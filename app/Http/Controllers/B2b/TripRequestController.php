@@ -165,7 +165,9 @@ class TripRequestController extends Controller
     {
         try {
             $this->validate($request, ['status' => 'required|string|in:accept,reject']);
-            if ($request->has('trip_request_id')) $business_trip_request = BusinessTripRequest::find((int)$request->trip_request_id);
+            if ($request->has('trip_request_id')) {
+                $business_trip_request = BusinessTripRequest::find((int)$request->trip_request_id);
+            }
             else $business_trip_request = $this->storeTripRequest($request);
             if ($request->has('status') && $request->status == "accept") {
                 $business_trip_request->vehicle_id = $request->vehicle_id;
@@ -228,6 +230,7 @@ class TripRequestController extends Controller
         $business_trip->business_trip_request_id = $business_trip_request->id;
         $business_trip->member_id = $business_trip_request->member_id;
         $business_trip->driver_id = $business_trip_request->driver_id;
+        $business_trip->business_id = $business_trip_request->business_id;
         $business_trip->vehicle_id = $business_trip_request->vehicle_id;
         $business_trip->pickup_geo = $business_trip_request->pickup_geo;
         $business_trip->dropoff_geo = $business_trip_request->dropoff_geo;
@@ -246,6 +249,7 @@ class TripRequestController extends Controller
     {
         $business_trip_request = new BusinessTripRequest();
         $business_trip_request->member_id = $request->member_id;
+        $business_trip_request->business_id = $request->member->businesses->first()->id;
         $business_trip_request->driver_id = $request->has('driver_id') ? $request->driver_id : null;
         $business_trip_request->vehicle_id = $request->has('vehicle_id') ? $request->vehicle_id : null;
         $business_trip_request->pickup_geo = $request->has('pickup_lat') ? json_encode(['lat' => $request->pickup_lat, 'lng' => $request->pickup_lng]) : null;
