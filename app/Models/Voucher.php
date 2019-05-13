@@ -115,4 +115,19 @@ class Voucher extends Model
     {
         return $query->whereRaw('((NOW() BETWEEN start_date AND end_date) OR (NOW() >= start_date AND end_date IS NULL))');
     }
+
+    public function tags()
+    {
+        return $this->morphToMany(Tag::class, 'taggable');
+    }
+
+    public function getTagListAttribute()
+    {
+        return $this->tags->pluck('id')->toArray();
+    }
+
+    public function getTagNamesAttribute()
+    {
+        return $this->tags->pluck('name');
+    }
 }
