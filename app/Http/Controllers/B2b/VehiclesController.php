@@ -171,7 +171,7 @@ class VehiclesController extends Controller
         }
     }
 
-    public function vehicleLists($member, Request $request)
+    public function index($member, Request $request)
     {
         try {
             $member = Member::find($member);

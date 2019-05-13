@@ -45,7 +45,7 @@ class BusinessRoute
             $api->group(['prefix' => '{member}'], function ($api) {
                 $api->group(['prefix' => 'vehicles'], function ($api) {
                     $api->post('/', 'B2b\VehiclesController@store');
-                    $api->get('/', 'B2b\VehiclesController@vehicleLists');
+                    $api->get('/', 'B2b\VehiclesController@index');
                     $api->group(['prefix' => '{vehicle}'], function ($api) {
                         $api->post('/', 'B2b\VehiclesController@update');
                         $api->get('/general-info', 'B2b\VehiclesController@getVehicleGeneralInfo');
@@ -59,7 +59,7 @@ class BusinessRoute
                 });
                 $api->group(['prefix' => 'drivers'], function ($api) {
                     $api->post('/', 'B2b\DriverController@store');
-                    $api->get('/', 'B2b\DriverController@driverLists');
+                    $api->get('/', 'B2b\DriverController@index');
                     $api->group(['prefix' => '{driver}'], function ($api) {
                         $api->post('/', 'B2b\DriverController@update');
                         $api->get('/general-info', 'B2b\DriverController@getDriverGeneralInfo');
