@@ -17,7 +17,9 @@ class TripSchedulerController extends Controller
                 'from' => 'sometimes|date|required_if:to',
                 'to' => 'sometimes|date|required_if:from'
             ]);
-            $trips = BusinessTrip::whereNotIn('status', ['cancelled', 'completed'])->with(['vehicle.basicInformation', 'member.profile', 'driver.profile'])->where('business_id', $business);
+            $trips = BusinessTrip::whereNotIn('status', ['cancelled', 'completed'])->with(['vehicle' => function ($q) {
+                $q->with(['basicInformation', 'businessDepartment']);
+            }, 'member.profile', 'driver.profile'])->where('business_id', $business);
             if ($request->has('from') && $request->has('to')) $trips->whereDateBetween('start_date', [$request->from, $request->to]);
             $trips = $trips->get();
             $filter = $request->filter;
@@ -29,6 +31,9 @@ class TripSchedulerController extends Controller
                     $data = [
                         'id' => $vehicle->id,
                         'name' => $vehicle->basicInformation->model_name,
+                        'status' => ucfirst($vehicle->status),
+                        'department' => $vehicle->businessDepartment->name,
+                        'type' => $vehicle->basicInformation->readable_type
                     ];
                     $trip_data = [];
                     foreach ($trips as $trip) {
@@ -101,7 +106,10 @@ class TripSchedulerController extends Controller
             ],
             'vehicle' => [
                 'id' => $trip->vehicle->id,
-                'name' => $trip->vehicle->basicInformation->model_name
+                'name' => $trip->vehicle->basicInformation->model_name,
+                'status' => ucfirst($trip->vehicle->status),
+                'department' => $trip->vehicle->businessDepartment->name,
+                'type' => $trip->vehicle->basicInformation->readable_type
             ],
         ];
     }
