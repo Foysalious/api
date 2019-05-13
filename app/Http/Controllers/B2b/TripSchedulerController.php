@@ -14,8 +14,8 @@ class TripSchedulerController extends Controller
         try {
             $this->validate($request, [
                 'filter' => 'required|string|in:vehicle,employee,driver',
-                'from' => 'sometimes|date|required_if:to',
-                'to' => 'sometimes|date|required_if:from'
+                'from' => 'sometimes|date|required_with:to',
+                'to' => 'sometimes|date|required_with:from'
             ]);
             $trips = BusinessTrip::whereNotIn('status', ['cancelled', 'completed'])->with(['vehicle' => function ($q) {
                 $q->with(['basicInformation', 'businessDepartment']);

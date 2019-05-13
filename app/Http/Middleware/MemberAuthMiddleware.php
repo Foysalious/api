@@ -29,6 +29,7 @@ class MemberAuthMiddleware
 
         if ($member->id == (int)$request->member) {
             $request->merge(['member' => $member]);
+            $request->merge(['business' => $member->businesses->first()]);
             return $next($request);
         }
         return response()->json(['message' => 'unauthorized', 'code' => 409]);

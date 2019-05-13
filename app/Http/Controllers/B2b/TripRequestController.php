@@ -16,7 +16,10 @@ class TripRequestController extends Controller
 
         try {
             $list = [];
-            $business_trip_requests = BusinessTripRequest::with(['member.profile'])->get();
+            $business = $request->business->load(['businessTripRequests' => function ($q) {
+                $q->with('member.profile');
+            }]);
+            $business_trip_requests = $business->businessTripRequests;
             foreach ($business_trip_requests as $business_trip_request) {
                 array_push($list, [
                     'id' => $business_trip_request->id,
@@ -30,6 +33,36 @@ class TripRequestController extends Controller
                 ]);
             }
             if (count($business_trip_requests) > 0) return api_response($request, $business_trip_requests, 200, ['trip_requests' => $list]);
+            else  return api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getTrips($member, Request $request)
+    {
+        try {
+            $list = [];
+            $business = $business = $request->business->load(['businessTrips' => function ($q) {
+                $q->with(['vehicle.basicInformation', 'driver.profile']);
+            }]);
+            $business_trips = $business->businessTrips;
+            foreach ($business_trips as $business_trip) {
+                array_push($list, [
+                    'id' => $business_trip->id,
+                    'vehicle' => [
+                        'name' => $business_trip->vehicle->basicInformation->model_name
+                    ],
+                    'driver' => [
+                        'name' => $business_trip->driver->profile->name,
+                        'image' => $business_trip->driver->profile->pro_pic,
+                    ],
+                    'start_date' => $business_trip->start_date,
+                    'end_date' => $business_trip->end_date
+                ]);
+            }
+            if (count($business_trips) > 0) return api_response($request, $business_trips, 200, ['trips' => $list]);
             else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -134,41 +167,13 @@ class TripRequestController extends Controller
     }
 
 
-    public function getTrips(Request $request)
-    {
-        try {
-            $list = [];
-            $business_trips = BusinessTrip::with(['vehicle.basicInformation', 'driver.profile'])->get();
-            foreach ($business_trips as $business_trip) {
-                array_push($list, [
-                    'id' => $business_trip->id,
-                    'vehicle' => [
-                        'name' => $business_trip->vehicle->basicInformation->model_name
-                    ],
-                    'driver' => [
-                        'name' => $business_trip->driver->profile->name,
-                        'image' => $business_trip->driver->profile->pro_pic,
-                    ],
-                    'start_date' => $business_trip->start_date,
-                    'end_date' => $business_trip->end_date
-                ]);
-            }
-            if (count($business_trips) > 0) return api_response($request, $business_trips, 200, ['trips' => $list]);
-            else  return api_response($request, null, 404);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
     public function createTrip(Request $request)
     {
         try {
             $this->validate($request, ['status' => 'required|string|in:accept,reject']);
             if ($request->has('trip_request_id')) {
                 $business_trip_request = BusinessTripRequest::find((int)$request->trip_request_id);
-            }
-            else $business_trip_request = $this->storeTripRequest($request);
+            } else $business_trip_request = $this->storeTripRequest($request);
             if ($request->has('status') && $request->status == "accept") {
                 $business_trip_request->vehicle_id = $request->vehicle_id;
                 $business_trip_request->driver_id = $request->driver_id;
@@ -249,7 +254,7 @@ class TripRequestController extends Controller
     {
         $business_trip_request = new BusinessTripRequest();
         $business_trip_request->member_id = $request->member_id;
-        $business_trip_request->business_id = $request->member->businesses->first()->id;
+        $business_trip_request->business_id = $request->business->id;
         $business_trip_request->driver_id = $request->has('driver_id') ? $request->driver_id : null;
         $business_trip_request->vehicle_id = $request->has('vehicle_id') ? $request->vehicle_id : null;
         $business_trip_request->pickup_geo = $request->has('pickup_lat') ? json_encode(['lat' => $request->pickup_lat, 'lng' => $request->pickup_lng]) : null;

@@ -49,6 +49,16 @@ class Business extends Model
         return $this->morphMany(Bonus::class, 'user');
     }
 
+    public function businessTrips()
+    {
+        return $this->hasMany(BusinessTrip::class);
+    }
+
+    public function businessTripRequests()
+    {
+        return $this->hasMany(BusinessTripRequest::class);
+    }
+
     public function bonusLogs()
     {
         return $this->morphMany(BonusLog::class, 'user');
