@@ -30,7 +30,7 @@ class BusinessTransactionController extends Controller
                 $transaction = [
                     'id' => $transaction->id,
                     'date' => Carbon::parse($transaction->created_at)->format('Y'),
-                    'sector' => 'SMS',
+                    'sector' => $transaction->tag,
                     'amount' => $transaction->amount,
                     'wallet' => (double)$business->wallet,
                     'type' => $transaction->type,
