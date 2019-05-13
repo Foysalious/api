@@ -77,4 +77,28 @@ class BusinessSmsTemplateController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function show($business, $sms, Request $request)
+    {
+        try {
+            $business = $request->business;
+            $sms_template = BusinessSmsTemplate::find((int)$sms);
+
+            $sms_template = [
+                    #'event_name' => $sms_template->event_name,
+                    #'event_title' => $sms_template->event_title,
+                    'template' => $sms_template->template,
+                    'variables' => $sms_template->variables,
+                    'is_published' => $sms_template->is_published,
+                    'cost' => 'BDT 0.25 will be charged per SMS sent.',
+                ];
+
+            if (count($sms_template) > 0) return api_response($request, $sms_template, 200, ['sms_template' => $sms_template]);
+            else  return api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
 }
