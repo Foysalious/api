@@ -242,9 +242,8 @@ class Checkout
     private function buildDeliveryCharge(Partner $partner)
     {
         return (new DeliveryCharge())
-            ->setPartner($partner)
-            ->setCategoryPartnerPivot($partner->categories->first()->pivot)
-            ->setCategory($this->partnerListRequest->selectedCategory);
+            ->setCategory($this->partnerListRequest->selectedCategory)
+            ->setCategoryPartnerPivot($partner->categories->first()->pivot);
     }
 
     private function createCarRentalDetail($service)
