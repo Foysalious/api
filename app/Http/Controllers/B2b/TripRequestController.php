@@ -329,6 +329,7 @@ class TripRequestController extends Controller
         $business_trip_request->start_date = $request->start_date;
         $business_trip_request->end_date = $request->end_date;
         $business_trip_request->trip_type = $request->trip_type;
+        $business_trip_request->vehicle_type = $request->vehicle_type;
         $business_trip_request->reason = $request->reason;
         $business_trip_request->details = $request->details;
         $business_trip_request->no_of_seats = $request->no_of_seats;
