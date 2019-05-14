@@ -1,5 +1,7 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Models\BusinessDepartment;
+use App\Models\BusinessRole;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessMember;
@@ -39,6 +41,8 @@ class MemberController extends Controller
             } else {
                 $business_data['sub_domain'] = $this->guessSubDomain($request->name);
                 $business = Business::create($this->withCreateModificationField($business_data));
+                $this->tagDepartment($business);
+                $this->tagRole($business);
                 $member_business_data = [
                     'business_id' => $business->id,
                     'member_id' => $member->id,
@@ -145,4 +149,31 @@ class MemberController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    private function tagDepartment(Business $business)
+    {
+        $departments = ['IT', 'FINANCE', 'HR', 'ADMIN', 'MARKETING', 'OPERATION', 'CXO'];
+        foreach ($departments as $department) {
+            $dept = new BusinessDepartment();
+            $dept->name = $department;
+            $dept->business_id = $business->id;
+            $dept->save();
+        }
+    }
+
+
+    private function tagRole(Business $business)
+    {
+        $roles = ['Manager', 'VP', 'Executive', 'Intern', 'Senior Executive', 'Driver'];
+        $depts = BusinessDepartment::where('business_id', $business->id)->pluck('id')->toArray();
+        foreach ($roles as $role) {
+            foreach ($depts as $dept) {
+                $b_role = new BusinessRole();
+                $b_role->name = $role;
+                $b_role->business_department_id = $dept;
+                $b_role->save();
+            }
+        }
+    }
+
 }
