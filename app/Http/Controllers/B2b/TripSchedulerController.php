@@ -20,7 +20,11 @@ class TripSchedulerController extends Controller
             $trips = BusinessTrip::whereNotIn('status', ['cancelled', 'completed'])->with(['vehicle' => function ($q) {
                 $q->with(['basicInformation', 'businessDepartment']);
             }, 'member.profile', 'driver.profile'])->where('business_id', $business);
-            if ($request->has('from') && $request->has('to')) $trips->whereBetween('start_date', [$request->from, $request->to]);
+            $from = $request->from;
+            $to = $request->to;
+            if ($request->has('from') && $request->has('to')) $trips->whereBetween('start_date', [$from, $to])->orWhere(function ($q) use ($from, $to) {
+                $q->where([['start_date', '<=', $from], ['end_date', '<=', $to]]);
+            });
             $trips = $trips->get();
             $filter = $request->filter;
             $final = [];

@@ -30,9 +30,7 @@ class TripRequestController extends Controller
                 elseif ($request->status == "reject") $status = 'rejected';
                 else $status = 'pending';
             }
-            if ($request->has('vehicle')) {
-                $car_type = $request->vehicle;
-            }
+            if ($request->has('vehicle')) $car_type = $request->vehicle;
             $business = $request->business->load(['businessTripRequests' => function ($q) use ($offset, $limit, $status, $car_type) {
                 $q->with('member.profile')->orderBy('id', 'desc')->skip($offset)->take($limit);
                 if ($status) $q->where('status', $status);
@@ -68,10 +66,25 @@ class TripRequestController extends Controller
     public function getTrips($member, Request $request)
     {
         try {
+            $this->validate($request, [
+                'vehicle_id' => 'sometimes|numeric',
+                'from' => 'sometimes|date',
+                'to' => 'sometimes|date',
+            ]);
             $list = [];
             list($offset, $limit) = calculatePagination($request);
-            $business = $business = $request->business->load(['businessTrips' => function ($q) use ($offset, $limit) {
-                $q->with(['vehicle.basicInformation', 'driver.profile'])->orderBy('id', 'desc')->skip($offset)->take($limit);;
+            $from = $to = $vehicle_id = null;
+            if ($request->has('from')) $from = $request->from;
+            elseif ($request->has('to')) $to = $request->to;
+            elseif ($request->has('vehicle_id')) $vehicle_id = $request->vehicle_id;
+            $business = $business = $request->business->load(['businessTrips' => function ($q) use ($offset, $limit, $from, $to, $vehicle_id) {
+                $q->with(['vehicle.basicInformation', 'driver.profile'])->orderBy('id', 'desc')->skip($offset)->take($limit);
+                if ($from && $to) {
+                    $q->wherBetween('start_date', $from, $to)->orWhere(function ($q) use ($from, $to) {
+                        $q->where([['start_date', '<=', $from], ['end_date', '<=', $to]]);
+                    });
+                }
+                if ($vehicle_id) $q->where('vehicle_id', $vehicle_id);
             }]);
             $business_trips = $business->businessTrips;
             foreach ($business_trips as $business_trip) {

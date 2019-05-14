@@ -27,14 +27,14 @@ class BusinessTripSms
         return $this;
     }
 
-    private function getEvent($event_name)
+    private function getSmsTemplate($event_name)
     {
         return $this->business->businessSmsTemplates()->where('event_name', $event_name)->first();
     }
 
     public function sendTripRequestAccept()
     {
-        if ($this->businessTrip->business->wallet >= $this->cost && $this->getEvent('trip_request_accept')) {
+        if ($this->canSendTripRequestAcceptSms()) {
             (new BusinessSmsHandler('trip_request_accept'))->send($this->mobile, [
                 'vehicle_name' => $this->vehicleName,
                 'arrival_time' => $this->arrivalTime,
@@ -42,5 +42,11 @@ class BusinessTripSms
             $this->business->debitWallet($this->cost);
             $this->business->walletTransaction(['amount' => $this->cost, 'type' => 'Debit', 'log' => 'Sms send', 'tag' => 'sms']);
         }
+    }
+
+    private function canSendTripRequestAcceptSms()
+    {
+        $sms_template = $this->getSmsTemplate('trip_request_accept');
+        return $sms_template && $sms_template->is_published && $this->businessTrip->business->wallet >= $this->cost;
     }
 }
