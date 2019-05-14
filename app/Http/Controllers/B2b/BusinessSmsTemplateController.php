@@ -8,21 +8,11 @@ use App\Models\BusinessSmsTemplate;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
-use Sheba\Sms\Sms;
-use Sheba\B2b\BusinessSmsHandler;
-use DB;
 
 class BusinessSmsTemplateController extends Controller
 {
     use CdnFileManager, FileManager;
     use ModificationFields;
-
-    private $sms;
-
-    public function __construct(Sms $sms)
-    {
-        $this->sms = $sms;
-    }
 
     public function index($business, Request $request)
     {
@@ -103,13 +93,5 @@ class BusinessSmsTemplateController extends Controller
         }
     }
 
-    public function sendSms($business, Request $request)
-    {
-        (new BusinessSmsHandler('vehicle_request_accept'))->send('+8801745523074', [
-            'vehicle_name' => 'Mercedes ',
-            'arrival_time' => '2 PM',
-        ]);
-        return response()->json(['message' => 'Done']);
-    }
 
 }
