@@ -1,11 +1,13 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\ModificationFields;
 use Sheba\Payment\Wallet;
 
 class Business extends Model
 {
     use Wallet;
+    use ModificationFields;
     protected $guarded = ['id'];
 
     public function members()

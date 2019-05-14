@@ -1,5 +1,6 @@
 <?php namespace App\Sheba\Business;
 
+use App\Models\Business;
 use App\Models\BusinessTrip;
 use Sheba\Business\BusinessSmsHandler;
 
@@ -7,6 +8,7 @@ use Sheba\Business\BusinessSmsHandler;
 class BusinessTripSms
 {
     private $businessTrip;
+    /** @var Business */
     private $business;
     private $mobile;
     private $vehicleName;
@@ -31,11 +33,13 @@ class BusinessTripSms
 
     public function sendTripRequestAccept()
     {
-        if ($this->businessTrip->business->wallet >= 0.25 && $this->getEvent('trip_request_accept')) {
+        if ($this->businessTrip->business->wallet >= $this->cost && $this->getEvent('trip_request_accept')) {
             (new BusinessSmsHandler('trip_request_accept'))->send($this->mobile, [
                 'vehicle_name' => $this->vehicleName,
                 'arrival_time' => $this->arrivalTime,
             ]);
+            $this->business->debitWallet($this->cost);
+            $this->business->walletTransaction(['amount' => $this->cost, 'type' => 'Debit', 'log' => 'Sms send', 'tag' => 'sms']);
         }
     }
 }
