@@ -81,7 +81,7 @@ class TripRequestController extends Controller
                 $q->with(['vehicle.basicInformation', 'driver.profile'])->orderBy('id', 'desc')->skip($offset)->take($limit);
                 if ($from && $to) {
                     $q->wherBetween('start_date', $from, $to)->orWhere(function ($q) use ($from, $to) {
-                        $q->where([['start_date', '<=', $from], ['end_date', '<=', $to]]);
+                        $q->where('end_date', '>', $to)->whereBetween('start_date', [$from, $to]);
                     });
                 }
                 if ($vehicle_id) $q->where('vehicle_id', $vehicle_id);

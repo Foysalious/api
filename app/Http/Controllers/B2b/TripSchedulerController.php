@@ -23,7 +23,9 @@ class TripSchedulerController extends Controller
             $from = $request->from;
             $to = $request->to;
             if ($request->has('from') && $request->has('to')) $trips->whereBetween('start_date', [$from, $to])->orWhere(function ($q) use ($from, $to) {
-                $q->where([['start_date', '<=', $from], ['end_date', '<=', $to]]);
+                $q->where('start_date', '<', $from)->whereBetween('end_date', [$from, $to])->orWhere(function ($q) use ($from, $to) {
+                    $q->where('end_date', '>', $to)->whereBetween('start_date', [$from, $to]);
+                });
             });
             $trips = $trips->get();
             $filter = $request->filter;
