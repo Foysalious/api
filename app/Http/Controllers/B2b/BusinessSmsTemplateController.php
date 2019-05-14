@@ -9,7 +9,7 @@ use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use Sheba\Sms\Sms;
-use Sheba\BusinessSmsHandler;
+use Sheba\B2b\BusinessSmsHandler;
 use DB;
 
 class BusinessSmsTemplateController extends Controller
