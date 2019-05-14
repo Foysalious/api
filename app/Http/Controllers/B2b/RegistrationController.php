@@ -50,8 +50,10 @@ class RegistrationController extends Controller
                     return api_response($request, null, 400, ['message' => 'The email / Phone number is already in use']);
                 }
             } elseif ($m_profile && !$e_profile) {
-                $m_profile->email = $email;
-                $m_profile->update();
+                if (!$m_profile->email) {
+                    $m_profile->email = $email;
+                    $m_profile->update();
+                }
                 $member = $m_profile->member;
                 if (!$member) $member = $this->makeMember($m_profile);
                 $businesses = $member->businesses->first();
@@ -62,9 +64,11 @@ class RegistrationController extends Controller
                 ];
                 return api_response($request, $info, 200, ['info' => $info]);
             } elseif ($e_profile && !$m_profile) {
-                $e_profile->mobile = formatMobile($mobile);
-                $e_profile->mobile_verified = 1;
-                $e_profile->update();
+                if (!$m_profile->mobile) {
+                    $e_profile->mobile = formatMobile($mobile);
+                    $e_profile->mobile_verified = 1;
+                    $e_profile->update();
+                }
                 $member = $e_profile->member;
                 if (!$member) $member = $this->makeMember($e_profile);
                 $businesses = $member->businesses->first();
