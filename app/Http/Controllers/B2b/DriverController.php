@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Models\BusinessDepartment;
 use App\Models\BusinessMember;
 use App\Models\BusinessTrip;
 use App\Models\Driver;
@@ -65,14 +66,17 @@ class DriverController extends Controller
                 $profile = $this->createDriverProfile($member, $driver, $request);
                 $new_member = $profile->member;
                 if (!$new_member) $new_member = $this->makeMember($profile);
-
+#
                 $business = $member->businesses->first();
+                $business_department = BusinessDepartment::find((int)$request->department_id);
+                $business_role = $business_department->businessRoles()->where('name', 'like', '%Driver%')->first();
                 $member_business_data = [
                     'business_id' => $business->id,
                     'member_id' => $new_member->id,
                     'type' => 'Admin',
                     'join_date' => Carbon::now(),
                     'department_id' => $request->department_id,
+                    'business_role_id' => $business_role->id,
                 ];
                 BusinessMember::create($this->withCreateModificationField($member_business_data));
             } else {
@@ -88,12 +92,15 @@ class DriverController extends Controller
                     if (!$new_member) $new_member = $this->makeMember($profile);
 
                     $business = $member->businesses->first();
+                    $business_department = BusinessDepartment::find((int)$request->department_id);
+                    $business_role = $business_department->businessRoles()->where('name', 'like', '%Driver%')->first();
                     $member_business_data = [
                         'business_id' => $business->id,
                         'member_id' => $new_member->id,
                         'type' => 'Admin',
                         'join_date' => Carbon::now(),
                         'department_id' => $request->department_id,
+                        'business_role_id' => $business_role->id,
                     ];
                     BusinessMember::create($this->withCreateModificationField($member_business_data));
                 } else {
@@ -162,7 +169,6 @@ class DriverController extends Controller
                 'years_of_experience' => $request->years_of_experience,
             ];
             $driver->update($this->withUpdateModificationField($driver_data));
-            #$profile = Profile::where('mobile', formatMobile($request->mobile))->first();
 
             return api_response($request, $driver, 200, ['driver' => $driver->id]);
         } catch (ValidationException $e) {
@@ -221,7 +227,6 @@ class DriverController extends Controller
             if (count($driver_lists) > 0) return api_response($request, $driver_lists, 200, ['driver_lists' => $driver_lists]);
             else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
