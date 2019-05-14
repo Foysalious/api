@@ -51,15 +51,16 @@ class CoWorkerController extends Controller
             $this->setModifier($member);
 
             $profile = $this->profileRepository->checkExistingProfile($request->mobile, $request->email);
-
+            $co_member = collect();
             if (!$profile) {
                 $profile = $this->createProfile($member, $request);
                 $new_member = $this->makeMember($profile);
+                $co_member->push($new_member);
 
                 $business = $member->businesses->first();
                 $member_business_data = [
                     'business_id' => $business->id,
-                    'member_id' => $new_member->id,
+                    'member_id' => $co_member->first()->id,
                     'type' => 'Admin',
                     'join_date' => Carbon::now(),
                     #'department' => $request->department,
@@ -68,12 +69,17 @@ class CoWorkerController extends Controller
                 BusinessMember::create($this->withCreateModificationField($member_business_data));
             } else {
                 $old_member = $profile->member;
-                if (!$old_member) $new_member = $this->makeMember($profile);
+                if (!$old_member) {
+                    $new_member = $this->makeMember($profile);
+                    $co_member->push($new_member);
+                } else {
+                    $co_member->push($old_member);
+                }
 
                 $business = $member->businesses->first();
                 $member_business_data = [
                     'business_id' => $business->id,
-                    'member_id' => $old_member ? $old_member->id : $new_member->id,
+                    'member_id' => $co_member->first()->id,
                     'type' => 'Admin',
                     'join_date' => Carbon::now(),
                     #'department' => $request->department,
@@ -81,7 +87,7 @@ class CoWorkerController extends Controller
                 ];
                 BusinessMember::create($this->withCreateModificationField($member_business_data));
             }
-            return api_response($request, $profile, 200, ['co_worker' => $profile->id]);
+            return api_response($request, $profile, 200, ['co_worker' => $co_member->first()->id]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
@@ -198,7 +204,7 @@ class CoWorkerController extends Controller
             $this->setModifier($member);
             $data = [
                 'business_id' => $business->id,
-                'name' =>  $request->name,
+                'name' => $request->name,
                 'is_published' => 1
             ];
             $business_dept = BusinessDepartment::create($this->withCreateModificationField($data));
@@ -225,7 +231,7 @@ class CoWorkerController extends Controller
             $this->setModifier($member);
             $data = [
                 'business_department_id' => $request->business_department_id,
-                'name' =>  $request->name,
+                'name' => $request->name,
                 'is_published' => 1
             ];
             $business_role = BusinessRole::create($this->withCreateModificationField($data));
