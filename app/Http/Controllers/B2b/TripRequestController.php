@@ -215,11 +215,15 @@ class TripRequestController extends Controller
     public function createTrip(Request $request, BusinessTripSms $businessTripSms)
     {
         try {
+            $business_member = $request->business_member;
+            $will_auto_assign = (int)$business_member->is_super || $business_member->actions()->where('tag', config('business.actions.trip_request.rw'))->first();
             $this->validate($request, ['status' => 'required|string|in:accept,reject']);
             if ($request->has('trip_request_id')) {
                 $business_trip_request = BusinessTripRequest::find((int)$request->trip_request_id);
-                if ($business_trip_request->status != 'pending') return api_response($request, null, 403);
-            } else $business_trip_request = $this->storeTripRequest($request);
+                if ($business_trip_request->status != 'pending' || !$will_auto_assign) return api_response($request, null, 403);
+            } else {
+                $business_trip_request = $this->storeTripRequest($request);
+            }
             if ($request->has('status') && $request->status == "accept") {
                 $business_trip_request->vehicle_id = $request->vehicle_id;
                 $business_trip_request->driver_id = $request->driver_id;
