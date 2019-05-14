@@ -264,6 +264,7 @@ class CoWorkerController extends Controller
         ];
         $profile = Profile::create($this->withCreateModificationField($profile_data));
         dispatch(new SendBusinessRequestEmail($request->email));
+        return $profile;
     }
 
     private function makeMember($profile)
