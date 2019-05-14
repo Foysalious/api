@@ -237,7 +237,7 @@ class TripRequestController extends Controller
         try {
             $business_member = $request->business_member;
             $business_trip_request = $this->storeTripRequest($request);
-            $will_auto_assign = $business_member->actions()->where('tag', config('business.actions.trip_request.auto_assign'))->first();
+            $will_auto_assign = (int)$business_member->is_super || $business_member->actions()->where('tag', config('business.actions.trip_request.auto_assign'))->first();
             if ($will_auto_assign) {
                 $vehicleScheduler->setStartDate($request->start_date)->setEndDate($request->end_date)
                     ->setBusinessDepartment($business_member->role->businessDepartment)->setBusiness($request->business);

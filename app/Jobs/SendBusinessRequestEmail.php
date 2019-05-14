@@ -27,9 +27,11 @@ class SendBusinessRequestEmail extends Job implements ShouldQueue
      */
     public function handle(Mailer $mailer)
     {
-        $mailer->send('emails.profile-creation', ['email' => $this->email], function ($m) {
-            $m->from('mail@sheba.xyz', 'Sheba.xyz');
-            $m->to($this->email)->subject('Profile Creation');
-        });
+        if ($this->attempts() <= 2) {
+            $mailer->send('emails.profile-creation', ['email' => $this->email], function ($m) {
+                $m->from('mail@sheba.xyz', 'Sheba.xyz');
+                $m->to($this->email)->subject('Profile Creation');
+            });
+        }
     }
 }

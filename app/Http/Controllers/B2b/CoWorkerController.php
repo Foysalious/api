@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Jobs\SendBusinessRequestEmail;
 use App\Models\BusinessDepartment;
 use App\Models\BusinessMember;
 use App\Models\BusinessRole;
@@ -254,6 +255,7 @@ class CoWorkerController extends Controller
             'mobile' => !empty($request->mobile) ? formatMobile($request->mobile) : null,
             'name' => $request->name,
             'email' => $request->email,
+            'password' => bcrypt('sheba#test1')
             ##'gender' => $request->gender,
             #'dob' => $request->dob,
             #'nid_no' => $request->nid_no,
@@ -261,8 +263,8 @@ class CoWorkerController extends Controller
             #'address' => $request->address,
             #'driver_id' => $driver->id,
         ];
-
-        return Profile::create($this->withCreateModificationField($profile_data));
+        $profile=Profile::create($this->withCreateModificationField($profile_data));
+        $this->dispatch(new SendBusinessRequestEmail($request->email));
     }
 
     private function makeMember($profile)

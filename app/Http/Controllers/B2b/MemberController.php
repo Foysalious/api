@@ -47,6 +47,7 @@ class MemberController extends Controller
                     'business_id' => $business->id,
                     'member_id' => $member->id,
                     'type' => 'Admin',
+                    'is_super' => 1,
                     'join_date' => Carbon::now(),
                 ];
                 BusinessMember::create($this->withCreateModificationField($member_business_data));
