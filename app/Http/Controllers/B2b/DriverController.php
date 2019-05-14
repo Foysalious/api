@@ -77,7 +77,6 @@ class DriverController extends Controller
                     'member_id' => $new_member->id,
                     'type' => 'Admin',
                     'join_date' => Carbon::now(),
-                    'department_id' => $request->department_id,
                     'business_role_id' => $business_role->id,
                 ];
                 BusinessMember::create($this->withCreateModificationField($member_business_data));
@@ -101,7 +100,6 @@ class DriverController extends Controller
                         'member_id' => $new_member->id,
                         'type' => 'Admin',
                         'join_date' => Carbon::now(),
-                        'department_id' => $request->department_id,
                         'business_role_id' => $business_role->id,
                     ];
                     BusinessMember::create($this->withCreateModificationField($member_business_data));
