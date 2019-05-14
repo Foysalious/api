@@ -7,6 +7,7 @@ use App\Models\BusinessTripRequest;
 use App\Repositories\CommentRepository;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Business\Scheduler\VehicleScheduler;
 
 class TripRequestController extends Controller
 {
@@ -196,10 +197,15 @@ class TripRequestController extends Controller
         }
     }
 
-    public function createTripRequests(Request $request)
+    public function createTripRequests(Request $request, VehicleScheduler $vehicleScheduler)
     {
         try {
+//            $business_member = $request->business_member;
+//            $will_auto_assign = $business_member->actions()->where('tag', config('business.actions.trip_request.auto_assign'))->first();
+//            $vehicles=$vehicleScheduler->setStartDate($request->start_date)->setEndDate($request->end_date)
+//                ->setBusinessDepartment($business_member->role->businessDepartment)->getFreeVehicles();
             $business_trip_request = $this->storeTripRequest($request);
+
             return api_response($request, $business_trip_request, 200, ['id' => $business_trip_request->id]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);

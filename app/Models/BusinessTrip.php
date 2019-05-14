@@ -31,4 +31,9 @@ class BusinessTrip extends Model
         return $this->morphMany(Comment::class, 'commentable');
     }
 
+    public function scopeOngoing($query)
+    {
+        return $query->where('status', 'open')->orWhere('status', 'process');
+    }
+
 }
