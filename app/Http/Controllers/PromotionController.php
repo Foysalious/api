@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Exceptions\HyperLocationNotFoundException;
 use App\Models\Customer;
 use App\Models\HyperLocal;
 use App\Models\Promotion;
@@ -14,6 +15,7 @@ use Sheba\Voucher\ApplicableVoucherFinder;
 use Sheba\Voucher\DTO\Params\CheckParamsForOrder;
 use Sheba\Voucher\PromotionList;
 use Sheba\Voucher\VoucherSuggester;
+use Throwable;
 
 class PromotionController extends Controller
 {
@@ -34,7 +36,7 @@ class PromotionController extends Controller
                 }
             }
             return $customer->promotions->count() > 0 ? api_response($request, $customer->promotions, 200, ['promotions' => $customer->promotions]) : api_response($request, $customer->promotions, 404);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -85,7 +87,7 @@ class PromotionController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -121,7 +123,7 @@ class PromotionController extends Controller
             } else {
                 return api_response($request, null, 404, ['message' => $msg]);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -150,7 +152,7 @@ class PromotionController extends Controller
             } else {
                 return api_response($request, null, 403, ['message' => 'Invalid Promo']);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -186,7 +188,7 @@ class PromotionController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -196,7 +198,7 @@ class PromotionController extends Controller
      * @param PartnerListRequest $request
      * @param $partner
      * @return float|int|null
-     * @throws \App\Exceptions\HyperLocationNotFoundException
+     * @throws HyperLocationNotFoundException
      */
     private function calculateOrderAmount(PartnerListRequest $request, $partner)
     {
@@ -271,7 +273,7 @@ class PromotionController extends Controller
                 return api_response($request, null, 404);
             }
 
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
