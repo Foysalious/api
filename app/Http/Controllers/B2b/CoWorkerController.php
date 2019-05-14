@@ -140,6 +140,7 @@ class CoWorkerController extends Controller
         try {
             $business = $request->business;
             $member = Member::find((int)$employee);
+            if (!$member) return api_response($request, null, 404);
             $profile = $member->profile;
             $employee = [
                 'name' => $profile->name,
