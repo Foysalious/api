@@ -2,6 +2,7 @@
 
 use App\Models\BusinessDepartment;
 use App\Models\BusinessMember;
+use App\Models\BusinessRole;
 use App\Models\BusinessTrip;
 use App\Models\Driver;
 use App\Models\Profile;
@@ -178,6 +179,60 @@ class CoWorkerController extends Controller
             }
             if (count($departments) > 0) return api_response($request, $departments, 200, ['departments' => $departments]);
             else  return api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function addBusinessDepartment($business, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'name' => 'required|string',
+                #'is_published' => 'required|boolean',
+
+            ]);
+            $business = $request->business;
+            $member = $request->manager_member;
+            $this->setModifier($member);
+            $data = [
+                'business_id' => $business->id,
+                'name' =>  $request->name,
+                'is_published' => 1
+            ];
+            $business_dept = BusinessDepartment::create($this->withCreateModificationField($data));
+            return api_response($request, null, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function addBusinessRole($business, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'name' => 'required|string',
+                'business_department_id' => 'required|integer',
+
+            ]);
+            $business = $request->business;
+            $member = $request->manager_member;
+            $this->setModifier($member);
+            $data = [
+                'business_department_id' => $request->business_department_id,
+                'name' =>  $request->name,
+                'is_published' => 1
+            ];
+            $business_role = BusinessRole::create($this->withCreateModificationField($data));
+            return api_response($request, null, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

@@ -21,8 +21,11 @@ class BusinessRoute
                 $api->get('/transactions', 'B2b\BusinessTransactionController@index');
 
                 $api->get('/dept-role', 'B2b\CoWorkerController@departmentRole');
+                $api->post('/departments', 'B2b\CoWorkerController@addBusinessDepartment');
+                $api->post('/roles', 'B2b\CoWorkerController@addBusinessRole');
 
                 $api->get('/sms-templates', 'B2b\BusinessSmsTemplateController@index');
+                $api->get('/test-sms', 'B2b\BusinessSmsTemplateController@sendSms');
                 $api->post('/sms-templates/{sms}', 'B2b\BusinessSmsTemplateController@update');
                 $api->get('/sms-templates/{sms}', 'B2b\BusinessSmsTemplateController@show');
 

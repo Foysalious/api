@@ -180,8 +180,8 @@ class DriverController extends Controller
             $this->setModifier($member);
 
             list($offset, $limit) = calculatePagination($request);
-            $drivers = Driver::whereHas('profile' , function ($q) use ($business) {
-                $q->WhereHas('member',function ($q) use ($business) {
+            $drivers = Driver::whereHas('profile', function ($q) use ($business) {
+                $q->WhereHas('member', function ($q) use ($business) {
                     $q->whereHas('businesses', function ($q) use ($business) {
                         $q->where('businesses.id', $business->id);
                     });

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# To commit changes of this file
+## To commit changes of this file
 # ------------------------------
 # git add deploy.sh
 # git update-index --chmod=+x deploy.sh

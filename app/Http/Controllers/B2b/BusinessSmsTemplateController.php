@@ -1,20 +1,15 @@
 <?php namespace App\Http\Controllers\B2b;
 
-use App\Models\BusinessDepartment;
-use App\Models\BusinessMember;
-use App\Models\BusinessSmsTemplate;
-use App\Models\BusinessTrip;
-use App\Models\Driver;
-use App\Models\Profile;
-use App\Repositories\FileRepository;
+
 use Illuminate\Validation\ValidationException;
-use App\Http\Controllers\Controller;
 use Sheba\FileManagers\CdnFileManager;
+use App\Http\Controllers\Controller;
+use App\Models\BusinessSmsTemplate;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
-use App\Models\Member;
-use Carbon\Carbon;
+use Sheba\Sms\Sms;
+use Sheba\B2b\BusinessSmsHandler;
 use DB;
 
 class BusinessSmsTemplateController extends Controller
@@ -22,12 +17,18 @@ class BusinessSmsTemplateController extends Controller
     use CdnFileManager, FileManager;
     use ModificationFields;
 
+    private $sms;
+
+    public function __construct(Sms $sms)
+    {
+        $this->sms = $sms;
+    }
+
     public function index($business, Request $request)
     {
         try {
             $business = $request->business;
             $business_sms_templates = BusinessSmsTemplate::where('business_id', $business->id)->orderBy('id', 'DESC')->get();
-            #dd($sms_templates);
             $sms_templates = [];
             foreach ($business_sms_templates as $sms_template) {
                 $template = [
@@ -100,6 +101,15 @@ class BusinessSmsTemplateController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function sendSms($business, Request $request)
+    {
+        (new BusinessSmsHandler('vehicle_request_accept'))->send('+8801745523074', [
+            'vehicle_name' => 'Mercedes ',
+            'arrival_time' => '2 PM',
+        ]);
+        return response()->json(['message' => 'Done']);
     }
 
 }

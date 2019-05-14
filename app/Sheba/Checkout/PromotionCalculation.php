@@ -21,7 +21,7 @@ class PromotionCalculation
             $partner = $partner_list->partners->first();
             $order_amount = 0;
             $delivery_charge = (new DeliveryCharge())->setCategory($request->selectedCategory)
-                ->setPartner($partner)->setCategoryPartnerPivot($partner->categories->first()->pivot)
+                ->setCategoryPartnerPivot($partner->categories->first()->pivot)
                 ->get(); //(double)$category_pivot->delivery_charge;
             foreach ($request->selectedServices as $selected_service) {
                 $service = $partner->services->where('id', $selected_service->id)->first();

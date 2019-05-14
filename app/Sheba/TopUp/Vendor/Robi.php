@@ -13,6 +13,6 @@ class Robi extends Vendor
 
     private function getPin()
     {
-        return config('topup.robi.robi_mid');
+        return config('topup.robi.robi_pin');
     }
 }

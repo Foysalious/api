@@ -302,6 +302,12 @@ return [
             'short_name' => 'AC',
             'prefix' => 'A',
             'department' => 'AC'
+        ],
+        'Telesales' => [
+            'name' => 'Telesales',
+            'short_name' => 'TEL',
+            'prefix' => 'T',
+            'department' => 'TEL'
         ]
     ],
     'SERVICE_UNITS' => ['ft', 'sft', 'hour', 'kg', 'meal', 'person', 'piece', 'rft', 'seat', 'strip', 'km', 'basket', 'Cow Price', 'litre', 'বান্ডেল', 'দিন', 'cft'],

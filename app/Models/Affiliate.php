@@ -247,4 +247,19 @@ class Affiliate extends Model implements TopUpAgent, MovieAgent, TransportAgent,
     {
         return (double)$this->bonuses()->where('status', 'valid')->sum('amount');
     }
+
+    public function tags()
+    {
+        return $this->morphToMany(Tag::class, 'taggable');
+    }
+
+    public function getTagListAttribute()
+    {
+        return $this->tags->pluck('id')->toArray();
+    }
+
+    public function getTagNamesAttribute()
+    {
+        return $this->tags->pluck('name');
+    }
 }

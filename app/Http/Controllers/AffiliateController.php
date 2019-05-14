@@ -469,6 +469,9 @@ class AffiliateController extends Controller
                 'transaction_id' => 'required|string',
                 'type' => 'required|in:bkash',
             ]);
+
+            return api_response($request, null, 500, ['message' => "Temporary Recharge Off"]);
+
             $payment_validator = PartnerPaymentValidatorFactory::make($request->all());
             if ($error = $payment_validator->hasError()) return api_response($request, null, 400, ['message' => $error]);
             $affiliate = $request->affiliate;
