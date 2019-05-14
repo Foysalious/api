@@ -1,4 +1,4 @@
-<?php namespace Sheba\B2b;
+<?php namespace Sheba\Business;
 
 use Sheba\Sms\Sms;
 use App\Models\BusinessSmsTemplate;

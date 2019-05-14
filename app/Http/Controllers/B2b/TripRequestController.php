@@ -5,6 +5,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BusinessTrip;
 use App\Models\BusinessTripRequest;
 use App\Repositories\CommentRepository;
+use App\Sheba\Business\BusinessTripSms;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\Scheduler\VehicleScheduler;
@@ -16,9 +17,26 @@ class TripRequestController extends Controller
     {
 
         try {
+            $type = implode(',', config('business.VEHICLE_TYPES'));
+            $this->validate($request, [
+                'status' => 'sometimes|string|in:accept,reject,pending',
+                'vehicle' => 'sometimes|string|in:' . $type,
+            ]);
             $list = [];
-            $business = $request->business->load(['businessTripRequests' => function ($q) {
-                $q->with('member.profile');
+            list($offset, $limit) = calculatePagination($request);
+            $status = $car_type = null;
+            if ($request->has('status')) {
+                if ($request->status == "accept") $status = 'accepted';
+                elseif ($request->status == "reject") $status = 'rejected';
+                else $status = 'pending';
+            }
+            if ($request->has('vehicle')) {
+                $car_type = $request->vehicle;
+            }
+            $business = $request->business->load(['businessTripRequests' => function ($q) use ($offset, $limit, $status, $car_type) {
+                $q->with('member.profile')->orderBy('id', 'desc')->skip($offset)->take($limit);
+                if ($status) $q->where('status', $status);
+                if ($car_type) $q->where('vehicle_type', $car_type);
             }]);
             $business_trip_requests = $business->businessTripRequests;
             foreach ($business_trip_requests as $business_trip_request) {
@@ -35,6 +53,12 @@ class TripRequestController extends Controller
             }
             if (count($business_trip_requests) > 0) return api_response($request, $business_trip_requests, 200, ['trip_requests' => $list]);
             else  return api_response($request, null, 404);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -45,8 +69,9 @@ class TripRequestController extends Controller
     {
         try {
             $list = [];
-            $business = $business = $request->business->load(['businessTrips' => function ($q) {
-                $q->with(['vehicle.basicInformation', 'driver.profile']);
+            list($offset, $limit) = calculatePagination($request);
+            $business = $business = $request->business->load(['businessTrips' => function ($q) use ($offset, $limit) {
+                $q->with(['vehicle.basicInformation', 'driver.profile'])->orderBy('id', 'desc')->skip($offset)->take($limit);;
             }]);
             $business_trips = $business->businessTrips;
             foreach ($business_trips as $business_trip) {
@@ -65,6 +90,12 @@ class TripRequestController extends Controller
             }
             if (count($business_trips) > 0) return api_response($request, $business_trips, 200, ['trips' => $list]);
             else  return api_response($request, null, 404);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -168,17 +199,21 @@ class TripRequestController extends Controller
     }
 
 
-    public function createTrip(Request $request)
+    public function createTrip(Request $request, BusinessTripSms $businessTripSms)
     {
         try {
             $this->validate($request, ['status' => 'required|string|in:accept,reject']);
             if ($request->has('trip_request_id')) {
                 $business_trip_request = BusinessTripRequest::find((int)$request->trip_request_id);
+                if ($business_trip_request->status != 'pending') return api_response($request, null, 403);
             } else $business_trip_request = $this->storeTripRequest($request);
             if ($request->has('status') && $request->status == "accept") {
                 $business_trip_request->vehicle_id = $request->vehicle_id;
                 $business_trip_request->driver_id = $request->driver_id;
+                $business_trip_request->status = 'accepted';
+                $business_trip_request->update();
                 $business_trip = $this->storeTrip($business_trip_request);
+                $businessTripSms->setTrip($business_trip)->sendTripRequestAccept();
                 return api_response($request, $business_trip, 200, ['id' => $business_trip->id]);
             } else {
                 $business_trip_request->status = 'rejected';
@@ -197,15 +232,26 @@ class TripRequestController extends Controller
         }
     }
 
-    public function createTripRequests(Request $request, VehicleScheduler $vehicleScheduler)
+    public function createTripRequests(Request $request, VehicleScheduler $vehicleScheduler, BusinessTripSms $businessTripSms)
     {
         try {
-//            $business_member = $request->business_member;
-//            $will_auto_assign = $business_member->actions()->where('tag', config('business.actions.trip_request.auto_assign'))->first();
-//            $vehicles=$vehicleScheduler->setStartDate($request->start_date)->setEndDate($request->end_date)
-//                ->setBusinessDepartment($business_member->role->businessDepartment)->getFreeVehicles();
+            $business_member = $request->business_member;
             $business_trip_request = $this->storeTripRequest($request);
-
+            $will_auto_assign = $business_member->actions()->where('tag', config('business.actions.trip_request.auto_assign'))->first();
+            if ($will_auto_assign) {
+                $vehicleScheduler->setStartDate($request->start_date)->setEndDate($request->end_date)
+                    ->setBusinessDepartment($business_member->role->businessDepartment)->setBusiness($request->business);
+                $vehicles = $vehicleScheduler->getFreeVehicles();
+                $drivers = $vehicleScheduler->getFreeDrivers();
+                if ($vehicles->count() > 0) $vehicle = $vehicles->random(1);
+                if ($drivers->count() > 0) $driver = $drivers->random(1);
+                $business_trip_request->vehicle_id = $vehicle;
+                $business_trip_request->driver_id = $driver;
+                $business_trip_request->status = 'accepted';
+                $business_trip_request->update();
+                $business_trip = $this->storeTrip($business_trip_request);
+                $businessTripSms->setTrip($business_trip)->sendTripRequestAccept();
+            }
             return api_response($request, $business_trip_request, 200, ['id' => $business_trip_request->id]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
