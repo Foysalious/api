@@ -488,7 +488,8 @@ class AffiliateController extends Controller
 
     private function ifTransactionAlreadyExists($transaction_id)
     {
-        return (AffiliateTransaction::where('transaction_details', 'like', "%$transaction_id%")->count() > 0) || (PartnerTransaction::where('transaction_details', 'like', "%$transaction_id%")->count() > 0);
+        return (AffiliateTransaction::where('transaction_details', 'like', "%$transaction_id%")->count() > 0) ||
+            (PartnerTransaction::where('transaction_details', 'like', "%$transaction_id%")->count() > 0);
     }
 
     private function recharge(Affiliate $affiliate, $payment_validator)
