@@ -263,8 +263,9 @@ class CoWorkerController extends Controller
             #'address' => $request->address,
             #'driver_id' => $driver->id,
         ];
-        $profile=Profile::create($this->withCreateModificationField($profile_data));
-        $this->dispatch(new SendBusinessRequestEmail($request->email));
+        $profile = Profile::create($this->withCreateModificationField($profile_data));
+        dispatch(new SendBusinessRequestEmail($request->email));
+        return $profile;
     }
 
     private function makeMember($profile)

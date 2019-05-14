@@ -22,11 +22,15 @@ class TripSchedulerController extends Controller
             }, 'member.profile', 'driver.profile'])->where('business_id', $business);
             $from = $request->from;
             $to = $request->to;
-            if ($request->has('from') && $request->has('to')) $trips->whereBetween('start_date', [$from, $to])->orWhere(function ($q) use ($from, $to) {
-                $q->where('start_date', '<', $from)->whereBetween('end_date', [$from, $to])->orWhere(function ($q) use ($from, $to) {
-                    $q->where('end_date', '>', $to)->whereBetween('start_date', [$from, $to]);
+            if ($request->has('from') && $request->has('to')) {
+                $trips->where(function ($q) use ($from, $to) {
+                    $q->whereBetween('start_date', [$from, $to])->orWhere(function ($q) use ($from, $to) {
+                        $q->where('start_date', '<', $from)->whereBetween('end_date', [$from, $to])->orWhere(function ($q) use ($from, $to) {
+                            $q->where('end_date', '>', $to)->whereBetween('start_date', [$from, $to]);
+                        });
+                    });
                 });
-            });
+            }
             $trips = $trips->get();
             $filter = $request->filter;
             $final = [];

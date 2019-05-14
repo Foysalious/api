@@ -80,8 +80,10 @@ class TripRequestController extends Controller
             $business = $business = $request->business->load(['businessTrips' => function ($q) use ($offset, $limit, $from, $to, $vehicle_id) {
                 $q->with(['vehicle.basicInformation', 'driver.profile'])->orderBy('id', 'desc')->skip($offset)->take($limit);
                 if ($from && $to) {
-                    $q->wherBetween('start_date', $from, $to)->orWhere(function ($q) use ($from, $to) {
-                        $q->where('end_date', '>', $to)->whereBetween('start_date', [$from, $to]);
+                    $q->where(function ($q) use ($from, $to) {
+                        $q->wherBetween('start_date', $from, $to)->orWhere(function ($q) use ($from, $to) {
+                            $q->where('end_date', '>', $to)->whereBetween('start_date', [$from, $to]);
+                        });
                     });
                 }
                 if ($vehicle_id) $q->where('vehicle_id', $vehicle_id);
@@ -215,11 +217,15 @@ class TripRequestController extends Controller
     public function createTrip(Request $request, BusinessTripSms $businessTripSms)
     {
         try {
+            $business_member = $request->business_member;
+            $will_auto_assign = (int)$business_member->is_super || $business_member->actions()->where('tag', config('business.actions.trip_request.rw'))->first();
             $this->validate($request, ['status' => 'required|string|in:accept,reject']);
             if ($request->has('trip_request_id')) {
                 $business_trip_request = BusinessTripRequest::find((int)$request->trip_request_id);
-                if ($business_trip_request->status != 'pending') return api_response($request, null, 403);
-            } else $business_trip_request = $this->storeTripRequest($request);
+                if ($business_trip_request->status != 'pending' || !$will_auto_assign) return api_response($request, null, 403);
+            } else {
+                $business_trip_request = $this->storeTripRequest($request);
+            }
             if ($request->has('status') && $request->status == "accept") {
                 $business_trip_request->vehicle_id = $request->vehicle_id;
                 $business_trip_request->driver_id = $request->driver_id;
@@ -329,6 +335,7 @@ class TripRequestController extends Controller
         $business_trip_request->start_date = $request->start_date;
         $business_trip_request->end_date = $request->end_date;
         $business_trip_request->trip_type = $request->trip_type;
+        $business_trip_request->vehicle_type = $request->vehicle_type;
         $business_trip_request->reason = $request->reason;
         $business_trip_request->details = $request->details;
         $business_trip_request->no_of_seats = $request->no_of_seats;
