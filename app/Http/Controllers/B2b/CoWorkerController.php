@@ -255,6 +255,7 @@ class CoWorkerController extends Controller
             'mobile' => !empty($request->mobile) ? formatMobile($request->mobile) : null,
             'name' => $request->name,
             'email' => $request->email,
+            'password' => bcrypt('sheba#test1')
             ##'gender' => $request->gender,
             #'dob' => $request->dob,
             #'nid_no' => $request->nid_no,
