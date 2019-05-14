@@ -1,8 +1,7 @@
 <?php namespace App\Sheba\B2b;
 
-use App\Models\BusinessTrip;
-use App\Models\BusinessTripRequest;
 use Sheba\B2b\BusinessSmsHandler;
+use App\Models\BusinessTrip;
 use Illuminate\Http\Request;
 use Sheba\Sms\Sms;
 
@@ -20,7 +19,6 @@ class BusinessTripCampaign
         $this->vehicleName = $this->businessTrip->vehicle->basicInformation->company_name;
         $this->arrivalTime = $this->businessTrip->start_date;
         return $this;
-        #$this->setTrip($business_trip)->sendSms();
     }
 
     public function sendSms()
