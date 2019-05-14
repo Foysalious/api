@@ -59,7 +59,7 @@ class VehiclesController extends Controller
             $vehicle_data = [
                 'owner_type' => get_class($business),
                 'owner_id' => $business->id,
-                'department_id' => $request->department_id,
+                'business_department_id' => $request->department_id,
             ];
             $vehicle = Vehicle::create($this->withCreateModificationField($vehicle_data));
 
@@ -133,7 +133,7 @@ class VehiclesController extends Controller
             $vehicle_basic_informations = $vehicle->basicInformations;
             $vehicle_registration_informations = $vehicle->registrationInformations;
 
-            $vehicle->update($this->withUpdateModificationField(['department_id' => $request->department_id]));
+            $vehicle->update($this->withUpdateModificationField(['business_department_id' => $request->department_id]));
 
             $vehicle_basic_information_data = [
                 'type' => $request->type,
@@ -179,7 +179,7 @@ class VehiclesController extends Controller
             $this->setModifier($member);
 
             list($offset, $limit) = calculatePagination($request);
-            $vehicles = Vehicle::with('basicInformations')->where('owner_id', $business->id)->select('id', 'status', 'current_driver_id', 'department_id')->orderBy('id', 'desc')->skip($offset)->limit($limit);
+            $vehicles = Vehicle::with('basicInformations')->where('owner_id', $business->id)->select('id', 'status', 'current_driver_id', 'business_department_id')->orderBy('id', 'desc')->skip($offset)->limit($limit);
 
             if ($request->has('status'))
                 $vehicles = $vehicles->status($request->status);
@@ -268,7 +268,7 @@ class VehiclesController extends Controller
             $basic_information = $vehicle->basicInformations;
             $registration_information = $vehicle->registrationInformations;
 
-            $vehicle->update($this->withUpdateModificationField(['department_id' => $request->department_id]));
+            $vehicle->update($this->withUpdateModificationField(['business_department_id' => $request->department_id]));
 
             $basic_information_data = [
                 'model_year' => $request->model_year,
