@@ -19,8 +19,8 @@ class TripRequestController extends Controller
         try {
             $type = implode(',', config('business.VEHICLE_TYPES'));
             $this->validate($request, [
-                'status' => 'required|string|in:accept,reject,pending',
-                'car_type' => 'sometimes|string|in:' . $type,
+                'status' => 'sometimes|string|in:accept,reject,pending',
+                'vehicle' => 'sometimes|string|in:' . $type,
             ]);
             $list = [];
             list($offset, $limit) = calculatePagination($request);
@@ -30,8 +30,8 @@ class TripRequestController extends Controller
                 elseif ($request->status == "reject") $status = 'rejected';
                 else $status = 'pending';
             }
-            if ($request->has('car_type')) {
-                $car_type = $request->car_type;
+            if ($request->has('vehicle')) {
+                $car_type = $request->vehicle;
             }
             $business = $request->business->load(['businessTripRequests' => function ($q) use ($offset, $limit, $status, $car_type) {
                 $q->with('member.profile')->orderBy('id', 'desc')->skip($offset)->take($limit);
@@ -90,6 +90,12 @@ class TripRequestController extends Controller
             }
             if (count($business_trips) > 0) return api_response($request, $business_trips, 200, ['trips' => $list]);
             else  return api_response($request, null, 404);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
