@@ -63,6 +63,7 @@ class VehiclesController extends Controller
                 'owner_type' => get_class($business),
                 'owner_id' => $business->id,
                 'business_department_id' => $request->department_id,
+                'status' => 'active',
             ];
             $vehicle = Vehicle::create($this->withCreateModificationField($vehicle_data));
 
