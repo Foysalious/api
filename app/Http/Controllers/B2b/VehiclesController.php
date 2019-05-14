@@ -1,11 +1,14 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Models\BusinessTrip;
+use App\Models\BusinessTripRequest;
+use App\Models\Driver;
 use App\Models\Vehicle;
 use App\Models\VehicleRegistrationInformation;
 use App\Repositories\FileRepository;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
+use Sheba\Business\Scheduler\TripScheduler;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
@@ -59,7 +62,8 @@ class VehiclesController extends Controller
             $vehicle_data = [
                 'owner_type' => get_class($business),
                 'owner_id' => $business->id,
-                'department_id' => $request->department_id,
+                'business_department_id' => $request->department_id,
+                'status' => 'active',
             ];
             $vehicle = Vehicle::create($this->withCreateModificationField($vehicle_data));
 
@@ -133,7 +137,7 @@ class VehiclesController extends Controller
             $vehicle_basic_informations = $vehicle->basicInformations;
             $vehicle_registration_informations = $vehicle->registrationInformations;
 
-            $vehicle->update($this->withUpdateModificationField(['department_id' => $request->department_id]));
+            $vehicle->update($this->withUpdateModificationField(['business_department_id' => $request->department_id]));
 
             $vehicle_basic_information_data = [
                 'type' => $request->type,
@@ -171,27 +175,35 @@ class VehiclesController extends Controller
         }
     }
 
-    public function vehicleLists($member, Request $request)
+    public function index($member, Request $request, TripScheduler $tripScheduler)
     {
         try {
             $member = Member::find($member);
             $business = $member->businesses->first();
             $this->setModifier($member);
+            if ($request->has('trip_request_id')) {
+                $business_trip_request = BusinessTripRequest::find((int)$request->trip_request_id);
+                $car_ids = $tripScheduler->setStartDate($business_trip_request->start_date)->setEndDate($business_trip_request->end_date)
+                    ->setBusinessDepartment($business_trip_request->member->businessMember->role->businessDepartment)
+                    ->getFreeVehicles();
+                $vehicles = Vehicle::whereIn('id', $car_ids->toArray())->with(['basicInformations','driver'])->get();
+            } else {
+                list($offset, $limit) = calculatePagination($request);
+                $vehicles = Vehicle::with('basicInformations')->where('owner_id', $business->id)->select('id', 'status', 'current_driver_id', 'business_department_id')->orderBy('id', 'desc')->skip($offset)->limit($limit);
 
-            list($offset, $limit) = calculatePagination($request);
-            $vehicles = Vehicle::with('basicInformations')->select('id', 'status', 'current_driver_id', 'department_id')->orderBy('id', 'desc')->skip($offset)->limit($limit);
+                if ($request->has('status'))
+                    $vehicles = $vehicles->status($request->status);
 
-            if ($request->has('status'))
-                $vehicles = $vehicles->status($request->status);
-
-            if ($request->has('type')) {
-                $vehicles->where(function ($query) use ($request) {
-                    $query->whereHas('basicInformations', function ($query) use ($request) {
-                        $query->where('type', $request->type);
+                if ($request->has('type')) {
+                    $vehicles->where(function ($query) use ($request) {
+                        $query->whereHas('basicInformations', function ($query) use ($request) {
+                            $query->where('type', $request->type);
+                        });
                     });
-                });
+                }
+                $vehicles = $vehicles->get();
             }
-            $vehicles = $vehicles->get();
+
             $vehicle_lists = [];
             foreach ($vehicles as $vehicle) {
                 $basic_information = $vehicle->basicInformations;
@@ -268,7 +280,7 @@ class VehiclesController extends Controller
             $basic_information = $vehicle->basicInformations;
             $registration_information = $vehicle->registrationInformations;
 
-            $vehicle->update($this->withUpdateModificationField(['department_id' => $request->department_id]));
+            $vehicle->update($this->withUpdateModificationField(['business_department_id' => $request->department_id]));
 
             $basic_information_data = [
                 'model_year' => $request->model_year,

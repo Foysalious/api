@@ -33,7 +33,7 @@ class Vehicle extends Model
 
     public function businessDepartment()
     {
-        return $this->belongsTo(BusinessDepartment::class, 'department_id');
+        return $this->belongsTo(BusinessDepartment::class, 'business_department_id');
     }
 
     public function businessTrip()

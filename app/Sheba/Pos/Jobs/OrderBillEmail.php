@@ -30,6 +30,8 @@ class OrderBillEmail extends Job implements ShouldQueue
      */
     public function handle(EmailHandler $handler)
     {
-        $handler->setOrder($this->order)->handle();
+        if ($this->attempts() <= 2) {
+            $handler->setOrder($this->order)->handle();
+        }
     }
 }

@@ -13,4 +13,9 @@ class BusinessTransaction extends Model
     {
         return $query->where('type', $type);
     }
+
+    public function scopeTag($query, $tag)
+    {
+        return $query->where('tag', $tag);
+    }
 }

@@ -1,12 +1,15 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Models\BusinessDepartment;
 use App\Models\BusinessMember;
 use App\Models\BusinessTrip;
+use App\Models\BusinessTripRequest;
 use App\Models\Driver;
 use App\Models\Profile;
 use App\Repositories\FileRepository;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
+use Sheba\Business\Scheduler\TripScheduler;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
@@ -45,7 +48,7 @@ class DriverController extends Controller
                 'dob' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
                 'nid_no' => 'required|integer',
                 'pro_pic' => 'required|mimes:jpeg,png',
-
+                'department_id' => 'required|integer',
             ]);
 
             $member = Member::find($member);
@@ -65,13 +68,16 @@ class DriverController extends Controller
                 $profile = $this->createDriverProfile($member, $driver, $request);
                 $new_member = $profile->member;
                 if (!$new_member) $new_member = $this->makeMember($profile);
-
+#
                 $business = $member->businesses->first();
+                $business_department = BusinessDepartment::find((int)$request->department_id);
+                $business_role = $business_department->businessRoles()->where('name', 'like', '%Driver%')->first();
                 $member_business_data = [
                     'business_id' => $business->id,
                     'member_id' => $new_member->id,
                     'type' => 'Admin',
                     'join_date' => Carbon::now(),
+                    'business_role_id' => $business_role->id,
                 ];
                 BusinessMember::create($this->withCreateModificationField($member_business_data));
             } else {
@@ -87,11 +93,14 @@ class DriverController extends Controller
                     if (!$new_member) $new_member = $this->makeMember($profile);
 
                     $business = $member->businesses->first();
+                    $business_department = BusinessDepartment::find((int)$request->department_id);
+                    $business_role = $business_department->businessRoles()->where('name', 'like', '%Driver%')->first();
                     $member_business_data = [
                         'business_id' => $business->id,
                         'member_id' => $new_member->id,
                         'type' => 'Admin',
                         'join_date' => Carbon::now(),
+                        'business_role_id' => $business_role->id,
                     ];
                     BusinessMember::create($this->withCreateModificationField($member_business_data));
                 } else {
@@ -160,7 +169,6 @@ class DriverController extends Controller
                 'years_of_experience' => $request->years_of_experience,
             ];
             $driver->update($this->withUpdateModificationField($driver_data));
-            #$profile = Profile::where('mobile', formatMobile($request->mobile))->first();
 
             return api_response($request, $driver, 200, ['driver' => $driver->id]);
         } catch (ValidationException $e) {
@@ -172,26 +180,39 @@ class DriverController extends Controller
         }
     }
 
-    public function driverLists($member, Request $request)
+    public function index($member, Request $request, TripScheduler $vehicleScheduler)
     {
         try {
             $member = Member::find($member);
             $business = $member->businesses->first();
             $this->setModifier($member);
-            list($offset, $limit) = calculatePagination($request);
-            $drivers = Driver::with('profile', 'vehicle.basicInformations')->select('id', 'status')->orderBy('id', 'desc')->skip($offset)->limit($limit);
-
-            if ($request->has('status'))
-                $drivers = $drivers->status($request->status);
-
-            if ($request->has('type')) {
-                $drivers->where(function ($query) use ($request) {
-                    $query->whereHas('vehicle.basicInformations', function ($query) use ($request) {
-                        $query->where('type', $request->type);
+            if ($request->has('trip_request_id')) {
+                $business_trip_request = BusinessTripRequest::find((int)$request->trip_request_id);
+                $driver_ids = $vehicleScheduler->setStartDate($business_trip_request->start_date)->setEndDate($business_trip_request->end_date)->setBusiness($request->business)
+                    ->getFreeDrivers();
+                $drivers = Driver::whereIn('id', $driver_ids->toArray())->with('profile')->get();
+            } else {
+                list($offset, $limit) = calculatePagination($request);
+                $drivers = Driver::whereHas('profile', function ($q) use ($business) {
+                    $q->WhereHas('member', function ($q) use ($business) {
+                        $q->whereHas('businesses', function ($q) use ($business) {
+                            $q->where('businesses.id', $business->id);
+                        });
                     });
-                });
+                })->with('profile', 'vehicle.basicInformation')->orderBy('id', 'desc')->skip($offset)->limit($limit);
+
+                if ($request->has('status'))
+                    $drivers = $drivers->status($request->status);
+
+                if ($request->has('type')) {
+                    $drivers->where(function ($query) use ($request) {
+                        $query->whereHas('vehicle.basicInformations', function ($query) use ($request) {
+                            $query->where('type', $request->type);
+                        });
+                    });
+                }
+                $drivers = $drivers->get();
             }
-            $drivers = $drivers->get();
             $driver_lists = [];
             foreach ($drivers as $driver) {
                 $profile = $driver->profile;

@@ -1,11 +1,13 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\ModificationFields;
 use Sheba\Payment\Wallet;
 
 class Business extends Model
 {
     use Wallet;
+    use ModificationFields;
     protected $guarded = ['id'];
 
     public function members()
@@ -49,6 +51,16 @@ class Business extends Model
         return $this->morphMany(Bonus::class, 'user');
     }
 
+    public function businessTrips()
+    {
+        return $this->hasMany(BusinessTrip::class);
+    }
+
+    public function businessTripRequests()
+    {
+        return $this->hasMany(BusinessTripRequest::class);
+    }
+
     public function bonusLogs()
     {
         return $this->morphMany(BonusLog::class, 'user');
@@ -72,6 +84,11 @@ class Business extends Model
     public function vehicles()
     {
         return $this->morphMany(Vehicle::class, 'owner');
+    }
+
+    public function businessSmsTemplates()
+    {
+        return $this->hasMany(BusinessSmsTemplate::class, 'business_id');
     }
 
 }

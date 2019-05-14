@@ -1,5 +1,8 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Models\BusinessDepartment;
+use App\Models\BusinessRole;
+use App\Models\BusinessSmsTemplate;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessMember;
@@ -39,13 +42,17 @@ class MemberController extends Controller
             } else {
                 $business_data['sub_domain'] = $this->guessSubDomain($request->name);
                 $business = Business::create($this->withCreateModificationField($business_data));
+                $this->tagDepartment($business);
+                $this->tagRole($business);
                 $member_business_data = [
                     'business_id' => $business->id,
                     'member_id' => $member->id,
                     'type' => 'Admin',
+                    'is_super' => 1,
                     'join_date' => Carbon::now(),
                 ];
                 BusinessMember::create($this->withCreateModificationField($member_business_data));
+                $this->saveSmsTemplate($business);
             }
 
             return api_response($request, 1, 200);
@@ -56,6 +63,18 @@ class MemberController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function saveSmsTemplate(Business $business)
+    {
+        $sms_template = new BusinessSmsTemplate();
+        $sms_template->business_id = $business->id;
+        $sms_template->event_name = "trip_request_accept";
+        $sms_template->event_title = "Vehicle Trip Request Accept";
+        $sms_template->template = "Your request for vehicle has been accepted. {{vehicle_name}} will be sent to you at {{arrival_time}}";
+        $sms_template->variables = "vehicle_name;arrival_time";
+        $sms_template->is_published = 1;
+        $sms_template->save();
     }
 
     public function getBusinessInfo($member, Request $request)
@@ -145,4 +164,31 @@ class MemberController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    private function tagDepartment(Business $business)
+    {
+        $departments = ['IT', 'FINANCE', 'HR', 'ADMIN', 'MARKETING', 'OPERATION', 'CXO'];
+        foreach ($departments as $department) {
+            $dept = new BusinessDepartment();
+            $dept->name = $department;
+            $dept->business_id = $business->id;
+            $dept->save();
+        }
+    }
+
+
+    private function tagRole(Business $business)
+    {
+        $roles = ['Manager', 'VP', 'Executive', 'Intern', 'Senior Executive', 'Driver'];
+        $depts = BusinessDepartment::where('business_id', $business->id)->pluck('id')->toArray();
+        foreach ($roles as $role) {
+            foreach ($depts as $dept) {
+                $b_role = new BusinessRole();
+                $b_role->name = $role;
+                $b_role->business_department_id = $dept;
+                $b_role->save();
+            }
+        }
+    }
+
 }

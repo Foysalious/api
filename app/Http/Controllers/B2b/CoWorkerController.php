@@ -1,7 +1,9 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Jobs\SendBusinessRequestEmail;
 use App\Models\BusinessDepartment;
 use App\Models\BusinessMember;
+use App\Models\BusinessRole;
 use App\Models\BusinessTrip;
 use App\Models\Driver;
 use App\Models\Profile;
@@ -50,15 +52,16 @@ class CoWorkerController extends Controller
             $this->setModifier($member);
 
             $profile = $this->profileRepository->checkExistingProfile($request->mobile, $request->email);
-
+            $co_member = collect();
             if (!$profile) {
                 $profile = $this->createProfile($member, $request);
                 $new_member = $this->makeMember($profile);
+                $co_member->push($new_member);
 
                 $business = $member->businesses->first();
                 $member_business_data = [
                     'business_id' => $business->id,
-                    'member_id' => $new_member->id,
+                    'member_id' => $co_member->first()->id,
                     'type' => 'Admin',
                     'join_date' => Carbon::now(),
                     #'department' => $request->department,
@@ -67,12 +70,17 @@ class CoWorkerController extends Controller
                 BusinessMember::create($this->withCreateModificationField($member_business_data));
             } else {
                 $old_member = $profile->member;
-                if (!$old_member) $new_member = $this->makeMember($profile);
+                if (!$old_member) {
+                    $new_member = $this->makeMember($profile);
+                    $co_member->push($new_member);
+                } else {
+                    $co_member->push($old_member);
+                }
 
                 $business = $member->businesses->first();
                 $member_business_data = [
                     'business_id' => $business->id,
-                    'member_id' => $old_member ? $old_member->id : $new_member->id,
+                    'member_id' => $co_member->first()->id,
                     'type' => 'Admin',
                     'join_date' => Carbon::now(),
                     #'department' => $request->department,
@@ -80,7 +88,7 @@ class CoWorkerController extends Controller
                 ];
                 BusinessMember::create($this->withCreateModificationField($member_business_data));
             }
-            return api_response($request, $profile, 200, ['co_worker' => $profile->id]);
+            return api_response($request, $profile, 200, ['co_worker' => $co_member->first()->id]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
@@ -133,6 +141,7 @@ class CoWorkerController extends Controller
         try {
             $business = $request->business;
             $member = Member::find((int)$employee);
+            if (!$member) return api_response($request, null, 404);
             $profile = $member->profile;
             $employee = [
                 'name' => $profile->name,
@@ -184,6 +193,60 @@ class CoWorkerController extends Controller
         }
     }
 
+    public function addBusinessDepartment($business, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'name' => 'required|string',
+                #'is_published' => 'required|boolean',
+
+            ]);
+            $business = $request->business;
+            $member = $request->manager_member;
+            $this->setModifier($member);
+            $data = [
+                'business_id' => $business->id,
+                'name' => $request->name,
+                'is_published' => 1
+            ];
+            $business_dept = BusinessDepartment::create($this->withCreateModificationField($data));
+            return api_response($request, null, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function addBusinessRole($business, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'name' => 'required|string',
+                'business_department_id' => 'required|integer',
+
+            ]);
+            $business = $request->business;
+            $member = $request->manager_member;
+            $this->setModifier($member);
+            $data = [
+                'business_department_id' => $request->business_department_id,
+                'name' => $request->name,
+                'is_published' => 1
+            ];
+            $business_role = BusinessRole::create($this->withCreateModificationField($data));
+            return api_response($request, null, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     private function createProfile($member, Request $request)
     {
         $this->setModifier($member);
@@ -192,6 +255,7 @@ class CoWorkerController extends Controller
             'mobile' => !empty($request->mobile) ? formatMobile($request->mobile) : null,
             'name' => $request->name,
             'email' => $request->email,
+            'password' => bcrypt('sheba#test1')
             ##'gender' => $request->gender,
             #'dob' => $request->dob,
             #'nid_no' => $request->nid_no,
@@ -199,8 +263,9 @@ class CoWorkerController extends Controller
             #'address' => $request->address,
             #'driver_id' => $driver->id,
         ];
-
-        return Profile::create($this->withCreateModificationField($profile_data));
+        $profile = Profile::create($this->withCreateModificationField($profile_data));
+        dispatch(new SendBusinessRequestEmail($request->email));
+        return $profile;
     }
 
     private function makeMember($profile)
