@@ -36,7 +36,7 @@ class BusinessTransactionController extends Controller
             foreach ($transactions as $transaction) {
                 $transaction = [
                     'id' => $transaction->id,
-                    'date' => Carbon::parse($transaction->created_at)->format('Y'),
+                    'date' => Carbon::parse($transaction->created_at)->format('d/m/y'),
                     'sector' => $transaction->tag,
                     'amount' => $transaction->amount,
                     'wallet' => (double)$business->wallet,
