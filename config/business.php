@@ -7,4 +7,6 @@ return [
             'rw' => 'trip_request_rw'
         ]
     ],
+    'DRIVER_CONTRACT_TYPES' => ['permanent', 'temporary'],
+    'VEHICLE_TYPES' => ['hatchback', 'sedan', 'suv', 'passenger_van', 'others']
 ];

@@ -17,9 +17,26 @@ class TripRequestController extends Controller
     {
 
         try {
+            $type = implode(',', config('business.VEHICLE_TYPES'));
+            $this->validate($request, [
+                'status' => 'required|string|in:accept,reject,pending',
+                'car_type' => 'sometimes|string|in:' . $type,
+            ]);
             $list = [];
-            $business = $request->business->load(['businessTripRequests' => function ($q) {
-                $q->with('member.profile');
+            list($offset, $limit) = calculatePagination($request);
+            $status = $car_type = null;
+            if ($request->has('status')) {
+                if ($request->status == "accept") $status = 'accepted';
+                elseif ($request->status == "reject") $status = 'rejected';
+                else $status = 'pending';
+            }
+            if ($request->has('car_type')) {
+                $car_type = $request->car_type;
+            }
+            $business = $request->business->load(['businessTripRequests' => function ($q) use ($offset, $limit, $status, $car_type) {
+                $q->with('member.profile')->orderBy('id', 'desc')->skip($offset)->take($limit);
+                if ($status) $q->where('status', $status);
+                if ($car_type) $q->where('vehicle_type', $car_type);
             }]);
             $business_trip_requests = $business->businessTripRequests;
             foreach ($business_trip_requests as $business_trip_request) {
@@ -36,6 +53,12 @@ class TripRequestController extends Controller
             }
             if (count($business_trip_requests) > 0) return api_response($request, $business_trip_requests, 200, ['trip_requests' => $list]);
             else  return api_response($request, null, 404);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -46,8 +69,9 @@ class TripRequestController extends Controller
     {
         try {
             $list = [];
-            $business = $business = $request->business->load(['businessTrips' => function ($q) {
-                $q->with(['vehicle.basicInformation', 'driver.profile']);
+            list($offset, $limit) = calculatePagination($request);
+            $business = $business = $request->business->load(['businessTrips' => function ($q) use ($offset, $limit) {
+                $q->with(['vehicle.basicInformation', 'driver.profile'])->orderBy('id', 'desc')->skip($offset)->take($limit);;
             }]);
             $business_trips = $business->businessTrips;
             foreach ($business_trips as $business_trip) {
