@@ -43,7 +43,7 @@ class Payable extends Model
             $class_name .= 'TransportTicketPurchaseComplete';
         }
 
-        return new $class_name();
+        return app($class_name);
     }
 
     public function user()

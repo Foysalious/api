@@ -1,10 +1,12 @@
 <?php namespace Sheba\TopUp\Vendor;
 
 use Sheba\TopUp\Vendor\Internal\Pretups;
+use Sheba\TopUp\Vendor\Internal\Ssl;
 
 class Banglalink extends Vendor
 {
-    use Pretups;
+    use Ssl;
+    /*use Pretups;
 
     private function getUrl()
     {
@@ -58,5 +60,5 @@ class Banglalink extends Vendor
     private function getVPNServer()
     {
         return "https://api.sheba.xyz";
-    }
+    }*/
 }
