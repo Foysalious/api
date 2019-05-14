@@ -2,6 +2,7 @@
 
 use App\Models\Business;
 use App\Models\BusinessTrip;
+use Carbon\Carbon;
 use Sheba\Business\BusinessSmsHandler;
 
 
@@ -21,7 +22,7 @@ class BusinessTripSms
         $this->business = $this->businessTrip->business;
         $this->mobile = $this->businessTrip->member->profile->mobile;
         $this->vehicleName = $this->businessTrip->vehicle->basicInformation->company_name;
-        $this->arrivalTime = $this->businessTrip->start_date;
+        $this->arrivalTime = Carbon::parse($this->businessTrip->start_date)->format('Y-m-d H:i:s');
         $this->cost = 0.25;
         return $this;
     }
