@@ -5,6 +5,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BusinessTrip;
 use App\Models\BusinessTripRequest;
 use App\Repositories\CommentRepository;
+use App\Sheba\Business\BusinessTripSms;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\Scheduler\VehicleScheduler;
@@ -168,7 +169,7 @@ class TripRequestController extends Controller
     }
 
 
-    public function createTrip(Request $request)
+    public function createTrip(Request $request, BusinessTripSms $businessTripSms)
     {
         try {
             $this->validate($request, ['status' => 'required|string|in:accept,reject']);
@@ -181,6 +182,7 @@ class TripRequestController extends Controller
                 $business_trip_request->status = 'accepted';
                 $business_trip_request->update();
                 $business_trip = $this->storeTrip($business_trip_request);
+                $businessTripSms->setTrip($business_trip)->sendTripRequestAccept();
                 return api_response($request, $business_trip, 200, ['id' => $business_trip->id]);
             } else {
                 $business_trip_request->status = 'rejected';
@@ -199,7 +201,7 @@ class TripRequestController extends Controller
         }
     }
 
-    public function createTripRequests(Request $request, VehicleScheduler $vehicleScheduler)
+    public function createTripRequests(Request $request, VehicleScheduler $vehicleScheduler, BusinessTripSms $businessTripSms)
     {
         try {
             $business_member = $request->business_member;
@@ -216,7 +218,8 @@ class TripRequestController extends Controller
                 $business_trip_request->driver_id = $driver;
                 $business_trip_request->status = 'accepted';
                 $business_trip_request->update();
-                $this->storeTrip($business_trip_request);
+                $business_trip = $this->storeTrip($business_trip_request);
+                $businessTripSms->setTrip($business_trip)->sendTripRequestAccept();
             }
             return api_response($request, $business_trip_request, 200, ['id' => $business_trip_request->id]);
         } catch (\Throwable $e) {

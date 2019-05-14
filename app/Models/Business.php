@@ -84,4 +84,9 @@ class Business extends Model
         return $this->morphMany(Vehicle::class, 'owner');
     }
 
+    public function businessSmsTemplates()
+    {
+        return $this->hasMany(BusinessSmsTemplate::class, 'business_id');
+    }
+
 }
