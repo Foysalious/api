@@ -8,7 +8,7 @@ use App\Repositories\CommentRepository;
 use App\Sheba\Business\BusinessTripSms;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Sheba\Business\Scheduler\VehicleScheduler;
+use Sheba\Business\Scheduler\TripScheduler;
 
 class TripRequestController extends Controller
 {
@@ -232,7 +232,7 @@ class TripRequestController extends Controller
         }
     }
 
-    public function createTripRequests(Request $request, VehicleScheduler $vehicleScheduler, BusinessTripSms $businessTripSms)
+    public function createTripRequests(Request $request, TripScheduler $vehicleScheduler, BusinessTripSms $businessTripSms)
     {
         try {
             $business_member = $request->business_member;

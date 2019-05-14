@@ -3,11 +3,13 @@
 use App\Models\BusinessDepartment;
 use App\Models\BusinessMember;
 use App\Models\BusinessTrip;
+use App\Models\BusinessTripRequest;
 use App\Models\Driver;
 use App\Models\Profile;
 use App\Repositories\FileRepository;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
+use Sheba\Business\Scheduler\TripScheduler;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
@@ -180,33 +182,39 @@ class DriverController extends Controller
         }
     }
 
-    public function index($member, Request $request)
+    public function index($member, Request $request, TripScheduler $vehicleScheduler)
     {
         try {
             $member = Member::find($member);
             $business = $member->businesses->first();
             $this->setModifier($member);
-
-            list($offset, $limit) = calculatePagination($request);
-            $drivers = Driver::whereHas('profile', function ($q) use ($business) {
-                $q->WhereHas('member', function ($q) use ($business) {
-                    $q->whereHas('businesses', function ($q) use ($business) {
-                        $q->where('businesses.id', $business->id);
+            if ($request->has('trip_request_id')) {
+                $business_trip_request = BusinessTripRequest::find((int)$request->trip_request_id);
+                $driver_ids = $vehicleScheduler->setStartDate($business_trip_request->start_date)->setEndDate($business_trip_request->end_date)->setBusiness($request->business)
+                    ->getFreeDrivers();
+                $drivers = Driver::whereIn('id', $driver_ids->toArray())->with('profile')->get();
+            } else {
+                list($offset, $limit) = calculatePagination($request);
+                $drivers = Driver::whereHas('profile', function ($q) use ($business) {
+                    $q->WhereHas('member', function ($q) use ($business) {
+                        $q->whereHas('businesses', function ($q) use ($business) {
+                            $q->where('businesses.id', $business->id);
+                        });
                     });
-                });
-            })->with('profile', 'vehicle.basicInformation')->orderBy('id', 'desc')->skip($offset)->limit($limit);
+                })->with('profile', 'vehicle.basicInformation')->orderBy('id', 'desc')->skip($offset)->limit($limit);
 
-            if ($request->has('status'))
-                $drivers = $drivers->status($request->status);
+                if ($request->has('status'))
+                    $drivers = $drivers->status($request->status);
 
-            if ($request->has('type')) {
-                $drivers->where(function ($query) use ($request) {
-                    $query->whereHas('vehicle.basicInformations', function ($query) use ($request) {
-                        $query->where('type', $request->type);
+                if ($request->has('type')) {
+                    $drivers->where(function ($query) use ($request) {
+                        $query->whereHas('vehicle.basicInformations', function ($query) use ($request) {
+                            $query->where('type', $request->type);
+                        });
                     });
-                });
+                }
+                $drivers = $drivers->get();
             }
-            $drivers = $drivers->get();
             $driver_lists = [];
             foreach ($drivers as $driver) {
                 $profile = $driver->profile;
