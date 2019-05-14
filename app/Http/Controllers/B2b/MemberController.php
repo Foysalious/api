@@ -2,6 +2,7 @@
 
 use App\Models\BusinessDepartment;
 use App\Models\BusinessRole;
+use App\Models\BusinessSmsTemplate;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessMember;
@@ -51,6 +52,7 @@ class MemberController extends Controller
                     'join_date' => Carbon::now(),
                 ];
                 BusinessMember::create($this->withCreateModificationField($member_business_data));
+                $this->saveSmsTemplate($business);
             }
 
             return api_response($request, 1, 200);
@@ -61,6 +63,18 @@ class MemberController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function saveSmsTemplate(Business $business)
+    {
+        $sms_template = new BusinessSmsTemplate();
+        $sms_template->business_id = $business->id;
+        $sms_template->event_name = "trip_request_accept";
+        $sms_template->event_title = "Vehicle Trip Request Accept";
+        $sms_template->template = "Your request for vehicle has been accepted. {{vehicle_name}} will be sent to you at {{arrival_time}}";
+        $sms_template->variables = "vehicle_name;arrival_time";
+        $sms_template->is_published = 1;
+        $sms_template->save();
     }
 
     public function getBusinessInfo($member, Request $request)
