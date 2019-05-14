@@ -175,6 +175,7 @@ class TripRequestController extends Controller
             $this->validate($request, ['status' => 'required|string|in:accept,reject']);
             if ($request->has('trip_request_id')) {
                 $business_trip_request = BusinessTripRequest::find((int)$request->trip_request_id);
+                if ($business_trip_request->status != 'pending') return api_response($request, null, 403);
             } else $business_trip_request = $this->storeTripRequest($request);
             if ($request->has('status') && $request->status == "accept") {
                 $business_trip_request->vehicle_id = $request->vehicle_id;

@@ -21,6 +21,11 @@ class BusinessTrip extends Model
         return $this->belongsTo(Member::class);
     }
 
+    public function business()
+    {
+        return $this->belongsTo(Business::class);
+    }
+
     public function getTripReadableTypeAttribute()
     {
         return title_case(str_replace('_', ' ', $this->trip_type));
