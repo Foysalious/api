@@ -45,7 +45,7 @@ class DriverController extends Controller
                 'dob' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
                 'nid_no' => 'required|integer',
                 'pro_pic' => 'required|mimes:jpeg,png',
-
+                'department_id' => 'required|integer',
             ]);
 
             $member = Member::find($member);
@@ -72,6 +72,7 @@ class DriverController extends Controller
                     'member_id' => $new_member->id,
                     'type' => 'Admin',
                     'join_date' => Carbon::now(),
+                    'department_id' => $request->department_id,
                 ];
                 BusinessMember::create($this->withCreateModificationField($member_business_data));
             } else {
@@ -92,6 +93,7 @@ class DriverController extends Controller
                         'member_id' => $new_member->id,
                         'type' => 'Admin',
                         'join_date' => Carbon::now(),
+                        'department_id' => $request->department_id,
                     ];
                     BusinessMember::create($this->withCreateModificationField($member_business_data));
                 } else {
