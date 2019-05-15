@@ -4,12 +4,13 @@ use Sheba\Transactions\BKashTransaction;
 use Sheba\TransactionValidators\BKashTransactionValidator;
 use Sheba\Transactions\MockTransaction;
 use Sheba\TransactionValidators\MockTransactionValidator;
+use Sheba\TransactionValidators\TransactionValidator;
 
 class PartnerPaymentValidatorFactory
 {
     /**
      * @param $data
-     * @return \Sheba\TransactionValidators\TransactionValidator
+     * @return TransactionValidator
      */
     public static function make($data)
     {

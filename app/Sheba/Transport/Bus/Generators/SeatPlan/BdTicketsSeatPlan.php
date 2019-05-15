@@ -85,7 +85,8 @@ class BdTicketsSeatPlan
             $seatDetails['boarding_points'] = $boarding_points;
             $seatDetails['dropping_points'] = $dropping_points;
             return $seatDetails;
-        } else
+        } else {
             throw new \Exception('Failed to parse ticket.');
+        }
     }
 }
