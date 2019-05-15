@@ -231,21 +231,24 @@ class CoWorkerController extends Controller
             $business = $request->business;
             $member = $request->manager_member;
             $this->setModifier($member);
+
+            #$name = trim($request->name);
+            #$role = BusinessRole::where('business_department_id', $request->department_id)->where('name', 'LIKE', "%$name%")->first();
             $data = [
                 'business_department_id' => $request->department_id,
-                'name' => $request->name,
+                'name' => trim($request->name),
                 'is_published' => 1,
             ];
-            $business_role = BusinessRole::create($this->withCreateModificationField($data));
+            BusinessRole::create($this->withCreateModificationField($data));
 
-            $member_business_data = [
+            /*$member_business_data = [
                 'business_id' => $business->id,
                 'member_id' => $member->id,
                 'type' => 'Admin',
                 'join_date' => Carbon::now(),
                 'business_role_id' => $business_role->id,
             ];
-            BusinessMember::create($this->withCreateModificationField($member_business_data));
+            BusinessMember::create($this->withCreateModificationField($member_business_data));*/
 
             return api_response($request, null, 200);
         } catch (ValidationException $e) {
