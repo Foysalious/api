@@ -39,9 +39,12 @@ class JobLogs
         $logs = [];
 
         $rider = null;
+        $logistic_uses = false;
         if($this->job->first_logistic_order_id) {
+            $logistic_uses = true;
             $rider = $this->logisticClient->get('orders/'.$this->job->first_logistic_order_id)['data']['rider'];
         } else if($this->job->last_logistic_order_id) {
+            $logistic_uses = true;
             $rider = $this->logisticClient->get('orders/'.$this->job->last_logistic_order_id)['data']['rider'];
         }
         $rider = json_decode(json_encode($rider));
@@ -55,12 +58,6 @@ class JobLogs
                     'mobile' => $partner->getManagerMobile(),
                     'type' => 'partner',
                 ),
-                'rider' => $rider ? [
-                    'name' => $rider->user->profile->name,
-                    'mobile' => $rider->user->profile->mobile,
-                    'pro_pic' => $rider->user->profile->pro_pic,
-                    'salary_type' => $rider->salary_type
-                ] : null
             ));
         }
         if (constants('JOB_STATUS_SEQUENCE')[$job_status] > 1) {
@@ -80,7 +77,27 @@ class JobLogs
                     )
                 ]);
             }
+
+            if($logistic_uses && !$rider) {
+                array_push($logs, [
+                    'status' => 'rider_searching',
+                    'log' => 'We are currently searching for a rider.',
+                ]);
+
+            } else if($logistic_uses && $rider) {
+                array_push($logs, [
+                    'status' => 'rider_assigned',
+                    'log' => 'A rider has been assigned to your order.',
+                    'rider' =>  [
+                        'name' => $rider->user->profile->name,
+                        'mobile' => $rider->user->profile->mobile,
+                        'pro_pic' => $rider->user->profile->pro_pic,
+                        'salary_type' => $rider->salary_type
+                    ]
+                ]);
+            }
         }
+
         if ($work_log = $this->formatWorkLog()) array_push($logs, $work_log);
         if ($message_log = $this->getOrderMessage()) array_push($logs, $message_log);
         return $logs;
