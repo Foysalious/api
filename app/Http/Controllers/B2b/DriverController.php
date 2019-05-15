@@ -308,13 +308,12 @@ class DriverController extends Controller
             $driver = Driver::find((int)$driver);
             $profile = $driver->profile;
             $vehicle = $driver->vehicle;
-            #dd($profile->member->businessMember);
             $license_info = [
                 'type' => $vehicle ? $vehicle->basicInformations->type : null,
                 #'company_name' => $vehicle ? $vehicle->basicInformations->company_name : null,
                 #'model_name' => $vehicle ? $vehicle->basicInformations->model_name : null,
                 #'model_year' => $vehicle ? $vehicle->basicInformations->model_year : null,
-                'department_id' => $profile->member->businessMember ? $profile->member->businessMember->role->business_department_id : null,
+                'department_id' => $profile->member->businessMember->role ? $profile->member->businessMember->role->business_department_id : null,
                 'license_number' => $driver->id,
                 'license_class' => $profile->name,
                 'issue_authority' => 'BRTA',
@@ -322,7 +321,6 @@ class DriverController extends Controller
 
             return api_response($request, $license_info, 200, ['license_info' => $license_info]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
