@@ -220,6 +220,28 @@ class CoWorkerController extends Controller
         }
     }
 
+    public function getBusinessDepartments($business, Request $request)
+    {
+        try {
+            $business = $request->business;
+            $business_depts = BusinessDepartment::where('business_id', $business->id)->select('id', 'business_id', 'name', 'created_at')->orderBy('id', 'DESC')->get();
+            $departments = [];
+            foreach ($business_depts as $business_dept) {
+                $department = [
+                    'id' => $business_dept->id,
+                    'name' => $business_dept->name,
+                    'created_at' => $business_dept->created_at->format('d/m/y'),
+                ];
+                array_push($departments, $department);
+            }
+            if (count($departments) > 0) return api_response($request, $departments, 200, ['departments' => $departments]);
+            else  return api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     public function addBusinessRole($business, Request $request)
     {
         try {

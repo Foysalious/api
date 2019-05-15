@@ -117,7 +117,7 @@ class MemberController extends Controller
                 'mobile' => $profile->mobile,
                 'email' => $profile->email,
                 'pro_pic' => $profile->pro_pic,
-                'designation' => count($member->businessMember) > 0 ? $member->businessMember->first()->type : null,
+                'designation' => count($member->businessMember) > 0 ? ($member->businessMember->first()->role ? $member->businessMember->first()->role->name : null) : null,
                 'gender' => $profile->gender,
                 'date_of_birth' => $profile->dob ? Carbon::parse($profile->dob)->format('M-j, Y') : null,
                 'nid_no' => $profile->nid_no,
