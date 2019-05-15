@@ -314,8 +314,8 @@ class DriverController extends Controller
                 #'model_name' => $vehicle ? $vehicle->basicInformations->model_name : null,
                 #'model_year' => $vehicle ? $vehicle->basicInformations->model_year : null,
                 'department_id' => $profile->member->businessMember->role ? $profile->member->businessMember->role->business_department_id : null,
-                'license_number' => $driver->id,
-                'license_class' => $profile->name,
+                'license_number' => $driver->license_number,
+                'license_class' => $driver->license_class,
                 'issue_authority' => 'BRTA',
             ];
 
