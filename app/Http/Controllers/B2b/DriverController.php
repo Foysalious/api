@@ -311,10 +311,10 @@ class DriverController extends Controller
 
             $license_info = [
                 'type' => $vehicle ? $vehicle->basicInformations->type : null,
-                'company_name' => $vehicle ? $vehicle->basicInformations->company_name : null,
+                #'company_name' => $vehicle ? $vehicle->basicInformations->company_name : null,
                 #'model_name' => $vehicle ? $vehicle->basicInformations->model_name : null,
                 #'model_year' => $vehicle ? $vehicle->basicInformations->model_year : null,
-
+                'department_id' => $profile->member->businessMember->role->business_department_id,
                 'license_number' => $driver->id,
                 'license_class' => $profile->name,
                 'issue_authority' => 'BRTA',
