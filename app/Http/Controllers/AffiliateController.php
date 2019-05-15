@@ -472,8 +472,9 @@ class AffiliateController extends Controller
                 'type' => 'required|in:bkash',
             ]);
 
-            if($request->ip() != "103.4.146.66")
+            /*if ($request->ip() != "103.4.146.66") {
                 return api_response($request, null, 500, ['message' => "Temporary Recharge Off"]);
+            }*/
 
             $affiliate = $request->affiliate;
             $transaction = (new Registrar())->register($affiliate, $request->type, $request->transaction_id);
