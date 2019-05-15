@@ -44,6 +44,7 @@ class JobLogs
         } else if($this->job->last_logistic_order_id) {
             $rider = $this->logisticClient->get('orders/'.$this->job->last_logistic_order_id)['data']['rider'];
         }
+        $rider = json_decode(json_encode($rider));
         if (constants('JOB_STATUS_SEQUENCE')[$job_status] > 0) {
             array_push($logs, array(
                 'status' => 'order_placed',
