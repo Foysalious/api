@@ -332,23 +332,30 @@ class DriverController extends Controller
         try {
             $this->validate($request, [
                 'type' => 'required|string|in:hatchback,sedan,suv,passenger_van,others',
-                'company_name' => 'required|string',
+                #'company_name' => 'required|string',
                 #'model_name' => 'required|string',
                 #'model_year' => 'required|date|date_format:Y-m-d',
                 'license_number' => 'required|string',
                 'license_class' => 'required|string',
+                'department_id' => 'required|integer',
             ]);
             $member = Member::find($member);
             $business = $member->businesses->first();
             $this->setModifier($member);
 
             $driver = Driver::find((int)$driver);
+            if (!$driver) return api_response($request, null, 404);
             $profile = $driver->profile;
             $vehicle = $driver->vehicle;
 
+            $business_department = BusinessDepartment::find((int)$request->department_id);
+            $business_role = $business_department->businessRoles()->where('name', 'like', '%Driver%')->first();
+
+            if ($business_role) $business_role->update($this->withUpdateModificationField(['business_department_id'=> $request->department_id]));
+
             $vehicle_basic_info = [
                 'type' => $request->type,
-                'company_name' => $request->company_name,
+                #'company_name' => $request->company_name,
                 #'model_name' => $request->model_name,
                 #'model_year' => $request->model_year,
             ];
