@@ -217,6 +217,7 @@ class JobController extends Controller
             $bill['status'] = $job->status;
             $bill['is_on_premise'] = (int)$job->isOnPremise();
             $bill['delivery_charge'] = $delivery_charge;
+            $bill['discounted_delivery_charge'] = $discounted_delivery_charge;
             $bill['invoice'] = $job->partnerOrder->invoice;
             $bill['version'] = $job->partnerOrder->getVersion();
             return api_response($request, $bill, 200, ['bill' => $bill]);
