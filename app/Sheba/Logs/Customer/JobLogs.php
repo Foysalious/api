@@ -3,7 +3,10 @@
 use App\Models\Job;
 use App\Models\Resource;
 use Carbon\Carbon;
+use GuzzleHttp\Client;
 use Illuminate\Support\Str;
+use Sheba\Checkout\DeliveryCharge;
+use Sheba\Logistics\Repository\LogisticClient;
 
 class JobLogs
 {
@@ -12,6 +15,7 @@ class JobLogs
     private $scheduleChangeLogs;
     private $priceChangeLogs;
     private $materialChangeLogs;
+    protected $logisticClient;
 
     public function __construct(Job $job)
     {
@@ -23,6 +27,8 @@ class JobLogs
         $this->materialChangeLogs = collect([]);
         $this->orderStatusLogs = collect([]);
         $this->comments = collect([]);
+        $client = new Client();
+        $this->logisticClient = new LogisticClient($client);
     }
 
     public function getorderStatusLogs()
@@ -31,6 +37,13 @@ class JobLogs
         $resource = $this->job->resource;
         $job_status = $this->job->status;
         $logs = [];
+
+        $rider = null;
+        if($this->job->first_logistic_order_id) {
+            $rider = $this->logisticClient->get('orders/'.$this->job->first_logistic_order_id)['data']['rider'];
+        } else if($this->job->last_logistic_order_id) {
+            $rider = $this->logisticClient->get('orders/'.$this->job->last_logistic_order_id)['data']['rider'];
+        }
         if (constants('JOB_STATUS_SEQUENCE')[$job_status] > 0) {
             array_push($logs, array(
                 'status' => 'order_placed',
@@ -40,7 +53,13 @@ class JobLogs
                     'picture' => $partner->logo,
                     'mobile' => $partner->getManagerMobile(),
                     'type' => 'partner',
-                )
+                ),
+                'rider' => $rider ? [
+                    'name' => $rider->user->profile->name,
+                    'mobile' => $rider->user->profile->mobile,
+                    'pro_pic' => $rider->user->profile->pro_pic,
+                    'salary_type' => $rider->salary_type
+                ] : null
             ));
         }
         if (constants('JOB_STATUS_SEQUENCE')[$job_status] > 1) {

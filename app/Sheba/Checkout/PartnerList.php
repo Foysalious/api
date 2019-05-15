@@ -366,7 +366,7 @@ class PartnerList
 
         /**  This block of code contains dummy information, will be updated later */
         $original_delivery_charge = $this->deliveryCharge->setCategoryPartnerPivot($category_pivot)->get();
-        $discounted_delivery_charge = 50;
+        $discounted_delivery_charge = $original_delivery_charge > 20 ? $original_delivery_charge - 10 : 0;
         $delivery_charge = $discounted_delivery_charge;
 
         $total_service_price['discounted_price'] += $delivery_charge;
