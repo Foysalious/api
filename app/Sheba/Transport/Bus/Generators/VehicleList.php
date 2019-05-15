@@ -74,18 +74,21 @@ class VehicleList
     private function parseBdTicketResponse($data)
     {
         $bd_ticket_vehicles = [];
-        if($data['data']) {
+        if ($data['data']) {
             $vehicles = $data['data'];
             foreach ($vehicles as  $vehicle) {
                 $vehicle = (object) $vehicle;
+                if ($vehicle->endCounter == null || $vehicle->arrivalTime == null) continue;
+
                 $start_time =  $vehicle->departureTime;
                 $end_time = $vehicle->arrivalTime;
-                if(str_contains($start_time,'PM') && str_contains($end_time,'AM')) {
-                    $date_next = Carbon::parse($this->date)->addDays(1)->format('Y-m-d').' '.$end_time;
-                    $duration = Carbon::parse($this->date.' '.$start_time)->diffInMinutes(Carbon::parse($date_next));
+
+                if (str_contains($start_time, 'PM') && str_contains($end_time, 'AM')) {
+                    $date_next = Carbon::parse($this->date)->addDays(1)->format('Y-m-d') . ' ' . $end_time;
+                    $duration = Carbon::parse($this->date . ' ' . $start_time)->diffInMinutes(Carbon::parse($date_next));
+                } else {
+                    $duration = Carbon::parse($this->date . ' ' . $start_time)->diffInMinutes(Carbon::parse($this->date . ' ' . $end_time));
                 }
-                else
-                    $duration = Carbon::parse($this->date.' '.$start_time)->diffInMinutes(Carbon::parse($this->date.' '.$end_time));
 
                 $current_vehicle_details = [
                     'id' => $vehicle->id,

@@ -24,6 +24,8 @@ use Sheba\ModificationFields;
 use Sheba\PartnerPayment\PartnerPaymentValidatorFactory;
 use Sheba\Reports\ExcelHandler;
 use Sheba\TopUp\Jobs\TopUpJob;
+use Sheba\Transactions\InvalidTransaction;
+use Sheba\Transactions\Registrar;
 use Validator;
 use DB;
 use Illuminate\Support\Facades\Redis;
@@ -470,16 +472,18 @@ class AffiliateController extends Controller
                 'type' => 'required|in:bkash',
             ]);
 
-            return api_response($request, null, 500, ['message' => "Temporary Recharge Off"]);
+            if($request->ip() != "103.4.146.66")
+                return api_response($request, null, 500, ['message' => "Temporary Recharge Off"]);
 
-            $payment_validator = PartnerPaymentValidatorFactory::make($request->all());
-            if ($error = $payment_validator->hasError()) return api_response($request, null, 400, ['message' => $error]);
             $affiliate = $request->affiliate;
-            if ($this->ifTransactionAlreadyExists($request->transaction_id)) return api_response($request, null, 403, ['message' => 'Transaction id already exists']);
+            $transaction = (new Registrar())->register($affiliate, $request->type, $request->transaction_id);
 
             $this->setModifier($affiliate);
-            $this->recharge($affiliate, $payment_validator);
+            $this->recharge($affiliate, $transaction);
             return api_response($request, null, 200, ['message' => "Moneybag refilled."]);
+        } catch (InvalidTransaction $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -492,26 +496,26 @@ class AffiliateController extends Controller
             (PartnerTransaction::where('transaction_details', 'like', "%$transaction_id%")->count() > 0);
     }
 
-    private function recharge(Affiliate $affiliate, $payment_validator)
+    private function recharge(Affiliate $affiliate, $transaction)
     {
-        $data = $this->makeRechargeData($payment_validator);
-        $amount = $payment_validator->amount;
+        $data = $this->makeRechargeData($transaction);
+        $amount = $transaction['amount'];
         DB::transaction(function () use ($amount, $affiliate, $data) {
             $affiliate->rechargeWallet($amount, $data);
         });
     }
 
-    private function makeRechargeData($payment_validator)
+    private function makeRechargeData($transaction)
     {
         return [
-            'amount' => $payment_validator->amount,
+            'amount' => $transaction['amount'],
             'transaction_details' => json_encode(
                 [
                     'name' => 'Bkash',
                     'details' => [
-                        'transaction_id' => $payment_validator->response->transaction->trxId,
+                        'transaction_id' => $transaction['amount'],
                         'gateway' => 'bkash',
-                        'details' => $payment_validator->response
+                        'details' => $transaction['details']
                     ]
                 ]
             ),

@@ -117,7 +117,11 @@ class BusTicketController extends Controller
         try {
             $this->validate($request, ['pickup_place_id' => 'required', 'destination_place_id' => 'required', 'date' => 'required']);
 
-            $data = $vehicleList->setPickupAddressId($request->pickup_place_id)->setDestinationAddressId($request->destination_place_id)->setDate($request->date)->getVehicles();
+            $data = $vehicleList->setPickupAddressId($request->pickup_place_id)
+                ->setDestinationAddressId($request->destination_place_id)
+                ->setDate($request->date)
+                ->getVehicles();
+
             if (count($data['coaches']) > 0) return api_response($request, $data, 200, ['data' => $data]);
             else return api_response($request, null, 404, ['message' => 'No Coaches Found.']);
         } catch (ValidationException $e) {
