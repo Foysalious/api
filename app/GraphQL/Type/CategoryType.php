@@ -93,7 +93,9 @@ class CategoryType extends GraphQlType
         $root->load(['services' => function ($q) use ($args, $fields, $version_code) {
             $q->published()->orderBy('order')->with('subscription');
             if ($version_code <= 30122) {
-                $q->doesntHave('subscription');
+                $q->whereDoesntHave('subscription', function ($q) {
+                    $q->active();
+                });
             }
             if (in_array('start_price', $fields)) {
                 $q->with(['partners' => function ($q) {
