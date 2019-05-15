@@ -48,7 +48,7 @@ class DriverController extends Controller
                 'dob' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
                 'nid_no' => 'required|integer',
                 'pro_pic' => 'required|mimes:jpeg,png',
-                'department_id' => 'required|integer',
+                'role_id' => 'required|integer',
             ]);
 
             $member = Member::find($member);
@@ -70,14 +70,14 @@ class DriverController extends Controller
                 if (!$new_member) $new_member = $this->makeMember($profile);
 #
                 $business = $member->businesses->first();
-                $business_department = BusinessDepartment::find((int)$request->department_id);
-                $business_role = $business_department->businessRoles()->where('name', 'like', '%Driver%')->first();
+                #$business_department = BusinessDepartment::find((int)$request->department_id);
+                #$business_role = $business_department->businessRoles()->where('name', 'like', '%Driver%')->first();
                 $member_business_data = [
                     'business_id' => $business->id,
                     'member_id' => $new_member->id,
                     'type' => 'Admin',
                     'join_date' => Carbon::now(),
-                    'business_role_id' => $business_role->id,
+                    'business_role_id' => $request->role_id,
                 ];
                 BusinessMember::create($this->withCreateModificationField($member_business_data));
             } else {
@@ -93,14 +93,14 @@ class DriverController extends Controller
                     if (!$new_member) $new_member = $this->makeMember($profile);
 
                     $business = $member->businesses->first();
-                    $business_department = BusinessDepartment::find((int)$request->department_id);
-                    $business_role = $business_department->businessRoles()->where('name', 'like', '%Driver%')->first();
+                    #$business_department = BusinessDepartment::find((int)$request->department_id);
+                    #$business_role = $business_department->businessRoles()->where('name', 'like', '%Driver%')->first();
                     $member_business_data = [
                         'business_id' => $business->id,
                         'member_id' => $new_member->id,
                         'type' => 'Admin',
                         'join_date' => Carbon::now(),
-                        'business_role_id' => $business_role->id,
+                        'business_role_id' => $request->role_id,
                     ];
                     BusinessMember::create($this->withCreateModificationField($member_business_data));
                 } else {
@@ -308,13 +308,13 @@ class DriverController extends Controller
             $driver = Driver::find((int)$driver);
             $profile = $driver->profile;
             $vehicle = $driver->vehicle;
-
+            #dd($profile->member->businessMember);
             $license_info = [
                 'type' => $vehicle ? $vehicle->basicInformations->type : null,
                 #'company_name' => $vehicle ? $vehicle->basicInformations->company_name : null,
                 #'model_name' => $vehicle ? $vehicle->basicInformations->model_name : null,
                 #'model_year' => $vehicle ? $vehicle->basicInformations->model_year : null,
-                'department_id' => $profile->member->businessMember->role->business_department_id,
+                'department_id' => $profile->member->businessMember ? $profile->member->businessMember->role->business_department_id : null,
                 'license_number' => $driver->id,
                 'license_class' => $profile->name,
                 'issue_authority' => 'BRTA',
@@ -322,6 +322,7 @@ class DriverController extends Controller
 
             return api_response($request, $license_info, 200, ['license_info' => $license_info]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -351,7 +352,7 @@ class DriverController extends Controller
             $business_department = BusinessDepartment::find((int)$request->department_id);
             $business_role = $business_department->businessRoles()->where('name', 'like', '%Driver%')->first();
 
-            if ($business_role) $business_role->update($this->withUpdateModificationField(['business_department_id'=> $request->department_id]));
+            if ($business_role) $business_role->update($this->withUpdateModificationField(['business_department_id' => $request->department_id]));
 
             $vehicle_basic_info = [
                 'type' => $request->type,
