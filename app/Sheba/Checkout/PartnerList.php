@@ -364,6 +364,7 @@ class PartnerList
         array_add($partner, 'breakdown', $services);
         $total_service_price['discount'] = (int)$total_service_price['discount'];
 
+        /**  This block of code contains dummy information, will be updated later */
         $original_delivery_charge = $this->deliveryCharge->setCategoryPartnerPivot($category_pivot)->get();
         $discounted_delivery_charge = 50;
         $delivery_charge = $discounted_delivery_charge;
