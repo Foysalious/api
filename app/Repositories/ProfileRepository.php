@@ -25,7 +25,7 @@ class ProfileRepository
 
     public function getIfExist($data, $queryColumn)
     {
-        $profile = Profile::where($queryColumn, $data)->first();
+        $profile = Profile::where($queryColumn, $data)->where('is_blacklisted', 0)->first();
         return $profile != null ? $profile : null;
     }
 
@@ -53,7 +53,7 @@ class ProfileRepository
 
     public function ifExist($data, $queryColumn)
     {
-        $user = Profile::where($queryColumn, $data)->first();
+        $user = Profile::where($queryColumn, $data)->where('is_blacklisted', 0)->first();
         return $user != null ? $user : false;
     }
 
