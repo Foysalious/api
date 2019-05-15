@@ -48,7 +48,7 @@ class DriverController extends Controller
                 'dob' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
                 'nid_no' => 'required|integer',
                 'pro_pic' => 'required|mimes:jpeg,png',
-                'department_id' => 'required|integer',
+                'role_id' => 'required|integer',
             ]);
 
             $member = Member::find($member);
@@ -70,14 +70,14 @@ class DriverController extends Controller
                 if (!$new_member) $new_member = $this->makeMember($profile);
 #
                 $business = $member->businesses->first();
-                $business_department = BusinessDepartment::find((int)$request->department_id);
-                $business_role = $business_department->businessRoles()->where('name', 'like', '%Driver%')->first();
+                #$business_department = BusinessDepartment::find((int)$request->department_id);
+                #$business_role = $business_department->businessRoles()->where('name', 'like', '%Driver%')->first();
                 $member_business_data = [
                     'business_id' => $business->id,
                     'member_id' => $new_member->id,
                     'type' => 'Admin',
                     'join_date' => Carbon::now(),
-                    'business_role_id' => $business_role->id,
+                    'business_role_id' => $request->role_id,
                 ];
                 BusinessMember::create($this->withCreateModificationField($member_business_data));
             } else {
@@ -93,14 +93,14 @@ class DriverController extends Controller
                     if (!$new_member) $new_member = $this->makeMember($profile);
 
                     $business = $member->businesses->first();
-                    $business_department = BusinessDepartment::find((int)$request->department_id);
-                    $business_role = $business_department->businessRoles()->where('name', 'like', '%Driver%')->first();
+                    #$business_department = BusinessDepartment::find((int)$request->department_id);
+                    #$business_role = $business_department->businessRoles()->where('name', 'like', '%Driver%')->first();
                     $member_business_data = [
                         'business_id' => $business->id,
                         'member_id' => $new_member->id,
                         'type' => 'Admin',
                         'join_date' => Carbon::now(),
-                        'business_role_id' => $business_role->id,
+                        'business_role_id' => $request->role_id,
                     ];
                     BusinessMember::create($this->withCreateModificationField($member_business_data));
                 } else {
@@ -308,15 +308,14 @@ class DriverController extends Controller
             $driver = Driver::find((int)$driver);
             $profile = $driver->profile;
             $vehicle = $driver->vehicle;
-
             $license_info = [
                 'type' => $vehicle ? $vehicle->basicInformations->type : null,
-                'company_name' => $vehicle ? $vehicle->basicInformations->company_name : null,
+                #'company_name' => $vehicle ? $vehicle->basicInformations->company_name : null,
                 #'model_name' => $vehicle ? $vehicle->basicInformations->model_name : null,
                 #'model_year' => $vehicle ? $vehicle->basicInformations->model_year : null,
-
-                'license_number' => $driver->id,
-                'license_class' => $profile->name,
+                'department_id' => $profile->member->businessMember->role ? $profile->member->businessMember->role->business_department_id : null,
+                'license_number' => $driver->license_number,
+                'license_class' => $driver->license_class,
                 'issue_authority' => 'BRTA',
             ];
 
@@ -332,23 +331,30 @@ class DriverController extends Controller
         try {
             $this->validate($request, [
                 'type' => 'required|string|in:hatchback,sedan,suv,passenger_van,others',
-                'company_name' => 'required|string',
+                #'company_name' => 'required|string',
                 #'model_name' => 'required|string',
                 #'model_year' => 'required|date|date_format:Y-m-d',
                 'license_number' => 'required|string',
                 'license_class' => 'required|string',
+                'department_id' => 'required|integer',
             ]);
             $member = Member::find($member);
             $business = $member->businesses->first();
             $this->setModifier($member);
 
             $driver = Driver::find((int)$driver);
+            if (!$driver) return api_response($request, null, 404);
             $profile = $driver->profile;
             $vehicle = $driver->vehicle;
 
+            $business_department = BusinessDepartment::find((int)$request->department_id);
+            $business_role = $business_department->businessRoles()->where('name', 'like', '%Driver%')->first();
+
+            if ($business_role) $business_role->update($this->withUpdateModificationField(['business_department_id' => $request->department_id]));
+
             $vehicle_basic_info = [
                 'type' => $request->type,
-                'company_name' => $request->company_name,
+                #'company_name' => $request->company_name,
                 #'model_name' => $request->model_name,
                 #'model_year' => $request->model_year,
             ];
