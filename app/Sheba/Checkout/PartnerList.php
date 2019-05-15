@@ -364,11 +364,14 @@ class PartnerList
         array_add($partner, 'breakdown', $services);
         $total_service_price['discount'] = (int)$total_service_price['discount'];
 
-        $delivery_charge = $this->deliveryCharge->setCategoryPartnerPivot($category_pivot)->get();
+        $original_delivery_charge = $this->deliveryCharge->setCategoryPartnerPivot($category_pivot)->get();
+        $discounted_delivery_charge = 50;
+        $delivery_charge = $discounted_delivery_charge;
 
         $total_service_price['discounted_price'] += $delivery_charge;
         $total_service_price['original_price'] += $delivery_charge;
-        $total_service_price['delivery_charge'] = $delivery_charge;
+        $total_service_price['delivery_charge'] = $original_delivery_charge;
+        $total_service_price['discounted_delivery_charge'] = $discounted_delivery_charge;
         $total_service_price['has_home_delivery'] = (int)$category_pivot->is_home_delivery_applied ? 1 : 0;
         $total_service_price['has_premise_available'] = (int)$category_pivot->is_partner_premise_applied ? 1 : 0;
         return $total_service_price;
