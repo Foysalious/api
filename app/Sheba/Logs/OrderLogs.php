@@ -1,17 +1,18 @@
-<?php
-
-namespace App\Sheba\Logs;
+<?php namespace Sheba\Logs;
 
 use App\Models\Order;
+use Sheba\Queries\Order\PartnerChangeLogsQueries;
 
 class OrderLogs
 {
     private $order;
     private $deliveryChangeLogs;
+    private $partnerChangeLogs;
 
     public function __construct($order)
     {
         $this->order = ($order instanceof Order) ? $order : Order::find($order);
+        $this->partnerChangeLogs = collect([]);
     }
 
     public function all()
@@ -21,6 +22,12 @@ class OrderLogs
         return [
             'delivery_info_change' => $this->deliveryChangeLogs
         ];
+    }
+
+    public function partnerChangeLogs()
+    {
+        $this->partnerChangeLogs = (new PartnerChangeLogsQueries())->setOrder($this->order)->get();
+        return $this->partnerChangeLogs;
     }
 
     public function getDeliveryChanges($updateLogs)

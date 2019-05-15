@@ -29,4 +29,17 @@ class BDMobileFormatter
         if(substr( $mobile, 0, 2 ) === "88") return substr( $mobile, 2, 11 );
         return $mobile;
     }
+
+    public static function getOriginal($number)
+    {
+        $number = str_replace(" ", "", $number);
+        $number = str_replace("-", "", $number);
+        if (preg_match("/^(\+88)/", $number)) {
+            return substr($number, 3);
+        } elseif (preg_match("/^(88)/", $number)) {
+            return substr($number, 2);
+        } else {
+            return $number;
+        }
+    }
 }

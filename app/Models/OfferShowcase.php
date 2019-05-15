@@ -13,10 +13,21 @@ class OfferShowcase extends Model
         return $q->where('is_active', 1);
     }
 
+    public function scopeFlash($q)
+    {
+        return $q->where('is_flash', 1);
+    }
+
     public function scopeValid($q)
     {
         $now = Carbon::now();
         return $q->where('start_date', '<=', $now)->where('end_date', '>=', $now);
+    }
+
+    public function scopeValidFlashOffer($q)
+    {
+        $now = Carbon::now();
+        return $q->where('end_date', '>=', $now);
     }
 
     public function scopeActual($q)
@@ -54,6 +65,11 @@ class OfferShowcase extends Model
         return strtolower(snake_case(str_replace("App\\Models\\", '', $this->target_type)));
     }
 
+    public function scopeTargetType($query, $type)
+    {
+        return $query->where('target_type', "App\\Models\\$type");
+    }
+
     public function isVoucher()
     {
         return $this->type() == 'voucher' ? 1 : 0;
@@ -77,6 +93,11 @@ class OfferShowcase extends Model
     public function locations()
     {
         return $this->belongsToMany(Location::class);
+    }
+
+    public function groups()
+    {
+        return $this->belongsToMany(OfferGroup::class, 'offer_group_offer');
     }
 
 }

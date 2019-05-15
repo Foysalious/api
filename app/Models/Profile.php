@@ -11,6 +11,7 @@ class Profile extends Model
         'email',
         'password',
         'remember_token',
+        'driver_id',
         'fb_id',
         'google_id',
         'mobile_verified',
@@ -63,9 +64,19 @@ class Profile extends Model
         return $this->hasOne(Member::class);
     }
 
+    public function driver()
+    {
+        return $this->belongsTo(Driver::class);
+    }
+
     public function joinRequests()
     {
         return $this->hasMany(JoinRequest::class);
+    }
+
+    public function posCustomer()
+    {
+        return $this->hasOne(PosCustomer::class);
     }
 
     public function getIdentityAttribute()

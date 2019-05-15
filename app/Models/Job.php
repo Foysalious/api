@@ -1,44 +1,87 @@
 <?php namespace App\Models;
 
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Model;
-use Sheba\CiCalculator;
-use Sheba\Dal\Complain\Model as Complain;
+use Illuminate\Database\Query\Builder;
+use Sheba\Dal\JobDiscount\JobDiscount;
 use Sheba\Helpers\TimeFrame;
+use Sheba\Jobs\CiCalculator;
+use Sheba\Dal\Complain\Model as Complain;
 use Sheba\Jobs\JobStatuses;
+use Sheba\Order\Code\Builder as CodeBuilder;
 
-class Job extends Model
+class Job extends BaseModel
 {
-    protected $materialPivotColumns = ['id', 'material_name', 'material_price', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
     protected $guarded = ['id'];
+    protected $materialPivotColumns = ['id', 'material_name', 'material_price', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
     protected $casts = ['sheba_contribution' => 'double', 'partner_contribution' => 'double', 'commission_rate' => 'double'];
-    protected $dates = ['delivered_date'];
+    protected $dates = ['delivered_date', /*'schedule_date',*/ 'estimated_delivery_date', 'estimated_visiting_date'];
+
     public $servicePrice;
-    public $commissionRate;
     public $serviceCost;
+    public $serviceCostRate;
     public $materialPrice;
+    public $materialCostRate;
     public $materialCost;
+    public $deliveryPrice;
+    public $deliveryCostRate;
+    public $deliveryCost;
+    public $logisticProfit;
+    public $logisticCostRateForPartner;
+    public $logisticCostForPartner;
+    public $logisticSystemChargeRate;
+    public $logisticSystemCharge;
     public $grossCost;
     public $totalPriceWithoutVat;
     public $totalPrice;
     public $totalCost;
+    public $commission;
     public $totalCostWithoutDiscount;
     public $grossPrice;
-    public $discountContributionSheba;
-    public $discountContributionPartner;
-    public $profit;
-    public $margin;
-    public $isCalculated;
     public $ownDiscount;
     public $ownShebaContribution;
     public $ownPartnerContribution;
     public $serviceDiscounts;
+    public $originalDiscount;
+    public $totalDiscount;
+    public $discountContributionSheba;
+    public $discountContributionPartner;
     public $ownDiscountContributionSheba;
     public $ownDiscountContributionPartner;
     public $serviceDiscountContributionSheba;
     public $serviceDiscountContributionPartner;
+    public $otherDiscounts;
+    public $otherDiscountContributionSheba;
+    public $otherDiscountContributionPartner;
+    public $otherDiscountsByType = [];
+    public $otherDiscountContributionShebaByType = [];
+    public $otherDiscountContributionPartnerByType = [];
+    public $profit;
+    public $margin;
     public $complexityIndex;
     public $isInWarranty;
+    public $isCalculated;
+
+    /** @var CodeBuilder */
+    private $codeBuilder;
+
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->codeBuilder = new CodeBuilder();
+    }
+
+    public static function boot()
+    {
+        parent::boot();
+
+        self::created(function (Job $model) {
+            $model->partnerOrder->createOrUpdateReport();
+        });
+
+        self::updated(function (Job $model) {
+            $model->partnerOrder->createOrUpdateReport();
+        });
+    }
 
     public function service()
     {
@@ -55,6 +98,16 @@ class Job extends Model
         return $this->hasOne(CarRentalJobDetail::class);
     }
 
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    public function services()
+    {
+        return $this->belongsToMany(Service::class);
+    }
+
     public function resource()
     {
         return $this->belongsTo(Resource::class);
@@ -68,6 +121,36 @@ class Job extends Model
     public function usedMaterials()
     {
         return $this->hasMany(JobMaterial::class);
+    }
+
+    public function materialLogs()
+    {
+        return $this->hasMany(JobMaterialLog::class);
+    }
+
+    public function complains()
+    {
+        return $this->hasMany(Complain::class);
+    }
+
+    public function comments()
+    {
+        return $this->morphMany(Comment::class, 'commentable');
+    }
+
+    public function tasks()
+    {
+        return $this->morphMany(ToDoTask::class, 'focused_to');
+    }
+
+    public function mentions()
+    {
+        return $this->morphMany(Mention::class, 'mentionable');
+    }
+
+    public function attachments()
+    {
+        return $this->morphMany(Attachment::class, 'attachable');
     }
 
     public function partner_order()
@@ -95,43 +178,124 @@ class Job extends Model
         return $this->hasOne(CustomerFavorite::class);
     }
 
-    public function comments()
+    public function crm()
     {
-        return $this->morphMany(Comment::class, 'commentable');
+        return $this->belongsTo(User::class, 'crm_id');
     }
 
+    public function cancelLog()
+    {
+        return $this->hasOne(JobCancelLog::class);
+    }
+
+    public function cancelRequest()
+    {
+        return $this->hasMany(JobCancelRequest::class);
+    }
+
+    public function partnerChangeLog()
+    {
+        return $this->hasOne(JobPartnerChangeLog::class);
+    }
+
+    public function statusChangeLogs()
+    {
+        return $this->hasMany(JobStatusChangeLog::class);
+    }
+
+    public function cmChangeLog()
+    {
+        return $this->hasMany(JobCrmChangeLog::class);
+    }
+
+    public function updateLogs()
+    {
+        return $this->hasMany(JobUpdateLog::class);
+    }
+
+    public function discounts()
+    {
+        return $this->hasMany(JobDiscount::class);
+    }
+
+    public function resourceSchedule()
+    {
+        return $this->hasOne(ResourceSchedule::class);
+    }
+
+    public function resourceScheduleSlot()
+    {
+        return $this->hasMany(ResourceSchedule::class);
+    }
+
+    public function scheduleDueLog()
+    {
+        return $this->hasMany(JobScheduleDueLog::class);
+    }
+
+    public function cancelRequests()
+    {
+        return $this->hasMany(JobCancelRequest::class);
+    }
+
+    /*public function setScheduleDateAttribute($date)
+    {
+        $this->attributes['schedule_date'] = Carbon::parse($date);
+    }
+
+    public function getScheduleDateAttribute($date)
+    {
+        return (new Carbon($date))->format('Y-m-d');
+    }*/
+
+    /**
+     * @param bool $price_only
+     * @return $this
+     */
     public function calculate($price_only = false)
     {
-        //$this->commissionRate = $this->partnerOrder->partner->categories()->find($this->service->category->id)->pivot->commission;
-        $cost_rate = 1 - ($this->commission_rate / 100);
-        $material_cost_rate = 1 - ($this->material_commission_rate / 100);
-
-        $this->servicePrice = formatTaka(($this->service_unit_price * $this->service_quantity) + $this->calculateServicePrice());
-        $this->serviceCost = formatTaka($this->servicePrice * $cost_rate);
+        $this->serviceCostRate = 1 - ($this->commission_rate / 100);
+        $this->materialCostRate = 1 - ($this->material_commission_rate / 100);
+        $this->deliveryCostRate = 1 - ($this->delivery_commission_rate / 100);
+        $this->logisticCostRateForPartner = $this->delivery_commission_rate / 100;
+        $this->logisticSystemChargeRate = 0;
+        $this->servicePrice = formatTaka(($this->service_unit_price * $this->service_quantity) + $this->getServicePrice());
+        $this->serviceCost = formatTaka($this->servicePrice * $this->serviceCostRate);
         $this->materialPrice = formatTaka($this->calculateMaterialPrice());
-        $this->materialCost = formatTaka($this->materialPrice * $material_cost_rate);
-        $this->totalCostWithoutDiscount = formatTaka($this->serviceCost + $this->materialCost + $this->delivery_charge);
+        $this->materialCost = formatTaka($this->materialPrice * $this->materialCostRate);
+        $this->deliveryPrice = floatval($this->delivery_charge) ?: floatval($this->logistic_charge);
+        $this->deliveryCost = formatTaka($this->delivery_charge * $this->deliveryCostRate);
+        $this->logisticCostForPartner = formatTaka($this->logistic_charge * $this->logisticCostRateForPartner);
         $this->totalPriceWithoutVat = formatTaka($this->servicePrice + $this->materialPrice + $this->delivery_charge);
+        $this->totalCostWithoutDiscount = formatTaka($this->serviceCost + $this->materialCost + $this->deliveryCost - $this->logisticCostForPartner);
+        $this->logisticSystemCharge = $this->logistic_charge * $this->logisticSystemChargeRate;
+        $this->logisticProfit = $this->logisticCostForPartner - $this->logisticSystemCharge;
         //$this->totalPrice = formatTaka($this->totalPriceWithoutVat + $this->vat); // later
+        $this->totalPrice = $this->totalPriceWithoutVat;
+        $this->commission = $this->totalPrice - $this->totalCostWithoutDiscount;
         $this->totalPrice = formatTaka($this->totalPriceWithoutVat);
+        $this->calculateOtherDiscounts();
         $this_discount = $this->isCalculated ? Job::find($this->id)->discount : $this->discount;
-        $this->ownDiscount = $this_discount;
+        $this->ownDiscount = $this_discount - $this->otherDiscounts;
         $this->ownShebaContribution = $this->sheba_contribution;
         $this->ownPartnerContribution = $this->partner_contribution;
-        $this->serviceDiscounts = $this->calculateServiceDiscount();
-        $this->discount = $this_discount + $this->serviceDiscounts;
+        $this->serviceDiscounts = $this->getServiceDiscount();
+        $this->totalDiscount = $this->discount = $this_discount + $this->serviceDiscounts;
+        $this->originalDiscount = $this->isCapApplied() ? 0 : $this->original_discount_amount + $this->serviceDiscounts;
         $this->grossPrice = ($this->totalPrice > $this->discount) ? formatTaka($this->totalPrice - $this->discount) : 0;
         $this->service_unit_price = formatTaka($this->service_unit_price);
         $this->ownDiscountContributionSheba = formatTaka(($this->ownDiscount * $this->ownShebaContribution) / 100);
         $this->ownDiscountContributionPartner = formatTaka(($this->ownDiscount * $this->ownPartnerContribution) / 100);
-        $this->serviceDiscountContributionSheba = $this->calculateServiceDiscountContributionSheba();
-        $this->serviceDiscountContributionPartner = $this->calculateServiceDiscountContributionPartner();
-        $this->discountContributionSheba = formatTaka($this->ownDiscountContributionSheba + $this->serviceDiscountContributionSheba);
-        $this->discountContributionPartner = formatTaka($this->ownDiscountContributionPartner + $this->serviceDiscountContributionPartner);
+        $this->serviceDiscountContributionSheba = $this->getServiceDiscountContributionSheba();
+        $this->serviceDiscountContributionPartner = $this->getServiceDiscountContributionPartner();
+        $this->discountContributionSheba = formatTaka($this->ownDiscountContributionSheba +
+            $this->serviceDiscountContributionSheba + $this->otherDiscountContributionSheba);
+        $this->discountContributionPartner = formatTaka($this->ownDiscountContributionPartner +
+            $this->serviceDiscountContributionPartner + $this->otherDiscountContributionPartner);
         $this->totalCost = $this->totalCostWithoutDiscount - $this->discountContributionPartner;
         $this->grossCost = formatTaka($this->totalCost);
         $this->profit = formatTaka($this->grossPrice - $this->totalCost);
-        $this->margin = ($this->totalPrice != 0) ? (($this->grossPrice - $this->totalCost) * 100) / $this->totalPrice : 0;
+        $this->margin = $this->totalPrice != 0 ? (($this->grossPrice - $this->totalCost) * 100) / $this->totalPrice : 0;
         $this->margin = formatTaka($this->margin);
         if (!$price_only) {
             $this->calculateComplexityIndex();
@@ -141,16 +305,17 @@ class Job extends Model
         return $this;
     }
 
-    private function calculateServicePrice()
+    private function getServicePrice()
     {
         $total_service_price = 0;
         foreach ($this->jobServices as $jobService) {
-            $total_service_price += ($jobService->min_price > ($jobService->unit_price * $jobService->quantity) ? $jobService->min_price : ($jobService->unit_price * $jobService->quantity));
+            $total_service_price += ($jobService->min_price > ($jobService->unit_price * $jobService->quantity) ?
+                $jobService->min_price : ($jobService->unit_price * $jobService->quantity));
         }
         return $total_service_price;
     }
 
-    private function calculateServiceDiscount()
+    private function getServiceDiscount()
     {
         $total_discount_price = 0;
         foreach ($this->jobServices as $jobService) {
@@ -159,7 +324,7 @@ class Job extends Model
         return $total_discount_price;
     }
 
-    private function calculateServiceDiscountContributionSheba()
+    private function getServiceDiscountContributionSheba()
     {
         $total_sheba_discount_contribution_price = 0;
         foreach ($this->jobServices as $jobService) {
@@ -168,7 +333,7 @@ class Job extends Model
         return $total_sheba_discount_contribution_price / 100;
     }
 
-    private function calculateServiceDiscountContributionPartner()
+    private function getServiceDiscountContributionPartner()
     {
         $total_partner_discount_contribution_price = 0;
         foreach ($this->jobServices as $jobService) {
@@ -177,9 +342,30 @@ class Job extends Model
         return $total_partner_discount_contribution_price / 100;
     }
 
+    private function calculateOtherDiscounts()
+    {
+        $this->otherDiscounts = $this->otherDiscountContributionSheba = $this->otherDiscountContributionPartner = 0;
+        foreach ($this->discounts as $discount) {
+            $this->otherDiscounts += $discount->amount;
+            $sheba_contribution_amount = ($discount->amount * $discount->sheba_contribution) / 100;
+            $partner_contribution_amount = ($discount->amount * $discount->partner_contribution) / 100;
+            $this->otherDiscountContributionSheba += $sheba_contribution_amount;
+            $this->otherDiscountContributionPartner += $partner_contribution_amount;
+            if(!array_key_exists($discount->type, $this->otherDiscountsByType)) {
+                $this->otherDiscountsByType[$discount->type] = 0;
+                $this->otherDiscountContributionShebaByType[$discount->type] = 0;
+                $this->otherDiscountContributionPartnerByType[$discount->type] = 0;
+            }
+            $this->otherDiscountsByType[$discount->type] += $discount->amount;
+            $this->otherDiscountContributionShebaByType[$discount->type] += $sheba_contribution_amount;
+            $this->otherDiscountContributionPartnerByType[$discount->type] += $partner_contribution_amount;
+        }
+        return $this;
+    }
+
     public function isInWarranty()
     {
-        if ($this->status != $this->jobStatuses["Served"] || !$this->delivered_date) return false;
+        if (!$this->isServed() || !$this->delivered_date) return false;
         return Carbon::now()->between($this->delivered_date, $this->delivered_date->addDays($this->warranty));
     }
 
@@ -208,33 +394,36 @@ class Job extends Model
 
     public function code()
     {
-        $startFrom = 16000;
-        return sprintf('%08d', $this->id + $startFrom);
+        return $this->codeBuilder->job($this);
     }
 
     public function fullCode()
     {
-        return $this->partner_order->code() . '-' . $this->code();
+        return $this->codeBuilder->jobFull($this);
     }
 
-    public function cancelLog()
+    public function department()
     {
-        return $this->hasOne(JobCancelLog::class);
+        return $this->partnerOrder->order->department();
     }
 
-    public function partnerChangeLog()
+    public function getClosingTime()
     {
-        return $this->hasOne(JobPartnerChangeLog::class);
+        if ($this->isServed()) {
+            return $this->delivered_date;
+        } elseif ($this->isCancelled()) {
+            return $this->partnerChangeLog ? $this->partnerChangeLog->created_at : ($this->cancelLog ? $this->cancelLog->created_at : $this->updated_at);
+        } else {
+            return Carbon::now();
+        }
     }
 
-    public function statusChangeLogs()
+    /**
+     * @return mixed
+     */
+    public function lifetime()
     {
-        return $this->hasMany(JobStatusChangeLog::class);
-    }
-
-    public function updateLogs()
-    {
-        return $this->hasMany(JobUpdateLog::class);
+        return $this->created_at->diffInDays($this->getClosingTime());
     }
 
     public function scopeInfo($query)
@@ -255,49 +444,180 @@ class Job extends Model
         );
     }
 
-    public function scopeValidStatus($query)
+    /**
+     * Scope a query to only include jobs for a given crm.
+     *
+     * @param Builder $query
+     * @param $cm
+     * @return Builder
+     */
+    public function scopeForCM($query, $cm)
     {
-        return $query->whereIn('status', ['Accepted', 'Served', 'Process', 'Schedule Due', 'Serve Due']);
+        if (is_array($cm)) {
+            return $query->whereIn('crm_id', $cm);
+        }
+        if (!$cm) return $query->notAssigned();
+        return $query->where('crm_id', $cm);
     }
 
+    /**
+     * @param Builder $query
+     * @return mixed
+     */
+    public function scopeNotAssigned($query)
+    {
+        return $query->whereNull('crm_id');
+    }
+
+    /**
+     * Scope a query to only include jobs for a given crm.
+     *
+     * @param Builder $query
+     * @param $category_id
+     * @return Builder
+     */
+    public function scopeForCategory($query, $category_id)
+    {
+        if (is_array($category_id)) {
+            return $query->whereIn('category_id', $category_id);
+        }
+
+        return $query->where('category_id', $category_id);
+    }
+
+    /**
+     * Scope a query to only include jobs of a given status.
+     *
+     * @param Builder $query
+     * @param $status
+     * @return Builder
+     */
+    public function scopeStatus($query, $status)
+    {
+        if (is_array($status)) {
+            return $query->whereIn('status', $status);
+        }
+        return $query->where('status', $status);
+    }
+
+    /**
+     * @param Builder $query
+     * @return Builder
+     */
+    public function scopeValidStatus($query)
+    {
+        return $query->status([JobStatuses::ACCEPTED, JobStatuses::SERVED,
+            JobStatuses::PROCESS, JobStatuses::SCHEDULE_DUE, JobStatuses::SERVE_DUE]);
+    }
+
+    /**
+     * @param Builder $query
+     * @return Builder
+     */
+    public function scopeServed($query)
+    {
+        return $query->status(JobStatuses::SERVED);
+    }
+
+    /**
+     * @param Builder $query
+     * @return Builder
+     */
     public function scopeTillNow($query)
     {
         return $query->where('schedule_date', '<=', date('Y-m-d'));
     }
 
-    public function scopeStatus($query, Array $status)
-    {
-        return $query->whereIn('status', $status);
-    }
-
+    /**
+     * @param Builder $query
+     * @param Carbon $date
+     */
     public function scopeDeliveredAt($query, Carbon $date)
     {
         $query->whereDate('delivered_date', '=', $date->toDateString());
     }
 
+    /**
+     * @param Builder $query
+     * @param $field
+     * @param TimeFrame $time_frame
+     */
     public function scopeDateBetween($query, $field, TimeFrame $time_frame)
     {
         $query->whereBetween($field, $time_frame->getArray());
     }
 
+    /**
+     * @param Builder $query
+     * @param TimeFrame $time_frame
+     */
     public function scopeCreatedAtBetween($query, TimeFrame $time_frame)
     {
         $query->dateBetween('created_at', $time_frame);
     }
 
+    /**
+     * @param Builder $query
+     * @param TimeFrame $time_frame
+     */
     public function scopeDeliveredAtBetween($query, TimeFrame $time_frame)
     {
         $query->dateBetween('delivered_date', $time_frame);
     }
 
-    public function materialLogs()
+    /**
+     * Scope a query to only include jobs of a given partner.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param $partner
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeForPartner($query, $partner)
     {
-        return $this->hasMany(JobMaterialLog::class);
+        return $query->whereHas('partnerOrder', function (Builder $q) use ($partner) {
+            if (is_array($partner)) {
+                return $q->whereIn('partner_orders.partner_id', $partner);
+            }
+            return $q->where('partner_orders.partner_id', $partner);
+        });
     }
 
-    public function complains()
+    /**
+     * Scope a query to only include jobs of a given preferred time.
+     *
+     * @param Builder $query
+     * @param $preferred_time
+     * @return Builder
+     */
+    public function scopePreferredTime($query, $preferred_time)
     {
-        return $this->hasMany(Complain::class);
+        if (is_array($preferred_time)) {
+            return $query->whereIn('preferred_time', $preferred_time);
+        }
+        return $query->where('preferred_time', $preferred_time);
+    }
+
+    /**
+     * @param Builder $query
+     * @return Builder
+     */
+    public function scopeScheduledToday($query)
+    {
+        return $query
+            ->join('partner_orders', 'jobs.partner_order_id', '=', 'partner_orders.id')
+            ->where('jobs.schedule_date', Carbon::today()->toDateString())
+            ->whereIn('jobs.status', [JobStatuses::NOT_RESPONDED, JobStatuses::SCHEDULE_DUE, JobStatuses::SERVE_DUE,
+                JobStatuses::DECLINED, JobStatuses::PROCESS, JobStatuses::ACCEPTED, JobStatuses::PENDING])
+            ->selectRaw('count(distinct(partner_orders.order_id)) as total');
+    }
+
+    /**
+     * @param Builder $query
+     * @return Builder
+     */
+    public function scopeOngoing($query)
+    {
+        return $query->status(JobStatuses::getOngoing());
     }
 
     public function customerComplains()
@@ -307,12 +627,7 @@ class Job extends Model
         });
     }
 
-    public function cancelRequests()
-    {
-        return $this->hasMany(JobCancelRequest::class);
-    }
-
-    public function hasStatus(Array $status)
+    public function hasStatus(array $status)
     {
         foreach ($status as $key => $value) {
             $status[$key] = constants('JOB_STATUSES')[$value];
@@ -320,29 +635,9 @@ class Job extends Model
         return in_array($this->status, $status);
     }
 
-    public function category()
-    {
-        return $this->belongsTo(Category::class);
-    }
-
     public function getVersion()
     {
-        return $this->partner_order_id > env('LAST_PARTNER_ORDER_ID_V1') ? 'v2' : 'v1';
-    }
-
-    public function department()
-    {
-        return $this->partnerOrder->order->department();
-    }
-
-    public function resourceSchedule()
-    {
-        return $this->hasOne(ResourceSchedule::class);
-    }
-
-    public function resourceScheduleSlot()
-    {
-        return $this->hasMany(ResourceSchedule::class);
+        return $this->partner_order_id > config('sheba.last_partner_order_id_v1') ? 'v2' : 'v1';
     }
 
     public function getReadablePreferredTimeAttribute()
@@ -354,59 +649,31 @@ class Job extends Model
         return $this->preferred_time;
     }
 
+    public function rescheduleCounter()
+    {
+        return $this->updateLogs->filter(function (JobUpdateLog $log) {
+            return $log->isScheduleChangeLog();
+        })->count();
+    }
+
+    public function priceChangeCounter()
+    {
+        return $this->updateLogs->filter(function ($update_log) {
+            $decoded_log = $update_log->decoded_log;
+
+            return str_contains($update_log->log, 'Service Price Updated') &&
+                ($decoded_log['old_service_unit_price'] != $decoded_log['new_service_unit_price']);
+        })->count();
+    }
+
     public function isRentCar()
     {
-        return in_array($this->category_id, array_map('intval', explode(',', env('RENT_CAR_IDS')))) ? 1 : 0;
+        return in_array($this->category_id, array_map('intval', config('sheba.car_rental.secondary_category_ids'))) ? 1 : 0;
     }
 
-    public function isClosed()
+    public function isAcceptable()
     {
-        return in_array($this->status, ["Served", "Cancelled"]);
-    }
-
-    public function isCancelRequestPending()
-    {
-        if ($cancel_request = $this->cancelRequests->last())
-            return $cancel_request->status == constants('CANCEL_REQUEST_STATUSES')['Pending'];
-
-        return false;
-    }
-
-    public function scopeOngoing($query)
-    {
-        return $query->whereIn('status',
-            array(
-                constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Schedule_Due'],
-                constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Serve_Due'],
-                constants('JOB_STATUSES')['Served']
-            )
-        );
-    }
-
-    public function canCallExpert()
-    {
-        if (in_array($this->status, ['Accepted', 'Schedule Due', 'Process', 'Serve Due', 'Served'])) return Carbon::today()->gte(Carbon::parse($this->schedule_date));
-        else return false;
-    }
-
-    public function isOnPremise()
-    {
-        return $this->site == constants('JOB_ON_PREMISE')['partner'] ? 1 : 0;
-    }
-
-    public function isOneWay()
-    {
-        return $this->category->needsOneWayLogistic();
-    }
-
-    public function isOneWayReadyToPick()
-    {
-        return $this->category->needsOneWayLogisticOnReadyToPick();
-    }
-
-    public function isTwoWay()
-    {
-        return $this->category->needsTwoWayLogistic();
+        return JobStatuses::isAcceptable($this->status);
     }
 
     public function isProcessable()
@@ -424,11 +691,6 @@ class Job extends Model
         return JobStatuses::isServeable($this->status) && empty($this->first_logistic_order_id);
     }
 
-    public function isPayable()
-    {
-        return !JobStatuses::isServeable($this->status) && empty($this->first_logistic_order_id);
-    }
-
     public function isReadyToPickable()
     {
         return ($this->isTwoWayReadyToPickable() || $this->isOneWayReadyToPickable()) && $this->needsLogistic();
@@ -444,6 +706,105 @@ class Job extends Model
         return JobStatuses::isServeable($this->status) && $this->category->needsTwoWayLogistic() && empty($this->last_logistic_order_id);
     }
 
+    public function canBeScheduleDue()
+    {
+        return JobStatuses::canBeScheduleDue($this->status);
+    }
+
+    public function canBeServeDue()
+    {
+        return JobStatuses::canBeServeDue($this->status);
+    }
+
+    public function canBeNotResponded()
+    {
+        return JobStatuses::canBeNotResponded($this->status);
+    }
+
+    public function isServed()
+    {
+        return $this->status == JobStatuses::SERVED;
+    }
+
+    public function isNotServed()
+    {
+        return !$this->isServed();
+    }
+
+    public function isClosed()
+    {
+        return in_array($this->status, JobStatuses::getClosed());
+    }
+
+    public function isCancelled()
+    {
+        return $this->status == JobStatuses::CANCELLED;
+    }
+
+    public function isCancelRequestPending()
+    {
+        /** @var JobCancelRequest $cancel_request */
+        if ($cancel_request = $this->cancelRequest->last()) return $cancel_request->isPending();
+        return false;
+    }
+
+    public function getPendingCancelRequest()
+    {
+        return $this->cancelRequest()->pending()->first();
+    }
+
+    public function isRentACarOrder()
+    {
+        return in_array($this->category_id, Category::getRentACarSecondaries());
+    }
+
+    public function isRentACarDateRangeOrder()
+    {
+        return $this->jobServices->first()->isRentACarDateRangeService();
+    }
+
+    public function getRentACarDateCount()
+    {
+        return $this->jobServices->first()->getRentACarDateCount();
+    }
+
+    public function canCallExpert()
+    {
+        if(!JobStatuses::isOngoing($this->status)) return false;
+
+        return Carbon::today()->gte(Carbon::parse($this->schedule_date));
+    }
+
+    public function isOnPremise()
+    {
+        return $this->site == constants('JOB_ON_PREMISE')['partner'] ? 1 : 0;
+    }
+
+    public function masterCategory()
+    {
+        return $this->category->parent;
+    }
+
+    public function serviceIds()
+    {
+        return $this->services()->pluck('service_id')->implode(',');
+    }
+
+    public function lastCancelRequestBy()
+    {
+        $req = $this->cancelRequest()->orderBy('created_at', 'desc')->first();
+        if ($req) {
+            return $req->created_by_name;
+        } else {
+            return 'N/A';
+        }
+    }
+
+    public function isNewOrderStructure()
+    {
+        return $this->partnerOrder->isNewOrderStructure();
+    }
+
     /**
      * @return CategoryPartner
      */
@@ -455,8 +816,84 @@ class Job extends Model
         ])->first();
     }
 
+    /**
+     * @param $id
+     * @return bool
+     * @throws \Exception
+     */
+    public function isLastLogisticOrder($id)
+    {
+        return $this->isOneWay() || $this->isLastLogisticOrderForTwoWay($id);
+    }
+
+    public function isOneWay()
+    {
+        return $this->category->needsOneWayLogistic();
+    }
+
+    public function isTwoWay()
+    {
+        return $this->category->needsTwoWayLogistic();
+    }
+
     public function needsLogistic()
     {
-        return $this->category->needsLogistic() && $this->getPartnerCategory()->needsShebaLogistic();
+        return $this->category->needsLogistic() &&
+            ($this->logistic_enabled_manually || $this->getPartnerCategory()->needsShebaLogistic());
+    }
+
+    public function isLastLogisticOrderForTwoWay($id)
+    {
+        return $this->isTwoWay() && $this->last_logistic_order_id == $id;
+    }
+
+    public function isOneWayReadyToPick()
+    {
+        return $this->category->needsOneWayLogisticOnReadyToPick();
+    }
+
+    public function isPayable()
+    {
+        return !JobStatuses::isServeable($this->status) && empty($this->first_logistic_order_id);
+    }
+
+    public function isOnlinePaymentDiscountApplicable()
+    {
+        return $this->created_at->copy()->addMinutes(config('sheba.online_payment_discount_threshold_minutes')) >= Carbon::now() && $this->online_discount == 0;
+    }
+
+    public function isCapApplied()
+    {
+        return $this->discount_percentage && ($this->discount_percentage != $this->original_discount_amount);
+    }
+
+    public function isFlatPercentageDiscount()
+    {
+        return $this->discount_percentage && !$this->isCapApplied();
+    }
+
+    public function isOverDiscounted()
+    {
+        if($this->isFlatPercentageDiscount()) return false;
+
+        return $this->originalDiscount > $this->totalPrice;
+    }
+
+    public function getExtraDiscount()
+    {
+        return $this->isOverDiscounted() ? $this->originalDiscount - $this->totalPrice : 0;
+    }
+
+    public function toJson($options = 0)
+    {
+        $unnecessary = [
+            "dates", "connection", "table", "primaryKey", "keyType", "perPage", "incrementing", "timestamps", "jobStatuses",
+            "attributes", "original", "relations", "hidden", "visible", "appends", "fillable", "dateFormat", "guarded",
+            "casts", "touches", "observables", "with", "morphClass", "exists", "wasRecentlyCreated", "materialPivotColumns",
+        ];
+
+        $array = get_object_vars($this) + $this->toArray();
+        $array = array_except($array, $unnecessary);
+        return json_encode($array, $options);
     }
 }

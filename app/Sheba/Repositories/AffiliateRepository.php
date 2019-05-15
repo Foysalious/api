@@ -3,7 +3,7 @@
 use App\Models\Affiliate;
 use App\Models\AffiliateTransaction;
 
-class AffiliateRepository extends  BaseRepository
+class AffiliateRepository extends BaseRepository
 {
     public function creditWallet(Affiliate $affiliate, $amount, $log_data)
     {

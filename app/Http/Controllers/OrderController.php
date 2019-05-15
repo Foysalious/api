@@ -5,6 +5,7 @@ use App\Http\Requests\BondhuOrderRequest;
 use App\Models\Affiliate;
 use App\Models\Customer;
 use App\Models\Order;
+use App\Models\Partner;
 use App\Models\PartnerOrder;
 use App\Models\Payment;
 use App\Repositories\JobServiceRepository;
@@ -23,6 +24,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Redis;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
 use Sheba\Payment\ShebaPayment;
+use Sheba\Portals\Portals;
 use Sheba\Sms\Sms;
 
 class OrderController extends Controller
@@ -116,18 +118,19 @@ class OrderController extends Controller
         }
     }
 
-    public function placeOrderFromBondhu(BondhuOrderRequest $request, $affiliate, BondhuAutoOrder $bondhuAutoOrder)
+    public function placeOrderFromBondhu(BondhuOrderRequest $request, $affiliate, BondhuAutoOrder $bondhu_auto_order)
     {
-        if (Affiliate::find($affiliate)->is_suspended) {
-            return api_response($request, null, 400, ['message' => 'You\'re suspended can not place order now']);
-        }
         try {
-            if ($bondhuAutoOrder->setServiceCategoryName()) {
-                $order = $payment = $link = null;
+            if (Affiliate::find($affiliate)->is_suspended) {
+                return api_response($request, null, 400, ['message' => 'You\'re suspended can not place order now']);
+            }
+
+            if ($bondhu_auto_order->setServiceCategoryName()) {
+                $payment = $link = null;
                 DB::beginTransaction();
-                $order = $bondhuAutoOrder->place();
+                $order = $bondhu_auto_order->place();
                 if ($order) {
-                    if ($order->voucher_id) $this->updateVouchers($order, $bondhuAutoOrder->customer);
+                    if ($order->voucher_id) $this->updateVouchers($order, $bondhu_auto_order->customer);
                     if ($request->payment_method !== 'cod') {
                         /** @var Payment $payment */
                         $payment = $this->getPayment($request->payment_method, $order);
@@ -137,8 +140,8 @@ class OrderController extends Controller
                         }
                     }
 
-                    $this->sendNotifications($bondhuAutoOrder->customer, $order);
-                    if ($request->header('portal-name') == 'admin-portal') {
+                    $this->sendNotifications($bondhu_auto_order->customer, $order);
+                    if ($bondhu_auto_order->isAsOfflineBondhu()) {
                         $this->sendSms($affiliate, $order);
                     }
                     DB::commit();
@@ -196,9 +199,10 @@ class OrderController extends Controller
     {
         try {
             $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
+            /** @var Partner $partner */
             $partner = $order->partnerOrders->first()->partner;
             if ((bool)config('sheba.send_order_create_sms')) {
-                if (!in_array($order->portal_name, config('sheba.stopped_sms_portal_for_customer'))) {
+                if ($this->isSendingServedConfirmationSms($order)) {
                     (new SmsHandler('order-created'))->send($customer->profile->mobile, [
                         'order_code' => $order->code()
                     ]);
@@ -245,5 +249,17 @@ class OrderController extends Controller
             app('sentry')->captureException($e);
             return null;
         }
+    }
+
+    /**
+     * @param $order
+     * @return bool
+     */
+    private function isSendingServedConfirmationSms($order)
+    {
+        return (
+            !in_array($order->portal_name, config('sheba.stopped_sms_portal_for_customer')) &&
+            !($order->portal_name == 'admin-portal' && $order->sales_channel == 'Bondhu')
+        );
     }
 }

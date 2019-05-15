@@ -33,7 +33,7 @@ return [
         'Declined' => 'Declined',
         'Accepted' => 'Accepted',
         'Schedule_Due' => 'Schedule Due',
-            'Ready_To_Pick' => 'Ready To Pick',
+        'Ready_To_Pick' => 'Ready To Pick',
         'Process' => 'Process',
         'Serve_Due' => 'Serve Due',
         'Served' => 'Served',
@@ -302,9 +302,15 @@ return [
             'short_name' => 'AC',
             'prefix' => 'A',
             'department' => 'AC'
+        ],
+        'Telesales' => [
+            'name' => 'Telesales',
+            'short_name' => 'TEL',
+            'prefix' => 'T',
+            'department' => 'TEL'
         ]
     ],
-    'SERVICE_UNITS' => ['ft', 'sft', 'hour', 'kg', 'meal', 'person', 'piece', 'rft', 'seat', 'strip', 'km'],
+    'SERVICE_UNITS' => ['ft', 'sft', 'hour', 'kg', 'meal', 'person', 'piece', 'rft', 'seat', 'strip', 'km', 'basket', 'Cow Price', 'litre', 'বান্ডেল', 'দিন', 'cft'],
     'FEEDBACK_STATUSES' => [
         'Open' => 'Open',
         'Acknowledged' => 'Acknowledged',
@@ -352,6 +358,7 @@ return [
         env('SHEBA_AFFILIATION_APP') => 'affiliate',
         env('SHEBA_RESOURCE_APP') => 'resource',
         env('SHEBA_MANGER_APP') => 'resource',
+        'user' => 'user'
     ],
     'MANAGER' => [
         'Owner', 'Management', 'Admin', 'Operation', 'Finance'
@@ -361,7 +368,8 @@ return [
         'customer-app',
         'affiliation-app',
         'manager-app',
-        'manager-web'
+        'manager-web',
+        'business-portal',
     ],
     'PARTNER_ACQUISITION_CHANNEL' => [
         'PM' => 'PM',
@@ -485,7 +493,7 @@ return [
         'silver' => 'silver',
         'gold' => 'gold'
     ],
-    'MODERATOR_DISTANCE_THRESHOLD' => 200,
+    'MODERATOR_DISTANCE_THRESHOLD' => 100,
     'AFFILIATION_LITE_ONBOARD_REWARD' => 0,
     'AFFILIATION_LITE_ONBOARD_MODERATION_REWARD' => 0,
     'AFFILIATION_LITE_ONBOARD_AMBASSADOR_REWARD' => 0,

@@ -94,7 +94,7 @@ class ProfileRepository
                 $info['referrer_id'] = $avatar->referrer_id;
             } elseif ($from == 'resource') {
                 $resource_types = $avatar->partnerResources->pluck('resource_type')->toArray();
-                $info['is_handyman'] = count($resource_types)>0 ? !isResourceAdmin($resource_types) : false;
+                $info['is_handyman'] = count($resource_types) > 0 ? !isResourceAdmin($resource_types) : false;
                 $info['is_profile_avatar_default'] = (getProfileDefaultAvatar() === $avatar->profile->pro_pic);
                 $info['is_verified'] = $avatar->is_verified;
                 $info['partners'] = $avatar->partners->unique('partner_id')->count();
@@ -205,7 +205,7 @@ class ProfileRepository
             'mobile_verified' => 1,
             "remember_token" => str_random(255)
         ];
-        if(isset($info['name'])) $data['name'] = $info['name'];
+        if (isset($info['name'])) $data['name'] = $info['name'];
         $profile = Profile::create($data);
         return Profile::find($profile->id);
     }
@@ -319,5 +319,10 @@ class ProfileRepository
     public function getAvatar($from)
     {
         return constants('AVATAR')[$from];
+    }
+
+    public function getByEmail($email)
+    {
+        return Profile::where('email', $email)->first();
     }
 }

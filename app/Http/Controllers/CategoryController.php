@@ -8,18 +8,20 @@ use App\Models\HyperLocal;
 use App\Models\Location;
 use App\Models\Partner;
 use App\Models\Service;
+use App\Models\ServiceGroupService;
 use App\Repositories\CategoryRepository;
 use App\Repositories\ServiceRepository;
 use Dingo\Api\Routing\Helpers;
 use Illuminate\Http\Request;
 use DB;
 use Illuminate\Validation\ValidationException;
+use Sheba\CategoryServiceGroup;
 use Sheba\Location\Coords;
 use Sheba\ModificationFields;
 
 class CategoryController extends Controller
 {
-    use Helpers, ModificationFields;
+    use Helpers, ModificationFields, CategoryServiceGroup;
     private $categoryRepository;
     private $serviceRepository;
 
@@ -35,11 +37,13 @@ class CategoryController extends Controller
             $is_business = $request->has('is_business') && (int)$request->is_business;
             $is_partner = ($request->has('is_partner') && (int)$request->is_partner)
                 || in_array($request->header('portal-name'), ['manager-app', 'bondhu-app']);
-
+            $is_b2b = $request->has('is_b2b') && (int)$request->is_b2b;
             if ($is_business) {
                 $q->publishedForBusiness();
             } else if ($is_partner) {
                 $q->publishedForPartner();
+            } else if ($is_b2b) {
+                $q->publishedForB2b();
             } else {
                 $q->published();
             }
@@ -56,6 +60,9 @@ class CategoryController extends Controller
                 $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
                 if (!is_null($hyperLocation)) $location = $hyperLocation->location;
             }
+            $best_deal_categories_id = explode(',', config('sheba.best_deal_ids'));
+            $best_deal_category = CategoryGroupCategory::whereIn('category_group_id', $best_deal_categories_id)->pluck('category_id')->toArray();
+
             $categories = Category::where('parent_id', null)->orderBy('order');
             if ($location) {
                 $categories = $categories->whereHas('locations', function ($q) use ($location) {
@@ -73,7 +80,7 @@ class CategoryController extends Controller
             if ($request->has('with')) {
                 $with = $request->with;
                 if ($with == 'children') {
-                    $categories->with(['allChildren' => function ($q) use ($location, $filter_publication) {
+                    $categories->with(['allChildren' => function ($q) use ($location, $filter_publication, $best_deal_category) {
                         if (!is_null($location)) {
                             $q->whereHas('locations', function ($q) use ($location) {
                                 $q->where('locations.id', $location->id);
@@ -84,6 +91,7 @@ class CategoryController extends Controller
                                 });
                             });
                         }
+                        $q->whereNotIn('id', $best_deal_category);
                         $filter_publication($q);
                         $q->orderBy('order');
                     }]);
@@ -240,11 +248,17 @@ class CategoryController extends Controller
                 } else $location = 4;
             }
 
-            $category = Category::where('id', $category)->whereHas('locations', function ($q) use ($location) {
+            $cat = Category::where('id', $category)->whereHas('locations', function ($q) use ($location) {
                 $q->where('locations.id', $location);
             });
 
-            $category = ((int)$request->is_business ? $category->publishedForBusiness() : $category->published())->first();
+            if ((int)$request->is_business) {
+                $category = $cat->publishedForBusiness()->first();
+            } elseif ((int)$request->is_b2b) {
+                $category = $cat->publishedForB2B()->first();
+            } else {
+                $category = $cat->published()->first();
+            }
             if ($category != null) {
                 list($offset, $limit) = calculatePagination($request);
                 $scope = [];
@@ -252,18 +266,25 @@ class CategoryController extends Controller
                 if ($category->parent_id == null) {
                     if ((int)$request->is_business) {
                         $services = $this->categoryRepository->getServicesOfCategory((Category::where('parent_id', $category->id)->publishedForBusiness()->orderBy('order')->get())->pluck('id')->toArray(), $location, $offset, $limit);
+                    } else if ($request->is_b2b) {
+                        $services = $this->categoryRepository->getServicesOfCategory(Category::where('parent_id', $category->id)->publishedForB2B()
+                            ->orderBy('order')->get()->pluck('id')->toArray(), $location, $offset, $limit);
                     } else {
                         $services = $this->categoryRepository->getServicesOfCategory($category->children->sortBy('order')->pluck('id'), $location, $offset, $limit);
                     }
                     $services = $this->serviceRepository->addServiceInfo($services, $scope);
                 } else {
                     $category = $category->load(['services' => function ($q) use ($offset, $limit, $location) {
-                        $q->whereHas('locations', function ($query) use ($location) {
-                            $query->where('locations.id', $location);
-                        });
+                        if (!(int)\request()->is_business) {
+                            $q->whereNotIn('id', $this->serviceGroupServiceIds())
+                                ->whereHas('locations', function ($query) use ($location) {
+                                    $query->where('locations.id', $location);
+                                });
+                        }
                         $q->select('id', 'category_id', 'unit', 'name', 'bn_name', 'thumb', 'app_thumb', 'app_banner', 'short_description', 'description', 'banner', 'faqs', 'variables', 'variable_type', 'min_quantity')->orderBy('order')->skip($offset)->take($limit);
                         if ((int)\request()->is_business) $q->publishedForBusiness();
                         elseif ((int)\request()->is_for_backend) $q->publishedForAll();
+                        elseif ((int)\request()->is_b2b) $q->publishedForB2B();
                         else $q->published();
                     }]);
 
@@ -284,10 +305,10 @@ class CategoryController extends Controller
                         return in_array($location, $locations);
                     });
                 }
+
                 $subscriptions = collect();
                 foreach ($services as $service) {
-                    if ($service->serviceSubscription) {
-                        $subscription = $service->serviceSubscription;
+                    if ($subscription = $service->activeSubscription) {
                         list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);
                         $subscription->min_price = $service->min_price;
                         $subscription->max_price = $service->max_price;

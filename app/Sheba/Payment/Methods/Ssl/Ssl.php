@@ -49,16 +49,16 @@ class Ssl extends PaymentMethod
         $data['cancel_url'] = $this->cancelUrl;
         $data['tran_id'] = $invoice;
         $user = $payable->user;
-        $data['cus_name'] = $user->profile->name;
-        $data['cus_email'] = $user->profile->email;
-        $data['cus_phone'] = $user->profile->mobile;
+        $data['cus_name'] = $payable->getName();
+        $data['cus_email'] = $payable->getEmail();
+        $data['cus_phone'] = $payable->getMobile();
         $payment = new Payment();
         DB::transaction(function () use ($payment, $payable, $invoice, $user) {
             $payment->payable_id = $payable->id;
             $payment->transaction_id = $invoice;
             $payment->gateway_transaction_id = $invoice;
             $payment->status = 'initiated';
-            $payment->valid_till = Carbon::tomorrow();
+            $payment->valid_till = Carbon::now()->addMinutes(30);
             $this->setModifier($user);
             $payment->fill((new RequestIdentification())->get());
             $this->withCreateModificationField($payment);

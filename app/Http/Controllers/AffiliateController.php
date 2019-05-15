@@ -58,9 +58,11 @@ class AffiliateController extends Controller
                 return response()->json(['code' => 500, 'msg' => $msg]);
             }
             $affiliate = Affiliate::find($affiliate);
-            if ($request->has('name')) {
+            if ($request->has('name') || $request->has('address')) {
+                /** @var Profile $profile */
                 $profile = $affiliate->profile;
-                $profile->name = $request->name;
+                if ($request->has('name')) $profile->name = $request->name;
+                if ($request->has('address')) $profile->address = $request->address;
                 $profile->update();
             }
             if ($request->has('bkash_no')) {
@@ -71,6 +73,7 @@ class AffiliateController extends Controller
             if ($request->has('geolocation')) {
                 $affiliate->geolocation = $request->geolocation;
             }
+
             return $affiliate->update() ? response()->json(['code' => 200]) : response()->json(['code' => 404]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -466,6 +469,9 @@ class AffiliateController extends Controller
                 'transaction_id' => 'required|string',
                 'type' => 'required|in:bkash',
             ]);
+
+            return api_response($request, null, 500, ['message' => "Temporary Recharge Off"]);
+
             $payment_validator = PartnerPaymentValidatorFactory::make($request->all());
             if ($error = $payment_validator->hasError()) return api_response($request, null, 400, ['message' => $error]);
             $affiliate = $request->affiliate;
@@ -482,7 +488,8 @@ class AffiliateController extends Controller
 
     private function ifTransactionAlreadyExists($transaction_id)
     {
-        return (AffiliateTransaction::where('transaction_details', 'like', "%$transaction_id%")->count() > 0) || (PartnerTransaction::where('transaction_details', 'like', "%$transaction_id%")->count() > 0);
+        return (AffiliateTransaction::where('transaction_details', 'like', "%$transaction_id%")->count() > 0) ||
+            (PartnerTransaction::where('transaction_details', 'like', "%$transaction_id%")->count() > 0);
     }
 
     private function recharge(Affiliate $affiliate, $payment_validator)

@@ -1,9 +1,9 @@
 <?php namespace App\Models;
 
+use App\Models\Transport\TransportTicketOrder;
 use App\Sheba\Payment\Rechargable;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Sheba\MovieTicket\MovieAgent;
-use Sheba\MovieTicket\MovieTicketCommission;
 use Sheba\MovieTicket\MovieTicketTrait;
 use Sheba\MovieTicket\MovieTicketTransaction;
 use Sheba\Payment\Wallet;
@@ -11,9 +11,13 @@ use Sheba\Reward\Rewardable;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
+use Sheba\Transport\Bus\BusTicketCommission;
+use Sheba\Transport\TransportAgent;
+use Sheba\Transport\TransportTicketTransaction;
 use Sheba\Voucher\VoucherCodeGenerator;
+use Sheba\Voucher\Contracts\CanApplyVoucher;
 
-class Customer extends Authenticatable implements Rechargable, Rewardable, TopUpAgent, MovieAgent
+class Customer extends Authenticatable implements Rechargable, Rewardable, TopUpAgent, MovieAgent, TransportAgent, CanApplyVoucher
 {
     use TopUpTrait;
     use MovieTicketTrait;
@@ -67,11 +71,6 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
     public function promotions()
     {
         return $this->hasMany(Promotion::class);
-    }
-
-    public function suggestedPromotion()
-    {
-        return suggestedVoucherFor($this);
     }
 
     public function generateReferral()
@@ -215,5 +214,24 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
     {
         $this->debitWallet($transaction->getAmount());
         $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
+    }
+
+    public function transportTicketOrders()
+    {
+        return $this->morphMany(TransportTicketOrder::class, 'agent');
+    }
+
+    /**
+     * @return BusTicketCommission|\Sheba\Transport\Bus\Commission\Customer
+     */
+    public function getBusTicketCommission()
+    {
+        return new \Sheba\Transport\Bus\Commission\Customer();
+    }
+
+    public function transportTicketTransaction(TransportTicketTransaction $transaction)
+    {
+        $this->debitWallet($transaction->getAmount());
+        $this->walletTransaction(['amount' => $transaction->getAmount(), 'event_type' => $transaction->getEventType(), 'event_id' => $transaction->getEventId(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
     }
 }

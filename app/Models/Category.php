@@ -19,6 +19,11 @@ class Category extends Model
         ]);
     }
 
+    public static function getRentACarSecondaries()
+    {
+        return config('sheba.car_rental.secondary_category_ids');
+    }
+
     public function scopePublished($query)
     {
         return $query->where('categories.publication_status', 1);
@@ -92,6 +97,10 @@ class Category extends Model
     public function scopePublishedForBusiness($query)
     {
         return $query->where('is_published_for_business', 1);
+    }
+    public function scopePublishedForB2B($query)
+    {
+        return $query->where('is_published_for_b2b', 1);
     }
 
     public function scopePublishedForPartner($query)

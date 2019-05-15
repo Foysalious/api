@@ -2,32 +2,32 @@
 
 class SslResponse extends TopUpResponse
 {
-    protected $response;
-
-    public function setResponse($response)
-    {
-        $this->response = $response;
-    }
-
     public function hasSuccess(): bool
     {
         return $this->response->recharge_status == 200;
     }
 
-    public function getSuccess(): TopUpSuccessResponse
+    /**
+     * @return mixed
+     */
+    public function getTransactionId()
     {
-        $topup_response = new TopUpSuccessResponse();
-        $topup_response->transactionId = $this->response->guid;
-        $topup_response->transactionDetails = $this->response;
-        return $topup_response;
+        return $this->response->guid;
     }
 
-    public function getError(): TopUpErrorResponse
+    /**
+     * @return mixed
+     */
+    public function getErrorCode()
     {
-        if ($this->hasSuccess()) throwException(new \Exception('Response has success'));
-        $topup_error = new TopUpErrorResponse();
-        $topup_error->errorCode = $this->response->recharge_status;
-        $topup_error->errorMessage = $this->response->Message;
-        return $topup_error;
+        return $this->response->recharge_status;
+    }
+
+    /**
+     * @return string
+     */
+    public function getErrorMessage()
+    {
+        return $this->response->Message;
     }
 }

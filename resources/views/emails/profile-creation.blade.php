@@ -8,10 +8,9 @@
 <div class="container">
     <div class="content">
         <div class="title">
-            <p>Please go to this link to create your profile: {{env('SHEBA_ACCOUNT_URL')}}
+            <p>Please go to this link to login with this email: {{env('SHEBA_BUSINESS_URL')}}. Your Password is:
+                <strong>sheba#test1</strong>
             </p>
-
-            <p style="color: red">If the above link is not clickable, try copying and pasting it into the address bar of your web browser.</p>
         </div>
     </div>
 </div>

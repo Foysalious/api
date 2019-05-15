@@ -18,6 +18,7 @@ use Carbon\Carbon;
 use DB;
 use Dingo\Api\Routing\Helpers;
 use Sheba\Checkout\DeliveryCharge;
+use Sheba\Checkout\Partners\PartnerUnavailabilityReasons;
 use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
@@ -51,9 +52,6 @@ class PartnerList
     protected $selectedServiceIds;
     protected $notFoundValues;
     protected $isNotLite;
-
-    /** @header * */
-    protected $portalName;
     protected $badgeResolver;
     /** @var PartnerListRequest */
     protected $partnerListRequest;
@@ -99,7 +97,7 @@ class PartnerList
         if ($this->isNotLite) {
             $this->filterByCreditLimit();
         }
-        if (!in_array($this->portalName, ['partner-portal', 'manager-app'])) {
+        if (!in_array($this->partnerListRequest->portalName, ['partner-portal', 'manager-app'])) {
             $this->filterByDailyOrderLimit();
         }
         $this->partners->load(['services' => function ($q) {
@@ -263,8 +261,24 @@ class PartnerList
     {
         $this->partners->load(['workingHours', 'leaves']);
         $this->partners->each(function ($partner) {
-            $partner['is_available'] = $this->isWithinPreparationTime($partner) && (new PartnerAvailable($partner))->available($this->partnerListRequest->scheduleDate, $this->partnerListRequest->scheduleTime, $this->partnerListRequest->selectedCategory) ? 1 : 0;
+            if(!$this->isWithinPreparationTime($partner)) {
+                $partner['is_available'] = 0;
+                $partner['unavailability_reason'] = PartnerUnavailabilityReasons::PREPARATION_TIME;
+                return;
+            }
+
+            $partner_available = new PartnerAvailable($partner);
+            $partner_available->check($this->partnerListRequest->scheduleDate, $this->partnerListRequest->scheduleTime, $this->partnerListRequest->selectedCategory);
+
+            if(!$partner_available->getAvailability()) {
+                $partner['is_available'] = 0;
+                $partner['unavailability_reason'] = $partner_available->getUnavailabilityReason();
+                return;
+            }
+
+            $partner['is_available'] = 1;
         });
+
         if ($this->getAvailablePartners()->count() > 1) $this->rejectShebaHelpDesk();
     }
 
@@ -350,7 +364,7 @@ class PartnerList
         array_add($partner, 'breakdown', $services);
         $total_service_price['discount'] = (int)$total_service_price['discount'];
 
-        $delivery_charge = $this->deliveryCharge->setPartner($partner)->setCategoryPartnerPivot($category_pivot)->getDeliveryCharge();
+        $delivery_charge = $this->deliveryCharge->setCategoryPartnerPivot($category_pivot)->get();
 
         $total_service_price['discounted_price'] += $delivery_charge;
         $total_service_price['original_price'] += $delivery_charge;

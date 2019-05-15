@@ -1,7 +1,4 @@
-<?php
-
-namespace Sheba\MovieTicket\Response;
-
+<?php namespace Sheba\MovieTicket\Response;
 
 use App\Models\MovieTicketOrder;
 

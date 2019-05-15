@@ -3,23 +3,16 @@
 use Carbon\Carbon;
 use Sheba\Reward\ActionRewardDispatcher;
 
-if (!function_exists('setTrace')) {
+$helper_files = [
+    "app/Sheba/ResourceScheduler/functions.php",
+    "app/Sheba/FileManagers/functions.php",
+    "app/Sheba/Partner/functions.php",
+    "app/Sheba/Helpers/Formatters/functions.php"
+];
 
-    /**
-     * Debug data in formatted presentation.
-     *
-     * @param $data
-     * @param bool $die
-     * @return array
-     */
-    function setTrace($data, $die = true)
-    {
-        echo "<hr><pre>";
-        print_r($data);
-        echo "</pre><hr>";
-
-        if ($die) exit;
-    }
+foreach ($helper_files as $file) {
+    $file = dirname(dirname(__DIR__)) . "/" . $file;
+    if (file_exists($file)) require $file;
 }
 
 if (!function_exists('constants')) {
@@ -35,33 +28,15 @@ if (!function_exists('constants')) {
     }
 }
 
-if (!function_exists('formatTaka')) {
+if (!function_exists('randomString'))
+{
     /**
-     * Format integer amount of taka into decimal.
-     *
-     * @param  $amount
-     * @return number
+     * @param $len
+     * @param int $num
+     * @param int $alpha
+     * @param int $spec_char
+     * @return string
      */
-    function formatTaka($amount)
-    {
-        return number_format($amount, 2, '.', '');
-    }
-}
-
-if (!function_exists('formatTaka')) {
-    /**
-     * Format integer amount of taka into decimal.
-     *
-     * @param  $amount
-     * @return number
-     */
-    function formatTaka($amount)
-    {
-        return number_format($amount, 2, '.', '');
-    }
-}
-
-if (!function_exists('randomString')) {
     function randomString($len, $num = 0, $alpha = 0, $spec_char = 0)
     {
         $alphabets = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -77,73 +52,6 @@ if (!function_exists('randomString')) {
             $rand_string .= $characters[mt_rand(0, strlen($characters) - 1)];
         }
         return $rand_string;
-    }
-}
-
-if (!function_exists('formatMobileAux')) {
-    /**
-     * Format mobile number, add +88 & rebove space.
-     * This function should be removed at refactoring.
-     *
-     * @param $mobile
-     * @return mixed
-     */
-    function formatMobileAux($mobile)
-    {
-        $mobile = str_replace(" ", "", $mobile);
-        $mobile = str_replace("-", "", $mobile);
-        if ($mobile[0] == "0") {
-            $mobile = "+88" . $mobile;
-        }
-        return $mobile;
-    }
-}
-
-if (!function_exists('formatMobile')) {
-    /**
-     * Format Mobile number with +88 .
-     *
-     * @param  $number
-     * @return string
-     */
-    function formatMobile($number)
-    {
-        $number = str_replace(" ", "", $number);
-        $number = str_replace("-", "", $number);
-        // mobile starts with '+88'
-        if (preg_match("/^(\+88)/", $number)) {
-            return $number;
-        } // when mobile starts with '88' replace it with '+880'
-        elseif (preg_match("/^(88)/", $number)) {
-            return preg_replace('/^88/', '+88', $number);
-        } // real mobile no add '+880' at the start
-        else {
-            return '+88' . $number;
-        }
-    }
-}
-
-if (!function_exists('getOriginalMobileNumber')) {
-    /**
-     * Format Mobile number with +88 .
-     *
-     * @param  $number
-     * @return string
-     */
-    function getOriginalMobileNumber($number)
-    {
-        $number = str_replace(" ", "", $number);
-        $number = str_replace("-", "", $number);
-        // mobile starts with '+88'
-        if (preg_match("/^(\+88)/", $number)) {
-            return substr($number, 3);
-        } // when mobile starts with '88' replace it with '+880'
-        elseif (preg_match("/^(88)/", $number)) {
-            return substr($number, 2);
-        } // real mobile no add '+880' at the start
-        else {
-            return $number;
-        }
     }
 }
 
@@ -253,7 +161,6 @@ if (!function_exists('getDayName')) {
         }
     }
 }
-
 
 if (!function_exists('createAuthorWithType')) {
     function createAuthorWithType($author)
@@ -434,7 +341,7 @@ if (!function_exists('en2bnNumber')) {
     }
 }
 
-if (!function_exists('indexedArrayToAssociativ')) {
+if (!function_exists('indexedArrayToAssociative')) {
     /**
      * @param $key
      * @param $value
@@ -522,8 +429,8 @@ if (!function_exists('trim_phone_number')) {
     }
 }
 
-if (!function_exists('pamel_case')) {
-    function pamel_case($string)
+if (!function_exists('pamelCase')) {
+    function pamelCase($string)
     {
         return ucfirst(camel_case($string));
     }

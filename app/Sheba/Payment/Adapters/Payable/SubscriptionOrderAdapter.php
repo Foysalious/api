@@ -1,6 +1,5 @@
 <?php namespace Sheba\Payment\Adapters\Payable;
 
-
 use App\Models\Payable;
 use Carbon\Carbon;
 

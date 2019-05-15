@@ -1,6 +1,4 @@
-<?php
-
-namespace Sheba\Payment\Complete;
+<?php namespace Sheba\Payment\Complete;
 
 use Illuminate\Database\QueryException;
 use DB;
