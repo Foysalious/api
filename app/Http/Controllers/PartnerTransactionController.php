@@ -9,6 +9,8 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Sheba\PartnerPayment\PartnerPaymentValidatorFactory;
 use Sheba\Reward\ActionRewardDispatcher;
+use Sheba\Transactions\InvalidTransaction;
+use Sheba\Transactions\Registrar;
 use Validator;
 
 class PartnerTransactionController extends Controller
@@ -81,11 +83,12 @@ class PartnerTransactionController extends Controller
                 'transaction_id' => 'required|string',
                 'type' => 'required|in:bkash,rocket,mock',
             ]);
-            $payment_validator = PartnerPaymentValidatorFactory::make($request->all());
-            if ($error = $payment_validator->hasError()) {
-                return api_response($request, null, 400, ['message' => $error]);
-            }
-            $request->merge(['transaction_amount' => $payment_validator->amount, 'transaction_account' => $payment_validator->sender]);
+
+            if($request->ip() != "103.4.146.66")
+                return api_response($request, null, 500, ['message' => "Temporary Recharge Off"]);
+
+            $transaction = (new Registrar())->register($request->partner, $request->type, $request->transaction_id);
+            $request->merge(['transaction_amount' => $transaction['amount'], 'transaction_account' => $transaction['from_account']]);
 
             if ($res = $this->reconcile($request)) {
                 if ($res->code != 200) return api_response($request, null, 500, ['message' => $res->msg]);
@@ -96,7 +99,7 @@ class PartnerTransactionController extends Controller
             app(ActionRewardDispatcher::class)->run(
                 'partner_wallet_recharge',
                 $request->partner,
-                $payment_validator->amount,
+                $transaction['amount'],
                 $request->partner
             );
 
@@ -107,6 +110,9 @@ class PartnerTransactionController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
+        } catch (InvalidTransaction $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
