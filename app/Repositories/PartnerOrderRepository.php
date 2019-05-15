@@ -165,7 +165,8 @@ class PartnerOrderRepository
                     'job_id' => $jobs[0]->id,
                     'schedule_date' => $jobs[0]->schedule_date,
                     'preferred_time' => $jobs[0]->readable_preferred_time,
-                    'services' => $services
+                    'services' => $services,
+                    'status' => $jobs[0]->status
                 ]);
                 $all_partner_orders->push($order);
             }
