@@ -48,7 +48,7 @@ class BusinessRoute
                 $api->group(['prefix' => 'form-templates'], function ($api) {
                     $api->get('/', 'B2b\FormTemplateController@index');
                     $api->post('/', 'B2b\FormTemplateController@store');
-                    $api->group(['prefix' => '{form-template}', 'middleware' => ['business_order.auth']], function ($api) {
+                    $api->group(['prefix' => '{form_template}'], function ($api) {
                         $api->get('/', 'B2b\FormTemplateController@get');
                     });
                 });
