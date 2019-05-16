@@ -601,7 +601,6 @@ class AffiliateController extends Controller
             $error = $validator->errors()->all()[0];
             return api_response($request, $error, 400, ['msg' => $error]);
         }
-        list($offset, $limit) = calculatePagination($request);
         if ((int)$request->agent_data)
             $earning = $top_up_earning->setType($request->sp_type)->getFormattedDate($request)->getAgentsData($affiliate);
         else

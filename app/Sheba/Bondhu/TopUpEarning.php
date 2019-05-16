@@ -26,13 +26,8 @@ class TopUpEarning
 
     public function generateData($affiliate_ids)
     {
-        if ($this->type == "affiliates") {
-            $this->getData("App\Models\Affiliation", "affiliations", $affiliate_ids, $this->from, $this->to);
-            return $this->statuses;
-        } else if ($this->type === "partner_affiliates") {
-            $this->getData("App\Models\PartnerAffiliation", "partner_affiliations", $affiliate_ids, $this->from, $this->to);
-            return $this->statuses;
-        }
+        $this->getData( $affiliate_ids);
+        return $this->statuses;
     }
 
     public function getIndividualData($affiliate_id)
