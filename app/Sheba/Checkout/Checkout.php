@@ -205,7 +205,7 @@ class Checkout
                     $charge = $delivery_charge->get();
                     $job_data['delivery_charge'] = $delivery_charge->doesUseShebaLogistic() ? 0 : $charge;
                     $job_data['logistic_charge'] = $delivery_charge->doesUseShebaLogistic() ? $charge : 0;
-                    $discount = $this->discountRepo->findValidForAgainst(DiscountTypes::DELIVERY, $category);
+                    $discount = $this->discountRepo->findValidForAgainst(DiscountTypes::DELIVERY, $category, $partner);
                     if($discount) {
                         $applied_amount = $discount->getApplicableAmount($charge);
                         $discount_data = $this->withBothModificationFields([

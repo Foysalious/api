@@ -371,9 +371,9 @@ class PartnerList
         /**  This block of code contains dummy information, will be updated later */
         $original_delivery_charge = $this->deliveryCharge->setCategoryPartnerPivot($category_pivot)->get();
         /** @var \Sheba\Dal\Discount\Discount $discount */
-        $discount = $this->discountRepo->findValidForAgainst(DiscountTypes::DELIVERY, $this->partnerListRequest->selectedCategory);
-        $applied_amount = (double) $discount->getApplicableAmount($original_delivery_charge);
-        $discounted_delivery_charge = $original_delivery_charge - $applied_amount;
+        $discount = $this->discountRepo->findValidForAgainst(DiscountTypes::DELIVERY, $this->partnerListRequest->selectedCategory, $partner);
+        $applied_discount = $discount ?(double) $discount->getApplicableAmount($original_delivery_charge) : 0.00;
+        $discounted_delivery_charge = $original_delivery_charge - $applied_discount;
         $delivery_charge = $discounted_delivery_charge;
 
         $total_service_price['discounted_price'] += $delivery_charge;
