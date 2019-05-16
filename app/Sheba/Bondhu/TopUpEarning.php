@@ -62,40 +62,24 @@ class TopUpEarning
         return $this;
     }
 
-    private function getData($modelName, $tableName, $affiliate_ids, $from, $to)
+    private function getData( $affiliate_ids)
     {
-        dd($from, $to);
-        $data = TopUpOrder::join('topup_vendors','topup_orders.vendor_id','=','topup_vendors.id')
+        $vendor_amounts = TopUpOrder::join('topup_vendors','topup_orders.vendor_id','=','topup_vendors.id')
             ->selectRaw('name, Sum(topup_orders.Amount) as amount')
-            ->where('agent_type',"App\\Models\\Affiliate")->whereIn('agent_id',$affiliate_ids)->groupBy('vendor_id')
+            ->where('agent_type',Affiliate::class)->whereIn('agent_id',$affiliate_ids)->groupBy('vendor_id')
             ->whereBetween('topup_orders.created_at', [$this->from, $this->to])->get();
-        dd($data);
-        $countsQuery = $modelName::join('affiliates', 'affiliates.id', '=', $tableName . '.affiliate_id')
-            ->select(
-                DB::raw("count(case when date (" . $tableName . ".created_at) >= '" . $from . "' and date(" . $tableName . ".created_at)<= '" . $to . "' then " . $tableName . ".id end) as total_leads"),
-                DB::raw("count(case when status='successful' and date (" . $tableName . ".created_at) >= '" . $from . "' and date(" . $tableName . ".created_at)<= '" . $to . "' then " . $tableName . ".id end) as total_successful"),
-                DB::raw("count(case when status in('pending', 'follow_up','converted') and date (" . $tableName . ".created_at) >= '" . $from . "' and date(" . $tableName . ".created_at)<= '" . $to . "' then " . $tableName . ".id end) as total_pending"),
-                DB::raw("count(case when status='rejected' and date (" . $tableName . ".created_at) >= '" . $from . "' and date(" . $tableName . ".created_at)<= '" . $to . "' then " . $tableName . ".id end) as total_rejected")
-            )
-            ->whereIn('affiliate_id', $affiliate_ids);
 
-        $countsQuery = $countsQuery->where($tableName . '.created_at', '>=', DB::raw('affiliates.under_ambassador_since'));
-        $counts = $countsQuery->get()->toArray();
+        $earning_amount = (double)  TopUpOrder::join('topup_vendors','topup_orders.vendor_id','=','topup_vendors.id')
+            ->where('agent_type',Affiliate::class)->whereIn('agent_id',$affiliate_ids)
+            ->whereBetween('topup_orders.created_at', [$this->from, $this->to])->sum('agent_commission');
 
-        $this->statuses = $counts[0];
+        $total_amount = (double)  TopUpOrder::join('topup_vendors','topup_orders.vendor_id','=','topup_vendors.id')
+            ->where('agent_type',Affiliate::class)->whereIn('agent_id',$affiliate_ids)
+            ->whereBetween('topup_orders.created_at', [$this->from, $this->to])->sum('topup_orders.amount');
 
-        $earning_amount_query = $modelName::join('affiliate_transactions', $tableName . '.id', '=', 'affiliate_transactions.affiliation_id')
-            ->join('affiliates', 'affiliates.id', '=', $tableName . '.affiliate_id')
-            ->where('affiliate_transactions.affiliate_id', $this->parent_id)
-            ->whereIn($tableName . '.affiliate_id', $affiliate_ids)
-            ->where('status', 'successful')
-            ->where('affiliate_transactions.is_gifted', 1)
-            ->whereRaw('affiliate_transactions.created_at >= affiliates.under_ambassador_since')
-            ->whereBetween('affiliate_transactions.created_at', [$this->from, $this->to]);
-
-        $earning_amount = (double)  $earning_amount_query->sum('affiliate_transactions.amount');
-
-        $this->statuses["earning_amount"] = $earning_amount;
+        $this->statuses['vendor_amounts'] = $vendor_amounts;
+        $this->statuses['earning_amount'] = $earning_amount;
+        $this->statuses['total_amount'] = $total_amount;
         $this->statuses["from_date"] = date("jS F", strtotime($this->from));
         $this->statuses["to_date"] = date("jS F", strtotime($this->to));
     }
