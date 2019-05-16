@@ -2,15 +2,21 @@
 
 
 use App\Http\Controllers\Controller;
+use App\Repositories\Interfaces\FormTemplateRepositoryInterface;
 use Illuminate\Http\Request;
 
 
 class FormTemplateController extends Controller
 {
 
-    public function store(Request $request)
+    public function store(Request $request, FormTemplateRepositoryInterface $formTemplateRepository)
     {
-        return api_response($request, null, 200, ['id' => 1]);
+        try {
+            $formTemplateRepository->create(['ad'=>44]);
+            return api_response($request, null, 200, ['id' => 1]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
     }
 
     public function get($form_template, Request $request)
