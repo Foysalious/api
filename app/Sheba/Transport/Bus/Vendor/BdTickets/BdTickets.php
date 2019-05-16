@@ -67,17 +67,44 @@ class BdTickets extends Vendor
 
     private function updateCart($cart_id)
     {
+        list($first_name, $last_name) = $this->formattedName();
         $data = [
             "cartType" => "DEPARTURE",
             "boardingPoint" => (int)$this->ticketRequest->getBoardingPoint(),
             "droppingPoint" => (int)$this->ticketRequest->getDroppingPoint(),
             "coachId" => $this->ticketRequest->getCoachId(),
-            "passengerList" => [json_encode(["firstName" => $this->ticketRequest->getReserverName(), "lastName" => "", "phoneNumber" => $this->ticketRequest->getReserverMobile(), "email" => $this->ticketRequest->getReserverEmail(), "gender" => strtoupper($this->ticketRequest->getReserverGender()[0])])],
+            "passengerList" => [
+                [
+                    "firstName" => $first_name,
+                    "lastName" => $last_name,
+                    "phoneNumber" => $this->ticketRequest->getReserverMobile(),
+                    "email" => $this->ticketRequest->getReserverEmail(),
+                    "gender" => strtoupper($this->ticketRequest->getReserverGender()[0])
+                ]
+            ],
             "seatIdList" => $this->ticketRequest->getSeatIdList(),
             "applicationChannel" => self::APPLICATION_CHANNEL
         ];
 
         return $this->bdTicketClient->put("carts/$cart_id", $data);
+    }
+
+    private function formattedName()
+    {
+        $name = $this->ticketRequest->getReserverName();
+        $explode_name = explode(' ', $name);
+
+        if (sizeof($explode_name) > 1) {
+            $last_name = end($explode_name);
+            $pos = array_search($last_name, $explode_name);
+            unset($explode_name[$pos]);
+            $first_name = implode(' ', $explode_name);
+        } else {
+            $first_name = strtoupper($this->ticketRequest->getReserverGender()[0]) == "M" ? 'Mr. ' : 'Mrs';
+            $last_name = implode(' ', $explode_name);
+        }
+
+        return [$first_name, $last_name];
     }
 
     private function _bookTicket($cart_id)

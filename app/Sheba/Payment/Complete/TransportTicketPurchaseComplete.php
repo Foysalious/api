@@ -2,6 +2,8 @@
 
 use App\Models\Payment;
 use App\Models\Transport\TransportTicketOrder;
+use App\Repositories\SmsHandler;
+use Carbon\Carbon;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Database\QueryException;
 use DB;
@@ -64,6 +66,24 @@ class TransportTicketPurchaseComplete extends PaymentComplete
 
                 $ticket_request = $this->transportTicketRequest->setShebaAmount($transport_ticket_order->vendor->sheba_amount)->setStatus(Status::CONFIRMED);
                 $this->transportTicketUpdater->setOrder($transport_ticket_order)->setRequest($ticket_request)->update();
+
+                try {
+                    $reservation_details = json_decode($transport_ticket_order->reservation_details);
+                    $trip = $reservation_details->trips[0];
+                    $sms_data = [
+                        'bus_name' => $trip->company->name,
+                        'from_station' => $trip->route->from->name,
+                        'to_station' => $trip->route->to->name,
+                        'ticket_no' => $reservation_details->ticketNo,
+                        'coach_no' => $trip->coachNo,
+                        'boarding_date_time' => Carbon::parse($trip->journeyDate . ' ' . $trip->boardingPoint->reportingTime)->format('Y-m-d H:i A'),
+                        'boarding_point' => $trip->boardingPoint->counterName,
+                        'seats_number' => collect($trip->coachSeatList)->pluck('seatNo')->implode(','),
+                        'fare_amount' => $transport_ticket_order->amount
+                    ];
+
+                    (new SmsHandler('transport_ticket_confirmed'))->send($transport_ticket_order->reserver_mobile, $sms_data);
+                } catch (\Exception $e) {}
             });
         } catch (QueryException $e) {
             throw $e;
