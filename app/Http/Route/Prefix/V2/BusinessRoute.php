@@ -44,6 +44,11 @@ class BusinessRoute
                         $api->get('bills', 'B2b\OrderController@getBills');
                     });
                 });
+
+                $api->group(['prefix' => 'form-templates'], function ($api) {
+                    $api->get('/', 'B2b\FormTemplateController@index');
+                    $api->post('/', 'B2b\FormTemplateController@store');
+                });
             });
         });
         $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {
