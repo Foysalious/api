@@ -200,7 +200,7 @@ class Checkout
                 ];
 
                 $discount_data = [];
-                if($data['is_on_premise']) {
+                if(!$data['is_on_premise']) {
                     $delivery_charge = $this->buildDeliveryCharge($partner);
                     $charge = $delivery_charge->get();
                     $job_data['delivery_charge'] = $delivery_charge->doesUseShebaLogistic() ? 0 : $charge;
