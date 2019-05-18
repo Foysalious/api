@@ -1,5 +1,6 @@
 <?php namespace App\Sheba\Checkout;
 
+use App\Exceptions\HyperLocationNotFoundException;
 use App\Models\Affiliation;
 use App\Models\CarRentalJobDetail;
 use App\Models\Category;
@@ -17,6 +18,7 @@ use App\Repositories\CustomerRepository;
 use App\Repositories\PartnerServiceRepository;
 use App\Repositories\VoucherRepository;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Database\QueryException;
 use DB;
 use Illuminate\Http\Request;
@@ -28,6 +30,7 @@ use Sheba\Jobs\JobStatuses;
 use Sheba\ModificationFields;
 use Sheba\RequestIdentification;
 use Sheba\Dal\Discount\DiscountRepository;
+use Throwable;
 
 class Checkout
 {
@@ -55,7 +58,7 @@ class Checkout
     /**
      * @param $request
      * @return Order|null
-     * @throws \App\Exceptions\HyperLocationNotFoundException
+     * @throws HyperLocationNotFoundException
      */
     public function placeOrder($request)
     {
@@ -78,6 +81,7 @@ class Checkout
         $this->partnerListRequest->setRequest($request)->prepareObject();
         $partner_list = new PartnerList();
         $partner_list->setPartnerListRequest($this->partnerListRequest)->find($request->partner);
+
         if ($partner_list->hasPartners) {
             $partner = $partner_list->partners->first();
             $this->orderData['location_id'] = $this->partnerListRequest->location;
@@ -104,7 +108,7 @@ class Checkout
         } else {
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all()]);
-            app('sentry')->captureException(new \Exception("Partner not found"));
+            app('sentry')->captureException(new Exception("Partner not found"));
             return null;
         }
     }
@@ -273,8 +277,13 @@ class Checkout
             /** @var ServiceObject $selected_service */
             $service = $services->where('id', $selected_service->id)->first();
             $schedule_date_time = Carbon::parse($this->orderData['date'] . ' ' . explode('-', $this->orderData['time'])[0]);
+
             $discount = new Discount();
-            $discount->setServiceObj($selected_service)->setServicePivot($service->pivot)->setScheduleDateTime($schedule_date_time)->initialize();
+            $discount->setServiceObj($selected_service)
+                ->setServicePivot($service->pivot)
+                ->setScheduleDateTime($schedule_date_time)
+                ->initialize();
+
             $service_data = array(
                 'service_id' => $selected_service->id,
                 'quantity' => $selected_service->quantity,
@@ -291,7 +300,6 @@ class Checkout
                 'variable_type' => $service->variable_type,
                 'surcharge_percentage' => $discount->surchargePercentage
             );
-
             list($service_data['option'], $service_data['variables']) = $this->getVariableOptionOfService($service, $selected_service->option);
             $job_services->push(new JobService($service_data));
         }
@@ -442,7 +450,7 @@ class Checkout
                 $data['voucher_id'] = $result['id'];
             }
             return $data;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return $data;
         }
@@ -477,7 +485,7 @@ class Checkout
                 $profile->update();
             }
             return $profile;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return null;
         }
     }
