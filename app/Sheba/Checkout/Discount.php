@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Sheba\Checkout;
+<?php namespace App\Sheba\Checkout;
 
 use App\Models\Partner;
 use App\Models\PartnerServiceDiscount;
@@ -143,7 +141,6 @@ class Discount
         return in_array($this->serviceObject->serviceModel->category_id, array_map('intval', explode(',', env('RENT_CAR_IDS'))));
     }
 
-
     private function calculateKey($collection, $key)
     {
         if (!$collection) return;
@@ -154,12 +151,14 @@ class Discount
 
     private function calculateRunningDiscount()
     {
-        if ($this->runningDiscount === null) $this->runningDiscount = PartnerServiceDiscount::where('partner_service_id', $this->servicePivot->id)->running()->first();
+        if ($this->runningDiscount === null) {
+            $this->runningDiscount = PartnerServiceDiscount::where('partner_service_id', $this->servicePivot->id)->running()->first();
+        }
     }
 
     private function calculateRunningSurcharge()
     {
-        if ($this->surchargePercentage === null) {
+        if (!$this->surchargePercentage) {
             $surcharge = PartnerServiceSurcharge::where('partner_service_id', $this->servicePivot->id)->runningAt($this->scheduleDateTime)->first();
             $this->surchargePercentage = $surcharge ? $surcharge->amount : 0;;
         }
