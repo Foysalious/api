@@ -128,12 +128,17 @@ class Discount
         } else {
             $this->original_price = $this->unit_price * $this->quantity;
         }
+
         if ($this->original_price < $this->min_price) {
             $this->original_price = $this->min_price;
         } elseif ($rent_a_car_price_applied) {
             $this->min_price = $this->original_price;
         }
-        if ($this->surchargePercentage > 0) $this->original_price = $this->original_price + ($this->original_price * $this->surchargePercentage / 100);
+
+        if ($this->surchargePercentage > 0) {
+            $this->original_price = $this->original_price + ($this->original_price * $this->surchargePercentage / 100);
+            $this->min_price = $this->original_price;
+        }
     }
 
     private function isRentACar()
