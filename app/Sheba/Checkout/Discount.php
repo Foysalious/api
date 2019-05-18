@@ -160,7 +160,7 @@ class Discount
     {
         if (!$this->surchargePercentage) {
             $surcharge = PartnerServiceSurcharge::where('partner_service_id', $this->servicePivot->id)->runningAt($this->scheduleDateTime)->first();
-            $this->surchargePercentage = $surcharge ? $surcharge->amount : 0;;
+            $this->surchargePercentage = $surcharge ? $surcharge->amount : 0;
         }
     }
 }

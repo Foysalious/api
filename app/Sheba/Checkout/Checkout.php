@@ -300,7 +300,6 @@ class Checkout
                 'variable_type' => $service->variable_type,
                 'surcharge_percentage' => $discount->surchargePercentage
             );
-
             list($service_data['option'], $service_data['variables']) = $this->getVariableOptionOfService($service, $selected_service->option);
             $job_services->push(new JobService($service_data));
         }
