@@ -149,7 +149,7 @@ class AffiliateController extends Controller
             'filter_type' => 'required|string',
             'from' => 'required_if:filter_type,date_range',
             'to' => 'required_if:filter_type,date_range',
-            'sp_type' => 'required|in:affiliates,partner_affiliates',
+            'sp_type' => 'required|in:affiliates,partner_affiliates,lite',
             'agent_id' => 'numeric'
         ];
         $validator = Validator::make($request->all(), $rules);
