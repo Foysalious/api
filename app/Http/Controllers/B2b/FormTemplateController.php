@@ -83,7 +83,19 @@ class FormTemplateController extends Controller
                 'id' => $form_template->id,
                 'title' => $form_template->title,
                 'short_description' => $form_template->short_description,
-                'items' => $items
+                'items' => $items,
+                'inspections' => [
+                    [
+                        'id' => 1,
+                        'type' => 'text',
+                        'schedule_date' => '14th March,2010'
+                    ],
+                    [
+                        'id' => 1,
+                        'type' => 'text',
+                        'schedule_date' => '14th March,2010'
+                    ]
+                ]
             ];
             return api_response($request, null, 200, ['form_template' => $data]);
         } catch (\Throwable $e) {
