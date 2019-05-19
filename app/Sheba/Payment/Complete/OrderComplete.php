@@ -38,32 +38,23 @@ class OrderComplete extends PaymentComplete
             $model = $payable->getPayableModel();
             $payable_model = $model::find((int)$payable->type_id);
             if ($payable_model instanceof PartnerOrder) $this->giveOnlineDiscount($payable_model);
-            foreach ($this->payment->paymentDetails as $paymentDetail) {
+            foreach ($this->payment->paymentDetails as $payment_detail) {
                 if ($payable_model instanceof PartnerOrder) {
-                    $has_error = $this->clearPartnerOrderPayment($payable_model, $customer, $paymentDetail, $has_error);
+                    $has_error = $this->clearPartnerOrderPayment($payable_model, $customer, $payment_detail, $has_error);
                 } elseif ($payable_model instanceof SubscriptionOrder) {
-                    $has_error = $this->clearSubscriptionPayment($payable_model, $paymentDetail, $has_error);
+                    $has_error = $this->clearSubscriptionPayment($payable_model, $payment_detail, $has_error);
                 }
             }
-            $this->paymentRepository->changeStatus(['to' => 'completed', 'from' => $this->payment->status,
-                'transaction_details' => $this->payment->transaction_details]);
-            $this->payment->status = 'completed';
             $this->payment->transaction_details = null;
-            $this->payment->update();
-            $payable_model->payment_method = strtolower($paymentDetail->readable_method);
+            $this->completePayment();
+            $payable_model->payment_method = strtolower($payment_detail->readable_method);
             $payable_model->update();
         } catch (RequestException $e) {
-            $this->paymentRepository->changeStatus(['to' => 'failed', 'from' => $this->payment->status,
-                'transaction_details' => $this->payment->transaction_details]);
-            $this->payment->status = 'failed';
-            $this->payment->update();
+            $this->failPayment();
             throw $e;
         }
         if ($has_error) {
-            $this->paymentRepository->changeStatus(['to' => 'completed', 'from' => $this->payment->status,
-                'transaction_details' => $this->payment->transaction_details]);
-            $this->payment->status = 'completed';
-            $this->payment->update();
+            $this->completePayment();
         }
         return $this->payment;
     }
