@@ -38,11 +38,11 @@ class ServiceGroupController extends Controller
                     return $q->published()/*->orderBy('service_group_service.order')
                         ->whereHas('locations', function ($q) use ($location) {
                             $q->where('locations.id', $location);
-                        });*/->orderByDesc('stock_left');
+                        });*/->orderBy('stock_left');
                 }])->where('id', $service_group)->select('id', 'name', 'app_thumb')->first();
             } else {
                 $service_group = ServiceGroup::with(['services' => function ($q) {
-                    $q->published()/*->orderBy('service_group_service.order')*/ ->orderByDesc('stock_left');
+                    $q->published()/*->orderBy('service_group_service.order')*/ ->orderBy('stock_left');
                 }])->where('id', $service_group)->select('id', 'name', 'app_thumb')->first();
             }
 
