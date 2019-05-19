@@ -49,17 +49,11 @@ class AdvancedOrderComplete extends PaymentComplete
                     }
 
                 }
-                $this->paymentRepository->changeStatus(['to' => 'completed', 'from' => $this->payment->status,
-                    'transaction_details' => $this->payment->transaction_details]);
-                $this->payment->status = 'completed';
                 $this->payment->transaction_details = null;
-                $this->payment->update();
+                $this->completePayment();
             });
         } catch (QueryException $e) {
-            $this->paymentRepository->changeStatus(['to' => 'failed', 'from' => $this->payment->status,
-                'transaction_details' => $this->payment->transaction_details]);
-            $this->payment->status = 'failed';
-            $this->payment->update();
+            $this->failPayment();
             throw $e;
         }
         return $this->payment;

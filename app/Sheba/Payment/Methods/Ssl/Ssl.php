@@ -10,6 +10,7 @@ use GuzzleHttp\Client;
 use Sheba\Payment\Methods\PaymentMethod;
 use Sheba\Payment\Methods\Ssl\Response\InitResponse;
 use Sheba\Payment\Methods\Ssl\Response\ValidationResponse;
+use Sheba\Payment\Statuses;
 use Sheba\RequestIdentification;
 use DB;
 
@@ -57,7 +58,7 @@ class Ssl extends PaymentMethod
             $payment->payable_id = $payable->id;
             $payment->transaction_id = $invoice;
             $payment->gateway_transaction_id = $invoice;
-            $payment->status = 'initiated';
+            $payment->status = Statuses::INITIATED;
             $payment->valid_till = Carbon::now()->addMinutes(30);
             $this->setModifier($user);
             $payment->fill((new RequestIdentification())->get());
@@ -79,9 +80,12 @@ class Ssl extends PaymentMethod
         } else {
             $error = $init_response->getError();
             $this->paymentRepository->setPayment($payment);
-            $this->paymentRepository->changeStatus(['to' => 'initiation_failed', 'from' => $payment->status,
-                'transaction_details' => json_encode($error->details)]);
-            $payment->status = 'initiation_failed';
+            $this->paymentRepository->changeStatus([
+                'to' => Statuses::INITIATION_FAILED,
+                'from' => $payment->status,
+                'transaction_details' => json_encode($error->details)
+            ]);
+            $payment->status = Statuses::INITIATION_FAILED;
             $payment->transaction_details = json_encode($error->details);
         }
         $payment->update();
@@ -104,23 +108,32 @@ class Ssl extends PaymentMethod
             $this->paymentRepository->setPayment($payment);
             if ($validation_response->hasSuccess()) {
                 $success = $validation_response->getSuccess();
-                $this->paymentRepository->changeStatus(['to' => 'validated', 'from' => $payment->status,
-                    'transaction_details' => $payment->transaction_details]);
-                $payment->status = 'validated';
+                $this->paymentRepository->changeStatus([
+                    'to' => Statuses::VALIDATED,
+                    'from' => $payment->status,
+                    'transaction_details' => $payment->transaction_details
+                ]);
+                $payment->status = Statuses::VALIDATED;
                 $payment->transaction_details = json_encode($success->details);
             } else {
                 $error = $validation_response->getError();
-                $this->paymentRepository->changeStatus(['to' => 'validation_failed', 'from' => $payment->status,
-                    'transaction_details' => $payment->transaction_details]);
-                $payment->status = 'validation_failed';
+                $this->paymentRepository->changeStatus([
+                    'to' => Statuses::VALIDATION_FAILED,
+                    'from' => $payment->status,
+                    'transaction_details' => $payment->transaction_details
+                ]);
+                $payment->status = Statuses::VALIDATION_FAILED;
                 $payment->transaction_details = json_encode($error->details);
             }
         } else {
             $request = request()->all();
             $request['status'] = 'HASH_VALIDATION_FAILED';
-            $this->paymentRepository->changeStatus(['to' => 'validation_failed', 'from' => $payment->status,
-                'transaction_details' => $payment->transaction_details]);
-            $payment->status = 'validation_failed';
+            $this->paymentRepository->changeStatus([
+                'to' => Statuses::VALIDATION_FAILED,
+                'from' => $payment->status,
+                'transaction_details' => $payment->transaction_details
+            ]);
+            $payment->status = Statuses::VALIDATION_FAILED;
             $payment->transaction_details = json_encode($request);
         }
         $payment->update();

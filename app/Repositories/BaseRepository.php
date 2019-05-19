@@ -1,18 +1,17 @@
-<?php namespace Sheba\Repositories;
+<?php namespace App\Repositories;
 
+use App\Repositories\Interfaces\BaseRepositoryInterface;
 use Illuminate\Database\Eloquent\Model;
+
 use Illuminate\Support\Collection;
-use Sheba\FileManagers\FileManager;
 use Sheba\FileManagers\CdnFileManager;
+use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
-use Sheba\Repositories\Interfaces\BaseRepositoryInterface;
 use Sheba\RequestIdentification;
 
-class BaseRepository implements BaseRepositoryInterface
+abstract class BaseRepository implements BaseRepositoryInterface
 {
     use FileManager, CdnFileManager, ModificationFields;
-
-    protected $partnerLoggedIn = true;
 
     /** @var RequestIdentification $requestIdentification */
     protected $requestIdentification;
@@ -23,15 +22,11 @@ class BaseRepository implements BaseRepositoryInterface
     /** @var string $modelClass */
     protected $modelClass;
 
-    public function __construct()
-    {
-        $this->requestIdentification = new RequestIdentification();
-    }
-
-    public function setModel($model)
+    public function __construct(Model $model)
     {
         $this->model = $model;
-        return $this;
+        $this->requestIdentification = app(RequestIdentification::class);
+        $this->modelClass = get_class($model);
     }
 
     /**
@@ -42,15 +37,6 @@ class BaseRepository implements BaseRepositoryInterface
     {
         $model = $this->model->create($this->withCreateModificationField($attributes));
         return $model::find($model->id);
-    }
-
-    public function createMany(array $attributes)
-    {
-        $data = [];
-        foreach ($attributes as $attribute) {
-            array_push($data, $this->withCreateModificationField($attribute));
-        }
-        ($this->model)::insert($data);
     }
 
     /**
@@ -93,17 +79,4 @@ class BaseRepository implements BaseRepositoryInterface
         return $this->requestIdentification->set($data);
     }
 
-    /**
-     * @param $limit
-     * @return mixed
-     */
-    public function paginate($limit)
-    {
-        // TODO: Implement paginate() method.
-    }
-
-    public function getByFieldOn($field, $data)
-    {
-        // TODO: Implement getByFieldOn() method.
-    }
 }
