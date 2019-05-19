@@ -26,7 +26,7 @@ class FormTemplateController extends Controller
                 $template = [
                     'id' => $template->id,
                     'title' => $template->title,
-                    'long_description' => $template->long_description,
+                    'short_description' => $template->short_description,
                 ];
                 array_push($templates, $template);
             }
