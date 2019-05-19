@@ -11,4 +11,9 @@ class FormTemplateRepository extends BaseRepository implements FormTemplateRepos
         parent::__construct();
         $this->setModel($formTemplate);
     }
+
+    public function find($id)
+    {
+        return $this->model->where('id', $id)->first()->load('items');
+    }
 }
