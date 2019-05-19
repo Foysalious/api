@@ -5,11 +5,6 @@ use Carbon\Carbon;
 
 class CustomerRepository extends BaseRepository
 {
-    public function update(Customer $customer, $data)
-    {
-        $customer->update($this->withUpdateModificationField($data));
-    }
-
     public function getTodayRegisteredCustomers()
     {
         return $this->getRegisteredCustomersOf(Carbon::today());

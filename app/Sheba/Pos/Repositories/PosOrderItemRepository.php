@@ -2,6 +2,7 @@
 
 use App\Models\PosOrder;
 use App\Models\PosOrderItem;
+use Illuminate\Database\Eloquent\Model;
 use Sheba\Repositories\BaseRepository;
 
 class PosOrderItemRepository extends BaseRepository
@@ -23,15 +24,5 @@ class PosOrderItemRepository extends BaseRepository
     public function save(array $data)
     {
         return PosOrderItem::create($this->withCreateModificationField($data));
-    }
-
-    /**
-     * @param PosOrderItem $item
-     * @param array $data
-     * @return bool|int
-     */
-    public function update(PosOrderItem $item, array $data)
-    {
-        return $item->update($this->withUpdateModificationField($data));
     }
 }
