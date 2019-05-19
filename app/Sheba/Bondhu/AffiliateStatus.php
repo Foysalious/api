@@ -48,11 +48,11 @@ class AffiliateStatus
     public function getAgentsData($affiliate_id)
     {
         $this->parent_id = $affiliate_id;
-        $affiliateIds = Affiliate::where("ambassador_id", $affiliate_id)->pluck('id');
+        $affiliateIds = Affiliate::where("ambassador_id", (int) $affiliate_id)->pluck('id');
         return $this->generateData($affiliateIds);
     }
 
-    public function getFormattedDate($request)
+    public function  getFormattedDate($request)
     {
         switch ($request->filter_type) {
             case "date_range":
@@ -71,11 +71,11 @@ class AffiliateStatus
         $countsQuery = $modelName::join('affiliates', 'affiliates.id', '=', $tableName . '.affiliate_id')
             ->select(
                 DB::raw("count(case when date (" . $tableName . ".created_at) >= '" . $from . "' and date(" . $tableName . ".created_at)<= '" . $to . "' then " . $tableName . ".id end) as total_leads"),
-                DB::raw("count(case when $status_column='successful' and date (" . $tableName . ".created_at) >= '" . $from . "' and date(" . $tableName . ".created_at)<= '" . $to . "' then " . $tableName . ".id end) as total_successful"),
+                DB::raw("count(case when $status_column='approved' and date (" . $tableName . ".created_at) >= '" . $from . "' and date(" . $tableName . ".created_at)<= '" . $to . "' then " . $tableName . ".id end) as total_successful"),
                 DB::raw("count(case when $status_column in('pending', 'follow_up','converted') and date (" . $tableName . ".created_at) >= '" . $from . "' and date(" . $tableName . ".created_at)<= '" . $to . "' then " . $tableName . ".id end) as total_pending"),
                 DB::raw("count(case when $status_column='rejected' and date (" . $tableName . ".created_at) >= '" . $from . "' and date(" . $tableName . ".created_at)<= '" . $to . "' then " . $tableName . ".id end) as total_rejected")
             )
-            ->whereIn('affiliate_id', $affiliate_ids);
+            ->whereIn($tableName.'.affiliate_id', $affiliate_ids);
 
         $countsQuery = $countsQuery->where($tableName . '.created_at', '>=', DB::raw('affiliates.under_ambassador_since'));
 
