@@ -131,4 +131,13 @@ class FormTemplateController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function itemEdit($business, $form_template,$item,Request $request){
+        try {
+           return api_response($request, null, 200);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }
