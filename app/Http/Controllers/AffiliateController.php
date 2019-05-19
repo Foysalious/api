@@ -149,7 +149,7 @@ class AffiliateController extends Controller
             'filter_type' => 'required|string',
             'from' => 'required_if:filter_type,date_range',
             'to' => 'required_if:filter_type,date_range',
-            'sp_type' => 'required|in:affiliates,partner_affiliates',
+            'sp_type' => 'required|in:affiliates,partner_affiliates,lite',
             'agent_id' => 'numeric'
         ];
         $validator = Validator::make($request->all(), $rules);
@@ -601,7 +601,6 @@ class AffiliateController extends Controller
             $error = $validator->errors()->all()[0];
             return api_response($request, $error, 400, ['msg' => $error]);
         }
-        list($offset, $limit) = calculatePagination($request);
         if ((int)$request->agent_data)
             $earning = $top_up_earning->setType($request->sp_type)->getFormattedDate($request)->getAgentsData($affiliate);
         else

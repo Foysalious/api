@@ -35,14 +35,14 @@ class ServiceGroupController extends Controller
 
             if ($location) {
                 $service_group = ServiceGroup::with(['services' => function ($q) use ($location) {
-                    return $q->published()->orderBy('service_group_service.order')
+                    return $q->published()/*->orderBy('service_group_service.order')
                         ->whereHas('locations', function ($q) use ($location) {
                             $q->where('locations.id', $location);
-                        });
+                        });*/->orderByDesc('stock_left');
                 }])->where('id', $service_group)->select('id', 'name', 'app_thumb')->first();
             } else {
                 $service_group = ServiceGroup::with(['services' => function ($q) {
-                    $q->published()->orderBy('service_group_service.order');
+                    $q->published()/*->orderBy('service_group_service.order')*/ ->orderByDesc('stock_left');
                 }])->where('id', $service_group)->select('id', 'name', 'app_thumb')->first();
             }
 

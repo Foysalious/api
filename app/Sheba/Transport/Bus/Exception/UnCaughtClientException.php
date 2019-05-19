@@ -9,6 +9,7 @@ class UnCaughtClientException extends TransportException
     const SEAT_BEING_PROCESSED_BY_OTHERS = "SEAT BEING BOOKED BY OTHERS USER";
     const NOT_ENOUGH_FUNDS = "NOT ENOUGH FUNDS";
     const CORE_ENTITY_NOT_FOUND = "CORE ENTITY NOT FOUND";
+    const BOARDING_POINT_UNAVAILABLE = "BOARDING POINT UNAVAILABLE";
 
     public function __construct($message = "", $code = 0, Throwable $previous = null)
     {

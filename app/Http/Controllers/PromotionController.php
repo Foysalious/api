@@ -240,7 +240,7 @@ class PromotionController extends Controller
         })->values()->all();
     }
 
-    public function getAllApplicable(ApplicableVoucherFinder $finder, Request $request, CheckParams $params, $customer, PartnerListRequest $partnerListRequest)
+    public function getAllApplicable(ApplicableVoucherFinder $finder, Request $request, $customer, PartnerListRequest $partnerListRequest)
     {
         try {
             $customer = $request->customer;
@@ -253,12 +253,17 @@ class PromotionController extends Controller
             $order_amount = $this->calculateOrderAmount($partnerListRequest, $request->partner);
             if (!$order_amount) return api_response($request, null, 403);
 
-            $params = $params->setPartner($request->partner)->setCustomer($customer)->setCategory($partnerListRequest->selectedCategory->id)->setLocation($location)->setOrderAmount($order_amount)->setSalesChannel($request->sales_channel);
+            $params = (new CheckParamsForOrder($customer, $customer->profile))
+                ->setApplicant($customer)
+                ->setCategory($partnerListRequest->selectedCategory->id)
+                ->setPartner($request->partner)
+                ->setLocation((int)$location)
+                ->setOrderAmount($order_amount)
+                ->setSalesChannel($request->sales_channel);
 
             $added_promos = Promotion::select('id', 'voucher_id')->where('customer_id', $customer->id)->get()->map(function ($item) {
                 return $item->voucher_id;
             })->toArray();
-
 
             $result = $finder->getAll($params)->filter(function ($item) {
                 if (isset($item['voucher'])) return $item;

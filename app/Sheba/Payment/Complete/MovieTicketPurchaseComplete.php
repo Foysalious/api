@@ -50,18 +50,13 @@ class MovieTicketPurchaseComplete extends PaymentComplete
                     $response = (new BlockBusterFailResponse())->setResponse($response);
                     $movie_ticket->processFailedMovieTicket($movie_ticket_order, $response);
                 }
-                $this->paymentRepository->changeStatus(['to' => 'completed', 'from' => $this->payment->status, 'transaction_details' => $this->payment->transaction_details]);
-                $this->payment->status = 'completed';
-                $this->payment->update();
+                $this->completePayment();
             });
         } catch (QueryException $e) {
             $movie_ticket_order = MovieTicketOrder::find($this->payment->payable->type_id);
             $movie_ticket_order->status = 'failed';
             $movie_ticket_order->update();
-
-            $this->paymentRepository->changeStatus(['to' => 'failed', 'from' => $this->payment->status, 'transaction_details' => $this->payment->transaction_details]);
-            $this->payment->status = 'failed';
-            $this->payment->update();
+            $this->failPayment();
             throw $e;
         }
         return $this->payment;

@@ -84,7 +84,7 @@ class VendorFactory
      */
     public static function sslVendorsId()
     {
-        return [self::GP, self::TELETALK, self::BANGLALINK];
+        return [self::GP, self::TELETALK];
     }
 
     /**
