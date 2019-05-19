@@ -20,12 +20,13 @@ class ProfileRepository extends BaseRepository
         return Profile::create($this->withBothModificationFields($profile_data));
     }
 
+
     /**
-     * @param Profile $profile
-     * @param $data
-     * @return bool|int
+     * @param Model $profile
+     * @param array $data
+     * @return bool|Model|int
      */
-    public function update(Profile $profile, $data)
+    public function update(Model $profile, array $data)
     {
         $profile_data = $this->profileDataFormat($data);
         unset($profile_data['remember_token']);
