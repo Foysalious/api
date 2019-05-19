@@ -12,8 +12,8 @@ class Inspection extends Model
         return $query->where('is_published', 1);
     }
 
-    public function formTemplates()
+    public function formTemplate()
     {
-        return $this->hasMany(FormTemplate::class);
+        return $this->belongsTo(FormTemplate::class, 'form_template_id');
     }
 }
