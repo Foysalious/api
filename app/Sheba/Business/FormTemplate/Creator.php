@@ -1,13 +1,6 @@
-<?php
-
-
-namespace Sheba\Business\FormTemplate;
-
-
-;
+<?php namespace Sheba\Business\FormTemplate;
 
 use App\Models\FormTemplate;
-use App\Models\FormTemplateItem;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Repositories\Interfaces\FormTemplateItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\FormTemplateRepositoryInterface;

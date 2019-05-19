@@ -50,19 +50,25 @@ class FormTemplateController extends Controller
                     'id' => 2,
                     'title' => 'Contrary to popular be',
                     'short_description' => 'Cimply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standar',
+                    'instruction' => 'Cimply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standar',
                     'type' => 'text',
+                    'is_required' => 1
                 ],
                 [
                     'id' => 3,
                     'title' => 'Contrary to popular be',
                     'short_description' => 'Cimply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standar',
+                    'instruction' => 'Cimply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standar',
                     'type' => 'number',
+                    'is_required' => 0
                 ],
                 [
                     'id' => 4,
                     'title' => 'Contrary to popular be',
                     'short_description' => 'Cimply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standar',
-                    'type' => 'radio'
+                    'instruction' => 'Cimply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry\'s standar',
+                    'type' => 'radio',
+                    'is_required' => 0
                 ],
             ]
         ];
