@@ -1,6 +1,8 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Payment\Statuses;
+use Sheba\Transactions\DTO\ShebaTransaction;
 
 class Payment extends Model
 {
@@ -18,47 +20,60 @@ class Payment extends Model
 
     public function isComplete()
     {
-        return $this->status == 'completed';
+        return $this->status == Statuses::COMPLETED;
     }
 
     public function isInitiated()
     {
-        return $this->status == 'initiated';
+        return $this->status == Statuses::INITIATED;
     }
 
     public function isFailed()
     {
-        return $this->status == 'validation_failed' || $this->status == 'initiation_failed';
+        return $this->status == Statuses::VALIDATION_FAILED || $this->status == Statuses::INITIATION_FAILED;
     }
 
     public function isPassed()
     {
-        return $this->status == 'validated' || $this->status == 'failed';
+        return $this->status == Statuses::VALIDATED || $this->status == Statuses::FAILED;
     }
 
     public function scopeValid($query)
     {
-        return $query->where([['status', '<>', 'validation_failed'], ['status', '<>', 'initiation_failed']]);
+        return $query->where([['status', '<>', Statuses::VALIDATION_FAILED], ['status', '<>', Statuses::INITIATION_FAILED]]);
     }
 
     public function scopeNotCompleted($query)
     {
-        return $query->where('status', '<>', 'completed');
+        return $query->where('status', '<>', Statuses::COMPLETED);
     }
 
     public function canComplete()
     {
-        return $this->status == 'validated' || $this->status == 'failed';
+        return $this->status == Statuses::VALIDATED || $this->status == Statuses::FAILED;
     }
 
     public function getFormattedPayment()
     {
-        return array(
+        return [
             'transaction_id' => $this->transaction_id,
             'id' => $this->payable->type_id,
             'type' => $this->payable->readable_type,
             'link' => $this->redirect_url,
             'success_url' => $this->payable->success_url
-        );
+        ];
+    }
+
+    /**
+     * @return ShebaTransaction
+     */
+    public function getShebaTransaction()
+    {
+        $detail = $this->paymentDetails->first();
+        $transaction = new ShebaTransaction();
+        $transaction->setTransactionId($this->transaction_id)
+            ->setGateway($detail ? $detail->method : null)
+            ->setDetails(json_decode($this->transaction_details));
+        return $transaction;
     }
 }
