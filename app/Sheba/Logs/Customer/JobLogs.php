@@ -65,37 +65,41 @@ class JobLogs
                 'status' => 'order_confirmed',
                 'log' => 'Order has been confirmed.',
             ]);
-            if ($resource) {
-                array_push($logs, [
-                    'status' => 'expert_assigned',
-                    'log' => 'An expert has been assigned to your order.',
-                    'user' => array(
-                        'name' => $resource->profile->name,
-                        'picture' => $resource->profile->pro_pic,
-                        'mobile' => $resource->profile->mobile,
-                        'type' => 'resource',
-                    )
-                ]);
+
+            if($logistic_uses) {
+                if( !$rider) {
+                    array_push($logs, [
+                        'status' => 'rider_searching',
+                        'log' => 'We are currently searching for a rider.',
+                    ]);
+
+                } else  {
+                    array_push($logs, [
+                        'status' => 'rider_assigned',
+                        'log' => 'A rider has been assigned to your order.',
+                        'user' =>  [
+                            'name' => $rider->user->profile->name,
+                            'mobile' => $rider->user->profile->mobile,
+                            'picture' => $rider->user->profile->pro_pic,
+                            'type' => $rider->salary_type
+                        ]
+                    ]);
+                }
+            } else {
+                if ($resource) {
+                    array_push($logs, [
+                        'status' => 'expert_assigned',
+                        'log' => 'An expert has been assigned to your order.',
+                        'user' => array(
+                            'name' => $resource->profile->name,
+                            'picture' => $resource->profile->pro_pic,
+                            'mobile' => $resource->profile->mobile,
+                            'type' => 'resource',
+                        )
+                    ]);
+                }
             }
 
-            if($logistic_uses && !$rider) {
-                array_push($logs, [
-                    'status' => 'rider_searching',
-                    'log' => 'We are currently searching for a rider.',
-                ]);
-
-            } else if($logistic_uses && $rider) {
-                array_push($logs, [
-                    'status' => 'rider_assigned',
-                    'log' => 'A rider has been assigned to your order.',
-                    'rider' =>  [
-                        'name' => $rider->user->profile->name,
-                        'mobile' => $rider->user->profile->mobile,
-                        'pro_pic' => $rider->user->profile->pro_pic,
-                        'salary_type' => $rider->salary_type
-                    ]
-                ]);
-            }
         }
 
         if ($work_log = $this->formatWorkLog()) array_push($logs, $work_log);

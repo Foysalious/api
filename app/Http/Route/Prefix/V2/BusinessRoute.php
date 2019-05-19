@@ -52,6 +52,10 @@ class BusinessRoute
                         $api->get('/', 'B2b\FormTemplateController@get');
                     });
                 });
+
+                $api->group(['prefix' => 'inspections'], function ($api) {
+                    $api->get('/', 'B2b\InspectionController@index');
+                });
             });
         });
         $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {

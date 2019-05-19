@@ -1,16 +1,30 @@
-<?php namespace App\Repositories\Business;
+<?php
 
-use App\Models\FormTemplate;
+
+namespace App\Repositories\Business;
+
+
+use App\Models\FormTemplateItem;
 use App\Repositories\BaseRepository;
-use App\Repositories\Interfaces\FormTemplateRepositoryInterface;
+use App\Repositories\Interfaces\FormTemplateItemRepositoryInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
-class FormTemplateRepository extends BaseRepository implements FormTemplateRepositoryInterface
+class FormTemplateItemRepository extends BaseRepository implements FormTemplateItemRepositoryInterface
 {
-    public function __construct(FormTemplate $formTemplate)
+
+    public function __construct(FormTemplateItem $formTemplateItem)
     {
-        parent::__construct($formTemplate);
+        parent::__construct($formTemplateItem);
+    }
+
+    /**
+     * @param array $attributes
+     * @return Model
+     */
+    public function create(array $attributes)
+    {
+        // TODO: Implement create() method.
     }
 
     /**

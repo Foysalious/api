@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
 use DB;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
-use Sheba\Checkout\DeliveryCharge;
+use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Logs\Customer\JobLogs;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
 use Sheba\Payment\ShebaPayment;
@@ -22,13 +22,11 @@ class JobController extends Controller
 {
     private $job_statuses_show;
     private $job_statuses;
-    protected $deliveryCharge;
 
     public function __construct()
     {
         $this->job_statuses_show = config('constants.JOB_STATUSES_SHOW');
         $this->job_statuses = config('constants.JOB_STATUSES');
-        $this->deliveryCharge = new DeliveryCharge();
     }
 
     public function index(Request $request)
@@ -196,10 +194,10 @@ class JobController extends Controller
             $partnerOrder->calculate(true);
 
             /**  This block of code contains dummy information, will be updated later */
-            $this->deliveryCharge->setCategory($job->category);
-            $orignal_delivery_charge = $this->deliveryCharge->setCategoryPartnerPivot($partnerOrder->partner->categories->first()->pivot)->get();
-            $discounted_delivery_charge = $orignal_delivery_charge > 20 ? $orignal_delivery_charge - 10 : 0;
-            $delivery_charge = $discounted_delivery_charge;
+            $orignal_delivery_charge = $job->deliveryPrice;
+            $delivery_discount = 0;
+            if(isset($job->otherDiscountsByType[DiscountTypes::DELIVERY]))
+                $delivery_discount = $job->otherDiscountsByType[DiscountTypes::DELIVERY];
 
             $bill = collect();
             $bill['total'] = (double)$partnerOrder->totalPrice;
@@ -216,8 +214,8 @@ class JobController extends Controller
             $bill['payment_method'] = $this->formatPaymentMethod($partnerOrder->payment_method);
             $bill['status'] = $job->status;
             $bill['is_on_premise'] = (int)$job->isOnPremise();
-            $bill['delivery_charge'] = $delivery_charge;
-            $bill['discounted_delivery_charge'] = $discounted_delivery_charge;
+            $bill['delivery_charge'] = $orignal_delivery_charge;
+            $bill['delivery_discount'] = $delivery_discount;
             $bill['invoice'] = $job->partnerOrder->invoice;
             $bill['version'] = $job->partnerOrder->getVersion();
             return api_response($request, $bill, 200, ['bill' => $bill]);

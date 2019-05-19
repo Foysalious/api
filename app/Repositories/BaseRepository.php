@@ -35,9 +35,8 @@ abstract class BaseRepository implements BaseRepositoryInterface
      */
     public function create(array $attributes)
     {
-        $model = $this->model->create($this->withBothModificationFields($attributes));
-        $model->refresh();
-        return $model;
+        $model = $this->model->create($this->withCreateModificationField($attributes));
+        return $model::find($model->id);
     }
 
     /**
