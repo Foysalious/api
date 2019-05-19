@@ -2,12 +2,18 @@
 
 use App\Models\Order;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Sheba\Helpers\TimeFrame;
 
 class OrderRepository extends BaseRepository
 {
-    public function update(Order $order, $data)
+    /**
+     * @param Model $order
+     * @param array $data
+     * @return Model|void
+     */
+    public function update(Model $order, array $data)
     {
         $order->update($this->withUpdateModificationField($data));
     }
@@ -22,17 +28,17 @@ class OrderRepository extends BaseRepository
             ->whereBetween('created_at', $time_frame->getArray())->get();*/
 
         return Order::with([
-            'customer' => function($q) {
-                $q->select('customers.id', 'customers.created_at', 'profile_id')->with(['profile' => function($q1) {
+            'customer' => function ($q) {
+                $q->select('customers.id', 'customers.created_at', 'profile_id')->with(['profile' => function ($q1) {
                     $q1->select('mobile');
                 }]);
             },
-            'jobs' => function($q2) {
+            'jobs' => function ($q2) {
                 $q2->select('jobs.id');
             }
         ])->select('customer_id', 'location_id', 'sales_channel', 'orders.created_at', 'orders.id')
-        ->whereBetween('created_at', $time_frame->getArray())
-        ->get();
+            ->whereBetween('created_at', $time_frame->getArray())
+            ->get();
     }
 
     public function countUniqueCustomerFromOrdersOf(TimeFrame $time_frame)
@@ -71,19 +77,19 @@ class OrderRepository extends BaseRepository
     public function getRetentionData(TimeFrame $time_frame)
     {
         return Order::with([
-            'customer' => function($q) {
+            'customer' => function ($q) {
                 $q->select('customers.id', 'customers.created_at');
             },
-            'partnerOrders' =>function($q2) {
+            'partnerOrders' => function ($q2) {
                 $q2->select('partner_orders.id', 'partner_orders.order_id', 'partner_orders.cancelled_at')->with([
-                    'jobs' => function($q3) {
+                    'jobs' => function ($q3) {
                         $q3->select('jobs.id', 'jobs.status', 'jobs.partner_order_id', 'jobs.service_unit_price', 'jobs.service_quantity', 'jobs.discount')->with([
-                                'jobServices' => function($q4) {
-                                    $q4->select('job_service.job_id', 'job_service.unit_price', 'job_service.quantity', 'job_service.discount');
-                                },
-                                'usedMaterials' => function($q5) {
-                                    $q5->select('job_material.job_id', 'job_material.material_price');
-                                }
+                            'jobServices' => function ($q4) {
+                                $q4->select('job_service.job_id', 'job_service.unit_price', 'job_service.quantity', 'job_service.discount');
+                            },
+                            'usedMaterials' => function ($q5) {
+                                $q5->select('job_material.job_id', 'job_material.material_price');
+                            }
                         ]);
                     }
                 ]);
