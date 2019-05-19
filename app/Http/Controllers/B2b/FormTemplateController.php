@@ -26,7 +26,7 @@ class FormTemplateController extends Controller
                 $template = [
                     'id' => $template->id,
                     'title' => $template->title,
-                    'long_description' => $template->long_description,
+                    'short_description' => $template->short_description,
                 ];
                 array_push($templates, $template);
             }
@@ -82,7 +82,7 @@ class FormTemplateController extends Controller
             $data = [
                 'id' => $form_template->id,
                 'title' => $form_template->title,
-                'short_description' => $form_template->short_description,
+                'long_description' => $form_template->long_description,
                 'items' => $items
             ];
             return api_response($request, null, 200, ['form_template' => $data]);
