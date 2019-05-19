@@ -3,6 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Repositories\Interfaces\FormTemplateItemRepositoryInterface;
 use App\Repositories\Interfaces\FormTemplateRepositoryInterface;
+use Illuminate\Validation\ValidationException;
 use Sheba\Business\FormTemplate\Creator;
 use Sheba\ModificationFields;
 use App\Models\FormTemplate;
@@ -22,10 +23,18 @@ class FormTemplateController extends Controller
                 'variables' => 'required|string'
             ]);
             $this->setModifier($request->manager_member);
-            $form_template =  $creator->setData($request->all())->setOwner($request->business)->create();
-            return api_response($request, null, 200, ['id' => 1]);
+            $form_template = $creator->setData($request->all())->setOwner($request->business)->create();
+            return api_response($request, null, 200, ['id' => $form_template->id]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all()]);
+            $sentry->captureException($e);
             return api_response($request, null, 500);
         }
     }

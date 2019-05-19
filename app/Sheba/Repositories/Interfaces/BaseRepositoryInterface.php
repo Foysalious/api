@@ -1,4 +1,4 @@
-<?php namespace App\Repositories\Interfaces;
+<?php namespace Sheba\Repositories\Interfaces;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -10,6 +10,8 @@ interface BaseRepositoryInterface
      * @return Model
      */
     public function create(array $attributes);
+
+    public function createMany(array $attributes);
 
     /**
      * @param $id

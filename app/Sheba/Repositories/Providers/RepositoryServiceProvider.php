@@ -1,10 +1,11 @@
-<?php namespace App\Repositories\Providers;
+<?php namespace Sheba\Repositories\Providers;
 
-use App\Repositories\Business\FormTemplateItemRepository;
-use App\Repositories\Business\FormTemplateRepository;
-use App\Repositories\Interfaces\FormTemplateItemRepositoryInterface;
-use App\Repositories\Interfaces\FormTemplateRepositoryInterface;
+
 use Illuminate\Support\ServiceProvider;
+use Sheba\Repositories\Business\FormTemplateItemRepository;
+use Sheba\Repositories\Business\FormTemplateRepository;
+use Sheba\Repositories\Interfaces\FormTemplateItemRepositoryInterface;
+use Sheba\Repositories\Interfaces\FormTemplateRepositoryInterface;
 
 
 class RepositoryServiceProvider extends ServiceProvider

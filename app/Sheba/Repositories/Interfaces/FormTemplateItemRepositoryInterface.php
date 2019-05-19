@@ -1,4 +1,4 @@
-<?php namespace App\Repositories\Interfaces;
+<?php namespace Sheba\Repositories\Interfaces;
 
 
 interface FormTemplateItemRepositoryInterface extends BaseRepositoryInterface
