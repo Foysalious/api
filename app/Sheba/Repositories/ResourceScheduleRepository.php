@@ -84,11 +84,6 @@ class ResourceScheduleRepository extends BaseRepository
         $this->update($job->resourceSchedule, $data);
     }
 
-    public function update(ResourceSchedule $resource_schedule, $data)
-    {
-        $resource_schedule->update($this->withUpdateModificationField($data));
-    }
-
     public function destroy(ResourceSchedule $resource_schedule)
     {
         $resource_schedule->delete();

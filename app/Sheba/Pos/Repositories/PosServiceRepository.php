@@ -24,22 +24,7 @@ class PosServiceRepository extends BaseRepository
         return PartnerPosService::create($this->withCreateModificationField($data));
     }
 
-    /**
-     * @param PartnerPosService $service
-     * @param $data
-     * @return bool|int
-     */
-    public function update(PartnerPosService $service, $data)
-    {
-        return $service->update($this->withUpdateModificationField($data));
-    }
-
-    /**
-     * @param PartnerPosService $service
-     * @return bool|null
-     * @throws Exception
-     */
-    public function delete(PartnerPosService $service)
+    public function delete($service)
     {
         return $service->delete();
     }

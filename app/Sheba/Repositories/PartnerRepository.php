@@ -29,11 +29,6 @@ class PartnerRepository extends BaseRepository
         }
     }
 
-    public function update(Partner $partner, $data)
-    {
-        $partner->update($this->withUpdateModificationField($data));
-    }
-
     public function saveStatusChangeLog(Partner $partner, $data)
     {
         $partner->statusChangeLogs()->save(new PartnerStatusChangeLog($this->withCreateModificationField($data)));

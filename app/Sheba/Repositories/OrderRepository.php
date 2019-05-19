@@ -8,15 +8,6 @@ use Sheba\Helpers\TimeFrame;
 
 class OrderRepository extends BaseRepository
 {
-    /**
-     * @param Model $order
-     * @param array $data
-     * @return Model|void
-     */
-    public function update(Model $order, array $data)
-    {
-        $order->update($this->withUpdateModificationField($data));
-    }
 
     /**
      * @param TimeFrame $time_frame
