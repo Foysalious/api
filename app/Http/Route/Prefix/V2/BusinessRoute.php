@@ -53,6 +53,8 @@ class BusinessRoute
                     });
                 });
 
+
+                $api->get('individual-inspections/', 'B2b\InspectionController@individualInspectionHistory');
                 $api->group(['prefix' => 'inspections'], function ($api) {
                     $api->get('/', 'B2b\InspectionController@index');
                 });
