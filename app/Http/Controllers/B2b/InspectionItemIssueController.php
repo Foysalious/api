@@ -22,7 +22,8 @@ class InspectionItemIssueController extends Controller
             $inspection_item_issues = InspectionItemIssue::with('inspectionItem.inspection.vehicle.basicInformation')->orderBy('id', 'DESC')->get();
             $issue_lists = [];
             foreach ($inspection_item_issues as $issue) {
-                $vehicle = $issue->inspectionItem->inspection->vehicle;
+                $inspection = $issue->inspectionItem->inspection;
+                $vehicle = $inspection->vehicle;
                 $basic_information = $vehicle->basicInformations;
                 $issue = [
                     'id' => $issue->id,
@@ -59,14 +60,20 @@ class InspectionItemIssueController extends Controller
             $issue = InspectionItemIssue::find((int)$issue);
             if (!$issue) return api_response($request, null, 404);
             $issue_lists = [];
-            $vehicle = $issue->inspectionItem->inspection->vehicle;
+            $inspection = $issue->inspectionItem->inspection;
+            $vehicle = $inspection->vehicle;
             $basic_information = $vehicle->basicInformations;
+            $driver = $vehicle->driver;
             $issue = [
                 'title' => $issue->inspectionItem->title,
                 'short_description' => $issue->inspectionItem->short_description,
                 'long_description' => $issue->inspectionItem->long_description,
                 'status' => $issue->status,
                 'comment' => $issue->comment,
+                'inspector' => $inspection->member->profile->name,
+                'inspection_form' => $inspection->formTemplate ? $inspection->formTemplate->title : null,
+                'submitted' => Carbon::parse($inspection->next_start_date)->format('j, M, Y h:i:a'),
+
                 'vehicle' => [
                     'id' => $vehicle->id,
                     'vehicle_model' => $basic_information->model_name,
@@ -74,6 +81,7 @@ class InspectionItemIssueController extends Controller
                     'status' => $vehicle->status,
                     'vehicle_type' => $basic_information->type,
                     'assigned_to' => $vehicle->businessDepartment ? $vehicle->businessDepartment->name : null,
+                    'current_driver' => $driver ? $vehicle->driver->profile->name : 'N/S',
                 ],
             ];
 
