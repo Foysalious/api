@@ -63,7 +63,8 @@ class BusinessRoute
                 });
 
 
-                $api->get('individual-inspections/', 'B2b\InspectionController@individualInspectionHistory');
+                $api->get('individual-inspection/', 'B2b\InspectionController@individualInspectionHistory');
+                $api->get('individual-schedule-inspection/', 'B2b\InspectionController@individualInspectionScheduleList');
                 $api->get('ongoing-inspections/', 'B2b\InspectionController@ongoingInspections');
                 $api->group(['prefix' => 'inspections'], function ($api) {
                     $api->get('/', 'B2b\InspectionController@index');

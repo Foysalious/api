@@ -66,7 +66,7 @@ class InspectionController extends Controller
 
             $inspection_items = $inspection->inspectionItems()->where('inspection_id', $inspection->id)->select('id', 'title', 'result')->get();
             $items = [];
-            foreach ($inspection_items as $inspection_item){
+            foreach ($inspection_items as $inspection_item) {
                 $item = [
                     'id' => $inspection_item->id,
                     'title' => $inspection_item->title,
@@ -176,6 +176,54 @@ class InspectionController extends Controller
             if (count($inspection_lists) > 0) return api_response($request, $inspection_lists, 200, ['inspection_lists' => $inspection_lists]);
             else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function individualInspectionScheduleList($business, Request $request)
+    {
+        try {
+            $business = $request->business;
+            $member = $request->manager_member;
+            $this->setModifier($member);
+
+            $inspections = Inspection::with('formTemplate', 'vehicle.basicInformations')
+                ->where('business_id', $business->id)
+                ->where('member_id', $member->id)
+                ->where(function ($query) {
+                    $query->where('status', 'open')
+                        ->orWhere('status', 'process');
+                })
+                ->orderBy('id', 'DESC')->get();
+            if (count($inspections) > 0) {
+                $inspection_lists = [];
+                foreach ($inspections as $inspection) {
+                    $vehicle = $inspection->vehicle;
+                    $basic_information = $vehicle->basicInformations;
+                    $inspection = [
+                        'id' => $inspection->id,
+                        'inspection_form' => $inspection->formTemplate ? $inspection->formTemplate->title : null,
+                        'inspector' => $member->profile->name,
+                        'schedule' => Carbon::parse($inspection->start_date)->format('j M'),
+                        'vehicle' => [
+                            'id' => $vehicle->id,
+                            'vehicle_model' => $basic_information->model_name,
+                            'model_year' => Carbon::parse($basic_information->model_year)->format('Y'),
+                            'status' => $vehicle->status,
+                            'vehicle_type' => $basic_information->type,
+                            'assigned_to' => $vehicle->businessDepartment ? $vehicle->businessDepartment->name : null,
+                        ],
+                    ];
+                    array_push($inspection_lists, $inspection);
+                }
+                if (count($inspection_lists) > 0) return api_response($request, $inspection_lists, 200, ['inspection_lists' => $inspection_lists]);
+                else  return api_response($request, null, 404);
+            } else {
+                return api_response($request, null, 404);
+            }
+        } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
