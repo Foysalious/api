@@ -52,6 +52,7 @@ class BusinessRoute
                         $api->get('/', 'B2b\FormTemplateController@get');
                         $api->post('/', 'B2b\FormTemplateController@edit');
                         $api->group(['prefix' => 'items'], function ($api) {
+                            $api->post('/', 'B2b\FormTemplateItemController@store');
                             $api->group(['prefix' => '{item}'], function ($api) {
                                 $api->post('/', 'B2b\FormTemplateItemController@edit');
                             });

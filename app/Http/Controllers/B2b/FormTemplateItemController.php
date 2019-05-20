@@ -42,4 +42,38 @@ class FormTemplateItemController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function delete($business, $form_template, $item, Request $request, FormTemplateItemRepository $form_template_item_repository)
+    {
+        try {
+            $this->setModifier($request->manager_member);
+            $form_template_item = $form_template_item_repository->delete($item);
+            return api_response($request, $form_template, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function store($business, $form_template, Request $request, FormTemplateItemRepository $form_template_item_repository)
+    {
+        try {
+            $this->setModifier($request->manager_member);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }

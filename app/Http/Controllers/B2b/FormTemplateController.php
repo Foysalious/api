@@ -74,7 +74,7 @@ class FormTemplateController extends Controller
                     'id' => $item->id,
                     'title' => $item->title,
                     'short_description' => $item->short_description,
-                    'instruction' => $item->long_description,
+                    'instructions' => $item->long_description,
                     'type' => $item->input_type,
                     'is_required' => (int)json_decode($item->variables)->is_required,
                 ]);
