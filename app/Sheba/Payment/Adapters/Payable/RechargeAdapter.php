@@ -20,7 +20,7 @@ class RechargeAdapter implements PayableAdapter
         $payable = new Payable();
         $payable->type = 'wallet_recharge';
         $payable->user_id = $this->user->id;
-        $payable->user_type = "App\\Models\\Customer";
+        $payable->user_type = get_class($this->user);
         $payable->amount = (double)$this->amount;
         $payable->completion_type = 'wallet_recharge';
         $payable->success_url = config('sheba.front_url') . '/profile/credit';

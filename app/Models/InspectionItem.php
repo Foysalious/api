@@ -11,4 +11,9 @@ class InspectionItem extends Model
     {
         return $this->belongsTo(Inspection::class);
     }
+
+    public function inspectionItemIssues()
+    {
+        return $this->hasMany(InspectionItemIssue::class);
+    }
 }
