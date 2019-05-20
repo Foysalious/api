@@ -5,6 +5,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\QueryException;
 use Sheba\Repositories\Interfaces\FormTemplateItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\FormTemplateRepositoryInterface;
+use DB;
 
 class Creator
 {
@@ -38,10 +39,12 @@ class Creator
         $this->makeFormTemplateData();
         $form_template = null;
         try {
-            /** @var FormTemplate $form_template */
-            $form_template = $this->formTemplateRepository->create($this->formTemplateData);
-            $this->makeFormTemplateItemData($form_template);
-            $this->formTemplateItemRepository->createMany($this->formTemplateItemData);
+            DB::transaction(function () {
+                /** @var FormTemplate $form_template */
+                $form_template = $this->formTemplateRepository->create($this->formTemplateData);
+                $this->makeFormTemplateItemData($form_template);
+                $this->formTemplateItemRepository->createMany($this->formTemplateItemData);
+            });
         } catch (QueryException $e) {
             app('sentry')->captureException($e);
             throw  $e;

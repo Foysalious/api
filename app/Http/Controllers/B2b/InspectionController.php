@@ -3,6 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Models\Inspection;
 use Carbon\Carbon;
+use Illuminate\Validation\ValidationException;
 use Sheba\Business\Inspection\Creator;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
@@ -272,6 +273,13 @@ class InspectionController extends Controller
             $this->setModifier($request->manager_member);
             $request->merge(['member_id' => $request->manager_member->id]);
             $creator->setData($request->all())->setBusiness($request->business)->create();
+            return api_response($request, null, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
