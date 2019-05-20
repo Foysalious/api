@@ -58,7 +58,14 @@ class BusinessRoute
                                 $api->delete('/', 'B2b\FormTemplateItemController@destroy');
                             });
                         });
+                    });
+                });
 
+                $api->group(['prefix' => 'inspections'], function ($api) {
+                    $api->post('/', 'B2b\InspectionController@store');
+                    $api->group(['prefix' => '{inspection}'], function ($api) {
+                        $api->post('/', 'B2b\InspectionController@edit');
+                        $api->delete('/', 'B2b\InspectionController@destroy');
                     });
                 });
 

@@ -8,7 +8,7 @@ use Illuminate\Database\QueryException;
 use Sheba\Repositories\Business\FormTemplateRepository;
 use Sheba\Repositories\Business\InspectionItemRepository;
 use Sheba\Repositories\Business\InspectionRepository;
-
+use DB;
 class Creator
 {
     private $inspectionRepository;
@@ -45,10 +45,12 @@ class Creator
         $this->makeInspectionData();
         $inspection = null;
         try {
-            /** @var Inspection $inspection */
-            $inspection = $this->inspectionRepository->create($this->inspectionData);
-            $this->makeInspectionItemData($inspection);
-            $this->inspectionItemRepository->createMany($this->inspectionItemData);
+            DB::transaction(function () {
+                /** @var Inspection $inspection */
+                $inspection = $this->inspectionRepository->create($this->inspectionData);
+                $this->makeInspectionItemData($inspection);
+                $this->inspectionItemRepository->createMany($this->inspectionItemData);
+            });
         } catch (QueryException $e) {
             app('sentry')->captureException($e);
             throw  $e;
@@ -58,14 +60,16 @@ class Creator
 
     private function makeInspectionData()
     {
+        $this->calculateDateValues();
         $this->inspectionData = [
-            'title' => $this->data['title'],
-            'short_description' => $this->data['short_description'],
-            'long_description' => $this->data['long_description'],
             'vehicle_id' => $this->data['vehicle_id'],
             'member_id' => $this->data['member_id'],
             'business_id' => $this->business->id,
-            'is_published' => 1
+            'is_published' => 1,
+            'form_template_id' => $this->data['form_template_id'],
+            'start_date' => $this->data['start_date'],
+            'next_start_date' => $this->data['next_start_date'],
+            'date_values' => $this->data['date_values'],
         ];
     }
 
@@ -84,16 +88,40 @@ class Creator
         }
     }
 
-    private function calculateStartDate()
+    private function calculateDateValues()
     {
+        $this->data['date_values'] = $this->data['next_start_date'] = null;
         if ($this->data['schedule_type'] == 'monthly') {
             $date = date('Y') . '-' . date('m') . '-' . $this->data['schedule_type_value'] . ' ' . $this->data['schedule_time'];
-            $this->data['start_date'] = Carbon::parse($date);
-        } elseif ($this->data['schedule_type'] == 'one_way') {
+            $date = Carbon::parse($date);
+            $this->data['start_date'] = Carbon::now() > $date ? $date->addDays(30) : $date;
+            $this->data['next_start_date'] = $date->copy()->addDays(30);
+        } elseif ($this->data['schedule_type'] == 'one_time') {
             $date = $this->data['schedule_type_value'] . ' ' . $this->data['schedule_time'];
             $this->data['start_date'] = Carbon::parse($date);
         } elseif ($this->data['schedule_type'] == 'weekly') {
-            $this->data['date_values'] = $this->data['schedule_type_value'];
+//            $days = json_decode($this->data['schedule_type_value']);
+//            $weeks = constants('WEEKS');
+//            $final = collect();
+//            foreach ($days as $day) {
+//                $final->push(['value' => $weeks[$day], 'day' => $day]);
+//            }
+//            $final = $final->sortBy('value');
+//            $current_day = date('l');
+//            $current_day_value = $weeks[$current_day];
+//            $bigger_days = $final->filter(function ($day) use ($current_day_value) {
+//                return $day['value'] >= $current_day_value;
+//            })->sortBy('value');
+//            if ($bigger_days->count() > 0) {
+//                dd($bigger_days);
+//                $this->data['start_date'] = Carbon::parse('next ' . $bigger_days->first()['day']);
+//                $this->data['next_start_date'] = Carbon::parse('next ' . next($current)['day']);
+//            } else {
+//                $first = $final->getIterator();
+//                $this->data['start_date'] = Carbon::parse('next ' . $final->first()['day']);
+//                $this->data['next_start_date'] = Carbon::parse('next ' . next($first)['day']);
+//            }
+//            $this->data['date_values'] = $this->data['schedule_type_value'];
         }
     }
 }
