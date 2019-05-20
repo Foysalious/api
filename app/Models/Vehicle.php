@@ -41,6 +41,11 @@ class Vehicle extends Model
         return $this->hasOne(BusinessTrip::class);
     }
 
+    public function inspections()
+    {
+        return $this->hasMany(Inspection::class);
+    }
+
     public function scopeStatus($query, $status)
     {
         return $query->where('status', $status);

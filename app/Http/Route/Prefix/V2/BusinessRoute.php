@@ -52,8 +52,10 @@ class BusinessRoute
                         $api->get('/', 'B2b\FormTemplateController@get');
                         $api->post('/', 'B2b\FormTemplateController@edit');
                         $api->group(['prefix' => 'items'], function ($api) {
+                            $api->post('/', 'B2b\FormTemplateItemController@store');
                             $api->group(['prefix' => '{item}'], function ($api) {
-                                $api->post('/', 'B2b\FormTemplateController@itemEdit');
+                                $api->post('/', 'B2b\FormTemplateItemController@edit');
+                                $api->delete('/', 'B2b\FormTemplateItemController@destroy');
                             });
                         });
 
@@ -61,9 +63,15 @@ class BusinessRoute
                 });
 
 
-                $api->get('individual-inspections/', 'B2b\InspectionController@individualInspectionHistory');
+                $api->get('individual-inspection/', 'B2b\InspectionController@individualInspectionHistory');
+                $api->get('individual-schedule-inspection/', 'B2b\InspectionController@individualInspectionScheduleList');
+                $api->get('ongoing-inspections/', 'B2b\InspectionController@ongoingInspections');
+
+                $api->get('inspection-issue/', 'B2b\InspectionItemIssueController@index');
+
                 $api->group(['prefix' => 'inspections'], function ($api) {
                     $api->get('/', 'B2b\InspectionController@index');
+                    $api->get('/{inspection}', 'B2b\InspectionController@show');
                 });
             });
         });

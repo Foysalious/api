@@ -44,7 +44,7 @@ class FormTemplateController extends Controller
             $this->validate($request, [
                 'title' => 'required|string',
                 'short_description' => 'required',
-                'variables' => 'required|string'
+                'variables' => 'required|string',
             ]);
             $this->setModifier($request->manager_member);
             $form_template = $creator->setData($request->all())->setOwner($request->business)->create();
@@ -74,7 +74,7 @@ class FormTemplateController extends Controller
                     'id' => $item->id,
                     'title' => $item->title,
                     'short_description' => $item->short_description,
-                    'instruction' => $item->long_description,
+                    'instructions' => $item->long_description,
                     'type' => $item->input_type,
                     'is_required' => (int)json_decode($item->variables)->is_required,
                 ]);
@@ -83,6 +83,7 @@ class FormTemplateController extends Controller
                 'id' => $form_template->id,
                 'title' => $form_template->title,
                 'short_description' => $form_template->short_description,
+                'created_at' => $form_template->created_at->toDateTimeString(),
                 'items' => $items,
                 'inspections' => [
                     [
@@ -110,31 +111,13 @@ class FormTemplateController extends Controller
     public function edit($business, $form_template, Request $request, FormTemplateRepositoryInterface $formTemplateRepository)
     {
         try {
-            $business = $request->business;
-            $member = $request->manager_member;
-            $this->setModifier($member);
-            $form_templates = FormTemplate::where('owner_id', $business->id)->published()->orderBy('id', 'DESC')->get();
-            $templates = [];
-            foreach ($form_templates as $template) {
-
-                $template = [
-                    'id' => $template->id,
-                    'title' => $template->title,
-                    'long_description' => $template->long_description,
-                ];
-                array_push($templates, $template);
-            }
-            if (count($templates) > 0) return api_response($request, $templates, 200, ['templates' => $templates]);
-            else  return api_response($request, null, 404);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
-    public function itemEdit($business, $form_template,$item,Request $request){
-        try {
-           return api_response($request, null, 200);
+            $this->setModifier($request->manager_member);
+            $form_template = $formTemplateRepository->find($form_template);
+            $formTemplateRepository->update($form_template, [
+                'title' => $request->title,
+                'short_description' => $request->short_description,
+            ]);
+            return api_response($request, $form_template, 200);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

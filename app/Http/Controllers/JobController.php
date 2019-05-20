@@ -193,7 +193,6 @@ class JobController extends Controller
             $partnerOrder = $job->partnerOrder;
             $partnerOrder->calculate(true);
 
-            /**  This block of code contains dummy information, will be updated later */
             $orignal_delivery_charge = $job->deliveryPrice;
             $delivery_discount = 0;
             if(isset($job->otherDiscountsByType[DiscountTypes::DELIVERY]))
