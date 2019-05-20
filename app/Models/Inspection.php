@@ -16,4 +16,14 @@ class Inspection extends Model
     {
         return $this->belongsTo(FormTemplate::class, 'form_template_id');
     }
+
+    public function vehicle()
+    {
+        return $this->belongsTo(Vehicle::class);
+    }
+
+    public function inspectionItems()
+    {
+        return $this->hasMany(InspectionItem::class);
+    }
 }
