@@ -20,6 +20,7 @@ use Dingo\Api\Routing\Helpers;
 use Sheba\Checkout\DeliveryCharge;
 use Sheba\Checkout\Partners\PartnerUnavailabilityReasons;
 use Sheba\Checkout\Requests\PartnerListRequest;
+use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
 use Sheba\Location\Distance\DistanceStrategy;
@@ -364,9 +365,12 @@ class PartnerList
         array_add($partner, 'breakdown', $services);
         $total_service_price['discount'] = (int)$total_service_price['discount'];
 
-        /**  This block of code contains dummy information, will be updated later */
         $original_delivery_charge = $this->deliveryCharge->setCategoryPartnerPivot($category_pivot)->get();
-        $discounted_delivery_charge = $original_delivery_charge > 20 ? $original_delivery_charge - 10 : 0;
+        $discount = $this->discountRepo->findValidForAgainst(DiscountTypes::DELIVERY, $this->partnerListRequest->selectedCategory->id, $partner);
+        $discount_amount = 0;
+        if($discount)
+            $discount_amount =  $discount->getApplicableAmount($original_delivery_charge);
+        $discounted_delivery_charge = $original_delivery_charge - $discount_amount;
         $delivery_charge = $discounted_delivery_charge;
 
         $total_service_price['discounted_price'] += $delivery_charge;
