@@ -20,7 +20,6 @@ class InspectionItemIssueController extends Controller
             $member = $request->manager_member;
             $this->setModifier($member);
             $inspection_item_issues = InspectionItemIssue::with('inspectionItem.inspection.vehicle.basicInformation')->orderBy('id', 'DESC')->get();
-            dd($inspection_item_issues);
             $issue_lists = [];
             foreach ($inspection_item_issues as $issue){
                 $vehicle = $issue->inspectionItem->inspection->vehicle;
@@ -46,7 +45,6 @@ class InspectionItemIssueController extends Controller
             if (count($issue_lists) > 0) return api_response($request, $issue_lists, 200, ['issue_lists' => $issue_lists]);
             else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
