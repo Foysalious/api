@@ -19,12 +19,12 @@ class InspectionController extends Controller
             $member = $request->manager_member;
             $this->setModifier($member);
 
-            $inspections = Inspection::with('formTemplate')->where('business_id', $business->id)->orderBy('id', 'DESC')->get();
-            #dd($inspections);
+            $inspections = Inspection::with('formTemplate')
+                ->where('business_id', $business->id)
+                ->where('status', 'closed')
+                ->orderBy('id', 'DESC')->get();
             $inspection_lists = [];
             foreach ($inspections as $inspection) {
-                #dd($inspection->vehicle->businessDepartment);
-                #dd($inspection->inspectionItems()->where('input_type', 'radio')->where('result', 'LIKE', '%failed%')->count());
                 $vehicle = $inspection->vehicle;
                 $basic_information = $vehicle->basicInformations;
                 $inspection = [
@@ -112,8 +112,10 @@ class InspectionController extends Controller
             $member = $request->manager_member;
             $this->setModifier($member);
 
-            $inspections = Inspection::with('formTemplate')->where('business_id', $business->id)->orderBy('id', 'DESC')->get();
-
+            $inspections = Inspection::with('formTemplate')
+                ->where('business_id', $business->id)
+                ->where('status', 'process')
+                ->orderBy('id', 'DESC')->get();
 
             /*if ($request->has('status')) {
                 $members->where(function ($query) use ($request) {
@@ -181,7 +183,7 @@ class InspectionController extends Controller
         }
     }
 
-    public function individualInspectionScheduleList($business, Request $request)
+    public function inspectionScheduleList($business, Request $request)
     {
         try {
             $business = $request->business;
@@ -190,11 +192,11 @@ class InspectionController extends Controller
 
             $inspections = Inspection::with('formTemplate', 'vehicle.basicInformations')
                 ->where('business_id', $business->id)
-                ->where('member_id', $member->id)
-                ->where(function ($query) {
+                /*->where(function ($query) {
                     $query->where('status', 'open')
                         ->orWhere('status', 'process');
-                })
+                })*/
+                ->where('status', 'open')
                 ->orderBy('id', 'DESC')->get();
             if (count($inspections) > 0) {
                 $inspection_lists = [];

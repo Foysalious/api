@@ -20,7 +20,6 @@ class InspectionItemIssueController extends Controller
             $member = $request->manager_member;
             $this->setModifier($member);
             $inspection_item_issues = InspectionItemIssue::with('inspectionItem.inspection.vehicle.basicInformation')->orderBy('id', 'DESC')->get();
-            #dd($inspection_item_issues);
             $issue_lists = [];
             foreach ($inspection_item_issues as $issue){
                 $vehicle = $issue->inspectionItem->inspection->vehicle;
