@@ -12,6 +12,7 @@ use App\Models\Partner;
 use App\Models\PartnerServiceDiscount;
 use App\Models\PartnerServiceSurcharge;
 use App\Models\Service;
+use Sheba\Dal\Discount\DiscountRepository;
 use App\Repositories\PartnerServiceRepository;
 use App\Sheba\Partner\PartnerAvailable;
 use Carbon\Carbon;
@@ -57,6 +58,9 @@ class PartnerList
     /** @var PartnerListRequest */
     protected $partnerListRequest;
     protected $deliveryCharge;
+    /** @var DiscountRepository */
+    private $discountRepo;
+
 
     use ModificationFields;
 
@@ -74,6 +78,7 @@ class PartnerList
             'options' => [],
             'handyman' => []
         ];
+        $this->discountRepo = app(DiscountRepository::class);
     }
 
     public function setPartnerListRequest(PartnerListRequest $partner_list_request)
@@ -366,7 +371,7 @@ class PartnerList
         $total_service_price['discount'] = (int)$total_service_price['discount'];
 
         $original_delivery_charge = $this->deliveryCharge->setCategoryPartnerPivot($category_pivot)->get();
-        $discount = $this->discountRepo->findValidForAgainst(DiscountTypes::DELIVERY, $this->partnerListRequest->selectedCategory->id, $partner);
+        $discount = $this->discountRepo->findValidForAgainst(DiscountTypes::DELIVERY, $this->partnerListRequest->selectedCategory, $partner);
         $discount_amount = 0;
         if($discount)
             $discount_amount =  $discount->getApplicableAmount($original_delivery_charge);
