@@ -85,7 +85,7 @@ class BaseRepository implements BaseRepositoryInterface
 
     public function delete($id)
     {
-       return $this->model->delete();
+       return ($this->model)::find($id)->delete();
     }
 
     protected function withRequestIdentificationData($data)

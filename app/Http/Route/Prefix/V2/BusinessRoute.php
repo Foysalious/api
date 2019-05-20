@@ -55,6 +55,7 @@ class BusinessRoute
                             $api->post('/', 'B2b\FormTemplateItemController@store');
                             $api->group(['prefix' => '{item}'], function ($api) {
                                 $api->post('/', 'B2b\FormTemplateItemController@edit');
+                                $api->delete('/', 'B2b\FormTemplateItemController@destroy');
                             });
                         });
 
