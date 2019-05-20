@@ -3,8 +3,10 @@
 use App\Http\Controllers\Controller;
 use App\Models\Inspection;
 use Carbon\Carbon;
+use Sheba\Business\Inspection\Creator;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
+use Sheba\Repositories\Business\InspectionRepository;
 
 class InspectionController extends Controller
 {
@@ -39,6 +41,17 @@ class InspectionController extends Controller
             }
             if (count($inspection_lists) > 0) return api_response($request, $inspection_lists, 200, ['inspection_lists' => $inspection_lists]);
             else  return api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function store($business, Request $request, Creator $creator)
+    {
+        try {
+            $this->setModifier($request->manager_member);
+            $creator->setData($request->all())->setBusiness($request->business)->create();
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
