@@ -18,6 +18,11 @@ class Member extends Model
         return $this->belongsToMany(Business::class)->withTimestamps();
     }
 
+    public function inspections()
+    {
+        return $this->hasMany(Inspection::class);
+    }
+
     public function businessMember()
     {
         return $this->hasOne(BusinessMember::class);

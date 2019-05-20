@@ -22,6 +22,11 @@ class Inspection extends Model
         return $this->belongsTo(Vehicle::class);
     }
 
+    public function member()
+    {
+        return $this->belongsTo(Member::class);
+    }
+
     public function inspectionItems()
     {
         return $this->hasMany(InspectionItem::class);
