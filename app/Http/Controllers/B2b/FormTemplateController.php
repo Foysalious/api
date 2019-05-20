@@ -82,8 +82,20 @@ class FormTemplateController extends Controller
             $data = [
                 'id' => $form_template->id,
                 'title' => $form_template->title,
-                'long_description' => $form_template->long_description,
-                'items' => $items
+                'short_description' => $form_template->short_description,
+                'items' => $items,
+                'inspections' => [
+                    [
+                        'id' => 1,
+                        'type' => 'text',
+                        'schedule_date' => '14th March,2010'
+                    ],
+                    [
+                        'id' => 1,
+                        'type' => 'text',
+                        'schedule_date' => '14th March,2010'
+                    ]
+                ]
             ];
             return api_response($request, null, 200, ['form_template' => $data]);
         } catch (\Throwable $e) {
@@ -114,6 +126,15 @@ class FormTemplateController extends Controller
             }
             if (count($templates) > 0) return api_response($request, $templates, 200, ['templates' => $templates]);
             else  return api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function itemEdit($business, $form_template,$item,Request $request){
+        try {
+           return api_response($request, null, 200);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
