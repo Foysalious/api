@@ -19,13 +19,14 @@ class FormTemplateItemController extends Controller
                 'short_description' => 'required',
                 'input_type' => 'required|string|in:text,radio,number',
                 'is_required' => 'required|numeric|in:0,1',
+                'instructions' => 'required|string',
             ]);
             $this->setModifier($request->manager_member);
             $form_template_item = $form_template_item_repository->find($item);
             $form_template_item_repository->update($form_template_item, [
                 'title' => $request->title,
                 'short_description' => $request->short_description,
-                'long_description' => $request->instruction,
+                'long_description' => $request->instructions,
                 'input_type' => $request->input_type,
                 'variables' => json_encode(['is_required' => (int)$request->is_required]),
             ]);
