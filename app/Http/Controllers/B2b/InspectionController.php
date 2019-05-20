@@ -92,6 +92,7 @@ class InspectionController extends Controller
     {
         try {
             $this->setModifier($request->manager_member);
+            $request->merge(['member_id' => $request->manager_member->id]);
             $creator->setData($request->all())->setBusiness($request->business)->create();
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);

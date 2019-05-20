@@ -1,28 +1,31 @@
-<?php
-
-
-namespace Sheba\Business\Inspection;
+<?php namespace Sheba\Business\Inspection;
 
 
 use App\Models\Business;
 use App\Models\Inspection;
-use Sheba\Repositories\Business\FormTemplateItemRepository;
+use Carbon\Carbon;
+use Illuminate\Database\QueryException;
+use Sheba\Repositories\Business\FormTemplateRepository;
+use Sheba\Repositories\Business\InspectionItemRepository;
 use Sheba\Repositories\Business\InspectionRepository;
 
 class Creator
 {
     private $inspectionRepository;
+    private $inspectionItemRepository;
     private $formTemplateRepository;
     private $inspectionData;
     private $inspectionItemData;
     private $data;
     private $business;
 
-    public function __construct(InspectionRepository $inspection_repository, FormTemplateItemRepository $form_template_repository)
+    public function __construct(InspectionRepository $inspection_repository, InspectionItemRepository $inspection_item_repository, FormTemplateRepository $form_template_repository)
     {
         $this->inspectionRepository = $inspection_repository;
+        $this->inspectionItemRepository = $inspection_item_repository;
         $this->formTemplateRepository = $form_template_repository;
         $this->inspectionData = [];
+        $this->inspectionItemData = [];
     }
 
     public function setData($data)
@@ -40,7 +43,17 @@ class Creator
     public function create()
     {
         $this->makeInspectionData();
-        $inspection = $this->inspectionRepository->create($this->inspectionData);
+        $inspection = null;
+        try {
+            /** @var Inspection $inspection */
+            $inspection = $this->inspectionRepository->create($this->inspectionData);
+            $this->makeInspectionItemData($inspection);
+            $this->inspectionItemRepository->createMany($this->inspectionItemData);
+        } catch (QueryException $e) {
+            app('sentry')->captureException($e);
+            throw  $e;
+        }
+        return $inspection;
     }
 
     private function makeInspectionData()
@@ -68,6 +81,19 @@ class Creator
                 'inspection_id' => $inspection->id,
                 'variables' => $item->variables,
             ]);
+        }
+    }
+
+    private function calculateStartDate()
+    {
+        if ($this->data['schedule_type'] == 'monthly') {
+            $date = date('Y') . '-' . date('m') . '-' . $this->data['schedule_type_value'] . ' ' . $this->data['schedule_time'];
+            $this->data['start_date'] = Carbon::parse($date);
+        } elseif ($this->data['schedule_type'] == 'one_way') {
+            $date = $this->data['schedule_type_value'] . ' ' . $this->data['schedule_time'];
+            $this->data['start_date'] = Carbon::parse($date);
+        } elseif ($this->data['schedule_type'] == 'weekly') {
+            $this->data['date_values'] = $this->data['schedule_type_value'];
         }
     }
 }
