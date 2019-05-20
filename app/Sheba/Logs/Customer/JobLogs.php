@@ -48,6 +48,9 @@ class JobLogs
             $rider = $this->logisticClient->get('orders/'.$this->job->last_logistic_order_id)['data']['rider'];
         }
         $rider = json_decode(json_encode($rider));
+        $this->job->logistic_uses = $logistic_uses;
+        $this->job->rider = $rider;
+
         if (constants('JOB_STATUS_SEQUENCE')[$job_status] > 0) {
             array_push($logs, array(
                 'status' => 'order_placed',
@@ -141,6 +144,7 @@ class JobLogs
                 'type' => 'danger'
             );
         } elseif ($job_status == constants('JOB_STATUSES')['Accepted']) {
+            $expert_type = $this->job->logistic_uses ? 'rider' : ($this->job->resource ? 'expert' : 'service provider');
             $thirty_min_before_scheduled_date_time = Carbon::parse($this->job->schedule_date . ' ' . $this->job->preferred_time_start)->subMinutes(30);
             if (Carbon::now()->gte($thirty_min_before_scheduled_date_time)) {
                 return array(
@@ -151,14 +155,15 @@ class JobLogs
             } else {
                 return array(
                     'status' => 'message',
-                    'log' => 'Expert will arrive at your place between ' . humanReadableShebaTime($this->job->preferred_time) . ', ' . Carbon::parse($this->job->schedule_date)->format('M d'),
+                    'log' => ucfirst($expert_type).' will arrive at your place between ' . humanReadableShebaTime($this->job->preferred_time) . ', ' . Carbon::parse($this->job->schedule_date)->format('M d'),
                     'type' => 'success'
                 );
             }
         } elseif ($job_status == constants('JOB_STATUSES')['Schedule_Due']) {
+            $expert_type = $this->job->logistic_uses ? 'rider' : ($this->job->resource ? 'expert' : 'service provider');
             return array(
                 'status' => 'message',
-                'log' => 'Your order is supposed to be started by now. Please call the ' . ($this->job->resource ? 'expert' : 'service provider') . '. For any kind of help call 16516.',
+                'log' => 'Your order is supposed to be started by now. Please call the ' . ($expert_type) . '. For any kind of help call 16516.',
                 'type' => 'danger'
             );
         } elseif (in_array($job_status, [constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Serve_Due']])) {
