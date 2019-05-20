@@ -83,6 +83,7 @@ class FormTemplateController extends Controller
                 'id' => $form_template->id,
                 'title' => $form_template->title,
                 'short_description' => $form_template->short_description,
+                'created_at' => $form_template->created_at->toDateTimeString(),
                 'items' => $items,
                 'inspections' => [
                     [
