@@ -23,12 +23,12 @@ class SubscriptionPartnerList extends PartnerList
         $category_pivot = $partner->categories->first()->pivot;
         foreach ($this->partnerListRequest->selectedServices as $selected_service) {
             $service = $partner->services->where('id', $selected_service->id)->first();
-
+            $service_pivot = $service->pivot;
             foreach($this->partnerListRequest->scheduleDate as $date) {
                 $discount = new SubscriptionPrice();
                 $schedule_date_time = Carbon::parse($date . ' ' . $this->partnerListRequest->scheduleStartTime);
                 $discount->setType($this->partnerListRequest->subscriptionType)->setServiceObj($selected_service)
-                    ->setServicePivot($service->pivot)->setScheduleDateTime($schedule_date_time)->initialize();
+                    ->setServicePivot($service_pivot)->setScheduleDateTime($schedule_date_time)->initialize();
                 $service = [];
                 $service['discount'] = $discount->discount;
                 $service['cap'] = $discount->cap;
