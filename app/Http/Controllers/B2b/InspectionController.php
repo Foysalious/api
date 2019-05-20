@@ -28,6 +28,7 @@ class InspectionController extends Controller
                 foreach ($inspections as $inspection) {
                     $inspection = [
                         'id' => $inspection->id,
+                        'inspection_form_id' => $inspection->formTemplate ? $inspection->formTemplate->id : null,
                         'inspection_form' => $inspection->formTemplate ? $inspection->formTemplate->title : null,
                         'type' => $inspection->type,
                         'next_start_date' => Carbon::parse($inspection->next_start_date)->format('l, j M'),

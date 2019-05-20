@@ -71,7 +71,10 @@ class BusinessRoute
                     $api->get('/', 'B2b\InspectionController@index');
                     $api->get('/{inspection}', 'B2b\InspectionController@show');
                 });
-                $api->get('/issues', 'B2b\InspectionItemIssueController@index');
+                $api->group(['prefix' => 'issues'], function ($api) {
+                    $api->get('/', 'B2b\InspectionItemIssueController@index');
+                    $api->get('/{issue}', 'B2b\InspectionItemIssueController@show');
+                });
             });
         });
         $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {
