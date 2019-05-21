@@ -1,17 +1,22 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Http\Controllers\Controller;
+use App\Models\Attachment;
 use App\Models\Inspection;
 use App\Models\InspectionItemIssue;
 use Carbon\Carbon;
+use Sheba\Attachments\FilesAttachment;
 use Sheba\Business\Inspection\Creator;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use Sheba\Repositories\Business\InspectionRepository;
+use Tinify\Exception;
+use Illuminate\Validation\ValidationException;
 
 class InspectionItemIssueController extends Controller
 {
     use ModificationFields;
+    use FilesAttachment;
 
     public function index($business, Request $request)
     {
@@ -87,6 +92,27 @@ class InspectionItemIssueController extends Controller
 
             if (count($issue) > 0) return api_response($request, $issue, 200, ['issue' => $issue]);
             else  return api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function storeAttachment($business, $issue, Request $request)
+    {
+        try {
+            $business = $request->business;
+            $member = $request->manager_member;
+            $this->setModifier($member);
+            $issue = InspectionItemIssue::find((int)$issue);
+            if (!$request->hasFile('file'))
+                return redirect()->back();
+            $data = $this->storeAttachmentToCDN($request->file('file'));
+            $attachment = $issue->attachments()->save(new Attachment($this->withBothModificationFields($data)));
+            return api_response($request, $attachment, 200, ['attachment' => $attachment->file]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
