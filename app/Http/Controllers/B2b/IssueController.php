@@ -4,10 +4,12 @@ use Illuminate\Validation\ValidationException;
 use Sheba\Attachments\FilesAttachment;
 use App\Http\Controllers\Controller;
 use App\Models\InspectionItemIssue;
+use Sheba\Business\Issue\Creator;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use App\Models\Attachment;
 use Carbon\Carbon;
+use Sheba\Repositories\Interfaces\InspectionItemRepositoryInterface;
 
 class IssueController extends Controller
 {
@@ -106,8 +108,28 @@ class IssueController extends Controller
             $data = $this->storeAttachmentToCDN($request->file('file'));
             $attachment = $issue->attachments()->save(new Attachment($this->withBothModificationFields($data)));
             return api_response($request, $attachment, 200, ['attachment' => $attachment->file]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function store($business, Request $request, InspectionItemRepositoryInterface $inspection_item_repository, Creator $creator)
+    {
+        try {
+            $this->validate($request, [
+                'inspection_item_id' => 'required|numeric'
+            ]);
+            $member = $request->manager_member;
+            $this->setModifier($member);
+            $inspection_item = $inspection_item_repository->find($request->inspection_item_id);
+            $issue = $creator->setInspectionItem($inspection_item)->create();
+            return api_response($request, $issue, 200, ['issue' => $issue->id]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
