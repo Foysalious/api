@@ -46,7 +46,6 @@ class Creator
                 $this->formTemplateItemRepository->createMany($this->formTemplateItemData);
             });
         } catch (QueryException $e) {
-            app('sentry')->captureException($e);
             throw  $e;
         }
         return $form_template;

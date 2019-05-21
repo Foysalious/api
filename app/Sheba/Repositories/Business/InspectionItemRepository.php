@@ -1,15 +1,22 @@
 <?php namespace Sheba\Repositories\Business;
 
 use App\Models\InspectionItem;
+use Illuminate\Database\QueryException;
 use Sheba\Repositories\BaseRepository;
 use Sheba\Repositories\Interfaces\InspectionItemRepositoryInterface;
+use DB;
+use Sheba\Repositories\Interfaces\InspectionItemStatusLogRepositoryInterface;
 
 class InspectionItemRepository extends BaseRepository implements InspectionItemRepositoryInterface
 {
-    public function __construct(InspectionItem $inspection_item)
+    private $inspectionItemStatusLogRepository;
+
+    public function __construct(InspectionItem $inspection_item, InspectionItemStatusLogRepositoryInterface $inspection_item_status_log_repository)
     {
         parent::__construct();
         $this->setModel($inspection_item);
+        $this->inspectionItemStatusLogRepository = $inspection_item_status_log_repository;
     }
+
 
 }
