@@ -1,15 +1,18 @@
 <?php namespace Sheba\Analysis\PartnerSale\Calculators;
 
+use App\Models\PosOrder;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Sheba\Analysis\PartnerSale\PartnerSale;
 use Sheba\Helpers\TimeFrame;
+use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Repositories\PartnerOrderRepository;
 
 class Basic extends PartnerSale
 {
     private $data;
     private $partnerOrders;
+    private $posOrders;
 
     /**
      * @return Collection|mixed
@@ -20,7 +23,16 @@ class Basic extends PartnerSale
         $orders = $this->partnerOrders->getClosedOrdersBetween($this->timeFrame, $this->partner);
         $accepted_orders = $this->partnerOrders->getAcceptedOrdersBetween($this->timeFrame, $this->partner);
 
-        $data['total_sales'] = $orders->sum('totalPrice');
+        $this->posOrders = new PosOrderRepository();
+        $pos_orders = $this->posOrders->getCreatedOrdersBetween($this->timeFrame, $this->partner);
+        $pos_orders->map(function ($pos_order) {
+            /** @var PosOrder $pos_order */
+            return $pos_order->sale = $pos_order->getTotalPrice();
+        });
+        $pos_sales = $pos_orders->sum('sale');
+
+        $data['total_sales'] = $orders->sum('totalPrice') + $pos_sales;
+        // $data['pos_sales'] = $pos_sales;
         $data['order_accepted'] = $accepted_orders ? $accepted_orders->count : 0;
         $data['order_completed'] = $orders->count();
 
