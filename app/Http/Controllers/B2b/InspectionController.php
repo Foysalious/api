@@ -8,6 +8,7 @@ use Sheba\Business\Inspection\Creator;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use Sheba\Repositories\Business\InspectionRepository;
+use Sheba\Repositories\Interfaces\InspectionRepositoryInterface;
 
 class InspectionController extends Controller
 {
@@ -215,6 +216,22 @@ class InspectionController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function edit($business, $inspection, Request $request, InspectionRepositoryInterface $inspection_repository)
+    {
+        try {
+            $this->setModifier($request->manager_member);
+            $inspection = $inspection_repository->find($inspection);
+            $inspection_repository->update($inspection, [
+                'title' => $request->title,
+                'short_description' => $request->short_description,
+            ]);
+            return api_response($request, $inspection, 200);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
