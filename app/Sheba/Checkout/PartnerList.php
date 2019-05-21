@@ -59,8 +59,7 @@ class PartnerList
     protected $partnerListRequest;
     protected $deliveryCharge;
     /** @var DiscountRepository */
-    private $discountRepo;
-
+    protected $discountRepo;
 
     use ModificationFields;
 

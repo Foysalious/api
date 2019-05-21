@@ -193,18 +193,26 @@ class JobController extends Controller
             $partnerOrder = $job->partnerOrder;
             $partnerOrder->calculate(true);
 
-            $orignal_delivery_charge = $job->deliveryPrice;
+            $original_delivery_charge = $job->deliveryPrice;
             $delivery_discount = 0;
             if(isset($job->otherDiscountsByType[DiscountTypes::DELIVERY]))
                 $delivery_discount = $job->otherDiscountsByType[DiscountTypes::DELIVERY];
 
+            $discounted_delivery_charge  = $original_delivery_charge - $delivery_discount;
+
+            $total_discount =  (double)$job->discount;
+            $total_discount -= $delivery_discount;
+
+            if($total_discount < 0)
+                $total_discount = 0;
+
             $bill = collect();
-            $bill['total'] = (double)$partnerOrder->totalPrice;
+            $bill['total'] = (double)$partnerOrder->totalPrice + $discounted_delivery_charge;
             $bill['original_price'] = (double)$partnerOrder->jobPrices;
             $bill['paid'] = (double)$partnerOrder->paid;
             $bill['due'] = (double)$partnerOrder->due;
             $bill['material_price'] = (double)$job->materialPrice;
-            $bill['discount'] = (double)$job->discount;
+            $bill['discount'] = $total_discount;
             $bill['services'] = $services;
             $bill['delivered_date'] = $job->delivered_date != null ? $job->delivered_date->format('Y-m-d') : null;
             $bill['delivered_date_timestamp'] = $job->delivered_date != null ? $job->delivered_date->timestamp : null;
@@ -213,7 +221,7 @@ class JobController extends Controller
             $bill['payment_method'] = $this->formatPaymentMethod($partnerOrder->payment_method);
             $bill['status'] = $job->status;
             $bill['is_on_premise'] = (int)$job->isOnPremise();
-            $bill['delivery_charge'] = $orignal_delivery_charge;
+            $bill['delivery_charge'] = $original_delivery_charge;
             $bill['delivery_discount'] = $delivery_discount;
             $bill['invoice'] = $job->partnerOrder->invoice;
             $bill['version'] = $job->partnerOrder->getVersion();
