@@ -2,6 +2,7 @@
 
 
 use App\Http\Controllers\Controller;
+use App\Models\Inspection;
 use App\Models\InspectionItem;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -14,19 +15,29 @@ class InspectionItemController extends Controller
 {
     use ModificationFields;
 
-    public function index($business, $inspection, $item, Request $request, InspectionItemRepositoryInterface $inspection_item_repository)
+    public function index($business, Request $request)
     {
         try {
             $business = $request->business;
             $member = $request->manager_member;
-            $inspection_items = InspectionItem::with('inspection')
-                ->where('business_id', $business->id)
-                ->orderBy('id', 'DESC');
+            $inspections = Inspection::where('business_id', $business->id)
+                ->orderBy('id', 'DESC')->get();
             $item_lists = [];
+            $inspection_items = [];
+            foreach ($inspections as $inspection) {
+                $items = $inspection->inspectionItems()->where('input_type', 'radio')->where('result', 'LIKE', '%failed%')->get();
+                array_push($inspection_items, $items);
+            }
+
+            foreach (array_flatten($inspection_items) as $item) {
+                dd($item);
+            }
+            dd($inspection_items);
 
             if (count($item_lists) > 0) return api_response($request, $item_lists, 200, ['item_lists' => $item_lists]);
             else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
