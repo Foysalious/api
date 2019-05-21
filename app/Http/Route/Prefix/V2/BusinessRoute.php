@@ -73,6 +73,7 @@ class BusinessRoute
                         });
                     });
                 });
+
                 $api->group(['prefix' => 'issues'], function ($api) {
                     $api->get('/', 'B2b\InspectionItemIssueController@index');
                     $api->get('/{issue}', 'B2b\InspectionItemIssueController@show');
@@ -129,7 +130,10 @@ class BusinessRoute
                         $api->get('/', 'B2b\TripRequestController@tripRequestInfo');
                         $api->post('/comments', 'B2b\TripRequestController@commentOnTripRequest');
                     });
+                });
 
+                $api->group(['prefix' => 'inspections'], function ($api) {
+                    $api->get('/', 'B2b\InspectionController@individualInspection');
                 });
             });
         });
