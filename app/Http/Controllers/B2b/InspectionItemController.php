@@ -2,6 +2,7 @@
 
 
 use App\Http\Controllers\Controller;
+use App\Models\InspectionItem;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\InspectionItem\Creator;
@@ -12,6 +13,24 @@ use Sheba\Repositories\Interfaces\InspectionRepositoryInterface;
 class InspectionItemController extends Controller
 {
     use ModificationFields;
+
+    public function index($business, $inspection, $item, Request $request, InspectionItemRepositoryInterface $inspection_item_repository)
+    {
+        try {
+            $business = $request->business;
+            $member = $request->manager_member;
+            $inspection_items = InspectionItem::with('inspection')
+                ->where('business_id', $business->id)
+                ->orderBy('id', 'DESC');
+            $item_lists = [];
+
+            if (count($item_lists) > 0) return api_response($request, $item_lists, 200, ['item_lists' => $item_lists]);
+            else  return api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 
     public function edit($business, $inspection, $item, Request $request, InspectionItemRepositoryInterface $inspection_item_repository)
     {
