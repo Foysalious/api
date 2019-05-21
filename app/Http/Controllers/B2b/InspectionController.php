@@ -216,7 +216,7 @@ class InspectionController extends Controller
             $this->setModifier($request->manager_member);
             $request->merge(['member_id' => $request->manager_member->id]);
             $inspection = $creator->setData($request->all())->setBusiness($request->business)->create();
-            return api_response($request, null, 200, ['inspection_id' => $inspection->id]);
+            return api_response($request, null, 200, ['id' => $inspection->id]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
