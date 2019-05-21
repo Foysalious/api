@@ -3,6 +3,7 @@
 use App\Models\Partner;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Repositories\PartnerOrderRepository;
 
 class PartnerSalesStatistics
@@ -14,6 +15,7 @@ class PartnerSalesStatistics
     public $lifetime;
 
     private $partnerOrders;
+    private $posOrders;
     private $beforeToday;
     private $partner;
     private $commaFormattedMoney;
@@ -21,6 +23,7 @@ class PartnerSalesStatistics
     public function __construct(Partner $partner = null)
     {
         $this->partnerOrders = new PartnerOrderRepository();
+        $this->posOrders = new PosOrderRepository();
         if ($partner instanceof Partner) $this->beforeToday = new PartnerSalesStatsBeforeToday($partner);
         $this->today = new SalesStat();
         $this->commaFormattedMoney = true;
@@ -58,6 +61,17 @@ class PartnerSalesStatistics
         return $data;
     }
 
+    private function calculateSalesFromPosOrders(Collection $pos_orders)
+    {
+        $data = new PosSalesStat();
+        $pos_orders->map(function ($order) {
+            return $order->sale = $order->getTotalPrice();
+        });
+        $data->posSale = $pos_orders->sum('sale');
+
+        return $data;
+    }
+
     public function getAll(Carbon $date)
     {
         $partner_orders = $this->partnerOrders->getClosedOrdersOfDateGroupedByPartner($date);
@@ -70,6 +84,10 @@ class PartnerSalesStatistics
     {
         $orders = $this->partnerOrders->getTodayClosedOrdersByPartner($this->partner);
         $this->today = $this->calculateSalesFromOrders($orders);
+
+        $pos_orders = $this->posOrders->getTodayOrdersByPartner($this->partner);
+        $today_pos_order_sales = $this->calculateSalesFromPosOrders($pos_orders);
+        $this->today->posSale = $today_pos_order_sales->posSale;
     }
 
     private function calculateStatsBeforeToday()
