@@ -24,7 +24,7 @@ class InspectionController extends Controller
                 ->orderBy('id', 'DESC');
 
             $inspection_lists = [];
-            if ($request->has('filter') && $request->filter === 'ongoing') {
+            if ($request->has('filter') && $request->filter === 'process') {
                 $inspections = $inspections->where('status', 'process')->get();
                 foreach ($inspections as $inspection) {
                     $inspection = [
@@ -36,7 +36,7 @@ class InspectionController extends Controller
                     ];
                     array_push($inspection_lists, $inspection);
                 }
-            } elseif ($request->has('filter') && $request->filter === 'schedule') {
+            } elseif ($request->has('filter') && $request->filter === 'open') {
                 $inspections = $inspections->where('status', 'open')->get();
                 foreach ($inspections as $inspection) {
                     $vehicle = $inspection->vehicle;
@@ -111,7 +111,7 @@ class InspectionController extends Controller
                 array_push($items, $item);
             }
             $vehicle = $inspection->vehicle;
-            $basic_information = $vehicle->basicInformations;
+            $basic_information = $vehicle->basicInformations ? $vehicle->basicInformations : null;
             $driver = $vehicle->driver;
             $inspection = [
                 'id' => $inspection->id,
@@ -122,13 +122,12 @@ class InspectionController extends Controller
                 'inspector' => $inspection->member->profile->name,
                 'failed_items' => $inspection->inspectionItems()->where('input_type', 'radio')->where('result', 'LIKE', '%failed%')->count(),
                 'submitted' => Carbon::parse($inspection->next_start_date)->format('l, j M'),#Dummy
-                'submitted_from' => 'Fleetio Web App',#Dummy
                 'inspection_items' => $items,
                 'vehicle' => [
-                    'vehicle_model' => $basic_information->model_name,
-                    'model_year' => Carbon::parse($basic_information->model_year)->format('Y'),
+                    'vehicle_model' => $basic_information ? $basic_information->model_name : null,
+                    'model_year' => $basic_information ? Carbon::parse($basic_information->model_year)->format('Y') : null,
                     'status' => $vehicle->status,
-                    'vehicle_type' => $basic_information->type,
+                    'vehicle_type' => $basic_information ? $basic_information->type : null,
                     'assigned_to' => $vehicle->businessDepartment ? $vehicle->businessDepartment->name : null,
                     'current_driver' => $driver ? $vehicle->driver->profile->name : 'N/S',
                 ],
@@ -147,9 +146,8 @@ class InspectionController extends Controller
             $this->setModifier($member);
 
             $inspections = Inspection::with('formTemplate')->where('member_id', $member->id)->orderBy('id', 'DESC');
-            #dd($inspections);
             $inspection_lists = [];
-            if ($request->has('filter') && $request->filter === 'schedule') {
+            if ($request->has('filter') && $request->filter === 'open') {
                 $inspections = $inspections->where('status', 'open')->get();
                 foreach ($inspections as $inspection) {
                     $vehicle = $inspection->vehicle;
