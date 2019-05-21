@@ -27,7 +27,11 @@ class InspectionController extends Controller
 
             $inspection_lists = [];
             if ($request->has('filter') && $request->filter === 'process') {
-                $inspections = $inspections->where('status', 'process')->get();
+                $inspections = $inspections->where(function ($query) {
+                    $query->where('status', '<>', 'closed')
+                        ->where('status', '<>', 'cancelled')
+                        ->where('created_at', Carbon::today());
+                })->get();
                 foreach ($inspections as $inspection) {
                     $inspection = [
                         'id' => $inspection->id,

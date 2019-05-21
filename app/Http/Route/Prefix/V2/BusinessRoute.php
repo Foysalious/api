@@ -75,9 +75,13 @@ class BusinessRoute
                                 $api->delete('/', 'B2b\InspectionItemController@destroy');
                             });
                         });
-
                     });
                 });
+
+                $api->group(['prefix' => 'inspection-items'], function ($api) {
+                    $api->get('/', 'B2b\InspectionItemController@index');
+                });
+
                 $api->group(['prefix' => 'issues'], function ($api) {
                     $api->get('/', 'B2b\IssueController@index');
                     $api->get('/{issue}', 'B2b\IssueController@show');
