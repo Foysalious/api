@@ -78,9 +78,9 @@ class BusinessRoute
                     });
                 });
                 $api->group(['prefix' => 'issues'], function ($api) {
-                    $api->get('/', 'B2b\InspectionItemIssueController@index');
-                    $api->get('/{issue}', 'B2b\InspectionItemIssueController@show');
-                    $api->post('/{issue}/attachments', 'B2b\InspectionItemIssueController@storeAttachment');
+                    $api->get('/', 'B2b\IssueController@index');
+                    $api->get('/{issue}', 'B2b\IssueController@show');
+                    $api->post('/{issue}/attachments', 'B2b\IssueController@storeAttachment');
                 });
             });
         });

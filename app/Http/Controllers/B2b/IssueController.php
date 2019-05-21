@@ -1,19 +1,15 @@
 <?php namespace App\Http\Controllers\B2b;
 
-use App\Http\Controllers\Controller;
-use App\Models\Attachment;
-use App\Models\Inspection;
-use App\Models\InspectionItemIssue;
-use Carbon\Carbon;
+use Illuminate\Validation\ValidationException;
 use Sheba\Attachments\FilesAttachment;
-use Sheba\Business\Inspection\Creator;
+use App\Http\Controllers\Controller;
+use App\Models\InspectionItemIssue;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
-use Sheba\Repositories\Business\InspectionRepository;
-use Tinify\Exception;
-use Illuminate\Validation\ValidationException;
+use App\Models\Attachment;
+use Carbon\Carbon;
 
-class InspectionItemIssueController extends Controller
+class IssueController extends Controller
 {
     use ModificationFields;
     use FilesAttachment;
