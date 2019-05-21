@@ -25,7 +25,7 @@ class InspectionController extends Controller
                 ->orderBy('id', 'DESC');
 
             $inspection_lists = [];
-            if ($request->has('filter') && $request->filter === 'ongoing') {
+            if ($request->has('filter') && $request->filter === 'process') {
                 $inspections = $inspections->where('status', 'process')->get();
                 foreach ($inspections as $inspection) {
                     $inspection = [
@@ -37,7 +37,7 @@ class InspectionController extends Controller
                     ];
                     array_push($inspection_lists, $inspection);
                 }
-            } elseif ($request->has('filter') && $request->filter === 'schedule') {
+            } elseif ($request->has('filter') && $request->filter === 'open') {
                 $inspections = $inspections->where('status', 'open')->get();
                 foreach ($inspections as $inspection) {
                     $vehicle = $inspection->vehicle;
@@ -148,9 +148,8 @@ class InspectionController extends Controller
             $this->setModifier($member);
 
             $inspections = Inspection::with('formTemplate')->where('member_id', $member->id)->orderBy('id', 'DESC');
-            #dd($inspections);
             $inspection_lists = [];
-            if ($request->has('filter') && $request->filter === 'schedule') {
+            if ($request->has('filter') && $request->filter === 'open') {
                 $inspections = $inspections->where('status', 'open')->get();
                 foreach ($inspections as $inspection) {
                     $vehicle = $inspection->vehicle;
