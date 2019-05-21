@@ -39,7 +39,7 @@ class Creator
         $this->makeFormTemplateData();
         $form_template = null;
         try {
-            DB::transaction(function () {
+            DB::transaction(function () use (&$form_template) {
                 /** @var FormTemplate $form_template */
                 $form_template = $this->formTemplateRepository->create($this->formTemplateData);
                 $this->makeFormTemplateItemData($form_template);

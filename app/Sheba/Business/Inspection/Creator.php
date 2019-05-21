@@ -9,6 +9,7 @@ use Sheba\Repositories\Business\FormTemplateRepository;
 use Sheba\Repositories\Business\InspectionItemRepository;
 use Sheba\Repositories\Business\InspectionRepository;
 use DB;
+
 class Creator
 {
     private $inspectionRepository;
@@ -45,7 +46,7 @@ class Creator
         $this->makeInspectionData();
         $inspection = null;
         try {
-            DB::transaction(function () {
+            DB::transaction(function () use (&$inspection) {
                 /** @var Inspection $inspection */
                 $inspection = $this->inspectionRepository->create($this->inspectionData);
                 $this->makeInspectionItemData($inspection);

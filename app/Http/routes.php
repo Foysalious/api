@@ -1,6 +1,5 @@
 <?php
 Route::get('/', function () {
-    dd(\Carbon\Carbon::now()->week);
     return ['code' => 200, 'message' => "Success. This project will hold the api's"];
 });
 
