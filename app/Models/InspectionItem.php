@@ -12,9 +12,9 @@ class InspectionItem extends Model
         return $this->belongsTo(Inspection::class);
     }
 
-    public function issues()
+    public function issue()
     {
-        return $this->hasMany(InspectionItemIssue::class);
+        return $this->hasOne(InspectionItemIssue::class);
     }
 
     public function isRadio()
