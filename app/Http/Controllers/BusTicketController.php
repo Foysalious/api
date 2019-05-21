@@ -316,6 +316,8 @@ class BusTicketController extends Controller
 
             $ticket_request->setReservationDetails(json_encode($response['data']));
             $order = $creator->setRequest($ticket_request)->create();
+            $order = $order->calculate();
+            $order->amount = $order->getNetBill();
 
             return api_response($request, null, 200, ['data' => $order]);
         } catch (ValidationException $e) {
@@ -348,7 +350,7 @@ class BusTicketController extends Controller
                 return api_response($request, null, 403, ['message' => "You don't have sufficient balance to buy this ticket."]);
             }
 
-            $order = $ticket_order_repo->findById($request->order_id);
+            $order = $ticket_order_repo->findById($request->order_id)->calculate();
             $payment = $this->getPayment($request->payment_method, $order);
             if ($payment) {
                 // $link = $payment->redirect_url;
