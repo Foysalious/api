@@ -96,18 +96,26 @@ class InspectionController extends Controller
             $business = $request->business;
             $member = $request->manager_member;
             $this->setModifier($member);
-
+            /*$inspection = $inspection_repository->find($inspection);
+            dd($inspection);*/
             $inspection = Inspection::with('inspectionItems', 'formTemplate', 'vehicle.basicInformations')
                 ->where('id', (int)$inspection)->first();
             if (!$inspection) return api_response($request, null, 404);
 
-            $inspection_items = $inspection->inspectionItems()->where('inspection_id', $inspection->id)->select('id', 'title', 'result')->get();
+            $inspection_items = $inspection->inspectionItems;
             $items = [];
             foreach ($inspection_items as $inspection_item) {
                 $item = [
                     'id' => $inspection_item->id,
                     'title' => $inspection_item->title,
                     'result' => $inspection_item->result,
+                    'short_description' => $inspection_item->short_description,
+                    'long_description' => $inspection_item->long_description,
+                    'input_type' => $inspection_item->input_type,
+                    'variables' => json_decode($inspection_item->variables),
+                    'comment' => $inspection_item->comment,
+                    'status' => $inspection_item->status,
+                    'acknowledgment_note' => $inspection_item->acknowledgment_note,
                 ];
                 array_push($items, $item);
             }
@@ -122,7 +130,8 @@ class InspectionController extends Controller
                 'inspection_form' => $inspection->formTemplate ? $inspection->formTemplate->title : null,
                 'inspector' => $inspection->member->profile->name,
                 'failed_items' => $inspection->inspectionItems()->where('input_type', 'radio')->where('result', 'LIKE', '%failed%')->count(),
-                'submitted' => Carbon::parse($inspection->next_start_date)->format('l, j M'),#Dummy
+                'submitted_date' => Carbon::parse($inspection->next_start_date)->format('l, j M'),#Dummy
+                'status' => $inspection->status,
                 'inspection_items' => $items,
                 'vehicle' => [
                     'vehicle_model' => $basic_information ? $basic_information->model_name : null,
