@@ -108,8 +108,8 @@ class InspectionItemIssueController extends Controller
             if (!$request->hasFile('file'))
                 return redirect()->back();
             $data = $this->storeAttachmentToCDN($request->file('file'));
-            $issue->attachments()->save(new Attachment($this->withBothModificationFields($data)));
-            return api_response($request, 1, 200);
+            $attachment = $issue->attachments()->save(new Attachment($this->withBothModificationFields($data)));
+            return api_response($request, $attachment, 200, ['attachment' => $attachment->file]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
