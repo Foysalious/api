@@ -3,9 +3,9 @@
 
 use App\Models\Inspection;
 use Sheba\Repositories\BaseRepository;
-use Sheba\Repositories\Interfaces\InspectionItemRepositoryInterface;
+use Sheba\Repositories\Interfaces\InspectionRepositoryInterface;
 
-class InspectionRepository extends BaseRepository implements InspectionItemRepositoryInterface
+class InspectionRepository extends BaseRepository implements InspectionRepositoryInterface
 {
 
     public function __construct(Inspection $inspection)
