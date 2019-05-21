@@ -701,11 +701,12 @@ class PartnerController extends Controller
     {
         try {
             $partner = Partner::with(['categories' => function ($query) {
-                return $query->select('categories.id', 'name', 'parent_id', 'thumb', 'app_thumb', 'categories.is_home_delivery_applied', 'categories.is_partner_premise_applied')->published()->with(['parent' => function ($query) {
+                return $query->select('categories.id', 'name', 'parent_id', 'thumb', 'app_thumb', 'categories.is_home_delivery_applied', 'categories.is_partner_premise_applied','categories.is_logistic_available')->published()->with(['parent' => function ($query) {
                     return $query->select('id', 'name', 'thumb', 'app_thumb');
                 }]);
             }])->find($partner);
             if ($partner) {
+                $number_of_services_with_sheba_delivery  = 0;
                 $master_categories = collect();
                 foreach ($partner->categories as $category) {
                     $published_services = $partner->services()->where('category_id', $category->id)->wherePivot('is_published', 1)->wherePivot('is_verified', 1)->published()->count();
@@ -716,12 +717,21 @@ class PartnerController extends Controller
                         $master_category = ['id' => $category->parent->id, 'name' => $category->parent->name, 'app_thumb' => $category->parent->app_thumb, 'secondary_category' => collect()];
                         $master_categories->push($master_category);
                     }
-
-                    $category = ['id' => $category->id, 'name' => $category->name, 'parent_id' => $category->parent_id, 'thumb' => $category->thumb, 'app_thumb' => $category->app_thumb, 'is_verified' => $category->pivot->is_verified, 'is_sheba_home_delivery_applied' => $category->is_home_delivery_applied, 'is_sheba_partner_premise_applied' => $category->is_partner_premise_applied, 'is_home_delivery_applied' => $category->pivot->is_home_delivery_applied, 'is_partner_premise_applied' => $category->pivot->is_partner_premise_applied, 'delivery_charge' => (double)$category->pivot->delivery_charge, 'published_services' => $published_services, 'unpublished_services' => $unpublished_services,];
+                    if($category->is_logistic_available) $number_of_services_with_sheba_delivery++;
+                    $category = [
+                        'id' => $category->id, 'name' => $category->name, 'parent_id' => $category->parent_id, 'thumb' => $category->thumb, 'app_thumb' => $category->app_thumb,
+                        'is_verified' => $category->pivot->is_verified, 'is_sheba_home_delivery_applied' => $category->is_home_delivery_applied,
+                        'is_sheba_partner_premise_applied' => $category->is_partner_premise_applied, 'is_home_delivery_applied' => $category->pivot->is_home_delivery_applied,
+                        'is_partner_premise_applied' => $category->pivot->is_partner_premise_applied,
+                        'delivery_charge' => (double)$category->pivot->delivery_charge,
+                        'published_services' => $published_services,
+                        'unpublished_services' => $unpublished_services,
+                        'is_logistic_available' => $category->is_logistic_available
+                    ];
 
                     $master_category['secondary_category']->push($category);
                 }
-                return api_response($request, $master_categories, 200, ['master_categories' => $master_categories]);
+                return api_response($request, $master_categories, 200, ['master_categories' => $master_categories, 'number_of_services_with_sheba_delivery' => $number_of_services_with_sheba_delivery]);
             }
             return api_response($request, null, 404);
         } catch (\Throwable $e) {
