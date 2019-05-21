@@ -717,9 +717,7 @@ class PartnerController extends Controller
                         $master_category = ['id' => $category->parent->id, 'name' => $category->parent->name, 'app_thumb' => $category->parent->app_thumb, 'secondary_category' => collect()];
                         $master_categories->push($master_category);
                     }
-
                     if($category->is_logistic_available) $number_of_services_with_sheba_delivery++;
-
                     $category = [
                         'id' => $category->id, 'name' => $category->name, 'parent_id' => $category->parent_id, 'thumb' => $category->thumb, 'app_thumb' => $category->app_thumb,
                         'is_verified' => $category->pivot->is_verified, 'is_sheba_home_delivery_applied' => $category->is_home_delivery_applied,
@@ -733,9 +731,7 @@ class PartnerController extends Controller
 
                     $master_category['secondary_category']->push($category);
                 }
-
-                $data =  ['master_categories' => $master_categories, 'number_of_services_with_sheba_delivery' => $number_of_services_with_sheba_delivery];
-                return api_response($request, $master_categories, 200, ['data' => $data]);
+                return api_response($request, $master_categories, 200, ['master_categories' => $master_categories, 'number_of_services_with_sheba_delivery' => $number_of_services_with_sheba_delivery]);
             }
             return api_response($request, null, 404);
         } catch (\Throwable $e) {
