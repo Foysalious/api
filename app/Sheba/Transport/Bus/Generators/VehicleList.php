@@ -78,7 +78,8 @@ class VehicleList
             $vehicles = $data['data'];
             foreach ($vehicles as  $vehicle) {
                 $vehicle = (object) $vehicle;
-                if (!$vehicle->endCounter || !$vehicle->arrivalTime || !$vehicle->boardingPoints || !$vehicle->droppingPoints) continue;
+                if ($vehicle->endCounter == null || $vehicle->arrivalTime == null
+                    || $vehicle->boardingPoints == null || $vehicle->droppingPoints == null) continue;
 
                 $start_time =  $vehicle->departureTime;
                 $end_time = $vehicle->arrivalTime;
