@@ -27,7 +27,7 @@ class Inspection extends Model
         return $this->belongsTo(Member::class);
     }
 
-    public function inspectionItems()
+    public function items()
     {
         return $this->hasMany(InspectionItem::class);
     }

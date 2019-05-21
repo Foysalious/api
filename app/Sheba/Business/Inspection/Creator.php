@@ -5,10 +5,10 @@ use App\Models\Business;
 use App\Models\Inspection;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
-use Sheba\Repositories\Business\FormTemplateRepository;
-use Sheba\Repositories\Business\InspectionItemRepository;
-use Sheba\Repositories\Business\InspectionRepository;
 use DB;
+use Sheba\Repositories\Interfaces\FormTemplateRepositoryInterface;
+use Sheba\Repositories\Interfaces\InspectionItemRepositoryInterface;
+use Sheba\Repositories\Interfaces\InspectionRepositoryInterface;
 
 class Creator
 {
@@ -20,7 +20,7 @@ class Creator
     private $data;
     private $business;
 
-    public function __construct(InspectionRepository $inspection_repository, InspectionItemRepository $inspection_item_repository, FormTemplateRepository $form_template_repository)
+    public function __construct(InspectionRepositoryInterface $inspection_repository, InspectionItemRepositoryInterface $inspection_item_repository, FormTemplateRepositoryInterface $form_template_repository)
     {
         $this->inspectionRepository = $inspection_repository;
         $this->inspectionItemRepository = $inspection_item_repository;
@@ -53,7 +53,6 @@ class Creator
                 $this->inspectionItemRepository->createMany($this->inspectionItemData);
             });
         } catch (QueryException $e) {
-            app('sentry')->captureException($e);
             throw  $e;
         }
         return $inspection;
@@ -102,28 +101,15 @@ class Creator
             $date = $this->data['schedule_type_value'] . ' ' . $this->data['schedule_time'];
             $this->data['start_date'] = Carbon::parse($date);
         } elseif ($this->data['schedule_type'] == 'weekly') {
-//            $days = json_decode($this->data['schedule_type_value']);
-//            $weeks = constants('WEEKS');
-//            $final = collect();
-//            foreach ($days as $day) {
-//                $final->push(['value' => $weeks[$day], 'day' => $day]);
-//            }
-//            $final = $final->sortBy('value');
-//            $current_day = date('l');
-//            $current_day_value = $weeks[$current_day];
-//            $bigger_days = $final->filter(function ($day) use ($current_day_value) {
-//                return $day['value'] >= $current_day_value;
-//            })->sortBy('value');
-//            if ($bigger_days->count() > 0) {
-//                dd($bigger_days);
-//                $this->data['start_date'] = Carbon::parse('next ' . $bigger_days->first()['day']);
-//                $this->data['next_start_date'] = Carbon::parse('next ' . next($current)['day']);
-//            } else {
-//                $first = $final->getIterator();
-//                $this->data['start_date'] = Carbon::parse('next ' . $final->first()['day']);
-//                $this->data['next_start_date'] = Carbon::parse('next ' . next($first)['day']);
-//            }
-//            $this->data['date_values'] = $this->data['schedule_type_value'];
+            $current_day = date('l');
+            if ($current_day == $this->data['schedule_type_value']) {
+                $this->data['start_date'] = Carbon::now();
+                $this->data['next_start_date'] = Carbon::parse('next ' . $this->data['schedule_type_value']);
+            } else {
+                $day = Carbon::parse('next ' . $this->data['schedule_type_value']);
+                $this->data['start_date'] = $day;
+                $this->data['next_start_date'] = $day->copy()->addDays(7);
+            }
         }
     }
 }
