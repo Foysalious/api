@@ -4,6 +4,7 @@ use App\Models\Affiliate;
 use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\Transport\TransportTicketOrder;
+use App\Models\Voucher;
 use App\Transformers\BusRouteTransformer;
 use App\Transformers\CustomSerializer;
 
@@ -315,7 +316,20 @@ class BusTicketController extends Controller
             $response = $vendor->bookTicket($ticket_request);
 
             $ticket_request->setReservationDetails(json_encode($response['data']));
+
+            /**
+             * TEMPORARY FIXING PRICING ISSUE FOR IOS
+             * REMOVE WHERE IOS GOES TO PLAY STORE
+             */
+            if ($request->headers->has('platform-name') && $request->headers->get('platform-name') == 'ios' && ($request->has('voucher_id') && $request->voucher_id)) {
+                $total_amount = json_decode($ticket_request->getReservationDetails())->grandTotalBase;
+                $request->amount = ceil($total_amount);
+                $ticket_request->setAmount($request->amount)->setVoucher($request->voucher_id);
+            }
+
             $order = $creator->setRequest($ticket_request)->create();
+            $order = $order->calculate();
+            $order->amount = $order->getNetBill();
 
             return api_response($request, null, 200, ['data' => $order]);
         } catch (ValidationException $e) {
@@ -348,7 +362,7 @@ class BusTicketController extends Controller
                 return api_response($request, null, 403, ['message' => "You don't have sufficient balance to buy this ticket."]);
             }
 
-            $order = $ticket_order_repo->findById($request->order_id);
+            $order = $ticket_order_repo->findById($request->order_id)->calculate();
             $payment = $this->getPayment($request->payment_method, $order);
             if ($payment) {
                 // $link = $payment->redirect_url;
