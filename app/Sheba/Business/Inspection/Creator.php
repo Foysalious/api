@@ -71,6 +71,7 @@ class Creator
             'start_date' => $this->data['start_date'],
             'next_start_date' => $this->data['next_start_date'],
             'date_values' => $this->data['date_values'],
+            'type' => $this->data['schedule_type'],
         ];
     }
 

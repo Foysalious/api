@@ -7,7 +7,6 @@ use Illuminate\Validation\ValidationException;
 use Sheba\Business\Inspection\Creator;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
-use Sheba\Repositories\Business\InspectionRepository;
 use Sheba\Repositories\Interfaces\InspectionRepositoryInterface;
 
 class InspectionController extends Controller

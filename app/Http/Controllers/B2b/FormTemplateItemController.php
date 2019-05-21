@@ -66,6 +66,9 @@ class FormTemplateItemController extends Controller
     public function store($business, $form_template, Request $request, Creator $creator, FormTemplateRepositoryInterface $form_template_repository)
     {
         try {
+            $this->validate($request, [
+                'variables' => 'required|string',
+            ]);
             $this->setModifier($request->manager_member);
             $creator->setData($request->all())->setFormTemplate($form_template_repository->find($form_template))->create();
             return api_response($request, $form_template, 200);
