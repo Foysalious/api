@@ -7,6 +7,7 @@ class BusinessMember extends Model
 {
     protected $guarded = ['id',];
     protected $table = 'business_member';
+    protected $casts = ['is_super' => 'int'];
 
     public function member()
     {
@@ -31,5 +32,15 @@ class BusinessMember extends Model
     public function department()
     {
         return $this->role()->department;
+    }
+
+    public function hasAction($action)
+    {
+        return $this->actions()->where('tag', config('business.actions.' . $action))->first();
+    }
+
+    public function isSuperAdmin()
+    {
+        return $this->is_super;
     }
 }

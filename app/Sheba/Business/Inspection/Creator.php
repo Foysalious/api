@@ -5,10 +5,10 @@ use App\Models\Business;
 use App\Models\Inspection;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
-use Sheba\Repositories\Business\FormTemplateRepository;
-use Sheba\Repositories\Business\InspectionItemRepository;
-use Sheba\Repositories\Business\InspectionRepository;
 use DB;
+use Sheba\Repositories\Interfaces\FormTemplateRepositoryInterface;
+use Sheba\Repositories\Interfaces\InspectionItemRepositoryInterface;
+use Sheba\Repositories\Interfaces\InspectionRepositoryInterface;
 
 class Creator
 {
@@ -20,7 +20,7 @@ class Creator
     private $data;
     private $business;
 
-    public function __construct(InspectionRepository $inspection_repository, InspectionItemRepository $inspection_item_repository, FormTemplateRepository $form_template_repository)
+    public function __construct(InspectionRepositoryInterface $inspection_repository, InspectionItemRepositoryInterface $inspection_item_repository, FormTemplateRepositoryInterface $form_template_repository)
     {
         $this->inspectionRepository = $inspection_repository;
         $this->inspectionItemRepository = $inspection_item_repository;
@@ -53,7 +53,6 @@ class Creator
                 $this->inspectionItemRepository->createMany($this->inspectionItemData);
             });
         } catch (QueryException $e) {
-            app('sentry')->captureException($e);
             throw  $e;
         }
         return $inspection;
