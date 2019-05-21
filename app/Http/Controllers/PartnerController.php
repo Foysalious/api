@@ -1025,12 +1025,15 @@ class PartnerController extends Controller
             $this->setModifier($partner);
             if ($category_partner->is_verified) {
                 if ($this->isRequestCreatable($request->partner_id, $request->category_id)) {
-                    list($old_category_partner_info, $new_category_partner_info) = $this->formatData($category_partner, $request);
-                    DeliveryChargeUpdateRequest::create($this->withCreateModificationField([
-                        'category_partner_id' => $category_partner->id,
-                        'old_category_partner_info' => json_encode($old_category_partner_info),
-                        'new_category_partner_info' => json_encode($new_category_partner_info)
-                    ]));
+                    if($request->has('bulk')) {
+                        $categories = $partner->categories()->where('is_logistic_available',true)->pluck('categories.id')->toArray();
+                        $category_partners = CategoryPartner::whereIn('category_id',$categories)->where('partner_id',$partner->id);
+                        foreach ($category_partners as $current_category_partner) {
+                            $this->createDeliveryChargeUpdateRequest($current_category_partner, $request);
+                        }
+                    } else {
+                        $this->createDeliveryChargeUpdateRequest($category_partner,$request);
+                    }
                     return api_response($request, 1, 200, ['message' => 'Your home delivery charge will be updated within 2 working days.']);
                 } else {
                     return api_response($request, null, 403, ['message' => 'You already have a pending a request']);
@@ -1048,6 +1051,16 @@ class PartnerController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function createDeliveryChargeUpdateRequest($category_partner, $request)
+    {
+        list($old_category_partner_info, $new_category_partner_info) = $this->formatData($category_partner, $request);
+        DeliveryChargeUpdateRequest::create($this->withCreateModificationField([
+            'category_partner_id' => $category_partner->id,
+            'old_category_partner_info' => json_encode($old_category_partner_info),
+            'new_category_partner_info' => json_encode($new_category_partner_info)
+        ]));
     }
 
     private function isRequestCreatable($partner_id, $category_id)
