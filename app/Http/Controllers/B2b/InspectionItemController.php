@@ -7,6 +7,7 @@ use App\Models\InspectionItem;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\InspectionItem\Creator;
+use Sheba\Business\InspectionItem\Updater;
 use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\InspectionItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\InspectionRepositoryInterface;
@@ -96,9 +97,31 @@ class InspectionItemController extends Controller
     public function store($business, $inspection, Request $request, Creator $creator, InspectionRepositoryInterface $inspection_repository)
     {
         try {
+            $this->validate($request, ['variables' => 'required|string']);
             $this->setModifier($request->manager_member);
             $creator->setData($request->all())->setInspection($inspection_repository->find($inspection))->create();
             return api_response($request, $inspection, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function acknowledge($business, $inspection, $item, Request $request, InspectionItemRepositoryInterface $inspection_item_repository, Updater $updater)
+    {
+        try {
+            $this->validate($request, ['note' => 'required|string']);
+            $this->setModifier($request->manager_member);
+            $inspection_item = $inspection_item_repository->find($item);
+            if ($inspection_item->status != 'open') return api_response($request, null, 400);
+            $updater->setInspectionItem($inspection_item)->updateStatus('acknowledged', ['acknowledgment_note' => $request->note]);
+            return api_response($request, $inspection_item, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
