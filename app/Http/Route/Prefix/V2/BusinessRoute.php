@@ -67,6 +67,7 @@ class BusinessRoute
                     $api->group(['prefix' => '{inspection}'], function ($api) {
                         $api->get('/', 'B2b\InspectionController@show');
                         $api->post('/', 'B2b\InspectionController@edit');
+                        $api->post('submit', 'B2b\InspectionController@submit');
                         $api->group(['prefix' => 'items'], function ($api) {
                             $api->post('/', 'B2b\InspectionItemController@store');
                             $api->group(['prefix' => '{item}'], function ($api) {
