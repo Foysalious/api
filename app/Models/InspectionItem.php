@@ -12,7 +12,7 @@ class InspectionItem extends Model
         return $this->belongsTo(Inspection::class);
     }
 
-    public function inspectionItemIssues()
+    public function issues()
     {
         return $this->hasMany(InspectionItemIssue::class);
     }

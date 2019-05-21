@@ -28,7 +28,7 @@ class InspectionController extends Controller
                 $inspections = $inspections->where(function ($query) {
                     $query->where('status', '<>', 'closed')
                         ->where('status', '<>', 'cancelled')
-                        ->where('created_at', Carbon::today());
+                        ->where('created_at', '>=', Carbon::today()->toDateString() . ' 00:00:00');
                 })->get();
                 foreach ($inspections as $inspection) {
                     $inspection = [
