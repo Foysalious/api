@@ -130,6 +130,7 @@ class InspectionController extends Controller
                 'long_description' => $inspection->long_description,
                 'inspection_form' => $inspection->formTemplate ? $inspection->formTemplate->title : null,
                 'inspector' => $inspection->member->profile->name,
+                'inspector_pic' => $inspection->member->profile->pro_pic,
                 'failed_items' => $inspection->items()->where('input_type', 'radio')->where('result', 'LIKE', '%failed%')->count(),
                 'submitted_date' => Carbon::parse($inspection->next_start_date)->format('l, j M'),#Dummy
                 'status' => $inspection->status,
@@ -214,8 +215,8 @@ class InspectionController extends Controller
         try {
             $this->setModifier($request->manager_member);
             $request->merge(['member_id' => $request->manager_member->id]);
-            $creator->setData($request->all())->setBusiness($request->business)->create();
-            return api_response($request, null, 200);
+            $inspection = $creator->setData($request->all())->setBusiness($request->business)->create();
+            return api_response($request, null, 200, ['id' => $inspection->id]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
