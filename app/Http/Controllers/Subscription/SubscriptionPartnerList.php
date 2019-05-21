@@ -14,7 +14,6 @@ class SubscriptionPartnerList extends PartnerList
     public function __construct()
     {
         parent::__construct();
-
     }
 
     protected function calculateServicePricingAndBreakdownOfPartner($partner)
@@ -101,7 +100,7 @@ class SubscriptionPartnerList extends PartnerList
 
         $total_service_price['discounted_price'] += $delivery_charge;
         $total_service_price['original_price'] += $delivery_charge;
-        $total_service_price['delivery_charge'] = $delivery_charge;
+        $total_service_price['delivery_charge'] = $original_delivery_charge;
         $total_service_price['discounted_delivery_charge'] = $discounted_delivery_charge;
         $total_service_price['total_quantity'] = count($this->partnerListRequest->scheduleDate);
         /*$total_service_price['discounted_price'] *= $total_service_price['total_quantity'];
