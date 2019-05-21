@@ -5,6 +5,8 @@ use App\Models\Inspection;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\Inspection\Creator;
+use Sheba\Business\Inspection\Submission;
+use Sheba\Business\Inspection\SubmissionValidator;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use Sheba\Repositories\Interfaces\InspectionRepositoryInterface;
@@ -70,7 +72,7 @@ class InspectionController extends Controller
                         'id' => $inspection->id,
                         'inspection_form' => $inspection->formTemplate ? $inspection->formTemplate->title : null,
                         'inspector' => $inspection->member->profile->name,
-                        'failed_items' => $inspection->inspectionItems()->where('input_type', 'radio')->where('result', 'LIKE', '%failed%')->count(),
+                        'failed_items' => $inspection->items()->where('input_type', 'radio')->where('result', 'LIKE', '%failed%')->count(),
                         'submitted' => Carbon::parse($inspection->next_start_date)->format('j M'),
                         'next_start_date' => Carbon::parse($inspection->next_start_date)->format('l, j M'),
                         'vehicle' => [
@@ -101,7 +103,7 @@ class InspectionController extends Controller
             $inspection = $inspection_repository->find($inspection);
             if (!$inspection) return api_response($request, null, 404);
 
-            $inspection_items = $inspection->inspectionItems;
+            $inspection_items = $inspection->items;
             $items = [];
             foreach ($inspection_items as $inspection_item) {
                 $item = [
@@ -128,7 +130,7 @@ class InspectionController extends Controller
                 'long_description' => $inspection->long_description,
                 'inspection_form' => $inspection->formTemplate ? $inspection->formTemplate->title : null,
                 'inspector' => $inspection->member->profile->name,
-                'failed_items' => $inspection->inspectionItems()->where('input_type', 'radio')->where('result', 'LIKE', '%failed%')->count(),
+                'failed_items' => $inspection->items()->where('input_type', 'radio')->where('result', 'LIKE', '%failed%')->count(),
                 'submitted_date' => Carbon::parse($inspection->next_start_date)->format('l, j M'),#Dummy
                 'status' => $inspection->status,
                 'inspection_items' => $items,
@@ -185,7 +187,7 @@ class InspectionController extends Controller
                         'id' => $inspection->id,
                         'inspection_form' => $inspection->formTemplate ? $inspection->formTemplate->title : null,
                         'inspector' => $member->profile->name,
-                        'failed_items' => $inspection->inspectionItems()->where('input_type', 'radio')->where('result', 'LIKE', '%failed%')->count(),
+                        'failed_items' => $inspection->items()->where('input_type', 'radio')->where('result', 'LIKE', '%failed%')->count(),
                         'submitted' => Carbon::parse($inspection->next_start_date)->format('j M'),
                         'next_start_date' => Carbon::parse($inspection->next_start_date)->format('l, j M'),
                         'vehicle' => [
@@ -242,16 +244,28 @@ class InspectionController extends Controller
         }
     }
 
-    public function submit($business, $inspection, Request $request, InspectionRepositoryInterface $inspection_repository)
+    public function submit($business, $inspection, Request $request, SubmissionValidator $submission_validator, InspectionRepositoryInterface $inspection_repository, Submission $submission)
     {
         try {
-            $this->setModifier($request->manager_member);
-            $inspection = $inspection_repository->find($inspection);
-            $inspection_repository->update($inspection, [
-                'title' => $request->title,
-                'short_description' => $request->short_description,
+            $this->validate($request, [
+                'submission_note' => 'required|string',
+                'items' => 'required|string',
             ]);
+            $member = $request->manager_member;
+            $this->setModifier($member);
+            $inspection = $inspection_repository->find($inspection);
+            $inspection->load('items');
+            $submission_validator->setBusinessMember($request->business_member)->setInspection($inspection)->setItemResult(json_decode($request->items));
+            if (!$submission_validator->hasAccess()) return api_response($request, null, 403);
+            if ($submission_validator->hasError()) return api_response($request, null, 400, ['message' => $submission_validator->getErrorMessage()]);
+            $submission->setData($request->all())->setInspection($inspection)->submit();
             return api_response($request, $inspection, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

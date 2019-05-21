@@ -16,4 +16,9 @@ class InspectionItem extends Model
     {
         return $this->hasMany(InspectionItemIssue::class);
     }
+
+    public function isRadio()
+    {
+        return $this->input_type == 'radio';
+    }
 }
