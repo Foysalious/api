@@ -22,6 +22,7 @@ use Sheba\Payment\Adapters\Payable\TransportTicketPurchaseAdapter;
 use Sheba\Payment\ShebaPayment;
 
 use Sheba\Transport\Bus\Exception\InvalidLocationAddressException;
+use Sheba\Transport\Bus\Generators\CompanyList;
 use Sheba\Transport\Bus\Generators\Destinations;
 use Sheba\Transport\Bus\Generators\Routes;
 use Sheba\Transport\Bus\Generators\SeatPlan\SeatPlan;
@@ -531,6 +532,39 @@ class BusTicketController extends Controller
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return null;
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @param CompanyList $company_list
+     * @return JsonResponse
+     */
+    public function companies(Request $request, CompanyList $company_list)
+    {
+        try {
+            $this->validate($request, []);
+
+            $agent = $this->getAgent($request);
+            $this->setModifier($agent);
+
+            $companies = [];
+            collect($company_list->getCompanies())->each(function ($company) use (&$companies) {
+                $companies[] = ['name' => $company['name']];
+            });
+
+            return api_response($request, null, 200, ['companies' => $companies]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (TransportException $e) {
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
         }
     }
 }
