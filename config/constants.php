@@ -570,5 +570,6 @@ return [
             'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bank_icon/city.png',
             'interest' => '10.5',
         ],
-    ]
+    ],
+    'WEEKS' => ['Saturday' => 1, 'Sunday' => 2, 'Monday' => 3, 'Tuesday' => 4, 'Wednesday' => 5, 'Thursday' => 6, 'Friday' => 7]
 ];

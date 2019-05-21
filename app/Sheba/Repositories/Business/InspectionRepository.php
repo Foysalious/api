@@ -2,17 +2,16 @@
 
 
 use App\Models\Inspection;
-use App\Models\InspectionItem;
 use Sheba\Repositories\BaseRepository;
-use Sheba\Repositories\Interfaces\InspectionItemRepositoryInterface;
+use Sheba\Repositories\Interfaces\InspectionRepositoryInterface;
 
-class InspectionRepository extends BaseRepository implements InspectionItemRepositoryInterface
+class InspectionRepository extends BaseRepository implements InspectionRepositoryInterface
 {
 
-    public function __construct(InspectionItem $inspection_item)
+    public function __construct(Inspection $inspection)
     {
         parent::__construct();
-        $this->setModel($inspection_item);
+        $this->setModel($inspection);
     }
 
 }
