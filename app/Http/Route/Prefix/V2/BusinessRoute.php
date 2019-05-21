@@ -67,13 +67,16 @@ class BusinessRoute
                     $api->group(['prefix' => '{inspection}'], function ($api) {
                         $api->get('/', 'B2b\InspectionController@show');
                         $api->post('/', 'B2b\InspectionController@edit');
-                        $api->group(['prefix' => '{item}'], function ($api) {
-                            $api->post('/', 'B2b\InspectionItemController@edit');
-                            $api->delete('/', 'B2b\InspectionItemController@destroy');
+                        $api->group(['prefix' => 'items'], function ($api) {
+                            $api->post('/', 'B2b\InspectionItemController@store');
+                            $api->group(['prefix' => '{item}'], function ($api) {
+                                $api->post('/', 'B2b\InspectionItemController@edit');
+                                $api->delete('/', 'B2b\InspectionItemController@destroy');
+                            });
                         });
+
                     });
                 });
-
                 $api->group(['prefix' => 'issues'], function ($api) {
                     $api->get('/', 'B2b\InspectionItemIssueController@index');
                     $api->get('/{issue}', 'B2b\InspectionItemIssueController@show');

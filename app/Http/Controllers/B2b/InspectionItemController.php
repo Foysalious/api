@@ -7,6 +7,7 @@ use Illuminate\Validation\ValidationException;
 use Sheba\Business\InspectionItem\Creator;
 use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\InspectionItemRepositoryInterface;
+use Sheba\Repositories\Interfaces\InspectionRepositoryInterface;
 
 class InspectionItemController extends Controller
 {
@@ -62,11 +63,11 @@ class InspectionItemController extends Controller
         }
     }
 
-    public function store($business, $inspection, Request $request, Creator $creator, InspectionItemRepositoryInterface $inspection_item_repository)
+    public function store($business, $inspection, Request $request, Creator $creator, InspectionRepositoryInterface $inspection_repository)
     {
         try {
             $this->setModifier($request->manager_member);
-            $creator->setData($request->all())->setInspection($inspection_item_repository->find($inspection))->create();
+            $creator->setData($request->all())->setInspection($inspection_repository->find($inspection))->create();
             return api_response($request, $inspection, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
