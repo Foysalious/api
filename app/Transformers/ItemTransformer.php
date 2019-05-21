@@ -7,7 +7,7 @@ class ItemTransformer extends TransformerAbstract
 {
     public function transform(PosOrderItem $item)
     {
-        $default_item_service_app_thumb = config('s3.url') . "/images/pos/services/thumbs/quick_sale_82_82.png";
+        $default_item_service_app_thumb = config('s3.url') . "images/pos/services/thumbs/quick_sale_82_82.png";
 
         return [
             'id'        => $item->service_id ? (int)$item->service_id : null,
