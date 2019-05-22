@@ -16,4 +16,9 @@ class InspectionItemIssue extends Model
     {
         return $this->morphMany(Attachment::class, 'attachable');
     }
+
+    public function comments()
+    {
+        return $this->morphMany(Comment::class, 'commentable');
+    }
 }
