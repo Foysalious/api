@@ -15,6 +15,7 @@ class TransportRoute
                 $api->get('history', 'BusTicketController@history');
                 $api->get('history/{history_id}', 'BusTicketController@historyDetails');
                 $api->get('cancel/{order_id}', 'BusTicketController@cancelTicket');
+                $api->get('companies', 'BusTicketController@companies');
 
                 $api->post('book', 'BusTicketController@book');
                 $api->post('pay', 'BusTicketController@pay');

@@ -2,10 +2,12 @@
 
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Analysis\PartnerSale\PartnerSale;
 use Sheba\Helpers\TimeFrame;
+use Throwable;
 
 class SalesStatisticsController extends Controller
 {
@@ -13,7 +15,7 @@ class SalesStatisticsController extends Controller
      * @param Request $request
      * @param PartnerSale $sale
      * @param TimeFrame $time_frame
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function index(Request $request, PartnerSale $sale, TimeFrame $time_frame)
     {
@@ -33,7 +35,7 @@ class SalesStatisticsController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
