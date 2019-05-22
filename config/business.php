@@ -9,6 +9,15 @@ return [
         'inspection' => [
             'rw' => 'inspection_rw'
         ],
+        'form_template' => [
+            'rw' => 'form_template_rw'
+        ],
+        'inspection_item' => [
+            'rw' => 'inspection_item_rw'
+        ],
+        'inspection_issue' => [
+            'rw' => 'inspection_issue_rw'
+        ],
     ],
     'DRIVER_CONTRACT_TYPES' => ['permanent', 'temporary'],
     'VEHICLE_TYPES' => ['hatchback', 'sedan', 'suv', 'passenger_van', 'others'],

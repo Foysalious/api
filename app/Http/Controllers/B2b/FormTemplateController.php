@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Http\Controllers\Controller;
+use App\Sheba\Business\ACL\AccessControl;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\FormTemplate\Creator;
 use Sheba\ModificationFields;
@@ -38,7 +39,7 @@ class FormTemplateController extends Controller
         }
     }
 
-    public function store(Request $request, Creator $creator)
+    public function store(Request $request, AccessControl $access_control, Creator $creator)
     {
         try {
             $this->validate($request, [
@@ -46,6 +47,7 @@ class FormTemplateController extends Controller
                 'short_description' => 'required',
                 'variables' => 'required|string',
             ]);
+            if (!$access_control->setBusinessMember($request->business_member)->hasAccess('form_template.rw')) return api_response($request, null, 403);
             $this->setModifier($request->manager_member);
             $form_template = $creator->setData($request->all())->setOwner($request->business)->create();
             return api_response($request, null, 200, ['id' => $form_template->id]);
@@ -104,9 +106,10 @@ class FormTemplateController extends Controller
 
     }
 
-    public function edit($business, $form_template, Request $request, FormTemplateRepositoryInterface $formTemplateRepository)
+    public function edit($business, $form_template, Request $request, AccessControl $access_control, FormTemplateRepositoryInterface $formTemplateRepository)
     {
         try {
+            if (!$access_control->setBusinessMember($request->business_member)->hasAccess('form_template.rw')) return api_response($request, null, 403);
             $this->setModifier($request->manager_member);
             $form_template = $formTemplateRepository->find($form_template);
             $formTemplateRepository->update($form_template, [
