@@ -11,5 +11,10 @@ return [
         ],
     ],
     'DRIVER_CONTRACT_TYPES' => ['permanent', 'temporary'],
-    'VEHICLE_TYPES' => ['hatchback', 'sedan', 'suv', 'passenger_van', 'others']
+    'VEHICLE_TYPES' => ['hatchback', 'sedan', 'suv', 'passenger_van', 'others'],
+    'INSPECTION_TYPE' => [
+        'one_time' => 'One Time',
+        'monthly' => 'Monthly',
+        'weekly' => 'Weekly',
+    ]
 ];
