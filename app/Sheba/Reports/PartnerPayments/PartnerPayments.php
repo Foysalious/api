@@ -1,6 +1,6 @@
 <?php namespace Sheba\Reports\PartnerPayments;
 
-use App\Http\Requests\SPPaymentReportRequest;
+use App\Http\Requests\Reports\SPPaymentReportRequest;
 use Carbon\Carbon;
 use Sheba\Reports\ReportData;
 
