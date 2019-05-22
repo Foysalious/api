@@ -50,5 +50,6 @@ class PartnerSalesStatsBeforeToday extends SalesStatsBeforeToday
         $timeFrameData->jobServed = $data->sum('jobServed');
         $timeFrameData->totalPartnerDiscount = $data->sum('totalPartnerDiscount');
         $timeFrameData->totalCostWithoutDiscount = $data->sum('totalCostWithoutDiscount');
+        $timeFrameData->posSale = $data->sum('posSale');
     }
 }
