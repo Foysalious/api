@@ -26,7 +26,9 @@ class IssueController extends Controller
             $business = $request->business;
             $member = $request->manager_member;
             $this->setModifier($member);
-            $inspection_item_issues = InspectionItemIssue::with('inspectionItem.inspection.vehicle.basicInformation')->orderBy('id', 'DESC')->get();
+            list($offset, $limit) = calculatePagination($request);
+            $inspection_item_issues = InspectionItemIssue::with('inspectionItem.inspection.vehicle.basicInformation')
+                ->orderBy('id', 'DESC')->skip($offset)->limit($limit)->get();
             $issue_lists = [];
             foreach ($inspection_item_issues as $issue) {
                 $inspection = $issue->inspectionItem->inspection;
@@ -107,8 +109,9 @@ class IssueController extends Controller
             $member = $request->manager_member;
             $issue = InspectionItemIssue::find((int)$issue);
             if (!$issue) return api_response($request, null, 404);
+            list($offset, $limit) = calculatePagination($request);
             $attaches = Attachment::where('attachable_type', get_class($issue))->where('attachable_id', $issue->id)
-                ->select('id', 'title', 'file', 'file_type')->get();
+                ->select('id', 'title', 'file', 'file_type')->orderBy('id', 'DESC')->skip($offset)->limit($limit)->get();
             $attach_lists = [];
             foreach ($attaches as $attach) {
                 array_push($attach_lists, [
@@ -161,8 +164,9 @@ class IssueController extends Controller
             $member = $request->manager_member;
             $issue = InspectionItemIssue::find((int)$issue);
             if (!$issue) return api_response($request, null, 404);
+            list($offset, $limit) = calculatePagination($request);
             $comments = Comment::where('commentable_type', get_class($issue))->where('commentable_id', $issue->id)
-                ->select('id', 'comment', 'created_at')->get();
+                ->select('id', 'comment', 'created_at')->orderBy('id', 'DESC')->skip($offset)->limit($limit)->get();
             $comment_lists = [];
             foreach ($comments as $comment) {
                 array_push($comment_lists, [
