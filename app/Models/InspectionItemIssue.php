@@ -11,4 +11,9 @@ class InspectionItemIssue extends Model
     {
         return $this->belongsTo(InspectionItem::class);
     }
+
+    public function attachments()
+    {
+        return $this->morphMany(Attachment::class, 'attachable');
+    }
 }

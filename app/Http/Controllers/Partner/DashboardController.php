@@ -26,6 +26,7 @@ class DashboardController extends Controller
             $rating = (string)(is_null($rating) ? 0 : $rating);
             $successful_jobs = $partner->notCancelledJobs();
             $sales_stats = (new PartnerSalesStatistics($partner))->calculate();
+
             $upgradable_package = (new PartnerSubscriber($partner))->getUpgradablePackage();
             $dashboard = [
                 'name' => $partner->name,
@@ -59,7 +60,7 @@ class DashboardController extends Controller
                 'sales' => [
                     'today' => [
                         'timeline' => date("jS F", strtotime(Carbon::today())),
-                        'amount' => $sales_stats->today->orderTotalPrice
+                        'amount' => $sales_stats->today->orderTotalPrice + $sales_stats->today->posSale
                     ],
                     'week' => [
                         'timeline' => date("jS F", strtotime(Carbon::today()->startOfWeek())) . "-" . date("jS F", strtotime(Carbon::today())),

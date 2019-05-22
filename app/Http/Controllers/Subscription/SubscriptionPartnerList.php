@@ -6,9 +6,15 @@ namespace App\Http\Controllers\Subscription;
 use App\Sheba\Checkout\PartnerList;
 use Carbon\Carbon;
 use Sheba\Checkout\SubscriptionPrice;
+use Sheba\Dal\Discount\DiscountTypes;
 
 class SubscriptionPartnerList extends PartnerList
 {
+
+    public function __construct()
+    {
+        parent::__construct();
+    }
 
     protected function calculateServicePricingAndBreakdownOfPartner($partner)
     {
@@ -83,10 +89,19 @@ class SubscriptionPartnerList extends PartnerList
             array_push($services, $service);
         }
         array_add($partner, 'breakdown', $services);
-        $delivery_charge = (double)$category_pivot->delivery_charge;
+
+        $original_delivery_charge = $this->deliveryCharge->setCategoryPartnerPivot($category_pivot)->get();
+        $discount = $this->discountRepo->findValidForAgainst(DiscountTypes::DELIVERY, $this->partnerListRequest->selectedCategory, $partner);
+        $discount_amount = 0;
+        if($discount)
+            $discount_amount =  $discount->getApplicableAmount($original_delivery_charge);
+        $discounted_delivery_charge = $original_delivery_charge - $discount_amount;
+        $delivery_charge = $discounted_delivery_charge;
+
         $total_service_price['discounted_price'] += $delivery_charge;
         $total_service_price['original_price'] += $delivery_charge;
-        $total_service_price['delivery_charge'] = $delivery_charge;
+        $total_service_price['delivery_charge'] = $original_delivery_charge;
+        $total_service_price['discounted_delivery_charge'] = $discounted_delivery_charge;
         $total_service_price['total_quantity'] = count($this->partnerListRequest->scheduleDate);
         /*$total_service_price['discounted_price'] *= $total_service_price['total_quantity'];
         $total_service_price['original_price'] *= $total_service_price['total_quantity'];

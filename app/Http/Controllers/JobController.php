@@ -14,6 +14,7 @@ use DB;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
 use Sheba\Dal\Discount\DiscountTypes;
+use Sheba\Logistics\Repository\OrderRepository;
 use Sheba\Logs\Customer\JobLogs;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
 use Sheba\Payment\ShebaPayment;
@@ -162,7 +163,7 @@ class JobController extends Controller
         return $complains;
     }
 
-    public function getBills($customer, $job, Request $request)
+    public function getBills($customer, $job, Request $request, OrderRepository $logistics_orderRepo)
     {
         try {
             $job = $request->job->load(['partnerOrder.order', 'category', 'service', 'jobServices' => function ($q) {
@@ -193,18 +194,47 @@ class JobController extends Controller
             $partnerOrder = $job->partnerOrder;
             $partnerOrder->calculate(true);
 
-            $orignal_delivery_charge = $job->deliveryPrice;
+            $firstLogisticDue = $secondLogisticDue = 0;
+            $firstLogisticPaid = $secondLogisticPaid = 0;
+
+            if($job->first_logistic_order_id) {
+                $first_logistics_orderDetails = json_decode(json_encode($logistics_orderRepo->find($job->first_logistic_order_id)));
+                if($first_logistics_orderDetails) {
+                    $firstLogisticDue  = $first_logistics_orderDetails->due;
+                    $firstLogisticPaid = $first_logistics_orderDetails->paid;
+                }
+            }
+
+            if($job->second_logistic_order_id) {
+                $second_logistics_orderDetails = $logistics_orderRepo->find($job->second_logistic_order_id);
+                if($second_logistics_orderDetails) {
+                    $secondLogisticDue  = $second_logistics_orderDetails->due;
+                    $secondLogisticPaid = $second_logistics_orderDetails->paid;
+                }
+
+            }
+
+            $total_logistic_due = $firstLogisticDue + $secondLogisticDue;
+            $total_logistic_paid = $firstLogisticPaid + $secondLogisticPaid;
+
+            $original_delivery_charge = $job->deliveryPrice;
             $delivery_discount = 0;
             if(isset($job->otherDiscountsByType[DiscountTypes::DELIVERY]))
                 $delivery_discount = $job->otherDiscountsByType[DiscountTypes::DELIVERY];
 
+            $total_discount =  (double)$job->discount;
+            $total_discount -= $delivery_discount;
+
+            if($total_discount < 0)
+                $total_discount = 0;
+
             $bill = collect();
-            $bill['total'] = (double)$partnerOrder->totalPrice;
+            $bill['total'] = (double)$partnerOrder->totalPrice + $original_delivery_charge;
             $bill['original_price'] = (double)$partnerOrder->jobPrices;
-            $bill['paid'] = (double)$partnerOrder->paid;
-            $bill['due'] = (double)$partnerOrder->due;
+            $bill['paid'] = (double)$partnerOrder->paid + $total_logistic_paid;
+            $bill['due'] = (double)$partnerOrder->due + $total_logistic_due;
             $bill['material_price'] = (double)$job->materialPrice;
-            $bill['discount'] = (double)$job->discount;
+            $bill['discount'] = $total_discount;
             $bill['services'] = $services;
             $bill['delivered_date'] = $job->delivered_date != null ? $job->delivered_date->format('Y-m-d') : null;
             $bill['delivered_date_timestamp'] = $job->delivered_date != null ? $job->delivered_date->timestamp : null;
@@ -213,12 +243,13 @@ class JobController extends Controller
             $bill['payment_method'] = $this->formatPaymentMethod($partnerOrder->payment_method);
             $bill['status'] = $job->status;
             $bill['is_on_premise'] = (int)$job->isOnPremise();
-            $bill['delivery_charge'] = $orignal_delivery_charge;
+            $bill['delivery_charge'] = $original_delivery_charge;
             $bill['delivery_discount'] = $delivery_discount;
             $bill['invoice'] = $job->partnerOrder->invoice;
             $bill['version'] = $job->partnerOrder->getVersion();
             return api_response($request, $bill, 200, ['bill' => $bill]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

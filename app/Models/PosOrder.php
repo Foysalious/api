@@ -1,6 +1,8 @@
 <?php namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Helpers\TimeFrame;
 use Sheba\Pos\Log\Supported\Types;
 use Sheba\Pos\Order\OrderPaymentStatuses;
 use Sheba\Pos\Order\RefundNatures\Natures;
@@ -272,5 +274,21 @@ class PosOrder extends Model
     {
         $service_ids = $this->items->pluck('service_id')->toArray();
         return !in_array(null, $service_ids);
+    }
+
+    public function scopeCreatedAt($query, Carbon $date)
+    {
+        $query->whereDate('created_at', '=', $date->toDateString());
+    }
+
+    public function scopeCreatedAtBetween($query, TimeFrame $time_frame)
+    {
+        $query->whereBetween('created_at', $time_frame->getArray());
+    }
+
+    public function scopeOf($query, $partner)
+    {
+        if (is_array($partner)) $query->whereIn('partner_id', $partner);
+        else $query->where('partner_id', '=', $partner);
     }
 }

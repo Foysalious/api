@@ -12,8 +12,13 @@ class InspectionItem extends Model
         return $this->belongsTo(Inspection::class);
     }
 
-    public function inspectionItemIssues()
+    public function issue()
     {
-        return $this->hasMany(InspectionItemIssue::class);
+        return $this->hasOne(InspectionItemIssue::class);
+    }
+
+    public function isRadio()
+    {
+        return $this->input_type == 'radio';
     }
 }

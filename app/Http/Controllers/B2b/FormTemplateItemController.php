@@ -6,14 +6,14 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\FormTemplateItem\Creator;
 use Sheba\ModificationFields;
-use Sheba\Repositories\Business\FormTemplateItemRepository;
-use Sheba\Repositories\Business\FormTemplateRepository;
+use Sheba\Repositories\Interfaces\FormTemplateItemRepositoryInterface;
+use Sheba\Repositories\Interfaces\FormTemplateRepositoryInterface;
 
 class FormTemplateItemController extends Controller
 {
     use ModificationFields;
 
-    public function edit($business, $form_template, $item, Request $request, FormTemplateItemRepository $form_template_item_repository)
+    public function edit($business, $form_template, $item, Request $request, FormTemplateItemRepositoryInterface $form_template_item_repository)
     {
         try {
             $this->validate($request, [
@@ -45,7 +45,7 @@ class FormTemplateItemController extends Controller
         }
     }
 
-    public function destroy($business, $form_template, $item, Request $request, FormTemplateItemRepository $form_template_item_repository)
+    public function destroy($business, $form_template, $item, Request $request, FormTemplateItemRepositoryInterface $form_template_item_repository)
     {
         try {
             $this->setModifier($request->manager_member);
@@ -63,9 +63,12 @@ class FormTemplateItemController extends Controller
         }
     }
 
-    public function store($business, $form_template, Request $request, Creator $creator, FormTemplateRepository $form_template_repository)
+    public function store($business, $form_template, Request $request, Creator $creator, FormTemplateRepositoryInterface $form_template_repository)
     {
         try {
+            $this->validate($request, [
+                'variables' => 'required|string',
+            ]);
             $this->setModifier($request->manager_member);
             $creator->setData($request->all())->setFormTemplate($form_template_repository->find($form_template))->create();
             return api_response($request, $form_template, 200);
