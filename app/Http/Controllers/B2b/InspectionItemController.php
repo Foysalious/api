@@ -46,8 +46,8 @@ class InspectionItemController extends Controller
                     'result' => $item->result,
                     'comment' => $item->comment,
                     'status' => $this->getStatus($item, $item->status),
+                    'issue_id' => $item->status == 'issue_created' ? $item->issue->id : null,
                     'acknowledgment_note' => $item->acknowledgment_note,
-
                     'inspection_id' => $inspection->id,
                     'inspection_status' => $inspection->status,
                     'inspection_form_title' => $inspection->formTemplate ? $inspection->formTemplate->title : null,
@@ -68,7 +68,7 @@ class InspectionItemController extends Controller
 
             if (count($item_lists) > 0) return api_response($request, $item_lists, 200, [
                     'item_lists' => $item_lists,
-                    'open_issues' =>$open_issues,
+                    'open_issues' => $open_issues,
                     'pending_item' => $pending_item
                 ]
             );
@@ -100,8 +100,8 @@ class InspectionItemController extends Controller
                 'result' => $item->result,
                 'comment' => $item->comment,
                 'status' => $this->getStatus($item, $item->status),
+                'issue_id' => $item->status == 'issue_created' ? $item->issue->id : null,
                 'acknowledgment_note' => $item->acknowledgment_note,
-
                 'inspection_id' => $inspection->id,
                 'inspection_status' => $inspection->status,
                 'inspection_form_title' => $inspection->formTemplate ? $inspection->formTemplate->title : null,
@@ -131,7 +131,7 @@ class InspectionItemController extends Controller
         if ($status === 'open') {
             return 'Pending';
         } elseif ($status === 'issue_created') {
-            return $item->issue->id;
+            return 'has_issue';
         } else {
             return 'Acknowledged';
         }

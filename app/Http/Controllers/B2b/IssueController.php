@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Repositories\CommentRepository;
 use App\Sheba\Business\ACL\AccessControl;
 use Illuminate\Validation\ValidationException;
 use Sheba\Attachments\FilesAttachment;
@@ -110,6 +111,20 @@ class IssueController extends Controller
             $data = $this->storeAttachmentToCDN($request->file('file'));
             $attachment = $issue->attachments()->save(new Attachment($this->withBothModificationFields($data)));
             return api_response($request, $attachment, 200, ['attachment' => $attachment->file]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function storeComment($business, $issue, Request $request)
+    {
+        try {
+            $business = $request->business;
+            $member = $request->manager_member;
+            $issue = InspectionItemIssue::find((int)$issue);
+            $comment = (new CommentRepository('InspectionItemIssue', $issue->id, $member))->store($request->comment);
+            return $comment ? api_response($request, $comment, 200) : api_response($request, $comment, 500);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
