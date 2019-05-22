@@ -34,11 +34,11 @@ class InspectionItem extends Model
     {
         return $query->whereHas('issue', function ($q) {
             $q->where('status', 'open');
-        })->where('status', 'issue_created')->count();
+        })->where('status', 'issue_created');
     }
 
     public function scopePendingItems($query)
     {
-        return $query->where('status', 'open')->count();
+        return $query->where('status', 'open');
     }
 }

@@ -25,10 +25,10 @@ class InspectionItemController extends Controller
 
             list($offset, $limit) = calculatePagination($request);
             $inspection_items = InspectionItem::failedItems($business);
-            $open_issues = InspectionItem::failedItems($business)->openIssues();
-            $pending_item = InspectionItem::failedItems($business)->pendingItems();
-            $inspection_items = $inspection_items->skip($offset)->limit($limit);
+            $open_issues = InspectionItem::failedItems($business)->openIssues()->count();
+            $pending_item = InspectionItem::failedItems($business)->pendingItems()->count();
 
+            $inspection_items = $inspection_items->skip($offset)->limit($limit);
             $item_lists = [];
             foreach ($inspection_items->get() as $item) {
                 $inspection = $item->inspection;
@@ -68,13 +68,12 @@ class InspectionItemController extends Controller
 
             if (count($item_lists) > 0) return api_response($request, $item_lists, 200, [
                     'item_lists' => $item_lists,
-                    'open_issues' => count($open_issues) > 0 ? $open_issues : 0,
-                    'pending_item' => count($pending_item) > 0 ? $pending_item : 0
+                    'open_issues' =>$open_issues,
+                    'pending_item' => $pending_item
                 ]
             );
             else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
