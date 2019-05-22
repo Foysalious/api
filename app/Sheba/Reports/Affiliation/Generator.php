@@ -60,9 +60,9 @@ class Generator
     private function getReportData(Affiliation $affiliation)
     {
         $report_data = $this->presenter->setAffiliation($affiliation)->getForTable() + [
-                'id' => $affiliation->id,
-                'report_updated_at' => Carbon::now()
-            ];
+            'id' => $affiliation->id,
+            'report_updated_at' => Carbon::now()
+        ];
 
         return $report_data;
     }

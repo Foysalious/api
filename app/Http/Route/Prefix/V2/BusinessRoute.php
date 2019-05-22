@@ -90,6 +90,7 @@ class BusinessRoute
                     $api->get('/{issue}', 'B2b\IssueController@show');
                     $api->post('{issue}/close', 'B2b\IssueController@close');
                     $api->post('/{issue}/attachments', 'B2b\IssueController@storeAttachment');
+                    $api->post('/{issue}/comments', 'B2b\IssueController@storeComment');
                 });
             });
         });
