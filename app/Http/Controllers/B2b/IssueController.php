@@ -107,10 +107,10 @@ class IssueController extends Controller
             $member = $request->manager_member;
             $issue = InspectionItemIssue::find((int)$issue);
             if (!$issue) return api_response($request, null, 404);
-            $attachs = Attachment::where('attachable_type', get_class($issue))->where('attachable_id', $issue->id)
+            $attaches = Attachment::where('attachable_type', get_class($issue))->where('attachable_id', $issue->id)
                 ->select('id', 'title', 'file', 'file_type')->get();
             $attach_lists = [];
-            foreach ($attachs as $attach) {
+            foreach ($attaches as $attach) {
                 array_push($attach_lists, [
                     'id' => $attach->id,
                     'title' => $attach->title,
@@ -122,7 +122,6 @@ class IssueController extends Controller
             if (count($attach_lists) > 0) return api_response($request, $attach_lists, 200, ['attach_lists' => $attach_lists]);
             else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
