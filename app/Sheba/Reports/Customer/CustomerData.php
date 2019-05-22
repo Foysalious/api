@@ -1,45 +1,62 @@
 <?php namespace Sheba\Reports\Customer;
 
+use App\Http\Requests\Reports\ReportTimeLine;
 use App\Models\Customer;
+use App\Models\Order;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Sheba\Reports\ReportData;
 
 abstract class CustomerData extends ReportData
 {
-    /** @var Request $request */
+    /** @var ReportTimeLine & Request $request */
     protected $request;
 
-    public function setRequest(Request $request)
+    /** @var Presenter */
+    protected $presenter;
+    /** @var Query */
+    protected $query;
+
+    public function __construct(Presenter $presenter, Query $query)
+    {
+        $this->presenter = $presenter;
+        $this->query = $query;
+    }
+
+    public function setRequest(ReportTimeLine $request)
     {
         $this->request = $request;
         return $this;
     }
 
+    /**
+     * @return array
+     */
     public function get()
     {
-        return $this->getCustomers($this->calculateTimeFrame());
+        $this->presenter->setIsAdvanced($this->isAdvanced());
+        $customers = $this->getCustomers($this->request->getTimeLine());
+        return $customers->map(function (Customer $customer) {
+            return $this->presenter->setCustomer($customer)->getForView();
+        })->toArray();
     }
 
-    abstract protected function calculateTimeFrame();
+    protected function isAdvanced()
+    {
+        return $this->request->has('is_advanced') &&
+            ($this->request->is_advanced == "on" || $this->request->is_advanced == true || $this->request->is_advanced == 1);
+    }
 
     /**
      * @param $time_frame
      * @param $customer_ids
-     * @return \Illuminate\Database\Eloquent\Builder|\Illuminate\Database\Eloquent\Collection|static|static[]
+     * @return Collection
      */
     protected function getCustomers($time_frame = null, $customer_ids = [])
     {
-        $is_advanced = $this->request->has('is_advanced') && $this->request->is_advanced == "on";
-
-        #$customer_base_query = Customer::join('profiles', 'customers.profile_id', '=', 'profiles.id')->with('orders.location', 'orders.partnerOrders.jobs.usedMaterials', 'orders.partnerOrders.jobs.service');
-
-        if ($is_advanced) {
-            $customer_base_query = Customer::with('profile', 'orders.location', 'orders.partnerOrders.jobs.usedMaterials', 'orders.partnerOrders.jobs.service');
-        } else {
-            $customer_base_query = Customer::with('profile');
-        }
-
-        $customers = clone $customer_base_query;
+        $is_advanced = $this->isAdvanced();
+        $this->query->setIsAdvanced($is_advanced);
+        $customers = $this->query->build();
         if (!empty($customer_ids)) {
             $customers = $customers->whereIn('id', $customer_ids);
         }
@@ -56,9 +73,9 @@ abstract class CustomerData extends ReportData
         $customers = $customers->get();
 
         if ($this->request->has('locations') && empty($customer_ids) && $is_advanced) {
-            $rem_customers = clone $customer_base_query;
+            $rem_customers = $this->query->build();
             $rem_customers = $rem_customers->whereNotIn('id', $customers->pluck('id')->toArray())->get();
-            $filtered_from_rem_customers = $rem_customers->filter(function ($item) {
+            $filtered_from_rem_customers = $rem_customers->filter(function (Customer $item) {
                 if ($this->request->has('operators') && !in_array(substr($item->mobile, 0, 6), $this->request->operators)) {
                     return false;
                 }
@@ -85,7 +102,7 @@ abstract class CustomerData extends ReportData
         }
 
         if ($this->request->has('channels') && $is_advanced) {
-            $customers = $customers->filter(function ($customer) {
+            $customers = $customers->filter(function (Customer $customer) {
                 $channels = $customer->orderChannelWithCounts()->keys();
                 foreach ($this->request->channels as $location) {
                     if ($channels->contains($location)) {
@@ -97,8 +114,8 @@ abstract class CustomerData extends ReportData
         }
 
         if ($is_advanced) {
-            $customers = $customers->map(function ($customer) {
-                $customer->orders->map(function ($order) {
+            $customers = $customers->map(function (Customer $customer) {
+                $customer->orders->map(function (Order $order) {
                     return $order->calculate($price_only = true);
                 });
                 return $customer;

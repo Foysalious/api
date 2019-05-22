@@ -38,10 +38,12 @@ abstract class Getter extends ReportData
         $transaction->gateway_transaction_id = null;
         if ($transaction->transaction_details) {
             $transaction_details = json_decode($transaction->transaction_details, true);
-            $transaction->gateway = $transaction_details['gateway'];
-            if ($transaction->gateway == 'bkash') {
-                $transaction->gateway_transaction_id = $transaction_details['transaction']['id'];
-                $transaction->sender = $transaction_details['account']['number'];
+            if (isset($transaction_details['gateway'])) {
+                $transaction->gateway = $transaction_details['gateway'];
+                if ($transaction->gateway == 'bkash') {
+                    $transaction->gateway_transaction_id = $transaction_details['transaction']['id'];
+                    $transaction->sender = $transaction_details['account']['number'];
+                }
             }
         }
 
