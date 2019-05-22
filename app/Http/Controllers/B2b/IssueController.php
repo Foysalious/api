@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Sheba\Business\ACL\AccessControl;
 use Illuminate\Validation\ValidationException;
 use Sheba\Attachments\FilesAttachment;
 use App\Http\Controllers\Controller;
@@ -10,6 +11,7 @@ use Illuminate\Http\Request;
 use App\Models\Attachment;
 use Carbon\Carbon;
 use Sheba\Repositories\Interfaces\InspectionItemRepositoryInterface;
+use Sheba\Repositories\Interfaces\IssueRepositoryInterface;
 
 class IssueController extends Controller
 {
@@ -114,16 +116,39 @@ class IssueController extends Controller
         }
     }
 
-    public function store($business, Request $request, InspectionItemRepositoryInterface $inspection_item_repository, Creator $creator)
+    public function store($business, Request $request, AccessControl $access_control, InspectionItemRepositoryInterface $inspection_item_repository, Creator $creator)
     {
         try {
             $this->validate($request, [
                 'inspection_item_id' => 'required|numeric'
             ]);
-            $member = $request->manager_member;
-            $this->setModifier($member);
+            if (!$access_control->setBusinessMember($request->business_member)->hasAccess('inspection_item.rw')) return api_response($request, null, 403);
+            $this->setModifier($request->manager_member);
             $inspection_item = $inspection_item_repository->find($request->inspection_item_id);
             $issue = $creator->setInspectionItem($inspection_item)->create();
+            return api_response($request, $issue, 200, ['issue' => $issue->id]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function close($business, $issue, Request $request, AccessControl $access_control, IssueRepositoryInterface $issue_repository)
+    {
+        try {
+            $this->validate($request, [
+                'note' => 'required|string'
+            ]);
+            if (!$access_control->setBusinessMember($request->business_member)->hasAccess('inspection_issue.rw')) return api_response($request, null, 403);
+            $this->setModifier($request->manager_member);
+            $issue = $issue_repository->find($issue);
+            $issue_repository->update($issue, ['status' => 'closed', 'comment' => $request->note]);
             return api_response($request, $issue, 200, ['issue' => $issue->id]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());

@@ -111,25 +111,25 @@ abstract class Repository
 
     protected function filterTimeLine(Builder $query)
     {
-        if(!$this->timeline) return $query;
+        if (!$this->timeline) return $query;
         return $this->notLifetimeQuery($query, $this->timeline['timeline'], $this->timeline['field']);
     }
 
     protected function filterPartner(Builder $query)
     {
-        if(!$this->partner) return $query;
+        if (!$this->partner) return $query;
         return $query->where($this->getPartnerIdField(), $this->partner);
     }
 
     protected function filterCancelledDate(Builder $query)
     {
-        if(!$this->cancelledDateRange) return $query;
+        if (!$this->cancelledDateRange) return $query;
         return $this->filterDate($query, $this->closedDateRange, $this->getCancelledDateField());
     }
 
     protected function filterClosedDate(Builder $query)
     {
-        if(!$this->closedDateRange) return $query;
+        if (!$this->closedDateRange) return $query;
         return $this->filterDate($query, $this->cancelledDateRange, $this->getClosedDateField());
     }
 
@@ -140,13 +140,13 @@ abstract class Repository
 
     protected function filterIds(Builder $query)
     {
-        if(empty($this->ids)) return $query;
+        if (empty($this->ids)) return $query;
         return $query->whereIn('id', $this->ids);
     }
 
     protected function paginate(Builder $query)
     {
-        if(!$this->limit) return $query;
+        if (!$this->limit) return $query;
         return $query->skip($this->offset)->take($this->limit);
     }
 }

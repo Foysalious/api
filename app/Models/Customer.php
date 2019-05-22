@@ -7,6 +7,7 @@ use Sheba\MovieTicket\MovieAgent;
 use Sheba\MovieTicket\MovieTicketTrait;
 use Sheba\MovieTicket\MovieTicketTransaction;
 use Sheba\Payment\Wallet;
+use Sheba\Reports\Customer\UpdateJob as CustomerReportUpdateJob;
 use Sheba\Reward\Rewardable;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
@@ -27,6 +28,25 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
     protected $hidden = ['password', 'remember_token',];
     protected $casts = ['wallet' => 'double'];
     private $firstOrder;
+
+
+    public static function boot()
+    {
+        parent::boot();
+
+        self::created(function(Customer $model){
+            $model->createOrUpdateReport();
+        });
+
+        self::updated(function(Customer $model){
+            $model->createOrUpdateReport();
+        });
+    }
+
+    public function createOrUpdateReport()
+    {
+        dispatch(new CustomerReportUpdateJob($this));
+    }
 
     public function mobiles()
     {

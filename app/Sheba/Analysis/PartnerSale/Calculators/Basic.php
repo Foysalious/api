@@ -31,10 +31,13 @@ class Basic extends PartnerSale
         });
         $pos_sales = $pos_orders->sum('sale');
 
-        $data['total_sales'] = $orders->sum('totalPrice') + $pos_sales;
-        // $data['pos_sales'] = $pos_sales;
-        $data['order_accepted'] = $accepted_orders ? $accepted_orders->count : 0;
-        $data['order_completed'] = $orders->count();
+        $data['sheba_sales'] = $orders->sum('totalPrice');
+        $data['pos_sales']   = $pos_sales;
+        $data['total_sales'] = $data['sheba_sales'] + $data['pos_sales'];
+
+        $data['order_accepted']     = $accepted_orders ? $accepted_orders->count : 0;
+        $data['order_completed']    = $orders->count();
+        $data['pos_order_created']  = $pos_orders->count();
 
         if ($this->frequency == self::DAY_BASE) {
             $data['day'] = $this->timeFrame->start->format('Y-m-d');
