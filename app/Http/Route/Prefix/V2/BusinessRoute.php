@@ -81,6 +81,7 @@ class BusinessRoute
 
                 $api->group(['prefix' => 'inspection-items'], function ($api) {
                     $api->get('/', 'B2b\InspectionItemController@index');
+                    $api->get('/{item}', 'B2b\InspectionItemController@show');
                 });
 
                 $api->group(['prefix' => 'issues'], function ($api) {
