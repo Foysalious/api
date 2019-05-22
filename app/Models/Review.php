@@ -4,6 +4,19 @@ use Illuminate\Database\Eloquent\Model;
 
 class Review extends Model
 {
+    public static function boot()
+    {
+        parent::boot();
+
+        self::created(function(Review $model){
+            $model->job->partnerOrder->createOrUpdateReport();
+        });
+
+        self::updated(function(Review $model){
+            $model->job->partnerOrder->createOrUpdateReport();
+        });
+    }
+
     public function service()
     {
         return $this->belongsTo(Service::class);
