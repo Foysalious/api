@@ -88,7 +88,11 @@ class BusinessRoute
                     $api->get('/', 'B2b\IssueController@index');
                     $api->post('/', 'B2b\IssueController@store');
                     $api->get('/{issue}', 'B2b\IssueController@show');
+                    $api->post('{issue}/close', 'B2b\IssueController@close');
                     $api->post('/{issue}/attachments', 'B2b\IssueController@storeAttachment');
+                    $api->get('/{issue}/attachments', 'B2b\IssueController@getAttachments');
+                    $api->post('/{issue}/comments', 'B2b\IssueController@storeComment');
+                    $api->get('/{issue}/comments', 'B2b\IssueController@getComments');
                 });
             });
         });

@@ -7,7 +7,7 @@ use Sheba\Helpers\TimeFrame;
 use Sheba\Order\Code\Builder as CodeBuilder;
 use Sheba\PartnerOrder\PartnerOrderStatuses;
 use Sheba\PartnerOrder\StatusCalculator;
-use Sheba\Reports\PartnerOrder\Generator as PartnerOrderReportGenerator;
+use Sheba\Reports\PartnerOrder\UpdateJob as PartnerOrderReportUpdateJob;
 
 class PartnerOrder extends Model
 {
@@ -80,9 +80,8 @@ class PartnerOrder extends Model
 
     public function createOrUpdateReport()
     {
-        /** @var PartnerOrderReportGenerator $generator */
-        $generator = app(PartnerOrderReportGenerator::class);
-        $generator->createOrUpdate($this);
+        $this->order->createOrUpdateReport();
+        dispatch(new PartnerOrderReportUpdateJob($this));
     }
 
     public function order()

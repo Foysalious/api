@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Http\Controllers\Controller;
+use App\Sheba\Business\ACL\AccessControl;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\FormTemplate\Creator;
 use Sheba\ModificationFields;
@@ -38,7 +39,7 @@ class FormTemplateController extends Controller
         }
     }
 
-    public function store(Request $request, Creator $creator)
+    public function store(Request $request, AccessControl $access_control, Creator $creator)
     {
         try {
             $this->validate($request, [
@@ -46,6 +47,7 @@ class FormTemplateController extends Controller
                 'short_description' => 'required',
                 'variables' => 'required|string',
             ]);
+            if (!$access_control->setBusinessMember($request->business_member)->hasAccess('form_template.rw')) return api_response($request, null, 403);
             $this->setModifier($request->manager_member);
             $form_template = $creator->setData($request->all())->setOwner($request->business)->create();
             return api_response($request, null, 200, ['id' => $form_template->id]);
@@ -68,7 +70,7 @@ class FormTemplateController extends Controller
         try {
             $form_template = $formTemplateRepository->find($form_template);
             if (!$form_template) return api_response($request, null, 404);
-            $items = [];
+            $items = $inspections = [];
             foreach ($form_template->items as $item) {
                 array_push($items, [
                     'id' => $item->id,
@@ -79,24 +81,20 @@ class FormTemplateController extends Controller
                     'is_required' => (int)json_decode($item->variables)->is_required,
                 ]);
             }
+            foreach ($form_template->inspections as $inspection) {
+                array_push($inspections, [
+                    'id' => $inspection->id,
+                    'type' => config('business.INSPECTION_TYPE')[$inspection->type],
+                    'schedule_date' => $inspection->start_date->format('jS M, Y'),
+                ]);
+            }
             $data = [
                 'id' => $form_template->id,
                 'title' => $form_template->title,
                 'short_description' => $form_template->short_description,
                 'created_at' => $form_template->created_at->toDateTimeString(),
                 'items' => $items,
-                'inspections' => [
-                    [
-                        'id' => 1,
-                        'type' => 'text',
-                        'schedule_date' => '14th March,2010'
-                    ],
-                    [
-                        'id' => 1,
-                        'type' => 'text',
-                        'schedule_date' => '14th March,2010'
-                    ]
-                ]
+                'inspections' => $inspections
             ];
             return api_response($request, null, 200, ['form_template' => $data]);
         } catch (\Throwable $e) {
@@ -108,9 +106,10 @@ class FormTemplateController extends Controller
 
     }
 
-    public function edit($business, $form_template, Request $request, FormTemplateRepositoryInterface $formTemplateRepository)
+    public function edit($business, $form_template, Request $request, AccessControl $access_control, FormTemplateRepositoryInterface $formTemplateRepository)
     {
         try {
+            if (!$access_control->setBusinessMember($request->business_member)->hasAccess('form_template.rw')) return api_response($request, null, 403);
             $this->setModifier($request->manager_member);
             $form_template = $formTemplateRepository->find($form_template);
             $formTemplateRepository->update($form_template, [

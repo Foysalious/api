@@ -2,6 +2,7 @@
 
 use App\Models\BusinessMember;
 use App\Models\Inspection;
+use App\Sheba\Business\ACL\AccessControl;
 
 class SubmissionValidator
 {
@@ -9,8 +10,14 @@ class SubmissionValidator
     private $businessMember;
     /** @var Inspection */
     private $inspection;
+    private $accessControl;
     private $itemResult;
     private $message;
+
+    public function __construct(AccessControl $access_control)
+    {
+        $this->accessControl = $access_control;
+    }
 
     public function setBusinessMember(BusinessMember $business_member)
     {
@@ -52,7 +59,7 @@ class SubmissionValidator
 
     public function hasAccess()
     {
-        return $this->businessMember->isSuperAdmin() || $this->businessMember->hasAction('inspection.rw') || $this->inspection->member_id == $this->businessMember->member_id;
+        return $this->accessControl->setBusinessMember($this->businessMember)->hasAccess('inspection.rw') || $this->inspection->member_id == $this->businessMember->member_id;
     }
 
     public function getErrorMessage()

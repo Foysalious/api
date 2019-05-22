@@ -8,6 +8,19 @@ class JobCancelRequest extends Model
     protected $guarded = ['id'];
     protected $dates = ['approved_at'];
 
+    public static function boot()
+    {
+        parent::boot();
+
+        self::created(function(JobCancelRequest $model){
+            $model->job->partnerOrder->createOrUpdateReport();
+        });
+
+        self::updated(function(JobCancelRequest $model){
+            $model->job->partnerOrder->createOrUpdateReport();
+        });
+    }
+
     public function job()
     {
         return $this->belongsTo(Job::class);

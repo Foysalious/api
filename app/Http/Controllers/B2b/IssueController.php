@@ -1,5 +1,8 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Models\Comment;
+use App\Repositories\CommentRepository;
+use App\Sheba\Business\ACL\AccessControl;
 use Illuminate\Validation\ValidationException;
 use Sheba\Attachments\FilesAttachment;
 use App\Http\Controllers\Controller;
@@ -10,6 +13,7 @@ use Illuminate\Http\Request;
 use App\Models\Attachment;
 use Carbon\Carbon;
 use Sheba\Repositories\Interfaces\InspectionItemRepositoryInterface;
+use Sheba\Repositories\Interfaces\IssueRepositoryInterface;
 
 class IssueController extends Controller
 {
@@ -22,7 +26,9 @@ class IssueController extends Controller
             $business = $request->business;
             $member = $request->manager_member;
             $this->setModifier($member);
-            $inspection_item_issues = InspectionItemIssue::with('inspectionItem.inspection.vehicle.basicInformation')->orderBy('id', 'DESC')->get();
+            list($offset, $limit) = calculatePagination($request);
+            $inspection_item_issues = InspectionItemIssue::with('inspectionItem.inspection.vehicle.basicInformation')
+                ->orderBy('id', 'DESC')->skip($offset)->limit($limit)->get();
             $issue_lists = [];
             foreach ($inspection_item_issues as $issue) {
                 $inspection = $issue->inspectionItem->inspection;
@@ -96,9 +102,40 @@ class IssueController extends Controller
         }
     }
 
+    public function getAttachments($business, $issue, Request $request)
+    {
+        try {
+            $business = $request->business;
+            $member = $request->manager_member;
+            $issue = InspectionItemIssue::find((int)$issue);
+            if (!$issue) return api_response($request, null, 404);
+            list($offset, $limit) = calculatePagination($request);
+            $attaches = Attachment::where('attachable_type', get_class($issue))->where('attachable_id', $issue->id)
+                ->select('id', 'title', 'file', 'file_type')->orderBy('id', 'DESC')->skip($offset)->limit($limit)->get();
+            $attach_lists = [];
+            foreach ($attaches as $attach) {
+                array_push($attach_lists, [
+                    'id' => $attach->id,
+                    'title' => $attach->title,
+                    'file' => $attach->file,
+                    'file_type' => $attach->file_type,
+                ]);
+            }
+
+            if (count($attach_lists) > 0) return api_response($request, $attach_lists, 200, ['attach_lists' => $attach_lists]);
+            else  return api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     public function storeAttachment($business, $issue, Request $request)
     {
         try {
+            $this->validate($request, [
+                'file' => 'required'
+            ]);
             $business = $request->business;
             $member = $request->manager_member;
             $this->setModifier($member);
@@ -108,22 +145,100 @@ class IssueController extends Controller
             $data = $this->storeAttachmentToCDN($request->file('file'));
             $attachment = $issue->attachments()->save(new Attachment($this->withBothModificationFields($data)));
             return api_response($request, $attachment, 200, ['attachment' => $attachment->file]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
-    public function store($business, Request $request, InspectionItemRepositoryInterface $inspection_item_repository, Creator $creator)
+    public function getComments($business, $issue, Request $request)
+    {
+        try {
+            $business = $request->business;
+            $member = $request->manager_member;
+            $issue = InspectionItemIssue::find((int)$issue);
+            if (!$issue) return api_response($request, null, 404);
+            list($offset, $limit) = calculatePagination($request);
+            $comments = Comment::where('commentable_type', get_class($issue))->where('commentable_id', $issue->id)
+                ->select('id', 'comment', 'created_at')->orderBy('id', 'DESC')->skip($offset)->limit($limit)->get();
+            $comment_lists = [];
+            foreach ($comments as $comment) {
+                array_push($comment_lists, [
+                    'id' => $comment->id,
+                    'comment' => $comment->comment,
+                    'created_at' => $comment->created_at->diffForHumans(),
+                ]);
+            }
+            if (count($comment_lists) > 0) return api_response($request, $comment_lists, 200, ['comment_lists' => $comment_lists]);
+            else  return api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function storeComment($business, $issue, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'comment' => 'required'
+            ]);
+            $business = $request->business;
+            $member = $request->manager_member;
+            $issue = InspectionItemIssue::find((int)$issue);
+            $comment = (new CommentRepository('InspectionItemIssue', $issue->id, $member))->store($request->comment);
+            return $comment ? api_response($request, $comment, 200) : api_response($request, $comment, 500);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function store($business, Request $request, AccessControl $access_control, InspectionItemRepositoryInterface $inspection_item_repository, Creator $creator)
     {
         try {
             $this->validate($request, [
                 'inspection_item_id' => 'required|numeric'
             ]);
-            $member = $request->manager_member;
-            $this->setModifier($member);
+            if (!$access_control->setBusinessMember($request->business_member)->hasAccess('inspection_item.rw')) return api_response($request, null, 403);
+            $this->setModifier($request->manager_member);
             $inspection_item = $inspection_item_repository->find($request->inspection_item_id);
             $issue = $creator->setInspectionItem($inspection_item)->create();
+            return api_response($request, $issue, 200, ['issue' => $issue->id]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function close($business, $issue, Request $request, AccessControl $access_control, IssueRepositoryInterface $issue_repository)
+    {
+        try {
+            $this->validate($request, [
+                'note' => 'required|string'
+            ]);
+            if (!$access_control->setBusinessMember($request->business_member)->hasAccess('inspection_issue.rw')) return api_response($request, null, 403);
+            $this->setModifier($request->manager_member);
+            $issue = $issue_repository->find($issue);
+            $issue_repository->update($issue, ['status' => 'closed', 'comment' => $request->note]);
             return api_response($request, $issue, 200, ['issue' => $issue->id]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());

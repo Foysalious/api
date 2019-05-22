@@ -21,4 +21,24 @@ class InspectionItem extends Model
     {
         return $this->input_type == 'radio';
     }
+
+    public function scopeFailedItems($query, $business)
+    {
+        return $query->whereHas('inspection', function ($q) use ($business) {
+            $q->with('vehicle.basicInformation')->where('business_id', $business->id);
+        })->where('input_type', 'radio')->where('result', 'LIKE', '%failed%')
+            ->orderBy('id', 'desc');
+    }
+
+    public function scopeOpenIssues($query)
+    {
+        return $query->whereHas('issue', function ($q) {
+            $q->where('status', 'open');
+        })->where('status', 'issue_created');
+    }
+
+    public function scopePendingItems($query)
+    {
+        return $query->where('status', 'open');
+    }
 }
