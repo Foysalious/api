@@ -165,14 +165,17 @@ class IssueController extends Controller
             $issue = InspectionItemIssue::find((int)$issue);
             if (!$issue) return api_response($request, null, 404);
             list($offset, $limit) = calculatePagination($request);
-            $comments = Comment::where('commentable_type', get_class($issue))->where('commentable_id', $issue->id)
-                ->select('id', 'comment', 'created_at')->orderBy('id', 'DESC')->skip($offset)->limit($limit)->get();
+            $comments = Comment::where('commentable_type', get_class($issue))->where('commentable_id', $issue->id)->orderBy('id', 'DESC')->skip($offset)->limit($limit)->get();
             $comment_lists = [];
             foreach ($comments as $comment) {
                 array_push($comment_lists, [
                     'id' => $comment->id,
                     'comment' => $comment->comment,
-                    'created_at' => $comment->created_at->diffForHumans(),
+                    'user' => [
+                        'name' => $comment->commentator->profile->name,
+                        'image' => $comment->commentator->profile->pro_pic
+                    ],
+                    'created_at' => $comment->created_at->toDateTimeString()
                 ]);
             }
             if (count($comment_lists) > 0) return api_response($request, $comment_lists, 200, ['comment_lists' => $comment_lists]);
