@@ -38,6 +38,7 @@ class ScheduleInspectionCreator extends Creator
                 $inspections = $this->inspectionRepository->where('inspection_schedule_id', $inspection_schedule->id)->select(['id'])->get();
                 $this->makeInspectionItemData($inspections);
                 $this->inspectionItemRepository->createMany($this->inspectionItemData);
+                $inspection=$inspections->first();
             });
         } catch (QueryException $e) {
             throw  $e;
