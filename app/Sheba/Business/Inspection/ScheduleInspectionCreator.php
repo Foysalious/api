@@ -37,7 +37,7 @@ class ScheduleInspectionCreator extends Creator
                 $this->mergeScheduleId($inspection_schedule);
                 $this->inspectionRepository->createMany($this->inspectionData);
                 $inspections = $this->inspectionRepository->where('inspection_schedule_id', $inspection_schedule->id)->select(['id'])->get();
-                $this->makeInspectionItemData($inspections->toArray());
+                $this->makeInspectionItemData($inspections);
                 $this->inspectionItemRepository->createMany($this->inspectionItemData);
             });
         } catch (QueryException $e) {
@@ -80,8 +80,8 @@ class ScheduleInspectionCreator extends Creator
 
     private function mergeScheduleId($inspection_schedule)
     {
-        foreach ($this->inspectionData as $data) {
-            array_merge($data, ['inspection_schedule_id' => $inspection_schedule->id]);
+        foreach ($this->inspectionData as &$data) {
+            $data['inspection_schedule_id'] = $inspection_schedule->id;
         }
     }
 
