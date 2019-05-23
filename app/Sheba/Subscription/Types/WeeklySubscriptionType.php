@@ -41,7 +41,7 @@ class WeeklySubscriptionType extends SubscriptionType
         $weeks = constants('WEEKS');
         $final = collect();
         foreach ($this->values as $day_name) {
-            $final->push(['value' => $weeks[$day_name], 'day' => $day_name]);
+            $final->push(['value' => $weeks[ucfirst($day_name)], 'day' => $day_name]);
         }
         $this->values = $final->sortBy('value');
     }
