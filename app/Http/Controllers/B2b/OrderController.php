@@ -214,10 +214,10 @@ class OrderController extends Controller
                 'business_id' => $business->id, 'sales_channel' => constants('SALES_CHANNELS')['B2B']['name'], 'voucher' => $request->voucher]);
             $order = $order->placeOrder($request);
             if ($order) {
-                if ($request->has('issue_id')) {
+                /*if ($request->has('issue_id')) {
                     $issue = InspectionItemIssue::find((int)$request->issue_id);
                     $issue->update($this->withBothModificationFields(['order_id' => $order->id]));
-                }
+                }*/
                 return api_response($request, $order, 200, ['job_id' => $order->jobs->first()->id, 'order_id' => $order->partnerOrders->first()->id,
                     'order_code' => $order->code()]);
             } else {
