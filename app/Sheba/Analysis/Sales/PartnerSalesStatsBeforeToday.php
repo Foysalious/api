@@ -23,15 +23,15 @@ class PartnerSalesStatsBeforeToday extends SalesStatsBeforeToday
         $year_data = collect([]);
         $month_data = collect([]);
         $week_data = collect([]);
-        $data->each(function($item) use (&$year_data, &$month_data, &$week_data) {
+        $data->each(function ($item) use (&$year_data, &$month_data, &$week_data) {
             $date = Carbon::parse($item->date);
-            if($date->between($this->weekTimeFrame[0], $this->weekTimeFrame[1])) {
+            if ($date->between($this->weekTimeFrame[0], $this->weekTimeFrame[1])) {
                 $week_data->push($item->data);
             }
-            if($date->year == Carbon::today()->year && $date->month == Carbon::today()->month) {
+            if ($date->year == Carbon::today()->year && $date->month == Carbon::today()->month) {
                 $month_data->push($item->data);
             }
-            if($date->year == Carbon::today()->year) {
+            if ($date->year == Carbon::today()->year) {
                 $year_data->push($item->data);
             }
         });
@@ -50,5 +50,6 @@ class PartnerSalesStatsBeforeToday extends SalesStatsBeforeToday
         $timeFrameData->jobServed = $data->sum('jobServed');
         $timeFrameData->totalPartnerDiscount = $data->sum('totalPartnerDiscount');
         $timeFrameData->totalCostWithoutDiscount = $data->sum('totalCostWithoutDiscount');
+        $timeFrameData->posSale = $data->sum('posSale');
     }
 }
