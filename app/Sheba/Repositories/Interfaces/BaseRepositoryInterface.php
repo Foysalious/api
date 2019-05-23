@@ -28,6 +28,13 @@ interface BaseRepositoryInterface
     public function where($column_name, $value);
 
     /**
+     * @param $column_name
+     * @param array $value
+     * @return $this
+     */
+    public function whereIn($column_name, array $value);
+
+    /**
      * @param array $column_name
      * @return  $this
      */
@@ -37,6 +44,11 @@ interface BaseRepositoryInterface
      * @return Collection
      */
     public function get();
+
+    /**
+     * @return Model
+     */
+    public function first();
 
     /**
      * @return Collection

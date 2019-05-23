@@ -132,6 +132,58 @@ class InspectionController extends Controller
         }
     }
 
+    public function getChildrenInspections($business, $inspection, Request $request, InspectionRepositoryInterface $inspection_repository)
+    {
+        try {
+            $this->validate($request, [
+                'filter' => 'required|string|in:ongoing,history',
+            ]);
+            $member = $request->manager_member;
+            $inspection = $inspection_repository->where('business_id', $business)->where('id', $inspection)->first();
+            $inspections = $inspection_repository->where('inspection_schedule_id', $inspection->inspection_schedule_id);
+            if ($request->filter == 'ongoing') $inspections = $inspections->whereIn('status', ['process', 'open'])->get();
+            else $inspections = $inspections->where('status', 'closed')->get();
+            $inspections->load(['vehicle' => function ($q) {
+                $q->with(['basicInformations', 'businessDepartment']);
+            }, 'formTemplate']);
+            $inspection_lists = [];
+            foreach ($inspections as $inspection) {
+                $vehicle = $inspection->vehicle;
+                $basic_information = $vehicle->basicInformations ? $vehicle->basicInformations : null;
+                $inspection = [
+                    'id' => $inspection->id,
+                    'inspection_form_id' => $inspection->formTemplate ? $inspection->formTemplate->id : null,
+                    'inspection_form' => $inspection->formTemplate ? $inspection->formTemplate->title : null,
+                    'inspector' => $member->profile->name,
+                    'type' => $inspection->type,
+                    'schedule' => Carbon::parse($inspection->start_date)->format('j M'),
+                    'id_due' => Carbon::today()->greaterThan($inspection->start_date) ? 1 : 0,
+                    'vehicle' => [
+                        'id' => $vehicle->id,
+                        'vehicle_model' => $basic_information ? $basic_information->model_name : null,
+                        'model_year' => $basic_information ? Carbon::parse($basic_information->model_year)->format('Y') : null,
+                        'status' => $vehicle->status,
+                        'vehicle_type' => $basic_information ? $basic_information->type : null,
+                        'assigned_to' => $vehicle->businessDepartment ? $vehicle->businessDepartment->name : null,
+                    ],
+                ];
+                array_push($inspection_lists, $inspection);
+            }
+            if (count($inspections) > 0) return api_response($request, $inspection_lists, 200, ['inspections' => $inspection_lists]);
+            else  return api_response($request, null, 404);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
+    }
+
     public function show($business, $inspection, Request $request, InspectionRepositoryInterface $inspection_repository)
     {
         try {

@@ -96,6 +96,8 @@ return [
         'Closed' => ['sheba' => 'Closed', 'partner' => 'Closed', 'customer' => 'Closed'],
         'Cancelled' => ['sheba' => 'Cancelled', 'partner' => 'Cancelled', 'customer' => 'Cancelled']
     ],
+    'PARTNER_MINIMUM_RESPONSE_TIME' => 30,
+    'PARTNER_MAXIMUM_RESPONSE_TIME' => 120,
     'FLAG_STATUSES' => [
         'Open' => 'Open',
         'Acknowledged' => 'Acknowledged',
