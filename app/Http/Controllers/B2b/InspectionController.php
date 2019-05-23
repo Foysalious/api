@@ -33,8 +33,17 @@ class InspectionController extends Controller
                     $query->where('status', '<>', 'closed')
                         ->where('status', '<>', 'cancelled')
                         ->where('created_at', '>=', Carbon::today()->toDateString() . ' 00:00:00');
-                })->skip($offset)->limit($limit)->get();
-                foreach ($inspections as $inspection) {
+                })->skip($offset)->limit($limit);
+
+                if ($request->has('inspection_form')) {
+                    $inspections = $inspections->whereHas('formTemplate', function ($query) use ($request) {
+                        $query->where('id', $request->inspection_form);
+                    });
+                }
+                if ($request->has('type')) {
+                    $inspections = $inspections->where('type', $request->type);
+                }
+                foreach ($inspections->get() as $inspection) {
                     $inspection = [
                         'id' => $inspection->id,
                         'inspection_form_id' => $inspection->formTemplate ? $inspection->formTemplate->id : null,
@@ -45,14 +54,24 @@ class InspectionController extends Controller
                     array_push($inspection_lists, $inspection);
                 }
             } elseif ($request->has('filter') && $request->filter === 'open') {
-                $inspections = $inspections->where('status', 'open')->skip($offset)->limit($limit)->get();
-                foreach ($inspections as $inspection) {
+                $inspections = $inspections->where('status', 'open')->skip($offset)->limit($limit);
+                if ($request->has('inspection_form')) {
+                    $inspections = $inspections->whereHas('formTemplate', function ($query) use ($request) {
+                        $query->where('id', $request->inspection_form);
+                    });
+                }
+                if ($request->has('type')) {
+                    $inspections = $inspections->where('type', $request->type);
+                }
+                foreach ($inspections->get() as $inspection) {
                     $vehicle = $inspection->vehicle;
                     $basic_information = $vehicle->basicInformations ? $vehicle->basicInformations : null;
                     $inspection = [
                         'id' => $inspection->id,
+                        'inspection_form_id' => $inspection->formTemplate ? $inspection->formTemplate->id : null,
                         'inspection_form' => $inspection->formTemplate ? $inspection->formTemplate->title : null,
                         'inspector' => $member->profile->name,
+                        'type' => $inspection->type,
                         'schedule' => Carbon::parse($inspection->start_date)->format('j M'),
                         'vehicle' => [
                             'id' => $vehicle->id,
@@ -66,14 +85,24 @@ class InspectionController extends Controller
                     array_push($inspection_lists, $inspection);
                 }
             } else {
-                $inspections = $inspections->where('status', 'closed')->skip($offset)->limit($limit)->get();
-                foreach ($inspections as $inspection) {
+                $inspections = $inspections->where('status', 'closed')->skip($offset)->limit($limit);
+                if ($request->has('inspection_form')) {
+                    $inspections = $inspections->whereHas('formTemplate', function ($query) use ($request) {
+                        $query->where('id', $request->inspection_form);
+                    });
+                }
+                if ($request->has('type')) {
+                    $inspections = $inspections->where('type', $request->type);
+                }
+                foreach ($inspections->get() as $inspection) {
                     $vehicle = $inspection->vehicle;
                     $basic_information = $vehicle->basicInformations ? $vehicle->basicInformations : null;
                     $inspection = [
                         'id' => $inspection->id,
+                        'inspection_form_id' => $inspection->formTemplate ? $inspection->formTemplate->id : null,
                         'inspection_form' => $inspection->formTemplate ? $inspection->formTemplate->title : null,
                         'inspector' => $inspection->member->profile->name,
+                        'type' => $inspection->type,
                         'failed_items' => $inspection->items()->where('input_type', 'radio')->where('result', 'LIKE', '%failed%')->count(),
                         'submitted' => $inspection->submitted_date ? Carbon::parse($inspection->submitted_date)->format('j M') : null,
                         'next_start_date' => Carbon::parse($inspection->next_start_date)->format('l, j M'),
@@ -162,18 +191,25 @@ class InspectionController extends Controller
         try {
             $member = $request->member;
             $this->setModifier($member);
-
+            list($offset, $limit) = calculatePagination($request);
             $inspections = Inspection::with('formTemplate')->where('member_id', $member->id)->orderBy('id', 'DESC');
             $inspection_lists = [];
             if ($request->has('filter') && $request->filter === 'open') {
-                $inspections = $inspections->where('status', 'open')->get();
-                foreach ($inspections as $inspection) {
+                $inspections = $inspections->where('status', 'open')->skip($offset)->limit($limit);
+                if ($request->has('inspection_form')) {
+                    $inspections = $inspections->whereHas('formTemplate', function ($query) use ($request) {
+                        $query->where('id', $request->inspection_form);
+                    });
+                }
+                foreach ($inspections->get() as $inspection) {
                     $vehicle = $inspection->vehicle;
                     $basic_information = $vehicle->basicInformations ? $vehicle->basicInformations : null;
                     $inspection = [
                         'id' => $inspection->id,
                         'inspection_form' => $inspection->formTemplate ? $inspection->formTemplate->title : null,
                         'inspector' => $member->profile->name,
+                        'inspector_pro_pic' => $member->profile->pro_pic,
+                        'type' => $inspection->type,
                         'schedule' => Carbon::parse($inspection->start_date)->format('j M'),
                         'vehicle' => [
                             'vehicle_model' => $basic_information ? $basic_information->model_name : null,
@@ -186,8 +222,13 @@ class InspectionController extends Controller
                     array_push($inspection_lists, $inspection);
                 }
             } else {
-                $inspections = $inspections->where('status', 'closed')->get();
-                foreach ($inspections as $inspection) {
+                $inspections = $inspections->where('status', 'closed')->skip($offset)->limit($limit);
+                if ($request->has('inspection_form')) {
+                    $inspections = $inspections->whereHas('formTemplate', function ($query) use ($request) {
+                        $query->where('id', $request->inspection_form);
+                    });
+                }
+                foreach ($inspections->get() as $inspection) {
                     $vehicle = $inspection->vehicle;
                     $basic_information = $vehicle->basicInformations ? $vehicle->basicInformations : null;
                     $inspection = [
