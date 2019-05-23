@@ -81,7 +81,7 @@ class IssueController extends Controller
                 'comment' => $issue->comment,
                 'inspector' => $inspection->member->profile->name,
                 'inspection_form' => $inspection->formTemplate ? $inspection->formTemplate->title : null,
-                'submitted' => Carbon::parse($inspection->next_start_date)->format('j, M, Y h:i:a'),
+                'submitted' => $inspection->submitted_date ? Carbon::parse($inspection->submitted_date)->format('j M') : null,
 
                 'vehicle' => [
                     'id' => $vehicle->id,

@@ -1,11 +1,11 @@
 <?php namespace App\Http\Controllers\B2b;
 
-
 use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;
+use App\Models\InspectionItemIssue;
 use App\Models\Member;
 use App\Models\Payment;
 use App\Sheba\Address\AddressValidator;
@@ -17,12 +17,14 @@ use Illuminate\Validation\ValidationException;
 use Sheba\Checkout\PromotionCalculation;
 use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Location\Coords;
+use Sheba\ModificationFields;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
 use Sheba\Payment\ShebaPayment;
 use Sheba\Voucher\PromotionList;
 
 class OrderController extends Controller
 {
+    use ModificationFields;
 
     public function index(Request $request)
     {
@@ -189,10 +191,12 @@ class OrderController extends Controller
                 'partner' => 'required',
                 'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
                 'time' => 'required|string',
+                'issue_id' => 'sometimes|required|integer',
             ], ['mobile' => 'Invalid mobile number!']);
             $business = $request->business;
             $member = $request->manager_member;
             $customer = $member->profile->customer;
+            $this->setModifier($customer);
             if (!$customer) {
                 $customer = $this->createCustomerFromMember($member);
                 $member = Member::find($member->id);
@@ -210,6 +214,10 @@ class OrderController extends Controller
                 'business_id' => $business->id, 'sales_channel' => constants('SALES_CHANNELS')['B2B']['name'], 'voucher' => $request->voucher]);
             $order = $order->placeOrder($request);
             if ($order) {
+                if ($request->has('issue_id')) {
+                    $issue = InspectionItemIssue::find((int)$request->issue_id);
+                    $issue->update($this->withBothModificationFields(['order_id' => $order->id]));
+                }
                 return api_response($request, $order, 200, ['job_id' => $order->jobs->first()->id, 'order_id' => $order->partnerOrders->first()->id,
                     'order_code' => $order->code()]);
             } else {

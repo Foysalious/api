@@ -73,7 +73,7 @@ class InspectionController extends Controller
                         'inspection_form' => $inspection->formTemplate ? $inspection->formTemplate->title : null,
                         'inspector' => $inspection->member->profile->name,
                         'failed_items' => $inspection->items()->where('input_type', 'radio')->where('result', 'LIKE', '%failed%')->count(),
-                        'submitted' => Carbon::parse($inspection->next_start_date)->format('j M'),
+                        'submitted' => $inspection->submitted_date ? Carbon::parse($inspection->submitted_date)->format('j M') : null,
                         'next_start_date' => Carbon::parse($inspection->next_start_date)->format('l, j M'),
                         'vehicle' => [
                             'id' => $vehicle->id,
@@ -132,7 +132,7 @@ class InspectionController extends Controller
                 'inspector' => $inspection->member->profile->name,
                 'inspector_pic' => $inspection->member->profile->pro_pic,
                 'failed_items' => $inspection->items()->where('input_type', 'radio')->where('result', 'LIKE', '%failed%')->count(),
-                'submitted_date' => Carbon::parse($inspection->next_start_date)->format('l, j M'),#Dummy
+                'submitted_date' => $inspection->submitted_date ? Carbon::parse($inspection->submitted_date)->format('j M') : null,
                 'status' => $inspection->status,
                 'inspection_items' => $items,
                 'vehicle' => [
@@ -189,7 +189,7 @@ class InspectionController extends Controller
                         'inspection_form' => $inspection->formTemplate ? $inspection->formTemplate->title : null,
                         'inspector' => $member->profile->name,
                         'failed_items' => $inspection->items()->where('input_type', 'radio')->where('result', 'LIKE', '%failed%')->count(),
-                        'submitted' => Carbon::parse($inspection->next_start_date)->format('j M'),
+                        'submitted' => $inspection->submitted_date ? Carbon::parse($inspection->submitted_date)->format('j M') : null,
                         'next_start_date' => Carbon::parse($inspection->next_start_date)->format('l, j M'),
                         'vehicle' => [
                             'vehicle_model' => $basic_information ? $basic_information->model_name : null,
