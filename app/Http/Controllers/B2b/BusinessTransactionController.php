@@ -22,9 +22,6 @@ class BusinessTransactionController extends Controller
             if ($request->has('sector'))
                 $transactions = $transactions->tag($request->sector);
 
-            /*if ($created_start_date && $created_end_date) {
-                $orders->whereBetween('orders.created_at', [$created_start_date . ' 00:00:00', $created_end_date . ' 23:59:59']);
-            }*/
             $start_date = $request->has('start_date') ? $request->start_date : null;
             $end_date = $request->has('end_date') ? $request->end_date : null;
             if ($start_date && $end_date) {

@@ -73,6 +73,7 @@ class InspectionController extends Controller
                         'inspector' => $member->profile->name,
                         'type' => $inspection->type,
                         'schedule' => Carbon::parse($inspection->start_date)->format('j M'),
+                        'id_due' => Carbon::today()->greaterThan($inspection->start_date) ? 1 : 0,
                         'vehicle' => [
                             'id' => $vehicle->id,
                             'vehicle_model' => $basic_information->model_name,
@@ -211,6 +212,7 @@ class InspectionController extends Controller
                         'inspector_pro_pic' => $member->profile->pro_pic,
                         'type' => $inspection->type,
                         'schedule' => Carbon::parse($inspection->start_date)->format('j M'),
+                        'id_due' => Carbon::today()->greaterThan($inspection->start_date) ? 1 : 0,
                         'vehicle' => [
                             'vehicle_model' => $basic_information ? $basic_information->model_name : null,
                             'model_year' => $basic_information ? Carbon::parse($basic_information->model_year)->format('Y') : null,
@@ -228,6 +230,13 @@ class InspectionController extends Controller
                         $query->where('id', $request->inspection_form);
                     });
                 }
+
+                $start_date = $request->has('start_date') ? $request->start_date : null;
+                $end_date = $request->has('end_date') ? $request->end_date : null;
+                if ($start_date && $end_date) {
+                    $inspections->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
+                }
+
                 foreach ($inspections->get() as $inspection) {
                     $vehicle = $inspection->vehicle;
                     $basic_information = $vehicle->basicInformations ? $vehicle->basicInformations : null;
