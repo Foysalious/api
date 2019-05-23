@@ -22,6 +22,7 @@ class InspectionController extends Controller
             $business = $request->business;
             $member = $request->manager_member;
             $this->setModifier($member);
+            list($offset, $limit) = calculatePagination($request);
             $inspections = Inspection::with('formTemplate')
                 ->where('business_id', $business->id)
                 ->orderBy('id', 'DESC');
@@ -32,7 +33,7 @@ class InspectionController extends Controller
                     $query->where('status', '<>', 'closed')
                         ->where('status', '<>', 'cancelled')
                         ->where('created_at', '>=', Carbon::today()->toDateString() . ' 00:00:00');
-                })->get();
+                })->skip($offset)->limit($limit)->get();
                 foreach ($inspections as $inspection) {
                     $inspection = [
                         'id' => $inspection->id,
@@ -44,7 +45,7 @@ class InspectionController extends Controller
                     array_push($inspection_lists, $inspection);
                 }
             } elseif ($request->has('filter') && $request->filter === 'open') {
-                $inspections = $inspections->where('status', 'open')->get();
+                $inspections = $inspections->where('status', 'open')->skip($offset)->limit($limit)->get();
                 foreach ($inspections as $inspection) {
                     $vehicle = $inspection->vehicle;
                     $basic_information = $vehicle->basicInformations ? $vehicle->basicInformations : null;
@@ -65,7 +66,7 @@ class InspectionController extends Controller
                     array_push($inspection_lists, $inspection);
                 }
             } else {
-                $inspections = $inspections->where('status', 'closed')->get();
+                $inspections = $inspections->where('status', 'closed')->skip($offset)->limit($limit)->get();
                 foreach ($inspections as $inspection) {
                     $vehicle = $inspection->vehicle;
                     $basic_information = $vehicle->basicInformations ? $vehicle->basicInformations : null;
@@ -134,7 +135,10 @@ class InspectionController extends Controller
                 'inspector_pic' => $inspection->member->profile->pro_pic,
                 'failed_items' => $inspection->items()->where('input_type', 'radio')->where('result', 'LIKE', '%failed%')->count(),
                 'submitted_date' => $inspection->submitted_date ? Carbon::parse($inspection->submitted_date)->format('j M') : null,
+                'type' => $inspection->type,
                 'status' => $inspection->status,
+                'created_at' => $inspection->created_at->toDateTimeString(),
+                'next_start_date' => $inspection->next_start_date->toDateTimeString(),
                 'inspection_items' => $items,
                 'vehicle' => [
                     'vehicle_model' => $basic_information ? $basic_information->model_name : null,
