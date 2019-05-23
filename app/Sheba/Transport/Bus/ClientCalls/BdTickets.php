@@ -30,9 +30,9 @@ class BdTickets extends ExternalApiClient
 
         if (!$token) {
             $access_token = $this->generateAccessToken();
-            $expired_at = $access_token['expires'] - 60;
+            // $expired_at = $access_token['expires'] - 60;
             Redis::set('bdticket_bearer_token', $access_token['token']);
-            Redis::expire('bdticket_bearer_token', $expired_at);
+            Redis::expire('bdticket_bearer_token', 270);
             $token = $access_token['token'];
         }
         $this->bearerToken = $token;
