@@ -101,8 +101,8 @@ class OperationController extends Controller
                     $partner_info['geo_informations'] = json_encode([
                         'lat' => $request->lat,
                         'lng' => $request->lng,
-                        'radius' => ($geo = json_decode($partner->geo_informations)) ? $geo->radius : 1
-                        #'radius' => $request->has('radius') ? ($request->radius) / 1000 : ((json_decode($partner->geo_informations)->radius) / 1000 ?: '10')
+                        'radius' => json_decode($partner->geo_informations)->radius ?: 1,
+                        //'radius' => $request->has('radius') ? ($request->radius / 1000) : (json_decode($partner->geo_informations)->radius ?: 1)
                     ]);
 
                     $geo_change_log_data = [
@@ -216,8 +216,13 @@ class OperationController extends Controller
         try{
             foreach ($categories as $category) {
 
-                $current_category_partner = ['response_time_min' => 60, 'response_time_max' => 120,
-                    'commission' => $partner->commission, 'category_id' => $category->id];
+                $current_category_partner = [
+                    'response_time_min' => constants('PARTNER_MINIMUM_RESPONSE_TIME'),
+                    'response_time_max' => constants('PARTNER_MAXIMUM_RESPONSE_TIME'),
+                    'commission' => $partner->commission,
+                    'preparation_time_minutes' => 120, //$category->preparation_time_minutes,
+                    'category_id' => $category->id
+                ];
 
                 if($partner->package_id === config('sheba.partner_lite_packages_id'))
                     $current_category_partner['is_partner_premise_applied'] = true;
