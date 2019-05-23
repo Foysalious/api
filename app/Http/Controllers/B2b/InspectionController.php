@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Inspection;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
+use Sheba\Business\Inspection\CreateProcessor;
 use Sheba\Business\Inspection\Creator;
 use Sheba\Business\Inspection\Submission;
 use Sheba\Business\Inspection\SubmissionValidator;
@@ -210,12 +211,14 @@ class InspectionController extends Controller
         }
     }
 
-    public function store($business, Request $request, Creator $creator)
+    public function store($business, Request $request, CreateProcessor $create_processor)
     {
         try {
             $this->setModifier($request->manager_member);
             $request->merge(['member_id' => $request->manager_member->id]);
-            $creator->setData($request->all())->setBusiness($request->business)->create();
+            /** @var Creator $creation_class */
+            $creation_class = $create_processor->setType($request->schedule_type)->getCreationClass();
+            $creation_class->setData($request->all())->setBusiness($request->business)->create();
             return api_response($request, null, 200);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
