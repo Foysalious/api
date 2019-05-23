@@ -134,7 +134,10 @@ class InspectionController extends Controller
                 'inspector_pic' => $inspection->member->profile->pro_pic,
                 'failed_items' => $inspection->items()->where('input_type', 'radio')->where('result', 'LIKE', '%failed%')->count(),
                 'submitted_date' => $inspection->submitted_date ? Carbon::parse($inspection->submitted_date)->format('j M') : null,
+                'type' => $inspection->type,
                 'status' => $inspection->status,
+                'created_at' => $inspection->created_at->toDateTimeString(),
+                'next_start_date' => $inspection->next_start_date->toDateTimeString(),
                 'inspection_items' => $items,
                 'vehicle' => [
                     'vehicle_model' => $basic_information ? $basic_information->model_name : null,
