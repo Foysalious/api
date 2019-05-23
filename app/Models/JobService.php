@@ -8,6 +8,19 @@ class JobService extends Model
     protected $casts = ['unit_price' => 'double', 'quantity' => 'double'];
     protected $table = 'job_service';
 
+    public static function boot()
+    {
+        parent::boot();
+
+        self::created(function(JobService $model){
+            $model->job->partnerOrder->createOrUpdateReport();
+        });
+
+        self::updated(function(JobService $model){
+            $model->job->partnerOrder->createOrUpdateReport();
+        });
+    }
+
     public function job()
     {
         return $this->belongsTo(Job::class);

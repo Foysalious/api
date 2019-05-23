@@ -76,7 +76,6 @@ class Generator
         $report_data = $this->presenter->setCustomer($customer)->getForTable() + [
             'report_updated_at' => Carbon::now()
         ];
-        $report_data['name'] = "test";
         return $report_data;
     }
 }

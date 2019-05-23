@@ -27,7 +27,7 @@ class Basic extends PartnerSale
         $pos_orders = $this->posOrders->getCreatedOrdersBetween($this->timeFrame, $this->partner);
         $pos_orders->map(function ($pos_order) {
             /** @var PosOrder $pos_order */
-            return $pos_order->sale = $pos_order->getTotalPrice();
+            return $pos_order->sale = $pos_order->getNetBill();
         });
         $pos_sales = $pos_orders->sum('sale');
 

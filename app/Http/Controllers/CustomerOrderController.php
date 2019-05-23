@@ -191,9 +191,9 @@ class CustomerOrderController extends Controller
             'created_at' => $partnerOrder->created_at->format('Y-m-d'),
             'created_at_timestamp' => $partnerOrder->created_at->timestamp,
             'version' => $partnerOrder->getVersion(),
-            'original_price' => (double)$partnerOrder->jobPrices,
+            'original_price' => (double)$partnerOrder->jobPrices + $job->logistic_charge,
             'discount' => (double)$partnerOrder->totalDiscount,
-            'discounted_price' => (double)$partnerOrder->totalPrice,
+            'discounted_price' => (double)$partnerOrder->totalPrice + $job->logistic_charge,
             'complain_count' => $job->customerComplains->count(),
             'message' => (new JobLogs($job))->getOrderMessage(),
         ));
