@@ -28,7 +28,7 @@ class InspectionController extends Controller
                 ->orderBy('id', 'DESC');
 
             $inspection_lists = [];
-            if ($request->has('filter') && $request->filter === 'process') {
+            if ($request->has('filter') && $request->filter === 'process') {##Ongoing
                 $inspections = $inspections->where(function ($query) {
                     $query->where('status', '<>', 'closed')
                         ->where('status', '<>', 'cancelled')
@@ -53,7 +53,7 @@ class InspectionController extends Controller
                     ];
                     array_push($inspection_lists, $inspection);
                 }
-            } elseif ($request->has('filter') && $request->filter === 'open') {
+            } elseif ($request->has('filter') && $request->filter === 'open') {##Schedule
                 $inspections = $inspections->where('status', 'open')->skip($offset)->limit($limit);
                 if ($request->has('inspection_form')) {
                     $inspections = $inspections->whereHas('formTemplate', function ($query) use ($request) {
@@ -86,7 +86,7 @@ class InspectionController extends Controller
                     array_push($inspection_lists, $inspection);
                 }
             } else {
-                $inspections = $inspections->where('status', 'closed')->skip($offset)->limit($limit);
+                $inspections = $inspections->where('status', 'closed')->skip($offset)->limit($limit);##History
                 if ($request->has('inspection_form')) {
                     $inspections = $inspections->whereHas('formTemplate', function ($query) use ($request) {
                         $query->where('id', $request->inspection_form);
