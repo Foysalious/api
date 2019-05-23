@@ -46,7 +46,7 @@ abstract class Creator
 
     abstract protected function makeInspectionData();
 
-    protected function makeInspectionItemData(array $inspections)
+    protected function makeInspectionItemData( $inspections)
     {
         $form_template = $this->formTemplateRepository->find((int)$this->data['form_template_id']);
         foreach ($inspections as $inspection) {
