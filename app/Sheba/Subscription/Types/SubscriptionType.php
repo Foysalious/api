@@ -17,6 +17,7 @@ abstract class SubscriptionType
     protected $currentDay;
     /** @var Carbon[] $dates */
     protected $dates;
+    protected $time;
 
     public function __construct()
     {
@@ -42,5 +43,16 @@ abstract class SubscriptionType
     {
         $this->toDate = $date;
         return $this;
+    }
+
+    public function seTime($time)
+    {
+        $this->time = $time;
+        return $this;
+    }
+
+    protected function addTime(Carbon $date)
+    {
+        return Carbon::parse($date->toDateString() . ' ' . $this->time);
     }
 }

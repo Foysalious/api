@@ -1,8 +1,6 @@
-<?php
+<?php namespace Sheba\Business\Inspection;
 
-
-namespace Sheba\Business\Inspection;
-
+use Carbon\Carbon;
 use DB;
 use Illuminate\Database\QueryException;
 use Sheba\Repositories\Interfaces\FormTemplateRepositoryInterface;
@@ -41,7 +39,7 @@ class OneTimeInspectionCreator extends Creator
             'business_id' => $this->business->id,
             'is_published' => 1,
             'form_template_id' => $this->data['form_template_id'],
-            'start_date' => $this->data['start_date'],
+            'start_date' => Carbon::parse($this->data['schedule_type_value'] . ' ' . $this->data['schedule_time']),
             'type' => $this->data['schedule_type'],
         ]);
     }
