@@ -73,6 +73,11 @@ class BaseRepository implements BaseRepositoryInterface
         return $this->model->where($column_name, $value);
     }
 
+    public function whereIn($column_name, array $value)
+    {
+        return $this->model->whereIn($column_name, $value);
+    }
+
     /**
      * @param array $column_name
      * @return $this
@@ -92,6 +97,11 @@ class BaseRepository implements BaseRepositoryInterface
     public function get()
     {
         return $this->model->get();
+    }
+
+    public function first()
+    {
+        return $this->model->first();
     }
 
     /**
