@@ -64,9 +64,7 @@ class PartnerSalesStatistics
     private function calculateSalesFromPosOrders(Collection $pos_orders)
     {
         $data = new PosSalesStat();
-        $pos_orders->map(function ($order) {
-            return $order->sale = $order->getTotalPrice();
-        });
+        $pos_orders->map(function ($order) { return $order->sale = $order->getNetBill(); });
         $data->posSale = $pos_orders->sum('sale');
 
         return $data;
@@ -115,6 +113,7 @@ class PartnerSalesStatistics
         $this->$time_frame->jobServed += $this->today->jobServed;
         $this->$time_frame->totalPartnerDiscount += $this->today->totalPartnerDiscount;
         $this->$time_frame->totalCostWithoutDiscount += $this->today->totalCostWithoutDiscount;
+        $this->$time_frame->posSale += $this->today->posSale;
     }
 
     private function formatDataForView()
@@ -137,6 +136,7 @@ class PartnerSalesStatistics
             "ServedJob" => commaSeparate($data->jobServed),
             "Discount" => commaSeparate($data->totalPartnerDiscount),
             "SaleWithoutDiscount" => commaSeparate($data->totalCostWithoutDiscount),
+            "posSale" => commaSeparate($data->posSale),
         ];
     }
 }

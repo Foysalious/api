@@ -19,6 +19,25 @@ interface BaseRepositoryInterface
      */
     public function find($id);
 
+
+    /**
+     * @param $column_name
+     * @param $value
+     * @return $this
+     */
+    public function where($column_name, $value);
+
+    /**
+     * @param array $column_name
+     * @return  $this
+     */
+    public function select(array $column_name);
+
+    /**
+     * @return Collection
+     */
+    public function get();
+
     /**
      * @return Collection
      */

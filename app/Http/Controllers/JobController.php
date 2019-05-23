@@ -99,7 +99,7 @@ class JobController extends Controller
             $job_collection->put('original_price', ((double)$job->partnerOrder->jobPrices + (double) $job->logistic_charge));
             $job_collection->put('discount', (double)$job->partnerOrder->totalDiscount);
             $job_collection->put('payment_method', $this->formatPaymentMethod($job->partnerOrder->payment_method));
-            $job_collection->put('price', (double)$job->partnerOrder->totalPrice);
+            $job_collection->put('price', (double)$job->partnerOrder->totalPrice  + (double) $job->logistic_charge);
             $job_collection->put('isDue', (double)$job->partnerOrder->due > 0 ? 1 : 0);
             $job_collection->put('isRentCar', $job->isRentCar());
             $job_collection->put('is_on_premise', $job->isOnPremise());

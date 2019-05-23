@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Inspection;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
+use Sheba\Business\Inspection\CreateProcessor;
 use Sheba\Business\Inspection\Creator;
 use Sheba\Business\Inspection\Submission;
 use Sheba\Business\Inspection\SubmissionValidator;
@@ -21,18 +22,28 @@ class InspectionController extends Controller
             $business = $request->business;
             $member = $request->manager_member;
             $this->setModifier($member);
+            list($offset, $limit) = calculatePagination($request);
             $inspections = Inspection::with('formTemplate')
                 ->where('business_id', $business->id)
                 ->orderBy('id', 'DESC');
 
             $inspection_lists = [];
-            if ($request->has('filter') && $request->filter === 'process') {
+            if ($request->has('filter') && $request->filter === 'process') {##Ongoing
                 $inspections = $inspections->where(function ($query) {
                     $query->where('status', '<>', 'closed')
                         ->where('status', '<>', 'cancelled')
                         ->where('created_at', '>=', Carbon::today()->toDateString() . ' 00:00:00');
-                })->get();
-                foreach ($inspections as $inspection) {
+                })->skip($offset)->limit($limit);
+
+                if ($request->has('inspection_form')) {
+                    $inspections = $inspections->whereHas('formTemplate', function ($query) use ($request) {
+                        $query->where('id', $request->inspection_form);
+                    });
+                }
+                if ($request->has('type')) {
+                    $inspections = $inspections->where('type', $request->type);
+                }
+                foreach ($inspections->get() as $inspection) {
                     $inspection = [
                         'id' => $inspection->id,
                         'inspection_form_id' => $inspection->formTemplate ? $inspection->formTemplate->id : null,
@@ -42,16 +53,27 @@ class InspectionController extends Controller
                     ];
                     array_push($inspection_lists, $inspection);
                 }
-            } elseif ($request->has('filter') && $request->filter === 'open') {
-                $inspections = $inspections->where('status', 'open')->get();
-                foreach ($inspections as $inspection) {
+            } elseif ($request->has('filter') && $request->filter === 'open') {##Schedule
+                $inspections = $inspections->where('status', 'open')->skip($offset)->limit($limit);
+                if ($request->has('inspection_form')) {
+                    $inspections = $inspections->whereHas('formTemplate', function ($query) use ($request) {
+                        $query->where('id', $request->inspection_form);
+                    });
+                }
+                if ($request->has('type')) {
+                    $inspections = $inspections->where('type', $request->type);
+                }
+                foreach ($inspections->get() as $inspection) {
                     $vehicle = $inspection->vehicle;
                     $basic_information = $vehicle->basicInformations ? $vehicle->basicInformations : null;
                     $inspection = [
                         'id' => $inspection->id,
+                        'inspection_form_id' => $inspection->formTemplate ? $inspection->formTemplate->id : null,
                         'inspection_form' => $inspection->formTemplate ? $inspection->formTemplate->title : null,
                         'inspector' => $member->profile->name,
+                        'type' => $inspection->type,
                         'schedule' => Carbon::parse($inspection->start_date)->format('j M'),
+                        'id_due' => Carbon::today()->greaterThan($inspection->start_date) ? 1 : 0,
                         'vehicle' => [
                             'id' => $vehicle->id,
                             'vehicle_model' => $basic_information->model_name,
@@ -64,16 +86,26 @@ class InspectionController extends Controller
                     array_push($inspection_lists, $inspection);
                 }
             } else {
-                $inspections = $inspections->where('status', 'closed')->get();
-                foreach ($inspections as $inspection) {
+                $inspections = $inspections->where('status', 'closed')->skip($offset)->limit($limit);##History
+                if ($request->has('inspection_form')) {
+                    $inspections = $inspections->whereHas('formTemplate', function ($query) use ($request) {
+                        $query->where('id', $request->inspection_form);
+                    });
+                }
+                if ($request->has('type')) {
+                    $inspections = $inspections->where('type', $request->type);
+                }
+                foreach ($inspections->get() as $inspection) {
                     $vehicle = $inspection->vehicle;
                     $basic_information = $vehicle->basicInformations ? $vehicle->basicInformations : null;
                     $inspection = [
                         'id' => $inspection->id,
+                        'inspection_form_id' => $inspection->formTemplate ? $inspection->formTemplate->id : null,
                         'inspection_form' => $inspection->formTemplate ? $inspection->formTemplate->title : null,
                         'inspector' => $inspection->member->profile->name,
+                        'type' => $inspection->type,
                         'failed_items' => $inspection->items()->where('input_type', 'radio')->where('result', 'LIKE', '%failed%')->count(),
-                        'submitted' => Carbon::parse($inspection->next_start_date)->format('j M'),
+                        'submitted' => $inspection->submitted_date ? Carbon::parse($inspection->submitted_date)->format('j M') : null,
                         'next_start_date' => Carbon::parse($inspection->next_start_date)->format('l, j M'),
                         'vehicle' => [
                             'id' => $vehicle->id,
@@ -87,7 +119,12 @@ class InspectionController extends Controller
                     array_push($inspection_lists, $inspection);
                 }
             }
-            if (count($inspection_lists) > 0) return api_response($request, $inspection_lists, 200, ['inspection_lists' => $inspection_lists]);
+            if (count($inspection_lists) > 0) return api_response($request, $inspection_lists, 200, [
+                'inspection_lists' => $inspection_lists,
+                'over_due' => 0,
+                'item_failure_rate' => 5.39,
+                'item_failure_rate_change' => 0.30,
+            ]);
             else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -132,8 +169,12 @@ class InspectionController extends Controller
                 'inspector' => $inspection->member->profile->name,
                 'inspector_pic' => $inspection->member->profile->pro_pic,
                 'failed_items' => $inspection->items()->where('input_type', 'radio')->where('result', 'LIKE', '%failed%')->count(),
-                'submitted_date' => Carbon::parse($inspection->next_start_date)->format('l, j M'),#Dummy
+                'submission_note' => $inspection->submission_note,
+                'submitted_date' => $inspection->submitted_date ? Carbon::parse($inspection->submitted_date)->format('j M') : null,
+                'type' => $inspection->type,
                 'status' => $inspection->status,
+                'created_at' => $inspection->created_at ? $inspection->created_at->toDateTimeString() : null,
+                'next_start_date' => $inspection->next_start_date ? $inspection->next_start_date->toDateTimeString() : null,
                 'inspection_items' => $items,
                 'vehicle' => [
                     'vehicle_model' => $basic_information ? $basic_information->model_name : null,
@@ -156,19 +197,27 @@ class InspectionController extends Controller
         try {
             $member = $request->member;
             $this->setModifier($member);
-
+            list($offset, $limit) = calculatePagination($request);
             $inspections = Inspection::with('formTemplate')->where('member_id', $member->id)->orderBy('id', 'DESC');
             $inspection_lists = [];
             if ($request->has('filter') && $request->filter === 'open') {
-                $inspections = $inspections->where('status', 'open')->get();
-                foreach ($inspections as $inspection) {
+                $inspections = $inspections->where('status', 'open')->skip($offset)->limit($limit);
+                if ($request->has('inspection_form')) {
+                    $inspections = $inspections->whereHas('formTemplate', function ($query) use ($request) {
+                        $query->where('id', $request->inspection_form);
+                    });
+                }
+                foreach ($inspections->get() as $inspection) {
                     $vehicle = $inspection->vehicle;
                     $basic_information = $vehicle->basicInformations ? $vehicle->basicInformations : null;
                     $inspection = [
                         'id' => $inspection->id,
                         'inspection_form' => $inspection->formTemplate ? $inspection->formTemplate->title : null,
                         'inspector' => $member->profile->name,
+                        'inspector_pro_pic' => $member->profile->pro_pic,
+                        'type' => $inspection->type,
                         'schedule' => Carbon::parse($inspection->start_date)->format('j M'),
+                        'id_due' => Carbon::today()->greaterThan($inspection->start_date) ? 1 : 0,
                         'vehicle' => [
                             'vehicle_model' => $basic_information ? $basic_information->model_name : null,
                             'model_year' => $basic_information ? Carbon::parse($basic_information->model_year)->format('Y') : null,
@@ -180,8 +229,20 @@ class InspectionController extends Controller
                     array_push($inspection_lists, $inspection);
                 }
             } else {
-                $inspections = $inspections->where('status', 'closed')->get();
-                foreach ($inspections as $inspection) {
+                $inspections = $inspections->where('status', 'closed')->skip($offset)->limit($limit);
+                if ($request->has('inspection_form')) {
+                    $inspections = $inspections->whereHas('formTemplate', function ($query) use ($request) {
+                        $query->where('id', $request->inspection_form);
+                    });
+                }
+
+                $start_date = $request->has('start_date') ? $request->start_date : null;
+                $end_date = $request->has('end_date') ? $request->end_date : null;
+                if ($start_date && $end_date) {
+                    $inspections->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
+                }
+
+                foreach ($inspections->get() as $inspection) {
                     $vehicle = $inspection->vehicle;
                     $basic_information = $vehicle->basicInformations ? $vehicle->basicInformations : null;
                     $inspection = [
@@ -189,7 +250,7 @@ class InspectionController extends Controller
                         'inspection_form' => $inspection->formTemplate ? $inspection->formTemplate->title : null,
                         'inspector' => $member->profile->name,
                         'failed_items' => $inspection->items()->where('input_type', 'radio')->where('result', 'LIKE', '%failed%')->count(),
-                        'submitted' => Carbon::parse($inspection->next_start_date)->format('j M'),
+                        'submitted' => $inspection->submitted_date ? Carbon::parse($inspection->submitted_date)->format('j M') : null,
                         'next_start_date' => Carbon::parse($inspection->next_start_date)->format('l, j M'),
                         'vehicle' => [
                             'vehicle_model' => $basic_information ? $basic_information->model_name : null,
@@ -210,12 +271,14 @@ class InspectionController extends Controller
         }
     }
 
-    public function store($business, Request $request, Creator $creator)
+    public function store($business, Request $request, CreateProcessor $create_processor)
     {
         try {
             $this->setModifier($request->manager_member);
             $request->merge(['member_id' => $request->manager_member->id]);
-            $inspection = $creator->setData($request->all())->setBusiness($request->business)->create();
+            /** @var Creator $creation_class */
+            $creation_class = $create_processor->setType($request->schedule_type)->getCreationClass();
+            $inspection = $creation_class->setData($request->all())->setBusiness($request->business)->create();
             return api_response($request, null, 200, ['id' => $inspection->id]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
