@@ -50,7 +50,7 @@ class BaseRepository implements BaseRepositoryInterface
         foreach ($attributes as $attribute) {
             array_push($data, $this->withCreateModificationField($attribute));
         }
-        ($this->model)::insert($data);
+        return ($this->model)::insert($data);
     }
 
     /**
@@ -60,6 +60,38 @@ class BaseRepository implements BaseRepositoryInterface
     public function find($id)
     {
         return $this->model->find($id);
+    }
+
+
+    /**
+     * @param $column_name
+     * @param $value
+     * @return $this
+     */
+    public function where($column_name, $value)
+    {
+        return $this->model->where($column_name, $value);
+    }
+
+    /**
+     * @param array $column_name
+     * @return $this
+     */
+    public function select(array $column_name)
+    {
+        $select = $column_name[0];
+        foreach ($column_name as $column) {
+            $select .= ',' . $column;
+        }
+        return $this->model->select($select);
+    }
+
+    /**
+     * @return Collection
+     */
+    public function get()
+    {
+        return $this->model->get();
     }
 
     /**
@@ -85,7 +117,7 @@ class BaseRepository implements BaseRepositoryInterface
 
     public function delete($id)
     {
-       return ($this->model)::find($id)->delete();
+        return ($this->model)::find($id)->delete();
     }
 
     protected function withRequestIdentificationData($data)

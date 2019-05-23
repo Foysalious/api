@@ -2,31 +2,39 @@
 
 
 use App\Models\Business;
-use App\Models\Inspection;
+use App\Models\InspectionSchedule;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use DB;
 use Sheba\Repositories\Interfaces\FormTemplateRepositoryInterface;
 use Sheba\Repositories\Interfaces\InspectionItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\InspectionRepositoryInterface;
+use Sheba\Repositories\Interfaces\InspectionScheduleRepositoryInterface;
+use Sheba\Subscription\Types\MonthlySubscriptionType;
+use Sheba\Subscription\Types\WeeklySubscriptionType;
 
 class Creator
 {
     private $inspectionRepository;
+    private $inspectionScheduleRepository;
     private $inspectionItemRepository;
     private $formTemplateRepository;
     private $inspectionData;
+    private $inspectionScheduleData;
     private $inspectionItemData;
+    private $inspectionScheduleDate;
     private $data;
     private $business;
 
-    public function __construct(InspectionRepositoryInterface $inspection_repository, InspectionItemRepositoryInterface $inspection_item_repository, FormTemplateRepositoryInterface $form_template_repository)
+    public function __construct(InspectionRepositoryInterface $inspection_repository, InspectionScheduleRepositoryInterface $inspection_schedule_repository, InspectionItemRepositoryInterface $inspection_item_repository, FormTemplateRepositoryInterface $form_template_repository)
     {
         $this->inspectionRepository = $inspection_repository;
         $this->inspectionItemRepository = $inspection_item_repository;
         $this->formTemplateRepository = $form_template_repository;
+        $this->inspectionScheduleRepository = $inspection_schedule_repository;
         $this->inspectionData = [];
         $this->inspectionItemData = [];
+        $this->inspectionScheduleDate = [];
     }
 
     public function setData($data)
@@ -43,13 +51,16 @@ class Creator
 
     public function create()
     {
-        $this->makeInspectionData();
+        $this->makeInspectionScheduleData();
         $inspection = null;
         try {
             DB::transaction(function () use (&$inspection) {
-                /** @var Inspection $inspection */
-                $inspection = $this->inspectionRepository->create($this->inspectionData);
-                $this->makeInspectionItemData($inspection);
+                /** @var InspectionSchedule $inspection_schedule */
+                $inspection_schedule = $this->inspectionScheduleRepository->create($this->inspectionScheduleData);
+                $this->makeInspectionData($inspection_schedule);
+                $this->inspectionRepository->createMany($this->inspectionData);
+                $inspections= $this->inspectionRepository->where('inspection_schedule_id', $inspection_schedule->id)->select(['id'])->get();
+                $this->makeInspectionItemData($inspections);
                 $this->inspectionItemRepository->createMany($this->inspectionItemData);
             });
         } catch (QueryException $e) {
@@ -58,57 +69,65 @@ class Creator
         return $inspection;
     }
 
-    private function makeInspectionData()
+    public function makeInspectionScheduleData()
     {
-        $this->calculateDateValues();
-        $this->inspectionData = [
-            'vehicle_id' => $this->data['vehicle_id'],
-            'member_id' => $this->data['member_id'],
-            'business_id' => $this->business->id,
+        $this->inspectionScheduleData = [
             'is_published' => 1,
-            'form_template_id' => $this->data['form_template_id'],
-            'start_date' => $this->data['start_date'],
-            'next_start_date' => $this->data['next_start_date'],
-            'date_values' => $this->data['date_values'],
+            'date_values' => $this->data['schedule_type_value'],
             'type' => $this->data['schedule_type'],
         ];
     }
 
-    private function makeInspectionItemData(Inspection $inspection)
+    private function makeInspectionData(InspectionSchedule $inspection_schedule)
     {
-        $form_template = $this->formTemplateRepository->find((int)$this->data['form_template_id']);
-        foreach ($form_template->items as $item) {
-            array_push($this->inspectionItemData, [
-                'title' => $item->title,
-                'short_description' => $item->short_description,
-                'long_description' => $item->long_description,
-                'input_type' => $item->input_type,
-                'inspection_id' => $inspection->id,
-                'variables' => $item->variables,
+        $this->calculateInspectionScheduleDates();
+        if ($this->data['schedule_type'] === 'one_way') {
+            array_push($this->inspectionData, [
+                'member_id' => $this->data['member_id'],
+                'vehicle_id' => $this->data['vehicle_id'],
+                'business_id' => $this->business->id,
+                'is_published' => 1,
+                'form_template_id' => $this->data['form_template_id'],
+                'start_date' => $this->data['start_date'],
+                'type' => $this->data['schedule_type'],
+                'inspection_schedule_id' => $inspection_schedule->id,
             ]);
+        } else {
+            foreach ($this->inspectionScheduleDate as $date) {
+                array_push($this->inspectionData, [
+                    'member_id' => $this->data['member_id'],
+                    'vehicle_id' => $this->data['vehicle_id'],
+                    'business_id' => $this->business->id,
+                    'is_published' => 1,
+                    'form_template_id' => $this->data['form_template_id'],
+                    'start_date' => $date->toDateTimeString(),
+                    'type' => $this->data['schedule_type'],
+                    'inspection_schedule_id' => $inspection_schedule->id
+                ]);
+            }
         }
     }
 
-    private function calculateDateValues()
+    private function calculateInspectionScheduleDates()
     {
-        $this->data['date_values'] = $this->data['next_start_date'] = null;
-        if ($this->data['schedule_type'] == 'monthly') {
-            $date = date('Y') . '-' . date('m') . '-' . $this->data['schedule_type_value'] . ' ' . $this->data['schedule_time'];
-            $date = Carbon::parse($date);
-            $this->data['start_date'] = Carbon::now() > $date ? $date->addDays(30) : $date;
-            $this->data['next_start_date'] = $date->copy()->addDays(30);
-        } elseif ($this->data['schedule_type'] == 'one_time') {
-            $date = $this->data['schedule_type_value'] . ' ' . $this->data['schedule_time'];
-            $this->data['start_date'] = Carbon::parse($date);
-        } elseif ($this->data['schedule_type'] == 'weekly') {
-            $current_day = date('l');
-            if ($current_day == $this->data['schedule_type_value']) {
-                $this->data['start_date'] = Carbon::now();
-                $this->data['next_start_date'] = Carbon::parse('next ' . $this->data['schedule_type_value']);
-            } else {
-                $day = Carbon::parse('next ' . $this->data['schedule_type_value']);
-                $this->data['start_date'] = $day;
-                $this->data['next_start_date'] = $day->copy()->addDays(7);
+        $type = $this->data['schedule_type'];
+        $type_class = $type == 'monthly' ? new MonthlySubscriptionType() : new WeeklySubscriptionType();
+        $this->inspectionScheduleDate = $type_class->setValues(json_decode($this->data['schedule_type_value']))->seToDate(Carbon::parse("2019-12-12"))->getDates();
+    }
+
+    private function makeInspectionItemData($inspections)
+    {
+        $form_template = $this->formTemplateRepository->find((int)$this->data['form_template_id']);
+        foreach ($inspections as $inspection) {
+            foreach ($form_template->items as $item) {
+                array_push($this->inspectionItemData, [
+                    'title' => $item->title,
+                    'short_description' => $item->short_description,
+                    'long_description' => $item->long_description,
+                    'input_type' => $item->input_type,
+                    'inspection_id' => $inspection->id,
+                    'variables' => $item->variables,
+                ]);
             }
         }
     }

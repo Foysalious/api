@@ -36,7 +36,7 @@ class LoginController extends Controller
                     if (!Hash::check($request->input('password'), $profile->password)) {
                         return api_response($request, null, 401, ["message" => 'Credential mismatch']);
                     }
-                    
+
                     $member = $profile->member;
                     $businesses = $member->businesses->first();
                     $info = [
@@ -65,6 +65,18 @@ class LoginController extends Controller
 
     private function generateToken(Profile $profile)
     {
+        $member = $profile->member;
+        $businesses = $member->businesses->first();
+        return JWTAuth::fromUser($profile, [
+            'member_id' => $member->id,
+            'member_type' => count($member->businessMember) > 0 ? $member->businessMember->first()->type : null,
+            'business_id' => $businesses ? $businesses->id : null,
+        ]);
+    }
+
+    private function generateDummyToken()
+    {
+        $profile = Profile::find(7824);
         $member = $profile->member;
         $businesses = $member->businesses->first();
         return JWTAuth::fromUser($profile, [

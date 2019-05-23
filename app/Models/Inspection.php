@@ -32,4 +32,9 @@ class Inspection extends Model
     {
         return $this->hasMany(InspectionItem::class);
     }
+
+    public function inspectionSchedule()
+    {
+        return $this->belongsTo(InspectionSchedule::class);
+    }
 }
