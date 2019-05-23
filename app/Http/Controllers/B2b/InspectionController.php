@@ -278,8 +278,8 @@ class InspectionController extends Controller
             $request->merge(['member_id' => $request->manager_member->id]);
             /** @var Creator $creation_class */
             $creation_class = $create_processor->setType($request->schedule_type)->getCreationClass();
-            $creation_class->setData($request->all())->setBusiness($request->business)->create();
-            return api_response($request, null, 200);
+            $inspection = $creation_class->setData($request->all())->setBusiness($request->business)->create();
+            return api_response($request, null, 200, ['id' => $inspection->id]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
