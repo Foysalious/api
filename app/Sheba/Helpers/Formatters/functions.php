@@ -47,7 +47,6 @@ if (!function_exists('formatMobileReverse')) {
     }
 }
 
-
 if (!function_exists('getOriginalMobileNumber')) {
     /**
      * Format Mobile number without +88 .

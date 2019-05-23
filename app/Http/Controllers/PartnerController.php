@@ -718,7 +718,8 @@ class PartnerController extends Controller
                         $master_category = ['id' => $category->parent->id, 'name' => $category->parent->name, 'app_thumb' => $category->parent->app_thumb, 'secondary_category' => collect()];
                         $master_categories->push($master_category);
                     }
-
+                    $category_partner = CategoryPartner::where('category_id',$category->id)->where('partner_id',$partner->id)->first();
+                    $delivery_charge_update_request = DeliveryChargeUpdateRequest::where('category_partner_id',$category_partner->id)->first();
                     if($category->is_logistic_available) $number_of_services_with_sheba_delivery++;
                     $category = [
                         'id' => $category->id, 'name' => $category->name, 'parent_id' => $category->parent_id, 'thumb' => $category->thumb, 'app_thumb' => $category->app_thumb,
@@ -729,7 +730,8 @@ class PartnerController extends Controller
                         'published_services' => $published_services,
                         'unpublished_services' => $unpublished_services,
                         'is_logistic_available' => $category->is_logistic_available,
-                        'uses_sheba_logistic' => CategoryPartner::where('category_id',$category->id)->where('partner_id',$partner->id)->first()->uses_sheba_logistic
+                        'uses_sheba_logistic' => $category_partner->uses_sheba_logistic,
+                        'status' => $delivery_charge_update_request ? $delivery_charge_update_request->status : null
                     ];
 
                     $master_category['secondary_category']->push($category);
@@ -1043,7 +1045,7 @@ class PartnerController extends Controller
                     'is_home_delivery_applied' => $request->has('home_delivery') ? 1 : 0,
                     'is_partner_premise_applied' => $request->has('on_premise') ? 1 : 0,
                     'delivery_charge' => $request->has('home_delivery') ? $request->delivery_charge : 0,
-                    'uses_sheba_logistic' => $this->doesUseShebaLogistic($category, $request) ? 1 : 0,
+                    'uses_sheba_logistic' => $this->doesUseShebaLogistic(Category::find($category), $request) ? 1 : 0,
                 ]));
                 return api_response($request, 1, 200);
             }

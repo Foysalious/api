@@ -64,11 +64,11 @@ class DashboardController extends Controller
                     ],
                     'week' => [
                         'timeline' => date("jS F", strtotime(Carbon::today()->startOfWeek())) . "-" . date("jS F", strtotime(Carbon::today())),
-                        'amount' => $sales_stats->week->orderTotalPrice
+                        'amount' => $sales_stats->week->orderTotalPrice + $sales_stats->week->posSale
                     ],
                     'month' => [
                         'timeline' => date("jS F", strtotime(Carbon::today()->startOfMonth())) . "-" . date("jS F", strtotime(Carbon::today())),
-                        'amount' => $sales_stats->month->orderTotalPrice
+                        'amount' => $sales_stats->month->orderTotalPrice + $sales_stats->month->posSale
                     ]
                 ],
                 'weekly_performance' => [
