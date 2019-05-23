@@ -21,6 +21,7 @@ class InspectionController extends Controller
             $business = $request->business;
             $member = $request->manager_member;
             $this->setModifier($member);
+            list($offset, $limit) = calculatePagination($request);
             $inspections = Inspection::with('formTemplate')
                 ->where('business_id', $business->id)
                 ->orderBy('id', 'DESC');
@@ -31,7 +32,7 @@ class InspectionController extends Controller
                     $query->where('status', '<>', 'closed')
                         ->where('status', '<>', 'cancelled')
                         ->where('created_at', '>=', Carbon::today()->toDateString() . ' 00:00:00');
-                })->get();
+                })->skip($offset)->limit($limit)->get();
                 foreach ($inspections as $inspection) {
                     $inspection = [
                         'id' => $inspection->id,
@@ -43,7 +44,7 @@ class InspectionController extends Controller
                     array_push($inspection_lists, $inspection);
                 }
             } elseif ($request->has('filter') && $request->filter === 'open') {
-                $inspections = $inspections->where('status', 'open')->get();
+                $inspections = $inspections->where('status', 'open')->skip($offset)->limit($limit)->get();
                 foreach ($inspections as $inspection) {
                     $vehicle = $inspection->vehicle;
                     $basic_information = $vehicle->basicInformations ? $vehicle->basicInformations : null;
@@ -64,7 +65,7 @@ class InspectionController extends Controller
                     array_push($inspection_lists, $inspection);
                 }
             } else {
-                $inspections = $inspections->where('status', 'closed')->get();
+                $inspections = $inspections->where('status', 'closed')->skip($offset)->limit($limit)->get();
                 foreach ($inspections as $inspection) {
                     $vehicle = $inspection->vehicle;
                     $basic_information = $vehicle->basicInformations ? $vehicle->basicInformations : null;
