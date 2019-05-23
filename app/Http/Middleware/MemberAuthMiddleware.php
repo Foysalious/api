@@ -25,7 +25,6 @@ class MemberAuthMiddleware
         } catch (JWTException $e) {
             return api_response($request, null, 401);
         }
-
         $member = Member::find($payload['member_id']);
         if (!$member) return response()->json(['message' => 'Member not found.', 'code' => 404]);
 
