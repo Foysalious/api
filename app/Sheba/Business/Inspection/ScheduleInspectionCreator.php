@@ -1,7 +1,4 @@
-<?php
-
-
-namespace Sheba\Business\Inspection;
+<?php namespace Sheba\Business\Inspection;
 
 
 use App\Models\InspectionSchedule;
@@ -18,11 +15,13 @@ use Sheba\Subscription\Types\WeeklySubscriptionType;
 class ScheduleInspectionCreator extends Creator
 {
     private $inspectionScheduleDate;
+    private $uptoDate;
 
     public function __construct(InspectionRepositoryInterface $inspection_repository, InspectionScheduleRepositoryInterface $inspection_schedule_repository, InspectionItemRepositoryInterface $inspection_item_repository, FormTemplateRepositoryInterface $form_template_repository)
     {
         parent::__construct($inspection_repository, $inspection_schedule_repository, $inspection_item_repository, $form_template_repository);
         $this->inspectionScheduleDate = [];
+        $this->uptoDate = Carbon::now()->addMonths(6);
     }
 
     public function create()
@@ -50,7 +49,9 @@ class ScheduleInspectionCreator extends Creator
     {
         $type = $this->data['schedule_type'];
         $type_class = $type == 'monthly' ? new MonthlySubscriptionType() : new WeeklySubscriptionType();
-        $this->inspectionScheduleDate = $type_class->setValues(json_decode($this->data['schedule_type_value']))->seToDate(Carbon::parse("2019-12-12"))->getDates();
+        $upto_date = Carbon::parse($this->uptoDate->toDateString() . ' ' . $this->data['schedule_time']);
+        $this->inspectionScheduleDate = $type_class->setValues(json_decode($this->data['schedule_type_value']))
+            ->seTime($this->data['schedule_time'])->seToDate($upto_date)->getDates();
     }
 
     public function makeInspectionScheduleData()

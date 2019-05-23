@@ -13,11 +13,11 @@ class MonthlySubscriptionType extends SubscriptionType
         $this->values = $this->values->sort()->unique();
         $month = $this->currentMonth;
         $year = $this->currentYear;
-        while ($this->toDate > Carbon::createFromDate($year, $month, $this->values->first())) {
+        while ($this->toDate > $this->addTime(Carbon::createFromDate($year, $month, $this->values->first()))) {
             foreach ($this->values as $date) {
-                $inspection_date = Carbon::createFromDate($year, $month, $date);
+                $inspection_date = $this->addTime(Carbon::createFromDate($year, $month, $date));
                 while ((int)$inspection_date->format('m') != $month && (int)$inspection_date->format('d') != $date) {
-                    $inspection_date = Carbon::createFromDate($year, $month, $date - 1);
+                    $inspection_date = $this->addTime(Carbon::createFromDate($year, $month, $date - 1));
                 }
                 if ($this->toDate > $inspection_date && $this->currentDate < $inspection_date) {
                     array_push($this->dates, $inspection_date);
@@ -31,5 +31,6 @@ class MonthlySubscriptionType extends SubscriptionType
         }
         return $this->dates;
     }
+
 
 }
