@@ -119,7 +119,12 @@ class InspectionController extends Controller
                     array_push($inspection_lists, $inspection);
                 }
             }
-            if (count($inspection_lists) > 0) return api_response($request, $inspection_lists, 200, ['inspection_lists' => $inspection_lists]);
+            if (count($inspection_lists) > 0) return api_response($request, $inspection_lists, 200, [
+                'inspection_lists' => $inspection_lists,
+                'over_due' => 0,
+                'item_failure_rate' => 5.39,
+                'item_failure_rate_change' => 0.30,
+            ]);
             else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
