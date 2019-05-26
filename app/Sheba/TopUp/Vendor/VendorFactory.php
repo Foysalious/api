@@ -1,8 +1,7 @@
-<?php
-
-namespace Sheba\TopUp\Vendor;
+<?php namespace Sheba\TopUp\Vendor;
 
 use App\Models\TopUpVendor;
+use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use ReflectionClass;
 
@@ -27,12 +26,12 @@ class VendorFactory
     /**
      * @param $id
      * @return Vendor
-     * @throws \Exception
+     * @throws Exception
      */
     public function getById($id)
     {
         if(!in_array($id, $this->getConstants())) {
-            throw new \Exception('Invalid Vendor');
+            throw new Exception('Invalid Vendor');
         }
         return app($this->classes[$id - 1])->setModel($this->getModel($id));
     }
@@ -40,12 +39,12 @@ class VendorFactory
     /**
      * @param $name
      * @return Vendor
-     * @throws \Exception
+     * @throws Exception
      */
     public function getByName($name)
     {
         if(!in_array($name, array_keys($this->getConstants()))) {
-            throw new \Exception('Invalid Vendor');
+            throw new Exception('Invalid Vendor');
         }
         $id = $this->getConstants()[$name];
         return app($this->classes[$id - 1])->setModel($this->getModel($id));
@@ -54,12 +53,12 @@ class VendorFactory
     /**
      * @param $name
      * @return Vendor
-     * @throws \Exception
+     * @throws Exception
      */
     public function getIdByName($name)
     {
         if(!in_array($name, array_keys($this->getConstants()))) {
-            throw new \Exception('Invalid Vendor');
+            throw new Exception('Invalid Vendor');
         }
         return $this->getConstants()[$name];
     }
@@ -67,7 +66,7 @@ class VendorFactory
     /**
      * @param $mobile
      * @return Vendor
-     * @throws \Exception
+     * @throws Exception
      */
     public function getByMobile($mobile)
     {
@@ -84,7 +83,7 @@ class VendorFactory
      */
     public static function sslVendorsId()
     {
-        return [self::GP, self::TELETALK];
+        return [self::GP, self::TELETALK, self::BANGLALINK];
     }
 
     /**
