@@ -21,7 +21,7 @@ class WeeklySubscriptionType extends SubscriptionType
      */
     public function getDates()
     {
-
+        $now = Carbon::now();
         $this->sortDays();
         if ($today = $this->getToday()) array_push($this->dates, $this->addTime(Carbon::now()));
         $to_date = $this->addTime($this->toDate);
@@ -33,6 +33,7 @@ class WeeklySubscriptionType extends SubscriptionType
                 if ($this->toDate > $inspection_date) array_push($this->dates, $inspection_date);
             }
         }
+        Carbon::setTestNow($now);
         return $this->dates;
     }
 
