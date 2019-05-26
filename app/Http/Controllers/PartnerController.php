@@ -1056,7 +1056,7 @@ class PartnerController extends Controller
                 $category_partner->update($this->withUpdateModificationField([
                     'is_home_delivery_applied' => $request->has('home_delivery') ? 1 : 0,
                     'is_partner_premise_applied' => $request->has('on_premise') ? 1 : 0,
-                    'delivery_charge' => $request->has('home_delivery') ? $request->delivery_charge : 0,
+                    'delivery_charge' => $request->has('is_home_delivery_applied') ? $request->delivery_charge : 0,
                     'uses_sheba_logistic' => $this->doesUseShebaLogistic(Category::find($category), $request) ? 1 : 0,
                 ]));
                 return api_response($request, 1, 200);
@@ -1094,7 +1094,7 @@ class PartnerController extends Controller
         $new = [
             'is_home_delivery_applied' => $request->has('home_delivery') ? 1 : 0,
             'is_partner_premise_applied' => $request->has('on_premise') ? 1 : 0,
-            'delivery_charge' => $request->has('home_delivery') ? $request->delivery_charge : 0,
+            'delivery_charge' => $request->has('is_home_delivery_applied') ? $request->delivery_charge : 0,
             'uses_sheba_logistic' => $this->doesUseShebaLogistic($category, $request),
         ];
 
