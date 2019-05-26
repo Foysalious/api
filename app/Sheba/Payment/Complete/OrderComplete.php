@@ -1,9 +1,11 @@
 <?php namespace Sheba\Payment\Complete;
 
 use App\Models\PartnerOrder;
+use App\Models\Payment;
 use App\Models\PaymentDetail;
 use App\Models\SubscriptionOrder;
 use Carbon\Carbon;
+use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Sheba\Checkout\Adapters\SubscriptionOrderAdapter;
@@ -11,6 +13,7 @@ use Sheba\Dal\Discount\DiscountRepository;
 use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\ModificationFields;
 use Sheba\RequestIdentification;
+use Throwable;
 
 class OrderComplete extends PaymentComplete
 {
@@ -27,6 +30,10 @@ class OrderComplete extends PaymentComplete
         $this->discountRepo = $discount_repo;
     }
 
+    /**
+     * @return Payment
+     * @throws Exception
+     */
     public function complete()
     {
         $has_error = false;
@@ -80,7 +87,9 @@ class OrderComplete extends PaymentComplete
             if (strtolower($paymentDetail->method) == 'wallet') dispatchReward()->run('wallet_cashback', $customer, $paymentDetail->amount, $partner_order);
         } else {
             $has_error = true;
+            throw new Exception('OrderComplete collect api failure. code:' . $response->code);
         }
+
         return $has_error;
     }
 
@@ -92,7 +101,7 @@ class OrderComplete extends PaymentComplete
             $payable_model->paid_at = Carbon::now();
             $payable_model->update();
             $this->convertToOrder($payable_model);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $has_error = false;
         }
         return $has_error;
@@ -106,7 +115,7 @@ class OrderComplete extends PaymentComplete
         try {
             $subscription_order = new SubscriptionOrderAdapter($payable_model);
             $subscription_order->convertToOrder();
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
         }
     }
