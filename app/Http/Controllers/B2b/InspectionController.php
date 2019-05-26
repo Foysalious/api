@@ -141,21 +141,21 @@ class InspectionController extends Controller
                 ->select(['id', 'status', 'result'])
                 ->get();
             $failed_items = $this->getFailedItems($inspection_items);
-            $failure_percent_in_last_seven_days = round(($failed_items->count() / $inspection_items->count()) * 100, 2);
+            $failure_percent_in_last_seven_days = ($failed_items->count() / $inspection_items->count()) * 100;
             $inspection_items = $inspection_item_repository->getAllByBusiness((int)$business->id)
                 ->whereBetween('created_at', [Carbon::now()->subDays(14)->toDateTimeString(), Carbon::now()->subDays(7)->toDateTimeString()])
                 ->where('input_type', 'radio')
                 ->select(['id', 'status', 'result'])
                 ->get();
             $failed_items = $this->getFailedItems($inspection_items);
-            $failure_percent_before_last_seven_days = $inspection_items->count() > 0 ? round(($failed_items->count() / $inspection_items->count()) * 100, 2) : 0;
+            $failure_percent_before_last_seven_days = $inspection_items->count() > 0 ? ($failed_items->count() / $inspection_items->count()) * 100 : 0;
             $difference = $failure_percent_before_last_seven_days - $failure_percent_in_last_seven_days;
             if (count($inspection_lists) > 0) return api_response($request, $inspection_lists, 200, [
                 'inspection_lists' => $inspection_lists,
                 'over_due' => 0,
-                'item_failure_rate' => $failure_percent_in_last_seven_days,
+                'item_failure_rate' => round($failure_percent_in_last_seven_days, 2),
                 'is_rate_change_upwords' => $failure_percent_in_last_seven_days >= $failure_percent_before_last_seven_days ? 1 : 0,
-                'item_failure_rate_change' => $difference >= 0 ? $difference : $difference * (-1)
+                'item_failure_rate_change' => $difference >= 0 ? round($difference, 2) : round($difference * (-1), 2)
             ]);
             else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
