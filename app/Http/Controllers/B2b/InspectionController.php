@@ -135,6 +135,7 @@ class InspectionController extends Controller
         }
     }
 
+
     public function getChildrenInspections($business, $inspection, Request $request, InspectionRepositoryInterface $inspection_repository)
     {
         try {
@@ -383,5 +384,35 @@ class InspectionController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function inspectionForms($business, Request $request)
+    {
+        try {
+            $business = $request->business;
+            $member = $request->manager_member;
+            $this->setModifier($member);
+            $inspections = Inspection::with('formTemplate')
+                ->where('business_id', $business->id)
+                ->orderBy('id', 'DESC')->get();
+            #dd($inspections->unique());
+
+            $form_lists = [];
+            foreach ($inspections as $inspection) {
+                $inspection_form = $inspection->formTemplate;
+                array_push($form_lists, [
+                    'inspection_id' => $inspection->id,
+                    'id' => $inspection_form ? $inspection_form->id : null,
+                    'title' => $inspection_form ? $inspection_form->title : null,
+                ]);
+            }
+            if (count($form_lists) > 0) return api_response($request, $form_lists, 200, ['form_lists' => $form_lists]);
+            else  return api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
     }
 }
