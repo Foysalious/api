@@ -289,6 +289,14 @@ class InspectionController extends Controller
                         $query->where('id', $request->inspection_form);
                     });
                 }
+                if ($request->has('type')) {
+                    $inspections->whereHas('vehicle', function ($query) use ($request) {
+                        $query->whereHas('basicInformations', function ($query) use ($request) {
+                            $query->where('type', $request->type);
+                        });
+                    });
+                }
+
                 foreach ($inspections->get() as $inspection) {
                     $vehicle = $inspection->vehicle;
                     $basic_information = $vehicle->basicInformations ? $vehicle->basicInformations : null;
