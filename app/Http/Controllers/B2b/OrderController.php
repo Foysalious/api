@@ -216,7 +216,7 @@ class OrderController extends Controller
             if ($order) {
                 if ($request->has('issue_id')) {
                     $issue = InspectionItemIssue::find((int)$request->issue_id);
-                    $issue->update($this->withBothModificationFields(['order_id' => $order->id]));
+                    $issue->update($this->withBothModificationFields(['order_id' => $order->id, 'status' => 'closed']));
                 }
                 return api_response($request, $order, 200, ['job_id' => $order->jobs->first()->id, 'order_id' => $order->jobs->first()->partnerOrder->id,
                     'order_code' => $order->code()]);
