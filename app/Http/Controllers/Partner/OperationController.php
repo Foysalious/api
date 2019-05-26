@@ -90,7 +90,11 @@ class OperationController extends Controller
                 if ($request->has('address')) $partner_info['address'] = $request->address;
                 if ($request->has('lat') && $request->has('lng')) {
                     $old_geo_informations = $partner->geo_informations;
-                    $partner_info['geo_informations'] = json_encode(['lat' => $request->lat, 'lng' => $request->lng, 'radius' => json_decode($partner->geo_informations)->radius ?: 1,//'radius' => $request->has('radius') ? ($request->radius / 1000) : (json_decode($partner->geo_informations)->radius ?: 1)
+                    $partner_info['geo_informations'] = json_encode([
+                        'lat' => $request->lat,
+                        'lng' => $request->lng,
+                        'radius' => $partner->geo_informations ? (json_decode($partner->geo_informations)->radius ?: 1) : 1
+                        //'radius' => $request->has('radius') ? ($request->radius / 1000) : (json_decode($partner->geo_informations)->radius ?: 1)
                     ]);
 
                     $geo_change_log_data = ['old_geo_informations' => $old_geo_informations, 'new_geo_informations' => $partner_info['geo_informations'], 'log' => 'Partner Geo Information Updated'];
