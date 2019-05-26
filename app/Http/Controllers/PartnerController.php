@@ -739,7 +739,7 @@ class PartnerController extends Controller
                         'is_verified' => $category->pivot->is_verified, 'is_sheba_home_delivery_applied' => $category->is_home_delivery_applied,
                         'is_sheba_partner_premise_applied' => $category->is_partner_premise_applied, 'is_home_delivery_applied' => $category->pivot->is_home_delivery_applied,
                         'is_partner_premise_applied' => $category->pivot->is_partner_premise_applied,
-                        'delivery_charge' => $category->pivot->is_home_delivery_applied ? (double)$category->pivot->delivery_charge :  $logistic_price  ,
+                        'delivery_charge' => $category->pivot->is_home_delivery_applied ? (double)$category->pivot->delivery_charge :  $logistic_price ,
                         'published_services' => $published_services,
                         'unpublished_services' => $unpublished_services,
                         'is_logistic_available' => $category->is_logistic_available,

@@ -1,5 +1,7 @@
 <?php namespace Sheba\Logs\Customer;
 
+use App\Models\Category;
+use App\Models\CategoryPartner;
 use App\Models\Job;
 use App\Models\Resource;
 use Carbon\Carbon;
@@ -118,15 +120,30 @@ class JobLogs
             if (!$status_change_log) return null;
             $time = $status_change_log->created_at->format('h:i A, M d');
             if (in_array($job_status, [constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Serve_Due']])) {
-                return [
-                    'status' => 'work_started',
-                    'log' => 'Expert has started working from ' . $time
-                ];
+                if($this->job->rider) {
+                    return [
+                        'status' => 'work_started',
+                        'log' => 'Rider has picked up your order at ' . $time
+                    ];
+                } else {
+                    return [
+                        'status' => 'work_started',
+                        'log' => 'Expert has started working from ' . $time
+                    ];
+                }
             } elseif ($job_status == constants('JOB_STATUSES')['Served']) {
-                return [
-                    'status' => 'work_completed',
-                    'log' => 'Expert has completed your order at ' . $time,
-                ];
+                if($this->job->rider) {
+                    return [
+                        'status' => 'work_completed',
+                        'log' => 'Rider dropped your order at ' . $time,
+                    ];
+                } else {
+                    return [
+                        'status' => 'work_completed',
+                        'log' => 'Expert has completed your order at ' . $time,
+                    ];
+                }
+
             }
         } else {
             return null;
@@ -153,11 +170,32 @@ class JobLogs
                     'type' => 'danger'
                 );
             } else {
-                return array(
-                    'status' => 'message',
-                    'log' => ucfirst($expert_type).' will arrive at your place between ' . humanReadableShebaTime($this->job->preferred_time) . ', ' . Carbon::parse($this->job->schedule_date)->format('M d'),
-                    'type' => 'success'
-                );
+                $partner = $this->job->partnerOrder->partner;
+                $category = $this->job->category;
+                $category_partner = CategoryPartner::where('category_id',$category->id)->where('partner_id',$partner->id)->first();
+                if($category_partner->uses_sheba_logistic) {
+                    if($this->job->rider) {
+                        return array(
+                            'status' => 'message',
+                            'log' => 'Rider is on his way to pick your order',
+                            'type' => 'success'
+                        );
+                    }
+                    else {
+                        return array(
+                            'status' => 'message',
+                            'log' => 'Your order will be delivered between ' . humanReadableShebaTime($this->job->preferred_time) . ', ' . Carbon::parse($this->job->schedule_date)->format('M d'),
+                            'type' => 'success'
+                        );
+                    }
+                } else {
+                    return array(
+                        'status' => 'message',
+                        'log' => ucfirst($expert_type).' will arrive at your place between ' . humanReadableShebaTime($this->job->preferred_time) . ', ' . Carbon::parse($this->job->schedule_date)->format('M d'),
+                        'type' => 'success'
+                    );
+                }
+
             }
         } elseif ($job_status == constants('JOB_STATUSES')['Schedule_Due']) {
             $expert_type = $this->job->logistic_uses ? 'rider' : ($this->job->resource ? 'expert' : 'service provider');
@@ -167,17 +205,33 @@ class JobLogs
                 'type' => 'danger'
             );
         } elseif (in_array($job_status, [constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Serve_Due']])) {
-            return array(
-                'status' => 'message',
-                'log' => 'Expert is working on your order.',
-                'type' => 'success'
-            );
+            if($this->job->rider) {
+                return array(
+                    'status' => 'message',
+                    'log' => 'Rider is on his way to drop your order.',
+                    'type' => 'success'
+                );
+            } else {
+                return array(
+                    'status' => 'message',
+                    'log' => 'Expert is working on your order.',
+                    'type' => 'success'
+                );
+            }
         } elseif ($job_status == constants('JOB_STATUSES')['Served'] && !$job_review) {
-            return array(
-                'status' => 'message',
-                'log' => 'Please rate the expert based on your service experience.',
-                'type' => 'success'
-            );
+            if($this->job->rider) {
+                return array(
+                    'status' => 'message',
+                    'log' => 'Your order has been served.',
+                    'type' => 'success'
+                );
+            } else {
+                return array(
+                    'status' => 'message',
+                    'log' => 'Please rate the expert based on your service experience.',
+                    'type' => 'success'
+                );
+            }
         } else {
             return null;
         }
