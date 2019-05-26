@@ -23,7 +23,7 @@ class InspectionController extends Controller
             $member = $request->manager_member;
             $this->setModifier($member);
             list($offset, $limit) = calculatePagination($request);
-            $inspections = Inspection::with(['formTemplate','inspectionSchedule.inspections'])
+            $inspections = Inspection::with(['formTemplate', 'inspectionSchedule.inspections'])
                 ->where('business_id', $business->id)
                 ->orderBy('id', 'DESC');
 
@@ -33,7 +33,7 @@ class InspectionController extends Controller
                     $query->where('status', '<>', 'closed')
                         ->where('status', '<>', 'cancelled')
                         ->where('created_at', '>=', Carbon::today()->toDateString() . ' 00:00:00');
-                })->skip($offset)->limit($limit);
+                })->orderBy('start_date')->skip($offset)->limit($limit);
 
                 if ($request->has('inspection_form')) {
                     $inspections = $inspections->whereHas('formTemplate', function ($query) use ($request) {
@@ -57,14 +57,19 @@ class InspectionController extends Controller
                 }
             } elseif ($request->has('filter') && $request->filter === 'open') {##Schedule
                 $inspections = $inspections->where('status', 'open')->skip($offset)->limit($limit);
+
                 if ($request->has('inspection_form')) {
-                    $inspections = $inspections->whereHas('formTemplate', function ($query) use ($request) {
-                        $query->where('id', $request->inspection_form);
+                    $inspections = $inspections->where('form_template_id', $request->inspection_form);
+                }
+
+                if ($request->has('type')) {
+                    $inspections->whereHas('vehicle', function ($query) use ($request) {
+                        $query->whereHas('basicInformations', function ($query) use ($request) {
+                            $query->where('type', $request->type);
+                        });
                     });
                 }
-                if ($request->has('type')) {
-                    $inspections = $inspections->where('type', $request->type);
-                }
+
                 foreach ($inspections->get() as $inspection) {
                     $vehicle = $inspection->vehicle;
                     $basic_information = $vehicle->basicInformations ? $vehicle->basicInformations : null;
@@ -225,6 +230,7 @@ class InspectionController extends Controller
             $vehicle = $inspection->vehicle;
             $basic_information = $vehicle->basicInformations ? $vehicle->basicInformations : null;
             $driver = $vehicle->driver;
+            $next_start_date = $inspection->getNextStartDate();
             $inspection = [
                 'id' => $inspection->id,
                 'title' => $inspection->title,
@@ -239,7 +245,7 @@ class InspectionController extends Controller
                 'type' => $inspection->type,
                 'status' => $inspection->status,
                 'created_at' => $inspection->created_at ? $inspection->created_at->toDateTimeString() : null,
-                'next_start_date' => $inspection->next_start_date ? $inspection->next_start_date->toDateTimeString() : null,
+                'next_start_date' => $next_start_date ? $next_start_date->format('l, j M') : null,
                 'inspection_items' => $items,
                 'vehicle' => [
                     'vehicle_model' => $basic_information ? $basic_information->model_name : null,
@@ -283,6 +289,14 @@ class InspectionController extends Controller
                         $query->where('id', $request->inspection_form);
                     });
                 }
+                if ($request->has('type')) {
+                    $inspections->whereHas('vehicle', function ($query) use ($request) {
+                        $query->whereHas('basicInformations', function ($query) use ($request) {
+                            $query->where('type', $request->type);
+                        });
+                    });
+                }
+
                 foreach ($inspections->get() as $inspection) {
                     $vehicle = $inspection->vehicle;
                     $basic_information = $vehicle->basicInformations ? $vehicle->basicInformations : null;
