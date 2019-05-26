@@ -23,7 +23,7 @@ class InspectionController extends Controller
             $member = $request->manager_member;
             $this->setModifier($member);
             list($offset, $limit) = calculatePagination($request);
-            $inspections = Inspection::with(['formTemplate','inspectionSchedule.inspections'])
+            $inspections = Inspection::with(['formTemplate', 'inspectionSchedule.inspections'])
                 ->where('business_id', $business->id)
                 ->orderBy('id', 'DESC');
 
@@ -57,14 +57,19 @@ class InspectionController extends Controller
                 }
             } elseif ($request->has('filter') && $request->filter === 'open') {##Schedule
                 $inspections = $inspections->where('status', 'open')->skip($offset)->limit($limit);
+
                 if ($request->has('inspection_form')) {
-                    $inspections = $inspections->whereHas('formTemplate', function ($query) use ($request) {
-                        $query->where('id', $request->inspection_form);
+                    $inspections = $inspections->where('form_template_id', $request->inspection_form);
+                }
+
+                if ($request->has('type')) {
+                    $inspections->whereHas('vehicle', function ($query) use ($request) {
+                        $query->whereHas('basicInformations', function ($query) use ($request) {
+                            $query->where('type', $request->type);
+                        });
                     });
                 }
-                if ($request->has('type')) {
-                    $inspections = $inspections->where('type', $request->type);
-                }
+
                 foreach ($inspections->get() as $inspection) {
                     $vehicle = $inspection->vehicle;
                     $basic_information = $vehicle->basicInformations ? $vehicle->basicInformations : null;
