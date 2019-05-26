@@ -1,6 +1,5 @@
 <?php namespace Sheba\Bkash\Modules;
 
-
 class BkashAuth
 {
     private $appKey;
@@ -43,5 +42,4 @@ class BkashAuth
     {
         return $this->$name;
     }
-
 }
