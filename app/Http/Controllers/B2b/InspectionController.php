@@ -10,13 +10,14 @@ use Sheba\Business\Inspection\Submission;
 use Sheba\Business\Inspection\SubmissionValidator;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
+use Sheba\Repositories\Interfaces\InspectionItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\InspectionRepositoryInterface;
 
 class InspectionController extends Controller
 {
     use ModificationFields;
 
-    public function index($business, Request $request)
+    public function index($business, Request $request, InspectionItemRepositoryInterface $inspection_item_repository)
     {
         try {
             $business = $request->business;
@@ -134,11 +135,27 @@ class InspectionController extends Controller
                     array_push($inspection_lists, $inspection);
                 }
             }
+            $inspection_items = $inspection_item_repository->getAllByBusiness((int)$business->id)
+                ->whereBetween('created_at', [Carbon::now()->subDays(7)->toDateTimeString(), Carbon::now()->toDateTimeString()])
+                ->where('input_type', 'radio')
+                ->select(['id', 'status', 'result'])
+                ->get();
+            $failed_items = $this->getFailedItems($inspection_items);
+            $failure_percent_in_last_seven_days = round(($failed_items->count() / $inspection_items->count()) * 100, 2);
+            $inspection_items = $inspection_item_repository->getAllByBusiness((int)$business->id)
+                ->whereBetween('created_at', [Carbon::now()->subDays(14)->toDateTimeString(), Carbon::now()->subDays(7)->toDateTimeString()])
+                ->where('input_type', 'radio')
+                ->select(['id', 'status', 'result'])
+                ->get();
+            $failed_items = $this->getFailedItems($inspection_items);
+            $failure_percent_before_last_seven_days = $inspection_items->count() > 0 ? round(($failed_items->count() / $inspection_items->count()) * 100, 2) : 0;
+            $difference = $failure_percent_before_last_seven_days - $failure_percent_in_last_seven_days;
             if (count($inspection_lists) > 0) return api_response($request, $inspection_lists, 200, [
                 'inspection_lists' => $inspection_lists,
                 'over_due' => 0,
-                'item_failure_rate' => 5.39,
-                'item_failure_rate_change' => 0.30,
+                'item_failure_rate' => $failure_percent_in_last_seven_days,
+                'is_rate_change_upwords' => $difference >= 0 ? 1 : 0,
+                'item_failure_rate_change' => $difference >= 0 ? $difference : $difference * (-1)
             ]);
             else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
@@ -147,6 +164,12 @@ class InspectionController extends Controller
         }
     }
 
+    private function getFailedItems($items)
+    {
+        return $items->filter(function ($item) {
+            return preg_match('/(?i)(fail)/', $item->result);
+        });
+    }
 
     public function getChildrenInspections($business, $inspection, Request $request, InspectionRepositoryInterface $inspection_repository)
     {
@@ -401,6 +424,7 @@ class InspectionController extends Controller
             ]);
             $member = $request->manager_member;
             $this->setModifier($member);
+            /** @var Inspection $inspection */
             $inspection = $inspection_repository->where('id', $inspection)->where('business_id', (int)$business)->first();
             if (!$inspection) return api_response($request, $inspection, 404);
             $inspection->load('items');
