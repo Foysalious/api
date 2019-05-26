@@ -23,7 +23,7 @@ class InspectionController extends Controller
             $member = $request->manager_member;
             $this->setModifier($member);
             list($offset, $limit) = calculatePagination($request);
-            $inspections = Inspection::with('formTemplate')
+            $inspections = Inspection::with(['formTemplate','inspectionSchedule.inspections'])
                 ->where('business_id', $business->id)
                 ->orderBy('id', 'DESC');
 
@@ -44,12 +44,14 @@ class InspectionController extends Controller
                     $inspections = $inspections->where('type', $request->type);
                 }
                 foreach ($inspections->get() as $inspection) {
+                    $next_start_date = $inspection->getNextStartDate();
                     $inspection = [
                         'id' => $inspection->id,
                         'inspection_form_id' => $inspection->formTemplate ? $inspection->formTemplate->id : null,
                         'inspection_form' => $inspection->formTemplate ? $inspection->formTemplate->title : null,
                         'type' => $inspection->type,
-                        'next_start_date' => Carbon::parse($inspection->next_start_date)->format('l, j M'),
+                        'start_date' => $inspection->start_date->toDateTimeString(),
+                        'next_start_date' => $next_start_date ? $next_start_date->format('l, j M') : null,
                     ];
                     array_push($inspection_lists, $inspection);
                 }
@@ -105,6 +107,7 @@ class InspectionController extends Controller
                 foreach ($inspections->get() as $inspection) {
                     $vehicle = $inspection->vehicle;
                     $basic_information = $vehicle->basicInformations ? $vehicle->basicInformations : null;
+                    $next_start_date = $inspection->getNextStartDate();
                     $inspection = [
                         'id' => $inspection->id,
                         'inspection_form_id' => $inspection->formTemplate ? $inspection->formTemplate->id : null,
@@ -113,7 +116,7 @@ class InspectionController extends Controller
                         'type' => $inspection->type,
                         'failed_items' => $inspection->items()->where('input_type', 'radio')->where('result', 'LIKE', '%failed%')->count(),
                         'submitted' => $inspection->submitted_date ? Carbon::parse($inspection->submitted_date)->format('j M') : null,
-                        'next_start_date' => Carbon::parse($inspection->next_start_date)->format('l, j M'),
+                        'next_start_date' => $next_start_date ? $next_start_date->format('l, j M') : null,
                         'vehicle' => [
                             'id' => $vehicle->id,
                             'vehicle_model' => $basic_information->model_name,
