@@ -35,6 +35,20 @@ interface BaseRepositoryInterface
     public function whereIn($column_name, array $value);
 
     /**
+     * @param $column_name
+     * @param array $value
+     * @return $this
+     */
+    public function whereBetween($column_name, array $value);
+
+    /**
+     * @param $column_name
+     * @param $value
+     * @return $this
+     */
+    public function whereLike($column_name, $value);
+
+    /**
      * @param array $column_name
      * @return  $this
      */

@@ -1,7 +1,7 @@
 <?php namespace Sheba\Bkash\Modules\Normal;
 
-
 use Sheba\Bkash\Modules\BkashAuth;
+use Sheba\Bkash\Modules\BkashAuthBuilder;
 use Sheba\Bkash\Modules\BkashModule;
 use Sheba\Bkash\Modules\Normal\Methods\Other\SupportingOperation;
 use Sheba\Bkash\Modules\Normal\Methods\Payout\NormalPayout;
@@ -21,11 +21,7 @@ class NormalModule extends BkashModule
 
     public function setBkashAuth()
     {
-        $this->bkashAuth = new BkashAuth();
-        $this->bkashAuth->setKey(config('bkash.app_key'))
-            ->setSecret(config('bkash.app_secret'))
-            ->setUsername(config('bkash.username'))
-            ->setPassword(config('bkash.password'))->setUrl(config('bkash.url'));
+        $this->bkashAuth = BkashAuthBuilder::set018BkashAuth();
     }
 
     public function getToken()
@@ -39,6 +35,4 @@ class NormalModule extends BkashModule
         if ($enum == 'support') return new SupportingOperation();
         else return null;
     }
-
-
 }

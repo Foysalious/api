@@ -1,7 +1,6 @@
 <?php namespace Sheba\Repositories\Business;
 
 use App\Models\InspectionItem;
-use Illuminate\Database\QueryException;
 use Sheba\Repositories\BaseRepository;
 use Sheba\Repositories\Interfaces\InspectionItemRepositoryInterface;
 use DB;
@@ -19,4 +18,14 @@ class InspectionItemRepository extends BaseRepository implements InspectionItemR
     }
 
 
+    /**
+     * @param $business_id
+     * @return InspectionItemRepositoryInterface
+     */
+    public function getAllByBusiness($business_id)
+    {
+        return $this->model->whereHas('inspection', function ($q) use ($business_id) {
+            return $q->where('business_id', $business_id);
+        });
+    }
 }

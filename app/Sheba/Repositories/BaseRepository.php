@@ -73,9 +73,34 @@ class BaseRepository implements BaseRepositoryInterface
         return $this->model->where($column_name, $value);
     }
 
+    /**
+     * @param $column_name
+     * @param array $value
+     * @return $this
+     */
     public function whereIn($column_name, array $value)
     {
         return $this->model->whereIn($column_name, $value);
+    }
+
+    /**
+     * @param $column_name
+     * @param array $value
+     * @return $this
+     */
+    public function whereBetween($column_name, array $value)
+    {
+        return $this->model->whereBetween($column_name, $value);
+    }
+
+    /**
+     * @param $column_name
+     * @param $value
+     * @return BaseRepositoryInterface
+     */
+    public function whereLike($column_name, $value)
+    {
+        return $this->model->where($column_name, 'like', '%' . $value . '%');
     }
 
     /**

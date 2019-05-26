@@ -76,6 +76,15 @@ class JobController extends Controller
                 $job->partnerOrder->order->deliveryAddress = $job->partnerOrder->order->getTempAddress();
             }
 
+            $delivery_discount = 0;
+            if(isset($job->otherDiscountsByType[DiscountTypes::DELIVERY]))
+                $delivery_discount = $job->otherDiscountsByType[DiscountTypes::DELIVERY];
+            $logistic_paid = $job->logistic_paid;
+            $logistic_charge = $job->logistic_charge;
+            if($logistic_paid > $logistic_charge)
+                $logistic_paid = $logistic_charge;
+            $logistic_due  = ($logistic_charge - $logistic_paid);
+
             $job_collection = collect();
             $job_collection->put('id', $job->id);
             $job_collection->put('resource_name', $job->resource ? $job->resource->profile->name : null);
@@ -99,8 +108,8 @@ class JobController extends Controller
             $job_collection->put('original_price', ((double)$job->partnerOrder->jobPrices + (double) $job->logistic_charge));
             $job_collection->put('discount', (double)$job->partnerOrder->totalDiscount);
             $job_collection->put('payment_method', $this->formatPaymentMethod($job->partnerOrder->payment_method));
-            $job_collection->put('price', (double)$job->partnerOrder->totalPrice  + (double) $job->logistic_charge);
-            $job_collection->put('isDue', (double)$job->partnerOrder->due > 0 ? 1 : 0);
+            $job_collection->put('price', (double)$job->partnerOrder->totalPrice  + (double) ($job->logistic_charge - $delivery_discount));
+            $job_collection->put('isDue', (double)($job->partnerOrder->due + ($logistic_due - $delivery_discount)) > 0 ? 1 : 0);
             $job_collection->put('isRentCar', $job->isRentCar());
             $job_collection->put('is_on_premise', $job->isOnPremise());
             $job_collection->put('customer_favorite', $job->customerFavorite ? $job->customerFavorite->id : null);
@@ -213,10 +222,10 @@ class JobController extends Controller
                 $total_discount = 0;
 
             $bill = collect();
-            $bill['total'] = (double)$partnerOrder->totalPrice + $original_delivery_charge;
+            $bill['total'] = (double)$partnerOrder->totalPrice + ($original_delivery_charge - $delivery_discount);
             $bill['original_price'] = (double)$partnerOrder->jobPrices;
             $bill['paid'] = (double)$partnerOrder->paid + $logistic_paid ;
-            $bill['due'] = (double)$partnerOrder->due + $logistic_due;
+            $bill['due'] = (double)$partnerOrder->due + ($logistic_due - $delivery_discount);
             $bill['material_price'] = (double)$job->materialPrice;
             $bill['discount'] = $total_discount;
             $bill['services'] = $services;

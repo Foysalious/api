@@ -4,7 +4,7 @@ use App\Models\Payable;
 use App\Models\Payment;
 use App\Models\PaymentDetail;
 use Carbon\Carbon;
-use Sheba\Bkash\Modules\Tokenized\Methods\Agreement\TokenizedAgreement;
+use Sheba\Bkash\Modules\BkashAuthBuilder;
 use Sheba\Bkash\Modules\Tokenized\TokenizedPayment;
 use Sheba\Bkash\ShebaBkash;
 use Sheba\ModificationFields;
@@ -27,15 +27,24 @@ class Bkash extends PaymentMethod
     public function __construct()
     {
         parent::__construct();
-        $this->appKey = config('bkash.app_key');
-        $this->appSecret = config('bkash.app_secret');
-        $this->username = config('bkash.username');
-        $this->password = config('bkash.password');
-        $this->url = config('bkash.url');
+    }
+
+    private function setCredentials($user)
+    {
+        $bkash_auth = BkashAuthBuilder::getForUser($user);
+
+        $this->appKey = $bkash_auth->appKey;
+        $this->appSecret = $bkash_auth->appSecret;
+        $this->username = $bkash_auth->username;
+        $this->password = $bkash_auth->password;
+        $this->url = $bkash_auth->url;
+
     }
 
     public function init(Payable $payable): Payment
     {
+        $this->setCredentials($payable->user);
+
         $invoice = "SHEBA_BKASH_" . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . randomString(10, 1, 1);
         $payment = new Payment();
         DB::transaction(function () use ($payment, $payable, $invoice) {
@@ -72,6 +81,8 @@ class Bkash extends PaymentMethod
 
     public function validate(Payment $payment)
     {
+        $this->setCredentials($payment->payable->user);
+
         $execute_response = new ExecuteResponse();
         $execute_response->setPayment($payment);
         if (false && $payment->payable->user->getAgreementId()) {
