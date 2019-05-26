@@ -456,7 +456,8 @@ class BusTicketController extends Controller
                 })->toArray()),
                 'boarding_point' => $trips_details->boardingPoint,
                 'dropping_point' => $trips_details->boardingPoint,
-                'seat_details' => $trips_details->coachSeatList
+                'seat_details' => $trips_details->coachSeatList,
+                'discount_amount'=> (double) $order->getAppliedDiscount()
             ];
 
             return api_response($request, $history, 200, ['details' => $history]);
