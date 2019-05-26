@@ -23,7 +23,7 @@ class InspectionController extends Controller
             $member = $request->manager_member;
             $this->setModifier($member);
             list($offset, $limit) = calculatePagination($request);
-            $inspections = Inspection::with(['formTemplate','inspectionSchedule.inspections'])
+            $inspections = Inspection::with(['formTemplate', 'inspectionSchedule.inspections'])
                 ->where('business_id', $business->id)
                 ->orderBy('id', 'DESC');
 
@@ -225,6 +225,7 @@ class InspectionController extends Controller
             $vehicle = $inspection->vehicle;
             $basic_information = $vehicle->basicInformations ? $vehicle->basicInformations : null;
             $driver = $vehicle->driver;
+            $next_start_date = $inspection->getNextStartDate();
             $inspection = [
                 'id' => $inspection->id,
                 'title' => $inspection->title,
@@ -239,7 +240,7 @@ class InspectionController extends Controller
                 'type' => $inspection->type,
                 'status' => $inspection->status,
                 'created_at' => $inspection->created_at ? $inspection->created_at->toDateTimeString() : null,
-                'next_start_date' => $inspection->next_start_date ? $inspection->next_start_date->toDateTimeString() : null,
+                'next_start_date' => $next_start_date ? $next_start_date->format('l, j M') : null,
                 'inspection_items' => $items,
                 'vehicle' => [
                     'vehicle_model' => $basic_information ? $basic_information->model_name : null,
