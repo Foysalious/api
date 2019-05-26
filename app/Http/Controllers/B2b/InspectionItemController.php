@@ -29,6 +29,16 @@ class InspectionItemController extends Controller
             $pending_item = InspectionItem::failedItems($business)->pendingItems()->count();
 
             $inspection_items = $inspection_items->skip($offset)->limit($limit);
+
+            if ($request->has('inspection_form')) {
+                $inspection_items = $inspection_items->whereHas('inspection', function ($q) use ($request) {
+                    $q->where('form_template_id', $request->inspection_form);
+                });
+            }
+
+            if ($request->has('status')) {
+                $inspection_items = $inspection_items->where('status', $request->status);
+            }
             $item_lists = [];
             foreach ($inspection_items->get() as $item) {
                 $inspection = $item->inspection;
