@@ -163,7 +163,7 @@ class Discount
 
     private function calculateRunningSurcharge()
     {
-        if (!$this->surchargePercentage) {
+        if (!$this->surchargePercentage && !$this->serviceObject->serviceModel->activeSubscription) {
             $surcharge = PartnerServiceSurcharge::where('partner_service_id', $this->servicePivot->id)->runningAt($this->scheduleDateTime)->first();
             $this->surchargePercentage = $surcharge ? $surcharge->amount : 0;
         }
