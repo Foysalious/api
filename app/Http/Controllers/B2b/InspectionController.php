@@ -33,7 +33,7 @@ class InspectionController extends Controller
                     $query->where('status', '<>', 'closed')
                         ->where('status', '<>', 'cancelled')
                         ->where('created_at', '>=', Carbon::today()->toDateString() . ' 00:00:00');
-                })->skip($offset)->limit($limit);
+                })->orderBy('start_date')->skip($offset)->limit($limit);
 
                 if ($request->has('inspection_form')) {
                     $inspections = $inspections->whereHas('formTemplate', function ($query) use ($request) {
