@@ -66,7 +66,7 @@ class TopUpEarning
 
         $earning_amount = (double)  TopUpOrder::join('topup_vendors','topup_orders.vendor_id','=','topup_vendors.id')
             ->where('agent_type',Affiliate::class)->whereIn('agent_id',$affiliate_ids)
-            ->whereBetween('topup_orders.created_at', [$this->from, $this->to])->sum('agent_commission');
+            ->whereBetween('topup_orders.created_at', [$this->from, $this->to])->sum('ambassador_commission');
 
         $total_amount = (double)  TopUpOrder::join('topup_vendors','topup_orders.vendor_id','=','topup_vendors.id')
             ->where('agent_type',Affiliate::class)->whereIn('agent_id',$affiliate_ids)
