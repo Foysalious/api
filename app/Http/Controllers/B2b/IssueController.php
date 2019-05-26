@@ -31,10 +31,27 @@ class IssueController extends Controller
                 $q->whereHas('inspection', function ($q) use ($business) {
                     $q->with('vehicle.basicInformation')->where('business_id', $business->id);
                 });
-            })->orderBy('id', 'DESC')->skip($offset)->limit($limit)->get();
-            #dd($inspection_item_issues);
+            })->orderBy('id', 'DESC')->skip($offset)->limit($limit);
+
+
+            if ($request->has('status')) {
+                $inspection_item_issues = $inspection_item_issues->where('status', $request->status);
+            }
+
+            if ($request->has('type')) {
+                $inspection_item_issues = $inspection_item_issues->whereHas('inspectionItem', function ($q) use ($request) {
+                    $q->whereHas('inspection', function ($q) use ($request) {
+                        $q->whereHas('vehicle', function ($query) use ($request) {
+                            $query->whereHas('basicInformations', function ($query) use ($request) {
+                                $query->where('type', $request->type);
+                            });
+                        });
+                    });
+                });
+            }
+
             $issue_lists = [];
-            foreach ($inspection_item_issues as $issue) {
+            foreach ($inspection_item_issues->get() as $issue) {
                 $inspection = $issue->inspectionItem->inspection;
                 $vehicle = $inspection->vehicle;
                 $basic_information = $vehicle->basicInformations;
