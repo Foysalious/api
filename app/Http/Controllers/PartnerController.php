@@ -724,11 +724,13 @@ class PartnerController extends Controller
                     $category_partner = CategoryPartner::where('category_id',$category->id)->where('partner_id',$partner->id)->first();
                     $delivery_charge_update_request = DeliveryChargeUpdateRequest::where('category_partner_id',$category_partner->id)->first();
 
-                    $logistic_price = null;
+                    $logistic_price = 0;
                     if($category->logistic_parcel_type) {
                         $type = (object) $parcelRepository->findBySlug($category->logistic_parcel_type);
-                        if($type)
-                        $logistic_price = $type->price;
+                        if($type) {
+                            $logistic_price = $type->price;
+                        }
+
                     }
 
                     if($category->is_logistic_available) $number_of_services_with_sheba_delivery++;
@@ -737,7 +739,7 @@ class PartnerController extends Controller
                         'is_verified' => $category->pivot->is_verified, 'is_sheba_home_delivery_applied' => $category->is_home_delivery_applied,
                         'is_sheba_partner_premise_applied' => $category->is_partner_premise_applied, 'is_home_delivery_applied' => $category->pivot->is_home_delivery_applied,
                         'is_partner_premise_applied' => $category->pivot->is_partner_premise_applied,
-                        'delivery_charge' => $logistic_price ? $logistic_price : (double)$category->pivot->delivery_charge,
+                        'delivery_charge' => $category->pivot->is_home_delivery_applied ? (double)$category->pivot->delivery_charge :  $logistic_price  ,
                         'published_services' => $published_services,
                         'unpublished_services' => $unpublished_services,
                         'is_logistic_available' => $category->is_logistic_available,
@@ -751,7 +753,6 @@ class PartnerController extends Controller
             }
             return api_response($request, null, 404);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -1054,9 +1055,9 @@ class PartnerController extends Controller
                 }
             } else {
                 $category_partner->update($this->withUpdateModificationField([
-                    'is_home_delivery_applied' => $request->has('home_delivery') ? 1 : 0,
+                    'is_home_delivery_applied' => $request->has('is_home_delivery_applied') ? 1 : 0,
                     'is_partner_premise_applied' => $request->has('on_premise') ? 1 : 0,
-                    'delivery_charge' => $request->has('home_delivery') ? $request->delivery_charge : 0,
+                    'delivery_charge' => $request->has('is_home_delivery_applied') ? $request->delivery_charge : 0,
                     'uses_sheba_logistic' => $this->doesUseShebaLogistic(Category::find($category), $request) ? 1 : 0,
                 ]));
                 return api_response($request, 1, 200);
@@ -1092,9 +1093,9 @@ class PartnerController extends Controller
             'uses_sheba_logistic' => $category_partner->uses_sheba_logistic
         ];
         $new = [
-            'is_home_delivery_applied' => $request->has('home_delivery') ? 1 : 0,
+            'is_home_delivery_applied' => $request->has('is_home_delivery_applied') ? 1 : 0,
             'is_partner_premise_applied' => $request->has('on_premise') ? 1 : 0,
-            'delivery_charge' => $request->has('home_delivery') ? $request->delivery_charge : 0,
+            'delivery_charge' => $request->has('is_home_delivery_applied') ? $request->delivery_charge : 0,
             'uses_sheba_logistic' => $this->doesUseShebaLogistic($category, $request),
         ];
 

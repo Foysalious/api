@@ -43,6 +43,10 @@ class SubmissionValidator
             $this->message = "You're not authorized";
             return 1;
         }
+        if ($this->inspection->isClosed()) {
+            $this->message = 'Inspection is already closed';
+            return 1;
+        }
         foreach ($this->inspection->items as $inspection_item) {
             $variables = json_decode($inspection_item->variables);
             $result = $this->itemResult->where('id', $inspection_item->id)->first();
@@ -50,7 +54,7 @@ class SubmissionValidator
                 $this->message = $inspection_item->title . ' is required';
                 return 1;
             }
-            if ($variables->is_required && $inspection_item->isRadio() && empty($result->comment)) {
+            if ($inspection_item->isRadio() && $result->result == 'failed' && empty($result->comment)) {
                 $this->message = $inspection_item->title . ' comment is required';
                 return 1;
             }

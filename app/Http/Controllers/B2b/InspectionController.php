@@ -401,7 +401,8 @@ class InspectionController extends Controller
             ]);
             $member = $request->manager_member;
             $this->setModifier($member);
-            $inspection = $inspection_repository->find($inspection);
+            $inspection = $inspection_repository->where('id', $inspection)->where('business_id', (int)$business)->first();
+            if (!$inspection) return api_response($request, $inspection, 404);
             $inspection->load('items');
             $submission_validator->setBusinessMember($request->business_member)->setInspection($inspection)->setItemResult(json_decode($request->items));
             if (!$submission_validator->hasAccess()) return api_response($request, null, 403);

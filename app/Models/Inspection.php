@@ -43,6 +43,11 @@ class Inspection extends Model
         return $this->belongsTo(InspectionSchedule::class);
     }
 
+    public function isClosed()
+    {
+        return $this->status == 'closed';
+    }
+
     public function getNextStartDate()
     {
         if ($this->inspectionSchedule) {
