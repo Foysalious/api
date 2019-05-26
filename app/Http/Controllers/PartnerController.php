@@ -751,7 +751,6 @@ class PartnerController extends Controller
             }
             return api_response($request, null, 404);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -1054,7 +1053,7 @@ class PartnerController extends Controller
                 }
             } else {
                 $category_partner->update($this->withUpdateModificationField([
-                    'is_home_delivery_applied' => $request->has('home_delivery') ? 1 : 0,
+                    'is_home_delivery_applied' => $request->has('is_home_delivery_applied') ? 1 : 0,
                     'is_partner_premise_applied' => $request->has('on_premise') ? 1 : 0,
                     'delivery_charge' => $request->has('is_home_delivery_applied') ? $request->delivery_charge : 0,
                     'uses_sheba_logistic' => $this->doesUseShebaLogistic(Category::find($category), $request) ? 1 : 0,
@@ -1092,7 +1091,7 @@ class PartnerController extends Controller
             'uses_sheba_logistic' => $category_partner->uses_sheba_logistic
         ];
         $new = [
-            'is_home_delivery_applied' => $request->has('home_delivery') ? 1 : 0,
+            'is_home_delivery_applied' => $request->has('is_home_delivery_applied') ? 1 : 0,
             'is_partner_premise_applied' => $request->has('on_premise') ? 1 : 0,
             'delivery_charge' => $request->has('is_home_delivery_applied') ? $request->delivery_charge : 0,
             'uses_sheba_logistic' => $this->doesUseShebaLogistic($category, $request),
