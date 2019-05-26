@@ -37,6 +37,7 @@ use Illuminate\Support\Facades\Redis;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
 use Sheba\Checkout\Partners\LitePartnerList;
 use Sheba\Checkout\Requests\PartnerListRequest;
+use Sheba\Logistics\Repository\ParcelRepository;
 use Sheba\Manager\JobList;
 use Sheba\ModificationFields;
 use Sheba\Partner\LeaveStatus;
@@ -697,12 +698,12 @@ class PartnerController extends Controller
         }
     }
 
-    public function getCategoriesTree($partner, Request $request)
+    public function getCategoriesTree($partner, Request $request, ParcelRepository $parcelRepository)
     {
         try {
             $partner = Partner::with(['categories' => function ($query) {
                 return $query->select('categories.id', 'name', 'parent_id', 'thumb', 'app_thumb', 'categories.is_home_delivery_applied',
-                    'categories.is_partner_premise_applied','categories.is_logistic_available')->published()->with(['parent' => function ($query) {
+                    'categories.is_partner_premise_applied','categories.is_logistic_available','categories.logistic_parcel_type')->published()->with(['parent' => function ($query) {
                     return $query->select('id', 'name', 'thumb', 'app_thumb');
                 }]);
             }])->find($partner);
@@ -718,15 +719,25 @@ class PartnerController extends Controller
                         $master_category = ['id' => $category->parent->id, 'name' => $category->parent->name, 'app_thumb' => $category->parent->app_thumb, 'secondary_category' => collect()];
                         $master_categories->push($master_category);
                     }
+
+
                     $category_partner = CategoryPartner::where('category_id',$category->id)->where('partner_id',$partner->id)->first();
                     $delivery_charge_update_request = DeliveryChargeUpdateRequest::where('category_partner_id',$category_partner->id)->first();
+
+                    $logistic_price = null;
+                    if($category->logistic_parcel_type) {
+                        $type = (object) $parcelRepository->findBySlug($category->logistic_parcel_type);
+                        if($type)
+                        $logistic_price = $type->price;
+                    }
+
                     if($category->is_logistic_available) $number_of_services_with_sheba_delivery++;
                     $category = [
                         'id' => $category->id, 'name' => $category->name, 'parent_id' => $category->parent_id, 'thumb' => $category->thumb, 'app_thumb' => $category->app_thumb,
                         'is_verified' => $category->pivot->is_verified, 'is_sheba_home_delivery_applied' => $category->is_home_delivery_applied,
                         'is_sheba_partner_premise_applied' => $category->is_partner_premise_applied, 'is_home_delivery_applied' => $category->pivot->is_home_delivery_applied,
                         'is_partner_premise_applied' => $category->pivot->is_partner_premise_applied,
-                        'delivery_charge' => (double)$category->pivot->delivery_charge,
+                        'delivery_charge' => $logistic_price ? $logistic_price : (double)$category->pivot->delivery_charge,
                         'published_services' => $published_services,
                         'unpublished_services' => $unpublished_services,
                         'is_logistic_available' => $category->is_logistic_available,
@@ -740,6 +751,7 @@ class PartnerController extends Controller
             }
             return api_response($request, null, 404);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
