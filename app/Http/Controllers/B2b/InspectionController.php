@@ -95,6 +95,13 @@ class InspectionController extends Controller
                 if ($request->has('type')) {
                     $inspections = $inspections->where('type', $request->type);
                 }
+
+                $start_date = $request->has('start_date') ? $request->start_date : null;
+                $end_date = $request->has('end_date') ? $request->end_date : null;
+                if ($start_date && $end_date) {
+                    $inspections->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
+                }
+
                 foreach ($inspections->get() as $inspection) {
                     $vehicle = $inspection->vehicle;
                     $basic_information = $vehicle->basicInformations ? $vehicle->basicInformations : null;
@@ -205,7 +212,9 @@ class InspectionController extends Controller
                     'input_type' => $inspection_item->input_type,
                     'variables' => json_decode($inspection_item->variables),
                     'comment' => $inspection_item->comment,
-                    'status' => $inspection_item->status,
+                    'status' => $this->getStatus($inspection_item, $inspection_item->status),
+                    'issue_id' => $inspection_item->status == 'issue_created' ? $inspection_item->issue->id : null,
+                    'is_acknowledge' => $inspection_item->status == 'acknowledged' ? 1 : 0,
                     'acknowledgment_note' => $inspection_item->acknowledgment_note,
                 ];
                 array_push($items, $item);
@@ -242,6 +251,17 @@ class InspectionController extends Controller
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
+        }
+    }
+
+    private function getStatus($item, $status)
+    {
+        if ($status === 'open') {
+            return 'Pending';
+        } elseif ($status === 'issue_created') {
+            return 'has_issue';
+        } else {
+            return 'Acknowledged';
         }
     }
 
@@ -392,21 +412,18 @@ class InspectionController extends Controller
             $inspections = Inspection::with('formTemplate')
                 ->where('business_id', $business->id)
                 ->orderBy('id', 'DESC')->get();
-            #dd($inspections->unique());
 
-            $form_lists = [];
+            $form_lists = collect();
             foreach ($inspections as $inspection) {
                 $inspection_form = $inspection->formTemplate;
-                array_push($form_lists, [
-                    'inspection_id' => $inspection->id,
+                $form_lists->push([
                     'id' => $inspection_form ? $inspection_form->id : null,
                     'title' => $inspection_form ? $inspection_form->title : null,
                 ]);
             }
-            if (count($form_lists) > 0) return api_response($request, $form_lists, 200, ['form_lists' => $form_lists]);
+            if (count($form_lists) > 0) return api_response($request, $form_lists, 200, ['form_lists' => $form_lists->unique()->values()]);
             else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
