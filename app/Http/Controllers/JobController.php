@@ -216,7 +216,7 @@ class JobController extends Controller
             $bill['total'] = (double)$partnerOrder->totalPrice + $original_delivery_charge;
             $bill['original_price'] = (double)$partnerOrder->jobPrices;
             $bill['paid'] = (double)$partnerOrder->paid + $logistic_paid ;
-            $bill['due'] = (double)$partnerOrder->due + $logistic_due;
+            $bill['due'] = (double)$partnerOrder->due + ($logistic_due - $delivery_discount);
             $bill['material_price'] = (double)$job->materialPrice;
             $bill['discount'] = $total_discount;
             $bill['services'] = $services;
