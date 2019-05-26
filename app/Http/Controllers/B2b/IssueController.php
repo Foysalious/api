@@ -222,6 +222,7 @@ class IssueController extends Controller
             if (!$access_control->setBusinessMember($request->business_member)->hasAccess('inspection_item.rw')) return api_response($request, null, 403);
             $this->setModifier($request->manager_member);
             $inspection_item = $inspection_item_repository->find($request->inspection_item_id);
+            if ($inspection_item->issue) return api_response($request, null, 403, ['message' => "Issue is already created."]);
             $issue = $creator->setInspectionItem($inspection_item)->create();
             return api_response($request, $issue, 200, ['issue' => $issue->id]);
         } catch (ValidationException $e) {
