@@ -13,6 +13,11 @@ class Inspection extends Model
         return $query->where('is_published', 1);
     }
 
+    public function scopeActive($query)
+    {
+        return $query->whereIn('status', ['open', 'process']);
+    }
+
     public function formTemplate()
     {
         return $this->belongsTo(FormTemplate::class, 'form_template_id');
@@ -36,5 +41,15 @@ class Inspection extends Model
     public function inspectionSchedule()
     {
         return $this->belongsTo(InspectionSchedule::class);
+    }
+
+    public function getNextStartDate()
+    {
+        if ($this->inspectionSchedule) {
+            $inspection = $this->inspectionSchedule->inspections()->published()->active()->where('start_date', '>', $this->start_date)->first();
+            return $inspection ? $inspection->start_date : null;
+        } else {
+            return null;
+        }
     }
 }
