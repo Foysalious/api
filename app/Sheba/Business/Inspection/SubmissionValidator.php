@@ -43,6 +43,10 @@ class SubmissionValidator
             $this->message = "You're not authorized";
             return 1;
         }
+        if ($this->inspection->isClosed()) {
+            $this->message = 'Inspection is already closed';
+            return 1;
+        }
         foreach ($this->inspection->items as $inspection_item) {
             $variables = json_decode($inspection_item->variables);
             $result = $this->itemResult->where('id', $inspection_item->id)->first();
