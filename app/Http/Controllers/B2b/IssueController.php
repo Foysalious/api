@@ -27,8 +27,12 @@ class IssueController extends Controller
             $member = $request->manager_member;
             $this->setModifier($member);
             list($offset, $limit) = calculatePagination($request);
-            $inspection_item_issues = InspectionItemIssue::with('inspectionItem.inspection.vehicle.basicInformation')
-                ->orderBy('id', 'DESC')->skip($offset)->limit($limit)->get();
+            $inspection_item_issues = InspectionItemIssue::whereHas('inspectionItem', function ($q) use ($business) {
+                $q->whereHas('inspection', function ($q) use ($business) {
+                    $q->with('vehicle.basicInformation')->where('business_id', $business->id);
+                });
+            })->orderBy('id', 'DESC')->skip($offset)->limit($limit)->get();
+            #dd($inspection_item_issues);
             $issue_lists = [];
             foreach ($inspection_item_issues as $issue) {
                 $inspection = $issue->inspectionItem->inspection;
