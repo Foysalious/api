@@ -36,13 +36,13 @@ class Destinations
     {
         $bus_route_location = $this->busRouteLocation_Repo->findById($this->pickupAddressId);
         $bd_ticket_destinations = $pekhom_destinations = [];
-        if(!$bus_route_location) throw new InvalidLocationAddressException('Invalid Pickup Address Id');
+        if (!$bus_route_location) throw new InvalidLocationAddressException('Invalid Pickup Address Id');
         if ($bus_route_location->bd_ticket_id) $bd_ticket_destinations = collect($this->bdTicketClient->get('routes/to/' . $bus_route_location->bd_ticket_id)["data"])->pluck('id')->toArray();
         if ($bus_route_location->pekhom_id) $pekhom_destinations = collect($this->pekhomDestinationRouteRepo->findIdsByColumnName('location_from_uid', [$bus_route_location->pekhom_id]))->pluck('location_uid')->toArray();
         $bd_ticket_locations = $this->busRouteLocation_Repo->findIdsByColumnName('bd_ticket_id', $bd_ticket_destinations);
         $pekhom_locations = $this->busRouteLocation_Repo->findIdsByColumnName('pekhom_id', $pekhom_destinations);
         $merged_destinations = $bd_ticket_locations->merge($pekhom_locations)->unique()->values();
+
         return $merged_destinations;
     }
-
 }

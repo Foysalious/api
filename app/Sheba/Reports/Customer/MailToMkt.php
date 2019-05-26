@@ -1,8 +1,8 @@
 <?php namespace Sheba\Reports\Customer;
 
+use App\Http\Requests\Reports\ReportStartEndRequest;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
-use Illuminate\Http\Request;
 use Sheba\Reports\ExcelHandler;
 use Mail;
 
@@ -34,16 +34,16 @@ class MailToMkt extends Command
      */
     public function handle(CustomerNormalData $data, ExcelHandler $excel)
     {
-        $request = new Request();
+        $request = new ReportStartEndRequest();
         $request->replace([
             'start_date' => Carbon::yesterday()->toDateString(),
-            'end_date' => Carbon::today()->subSecond()->toDateString()
+            'end_date' => Carbon::today()->subSecond()->toDateString(),
+            'is_advanced' => true
         ]);
-        $data->setRequest($request);
 
         $excel->setName('Customer');
         $excel->setViewFile('customer');
-        $excel->pushData('customers', $data->get())->pushData('is_advanced', true);
+        $excel->createReport($data->setRequest($request)->get());
         $file_name = $excel->save();
 
         Mail::raw('Yesterday\'s registered customers', function ($message) use ($file_name) {

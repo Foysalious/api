@@ -1,9 +1,14 @@
 <?php namespace Sheba\Logs\Customer;
 
+use App\Models\Category;
+use App\Models\CategoryPartner;
 use App\Models\Job;
 use App\Models\Resource;
 use Carbon\Carbon;
+use GuzzleHttp\Client;
 use Illuminate\Support\Str;
+use Sheba\Checkout\DeliveryCharge;
+use Sheba\Logistics\Repository\LogisticClient;
 
 class JobLogs
 {
@@ -12,6 +17,7 @@ class JobLogs
     private $scheduleChangeLogs;
     private $priceChangeLogs;
     private $materialChangeLogs;
+    protected $logisticClient;
 
     public function __construct(Job $job)
     {
@@ -23,6 +29,8 @@ class JobLogs
         $this->materialChangeLogs = collect([]);
         $this->orderStatusLogs = collect([]);
         $this->comments = collect([]);
+        $client = new Client();
+        $this->logisticClient = new LogisticClient($client);
     }
 
     public function getorderStatusLogs()
@@ -31,6 +39,20 @@ class JobLogs
         $resource = $this->job->resource;
         $job_status = $this->job->status;
         $logs = [];
+
+        $rider = null;
+        $logistic_uses = false;
+        if($this->job->first_logistic_order_id) {
+            $logistic_uses = true;
+            $rider = $this->logisticClient->get('orders/'.$this->job->first_logistic_order_id)['data']['rider'];
+        } else if($this->job->last_logistic_order_id) {
+            $logistic_uses = true;
+            $rider = $this->logisticClient->get('orders/'.$this->job->last_logistic_order_id)['data']['rider'];
+        }
+        $rider = json_decode(json_encode($rider));
+        $this->job->logistic_uses = $logistic_uses;
+        $this->job->rider = $rider;
+
         if (constants('JOB_STATUS_SEQUENCE')[$job_status] > 0) {
             array_push($logs, array(
                 'status' => 'order_placed',
@@ -40,7 +62,7 @@ class JobLogs
                     'picture' => $partner->logo,
                     'mobile' => $partner->getManagerMobile(),
                     'type' => 'partner',
-                )
+                ),
             ));
         }
         if (constants('JOB_STATUS_SEQUENCE')[$job_status] > 1) {
@@ -48,19 +70,43 @@ class JobLogs
                 'status' => 'order_confirmed',
                 'log' => 'Order has been confirmed.',
             ]);
-            if ($resource) {
-                array_push($logs, [
-                    'status' => 'expert_assigned',
-                    'log' => 'An expert has been assigned to your order.',
-                    'user' => array(
-                        'name' => $resource->profile->name,
-                        'picture' => $resource->profile->pro_pic,
-                        'mobile' => $resource->profile->mobile,
-                        'type' => 'resource',
-                    )
-                ]);
+
+            if($logistic_uses) {
+                if( !$rider) {
+                    array_push($logs, [
+                        'status' => 'rider_searching',
+                        'log' => 'We are currently searching for a rider.',
+                    ]);
+
+                } else  {
+                    array_push($logs, [
+                        'status' => 'rider_assigned',
+                        'log' => 'A rider has been assigned to your order.',
+                        'user' =>  [
+                            'name' => $rider->user->profile->name,
+                            'mobile' => $rider->user->profile->mobile,
+                            'picture' => $rider->user->profile->pro_pic,
+                            'type' => $rider->salary_type
+                        ]
+                    ]);
+                }
+            } else {
+                if ($resource) {
+                    array_push($logs, [
+                        'status' => 'expert_assigned',
+                        'log' => 'An expert has been assigned to your order.',
+                        'user' => array(
+                            'name' => $resource->profile->name,
+                            'picture' => $resource->profile->pro_pic,
+                            'mobile' => $resource->profile->mobile,
+                            'type' => 'resource',
+                        )
+                    ]);
+                }
             }
+
         }
+
         if ($work_log = $this->formatWorkLog()) array_push($logs, $work_log);
         if ($message_log = $this->getOrderMessage()) array_push($logs, $message_log);
         return $logs;
@@ -74,15 +120,30 @@ class JobLogs
             if (!$status_change_log) return null;
             $time = $status_change_log->created_at->format('h:i A, M d');
             if (in_array($job_status, [constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Serve_Due']])) {
-                return [
-                    'status' => 'work_started',
-                    'log' => 'Expert has started working from ' . $time
-                ];
+                if($this->job->rider) {
+                    return [
+                        'status' => 'work_started',
+                        'log' => 'Rider has picked up your order at ' . $time
+                    ];
+                } else {
+                    return [
+                        'status' => 'work_started',
+                        'log' => 'Expert has started working from ' . $time
+                    ];
+                }
             } elseif ($job_status == constants('JOB_STATUSES')['Served']) {
-                return [
-                    'status' => 'work_completed',
-                    'log' => 'Expert has completed your order at ' . $time,
-                ];
+                if($this->job->rider) {
+                    return [
+                        'status' => 'work_completed',
+                        'log' => 'Rider dropped your order at ' . $time,
+                    ];
+                } else {
+                    return [
+                        'status' => 'work_completed',
+                        'log' => 'Expert has completed your order at ' . $time,
+                    ];
+                }
+
             }
         } else {
             return null;
@@ -100,6 +161,7 @@ class JobLogs
                 'type' => 'danger'
             );
         } elseif ($job_status == constants('JOB_STATUSES')['Accepted']) {
+            $expert_type = $this->job->logistic_uses ? 'rider' : ($this->job->resource ? 'expert' : 'service provider');
             $thirty_min_before_scheduled_date_time = Carbon::parse($this->job->schedule_date . ' ' . $this->job->preferred_time_start)->subMinutes(30);
             if (Carbon::now()->gte($thirty_min_before_scheduled_date_time)) {
                 return array(
@@ -108,30 +170,68 @@ class JobLogs
                     'type' => 'danger'
                 );
             } else {
-                return array(
-                    'status' => 'message',
-                    'log' => 'Expert will arrive at your place between ' . humanReadableShebaTime($this->job->preferred_time) . ', ' . Carbon::parse($this->job->schedule_date)->format('M d'),
-                    'type' => 'success'
-                );
+                $partner = $this->job->partnerOrder->partner;
+                $category = $this->job->category;
+                $category_partner = CategoryPartner::where('category_id',$category->id)->where('partner_id',$partner->id)->first();
+                if($category_partner->uses_sheba_logistic) {
+                    if($this->job->rider) {
+                        return array(
+                            'status' => 'message',
+                            'log' => 'Rider is on his way to pick your order',
+                            'type' => 'success'
+                        );
+                    }
+                    else {
+                        return array(
+                            'status' => 'message',
+                            'log' => 'Your order will be delivered between ' . humanReadableShebaTime($this->job->preferred_time) . ', ' . Carbon::parse($this->job->schedule_date)->format('M d'),
+                            'type' => 'success'
+                        );
+                    }
+                } else {
+                    return array(
+                        'status' => 'message',
+                        'log' => ucfirst($expert_type).' will arrive at your place between ' . humanReadableShebaTime($this->job->preferred_time) . ', ' . Carbon::parse($this->job->schedule_date)->format('M d'),
+                        'type' => 'success'
+                    );
+                }
+
             }
         } elseif ($job_status == constants('JOB_STATUSES')['Schedule_Due']) {
+            $expert_type = $this->job->logistic_uses ? 'rider' : ($this->job->resource ? 'expert' : 'service provider');
             return array(
                 'status' => 'message',
-                'log' => 'Your order is supposed to be started by now. Please call the ' . ($this->job->resource ? 'expert' : 'service provider') . '. For any kind of help call 16516.',
+                'log' => 'Your order is supposed to be started by now. Please call the ' . ($expert_type) . '. For any kind of help call 16516.',
                 'type' => 'danger'
             );
         } elseif (in_array($job_status, [constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Serve_Due']])) {
-            return array(
-                'status' => 'message',
-                'log' => 'Expert is working on your order.',
-                'type' => 'success'
-            );
+            if($this->job->rider) {
+                return array(
+                    'status' => 'message',
+                    'log' => 'Rider is on his way to drop your order.',
+                    'type' => 'success'
+                );
+            } else {
+                return array(
+                    'status' => 'message',
+                    'log' => 'Expert is working on your order.',
+                    'type' => 'success'
+                );
+            }
         } elseif ($job_status == constants('JOB_STATUSES')['Served'] && !$job_review) {
-            return array(
-                'status' => 'message',
-                'log' => 'Please rate the expert based on your service experience.',
-                'type' => 'success'
-            );
+            if($this->job->rider) {
+                return array(
+                    'status' => 'message',
+                    'log' => 'Your order has been served.',
+                    'type' => 'success'
+                );
+            } else {
+                return array(
+                    'status' => 'message',
+                    'log' => 'Please rate the expert based on your service experience.',
+                    'type' => 'success'
+                );
+            }
         } else {
             return null;
         }

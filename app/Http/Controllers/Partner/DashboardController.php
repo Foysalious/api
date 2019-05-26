@@ -26,6 +26,7 @@ class DashboardController extends Controller
             $rating = (string)(is_null($rating) ? 0 : $rating);
             $successful_jobs = $partner->notCancelledJobs();
             $sales_stats = (new PartnerSalesStatistics($partner))->calculate();
+
             $upgradable_package = (new PartnerSubscriber($partner))->getUpgradablePackage();
             $dashboard = [
                 'name' => $partner->name,
@@ -35,7 +36,7 @@ class DashboardController extends Controller
                     'name' => $partner->subscription->name,
                     'name_bn' => $partner->subscription->name_bn
                 ],
-                'badge' => $partner->subscription->badge_thumb,
+                'badge' => $partner->resolveBadge(),
                 'rating' => $rating,
                 'status' => constants('PARTNER_STATUSES_SHOW')[$partner['status']]['partner'],
                 'balance' => $partner->totalWalletAmount(),
@@ -59,15 +60,15 @@ class DashboardController extends Controller
                 'sales' => [
                     'today' => [
                         'timeline' => date("jS F", strtotime(Carbon::today())),
-                        'amount' => $sales_stats->today->orderTotalPrice
+                        'amount' => $sales_stats->today->orderTotalPrice + $sales_stats->today->posSale
                     ],
                     'week' => [
                         'timeline' => date("jS F", strtotime(Carbon::today()->startOfWeek())) . "-" . date("jS F", strtotime(Carbon::today())),
-                        'amount' => $sales_stats->week->orderTotalPrice
+                        'amount' => $sales_stats->week->orderTotalPrice + $sales_stats->week->posSale
                     ],
                     'month' => [
                         'timeline' => date("jS F", strtotime(Carbon::today()->startOfMonth())) . "-" . date("jS F", strtotime(Carbon::today())),
-                        'amount' => $sales_stats->month->orderTotalPrice
+                        'amount' => $sales_stats->month->orderTotalPrice + $sales_stats->month->posSale
                     ]
                 ],
                 'weekly_performance' => [

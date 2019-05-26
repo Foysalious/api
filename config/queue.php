@@ -66,6 +66,12 @@ return [
             'connection' => 'default',
             'queue' => 'sms_campaign',
             'expire' => 60
+        ],
+        'report' => [
+            'driver' => 'redis',
+            'connection' => 'default',
+            'queue' => 'report',
+            'expire' => 60
         ]
     ],
 

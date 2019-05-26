@@ -189,6 +189,11 @@ class TopUpController extends Controller
 
     /**
      * TEST CONTROLLER FOR TOPUP TEST
+     * @param Request $request
+     * @param VendorFactory $vendor
+     * @param TopUp $top_up
+     * @param TopUpRequest $top_up_request
+     * @return \Illuminate\Http\JsonResponse
      */
     public function topUpTest(Request $request, VendorFactory $vendor, TopUp $top_up, TopUpRequest $top_up_request)
     {

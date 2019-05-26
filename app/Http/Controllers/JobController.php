@@ -13,6 +13,8 @@ use Illuminate\Http\Request;
 use DB;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
+use Sheba\Dal\Discount\DiscountTypes;
+use Sheba\Logistics\Repository\OrderRepository;
 use Sheba\Logs\Customer\JobLogs;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
 use Sheba\Payment\ShebaPayment;
@@ -73,6 +75,7 @@ class JobController extends Controller
             if (!$job->partnerOrder->order->deliveryAddress) {
                 $job->partnerOrder->order->deliveryAddress = $job->partnerOrder->order->getTempAddress();
             }
+
             $job_collection = collect();
             $job_collection->put('id', $job->id);
             $job_collection->put('resource_name', $job->resource ? $job->resource->profile->name : null);
@@ -93,10 +96,10 @@ class JobController extends Controller
             $job_collection->put('status', $job->status);
             $job_collection->put('rating', $job->review ? $job->review->rating : null);
             $job_collection->put('review', $job->review ? $job->review->calculated_review : null);
-            $job_collection->put('original_price', (double)$job->partnerOrder->jobPrices);
+            $job_collection->put('original_price', ((double)$job->partnerOrder->jobPrices + (double) $job->logistic_charge));
             $job_collection->put('discount', (double)$job->partnerOrder->totalDiscount);
             $job_collection->put('payment_method', $this->formatPaymentMethod($job->partnerOrder->payment_method));
-            $job_collection->put('price', (double)$job->partnerOrder->totalPrice);
+            $job_collection->put('price', (double)$job->partnerOrder->totalPrice  + (double) $job->logistic_charge);
             $job_collection->put('isDue', (double)$job->partnerOrder->due > 0 ? 1 : 0);
             $job_collection->put('isRentCar', $job->isRentCar());
             $job_collection->put('is_on_premise', $job->isOnPremise());
@@ -161,7 +164,7 @@ class JobController extends Controller
         return $complains;
     }
 
-    public function getBills($customer, $job, Request $request)
+    public function getBills($customer, $job, Request $request, OrderRepository $logistics_orderRepo)
     {
         try {
             $job = $request->job->load(['partnerOrder.order', 'category', 'service', 'jobServices' => function ($q) {
@@ -192,13 +195,30 @@ class JobController extends Controller
             $partnerOrder = $job->partnerOrder;
             $partnerOrder->calculate(true);
 
+            $original_delivery_charge = $job->deliveryPrice;
+            $delivery_discount = 0;
+            if(isset($job->otherDiscountsByType[DiscountTypes::DELIVERY]))
+                $delivery_discount = $job->otherDiscountsByType[DiscountTypes::DELIVERY];
+
+            $total_discount =  (double)$job->discount;
+            $total_discount -= $delivery_discount;
+
+            $logistic_paid = $job->logistic_paid;
+            $logistic_charge = $job->logistic_charge;
+            if($logistic_paid > $logistic_charge)
+                $logistic_paid = $logistic_charge;
+            $logistic_due  = ($logistic_charge - $logistic_paid);
+
+            if($total_discount < 0)
+                $total_discount = 0;
+
             $bill = collect();
-            $bill['total'] = (double)$partnerOrder->totalPrice;
+            $bill['total'] = (double)$partnerOrder->totalPrice + $original_delivery_charge;
             $bill['original_price'] = (double)$partnerOrder->jobPrices;
-            $bill['paid'] = (double)$partnerOrder->paid;
-            $bill['due'] = (double)$partnerOrder->due;
+            $bill['paid'] = (double)$partnerOrder->paid + $logistic_paid ;
+            $bill['due'] = (double)$partnerOrder->due + $logistic_due;
             $bill['material_price'] = (double)$job->materialPrice;
-            $bill['discount'] = (double)$job->discount;
+            $bill['discount'] = $total_discount;
             $bill['services'] = $services;
             $bill['delivered_date'] = $job->delivered_date != null ? $job->delivered_date->format('Y-m-d') : null;
             $bill['delivered_date_timestamp'] = $job->delivered_date != null ? $job->delivered_date->timestamp : null;
@@ -207,7 +227,8 @@ class JobController extends Controller
             $bill['payment_method'] = $this->formatPaymentMethod($partnerOrder->payment_method);
             $bill['status'] = $job->status;
             $bill['is_on_premise'] = (int)$job->isOnPremise();
-            $bill['delivery_charge'] = (double)$partnerOrder->deliveryCharge;
+            $bill['delivery_charge'] = $original_delivery_charge;
+            $bill['delivery_discount'] = $delivery_discount;
             $bill['invoice'] = $job->partnerOrder->invoice;
             $bill['version'] = $job->partnerOrder->getVersion();
             return api_response($request, $bill, 200, ['bill' => $bill]);

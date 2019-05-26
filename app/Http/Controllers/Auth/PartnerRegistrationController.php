@@ -72,11 +72,6 @@ class PartnerRegistrationController extends Controller
                     $partner->businesses()->sync(['business_id' => $business_join_reqs->business_id]);
                     $business_join_reqs->update(['status' => 'successful']);
                 }
-                /**
-                 * LOGIC CHANGE - PARTNER REWARD MOVE TO WAITING STATUS
-                 *
-                 * app('\Sheba\PartnerAffiliation\RewardHandler')->setPartner($partner)->onBoarded();
-                 */
                 return api_response($request, null, 200, ['info' => $info]);
             } else {
                 return api_response($request, null, 500);
@@ -123,11 +118,6 @@ class PartnerRegistrationController extends Controller
             $data = $this->makePartnerCreateData($request);
             if ($partner = $this->createPartner($resource, $data)) {
                 $info = $this->profileRepository->getProfileInfo('resource', Profile::find($profile->id));
-                /**
-                 * LOGIC CHANGE - PARTNER REWARD MOVE TO WAITING STATUS
-                 *
-                 * app('\Sheba\PartnerAffiliation\RewardHandler')->setPartner($partner)->onBoarded();
-                 */
                 return api_response($request, null, 200, ['info' => $info]);
             } else {
                 return api_response($request, null, 500);
@@ -281,7 +271,6 @@ class PartnerRegistrationController extends Controller
                     return api_response($request, null, 200, ['info' => $info]);
                 }
             }
-
 
             $data = $this->makePartnerCreateData($request);
             $data['moderation_status'] = 'pending';

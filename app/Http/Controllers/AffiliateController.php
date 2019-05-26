@@ -17,6 +17,7 @@ use App\Repositories\FileRepository;
 use App\Repositories\LocationRepository;
 use App\Sheba\Bondhu\AffiliateHistory;
 use App\Sheba\Bondhu\AffiliateStatus;
+use App\Sheba\Bondhu\TopUpEarning;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -99,10 +100,11 @@ class AffiliateController extends Controller
     public function getDashboardInfo($affiliate, Request $request)
     {
         try {
+            /** @var Affiliate $affiliate */
             $affiliate = Affiliate::find($affiliate);
             $info = [
                 'wallet' => (double)$affiliate->wallet,
-                'total_income' => (double)$affiliate->transactions->where('type', 'Credit')->sum('amount'),
+                'total_income' => (double)$affiliate->getIncome(),
                 'total_service_referred' => $affiliate->affiliations->count(),
                 'total_sp_referred' => $affiliate->partnerAffiliations->count(),
                 'last_updated' => Carbon::parse($affiliate->updated_at)->format('dS F,g:i A')
@@ -148,7 +150,7 @@ class AffiliateController extends Controller
             'filter_type' => 'required|string',
             'from' => 'required_if:filter_type,date_range',
             'to' => 'required_if:filter_type,date_range',
-            'sp_type' => 'required|in:affiliates,partner_affiliates',
+            'sp_type' => 'required|in:affiliates,partner_affiliates,lite',
             'agent_id' => 'numeric'
         ];
         $validator = Validator::make($request->all(), $rules);
@@ -493,7 +495,8 @@ class AffiliateController extends Controller
 
     private function ifTransactionAlreadyExists($transaction_id)
     {
-        return (AffiliateTransaction::where('transaction_details', 'like', "%$transaction_id%")->count() > 0) || (PartnerTransaction::where('transaction_details', 'like', "%$transaction_id%")->count() > 0);
+        return (AffiliateTransaction::where('transaction_details', 'like', "%$transaction_id%")->count() > 0) ||
+            (PartnerTransaction::where('transaction_details', 'like', "%$transaction_id%")->count() > 0);
     }
 
     private function recharge(Affiliate $affiliate, $transaction)
@@ -582,6 +585,28 @@ class AffiliateController extends Controller
         list($offset, $limit) = calculatePagination($request);
         $historyData = $history->setType($request->sp_type)->getFormattedDate($request)->generateData($affiliate, $request->agent_id)->skip($offset)->take($limit)->get();
         return response()->json(['code' => 200, 'data' => $historyData]);
+    }
+
+    public function topUpEarning($affiliate, TopUpEarning $top_up_earning, Request $request)
+    {
+        $rules = [
+            'filter_type' => 'required|string',
+            'from' => 'required_if:filter_type,date_range',
+            'to' => 'required_if:filter_type,date_range',
+            'sp_type' => 'required|in:affiliates,partner_affiliates',
+            'agent_id' => 'required'
+        ];
+
+        $validator = Validator::make($request->all(), $rules);
+        if ($validator->fails()) {
+            $error = $validator->errors()->all()[0];
+            return api_response($request, $error, 400, ['msg' => $error]);
+        }
+        if ((int)$request->agent_data)
+            $earning = $top_up_earning->setType($request->sp_type)->getFormattedDate($request)->getAgentsData($affiliate);
+        else
+            $earning = $top_up_earning->setType($request->sp_type)->getFormattedDate($request)->getIndividualData($request->agent_id);
+        return response()->json(['code' => 200, 'data' => $earning]);
     }
 
     public function topUpHistory($affiliate, Request $request)

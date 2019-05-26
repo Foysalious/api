@@ -96,6 +96,8 @@ return [
         'Closed' => ['sheba' => 'Closed', 'partner' => 'Closed', 'customer' => 'Closed'],
         'Cancelled' => ['sheba' => 'Cancelled', 'partner' => 'Cancelled', 'customer' => 'Cancelled']
     ],
+    'PARTNER_MINIMUM_RESPONSE_TIME' => 30,
+    'PARTNER_MAXIMUM_RESPONSE_TIME' => 120,
     'FLAG_STATUSES' => [
         'Open' => 'Open',
         'Acknowledged' => 'Acknowledged',
@@ -570,5 +572,6 @@ return [
             'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bank_icon/city.png',
             'interest' => '10.5',
         ],
-    ]
+    ],
+    'WEEKS' => ['Saturday' => 1, 'Sunday' => 2, 'Monday' => 3, 'Tuesday' => 4, 'Wednesday' => 5, 'Thursday' => 6, 'Friday' => 7]
 ];

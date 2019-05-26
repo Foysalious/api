@@ -60,9 +60,7 @@ class TransportTicketPurchaseComplete extends PaymentComplete
                 // if ($payment_method == 'wallet') $bus_ticket->agentTransaction();
                 $bus_ticket->disburseCommissions();
 
-                $this->paymentRepository->changeStatus(['to' => 'completed', 'from' => $this->payment->status, 'transaction_details' => $this->payment->transaction_details]);
-                $this->payment->status = 'completed';
-                $this->payment->update();
+                $this->completePayment();
 
                 $ticket_request = $this->transportTicketRequest->setShebaAmount($transport_ticket_order->vendor->sheba_amount)->setStatus(Status::CONFIRMED);
                 $this->transportTicketUpdater->setOrder($transport_ticket_order)->setRequest($ticket_request)->update();
@@ -86,6 +84,7 @@ class TransportTicketPurchaseComplete extends PaymentComplete
                 } catch (\Exception $e) {}
             });
         } catch (QueryException $e) {
+            $this->failPayment();
             throw $e;
         }
 

@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use App\Models\Transport\TransportTicketOrder;
+use App\Sheba\Payment\Rechargable;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Helpers\TimeFrame;
@@ -17,7 +18,7 @@ use Sheba\Transport\TransportAgent;
 use Sheba\Transport\TransportTicketTransaction;
 use Sheba\Voucher\Contracts\CanApplyVoucher;
 
-class Affiliate extends Model implements TopUpAgent, MovieAgent, TransportAgent, CanApplyVoucher
+class Affiliate extends Model implements TopUpAgent, MovieAgent, TransportAgent, CanApplyVoucher, Rechargable
 {
     use TopUpTrait;
     use MovieTicketTrait;
@@ -261,5 +262,10 @@ class Affiliate extends Model implements TopUpAgent, MovieAgent, TransportAgent,
     public function getTagNamesAttribute()
     {
         return $this->tags->pluck('name');
+    }
+
+    public function getIncome()
+    {
+        return $this->transactions()->where('type', 'Credit')->where('log', '<>', 'Credit Purchase')->sum('amount');
     }
 }

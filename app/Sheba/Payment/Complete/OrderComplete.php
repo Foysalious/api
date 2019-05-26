@@ -1,9 +1,11 @@
 <?php namespace Sheba\Payment\Complete;
 
 use App\Models\PartnerOrder;
+use App\Models\Payment;
 use App\Models\PaymentDetail;
 use App\Models\SubscriptionOrder;
 use Carbon\Carbon;
+use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Sheba\Checkout\Adapters\SubscriptionOrderAdapter;
@@ -11,6 +13,7 @@ use Sheba\Dal\Discount\DiscountRepository;
 use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\ModificationFields;
 use Sheba\RequestIdentification;
+use Throwable;
 
 class OrderComplete extends PaymentComplete
 {
@@ -27,6 +30,10 @@ class OrderComplete extends PaymentComplete
         $this->discountRepo = $discount_repo;
     }
 
+    /**
+     * @return Payment
+     * @throws Exception
+     */
     public function complete()
     {
         $has_error = false;
@@ -38,32 +45,23 @@ class OrderComplete extends PaymentComplete
             $model = $payable->getPayableModel();
             $payable_model = $model::find((int)$payable->type_id);
             if ($payable_model instanceof PartnerOrder) $this->giveOnlineDiscount($payable_model);
-            foreach ($this->payment->paymentDetails as $paymentDetail) {
+            foreach ($this->payment->paymentDetails as $payment_detail) {
                 if ($payable_model instanceof PartnerOrder) {
-                    $has_error = $this->clearPartnerOrderPayment($payable_model, $customer, $paymentDetail, $has_error);
+                    $has_error = $this->clearPartnerOrderPayment($payable_model, $customer, $payment_detail, $has_error);
                 } elseif ($payable_model instanceof SubscriptionOrder) {
-                    $has_error = $this->clearSubscriptionPayment($payable_model, $paymentDetail, $has_error);
+                    $has_error = $this->clearSubscriptionPayment($payable_model, $payment_detail, $has_error);
                 }
             }
-            $this->paymentRepository->changeStatus(['to' => 'completed', 'from' => $this->payment->status,
-                'transaction_details' => $this->payment->transaction_details]);
-            $this->payment->status = 'completed';
             $this->payment->transaction_details = null;
-            $this->payment->update();
-            $payable_model->payment_method = strtolower($paymentDetail->readable_method);
+            $this->completePayment();
+            $payable_model->payment_method = strtolower($payment_detail->readable_method);
             $payable_model->update();
         } catch (RequestException $e) {
-            $this->paymentRepository->changeStatus(['to' => 'failed', 'from' => $this->payment->status,
-                'transaction_details' => $this->payment->transaction_details]);
-            $this->payment->status = 'failed';
-            $this->payment->update();
+            $this->failPayment();
             throw $e;
         }
         if ($has_error) {
-            $this->paymentRepository->changeStatus(['to' => 'completed', 'from' => $this->payment->status,
-                'transaction_details' => $this->payment->transaction_details]);
-            $this->payment->status = 'completed';
-            $this->payment->update();
+            $this->completePayment();
         }
         return $this->payment;
     }
@@ -89,7 +87,9 @@ class OrderComplete extends PaymentComplete
             if (strtolower($paymentDetail->method) == 'wallet') dispatchReward()->run('wallet_cashback', $customer, $paymentDetail->amount, $partner_order);
         } else {
             $has_error = true;
+            throw new Exception('OrderComplete collect api failure. code:' . $response->code);
         }
+
         return $has_error;
     }
 
@@ -101,7 +101,7 @@ class OrderComplete extends PaymentComplete
             $payable_model->paid_at = Carbon::now();
             $payable_model->update();
             $this->convertToOrder($payable_model);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $has_error = false;
         }
         return $has_error;
@@ -115,7 +115,7 @@ class OrderComplete extends PaymentComplete
         try {
             $subscription_order = new SubscriptionOrderAdapter($payable_model);
             $subscription_order->convertToOrder();
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
         }
     }
