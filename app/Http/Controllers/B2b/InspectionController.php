@@ -154,7 +154,7 @@ class InspectionController extends Controller
                 'inspection_lists' => $inspection_lists,
                 'over_due' => 0,
                 'item_failure_rate' => $failure_percent_in_last_seven_days,
-                'is_rate_change_upwords' => $difference >= 0 ? 1 : 0,
+                'is_rate_change_upwords' => $failure_percent_in_last_seven_days >= $failure_percent_before_last_seven_days ? 1 : 0,
                 'item_failure_rate_change' => $difference >= 0 ? $difference : $difference * (-1)
             ]);
             else  return api_response($request, null, 404);
