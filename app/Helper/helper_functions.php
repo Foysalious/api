@@ -132,6 +132,8 @@ if (!function_exists('getRangeFormat')) {
                 return $dateFrame->forAMonth($today->month, $today->year)->getArray();
             case 'week':
                 return $dateFrame->forAWeek($today)->getArray();
+            case 'lifetime':
+                return $dateFrame->forLifeTime()->getArray();
             default:
                 return [$today->startOfDay(), $today->endOfDay()];
         }

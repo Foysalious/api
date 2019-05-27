@@ -74,14 +74,14 @@ class JobLogs
             if($logistic_uses) {
                 if( !$rider) {
                     array_push($logs, [
-                        'status' => 'rider_searching',
-                        'log' => 'We are currently searching for a rider.',
+                        'status' => 'delivery man_searching',
+                        'log' => 'We are currently searching for a delivery man.',
                     ]);
 
                 } else  {
                     array_push($logs, [
-                        'status' => 'rider_assigned',
-                        'log' => 'A rider has been assigned to your order.',
+                        'status' => 'delivery man_assigned',
+                        'log' => 'A delivery man has been assigned to your order.',
                         'user' =>  [
                             'name' => $rider->user->profile->name,
                             'mobile' => $rider->user->profile->mobile,
@@ -123,7 +123,7 @@ class JobLogs
                 if($this->job->rider) {
                     return [
                         'status' => 'work_started',
-                        'log' => 'Rider has picked up your order at ' . $time
+                        'log' => 'Delivery man has picked up your order at ' . $time
                     ];
                 } else {
                     return [
@@ -135,7 +135,7 @@ class JobLogs
                 if($this->job->rider) {
                     return [
                         'status' => 'work_completed',
-                        'log' => 'Rider dropped your order at ' . $time,
+                        'log' => 'Delivery man dropped your order at ' . $time,
                     ];
                 } else {
                     return [
@@ -161,7 +161,7 @@ class JobLogs
                 'type' => 'danger'
             );
         } elseif ($job_status == constants('JOB_STATUSES')['Accepted']) {
-            $expert_type = $this->job->logistic_uses ? 'rider' : ($this->job->resource ? 'expert' : 'service provider');
+            $expert_type = $this->job->logistic_uses ? 'Delivery man' : ($this->job->resource ? 'expert' : 'service provider');
             $thirty_min_before_scheduled_date_time = Carbon::parse($this->job->schedule_date . ' ' . $this->job->preferred_time_start)->subMinutes(30);
             if (Carbon::now()->gte($thirty_min_before_scheduled_date_time)) {
                 return array(
@@ -177,7 +177,7 @@ class JobLogs
                     if($this->job->rider) {
                         return array(
                             'status' => 'message',
-                            'log' => 'Rider is on his way to pick your order',
+                            'log' => 'Delivery man is on his way to pick your order',
                             'type' => 'success'
                         );
                     }
@@ -198,7 +198,7 @@ class JobLogs
 
             }
         } elseif ($job_status == constants('JOB_STATUSES')['Schedule_Due']) {
-            $expert_type = $this->job->logistic_uses ? 'rider' : ($this->job->resource ? 'expert' : 'service provider');
+            $expert_type = $this->job->logistic_uses ? 'Delivery man' : ($this->job->resource ? 'expert' : 'service provider');
             return array(
                 'status' => 'message',
                 'log' => 'Your order is supposed to be started by now. Please call the ' . ($expert_type) . '. For any kind of help call 16516.',
@@ -208,7 +208,7 @@ class JobLogs
             if($this->job->rider) {
                 return array(
                     'status' => 'message',
-                    'log' => 'Rider is on his way to drop your order.',
+                    'log' => 'Delivery man is on his way to drop your order.',
                     'type' => 'success'
                 );
             } else {
