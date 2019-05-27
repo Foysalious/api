@@ -64,7 +64,7 @@ class JobController extends Controller
     {
         try {
             $customer = $request->customer;
-            $job = $request->job->load(['resource.profile', 'carRentalJobDetail', 'category', 'review', 'jobServices', 'complains' => function ($q) use ($customer) {
+            $job = $request->job->load(['resource.profile', 'carRentalJobDetail', 'category', 'review', 'jobServices', 'discounts', 'complains' => function ($q) use ($customer) {
                 $q->select('id', 'job_id', 'status', 'complain', 'complain_preset_id')
                     ->whereHas('accessor', function ($query) use ($customer) {
                         $query->where('accessors.model_name', get_class($customer));
@@ -77,13 +77,15 @@ class JobController extends Controller
             }
 
             $delivery_discount = 0;
-            if(isset($job->otherDiscountsByType[DiscountTypes::DELIVERY]))
-                $delivery_discount = $job->otherDiscountsByType[DiscountTypes::DELIVERY];
+            $calculated_job = $job->calculate(true);
+            if (isset($calculated_job->otherDiscountsByType[DiscountTypes::DELIVERY]))
+                $delivery_discount = $calculated_job->otherDiscountsByType[DiscountTypes::DELIVERY];
+
             $logistic_paid = $job->logistic_paid;
             $logistic_charge = $job->logistic_charge;
-            if($logistic_paid > $logistic_charge)
-                $logistic_paid = $logistic_charge;
-            $logistic_due  = ($logistic_charge - $logistic_paid);
+
+            if ($logistic_paid > $logistic_charge) $logistic_paid = $logistic_charge;
+            $logistic_due = ($logistic_charge - $logistic_paid);
 
             $job_collection = collect();
             $job_collection->put('id', $job->id);
