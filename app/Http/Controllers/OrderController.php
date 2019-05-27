@@ -216,6 +216,7 @@ class OrderController extends Controller
             }
             (new NotificationRepository())->send($order);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return null;
         }
     }
