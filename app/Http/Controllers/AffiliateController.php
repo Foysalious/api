@@ -239,13 +239,45 @@ class AffiliateController extends Controller
             $sort_order = $request->get('sort_order');
 
             list($offset, $limit) = calculatePagination($request);
-            if (empty($range)) {
-                $query[] = $this->allAgents($request->affiliate);
-            }
-            $query[] = Affiliate::agentsWithFilter($request, 'affiliations')->get()->toArray();
-            $query[] = Affiliate::agentsWithFilter($request, 'partner_affiliations')->get()->toArray();
+//            if (empty($range)) {
+//                $query[] = $this->allAgents($request->affiliate);
+//            }
 
-            $agents = $this->mapAgents($query)->where('ambassador_id', $affiliate->id);
+//            $query[] = Affiliate::agentsWithFilter($request, 'affiliations')->get()->toArray();
+//            $query[] = Affiliate::agentsWithFilter($request, 'partner_affiliations')->get()->toArray();
+//
+//            $agents = $this->mapAgents($query)->where('ambassador_id', $affiliate->id);
+
+            $agents = collect(DB::select('SELECT 
+    affiliates.id,
+    affiliates.profile_id,
+      (Sum(affiliate_transactions.amount))  AS total_gifted_amount, 
+     Count(DISTINCT( affiliate_transactions.id )) AS total_gifted_number,
+    affiliates.profile_id,
+    affiliates.ambassador_id,
+    affiliates.under_ambassador_since,
+    profiles.name,
+    profiles.pro_pic AS picture,
+    profiles.mobile,
+    affiliates.created_at
+FROM
+    affiliate_transactions
+        LEFT JOIN
+    `affiliates` ON `affiliate_transactions`.`affiliate_id` = `affiliates`.`id`
+        LEFT JOIN
+    profiles ON affiliates.profile_id = profiles.id
+WHERE
+         affiliate_id IN (SELECT 
+            id
+        FROM
+            affiliates
+        WHERE
+            ambassador_id = ?)
+GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id]));
+
+            $agents->map(function ($agent) {
+                $agent->total_gifted_amount = (double) $agent->total_gifted_amount;
+            });
 
             $agents = $this->filterAgents($q, $agents);
 
@@ -372,7 +404,7 @@ class AffiliateController extends Controller
         }
     }
 
-    public function getAmbassadorSummary($affiliate, Request $request)
+    public function getAmbassadorSummary($affiliate, Request $request, TopUpEarning $top_up_earning)
     {
         try {
             $affiliate = $request->affiliate;
@@ -387,13 +419,28 @@ class AffiliateController extends Controller
                     AND affiliate_transactions.affiliate_id = ? AND is_gifted = 1
                     AND affiliates.under_ambassador_since < affiliate_transactions.created_at', [$affiliate->id]
             );
-            $total_amount = $partner_affiliation_total_amount[0]->total_amount ?: 0;
+            $partner_affiliation_amount = $partner_affiliation_total_amount[0]->total_amount ?: 0;
+
+            $lite_affiliation_total_amount = DB::select('SELECT SUM(affiliate_transactions.amount) as total_amount FROM affiliate_transactions 
+                    LEFT JOIN `affiliates` ON `affiliate_transactions`.`affiliate_id` = `affiliates`.`id` 
+                    WHERE `affiliate_transactions`.`affiliation_type` = \'App\\\Models\\\Partner\'
+                    AND affiliate_transactions.affiliate_id = ? AND is_gifted = 1 group by affiliate_transactions.affiliate_id
+                    ', [$affiliate->id]
+            );
+            $lite_total_amount = $lite_affiliation_total_amount[0]->total_amount ?: 0;
+            $request->filter_type = 'lifetime';
+            $topup_earning = $top_up_earning->setType('affiliate')->getFormattedDate($request)->getAgentsData($affiliate)['earning_amount'];
+            $total_amount = $partner_affiliation_amount + $lite_total_amount + $topup_earning;
+
+            $partner_affiliation_count = PartnerAffiliation::spCount($affiliate->id)->count();
+            $lite_affiliation_count_query = DB::select('select count(*) as count from partners where affiliate_id in (select id from affiliates where ambassador_id = ?)',[$affiliate->id]);
+            $lite_affiliation_count = $lite_affiliation_count_query[0]->count ?:0;
 
             $info = collect();
             $info->put('agent_count', $affiliate->agents->count());
             $info->put('earning_amount', $affiliate->agents->sum('total_gifted_amount') + (double)$total_amount);
             $info->put('total_refer', Affiliation::totalRefer($affiliate->id)->count());
-            $info->put('sp_count', PartnerAffiliation::spCount($affiliate->id)->count());
+            $info->put('sp_count',$partner_affiliation_count + $lite_affiliation_count );
             return api_response($request, $info, 200, ['info' => $info->all()]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
