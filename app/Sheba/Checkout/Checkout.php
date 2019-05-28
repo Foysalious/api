@@ -177,7 +177,7 @@ class Checkout
                     'order_id' => $order->id, 'partner_id' => $partner->id,
                     'payment_method' => $data['payment_method']
                 ]);
-                
+
                 $partner_order = $this->getAuthor($partner_order, $data);
                 $preferred_time_start = (Carbon::parse(explode('-', $data['time'])[0]))->format('G:i:s');
                 $preferred_time_end = (Carbon::parse(explode('-', $data['time'])[1]))->format('G:i:s');
