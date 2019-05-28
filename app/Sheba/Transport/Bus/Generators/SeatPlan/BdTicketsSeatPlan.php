@@ -55,7 +55,8 @@ class BdTicketsSeatPlan
             $seatDetails = [];
             $seats = [];
             foreach ($plan['seats'] as $seat) {
-                $currentSeat = ["seat_id" => $seat['seatId'], "seat_no" => $seat['seatNo'], "seat_type_id" => $seat['seatTypeId'], "status" => $seat['status'], "color_code" => $seat['colorCode'], "fare" => (double)$seat['fare'], "x_axis" => $seat['xaxis'], "y_axis" => $seat['yaxis']];
+                $currentSeat = ["seat_id" => $seat['seatId'], "seat_no" => $seat['seatNo'], "seat_type_id" => $seat['seatTypeId'], "status" => $seat['status'],
+                    "color_code" => $seat['colorCode'], "fare" => (double)$seat['fare'], "x_axis" => $seat['xaxis'], "y_axis" => $seat['yaxis'],'gender'=>$this->resolveGender($seat['color_code'])];
                 array_push($seats, $currentSeat);
             }
             $seatDetails['seats'] = $seats;
@@ -64,12 +65,12 @@ class BdTicketsSeatPlan
             $seatDetails['total_seat_row'] = $plan['seatRow'];
             $boarding_points = [];
             foreach ($plan['boardingPoints'] as $boarding_point) {
-               $current_boarding_point = [
-                   "reporting_branch_id"=> $boarding_point['reportingBranchId'],
-                   "counter_name"=> $boarding_point['counterName'],
-                   "reporting_time"=> $boarding_point['reportingTime'],
-                   "schedule_time"=> $boarding_point['scheduleTime']
-               ];
+                $current_boarding_point = [
+                    "reporting_branch_id"=> $boarding_point['reportingBranchId'],
+                    "counter_name"=> $boarding_point['counterName'],
+                    "reporting_time"=> $boarding_point['reportingTime'],
+                    "schedule_time"=> $boarding_point['scheduleTime']
+                ];
                 array_push($boarding_points, $current_boarding_point);
             }
             $dropping_points = [];
@@ -87,6 +88,21 @@ class BdTicketsSeatPlan
             return $seatDetails;
         } else {
             throw new \Exception('Failed to parse ticket.');
+        }
+    }
+
+    public function resolveGender($color_code)
+    {
+        switch ($color_code) {
+            case '#ffa4a4':
+            case '#FF0000':
+                return 'male';
+
+            case '#ff99ff':
+            case '#ff1493':
+                return 'female';
+            default:
+                return 'none';
         }
     }
 }
