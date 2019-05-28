@@ -42,4 +42,10 @@ class ResourceSchedule extends Model
     {
         return $query->where([['start', $start], ['end', $end]]);
     }
+
+    public function scopeActive($query)
+    {
+        return $query->whereRaw('start < end');
+    }
+
 }
