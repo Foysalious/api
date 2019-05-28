@@ -56,7 +56,7 @@ class BdTicketsSeatPlan
             $seats = [];
             foreach ($plan['seats'] as $seat) {
                 $currentSeat = ["seat_id" => $seat['seatId'], "seat_no" => $seat['seatNo'], "seat_type_id" => $seat['seatTypeId'], "status" => $seat['status'],
-                    "color_code" => $seat['colorCode'], "fare" => (double)$seat['fare'], "x_axis" => $seat['xaxis'], "y_axis" => $seat['yaxis'],'gender'=>$this->resolveGender($seat['colorCode'])];
+                    "color_code" => $seat['colorCode'], "fare" => ceil((double)$seat['fare']), "x_axis" => $seat['xaxis'], "y_axis" => $seat['yaxis'],'gender'=>$this->resolveGender($seat['colorCode'])];
                 array_push($seats, $currentSeat);
             }
             $seatDetails['seats'] = $seats;
