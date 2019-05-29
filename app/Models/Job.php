@@ -66,6 +66,7 @@ class Job extends BaseModel
     public $isCalculated;
     /** @var float|int */
     public $discountWithoutDeliveryDiscount;
+    public $logisticDueWithoutDiscount;
 
     /** @var CodeBuilder */
     private $codeBuilder;
@@ -308,6 +309,7 @@ class Job extends BaseModel
             $this->deliveryDiscount = $this->otherDiscountsByType[DiscountTypes::DELIVERY];
 
         $this->grossLogisticCharge = ramp($this->logistic_charge - $this->deliveryDiscount);
+        $this->logisticDueWithoutDiscount = ramp($this->logistic_charge - $this->logistic_paid);
         $this->logisticDue = ramp($this->grossLogisticCharge - $this->logistic_paid);
         $this->discountWithoutDeliveryDiscount = ramp($this->discount - $this->deliveryDiscount);
 
