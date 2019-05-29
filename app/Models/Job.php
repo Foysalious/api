@@ -2,6 +2,7 @@
 
 use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
+use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Dal\JobDiscount\JobDiscount;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Jobs\CiCalculator;
@@ -57,9 +58,14 @@ class Job extends BaseModel
     public $otherDiscountContributionPartnerByType = [];
     public $profit;
     public $margin;
+    public $deliveryDiscount = 0.00;
+    public $grossLogisticCharge;
+    public $logisticDue;
     public $complexityIndex;
     public $isInWarranty;
     public $isCalculated;
+    /** @var float|int */
+    public $discountWithoutDeliveryDiscount;
 
     /** @var CodeBuilder */
     private $codeBuilder;
@@ -297,6 +303,14 @@ class Job extends BaseModel
         $this->profit = formatTaka($this->grossPrice - $this->totalCost);
         $this->margin = $this->totalPrice != 0 ? (($this->grossPrice - $this->totalCost) * 100) / $this->totalPrice : 0;
         $this->margin = formatTaka($this->margin);
+
+        if (isset($this->otherDiscountsByType[DiscountTypes::DELIVERY]))
+            $this->deliveryDiscount = $this->otherDiscountsByType[DiscountTypes::DELIVERY];
+
+        $this->grossLogisticCharge = ramp($this->logistic_charge - $this->deliveryDiscount);
+        $this->logisticDue = ramp($this->grossLogisticCharge - $this->logistic_paid);
+        $this->discountWithoutDeliveryDiscount = ramp($this->discount - $this->deliveryDiscount);
+
         if (!$price_only) {
             $this->calculateComplexityIndex();
         }
