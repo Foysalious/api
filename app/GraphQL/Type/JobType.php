@@ -45,6 +45,7 @@ class JobType extends GraphQlType
             'customerFavorite' => ['type' => GraphQL::type('CustomerFavorite')],
             'can_take_review' => ['type' => Type::boolean()],
             'can_pay' => ['type' => Type::boolean()],
+            'can_add_promo' => ['type' => Type::int()],
         ];
     }
 
@@ -183,13 +184,21 @@ class JobType extends GraphQlType
         return $this->canTakeReview($root);
     }
 
+    protected function resolveCanAddPromoField($root, $args)
+    {
+        if (!isset($root->totalDiscount)) {
+            $root->calculate(true);
+        }
+        return (double)$root->totalDiscount == 0 && !$root->partnerOrder->order->voucher_id ? 1 : 0;
+    }
+
     protected function canTakeReview($job)
     {
         $review = $job->review;
 
-        if(!is_null($review) && $review->rating > 0) {
+        if (!is_null($review) && $review->rating > 0) {
             return false;
-        } else if($job->partnerOrder->closed_at) {
+        } else if ($job->partnerOrder->closed_at) {
             $closed_date = Carbon::parse($job->partnerOrder->closed_at);
             $now = Carbon::now();
             $difference = $closed_date->diffInDays($now);
@@ -205,7 +214,7 @@ class JobType extends GraphQlType
         $due = $root->partnerOrder->calculate(true)->due;
         $status = $root->status;
 
-        if(in_array($status, ['Declined', 'Cancelled']))
+        if (in_array($status, ['Declined', 'Cancelled']))
             return false;
         else {
             return $due > 0;
