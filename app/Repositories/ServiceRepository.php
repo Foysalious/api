@@ -277,7 +277,7 @@ class ServiceRepository
     public function addServiceInfo($services, array $scope)
     {
         foreach ($services as $service) {
-            $service->partnerServices = $this->_filterByPartnerAndWallet($service->partnerServices);
+            if (count($scope) > 0) $service->partnerServices = $this->_filterByPartnerAndWallet($service->partnerServices);
 
             if (array_search('start_price', $scope) !== false) {
                 $service = $this->getStartPrice($service);
@@ -316,7 +316,8 @@ class ServiceRepository
         return $services->load(['partners' => function ($q) use ($location) {
             $q->published()->whereNotNull('geo_informations')/*->whereHas('locations', function ($query) use ($location) {
                 $query->where('id', $location);
-            })*/;
+            })*/
+            ;
         }]);
     }
 
