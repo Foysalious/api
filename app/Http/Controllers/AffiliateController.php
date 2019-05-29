@@ -427,7 +427,8 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id]));
                     AND affiliate_transactions.affiliate_id = ? AND is_gifted = 1 group by affiliate_transactions.affiliate_id
                     ', [$affiliate->id]
             );
-            $lite_total_amount = $lite_affiliation_total_amount[0]->total_amount ?: 0;
+
+            $lite_total_amount = count($lite_affiliation_total_amount) > 0 ? ( $lite_affiliation_total_amount[0]->total_amount ?: 0 ):0;
             $request->filter_type = 'lifetime';
             $topup_earning = $top_up_earning->setType('affiliate')->getFormattedDate($request)->getAgentsData($affiliate)['earning_amount'];
             $total_amount = $partner_affiliation_amount + $lite_total_amount + $topup_earning;
