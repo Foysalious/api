@@ -53,6 +53,7 @@ class PartnerOrder extends Model
     public $isCalculated = false;
     public $revenuePercent = 0;
     public $serviceChargePercent = 0;
+    private $totalLogisticCharge = 0;
     public $totalLogisticPaid = 0;
     public $totalLogisticDue = 0;
     public $paidWithLogistic = 0;
@@ -229,6 +230,7 @@ class PartnerOrder extends Model
         $this->totalShebaDiscount += $job->discountContributionSheba;
         $this->deliveryCharge += $job->delivery_charge;
         $this->deliveryCost += $job->deliveryCost;
+        $this->totalLogisticCharge += $job->logistic_charge;
         $this->totalLogisticPaid += $job->logistic_paid;
         $this->totalLogisticDue += $job->logisticDue;
     }
