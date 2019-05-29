@@ -8,6 +8,7 @@ use Sheba\ModificationFields;
 use Sheba\Voucher\DTO\Params\CheckParamsForOrder;
 use Sheba\Voucher\PromotionList;
 use Sheba\Voucher\VoucherDiscount;
+use DB;
 
 class CustomerJobController extends Controller
 {
@@ -22,13 +23,17 @@ class CustomerJobController extends Controller
             ]);
             $job = $request->job;
             $order = $job->partnerOrder->order;
+            if ($order->voucher_id) return api_response($request, null, 403, ['message' => 'There is already a promo in order.']);
             $customer = $request->customer;
-            $order_params->setCategory($order->category)->setCustomer($customer)->setLocation($order->location)->setOrder($order);
+            $order_params->setCategory($order->category)->setSalesChannel($request->sales_channel)
+                ->setCustomer($customer)->setLocation($order->location)->setOrder($order);
             $result = voucher(strtoupper($request->code))->checkForOrder($order_params)->reveal();
             if ($result['is_valid']) {
                 $voucher = $result['voucher'];
-                $promo = (new PromotionList($customer))->add($voucher);
-                if (!$promo[0]) return api_response($request, null, 403, ['message' => $promo[1]]);
+                if (!$customer->promotions()->valid()->where('voucher_id', $voucher->id)->first()) {
+                    $promo = (new PromotionList($customer))->add($voucher);
+                    if (!$promo[0]) return api_response($request, null, 403, ['message' => $promo[1]]);
+                }
                 try {
                     DB::transaction(function () use ($order, $voucher, $job) {
                         $order->update($this->withUpdateModificationField(['voucher_id' => $voucher->id]));
@@ -47,7 +52,7 @@ class CustomerJobController extends Controller
                 } catch (QueryException $e) {
                     throw $e;
                 }
-                return api_response($request, 1, 200, ['voucher' => $voucher]);
+                return api_response($request, 1, 200);
             } else {
                 return api_response($request, null, 403, ['message' => 'Invalid Promo']);
             }
@@ -58,6 +63,7 @@ class CustomerJobController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all()]);
             $sentry->captureException($e);
