@@ -107,10 +107,10 @@ class JobController extends Controller
             $job_collection->put('status', $job->status);
             $job_collection->put('rating', $job->review ? $job->review->rating : null);
             $job_collection->put('review', $job->review ? $job->review->calculated_review : null);
-            $job_collection->put('original_price', ((double)$job->partnerOrder->jobPrices + (double) $job->logistic_charge));
+            $job_collection->put('original_price', ((double)$job->partnerOrder->jobPrices + (double)$job->logistic_charge));
             $job_collection->put('discount', (double)$job->partnerOrder->totalDiscount);
             $job_collection->put('payment_method', $this->formatPaymentMethod($job->partnerOrder->payment_method));
-            $job_collection->put('price', (double)$job->partnerOrder->totalPrice  + (double) ($job->logistic_charge - $delivery_discount));
+            $job_collection->put('price', (double)$job->partnerOrder->totalPrice + (double)($job->logistic_charge - $delivery_discount));
             $job_collection->put('isDue', (double)($job->partnerOrder->due + ($logistic_due - $delivery_discount)) > 0 ? 1 : 0);
             $job_collection->put('isRentCar', $job->isRentCar());
             $job_collection->put('is_on_premise', $job->isOnPremise());
@@ -125,6 +125,7 @@ class JobController extends Controller
             $job_collection->put('estimated_time', $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_time : null);
             $job_collection->put('can_take_review', $this->canTakeReview($job));
             $job_collection->put('can_pay', $this->canPay($job));
+            $job_collection->put('can_add_promo', $this->canAddPromo($job));
 
             if (count($job->jobServices) == 0) {
                 $services = collect();
@@ -175,6 +176,11 @@ class JobController extends Controller
         return $complains;
     }
 
+    private function canAddPromo(Job $job)
+    {
+        return (double)$job->totalDiscount == 0 && !$job->partnerOrder->order->voucher_id ? 1 : 0;
+    }
+
     public function getBills($customer, $job, Request $request, OrderRepository $logistics_orderRepo)
     {
         try {
@@ -208,25 +214,25 @@ class JobController extends Controller
 
             $original_delivery_charge = $job->deliveryPrice;
             $delivery_discount = 0;
-            if(isset($job->otherDiscountsByType[DiscountTypes::DELIVERY]))
+            if (isset($job->otherDiscountsByType[DiscountTypes::DELIVERY]))
                 $delivery_discount = $job->otherDiscountsByType[DiscountTypes::DELIVERY];
 
-            $total_discount =  (double)$job->discount;
+            $total_discount = (double)$job->discount;
             $total_discount -= $delivery_discount;
 
             $logistic_paid = $job->logistic_paid;
             $logistic_charge = $job->logistic_charge;
-            if($logistic_paid > $logistic_charge)
+            if ($logistic_paid > $logistic_charge)
                 $logistic_paid = $logistic_charge;
-            $logistic_due  = ($logistic_charge - $logistic_paid);
+            $logistic_due = ($logistic_charge - $logistic_paid);
 
-            if($total_discount < 0)
+            if ($total_discount < 0)
                 $total_discount = 0;
 
             $bill = collect();
             $bill['total'] = (double)$partnerOrder->totalPrice + ($original_delivery_charge - $delivery_discount);
             $bill['original_price'] = (double)$partnerOrder->jobPrices;
-            $bill['paid'] = (double)$partnerOrder->paid + $logistic_paid ;
+            $bill['paid'] = (double)$partnerOrder->paid + $logistic_paid;
             $bill['due'] = (double)$partnerOrder->due + ($logistic_due - $delivery_discount);
             $bill['material_price'] = (double)$job->materialPrice;
             $bill['discount'] = $total_discount;
