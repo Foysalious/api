@@ -53,7 +53,7 @@ class PartnerOrder extends Model
     public $isCalculated = false;
     public $revenuePercent = 0;
     public $serviceChargePercent = 0;
-    private $totalLogisticCharge = 0;
+    public $totalLogisticCharge = 0;
     public $totalLogisticPaid = 0;
     public $totalLogisticDue = 0;
     public $paidWithLogistic = 0;
