@@ -19,6 +19,7 @@ class OrderType extends GraphQlType
         return [
             'id' => ['type' => Type::int()],
             'order_id' => ['type' => Type::int()],
+            'voucher_id' => ['type' => Type::int()],
             'customer' => ['type' => GraphQL::type('Customer')],
             'category' => ['type' => GraphQL::type('Category')],
             'partner' => ['type' => GraphQL::type('Partner')],
