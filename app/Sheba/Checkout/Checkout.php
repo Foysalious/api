@@ -99,11 +99,13 @@ class Checkout
             $data['category_id'] = $this->partnerListRequest->selectedCategory->id;
             $this->calculateOrderAmount($data['job_services'], $partner);
             $data = $this->getVoucherData($data, $partner);
+
             if ($order = $this->storeInDB($data, $this->partnerListRequest->selectedServices, $partner)) {
                 if (isset($data['email'])) {
                     $this->updateProfile($order->customer, $data['email']);
                 }
             }
+
             return $order;
         } else {
             $sentry = app('sentry');
@@ -175,6 +177,7 @@ class Checkout
                     'order_id' => $order->id, 'partner_id' => $partner->id,
                     'payment_method' => $data['payment_method']
                 ]);
+
                 $partner_order = $this->getAuthor($partner_order, $data);
                 $preferred_time_start = (Carbon::parse(explode('-', $data['time'])[0]))->format('G:i:s');
                 $preferred_time_end = (Carbon::parse(explode('-', $data['time'])[1]))->format('G:i:s');
@@ -235,6 +238,7 @@ class Checkout
                     $data['car_rental_job_detail']->job_id = $job->id;
                     $data['car_rental_job_detail']->save();
                 }
+                $order->partnerOrders->push($partner_order);
             });
         } catch (QueryException $e) {
             app('sentry')->captureException($e);
