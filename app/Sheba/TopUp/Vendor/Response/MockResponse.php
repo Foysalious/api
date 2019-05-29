@@ -2,35 +2,35 @@
 
 class MockResponse extends TopUpResponse
 {
-    protected $response;
-
-    public function setResponse($response)
-    {
-        $this->response = $response;
-        return $this;
-    }
-
+    /**
+     * @return bool
+     */
     public function hasSuccess(): bool
     {
         return $this->response->TXNSTATUS == 200;
     }
 
-    public function getSuccess(): TopUpSuccessResponse
+    /**
+     * @return mixed
+     */
+    public function getTransactionId()
     {
-        $topup_response = new TopUpSuccessResponse();
-        $topup_response->transactionId = $this->response->TXNID;
-        $topup_response->transactionDetails = $this->response;
-        return $topup_response;
+        return $this->response->TXNID;
     }
 
-    public function getError(): TopUpErrorResponse
+    /**
+     * @return mixed
+     */
+    public function getErrorCode()
     {
-        if ($this->hasSuccess()) throwException(new \Exception('Response has success'));
-        $topup_error = new TopUpErrorResponse();
-        $topup_error->errorCode = $this->response->TXNID;
-        $topup_error->errorMessage = isset($this->response->MESSAGE) ? $this->response->MESSAGE : 'Error message not given.';
-        return $topup_error;
+        return $this->response->TXNID;
     }
 
-
+    /**
+     * @return string
+     */
+    public function getErrorMessage()
+    {
+        return isset($this->response->MESSAGE) ? $this->response->MESSAGE : 'Error message not given.';
+    }
 }

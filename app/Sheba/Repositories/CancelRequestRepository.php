@@ -7,7 +7,7 @@ use App\Sheba\UserRequestInformation;
 
 class CancelRequestRepository extends BaseRepository
 {
-    public function create($data)
+    public function create(array $data)
     {
         $data = $this->withCreateModificationField($this->withRequestIdentificationData($data));
         JobCancelRequest::create($data);

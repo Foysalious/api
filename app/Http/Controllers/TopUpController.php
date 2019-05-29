@@ -4,8 +4,11 @@ use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Database\QueryException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\TopUp\TopUp;
@@ -18,6 +21,7 @@ use Sheba\TopUp\Vendor\Response\Ssl\SslFailResponse;
 use Sheba\TopUp\Vendor\VendorFactory;
 use Storage;
 use Excel;
+use Throwable;
 
 class TopUpController extends Controller
 {
@@ -44,7 +48,7 @@ class TopUpController extends Controller
                 'error_message' => $error_message . '.'
             );
             return api_response($request, $vendors, 200, ['vendors' => $vendors, 'regex' => $regular_expression]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -73,7 +77,7 @@ class TopUpController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -87,16 +91,20 @@ class TopUpController extends Controller
             Storage::disk('s3')->put("topup/fail/ssl/$filename", json_encode($data));
             $sentry = app('sentry');
             $sentry->user_context(['request' => $data]);
-            $sentry->captureException(new \Exception('SSL topup fail'));
+            $sentry->captureException(new Exception('SSL topup fail'));
             $error_response->setResponse($data);
             $top_up->processFailedTopUp($error_response->getTopUpOrder(), $error_response);
+
+            $topup_fail_namespace = 'Topup:Fail_'. Carbon::now()->timestamp . str_random(6);
+            Redis::set($topup_fail_namespace, json_encode($data));
+
             return api_response($request, 1, 200);
         } catch (QueryException $e) {
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all()]);
             $sentry->captureException($e);
             return api_response($request, null, 500);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all()]);
             $sentry->captureException($e);
@@ -112,13 +120,21 @@ class TopUpController extends Controller
             Storage::disk('s3')->put("topup/success/ssl/$filename", json_encode($data));
             $success_response->setResponse($data);
             $top_up->processSuccessfulTopUp($success_response->getTopUpOrder(), $success_response);
+
+            /**
+             * USE ONLY FOR TEMPORARY CHECK
+             *
+             * $topup_success_namespace = 'Topup:Success_'. Carbon::now()->timestamp . str_random(6);
+             * Redis::set($topup_success_namespace, json_encode($data));
+             */
+
             return api_response($request, 1, 200);
         } catch (QueryException $e) {
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all()]);
             $sentry->captureException($e);
             return api_response($request, null, 500);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all()]);
             $sentry->captureException($e);
@@ -164,7 +180,7 @@ class TopUpController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -180,10 +196,14 @@ class TopUpController extends Controller
 
     /**
      * TEST CONTROLLER FOR TOPUP TEST
+     * @param Request $request
+     * @param VendorFactory $vendor
+     * @param TopUp $top_up
+     * @param TopUpRequest $top_up_request
+     * @return JsonResponse
      */
     public function topUpTest(Request $request, VendorFactory $vendor, TopUp $top_up, TopUpRequest $top_up_request)
     {
-
         try {
             $this->validate($request, [
                 'mobile' => 'required|string|mobile:bd',
@@ -204,7 +224,7 @@ class TopUpController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

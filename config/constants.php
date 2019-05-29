@@ -33,7 +33,7 @@ return [
         'Declined' => 'Declined',
         'Accepted' => 'Accepted',
         'Schedule_Due' => 'Schedule Due',
-            'Ready_To_Pick' => 'Ready To Pick',
+        'Ready_To_Pick' => 'Ready To Pick',
         'Process' => 'Process',
         'Serve_Due' => 'Serve Due',
         'Served' => 'Served',
@@ -96,6 +96,8 @@ return [
         'Closed' => ['sheba' => 'Closed', 'partner' => 'Closed', 'customer' => 'Closed'],
         'Cancelled' => ['sheba' => 'Cancelled', 'partner' => 'Cancelled', 'customer' => 'Cancelled']
     ],
+    'PARTNER_MINIMUM_RESPONSE_TIME' => 30,
+    'PARTNER_MAXIMUM_RESPONSE_TIME' => 120,
     'FLAG_STATUSES' => [
         'Open' => 'Open',
         'Acknowledged' => 'Acknowledged',
@@ -302,9 +304,15 @@ return [
             'short_name' => 'AC',
             'prefix' => 'A',
             'department' => 'AC'
+        ],
+        'Telesales' => [
+            'name' => 'Telesales',
+            'short_name' => 'TEL',
+            'prefix' => 'T',
+            'department' => 'TEL'
         ]
     ],
-    'SERVICE_UNITS' => ['ft', 'sft', 'hour', 'kg', 'meal', 'person', 'piece', 'rft', 'seat', 'strip', 'km'],
+    'SERVICE_UNITS' => ['ft', 'sft', 'hour', 'kg', 'meal', 'person', 'piece', 'rft', 'seat', 'strip', 'km', 'basket', 'Cow Price', 'litre', 'বান্ডেল', 'দিন', 'cft'],
     'FEEDBACK_STATUSES' => [
         'Open' => 'Open',
         'Acknowledged' => 'Acknowledged',
@@ -352,6 +360,7 @@ return [
         env('SHEBA_AFFILIATION_APP') => 'affiliate',
         env('SHEBA_RESOURCE_APP') => 'resource',
         env('SHEBA_MANGER_APP') => 'resource',
+        'user' => 'user'
     ],
     'MANAGER' => [
         'Owner', 'Management', 'Admin', 'Operation', 'Finance'
@@ -361,7 +370,8 @@ return [
         'customer-app',
         'affiliation-app',
         'manager-app',
-        'manager-web'
+        'manager-web',
+        'business-portal',
     ],
     'PARTNER_ACQUISITION_CHANNEL' => [
         'PM' => 'PM',
@@ -485,10 +495,10 @@ return [
         'silver' => 'silver',
         'gold' => 'gold'
     ],
-    'MODERATOR_DISTANCE_THRESHOLD' => 200,
-    'AFFILIATION_LITE_ONBOARD_REWARD' => 5,
-    'AFFILIATION_LITE_ONBOARD_MODERATION_REWARD' => 5,
-    'AFFILIATION_LITE_ONBOARD_AMBASSADOR_REWARD' => 2,
+    'MODERATOR_DISTANCE_THRESHOLD' => 100,
+    'AFFILIATION_LITE_ONBOARD_REWARD' => 0,
+    'AFFILIATION_LITE_ONBOARD_MODERATION_REWARD' => 0,
+    'AFFILIATION_LITE_ONBOARD_AMBASSADOR_REWARD' => 0,
     'CUSTOMER_REVIEW_OPEN_DAY_LIMIT' => 14,
     'SMS_CAMPAIGN' => [
         'rate_per_sms' => 0.30
@@ -562,5 +572,6 @@ return [
             'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bank_icon/city.png',
             'interest' => '10.5',
         ],
-    ]
+    ],
+    'WEEKS' => ['Saturday' => 1, 'Sunday' => 2, 'Monday' => 3, 'Tuesday' => 4, 'Wednesday' => 5, 'Thursday' => 6, 'Friday' => 7]
 ];

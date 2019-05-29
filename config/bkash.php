@@ -1,11 +1,20 @@
 <?php
 
 return [
-    'app_key' => env('BKASH_APP_KEY'),
-    'app_secret' => env('BKASH_APP_SECRET'),
-    'username' => env('BKASH_USERNAME'),
-    'password' => env('BKASH_PASSWORD'),
-    'url' => env('BKASH_URL'),
+    '01799444000' => [
+        'app_key' => env('BKASH_APP_KEY_017'),
+        'app_secret' => env('BKASH_APP_SECRET_017'),
+        'username' => env('BKASH_USERNAME_017'),
+        'password' => env('BKASH_PASSWORD_017'),
+        'url' => env('BKASH_URL_017')
+    ],
+    '01833922030' => [
+        'app_key' => env('BKASH_APP_KEY_018'),
+        'app_secret' => env('BKASH_APP_SECRET_018'),
+        'username' => env('BKASH_USERNAME_018'),
+        'password' => env('BKASH_PASSWORD_018'),
+        'url' => env('BKASH_URL_018')
+    ],
     'old_username' => env('BKASH_VERIFICATION_USERNAME'),
     'old_password' => env('BKASH_VERIFICATION_PASSWORD'),
     'verification_endpoint' => env('BKASH_VERIFICATION_ENDPOINT', 'https://www.bkashcluster.com:9081/dreamwave/merchant/trxcheck/sendmsg'),

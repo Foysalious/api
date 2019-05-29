@@ -1,5 +1,8 @@
 <?php namespace Sheba\Payment\Factory;
 
+use InvalidArgumentException;
+use ReflectionClass;
+use ReflectionException;
 use Sheba\Payment\Methods\Bkash\Bkash;
 use Sheba\Payment\Methods\Cbl\Cbl;
 use Sheba\Payment\Methods\Cod;
@@ -14,7 +17,7 @@ class PaymentProcessor
     /**
      * PaymentProcessor constructor.
      * @param $method
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function __construct($method)
     {
@@ -29,21 +32,21 @@ class PaymentProcessor
     /**
      * @param $method
      * @return bool
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     private function isValidMethod($method)
     {
-        return in_array($method, (new \ReflectionClass(PaymentStrategy::class))->getStaticProperties());
+        return in_array($method, (new ReflectionClass(PaymentStrategy::class))->getStaticProperties());
     }
 
     /**
      * @param $method
      * @return Bkash|Cbl|Cod|Ssl|Wallet|PartnerWallet
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     private function getMethod($method)
     {
-        if (!$this->isValidMethod($method)) throw new \InvalidArgumentException('Invalid Method.');
+        if (!$this->isValidMethod($method)) throw new InvalidArgumentException('Invalid Method.');
 
         switch ($method) {
             case 'cod':

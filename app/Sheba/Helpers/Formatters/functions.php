@@ -20,6 +20,46 @@ if (!function_exists('formatMobile')) {
     }
 }
 
+if (!function_exists('formatMobileAux')) {
+    /**
+     * Format mobile number, add +88 & remove space.
+     * This function should be removed at refactoring.
+     *
+     * @param $mobile
+     * @return mixed
+     */
+    function formatMobileAux($mobile)
+    {
+        return BDMobileFormatter::formatAux($mobile);
+    }
+}
+
+if (!function_exists('formatMobileReverse')) {
+    /**
+     * Format mobile number, remove +88.
+     *
+     * @param $mobile
+     * @return mixed
+     */
+    function formatMobileReverse($mobile)
+    {
+        return BDMobileFormatter::reverse($mobile);
+    }
+}
+
+if (!function_exists('getOriginalMobileNumber')) {
+    /**
+     * Format Mobile number without +88 .
+     *
+     * @param  $number
+     * @return string
+     */
+    function getOriginalMobileNumber($number)
+    {
+        return BDMobileFormatter::getOriginal($number);
+    }
+}
+
 if (!function_exists('commaSeparate')) {
     /**
      * Format comma separated number.
@@ -46,34 +86,20 @@ if (!function_exists('formatTaka')) {
      */
     function formatTaka($amount, $comma_separation = false, $comma_separation_format = "BDT")
     {
-        return TakaFormatter::formatTaka($amount, $comma_separation, $comma_separation_format);
+        return TakaFormatter::toString($amount, $comma_separation, $comma_separation_format);
     }
 }
 
-if (!function_exists('formatMobileAux')) {
+if (!function_exists('formatTakaToDecimal')) {
     /**
-     * Format mobile number, add +88 & remove space.
-     * This function should be removed at refactoring.
+     * Format integer amount of taka into decimal.
      *
-     * @param $mobile
-     * @return mixed
+     * @param  $amount
+     * @return number
      */
-    function formatMobileAux($mobile)
+    function formatTakaToDecimal($amount)
     {
-        return BDMobileFormatter::formatAux($mobile);
-    }
-}
-
-if (!function_exists('formatMobileReverse')) {
-    /**
-     * Format mobile number, remove +88.
-     *
-     * @param $mobile
-     * @return mixed
-     */
-    function formatMobileReverse($mobile)
-    {
-        return BDMobileFormatter::reverse($mobile);
+        return TakaFormatter::toDecimal($amount);
     }
 }
 

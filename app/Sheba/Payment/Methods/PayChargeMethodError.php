@@ -1,11 +1,7 @@
-<?php
-
-namespace Sheba\Payment\Methods;
-
+<?php namespace Sheba\Payment\Methods;
 
 class PayChargeMethodError
 {
-
     private $code;
     private $message;
 

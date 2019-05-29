@@ -14,6 +14,7 @@ class AffiliateRoute
             $api->post('recharge', 'AffiliateController@rechargeWallet');
             $api->get('service-lead-status', 'AffiliateController@leadInfo');
             $api->get('history', 'AffiliateController@history');
+            $api->get('topup-earning', 'AffiliateController@topUpEarning');
             $api->get('lifetime-gift/{agent_id}', 'AffiliateController@lifeTimeGift');
             $api->get('top-up/validate/ssl', 'SslController@validateTopUp');
             $api->get('top-up/ssl/balance', 'SslController@checkBalance');
@@ -42,16 +43,9 @@ class AffiliateRoute
                 $api->post('book-tickets', 'MovieTicketController@bookTickets');
                 $api->post('update-status', 'MovieTicketController@updateTicketStatus');
             });
+            (new TransportRoute())->set($api);
         });
         $api->post('eksheba/save', 'EkshebaController@saveEkshebaData');
         $api->get('affiliates/faq', 'FaqController@getAffiliateFaqs');
-        $api->group(['prefix' => 'movie-ticket'], function ($api) {
-            $api->get('movie-list', 'MovieTicketController@getAvailableTickets');
-            $api->get('theatre-list', 'MovieTicketController@getAvailableTheatres');
-            $api->get('theatre-seat-status', 'MovieTicketController@getTheatreSeatStatus');
-            $api->get('book-tickets', 'MovieTicketController@bookTickets');
-            $api->get('update-status', 'MovieTicketController@updateTicketStatus');
-        });
-
     }
 }

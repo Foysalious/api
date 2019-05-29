@@ -2,12 +2,18 @@
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Sheba\Helpers\TimeFrame;
+use Sheba\Order\Code\Builder as CodeBuilder;
+use Sheba\PartnerOrder\PartnerOrderStatuses;
 use Sheba\PartnerOrder\StatusCalculator;
+use Sheba\Reports\PartnerOrder\UpdateJob as PartnerOrderReportUpdateJob;
 
 class PartnerOrder extends Model
 {
-    private $jobStatuses;
+    protected $guarded = ['id'];
+    protected $dates = ['closed_at', 'closed_and_paid_at', 'cancelled_at'];
+
     public $status;
     public $paymentStatus;
     public $totalServicePrice;
@@ -16,14 +22,18 @@ class PartnerOrder extends Model
     public $totalMaterialCost;
     public $totalPrice;
     public $gmv;
-    public $totalCost;
-    public $grossAmount;
     public $serviceCharge;
     public $totalCommission;
+    public $totalCost;
+    public $grossAmount;
     public $roundingCutOff;
     public $paid;
+    public $totalCollectedBySheba;
+    public $totalCollectedBySP;
     public $due;
+    public $overPaid;
     public $profit;
+    public $revenue;
     public $profitBeforeDiscount;
     public $margin;
     public $marginBeforeDiscount;
@@ -39,18 +49,39 @@ class PartnerOrder extends Model
     public $totalShebaDiscount;
     public $totalCostWithoutDiscount;
     public $deliveryCharge;
-    public $isCalculated;
-    public $revenue_percent = 0;
-    public $service_charge_percent = 0;
+    public $deliveryCost;
+    public $isCalculated = false;
+    public $revenuePercent = 0;
+    public $serviceChargePercent = 0;
 
-    protected $guarded = ['id'];
-    protected $dates = ['closed_at', 'closed_and_paid_at'];
+    /** @var CodeBuilder */
+    private $codeBuilder;
+    private $statusCalculator;
 
     public function __construct($attributes = [])
     {
         parent::__construct($attributes);
-        StatusCalculator::initialize();
-        $this->jobStatuses = StatusCalculator::$jobStatuses;
+        $this->codeBuilder = new CodeBuilder();
+        $this->statusCalculator = new StatusCalculator();
+    }
+
+    public static function boot()
+    {
+        parent::boot();
+
+        self::created(function(PartnerOrder $model){
+            $model->createOrUpdateReport();
+        });
+
+        self::updated(function(PartnerOrder $model){
+            $model->createOrUpdateReport();
+        });
+    }
+
+    public function createOrUpdateReport()
+    {
+        $this->order->createOrUpdateReport();
+        dispatch(new PartnerOrderReportUpdateJob($this));
     }
 
     public function order()
@@ -91,13 +122,16 @@ class PartnerOrder extends Model
         $this->_calculateRoundingCutOff();
         $this->gmv = floatValFormat($this->jobPrices);
         $this->serviceCharge = floatValFormat($this->gmv - ($this->totalCostWithoutDiscount + $this->totalPartnerDiscount));
-        $this->service_charge_percent = floatValFormat($this->gmv > 0 ? ($this->serviceCharge * 100) / $this->gmv : 0);
+        $this->serviceChargePercent = floatValFormat($this->gmv > 0 ? ($this->serviceCharge * 100) / $this->gmv : 0);
         $this->grossAmount = floatValFormat($this->totalPrice - $this->discount - $this->roundingCutOff);
         $this->paid = $this->sheba_collection + $this->partner_collection;
         $this->due = floatValFormat($this->grossAmount - $this->paid);
+        $this->overPaid = $this->isOverPaid() ? floatValFormat($this->paid - $this->grossAmount) : 0;
         $this->profitBeforeDiscount = floatValFormat($this->jobPrices - $this->totalCost);
         $this->totalDiscountedCost = ($this->totalDiscountedCost < 0) ? 0 : $this->totalDiscountedCost;
         $this->profit = floatValFormat($this->grossAmount - $this->totalCost);
+        $this->revenue = floatValFormat($this->gmv - ($this->totalCostWithoutDiscount + $this->totalPartnerDiscount + $this->totalShebaDiscount));
+        $this->revenuePercent = floatValFormat($this->gmv > 0 ? $this->revenue * 100 / $this->gmv : 0);
         $this->margin = $this->totalPrice ? (floatValFormat($this->totalPrice - $this->totalCost) * 100) / $this->totalPrice : 0;
         $this->marginBeforeDiscount = $this->jobPrices ? (floatValFormat($this->jobPrices - $this->totalCost) * 100) / $this->jobPrices : 0;
         $this->marginAfterDiscount = $this->grossAmount ? (floatValFormat($this->grossAmount - $this->totalCost) * 100) / $this->grossAmount : 0;
@@ -106,6 +140,11 @@ class PartnerOrder extends Model
         $this->_setPaymentStatus()->_setFinanceDue();
         $this->isCalculated = true;
         return $this->_formatAllToTaka();
+    }
+
+    public function isOverPaid()
+    {
+        return $this->paid > $this->grossAmount;
     }
 
     public function getTotalShebaCollectionAttribute()
@@ -147,13 +186,16 @@ class PartnerOrder extends Model
         return $this;
     }
 
+
+
     private function _calculateThisJobs($price_only = false)
     {
         //$this->_initializeStatusCounter();
         $this->_initializeTotalsToZero();
         foreach ($this->jobs as $job) {
+            /** @var Job $job */
             $job = $job->calculate($price_only);
-            if ($job->status != $this->jobStatuses['Cancelled']) {
+            if (!$job->isCancelled()) {
                 $this->_updateTotalPriceAndCost($job);
             }
             //$this->jobStatusCounter[$job->status]++;
@@ -164,9 +206,9 @@ class PartnerOrder extends Model
     }
 
     /**
-     * @param $job
+     * @param Job $job
      */
-    private function _updateTotalPriceAndCost($job)
+    private function _updateTotalPriceAndCost(Job $job)
     {
         $this->totalServicePrice += $job->servicePrice;
         $this->totalServiceCost += $job->serviceCost;
@@ -182,6 +224,7 @@ class PartnerOrder extends Model
         $this->totalPartnerDiscount += $job->discountContributionPartner;
         $this->totalShebaDiscount += $job->discountContributionSheba;
         $this->deliveryCharge += $job->delivery_charge;
+        $this->deliveryCost += $job->deliveryCost;
     }
 
     private function _calculateRoundingCutOff()
@@ -196,6 +239,7 @@ class PartnerOrder extends Model
 
     private function _formatAllToTaka()
     {
+        $this->totalServicePrice = formatTaka($this->totalServicePrice);
         $this->totalServiceCost = formatTaka($this->totalServiceCost);
         $this->totalMaterialPrice = formatTaka($this->totalMaterialPrice);
         $this->totalMaterialCost = formatTaka($this->totalMaterialCost);
@@ -206,6 +250,7 @@ class PartnerOrder extends Model
         $this->paid = formatTaka($this->paid);
         $this->due = formatTaka($this->due);
         $this->profit = formatTaka($this->profit);
+        $this->revenue = formatTaka($this->revenue);
         $this->profitBeforeDiscount = formatTaka($this->profitBeforeDiscount);
         $this->margin = formatTaka($this->margin);
         $this->marginBeforeDiscount = formatTaka($this->marginBeforeDiscount);
@@ -218,7 +263,11 @@ class PartnerOrder extends Model
         $this->totalPartnerDiscount = formatTaka($this->totalPartnerDiscount);
         $this->totalShebaDiscount = formatTaka($this->totalShebaDiscount);
         $this->totalCostWithoutDiscount = formatTaka($this->totalCostWithoutDiscount);
+        $this->serviceCharge = formatTaka($this->serviceCharge);
         $this->deliveryCharge = formatTaka($this->deliveryCharge);
+        $this->deliveryCost = formatTaka($this->deliveryCost);
+        $this->revenuePercent = formatTaka($this->revenuePercent);
+        $this->serviceChargePercent = formatTaka($this->serviceChargePercent);
         return $this;
     }
 
@@ -308,6 +357,11 @@ class PartnerOrder extends Model
         return $this->hasMany(PartnerOrderStatusLog::class);
     }
 
+    public function statusChangeLogs()
+    {
+        return $this->hasMany(PartnerOrderStatusLog::class);
+    }
+
     public function getVersion()
     {
         return $this->id > (double)env('LAST_PARTNER_ORDER_ID_V1') ? 'v2' : 'v1';
@@ -316,5 +370,64 @@ class PartnerOrder extends Model
     public function getIsV2Attribute()
     {
         return $this->id > (double)env('LAST_PARTNER_ORDER_ID_V1');
+    }
+
+    public function isCancelled()
+    {
+        return $this->getStatus() == PartnerOrderStatuses::CANCELLED;
+    }
+
+    public function lifetime()
+    {
+        if ($this->cancelled_at) {
+            $closed_date = $this->cancelled_at;
+        } elseif ($this->closed_at) {
+            $closed_date = $this->closed_at;
+        } else {
+            $closed_date = Carbon::now();
+        }
+
+        return $this->created_at->diffInHours($closed_date);
+    }
+
+
+    public function getAllCm()
+    {
+        $cm = collect([]);
+        $this->jobs->each(function ($job) use ($cm) {
+            $cm->push($job->crm);
+        });
+        return $cm;
+    }
+
+    /**
+     * @return Collection
+     */
+    public function getAllCmNames()
+    {
+        return $this->getAllCm()->map(function ($cm) {
+            return $cm ? $cm->name : "N/A";
+        });
+    }
+
+    /**
+     * @return Job
+     */
+    public function getActiveJob()
+    {
+        return $this->jobs()->where('status', '<>', constants('JOB_STATUSES')['Cancelled'])->first();
+    }
+
+    public function lastJob()
+    {
+        if ($this->isCancelled()) return $this->jobs->last();
+        return $this->jobs->filter(function (Job $job) {
+            return !$job->isCancelled();
+        })->first();
+    }
+
+    public function getActiveJobAttribute()
+    {
+        return $this->jobs->first();
     }
 }

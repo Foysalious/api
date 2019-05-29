@@ -6,7 +6,6 @@ class Customer extends MovieTicketCommission
 {
     public function disburse()
     {
-       $this->storeAgentsCommission();
     }
 
     public function refund()

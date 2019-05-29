@@ -24,7 +24,7 @@ class Affiliate extends TopUpCommission
     {
         $this->agent->ambassador->creditWallet($this->topUpOrder->ambassador_commission);
         $log = "{$this->agent->profile->name} gifted {$this->topUpOrder->ambassador_commission} Tk. for {$this->topUpOrder->amount} Tk. topup";;
-        $this->agent->ambassador->walletTransaction(['amount' => $this->topUpOrder->ambassador_commission, 'type' => 'Credit', 'log' => $log]);
+        $this->agent->ambassador->walletTransaction(['amount' => $this->topUpOrder->ambassador_commission, 'type' => 'Credit', 'log' => $log, 'is_gifted' => 1]);
     }
 
     private function deductFromAmbassador($amount, $log)

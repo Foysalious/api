@@ -1,9 +1,10 @@
 <?php namespace App\Models;
 
+use App\Models\Transport\TransportTicketOrder;
+use App\Sheba\Payment\Rechargable;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Helpers\TimeFrame;
-use Sheba\Location\Distance\TransactionMethod;
 use Sheba\ModificationFields;
 use Sheba\MovieTicket\MovieAgent;
 use Sheba\MovieTicket\MovieTicketTrait;
@@ -12,8 +13,12 @@ use Sheba\Payment\Wallet;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
+use Sheba\Transport\Bus\BusTicketCommission;
+use Sheba\Transport\TransportAgent;
+use Sheba\Transport\TransportTicketTransaction;
+use Sheba\Voucher\Contracts\CanApplyVoucher;
 
-class Affiliate extends Model implements TopUpAgent, MovieAgent
+class Affiliate extends Model implements TopUpAgent, MovieAgent, TransportAgent, CanApplyVoucher, Rechargable
 {
     use TopUpTrait;
     use MovieTicketTrait;
@@ -47,12 +52,12 @@ class Affiliate extends Model implements TopUpAgent, MovieAgent
 
     public function onboardedPartners()
     {
-        return $this->hasMany(Partner::class,'affiliate_id');
+        return $this->hasMany(Partner::class, 'affiliate_id');
     }
 
     public function moderatedPartners()
     {
-        return $this->hasMany(Partner::class,'moderator_id');
+        return $this->hasMany(Partner::class, 'moderator_id');
     }
 
     public function suspensions()
@@ -106,20 +111,20 @@ class Affiliate extends Model implements TopUpAgent, MovieAgent
     public function scopeAgentsWithFilter($query, $request, $tableName)
     {
         $affiliate = $request->affiliate;
-        $rangeQuery = 'affiliate_transactions.is_gifted = 1 and affiliate_transactions.created_at > aff2.under_ambassador_since';
+        $rangeQuery = 'affiliate_transactions.is_gifted = 1     ';
         if (isset($request->range) && !empty($request->range)) {
             $range = getRangeFormat($request);
             $rangeQuery = $rangeQuery . ' and `affiliate_transactions`.`created_at` BETWEEN \'' . $range[0]->toDateTimeString() . '\' AND \'' . $range[1]->toDateTimeString() . '\'';
         }
-        return $query->select($tableName . '.affiliate_id as id', 'aff2.profile_id', 'aff2.ambassador_id', 'aff2.under_ambassador_since', 'profiles.name', 'profiles.pro_pic as picture', 'profiles.mobile', 'aff2.created_at')
+        return $query->select('affiliate_transactions' . '.affiliate_id as id', 'affiliates.profile_id', 'affiliates.ambassador_id', 'affiliates.under_ambassador_since', 'profiles.name', 'profiles.pro_pic as picture', 'profiles.mobile', 'affiliates.created_at')
             ->leftJoin('affiliate_transactions', 'affiliate_transactions.affiliate_id', '=', 'affiliates.id')
-            ->leftJoin($tableName, 'affiliate_transactions.affiliation_id', ' = ', $tableName . '.id')
-            ->leftJoin('affiliates as aff2', $tableName . '.affiliate_id', '=', 'aff2.id')
-            ->leftJoin('profiles', 'profiles.id', '=', 'aff2.profile_id')
+//            ->leftJoin($tableName, 'affiliate_transactions.affiliation_id', ' = ', $tableName . '.id')
+            ->leftJoin('affiliates', 'affiliate_transactions' . '.affiliate_id', '=', 'affiliates.id')
+            ->leftJoin('profiles', 'profiles.id', '=', 'affiliates.profile_id')
             ->selectRaw('sum(affiliate_transactions.amount) as total_gifted_amount, count(distinct(affiliate_transactions.id)) as total_gifted_number')
             ->where('affiliates.id', $affiliate->id)
             ->whereRaw($rangeQuery)
-            ->groupBy($tableName . '.affiliate_id');
+            ->groupBy('affiliate_transactions' . '.affiliate_id');
     }
 
     public function totalLead()
@@ -186,7 +191,7 @@ class Affiliate extends Model implements TopUpAgent, MovieAgent
 
     public function topups()
     {
-        return $this->hasMany(TopUpOrder::class, 'agent_id');
+        return $this->hasMany(TopUpOrder::class, 'agent_id')->where('agent_type', 'App\\Models\\Affiliate');
     }
 
     public function scopeTopUpTransactionBetween($query, $from, $to)
@@ -213,5 +218,54 @@ class Affiliate extends Model implements TopUpAgent, MovieAgent
     {
         $this->debitWallet($transaction->getAmount());
         $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
+    }
+
+    public function transportTicketOrders()
+    {
+        return $this->morphMany(TransportTicketOrder::class, 'agent');
+    }
+
+    /**
+     * @return BusTicketCommission|\Sheba\Transport\Bus\Commission\Affiliate
+     */
+    public function getBusTicketCommission()
+    {
+        return new \Sheba\Transport\Bus\Commission\Affiliate();
+    }
+
+    public function transportTicketTransaction(TransportTicketTransaction $transaction)
+    {
+        $this->creditWallet($transaction->getAmount());
+        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Credit', 'log' => $transaction->getLog()]);
+    }
+
+    public function shebaCredit()
+    {
+        return $this->wallet + $this->shebaBonusCredit();
+    }
+
+    public function shebaBonusCredit()
+    {
+        return (double)$this->bonuses()->where('status', 'valid')->sum('amount');
+    }
+
+    public function tags()
+    {
+        return $this->morphToMany(Tag::class, 'taggable');
+    }
+
+    public function getTagListAttribute()
+    {
+        return $this->tags->pluck('id')->toArray();
+    }
+
+    public function getTagNamesAttribute()
+    {
+        return $this->tags->pluck('name');
+    }
+
+    public function getIncome()
+    {
+        return $this->transactions()->where('type', 'Credit')->where('log', '<>', 'Credit Purchase')->sum('amount');
     }
 }

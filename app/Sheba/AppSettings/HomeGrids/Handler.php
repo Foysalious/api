@@ -108,7 +108,6 @@ class Handler
         return "Grid created successfully";
     }
 
-
     public function updateGrid($grid_id, $data)
     {
         $grid = Grid::where('id',$grid_id)->first();
@@ -130,7 +129,7 @@ class Handler
 
             }
         }
-        $grid->blocks()->detach();
+        if($data->data) $grid->blocks()->detach();
         foreach ($data->data as $key => $item) {
             $order = $key + 1;
             $new_data = [
@@ -148,7 +147,7 @@ class Handler
                     $grid->blocks()->attach($block->id, ["location_id"=>$location, "order" => $order]);
                 }
             } else {
-                $block = Block::insert($this->withBothModificationFields($new_data));
+                $block = Block::create($this->withBothModificationFields($new_data));
                 $locations = Location::where('city_id',$data->grid_city)->pluck('id')->toArray();
                 foreach ($locations as $location) {
                     $grid->blocks()->attach($block->id, ["location_id"=>$location, "order" => $order]);
@@ -157,5 +156,4 @@ class Handler
         }
         return "Grid updated successfully";
     }
-
 }

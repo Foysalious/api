@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Comment;
 use App\Models\User;
 use Sheba\Complains\ComplainStatusChanger;
+use Sheba\Complains\Statuses;
 use Sheba\Dal\Complain\Model as Complain;
 use Sheba\Dal\Accessor\Model as Accessor;
 use App\Models\Job;
@@ -356,7 +357,7 @@ class ComplainController extends Controller
                     'location' => $job_location,
                     'resource' => $resource_name,
                     'complain_category' => $complain->preset->complainCategory->name,
-                    'status' => $complain->status,
+                    'status' => $complain->status == Statuses::OBSERVATION ? Statuses::OPEN : $complain->status,
                     'created_at' => $complain->created_at->format('jS F, Y')
                 ]);
             }

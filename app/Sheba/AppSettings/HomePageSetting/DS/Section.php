@@ -12,6 +12,7 @@ class Section
     protected $height;
     /** @var  Carbon */
     protected $updatedAt;
+    protected $ratio;
     /** @var  array */
     protected $items = [];
 
@@ -66,6 +67,12 @@ class Section
         return $this;
     }
 
+    public function setRatio($ratio)
+    {
+        $this->ratio = $ratio;
+        return $this;
+    }
+
     /**
      * @param Item $item
      * @return Section
@@ -86,7 +93,8 @@ class Section
             'data' => $items ? $items : null,
             'updated_at' => $this->updatedAt ? $this->updatedAt->toDateTimeString() : null,
             'updated_at_timestamp' => $this->updatedAt ? $this->updatedAt->timestamp : null,
-            'height' => $this->height
+            'height' => $this->height,
+            'ratio' => $this->ratio,
         ];
     }
 
@@ -98,5 +106,13 @@ class Section
             $items[] = $item->toArray();
         }
         return $items;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isEmpty()
+    {
+        return empty($this->items);
     }
 }

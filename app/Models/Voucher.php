@@ -2,6 +2,7 @@
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Voucher\VoucherUsageCalculator;
 
 class Voucher extends Model
 {
@@ -9,19 +10,48 @@ class Voucher extends Model
     protected $dates = ['start_date', 'end_date'];
     protected $casts = ['is_amount_percentage' => 'integer', 'cap' => 'double', 'amount' => 'double'];
 
+    /** @var  VoucherUsageCalculator */
+    private $usageCalculator;
+
+    public function __construct($attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->usageCalculator = new VoucherUsageCalculator();
+    }
+
     public function orders()
     {
         return $this->hasMany(Order::class);
     }
 
-    public function usage($customer)
+    public function movieTicketOrders()
     {
-        return $this->orders->where('customer_id', $customer)->count();
+        return $this->hasMany(MovieTicketOrder::class);
+    }
+
+    public function usage(Profile $profile)
+    {
+        return $this->usageCalculator->setVoucher($this)->usage($profile);
     }
 
     public function usedCustomerCount()
     {
-        return $this->orders->groupBy('customer_id')->count();
+        return $this->usageCalculator->setVoucher($this)->usedCustomerCount();
+    }
+
+    public function hasNotReachedMaxCustomer()
+    {
+        return $this->usedCustomerCount() < $this->max_customer;
+    }
+
+    public function hasNotReachedMaxOrder(Profile $profile)
+    {
+        return $this->usage($profile) < $this->max_order;
+    }
+
+    public function hasReachedMaxOrder(Profile $profile)
+    {
+        return $this->usage($profile) >= $this->max_order;
     }
 
     public function promotions()
@@ -84,5 +114,20 @@ class Voucher extends Model
     public function scopeValid($query)
     {
         return $query->whereRaw('((NOW() BETWEEN start_date AND end_date) OR (NOW() >= start_date AND end_date IS NULL))');
+    }
+
+    public function tags()
+    {
+        return $this->morphToMany(Tag::class, 'taggable');
+    }
+
+    public function getTagListAttribute()
+    {
+        return $this->tags->pluck('id')->toArray();
+    }
+
+    public function getTagNamesAttribute()
+    {
+        return $this->tags->pluck('name');
     }
 }

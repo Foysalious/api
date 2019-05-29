@@ -1,6 +1,7 @@
 <?php namespace Sheba\TopUp\Jobs;
 
 use Excel;
+use Exception;
 use Maatwebsite\Excel\Readers\LaravelExcelReader;
 
 use Sheba\FileManagers\CdnFileManager;
@@ -34,7 +35,7 @@ class TopUpExcelJob extends TopUpJob
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     protected function takeUnsuccessfulAction()
     {
@@ -43,7 +44,7 @@ class TopUpExcelJob extends TopUpJob
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     protected function takeSuccessfulAction()
     {

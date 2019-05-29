@@ -39,5 +39,6 @@ class RawDataGetter extends Getter
                 $complain->job->partnerOrder->order->customer->setFirstOrder($customer_first_orders[$complain->job->partnerOrder->order->customer_id]);
             return $complain;
         });
+
     }
 }

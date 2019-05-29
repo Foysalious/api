@@ -3,6 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\FacebookAccountKit;
 
+use App\Models\BusinessJoinRequest;
 use App\Models\Partner;
 use App\Models\PartnerAffiliation;
 use App\Models\PartnerBasicInformation;
@@ -26,7 +27,9 @@ class PartnerRegistrationController extends Controller
 {
     private $fbKit;
     private $profileRepository;
-    private $sms; /** @var Sms */
+    private $sms;
+
+    /** @var Sms */
 
     public function __construct()
     {
@@ -49,24 +52,26 @@ class PartnerRegistrationController extends Controller
             $code_data = $this->fbKit->authenticateKit($request->code);
             if (!$code_data) return api_response($request, null, 401, ['message' => 'AccountKit authorization failed']);
             $mobile = formatMobile($code_data['mobile']);
+
             if ($profile = $this->profileRepository->ifExist($mobile, 'mobile')) {
                 $resource = $profile->resource;
-                if (!$resource) $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
+                if (!$resource) {
+                    $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
+                }
             } else {
                 $profile = $this->profileRepository->registerMobile(array_merge($request->all(), ['mobile' => $mobile]));
                 $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
             }
-
             if ($resource->partnerResources->count() > 0) return api_response($request, null, 403, ['message' => 'You already have a company!']);
 
             $data = $this->makePartnerCreateData($request);
             if ($partner = $this->createPartner($resource, $data)) {
                 $info = $this->profileRepository->getProfileInfo('resource', Profile::find($profile->id));
-                /**
-                 * LOGIC CHANGE - PARTNER REWARD MOVE TO WAITING STATUS
-                 *
-                 * app('\Sheba\PartnerAffiliation\RewardHandler')->setPartner($partner)->onBoarded();
-                 */
+                $business_join_reqs = BusinessJoinRequest::where('mobile', $mobile)->first();
+                if ($business_join_reqs) {
+                    $partner->businesses()->sync(['business_id' => $business_join_reqs->business_id]);
+                    $business_join_reqs->update(['status' => 'successful']);
+                }
                 return api_response($request, null, 200, ['info' => $info]);
             } else {
                 return api_response($request, null, 500);
@@ -96,7 +101,7 @@ class PartnerRegistrationController extends Controller
             ]);
 
             $resource = Resource::find($request->resource_id);
-            if(!($resource && $resource->remember_token == $request->remember_token)) {
+            if (!($resource && $resource->remember_token == $request->remember_token)) {
                 return api_response($request, null, 403, ['message' => "Unauthorized."]);
             }
 
@@ -113,11 +118,6 @@ class PartnerRegistrationController extends Controller
             $data = $this->makePartnerCreateData($request);
             if ($partner = $this->createPartner($resource, $data)) {
                 $info = $this->profileRepository->getProfileInfo('resource', Profile::find($profile->id));
-                /**
-                 * LOGIC CHANGE - PARTNER REWARD MOVE TO WAITING STATUS
-                 *
-                 * app('\Sheba\PartnerAffiliation\RewardHandler')->setPartner($partner)->onBoarded();
-                 */
                 return api_response($request, null, 200, ['info' => $info]);
             } else {
                 return api_response($request, null, 500);
@@ -147,10 +147,10 @@ class PartnerRegistrationController extends Controller
             $data['billing_type'] = $request->billing_type;
             $data['package_id'] = $request->package_id;
         }
-        if($request->has('affiliate_id')) {
+        if ($request->has('affiliate_id')) {
             $data['affiliate_id'] = $request->affiliate_id;
         }
-        if($request->has('address')) {
+        if ($request->has('address')) {
             $data['address'] = $request->address;
         }
         return $data;
@@ -197,7 +197,7 @@ class PartnerRegistrationController extends Controller
                 $partner = $partner->fill(array_merge($data, $by));
                 $partner->save();
                 $partner->resources()->attach($resource->id, array_merge($by, ['resource_type' => 'Admin']));
-                if(isset($data['package_id']) && $data['package_id'] == env('LITE_PACKAGE_ID')) {
+                if (isset($data['package_id']) && $data['package_id'] == env('LITE_PACKAGE_ID')) {
                     $partner->resources()->attach($resource->id, array_merge($by, ['resource_type' => 'Handyman']));
                     (new PartnerRepository($partner))->saveDefaultWorkingHours($by);
                 }
@@ -245,7 +245,10 @@ class PartnerRegistrationController extends Controller
 
             $mobile = formatMobile($request->mobile);
             if ($profile = $this->profileRepository->ifExist($mobile, 'mobile')) {
-                if($profile->name === "" || $profile->name === null) { $profile->name = $request->name;  $profile->save(); }
+                if ($profile->name === "" || $profile->name === null) {
+                    $profile->name = $request->name;
+                    $profile->save();
+                }
                 $resource = $profile->resource;
                 if (!$resource) $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
             } else {
@@ -254,11 +257,11 @@ class PartnerRegistrationController extends Controller
             }
             $request['package_id'] = env('LITE_PACKAGE_ID');
             $request['billing_type'] = 'monthly';
-            $request['affiliate_id'] = (int) $affiliate;
+            $request['affiliate_id'] = (int)$affiliate;
 
-            if(count($resource->partners)>0) {
-                $partnerWithAffiliate = (($resource->partners[0]->affiliate_id === (int) $affiliate) && ($resource->partners[0]->status === 'Onboarded'));
-                if(!$partnerWithAffiliate || $this->liteFormCompleted($profile,$resource)) return api_response($request, null, 403, ['message' => 'This company already referred!']);
+            if (count($resource->partners) > 0) {
+                $partnerWithAffiliate = (($resource->partners[0]->affiliate_id === (int)$affiliate) && ($resource->partners[0]->status === 'Onboarded'));
+                if (!$partnerWithAffiliate || $this->liteFormCompleted($profile, $resource)) return api_response($request, null, 403, ['message' => 'This company already referred!']);
                 else {
                     $data = $this->makePartnerCreateData($request);
                     $data['moderation_status'] = 'pending';
@@ -268,7 +271,6 @@ class PartnerRegistrationController extends Controller
                     return api_response($request, null, 200, ['info' => $info]);
                 }
             }
-
 
             $data = $this->makePartnerCreateData($request);
             $data['moderation_status'] = 'pending';

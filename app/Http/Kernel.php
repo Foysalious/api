@@ -2,6 +2,7 @@
 
 namespace App\Http;
 
+use App\Http\Middleware\B2B\OrderMiddleware;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
 class Kernel extends HttpKernel {
@@ -61,11 +62,14 @@ class Kernel extends HttpKernel {
         'member.auth' => \App\Http\Middleware\MemberAuthMiddleware::class,
         'resource.auth' => \App\Http\Middleware\ResourceAuthMiddleware::class,
         'manager.auth' => \App\Http\Middleware\ManagerAuthMiddleware::class,
+        'business.auth' => \App\Http\Middleware\BusinessManagerAuthMiddleware::class,
         'partner_job.auth' => \App\Http\Middleware\PartnerJobAuthMiddleware::class,
         'partner_order.auth' => \App\Http\Middleware\PartnerOrderAuthMiddleware::class,
         'partner_resource.auth' => \App\Http\Middleware\PartnerResourceAuthMiddleware::class,
         'resource_job.auth' => \App\Http\Middleware\ResourceJobAuthMiddleware::class,
         'admin.auth' => \App\Http\Middleware\AdminAuthMiddleware::class,
         'vendor.auth' => \App\Http\Middleware\VendorMiddleware::class,
+
+        'business_order.auth' => OrderMiddleware::class,
     ];
 }

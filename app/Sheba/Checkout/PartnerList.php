@@ -12,13 +12,16 @@ use App\Models\Partner;
 use App\Models\PartnerServiceDiscount;
 use App\Models\PartnerServiceSurcharge;
 use App\Models\Service;
+use Sheba\Dal\Discount\DiscountRepository;
 use App\Repositories\PartnerServiceRepository;
 use App\Sheba\Partner\PartnerAvailable;
 use Carbon\Carbon;
 use DB;
 use Dingo\Api\Routing\Helpers;
 use Sheba\Checkout\DeliveryCharge;
+use Sheba\Checkout\Partners\PartnerUnavailabilityReasons;
 use Sheba\Checkout\Requests\PartnerListRequest;
+use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
 use Sheba\Location\Distance\DistanceStrategy;
@@ -51,13 +54,12 @@ class PartnerList
     protected $selectedServiceIds;
     protected $notFoundValues;
     protected $isNotLite;
-
-    /** @header * */
-    protected $portalName;
     protected $badgeResolver;
     /** @var PartnerListRequest */
     protected $partnerListRequest;
     protected $deliveryCharge;
+    /** @var DiscountRepository */
+    protected $discountRepo;
 
     use ModificationFields;
 
@@ -75,6 +77,7 @@ class PartnerList
             'options' => [],
             'handyman' => []
         ];
+        $this->discountRepo = app(DiscountRepository::class);
     }
 
     public function setPartnerListRequest(PartnerListRequest $partner_list_request)
@@ -99,7 +102,7 @@ class PartnerList
         if ($this->isNotLite) {
             $this->filterByCreditLimit();
         }
-        if (!in_array($this->portalName, ['partner-portal', 'manager-app'])) {
+        if (!in_array($this->partnerListRequest->portalName, ['partner-portal', 'manager-app'])) {
             $this->filterByDailyOrderLimit();
         }
         $this->partners->load(['services' => function ($q) {
@@ -263,8 +266,24 @@ class PartnerList
     {
         $this->partners->load(['workingHours', 'leaves']);
         $this->partners->each(function ($partner) {
-            $partner['is_available'] = $this->isWithinPreparationTime($partner) && (new PartnerAvailable($partner))->available($this->partnerListRequest->scheduleDate, $this->partnerListRequest->scheduleTime, $this->partnerListRequest->selectedCategory) ? 1 : 0;
+            if(!$this->isWithinPreparationTime($partner)) {
+                $partner['is_available'] = 0;
+                $partner['unavailability_reason'] = PartnerUnavailabilityReasons::PREPARATION_TIME;
+                return;
+            }
+
+            $partner_available = new PartnerAvailable($partner);
+            $partner_available->check($this->partnerListRequest->scheduleDate, $this->partnerListRequest->scheduleTime, $this->partnerListRequest->selectedCategory);
+
+            if(!$partner_available->getAvailability()) {
+                $partner['is_available'] = 0;
+                $partner['unavailability_reason'] = $partner_available->getUnavailabilityReason();
+                return;
+            }
+
+            $partner['is_available'] = 1;
         });
+
         if ($this->getAvailablePartners()->count() > 1) $this->rejectShebaHelpDesk();
     }
 
@@ -327,10 +346,10 @@ class PartnerList
             $service['cap'] = $discount->cap;
             $service['amount'] = $discount->amount;
             $service['is_percentage'] = $discount->isDiscountPercentage;
-            $service['discounted_price'] = $discount->discounted_price;
-            $service['original_price'] = $discount->original_price;
+            $service['discounted_price'] = floor($discount->discounted_price);
+            $service['original_price'] = floor($discount->original_price);
             $service['min_price'] = $discount->min_price;
-            $service['unit_price'] = $discount->unit_price;
+            $service['unit_price'] = floor($discount->unit_price);
             $service['sheba_contribution'] = $discount->sheba_contribution;
             $service['partner_contribution'] = $discount->partner_contribution;
             $service['is_min_price_applied'] = $discount->original_price == $discount->min_price ? 1 : 0;
@@ -350,11 +369,18 @@ class PartnerList
         array_add($partner, 'breakdown', $services);
         $total_service_price['discount'] = (int)$total_service_price['discount'];
 
-        $delivery_charge = $this->deliveryCharge->setPartner($partner)->setCategoryPartnerPivot($category_pivot)->getDeliveryCharge();
+        $original_delivery_charge = $this->deliveryCharge->setCategoryPartnerPivot($category_pivot)->get();
+        $discount = $this->discountRepo->findValidForAgainst(DiscountTypes::DELIVERY, $this->partnerListRequest->selectedCategory, $partner);
+        $discount_amount = 0;
+        if($discount)
+            $discount_amount =  $discount->getApplicableAmount($original_delivery_charge);
+        $discounted_delivery_charge = $original_delivery_charge - $discount_amount;
+        $delivery_charge = $discounted_delivery_charge;
 
         $total_service_price['discounted_price'] += $delivery_charge;
         $total_service_price['original_price'] += $delivery_charge;
-        $total_service_price['delivery_charge'] = $delivery_charge;
+        $total_service_price['delivery_charge'] = $original_delivery_charge;
+        $total_service_price['discounted_delivery_charge'] = $discounted_delivery_charge;
         $total_service_price['has_home_delivery'] = (int)$category_pivot->is_home_delivery_applied ? 1 : 0;
         $total_service_price['has_premise_available'] = (int)$category_pivot->is_partner_premise_applied ? 1 : 0;
         return $total_service_price;

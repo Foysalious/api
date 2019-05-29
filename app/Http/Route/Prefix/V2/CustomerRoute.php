@@ -6,7 +6,7 @@ class CustomerRoute
     {
         $api->group(['prefix' => 'customers'], function ($api) {
             $api->group(['prefix' => '{customer}', 'middleware' => ['customer.auth']], function ($api) {
-                $api->get('partners-nearby','PartnerLocationController@getNearbyPartners');
+                $api->get('partners-nearby', 'PartnerLocationController@getNearbyPartners');
                 $api->get('checkout-info', 'CustomerController@getDeliveryInfo');
                 $api->post('purchase-gift-card', 'GiftCardController@purchaseGiftCard');
                 $api->group(['prefix' => 'settings'], function ($api) {
@@ -14,15 +14,11 @@ class CustomerRoute
                     $api->get('review', 'Settings\SettingsController@getCustomerReviewSettings');
                     $api->get('payment', 'Settings\SettingsController@addPayment');
                 });
-
-
                 $api->group(['prefix' => 'info-call'], function ($api) {
                     $api->get('/', 'InfoCallController@index');
                     $api->get('/details/{id}', 'InfoCallController@getDetails');
                     $api->post('/', 'InfoCallController@store');
                 });
-
-
                 $api->put('notifications', 'CustomerNotificationController@update');
                 $api->post('top-up', 'TopUpController@topUp');
                 $api->group(['prefix' => 'bkash'], function ($api) {
@@ -40,7 +36,6 @@ class CustomerRoute
                     $api->post('/', 'PromotionController@addPromo');
                     $api->get('applicable', 'PromotionController@getApplicablePromotions');
                 });
-
                 $api->group(['prefix' => 'delivery-addresses'], function ($api) {
                     $api->get('/', 'CustomerDeliveryAddressController@index');
                     $api->get('filter', 'CustomerDeliveryAddressController@filterAddress');
@@ -73,9 +68,14 @@ class CustomerRoute
                     $api->get('theatre-seat-status', 'MovieTicketController@getTheatreSeatStatus');
                     $api->get('history', 'MovieTicketController@history');
                     $api->get('history/{history_id}', 'MovieTicketController@historyDetails');
+                    $api->get('promotions', 'MovieTicketController@getPromotions');
+                    $api->post('promotions/add', 'MovieTicketController@applyPromo');
                     $api->post('book-tickets', 'MovieTicketController@bookTickets');
-                    $api->post('update-status', 'MovieTicketController@updateTicketStatus');
+                    $api->post('update-status', 'CustomerMovieTicketController@updateTicketStatus');
                 });
+
+                (new TransportRoute())->set($api);
+
                 $api->group(['prefix' => 'jobs'], function ($api) {
                     $api->get('/', 'JobController@index');
                     $api->get('cancel-reason', 'JobController@cancelReason');
@@ -86,6 +86,7 @@ class CustomerRoute
                         $api->get('logs', 'JobController@getLogs');
                         $api->get('logs/order', 'JobController@getOrderLogs');
                         $api->post('reviews', 'ReviewController@store');
+                        $api->post('promotions', 'Customer\CustomerJobController@addPromotion');
                         $api->group(['prefix' => 'complains'], function ($api) {
                             $api->get('/', 'ComplainController@index');
                             $api->post('/', 'ComplainController@storeForCustomer');
@@ -104,7 +105,6 @@ class CustomerRoute
                 $api->group(['prefix' => 'transactions'], function ($api) {
                     $api->get('/', 'Customer\CustomerTransactionController@index');
                 });
-
             });
         });
     }

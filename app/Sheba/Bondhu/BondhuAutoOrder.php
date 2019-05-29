@@ -8,11 +8,16 @@ use App\Models\CustomerDeliveryAddress;
 use App\Models\Location;
 use App\Models\Profile;
 use App\Models\Service;
+use App\Models\User;
 use App\Sheba\Checkout\Checkout;
+use Sheba\ModificationFields;
+use Sheba\Portals\Portals;
 
 class BondhuAutoOrder
 {
-    private $service_category, $profile, $affiliation;
+    use ModificationFields;
+
+    private $service_category, $profile, $affiliation, $portal;
     public $order, $customer, $request, $affiliate;
 
     public function __construct(BondhuOrderRequest $request)
@@ -21,7 +26,12 @@ class BondhuAutoOrder
         if (!isset($this->request->affiliate->id)) {
             $this->request->affiliate = Affiliate::find($this->request->affiliate);
         }
+
         $this->affiliate = $this->request->affiliate;
+        $this->portal = $this->request->header('portal-name');
+
+        $modifier = $this->request->has('created_by') && $this->isAsOfflineBondhu() ? User::find($this->request->created_by) : $this->affiliate;
+        $this->setModifier($modifier);
     }
 
     public function place()
@@ -71,6 +81,11 @@ class BondhuAutoOrder
         return $this;
     }
 
+    public function isAsOfflineBondhu()
+    {
+        return $this->portal == Portals::ADMIN;
+    }
+
     public function generateOrder()
     {
         $this->setAddress();
@@ -91,8 +106,7 @@ class BondhuAutoOrder
             $customer_address->location_id = $this->request->location;
             $customer_address->geo_informations = json_encode(['lat' => $geo->lat, 'lng' => $geo->lng]);
             $customer_address->name = $this->profile->name;
-            $customer_address->created_by = $this->affiliate->id;
-            $customer_address->created_by_name = 'Affiliate - ' . $this->affiliate->profile->name;
+            $this->withCreateModificationField($customer_address);
             $customer_address->customer_id = $this->customer->id;
             $customer_address->save();
             $this->request->merge(['address_id' => $customer_address->id]);
@@ -101,11 +115,12 @@ class BondhuAutoOrder
 
     private function setExtras()
     {
-        $this->request->merge([
-            'affiliation_id' => $this->affiliation->id,
-            'created_by' => $this->affiliate->id,
-            'created_by_name' => 'Affiliate - ' . $this->affiliate->profile->name
-        ]);
+        $extra = ['affiliation_id' => $this->affiliation->id];
+        if(!$this->isAsOfflineBondhu()) {
+            $extra['created_by'] = $this->affiliate->id;
+            $extra['created_by_name'] = 'Affiliate - ' . $this->affiliate->profile->name;
+        }
+        $this->request->merge($extra);
     }
 
     private function createProfile()

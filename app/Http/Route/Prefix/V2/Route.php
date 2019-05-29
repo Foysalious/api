@@ -84,6 +84,29 @@ class Route
                     $api->get('', 'CategoryGroupController@show');
                 });
             });
+
+            $api->group(['prefix' => 'service-groups'], function ($api) {
+                $api->get('/', 'ServiceGroupController@index');
+                $api->group(['prefix' => '{id}'], function ($api) {
+                    $api->get('', 'ServiceGroupController@show');
+                });
+            });
+
+            $api->group(['prefix' => 'offer-groups'], function ($api) {
+                $api->get('/', 'OfferGroupController@index');
+                $api->group(['prefix' => '{id}'], function ($api) {
+                    $api->get('', 'OfferGroupController@show');
+                });
+            });
+
+            $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {
+                $api->get('/{member}/info', 'B2b\MemberController@getMemberInfo');
+                $api->get('/{member}/get-business-info', 'B2b\MemberController@getBusinessInfo');
+                $api->post('/{member}/update-business-info', 'B2b\MemberController@updateBusinessInfo');
+            });
+
+            (new BusinessRoute())->set($api);
+
             $api->group(['prefix' => 'categories'], function ($api) {
                 $api->group(['prefix' => '{id}'], function ($api) {
                     $api->get('', 'CategoryController@show');
@@ -110,6 +133,7 @@ class Route
             (new CustomerRoute())->set($api);
             (new AffiliateRoute())->set($api);
             (new PartnerRoute())->set($api);
+
             $api->group(['prefix' => 'resources/{resource}', 'middleware' => ['resource.auth']], function ($api) {
                 $api->group(['prefix' => 'jobs'], function ($api) {
                     $api->group(['prefix' => '{job}', 'middleware' => ['resource_job.auth']], function ($api) {
@@ -130,7 +154,14 @@ class Route
              * PROFILE EXISTENCE CHECK. PUBLIC API
              */
             $api->get('get-profile-info', 'ProfileController@getProfile');
+            $api->post('profile/{id}/update-profile-document', 'ProfileController@updateProfileDocument')->middleware('profile.auth');
             $api->post('admin/payout', 'Bkash\\BkashPayoutController@pay');
+            $api->post('admin/bkash-balance', 'Bkash\\BkashPayoutController@queryBalance');
+            $api->post('forget-password', 'ProfileController@forgetPassword');
+
+            $api->group(['prefix' => 'proxy'], function ($api) {
+                $api->post('/top-up', 'ProxyController@pretupsTopUp');
+            });
         });
         return $api;
     }

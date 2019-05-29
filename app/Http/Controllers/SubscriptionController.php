@@ -11,7 +11,7 @@ use Sheba\Subscription\ApproximatePriceCalculator;
 
 class SubscriptionController extends Controller
 {
-    public function index(Request $request, ApproximatePriceCalculator $approximatePriceCalculator)
+    public function index(Request $request, ApproximatePriceCalculator $approximate_price_calculator)
     {
         try {
             ini_set('memory_limit', '2048M');
@@ -25,28 +25,24 @@ class SubscriptionController extends Controller
             }
 
             $categories = Category::whereNotNull('parent_id')->whereHas('services', function ($q) {
-                $q->whereHas('serviceSubscription', function ($query) {
-                    return $query->whereNotNull('id');
-                });
+                $q->whereHas('activeSubscription');
             })->with(['services' => function ($q) use ($location) {
-                $q->whereHas('serviceSubscription', function ($query) {
-                    return $query->whereNotNull('id');
-                });
+                $q->whereHas('activeSubscription');
                 $q->whereHas('locations', function ($q) use ($location) {
                     $q->where('locations.id', $location);
                 });
-                $q->with('serviceSubscription');
+                $q->with('activeSubscription');
             }])->whereHas('locations', function ($q) use ($location) {
                 $q->where('locations.id', $location);
             })->get();
 
             $parents = collect();
             foreach ($categories as $category) {
-                $subscriptions =  $category->services->map(function($service) use ($approximatePriceCalculator){
+                $subscriptions = $category->services->map(function ($service) use ($approximate_price_calculator) {
                     $service = removeRelationsAndFields($service);
-                    $subscription = $service->serviceSubscription;
+                    $subscription = $service->activeSubscription;
                     $subscription['offers'] = $subscription->getDiscountOffers();
-                    $price_range = $approximatePriceCalculator->setSubscription($subscription)->getPriceRange();
+                    $price_range = $approximate_price_calculator->setSubscription($subscription)->getPriceRange();
                     $subscription = removeRelationsAndFields($subscription);
                     $subscription['max_price'] = $price_range['max_price'] > 0 ? $price_range['max_price'] : 0;
                     $subscription['min_price'] = $price_range['min_price'] > 0 ? $price_range['min_price'] : 0;
@@ -55,28 +51,27 @@ class SubscriptionController extends Controller
                     $subscription['banner'] = $service['banner'];
                     return $subscription;
                 });
-                $parent =[
-                    'id'=>$category->parent->id,
-                    'name'=> $category->parent->name,
+                $parent = [
+                    'id' => $category->parent->id,
+                    'name' => $category->parent->name,
                     'bn_name' => $category->parent->bn_name,
                     'slug' => $category->parent->slug,
                     'short_description' => $category->parent->slug,
                     'subscriptions' => $subscriptions
                 ];
-                if(count($parent['subscriptions']) > 0) {
-                    $existingParent = $parents->filter(function($parent) use ($category) {
-                        if($parent['id'] === $category->parent->id) return $parent;
+                if (count($parent['subscriptions']) > 0) {
+                    $existingParent = $parents->filter(function ($parent) use ($category) {
+                        if ($parent['id'] === $category->parent->id) return $parent;
                     });
-                    if(count($existingParent)>0) {
-                        foreach($subscriptions as $subscription) {
+                    if (count($existingParent) > 0) {
+                        foreach ($subscriptions as $subscription) {
                             $existingParent->first()['subscriptions']->push($subscription);
                         }
-                    }
-                    else
+                    } else
                         $parents->push($parent);
                 }
             }
-            if(count($parents)>0)
+            if (count($parents) > 0)
                 return api_response($request, $parents, 200, ['category' => $parents]);
             else
                 return api_response($request, null, 404);
@@ -88,7 +83,7 @@ class SubscriptionController extends Controller
 
     public function all(Request $request, ApproximatePriceCalculator $approximatePriceCalculator)
     {
-        try{
+        try {
             if ($request->has('location')) {
                 $location = $request->location != '' ? $request->location : 4;
             } else {
@@ -98,7 +93,7 @@ class SubscriptionController extends Controller
                 } else $location = 4;
             }
 
-            $subscriptions = ServiceSubscription::all();
+            $subscriptions = ServiceSubscription::active()->get();
             foreach ($subscriptions as $index => $subscription) {
                 if (!in_array($location, $subscription->service->locations->pluck('id')->toArray())) {
                     array_forget($subscriptions, $index);
@@ -126,7 +121,7 @@ class SubscriptionController extends Controller
         }
     }
 
-    public function show($serviceSubscription,Request $request, ApproximatePriceCalculator $approximatePriceCalculator)
+    public function show($serviceSubscription, Request $request, ApproximatePriceCalculator $approximatePriceCalculator)
     {
         try {
             if ($request->has('location')) {

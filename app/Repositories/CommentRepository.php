@@ -1,10 +1,9 @@
-<?php
-
-namespace App\Repositories;
+<?php namespace App\Repositories;
 
 use App\Models\Comment;
 use Illuminate\Database\QueryException;
 use Sheba\Dal\Accessor\Model as Accessor;
+use DB;
 
 class CommentRepository
 {
@@ -24,13 +23,15 @@ class CommentRepository
     {
         $comment = new Comment(['comment' => $comment]);
         try {
-            $comment->commentable_type = $this->morphable;
-            $comment->commentable_id = $this->morphable_id;
-            $comment->commentator_type = $this->model_name . class_basename($this->created_by);
-            $comment->commentator_id = $comment->created_by = $this->created_by->id;
-            $comment->created_by_name = 'Resource -' . $this->created_by->profile->name;
-            $comment->save();
-            $comment->accessors()->attach((Accessor::where('model_name', $comment->commentator_type))->first()->id);
+            DB::transaction(function () use ($comment) {
+                $comment->commentable_type = $this->morphable;
+                $comment->commentable_id = $this->morphable_id;
+                $comment->commentator_type = $this->model_name . class_basename($this->created_by);
+                $comment->commentator_id = $comment->created_by = $this->created_by->id;
+                $comment->created_by_name = class_basename($this->created_by) . ' -' . $this->created_by->profile->name;
+                $comment->save();
+                $comment->accessors()->attach((Accessor::where('model_name', $comment->commentator_type))->first()->id);
+            });
         } catch (QueryException $e) {
             app('sentry')->captureException($e);
             return false;

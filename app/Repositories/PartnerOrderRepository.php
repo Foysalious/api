@@ -3,9 +3,8 @@
 namespace App\Repositories;
 
 use App\Models\PartnerOrder;
-use App\Models\Service;
-use App\Sheba\JobTime;
 use Carbon\Carbon;
+use Sheba\Jobs\JobStatuses;
 
 class PartnerOrderRepository
 {
@@ -99,7 +98,7 @@ class PartnerOrderRepository
     public function getNewOrdersWithJobs($request)
     {
         list($offset, $limit) = calculatePagination($request);
-        $jobs = (new PartnerRepository($request->partner))->jobs(array(constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']), $offset, $limit);
+        $jobs = (new PartnerRepository($request->partner))->jobs(JobStatuses::getAcceptable(), $offset, $limit);
 
         $all_partner_orders = collect();
         $all_jobs = collect();
@@ -166,7 +165,8 @@ class PartnerOrderRepository
                     'job_id' => $jobs[0]->id,
                     'schedule_date' => $jobs[0]->schedule_date,
                     'preferred_time' => $jobs[0]->readable_preferred_time,
-                    'services' => $services
+                    'services' => $services,
+                    'status' => $jobs[0]->status
                 ]);
                 $all_partner_orders->push($order);
             }
@@ -284,26 +284,21 @@ class PartnerOrderRepository
         } elseif ($request->has('filter')) {
             return $this->resolveStatus($request->filter);
         } else {
-            return array(constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded'],
-                constants('JOB_STATUSES')['Declined'], constants('JOB_STATUSES')['Cancelled'],
-                constants('JOB_STATUSES')['Schedule_Due'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Serve_Due'], constants('JOB_STATUSES')['Served']);
+            return JobStatuses::getActuals();
         }
     }
 
     private function resolveStatus($filter)
     {
-        if ($filter == 'ongoing') {
-            return array(constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Schedule_Due'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Serve_Due'], constants('JOB_STATUSES')['Served']);
-        } elseif ($filter == 'history') {
-            return constants('JOB_STATUSES');
-        }
+        if ($filter == 'ongoing') return JobStatuses::getOngoing();
+
+        if ($filter == 'history') return JobStatuses::getActuals();
     }
 
     public function getInfo($partner_order)
     {
         if ($partner_order->jobs->count() > 1) {
-            $job = $partner_order->jobs->whereIn('status', array(constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded'],
-                constants('JOB_STATUSES')['Schedule_Due'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Serve_Due'], constants('JOB_STATUSES')['Served']))->first();
+            $job = $partner_order->jobs->whereIn('status', array_merge(JobStatuses::getAcceptable(), JobStatuses::getOngoing()))->first();
         } else {
             $job = $partner_order->jobs->first();
         }
@@ -311,7 +306,9 @@ class PartnerOrderRepository
         $partner_order->calculate(true);
         $partner_order['code'] = $partner_order->code();
         $partner_order['customer_name'] = $partner_order->order->deliveryAddress->name;
-        $partner_order['customer_mobile'] = $partner_order->order->deliveryAddress->mobile;
+        $partner_order['customer_mobile'] = $partner_order->order->isFromOfflineBondhu() ?
+            $partner_order->order->affiliation->affiliate->profile->mobile :
+            $partner_order->order->deliveryAddress->mobile;
         $partner_order['resource_picture'] = $job->resource ? $job->resource->profile->pro_pic : null;
         $partner_order['resource_mobile'] = $job->resource ? $job->resource->profile->mobile : null;
         $partner_order['category_app_banner'] = $job->category ? $job->category->app_banner : null;

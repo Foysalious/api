@@ -16,4 +16,5 @@ class SalesStat
     public $complain;
     public $totalPartnerDiscount;
     public $totalCostWithoutDiscount;
+    public $posSale;
 }

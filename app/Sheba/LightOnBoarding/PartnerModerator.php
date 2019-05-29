@@ -101,11 +101,9 @@ class PartnerModerator
             if ($this->validateRequest($data)) {
                 DB::beginTransaction();
                 $this->setPartnerData('approved');
-                $this->affiliationRewards->setAffiliate($this->partner->affiliate)
-                    ->payAffiliate($this->partner);
+                $this->affiliationRewards->setAffiliate($this->partner->affiliate)->payAffiliate($this->partner);
                 if ($this->moderatorRole == 'moderator') {
-                    $this->affiliationRewards->setModerator($this->moderator)
-                        ->payModerator($this->partner, 'accept');
+                    $this->affiliationRewards->setModerator($this->moderator)->payModerator($this->partner, 'accept');
                 }
                 DB::commit();
             }
@@ -135,8 +133,7 @@ class PartnerModerator
                 }
                 $this->setPartnerData('rejected', $data['reject_reason']);
                 if ($this->moderatorRole == 'moderator') {
-                    $this->affiliationRewards->setModerator($this->moderator)
-                        ->payModerator($this->partner, 'reject');
+                    $this->affiliationRewards->setModerator($this->moderator)->payModerator($this->partner, 'reject');
                 }
                 DB::commit();
             }
@@ -195,9 +192,8 @@ class PartnerModerator
         $distance = (new Distance(DistanceStrategy::$VINCENTY))->linear();
 
         $source = (new Coords($source['lat'], $source['lng']));
-        $dest   = (new Coords($dest['lat'], $dest['lng']));
+        $dest = (new Coords($dest['lat'], $dest['lng']));
 
         return $distance->from($source)->to($dest)->distance();
-        // return self::vincentyGreatCircleDistance(floatval($source['lat']), floatval($source['lng']), floatval($dest['lat']), floatval($dest['lng']));
     }
 }

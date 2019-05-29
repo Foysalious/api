@@ -2,6 +2,7 @@
 
 use App\Jobs\Job;
 use App\Models\TopUpVendor;
+use Exception;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -37,7 +38,7 @@ class TopUpJob extends Job implements ShouldQueue
      * Execute the job.
      *
      * @return void
-     * @throws \Exception
+     * @throws Exception
      */
     public function handle()
     {
@@ -58,7 +59,7 @@ class TopUpJob extends Job implements ShouldQueue
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     protected function takeUnsuccessfulAction()
     {
@@ -66,7 +67,7 @@ class TopUpJob extends Job implements ShouldQueue
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     protected function takeSuccessfulAction()
     {
@@ -74,11 +75,15 @@ class TopUpJob extends Job implements ShouldQueue
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     private function notifyAgentAboutFailure()
     {
-        notify($this->agent)->send(["title" => 'Your top up to ' . $this->topUpRequest->getMobile() . ' has been failed.', "link" => '', "type" => notificationType('Danger')]);
+        notify($this->agent)->send([
+            "title" => 'Your top up to ' . $this->topUpRequest->getMobile() . ' has been failed.',
+            "link" => '',
+            "type" => notificationType('Danger')
+        ]);
     }
 
     /**
@@ -104,5 +109,4 @@ class TopUpJob extends Job implements ShouldQueue
     {
         return $this->agent;
     }
-
 }

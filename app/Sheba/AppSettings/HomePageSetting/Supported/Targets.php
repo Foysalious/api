@@ -15,6 +15,10 @@ class Targets extends Constants
     const OFFER = "offer";
     const SUBSCRIPTION_LIST = "subscription_list";
     const SUBSCRIPTION_SERVICE = "subscription_service";
+    const EXTERNAL_PROJECT = 'external_project';
+    const REFERRALS = 'referral';
+    const INFO_CALL = 'info_call';
+    const NEAR_BY_PARTNERS = 'near_by_partners';
 
     /**
      * @param $target

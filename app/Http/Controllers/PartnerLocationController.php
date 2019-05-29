@@ -96,7 +96,7 @@ class PartnerLocationController extends Controller
             ]);
             $partner = $request->has('partner') ? $request->partner : null;
             $partner_count = $request->has('partner_count') ? (int)$request->partner_count : 0;
-            if ($partner_count < 50) {
+            if ($partner_count < 50 && $request->services != 'null') {
                 $partnerListRequest->setRequest($request)->prepareObject();
                 $partner_list = new PartnerList();
                 $partner_list->setPartnerListRequest($partnerListRequest)->find($partner);
@@ -164,7 +164,7 @@ class PartnerLocationController extends Controller
             $partners = $partners->whereIn('id', $nearByPartners->keys())->get();
 
             if ($request->has('category_id'))
-                $partners =  $partners->filter(function($partner) use ($request) {
+                $partners = $partners->filter(function ($partner) use ($request) {
                     return in_array($request->category_id, $partner->servingMasterCategoryIds());
                 });
 
