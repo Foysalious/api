@@ -53,6 +53,10 @@ class PartnerOrder extends Model
     public $isCalculated = false;
     public $revenuePercent = 0;
     public $serviceChargePercent = 0;
+    public $totalLogisticPaid = 0;
+    public $totalLogisticDue = 0;
+    public $paidWithLogistic = 0;
+    public $dueWithLogistic = 0;
 
     /** @var CodeBuilder */
     private $codeBuilder;
@@ -126,6 +130,8 @@ class PartnerOrder extends Model
         $this->grossAmount = floatValFormat($this->totalPrice - $this->discount - $this->roundingCutOff);
         $this->paid = $this->sheba_collection + $this->partner_collection;
         $this->due = floatValFormat($this->grossAmount - $this->paid);
+        $this->paidWithLogistic = floatValFormat($this->paid + $this->totalLogisticPaid);
+        $this->dueWithLogistic = floatValFormat($this->due + $this->totalLogisticDue);
         $this->overPaid = $this->isOverPaid() ? floatValFormat($this->paid - $this->grossAmount) : 0;
         $this->profitBeforeDiscount = floatValFormat($this->jobPrices - $this->totalCost);
         $this->totalDiscountedCost = ($this->totalDiscountedCost < 0) ? 0 : $this->totalDiscountedCost;
@@ -186,8 +192,6 @@ class PartnerOrder extends Model
         return $this;
     }
 
-
-
     private function _calculateThisJobs($price_only = false)
     {
         //$this->_initializeStatusCounter();
@@ -225,6 +229,8 @@ class PartnerOrder extends Model
         $this->totalShebaDiscount += $job->discountContributionSheba;
         $this->deliveryCharge += $job->delivery_charge;
         $this->deliveryCost += $job->deliveryCost;
+        $this->totalLogisticPaid += $job->logistic_paid;
+        $this->totalLogisticDue += $job->logisticDue;
     }
 
     private function _calculateRoundingCutOff()
@@ -389,7 +395,6 @@ class PartnerOrder extends Model
 
         return $this->created_at->diffInHours($closed_date);
     }
-
 
     public function getAllCm()
     {

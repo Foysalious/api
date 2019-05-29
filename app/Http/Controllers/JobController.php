@@ -190,52 +190,33 @@ class JobController extends Controller
             $job->calculate(true);
             if (count($job->jobServices) == 0) {
                 $services = array();
-                array_push($services, array(
+                array_push($services, [
                     'name' => $job->service != null ? $job->service->name : null,
                     'price' => (double)$job->servicePrice,
-                    'min_price' => 0, 'is_min_price_applied' => 0
-                ));
+                    'min_price' => 0,
+                    'is_min_price_applied' => 0
+                ]);
             } else {
                 $services = array();
                 foreach ($job->jobServices as $jobService) {
                     $total = (double)$jobService->unit_price * (double)$jobService->quantity;
                     $min_price = (double)$jobService->min_price;
-                    array_push($services, array(
-                        'name' => $jobService->service != null ? $jobService->service->name : null,
-                        'quantity' => $jobService->quantity,
-                        'price' => $total,
-                        'min_price' => $min_price,
-                        'is_min_price_applied' => $min_price > $total ? 1 : 0
-                    ));
+                    array_push($services, array('name' => $jobService->service != null ? $jobService->service->name : null, 'quantity' => $jobService->quantity, 'price' => $total, 'min_price' => $min_price, 'is_min_price_applied' => $min_price > $total ? 1 : 0));
                 }
             }
             $partnerOrder = $job->partnerOrder;
             $partnerOrder->calculate(true);
 
             $original_delivery_charge = $job->deliveryPrice;
-            $delivery_discount = 0;
-            if (isset($job->otherDiscountsByType[DiscountTypes::DELIVERY]))
-                $delivery_discount = $job->otherDiscountsByType[DiscountTypes::DELIVERY];
-
-            $total_discount = (double)$job->discount;
-            $total_discount -= $delivery_discount;
-
-            $logistic_paid = $job->logistic_paid;
-            $logistic_charge = $job->logistic_charge;
-            if ($logistic_paid > $logistic_charge)
-                $logistic_paid = $logistic_charge;
-            $logistic_due = ($logistic_charge - $logistic_paid);
-
-            if ($total_discount < 0)
-                $total_discount = 0;
+            $delivery_discount = $job->deliveryDiscount;
 
             $bill = collect();
             $bill['total'] = (double)$partnerOrder->totalPrice + ($original_delivery_charge - $delivery_discount);
             $bill['original_price'] = (double)$partnerOrder->jobPrices;
-            $bill['paid'] = (double)$partnerOrder->paid + $logistic_paid;
-            $bill['due'] = (double)$partnerOrder->due + ($logistic_due - $delivery_discount);
+            $bill['paid'] = (double)$partnerOrder->paidWithLogistic;
+            $bill['due'] = (double)$partnerOrder->dueWithLogistic;
             $bill['material_price'] = (double)$job->materialPrice;
-            $bill['discount'] = $total_discount;
+            $bill['discount'] = (double)$job->discountWithoutDeliveryDiscount;
             $bill['services'] = $services;
             $bill['delivered_date'] = $job->delivered_date != null ? $job->delivered_date->format('Y-m-d') : null;
             $bill['delivered_date_timestamp'] = $job->delivered_date != null ? $job->delivered_date->timestamp : null;
@@ -248,6 +229,7 @@ class JobController extends Controller
             $bill['delivery_discount'] = $delivery_discount;
             $bill['invoice'] = $job->partnerOrder->invoice;
             $bill['version'] = $job->partnerOrder->getVersion();
+
             return api_response($request, $bill, 200, ['bill' => $bill]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
