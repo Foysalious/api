@@ -33,9 +33,9 @@ class CustomerJobController extends Controller
                     DB::transaction(function () use ($order, $voucher, $job) {
                         $order->update($this->withUpdateModificationField(['voucher_id' => $voucher->id]));
                         $voucherDiscount = new VoucherDiscount();
-                        $amount = $voucherDiscount->setVoucher($voucher)->calculate($order_amount);
+                        $total_price = (double)$job->partnerOrder->calculate(true)->totalPrice;
+                        $amount = $voucherDiscount->setVoucher($voucher)->calculate($total_price);
                         $discount_percentage = $voucher->is_amount_percentage ? $voucher->amount : null;
-                        $total_price = $job->partnerOrder->calculate(true)->totalPrice;
                         $voucher_data = [
                             'discount' => ($amount > $total_price) ? $total_price : $amount,
                             'discount_percentage' => $discount_percentage,
