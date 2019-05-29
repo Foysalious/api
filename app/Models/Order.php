@@ -44,7 +44,7 @@ class Order extends Model implements ShebaOrderInterface, CanHaveVoucher
 
     public function createOrUpdateReport($update_partner_order_report = false)
     {
-        if($update_partner_order_report) {
+        if ($update_partner_order_report) {
             foreach ($this->partnerOrders as $partner_order) {
                 /** @var PartnerOrder $partner_order */
                 $partner_order->createOrUpdateReport();

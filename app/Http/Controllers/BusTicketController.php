@@ -322,7 +322,11 @@ class BusTicketController extends Controller
              * TEMPORARY FIXING PRICING ISSUE FOR IOS
              * REMOVE WHERE IOS GOES TO PLAY STORE
              */
-            if ($request->headers->has('platform-name') && $request->headers->get('platform-name') == 'ios' && ($request->has('voucher_id') && $request->voucher_id)) {
+            if (
+                ($request->headers->has('platform-name') && $request->headers->get('platform-name') == 'ios')
+                && ($request->headers->has('version-code') && $request->headers->get('version-code') == 116)
+                && ($request->has('voucher_id') && $request->voucher_id)
+            ) {
                 $total_amount = json_decode($ticket_request->getReservationDetails())->grandTotalBase;
                 $request->amount = ceil($total_amount);
                 $ticket_request->setAmount($request->amount)->setVoucher($request->voucher_id);

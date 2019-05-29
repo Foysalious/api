@@ -27,6 +27,7 @@ class ResourceScheduleRepository extends BaseRepository
         return $this->resourceSchedule->where('start', '=', $start)
             ->where('end', '=', $end)
             ->where('resource_id', $resource->id)
+            ->active()
             ->get();
     }
 
@@ -42,6 +43,7 @@ class ResourceScheduleRepository extends BaseRepository
         return $this->resourceSchedule->where('start', '<', $date_time)
             ->where('end', '>', $date_time)
             ->where('resource_id', $resource->id)
+            ->active()
             ->get();
     }
 
@@ -50,6 +52,7 @@ class ResourceScheduleRepository extends BaseRepository
         return $this->resourceSchedule->where('start', '>', $start)
             ->where('start', '<', $end)
             ->where('resource_id', $resource->id)
+            ->active()
             ->get();
     }
 
@@ -58,6 +61,7 @@ class ResourceScheduleRepository extends BaseRepository
         return $this->resourceSchedule->where('end', '>', $start)
             ->where('end', '<', $end)
             ->where('resource_id', $resource->id)
+            ->active()
             ->get();
     }
 

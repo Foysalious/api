@@ -511,3 +511,14 @@ if (!function_exists('normalizeCases')) {
         return ucwords(str_replace(['_', '-'], ' ', $value));
     }
 }
+
+if (!function_exists('ramp')) {
+    /**
+     * @param $value
+     * @return string
+     */
+    function ramp($value)
+    {
+        return max($value, 0);
+    }
+}
