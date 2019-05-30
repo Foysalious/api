@@ -567,10 +567,15 @@ return [
             'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bank_icon/brac.png',
             'interest' => '11.5',
         ],
-        'City Bank' => [
+        /*'City Bank' => [
             'name' => 'City Bank',
             'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bank_icon/city.png',
             'interest' => '10.5',
+        ],*/
+        'BRAC' => [
+            'name' => 'Brac',
+            'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bank_icon/brac_pink_logo.png',
+            'interest' => '25',
         ],
     ],
     'WEEKS' => ['Saturday' => 1, 'Sunday' => 2, 'Monday' => 3, 'Tuesday' => 4, 'Wednesday' => 5, 'Thursday' => 6, 'Friday' => 7]
