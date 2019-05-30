@@ -93,7 +93,7 @@ class VehicleList
                 $current_vehicle_details = [
                     'id' => $vehicle->id,
                     'company_name' => ( (object) ($vehicle->company))->name,
-                    'type' => $vehicle->coachType,
+                    'type' =>  (strtolower($vehicle->coachType) === 'ac') ? 'AC' : $vehicle->coachType,
                     'start_time' => $start_time,
                     'start_point' => $vehicle->startCounter,
                     'end_time' => $end_time,
