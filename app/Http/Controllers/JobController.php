@@ -178,7 +178,8 @@ class JobController extends Controller
 
     private function canAddPromo(Job $job)
     {
-        return (double)$job->totalDiscount == 0 && !$job->partnerOrder->order->voucher_id ? 1 : 0;
+        $partner_order = $job->partnerOrder;
+        return (double)$job->totalDiscount == 0 && !$partner_order->order->voucher_id && $partner_order->due != 0 && !$partner_order->cancelled_at && !$partner_order->closed_at ? 1 : 0;
     }
 
     public function getBills($customer, $job, Request $request, OrderRepository $logistics_orderRepo)

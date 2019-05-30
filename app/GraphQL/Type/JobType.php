@@ -189,7 +189,8 @@ class JobType extends GraphQlType
         if (!isset($root->totalDiscount)) {
             $root->calculate(true);
         }
-        return (double)$root->totalDiscount == 0 && !$root->partnerOrder->order->voucher_id ? 1 : 0;
+        $partner_order = $root->partnerOrder;
+        return (double)$root->totalDiscount == 0 && !$partner_order->order->voucher_id && $partner_order->due != 0 && !$partner_order->cancelled_at && !$partner_order->closed_at ? 1 : 0;
     }
 
     protected function canTakeReview($job)
