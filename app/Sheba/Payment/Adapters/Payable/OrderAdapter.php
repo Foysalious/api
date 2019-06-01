@@ -4,7 +4,6 @@ use App\Models\Job;
 use App\Models\PartnerOrder;
 use App\Models\Payable;
 use Carbon\Carbon;
-use Sheba\Logistics\Repository\ParcelRepository;
 
 class OrderAdapter implements PayableAdapter
 {
@@ -32,7 +31,7 @@ class OrderAdapter implements PayableAdapter
         $payable->type_id = $this->partnerOrder->id;
         $payable->user_id = $this->userId;
         $payable->user_type = $this->userType;
-        $due = (double)$this->partnerOrder->due + $this->getShebaLogisticsPrice();
+        $due = (double)$this->partnerOrder->dueWithLogistic;
         $payable->amount = $this->calculateAmount($due);
         $payable->completion_type = $this->isAdvancedPayment ? 'advanced_order' : "order";
         $payable->success_url = $this->getSuccessUrl();
