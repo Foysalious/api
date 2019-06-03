@@ -21,6 +21,7 @@ use App\Sheba\Bondhu\TopUpEarning;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Maatwebsite\Excel\Excel;
 use Sheba\ModificationFields;
 use Sheba\PartnerPayment\PartnerPaymentValidatorFactory;
 use Sheba\Reports\ExcelHandler;
@@ -725,7 +726,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id]));
             $topup_data = array_merge($queued_topups, $topup_data);
 
             if ($is_excel_report) {
-                $excel = (new ExcelHandler());
+                $excel = app(ExcelHandler::class);
                 $excel->setName('Topup History');
                 $excel->setViewFile('topup_history');
                 $excel->pushData('topup_data', $topup_data);
