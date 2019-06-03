@@ -220,23 +220,58 @@ class CoWorkerController extends Controller
         }
     }
 
+    public function getBusinessDepartments($business, Request $request)
+    {
+        try {
+            $business = $request->business;
+            $business_depts = BusinessDepartment::where('business_id', $business->id)->select('id', 'business_id', 'name', 'created_at')->orderBy('id', 'DESC')->get();
+            $departments = [];
+            foreach ($business_depts as $business_dept) {
+                $department = [
+                    'id' => $business_dept->id,
+                    'name' => $business_dept->name,
+                    'created_at' => $business_dept->created_at->format('d/m/y'),
+                ];
+                array_push($departments, $department);
+            }
+            if (count($departments) > 0) return api_response($request, $departments, 200, ['departments' => $departments]);
+            else  return api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     public function addBusinessRole($business, Request $request)
     {
         try {
             $this->validate($request, [
                 'name' => 'required|string',
-                'business_department_id' => 'required|integer',
+                'department_id' => 'required|integer',
 
             ]);
             $business = $request->business;
             $member = $request->manager_member;
             $this->setModifier($member);
+
+            #$name = trim($request->name);
+            #$role = BusinessRole::where('business_department_id', $request->department_id)->where('name', 'LIKE', "%$name%")->first();
             $data = [
-                'business_department_id' => $request->business_department_id,
-                'name' => $request->name,
-                'is_published' => 1
+                'business_department_id' => $request->department_id,
+                'name' => trim($request->name),
+                'is_published' => 1,
             ];
-            $business_role = BusinessRole::create($this->withCreateModificationField($data));
+            BusinessRole::create($this->withCreateModificationField($data));
+
+            /*$member_business_data = [
+                'business_id' => $business->id,
+                'member_id' => $member->id,
+                'type' => 'Admin',
+                'join_date' => Carbon::now(),
+                'business_role_id' => $business_role->id,
+            ];
+            BusinessMember::create($this->withCreateModificationField($member_business_data));*/
+
             return api_response($request, null, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());

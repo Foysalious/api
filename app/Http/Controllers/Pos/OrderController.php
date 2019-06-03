@@ -39,9 +39,16 @@ class OrderController extends Controller
         try {
             $status = $request->status;
             $partner = $request->partner;
+            list($offset, $limit) = calculatePagination($request);
 
             /** @var PosOrder $orders */
-            $orders = PosOrder::with('items.service.discounts', 'customer', 'payments', 'logs', 'partner')->byPartner($partner->id)->orderBy('created_at', 'desc')->get();
+            $orders = PosOrder::with('items.service.discounts', 'customer', 'payments', 'logs', 'partner')
+                ->byPartner($partner->id)
+                ->orderBy('created_at', 'desc')
+                ->skip($offset)
+                ->take($limit)
+                ->get();
+
             $final_orders = [];
 
             foreach ($orders as $index => $order) {

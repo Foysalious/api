@@ -14,7 +14,7 @@ class Presenter extends BasePresenter
     /** @var PartnerOrderReport */
     private $partnerOrderReport;
 
-    private $fields = [
+    protected $fields = [
         'order_code' => 'Order Code',
         'order_media' => 'Order Media',
         'order_channel' => 'Order Channel',

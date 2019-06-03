@@ -86,6 +86,7 @@ class CustomerRoute
                         $api->get('logs', 'JobController@getLogs');
                         $api->get('logs/order', 'JobController@getOrderLogs');
                         $api->post('reviews', 'ReviewController@store');
+                        $api->post('promotions', 'Customer\CustomerJobController@addPromotion');
                         $api->group(['prefix' => 'complains'], function ($api) {
                             $api->get('/', 'ComplainController@index');
                             $api->post('/', 'ComplainController@storeForCustomer');

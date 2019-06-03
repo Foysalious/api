@@ -98,7 +98,8 @@ class OrderController extends Controller
                     }
                 }
                 $this->sendNotifications($customer, $order);
-                return api_response($request, $order, 200, ['link' => $link, 'job_id' => $order->jobs->first()->id,
+                $partner = $order->partnerOrders()->first()->partner;
+                return api_response($request, $order, 200, ['link' => $link, 'job_id' => $order->jobs->first()->id, 'provider_mobile' => $partner->getContactNumber(),
                     'order_code' => $order->code(), 'payment' => $payment]);
             }
             return api_response($request, $order, 500);
@@ -186,9 +187,9 @@ class OrderController extends Controller
         $job = $order->lastJob();
 
         (new SmsHandler('order-created-to-bondhu'))->send($agent_mobile, [
-            'service_name'   => $job->category->name,
-            'order_code'     => $order->code(),
-            'partner_name'   => $partner->name,
+            'service_name' => $job->category->name,
+            'order_code' => $order->code(),
+            'partner_name' => $partner->name,
             'partner_number' => $partner->getContactNumber(),
             'preferred_time' => $job->preferred_time,
             'preferred_date' => $job->schedule_date,
@@ -216,6 +217,7 @@ class OrderController extends Controller
             }
             (new NotificationRepository())->send($order);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return null;
         }
     }

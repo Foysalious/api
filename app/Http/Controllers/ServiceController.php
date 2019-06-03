@@ -54,6 +54,7 @@ class ServiceController extends Controller
     public function get($service, Request $request, ApproximatePriceCalculator $approximatePriceCalculator)
     {
         try {
+            ini_set('memory_limit', '2048M');
             $service = Service::where('id', $service)->select('id', 'name', 'unit', 'structured_description', 'stock', 'stock_left', 'category_id', 'short_description', 'description', 'thumb', 'slug', 'min_quantity', 'banner', 'faqs', 'bn_name', 'bn_faqs', 'variable_type', 'variables');
 
             $service_groups = $service->first()->groups;

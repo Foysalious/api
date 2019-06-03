@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use App\Models\Transport\TransportTicketOrder;
+use App\Sheba\Payment\Rechargable;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Helpers\TimeFrame;
@@ -17,7 +18,7 @@ use Sheba\Transport\TransportAgent;
 use Sheba\Transport\TransportTicketTransaction;
 use Sheba\Voucher\Contracts\CanApplyVoucher;
 
-class Affiliate extends Model implements TopUpAgent, MovieAgent, TransportAgent, CanApplyVoucher
+class Affiliate extends Model implements TopUpAgent, MovieAgent, TransportAgent, CanApplyVoucher, Rechargable
 {
     use TopUpTrait;
     use MovieTicketTrait;
@@ -110,20 +111,20 @@ class Affiliate extends Model implements TopUpAgent, MovieAgent, TransportAgent,
     public function scopeAgentsWithFilter($query, $request, $tableName)
     {
         $affiliate = $request->affiliate;
-        $rangeQuery = 'affiliate_transactions.is_gifted = 1 and affiliate_transactions.created_at > aff2.under_ambassador_since';
+        $rangeQuery = 'affiliate_transactions.is_gifted = 1     ';
         if (isset($request->range) && !empty($request->range)) {
             $range = getRangeFormat($request);
             $rangeQuery = $rangeQuery . ' and `affiliate_transactions`.`created_at` BETWEEN \'' . $range[0]->toDateTimeString() . '\' AND \'' . $range[1]->toDateTimeString() . '\'';
         }
-        return $query->select($tableName . '.affiliate_id as id', 'aff2.profile_id', 'aff2.ambassador_id', 'aff2.under_ambassador_since', 'profiles.name', 'profiles.pro_pic as picture', 'profiles.mobile', 'aff2.created_at')
+        return $query->select('affiliate_transactions' . '.affiliate_id as id', 'affiliates.profile_id', 'affiliates.ambassador_id', 'affiliates.under_ambassador_since', 'profiles.name', 'profiles.pro_pic as picture', 'profiles.mobile', 'affiliates.created_at')
             ->leftJoin('affiliate_transactions', 'affiliate_transactions.affiliate_id', '=', 'affiliates.id')
-            ->leftJoin($tableName, 'affiliate_transactions.affiliation_id', ' = ', $tableName . '.id')
-            ->leftJoin('affiliates as aff2', $tableName . '.affiliate_id', '=', 'aff2.id')
-            ->leftJoin('profiles', 'profiles.id', '=', 'aff2.profile_id')
+//            ->leftJoin($tableName, 'affiliate_transactions.affiliation_id', ' = ', $tableName . '.id')
+            ->leftJoin('affiliates', 'affiliate_transactions' . '.affiliate_id', '=', 'affiliates.id')
+            ->leftJoin('profiles', 'profiles.id', '=', 'affiliates.profile_id')
             ->selectRaw('sum(affiliate_transactions.amount) as total_gifted_amount, count(distinct(affiliate_transactions.id)) as total_gifted_number')
             ->where('affiliates.id', $affiliate->id)
             ->whereRaw($rangeQuery)
-            ->groupBy($tableName . '.affiliate_id');
+            ->groupBy('affiliate_transactions' . '.affiliate_id');
     }
 
     public function totalLead()
@@ -261,5 +262,10 @@ class Affiliate extends Model implements TopUpAgent, MovieAgent, TransportAgent,
     public function getTagNamesAttribute()
     {
         return $this->tags->pluck('name');
+    }
+
+    public function getIncome()
+    {
+        return $this->transactions()->where('type', 'Credit')->where('log', '<>', 'Credit Purchase')->sum('amount');
     }
 }

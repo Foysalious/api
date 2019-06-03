@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use GraphQL;
 use \Folklore\GraphQL\Support\Type as GraphQlType;
 use GraphQL\Type\Definition\Type;
+use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Logs\Customer\JobLogs;
 
 class OrderType extends GraphQlType
@@ -19,6 +20,7 @@ class OrderType extends GraphQlType
         return [
             'id' => ['type' => Type::int()],
             'order_id' => ['type' => Type::int()],
+            'voucher_id' => ['type' => Type::int()],
             'customer' => ['type' => GraphQL::type('Customer')],
             'category' => ['type' => GraphQL::type('Category')],
             'partner' => ['type' => GraphQL::type('Partner')],
@@ -38,6 +40,8 @@ class OrderType extends GraphQlType
             'location' => ['type' => GraphQL::type('Location')],
             'original_price' => ['type' => Type::float()],
             'discounted_price' => ['type' => Type::float()],
+            'delivery_charge' => ['type' => Type::float()],
+            'delivery_discount' => ['type' => Type::float()],
             'total_material_price' => ['type' => Type::float()],
             'total_discount' => ['type' => Type::float()],
             'paid' => ['type' => Type::float()],
@@ -105,6 +109,18 @@ class OrderType extends GraphQlType
         }
         return (float)$root->totalPrice;
     }
+
+    protected function resolveDeliveryChargeField($root) {
+        return (float) $root->jobs[0]->deliveryPrice;
+    }
+
+    protected function resolveDeliveryDiscountField($root) {
+       $job = $root->jobs[0];
+        $delivery_discount = 0;
+        if(isset($job->otherDiscountsByType[DiscountTypes::DELIVERY]))
+            $delivery_discount = $job->otherDiscountsByType[DiscountTypes::DELIVERY];
+        return (float) $delivery_discount;
+     }
 
     protected function resolveTotalMaterialPriceField($root)
     {

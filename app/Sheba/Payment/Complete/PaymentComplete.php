@@ -2,6 +2,7 @@
 
 use App\Models\Payment;
 use App\Repositories\PaymentRepository;
+use Sheba\Payment\Statuses;
 
 abstract class PaymentComplete
 {
@@ -23,4 +24,25 @@ abstract class PaymentComplete
     }
 
     public abstract function complete();
+
+    protected function failPayment()
+    {
+        $this->changePaymentStatus(Statuses::FAILED);
+    }
+
+    protected function completePayment()
+    {
+        $this->changePaymentStatus(Statuses::COMPLETED);
+    }
+
+    protected function changePaymentStatus($to_status)
+    {
+        $this->paymentRepository->changeStatus([
+            'to' => $to_status,
+            'from' => $this->payment->status,
+            'transaction_details' => $this->payment->transaction_details
+        ]);
+        $this->payment->status = $to_status;
+        $this->payment->update();
+    }
 }

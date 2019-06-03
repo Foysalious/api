@@ -51,7 +51,7 @@ abstract class SalesStatsBeforeToday
     private function getFromRedis()
     {
         $data = Cache::store('redis')->get($this->redisCacheName);
-        if($this->redisHasProperData($data)) {
+        if ($this->redisHasProperData($data)) {
             $this->week = $data->week;
             $this->month = $data->month;
             $this->year = $data->year;
@@ -72,5 +72,6 @@ abstract class SalesStatsBeforeToday
     }
 
     abstract protected function calculateFromDB();
+
     abstract protected function sumDataForATimeFrame(SalesStat $timeFrameData, Collection $data);
 }

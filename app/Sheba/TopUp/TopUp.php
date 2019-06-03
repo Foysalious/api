@@ -2,7 +2,7 @@
 
 use App\Models\Affiliate;
 use App\Models\TopUpOrder;
-use Sheba\TopUp\Commission\CommissionFactory;
+use Exception;
 use App\Models\TopUpVendor;
 use Sheba\ModificationFields;
 use DB;
@@ -63,7 +63,7 @@ class TopUp
 
     /**
      * @param TopUpRequest $top_up_request
-     * @throws \Exception
+     * @throws Exception
      */
     public function recharge(TopUpRequest $top_up_request)
     {
@@ -90,6 +90,7 @@ class TopUp
 
     /**
      * @return TopUpErrorResponse
+     * @throws Exception
      */
     public function getError()
     {

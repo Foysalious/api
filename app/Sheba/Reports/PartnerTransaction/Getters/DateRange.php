@@ -15,7 +15,7 @@ class DateRange extends Getter
     protected function _get(Request $request)
     {
         $partner_transactions = PartnerTransaction::with('partner');
-        return $this->notLifetimeQuery($partner_transactions, [$request->start_date, $request->end_date])->get();
+        return $this->notLifetimeQuery($partner_transactions, $request->all())->get();
     }
 
     /**

@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Sheba\Checkout;
+<?php namespace App\Sheba\Checkout;
 
 use App\Models\Partner;
 use App\Models\PartnerServiceDiscount;
@@ -130,19 +128,23 @@ class Discount
         } else {
             $this->original_price = $this->unit_price * $this->quantity;
         }
+
         if ($this->original_price < $this->min_price) {
             $this->original_price = $this->min_price;
         } elseif ($rent_a_car_price_applied) {
             $this->min_price = $this->original_price;
         }
-        if ($this->surchargePercentage > 0) $this->original_price = $this->original_price + ($this->original_price * $this->surchargePercentage / 100);
+
+        if ($this->surchargePercentage > 0) {
+            $this->original_price = $this->original_price + ($this->original_price * $this->surchargePercentage / 100);
+            $this->min_price = $this->original_price;
+        }
     }
 
     private function isRentACar()
     {
         return in_array($this->serviceObject->serviceModel->category_id, array_map('intval', explode(',', env('RENT_CAR_IDS'))));
     }
-
 
     private function calculateKey($collection, $key)
     {
@@ -154,14 +156,16 @@ class Discount
 
     private function calculateRunningDiscount()
     {
-        if ($this->runningDiscount === null) $this->runningDiscount = PartnerServiceDiscount::where('partner_service_id', $this->servicePivot->id)->running()->first();
+        if ($this->runningDiscount === null) {
+            $this->runningDiscount = PartnerServiceDiscount::where('partner_service_id', $this->servicePivot->id)->running()->first();
+        }
     }
 
     private function calculateRunningSurcharge()
     {
-        if ($this->surchargePercentage === null) {
+        if (!$this->surchargePercentage && !$this->serviceObject->serviceModel->activeSubscription) {
             $surcharge = PartnerServiceSurcharge::where('partner_service_id', $this->servicePivot->id)->runningAt($this->scheduleDateTime)->first();
-            $this->surchargePercentage = $surcharge ? $surcharge->amount : 0;;
+            $this->surchargePercentage = $surcharge ? $surcharge->amount : 0;
         }
     }
 }

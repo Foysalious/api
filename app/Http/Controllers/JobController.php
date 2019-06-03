@@ -13,6 +13,8 @@ use Illuminate\Http\Request;
 use DB;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
+use Sheba\Dal\Discount\DiscountTypes;
+use Sheba\Logistics\Repository\OrderRepository;
 use Sheba\Logs\Customer\JobLogs;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
 use Sheba\Payment\ShebaPayment;
@@ -62,7 +64,7 @@ class JobController extends Controller
     {
         try {
             $customer = $request->customer;
-            $job = $request->job->load(['resource.profile', 'carRentalJobDetail', 'category', 'review', 'jobServices', 'complains' => function ($q) use ($customer) {
+            $job = $request->job->load(['resource.profile', 'carRentalJobDetail', 'category', 'review', 'jobServices', 'discounts', 'complains' => function ($q) use ($customer) {
                 $q->select('id', 'job_id', 'status', 'complain', 'complain_preset_id')
                     ->whereHas('accessor', function ($query) use ($customer) {
                         $query->where('accessors.model_name', get_class($customer));
@@ -73,6 +75,18 @@ class JobController extends Controller
             if (!$job->partnerOrder->order->deliveryAddress) {
                 $job->partnerOrder->order->deliveryAddress = $job->partnerOrder->order->getTempAddress();
             }
+
+            $delivery_discount = 0;
+            $calculated_job = $job->calculate(true);
+            if (isset($calculated_job->otherDiscountsByType[DiscountTypes::DELIVERY]))
+                $delivery_discount = $calculated_job->otherDiscountsByType[DiscountTypes::DELIVERY];
+
+            $logistic_paid = $job->logistic_paid;
+            $logistic_charge = $job->logistic_charge;
+
+            if ($logistic_paid > $logistic_charge) $logistic_paid = $logistic_charge;
+            $logistic_due = ($logistic_charge - $logistic_paid);
+
             $job_collection = collect();
             $job_collection->put('id', $job->id);
             $job_collection->put('resource_name', $job->resource ? $job->resource->profile->name : null);
@@ -93,11 +107,11 @@ class JobController extends Controller
             $job_collection->put('status', $job->status);
             $job_collection->put('rating', $job->review ? $job->review->rating : null);
             $job_collection->put('review', $job->review ? $job->review->calculated_review : null);
-            $job_collection->put('original_price', (double)$job->partnerOrder->jobPrices);
+            $job_collection->put('original_price', ((double)$job->partnerOrder->jobPrices + (double)$job->logistic_charge));
             $job_collection->put('discount', (double)$job->partnerOrder->totalDiscount);
             $job_collection->put('payment_method', $this->formatPaymentMethod($job->partnerOrder->payment_method));
-            $job_collection->put('price', (double)$job->partnerOrder->totalPrice);
-            $job_collection->put('isDue', (double)$job->partnerOrder->due > 0 ? 1 : 0);
+            $job_collection->put('price', (double)$job->partnerOrder->totalPrice + (double)($job->logistic_charge - $delivery_discount));
+            $job_collection->put('isDue', (double)($job->partnerOrder->due + ($logistic_due - $delivery_discount)) > 0 ? 1 : 0);
             $job_collection->put('isRentCar', $job->isRentCar());
             $job_collection->put('is_on_premise', $job->isOnPremise());
             $job_collection->put('customer_favorite', $job->customerFavorite ? $job->customerFavorite->id : null);
@@ -111,6 +125,7 @@ class JobController extends Controller
             $job_collection->put('estimated_time', $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_time : null);
             $job_collection->put('can_take_review', $this->canTakeReview($job));
             $job_collection->put('can_pay', $this->canPay($job));
+            $job_collection->put('can_add_promo', $this->canAddPromo($job));
 
             if (count($job->jobServices) == 0) {
                 $services = collect();
@@ -161,7 +176,13 @@ class JobController extends Controller
         return $complains;
     }
 
-    public function getBills($customer, $job, Request $request)
+    private function canAddPromo(Job $job)
+    {
+        $partner_order = $job->partnerOrder;
+        return (double)$job->totalDiscount == 0 && !$partner_order->order->voucher_id && $partner_order->due != 0 && !$partner_order->cancelled_at && !$partner_order->closed_at ? 1 : 0;
+    }
+
+    public function getBills($customer, $job, Request $request, OrderRepository $logistics_orderRepo)
     {
         try {
             $job = $request->job->load(['partnerOrder.order', 'category', 'service', 'jobServices' => function ($q) {
@@ -170,35 +191,33 @@ class JobController extends Controller
             $job->calculate(true);
             if (count($job->jobServices) == 0) {
                 $services = array();
-                array_push($services, array(
+                array_push($services, [
                     'name' => $job->service != null ? $job->service->name : null,
                     'price' => (double)$job->servicePrice,
-                    'min_price' => 0, 'is_min_price_applied' => 0
-                ));
+                    'min_price' => 0,
+                    'is_min_price_applied' => 0
+                ]);
             } else {
                 $services = array();
                 foreach ($job->jobServices as $jobService) {
                     $total = (double)$jobService->unit_price * (double)$jobService->quantity;
                     $min_price = (double)$jobService->min_price;
-                    array_push($services, array(
-                        'name' => $jobService->service != null ? $jobService->service->name : null,
-                        'quantity' => $jobService->quantity,
-                        'price' => $total,
-                        'min_price' => $min_price,
-                        'is_min_price_applied' => $min_price > $total ? 1 : 0
-                    ));
+                    array_push($services, array('name' => $jobService->service != null ? $jobService->service->name : null, 'quantity' => $jobService->quantity, 'price' => $total, 'min_price' => $min_price, 'is_min_price_applied' => $min_price > $total ? 1 : 0));
                 }
             }
             $partnerOrder = $job->partnerOrder;
             $partnerOrder->calculate(true);
 
+            $original_delivery_charge = $job->deliveryPrice;
+            $delivery_discount = $job->deliveryDiscount;
+
             $bill = collect();
-            $bill['total'] = (double)$partnerOrder->totalPrice;
+            $bill['total'] = (double)($partnerOrder->totalPrice + $partnerOrder->totalLogisticCharge);
             $bill['original_price'] = (double)$partnerOrder->jobPrices;
-            $bill['paid'] = (double)$partnerOrder->paid;
-            $bill['due'] = (double)$partnerOrder->due;
+            $bill['paid'] = (double)$partnerOrder->paidWithLogistic;
+            $bill['due'] = (double)$partnerOrder->dueWithLogistic;
             $bill['material_price'] = (double)$job->materialPrice;
-            $bill['discount'] = (double)$job->discount;
+            $bill['discount'] = (double)$job->discountWithoutDeliveryDiscount;
             $bill['services'] = $services;
             $bill['delivered_date'] = $job->delivered_date != null ? $job->delivered_date->format('Y-m-d') : null;
             $bill['delivered_date_timestamp'] = $job->delivered_date != null ? $job->delivered_date->timestamp : null;
@@ -207,9 +226,11 @@ class JobController extends Controller
             $bill['payment_method'] = $this->formatPaymentMethod($partnerOrder->payment_method);
             $bill['status'] = $job->status;
             $bill['is_on_premise'] = (int)$job->isOnPremise();
-            $bill['delivery_charge'] = (double)$partnerOrder->deliveryCharge;
+            $bill['delivery_charge'] = $original_delivery_charge;
+            $bill['delivery_discount'] = $delivery_discount;
             $bill['invoice'] = $job->partnerOrder->invoice;
             $bill['version'] = $job->partnerOrder->getVersion();
+
             return api_response($request, $bill, 200, ['bill' => $bill]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);

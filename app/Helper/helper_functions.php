@@ -132,6 +132,8 @@ if (!function_exists('getRangeFormat')) {
                 return $dateFrame->forAMonth($today->month, $today->year)->getArray();
             case 'week':
                 return $dateFrame->forAWeek($today)->getArray();
+            case 'lifetime':
+                return $dateFrame->forLifeTime()->getArray();
             default:
                 return [$today->startOfDay(), $today->endOfDay()];
         }
@@ -507,5 +509,16 @@ if (!function_exists('normalizeCases')) {
     {
         $value = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $value));
         return ucwords(str_replace(['_', '-'], ' ', $value));
+    }
+}
+
+if (!function_exists('ramp')) {
+    /**
+     * @param $value
+     * @return string
+     */
+    function ramp($value)
+    {
+        return max($value, 0);
     }
 }

@@ -29,6 +29,30 @@ class Order extends Model implements ShebaOrderInterface, CanHaveVoucher
         $this->codeBuilder = new CodeBuilder();
     }
 
+    public static function boot()
+    {
+        parent::boot();
+
+        self::created(function(Order $model){
+            $model->createOrUpdateReport(true);
+        });
+
+        self::updated(function(Order $model){
+            $model->createOrUpdateReport(true);
+        });
+    }
+
+    public function createOrUpdateReport($update_partner_order_report = false)
+    {
+        if ($update_partner_order_report) {
+            foreach ($this->partnerOrders as $partner_order) {
+                /** @var PartnerOrder $partner_order */
+                $partner_order->createOrUpdateReport();
+            }
+        }
+        $this->customer->createOrUpdateReport();
+    }
+
     public function jobs()
     {
         return $this->hasManyThrough(Job::class, PartnerOrder::class);

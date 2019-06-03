@@ -4,6 +4,7 @@ use App\Models\Affiliate;
 use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\Transport\TransportTicketOrder;
+use App\Models\Voucher;
 use App\Transformers\BusRouteTransformer;
 use App\Transformers\CustomSerializer;
 
@@ -21,6 +22,7 @@ use Sheba\Payment\Adapters\Payable\TransportTicketPurchaseAdapter;
 use Sheba\Payment\ShebaPayment;
 
 use Sheba\Transport\Bus\Exception\InvalidLocationAddressException;
+use Sheba\Transport\Bus\Generators\CompanyList;
 use Sheba\Transport\Bus\Generators\Destinations;
 use Sheba\Transport\Bus\Generators\Routes;
 use Sheba\Transport\Bus\Generators\SeatPlan\SeatPlan;
@@ -315,7 +317,24 @@ class BusTicketController extends Controller
             $response = $vendor->bookTicket($ticket_request);
 
             $ticket_request->setReservationDetails(json_encode($response['data']));
+
+            /**
+             * TEMPORARY FIXING PRICING ISSUE FOR IOS
+             * REMOVE WHERE IOS GOES TO PLAY STORE
+             */
+            if (
+                ($request->headers->has('platform-name') && $request->headers->get('platform-name') == 'ios')
+                && ($request->headers->has('version-code') && $request->headers->get('version-code') == 116)
+                && ($request->has('voucher_id') && $request->voucher_id)
+            ) {
+                $total_amount = json_decode($ticket_request->getReservationDetails())->grandTotalBase;
+                $request->amount = ceil($total_amount);
+                $ticket_request->setAmount($request->amount)->setVoucher($request->voucher_id);
+            }
+
             $order = $creator->setRequest($ticket_request)->create();
+            $order = $order->calculate();
+            $order->amount = $order->getNetBill();
 
             return api_response($request, null, 200, ['data' => $order]);
         } catch (ValidationException $e) {
@@ -348,7 +367,7 @@ class BusTicketController extends Controller
                 return api_response($request, null, 403, ['message' => "You don't have sufficient balance to buy this ticket."]);
             }
 
-            $order = $ticket_order_repo->findById($request->order_id);
+            $order = $ticket_order_repo->findById($request->order_id)->calculate();
             $payment = $this->getPayment($request->payment_method, $order);
             if ($payment) {
                 // $link = $payment->redirect_url;
@@ -441,7 +460,8 @@ class BusTicketController extends Controller
                 })->toArray()),
                 'boarding_point' => $trips_details->boardingPoint,
                 'dropping_point' => $trips_details->boardingPoint,
-                'seat_details' => $trips_details->coachSeatList
+                'seat_details' => $trips_details->coachSeatList,
+                'discount_amount'=> (double) $order->getAppliedDiscount()
             ];
 
             return api_response($request, $history, 200, ['details' => $history]);
@@ -517,6 +537,39 @@ class BusTicketController extends Controller
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return null;
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @param CompanyList $company_list
+     * @return JsonResponse
+     */
+    public function companies(Request $request, CompanyList $company_list)
+    {
+        try {
+            $this->validate($request, []);
+
+            $agent = $this->getAgent($request);
+            $this->setModifier($agent);
+
+            $companies = [];
+            collect($company_list->getCompanies())->each(function ($company) use (&$companies) {
+                $companies[] = ['name' => $company['name']];
+            });
+
+            return api_response($request, null, 200, ['companies' => $companies]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (TransportException $e) {
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
         }
     }
 }

@@ -22,6 +22,7 @@ class BusinessRoute
 
                 $api->get('/dept-role', 'B2b\CoWorkerController@departmentRole');
                 $api->post('/departments', 'B2b\CoWorkerController@addBusinessDepartment');
+                $api->get('/departments', 'B2b\CoWorkerController@getBusinessDepartments');
                 $api->post('/roles', 'B2b\CoWorkerController@addBusinessRole');
 
                 $api->get('/sms-templates', 'B2b\BusinessSmsTemplateController@index');
@@ -42,6 +43,58 @@ class BusinessRoute
                         $api->get('bills/clear', 'B2b\OrderController@clearBills');
                         $api->get('bills', 'B2b\OrderController@getBills');
                     });
+                });
+
+                $api->group(['prefix' => 'form-templates'], function ($api) {
+                    $api->get('/', 'B2b\FormTemplateController@index');
+                    $api->post('/', 'B2b\FormTemplateController@store');
+                    $api->group(['prefix' => '{form_template}'], function ($api) {
+                        $api->get('/', 'B2b\FormTemplateController@get');
+                        $api->post('/', 'B2b\FormTemplateController@edit');
+                        $api->group(['prefix' => 'items'], function ($api) {
+                            $api->post('/', 'B2b\FormTemplateItemController@store');
+                            $api->group(['prefix' => '{item}'], function ($api) {
+                                $api->post('/', 'B2b\FormTemplateItemController@edit');
+                                $api->delete('/', 'B2b\FormTemplateItemController@destroy');
+                            });
+                        });
+                    });
+                });
+
+                $api->group(['prefix' => 'inspections'], function ($api) {
+                    $api->get('/', 'B2b\InspectionController@index');
+                    $api->post('/', 'B2b\InspectionController@store');
+                    $api->get('/forms', 'B2b\InspectionController@inspectionForms');
+                    $api->group(['prefix' => '{inspection}'], function ($api) {
+                        $api->get('/', 'B2b\InspectionController@show');
+                        $api->get('list', 'B2b\InspectionController@getChildrenInspections');
+                        $api->post('/', 'B2b\InspectionController@edit');
+                        $api->post('submit', 'B2b\InspectionController@submit');
+                        $api->group(['prefix' => 'items'], function ($api) {
+                            $api->post('/', 'B2b\InspectionItemController@store');
+                            $api->group(['prefix' => '{item}'], function ($api) {
+                                $api->post('/', 'B2b\InspectionItemController@edit');
+                                $api->post('acknowledge', 'B2b\InspectionItemController@acknowledge');
+                                $api->delete('/', 'B2b\InspectionItemController@destroy');
+                            });
+                        });
+                    });
+                });
+
+                $api->group(['prefix' => 'inspection-items'], function ($api) {
+                    $api->get('/', 'B2b\InspectionItemController@index');
+                    $api->get('/{item}', 'B2b\InspectionItemController@show');
+                });
+
+                $api->group(['prefix' => 'issues'], function ($api) {
+                    $api->get('/', 'B2b\IssueController@index');
+                    $api->post('/', 'B2b\IssueController@store');
+                    $api->get('/{issue}', 'B2b\IssueController@show');
+                    $api->post('{issue}/close', 'B2b\IssueController@close');
+                    $api->post('/{issue}/attachments', 'B2b\IssueController@storeAttachment');
+                    $api->get('/{issue}/attachments', 'B2b\IssueController@getAttachments');
+                    $api->post('/{issue}/comments', 'B2b\IssueController@storeComment');
+                    $api->get('/{issue}/comments', 'B2b\IssueController@getComments');
                 });
             });
         });
@@ -94,7 +147,10 @@ class BusinessRoute
                         $api->get('/', 'B2b\TripRequestController@tripRequestInfo');
                         $api->post('/comments', 'B2b\TripRequestController@commentOnTripRequest');
                     });
+                });
 
+                $api->group(['prefix' => 'inspections'], function ($api) {
+                    $api->get('/', 'B2b\InspectionController@individualInspection');
                 });
             });
         });
