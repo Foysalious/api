@@ -96,6 +96,15 @@ class BusinessRoute
                     $api->post('/{issue}/comments', 'B2b\IssueController@storeComment');
                     $api->get('/{issue}/comments', 'B2b\IssueController@getComments');
                 });
+
+                $api->group(['prefix' => 'fuel-logs'], function ($api) {
+                    $api->get('/', 'B2b\FuelLogController@index');
+                    $api->get('/{log}', 'B2b\FuelLogController@show');
+                    $api->post('/{log}/attachments', 'B2b\FuelLogController@storeAttachment');
+                    $api->get('/{log}/attachments', 'B2b\FuelLogController@getAttachments');
+                    $api->post('/{log}/comments', 'B2b\FuelLogController@storeComment');
+                    $api->get('/{log}/comments', 'B2b\FuelLogController@getComments');
+                });
             });
         });
         $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {
