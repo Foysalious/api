@@ -45,7 +45,7 @@ class FuelLogController extends Controller
                     'unit' => $log->unit,
                     'volume' => $log->volume,
                     'price' => $log->price,
-                    'refilled_date' => $log->refilled_date,
+                    'refilled_date' => $log->refilled_date->toDateTimeString(),
                     'station_name' => $log->station_name,
                     'station_address' => $log->station_address,
                     'reference' => $log->reference,
@@ -78,7 +78,7 @@ class FuelLogController extends Controller
         try {
             $business = $request->business;
             $member = $request->manager_member;
-          
+
             $fuel_log = FuelLog::find((int)$log);
             if (!$fuel_log) return api_response($request, null, 404);
 
@@ -90,7 +90,7 @@ class FuelLogController extends Controller
                 'unit' => $fuel_log->unit,
                 'volume' => $fuel_log->volume,
                 'price' => $fuel_log->price,
-                'refilled_date' => $fuel_log->refilled_date,
+                'refilled_date' => $fuel_log->refilled_date->toDateTimeString(),
                 'station_name' => $fuel_log->station_name,
                 'station_address' => $fuel_log->station_address,
                 'reference' => $fuel_log->reference,
