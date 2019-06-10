@@ -23,7 +23,7 @@ class FuelLogController extends Controller
         try {
             $business = $request->business;
             $member = $request->manager_member;
-            $this->setModifier($member);
+
             list($offset, $limit) = calculatePagination($request);
             $fuel_logs = FuelLog::with('vehicle')->orderBy('id', 'DESC')->skip($offset)->limit($limit);
 
@@ -78,7 +78,7 @@ class FuelLogController extends Controller
         try {
             $business = $request->business;
             $member = $request->manager_member;
-            $this->setModifier($member);
+          
             $fuel_log = FuelLog::find((int)$log);
             if (!$fuel_log) return api_response($request, null, 404);
 
