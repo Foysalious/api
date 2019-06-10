@@ -578,5 +578,7 @@ return [
             'interest' => '25',
         ],
     ],
-    'WEEKS' => ['Saturday' => 1, 'Sunday' => 2, 'Monday' => 3, 'Tuesday' => 4, 'Wednesday' => 5, 'Thursday' => 6, 'Friday' => 7]
+    'WEEKS' => ['Saturday' => 1, 'Sunday' => 2, 'Monday' => 3, 'Tuesday' => 4, 'Wednesday' => 5, 'Thursday' => 6, 'Friday' => 7],
+    'FUEL_TYPES' => ['petrol', 'diesel', 'octane', 'cng'],
+    'FUEL_UNITS' => ['ltr', 'cubic_feet'],
 ];
