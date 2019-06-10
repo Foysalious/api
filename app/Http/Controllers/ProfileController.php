@@ -80,6 +80,9 @@ class ProfileController extends Controller
                 if (empty($profile->password) && !empty($request->password)) {
                     $profile->password = bcrypt($request->password);
                 }
+                if (empty($profile->name)) {
+                    $profile->name = $request->name;
+                }
                 $profile->save();
             }
         } elseif ($request->has('profile_id')) {
