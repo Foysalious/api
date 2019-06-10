@@ -23,4 +23,11 @@ class FuelLog extends Model
     {
         return $this->morphMany(Comment::class, 'commentable');
     }
+
+    public function scopeFuelLogs($query, $business)
+    {
+        return $query->whereHas('vehicle', function ($query) use ($business) {
+            $query->where('owner_id', $business->id);
+        })->with('vehicle')->orderBy('id', 'DESC');
+    }
 }
