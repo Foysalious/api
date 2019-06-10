@@ -81,6 +81,12 @@ class BusinessRoute
                     });
                 });
 
+                $api->group(['prefix' => 'fuel-logs'], function ($api) {
+                    $api->get('/', 'B2b\FuelLogController@index');
+                    $api->post('/', 'B2b\FuelLogController@store');
+                    $api->post('{fuel_log}', 'B2b\FuelLogController@store');
+                });
+
                 $api->group(['prefix' => 'inspection-items'], function ($api) {
                     $api->get('/', 'B2b\InspectionItemController@index');
                     $api->get('/{item}', 'B2b\InspectionItemController@show');
