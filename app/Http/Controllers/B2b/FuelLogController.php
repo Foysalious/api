@@ -183,8 +183,6 @@ class FuelLogController extends Controller
             $member = $request->manager_member;
             $this->setModifier($member);
             $fuel_log = FuelLog::find((int)$log);
-            if (!$request->hasFile('file'))
-                return redirect()->back();
             $data = $this->storeAttachmentToCDN($request->file('file'));
             $attachment = $fuel_log->attachments()->save(new Attachment($this->withBothModificationFields($data)));
             return api_response($request, $attachment, 200, ['attachment' => $attachment->file]);
