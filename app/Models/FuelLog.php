@@ -4,7 +4,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class FuelLog extends Model
 {
+
     protected $guarded = ['id',];
+    protected $dates = ['refilled_date'];
     protected $table = 'fuel_logs';
 
     public function vehicle()

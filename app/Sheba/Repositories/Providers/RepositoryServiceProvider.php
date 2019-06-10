@@ -3,6 +3,7 @@
 use Illuminate\Support\ServiceProvider;
 use Sheba\Repositories\Business\FormTemplateItemRepository;
 use Sheba\Repositories\Business\FormTemplateRepository;
+use Sheba\Repositories\Business\FuelLogRepository;
 use Sheba\Repositories\Business\InspectionItemRepository;
 use Sheba\Repositories\Business\InspectionItemStatusLogRepository;
 use Sheba\Repositories\Business\InspectionRepository;
@@ -10,6 +11,7 @@ use Sheba\Repositories\Business\InspectionScheduleRepository;
 use Sheba\Repositories\Business\IssueRepository;
 use Sheba\Repositories\Interfaces\FormTemplateItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\FormTemplateRepositoryInterface;
+use Sheba\Repositories\Interfaces\FuelLogRepositoryInterface;
 use Sheba\Repositories\Interfaces\InspectionItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\InspectionItemStatusLogRepositoryInterface;
 use Sheba\Repositories\Interfaces\InspectionRepositoryInterface;
@@ -28,5 +30,6 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(InspectionItemStatusLogRepositoryInterface::class, InspectionItemStatusLogRepository::class);
         $this->app->bind(IssueRepositoryInterface::class, IssueRepository::class);
         $this->app->bind(InspectionScheduleRepositoryInterface::class, InspectionScheduleRepository::class);
+        $this->app->bind(FuelLogRepositoryInterface::class, FuelLogRepository::class);
     }
 }
