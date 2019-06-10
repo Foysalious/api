@@ -7,11 +7,13 @@ use App\Models\Comment;
 use App\Models\FuelLog;
 use App\Repositories\CommentRepository;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Attachments\FilesAttachment;
 use Sheba\Business\FuelLog\Creator;
 use Sheba\ModificationFields;
+use DB;
 
 class FuelLogController extends Controller
 {
@@ -127,18 +129,31 @@ class FuelLogController extends Controller
                 'reference' => 'string',
                 'comment' => 'string'
             ]);
+            $member = $request->manager_member;
             $this->setModifier($request->manager_member);
-            $fuel_log = $creator->setVehicleId($request->vehicle_id)->setDate($request->date)
+            $creator->setVehicleId($request->vehicle_id)->setDate($request->date)
                 ->setPrice($request->price)->setVolume($request->volume)->setUnit($request->unit)->setType($request->type)
                 ->setStationName($request->station_name)->setStationAddress($request->station_address)
-                ->setReference($request->reference)
-                ->save();
+                ->setReference($request->reference);
+            $fuel_log = null;
+            DB::transaction(function () use (&$fuel_log, $creator, $member, $request) {
+                $fuel_log = $creator->save();
+                if ($request->comment) (new CommentRepository('FuelLog', $fuel_log->id, $member))->store($request->comment);
+                foreach ($request->file as $file) {
+                    $data = $this->storeAttachmentToCDN($file);
+                    $attachment = $fuel_log->attachments()->save(new Attachment($this->withBothModificationFields($data)));
+                }
+            });
+            return api_response($request, null, 200, ['id' => $fuel_log->id]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
+        } catch (QueryException $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
