@@ -75,6 +75,7 @@ class TopUpController extends Controller
 
             return api_response($request, null, 200, ['message' => "Recharge Request Successful"]);
         } catch (ValidationException $e) {
+            app('sentry')->captureException($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
@@ -95,7 +96,7 @@ class TopUpController extends Controller
             $error_response->setResponse($data);
             $top_up->processFailedTopUp($error_response->getTopUpOrder(), $error_response);
 
-            $topup_fail_namespace = 'Topup:Fail_'. Carbon::now()->timestamp . str_random(6);
+            $topup_fail_namespace = 'Topup:Fail_' . Carbon::now()->timestamp . str_random(6);
             Redis::set($topup_fail_namespace, json_encode($data));
 
             return api_response($request, 1, 200);
