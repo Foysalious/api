@@ -43,7 +43,7 @@ class FuelLog extends Model
         return $query->whereHas('vehicle', function ($query) use ($business) {
             $query->where('owner_id', $business->id);
         })->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59'])
-            ->where('unit', 'LIKE', 'ltr')->sum('price');
+            ->where('unit', 'LIKE', 'ltr');
     }
 
     public function scopeTotalGallons($query, $start_date, $end_date, $business)
@@ -51,6 +51,6 @@ class FuelLog extends Model
         return $query->whereHas('vehicle', function ($query) use ($business) {
             $query->where('owner_id', $business->id);
         })->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59'])
-            ->where('unit', 'LIKE', 'cubic_feet')->sum('price');
+            ->where('unit', 'LIKE', 'cubic_feet');
     }
 }

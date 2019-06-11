@@ -58,14 +58,12 @@ class OrderCreator
             ->setDiscountByArray($logistic_nature->getDiscount())
             ->setPaidAmount($logistic_nature->getPaidAmount())
             ->setCustomerProfileId($this->job->partnerOrder->order->customer->profile->id)
-            ->setVendorOrder((new VendorOrder())->setDetailUrl($detail_url)->setBillUrl($detail_url . '/bills'))
+            ->setVendorOrder((new VendorOrder())->setDetailUrl($detail_url)->setBillUrl($detail_url . '/bills')->setCode($this->job->partner_order->order->code())->setId($this->job->partner_order->order->id))
             ->setParcelType($this->category->logistic_parcel_type)
             ->setSuccessUrl($base_url . '/logistic-completed')
             ->setPickedUrl($base_url . '/logistic-picked')
             ->setFailureUrl($base_url . '/logistic-completed')
-            ->setCollectionUrl($base_url . '/collect-by-logistic')
-            ->setCode($this->job->partner_order->order->code())
-            ->setId($this->job->order->id);
+            ->setCollectionUrl($base_url . '/collect-by-logistic');
 
         $logistic_order = $this->repo->store($order->toArray());
 
