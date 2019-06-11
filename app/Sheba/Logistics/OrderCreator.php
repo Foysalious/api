@@ -64,7 +64,7 @@ class OrderCreator
             ->setPickedUrl($base_url . '/logistic-picked')
             ->setFailureUrl($base_url . '/logistic-completed')
             ->setCollectionUrl($base_url . '/collect-by-logistic')
-            ->setCode($this->job->order->code())
+            ->setCode($this->job->partner_order->order->code())
             ->setId($this->job->order->id);
 
         $logistic_order = $this->repo->store($order->toArray());
