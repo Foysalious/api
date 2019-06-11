@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
+use Sheba\TopUp\Creator;
 use Sheba\TopUp\TopUp;
 use Sheba\TopUp\Jobs\TopUpExcelJob;
 use Sheba\TopUp\Jobs\TopUpJob;
@@ -54,7 +55,7 @@ class TopUpController extends Controller
         }
     }
 
-    public function topUp(Request $request, VendorFactory $vendor, TopUpRequest $top_up_request)
+    public function topUp(Request $request, TopUpRequest $top_up_request, Creator $creator)
     {
         try {
             $this->validate($request, [
@@ -63,22 +64,18 @@ class TopUpController extends Controller
                 'vendor_id' => 'required|exists:topup_vendors,id',
                 'amount' => 'required|min:10|max:1000|numeric'
             ]);
-
             $agent = $this->getAgent($request);
-
-            if ($agent->wallet < (double)$request->amount) return api_response($request, null, 403, ['message' => "You don't have sufficient balance to recharge."]);
-            $vendor = $vendor->getById($request->vendor_id);
-            if (!$vendor->isPublished()) return api_response($request, null, 403, ['message' => 'Sorry, we don\'t support this operator at this moment']);
-
-            $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type);
-            dispatch((new TopUpJob($agent, $request->vendor_id, $top_up_request)));
-
+            $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id);
+            if ($top_up_request->hasError()) return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
+            $top_up_order = $creator->setTopUpRequest($top_up_request)->create();
+            dispatch((new TopUpJob($agent, $request->vendor_id, $top_up_order)));
             return api_response($request, null, 200, ['message' => "Recharge Request Successful"]);
         } catch (ValidationException $e) {
             app('sentry')->captureException($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

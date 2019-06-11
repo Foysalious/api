@@ -62,21 +62,23 @@ class TopUp
     }
 
     /**
-     * @param TopUpRequest $top_up_request
+     * @param TopUpOrder $top_up_order
      * @throws Exception
      */
-    public function recharge(TopUpRequest $top_up_request)
+    public function recharge(TopUpOrder $top_up_order)
     {
-        if ($this->validator->setRequest($top_up_request)->validate()->hasError()) return;
-        $this->response = $this->vendor->recharge($top_up_request);
+//        if ($this->validator->setRequest($top_up_order)->validate()->hasError()) return;
+        $this->response = $this->vendor->recharge($top_up_order);
         if ($this->response->hasSuccess()) {
             $response = $this->response->getSuccess();
-            DB::transaction(function () use ($response, $top_up_request) {
+            DB::transaction(function () use ($response, $top_up_order) {
                 $top_up_order = $this->placeTopUpOrder($response, $top_up_request->getMobile(), $top_up_request->getAmount());
                 $this->agent->getCommission()->setTopUpOrder($top_up_order)->disburse();
                 $this->vendor->deductAmount($top_up_request->getAmount());
                 $this->isSuccessful = true;
             });
+        }else{
+
         }
     }
 
@@ -131,6 +133,10 @@ class TopUp
         $top_up_order->vendor = $this->model;
 
         return $top_up_order;
+    }
+
+    private function updateTopOrder(){
+
     }
 
     /**

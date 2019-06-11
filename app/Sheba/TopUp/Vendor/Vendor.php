@@ -1,5 +1,6 @@
 <?php namespace Sheba\TopUp\Vendor;
 
+use App\Models\TopUpOrder;
 use App\Models\TopUpRechargeHistory;
 use App\Models\TopUpVendor;
 use Carbon\Carbon;
@@ -26,7 +27,7 @@ abstract class Vendor
         return $this->model->is_published;
     }
 
-    abstract function recharge(TopUpRequest $top_up_request): TopUpResponse;
+    abstract function recharge(TopUpOrder $topup_order): TopUpResponse;
 
     abstract function getTopUpInitialStatus();
 

@@ -1,5 +1,6 @@
 <?php namespace Sheba\TopUp\Vendor\Internal;
 
+use App\Models\TopUpOrder;
 use Sheba\TopUp\TopUpRequest;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 use Sheba\TopUp\Vendor\Internal\Pretups\Client as PretupsClient;
@@ -14,11 +15,11 @@ trait Pretups
     }
 
     /**
-     * @param TopUpRequest $top_up_request
+     * @param TopUpOrder $topup_order
      * @return TopUpResponse
      * @throws \Exception
      */
-    public function recharge(TopUpRequest $top_up_request): TopUpResponse
+    public function recharge(TopUpOrder $topup_order): TopUpResponse
     {
         $pretups = $this->pretups->setPin($this->getPin())->setMId($this->getMid())->setUrl($this->getUrl())
             ->setEXTNWCODE($this->getEXTNWCODE())->setAmountMultiplier($this->getAmountMultiplier())
@@ -26,7 +27,7 @@ trait Pretups
 
         if($this->needsProxy()) $pretups->setProxyUrl($this->getVPNServer() . "/v2/proxy/top-up");
 
-        return $pretups->recharge($top_up_request);
+        return $pretups->recharge($topup_order);
     }
 
     public function getTopUpInitialStatus()
