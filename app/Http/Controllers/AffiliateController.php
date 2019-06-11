@@ -462,8 +462,41 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id]));
             $sp = Affiliate::agentsWithFilter($request, 'partner_affiliations')->get()->filter(function ($d) use ($agent_id) {
                 return $d['id'] == $agent_id;
             })->first();
+
+            $lite_refers = collect(DB::select('SELECT 
+    affiliates.id,
+    affiliates.profile_id,
+      (Sum(affiliate_transactions.amount))  AS total_gifted_amount, 
+     Count(DISTINCT( affiliate_transactions.id )) AS total_gifted_number,
+    affiliates.profile_id,
+    affiliates.ambassador_id,
+    affiliates.under_ambassador_since,
+    profiles.name,
+    profiles.pro_pic AS picture,
+    profiles.mobile,
+    affiliates.created_at
+FROM
+    affiliate_transactions
+        LEFT JOIN
+    `affiliates` ON `affiliate_transactions`.`affiliate_id` = `affiliates`.`id`
+        LEFT JOIN
+    profiles ON affiliates.profile_id = profiles.id
+WHERE
+         affiliate_id IN (SELECT 
+            id
+        FROM
+            affiliates
+        WHERE
+            ambassador_id = ? AND affiliates.id = ?)
+GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
+
+            $lite_refers->map(function ($agent) {
+                $agent->total_gifted_amount = (double) $agent->total_gifted_amount;
+            });
+
             $gift_amount = $agent ? $agent->total_gifted_amount : 0;
             $gift_amount += $sp ? $sp->total_gifted_amount : 0;
+            $gift_amount += count($lite_refers) > 0 ? $lite_refers[0]->total_gifted_amount : 0;
             $info->put('life_time_gift', $gift_amount);
             return api_response($request, $info, 200, $info->all());
         } catch (\Throwable $e) {
