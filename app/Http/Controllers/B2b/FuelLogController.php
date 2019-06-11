@@ -75,9 +75,9 @@ class FuelLogController extends Controller
             }
             if (count($logs_lists) > 0) return api_response($request, $logs_lists, 200, [
                 'logs_lists' => $logs_lists,
-                'total_fuel_cost' => $total_fuel_cost,
-                'total_gallons' => $total_gallons,
-                'total_litres' => $total_litres,
+                'total_fuel_cost' => (double)$total_fuel_cost,
+                'total_gallons' => (double)$total_gallons,
+                'total_litres' => (double)$total_litres,
             ]);
             else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
