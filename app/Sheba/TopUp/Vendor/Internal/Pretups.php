@@ -1,7 +1,6 @@
 <?php namespace Sheba\TopUp\Vendor\Internal;
 
 use App\Models\TopUpOrder;
-use Sheba\TopUp\TopUpRequest;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 use Sheba\TopUp\Vendor\Internal\Pretups\Client as PretupsClient;
 

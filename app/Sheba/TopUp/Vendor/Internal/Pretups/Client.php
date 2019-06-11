@@ -1,7 +1,6 @@
 <?php namespace Sheba\TopUp\Vendor\Internal\Pretups;
 
 use App\Models\TopUpOrder;
-use Sheba\TopUp\TopUpRequest;
 use Sheba\TopUp\Vendor\Response\PretupsResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 use Carbon\Carbon;
