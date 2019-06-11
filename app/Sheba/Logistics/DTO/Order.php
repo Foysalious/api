@@ -27,7 +27,17 @@ class Order
     private $collectableAmount;
     private $discount;
     private $isDiscountInPercentage;
+    private $code;
 
+    /**
+     * @param mixed $code
+     * @return Order
+     */
+    public function setCode($code)
+    {
+        $this->code = $code;
+        return $this;
+    }
     /**
      * @param int $id
      *
@@ -245,6 +255,8 @@ class Order
             'collectable_amount'    => $this->collectableAmount,
             'discount'              => $this->discount,
             'is_percentage'         => $this->isDiscountInPercentage,
+            'id'                    => $this->id,
+            'code'                  => $this->code
         ];
     }
 }
