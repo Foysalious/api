@@ -12,7 +12,7 @@ use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpRequest;
 use Sheba\TopUp\Vendor\VendorFactory;
 
-class TopUpJob extends Job
+class TopUpJob extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
 

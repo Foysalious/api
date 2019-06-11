@@ -68,14 +68,17 @@ class TopUpController extends Controller
             $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id);
             if ($top_up_request->hasError()) return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
             $top_up_order = $creator->setTopUpRequest($top_up_request)->create();
-            dispatch((new TopUpJob($agent, $request->vendor_id, $top_up_order)));
-            return api_response($request, null, 200, ['message' => "Recharge Request Successful"]);
+            if ($top_up_order) {
+                dispatch((new TopUpJob($agent, $request->vendor_id, $top_up_order)));
+                return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $top_up_order->id]);
+            } else {
+                return api_response($request, null, 500);
+            }
         } catch (ValidationException $e) {
             app('sentry')->captureException($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

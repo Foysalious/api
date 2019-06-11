@@ -31,9 +31,10 @@ class Creator
         $model = $vendor->getModel();
         $top_up_order->agent_type = "App\\Models\\" . class_basename($this->topUpRequest->getAgent());
         $top_up_order->agent_id = $agent->id;
+        $top_up_order->payee_mobile_type = $this->topUpRequest->getType();
         $top_up_order->payee_mobile = $this->topUpRequest->getMobile();
         $top_up_order->amount = $this->topUpRequest->getAmount();
-        $top_up_order->status = "Pending";
+        $top_up_order->status = config('topup.status.initiated')['sheba'];
         $top_up_order->vendor_id = $model->id;
         $top_up_order->sheba_commission = ($this->topUpRequest->getAmount() * $model->sheba_commission) / 100;
         $this->setModifier($agent);
