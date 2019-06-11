@@ -1,12 +1,12 @@
 <?php namespace Sheba\Business\FuelLog;
 
+use Carbon\Carbon;
 use Sheba\Repositories\Interfaces\FuelLogRepositoryInterface;
 
 class Creator
 {
     private $fuelLogRepository;
     private $vehicleId;
-    private $refilledDate;
     private $price;
     private $volume;
     private $unit;
@@ -15,6 +15,8 @@ class Creator
     private $stationAddress;
     private $reference;
     private $data;
+    /** @var Carbon */
+    private $refilledDate;
 
     public function __construct(FuelLogRepositoryInterface $fuel_log_repository)
     {
@@ -29,7 +31,7 @@ class Creator
 
     public function setDate($date)
     {
-        $this->refilledDate = $date;
+        $this->refilledDate = Carbon::parse($date);
         return $this;
     }
 
@@ -89,7 +91,7 @@ class Creator
             'unit' => $this->unit,
             'volume' => $this->volume,
             'price' => $this->price,
-            'refilled_date' => $this->refilledDate,
+            'refilled_date' => $this->refilledDate->toDateTimeString(),
             'station_name' => $this->stationName,
             'station_address' => $this->stationAddress,
             'reference' => $this->reference,
