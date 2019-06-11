@@ -23,4 +23,34 @@ class FuelLog extends Model
     {
         return $this->morphMany(Comment::class, 'commentable');
     }
+
+    public function scopeFuelLogs($query, $business)
+    {
+        return $query->whereHas('vehicle', function ($query) use ($business) {
+            $query->where('owner_id', $business->id);
+        })->with('vehicle')->orderBy('id', 'DESC');
+    }
+
+    public function scopeTotalFuelCost($query, $start_date, $end_date, $business)
+    {
+        return $query->whereHas('vehicle', function ($query) use ($business) {
+            $query->where('owner_id', $business->id);
+        })->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59'])->sum('price');
+    }
+
+    public function scopeTotalLitres($query, $start_date, $end_date, $business)
+    {
+        return $query->whereHas('vehicle', function ($query) use ($business) {
+            $query->where('owner_id', $business->id);
+        })->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59'])
+            ->where('unit', 'LIKE', 'ltr')->sum('price');
+    }
+
+    public function scopeTotalGallons($query, $start_date, $end_date, $business)
+    {
+        return $query->whereHas('vehicle', function ($query) use ($business) {
+            $query->where('owner_id', $business->id);
+        })->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59'])
+            ->where('unit', 'LIKE', 'cubic_feet')->sum('price');
+    }
 }

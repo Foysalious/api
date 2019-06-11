@@ -27,7 +27,18 @@ class FuelLogController extends Controller
             $member = $request->manager_member;
 
             list($offset, $limit) = calculatePagination($request);
-            $fuel_logs = FuelLog::with('vehicle')->orderBy('id', 'DESC')->skip($offset)->limit($limit);
+            $fuel_logs = FuelLog::fuelLogs($business);
+            $fuel_logs = $fuel_logs->skip($offset)->limit($limit);
+
+            $start_date = $request->has('start_date') ? $request->start_date : null;
+            $end_date = $request->has('end_date') ? $request->end_date : null;
+            if ($start_date && $end_date) {
+                $fuel_logs->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
+            }
+
+            $total_fuel_cost = FuelLog::totalFuelCost($start_date, $end_date, $business);
+            $total_litres = FuelLog::totalLitres($start_date, $end_date, $business);
+            $total_gallons = FuelLog::totalGallons($start_date, $end_date, $business);
 
             if ($request->has('type')) {
                 $fuel_logs = $fuel_logs->whereHas('vehicle', function ($query) use ($request) {
@@ -40,7 +51,7 @@ class FuelLogController extends Controller
             $logs_lists = [];
             foreach ($fuel_logs->get() as $log) {
                 $vehicle = $log->vehicle;
-                $basic_information = $vehicle->basicInformations;
+                $basic_information = $vehicle ? $vehicle->basicInformations : null;
                 $logs = [
                     'id' => $log->id,
                     'type' => $log->type,
@@ -52,11 +63,11 @@ class FuelLogController extends Controller
                     'station_address' => $log->station_address,
                     'reference' => $log->reference,
                     'vehicle' => [
-                        'id' => $vehicle->id,
-                        'vehicle_model' => $basic_information->model_name,
-                        'model_year' => Carbon::parse($basic_information->model_year)->format('Y'),
-                        'status' => $vehicle->status,
-                        'vehicle_type' => $basic_information->type,
+                        'id' => $vehicle ? $vehicle->id : null,
+                        'vehicle_model' => $basic_information ? $basic_information->model_name : null,
+                        'model_year' => $basic_information ? Carbon::parse($basic_information->model_year)->format('Y') : null,
+                        'status' => $vehicle ? $vehicle->status : null,
+                        'vehicle_type' => $basic_information ? $basic_information->type : null,
                         'assigned_to' => $vehicle->businessDepartment ? $vehicle->businessDepartment->name : null,
                     ],
                 ];
@@ -64,9 +75,9 @@ class FuelLogController extends Controller
             }
             if (count($logs_lists) > 0) return api_response($request, $logs_lists, 200, [
                 'logs_lists' => $logs_lists,
-                'total_fuel_cost' => '793.53',
-                'total_gallons' => '311',
-                'cost_per_gallon' => '240',
+                'total_fuel_cost' => $total_fuel_cost,
+                'total_gallons' => $total_gallons,
+                'total_litres' => $total_litres,
             ]);
             else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
