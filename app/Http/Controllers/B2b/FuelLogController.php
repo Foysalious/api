@@ -30,6 +30,16 @@ class FuelLogController extends Controller
             $fuel_logs = FuelLog::fuelLogs($business);
             $fuel_logs = $fuel_logs->skip($offset)->limit($limit);
 
+            $start_date = $request->has('start_date') ? $request->start_date : null;
+            $end_date = $request->has('end_date') ? $request->end_date : null;
+            if ($start_date && $end_date) {
+                $fuel_logs->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
+            }
+
+            $total_fuel_cost = FuelLog::totalFuelCost($start_date, $end_date, $business);
+            $total_litres = FuelLog::totalLitres($start_date, $end_date, $business);
+            $total_gallons = FuelLog::totalGallons($start_date, $end_date, $business);
+
             if ($request->has('type')) {
                 $fuel_logs = $fuel_logs->whereHas('vehicle', function ($query) use ($request) {
                     $query->whereHas('basicInformations', function ($query) use ($request) {
@@ -65,9 +75,9 @@ class FuelLogController extends Controller
             }
             if (count($logs_lists) > 0) return api_response($request, $logs_lists, 200, [
                 'logs_lists' => $logs_lists,
-                'total_fuel_cost' => '793.53',
-                'total_gallons' => '311',
-                'total_litres' => '240',
+                'total_fuel_cost' => $total_fuel_cost,
+                'total_gallons' => $total_gallons,
+                'total_litres' => $total_litres,
             ]);
             else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
