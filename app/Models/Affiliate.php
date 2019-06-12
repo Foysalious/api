@@ -106,23 +106,42 @@ class Affiliate extends Model implements TopUpAgent, MovieAgent, TransportAgent,
         return $query->select('affiliates.profile_id', 'affiliates.id', 'affiliates.under_ambassador_since', 'affiliates.ambassador_id', 'affiliates.total_gifted_number', 'affiliates.total_gifted_amount', 'profiles.name', 'profiles.pro_pic as picture', 'profiles.mobile')->leftJoin('profiles', 'profiles.id', '=', 'affiliates.profile_id')->orderBy('affiliates.total_gifted_amount', $order)->where('affiliates.ambassador_id', $affiliate->id);
     }
 
+//    public function scopeAgentsWithFilter($query, $request, $tableName)
+//    {
+//        $affiliate = $request->affiliate;
+//        $rangeQuery = 'affiliate_transactions.is_gifted = 1     ';
+//        if (isset($request->range) && !empty($request->range)) {
+//            $range = getRangeFormat($request);
+//            $rangeQuery = $rangeQuery . ' and `affiliate_transactions`.`created_at` BETWEEN \'' . $range[0]->toDateTimeString() . '\' AND \'' . $range[1]->toDateTimeString() . '\'';
+//        }
+//        return $query->select('affiliate_transactions' . '.affiliate_id as id', 'affiliates.profile_id', 'affiliates.ambassador_id', 'affiliates.under_ambassador_since', 'profiles.name', 'profiles.pro_pic as picture', 'profiles.mobile', 'affiliates.created_at')
+//            ->leftJoin('affiliate_transactions', 'affiliate_transactions.affiliate_id', '=', 'affiliates.id')
+////            ->leftJoin($tableName, 'affiliate_transactions.affiliation_id', ' = ', $tableName . '.id')
+//            ->leftJoin('affiliates', 'affiliate_transactions' . '.affiliate_id', '=', 'affiliates.id')
+//            ->leftJoin('profiles', 'profiles.id', '=', 'affiliates.profile_id')
+//            ->selectRaw('sum(affiliate_transactions.amount) as total_gifted_amount, count(distinct(affiliate_transactions.id)) as total_gifted_number')
+//            ->where('affiliates.id', $affiliate->id)
+//            ->whereRaw($rangeQuery)
+//            ->groupBy('affiliate_transactions' . '.affiliate_id');
+//    }
+
     public function scopeAgentsWithFilter($query, $request, $tableName)
     {
         $affiliate = $request->affiliate;
-        $rangeQuery = 'affiliate_transactions.is_gifted = 1     ';
+        $rangeQuery = 'affiliate_transactions.is_gifted = 1 and affiliate_transactions.created_at > aff2.under_ambassador_since';
         if (isset($request->range) && !empty($request->range)) {
             $range = getRangeFormat($request);
             $rangeQuery = $rangeQuery . ' and `affiliate_transactions`.`created_at` BETWEEN \'' . $range[0]->toDateTimeString() . '\' AND \'' . $range[1]->toDateTimeString() . '\'';
         }
-        return $query->select('affiliate_transactions' . '.affiliate_id as id', 'affiliates.profile_id', 'affiliates.ambassador_id', 'affiliates.under_ambassador_since', 'profiles.name', 'profiles.pro_pic as picture', 'profiles.mobile', 'affiliates.created_at')
+        return $query->select($tableName . '.affiliate_id as id', 'aff2.profile_id', 'aff2.ambassador_id', 'aff2.under_ambassador_since', 'profiles.name', 'profiles.pro_pic as picture', 'profiles.mobile', 'aff2.created_at')
             ->leftJoin('affiliate_transactions', 'affiliate_transactions.affiliate_id', '=', 'affiliates.id')
-//            ->leftJoin($tableName, 'affiliate_transactions.affiliation_id', ' = ', $tableName . '.id')
-            ->leftJoin('affiliates', 'affiliate_transactions' . '.affiliate_id', '=', 'affiliates.id')
-            ->leftJoin('profiles', 'profiles.id', '=', 'affiliates.profile_id')
+            ->leftJoin($tableName, 'affiliate_transactions.affiliation_id', ' = ', $tableName . '.id')
+            ->leftJoin('affiliates as aff2', $tableName . '.affiliate_id', '=', 'aff2.id')
+            ->leftJoin('profiles', 'profiles.id', '=', 'aff2.profile_id')
             ->selectRaw('sum(affiliate_transactions.amount) as total_gifted_amount, count(distinct(affiliate_transactions.id)) as total_gifted_number')
             ->where('affiliates.id', $affiliate->id)
             ->whereRaw($rangeQuery)
-            ->groupBy('affiliate_transactions' . '.affiliate_id');
+            ->groupBy($tableName . '.affiliate_id');
     }
 
     public function totalLead()

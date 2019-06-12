@@ -27,7 +27,6 @@ class Order
     private $collectableAmount;
     private $discount;
     private $isDiscountInPercentage;
-
     /**
      * @param int $id
      *
@@ -244,7 +243,7 @@ class Order
             'is_instant'            => $this->isInstant,
             'collectable_amount'    => $this->collectableAmount,
             'discount'              => $this->discount,
-            'is_percentage'         => $this->isDiscountInPercentage,
+            'is_percentage'         => $this->isDiscountInPercentage
         ];
     }
 }
