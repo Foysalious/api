@@ -18,6 +18,7 @@ class Route
                 $api->group(['prefix' => 'topup'], function ($api) {
                     $api->post('/', 'Vendor\TopUpController@topUp');
                     $api->get('', 'Vendor\TopUpController@history');
+                    $api->get('{topup}', 'Vendor\TopUpController@historyDetails');
                 });
                 $api->get('balance', 'Vendor\ShebaController@getDetails');
             });

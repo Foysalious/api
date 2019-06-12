@@ -2,29 +2,13 @@
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
-use Sheba\Reports\Affiliation\UpdateJob as AffiliationReportUpdateJob;
+use Sheba\Report\Updater\Affiliation as ReportUpdater;
 
 class Affiliation extends Model
 {
+    use ReportUpdater;
+
     protected $guarded = ['id'];
-
-    public static function boot()
-    {
-        parent::boot();
-
-        self::created(function(Affiliation $model){
-            $model->createOrUpdateReport();
-        });
-
-        self::updated(function(Affiliation $model){
-            $model->createOrUpdateReport();
-        });
-    }
-
-    public function createOrUpdateReport()
-    {
-        dispatch(new AffiliationReportUpdateJob($this));
-    }
 
     public function affiliate()
     {

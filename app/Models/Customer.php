@@ -7,7 +7,7 @@ use Sheba\MovieTicket\MovieAgent;
 use Sheba\MovieTicket\MovieTicketTrait;
 use Sheba\MovieTicket\MovieTicketTransaction;
 use Sheba\Payment\Wallet;
-use Sheba\Reports\Customer\UpdateJob as CustomerReportUpdateJob;
+use Sheba\Report\Updater\Customer as ReportUpdater;
 use Sheba\Reward\Rewardable;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
@@ -20,33 +20,12 @@ use Sheba\Voucher\Contracts\CanApplyVoucher;
 
 class Customer extends Authenticatable implements Rechargable, Rewardable, TopUpAgent, MovieAgent, TransportAgent, CanApplyVoucher
 {
-    use TopUpTrait;
-    use MovieTicketTrait;
-    use Wallet;
+    use TopUpTrait, MovieTicketTrait, Wallet, ReportUpdater;
 
     protected $fillable = ['name', 'mobile', 'email', 'password', 'fb_id', 'mobile_verified', 'email_verified', 'address', 'gender', 'dob', 'pro_pic', 'wallet', 'created_by', 'created_by_name', 'updated_by', 'updated_by_name', 'remember_token', 'reference_code', 'referrer_id', 'profile_id'];
     protected $hidden = ['password', 'remember_token',];
     protected $casts = ['wallet' => 'double'];
     private $firstOrder;
-
-
-    public static function boot()
-    {
-        parent::boot();
-
-        self::created(function(Customer $model){
-            $model->createOrUpdateReport();
-        });
-
-        self::updated(function(Customer $model){
-            $model->createOrUpdateReport();
-        });
-    }
-
-    public function createOrUpdateReport()
-    {
-        dispatch(new CustomerReportUpdateJob($this));
-    }
 
     public function mobiles()
     {

@@ -9,9 +9,12 @@ use Sheba\Jobs\CiCalculator;
 use Sheba\Dal\Complain\Model as Complain;
 use Sheba\Jobs\JobStatuses;
 use Sheba\Order\Code\Builder as CodeBuilder;
+use Sheba\Report\Updater\Job as ReportUpdater;
 
 class Job extends BaseModel
 {
+    use ReportUpdater;
+
     protected $guarded = ['id'];
     protected $materialPivotColumns = ['id', 'material_name', 'material_price', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
     protected $casts = ['sheba_contribution' => 'double', 'partner_contribution' => 'double', 'commission_rate' => 'double'];
@@ -75,19 +78,6 @@ class Job extends BaseModel
     {
         parent::__construct($attributes);
         $this->codeBuilder = new CodeBuilder();
-    }
-
-    public static function boot()
-    {
-        parent::boot();
-
-        self::created(function (Job $model) {
-            $model->partnerOrder->createOrUpdateReport();
-        });
-
-        self::updated(function (Job $model) {
-            $model->partnerOrder->createOrUpdateReport();
-        });
     }
 
     public function service()

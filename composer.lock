@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f6eed257a4e4ba3a5c005220e17a2521",
+    "content-hash": "0abb173375154789a946eecd37936374",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -2919,6 +2919,35 @@
             "time": "2019-03-16T08:18:58+00:00"
         },
         {
+            "name": "sheba/report",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_report.git",
+                "reference": "70bf17e1a7685cb39311fa18c9ec6debed8f7df5"
+            },
+            "require": {
+                "ext-redis": "*"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Sheba\\Report\\": "src"
+                }
+            },
+            "license": [
+                "proprietary"
+            ],
+            "authors": [
+                {
+                    "name": "Shafiqul Islam",
+                    "email": "shafiq.startern@gmail.com"
+                }
+            ],
+            "description": "Report updater for Sheba",
+            "time": "2019-06-11T14:10:02+00:00"
+        },
+        {
             "name": "sheba/sms",
             "version": "dev-master",
             "source": {
@@ -5434,7 +5463,8 @@
         "sheba/dal": 20,
         "sheba/voucher": 20,
         "sheba/notification": 20,
-        "sheba/sms": 20
+        "sheba/sms": 20,
+        "sheba/report": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,

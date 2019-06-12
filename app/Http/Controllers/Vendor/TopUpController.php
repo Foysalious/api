@@ -61,4 +61,16 @@ class TopUpController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function historyDetails($topup, Request $request)
+    {
+        try {
+            $data= (new VendorRepository())->topUpHistoryDetails($topup, $request);
+            $response = ['data' => $data];
+            return api_response($request, $response, 200, $response);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }
