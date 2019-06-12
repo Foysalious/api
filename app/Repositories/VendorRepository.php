@@ -32,6 +32,21 @@ class VendorRepository
 
     }
 
+    public function topUpHistoryDetails($topupID, Request $request)
+    {
+        $topup = $request->vendor->topups()->find($topupID);
+        $topup_data = [
+                'mobile' => $topup->payee_mobile,
+                'name' => $topup->payee_name ? $topup->payee_name : 'N/A',
+                'amount' => (double)$topup->amount,
+                'operator' => $topup->vendor->name,
+                'status' => $topup->status,
+                'created_at' => $topup->created_at->toDateTimeString()
+            ];
+        return $topup_data;
+
+    }
+
     public function details(Request $request)
     {
         return ['data' => ['name' => $request->vendor->name, 'balance' => (double)$request->vendor->wallet]];
