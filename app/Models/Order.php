@@ -6,9 +6,11 @@ use Sheba\Order\Code\Builder as CodeBuilder;
 use Sheba\Order\StatusCalculator;
 use Sheba\Portals\Portals;
 use Sheba\Voucher\Contracts\CanHaveVoucher;
+use Sheba\Report\Updater\Order as ReportUpdater;
 
 class Order extends Model implements ShebaOrderInterface, CanHaveVoucher
 {
+    use ReportUpdater;
     protected $guarded = ['id'];
     public $totalPrice;
     public $due;
@@ -27,30 +29,6 @@ class Order extends Model implements ShebaOrderInterface, CanHaveVoucher
         $this->salesChannelDepartments = getSalesChannels('department');
         $this->salesChannelShortNames = getSalesChannels('short_name');
         $this->codeBuilder = new CodeBuilder();
-    }
-
-    public static function boot()
-    {
-        parent::boot();
-
-        self::created(function(Order $model){
-            $model->createOrUpdateReport(true);
-        });
-
-        self::updated(function(Order $model){
-            $model->createOrUpdateReport(true);
-        });
-    }
-
-    public function createOrUpdateReport($update_partner_order_report = false)
-    {
-        if ($update_partner_order_report) {
-            foreach ($this->partnerOrders as $partner_order) {
-                /** @var PartnerOrder $partner_order */
-                $partner_order->createOrUpdateReport();
-            }
-        }
-        $this->customer->createOrUpdateReport();
     }
 
     public function jobs()

@@ -1,25 +1,14 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Report\Updater\JobService as ReportUpdater;
 
 class JobService extends Model
 {
+    use ReportUpdater;
     protected $guarded = ['id'];
     protected $casts = ['unit_price' => 'double', 'quantity' => 'double'];
     protected $table = 'job_service';
-
-    public static function boot()
-    {
-        parent::boot();
-
-        self::created(function(JobService $model){
-            $model->job->partnerOrder->createOrUpdateReport();
-        });
-
-        self::updated(function(JobService $model){
-            $model->job->partnerOrder->createOrUpdateReport();
-        });
-    }
 
     public function job()
     {

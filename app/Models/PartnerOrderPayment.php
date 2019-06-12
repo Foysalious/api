@@ -1,24 +1,13 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Report\Updater\PartnerOrderPayment as ReportUpdater;
 
 class PartnerOrderPayment extends Model
 {
+    use ReportUpdater;
     protected $guarded = ['id'];
     protected $casts = ['amount' => 'double'];
-
-    public static function boot()
-    {
-        parent::boot();
-
-        self::created(function(PartnerOrderPayment $model){
-            $model->partnerOrder->createOrUpdateReport();
-        });
-
-        self::updated(function(PartnerOrderPayment $model){
-            $model->partnerOrder->createOrUpdateReport();
-        });
-    }
 
     public function partnerOrder()
     {

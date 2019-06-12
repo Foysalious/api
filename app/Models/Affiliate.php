@@ -17,13 +17,11 @@ use Sheba\Transport\Bus\BusTicketCommission;
 use Sheba\Transport\TransportAgent;
 use Sheba\Transport\TransportTicketTransaction;
 use Sheba\Voucher\Contracts\CanApplyVoucher;
+use Sheba\Report\Updater\Affiliate as ReportUpdater;
 
 class Affiliate extends Model implements TopUpAgent, MovieAgent, TransportAgent, CanApplyVoucher, Rechargable
 {
-    use TopUpTrait;
-    use MovieTicketTrait;
-    use Wallet;
-    use ModificationFields;
+    use ReportUpdater, TopUpTrait, MovieTicketTrait, Wallet, ModificationFields;
 
     protected $guarded = ['id'];
     protected $dates = ['last_suspended_at'];
