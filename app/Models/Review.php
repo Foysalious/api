@@ -1,21 +1,11 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Report\Updater\Review as ReportUpdater;
 
 class Review extends Model
 {
-    public static function boot()
-    {
-        parent::boot();
-
-        self::created(function(Review $model){
-            $model->job->partnerOrder->createOrUpdateReport();
-        });
-
-        self::updated(function(Review $model){
-            $model->job->partnerOrder->createOrUpdateReport();
-        });
-    }
+    use ReportUpdater;
 
     public function service()
     {

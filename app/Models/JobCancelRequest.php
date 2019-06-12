@@ -2,24 +2,14 @@
 
 use Illuminate\Database\Eloquent\Model;
 use Sheba\CancelRequest\CancelRequestStatuses;
+use Sheba\Report\Updater\JobCancelRequest as ReportUpdater;
 
 class JobCancelRequest extends Model
 {
+    use ReportUpdater;
+
     protected $guarded = ['id'];
     protected $dates = ['approved_at'];
-
-    public static function boot()
-    {
-        parent::boot();
-
-        self::created(function(JobCancelRequest $model){
-            $model->job->partnerOrder->createOrUpdateReport();
-        });
-
-        self::updated(function(JobCancelRequest $model){
-            $model->job->partnerOrder->createOrUpdateReport();
-        });
-    }
 
     public function job()
     {
