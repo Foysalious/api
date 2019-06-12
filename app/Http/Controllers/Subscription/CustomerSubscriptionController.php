@@ -103,7 +103,7 @@ class CustomerSubscriptionController extends Controller
     {
         try {
             $this->validate($request, [
-                'payment_method' => 'required|string|in:online,bkash,wallet,cbl',
+                'payment_method' => 'required|string|in:bkash,wallet,cbl',
             ]);
             $subscription_order = SubscriptionOrder::find((int)$subscription);
             $order_adapter = new SubscriptionOrderAdapter();
