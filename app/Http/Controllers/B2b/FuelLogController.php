@@ -150,9 +150,11 @@ class FuelLogController extends Controller
             DB::transaction(function () use (&$fuel_log, $creator, $member, $request) {
                 $fuel_log = $creator->save();
                 if ($request->comment) (new CommentRepository('FuelLog', $fuel_log->id, $member))->store($request->comment);
-                foreach ($request->file as $file) {
-                    $data = $this->storeAttachmentToCDN($file);
-                    $attachment = $fuel_log->attachments()->save(new Attachment($this->withBothModificationFields($data)));
+                if ($request->has('file')) {
+                    foreach ($request->file as $file) {
+                        $data = $this->storeAttachmentToCDN($file);
+                        $attachment = $fuel_log->attachments()->save(new Attachment($this->withBothModificationFields($data)));
+                    }
                 }
             });
             return api_response($request, null, 200, ['id' => $fuel_log->id]);
