@@ -1,5 +1,6 @@
 <?php namespace Sheba\TopUp\Jobs;
 
+use App\Models\TopUpOrder;
 use Excel;
 use Exception;
 use Maatwebsite\Excel\Readers\LaravelExcelReader;
@@ -10,7 +11,6 @@ use Sheba\FileManagers\FileManager;
 use Sheba\Sms\Sms;
 
 use Sheba\TopUp\TopUpExcel;
-use Sheba\TopUp\TopUpRequest;
 
 class TopUpExcelJob extends TopUpJob
 {
@@ -24,9 +24,9 @@ class TopUpExcelJob extends TopUpJob
     /** @var LaravelExcelReader */
     private $excel = null;
 
-    public function __construct($agent, $vendor, TopUpRequest $top_up_request, $file, $row, $total_row)
+    public function __construct($agent, $vendor, TopUpOrder $topup_order, $file, $row, $total_row)
     {
-        parent::__construct($agent, $vendor, $top_up_request);
+        parent::__construct($agent, $vendor, $topup_order);
 
         $this->file = $file;
         $this->row = $row;

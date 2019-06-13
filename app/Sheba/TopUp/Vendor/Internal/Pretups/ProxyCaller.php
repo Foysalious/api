@@ -32,8 +32,12 @@ class ProxyCaller extends Caller
                 'input' => $this->input
             ]
         ]);
-
-        $response = json_decode($result->getBody()->getContents())->endpoint_response;
-        return json_decode(json_encode($response));
+        $proxy_response = $result->getBody()->getContents();
+        if ($proxy_response && isset(json_decode($proxy_response)->endpoint_response)) {
+            $response = json_decode($proxy_response)->endpoint_response;
+            return json_decode(json_encode($response));
+        } else {
+            return null;
+        }
     }
 }
