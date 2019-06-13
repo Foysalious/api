@@ -66,7 +66,7 @@ class Generator
             try {
                 $this->createOrUpdate($customer);
             } catch (\Exception $e) {
-                dd($e->getMessage());
+
             };
         });
     }
