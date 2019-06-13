@@ -89,7 +89,7 @@ class TopUpController extends Controller
         try {
             $this->validate($request, ['file' => 'required|file']);
 
-            $valid_extensions = ["csv", "xls", "xlsx", "xlm", "xla", "xlc", "xlt", "xlw"];
+            $valid_extensions = ["xls", "xlsx", "xlm", "xla", "xlc", "xlt", "xlw"];
             $extension = $request->file('file')->getClientOriginalExtension();
 
             if (!in_array($extension, $valid_extensions)) {
