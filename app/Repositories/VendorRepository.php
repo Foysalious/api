@@ -18,6 +18,13 @@ class VendorRepository
 //        ->skip($offset)->take($limit)
         $topups = $topups->with('vendor')->orderBy('created_at', 'desc')->get();
 
+        if($request->search) {
+            $search_key = $request->search;
+            $topups = $topups->filter(function ($topup) use ($search_key) {
+                return strpos($topup->payee_mobile, $search_key) !== false;;
+            });
+        }
+
         $topup_data = $topups->map(function ($topup) {
             return [
                 'mobile' => $topup->payee_mobile,
