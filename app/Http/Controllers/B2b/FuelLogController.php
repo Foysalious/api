@@ -37,8 +37,8 @@ class FuelLogController extends Controller
             }
 
             $total_fuel_cost = FuelLog::totalFuelCost($start_date, $end_date, $business);
-            $total_litres = FuelLog::totalLitres($start_date, $end_date, $business)->sum('price');
-            $total_gallons = FuelLog::totalGallons($start_date, $end_date, $business)->sum('price');
+            $total_litres = FuelLog::totalLitres($start_date, $end_date, $business)->sum('volume');
+            $total_gallons = FuelLog::totalGallons($start_date, $end_date, $business)->sum('volume');
 
             if ($request->has('type')) {
                 $fuel_logs = $fuel_logs->whereHas('vehicle', function ($query) use ($request) {
