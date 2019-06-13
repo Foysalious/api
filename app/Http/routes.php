@@ -1,6 +1,5 @@
 <?php
 Route::get('/', function () {
-    dd(\Carbon\Carbon::parse("2019-06-12 13:4:49"));
     return ['code' => 200, 'message' => "Success. This project will hold the api's"];
 });
 
