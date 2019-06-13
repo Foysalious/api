@@ -37,17 +37,12 @@ class RegistrationController extends Controller
             $profile = collect();
             if ($m_profile && $e_profile) {
                 if ($m_profile->id == $e_profile->id) {
-
                     if (!$m_profile->password) {
                         $data = [
-                            #'mobile' => $mobile,
-                            #'name' => $request->name,
-                            #'email' => $request->email,
                             'password' => bcrypt($request->password)
                         ];
                         $m_profile = $this->profileRepository->updateIfNull($m_profile, $data);
                     }
-
                     $member = $m_profile->member;
                     if (!$member) $member = $this->makeMember($m_profile);
                     $businesses = $member->businesses->first();
@@ -65,6 +60,12 @@ class RegistrationController extends Controller
                     $m_profile->email = $email;
                     $m_profile->update();
                 }
+                if (!$m_profile->password) {
+                    $data = [
+                        'password' => bcrypt($request->password)
+                    ];
+                    $m_profile = $this->profileRepository->updateIfNull($m_profile, $data);
+                }
                 $member = $m_profile->member;
                 if (!$member) $member = $this->makeMember($m_profile);
                 $businesses = $member->businesses->first();
@@ -79,6 +80,12 @@ class RegistrationController extends Controller
                     $e_profile->mobile = formatMobile($mobile);
                     $e_profile->mobile_verified = 1;
                     $e_profile->update();
+                }
+                if (!$e_profile->password) {
+                    $data = [
+                        'password' => bcrypt($request->password)
+                    ];
+                    $e_profile = $this->profileRepository->updateIfNull($e_profile, $data);
                 }
                 $member = $e_profile->member;
                 if (!$member) $member = $this->makeMember($e_profile);
