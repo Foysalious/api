@@ -103,12 +103,18 @@ class CustomerSubscriptionController extends Controller
     {
         try {
             $this->validate($request, [
-                'payment_method' => 'required|string|in:online,bkash,wallet,cbl',
+                'payment_method' => 'required|string|in:bkash,wallet,cbl,online',
             ]);
+            $customer = $request->customer;
+            $payment_method = $request->payment_method;
+            /** @var SubscriptionOrder $subscription_order */
             $subscription_order = SubscriptionOrder::find((int)$subscription);
+            if ($payment_method == 'wallet' && $subscription_order->getTotalPrice() > $customer->shebaCredit()) {
+                return api_response($request, null, 403, ['message' => 'You don\'t have sufficient credit.']);
+            }
             $order_adapter = new SubscriptionOrderAdapter();
             $payable = $order_adapter->setModelForPayable($subscription_order)->getPayable();
-            $payment = (new ShebaPayment($request->payment_method))->init($payable);
+            $payment = (new ShebaPayment($payment_method))->init($payable);
             return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -138,7 +144,7 @@ class CustomerSubscriptionController extends Controller
                         'id' => $partner_order->order->code(),
                         'job_id' => $last_job->id,
                         'schedule_date' => Carbon::parse($last_job->schedule_date),
-                        'preferred_time' => Carbon::parse($last_job->schedule_date)->format('M-j').', '.Carbon::parse($last_job->preferred_time_start)->format('h:ia'),
+                        'preferred_time' => Carbon::parse($last_job->schedule_date)->format('M-j') . ', ' . Carbon::parse($last_job->preferred_time_start)->format('h:ia'),
                         'is_completed' => $partner_order->closed_and_paid_at ? $partner_order->closed_and_paid_at->format('M-j, h:ia') : null,
                         'cancelled_at' => $partner_order->cancelled_at ? Carbon::parse($partner_order->cancelled_at)->format('M-j, h:i a') : null
                     ];
@@ -207,7 +213,7 @@ class CustomerSubscriptionController extends Controller
                     'id' => $partner_order->order->code(),
                     'job_id' => $last_job->id,
                     'schedule_date' => Carbon::parse($last_job->schedule_date),
-                    'preferred_time' => Carbon::parse($last_job->schedule_date)->format('M-j').', '.Carbon::parse($last_job->preferred_time_start)->format('h:ia'),
+                    'preferred_time' => Carbon::parse($last_job->schedule_date)->format('M-j') . ', ' . Carbon::parse($last_job->preferred_time_start)->format('h:ia'),
                     'is_completed' => $partner_order->closed_and_paid_at ? $partner_order->closed_and_paid_at->format('M-j, h:ia') : null,
                     'cancelled_at' => $partner_order->cancelled_at ? Carbon::parse($partner_order->cancelled_at)->format('M-j, h:i a') : null
                 ];
@@ -216,7 +222,7 @@ class CustomerSubscriptionController extends Controller
             $schedule_dates = $partner_orders->map(function ($partner_order) {
                 $last_job = $partner_order->order->lastJob();
                 $day_name = Carbon::parse($last_job->schedule_date)->format('l');
-                return Carbon::parse(new Carbon('next '.lcfirst($day_name)))->toDateString();
+                return Carbon::parse(new Carbon('next ' . lcfirst($day_name)))->toDateString();
             })->toArray();
 
             usort($schedule_dates, function ($a, $b) {
@@ -224,8 +230,8 @@ class CustomerSubscriptionController extends Controller
             });
 
             $next_order = [];
-            foreach ($format_partner_orders->toArray() as $partner_order){
-                if (empty($partner_order['is_completed'])){
+            foreach ($format_partner_orders->toArray() as $partner_order) {
+                if (empty($partner_order['is_completed'])) {
                     $next_order = getDayName($partner_order['schedule_date']);
                     break;
                 }
@@ -258,7 +264,7 @@ class CustomerSubscriptionController extends Controller
             $service_details_breakdown = $service_details->breakdown['0'];
 
             $service = Service::find((int)$service_details_breakdown->id);
-            $service_subscription =  $service->subscription;
+            $service_subscription = $service->subscription;
 
             $schedules = collect(json_decode($subscription_order->schedules));
 
@@ -286,7 +292,7 @@ class CustomerSubscriptionController extends Controller
                 'customer_mobile' => $subscription_order->customer->profile->mobile,
                 'address_id' => $subscription_order->deliveryAddress->id,
                 'address' => $subscription_order->deliveryAddress->address,
-                'location_name' => $subscription_order->location ?  $subscription_order->location->name : "",
+                'location_name' => $subscription_order->location ? $subscription_order->location->name : "",
                 'ordered_for' => $subscription_order->deliveryAddress->name,
 
                 "billing_cycle" => $subscription_order->billing_cycle,
@@ -317,7 +323,7 @@ class CustomerSubscriptionController extends Controller
 
     public function checkRenewalStatus(Request $request, $customer, $subscription)
     {
-        try{
+        try {
             $customer = $request->customer;
             $subscription_order = SubscriptionOrder::find((int)$subscription);
             $partner_orders = $subscription_order->orders->map(function ($order) {
@@ -332,7 +338,7 @@ class CustomerSubscriptionController extends Controller
                     'id' => $partner_order->order->code(),
                     'job_id' => $last_job->id,
                     'schedule_date' => Carbon::parse($last_job->schedule_date),
-                    'preferred_time' => Carbon::parse($last_job->schedule_date)->format('M-j').', '.Carbon::parse($last_job->preferred_time_start)->format('h:ia'),
+                    'preferred_time' => Carbon::parse($last_job->schedule_date)->format('M-j') . ', ' . Carbon::parse($last_job->preferred_time_start)->format('h:ia'),
                     'is_completed' => $partner_order->closed_and_paid_at ? $partner_order->closed_and_paid_at->format('M-j, h:ia') : null,
                     'cancelled_at' => $partner_order->cancelled_at ? Carbon::parse($partner_order->cancelled_at)->format('M-j, h:i a') : null
                 ];
@@ -341,7 +347,7 @@ class CustomerSubscriptionController extends Controller
             $schedule_dates = $partner_orders->map(function ($partner_order) {
                 $last_job = $partner_order->order->lastJob();
                 $day_name = Carbon::parse($last_job->schedule_date)->format('l');
-                return Carbon::parse(new Carbon('next '.lcfirst($day_name)))->toDateString();
+                return Carbon::parse(new Carbon('next ' . lcfirst($day_name)))->toDateString();
             })->toArray();
 
             usort($schedule_dates, function ($a, $b) {
@@ -352,27 +358,27 @@ class CustomerSubscriptionController extends Controller
             $service_details = json_decode($subscription_order->service_details);
             $variables = collect();
             foreach ($service_details->breakdown as $breakdown) {
-                    $data = [
-                        'id' => $breakdown->id,
-                        'quantity' => $breakdown->quantity,
-                        'option' => $breakdown->option
-                    ];
+                $data = [
+                    'id' => $breakdown->id,
+                    'quantity' => $breakdown->quantity,
+                    'option' => $breakdown->option
+                ];
 
                 $variables->push($data);
             }
 
             $request['date'] = $schedule_dates;
-            $request['time'] =$schedules->first()->time;
+            $request['time'] = $schedules->first()->time;
             $request['services'] = json_encode($variables, true);
-            $request['lat'] = (double) $geo->lat;
-            $request['lng'] = (double) $geo->lng;
-            $request['subscription_type'] =  $subscription_order->billing_cycle;
-            $partners = $this->findPartnersForSubscription($request,$partner_orders[0]->partner_id);
-            if(count($partners) > 0) {
+            $request['lat'] = (double)$geo->lat;
+            $request['lng'] = (double)$geo->lng;
+            $request['subscription_type'] = $subscription_order->billing_cycle;
+            $partners = $this->findPartnersForSubscription($request, $partner_orders[0]->partner_id);
+            if (count($partners) > 0) {
                 return api_response($request, $partners, 200, ['status' => 'partner_available_on_time']);
             } else {
                 $partners = $this->findPartnersForSubscription($request);
-                if(count($partners) > 0)
+                if (count($partners) > 0)
                     return api_response($request, $partners, 200, ['status' => 'other_partners_available_on_time']);
                 else
                     return api_response($request, $partners, 200, ['status' => 'no_partners_available_on_time']);

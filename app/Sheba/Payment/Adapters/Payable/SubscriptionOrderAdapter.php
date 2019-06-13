@@ -1,10 +1,12 @@
 <?php namespace Sheba\Payment\Adapters\Payable;
 
 use App\Models\Payable;
+use App\Models\SubscriptionOrder;
 use Carbon\Carbon;
 
 class SubscriptionOrderAdapter implements PayableAdapter
 {
+    /** @var SubscriptionOrder */
     private $subscriptionOrder;
 
     public function setModelForPayable($model)
@@ -20,7 +22,7 @@ class SubscriptionOrderAdapter implements PayableAdapter
         $payable->type_id = $this->subscriptionOrder->id;
         $payable->user_id = $this->subscriptionOrder->customer_id;
         $payable->user_type = "App\\Models\\Customer";
-        $payable->amount = (double)json_decode($this->subscriptionOrder->service_details)->discounted_price;
+        $payable->amount = $this->subscriptionOrder->getTotalPrice();
         $payable->completion_type = "order";
         $payable->success_url = config('sheba.front_url') . '/subscription-orders/' . $this->subscriptionOrder->id;
         $payable->created_at = Carbon::now();

@@ -50,7 +50,7 @@ class ProductCategory
         foreach ($categories as &$category) {
             $service = $category->services->first();
             if ($service == null) {
-                dd($category);
+
             }
             $partners = $service->partners;
             if (count($partners) > 0) {
