@@ -37,6 +37,17 @@ class RegistrationController extends Controller
             $profile = collect();
             if ($m_profile && $e_profile) {
                 if ($m_profile->id == $e_profile->id) {
+
+                    if (!$m_profile->password) {
+                        $data = [
+                            #'mobile' => $mobile,
+                            #'name' => $request->name,
+                            #'email' => $request->email,
+                            'password' => bcrypt($request->password)
+                        ];
+                        $m_profile = $this->profileRepository->updateIfNull($m_profile, $data);
+                    }
+
                     $member = $m_profile->member;
                     if (!$member) $member = $this->makeMember($m_profile);
                     $businesses = $member->businesses->first();
