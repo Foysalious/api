@@ -25,9 +25,9 @@ class SubscriptionController extends Controller
             }
 
             $categories = Category::whereNotNull('parent_id')->whereHas('services', function ($q) {
-                $q->whereHas('activeSubscription');
+                $q->has('activeSubscription');
             })->with(['services' => function ($q) use ($location) {
-                $q->whereHas('activeSubscription');
+                $q->has('activeSubscription');
                 $q->whereHas('locations', function ($q) use ($location) {
                     $q->where('locations.id', $location);
                 });

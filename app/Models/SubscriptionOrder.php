@@ -65,4 +65,9 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface
     {
         return $this->channelCode() . '-' . sprintf('%06d', $this->id);
     }
+
+    public function getTotalPrice()
+    {
+        return (double)json_decode($this->service_details)->discounted_price;
+    }
 }
