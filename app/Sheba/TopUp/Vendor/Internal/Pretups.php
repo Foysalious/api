@@ -38,15 +38,4 @@ trait Pretups
     {
         return config('app.url') != $this->getVPNServer();
     }
-
-    public function getOperatorTransactionId($response)
-    {
-        if (!$response) {
-            return null;
-        } else {
-            $response = json_decode($response);
-            if (isset($response->TXNID)) return $response->TXNID;
-            else return null;
-        }
-    }
 }

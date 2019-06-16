@@ -43,15 +43,4 @@ trait Ssl
     {
         VendorFactory::sslVendors()->increment('amount', $amount);
     }
-
-    public function getOperatorTransactionId($response)
-    {
-        if (!$response) {
-            return null;
-        } else {
-            $response = json_decode($response);
-            if (isset($response->guid)) return $response->guid;
-            else return null;
-        }
-    }
 }

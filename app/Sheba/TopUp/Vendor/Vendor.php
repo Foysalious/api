@@ -30,8 +30,6 @@ abstract class Vendor
 
     abstract function getTopUpInitialStatus();
 
-    abstract function getOperatorTransactionId($response);
-
     public function deductAmount($amount)
     {
         $this->model->amount -= $amount;

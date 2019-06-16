@@ -66,12 +66,11 @@ class TopUpController extends Controller
     public function historyDetails($topup, Request $request)
     {
         try {
-            $data= (new VendorRepository())->topUpHistoryDetails($topup, $request);
-            if(!$data) {
+            $data = (new VendorRepository())->topUpHistoryDetails($topup, $request);
+            if (!$data) {
                 return api_response($request, null, 404, ['message' => 'TopUp Not found']);
             } else {
-                $response = ['data' => $data];
-                return api_response($request, $response, 200, $response);
+                return api_response($request, $data, 200, ['data' => $data]);
             }
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
