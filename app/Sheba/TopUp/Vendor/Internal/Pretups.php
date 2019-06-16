@@ -24,7 +24,7 @@ trait Pretups
             ->setEXTNWCODE($this->getEXTNWCODE())->setAmountMultiplier($this->getAmountMultiplier())
             ->setLanguage1($this->getLanguage1())->setLanguage2($this->getLanguage2())->setSelectors($this->getSelectors());
 
-        if($this->needsProxy()) $pretups->setProxyUrl($this->getVPNServer() . "/v2/proxy/top-up");
+        if ($this->needsProxy()) $pretups->setProxyUrl($this->getVPNServer() . "/v2/proxy/top-up");
 
         return $pretups->recharge($topup_order);
     }
@@ -37,5 +37,16 @@ trait Pretups
     private function needsProxy()
     {
         return config('app.url') != $this->getVPNServer();
+    }
+
+    public function getOperatorTransactionId($response)
+    {
+        if (!$response) {
+            return null;
+        } else {
+            $response = json_decode($response);
+            if (isset($response->TXNID)) return $response->TXNID;
+            else return null;
+        }
     }
 }

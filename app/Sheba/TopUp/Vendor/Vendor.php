@@ -10,7 +10,7 @@ abstract class Vendor
 {
     protected $model;
 
-    public function  setModel(TopUpVendor $model)
+    public function setModel(TopUpVendor $model)
     {
         $this->model = $model;
         return $this;
@@ -29,6 +29,8 @@ abstract class Vendor
     abstract function recharge(TopUpOrder $topup_order): TopUpResponse;
 
     abstract function getTopUpInitialStatus();
+
+    abstract function getOperatorTransactionId($response);
 
     public function deductAmount($amount)
     {
