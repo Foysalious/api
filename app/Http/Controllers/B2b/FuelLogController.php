@@ -37,8 +37,8 @@ class FuelLogController extends Controller
             }
 
             $total_fuel_cost = FuelLog::totalFuelCost($start_date, $end_date, $business);
-            $total_litres = FuelLog::totalLitres($start_date, $end_date, $business)->sum('price');
-            $total_gallons = FuelLog::totalGallons($start_date, $end_date, $business)->sum('price');
+            $total_litres = FuelLog::totalLitres($start_date, $end_date, $business)->sum('volume');
+            $total_gallons = FuelLog::totalGallons($start_date, $end_date, $business)->sum('volume');
 
             if ($request->has('type')) {
                 $fuel_logs = $fuel_logs->whereHas('vehicle', function ($query) use ($request) {
@@ -150,9 +150,11 @@ class FuelLogController extends Controller
             DB::transaction(function () use (&$fuel_log, $creator, $member, $request) {
                 $fuel_log = $creator->save();
                 if ($request->comment) (new CommentRepository('FuelLog', $fuel_log->id, $member))->store($request->comment);
-                foreach ($request->file as $file) {
-                    $data = $this->storeAttachmentToCDN($file);
-                    $attachment = $fuel_log->attachments()->save(new Attachment($this->withBothModificationFields($data)));
+                if ($request->has('file')) {
+                    foreach ($request->file as $file) {
+                        $data = $this->storeAttachmentToCDN($file);
+                        $attachment = $fuel_log->attachments()->save(new Attachment($this->withBothModificationFields($data)));
+                    }
                 }
             });
             return api_response($request, null, 200, ['id' => $fuel_log->id]);
