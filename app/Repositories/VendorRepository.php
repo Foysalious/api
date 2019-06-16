@@ -42,7 +42,10 @@ class VendorRepository
     public function topUpHistoryDetails($topupID, Request $request)
     {
         $topup = $request->vendor->topups()->find($topupID);
-        $topup_data = [
+        $topup_data = null;
+
+        if(!is_null($topup)) {
+            $topup_data = [
                 'mobile' => $topup->payee_mobile,
                 'name' => $topup->payee_name ? $topup->payee_name : 'N/A',
                 'amount' => (double)$topup->amount,
@@ -50,6 +53,8 @@ class VendorRepository
                 'status' => $topup->status,
                 'created_at' => $topup->created_at->toDateTimeString()
             ];
+        }
+
         return $topup_data;
 
     }
