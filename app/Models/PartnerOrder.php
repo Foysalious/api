@@ -7,10 +7,12 @@ use Sheba\Helpers\TimeFrame;
 use Sheba\Order\Code\Builder as CodeBuilder;
 use Sheba\PartnerOrder\PartnerOrderStatuses;
 use Sheba\PartnerOrder\StatusCalculator;
-use Sheba\Reports\PartnerOrder\UpdateJob as PartnerOrderReportUpdateJob;
+use Sheba\Report\Updater\PartnerOrder as ReportUpdater;
 
 class PartnerOrder extends Model
 {
+    use ReportUpdater;
+
     protected $guarded = ['id'];
     protected $dates = ['closed_at', 'closed_and_paid_at', 'cancelled_at'];
 
@@ -69,25 +71,6 @@ class PartnerOrder extends Model
         parent::__construct($attributes);
         $this->codeBuilder = new CodeBuilder();
         $this->statusCalculator = new StatusCalculator();
-    }
-
-    public static function boot()
-    {
-        parent::boot();
-
-        self::created(function(PartnerOrder $model){
-            $model->createOrUpdateReport();
-        });
-
-        self::updated(function(PartnerOrder $model){
-            $model->createOrUpdateReport();
-        });
-    }
-
-    public function createOrUpdateReport()
-    {
-        $this->order->createOrUpdateReport();
-        dispatch(new PartnerOrderReportUpdateJob($this));
     }
 
     public function order()

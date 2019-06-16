@@ -453,6 +453,7 @@ if (!function_exists('scramble_string')) {
         $len = strlen($str);
         $number_of_words_visible = (int)ceil(($scramble_ratio * $len) / 100);
         $number_of_words_hidden = $len - ($number_of_words_visible * 2);
+        $number_of_words_hidden = $number_of_words_hidden > 0 ? $number_of_words_hidden : 0;
         return substr($str, 0, $number_of_words_visible) . str_repeat('*', $number_of_words_hidden) . substr($str, $len - $number_of_words_visible, $len);
     }
 }

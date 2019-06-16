@@ -18,6 +18,13 @@ class VendorRepository
 //        ->skip($offset)->take($limit)
         $topups = $topups->with('vendor')->orderBy('created_at', 'desc')->get();
 
+        if($request->search) {
+            $search_key = $request->search;
+            $topups = $topups->filter(function ($topup) use ($search_key) {
+                return strpos($topup->payee_mobile, $search_key) !== false;;
+            });
+        }
+
         $topup_data = $topups->map(function ($topup) {
             return [
                 'mobile' => $topup->payee_mobile,
@@ -28,6 +35,21 @@ class VendorRepository
                 'created_at' => $topup->created_at->toDateTimeString()
             ];
         });
+        return $topup_data;
+
+    }
+
+    public function topUpHistoryDetails($topupID, Request $request)
+    {
+        $topup = $request->vendor->topups()->find($topupID);
+        $topup_data = [
+                'mobile' => $topup->payee_mobile,
+                'name' => $topup->payee_name ? $topup->payee_name : 'N/A',
+                'amount' => (double)$topup->amount,
+                'operator' => $topup->vendor->name,
+                'status' => $topup->status,
+                'created_at' => $topup->created_at->toDateTimeString()
+            ];
         return $topup_data;
 
     }

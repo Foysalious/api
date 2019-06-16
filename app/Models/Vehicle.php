@@ -46,6 +46,11 @@ class Vehicle extends Model
         return $this->hasMany(Inspection::class);
     }
 
+    public function fuelLogs()
+    {
+        return $this->hasMany(FuelLog::class);
+    }
+
     public function scopeStatus($query, $status)
     {
         return $query->where('status', $status);

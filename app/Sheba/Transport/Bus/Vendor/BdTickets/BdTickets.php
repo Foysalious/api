@@ -79,7 +79,7 @@ class BdTickets extends Vendor
                     "lastName" => $last_name,
                     "phoneNumber" => $this->ticketRequest->getReserverMobile(),
                     "email" => $this->ticketRequest->getReserverEmail(),
-                    "gender" => strtoupper($this->ticketRequest->getReserverGender()[0])
+                    "gender" => $this->ticketRequest->getReserverGender()
                 ]
             ],
             "seatIdList" => $this->ticketRequest->getSeatIdList(),
