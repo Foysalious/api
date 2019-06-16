@@ -1,6 +1,7 @@
 <?php namespace Sheba\Transactions;
 
 use App\Models\Partner;
+use GuzzleHttp\Exception\GuzzleException;
 
 class Registrar
 {
@@ -10,7 +11,7 @@ class Registrar
      * @param $transaction_id
      * @return bool
      * @throws InvalidTransaction
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      */
     public function register($user, $gateway, $transaction_id)
     {
@@ -31,7 +32,7 @@ class Registrar
         $walletClient = new WalletClient();
         $response_wallet = json_decode(json_encode($walletClient->registerTransaction($data)), 1);
 
-        if($response_wallet['code'] != 200) {
+        if ($response_wallet['code'] != 200) {
             throw new InvalidTransaction($response_wallet['message']);
         }
 

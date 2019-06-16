@@ -91,6 +91,8 @@ class ProfileController extends Controller
             return api_response($request, null, 404, []);
         }
 
+        if (!$profile) return api_response($request, null, 404, []);
+
         $profile = $profile->toArray();
         unset($profile['password']);
         return api_response($request, $profile, 200, ['info' => $profile]);
