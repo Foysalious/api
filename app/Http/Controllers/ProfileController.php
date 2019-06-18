@@ -150,4 +150,20 @@ class ProfileController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function getProfileInfoByMobile(Request $request)
+    {
+        try {
+            $mobile = BDMobileFormatter::format($request->mobile);
+            $profile = $this->profileRepo->getIfExist($mobile, 'mobile');;
+            if (!$profile) return api_response($request, null, 404, ['message' => 'Profile not found with this number']);
+            return api_response($request, true, 200, ['message' => 'Profile found', 'profile' => $profile]);
+        } catch (ValidationException $e) {
+            return api_response($request, null, 401, ['message' => 'Invalid mobile number']);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
+    }
 }
