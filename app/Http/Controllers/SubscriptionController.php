@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\HyperLocal;
@@ -259,7 +257,6 @@ class SubscriptionController extends Controller
             return array(0, 0);
         }
     }
-
 
     private function breakdown_service_with_min_max_price($arrays, $min_price, $max_price, $i = 0)
     {
