@@ -40,7 +40,18 @@ class FaqController extends Controller
     public function getSubscriptionFaq(Request $request)
     {
         try {
-            $faqs = array(array('question' => 'Plan, Subscribe & save money', 'answer' => 'A broken AC on a hot summer day is troublesome. Our Experienced AC mechanic partner will fix your AC on spot or take the broken parts for repair.', 'list' => null), array('question' => 'How Subscription Works', 'answer' => null, 'list' => ['You can subscribe for a week and month', 'From subscription details you can renew for next billing cycle']), array('question' => 'How Payment Works', 'answer' => null, 'list' => ['Payment must be confirmed before completing subscription', 'You can pay via any payment method available in sheba.xyz']),);
+            $faqs = [
+                [
+                    'question' => 'How Subscription Works',
+                    'answer' => null,
+                    'list' => ['You can subscribe for a week and month', 'From subscription details you can renew for next billing cycle']
+                ],
+                [
+                    'question' => 'How Payment Works',
+                    'answer' => null,
+                    'list' => ['Payment must be confirmed before completing subscription', 'You can pay via any payment method available in sheba.xyz']
+                ]
+            ];
             return api_response($request, $faqs, 200, ['faqs' => $faqs]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
