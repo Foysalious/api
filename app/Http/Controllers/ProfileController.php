@@ -178,6 +178,22 @@ class ProfileController extends Controller
         }
     }
 
+    public function refresh(Request $request)
+    {
+        $token = JWTAuth::getToken();
+        if (!$token) {
+            return api_response($request, null, 401, ['message' => "Token is not present."]);
+        }
+
+        try {
+            $token = JWTAuth::refresh($token);
+        } catch (\Exception $e) {
+            return api_response($request, null, 401, ['message' => "Token is not present."]);
+        }
+
+        return api_response($request, $token, 200, ['token' => $token]);
+    }
+
     private function generateUtilityToken(Profile $profile)
     {
 
