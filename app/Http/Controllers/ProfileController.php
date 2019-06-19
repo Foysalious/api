@@ -9,8 +9,9 @@ use Illuminate\Validation\ValidationException;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\Repositories\ProfileRepository as ShebaProfileRepository;
 use Sheba\Sms\Sms;
+use JWTAuth;
+use JWTFactory;
 use Validator;
-use App\Http\Requests;
 
 class ProfileController extends Controller
 {
@@ -91,6 +92,8 @@ class ProfileController extends Controller
             return api_response($request, null, 404, []);
         }
 
+        if (!$profile) return api_response($request, null, 404, []);
+
         $profile = $profile->toArray();
         unset($profile['password']);
         return api_response($request, $profile, 200, ['info' => $profile]);
@@ -147,5 +150,58 @@ class ProfileController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function getProfileInfoByMobile(Request $request)
+    {
+        try {
+            $mobile = BDMobileFormatter::format($request->mobile);
+            $profile = $this->profileRepo->getIfExist($mobile, 'mobile');;
+            if (!$profile) return api_response($request, null, 404, ['message' => 'Profile not found with this number']);
+            return api_response($request, true, 200, ['message' => 'Profile found', 'profile' => $profile]);
+        } catch (ValidationException $e) {
+            return api_response($request, null, 401, ['message' => 'Invalid mobile number']);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
+    }
+
+    public function getJWT(Request $request)
+    {
+        try {
+            $token = $this->generateUtilityToken($request->profile);
+            return api_response($request, $token, 200, ['token' => $token]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500, ['message' => $e->getMessage()]);
+        }
+    }
+
+    public function refresh(Request $request)
+    {
+        $token = JWTAuth::getToken();
+        if (!$token) {
+            return api_response($request, null, 401, ['message' => "Token is not present."]);
+        }
+
+        try {
+            $token = JWTAuth::refresh($token);
+        } catch (\Exception $e) {
+            return api_response($request, null, 401, ['message' => "Token is not present."]);
+        }
+
+        return api_response($request, $token, 200, ['token' => $token]);
+    }
+
+    private function generateUtilityToken(Profile $profile)
+    {
+
+        $customClaims = [
+            'profile_id' => $profile->id,
+            'customer_id' => $profile->customer ? $profile->customer->id : null,
+            'affiliate_id' => $profile->affiliate ? $profile->affiliate->id : null
+        ];
+        return JWTAuth::fromUser($profile, $customClaims);
     }
 }
