@@ -9,8 +9,9 @@ use Illuminate\Validation\ValidationException;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\Repositories\ProfileRepository as ShebaProfileRepository;
 use Sheba\Sms\Sms;
+use JWTAuth;
+use JWTFactory;
 use Validator;
-use App\Http\Requests;
 
 class ProfileController extends Controller
 {
@@ -165,5 +166,26 @@ class ProfileController extends Controller
             return api_response($request, null, 500);
         }
 
+    }
+
+    public function getJWT(Request $request)
+    {
+        try {
+            $token = $this->generateUtilityToken($request->profile);
+            return api_response($request, $token, 200, ['token' => $token]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500, ['message' => $e->getMessage()]);
+        }
+    }
+
+    private function generateUtilityToken(Profile $profile)
+    {
+
+        $customClaims = [
+            'profile_id' => $profile->id,
+            'customer_id' => $profile->customer ? $profile->customer->id : null,
+            'affiliate_id' => $profile->affiliate ? $profile->affiliate->id : null
+        ];
+        return JWTAuth::fromUser($profile, $customClaims);
     }
 }
