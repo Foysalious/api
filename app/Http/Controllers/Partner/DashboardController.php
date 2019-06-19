@@ -1,24 +1,35 @@
 <?php namespace App\Http\Controllers\Partner;
 
-use App\Repositories\ReviewRepository;
-use Carbon\Carbon;
-use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 use Sheba\Analysis\PartnerPerformance\PartnerPerformance;
-use Sheba\Analysis\PartnerSale\PartnerSale;
+use App\Http\Controllers\SpLoanInformationCompletion;
+use Sheba\Subscription\Partner\PartnerSubscriber;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
+use Sheba\Analysis\PartnerSale\PartnerSale;
+use App\Repositories\ReviewRepository;
+use App\Http\Controllers\Controller;
+use Sheba\Reward\PartnerReward;
+use Sheba\Partner\LeaveStatus;
+use App\Models\SliderPortal;
+use Illuminate\Http\Request;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Manager\JobList;
-use Sheba\Partner\LeaveStatus;
-use Sheba\Reward\PartnerReward;
-use Sheba\Subscription\Partner\PartnerSubscriber;
+use GuzzleHttp\Client;
+use App\Models\Slider;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
     public function get(Request $request, PartnerPerformance $performance, PartnerReward $partner_reward)
     {
         try {
+            ini_set('memory_limit', '6096M');
+            ini_set('max_execution_time', 660);
             $partner = $request->partner;
+            $slider_portal = SliderPortal::with('slider.slides')
+                ->where('portal_name', 'manager-app')
+                ->where('screen', 'home')
+                ->get();
+            $slide = $slider_portal->last()->slider->slides->last();
             $performance->setPartner($partner)->setTimeFrame((new TimeFrame())->forCurrentWeek())->calculate();
             $performanceStats = $performance->getData();
 
@@ -26,7 +37,6 @@ class DashboardController extends Controller
             $rating = (string)(is_null($rating) ? 0 : $rating);
             $successful_jobs = $partner->notCancelledJobs();
             $sales_stats = (new PartnerSalesStatistics($partner))->calculate();
-
             $upgradable_package = (new PartnerSubscriber($partner))->getUpgradablePackage();
             $dashboard = [
                 'name' => $partner->name,
@@ -37,6 +47,7 @@ class DashboardController extends Controller
                     'name_bn' => $partner->subscription->name_bn
                 ],
                 'badge' => $partner->resolveBadge(),
+                'sheba_order' => $partner->orders->isEmpty() ? 0 : 1,
                 'rating' => $rating,
                 'status' => constants('PARTNER_STATUSES_SHOW')[$partner['status']]['partner'],
                 'balance' => $partner->totalWalletAmount(),
@@ -101,13 +112,33 @@ class DashboardController extends Controller
                     'package_usp_bn' => json_decode($upgradable_package->usps, 1)['usp_bn']
                 ] : null,
                 'has_reward_campaign' => count($partner_reward->upcoming()) > 0 ? 1 : 0,
-                'leave_info'=>(new LeaveStatus($partner))->getCurrentStatus()
+                'leave_info' => (new LeaveStatus($partner))->getCurrentStatus(),
+                'manager_dashboard_banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/categories/24/app_banner.jpg',
+                'video' => json_decode($slide->video_info),
+                'has_pos_inventory' => $partner->posServices->isEmpty() ? 0 : 1,
+                'has_kyc_profile_completed' => $this->getSpLoanInformationCompletion($partner, $request),
             ];
 
             return api_response($request, $dashboard, 200, ['data' => $dashboard]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
+        }
+    }
+
+    private function getSpLoanInformationCompletion($partner, $request)
+    {
+        try {
+            $sp_loan_information_completion = new SpLoanInformationCompletion();
+            $sp_information_completion = $sp_loan_information_completion->getLoanInformationCompletion($partner, $request)->getData()->completion;
+            $personal = $sp_information_completion->personal->completion_percentage;
+            $business = $sp_information_completion->business->completion_percentage;
+            $finance = $sp_information_completion->finance->completion_percentage;
+            $nominee = $sp_information_completion->nominee->completion_percentage;
+            $documents = $sp_information_completion->documents->completion_percentage;
+            return ($personal == 100 && $business == 100 && $finance == 100 && $nominee == 100 && $documents == 100) ? 1 : 0;
+        } catch (\Throwable $e) {
+            return array();
         }
     }
 
