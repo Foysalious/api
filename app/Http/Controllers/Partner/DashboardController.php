@@ -1,5 +1,7 @@
 <?php namespace App\Http\Controllers\Partner;
 
+use App\Http\Controllers\PartnerOrderController;
+use App\Models\PosOrder;
 use Sheba\Analysis\PartnerPerformance\PartnerPerformance;
 use App\Http\Controllers\SpLoanInformationCompletion;
 use Sheba\Subscription\Partner\PartnerSubscriber;
@@ -25,6 +27,12 @@ class DashboardController extends Controller
             ini_set('memory_limit', '6096M');
             ini_set('max_execution_time', 660);
             $partner = $request->partner;
+            /*$pos_order_dues = 0;
+            $pos_orders = $partner->posOrders->map(function ($pos_order) use ($pos_order_dues) {
+                dd($pos_order);
+            });
+
+            dd($pos_order_dues);*/
             $slider_portal = SliderPortal::with('slider.slides')
                 ->where('portal_name', 'manager-app')
                 ->where('screen', 'home')
@@ -38,6 +46,7 @@ class DashboardController extends Controller
             $successful_jobs = $partner->notCancelledJobs();
             $sales_stats = (new PartnerSalesStatistics($partner))->calculate();
             $upgradable_package = (new PartnerSubscriber($partner))->getUpgradablePackage();
+            $new_order = $this->newOrdersCount($partner, $request);
             $dashboard = [
                 'name' => $partner->name,
                 'logo' => $partner->logo,
@@ -47,7 +56,6 @@ class DashboardController extends Controller
                     'name_bn' => $partner->subscription->name_bn
                 ],
                 'badge' => $partner->resolveBadge(),
-                'sheba_order' => $partner->orders->isEmpty() ? 0 : 1,
                 'rating' => $rating,
                 'status' => constants('PARTNER_STATUSES_SHOW')[$partner['status']]['partner'],
                 'balance' => $partner->totalWalletAmount(),
@@ -59,6 +67,7 @@ class DashboardController extends Controller
                 'reward_point' => $partner->reward_point,
                 'bkash_no' => $partner->bkash_no,
                 'current_stats' => [
+                    'total_new_order' => $new_order->total_new_orders,
                     'total_order' => $partner->orders()->count(),
                     'total_ongoing_order' => (new JobList($partner))->ongoing()->count(),
                     'today_order' => $partner->todayJobs($successful_jobs)->count(),
@@ -113,6 +122,7 @@ class DashboardController extends Controller
                 ] : null,
                 'has_reward_campaign' => count($partner_reward->upcoming()) > 0 ? 1 : 0,
                 'leave_info' => (new LeaveStatus($partner))->getCurrentStatus(),
+                'sheba_order' => $partner->orders->isEmpty() ? 0 : 1,
                 'manager_dashboard_banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/categories/24/app_banner.jpg',
                 'video' => json_decode($slide->video_info),
                 'has_pos_inventory' => $partner->posServices->isEmpty() ? 0 : 1,
@@ -123,6 +133,17 @@ class DashboardController extends Controller
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
+        }
+    }
+
+    private function newOrdersCount($partner, $request)
+    {
+        try {
+            $partner_order = new PartnerOrderController();
+            $new_order = $partner_order->newOrders($partner, $request)->getData();
+            return $new_order;
+        } catch (\Throwable $e) {
+            return array();
         }
     }
 
