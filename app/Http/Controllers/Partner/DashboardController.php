@@ -44,10 +44,10 @@ class DashboardController extends Controller
             $new_order = $this->newOrdersCount($partner, $request);
             $pos_due_orders = $this->posDueOrders($request);
             $pos_paid_orders = $this->posPaidOrders($request);
-            $total_due_for_pos_order = 0;
+            $total_due_for_pos_orders = 0;
             foreach ($pos_due_orders as $pos_due_order){
                 foreach ($pos_due_order->orders as $order){
-                    $total_due_for_pos_order += $order->due;
+                    $total_due_for_pos_orders += $order->due;
                 }
             }
 
@@ -93,7 +93,8 @@ class DashboardController extends Controller
                     'month' => [
                         'timeline' => date("jS F", strtotime(Carbon::today()->startOfMonth())) . "-" . date("jS F", strtotime(Carbon::today())),
                         'amount' => $sales_stats->month->orderTotalPrice + $sales_stats->month->posSale
-                    ]
+                    ],
+                    'total_due_for_pos_orders' => $total_due_for_pos_orders,
                 ],
                 'weekly_performance' => [
                     'timeline' => date("jS F", strtotime(Carbon::today()->startOfWeek())) . "-" . date("jS F", strtotime(Carbon::today())),
