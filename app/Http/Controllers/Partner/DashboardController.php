@@ -131,8 +131,8 @@ class DashboardController extends Controller
                 'video' => json_decode($slide->video_info),
                 'has_pos_inventory' => $partner->posServices->isEmpty() ? 0 : 1,
                 'has_kyc_profile_completed' => $this->getSpLoanInformationCompletion($partner, $request),
-                'has_pos_due_order' => count($pos_due_orders->orders) > 0 ? 1 : 0,
-                'has_pos_paid_order' => count($pos_paid_orders->orders) > 0 ? 1 : 0,
+                'has_pos_due_order' => count($pos_due_orders) > 0 ? 1 : 0,
+                'has_pos_paid_order' => count($pos_paid_orders) > 0 ? 1 : 0,
             ];
 
             return api_response($request, $dashboard, 200, ['data' => $dashboard]);
