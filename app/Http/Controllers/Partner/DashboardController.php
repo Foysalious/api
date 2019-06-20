@@ -28,12 +28,6 @@ class DashboardController extends Controller
         try {
             ini_set('memory_limit', '6096M');
             $partner = $request->partner;
-            /*$pos_order_dues = 0;
-            $pos_orders = $partner->posOrders->map(function ($pos_order) use ($pos_order_dues) {
-                dd($pos_order);
-            });
-
-            dd($pos_order_dues);*/
             $slider_portal = SliderPortal::with('slider.slides')
                 ->where('portal_name', 'manager-app')
                 ->where('screen', 'home')
@@ -48,6 +42,15 @@ class DashboardController extends Controller
             $sales_stats = (new PartnerSalesStatistics($partner))->calculate();
             $upgradable_package = (new PartnerSubscriber($partner))->getUpgradablePackage();
             $new_order = $this->newOrdersCount($partner, $request);
+            $pos_due_orders = $this->posDueOrders($request);
+            $pos_paid_orders = $this->posPaidOrders($request);
+            $total_due_for_pos_order = 0;
+            foreach ($pos_due_orders as $pos_due_order){
+                foreach ($pos_due_order->orders as $order){
+                    $total_due_for_pos_order += $order->due;
+                }
+            }
+
             $dashboard = [
                 'name' => $partner->name,
                 'logo' => $partner->logo,
@@ -128,8 +131,8 @@ class DashboardController extends Controller
                 'video' => json_decode($slide->video_info),
                 'has_pos_inventory' => $partner->posServices->isEmpty() ? 0 : 1,
                 'has_kyc_profile_completed' => $this->getSpLoanInformationCompletion($partner, $request),
-                'has_pos_due_order' => $this->posDueOrders($request),
-                'has_pos_paid_order' => $this->posPaidOrders($request),
+                'has_pos_due_order' => count($pos_due_orders->orders) > 0 ? 1 : 0,
+                'has_pos_paid_order' => count($pos_paid_orders->orders) > 0 ? 1 : 0,
             ];
 
             return api_response($request, $dashboard, 200, ['data' => $dashboard]);
@@ -157,7 +160,7 @@ class DashboardController extends Controller
             $request->merge(['status' => 'Paid']);
             $due_order = new OrderController();
             $due_order = $due_order->index($request)->getData();
-            return count($due_order->orders) > 0 ? 1 : 0;
+            return $due_order->orders;
         } catch (\Throwable $e) {
             return array();
         }
@@ -169,7 +172,7 @@ class DashboardController extends Controller
             $request->merge(['status' => 'Due']);
             $paid_order = new OrderController();
             $paid_order = $paid_order->index($request)->getData();
-            return count($paid_order->orders) > 0 ? 1 : 0;
+            return $paid_order->orders;
         } catch (\Throwable $e) {
             return array();
         }
