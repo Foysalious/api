@@ -1,7 +1,9 @@
 <?php namespace App\Http\Controllers\Partner;
 
 use App\Http\Controllers\PartnerOrderController;
+use App\Http\Controllers\Pos\OrderController;
 use App\Models\PosOrder;
+use phpDocumentor\Reflection\Types\This;
 use Sheba\Analysis\PartnerPerformance\PartnerPerformance;
 use App\Http\Controllers\SpLoanInformationCompletion;
 use Sheba\Subscription\Partner\PartnerSubscriber;
@@ -25,7 +27,6 @@ class DashboardController extends Controller
     {
         try {
             ini_set('memory_limit', '6096M');
-            ini_set('max_execution_time', 660);
             $partner = $request->partner;
             /*$pos_order_dues = 0;
             $pos_orders = $partner->posOrders->map(function ($pos_order) use ($pos_order_dues) {
@@ -127,6 +128,8 @@ class DashboardController extends Controller
                 'video' => json_decode($slide->video_info),
                 'has_pos_inventory' => $partner->posServices->isEmpty() ? 0 : 1,
                 'has_kyc_profile_completed' => $this->getSpLoanInformationCompletion($partner, $request),
+                'has_due_paid_order' => $this->posDueOrders($request),
+                'has_pos_paid_order' => $this->posPaidOrders($request),
             ];
 
             return api_response($request, $dashboard, 200, ['data' => $dashboard]);
@@ -143,6 +146,30 @@ class DashboardController extends Controller
             $partner_order = new PartnerOrderController();
             $new_order = $partner_order->newOrders($partner, $request)->getData();
             return $new_order;
+        } catch (\Throwable $e) {
+            return array();
+        }
+    }
+
+    private function posPaidOrders($request)
+    {
+        try {
+            $request->merge(['status' => 'Paid']);
+            $due_order = new OrderController();
+            $due_order = $due_order->index($request)->getData();
+            return count($due_order->orders) > 0 ? 1 : 0;
+        } catch (\Throwable $e) {
+            return array();
+        }
+    }
+
+    private function posDueOrders($request)
+    {
+        try {
+            $request->merge(['status' => 'Due']);
+            $paid_order = new OrderController();
+            $paid_order = $paid_order->index($request)->getData();
+            return count($paid_order->orders) > 0 ? 1 : 0;
         } catch (\Throwable $e) {
             return array();
         }
