@@ -139,6 +139,7 @@ class DashboardController extends Controller
     private function newOrdersCount($partner, $request)
     {
         try {
+            $request->merge(['getCount' => 1]);
             $partner_order = new PartnerOrderController();
             $new_order = $partner_order->newOrders($partner, $request)->getData();
             return $new_order;
