@@ -128,7 +128,7 @@ class DashboardController extends Controller
                 'video' => json_decode($slide->video_info),
                 'has_pos_inventory' => $partner->posServices->isEmpty() ? 0 : 1,
                 'has_kyc_profile_completed' => $this->getSpLoanInformationCompletion($partner, $request),
-                'has_due_paid_order' => $this->posDueOrders($request),
+                'has_pos_due_order' => $this->posDueOrders($request),
                 'has_pos_paid_order' => $this->posPaidOrders($request),
             ];
 
