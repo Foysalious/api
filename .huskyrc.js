@@ -2,7 +2,7 @@ const join_commands = arr => (arr || []).join(' && ');
 
 const isWin = process.platform === "win32";
 
-console.log("dsaf");
+console.log(process.platform);
 process.exit(1);
 
 let commitlint_script = "node_modules/@sheba/commitlint/index.js";
