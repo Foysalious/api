@@ -3,6 +3,7 @@
 use Illuminate\Support\ServiceProvider;
 
 use Sheba\Dal\Providers\CustomMigrationServiceProvider;
+use Sheba\Dev\DevelopmentEnvironmentChecker;
 use Sheba\Sms\SmsServiceProvider;
 use Sheba\Voucher\VoucherCodeServiceProvider;
 use Sheba\Voucher\VoucherSuggesterServiceProvider;
@@ -16,10 +17,13 @@ class AppServiceProvider extends ServiceProvider
      * Bootstrap any application services.
      *
      * @return void
+     * @throws \Exception
      */
     public function boot()
     {
-        //
+        if(!in_array($this->app->environment(), ["production", "development"])) {
+            $this->app->make(DevelopmentEnvironmentChecker::class)->check();
+        }
     }
 
     /**

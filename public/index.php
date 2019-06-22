@@ -56,8 +56,6 @@ $response = $kernel->handle(
     $request = Illuminate\Http\Request::capture()
 );
 
-if(app()->environment() != "production" && app()->environment() != "development") checkForNpmPackages();
-
 $response->send();
 
 $kernel->terminate($request, $response);
