@@ -152,7 +152,7 @@ class TopUp
     private function updateFailedTopOrder(TopUpOrder $topup_order, TopUpErrorResponse $response)
     {
         $topup_order->status = config('topup.status.failed')['sheba'];
-        $topup_order->transaction_details = json_encode(['code' => $response->errorCode, 'message' => $response->errorMessage]);
+        $topup_order->transaction_details = json_encode(['code' => $response->errorCode, 'message' => $response->errorMessage, 'response' => $response->errorResponse]);
         return $this->updateTopUpOrder($topup_order);
     }
 
