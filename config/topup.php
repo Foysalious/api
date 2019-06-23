@@ -21,6 +21,7 @@ return [
         'pin' => env('BL_TOPUP_PIN')
     ],
     'status' => [
+        'initiated' => ['sheba' => 'Initiated', 'partner' => 'Initiated', 'customer' => 'Initiated'],
         'pending' => ['sheba' => 'Pending', 'partner' => 'Active', 'customer' => 'Verified'],
         'successful' => ['sheba' => 'Successful', 'partner' => 'Inactive', 'customer' => 'Inactive'],
         'failed' => ['sheba' => 'Failed', 'partner' => 'Inactive', 'customer' => 'Blocked'],

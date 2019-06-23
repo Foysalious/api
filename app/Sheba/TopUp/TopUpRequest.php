@@ -1,10 +1,24 @@
 <?php namespace Sheba\TopUp;
 
+use Sheba\TopUp\Vendor\Vendor;
+use Sheba\TopUp\Vendor\VendorFactory;
+
 class TopUpRequest
 {
     private $mobile;
     private $amount;
     private $type;
+    private $agent;
+    private $vendorId;
+    /** @var Vendor */
+    private $vendor;
+    private $vendorFactory;
+    private $errorMessage;
+
+    public function __construct(VendorFactory $vendor_factory)
+    {
+        $this->vendorFactory = $vendor_factory;
+    }
 
     /**
      * @return mixed
@@ -24,6 +38,24 @@ class TopUpRequest
         return $this;
     }
 
+    public function setAgent(TopUpAgent $agent)
+    {
+        $this->agent = $agent;
+        return $this;
+    }
+
+    public function getAgent()
+    {
+        return $this->agent;
+    }
+
+    public function setVendorId($vendor_id)
+    {
+        $this->vendorId = $vendor_id;
+        $this->vendor = $this->vendorFactory->getById($this->vendorId);
+        return $this;
+    }
+
     /**
      * @return mixed
      */
@@ -38,7 +70,7 @@ class TopUpRequest
      */
     public function setAmount($amount)
     {
-        $this->amount = $amount;
+        $this->amount = (double)$amount;
         return $this;
     }
 
@@ -48,6 +80,14 @@ class TopUpRequest
     public function getMobile()
     {
         return $this->mobile;
+    }
+
+    /**
+     * @return Vendor
+     */
+    public function getVendor()
+    {
+        return $this->vendor;
     }
 
     /**
@@ -66,5 +106,23 @@ class TopUpRequest
     {
         $this->mobile = formatMobile($mobile);
         return $this;
+    }
+
+    public function hasError()
+    {
+        if ($this->agent->wallet < $this->amount) {
+            $this->errorMessage = "You don't have sufficient balance to recharge.";
+            return 1;
+        }
+        if (!$this->vendor->isPublished()) {
+            $this->errorMessage = "Sorry, we don't support this operator at this moment.";
+            return 1;
+        }
+        return 0;
+    }
+
+    public function getErrorMessage()
+    {
+        return $this->errorMessage;
     }
 }

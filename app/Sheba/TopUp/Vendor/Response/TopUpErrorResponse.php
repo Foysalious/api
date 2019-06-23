@@ -7,6 +7,7 @@ class TopUpErrorResponse
 {
     protected $errorCode;
     protected $errorMessage;
+    protected $errorResponse;
 
     public function __get($name)
     {
