@@ -51,8 +51,9 @@ class TopUpOrder extends Model
     {
         return $query->where('vendor_id', $vendor_id);
     }
+
     public function getOriginalMobile()
     {
-        return getOriginalMobileNumber($this->mobile);
+        return getOriginalMobileNumber($this->payee_mobile);
     }
 }
