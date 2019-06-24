@@ -25,7 +25,7 @@ class CustomerJobController extends Controller
             $order = $job->partnerOrder->order;
             if ($order->voucher_id) return api_response($request, null, 403, ['message' => 'There is already a promo in order.']);
             $customer = $request->customer;
-            $order_params->setCategory($order->category)->setSalesChannel($request->sales_channel)
+            $order_params->setCategory($job->category)->setSalesChannel($request->sales_channel)
                 ->setCustomer($customer)->setLocation($order->location)->setOrder($order);
             $result = voucher(strtoupper($request->code))->checkForOrder($order_params)->reveal();
             if ($result['is_valid']) {
