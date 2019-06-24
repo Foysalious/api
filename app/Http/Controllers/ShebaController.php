@@ -294,7 +294,8 @@ class ShebaController extends Controller
                         $payments = $this->getTransportTicketPayments($version_code, $platform_name);
                         break;
                     case 'utility':
-                        $payments=$this->getUtilityTicketPayments($version_code,$platform_name);
+                        $payments = $this->getUtilityTicketPayments($version_code, $platform_name);
+                        break;
                     default:
                         throw new \Exception('Invalid Payable Type');
                         break;
