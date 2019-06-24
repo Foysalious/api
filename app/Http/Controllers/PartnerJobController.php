@@ -13,6 +13,7 @@ use DB;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Jobs\DeliveryStatuses;
 use Sheba\PushNotificationHandler;
 
 class PartnerJobController extends Controller
@@ -26,7 +27,7 @@ class PartnerJobController extends Controller
         $this->jobStatuses = constants('JOB_STATUSES');
     }
 
-    public function index($partner, Request $request)
+    public function index($partner, Request $request, DeliveryStatuses $delivery_statuses)
     {
         try {
             $this->validate($request, [
@@ -61,6 +62,10 @@ class PartnerJobController extends Controller
                     $job['preferred_time'] = humanReadableShebaTime($job->preferred_time);
                     $job['rating'] = $job->review != null ? $job->review->rating : null;
                     $job['version'] = $partnerOrder->order->getVersion();
+
+                    $delivery_statuses->setJob($job);
+                    $job['delivery_status'] = $delivery_statuses->getApplicable();
+
                     if ($partnerOrder->closed_and_paid_at != null) {
                         $job['completed_at_timestamp'] = $partnerOrder->closed_and_paid_at->timestamp;
                         $job['closed_and_paid_at'] = $partnerOrder->closed_and_paid_at->format('jS F');
