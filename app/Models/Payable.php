@@ -23,6 +23,8 @@ class Payable extends Model
             return 'movie_ticket_purchase';
         } else if ($this->type == 'transport_ticket_purchase') {
             return 'transport_ticket_purchase';
+        } else if ($this->type == 'utility_order') {
+            return 'utility_order';
         }
     }
 
@@ -41,6 +43,8 @@ class Payable extends Model
             $class_name .= 'MovieTicketPurchaseComplete';
         } else if ($this->completion_type == 'transport_ticket_purchase') {
             $class_name .= 'TransportTicketPurchaseComplete';
+        } else if ($this->type == 'utility_order') {
+            $class_name .= 'UtilityOrderComplete';
         }
 
         return app($class_name);
