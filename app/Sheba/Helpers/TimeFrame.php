@@ -9,6 +9,7 @@ class TimeFrame
 
     public function __construct($start = null, $end = null)
     {
+        Carbon::useMicrosecondsFallback(false);
         $this->set($start, $end);
     }
 
