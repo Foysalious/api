@@ -511,7 +511,7 @@ class ShebaController extends Controller
         }
     }
 
-    private function getUtilityPayments($version_code, array $platform_name)
+    private function getUtilityPayments($version_code,  $platform_name)
     {
         return [
             array(
