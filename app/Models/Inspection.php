@@ -4,7 +4,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Inspection extends Model
 {
-    protected $guarded = ['id',];
+    protected $guarded = ['id'];
     protected $dates = ['start_date', 'next_start_date'];
     protected $table = 'inspections';
 

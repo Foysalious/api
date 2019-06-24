@@ -1,6 +1,5 @@
 <?php namespace App\Http\Route\Prefix\V2;
 
-
 class BusinessRoute
 {
     public function set($api)
@@ -81,6 +80,10 @@ class BusinessRoute
                     });
                 });
 
+                $api->group(['prefix' => 'purchase-requests'], function ($api) {
+                    $api->get('/forms', 'B2b\PurchaseRequestController@forms');
+                });
+
                 $api->group(['prefix' => 'fuel-logs'], function ($api) {
                     $api->get('/', 'B2b\FuelLogController@index');
                     $api->post('/', 'B2b\FuelLogController@store');
@@ -113,6 +116,7 @@ class BusinessRoute
                 });
             });
         });
+
         $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {
             $api->group(['prefix' => '{member}'], function ($api) {
                 $api->group(['prefix' => 'vehicles'], function ($api) {
@@ -163,7 +167,6 @@ class BusinessRoute
                         $api->post('/comments', 'B2b\TripRequestController@commentOnTripRequest');
                     });
                 });
-
                 $api->group(['prefix' => 'inspections'], function ($api) {
                     $api->get('/', 'B2b\InspectionController@individualInspection');
                 });
