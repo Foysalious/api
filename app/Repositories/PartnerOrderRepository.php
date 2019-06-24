@@ -1,9 +1,8 @@
-<?php
-
-namespace App\Repositories;
+<?php namespace App\Repositories;
 
 use App\Models\PartnerOrder;
 use Carbon\Carbon;
+use Sheba\Jobs\DeliveryStatuses;
 use Sheba\Jobs\JobStatuses;
 
 class PartnerOrderRepository
@@ -39,8 +38,10 @@ class PartnerOrderRepository
         $partner_order['can_process'] = $partner_order->order->isProcessable();
         $partner_order['can_serve'] = $partner_order->order->isServeable();
         $partner_order['can_pay'] = $partner_order->order->isPayable();
+        /** @var DeliveryStatuses $delivery_statuses */
+        $delivery_statuses = app(DeliveryStatuses::class);
 
-        $jobs = $partner_order->jobs->each(function ($job) use ($partner_order) {
+        $jobs = $partner_order->jobs->each(function ($job) use ($partner_order, $delivery_statuses) {
             $job['partner_order'] = $partner_order;
             $job = $this->partnerJobRepository->getJobInfo($job);
             $services = [];
@@ -58,6 +59,9 @@ class PartnerOrderRepository
 
             $job['category_name'] = $job->category ? $job->category->name : null;
             $job['complains'] = app('Sheba\Dal\Complain\EloquentImplementation')->jobWiseComplainInfo($job->id);
+            $delivery_statuses->setJob($job);
+            $job['delivery_status'] = $delivery_statuses->getApplicable();
+
             if (!$job['complains']->isEmpty()) {
                 $order = $job->partnerOrder->order;
                 $complain_additional_info = [
@@ -331,7 +335,6 @@ class PartnerOrderRepository
 
         return $partner_order;
     }
-
 
     private function partnerOrdersSortBy($field, $orderBy, $all_partner_orders, $all_jobs)
     {
