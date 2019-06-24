@@ -2,7 +2,9 @@
 
 namespace Sheba\TopUp\Vendor\Internal;
 
+
 use App\Models\TopUpOrder;
+use App\Sheba\Sentry\SendSentryError;
 use Sheba\TopUp\Vendor\Response\SslResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 use SoapClient;
@@ -28,6 +30,7 @@ class SslClient
      */
     public function recharge(TopUpOrder $topup_order): TopUpResponse
     {
+        $ssl_response = new SslResponse();
         try {
             ini_set("soap.wsdl_cache_enabled", '0'); // disabling WSDL cache
             $client = new SoapClient($this->topUpUrl);
@@ -45,12 +48,11 @@ class SslClient
             $vr_guid = $create_recharge_response->vr_guid;
             $recharge_response = $client->InitRecharge($this->clientId, $this->clientPassword, $guid, $vr_guid);
             $recharge_response->guid = $guid;
-            $ssl_response = new SslResponse();
             $ssl_response->setResponse($recharge_response);
-            return $ssl_response;
         } catch (SoapFault $exception) {
-            throw $exception;
+            new SendSentryError($exception);
         }
+        return $ssl_response;
     }
 
     public function getBalance()
