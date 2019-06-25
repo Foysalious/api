@@ -1,13 +1,15 @@
 <?php namespace Sheba\Reward;
 
 use Sheba\ModificationFields;
+use Sheba\Payment\PayableType;
 use Sheba\Repositories\BonusLogRepository;
 
 class BonusCredit
 {
     use ModificationFields;
     private $user;
-    private $spent_model;
+    /** @var PayableType */
+    private $payable_type;
 
     private $logRepo;
 
@@ -22,9 +24,9 @@ class BonusCredit
         return $this;
     }
 
-    public function setSpentModel($spent_on)
+    public function setPayableType(PayableType $payable_type)
     {
-        $this->spent_model = $spent_on;
+        $this->payable_type = $payable_type;
         return $this;
     }
 
@@ -54,7 +56,7 @@ class BonusCredit
     private function saveLog($amount, $log = '')
     {
         $data = $this->getSpentInfo();
-        $data['user_type'] = "App\\Models\\" . class_basename($this->user);
+        $data['user_type'] = get_class($this->user);
         $data['user_id'] = $this->user->id;
         $data['amount'] = $amount;
         $data['log'] = $log;
@@ -64,7 +66,7 @@ class BonusCredit
 
     private function setSpentInfo($bonus)
     {
-        if ($this->spent_model) {
+        if ($this->payable_type) {
             $data = $this->getSpentInfo();
             $bonus->spent_on_type = $data['spent_on_type'];
             $bonus->spent_on_id = $data['spent_on_id'];
@@ -75,8 +77,8 @@ class BonusCredit
     private function getSpentInfo()
     {
         return [
-            'spent_on_type' => "App\\Models\\" . class_basename($this->spent_model),
-            'spent_on_id' => $this->spent_model->id
+            'spent_on_type' => get_class($this->payable_type),
+            'spent_on_id' => $this->payable_type->id
         ];
     }
 

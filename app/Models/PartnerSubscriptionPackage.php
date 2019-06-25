@@ -1,12 +1,10 @@
 <?php namespace App\Models;
 
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
-use Sheba\Bonus\SpentOnType;
-use Sheba\Subscription\Package;
+use Sheba\Payment\PayableType;
 use Sheba\Subscription\SubscriptionPackage;
 
-class PartnerSubscriptionPackage extends Model implements SubscriptionPackage, SpentOnType
+class PartnerSubscriptionPackage extends Model implements SubscriptionPackage,PayableType
 {
     protected $guarded = ['id'];
     protected $table = 'partner_subscription_packages';

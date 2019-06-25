@@ -1,10 +1,10 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Sheba\Bonus\SpentOnType;
 use Sheba\Checkout\SubscriptionOrderInterface;
+use Sheba\Payment\PayableType;
 
-class SubscriptionOrder extends Model implements SubscriptionOrderInterface, SpentOnType
+class SubscriptionOrder extends Model implements SubscriptionOrderInterface, PayableType
 {
     protected $guarded = ['id'];
 

@@ -2,6 +2,8 @@
 
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Payment\Complete\PaymentComplete;
+use Sheba\Payment\PayableType;
+use Sheba\Utility\UtilityOrder;
 
 class Payable extends Model
 {
@@ -104,5 +106,17 @@ class Payable extends Model
     public function payment()
     {
         return $this->hasOne(Payment::class);
+    }
+
+    /**
+     * @return PayableType
+     */
+    public function getPayableType()
+    {
+        if ($this->type == 'utility_order') {
+            return (new UtilityOrder())->setPayable($this);
+        } else {
+            return ($this->getPayableModel())::find($this->type_id);
+        }
     }
 }

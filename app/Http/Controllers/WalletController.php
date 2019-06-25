@@ -84,9 +84,8 @@ class WalletController extends Controller
             try {
                 $transaction = '';
                 DB::transaction(function () use ($payment, $user, $bonus_credit, &$transaction) {
-                    $model_name = $payment->payable->getPayableModel();
-                    $spent_model = $model_name::find($payment->payable->type_id);
-                    $remaining = $bonus_credit->setUser($user)->setSpentModel($spent_model)->deduct($payment->payable->amount);
+                    $spent_model = $payment->payable->getPayableType();
+                    $remaining = $bonus_credit->setUser($user)->setPayableType($spent_model)->deduct($payment->payable->amount);
                     if ($remaining > 0) {
                         if ($user->wallet < $remaining) {
                             $remaining = $user->wallet;
@@ -96,11 +95,8 @@ class WalletController extends Controller
                         }
                         $user->debitWallet($remaining);
                         $this->setModifier($user);
-                        $wallet_transaction_data = ['amount' => $remaining, 'type' => 'Debit', 'log' => "Service Purchase.",
-                            'created_at' => Carbon::now()];
-                        if ($user instanceof Customer) {
-                            $wallet_transaction_data += ['event_type' => get_class($spent_model), 'event_id' => $spent_model->id];
-                        }
+                        $wallet_transaction_data = ['amount' => $remaining, 'type' => 'Debit', 'log' => "Service Purchase.", 'created_at' => Carbon::now()];
+                        if ($user instanceof Customer) $wallet_transaction_data += ['event_type' => get_class($spent_model), 'event_id' => $spent_model->id];
                         $transaction = $user->walletTransaction($wallet_transaction_data);
                     }
                 });

@@ -3,14 +3,14 @@
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
-use Sheba\Bonus\SpentOnType;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Order\Code\Builder as CodeBuilder;
 use Sheba\PartnerOrder\PartnerOrderStatuses;
 use Sheba\PartnerOrder\StatusCalculator;
+use Sheba\Payment\PayableType;
 use Sheba\Report\Updater\PartnerOrder as ReportUpdater;
 
-class PartnerOrder extends Model implements SpentOnType
+class PartnerOrder extends Model implements PayableType
 {
     use ReportUpdater;
 
