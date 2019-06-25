@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\PartnerOrder;
 use Carbon\Carbon;
 use Sheba\Jobs\JobStatuses;
+use Sheba\Jobs\LogisticJobStatusCalculator;
 
 class PartnerOrderRepository
 {
@@ -195,6 +196,11 @@ class PartnerOrderRepository
 
         return array_slice($partner_orders->each(function ($partner_order, $key) {
             $partner_order['version'] = $partner_order->is_v2 ? 'v2' : 'v1';
+            $job = $partner_order->jobs[0];
+            if($job->first_logistic_order_id || $job->last_logistic_order_id) {
+                $status = new LogisticJobStatusCalculator($job);
+                $partner_order['logistic'] = $status->calculate()->get();
+            }
             $partner_order['category_name'] = $partner_order->jobs[0]->category ? $partner_order->jobs[0]->category->name : null;
             removeRelationsAndFields($this->getInfo($partner_order));
         })->reject(function ($item, $key) {
