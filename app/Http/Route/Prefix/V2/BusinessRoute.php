@@ -79,7 +79,9 @@ class BusinessRoute
                         });
                     });
                 });
-
+                $api->group(['prefix' => 'procurements'], function ($api) {
+                    $api->post('/', 'B2b\ProcurementController@store');
+                });
                 $api->group(['prefix' => 'purchase-requests'], function ($api) {
                     $api->get('/forms', 'B2b\PurchaseRequestController@forms');
                 });
