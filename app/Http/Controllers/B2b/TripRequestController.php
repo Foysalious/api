@@ -17,6 +17,7 @@ class TripRequestController extends Controller
     {
 
         try {
+            $business_member = $request->business_member;
             $type = implode(',', config('business.VEHICLE_TYPES'));
             $this->validate($request, [
                 'status' => 'sometimes|string|in:accept,reject,pending',
@@ -42,7 +43,7 @@ class TripRequestController extends Controller
                     'id' => $business_trip_request->id,
                     'member' => [
                         'name' => $business_trip_request->member->profile->name,
-                        "designation" => 'Manager'
+                        "designation" => $business_member->role ? $business_member->role->name : ''
                     ],
                     'vehicle_type' => ucfirst($business_trip_request->vehicle_type),
                     'status' => ucfirst($business_trip_request->status),
@@ -124,6 +125,7 @@ class TripRequestController extends Controller
             $trip_request = BusinessTripRequest::find((int)$trip_request);
             if (!$trip_request) return api_response($request, null, 404);
             $comments = [];
+            $business_member = $request->business_member;
             foreach ($trip_request->comments as $comment) {
                 array_push($comments, [
                     'comment' => $comment->comment,
@@ -140,7 +142,7 @@ class TripRequestController extends Controller
                 'details' => $trip_request->details,
                 'member' => [
                     'name' => $trip_request->member->profile->name,
-                    "designation" => 'Manager'
+                    "designation" => $business_member->role ? $business_member->role->name : ''
                 ],
                 'status' => $trip_request->status,
                 'comments' => $comments,
@@ -168,6 +170,8 @@ class TripRequestController extends Controller
             $trip = BusinessTrip::find((int)$trip);
             if (!$trip) return api_response($request, null, 404);
             $comments = [];
+            $business_member = $request->business_member;
+            dd($business_member->role);
             foreach ($trip->comments as $comment) {
                 array_push($comments, [
                     'comment' => $comment->comment,
