@@ -2,10 +2,11 @@
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Bonus\SpentOnType;
 use Sheba\Subscription\Package;
 use Sheba\Subscription\SubscriptionPackage;
 
-class PartnerSubscriptionPackage extends Model implements SubscriptionPackage
+class PartnerSubscriptionPackage extends Model implements SubscriptionPackage, SpentOnType
 {
     protected $guarded = ['id'];
     protected $table = 'partner_subscription_packages';

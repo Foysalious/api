@@ -1,8 +1,9 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Bonus\SpentOnType;
 
-class TopUpOrder extends Model
+class TopUpOrder extends Model implements SpentOnType
 {
     protected $guarded = ['id'];
     protected $table = 'topup_orders';
