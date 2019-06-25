@@ -2,18 +2,24 @@
 
 use App\Http\Controllers\Controller;
 use App\Sheba\Business\ACL\AccessControl;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\FormTemplate\Creator;
 use Sheba\ModificationFields;
 use App\Models\FormTemplate;
 use Illuminate\Http\Request;
 use Sheba\Repositories\Interfaces\FormTemplateRepositoryInterface;
-
+use Throwable;
 
 class FormTemplateController extends Controller
 {
     use ModificationFields;
 
+    /**
+     * @param $business
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function index($business, Request $request)
     {
         try {
@@ -23,7 +29,6 @@ class FormTemplateController extends Controller
             $form_templates = FormTemplate::where('owner_id', $business->id)->published()->orderBy('id', 'DESC')->get();
             $templates = [];
             foreach ($form_templates as $template) {
-
                 $template = [
                     'id' => $template->id,
                     'title' => $template->title,
@@ -33,12 +38,18 @@ class FormTemplateController extends Controller
             }
             if (count($templates) > 0) return api_response($request, $templates, 200, ['templates' => $templates]);
             else  return api_response($request, null, 404);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
+    /**
+     * @param Request $request
+     * @param AccessControl $access_control
+     * @param Creator $creator
+     * @return JsonResponse
+     */
     public function store(Request $request, AccessControl $access_control, Creator $creator)
     {
         try {
@@ -57,7 +68,7 @@ class FormTemplateController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all()]);
             $sentry->captureException($e);
@@ -65,6 +76,13 @@ class FormTemplateController extends Controller
         }
     }
 
+    /**
+     * @param $business
+     * @param $form_template
+     * @param Request $request
+     * @param FormTemplateRepositoryInterface $formTemplateRepository
+     * @return JsonResponse
+     */
     public function get($business, $form_template, Request $request, FormTemplateRepositoryInterface $formTemplateRepository)
     {
         try {
@@ -97,7 +115,7 @@ class FormTemplateController extends Controller
                 'inspections' => $inspections
             ];
             return api_response($request, null, 200, ['form_template' => $data]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all()]);
             $sentry->captureException($e);
@@ -106,6 +124,14 @@ class FormTemplateController extends Controller
 
     }
 
+    /**
+     * @param $business
+     * @param $form_template
+     * @param Request $request
+     * @param AccessControl $access_control
+     * @param FormTemplateRepositoryInterface $formTemplateRepository
+     * @return JsonResponse
+     */
     public function edit($business, $form_template, Request $request, AccessControl $access_control, FormTemplateRepositoryInterface $formTemplateRepository)
     {
         try {
@@ -117,7 +143,7 @@ class FormTemplateController extends Controller
                 'short_description' => $request->short_description,
             ]);
             return api_response($request, $form_template, 200);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
