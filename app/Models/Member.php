@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Models;
+<?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
@@ -47,6 +45,4 @@ class Member extends Model
     {
         return $this->isOfTypesIn($business, ["Admin"]);
     }
-
-
 }
