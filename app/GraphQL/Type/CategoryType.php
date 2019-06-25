@@ -92,11 +92,6 @@ class CategoryType extends GraphQlType
         $version_code = (int)request()->header('Version-Code');
         $root->load(['services' => function ($q) use ($args, $fields, $version_code) {
             $q->published()->orderBy('order')->with('subscription');
-            if ($version_code <= 30122) {
-                $q->whereDoesntHave('subscription', function ($q) {
-                    $q->active();
-                });
-            }
             if (in_array('start_price', $fields)) {
                 $q->with(['partners' => function ($q) {
                     $q->verified()->where([['partner_service.is_published', 1], ['partner_service.is_verified', 1]]);

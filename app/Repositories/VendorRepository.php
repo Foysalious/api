@@ -2,6 +2,7 @@
 
 use App\Models\Vendor;
 use Illuminate\Http\Request;
+use Sheba\TopUp\Vendor\VendorFactory;
 
 class VendorRepository
 {
@@ -18,7 +19,7 @@ class VendorRepository
 //        ->skip($offset)->take($limit)
         $topups = $topups->with('vendor')->orderBy('created_at', 'desc')->get();
 
-        if($request->search) {
+        if ($request->search) {
             $search_key = $request->search;
             $topups = $topups->filter(function ($topup) use ($search_key) {
                 return strpos($topup->payee_mobile, $search_key) !== false;;
@@ -41,11 +42,10 @@ class VendorRepository
 
     public function topUpHistoryDetails($topupID, Request $request)
     {
-        $topup = $request->vendor->topups()->find($topupID);
-        $topup_data = null;
-
-        if(!is_null($topup)) {
-            $topup_data = [
+        if ($topup = $request->vendor->topups()->find($topupID)) {
+            return [
+                'id' => $topup->id,
+                'transaction_id' => $topup->transaction_id,
                 'mobile' => $topup->payee_mobile,
                 'name' => $topup->payee_name ? $topup->payee_name : 'N/A',
                 'amount' => (double)$topup->amount,
@@ -53,9 +53,9 @@ class VendorRepository
                 'status' => $topup->status,
                 'created_at' => $topup->created_at->toDateTimeString()
             ];
+        } else {
+            return null;
         }
-
-        return $topup_data;
 
     }
 

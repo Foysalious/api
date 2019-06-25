@@ -1,6 +1,5 @@
 <?php namespace Sheba\TopUp;
 
-use App\Models\Affiliate;
 use App\Models\TopUpOrder;
 use Exception;
 use App\Models\TopUpVendor;
@@ -62,21 +61,23 @@ class TopUp
     }
 
     /**
-     * @param TopUpRequest $top_up_request
+     * @param TopUpOrder $topup_order
      * @throws Exception
      */
-    public function recharge(TopUpRequest $top_up_request)
+    public function recharge(TopUpOrder $topup_order)
     {
-        if ($this->validator->setRequest($top_up_request)->validate()->hasError()) return;
-        $this->response = $this->vendor->recharge($top_up_request);
+        $this->response = $this->vendor->recharge($topup_order);
         if ($this->response->hasSuccess()) {
             $response = $this->response->getSuccess();
-            DB::transaction(function () use ($response, $top_up_request) {
-                $top_up_order = $this->placeTopUpOrder($response, $top_up_request->getMobile(), $top_up_request->getAmount());
-                $this->agent->getCommission()->setTopUpOrder($top_up_order)->disburse();
-                $this->vendor->deductAmount($top_up_request->getAmount());
+            DB::transaction(function () use ($response, $topup_order) {
+                $this->setModifier($this->agent);
+                $topup_order = $this->updateSuccessfulTopOrder($topup_order, $response);
+                $this->agent->getCommission()->setTopUpOrder($topup_order)->disburse();
+                $this->vendor->deductAmount($topup_order->amount);
                 $this->isSuccessful = true;
             });
+        } else {
+            $this->updateFailedTopOrder($topup_order, $this->response->getError());
         }
     }
 
@@ -105,32 +106,33 @@ class TopUp
     }
 
     /**
+     * @param TopUpOrder $topup_order
      * @param TopUpSuccessResponse $response
-     * @param $mobile_number
-     * @param $amount
      * @return TopUpOrder
      */
-    private function placeTopUpOrder(TopUpSuccessResponse $response, $mobile_number, $amount)
+    private function updateSuccessfulTopOrder(TopUpOrder $topup_order, TopUpSuccessResponse $response)
     {
-        $top_up_order = new TopUpOrder();
-        $top_up_order->agent_type = "App\\Models\\" . class_basename($this->agent);
-        $top_up_order->agent_id = $this->agent->id;
-        $top_up_order->payee_mobile = $mobile_number;
-        $top_up_order->amount = $amount;
-        $top_up_order->status = $this->vendor->getTopUpInitialStatus();
-        $top_up_order->transaction_id = $response->transactionId;
-        $top_up_order->transaction_details = json_encode($response->transactionDetails);
-        $top_up_order->vendor_id = $this->model->id;
-        $top_up_order->sheba_commission = ($amount * $this->model->sheba_commission) / 100;
+        $topup_order->status = $this->vendor->getTopUpInitialStatus();
+        $topup_order->transaction_id = $response->transactionId;
+        $topup_order->transaction_details = json_encode($response->transactionDetails);
+        return $this->updateTopUpOrder($topup_order);
 
-        $this->setModifier($this->agent);
-        $this->withCreateModificationField($top_up_order);
-        $top_up_order->save();
+    }
 
-        $top_up_order->agent = $this->agent;
-        $top_up_order->vendor = $this->model;
+    private function updateFailedTopOrder(TopUpOrder $topup_order, TopUpErrorResponse $response)
+    {
+        $topup_order->status = config('topup.status.failed')['sheba'];
+        $topup_order->transaction_details = json_encode(['code' => $response->errorCode, 'message' => $response->errorMessage, 'response' => $response->errorResponse]);
+        return $this->updateTopUpOrder($topup_order);
+    }
 
-        return $top_up_order;
+    private function updateTopUpOrder(TopUpOrder $topup_order)
+    {
+        $this->withUpdateModificationField($topup_order);
+        $topup_order->update();
+        $topup_order->agent = $this->agent;
+        $topup_order->vendor = $this->model;
+        return $topup_order;
     }
 
     /**

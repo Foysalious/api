@@ -2,6 +2,7 @@
 
 use App\Exceptions\HyperLocationNotFoundException;
 use App\Http\Requests\BondhuOrderRequest;
+use App\Jobs\AddCustomerGender;
 use App\Models\Affiliate;
 use App\Models\Customer;
 use App\Models\Order;
@@ -18,6 +19,7 @@ use App\Sheba\Checkout\OnlinePayment;
 use App\Sheba\Checkout\Validation;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -29,6 +31,7 @@ use Sheba\Sms\Sms;
 
 class OrderController extends Controller
 {
+    use DispatchesJobs;
     private $orderRepository;
     private $jobServiceRepository;
     private $sms;
@@ -87,6 +90,7 @@ class OrderController extends Controller
             $order = new Checkout($customer);
             $order = $order->placeOrder($request);
             if ($order) {
+                if (!empty($customer->profile->name) && empty($customer->profile->gender)) dispatch(new AddCustomerGender($customer->profile));
                 if ($order->voucher_id) $this->updateVouchers($order, $customer);
                 $payment = $link = null;
                 if ($request->payment_method !== 'cod') {

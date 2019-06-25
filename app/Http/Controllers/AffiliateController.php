@@ -723,25 +723,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             $topups = $topups->with('vendor')->skip($offset)->take($limit)->orderBy('created_at', 'desc')->get();
 
             $topup_data = [];
-            $queued_jobs = Redis::lrange('queues:topup', 0, -1);
-            $queued_topups = [];
 
-            foreach ($queued_jobs as $queued_job) {
-                /** @var TopUpJob $data */
-                $data = unserialize(json_decode($queued_job)->data->command);
-                if ($data->getAgent()->id == $affiliate) {
-                    $topup_request = $data->getTopUpRequest();
-                    array_push($queued_topups, [
-                        'payee_mobile' => $topup_request->getMobile(),
-                        'payee_name' => 'N/A',
-                        'amount' => (double)$topup_request->getAmount(),
-                        'operator' => $data->getVendor()->name,
-                        'status' => config('topup.status.pending')['sheba'],
-                        'created_at' => Carbon::now()->format('jS M, Y h:i A'),
-                        'created_at_raw' => Carbon::now()->format('Y-m-d h:i:s')
-                    ]);
-                }
-            }
 
             foreach ($topups as $topup) {
                 $topup = [
@@ -755,8 +737,6 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
                 ];
                 array_push($topup_data, $topup);
             }
-
-            $topup_data = array_merge($queued_topups, $topup_data);
 
             if ($is_excel_report) {
                 $excel = app(ExcelHandler::class);

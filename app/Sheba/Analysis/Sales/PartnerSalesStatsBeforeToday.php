@@ -24,7 +24,7 @@ class PartnerSalesStatsBeforeToday extends SalesStatsBeforeToday
         $month_data = collect([]);
         $week_data = collect([]);
         $data->each(function ($item) use (&$year_data, &$month_data, &$week_data) {
-            $date = Carbon::parse($item->date);
+            $date = $item->date;
             if ($date->between($this->weekTimeFrame[0], $this->weekTimeFrame[1])) {
                 $week_data->push($item->data);
             }

@@ -1,6 +1,7 @@
 <?php namespace Sheba\TopUp\Jobs;
 
 use App\Jobs\Job;
+use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use Exception;
 use Illuminate\Queue\SerializesModels;
@@ -19,16 +20,16 @@ class TopUpJob extends Job implements ShouldQueue
     protected $vendorId;
     protected $vendor;
 
-    /** @var TopUpRequest */
-    protected $topUpRequest;
+    /** @var TopUpOrder */
+    protected $topUpOrder;
 
     /** @var TopUp */
     protected $topUp;
 
-    public function __construct($agent, $vendor, TopUpRequest $top_up_request)
+    public function __construct($agent, $vendor, TopUpOrder $top_up_order)
     {
         $this->agent = $agent;
-        $this->topUpRequest = $top_up_request;
+        $this->topUpOrder = $top_up_order;
         $this->vendorId = $vendor;
         $this->connection = 'topup';
         $this->queue = 'topup';
@@ -49,7 +50,7 @@ class TopUpJob extends Job implements ShouldQueue
             $this->topUp = app(TopUp::class);
             $this->topUp->setAgent($this->agent)->setVendor($this->vendor);
 
-            $this->topUp->recharge($this->topUpRequest);
+            $this->topUp->recharge($this->topUpOrder);
             if ($this->topUp->isNotSuccessful()) {
                 $this->takeUnsuccessfulAction();
             } else {
@@ -80,7 +81,7 @@ class TopUpJob extends Job implements ShouldQueue
     private function notifyAgentAboutFailure()
     {
         notify($this->agent)->send([
-            "title" => 'Your top up to ' . $this->topUpRequest->getMobile() . ' has been failed.',
+            "title" => 'Your top up to ' . $this->topUpOrder->payee_mobile . ' has been failed.',
             "link" => '',
             "type" => notificationType('Danger')
         ]);
@@ -99,7 +100,7 @@ class TopUpJob extends Job implements ShouldQueue
      */
     public function getVendor()
     {
-        return TopUpVendor::find($this->vendorId);
+        return $this->topUpOrder->vendor;
     }
 
     /**
@@ -107,6 +108,6 @@ class TopUpJob extends Job implements ShouldQueue
      */
     public function getAgent()
     {
-        return $this->agent;
+        return $this->topUpOrder->agent;
     }
 }

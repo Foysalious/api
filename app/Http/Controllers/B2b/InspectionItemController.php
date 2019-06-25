@@ -1,6 +1,5 @@
 <?php namespace App\Http\Controllers\B2b;
 
-
 use App\Http\Controllers\Controller;
 use App\Models\Inspection;
 use App\Models\InspectionItem;

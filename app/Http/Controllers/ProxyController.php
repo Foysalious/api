@@ -19,23 +19,29 @@ class ProxyController extends Controller
     {
         try {
             $whitelists = ['180.234.223.46', '104.215.190.77', '13.232.181.83', '103.4.146.66'];
-            if(!in_array($request->ip(), $whitelists)) {
-                return ['status' => 401];
+            if (!in_array($request->ip(), $whitelists)) {
+                $sentry = app('sentry');
+                $sentry->user_context(['ip' => $request->ip()]);
+                $sentry->captureException(new \Exception('Unauthorized ip'));
+                return api_response($request, null, 401);
             }
-
             $this->validate($request, [
                 'url' => 'required|string',
                 'input' => 'required|string',
             ]);
-
             $data = $caller->setUrl($request->url)->setInput($request->input)->call();
 
             return api_response($request, 1, 200, ['endpoint_response' => $data]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all()]);
+            $sentry->captureException($e);
             return api_response($request, null, 500);
         }
     }

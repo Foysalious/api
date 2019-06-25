@@ -1,6 +1,6 @@
 <?php namespace Sheba\TopUp\Vendor\Internal\Pretups;
 
-use Sheba\TopUp\TopUpRequest;
+use App\Models\TopUpOrder;
 use Sheba\TopUp\Vendor\Response\PretupsResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 use Carbon\Carbon;
@@ -79,23 +79,23 @@ class Client
     }
 
     /**
-     * @param TopUpRequest $top_up_request
+     * @param TopUpOrder $topup_order
      * @return TopUpResponse
      * @throws \Exception
      */
-    public function recharge(TopUpRequest $top_up_request): TopUpResponse
+    public function recharge(TopUpOrder $topup_order): TopUpResponse
     {
-        $this->caller->setInput($this->makeInputString($top_up_request));
+        $this->caller->setInput($this->makeInputString($topup_order));
         $response = $this->caller->call();
         $rax_response = new PretupsResponse();
         $rax_response->setResponse($response);
         return $rax_response;
     }
 
-    private function makeInputString(TopUpRequest $top_up_request)
+    private function makeInputString(TopUpOrder $topup_order)
     {
         $input = '<?xml version="1.0"?><COMMAND>';
-        $input .= "<TYPE>" . $this->getType($top_up_request->getType()) . "</TYPE>";
+        $input .= "<TYPE>" . $this->getType($topup_order->payee_mobile_type) . "</TYPE>";
         $input .= "<DATE>" . Carbon::now()->toDateTimeString() . "</DATE>";
         $input .= "<EXTNWCODE>$this->EXTNWCODE</EXTNWCODE>";
         $input .= "<MSISDN>$this->mId</MSISDN>";
@@ -104,11 +104,11 @@ class Client
         $input .= '<PASSWORD></PASSWORD>';
         $input .= '<EXTCODE></EXTCODE>';
         $input .= '<EXTREFNUM></EXTREFNUM>';
-        $input .= "<MSISDN2>" . $top_up_request->getOriginalMobile() . "</MSISDN2>";
-        $input .= "<AMOUNT>" . ($top_up_request->getAmount() * $this->amountMultiplier) . "</AMOUNT>";
+        $input .= "<MSISDN2>" . $topup_order->getOriginalMobile() . "</MSISDN2>";
+        $input .= "<AMOUNT>" . ($topup_order->amount * $this->amountMultiplier) . "</AMOUNT>";
         $input .= "<LANGUAGE1>" . $this->language1 . "</LANGUAGE1>";
         $input .= "<LANGUAGE2>" . $this->language2 . "</LANGUAGE2>";
-        $input .= "<SELECTOR>" . $this->selectors[$top_up_request->getType()] . "</SELECTOR>";
+        $input .= "<SELECTOR>" . $this->selectors[$topup_order->payee_mobile_type] . "</SELECTOR>";
         $input .= '</COMMAND>';
         return $input;
     }

@@ -1,24 +1,38 @@
 <?php namespace App\Http\Controllers\Partner;
 
-use App\Repositories\ReviewRepository;
-use Carbon\Carbon;
-use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
+use App\Http\Controllers\PartnerOrderController;
+use App\Http\Controllers\Pos\OrderController;
+use App\Models\PosOrder;
+use phpDocumentor\Reflection\Types\This;
 use Sheba\Analysis\PartnerPerformance\PartnerPerformance;
-use Sheba\Analysis\PartnerSale\PartnerSale;
+use App\Http\Controllers\SpLoanInformationCompletion;
+use Sheba\Subscription\Partner\PartnerSubscriber;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
+use Sheba\Analysis\PartnerSale\PartnerSale;
+use App\Repositories\ReviewRepository;
+use App\Http\Controllers\Controller;
+use Sheba\Reward\PartnerReward;
+use Sheba\Partner\LeaveStatus;
+use App\Models\SliderPortal;
+use Illuminate\Http\Request;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Manager\JobList;
-use Sheba\Partner\LeaveStatus;
-use Sheba\Reward\PartnerReward;
-use Sheba\Subscription\Partner\PartnerSubscriber;
+use GuzzleHttp\Client;
+use App\Models\Slider;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
     public function get(Request $request, PartnerPerformance $performance, PartnerReward $partner_reward)
     {
         try {
+            ini_set('memory_limit', '6096M');
             $partner = $request->partner;
+            $slider_portal = SliderPortal::with('slider.slides')
+                ->where('portal_name', 'manager-app')
+                ->where('screen', 'home')
+                ->get();
+            $slide = $slider_portal->last()->slider->slides->last();
             $performance->setPartner($partner)->setTimeFrame((new TimeFrame())->forCurrentWeek())->calculate();
             $performanceStats = $performance->getData();
 
@@ -26,8 +40,17 @@ class DashboardController extends Controller
             $rating = (string)(is_null($rating) ? 0 : $rating);
             $successful_jobs = $partner->notCancelledJobs();
             $sales_stats = (new PartnerSalesStatistics($partner))->calculate();
-
             $upgradable_package = (new PartnerSubscriber($partner))->getUpgradablePackage();
+            $new_order = $this->newOrdersCount($partner, $request);
+            $pos_due_orders = $this->posDueOrders($request);
+            $pos_paid_orders = $this->posPaidOrders($request);
+            $total_due_for_pos_orders = 0;
+            foreach ($pos_due_orders as $pos_due_order){
+                foreach ($pos_due_order->orders as $order){
+                    $total_due_for_pos_orders += $order->due;
+                }
+            }
+
             $dashboard = [
                 'name' => $partner->name,
                 'logo' => $partner->logo,
@@ -48,6 +71,7 @@ class DashboardController extends Controller
                 'reward_point' => $partner->reward_point,
                 'bkash_no' => $partner->bkash_no,
                 'current_stats' => [
+                    'total_new_order' => $new_order->total_new_orders,
                     'total_order' => $partner->orders()->count(),
                     'total_ongoing_order' => (new JobList($partner))->ongoing()->count(),
                     'today_order' => $partner->todayJobs($successful_jobs)->count(),
@@ -69,7 +93,8 @@ class DashboardController extends Controller
                     'month' => [
                         'timeline' => date("jS F", strtotime(Carbon::today()->startOfMonth())) . "-" . date("jS F", strtotime(Carbon::today())),
                         'amount' => $sales_stats->month->orderTotalPrice + $sales_stats->month->posSale
-                    ]
+                    ],
+                    'total_due_for_pos_orders' => $total_due_for_pos_orders,
                 ],
                 'weekly_performance' => [
                     'timeline' => date("jS F", strtotime(Carbon::today()->startOfWeek())) . "-" . date("jS F", strtotime(Carbon::today())),
@@ -101,13 +126,72 @@ class DashboardController extends Controller
                     'package_usp_bn' => json_decode($upgradable_package->usps, 1)['usp_bn']
                 ] : null,
                 'has_reward_campaign' => count($partner_reward->upcoming()) > 0 ? 1 : 0,
-                'leave_info'=>(new LeaveStatus($partner))->getCurrentStatus()
+                'leave_info' => (new LeaveStatus($partner))->getCurrentStatus(),
+                'sheba_order' => $partner->orders->isEmpty() ? 0 : 1,
+                'manager_dashboard_banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/categories/24/app_banner.jpg',
+                'video' => json_decode($slide->video_info),
+                'has_pos_inventory' => $partner->posServices->isEmpty() ? 0 : 1,
+                'has_kyc_profile_completed' => $this->getSpLoanInformationCompletion($partner, $request),
+                'has_pos_due_order' => count($pos_due_orders) > 0 ? 1 : 0,
+                'has_pos_paid_order' => count($pos_paid_orders) > 0 ? 1 : 0,
             ];
 
             return api_response($request, $dashboard, 200, ['data' => $dashboard]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
+        }
+    }
+
+    private function newOrdersCount($partner, $request)
+    {
+        try {
+            $request->merge(['getCount' => 1]);
+            $partner_order = new PartnerOrderController();
+            $new_order = $partner_order->newOrders($partner, $request)->getData();
+            return $new_order;
+        } catch (\Throwable $e) {
+            return array();
+        }
+    }
+
+    private function posPaidOrders($request)
+    {
+        try {
+            $request->merge(['status' => 'Paid']);
+            $due_order = new OrderController();
+            $due_order = $due_order->index($request)->getData();
+            return $due_order->orders;
+        } catch (\Throwable $e) {
+            return array();
+        }
+    }
+
+    private function posDueOrders($request)
+    {
+        try {
+            $request->merge(['status' => 'Due']);
+            $paid_order = new OrderController();
+            $paid_order = $paid_order->index($request)->getData();
+            return $paid_order->orders;
+        } catch (\Throwable $e) {
+            return array();
+        }
+    }
+
+    private function getSpLoanInformationCompletion($partner, $request)
+    {
+        try {
+            $sp_loan_information_completion = new SpLoanInformationCompletion();
+            $sp_information_completion = $sp_loan_information_completion->getLoanInformationCompletion($partner, $request)->getData()->completion;
+            $personal = $sp_information_completion->personal->completion_percentage;
+            $business = $sp_information_completion->business->completion_percentage;
+            $finance = $sp_information_completion->finance->completion_percentage;
+            $nominee = $sp_information_completion->nominee->completion_percentage;
+            $documents = $sp_information_completion->documents->completion_percentage;
+            return ($personal == 100 && $business == 100 && $finance == 100 && $nominee == 100 && $documents == 100) ? 1 : 0;
+        } catch (\Throwable $e) {
+            return array();
         }
     }
 

@@ -2,7 +2,9 @@
 
 namespace Sheba\TopUp\Vendor\Internal;
 
-use Sheba\TopUp\TopUpRequest;
+
+use App\Models\TopUpOrder;
+use App\Sheba\Sentry\SendSentryError;
 use Sheba\TopUp\Vendor\Response\SslResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 use SoapClient;
@@ -22,35 +24,35 @@ class SslClient
     }
 
     /**
-     * @param TopUpRequest $top_up_request
+     * @param TopUpOrder $topup_order
      * @return TopUpResponse
      * @throws SoapFault
      */
-    public function recharge(TopUpRequest $top_up_request): TopUpResponse
+    public function recharge(TopUpOrder $topup_order): TopUpResponse
     {
+        $ssl_response = new SslResponse();
         try {
             ini_set("soap.wsdl_cache_enabled", '0'); // disabling WSDL cache
             $client = new SoapClient($this->topUpUrl);
             $guid = randomString(20, 1, 1);
-            $mobile = $top_up_request->getMobile();
+            $mobile = $topup_order->payee_mobile;
             $operator_id = $this->getOperatorId($mobile);
-            $connection_type = $top_up_request->getType();
+            $connection_type = $topup_order->payee_mobile_type;
             $sender_id = "redwan@sslwireless.com";
             $priority = 1;
             $s_url = config('sheba.api_url') . '/v2/top-up/success/ssl';
             $f_url = config('sheba.api_url') . '/v2/top-up/fail/ssl';
             $calling_method = "GET";
             $create_recharge_response = $client->CreateRecharge($this->clientId, $this->clientPassword, $guid, $operator_id,
-                $mobile, $top_up_request->getAmount(), $connection_type, $sender_id, $priority, $s_url, $f_url, $calling_method);
+                $mobile, $topup_order->amount, $connection_type, $sender_id, $priority, $s_url, $f_url, $calling_method);
             $vr_guid = $create_recharge_response->vr_guid;
             $recharge_response = $client->InitRecharge($this->clientId, $this->clientPassword, $guid, $vr_guid);
             $recharge_response->guid = $guid;
-            $ssl_response = new SslResponse();
             $ssl_response->setResponse($recharge_response);
-            return $ssl_response;
         } catch (SoapFault $exception) {
-            throw $exception;
+            new SendSentryError($exception);
         }
+        return $ssl_response;
     }
 
     public function getBalance()
