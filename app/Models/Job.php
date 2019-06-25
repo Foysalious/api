@@ -438,7 +438,8 @@ class Job extends BaseModel
             'jobs.id', 'jobs.discount', 'jobs.created_at', 'jobs.category_id', 'sheba_contribution', 'jobs.preferred_time_start',
             'partner_contribution', 'commission_rate', 'resource_id', 'schedule_date', 'service_variables',
             'job_additional_info', 'delivered_date', 'preferred_time', 'service_name',
-            'status', 'site', 'service_quantity', 'service_unit_price', 'service_id', 'partner_order_id', 'jobs.delivery_charge'
+            'status', 'site', 'service_quantity', 'service_unit_price', 'service_id', 'partner_order_id', 'jobs.delivery_charge',
+            'first_logistic_order_id', 'last_logistic_order_id'
         );
     }
 

@@ -88,6 +88,10 @@ class PartnerOrderRepository
             $job['estimated_time'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_time : null;
 
             array_forget($job, ['partner_order', 'carRentalJobDetail']);
+            if($job->first_logistic_order_id || $job->last_logistic_order_id) {
+                $status = new LogisticJobStatusCalculator($job);
+                $job['logistic'] = $status->calculate()->get();
+            }
 
         })->sortByDesc('id')->values()->all();
         removeRelationsAndFields($partner_order);

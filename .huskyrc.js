@@ -1,3 +1,4 @@
++
 const join_commands = arr => (arr || []).join(' && ');
 
 const isWin = process.platform === "win32";
