@@ -49,7 +49,7 @@ class LogisticJobStatusCalculator
             case 'pending':
                 $order_time = Carbon::parse($this->job->schedule_date." ".$this->job->preferred_time_start);
                 $current_time = Carbon::now();
-                $time_remaining_till_order_starts = $current_time->diffInHours($order_time);
+                $time_remaining_till_order_starts = $current_time->diffInMinutes($order_time);
                 if($time_remaining_till_order_starts > 60) {
                     $this->status =  $this->jobStatuses['Delivery_Scheduled'];
                 } else if ($time_remaining_till_order_starts > 0 && $time_remaining_till_order_starts <=60){
