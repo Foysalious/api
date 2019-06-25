@@ -2,18 +2,24 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\FormTemplate;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\ModificationFields;
+use Throwable;
 
 class PurchaseRequestController extends Controller
 {
     use ModificationFields;
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function forms(Request $request)
     {
         try {
             $business = $request->business;
-            $purchase_request_forms = FormTemplate::for('purchase_request')
+            $purchase_request_forms = FormTemplate::for(config('b2b.FORM_TEMPLATES.purchase_request'))
                 ->businessOwner($business->id)
                 ->get();
 
@@ -28,7 +34,7 @@ class PurchaseRequestController extends Controller
 
             if (count($form_lists) > 0) return api_response($request, $form_lists, 200, ['data' => $form_lists->unique()->values()]);
             else return api_response($request, null, 404);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

@@ -2,7 +2,7 @@
 
 use Illuminate\Database\Eloquent\Model;
 
-class FormTemplateItem extends Model
+class FormTemplateQuestion extends Model
 {
     protected $guarded = ['id'];
 }

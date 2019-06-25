@@ -81,7 +81,9 @@ class BusinessRoute
                 });
 
                 $api->group(['prefix' => 'purchase-requests'], function ($api) {
-                    $api->get('/forms', 'B2b\PurchaseRequestController@forms');
+                    $api->group(['prefix' => 'forms'], function ($api) {
+                        $api->get('/', 'B2b\PurchaseRequestController@forms');
+                    });
                 });
 
                 $api->group(['prefix' => 'fuel-logs'], function ($api) {
