@@ -1,7 +1,7 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Http\Controllers\Controller;
-use App\Models\PurchaseRequest;
+use App\Models\FormTemplate;
 use Illuminate\Http\Request;
 use Sheba\ModificationFields;
 
@@ -13,24 +13,21 @@ class PurchaseRequestController extends Controller
     {
         try {
             $business = $request->business;
-            $member = $request->manager_member;
-            $this->setModifier($member);
-            $purchase_requests = PurchaseRequest::with('formTemplate')
-                ->where('business_id', $business->id)
-                ->orderBy('id', 'DESC')
+            $purchase_request_forms = FormTemplate::for('purchase_request')
+                ->businessOwner($business->id)
                 ->get();
 
             $form_lists = collect();
-            foreach ($purchase_requests as $purchase_request) {
-                $purchase_request_form = $purchase_request->formTemplate;
+            foreach ($purchase_request_forms as $purchase_request_form) {
                 $form_lists->push([
-                    'id' => $purchase_request_form ? $purchase_request_form->id : null,
-                    'title' => $purchase_request_form ? $purchase_request_form->title : null
+                    'id' => $purchase_request_form->id,
+                    'title' => $purchase_request_form->title,
+                    'short_description' => $purchase_request_form->short_description
                 ]);
             }
 
-            if (count($form_lists) > 0)
-                return api_response($request, $form_lists, 200, ['form_lists' => $form_lists->unique()->values()]); else  return api_response($request, null, 404);
+            if (count($form_lists) > 0) return api_response($request, $form_lists, 200, ['data' => $form_lists->unique()->values()]);
+            else return api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
