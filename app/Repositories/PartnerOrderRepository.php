@@ -39,10 +39,8 @@ class PartnerOrderRepository
         $partner_order['can_process'] = $partner_order->order->isProcessable();
         $partner_order['can_serve'] = $partner_order->order->isServeable();
         $partner_order['can_pay'] = $partner_order->order->isPayable();
-        /** @var DeliveryStatuses $delivery_statuses */
-        $delivery_statuses = app(DeliveryStatuses::class);
 
-        $jobs = $partner_order->jobs->each(function ($job) use ($partner_order, $delivery_statuses) {
+        $jobs = $partner_order->jobs->each(function ($job) use ($partner_order) {
             $job['partner_order'] = $partner_order;
             $job = $this->partnerJobRepository->getJobInfo($job);
             $services = [];
@@ -60,8 +58,6 @@ class PartnerOrderRepository
 
             $job['category_name'] = $job->category ? $job->category->name : null;
             $job['complains'] = app('Sheba\Dal\Complain\EloquentImplementation')->jobWiseComplainInfo($job->id);
-            $delivery_statuses->setJob($job);
-            $job['delivery_status'] = $delivery_statuses->getApplicable();
 
             if (!$job['complains']->isEmpty()) {
                 $order = $job->partnerOrder->order;
