@@ -55,11 +55,6 @@ class CustomerRoute
                         $api->get('/', 'CustomerOrderController@show');
                     });
                 });
-                $api->group(['prefix' => 'utility-orders'], function ($api) {
-                    $api->group(['prefix' => '{utility_order}'], function ($api) {
-                        $api->get('bills/clear', 'UtilityController@clearBills');
-                    });
-                });
                 $api->group(['prefix' => 'subscriptions'], function ($api) {
                     $api->post('/', 'Subscription\CustomerSubscriptionController@placeSubscriptionRequest');
                     $api->get('{subscription}/payment', 'Subscription\CustomerSubscriptionController@clearPayment');

@@ -57,6 +57,11 @@ class Route
                     $api->post('cancel', 'SslController@validatePayment');
                 });
             });
+            $api->group(['prefix' => 'utility-orders'], function ($api) {
+                $api->group(['prefix' => '{utility_order}'], function ($api) {
+                    $api->post('bills/clear', 'UtilityController@clearBills');
+                });
+            });
             $api->group(['prefix' => 'payments'], function ($api) {
                 $api->group(['prefix' => 'cbl'], function ($api) {
                     $api->post('success', 'CblController@validateCblPGR');

@@ -2,8 +2,9 @@
 
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Checkout\SubscriptionOrderInterface;
+use Sheba\Payment\PayableType;
 
-class SubscriptionOrder extends Model implements SubscriptionOrderInterface
+class SubscriptionOrder extends Model implements SubscriptionOrderInterface, PayableType
 {
     protected $guarded = ['id'];
 
