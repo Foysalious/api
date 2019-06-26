@@ -2,7 +2,7 @@
 
 use Illuminate\Database\Eloquent\Model;
 
-class ProcurementQuestion extends Model
+class PurchaseRequestQuestion extends Model
 {
     protected $guarded = ['id'];
 }

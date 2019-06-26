@@ -1,6 +1,5 @@
 <?php namespace App\Sheba\Business\ACL;
 
-
 use App\Models\BusinessMember;
 
 class AccessControl

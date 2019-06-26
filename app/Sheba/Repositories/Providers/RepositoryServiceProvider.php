@@ -13,6 +13,9 @@ use Sheba\Repositories\Business\IssueRepository;
 use Sheba\Repositories\Business\ProcurementItemRepository;
 use Sheba\Repositories\Business\ProcurementQuestionRepository;
 use Sheba\Repositories\Business\ProcurementRepository;
+use Sheba\Repositories\Business\PurchaseRequestItemRepository;
+use Sheba\Repositories\Business\PurchaseRequestQuestionRepository;
+use Sheba\Repositories\Business\PurchaseRequestRepository;
 use Sheba\Repositories\Interfaces\FormTemplateItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\FormTemplateQuestionRepositoryInterface;
 use Sheba\Repositories\Interfaces\FormTemplateRepositoryInterface;
@@ -25,6 +28,9 @@ use Sheba\Repositories\Interfaces\IssueRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementQuestionRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
+use Sheba\Repositories\Interfaces\PurchaseRequestItemRepositoryInterface;
+use Sheba\Repositories\Interfaces\PurchaseRequestQuestionRepositoryInterface;
+use Sheba\Repositories\Interfaces\PurchaseRequestRepositoryInterface;
 
 class RepositoryServiceProvider extends ServiceProvider
 {
@@ -42,5 +48,8 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(ProcurementRepositoryInterface::class, ProcurementRepository::class);
         $this->app->bind(ProcurementItemRepositoryInterface::class, ProcurementItemRepository::class);
         $this->app->bind(ProcurementQuestionRepositoryInterface::class, ProcurementQuestionRepository::class);
+        $this->app->bind(PurchaseRequestRepositoryInterface::class, PurchaseRequestRepository::class);
+        $this->app->bind(PurchaseRequestItemRepositoryInterface::class, PurchaseRequestItemRepository::class);
+        $this->app->bind(PurchaseRequestQuestionRepositoryInterface::class, PurchaseRequestQuestionRepository::class);
     }
 }

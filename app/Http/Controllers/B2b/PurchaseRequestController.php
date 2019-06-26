@@ -3,8 +3,11 @@
 use App\Http\Controllers\Controller;
 use App\Models\FormTemplate;
 use App\Models\PurchaseRequest;
+use App\Sheba\Business\ACL\AccessControl;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Sheba\Business\Purchase\Creator;
 use Sheba\ModificationFields;
 use Throwable;
 use Validator;
@@ -58,6 +61,52 @@ class PurchaseRequestController extends Controller
                 return api_response($request, null, 404);
             }
         } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @param AccessControl $access_control
+     * @param Creator $creator
+     * @return JsonResponse
+     */
+    public function store(Request $request, AccessControl $access_control, Creator $creator)
+    {
+        try {
+            $this->validate($request, [
+                'type' => 'required|string:in:product,service',
+                'form_template_id' => 'sometimes|numeric',
+                'title' => 'required|string',
+                'items' => 'required|string',
+                'questions' => 'sometimes|string',
+                'estimated_price' => 'sometimes|numeric',
+                'estimated_date' => 'sometimes|date_format:Y-m-d'
+            ]);
+            $this->setModifier($request->manager_member);
+
+            $creator->setType($request->type)
+                ->setTitle($request->title)
+                ->setEstimatedPrice($request->estimated_price)
+                ->setEstimatedDate($request->estimated_date)
+                ->setBusiness($request->business)
+                ->setMember($request->manager_member)
+                ->setFormTemplateId($request->form_template_id)
+                ->setLongDescription($request->description)
+                ->setItems($request->items)
+                ->setQuestions($request->questions);
+
+            $procurement = $creator->create();
+            return api_response($request, null, 200, ['id' => $procurement->id]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
