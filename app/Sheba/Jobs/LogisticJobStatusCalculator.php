@@ -58,6 +58,12 @@ class LogisticJobStatusCalculator
                     $this->status =  $this->jobStatuses['Rider_Not_Found'];
                 }
                 break;
+            case 'search_started':
+                $this->status =  $this->jobStatuses['Rider_Searching'];
+                break;
+            case 'rider_not_found':
+                $this->status = $this->jobStatuses['Rider_Not_Found'];
+                break;
             case 'assigned':
                 $this->status =  $this->jobStatuses['Rider_Assigned'];
                 break;
