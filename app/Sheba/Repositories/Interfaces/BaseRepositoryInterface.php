@@ -19,7 +19,6 @@ interface BaseRepositoryInterface
      */
     public function find($id);
 
-
     /**
      * @param $column_name
      * @param $value
