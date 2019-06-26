@@ -42,7 +42,7 @@ class ProfileAuthMiddleware
                     $avatar = Profile::where('remember_token', $request->input('remember_token'))->first();
                 }
                 if ($avatar != null) {
-                    if ($avatar->id == $request->id) {
+                    if ($avatar->id == $request->id ||( $from == 'resource' && $avatar->firstPartner()->id == $request->id)) {
                         $request->merge(['profile' => $from != 'user' ? $avatar->profile : $avatar]);
                         return $next($request);
                     } else {
