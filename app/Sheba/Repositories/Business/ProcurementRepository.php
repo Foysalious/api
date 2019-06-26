@@ -12,4 +12,9 @@ class ProcurementRepository extends BaseRepository implements ProcurementReposit
         parent::__construct();
         $this->setModel($procurement);
     }
+
+    public function ofBusiness($business_id)
+    {
+        return $this->model->where('owner_id', $business_id)->where('owner_type', "App\\Models\\Business");
+    }
 }

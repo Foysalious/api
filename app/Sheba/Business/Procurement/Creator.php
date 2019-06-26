@@ -63,43 +63,43 @@ class Creator
 
     public function estimatedPrice($estimated_price)
     {
-        $this->estimatedPrice = $estimated_price;
+        $this->estimatedPrice = $estimated_price ? $estimated_price : null;
         return $this;
     }
 
     public function setLongDescription($long_description)
     {
-        $this->longDescription = $long_description;
+        $this->longDescription = $long_description ? $long_description : null;
         return $this;
     }
 
     public function setOrderStartDate($order_start_date)
     {
-        $this->orderStartDate = $order_start_date;
+        $this->orderStartDate = $order_start_date ? $order_start_date : null;
         return $this;
     }
 
     public function setOrderEndDate($order_end_date)
     {
-        $this->orderEndDate = $order_end_date;
+        $this->orderEndDate = $order_end_date ? $order_end_date : null;
         return $this;
     }
 
     public function setInterviewDate($interview_date)
     {
-        $this->interviewDate = $interview_date;
+        $this->interviewDate = $interview_date ? $interview_date : null;
         return $this;
     }
 
     public function setProcurementStartDate($procurement_start_date)
     {
-        $this->procurementStartDate = $procurement_start_date;
+        $this->procurementStartDate = $procurement_start_date ? $procurement_start_date : null;
         return $this;
     }
 
     public function setProcurementEndDate($procurement_end_date)
     {
-        $this->procurementEndDate = $procurement_end_date;
+        $this->procurementEndDate = $procurement_end_date ? $procurement_end_date : null;
         return $this;
     }
 
