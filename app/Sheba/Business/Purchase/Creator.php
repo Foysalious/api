@@ -151,6 +151,7 @@ class Creator
                 'input_type' => $item->type,
                 'purchase_request_id' => $purchaseRequest->id,
                 'variables' => json_encode(['is_required' => $item->is_required]),
+                'result' => $item->result
             ]);
         }
     }
@@ -170,6 +171,7 @@ class Creator
                 'input_type' => $question->type,
                 'purchase_request_id' => $purchaseRequest->id,
                 'variables' => json_encode(['is_required' => $question->is_required]),
+                'result' => $question->result
             ]);
         }
     }
