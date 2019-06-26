@@ -43,7 +43,7 @@ class TripRequestController extends Controller
                     'id' => $business_trip_request->id,
                     'member' => [
                         'name' => $business_trip_request->member->profile->name,
-                        "designation" => $business_member->role ? $business_member->role->name : ''
+                        "designation" => $business_trip_request->member->businessMember->role ? $business_trip_request->member->businessMember->role->name : ''
                     ],
                     'vehicle_type' => ucfirst($business_trip_request->vehicle_type),
                     'status' => ucfirst($business_trip_request->status),
@@ -125,7 +125,6 @@ class TripRequestController extends Controller
             $trip_request = BusinessTripRequest::find((int)$trip_request);
             if (!$trip_request) return api_response($request, null, 404);
             $comments = [];
-            $business_member = $request->business_member;
             foreach ($trip_request->comments as $comment) {
                 array_push($comments, [
                     'comment' => $comment->comment,
@@ -142,7 +141,7 @@ class TripRequestController extends Controller
                 'details' => $trip_request->details,
                 'member' => [
                     'name' => $trip_request->member->profile->name,
-                    "designation" => $business_member->role ? $business_member->role->name : ''
+                    "designation" => $trip_request->member->businessMember->role ? $trip_request->member->businessMember->role->name : ''
                 ],
                 'status' => $trip_request->status,
                 'comments' => $comments,
