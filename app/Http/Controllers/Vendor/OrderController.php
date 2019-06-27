@@ -56,6 +56,8 @@ class OrderController extends Controller
             return response()->json(['data' =>
                 [
                     'discounted_price' => $job->get('total'),
+                    'total_price_with_logistic' => $job->get('total'),
+                    'total_price_without_logistic' => $job->get('total_without_logistic'),
                     'original_price' => $job->get('original_price'),
                     'discount' => $job->get('discount'),
                     'material_price' => $job->get('material_price'),
