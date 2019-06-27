@@ -47,10 +47,10 @@ class StatusChanger
      */
     public function change()
     {
-        $this->purchaseRequestRepository
-            ->update(
-                $this->purchaseRequest,
-                $this->withUpdateModificationField(['status' => $this->data['status']])
-            );
+        $data = ['status' => $this->data['status']];
+        if ($this->data['status'] == $this->statuses['rejected']) {
+            $data['rejection_note'] = $this->data['rejection_note'];
+        }
+        $this->purchaseRequestRepository->update($this->purchaseRequest, $this->withUpdateModificationField($data));
     }
 }
