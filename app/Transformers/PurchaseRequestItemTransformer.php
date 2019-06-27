@@ -7,10 +7,14 @@ class PurchaseRequestItemTransformer extends TransformerAbstract
 {
     public function transform(PurchaseRequestItem $item)
     {
-        return [
-            'id' => $item->id,
-            'title' => $item->title,
-            'result' => $item->result
-        ];
+        $items = [];
+        $item->fields->each(function ($field) use (&$items) {
+            $items[] = [
+                'title' => $field->title,
+                'result' => $field->result
+            ];
+        });
+
+        return $items;
     }
 }
