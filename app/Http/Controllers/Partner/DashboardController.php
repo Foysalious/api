@@ -50,7 +50,8 @@ class DashboardController extends Controller
             PosOrder::with('items.service.discounts', 'customer', 'payments', 'logs', 'partner')->byPartner($partner->id)
                 ->each(function (PosOrder $pos_order) use (&$total_due_for_pos_orders, &$has_pos_paid_order) {
                     $pos_order->calculate();
-                    $total_due_for_pos_orders += $pos_order->getDue();
+                    $due = $pos_order->getDue();
+                    $total_due_for_pos_orders += $due > 0 ? $due : 0;
                     if (!$has_pos_paid_order && ($pos_order->getPaymentStatus() == OrderPaymentStatuses::PAID))
                         $has_pos_paid_order = 1;
                 });
