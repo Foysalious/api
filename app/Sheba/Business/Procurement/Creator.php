@@ -1,7 +1,9 @@
 <?php namespace Sheba\Business\Procurement;
 
 use App\Models\Procurement;
+use App\Models\ProcurementItem;
 use Illuminate\Database\QueryException;
+use Sheba\Repositories\Interfaces\ProcurementItemFieldRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementQuestionRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
@@ -12,6 +14,7 @@ class Creator
     private $procurementRepository;
     private $procurementItemRepository;
     private $procurementQuestionRepository;
+    private $procurementItemFieldRepository;
     private $purchaseRequestId;
     private $type;
     private $title;
@@ -27,13 +30,15 @@ class Creator
     private $questions;
     private $procurementData;
     private $procurementItemData;
+    private $procurementItemFieldData;
     private $procurementQuestionData;
 
-    public function __construct(ProcurementRepositoryInterface $procurement_repository, ProcurementItemRepositoryInterface $procurement_item_repository, ProcurementQuestionRepositoryInterface $procurement_question_repository)
+    public function __construct(ProcurementRepositoryInterface $procurement_repository, ProcurementItemRepositoryInterface $procurement_item_repository, ProcurementItemFieldRepositoryInterface $procurement_item_field_repository, ProcurementQuestionRepositoryInterface $procurement_question_repository)
     {
         $this->procurementRepository = $procurement_repository;
         $this->procurementItemRepository = $procurement_item_repository;
         $this->procurementQuestionRepository = $procurement_question_repository;
+        $this->procurementItemFieldRepository = $procurement_item_field_repository;
     }
 
     public function setType($type)
@@ -118,12 +123,17 @@ class Creator
     {
         $this->makeProcurementData();
         $procurement = null;
+        $items = json_decode($this->items);
         try {
-            DB::transaction(function () use (&$procurement) {
+            DB::transaction(function () use (&$procurement, $items) {
                 /** @var Procurement $procurement */
                 $procurement = $this->procurementRepository->create($this->procurementData);
-                $this->makeItem($procurement);
-                $this->procurementItemRepository->createMany($this->procurementItemData);
+                foreach ($items as $fields) {
+                    /** @var ProcurementItem $procurement_item */
+                    $procurement_item = $this->procurementItemRepository->create(['procurement_id' => $procurement->id]);
+                    $this->makeItemFields($procurement_item, $fields);
+                    $this->procurementItemFieldRepository->createMany($this->procurementItemFieldData);
+                }
                 $this->makeQuestion($procurement);
                 $this->procurementQuestionRepository->createMany($this->procurementQuestionData);
             });
@@ -152,18 +162,18 @@ class Creator
         ];
     }
 
-    private function makeItem(Procurement $procurement)
+    private function makeItemFields(ProcurementItem $procurement_item, $fields)
     {
-        $this->procurementItemData = [];
-        $items = json_decode($this->items);
-        foreach ($items as $item) {
-            array_push($this->procurementItemData, [
-                'title' => $item->title,
-                'short_description' => $item->short_description,
-                'long_description' => $item->instructions,
-                'input_type' => $item->type,
-                'procurement_id' => $procurement->id,
-                'variables' => json_encode(['is_required' => $item->is_required]),
+        $this->procurementItemFieldData = [];
+        foreach ($fields as $field) {
+            array_push($this->procurementItemFieldData, [
+                'title' => $field->title,
+                'short_description' => $field->short_description,
+                'long_description' => $field->instructions,
+                'input_type' => $field->type,
+                'procurement_item_id' => $procurement_item->id,
+                'variables' => json_encode(['is_required' => $field->is_required]),
+                'result' => $field->result
             ]);
         }
     }
