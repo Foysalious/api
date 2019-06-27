@@ -44,16 +44,22 @@ class DashboardController extends Controller
             $new_order = $this->newOrdersCount($partner, $request);
             $pos_due_orders = $this->posDueOrders($request);
             $pos_paid_orders = $this->posPaidOrders($request);
+
             $total_due_for_pos_orders = 0;
+            /*foreach ($partner->posOrders as $pos_order) {
+                $pos_order->calculate(true);
+                $total_due_for_pos_orders += $pos_order->getDue();
+            }*/
             foreach ($pos_due_orders as $pos_due_order) {
                 foreach ($pos_due_order->orders as $order) {
                     $total_due_for_pos_orders += $order->due;
                 }
             }
-            $partner_orders = $partner->orders()->where('cancelled_at', null)->get();
+
+            $partner_orders = $partner->orders()->notCompleted()->get();
             $total_due_for_sheba_orders = 0;
             foreach ($partner_orders as $order) {
-                $total_due_for_sheba_orders += $order->calculate(false)->due;
+                $total_due_for_sheba_orders += $order->calculate(true)->due;
             }
 
             $dashboard = [
