@@ -5,7 +5,7 @@ use League\Fractal\TransformerAbstract;
 
 class PurchaseRequestTransformer extends TransformerAbstract
 {
-    protected $defaultIncludes = ['items', 'questions'];
+    protected $defaultIncludes = ['items', 'questions', 'approvals'];
 
     public function transform(PurchaseRequest $purchase_request)
     {
@@ -23,7 +23,8 @@ class PurchaseRequestTransformer extends TransformerAbstract
             'estimated_price' => $purchase_request->estimated_price,
             'required_date' => $purchase_request->estimated_date ? $purchase_request->estimated_date->format('d/m/Y') : null,
             'message' => $purchase_request->long_description,
-            'status' => $purchase_request->status
+            'status' => $purchase_request->status,
+            'rejection_reason' => $purchase_request->rejection_note
         ];
     }
 
@@ -38,6 +39,14 @@ class PurchaseRequestTransformer extends TransformerAbstract
     public function includeQuestions($purchase_request)
     {
         $collection = $this->collection($purchase_request->questions, new PurchaseRequestQuestionTransformer());
+        return $collection->getData() ? $collection : $this->item(null, function () {
+            return [];
+        });
+    }
+
+    public function includeApprovals($purchase_request)
+    {
+        $collection = $this->collection($purchase_request->approvalRequests, new PurchaseRequestApprovalTransformer());
         return $collection->getData() ? $collection : $this->item(null, function () {
             return [];
         });
