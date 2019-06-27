@@ -6,6 +6,7 @@ use App\Models\PosOrder;
 use phpDocumentor\Reflection\Types\This;
 use Sheba\Analysis\PartnerPerformance\PartnerPerformance;
 use App\Http\Controllers\SpLoanInformationCompletion;
+use Sheba\Pos\Order\OrderPaymentStatuses;
 use Sheba\Subscription\Partner\PartnerSubscriber;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
 use Sheba\Analysis\PartnerSale\PartnerSale;
@@ -26,13 +27,14 @@ class DashboardController extends Controller
     public function get(Request $request, PartnerPerformance $performance, PartnerReward $partner_reward)
     {
         try {
-            ini_set('memory_limit', '9999999M');
+            ini_set('memory_limit', '6096M');
+            ini_set('max_execution_time', 660);
             $partner = $request->partner;
             $slider_portal = SliderPortal::with('slider.slides')
                 ->where('portal_name', 'manager-app')
                 ->where('screen', 'home')
                 ->get();
-            $slide = $slider_portal->last()->slider->slides->last();
+            $slide = !$slider_portal->isEmpty() ? $slider_portal->last()->slider->slides->last() : null;
             $performance->setPartner($partner)->setTimeFrame((new TimeFrame())->forCurrentWeek())->calculate();
             $performanceStats = $performance->getData();
 
@@ -42,19 +44,16 @@ class DashboardController extends Controller
             $sales_stats = (new PartnerSalesStatistics($partner))->calculate();
             $upgradable_package = (new PartnerSubscriber($partner))->getUpgradablePackage();
             $new_order = $this->newOrdersCount($partner, $request);
-            $pos_due_orders = $this->posDueOrders($request);
-            $pos_paid_orders = $this->posPaidOrders($request);
 
             $total_due_for_pos_orders = 0;
-            /*foreach ($partner->posOrders as $pos_order) {
-                $pos_order->calculate(true);
-                $total_due_for_pos_orders += $pos_order->getDue();
-            }*/
-            foreach ($pos_due_orders as $pos_due_order) {
-                foreach ($pos_due_order->orders as $order) {
-                    $total_due_for_pos_orders += $order->due;
-                }
-            }
+            $has_pos_paid_order = 0;
+            PosOrder::with('items.service.discounts', 'customer', 'payments', 'logs', 'partner')->byPartner($partner->id)
+                ->each(function (PosOrder $pos_order) use (&$total_due_for_pos_orders, &$has_pos_paid_order) {
+                    $pos_order->calculate();
+                    $total_due_for_pos_orders += $pos_order->getDue();
+                    if (!$has_pos_paid_order && ($pos_order->getPaymentStatus() == OrderPaymentStatuses::PAID))
+                        $has_pos_paid_order = 1;
+                });
 
             $partner_orders = $partner->orders()->notCompleted()->get();
             $total_due_for_sheba_orders = 0;
@@ -141,15 +140,16 @@ class DashboardController extends Controller
                 'leave_info' => (new LeaveStatus($partner))->getCurrentStatus(),
                 'sheba_order' => $partner->orders->isEmpty() ? 0 : 1,
                 'manager_dashboard_banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/categories/24/app_banner.jpg',
-                'video' => json_decode($slide->video_info),
+                'video' => $slide ? json_decode($slide->video_info) : null,
                 'has_pos_inventory' => $partner->posServices->isEmpty() ? 0 : 1,
                 'has_kyc_profile_completed' => $this->getSpLoanInformationCompletion($partner, $request),
-                'has_pos_due_order' => count($pos_due_orders) > 0 ? 1 : 0,
-                'has_pos_paid_order' => count($pos_paid_orders) > 0 ? 1 : 0,
+                'has_pos_due_order' => $total_due_for_pos_orders > 0 ? 1 : 0,
+                'has_pos_paid_order' => $has_pos_paid_order,
             ];
 
             return api_response($request, $dashboard, 200, ['data' => $dashboard]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -162,30 +162,6 @@ class DashboardController extends Controller
             $partner_order = new PartnerOrderController();
             $new_order = $partner_order->newOrders($partner, $request)->getData();
             return $new_order;
-        } catch (\Throwable $e) {
-            return array();
-        }
-    }
-
-    private function posPaidOrders($request)
-    {
-        try {
-            $request->merge(['status' => 'Paid']);
-            $due_order = new OrderController();
-            $due_order = $due_order->index($request)->getData();
-            return $due_order->orders;
-        } catch (\Throwable $e) {
-            return array();
-        }
-    }
-
-    private function posDueOrders($request)
-    {
-        try {
-            $request->merge(['status' => 'Due']);
-            $paid_order = new OrderController();
-            $paid_order = $paid_order->index($request)->getData();
-            return $paid_order->orders;
         } catch (\Throwable $e) {
             return array();
         }

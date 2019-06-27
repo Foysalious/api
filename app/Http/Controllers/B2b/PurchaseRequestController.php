@@ -2,11 +2,22 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\FormTemplate;
+use App\Models\PosOrder;
 use App\Models\PurchaseRequest;
 use App\Sheba\Business\ACL\AccessControl;
+use App\Transformers\CustomSerializer;
+use App\Transformers\OfferDetailsTransformer;
+use App\Transformers\OfferTransformer;
+use App\Transformers\PosOrderTransformer;
+use App\Transformers\PosServiceTransformer;
+use App\Transformers\PurchaseRequestTransformer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
+use League\Fractal\Resource\Item;
+use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Business\Purchase\Creator;
 use Sheba\ModificationFields;
 use Throwable;
@@ -107,6 +118,29 @@ class PurchaseRequestController extends Controller
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function show(Request $request)
+    {
+        try {
+            /** @var PurchaseRequest $purchase_request */
+            $purchase_request = PurchaseRequest::with('items')->find($request->purchase_request);
+            if (!$purchase_request) return api_response($request, null, 404, ['msg' => 'Request Not Found']);
+
+            $manager = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+            $resource = new Item($purchase_request, new PurchaseRequestTransformer());
+            $purchase_request = $manager->createData($resource)->toArray()['data'];
+
+            return api_response($request, null, 200, ['purchase_request' => $purchase_request]);
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
