@@ -19,6 +19,7 @@ use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Business\Purchase\Creator;
+use Sheba\Business\Purchase\StatusChanger;
 use Sheba\ModificationFields;
 use Throwable;
 use Validator;
@@ -170,6 +171,38 @@ class PurchaseRequestController extends Controller
             if (count($form_lists) > 0) return api_response($request, $form_lists, 200, ['data' => $form_lists->unique()->values()]);
             else return api_response($request, null, 404);
         } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @param StatusChanger $status_changer
+     * @return JsonResponse
+     */
+    public function changeStatus(Request $request, StatusChanger $status_changer)
+    {
+        try {
+            $this->validate($request, ['status' => 'required|string']);
+            $this->setModifier($request->manager_member);
+
+            $purchase_request = PurchaseRequest::find($request->purchase_request);
+            $status_changer->setPurchaseRequest($purchase_request)->setData($request->all());
+
+            if ($error = $status_changer->hasError())
+                return api_response($request, $error, 400, ['message' => $error]);
+
+            $status_changer->change();
+
+            return api_response($request, null, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

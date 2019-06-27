@@ -86,9 +86,10 @@ class FormTemplateController extends Controller
     public function get($business, $form_template, Request $request, FormTemplateRepositoryInterface $formTemplateRepository)
     {
         try {
+            /** @var FormTemplate $form_template */
             $form_template = $formTemplateRepository->find($form_template);
             if (!$form_template) return api_response($request, null, 404);
-            $items = $inspections = [];
+            $items = $inspections = $questions = [];
             foreach ($form_template->items as $item) {
                 array_push($items, [
                     'id' => $item->id,
@@ -106,13 +107,20 @@ class FormTemplateController extends Controller
                     'schedule_date' => $inspection->start_date->format('jS M, Y'),
                 ]);
             }
+            foreach ($form_template->questions as $question) {
+                array_push($questions, [
+                    'question' => $question->title,
+                    'answer' => $question->result
+                ]);
+            }
             $data = [
                 'id' => $form_template->id,
                 'title' => $form_template->title,
                 'short_description' => $form_template->short_description,
                 'created_at' => $form_template->created_at->toDateTimeString(),
                 'items' => $items,
-                'inspections' => $inspections
+                'inspections' => $inspections,
+                'questions' => $questions
             ];
             return api_response($request, null, 200, ['form_template' => $data]);
         } catch (Throwable $e) {
@@ -121,7 +129,6 @@ class FormTemplateController extends Controller
             $sentry->captureException($e);
             return api_response($request, null, 500);
         }
-
     }
 
     /**

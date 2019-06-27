@@ -1,6 +1,7 @@
 <?php namespace Sheba\Complains;
 
 use Carbon\Carbon;
+use Exception;
 use Sheba\Dal\Complain\Model as Complain;
 use Sheba\Dal\Complain\EloquentImplementation as ComplainRepo;
 use Sheba\ModificationFields;
@@ -52,7 +53,7 @@ class ComplainStatusChanger
 
     /**
      *
-     * @throws \Exception
+     * @throws Exception
      */
     public function change()
     {

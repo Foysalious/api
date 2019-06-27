@@ -12,6 +12,11 @@ class FormTemplate extends Model
         return $this->hasMany(FormTemplateItem::class);
     }
 
+    public function questions()
+    {
+        return $this->hasMany(FormTemplateQuestion::class);
+    }
+
     public function scopePublished($query)
     {
         return $query->where('is_published', 1);
