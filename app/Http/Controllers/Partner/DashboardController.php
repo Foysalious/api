@@ -56,11 +56,11 @@ class DashboardController extends Controller
                         $has_pos_paid_order = 1;
                 });
 
-            $partner_orders = $partner->orders()->notCompleted()->get();
-            $total_due_for_sheba_orders = 0;
+            #$partner_orders = $partner->orders()->notCompleted()->get();
+            /*$total_due_for_sheba_orders = 0;
             foreach ($partner_orders as $order) {
                 $total_due_for_sheba_orders += $order->calculate(true)->due;
-            }
+            }*/
 
             $dashboard = [
                 'name' => $partner->name,
@@ -106,7 +106,7 @@ class DashboardController extends Controller
                         'amount' => $sales_stats->month->orderTotalPrice + $sales_stats->month->posSale
                     ],
                     'total_due_for_pos_orders' => $total_due_for_pos_orders,
-                    'total_due_for_sheba_orders' => $total_due_for_sheba_orders,
+                    #'total_due_for_sheba_orders' => $total_due_for_sheba_orders,
                 ],
                 'weekly_performance' => [
                     'timeline' => date("jS F", strtotime(Carbon::today()->startOfWeek())) . "-" . date("jS F", strtotime(Carbon::today())),
@@ -150,7 +150,6 @@ class DashboardController extends Controller
 
             return api_response($request, $dashboard, 200, ['data' => $dashboard]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
