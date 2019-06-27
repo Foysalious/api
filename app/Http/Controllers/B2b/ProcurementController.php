@@ -1,7 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Http\Controllers\Controller;
-use App\Repositories\BusinessRepository;
 use App\Sheba\Business\ACL\AccessControl;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;

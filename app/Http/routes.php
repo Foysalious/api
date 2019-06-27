@@ -1,17 +1,6 @@
 <?php
 
-use App\Models\Profile;
-use Tymon\JWTAuth\Facades\JWTAuth;
-
 Route::get('/', function () {
-    $profile = Profile::find(7824);
-    $member = $profile->member;
-    $businesses = $member->businesses->first();
-    return JWTAuth::fromUser($profile, [
-        'member_id' => $member->id,
-        'member_type' => count($member->businessMember) > 0 ? $member->businessMember->first()->type : null,
-        'business_id' => $businesses ? $businesses->id : null,
-    ]);
     return ['code' => 200, 'message' => "Success. This project will hold the api's"];
 });
 
