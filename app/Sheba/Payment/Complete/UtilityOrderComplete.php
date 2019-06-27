@@ -4,6 +4,8 @@
 namespace Sheba\Payment\Complete;
 
 
+use App\Sheba\Repositories\UtilityOrderRepository;
+
 class UtilityOrderComplete extends PaymentComplete
 {
 
@@ -17,6 +19,7 @@ class UtilityOrderComplete extends PaymentComplete
             $this->setModifier($customer = $payable->user);
             $this->payment->transaction_details = null;
             $this->completePayment();
+            (new UtilityOrderRepository())->CompletePayment($payable->type_id);
         } catch (RequestException $e) {
             $this->failPayment();
             throw $e;
@@ -27,3 +30,4 @@ class UtilityOrderComplete extends PaymentComplete
         return $this->payment;
     }
 }
+

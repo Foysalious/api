@@ -4,6 +4,7 @@
 namespace App\Sheba\Repositories;
 
 
+use App\Exceptions\NotFoundException;
 use GuzzleHttp\Client;
 
 class UtilityOrderRepository
@@ -11,7 +12,7 @@ class UtilityOrderRepository
     function getOrder($id)
     {
         $client = new Client();
-        $contents = $client->request("get", env("SHEBA_UTILITY_URL") . "/history/" . $id . '?formatted=false')->getBody()->getContents();
+        $contents = $client->request("GET", env("SHEBA_UTILITY_URL") . "/history/" . $id . '?formatted=false')->getBody()->getContents();
         $response = json_decode($contents, true);
         return $this->getDefaultUtilityOrder($response);
     }
@@ -25,11 +26,14 @@ class UtilityOrderRepository
             $order->user_id = $response["data"]["user_id"];
             $order->user_type = $response["data"]["user_type"];
         } else {
-            $order->id = 0;
-            $order->price = 0;
-            $order->user_id = 0;
-            $order->user_type = "Customer";
+            throw new NotFoundException("Utility User Not Found");
         }
         return $order;
+    }
+
+    function CompletePayment($order_id)
+    {
+        $client = new Client();
+        $contents = $client->request("POST", env("SHEBA_UTILITY_URL") . "/complete-payment/" . $order_id)->getBody()->getContents();
     }
 }
