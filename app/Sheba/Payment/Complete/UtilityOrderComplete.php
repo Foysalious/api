@@ -10,6 +10,7 @@ use Sheba\ModificationFields;
 class UtilityOrderComplete extends PaymentComplete
 {
     use ModificationFields;
+
     public function complete()
     {
         $has_error = false;
@@ -24,6 +25,8 @@ class UtilityOrderComplete extends PaymentComplete
         } catch (RequestException $e) {
             $this->failPayment();
             throw $e;
+        } catch (\Throwable $e) {
+            $this->failPayment();
         }
         if ($has_error) {
             $this->completePayment();
