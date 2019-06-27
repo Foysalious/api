@@ -33,7 +33,7 @@ class DashboardController extends Controller
             foreach ($partner_orders as $order) {
                 $orders_dues += $order->calculate(false)->due;
             }
-            dd($orders_dues);
+            #dd($orders_dues);
             $slider_portal = SliderPortal::with('slider.slides')
                 ->where('portal_name', 'manager-app')
                 ->where('screen', 'home')
