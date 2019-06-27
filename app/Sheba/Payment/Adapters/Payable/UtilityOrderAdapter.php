@@ -4,6 +4,7 @@
 namespace Sheba\Payment\Adapters\Payable;
 
 use App\Models\Payable;
+use App\Sheba\Repositories\UtilityOrderRepository;
 use Carbon\Carbon;
 
 class UtilityOrderAdapter
@@ -33,6 +34,6 @@ class UtilityOrderAdapter
 
     private function getUtilityOrderInfo($id)
     {
-        return json_decode(json_encode(['id' => 1, 'price' => 100, 'user_type' => 'Customer', 'user_id' => 11]));
+        return (new UtilityOrderRepository())->getOrder($id);
     }
 }
