@@ -25,8 +25,6 @@ class UtilityOrderComplete extends PaymentComplete
         } catch (RequestException $e) {
             $this->failPayment();
             throw $e;
-        } catch (\Throwable $e) {
-            $this->failPayment();
         }
         if ($has_error) {
             $this->completePayment();
