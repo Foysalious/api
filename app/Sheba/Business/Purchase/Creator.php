@@ -1,9 +1,11 @@
 <?php namespace Sheba\Business\Purchase;
 
 use App\Models\PurchaseRequest;
+use App\Models\PurchaseRequestItem;
 use Illuminate\Database\QueryException;
 
 use DB;
+use Sheba\Repositories\Interfaces\PurchaseRequestItemFieldRepositoryInterface;
 use Sheba\Repositories\Interfaces\PurchaseRequestItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\PurchaseRequestQuestionRepositoryInterface;
 use Sheba\Repositories\Interfaces\PurchaseRequestRepositoryInterface;
@@ -12,6 +14,7 @@ class Creator
 {
     private $purchaseRequestRepository;
     private $purchaseRequestItemRepository;
+    private $purchaseRequestItemFieldRepository;
     private $purchaseRequestQuestionRepository;
     private $type;
     private $estimatedPrice;
@@ -26,20 +29,24 @@ class Creator
     private $purchaseRequestItemData;
     private $purchaseRequestQuestionData;
     private $formTemplateId;
+    private $purchaseRequestItemFieldData;
 
     /**
      * Creator constructor.
      *
      * @param PurchaseRequestRepositoryInterface $purchaseRequest_repository
      * @param PurchaseRequestItemRepositoryInterface $purchaseRequest_item_repository
+     * @param PurchaseRequestItemFieldRepositoryInterface $purchaseRequest_item_field_repository
      * @param PurchaseRequestQuestionRepositoryInterface $purchaseRequest_question_repository
      */
     public function __construct(PurchaseRequestRepositoryInterface $purchaseRequest_repository,
                                 PurchaseRequestItemRepositoryInterface $purchaseRequest_item_repository,
+                                PurchaseRequestItemFieldRepositoryInterface $purchaseRequest_item_field_repository,
                                 PurchaseRequestQuestionRepositoryInterface $purchaseRequest_question_repository)
     {
         $this->purchaseRequestRepository = $purchaseRequest_repository;
         $this->purchaseRequestItemRepository = $purchaseRequest_item_repository;
+        $this->purchaseRequestItemFieldRepository = $purchaseRequest_item_field_repository;
         $this->purchaseRequestQuestionRepository = $purchaseRequest_question_repository;
     }
 
@@ -106,21 +113,20 @@ class Creator
     public function create()
     {
         $this->makePurchaseRequestData();
-        $purchaseRequest = null;
+        $purchase_request = null;
         try {
-            DB::transaction(function () use (&$purchaseRequest) {
-                /** @var PurchaseRequest $purchaseRequest */
-                $purchaseRequest = $this->purchaseRequestRepository->create($this->purchaseRequestData);
-                $this->makeItem($purchaseRequest);
-                $this->purchaseRequestItemRepository->createMany($this->purchaseRequestItemData);
-                $this->makeQuestion($purchaseRequest);
+            DB::transaction(function () use (&$purchase_request) {
+                /** @var PurchaseRequest $purchase_request */
+                $purchase_request = $this->purchaseRequestRepository->create($this->purchaseRequestData);
+                $this->makeItem($purchase_request);
+                $this->makeQuestion($purchase_request);
                 $this->purchaseRequestQuestionRepository->createMany($this->purchaseRequestQuestionData);
             });
         } catch (QueryException $e) {
             throw $e;
         }
 
-        return $purchaseRequest;
+        return $purchase_request;
     }
 
     private function makePurchaseRequestData()
@@ -137,29 +143,45 @@ class Creator
     }
 
     /**
-     * @param PurchaseRequest $purchaseRequest
+     * @param PurchaseRequest $purchase_request
      */
-    private function makeItem(PurchaseRequest $purchaseRequest)
+    private function makeItem(PurchaseRequest $purchase_request)
     {
         $this->purchaseRequestItemData = [];
         $items = json_decode($this->items);
         foreach ($items as $item) {
-            array_push($this->purchaseRequestItemData, [
-                'title' => $item->title,
-                'short_description' => $item->short_description,
-                'long_description' => $item->instructions,
-                'input_type' => $item->type,
-                'purchase_request_id' => $purchaseRequest->id,
-                'variables' => json_encode(['is_required' => $item->is_required]),
-                'result' => $item->result
-            ]);
+            $this->purchaseRequestItemData = ['purchase_request_id' => $purchase_request->id];
+            /** @var PurchaseRequestItem $purchase_request_item */
+            $purchase_request_item = $this->purchaseRequestItemRepository->create($this->purchaseRequestItemData);
+            $this->makeItemFields($purchase_request_item, $item);
         }
     }
 
     /**
-     * @param PurchaseRequest $purchaseRequest
+     * @param PurchaseRequestItem $purchase_request_item
+     * @param $item
      */
-    private function makeQuestion(PurchaseRequest $purchaseRequest)
+    private function makeItemFields(PurchaseRequestItem $purchase_request_item, $item)
+    {
+        $this->purchaseRequestItemFieldData = [];
+        foreach ($item as $field) {
+            array_push($this->purchaseRequestItemFieldData, [
+                'title' => $field->title,
+                'short_description' => $field->short_description,
+                'long_description' => $field->instructions,
+                'input_type' => $field->type,
+                'purchase_request_item_id' => $purchase_request_item->id,
+                'variables' => json_encode(['is_required' => $field->is_required]),
+                'result' => $field->result
+            ]);
+        }
+        $this->purchaseRequestItemFieldRepository->createMany($this->purchaseRequestItemFieldData);
+    }
+
+    /**
+     * @param PurchaseRequest $purchase_request
+     */
+    private function makeQuestion(PurchaseRequest $purchase_request)
     {
         $this->purchaseRequestQuestionData = [];
         $questions = json_decode($this->questions);
@@ -169,7 +191,7 @@ class Creator
                 'short_description' => $question->short_description,
                 'long_description' => $question->instructions,
                 'input_type' => $question->type,
-                'purchase_request_id' => $purchaseRequest->id,
+                'purchase_request_id' => $purchase_request->id,
                 'variables' => json_encode(['is_required' => $question->is_required]),
                 'result' => $question->result
             ]);
