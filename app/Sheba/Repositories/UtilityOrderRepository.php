@@ -12,7 +12,7 @@ class UtilityOrderRepository
     function getOrder($id)
     {
         $client = new Client();
-        $contents = $client->request("GET", env("SHEBA_UTILITY_URL") . "/orders/" . $id )->getBody()->getContents();
+        $contents = $client->request("GET", env("SHEBA_UTILITY_URL") . "/orders/" . $id)->getBody()->getContents();
         $response = json_decode($contents, true);
         return $this->getDefaultUtilityOrder($response);
     }
@@ -35,7 +35,8 @@ class UtilityOrderRepository
     {
         $client = new Client();
         $contents = $client->request("POST", env("SHEBA_UTILITY_URL") . "/complete-payment/" . $order_id)->getBody()->getContents();
-        $contents=json_decode($contents);
+        $contents = json_decode($contents);
+        if ($contents["code"] != 200) throw new \Error("Can not complete payment");
         return $contents;
     }
 }
