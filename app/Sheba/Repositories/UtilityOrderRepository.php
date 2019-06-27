@@ -12,7 +12,7 @@ class UtilityOrderRepository
     function getOrder($id)
     {
         $client = new Client();
-        $contents = $client->request("GET", env("SHEBA_UTILITY_URL") . "/history/" . $id . '?formatted=false')->getBody()->getContents();
+        $contents = $client->request("GET", env("SHEBA_UTILITY_URL") . "/orders/" . $id )->getBody()->getContents();
         $response = json_decode($contents, true);
         return $this->getDefaultUtilityOrder($response);
     }
