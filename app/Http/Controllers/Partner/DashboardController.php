@@ -28,12 +28,6 @@ class DashboardController extends Controller
         try {
             ini_set('memory_limit', '9999999M');
             $partner = $request->partner;
-            $partner_orders = $partner->orders()->where('cancelled_at', null)->get();
-            $orders_dues = 0;
-            foreach ($partner_orders as $order) {
-                $orders_dues += $order->calculate(false)->due;
-            }
-            #dd($orders_dues);
             $slider_portal = SliderPortal::with('slider.slides')
                 ->where('portal_name', 'manager-app')
                 ->where('screen', 'home')
@@ -55,6 +49,11 @@ class DashboardController extends Controller
                 foreach ($pos_due_order->orders as $order) {
                     $total_due_for_pos_orders += $order->due;
                 }
+            }
+            $partner_orders = $partner->orders()->where('cancelled_at', null)->get();
+            $total_due_for_orders = 0;
+            foreach ($partner_orders as $order) {
+                $total_due_for_orders += $order->calculate(false)->due;
             }
 
             $dashboard = [
@@ -101,6 +100,7 @@ class DashboardController extends Controller
                         'amount' => $sales_stats->month->orderTotalPrice + $sales_stats->month->posSale
                     ],
                     'total_due_for_pos_orders' => $total_due_for_pos_orders,
+                    'total_due_for_orders' => $total_due_for_orders,
                 ],
                 'weekly_performance' => [
                     'timeline' => date("jS F", strtotime(Carbon::today()->startOfWeek())) . "-" . date("jS F", strtotime(Carbon::today())),
