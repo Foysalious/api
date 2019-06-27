@@ -8,7 +8,7 @@ use App\Sheba\Repositories\UtilityOrderRepository;
 
 class UtilityOrderComplete extends PaymentComplete
 {
-
+    use ModificationFields;
     public function complete()
     {
         $has_error = false;
