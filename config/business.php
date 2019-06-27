@@ -18,6 +18,10 @@ return [
         'inspection_issue' => [
             'rw' => 'inspection_issue_rw'
         ],
+        'procurement' => [
+            'rw' => 'procurement_rw',
+            'r' => 'procurement_r',
+        ],
     ],
     'DRIVER_CONTRACT_TYPES' => ['permanent', 'temporary'],
     'VEHICLE_TYPES' => ['hatchback', 'sedan', 'suv', 'passenger_van', 'others'],

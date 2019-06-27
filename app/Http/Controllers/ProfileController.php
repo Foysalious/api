@@ -188,7 +188,7 @@ class ProfileController extends Controller
         try {
             $token = JWTAuth::refresh($token);
         } catch (\Exception $e) {
-            return api_response($request, null, 401, ['message' => "Token is not present."]);
+            return api_response($request, null, 403, ['message' => $e->getMessage()]);
         }
 
         return api_response($request, $token, 200, ['token' => $token]);
@@ -196,11 +196,14 @@ class ProfileController extends Controller
 
     private function generateUtilityToken(Profile $profile)
     {
-
+        $from = \request()->get('from');
+        $id = (\request()->get('id'));
         $customClaims = [
             'profile_id' => $profile->id,
             'customer_id' => $profile->customer ? $profile->customer->id : null,
-            'affiliate_id' => $profile->affiliate ? $profile->affiliate->id : null
+            'affiliate_id' => $profile->affiliate ? $profile->affiliate->id : null,
+            'from' => constants('AVATAR_FROM_CLASS')[$from],
+            'user_id' => $id
         ];
         return JWTAuth::fromUser($profile, $customClaims);
     }

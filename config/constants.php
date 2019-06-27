@@ -581,4 +581,11 @@ return [
     'WEEKS' => ['Saturday' => 1, 'Sunday' => 2, 'Monday' => 3, 'Tuesday' => 4, 'Wednesday' => 5, 'Thursday' => 6, 'Friday' => 7],
     'FUEL_TYPES' => ['petrol', 'diesel', 'octane', 'cng'],
     'FUEL_UNITS' => ['ltr', 'cubic_feet'],
+    'AVATAR_FROM_CLASS' => [
+        env('SHEBA_CUSTOMER_APP') => 'Customer',
+        env('SHEBA_AFFILIATION_APP') => 'Affiliate',
+        env('SHEBA_RESOURCE_APP') => 'Resource',
+        env('SHEBA_MANGER_APP') => 'Partner',
+        'user' => 'Profile'
+    ]
 ];

@@ -81,9 +81,11 @@ class BusinessRoute
                 });
                 $api->group(['prefix' => 'procurements'], function ($api) {
                     $api->post('/', 'B2b\ProcurementController@store');
+                    $api->get('/', 'B2b\ProcurementController@index');
                 });
                 $api->group(['prefix' => 'purchase-requests'], function ($api) {
                     $api->get('/', 'B2b\PurchaseRequestController@index');
+                    $api->post('/', 'B2b\PurchaseRequestController@store');
                     $api->group(['prefix' => 'forms'], function ($api) {
                         $api->get('/', 'B2b\PurchaseRequestController@forms');
                     });

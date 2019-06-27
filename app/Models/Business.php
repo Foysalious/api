@@ -91,4 +91,9 @@ class Business extends Model
         return $this->hasMany(BusinessSmsTemplate::class, 'business_id');
     }
 
+    public function procurements()
+    {
+        return $this->morphMany(Procurement::class, 'owner');
+    }
+
 }

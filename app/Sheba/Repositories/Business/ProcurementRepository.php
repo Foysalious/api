@@ -1,6 +1,5 @@
 <?php namespace Sheba\Repositories\Business;
 
-
 use App\Models\Procurement;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
 use Sheba\Repositories\BaseRepository;
@@ -11,5 +10,10 @@ class ProcurementRepository extends BaseRepository implements ProcurementReposit
     {
         parent::__construct();
         $this->setModel($procurement);
+    }
+
+    public function ofBusiness($business_id)
+    {
+        return $this->model->where('owner_id', $business_id)->where('owner_type', "App\\Models\\Business");
     }
 }
