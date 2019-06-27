@@ -21,7 +21,7 @@ class UtilityOrderComplete extends PaymentComplete
             $this->setModifier($customer = $payable->user);
             $this->payment->transaction_details = null;
             $this->completePayment();
-            (new UtilityOrderRepository())->CompletePayment($payable->type_id);
+            (new UtilityOrderRepository())->CompletePayment($payable->type_id,$this->payment->transaction_id);
         } catch (RequestException $e) {
             $this->failPayment();
             throw $e;
