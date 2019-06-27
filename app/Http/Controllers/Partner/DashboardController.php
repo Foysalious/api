@@ -28,7 +28,7 @@ class DashboardController extends Controller
         try {
             ini_set('memory_limit', '9999999M');
             $partner = $request->partner;
-            $partner_orders = $partner->orders()->where('cancelled_at', null)->get()->take(51);
+            $partner_orders = $partner->orders()->where('cancelled_at', null)->get();
             $orders_dues = 0;
             foreach ($partner_orders as $order) {
                 $orders_dues += $order->calculate(false)->due;
