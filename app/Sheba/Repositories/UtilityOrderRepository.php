@@ -35,5 +35,7 @@ class UtilityOrderRepository
     {
         $client = new Client();
         $contents = $client->request("POST", env("SHEBA_UTILITY_URL") . "/complete-payment/" . $order_id)->getBody()->getContents();
+        $contents=json_decode($contents);
+        return $contents;
     }
 }
