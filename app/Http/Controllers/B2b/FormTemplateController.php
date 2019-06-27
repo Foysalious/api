@@ -110,7 +110,7 @@ class FormTemplateController extends Controller
             foreach ($form_template->questions as $question) {
                 array_push($questions, [
                     'question' => $question->title,
-                    'answer' => $question->result
+                    'type' => $question->input_type
                 ]);
             }
             $data = [
