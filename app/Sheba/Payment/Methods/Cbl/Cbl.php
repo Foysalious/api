@@ -155,7 +155,7 @@ class Cbl extends PaymentMethod
 
         $headers = 'POST ' . $path . " HTTP/1.0\r\n";
         $headers .= 'Host: ' . $this->tunnelHost . "\r\n";
-        $headers .= "Content-type: application/x-www-form-urlencoded\r\n";
+        $headers .= "Content-type: text/xml\r\n";
         $headers .= 'Content-Length: ' . strlen($data) . "\r\n\r\n";
 
         fwrite($fp, $headers . $data);
