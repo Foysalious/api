@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\FormTemplate;
 use App\Models\PosOrder;
 use App\Models\PurchaseRequest;
+use App\Models\PurchaseRequestApproval;
 use App\Sheba\Business\ACL\AccessControl;
 use App\Transformers\CustomSerializer;
 use App\Transformers\OfferDetailsTransformer;
@@ -118,7 +119,6 @@ class PurchaseRequestController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -132,7 +132,7 @@ class PurchaseRequestController extends Controller
     {
         try {
             /** @var PurchaseRequest $purchase_request */
-            $purchase_request = PurchaseRequest::with('items')->find($request->purchase_request);
+            $purchase_request = PurchaseRequest::with('items', 'approvalRequests')->find($request->purchase_request);
             if (!$purchase_request) return api_response($request, null, 404, ['msg' => 'Request Not Found']);
 
             $manager = new Manager();
@@ -142,6 +142,7 @@ class PurchaseRequestController extends Controller
 
             return api_response($request, null, 200, ['purchase_request' => $purchase_request]);
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -196,6 +197,35 @@ class PurchaseRequestController extends Controller
             $status_changer->change();
 
             return api_response($request, null, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function memberApprovalRequest(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'members' => 'required|string',
+                'purchase_request_id' => 'required|numeric'
+            ]);
+            $this->setModifier($request->manager_member);
+            $members = explode(',', $request->members);
+            foreach ($members as $member) {
+                PurchaseRequestApproval::create($this->withCreateModificationField([
+                    'member_id' => $member,
+                    'purchase_request_id' => $request->purchase_request_id
+                ]));
+            }
+
+            return api_response($request, null, 200, ['msg' => 'Request Created Successfully']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
