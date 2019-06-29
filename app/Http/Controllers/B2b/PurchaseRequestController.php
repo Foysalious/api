@@ -142,7 +142,6 @@ class PurchaseRequestController extends Controller
 
             return api_response($request, null, 200, ['purchase_request' => $purchase_request]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

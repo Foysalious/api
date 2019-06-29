@@ -24,5 +24,4 @@ class UtilityOrder implements PayableType
     {
         $this->id = $this->payable->type_id;
     }
-
 }
