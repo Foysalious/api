@@ -28,6 +28,6 @@ class PretupsResponse extends TopUpResponse
      */
     public function getErrorMessage()
     {
-        return isset($this->response->MESSAGE) ? $this->response->MESSAGE : 'Error message not given.';
+        return isset($this->response->MESSAGE) ? $this->response->MESSAGE : 'Vendor api call error.';
     }
 }
