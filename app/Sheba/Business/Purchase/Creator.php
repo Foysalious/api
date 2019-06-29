@@ -119,8 +119,10 @@ class Creator
                 /** @var PurchaseRequest $purchase_request */
                 $purchase_request = $this->purchaseRequestRepository->create($this->purchaseRequestData);
                 $this->makeItem($purchase_request);
-                $this->makeQuestion($purchase_request);
-                $this->purchaseRequestQuestionRepository->createMany($this->purchaseRequestQuestionData);
+                if ($this->questions && !empty($this->questions)) {
+                    $this->makeQuestion($purchase_request);
+                    $this->purchaseRequestQuestionRepository->createMany($this->purchaseRequestQuestionData);
+                }
             });
         } catch (QueryException $e) {
             throw $e;
