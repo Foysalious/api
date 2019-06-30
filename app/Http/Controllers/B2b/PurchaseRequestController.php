@@ -212,15 +212,14 @@ class PurchaseRequestController extends Controller
     {
         try {
             $this->validate($request, [
-                'members' => 'required|string',
-                'purchase_request_id' => 'required|numeric'
+                'members' => 'required|string'
             ]);
             $this->setModifier($request->manager_member);
             $members = explode(',', $request->members);
             foreach ($members as $member) {
                 PurchaseRequestApproval::create($this->withCreateModificationField([
                     'member_id' => $member,
-                    'purchase_request_id' => $request->purchase_request_id
+                    'purchase_request_id' => $request->purchase_request
                 ]));
             }
 
