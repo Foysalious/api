@@ -5,6 +5,7 @@ use App\Sheba\Business\ACL\AccessControl;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\FormTemplate\Creator;
+use Sheba\Business\FormTemplate\Updater;
 use Sheba\ModificationFields;
 use App\Models\FormTemplate;
 use Illuminate\Http\Request;
@@ -60,7 +61,9 @@ class FormTemplateController extends Controller
             ]);
             if (!$access_control->setBusinessMember($request->business_member)->hasAccess('form_template.rw')) return api_response($request, null, 403);
             $this->setModifier($request->manager_member);
-            $form_template = $creator->setData($request->all())->setOwner($request->business)->create();
+            $form_template = $creator->setTitle($request->title)
+                ->setShortDescription($request->short_description)
+                ->setData($request->all())->setOwner($request->business)->create();
             return api_response($request, null, 200, ['id' => $form_template->id]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -72,6 +75,21 @@ class FormTemplateController extends Controller
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all()]);
             $sentry->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function edit($business, $form_template, Request $request, AccessControl $access_control, FormTemplateRepositoryInterface $formTemplateRepository, Updater $updater)
+    {
+        try {
+            if (!$access_control->setBusinessMember($request->business_member)->hasAccess('form_template.rw')) return api_response($request, null, 403);
+            $this->setModifier($request->manager_member);
+            $form_template = $formTemplateRepository->find($form_template);
+            $updater->setOwner($request->business)->setTitle($request->title)
+                ->setShortDescription($request->short_description)->setData($request->all())->setFormTemplate($form_template)->update();
+            return api_response($request, $form_template, 200);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -131,28 +149,5 @@ class FormTemplateController extends Controller
         }
     }
 
-    /**
-     * @param $business
-     * @param $form_template
-     * @param Request $request
-     * @param AccessControl $access_control
-     * @param FormTemplateRepositoryInterface $formTemplateRepository
-     * @return JsonResponse
-     */
-    public function edit($business, $form_template, Request $request, AccessControl $access_control, FormTemplateRepositoryInterface $formTemplateRepository)
-    {
-        try {
-            if (!$access_control->setBusinessMember($request->business_member)->hasAccess('form_template.rw')) return api_response($request, null, 403);
-            $this->setModifier($request->manager_member);
-            $form_template = $formTemplateRepository->find($form_template);
-            $formTemplateRepository->update($form_template, [
-                'title' => $request->title,
-                'short_description' => $request->short_description,
-            ]);
-            return api_response($request, $form_template, 200);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
+
 }

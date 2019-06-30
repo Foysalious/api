@@ -18,10 +18,12 @@ class Updater extends Creator
         return $this;
     }
 
+
     public function update()
     {
         try {
             DB::transaction(function () {
+                $this->formTemplateRepository->update($this->formTemplate, ['title' => $this->title, 'short_description' => $this->shortDescription]);
                 if (isset($this->data['variables'])) {
                     $this->makeItem($this->formTemplate);
                     $this->deleteItems();
