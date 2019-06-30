@@ -29,7 +29,6 @@ class Creator
     private $items;
     private $questions;
     private $procurementData;
-    private $procurementItemData;
     private $procurementItemFieldData;
     private $procurementQuestionData;
 

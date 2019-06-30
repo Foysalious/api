@@ -88,6 +88,7 @@ class ProcurementController extends Controller
             $partners = Partner::whereIn('id', json_decode($request->partners))->get();
             $business = $request->business;
             foreach ($partners as $partner) {
+                /** @var Partner $partner */
                 $sms->shoot($partner->getManagerMobile(), "You have been invited to serv" . $business->name);
             }
         } catch (ValidationException $e) {
