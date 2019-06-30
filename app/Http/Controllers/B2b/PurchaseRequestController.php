@@ -208,21 +208,23 @@ class PurchaseRequestController extends Controller
         }
     }
 
-    public function memberApprovalRequest(Request $request)
+    public function memberApprovalRequest(Request $request, StatusChanger $changer)
     {
         try {
             $this->validate($request, [
-                'members' => 'required|string',
-                'purchase_request_id' => 'required|numeric'
+                'members' => 'required|string'
             ]);
             $this->setModifier($request->manager_member);
             $members = explode(',', $request->members);
             foreach ($members as $member) {
                 PurchaseRequestApproval::create($this->withCreateModificationField([
                     'member_id' => $member,
-                    'purchase_request_id' => $request->purchase_request_id
+                    'purchase_request_id' => $request->purchase_request
                 ]));
             }
+
+            $purchase_request = PurchaseRequest::find($request->purchase_request);
+            $changer->setPurchaseRequest($purchase_request)->setData(['status' => config('b2b.PURCHASE_REQUEST_STATUS.need_approval')]);
 
             return api_response($request, null, 200, ['msg' => 'Request Created Successfully']);
         } catch (ValidationException $e) {
