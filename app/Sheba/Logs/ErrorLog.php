@@ -1,10 +1,21 @@
 <?php namespace Sheba\Logs;
 
 use Exception;
+use Illuminate\Http\Request;
 
 class ErrorLog
 {
     private $exception;
+    /** @var Request */
+    private $request;
+    private $errorMessage;
+    private $context;
+
+    public function __construct()
+    {
+        $this->request = null;
+        $this->errorMessage = null;
+    }
 
     public function setException(Exception $exception)
     {
@@ -12,9 +23,25 @@ class ErrorLog
         return $this;
     }
 
+    public function setRequest(Request $request)
+    {
+        $this->request = $request;
+        return $this;
+    }
+
+    public function setErrorMessage($message)
+    {
+        $this->errorMessage = $message;
+        return $this;
+    }
+
     public function send()
     {
-        app('sentry')->captureException($this->exception);
+        $sentry = app('sentry');
+        if ($this->request) array_merge($this->context, ['request' => $this->request->all()]);
+        if ($this->errorMessage) array_merge($this->context, ['message' => $this->errorMessage]);
+        if (count($this->context) > 0) $sentry->user_context($this->context);
+        $sentry->captureException($this->exception);
     }
 
 }
