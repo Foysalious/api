@@ -20,6 +20,8 @@ class Creator
     protected $formTemplateQuestionRepository;
     /** @var array */
     protected $formTemplateQuestionData;
+    protected $title;
+    protected $shortDescription;
 
     /**
      * Creator constructor.
@@ -57,6 +59,18 @@ class Creator
         return $this;
     }
 
+    public function setTitle($title)
+    {
+        $this->title = $title;
+        return $this;
+    }
+
+    public function setShortDescription($short_description)
+    {
+        $this->shortDescription = $short_description;
+        return $this;
+    }
+
     /**
      * @return null
      */
@@ -70,7 +84,6 @@ class Creator
                 $form_template = $this->formTemplateRepository->create($this->formTemplateData);
                 $this->makeItem($form_template);
                 $this->formTemplateItemRepository->createMany($this->formTemplateItemData);
-
                 if (isset($this->data['questions'])) {
                     $this->makeQuestion($form_template);
                     $this->formTemplateQuestionRepository->createMany($this->formTemplateQuestionData);
@@ -89,8 +102,8 @@ class Creator
     private function makeFormTemplateData()
     {
         $this->formTemplateData = [
-            'title' => $this->data['title'],
-            'short_description' => $this->data['short_description'],
+            'title' => $this->title,
+            'short_description' => $this->shortDescription,
             'owner_type' => "App\\Models\\" . class_basename($this->owner),
             'owner_id' => $this->owner->id,
             'is_published' => 1,
