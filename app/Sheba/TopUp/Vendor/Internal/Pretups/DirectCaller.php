@@ -1,13 +1,10 @@
 <?php namespace Sheba\TopUp\Vendor\Internal\Pretups;
 
-use App\Sheba\Sentry\SendSentryError;
+use Sheba\Logs\ErrorLog;
 
 class DirectCaller extends Caller
 {
-    /**
-     * @return array
-     * @throws \Exception0
-     */
+
     public function call()
     {
         $ch = curl_init();
@@ -19,7 +16,7 @@ class DirectCaller extends Caller
         $data = curl_exec($ch);
         $err = curl_error($ch);
         if ($err) {
-            (new SendSentryError(new \Exception($err)))->send();
+            (new ErrorLog())->setException(new \Exception($err))->send();
             return null;
         }
         curl_close($ch);

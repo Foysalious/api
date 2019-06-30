@@ -1,10 +1,8 @@
-<?php
-
-namespace Sheba\TopUp\Vendor\Internal;
+<?php namespace Sheba\TopUp\Vendor\Internal;
 
 
 use App\Models\TopUpOrder;
-use App\Sheba\Sentry\SendSentryError;
+use Sheba\Logs\ErrorLog;
 use Sheba\TopUp\Vendor\Response\SslResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 use SoapClient;
@@ -50,7 +48,7 @@ class SslClient
             $recharge_response->guid = $guid;
             $ssl_response->setResponse($recharge_response);
         } catch (SoapFault $exception) {
-            new SendSentryError($exception);
+            (new ErrorLog())->setException($exception)->send();
         }
         return $ssl_response;
     }

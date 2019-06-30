@@ -1,15 +1,15 @@
-<?php namespace App\Sheba\Sentry;
+<?php namespace Sheba\Logs;
 
 use Exception;
 
-class SendSentryError
+class ErrorLog
 {
     private $exception;
 
-    public function __construct(Exception $exception)
+    public function setException(Exception $exception)
     {
         $this->exception = $exception;
-        $this->send();
+        return $this;
     }
 
     public function send()
