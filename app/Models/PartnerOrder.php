@@ -2,14 +2,16 @@
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Order\Code\Builder as CodeBuilder;
 use Sheba\PartnerOrder\PartnerOrderStatuses;
 use Sheba\PartnerOrder\StatusCalculator;
+use Sheba\Payment\PayableType;
 use Sheba\Report\Updater\PartnerOrder as ReportUpdater;
 
-class PartnerOrder extends Model
+class PartnerOrder extends Model implements PayableType
 {
     use ReportUpdater;
 
@@ -338,6 +340,14 @@ class PartnerOrder extends Model
             ['cancelled_at', null],
             ['closed_and_paid_at', null]
         ]);
+    }
+
+    /**
+     * @param Builder $query
+     */
+    public function scopeNotCompleted($query)
+    {
+        $query->whereNull('cancelled_at')->whereNull('closed_and_paid_at');
     }
 
     public function scopeHistory($query)

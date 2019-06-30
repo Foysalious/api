@@ -1,8 +1,9 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Payment\PayableType;
 
-class TopUpOrder extends Model
+class TopUpOrder extends Model implements PayableType
 {
     protected $guarded = ['id'];
     protected $table = 'topup_orders';

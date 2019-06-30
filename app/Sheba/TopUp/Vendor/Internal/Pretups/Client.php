@@ -88,7 +88,7 @@ class Client
         $this->caller->setInput($this->makeInputString($topup_order));
         $response = $this->caller->call();
         $rax_response = new PretupsResponse();
-        $rax_response->setResponse($response);
+        if ($response) $rax_response->setResponse($response);
         return $rax_response;
     }
 

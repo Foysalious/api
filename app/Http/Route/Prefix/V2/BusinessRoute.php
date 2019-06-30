@@ -1,6 +1,5 @@
 <?php namespace App\Http\Route\Prefix\V2;
 
-
 class BusinessRoute
 {
     public function set($api)
@@ -80,6 +79,27 @@ class BusinessRoute
                         });
                     });
                 });
+                $api->group(['prefix' => 'procurements'], function ($api) {
+                    $api->post('/', 'B2b\ProcurementController@store');
+                    $api->group(['prefix' => '{procurement}'], function ($api) {
+                        $api->post('invitations', 'B2b\ProcurementController@sendInvitation');
+                    });
+                    $api->get('/', 'B2b\ProcurementController@index');
+                });
+                $api->group(['prefix' => 'purchase-requests'], function ($api) {
+                    $api->get('/', 'B2b\PurchaseRequestController@index');
+                    $api->post('/', 'B2b\PurchaseRequestController@store');
+
+                    $api->group(['prefix' => '{purchase_request}'], function ($api) {
+                        $api->get('/', 'B2b\PurchaseRequestController@show');
+                        $api->post('/change-status', 'B2b\PurchaseRequestController@changeStatus');
+                        $api->post('/member-approval-request', 'B2b\PurchaseRequestController@memberApprovalRequest');
+                    });
+
+                    $api->group(['prefix' => 'forms'], function ($api) {
+                        $api->get('/', 'B2b\PurchaseRequestController@forms');
+                    });
+                });
 
                 $api->group(['prefix' => 'fuel-logs'], function ($api) {
                     $api->get('/', 'B2b\FuelLogController@index');
@@ -113,6 +133,7 @@ class BusinessRoute
                 });
             });
         });
+
         $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {
             $api->group(['prefix' => '{member}'], function ($api) {
                 $api->group(['prefix' => 'vehicles'], function ($api) {
@@ -163,7 +184,6 @@ class BusinessRoute
                         $api->post('/comments', 'B2b\TripRequestController@commentOnTripRequest');
                     });
                 });
-
                 $api->group(['prefix' => 'inspections'], function ($api) {
                     $api->get('/', 'B2b\InspectionController@individualInspection');
                 });

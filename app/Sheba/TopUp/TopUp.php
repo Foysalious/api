@@ -1,6 +1,5 @@
 <?php namespace Sheba\TopUp;
 
-use App\Models\Affiliate;
 use App\Models\TopUpOrder;
 use Exception;
 use App\Models\TopUpVendor;
@@ -104,35 +103,6 @@ class TopUp
             if (!$this->isSuccessful) return new TopUpSystemErrorResponse();
         }
         return new TopUpErrorResponse();
-    }
-
-    /**
-     * @param TopUpSuccessResponse $response
-     * @param $mobile_number
-     * @param $amount
-     * @return TopUpOrder
-     */
-    private function placeTopUpOrder(TopUpSuccessResponse $response, $mobile_number, $amount)
-    {
-        $top_up_order = new TopUpOrder();
-        $top_up_order->agent_type = "App\\Models\\" . class_basename($this->agent);
-        $top_up_order->agent_id = $this->agent->id;
-        $top_up_order->payee_mobile = $mobile_number;
-        $top_up_order->amount = $amount;
-        $top_up_order->status = $this->vendor->getTopUpInitialStatus();
-        $top_up_order->transaction_id = $response->transactionId;
-        $top_up_order->transaction_details = json_encode($response->transactionDetails);
-        $top_up_order->vendor_id = $this->model->id;
-        $top_up_order->sheba_commission = ($amount * $this->model->sheba_commission) / 100;
-
-        $this->setModifier($this->agent);
-        $this->withCreateModificationField($top_up_order);
-        $top_up_order->save();
-
-        $top_up_order->agent = $this->agent;
-        $top_up_order->vendor = $this->model;
-
-        return $top_up_order;
     }
 
     /**

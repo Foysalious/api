@@ -122,9 +122,11 @@ class CoWorkerController extends Controller
                 $employee = [
                     'id' => $member->id,
                     'name' => $profile->name,
+                    'pro_pic' => $profile->pro_pic,
                     'mobile' => $profile->mobile,
                     'email' => $profile->email,
                     'department' => $role ? $role->businessDepartment->name : null,
+                    'designation' => $role ? $role->name : null
                 ];
                 array_push($employees, $employee);
             }

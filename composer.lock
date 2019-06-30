@@ -2857,7 +2857,7 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
-                "reference": "145cdea48c10caf87d761edce8afcc57c045f9a5"
+                "reference": "d6ba9794821942144e5ecdaf627c8f15aa3b624f"
             },
             "require": {
                 "php": ">=5.4"
@@ -2884,7 +2884,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2019-05-26T10:49:16+00:00"
+            "time": "2019-06-18T13:17:16+00:00"
         },
         {
             "name": "sheba/notification",
@@ -2924,7 +2924,7 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_report.git",
-                "reference": "70bf17e1a7685cb39311fa18c9ec6debed8f7df5"
+                "reference": "271c501508aa8750c6ac42ed8733b41b0c1a4627"
             },
             "require": {
                 "ext-redis": "*"
@@ -2945,7 +2945,7 @@
                 }
             ],
             "description": "Report updater for Sheba",
-            "time": "2019-06-11T14:10:02+00:00"
+            "time": "2019-06-17T09:10:16+00:00"
         },
         {
             "name": "sheba/sms",

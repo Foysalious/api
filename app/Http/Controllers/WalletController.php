@@ -1,10 +1,8 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\Customer;
-use App\Models\PartnerOrder;
 use App\Models\Payment;
 use App\Repositories\PaymentRepository;
-use App\Sheba\Payment\Rechargable;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -14,7 +12,6 @@ use Sheba\Payment\Adapters\Payable\RechargeAdapter;
 use Sheba\Payment\ShebaPayment;
 use DB;
 use Sheba\Reward\BonusCredit;
-use Sheba\Transport\Exception\TransportException;
 
 class WalletController extends Controller
 {
@@ -70,7 +67,7 @@ class WalletController extends Controller
     public function purchase(Request $request, PaymentRepository $paymentRepository, BonusCredit $bonus_credit)
     {
         try {
-            $this->validate($request, ['user_id' => 'sometimes', 'transaction_id' => 'required', 'user_type' => 'sometimes|in:customer,affiliate', 'remember_token' => 'sometimes',]);
+            $this->validate($request, ['transaction_id' => 'required']);
             /** @var Payment $payment */
             $payment = Payment::where('transaction_id', $request->transaction_id)->valid()->first();
             if (!$payment) return api_response($request, null, 404); elseif ($payment->isFailed()) return api_response($request, null, 500, ['message' => 'Payment failed']);
@@ -78,7 +75,7 @@ class WalletController extends Controller
             $user = $payment->payable->user;
             $sheba_credit = $user->shebaCredit();
             $paymentRepository->setPayment($payment);
-            if ($sheba_credit == 0 && $sheba_credit < $payment->payable->amount) {
+            if ($sheba_credit == 0) {
                 $paymentRepository->changeStatus(['to' => 'validation_failed', 'from' => $payment->status, 'transaction_details' => $payment->transaction_details, 'log' => "Insufficient balance. Purchase Amount: " . $payment->payable->amount . " & Sheba Credit: $sheba_credit"]);
                 $payment->status = 'validation_failed';
                 $payment->update();
@@ -87,9 +84,8 @@ class WalletController extends Controller
             try {
                 $transaction = '';
                 DB::transaction(function () use ($payment, $user, $bonus_credit, &$transaction) {
-                    $model_name = $payment->payable->getPayableModel();
-                    $spent_model = $model_name::find($payment->payable->type_id);
-                    $remaining = $bonus_credit->setUser($user)->setSpentModel($spent_model)->deduct($payment->payable->amount);
+                    $spent_model = $payment->payable->getPayableType();
+                    $remaining = $bonus_credit->setUser($user)->setPayableType($spent_model)->deduct($payment->payable->amount);
                     if ($remaining > 0) {
                         if ($user->wallet < $remaining) {
                             $remaining = $user->wallet;
@@ -99,11 +95,8 @@ class WalletController extends Controller
                         }
                         $user->debitWallet($remaining);
                         $this->setModifier($user);
-                        $wallet_transaction_data = ['amount' => $remaining, 'type' => 'Debit', 'log' => "Service Purchase.", // . ($spent_model instanceof PartnerOrder) ? "ORDER ID: {$spent_model->code()}" : "",
-                            'created_at' => Carbon::now()];
-                        if ($user instanceof Customer) {
-                            $wallet_transaction_data += ['event_type' => get_class($spent_model), 'event_id' => $spent_model->id];
-                        }
+                        $wallet_transaction_data = ['amount' => $remaining, 'type' => 'Debit', 'log' => "Service Purchase.", 'created_at' => Carbon::now()];
+                        if ($user instanceof Customer) $wallet_transaction_data += ['event_type' => get_class($spent_model), 'event_id' => $spent_model->id];
                         $transaction = $user->walletTransaction($wallet_transaction_data);
                     }
                 });

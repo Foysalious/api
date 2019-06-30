@@ -293,6 +293,9 @@ class ShebaController extends Controller
                     case 'transport_ticket':
                         $payments = $this->getTransportTicketPayments($version_code, $platform_name);
                         break;
+                    case 'utility':
+                        $payments = $this->getUtilityPayments($version_code, $platform_name);
+                        break;
                     default:
                         throw new \Exception('Invalid Payable Type');
                         break;
@@ -506,5 +509,39 @@ class ShebaController extends Controller
         } else {
             return 1;
         }
+    }
+
+    private function getUtilityPayments($version_code,  $platform_name)
+    {
+        return [
+            array(
+                'name' => 'Sheba Credit',
+                'is_published' => 1,
+                'description' => '',
+                'asset' => 'sheba_credit',
+                'method_name' => 'wallet'
+            ),
+            array(
+                'name' => 'bKash',
+                'is_published' => 1,
+                'description' => '',
+                'asset' => 'bkash',
+                'method_name' => 'bkash'
+            ),
+            array(
+                'name' => 'City Bank',
+                'is_published' => $this->calculateCityBankStatus($version_code, $platform_name),
+                'description' => '',
+                'asset' => 'cbl',
+                'method_name' => 'cbl'
+            ),
+            array(
+                'name' => 'Other Debit/Credit',
+                'is_published' => 1,
+                'description' => '',
+                'asset' => 'ssl',
+                'method_name' => 'online'
+            )
+        ];
     }
 }

@@ -1,10 +1,10 @@
-<?php
-
-namespace App\Repositories;
+<?php namespace App\Repositories;
 
 use App\Models\PartnerOrder;
 use Carbon\Carbon;
+use Sheba\Jobs\DeliveryStatuses;
 use Sheba\Jobs\JobStatuses;
+use Sheba\Jobs\LogisticJobStatusCalculator;
 
 class PartnerOrderRepository
 {
@@ -58,6 +58,7 @@ class PartnerOrderRepository
 
             $job['category_name'] = $job->category ? $job->category->name : null;
             $job['complains'] = app('Sheba\Dal\Complain\EloquentImplementation')->jobWiseComplainInfo($job->id);
+
             if (!$job['complains']->isEmpty()) {
                 $order = $job->partnerOrder->order;
                 $complain_additional_info = [
@@ -87,6 +88,10 @@ class PartnerOrderRepository
             $job['estimated_time'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_time : null;
 
             array_forget($job, ['partner_order', 'carRentalJobDetail']);
+            if($job->first_logistic_order_id || $job->last_logistic_order_id) {
+                $status = new LogisticJobStatusCalculator($job);
+                $job['logistic'] = $status->calculate()->get();
+            }
 
         })->sortByDesc('id')->values()->all();
         removeRelationsAndFields($partner_order);
@@ -195,6 +200,11 @@ class PartnerOrderRepository
 
         return array_slice($partner_orders->each(function ($partner_order, $key) {
             $partner_order['version'] = $partner_order->is_v2 ? 'v2' : 'v1';
+            $job = $partner_order->jobs[0];
+            if($job->first_logistic_order_id || $job->last_logistic_order_id) {
+                $status = new LogisticJobStatusCalculator($job);
+                $partner_order['logistic'] = $status->calculate()->get();
+            }
             $partner_order['category_name'] = $partner_order->jobs[0]->category ? $partner_order->jobs[0]->category->name : null;
             removeRelationsAndFields($this->getInfo($partner_order));
         })->reject(function ($item, $key) {
@@ -331,7 +341,6 @@ class PartnerOrderRepository
 
         return $partner_order;
     }
-
 
     private function partnerOrdersSortBy($field, $orderBy, $all_partner_orders, $all_jobs)
     {

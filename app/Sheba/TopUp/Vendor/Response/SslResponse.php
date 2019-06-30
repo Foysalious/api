@@ -4,7 +4,7 @@ class SslResponse extends TopUpResponse
 {
     public function hasSuccess(): bool
     {
-        return $this->response->recharge_status == 200;
+        return $this->response && $this->response->recharge_status == 200;
     }
 
     /**

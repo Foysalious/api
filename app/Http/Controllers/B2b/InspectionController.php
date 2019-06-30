@@ -469,6 +469,5 @@ class InspectionController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
-
     }
 }
