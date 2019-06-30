@@ -26,7 +26,7 @@ class UtilityOrderAdapter
         $payable->user_type = "App\\Models\\" . $this->utilityOrder->user_type;
         $payable->amount = $this->utilityOrder->price;
         $payable->completion_type = "utility_order";
-        $payable->success_url = config('sheba.front_url') . '/utility-orders/' . $this->utilityOrder->id;
+        $payable->success_url = config('sheba.front_url') . '/profile/utility-bills/' . $this->utilityOrder->id;
         $payable->created_at = Carbon::now();
         $payable->save();
         return $payable;
