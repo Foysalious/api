@@ -13,4 +13,9 @@ class OrderRepository extends BaseRepository
         $result = $this->client->post('orders', $data);
         return !empty($result) ? $result['order'] : $result;
     }
+
+    public function retryRiderSearch($order_id)
+    {
+        $this->client->get("orders/$order_id/retry-search");
+    }
 }

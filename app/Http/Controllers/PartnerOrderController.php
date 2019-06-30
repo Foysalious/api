@@ -7,6 +7,7 @@ use App\Repositories\PartnerJobRepository;
 use App\Repositories\PartnerOrderRepository;
 use App\Repositories\ResourceJobRepository;
 use App\Sheba\Checkout\PartnerList;
+use Sheba\Logistics\Repository\OrderRepository;
 use Sheba\Logs\OrderLogs;
 use App\Sheba\Logs\PartnerOrderLogs;
 use Carbon\Carbon;
@@ -354,6 +355,12 @@ class PartnerOrderController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function retryRiderSearch($partner, $order_id, $logistic_order_id ,Request $request, OrderRepository $order_repository)
+    {
+        $order_repository->retryRiderSearch($logistic_order_id);
+        return api_response($request, null, 200, ['message' => 'Order search restarted']);
     }
 
 }

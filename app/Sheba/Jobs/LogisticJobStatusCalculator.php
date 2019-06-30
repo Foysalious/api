@@ -99,7 +99,8 @@ class LogisticJobStatusCalculator
         return [
             'status' => $this->status,
             'data' => [
-                'rider' => $this->logisticOrder['rider'] ?: null
+                'rider' => $this->logisticOrder['rider'] ?: null,
+                'order_id' => $this->logisticOrder['id'] ?: null
             ]
         ];
     }
