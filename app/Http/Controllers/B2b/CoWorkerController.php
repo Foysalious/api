@@ -125,7 +125,7 @@ class CoWorkerController extends Controller
                     'mobile' => $profile->mobile,
                     'email' => $profile->email,
                     'department' => $role ? $role->businessDepartment->name : null,
-                    'designation' => $role->name
+                    'designation' => $role ? $role->name : null
                 ];
                 array_push($employees, $employee);
             }
