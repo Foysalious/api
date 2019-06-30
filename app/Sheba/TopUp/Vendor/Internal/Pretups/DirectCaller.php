@@ -1,11 +1,10 @@
 <?php namespace Sheba\TopUp\Vendor\Internal\Pretups;
 
+use Sheba\Logs\ErrorLog;
+
 class DirectCaller extends Caller
 {
-    /**
-     * @return array
-     * @throws \Exception
-     */
+
     public function call()
     {
         $ch = curl_init();
@@ -16,7 +15,10 @@ class DirectCaller extends Caller
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 300);
         $data = curl_exec($ch);
         $err = curl_error($ch);
-        if($err) throw new \Exception($err);
+        if ($err) {
+            (new ErrorLog())->setException(new \Exception($err))->send();
+            return null;
+        }
         curl_close($ch);
         return json_decode(json_encode(simplexml_load_string($data)));
     }

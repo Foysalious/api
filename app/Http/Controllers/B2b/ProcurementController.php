@@ -1,13 +1,15 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Http\Controllers\Controller;
-use App\Repositories\BusinessRepository;
+use App\Models\Partner;
 use App\Sheba\Business\ACL\AccessControl;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\Procurement\Creator;
+use Sheba\Logs\ErrorLog;
 use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
+use Sheba\Sms\Sms;
 
 class ProcurementController extends Controller
 {
@@ -77,4 +79,25 @@ class ProcurementController extends Controller
         }
     }
 
+    public function sendInvitation($procurement, Request $request, Sms $sms, ErrorLog $errorLog)
+    {
+        try {
+            $this->validate($request, [
+                'partners' => 'required|string',
+            ]);
+            $partners = Partner::whereIn('id', json_decode($request->partners))->get();
+            $business = $request->business;
+            foreach ($partners as $partner) {
+                /** @var Partner $partner */
+                $sms->shoot($partner->getManagerMobile(), "You have been invited to serv" . $business->name);
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $errorLog->setException($e)->setRequest($request)->setErrorMessage($message)->send();
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            $errorLog->setException($e)->send();
+            return api_response($request, null, 500);
+        }
+    }
 }

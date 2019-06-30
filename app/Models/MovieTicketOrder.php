@@ -1,9 +1,10 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Payment\PayableType;
 use Sheba\Voucher\Contracts\CanHaveVoucher;
 
-class MovieTicketOrder extends Model implements CanHaveVoucher
+class MovieTicketOrder extends Model implements CanHaveVoucher, PayableType
 {
     protected $guarded = ['id'];
     private $appliedDiscount;

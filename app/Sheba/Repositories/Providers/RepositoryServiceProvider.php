@@ -10,9 +10,11 @@ use Sheba\Repositories\Business\InspectionItemStatusLogRepository;
 use Sheba\Repositories\Business\InspectionRepository;
 use Sheba\Repositories\Business\InspectionScheduleRepository;
 use Sheba\Repositories\Business\IssueRepository;
+use Sheba\Repositories\Business\ProcurementItemFieldRepository;
 use Sheba\Repositories\Business\ProcurementItemRepository;
 use Sheba\Repositories\Business\ProcurementQuestionRepository;
 use Sheba\Repositories\Business\ProcurementRepository;
+use Sheba\Repositories\Business\PurchaseRequestItemFieldRepository;
 use Sheba\Repositories\Business\PurchaseRequestItemRepository;
 use Sheba\Repositories\Business\PurchaseRequestQuestionRepository;
 use Sheba\Repositories\Business\PurchaseRequestRepository;
@@ -25,9 +27,11 @@ use Sheba\Repositories\Interfaces\InspectionItemStatusLogRepositoryInterface;
 use Sheba\Repositories\Interfaces\InspectionRepositoryInterface;
 use Sheba\Repositories\Interfaces\InspectionScheduleRepositoryInterface;
 use Sheba\Repositories\Interfaces\IssueRepositoryInterface;
+use Sheba\Repositories\Interfaces\ProcurementItemFieldRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementQuestionRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
+use Sheba\Repositories\Interfaces\PurchaseRequestItemFieldRepositoryInterface;
 use Sheba\Repositories\Interfaces\PurchaseRequestItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\PurchaseRequestQuestionRepositoryInterface;
 use Sheba\Repositories\Interfaces\PurchaseRequestRepositoryInterface;
@@ -50,6 +54,8 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(ProcurementQuestionRepositoryInterface::class, ProcurementQuestionRepository::class);
         $this->app->bind(PurchaseRequestRepositoryInterface::class, PurchaseRequestRepository::class);
         $this->app->bind(PurchaseRequestItemRepositoryInterface::class, PurchaseRequestItemRepository::class);
+        $this->app->bind(PurchaseRequestItemFieldRepositoryInterface::class, PurchaseRequestItemFieldRepository::class);
         $this->app->bind(PurchaseRequestQuestionRepositoryInterface::class, PurchaseRequestQuestionRepository::class);
+        $this->app->bind(ProcurementItemFieldRepositoryInterface::class, ProcurementItemFieldRepository::class);
     }
 }

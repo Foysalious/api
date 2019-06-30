@@ -197,7 +197,7 @@ class ProfileController extends Controller
     private function generateUtilityToken(Profile $profile)
     {
         $from = \request()->get('from');
-        $id = (\request()->get('id'));
+        $id = \request()->id;
         $customClaims = [
             'profile_id' => $profile->id,
             'customer_id' => $profile->customer ? $profile->customer->id : null,
