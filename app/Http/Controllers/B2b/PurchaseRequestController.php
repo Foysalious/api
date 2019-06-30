@@ -215,6 +215,13 @@ class PurchaseRequestController extends Controller
                 'members' => 'required|string'
             ]);
             $this->setModifier($request->manager_member);
+            $purchase_request = PurchaseRequest::find($request->purchase_request);
+
+            $changer->setPurchaseRequest($purchase_request)->setData(['status' => config('b2b.PURCHASE_REQUEST_STATUS.need_approval')]);
+            if ($error = $changer->hasError())
+                return api_response($request, $error, 400, ['message' => $error]);
+            $changer->change();
+
             $members = explode(',', $request->members);
             foreach ($members as $member) {
                 PurchaseRequestApproval::create($this->withCreateModificationField([
@@ -222,10 +229,6 @@ class PurchaseRequestController extends Controller
                     'purchase_request_id' => $request->purchase_request
                 ]));
             }
-
-            $purchase_request = PurchaseRequest::find($request->purchase_request);
-            $changer->setPurchaseRequest($purchase_request)->setData(['status' => config('b2b.PURCHASE_REQUEST_STATUS.need_approval')]);
-
             return api_response($request, null, 200, ['msg' => 'Request Created Successfully']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
