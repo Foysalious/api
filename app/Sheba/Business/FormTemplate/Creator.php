@@ -10,16 +10,16 @@ use DB;
 
 class Creator
 {
-    private $formTemplateRepository;
-    private $formTemplateItemRepository;
-    private $formTemplateData;
-    private $formTemplateItemData;
-    private $data;
-    private $owner;
+    protected $formTemplateRepository;
+    protected $formTemplateItemRepository;
+    protected $formTemplateData;
+    protected $formTemplateItemData;
+    protected $data;
+    protected $owner;
     /** @var FormTemplateQuestionRepositoryInterface $formTemplateQuestionRepository */
-    private $formTemplateQuestionRepository;
+    protected $formTemplateQuestionRepository;
     /** @var array */
-    private $formTemplateQuestionData;
+    protected $formTemplateQuestionData;
 
     /**
      * Creator constructor.
@@ -103,7 +103,7 @@ class Creator
      *
      * @param FormTemplate $form_template
      */
-    private function makeItem(FormTemplate $form_template)
+    protected function makeItem(FormTemplate $form_template)
     {
         $this->formTemplateItemData = [];
         $variables = json_decode($this->data['variables']);
@@ -124,7 +124,7 @@ class Creator
      *
      * @param FormTemplate $form_template
      */
-    private function makeQuestion(FormTemplate $form_template)
+    protected function makeQuestion(FormTemplate $form_template)
     {
         $this->formTemplateQuestionData = [];
         $questions = json_decode($this->data['questions']);
