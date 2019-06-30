@@ -170,7 +170,6 @@ class TripRequestController extends Controller
             if (!$trip) return api_response($request, null, 404);
             $comments = [];
             $business_member = $request->business_member;
-            dd($business_member->role);
             foreach ($trip->comments as $comment) {
                 array_push($comments, [
                     'comment' => $comment->comment,
