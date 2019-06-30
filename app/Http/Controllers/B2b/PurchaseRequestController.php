@@ -208,7 +208,7 @@ class PurchaseRequestController extends Controller
         }
     }
 
-    public function memberApprovalRequest(Request $request)
+    public function memberApprovalRequest(Request $request, StatusChanger $changer)
     {
         try {
             $this->validate($request, [
@@ -222,6 +222,9 @@ class PurchaseRequestController extends Controller
                     'purchase_request_id' => $request->purchase_request
                 ]));
             }
+
+            $purchase_request = PurchaseRequest::find($request->purchase_request);
+            $changer->setPurchaseRequest($purchase_request)->setData(['status' => config('b2b.PURCHASE_REQUEST_STATUS.need_approval')]);
 
             return api_response($request, null, 200, ['msg' => 'Request Created Successfully']);
         } catch (ValidationException $e) {
