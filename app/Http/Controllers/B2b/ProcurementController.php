@@ -79,7 +79,7 @@ class ProcurementController extends Controller
         }
     }
 
-    public function sendInvitation(Request $request, Sms $sms, ErrorLog $errorLog)
+    public function sendInvitation($procurement, Request $request, Sms $sms, ErrorLog $errorLog)
     {
         try {
             $this->validate($request, [

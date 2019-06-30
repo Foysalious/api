@@ -15,6 +15,7 @@ class ErrorLog
     {
         $this->request = null;
         $this->errorMessage = null;
+        $this->context = [];
     }
 
     public function setException(Exception $exception)
@@ -38,8 +39,8 @@ class ErrorLog
     public function send()
     {
         $sentry = app('sentry');
-        if ($this->request) array_merge($this->context, ['request' => $this->request->all()]);
-        if ($this->errorMessage) array_merge($this->context, ['message' => $this->errorMessage]);
+        if ($this->request) $this->context['request'] = $this->request->all();
+        if ($this->errorMessage) $this->context['message'] = $this->errorMessage;
         if (count($this->context) > 0) $sentry->user_context($this->context);
         $sentry->captureException($this->exception);
     }
