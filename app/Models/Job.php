@@ -705,7 +705,7 @@ class Job extends BaseModel
 
     private function isOneWayReadyToPickable()
     {
-        return $this->category->needsOneWayLogisticOnReadyToPick() && JobStatuses::isProcessable($this->status);
+        return $this->category->needsOneWayLogisticOnReadyToPick() && JobStatuses::isProcessable($this->status) && !$this->first_logistic_order_id;
     }
 
     private function isTwoWayReadyToPickable()
