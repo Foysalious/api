@@ -140,7 +140,7 @@ class DashboardController extends Controller
                 'has_reward_campaign' => count($partner_reward->upcoming()) > 0 ? 1 : 0,
                 'leave_info' => (new LeaveStatus($partner))->getCurrentStatus(),
                 'sheba_order' => $partner->orders->isEmpty() ? 0 : 1,
-                'manager_dashboard_banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/categories/24/app_banner.jpg',
+                'manager_dashboard_banner' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner_assets/dashboard/manager_dashboard.png',
                 'video' => $slide ? json_decode($slide->video_info) : null,
                 'has_pos_inventory' => $partner->posServices->isEmpty() ? 0 : 1,
                 'has_kyc_profile_completed' => $this->getSpLoanInformationCompletion($partner, $request),
