@@ -21,7 +21,7 @@ class UtilityOrderRepository
     {
         $order = new \stdClass();
         if ($response["code"] == 200) {
-            $order->id = $response["data"]["id"];
+            $order->id = $response["data"]["order_id"];
             $order->price = $response["data"]["price"];
             $order->user_id = $response["data"]["user_id"];
             $order->user_type = $response["data"]["user_type"];
@@ -31,10 +31,10 @@ class UtilityOrderRepository
         return $order;
     }
 
-    function CompletePayment($order_id,$transaction_id)
+    function CompletePayment($order_id, $transaction_id)
     {
         $client = new Client();
-        $contents = $client->request("POST", env("SHEBA_UTILITY_URL") . "/complete-payment/" . $order_id.'/'.$transaction_id)->getBody()->getContents();
+        $contents = $client->request("POST", env("SHEBA_UTILITY_URL") . "/complete-payment/" . $order_id . '/' . $transaction_id)->getBody()->getContents();
         $contents = json_decode($contents, true);
         if ($contents["code"] != 200) throw new \Error("Can not complete payment" . $contents['message'] . $order_id);
         return $contents;
