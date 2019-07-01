@@ -23,7 +23,7 @@ class AddCustomerGender extends Job implements ShouldQueue
 
     public function handle()
     {
-        if ($this->attempts() <= 1 && !$this->isLimitOverForToday()) {
+        if (config('app.env') == 'production' && $this->attempts() <= 1 && !$this->isLimitOverForToday()) {
             $gender = $this->getGender();
             if ($gender) $this->addGender($gender);
         }
