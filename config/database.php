@@ -45,13 +45,11 @@ return [
     */
 
     'connections' => [
-
         'sqlite' => [
             'driver' => 'sqlite',
             'database' => env('DB_DATABASE', database_path('database.sqlite')),
             'prefix' => '',
         ],
-
         'mysql' => [
             'driver' => 'mysql',
             'host' => env('DB_HOST', 'localhost'),
@@ -65,7 +63,6 @@ return [
             'strict' => false,
             'engine' => null,
         ],
-
         'pgsql' => [
             'driver' => 'pgsql',
             'host' => env('DB_HOST', 'localhost'),
@@ -87,8 +84,12 @@ return [
             'options' => [
                 'database' => env('MONGO_DB_DATABASE') // sets the authentication database required by mongo 3
             ]
+        ],
+        'mongodb_atlas_conn' => [
+            'driver' => 'mongodb',
+            'dsn' => env('MONGO_DB_ATLAS_DSN', 'mongodb://shafiq:Shafiq.10213223@cluster0-shard-00-00-pzibo.mongodb.net:27017,cluster0-shard-00-01-pzibo.mongodb.net:27017,cluster0-shard-00-02-pzibo.mongodb.net:27017/test?ssl=true&replicaSet=Cluster0-shard-0&authSource=admin&retryWrites=true&w=majority'),
+            'database' => env('MONGO_DB_DATABASE', 'sheba'),
         ]
-
     ],
 
     /*

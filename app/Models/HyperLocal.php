@@ -4,7 +4,7 @@ use Jenssegers\Mongodb\Eloquent\Model as Eloquent;
 
 class HyperLocal extends Eloquent
 {
-    protected $connection = 'mongodb';
+    protected $connection = 'mongodb_atlas_conn';
 
     public function location()
     {

@@ -1,12 +1,10 @@
-<?php
-
-namespace App\Models;
+<?php namespace App\Models;
 
 use Jenssegers\Mongodb\Eloquent\Model as Eloquent;
 
 class NavService extends Eloquent
 {
-    protected $connection = 'mongodb';
+    protected $connection = 'mongodb_atlas_conn';
 
     public function groups()
     {
