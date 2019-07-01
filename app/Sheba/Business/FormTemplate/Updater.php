@@ -1,11 +1,9 @@
-<?php
-
-
-namespace Sheba\Business\FormTemplate;
+<?php namespace Sheba\Business\FormTemplate;
 
 
 use App\Models\FormTemplate;
 use Illuminate\Database\QueryException;
+use DB;
 
 class Updater extends Creator
 {
