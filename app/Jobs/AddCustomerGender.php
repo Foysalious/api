@@ -23,7 +23,7 @@ class AddCustomerGender extends Job implements ShouldQueue
 
     public function handle()
     {
-        if ($this->attempts() <= 1 && !$this->isLimitOverForToday()) {
+        if (empty($this->profile->gender) && $this->attempts() <= 1 && !$this->isLimitOverForToday()) {
             $gender = $this->getGender();
             if ($gender) $this->addGender($gender);
         }
@@ -57,7 +57,7 @@ class AddCustomerGender extends Job implements ShouldQueue
         }
         if (isset($response->status) && $response->status) {
             $this->setToRedis(json_encode(['is_expired' => 0, 'renews' => (int)$response->expires]));
-            if ((int)$response->probability > 95) return $response->gender;
+            if ((int)$response->probability >= 90) return $response->gender;
         };
         return null;
     }
