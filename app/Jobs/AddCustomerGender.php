@@ -14,16 +14,19 @@ class AddCustomerGender extends Job implements ShouldQueue
     use InteractsWithQueue, SerializesModels;
     private $profile;
     private $now;
+    private $keys;
+    private $apiKey;
 
     public function __construct(Profile $profile)
     {
         $this->profile = $profile;
         $this->now = Carbon::now();
+        $this->keys = ['5c835974615dc558d6147d82', '5d0b6893e4b204231e617b82'];
     }
 
     public function handle()
     {
-        if (config('app.env') == 'production' && $this->attempts() <= 1 && !$this->isLimitOverForToday()) {
+        if (config('app.env') == 'production' && empty($this->profile->gender) && $this->attempts() <= 1 && !$this->isLimitOverForToday()) {
             $gender = $this->getGender();
             if ($gender) $this->addGender($gender);
         }
@@ -35,11 +38,17 @@ class AddCustomerGender extends Job implements ShouldQueue
         $this->profile->update();
     }
 
+    private function setApiKey($api_key)
+    {
+        $this->apiKey = $api_key;
+        return $this;
+    }
+
     private function getGender()
     {
         try {
             $client = new Client();
-            $response = $client->request('GET', 'https://genderapi.io/api', ['query' => ['name' => $this->profile->name, 'key' => config('research.genderapi_key')]]);
+            $response = $client->request('GET', 'https://genderapi.io/api', ['query' => ['name' => $this->profile->name, 'key' => $this->apiKey]]);
             return $this->extractGenderFromResponse(json_decode($response->getBody()));
         } catch (RequestException $exception) {
             return null;
@@ -50,7 +59,7 @@ class AddCustomerGender extends Job implements ShouldQueue
     {
         if (!$response) return null;
         if (isset($response->errno) && (int)$response->errno == 93) {
-            $this->setToRedis(json_encode(['expired_at' => $this->now->timestamp]));
+            $this->setToRedis(json_encode(['key' => $this->apiKey, 'expired_at' => $this->now->timestamp]));
         }
         if (isset($response->status) && $response->status) {
             if ((int)$response->probability >= 90) return $response->gender;
@@ -61,10 +70,18 @@ class AddCustomerGender extends Job implements ShouldQueue
     private function isLimitOverForToday()
     {
         if ($gender_api = $this->getFromRedis()) {
-            $gender_api = json_decode($gender_api);
-            return Carbon::createFromTimestamp($gender_api->expired_at)->isToday();
-        } else
-            return false;
+            $gender_api = collect(json_decode($gender_api));
+            foreach ($this->keys as $key) {
+                $redis_key = $gender_api->where('key', $key)->first();
+                if ($redis_key == null || $this->isKeyExpired($redis_key) == false) {
+                    $this->setApiKey($key);
+                    return 0;
+                }
+            }
+            return 1;
+        };
+        $this->setApiKey($this->keys[0]);
+        return 0;
     }
 
     private function getFromRedis()
@@ -75,5 +92,14 @@ class AddCustomerGender extends Job implements ShouldQueue
     private function setToRedis($data)
     {
         Redis::set('genderapi', $data);
+    }
+
+    /**
+     * @param $redis_key
+     * @return bool
+     */
+    private function isKeyExpired($redis_key)
+    {
+        return Carbon::createFromTimestamp($redis_key->expired_at)->isToday();
     }
 }
