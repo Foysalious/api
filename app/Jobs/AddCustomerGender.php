@@ -66,7 +66,7 @@ class AddCustomerGender extends Job implements ShouldQueue
                 array_push($gender_api, $data);
                 $this->setToRedis(json_encode($gender_api));
             } else {
-                $this->setToRedis(json_encode($data));
+                $this->setToRedis(json_encode([$data]));
             }
         }
         if (isset($response->status) && $response->status && (int)$response->probability >= 90) {
