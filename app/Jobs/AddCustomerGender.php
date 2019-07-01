@@ -23,7 +23,7 @@ class AddCustomerGender extends Job implements ShouldQueue
 
     public function handle()
     {
-        if (empty($this->profile->gender) && $this->attempts() <= 1 && !$this->isLimitOverForToday()) {
+        if (config('app.env') == 'production' && $this->attempts() <= 1 && !$this->isLimitOverForToday()) {
             $gender = $this->getGender();
             if ($gender) $this->addGender($gender);
         }
@@ -50,13 +50,9 @@ class AddCustomerGender extends Job implements ShouldQueue
     {
         if (!$response) return null;
         if (isset($response->errno) && (int)$response->errno == 93) {
-            $gender_api = json_decode($this->getFromRedis());
-            $data = ['is_expired' => 1];
-            if (isset($gender_api->expires)) $data['renews'] = (int)$gender_api->expires;
-            $this->setToRedis(json_encode($data));
+            $this->setToRedis(json_encode(['expired_at' => $this->now->timestamp]));
         }
         if (isset($response->status) && $response->status) {
-            $this->setToRedis(json_encode(['is_expired' => 0, 'renews' => (int)$response->expires]));
             if ((int)$response->probability >= 90) return $response->gender;
         };
         return null;
@@ -66,7 +62,7 @@ class AddCustomerGender extends Job implements ShouldQueue
     {
         if ($gender_api = $this->getFromRedis()) {
             $gender_api = json_decode($gender_api);
-            return isset($gender_api->is_expired) && $gender_api->is_expired && isset($gender_api->renews) && $this->now->timestamp < (int)$gender_api->renews;
+            return Carbon::createFromTimestamp($gender_api->expired_at)->isToday();
         } else
             return false;
     }
