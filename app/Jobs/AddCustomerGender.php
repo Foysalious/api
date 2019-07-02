@@ -21,7 +21,7 @@ class AddCustomerGender extends Job implements ShouldQueue
     {
         $this->profile = $profile;
         $this->now = Carbon::now();
-        $this->keys = ['5c835974615dc558d6147d82', '5d0b6893e4b204231e617b82'];
+        $this->keys = ['5c835974615dc558d6147d82', '5d0b6893e4b204231e617b82', '5d1adb47e4b20453bd07e3f2'];
     }
 
     public function handle()
@@ -62,7 +62,9 @@ class AddCustomerGender extends Job implements ShouldQueue
             $gender_api = $this->getFromRedis();
             $data = ['key' => $this->apiKey, 'expired_at' => $this->now->timestamp];
             if ($gender_api) {
-                $gender_api = json_decode($this->getFromRedis());
+                $gender_api = collect(json_decode($this->getFromRedis()))->reject(function ($key) {
+                    return $key->key == $this->apiKey;
+                })->values()->all();
                 array_push($gender_api, $data);
                 $this->setToRedis(json_encode($gender_api));
             } else {
