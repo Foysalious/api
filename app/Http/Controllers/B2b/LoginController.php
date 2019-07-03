@@ -43,6 +43,7 @@ class LoginController extends Controller
                         'token' => $this->generateToken($profile),
                         'member_id' => $member->id,
                         'business_id' => $businesses ? $businesses->id : null,
+                        'is_super' => $member->businessMember ? $member->businessMember->is_super : null,
                     ];
                     return api_response($request, $info, 200, ['info' => $info]);
                 } else {

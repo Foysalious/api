@@ -37,7 +37,13 @@ class TripRequestController extends Controller
                 if ($status) $q->where('status', $status);
                 if ($car_type) $q->where('vehicle_type', $car_type);
             }]);
-            $business_trip_requests = $business->businessTripRequests;
+            if (!$business_member->is_super) {
+                $business_trip_requests = $business->businessTripRequests()
+                    ->where('member_id', $business_member->member_id)
+                    ->get();
+            } else {
+                $business_trip_requests = $business->businessTripRequests;
+            }
             foreach ($business_trip_requests as $business_trip_request) {
                 array_push($list, [
                     'id' => $business_trip_request->id,

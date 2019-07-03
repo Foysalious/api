@@ -31,6 +31,8 @@ class TripSchedulerController extends Controller
                     });
                 });
             }
+            $business_member = $request->business_member;
+            if (!$business_member->is_super) $trips = $trips->where('member_id', $business_member->member_id);
             $trips = $trips->get();
             $filter = $request->filter;
             $final = [];
