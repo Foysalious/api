@@ -2892,7 +2892,7 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_notification.git",
-                "reference": "519f9a5b06b9c7b2ef10f02312f3b5fb67b999ac"
+                "reference": "af7c3f09f64e18a75d700dcdd48a44b8dafa1709"
             },
             "require": {
                 "php": ">=5.4"
@@ -2916,7 +2916,7 @@
                 }
             ],
             "description": "Sheba notifications.",
-            "time": "2019-06-26T13:54:11+00:00"
+            "time": "2019-07-03T05:31:25+00:00"
         },
         {
             "name": "sheba/report",

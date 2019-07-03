@@ -5,6 +5,10 @@ class Route
     public function set($api)
     {
         $api->group(['prefix' => 'v2', 'namespace' => 'App\Http\Controllers'], function ($api) {
+            $api->get('profile', 'Profile\ProfileController@getInfo');
+            $api->post('profile/registration', 'Auth\Profile\RegistrationController@register');
+            $api->post('profile/login', 'Auth\Profile\LoginController@login');
+            $api->post('profile/password', 'Profile\PasswordController@store');
             $api->get('validate-location', 'LocationController@validateLocation');
             $api->get('partners', 'PartnerLocationController@getPartners');
             $api->get('lite-partners', 'PartnerLocationController@getLitePartners');
