@@ -150,6 +150,9 @@ class VehiclesController extends Controller
                 #'fuel_quality' => $request->fuel_quality,
                 #'fuel_tank_capacity_ltr' => $request->fuel_tank_capacity_ltr,
             ];
+            if ($request->hasFile('vehicle_image')) {
+                $vehicle_basic_information_data['vehicle_image'] = $this->updateVehicleImage($vehicle, $request->file('vehicle_image'));
+            }
             $vehicle_basic_informations->update($this->withUpdateModificationField($vehicle_basic_information_data));
 
             $vehicle_registration_information_data = [
@@ -295,8 +298,11 @@ class VehiclesController extends Controller
                 'company_name' => $request->company_name,
                 'model_name' => $request->model_name,
                 'type' => $request->type,
-                'seat_capacity' => $request->seat_capacity,
+                'seat_capacity' => $request->seat_capacity
             ];
+            if ($request->hasFile('vehicle_image')) {
+                $basic_information_data['vehicle_image'] = $this->updateVehicleImage($vehicle, $request->file('vehicle_image'));
+            }
 
             $basic_information->update($this->withUpdateModificationField($basic_information_data));
 
@@ -491,6 +497,16 @@ class VehiclesController extends Controller
         return $picture_link;
     }
 
+    private function updateVehicleImage(Vehicle $vehicle, $photo)
+    {
+        if (!empty($vehicle->vehicle_image) && basename($vehicle->vehicle_image) != 'default.jpg') {
+            $filename = substr($vehicle->vehicle_image, strlen(config('sheba.s3_url')));
+            $this->deleteOldImage($filename);
+        }
+        $link = $this->fileRepository->uploadToCDN($this->makeVehicleImageName($vehicle, $photo), $photo, 'images/profiles/vehicles/');
+        return $link;
+    }
+
     private function deleteOldImage($filename)
     {
         $old_image = substr($filename, strlen(config('sheba.s3_url')));
@@ -502,4 +518,8 @@ class VehiclesController extends Controller
         return $filename = Carbon::now()->timestamp . '_' . $image_for . '_image_' . $vehicle_registration_information->id . '.' . $photo->extension();
     }
 
+    private function makeVehicleImageName(Vehicle $vehicle, $photo)
+    {
+        return $filename = Carbon::now()->timestamp . '_vehicle_image_' . $vehicle->id . '.' . $photo->extension();
+    }
 }
