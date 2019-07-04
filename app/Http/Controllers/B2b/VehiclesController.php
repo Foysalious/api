@@ -189,10 +189,10 @@ class VehiclesController extends Controller
                 $car_ids = $tripScheduler->setStartDate($business_trip_request->start_date)->setEndDate($business_trip_request->end_date)
                     ->setBusinessDepartment($business_trip_request->member->businessMember->role->businessDepartment)
                     ->getFreeVehicles();
-                $vehicles = Vehicle::whereIn('id', $car_ids->toArray())->with(['basicInformations', 'driver'])->get();
+                $vehicles = Vehicle::whereIn('id', $car_ids->toArray())->with(['basicInformations', 'driver', 'registrationInformations'])->get();
             } else {
                 list($offset, $limit) = calculatePagination($request);
-                $vehicles = Vehicle::with('basicInformations')->where('owner_id', $business->id)->select('id', 'status', 'current_driver_id', 'business_department_id')->orderBy('id', 'desc')->skip($offset)->limit($limit);
+                $vehicles = Vehicle::with(['basicInformations', 'registrationInformations'])->where('owner_id', $business->id)->select('id', 'status', 'current_driver_id', 'business_department_id')->orderBy('id', 'desc')->skip($offset)->limit($limit);
 
                 if ($request->has('status'))
                     $vehicles = $vehicles->status($request->status);
@@ -227,6 +227,8 @@ class VehiclesController extends Controller
                     'vehicle_type' => $basic_information->type,
                     'assigned_to' => $vehicle->businessDepartment ? $vehicle->businessDepartment->name : null,
                     'current_driver' => $driver ? $vehicle->driver->profile->name : 'N/S',
+                    'license_number' => $vehicle->registrationInformations->license_number,
+                    'vehicle_image' => $vehicle->basicInformation->vehicle_img
                 ];
                 array_push($vehicle_lists, $vehicle);
             }
