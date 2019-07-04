@@ -22,6 +22,37 @@ class ProfileController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
 
+    public function getPartnerInfo(Request $request)
+    {
+        try {
+            return api_response($request, true, 200, ['data' => [
+                'partner' => [
+                    'id' => 1,
+                    'name' => 'adad',
+                    'mobile' => '+88017589',
+                    'address' => 'afaf',
+                    'geo' => [
+                        'lat' => 455,
+                        'lng' => 47,
+                        'radius' => 5
+                    ],
+                    'categories=' > [
+                        ['id' => 4, 'name' => 'ad'],
+                        ['id' => 5, 'name' => 'af'],
+                        ['id' => 6, 'name' => 'aafafd'],
+                    ]
+                ],
+                'resource' => [
+                    'id' => 1,
+                    'name' => 'adad',
+                    'token' => str_random(10)
+                ]
+            ]]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 }
