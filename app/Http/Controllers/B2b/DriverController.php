@@ -42,7 +42,6 @@ class DriverController extends Controller
                 'license_number_image' => 'sometimes|required|mimes:jpeg,png',
                 'license_class' => 'required',
                 'years_of_experience' => 'integer',
-
                 'name' => 'required|string',
                 'mobile' => 'required|string|mobile:bd',
                 'address' => 'required|string',
@@ -53,7 +52,7 @@ class DriverController extends Controller
                 'nid_image_front' => 'sometimes|required|mimes:jpeg,png',
                 'nid_image_back' => 'sometimes|required|mimes:jpeg,png',
             ]);
-            $member = Member::find($member);
+            $member = $request->member;
             $this->setModifier($member);
 
             $driver_data = [
@@ -74,7 +73,6 @@ class DriverController extends Controller
                 $profile = $this->createDriverProfile($member, $driver, $request);
                 $new_member = $profile->member;
                 if (!$new_member) $new_member = $this->makeMember($profile);
-#
                 $business = $member->businesses->first();
                 #$business_department = BusinessDepartment::find((int)$request->department_id);
                 #$business_role = $business_department->businessRoles()->where('name', 'like', '%Driver%')->first();
@@ -113,9 +111,7 @@ class DriverController extends Controller
                     return api_response($request, null, 403, ['message' => 'Driver already exits!']);
                 }
             }
-
             return api_response($request, $driver, 200, ['driver' => $driver->id]);
-
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
@@ -642,5 +638,4 @@ class DriverController extends Controller
         $old_image = substr($filename, strlen(config('sheba.s3_url')));
         $this->fileRepository->deleteFileFromCDN($old_image);
     }
-
 }
