@@ -4,7 +4,7 @@ use Jenssegers\Mongodb\Eloquent\Model as Eloquent;
 
 class NavService extends Eloquent
 {
-    protected $connection = 'mongodb_atlas_conn';
+    protected $connection = 'mongodb';
 
     public function groups()
     {
