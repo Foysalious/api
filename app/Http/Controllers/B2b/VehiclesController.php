@@ -43,15 +43,16 @@ class VehiclesController extends Controller
                 #'fuel_quality' => 'required|string',
                 #'fuel_tank_capacity_ltr' => 'required|string',
 
+                'vehicle_image' => 'sometimes|required|mimes:jpeg,png',
                 'license_number' => 'required|unique:vehicle_registration_informations',
-                #'license_number_image' => 'required|mimes:jpeg,png',
+                'license_number_image' => 'sometimes|required|mimes:jpeg,png',
                 'tax_token_number' => 'required|unique:vehicle_registration_informations',
-                #'tax_token_image' => 'required|mimes:jpeg,png',
+                'tax_token_image' => 'sometimes|required|mimes:jpeg,png',
                 'fitness_start_date' => 'required|date|date_format:Y-m-d',
                 'fitness_end_date' => 'required|date|date_format:Y-m-d',
-                #'fitness_paper_image' => 'required|mimes:jpeg,png',
+                'fitness_paper_image' => 'sometimes|required|mimes:jpeg,png',
                 'insurance_date' => 'required|date|date_format:Y-m-d',
-                #'insurance_paper_image' => 'required|mimes:jpeg,png',
+                'insurance_paper_image' => 'sometimes|required|mimes:jpeg,png',
                 'department_id' => 'required|integer',
             ]);
 
@@ -74,22 +75,24 @@ class VehiclesController extends Controller
                 'model_year' => $request->model_year,
                 'seat_capacity' => $request->seat_capacity,
                 'transmission_type' => $request->transmission_type,
+                'vehicle_image' => $request->hasFile('vehicle_image') ? $this->updateVehicleImage($vehicle, $request->file('vehicle_image')) : null,
                 #'fuel_type' => $request->fuel_type,
                 #'fuel_quality' => $request->fuel_quality,
                 #'fuel_tank_capacity_ltr' => $request->fuel_tank_capacity_ltr,
             ];
+
             $vehicle->basicInformations()->create($this->withCreateModificationField($vehicle_basic_information_data));
 
             $vehicle_registration_information_data = [
                 'license_number' => $request->license_number,
-                #'license_number_image' => $this->updateVehiclesDocuments('license_number_image', $request->file('license_number_image')),
+                'license_number_image' => $request->hasFile('license_number_image') ? $this->updateVehiclesDocuments('license_number_image', $request->file('license_number_image')) : '',
                 'tax_token_number' => $request->tax_token_number,
-                #'tax_token_image' => $this->updateVehiclesDocuments('tax_token_image', $request->file('tax_token_image')),
+                'tax_token_image' => $request->hasFile('tax_token_image') ? $this->updateVehiclesDocuments('tax_token_image', $request->file('tax_token_image')) : '',
                 'fitness_start_date' => $request->fitness_start_date,
                 'fitness_end_date' => $request->fitness_end_date,
-                #'fitness_paper_image' => $this->updateVehiclesDocuments('fitness_paper_image', $request->file('fitness_paper_image')),
+                'fitness_paper_image' => $request->hasFile('fitness_paper_image') ? $this->updateVehiclesDocuments('fitness_paper_image', $request->file('fitness_paper_image')) : '',
                 'insurance_date' => $request->insurance_date,
-                #'insurance_paper_image' => $this->updateVehiclesDocuments('insurance_paper_image', $request->file('insurance_paper_image')),
+                'insurance_paper_image' => $request->hasFile('insurance_paper_image') ? $this->updateVehiclesDocuments('insurance_paper_image', $request->file('insurance_paper_image')) : '',
             ];
             $vehicle->registrationInformations()->create($this->withCreateModificationField($vehicle_registration_information_data));
 
@@ -214,10 +217,10 @@ class VehiclesController extends Controller
                 }
                 $vehicles = $vehicles->get();
             }
-
             $vehicle_lists = [];
             foreach ($vehicles as $vehicle) {
                 $basic_information = $vehicle->basicInformations;
+                $registration_information = $vehicle->registrationInformations ? $vehicle->registrationInformations : null;
                 $driver = $vehicle->driver;
                 $vehicle = [
                     'id' => $vehicle->id,
@@ -227,8 +230,8 @@ class VehiclesController extends Controller
                     'vehicle_type' => $basic_information->type,
                     'assigned_to' => $vehicle->businessDepartment ? $vehicle->businessDepartment->name : null,
                     'current_driver' => $driver ? $vehicle->driver->profile->name : 'N/S',
-                    'license_number' => $vehicle->registrationInformations->license_number,
-                    'vehicle_image' => $vehicle->basicInformation->vehicle_img
+                    'license_number' => $registration_information ? $registration_information->license_number : null,
+                    'vehicle_image' => $basic_information->vehicle_img
                 ];
                 array_push($vehicle_lists, $vehicle);
             }
