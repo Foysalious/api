@@ -22,6 +22,12 @@ class Driver extends Model
         return $this->hasOne(BusinessTrip::class);
     }
 
+    public function attachments()
+    {
+        return $this->morphMany(Attachment::class, 'attachable');
+    }
+
+
     public function scopeStatus($query, $status)
     {
         return $query->where('status', $status);

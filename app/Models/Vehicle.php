@@ -51,6 +51,11 @@ class Vehicle extends Model
         return $this->hasMany(FuelLog::class);
     }
 
+    public function attachments()
+    {
+        return $this->morphMany(Attachment::class, 'attachable');
+    }
+
     public function scopeStatus($query, $status)
     {
         return $query->where('status', $status);
