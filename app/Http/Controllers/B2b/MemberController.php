@@ -205,7 +205,6 @@ class MemberController extends Controller
             $member = $request->member;
             $model = "App\\Models\\" . ucfirst(camel_case($request->type));
             $model = $model::find((int)$request->type_id);
-            #dd(get_class($model), $model);
             if (!$model) return api_response($request, null, 404);
             list($offset, $limit) = calculatePagination($request);
             $attaches = Attachment::where('attachable_type', get_class($model))->where('attachable_id', $model->id)
