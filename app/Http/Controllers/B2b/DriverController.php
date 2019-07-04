@@ -38,7 +38,7 @@ class DriverController extends Controller
         try {
             $this->validate($request, [
                 'license_number' => 'required',
-                'license_number_image' => 'required|mimes:jpeg,png',
+                'license_number_image' => 'sometimes|required|mimes:jpeg,png',
                 'license_class' => 'required',
                 'years_of_experience' => 'integer',
 
@@ -47,17 +47,18 @@ class DriverController extends Controller
                 'address' => 'required|string',
                 'dob' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
                 'nid_no' => 'required|integer',
-                'pro_pic' => 'required|mimes:jpeg,png',
+                'pro_pic' => 'sometimes|required|mimes:jpeg,png',
                 'role_id' => 'required|integer',
+                'nid_image_front' => 'sometimes|required|mimes:jpeg,png',
+                'nid_image_back' => 'sometimes|required|mimes:jpeg,png',
             ]);
-
             $member = Member::find($member);
             $this->setModifier($member);
 
             $driver_data = [
                 'status' => 'active',
                 'license_number' => $request->license_number,
-                'license_number_image' => $this->updateDriversDocuments('license_number_image', $request->file('license_number_image')),
+                'license_number_image' => $request->hasFile('license_number_image') ? $this->updateDriversDocuments('license_number_image', $request->file('license_number_image')) : '',
                 'license_class' => $request->license_class,
                 'years_of_experience' => $request->years_of_experience,
             ];
@@ -132,7 +133,9 @@ class DriverController extends Controller
             #'gender' => $request->gender,
             'dob' => $request->dob,
             'nid_no' => $request->nid_no,
-            'pro_pic' => $this->updateProfilePicture('pro_pic', $request->file('pro_pic')),
+            'nid_image_front' => $request->hasFile('nid_image_front') ? $this->updateProfilesPicture('nid_image_front', $request->file('nid_image_front')) : '',
+            'nid_image_back' => $request->hasFile('nid_image_back') ? $this->updateProfilesPicture('nid_image_back', $request->file('nid_image_back')) : '',
+            'pro_pic' => $request->hasFile('pro_pic') ? $this->updateProfilesPicture('pro_pic', $request->file('pro_pic')) : '',
         ];
 
         return Profile::create($this->withCreateModificationField($profile_data));
@@ -606,11 +609,11 @@ class DriverController extends Controller
         return $picture_link;
     }
 
-    private function updateProfilePicture($image_for, $photo)
+    private function updateProfilesPicture($image_for, $photo)
     {
         $profile = new Profile();
 
-        if (basename($profile->image_for) != 'default.jpg') {
+        if (!empty($profile->{$image_for}) && basename($profile->{$image_for}) != 'default.jpg') {
             $filename = substr($profile->{$image_for}, strlen(config('sheba.s3_url')));
             $this->deleteOldImage($filename);
         }
