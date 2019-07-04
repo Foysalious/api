@@ -6,6 +6,7 @@ use App\Models\BusinessTrip;
 use App\Models\BusinessTripRequest;
 use App\Models\Driver;
 use App\Models\Profile;
+use App\Models\Vehicle;
 use App\Repositories\FileRepository;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
@@ -62,10 +63,14 @@ class DriverController extends Controller
                 'license_class' => $request->license_class,
                 'years_of_experience' => $request->years_of_experience,
             ];
-
             $profile = $this->profileRepository->checkExistingMobile($request->mobile);
             if (!$profile) {
                 $driver = Driver::create($this->withCreateModificationField($driver_data));
+
+                if ($request->has('vehicle_id')) {
+                    $vehicle = Vehicle::get($request->vehicle_id);
+                    $driver->vehicle()->save($vehicle);
+                }
                 $profile = $this->createDriverProfile($member, $driver, $request);
                 $new_member = $profile->member;
                 if (!$new_member) $new_member = $this->makeMember($profile);

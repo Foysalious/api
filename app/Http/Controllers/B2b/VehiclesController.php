@@ -66,6 +66,9 @@ class VehiclesController extends Controller
                 'business_department_id' => $request->department_id,
                 'status' => 'active',
             ];
+            if ($request->has("driver_id")) {
+                $vehicle_data['current_driver_id'] = $request->driver_id;
+            }
             $vehicle = Vehicle::create($this->withCreateModificationField($vehicle_data));
 
             $vehicle_basic_information_data = [
