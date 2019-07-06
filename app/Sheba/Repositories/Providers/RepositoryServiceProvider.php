@@ -1,6 +1,7 @@
 <?php namespace Sheba\Repositories\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Sheba\Repositories\Business\DriverRepository;
 use Sheba\Repositories\Business\FormTemplateItemRepository;
 use Sheba\Repositories\Business\FormTemplateQuestionRepository;
 use Sheba\Repositories\Business\FormTemplateRepository;
@@ -18,6 +19,7 @@ use Sheba\Repositories\Business\PurchaseRequestItemFieldRepository;
 use Sheba\Repositories\Business\PurchaseRequestItemRepository;
 use Sheba\Repositories\Business\PurchaseRequestQuestionRepository;
 use Sheba\Repositories\Business\PurchaseRequestRepository;
+use Sheba\Repositories\Interfaces\DriverRepositoryInterface;
 use Sheba\Repositories\Interfaces\FormTemplateItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\FormTemplateQuestionRepositoryInterface;
 use Sheba\Repositories\Interfaces\FormTemplateRepositoryInterface;
@@ -57,5 +59,6 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(PurchaseRequestItemFieldRepositoryInterface::class, PurchaseRequestItemFieldRepository::class);
         $this->app->bind(PurchaseRequestQuestionRepositoryInterface::class, PurchaseRequestQuestionRepository::class);
         $this->app->bind(ProcurementItemFieldRepositoryInterface::class, ProcurementItemFieldRepository::class);
+        $this->app->bind(DriverRepositoryInterface::class, DriverRepository::class);
     }
 }

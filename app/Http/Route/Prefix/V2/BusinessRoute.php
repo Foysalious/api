@@ -141,6 +141,7 @@ class BusinessRoute
                 });
                 $api->group(['prefix' => 'drivers'], function ($api) {
                     $api->post('/', 'B2b\DriverController@store');
+                    $api->post('/bulk-store', 'B2b\DriverController@bulkStore');
                     $api->get('/', 'B2b\DriverController@index');
                     $api->group(['prefix' => '{driver}'], function ($api) {
                         $api->post('/', 'B2b\DriverController@update');

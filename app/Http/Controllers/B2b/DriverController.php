@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Http\Validators\MobileNumberValidator;
 use App\Models\BusinessDepartment;
 use App\Models\BusinessMember;
 use App\Models\BusinessTrip;
@@ -7,18 +8,26 @@ use App\Models\BusinessTripRequest;
 use App\Models\Driver;
 use App\Models\Profile;
 use App\Models\Vehicle;
+
 use App\Repositories\FileRepository;
+
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
+use Sheba\Business\Driver\BulkUploadExcel;
+use Sheba\Business\Driver\CreateRequest;
+use Sheba\Business\Driver\Creator;
 use Sheba\Business\Scheduler\TripScheduler;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
+use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use App\Models\Member;
 use Carbon\Carbon;
 use DB;
 use Sheba\Repositories\ProfileRepository;
+use Throwable;
+use Excel;;
 
 class DriverController extends Controller
 {
@@ -116,6 +125,49 @@ class DriverController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function bulkStore(Request $request, CreateRequest $create_request, Creator $creator)
+    {
+        try {
+            $this->validate($request, ['file' => 'required|file']);
+
+            $valid_extensions = ["xls", "xlsx", "xlm", "xla", "xlc", "xlt", "xlw", "csv"];
+            $extension = $request->file('file')->getClientOriginalExtension();
+
+            if (!in_array($extension, $valid_extensions)) {
+                return api_response($request, null, 400, ['message' => 'File type not support']);
+            }
+
+            $file = Excel::selectSheets(BulkUploadExcel::SHEET)->load($request->file)->save();
+            $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
+
+            $data = Excel::selectSheets(BulkUploadExcel::SHEET)->load($file_path)->get();
+            $total = $data->count();
+
+            $data->each(function ($value, $key) use ($create_request, $creator, $total) {
+                $license_number_field = BulkUploadExcel::LICENSE_NUMBER_COLUMN_TITLE;
+                $license_class = BulkUploadExcel::LICENSE_CLASS_COLUMN_TITLE;
+                $driver_mobile = BulkUploadExcel::PHONE_NUMBER_COLUMN_TITLE;
+
+                $request = $create_request->setDriverMobile($value->$driver_mobile)
+                    ->setLicenseNumber($value->$license_number_field)
+                    ->setLicenseClass($value->$license_class);
+
+                dd($request);
+
+                $driver_create = $creator->setDriverCreateRequest($request)->create();
+            });
+
+            $response_msg = "";
+            return api_response($request, null, 200, ['message' => $response_msg]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
