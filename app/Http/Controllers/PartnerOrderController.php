@@ -166,34 +166,34 @@ class PartnerOrderController extends Controller
             $partner_order = $request->partner_order;
             $partner_order->calculate(true);
             foreach ($partner_order->jobs as $job) {
+                $services = [];
                 if (count($job->jobServices) == 0) {
-                    $services = array();
-                    array_push($services, array(
-                            'name' => $job->service_name,
-                            'quantity' => (double)$job->quantity,
-                            'unit' => $job->service->unit,
-                            'price' => (double)$job->servicePrice)
-                    );
+                    array_push($services, [
+                        'name' => $job->service_name,
+                        'quantity' => (double)$job->quantity,
+                        'unit' => $job->service->unit,
+                        'price' => (double)$job->servicePrice
+                    ]);
                 } else {
-                    $services = array();
-                    foreach ($job->jobServices as $jobService) {
-                        array_push($services, array(
-                            'name' => $jobService->service ? $jobService->service->name : null,
-                            'quantity' => (double)$jobService->quantity,
-                            'unit' => $jobService->service ? $jobService->service->unit : null,
-                            'discount' => (double)$jobService->discount,
-                            'sheba_contribution' => (double)$jobService->sheba_contribution,
-                            'partner_contribution' => (double)$jobService->partner_contribution,
-                            'price' => (double)$jobService->unit_price * (double)$jobService->quantity));
+                    foreach ($job->jobServices as $job_service) {
+                        array_push($services, [
+                            'name' => $job_service->service ? $job_service->service->name : null,
+                            'quantity' => (double)$job_service->quantity,
+                            'unit' => $job_service->service ? $job_service->service->unit : null,
+                            'discount' => (double)$job_service->discount,
+                            'sheba_contribution' => (double)$job_service->sheba_contribution,
+                            'partner_contribution' => (double)$job_service->partner_contribution,
+                            'price' => (double)$job_service->unit_price * (double)$job_service->quantity
+                        ]);
                     }
                 }
             }
-            $partner_order = array(
+            $partner_order = [
                 'id' => $partner_order->id,
                 'total_material_price' => (double)$partner_order->totalMaterialPrice,
-                'total_price' => (double)$partner_order->totalPrice,
-                'paid' => (double)$partner_order->paid,
-                'due' => (double)$partner_order->due,
+                'total_price' => (double)$partner_order->totalPrice + $partner_order->totalLogisticCharge,
+                'paid' => (double)$partner_order->paidWithLogistic,
+                'due' => (double)$partner_order->dueWithLogistic,
                 'invoice' => $partner_order->invoice,
                 'sheba_commission' => (double)$partner_order->profit,
                 'partner_commission' => (double)$partner_order->totalCost,
@@ -205,10 +205,10 @@ class PartnerOrderController extends Controller
                 'discount' => (double)$partner_order->totalDiscount,
                 'total_sheba_discount_amount' => (double)$partner_order->totalShebaDiscount,
                 'total_partner_discount_amount' => (double)$partner_order->totalPartnerDiscount,
-                'delivery_charge' => $partner_order->deliveryCharge,
+                'delivery_charge' => (double)$partner_order->deliveryCharge + $partner_order->totalLogisticCharge,
                 'is_logistic'=> $partner_order->order->isLogisticOrder(),
                 'is_ready_to_pick' => $partner_order->order->isReadyToPick(),
-            );
+            ];
             return api_response($request, $partner_order, 200, ['order' => $partner_order]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
