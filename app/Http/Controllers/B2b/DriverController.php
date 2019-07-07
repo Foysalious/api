@@ -102,7 +102,10 @@ class DriverController extends Controller
                     $driver = Driver::create($this->withCreateModificationField($driver_data));
                     $profile_data = ['driver_id' => $driver->id];
                     $profile->update($this->withCreateModificationField($profile_data));
-
+                    if ($request->has('vehicle_id')) {
+                        $vehicle = Vehicle::find((int)$request->vehicle_id);
+                        $driver->vehicle()->sync([$vehicle->id]);
+                    }
                     $new_member = $profile->member;
                     if (!$new_member) $new_member = $this->makeMember($profile);
 
