@@ -21,7 +21,7 @@ class SmsHandler
     {
         $service_break_down = [];
         $this->order->items->each(function ($item) use (&$service_break_down) {
-            $service_break_down[$item->id] = $item->service_name . ':' . $item->getTotal();
+            $service_break_down[$item->id] = $item->service_name . ': ' . $item->getTotal();
         });
 
         $service_break_down = implode(',', $service_break_down);
