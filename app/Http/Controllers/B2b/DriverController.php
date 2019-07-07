@@ -80,7 +80,7 @@ class DriverController extends Controller
 
                 if ($request->has('vehicle_id')) {
                     $vehicle = Vehicle::find((int)$request->vehicle_id);
-                    $driver->vehicle()->sync([$vehicle->id]);
+                    $driver->vehicle()->create($vehicle);
                 }
                 $profile = $this->createDriverProfile($member, $driver, $request);
                 $new_member = $profile->member;
@@ -104,7 +104,7 @@ class DriverController extends Controller
                     $profile->update($this->withCreateModificationField($profile_data));
                     if ($request->has('vehicle_id')) {
                         $vehicle = Vehicle::find((int)$request->vehicle_id);
-                        $driver->vehicle()->sync([$vehicle->id]);
+                        $driver->vehicle()->create($vehicle);
                     }
                     $new_member = $profile->member;
                     if (!$new_member) $new_member = $this->makeMember($profile);
@@ -161,21 +161,23 @@ class DriverController extends Controller
             $data = Excel::selectSheets(BulkUploadExcel::SHEET)->load($file_path)->get();
 
             $error_count = 0;
-            $license_number_field   = BulkUploadExcel::LICENSE_NUMBER_COLUMN_TITLE;
-            $license_class          = BulkUploadExcel::LICENSE_CLASS_COLUMN_TITLE;
-            $driver_mobile          = BulkUploadExcel::PHONE_NUMBER_COLUMN_TITLE;
-            $name                   = BulkUploadExcel::DRIVER_NAME_COLUMN_TITLE;
-            $date_of_birth          = BulkUploadExcel::DATE_OF_BIRTH_COLUMN_TITLE;
-            $blood_group            = BulkUploadExcel::BLOOD_GROUP_COLUMN_TITLE;
-            $nid_number             = BulkUploadExcel::NID_NUMBER_COLUMN_TITLE;
-            $department             = BulkUploadExcel::DRIVER_DEPARTMENT_COLUMN_TITLE;
-            $vendor_mobile          = BulkUploadExcel::VENDOR_PHONE_NUMBER_COLUMN_TITLE;
-            $driver_role            = BulkUploadExcel::DRIVER_ROLE_COLUMN_TITLE;
-            $driver_address         = BulkUploadExcel::ADDRESS_COLUMN_TITLE;
+            $license_number_field = BulkUploadExcel::LICENSE_NUMBER_COLUMN_TITLE;
+            $license_class = BulkUploadExcel::LICENSE_CLASS_COLUMN_TITLE;
+            $driver_mobile = BulkUploadExcel::PHONE_NUMBER_COLUMN_TITLE;
+            $name = BulkUploadExcel::DRIVER_NAME_COLUMN_TITLE;
+            $date_of_birth = BulkUploadExcel::DATE_OF_BIRTH_COLUMN_TITLE;
+            $blood_group = BulkUploadExcel::BLOOD_GROUP_COLUMN_TITLE;
+            $nid_number = BulkUploadExcel::NID_NUMBER_COLUMN_TITLE;
+            $department = BulkUploadExcel::DRIVER_DEPARTMENT_COLUMN_TITLE;
+            $vendor_mobile = BulkUploadExcel::VENDOR_PHONE_NUMBER_COLUMN_TITLE;
+            $driver_role = BulkUploadExcel::DRIVER_ROLE_COLUMN_TITLE;
+            $driver_address = BulkUploadExcel::ADDRESS_COLUMN_TITLE;
 
-            $data->each(function ($value) use ($create_request, $creator, $admin_member, &$error_count,
+            $data->each(function ($value) use (
+                $create_request, $creator, $admin_member, &$error_count,
                 $license_number_field, $license_class, $driver_mobile, $name, $date_of_birth, $blood_group,
-                $nid_number, $department, $vendor_mobile, $driver_role, $driver_address) {
+                $nid_number, $department, $vendor_mobile, $driver_role, $driver_address
+            ) {
 
                 if (is_null($value->$name) && is_null($value->$driver_mobile)) return false;
 
