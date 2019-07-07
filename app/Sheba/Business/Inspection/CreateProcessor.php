@@ -1,6 +1,5 @@
 <?php namespace Sheba\Business\Inspection;
 
-
 class CreateProcessor
 {
     private $type;

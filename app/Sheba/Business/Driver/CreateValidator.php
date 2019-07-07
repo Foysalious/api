@@ -1,12 +1,9 @@
 <?php namespace Sheba\Business\Driver;
 
 use Carbon\Carbon;
-use Illuminate\Foundation\Validation\ValidatesRequests;
 
 class CreateValidator
 {
-    use ValidatesRequests;
-
     /** @var CreateRequest $driverCreateRequest*/
     private $driverCreateRequest;
 
