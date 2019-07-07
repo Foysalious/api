@@ -27,7 +27,9 @@ use Carbon\Carbon;
 use DB;
 use Sheba\Repositories\ProfileRepository;
 use Throwable;
-use Excel;;
+use Excel;
+
+;
 
 class DriverController extends Controller
 {
@@ -77,7 +79,7 @@ class DriverController extends Controller
 
                 if ($request->has('vehicle_id')) {
                     $vehicle = Vehicle::find((int)$request->vehicle_id);
-                    $driver->vehicle()->save($vehicle);
+                    $driver->vehicle()->sync([$vehicle->id]);
                 }
                 $profile = $this->createDriverProfile($member, $driver, $request);
                 $new_member = $profile->member;
