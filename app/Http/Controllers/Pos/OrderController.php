@@ -164,6 +164,7 @@ class OrderController extends Controller
 
             $order = $creator->setData($request->all())->create();
             $order = $order->calculate();
+            $this->sendCustomerSms($order);
             $order->payment_status = $order->getPaymentStatus();
 
             return api_response($request, null, 200, ['msg' => 'Order Created Successfully', 'order' => $order]);
