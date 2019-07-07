@@ -125,9 +125,10 @@ class OrderController extends Controller
             $order = $creator->create();
 
             $order = $order->calculate();
+            $this->sendCustomerSms($order);
+            $this->sendCustomerEmail($order);
             $order->payment_status = $order->getPaymentStatus();
             $order->client_pos_order_id = $request->client_pos_order_id;
-
             return api_response($request, null, 200, ['msg' => 'Order Created Successfully', 'order' => $order]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -139,6 +140,18 @@ class OrderController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function sendCustomerSms(PosOrder $order)
+    {
+        if ($order->customer && $order->customer->profile->mobile)
+            dispatch(new OrderBillSms($order));
+    }
+
+    private function sendCustomerEmail($order)
+    {
+        if ($order->customer && $order->customer->profile->email)
+            dispatch(new OrderBillEmail($order));
     }
 
     /**
@@ -158,6 +171,8 @@ class OrderController extends Controller
 
             $order = $creator->setData($request->all())->create();
             $order = $order->calculate();
+            $this->sendCustomerSms($order);
+            $this->sendCustomerEmail($order);
             $order->payment_status = $order->getPaymentStatus();
 
             return api_response($request, null, 200, ['msg' => 'Order Created Successfully', 'order' => $order]);
