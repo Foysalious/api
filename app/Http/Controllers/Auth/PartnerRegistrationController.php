@@ -101,7 +101,7 @@ class PartnerRegistrationController extends Controller
                 'address' => 'string',
             ]);
             $profile = $request->profile;
-            if (!$profile->resource) $resource = Resource::create(['profile_id' => $profile, 'remember_token' => str_random(60)]);
+            if (!$profile->resource) $resource = Resource::create(['profile_id' => $profile->id, 'remember_token' => str_random(60)]);
             else $resource = $profile->resource;
             $request['package_id'] = config('sheba.partner_lite_packages_id');
             $request['billing_type'] = 'monthly';
