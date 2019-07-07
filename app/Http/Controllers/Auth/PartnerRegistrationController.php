@@ -96,12 +96,16 @@ class PartnerRegistrationController extends Controller
                 'company_name' => 'required|string',
                 'from' => 'string|in:' . implode(',', constants('FROM')),
                 'geo' => 'string',
+                'name' => 'string',
+                'number' => 'string',
+                'address' => 'string',
             ]);
             $profile = $request->profile;
             if (!$profile->resource) $resource = Resource::create(['profile_id' => $profile, 'remember_token' => str_random(60)]);
             else $resource = $profile->resource;
             $request['package_id'] = config('sheba.partner_lite_packages_id');
             $request['billing_type'] = 'monthly';
+            if ($request->has('name')) $profile->update(['name' => $request->name]);
             if ($resource->partnerResources->count() == 0) {
                 $data = $this->makePartnerCreateData($request);
                 $this->createPartner($resource, $data);
@@ -185,6 +189,7 @@ class PartnerRegistrationController extends Controller
         if ($request->has('address')) {
             $data['address'] = $request->address;
         }
+        if ($request->has('number')) $data['mobile'] = formatMobile($request->number);
         if ($request->has('geo')) {
             $geo = json_decode($request->geo);
             $geo->radius = 5;
