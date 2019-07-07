@@ -300,10 +300,17 @@ class InspectionController extends Controller
     public function individualInspection($member, Request $request)
     {
         try {
+            $business_member = $request->business_member;
+            $business = $request->business;
             $member = $request->member;
             $this->setModifier($member);
             list($offset, $limit) = calculatePagination($request);
-            $inspections = Inspection::with('formTemplate')->where('member_id', $member->id)->orderBy('id', 'DESC');
+            if (!$business_member->is_super) {
+                $inspections = Inspection::with('formTemplate')->where('member_id', $member->id)->orderBy('id', 'DESC');
+            } else {
+                $inspections = Inspection::with('formTemplate')->where('business_id', $business_member->business_id)->orderBy('id', 'DESC');
+            }
+
             $inspection_lists = [];
             if ($request->has('filter') && $request->filter === 'open') {
                 $inspections = $inspections->where('status', 'open')->skip($offset)->limit($limit);
@@ -388,7 +395,6 @@ class InspectionController extends Controller
     {
         try {
             $this->setModifier($request->manager_member);
-            $request->merge(['member_id' => $request->manager_member->id]);
             /** @var Creator $creation_class */
             $creation_class = $create_processor->setType($request->schedule_type)->getCreationClass();
             $inspection = $creation_class->setData($request->all())->setBusiness($request->business)->create();

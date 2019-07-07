@@ -6,7 +6,6 @@ class BusinessRoute
     {
         $api->post('business/login', 'B2b\LoginController@login');
         $api->post('business/register', 'B2b\RegistrationController@register');
-
         $api->group(['prefix' => 'businesses', 'middleware' => ['business.auth']], function ($api) {
             $api->group(['prefix' => '{business}'], function ($api) {
                 $api->get('members', 'B2b\MemberController@index');
@@ -16,25 +15,20 @@ class BusinessRoute
                 $api->post('orders', 'B2b\OrderController@placeOrder');
                 $api->get('trips', 'B2b\TripSchedulerController@getList');
                 $api->post('promotions/add', 'B2b\OrderController@applyPromo');
-
                 $api->get('/transactions', 'B2b\BusinessTransactionController@index');
-
                 $api->get('/dept-role', 'B2b\CoWorkerController@departmentRole');
                 $api->post('/departments', 'B2b\CoWorkerController@addBusinessDepartment');
                 $api->get('/departments', 'B2b\CoWorkerController@getBusinessDepartments');
                 $api->post('/roles', 'B2b\CoWorkerController@addBusinessRole');
-
                 $api->get('/sms-templates', 'B2b\BusinessSmsTemplateController@index');
                 $api->get('/test-sms', 'B2b\BusinessSmsTemplateController@sendSms');
                 $api->post('/sms-templates/{sms}', 'B2b\BusinessSmsTemplateController@update');
                 $api->get('/sms-templates/{sms}', 'B2b\BusinessSmsTemplateController@show');
-
                 $api->group(['prefix' => 'employees'], function ($api) {
                     $api->post('/', 'B2b\CoWorkerController@store');
                     $api->get('/', 'B2b\CoWorkerController@index');
                     $api->get('/{employee}', 'B2b\CoWorkerController@show');
                 });
-
                 $api->group(['prefix' => 'orders'], function ($api) {
                     $api->get('/', 'B2b\OrderController@index');
                     $api->group(['prefix' => '{order}', 'middleware' => ['business_order.auth']], function ($api) {
@@ -43,7 +37,6 @@ class BusinessRoute
                         $api->get('bills', 'B2b\OrderController@getBills');
                     });
                 });
-
                 $api->group(['prefix' => 'form-templates'], function ($api) {
                     $api->get('/', 'B2b\FormTemplateController@index');
                     $api->post('/', 'B2b\FormTemplateController@store');
@@ -59,7 +52,6 @@ class BusinessRoute
                         });
                     });
                 });
-
                 $api->group(['prefix' => 'inspections'], function ($api) {
                     $api->get('/', 'B2b\InspectionController@index');
                     $api->post('/', 'B2b\InspectionController@store');
@@ -100,18 +92,15 @@ class BusinessRoute
                         $api->get('/', 'B2b\PurchaseRequestController@forms');
                     });
                 });
-
                 $api->group(['prefix' => 'fuel-logs'], function ($api) {
                     $api->get('/', 'B2b\FuelLogController@index');
                     $api->post('/', 'B2b\FuelLogController@store');
                     $api->post('{fuel_log}', 'B2b\FuelLogController@store');
                 });
-
                 $api->group(['prefix' => 'inspection-items'], function ($api) {
                     $api->get('/', 'B2b\InspectionItemController@index');
                     $api->get('/{item}', 'B2b\InspectionItemController@show');
                 });
-
                 $api->group(['prefix' => 'issues'], function ($api) {
                     $api->get('/', 'B2b\IssueController@index');
                     $api->post('/', 'B2b\IssueController@store');
@@ -122,7 +111,6 @@ class BusinessRoute
                     $api->post('/{issue}/comments', 'B2b\IssueController@storeComment');
                     $api->get('/{issue}/comments', 'B2b\IssueController@getComments');
                 });
-
                 $api->group(['prefix' => 'fuel-logs'], function ($api) {
                     $api->get('/', 'B2b\FuelLogController@index');
                     $api->get('/{log}', 'B2b\FuelLogController@show');
@@ -133,7 +121,6 @@ class BusinessRoute
                 });
             });
         });
-
         $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {
             $api->group(['prefix' => '{member}'], function ($api) {
                 $api->post('/attachments', 'B2b\MemberController@storeAttachment');
@@ -154,6 +141,7 @@ class BusinessRoute
                 });
                 $api->group(['prefix' => 'drivers'], function ($api) {
                     $api->post('/', 'B2b\DriverController@store');
+                    $api->post('/bulk-store', 'B2b\DriverController@bulkStore');
                     $api->get('/', 'B2b\DriverController@index');
                     $api->group(['prefix' => '{driver}'], function ($api) {
                         $api->post('/', 'B2b\DriverController@update');

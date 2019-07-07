@@ -75,7 +75,7 @@ class ProfileRepository
                 'id' => $avatar->id,
                 'name' => $profile->name,
                 'mobile' => $profile->mobile,
-                'email' => $profile->email ?: (strtolower(clean($profile->name, '_')) . "@ajaira.co"),
+                'email' => $profile->email,
                 'profile_image' => $profile->pro_pic,
                 'token' => $avatar->remember_token,
             );
@@ -99,6 +99,7 @@ class ProfileRepository
                 $info['is_verified'] = $avatar->is_verified;
                 $info['partners'] = $avatar->partners->unique('partner_id')->count();
                 $info['partner'] = (new ResourceRepository($avatar))->getPartner($avatar);
+                $info['email'] = $profile->email ? $profile->email : (strtolower(clean($profile->name, '_')) . "@ajaira.co");
             }
             return $info;
         }

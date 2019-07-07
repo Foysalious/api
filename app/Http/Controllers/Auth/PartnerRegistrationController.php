@@ -19,6 +19,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
+use Sheba\Logs\ErrorLog;
 use Sheba\Sms\Sms;
 use Sheba\Voucher\Creator\Referral;
 use DB;
@@ -88,6 +89,41 @@ class PartnerRegistrationController extends Controller
         }
     }
 
+    public function registerByProfile(Request $request, ErrorLog $error_log)
+    {
+        try {
+            $this->validate($request, [
+                'company_name' => 'required|string',
+                'from' => 'string|in:' . implode(',', constants('FROM')),
+                'geo' => 'string',
+                'name' => 'string',
+                'number' => 'string',
+                'address' => 'string',
+            ]);
+            $profile = $request->profile;
+            if (!$profile->resource) $resource = Resource::create(['profile_id' => $profile->id, 'remember_token' => str_random(60)]);
+            else $resource = $profile->resource;
+            $request['package_id'] = config('sheba.partner_lite_packages_id');
+            $request['billing_type'] = 'monthly';
+            if ($request->has('name')) $profile->update(['name' => $request->name]);
+            if ($resource->partnerResources->count() == 0) {
+                $data = $this->makePartnerCreateData($request);
+                $this->createPartner($resource, $data);
+                $info = $this->profileRepository->getProfileInfo('resource', $profile);
+                return api_response($request, null, 200, ['info' => $info]);
+            } else {
+                return api_response($request, null, 403, ['message' => 'You already have a company.']);
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $error_log->setException($e)->setRequest($request)->setErrorMessage($message)->send();
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            $error_log->setException($e)->send();
+            return api_response($request, null, 500);
+        }
+    }
+
     public function registerByResource(Request $request)
     {
         try {
@@ -153,6 +189,12 @@ class PartnerRegistrationController extends Controller
         if ($request->has('address')) {
             $data['address'] = $request->address;
         }
+        if ($request->has('number')) $data['mobile'] = formatMobile($request->number);
+        if ($request->has('geo')) {
+            $geo = json_decode($request->geo);
+            $geo->radius = 5;
+            $data['geo_informations'] = json_encode($geo);
+        }
         return $data;
     }
 
@@ -208,8 +250,7 @@ class PartnerRegistrationController extends Controller
                 if (isset($data['billing_type']) && isset($data['package_id'])) $partner->subscribe($data['package_id'], $data['billing_type']);
             });
         } catch (QueryException $e) {
-            app('sentry')->captureException($e);
-            return null;
+            throw  $e;
         }
         return Partner::find($partner->id);
     }

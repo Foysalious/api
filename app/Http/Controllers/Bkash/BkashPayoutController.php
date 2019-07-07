@@ -59,7 +59,8 @@ class BkashPayoutController extends Controller
             $support->setAppKey($request->app_key)->setAppSecret($request->app_secret)
                 ->setUsername($request->username)->setPassword($request->password)->setUrl("https://checkout.pay.bka.sh/v1.2.0-beta");
             $result = $support->queryBalance();
-            return api_response($request, $result, 200, ['data' => $result->organizationBalance]);
+            if (!isset($result->errorCode)) return api_response($request, $result, 200, ['data' => $result->organizationBalance]);
+            return api_response($request, null, 500);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');

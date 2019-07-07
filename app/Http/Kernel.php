@@ -5,7 +5,8 @@ namespace App\Http;
 use App\Http\Middleware\B2B\OrderMiddleware;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
-class Kernel extends HttpKernel {
+class Kernel extends HttpKernel
+{
     /**
      * The application's global HTTP middleware stack.
      *
@@ -69,7 +70,7 @@ class Kernel extends HttpKernel {
         'resource_job.auth' => \App\Http\Middleware\ResourceJobAuthMiddleware::class,
         'admin.auth' => \App\Http\Middleware\AdminAuthMiddleware::class,
         'vendor.auth' => \App\Http\Middleware\VendorMiddleware::class,
-
+        'jwtAuth' => \App\Http\Middleware\JWTAuthentication::class,
         'business_order.auth' => OrderMiddleware::class,
     ];
 }
