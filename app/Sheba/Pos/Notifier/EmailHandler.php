@@ -19,7 +19,7 @@ class EmailHandler
     public function handle()
     {
         Mail::send('emails.pos-order-bill', ['order' => $this->order], function ($m) {
-            $m->to('saiful.sheba@gmail.com')->subject('Order Bills');
+            $m->to($this->order->customer->profile->email)->subject('Order Bills');
         });
     }
 }
