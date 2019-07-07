@@ -388,7 +388,6 @@ class InspectionController extends Controller
     {
         try {
             $this->setModifier($request->manager_member);
-            $request->merge(['member_id' => $request->manager_member->id]);
             /** @var Creator $creation_class */
             $creation_class = $create_processor->setType($request->schedule_type)->getCreationClass();
             $inspection = $creation_class->setData($request->all())->setBusiness($request->business)->create();

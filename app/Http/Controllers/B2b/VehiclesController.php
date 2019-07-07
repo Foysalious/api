@@ -6,8 +6,11 @@ use App\Models\Driver;
 use App\Models\Vehicle;
 use App\Models\VehicleRegistrationInformation;
 use App\Repositories\FileRepository;
+use FacebookAds\Http\Client;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
+use Sheba\Business\Inspection\CreateProcessor;
+use Sheba\Business\Inspection\Creator;
 use Sheba\Business\Scheduler\TripScheduler;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
@@ -29,7 +32,7 @@ class VehiclesController extends Controller
         $this->fileRepository = $file_repository;
     }
 
-    public function store($member, Request $request)
+    public function store($member, Request $request, CreateProcessor $create_processor)
     {
         try {
             $this->validate($request, [
@@ -39,10 +42,6 @@ class VehiclesController extends Controller
                 'model_year' => 'required|date|date_format:Y-m-d',
                 'seat_capacity' => 'required|integer',
                 'transmission_type' => 'required|string|in:auto,manual',
-                #'fuel_type' => 'required|string',
-                #'fuel_quality' => 'required|string',
-                #'fuel_tank_capacity_ltr' => 'required|string',
-
                 'vehicle_image' => 'sometimes|required|mimes:jpeg,png',
                 'license_number' => 'required|unique:vehicle_registration_informations',
                 'license_number_image' => 'sometimes|required|mimes:jpeg,png',
@@ -79,9 +78,6 @@ class VehiclesController extends Controller
                 'seat_capacity' => $request->seat_capacity,
                 'transmission_type' => $request->transmission_type,
                 'vehicle_image' => $request->hasFile('vehicle_image') ? $this->updateVehicleImage($vehicle, $request->file('vehicle_image')) : null,
-                #'fuel_type' => $request->fuel_type,
-                #'fuel_quality' => $request->fuel_quality,
-                #'fuel_tank_capacity_ltr' => $request->fuel_tank_capacity_ltr,
             ];
 
             $vehicle->basicInformations()->create($this->withCreateModificationField($vehicle_basic_information_data));
@@ -98,7 +94,12 @@ class VehiclesController extends Controller
                 'insurance_paper_image' => $request->hasFile('insurance_paper_image') ? $this->updateVehiclesDocuments('insurance_paper_image', $request->file('insurance_paper_image')) : '',
             ];
             $vehicle->registrationInformations()->create($this->withCreateModificationField($vehicle_registration_information_data));
-
+            if ($request->has('form_template_id')) {
+                $request->merge(['vehicle_id' => $vehicle->id, 'inspector_id' => $member->id, 'form_template_id' => $request->form_template_id]);
+                /** @var Creator $creation_class */
+                $creation_class = $create_processor->setType('one_time')->getCreationClass();
+                $inspection = $creation_class->setData($request->all())->setBusiness($request->business)->create();
+            }
             return api_response($request, $vehicle, 200, ['vehicle' => $vehicle->id]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
