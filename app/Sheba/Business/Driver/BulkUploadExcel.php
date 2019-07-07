@@ -16,15 +16,15 @@ class BulkUploadExcel
     const PHONE_NUMBER_COLUMN = "J";
     const ADDRESS_COLUMN = "K";
 
-    const DRIVER_NAME_COLUMN_TITLE = "Driver Name";
-    const DATE_OF_BIRTH_COLUMN_TITLE = "Date of Birth(dd/mm/yyyy)";
-    const BLOOD_GROUP_COLUMN_TITLE = "Blood Group";
-    const NID_NUMBER_COLUMN_TITLE = "NID Number";
-    const DRIVER_DEPARTMENT_COLUMN_TITLE = "Driver Department";
-    const VENDOR_PHONE_NUMBER_COLUMN_TITLE = "Vendor Phone Number";
-    const DRIVER_ROLE_COLUMN_TITLE = "Driver Role";
-    const LICENSE_NUMBER_COLUMN_TITLE = "License Number";
-    const LICENSE_CLASS_COLUMN_TITLE = "License Class";
-    const PHONE_NUMBER_COLUMN_TITLE = "Phone Number";
-    const ADDRESS_COLUMN_TITLE = "Address";
+    const DRIVER_NAME_COLUMN_TITLE = "driver_name";
+    const DATE_OF_BIRTH_COLUMN_TITLE = "date_of_birth";
+    const BLOOD_GROUP_COLUMN_TITLE = "blood_group";
+    const NID_NUMBER_COLUMN_TITLE = "nid_number";
+    const DRIVER_DEPARTMENT_COLUMN_TITLE = "driver_department";
+    const VENDOR_PHONE_NUMBER_COLUMN_TITLE = "vendor_phone_number";
+    const DRIVER_ROLE_COLUMN_TITLE = "driver_role";
+    const LICENSE_NUMBER_COLUMN_TITLE = "license_number";
+    const LICENSE_CLASS_COLUMN_TITLE = "license_class";
+    const PHONE_NUMBER_COLUMN_TITLE = "phone_number";
+    const ADDRESS_COLUMN_TITLE = "address";
 }
