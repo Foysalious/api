@@ -103,10 +103,10 @@ class OrderType extends GraphQlType
 
     protected function resolveDiscountedPriceField($root)
     {
-        if (!isset($root['totalPrice'])) {
+        if (!isset($root['grossAmountWithLogistic'])) {
             $root->calculate(true);
         }
-        return (float)$root->totalPrice;
+        return (float)$root->grossAmountWithLogistic;
     }
 
     protected function resolveDeliveryChargeField($root)
