@@ -20,6 +20,7 @@ class PartnerOrder extends Model implements PayableType
 
     public $status;
     public $paymentStatus;
+    public $paymentStatusWithLogistic;
     public $totalServicePrice;
     public $totalServiceCost;
     public $totalMaterialPrice;
@@ -45,6 +46,7 @@ class PartnerOrder extends Model implements PayableType
     public $spPayable;
     public $shebaReceivable;
     public $totalDiscount;
+    public $totalDiscountWithRoundingCutOff;
     public $jobDiscounts;
     public $jobPrices;
     public $financeDue;
@@ -63,6 +65,8 @@ class PartnerOrder extends Model implements PayableType
     public $paidWithLogistic = 0;
     public $dueWithLogistic = 0;
     public $totalLogisticDueWithoutDiscount;
+    public $jobPricesWithLogistic;
+    public $grossAmountWithLogistic;
 
     /** @var CodeBuilder */
     private $codeBuilder;
@@ -115,6 +119,8 @@ class PartnerOrder extends Model implements PayableType
         $this->serviceCharge = floatValFormat($this->gmv - ($this->totalCostWithoutDiscount + $this->totalPartnerDiscount));
         $this->serviceChargePercent = floatValFormat($this->gmv > 0 ? ($this->serviceCharge * 100) / $this->gmv : 0);
         $this->grossAmount = floatValFormat($this->totalPrice - $this->discount - $this->roundingCutOff);
+        $this->jobPricesWithLogistic = $this->jobPrices + $this->totalLogisticCharge;
+        $this->grossAmountWithLogistic = $this->grossAmount + $this->totalLogisticCharge;
         $this->paid = $this->sheba_collection + $this->partner_collection;
         $this->due = floatValFormat($this->grossAmount - $this->paid);
         $this->paidWithLogistic = floatValFormat($this->paid + $this->totalLogisticPaid);
@@ -122,6 +128,7 @@ class PartnerOrder extends Model implements PayableType
         $this->overPaid = $this->isOverPaid() ? floatValFormat($this->paid - $this->grossAmount) : 0;
         $this->profitBeforeDiscount = floatValFormat($this->jobPrices - $this->totalCost);
         $this->totalDiscountedCost = ($this->totalDiscountedCost < 0) ? 0 : $this->totalDiscountedCost;
+        $this->totalDiscountWithRoundingCutOff = $this->totalDiscount + $this->roundingCutOff;
         $this->profit = floatValFormat($this->grossAmount - $this->totalCost);
         $this->revenue = floatValFormat($this->gmv - ($this->totalCostWithoutDiscount + $this->totalPartnerDiscount + $this->totalShebaDiscount));
         $this->revenuePercent = floatValFormat($this->gmv > 0 ? $this->revenue * 100 / $this->gmv : 0);
