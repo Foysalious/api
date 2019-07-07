@@ -80,7 +80,7 @@ class DriverController extends Controller
 
                 if ($request->has('vehicle_id')) {
                     $vehicle = Vehicle::find((int)$request->vehicle_id);
-                    $driver->vehicle()->attach([$vehicle->id]);
+                    $driver->vehicle()->save($vehicle);
                 }
                 $profile = $this->createDriverProfile($member, $driver, $request);
                 $new_member = $profile->member;
@@ -104,7 +104,7 @@ class DriverController extends Controller
                     $profile->update($this->withCreateModificationField($profile_data));
                     if ($request->has('vehicle_id')) {
                         $vehicle = Vehicle::find((int)$request->vehicle_id);
-                        $driver->vehicle()->attach([$vehicle->id]);
+                        $driver->vehicle()->save($vehicle);
                     }
                     $new_member = $profile->member;
                     if (!$new_member) $new_member = $this->makeMember($profile);
