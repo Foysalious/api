@@ -846,7 +846,7 @@ class Job extends BaseModel
     public function needsLogistic()
     {
         return $this->category->needsLogistic() &&
-            ($this->logistic_enabled_manually || $this->getPartnerCategory()->needsShebaLogistic());
+            ($this->logistic_enabled_manually || ($this->getPartnerCategory() && $this->getPartnerCategory()->needsShebaLogistic()));
     }
 
     public function isLastLogisticOrderForTwoWay($id)
