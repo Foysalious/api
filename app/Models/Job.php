@@ -47,6 +47,8 @@ class Job extends BaseModel
     public $serviceDiscounts;
     public $originalDiscount;
     public $totalDiscount;
+    public $totalDiscountWithoutOtherDiscounts;
+    public $discountByPromo;
     public $discountContributionSheba;
     public $discountContributionPartner;
     public $ownDiscountContributionSheba;
@@ -277,7 +279,9 @@ class Job extends BaseModel
         $this->ownShebaContribution = $this->sheba_contribution;
         $this->ownPartnerContribution = $this->partner_contribution;
         $this->serviceDiscounts = $this->getServiceDiscount();
+        $this->discountByPromo = $this->discount - $this->otherDiscounts;
         $this->totalDiscount = $this->discount = $this_discount + $this->serviceDiscounts;
+        $this->totalDiscountWithoutOtherDiscounts = $this->totalDiscount - $this->otherDiscounts;
         $this->originalDiscount = $this->isCapApplied() ? 0 : $this->original_discount_amount + $this->serviceDiscounts;
         $this->grossPrice = ($this->totalPrice > $this->discount) ? formatTaka($this->totalPrice - $this->discount) : 0;
         $this->service_unit_price = formatTaka($this->service_unit_price);
@@ -299,7 +303,7 @@ class Job extends BaseModel
             $this->deliveryDiscount = $this->otherDiscountsByType[DiscountTypes::DELIVERY];
 
         $this->grossLogisticCharge = ramp($this->logistic_charge - $this->deliveryDiscount);
-        $this->logisticDueWithoutDiscount = ramp($this->logistic_charge - $this->logistic_paid);
+        $this->logisticDueWithoutDiscount = $this->logistic_charge - $this->logistic_paid;
         $this->logisticDue = ramp($this->grossLogisticCharge - $this->logistic_paid);
         $this->discountWithoutDeliveryDiscount = ramp($this->discount - $this->deliveryDiscount);
 
@@ -351,6 +355,7 @@ class Job extends BaseModel
     private function calculateOtherDiscounts()
     {
         $this->otherDiscounts = $this->otherDiscountContributionSheba = $this->otherDiscountContributionPartner = 0;
+        $this->otherDiscountsByType = $this->otherDiscountContributionShebaByType = $this->otherDiscountContributionPartnerByType = [];
         foreach ($this->discounts as $discount) {
             $this->otherDiscounts += $discount->amount;
             $sheba_contribution_amount = ($discount->amount * $discount->sheba_contribution) / 100;
