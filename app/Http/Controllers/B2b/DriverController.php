@@ -68,7 +68,7 @@ class DriverController extends Controller
                 $driver = Driver::create($this->withCreateModificationField($driver_data));
 
                 if ($request->has('vehicle_id')) {
-                    $vehicle = Vehicle::get($request->vehicle_id);
+                    $vehicle = Vehicle::find((int)$request->vehicle_id);
                     $driver->vehicle()->save($vehicle);
                 }
                 $profile = $this->createDriverProfile($member, $driver, $request);
