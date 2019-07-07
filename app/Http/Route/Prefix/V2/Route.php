@@ -6,13 +6,7 @@ class Route
     {
         $api->group(['prefix' => 'v2', 'namespace' => 'App\Http\Controllers'], function ($api) {
             $api->group(['prefix' => 'profile'], function ($api) {
-                $api->get('/', 'Profile\ProfileController@getInfo');
-                $api->group(['prefix' => 'me'], function ($api) {
-                    $api->get('partner', 'Profile\ProfileController@getPartnerInfo');
-                });
-                $api->post('registration', 'Auth\Profile\RegistrationController@register');
-                $api->post('login', 'Auth\Profile\LoginController@login');
-                $api->post('password', 'Profile\PasswordController@store');
+                $api->post('registration/partner', 'Auth\PartnerRegistrationController@registerByProfile')->middleware('jwtAuth');
             });
             $api->get('validate-location', 'LocationController@validateLocation');
             $api->get('partners', 'PartnerLocationController@getPartners');

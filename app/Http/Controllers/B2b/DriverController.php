@@ -157,7 +157,6 @@ class DriverController extends Controller
                     ->setLicenseNumber($value->$license_number_field)
                     ->setLicenseClass($value->$license_class);
 
-                dd($request);
 
                 $driver_create = $creator->setDriverCreateRequest($request)->create();
             });
