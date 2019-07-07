@@ -275,21 +275,25 @@ class PartnerOrder extends Model implements PayableType
 
     private function _initializeTotalsToZero()
     {
-        //$this->totalJobs = 0;
         $this->totalServicePrice = 0;
         $this->totalServiceCost = 0;
         $this->totalMaterialPrice = 0;
         $this->totalMaterialCost = 0;
+        $this->jobPrices = 0;
         $this->totalPrice = 0;
+        $this->totalCostWithoutDiscount = 0;
         $this->totalCost = 0;
         $this->totalCommission = 0;
         $this->totalDiscountedCost = 0;
         $this->jobDiscounts = 0;
-        $this->jobPrices = 0;
         $this->totalPartnerDiscount = 0;
         $this->totalShebaDiscount = 0;
-        $this->totalCostWithoutDiscount = 0;
         $this->deliveryCharge = 0;
+        $this->deliveryCost = 0;
+        $this->totalLogisticCharge = 0;
+        $this->totalLogisticPaid = 0;
+        $this->totalLogisticDue = 0;
+        $this->totalLogisticDueWithoutDiscount = 0;
     }
 
     public function calculateStatus()
