@@ -34,7 +34,7 @@ class OneTimeInspectionCreator extends Creator
     protected function makeInspectionData()
     {
         array_push($this->inspectionData, [
-            'member_id' => $this->data['member_id'],
+            'member_id' => $this->data['inspector_id'],
             'vehicle_id' => $this->data['vehicle_id'],
             'business_id' => $this->business->id,
             'is_published' => 1,

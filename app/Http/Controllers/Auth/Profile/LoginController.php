@@ -2,15 +2,20 @@
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Sheba\Logs\ErrorLog;
 
 class LoginController extends Controller
 {
-    public function login(Request $request)
+    public function login(Request $request, ErrorLog $error_log)
     {
-        return api_response($request, true, 200, ['data' => [
-            'token' => str_random(30),
-            'has_partner' => $request->has_partner ? (int)$request->has_partner : 0,
-            'has_resource' => $request->has_resource ? (int)$request->has_resource : 0,
-        ]]);
+        try {
+            return api_response($request, true, 200, ['data' => ['token' => str_random(30)]]);
+        } catch (ValidationException $e) {
+            return api_response($request, null, 401, ['message' => 'Invalid mobile number']);
+        } catch (\Throwable $e) {
+            $error_log->setException($e)->send();
+            return api_response($request, null, 500);
+        }
     }
 }
