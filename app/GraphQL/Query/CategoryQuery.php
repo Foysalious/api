@@ -34,8 +34,7 @@ class CategoryQuery extends Query
 
     public function resolve($root, $args, $context, ResolveInfo $info)
     {
-        $category = Category::query();
-        $where = function ($query) use ($args) {
+        return Category::query()->where(function ($query) use ($args) {
             if (isset($args['slug'])) {
                 $query->where('slug', $args['slug']);
             } elseif (isset($args['id'])) {
@@ -52,18 +51,15 @@ class CategoryQuery extends Query
                 $lat = $args['lat'];
                 $lng = $args['lng'];
                 $query->whereHas('locations' , function($q) use ($lat, $lng) {
-                    $hyperLocation= HyperLocal::insidePolygon((double) $lat, (double) $lng)->with('location')->first();
-                    if(!is_null($hyperLocation)) {
-                        $location = $hyperLocation->location;
-                        $q->where('locations.id', $location->id);
+                    $hyper_location = HyperLocal::insidePolygon((double) $lat, (double) $lng)->with('location')->first();
+                    if(!is_null($hyper_location)) {
+                        $q->where('locations.id', $hyper_location->location->id);
                     }
                 });
             }
 
             $query->published();
-        };
-        $category = $category->where($where)->first();
-        return $category ? $category : null;
+        })->first();
     }
 
 }
