@@ -411,7 +411,7 @@ class VehiclesController extends Controller
                 'vendor' =>
                     $partner instanceof Partner ? [
                         'name' => $partner->name,
-                        'mobile' => $vehicle->getContactNumber(),
+                        'mobile' => $partner->getContactNumber(),
                         'picture' => $partner->logo,
                     ] : null
 
