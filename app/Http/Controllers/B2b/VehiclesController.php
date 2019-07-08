@@ -404,13 +404,13 @@ class VehiclesController extends Controller
                 'driver' => $vehicle->driver ? [
                     'name' => $vehicle->driver->profile->name,
                     'mobile' => $vehicle->driver->profile->mobile,
-                    'picture' => $vehicle->driver->profile->pro_pic,
+                    'image' => $vehicle->driver->profile->pro_pic,
                 ] : null,
                 'vendor' =>
                     $partner instanceof Partner ? [
                         'name' => $partner->name,
                         'mobile' => $partner->getContactNumber(),
-                        'picture' => $partner->logo,
+                        'logo' => $partner->logo,
                     ] : null
 
             ];
