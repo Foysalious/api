@@ -417,11 +417,15 @@ class DriverController extends Controller
             $vehicle = $driver->vehicle;
             $license_info = [
                 'type' => $vehicle ? $vehicle->basicInformations->type : null,
+                'vehicle_image' => $vehicle ? $vehicle->basicInformations->vehicle_image : null,
+                'vehicle_model_name' => $vehicle ? $vehicle->basicInformations->model_name : null,
+                'vehicle_license_number' => $vehicle ? $vehicle->registrationInformations->license_number : null,
                 #'company_name' => $vehicle ? $vehicle->basicInformations->company_name : null,
                 #'model_name' => $vehicle ? $vehicle->basicInformations->model_name : null,
                 #'model_year' => $vehicle ? $vehicle->basicInformations->model_year : null,
                 'department_id' => $profile->member->businessMember->role ? $profile->member->businessMember->role->business_department_id : null,
                 'license_number' => $driver->license_number,
+                'license_number_image' => $driver->license_number_image,
                 'license_class' => $driver->license_class,
                 'issue_authority' => 'BRTA',
             ];
