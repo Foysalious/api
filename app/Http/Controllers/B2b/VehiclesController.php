@@ -158,10 +158,12 @@ class VehiclesController extends Controller
             $insurance_valid_till = BulkUploadExcel::INSURANCE_VALID_TILL_COLUMN_TITLE;
             $transmission_type = BulkUploadExcel::TRANSMISSION_TYPE_COLUMN_TITLE;
 
-            $data->each(function ($value) use ($create_request, $creator, $admin_member, &$error_count,
+            $data->each(function ($value) use (
+                $create_request, $creator, $admin_member, &$error_count,
                 $vehicle_type, $vehicle_brand_name, $model_name, $model_year, $vehicle_department,
                 $seat_capacity, $vendor_phone_number, $license_number, $tax_token_number, $fitness_validity_start,
-                $fitness_validity_end, $insurance_valid_till, $transmission_type, $business) {
+                $fitness_validity_end, $insurance_valid_till, $transmission_type, $business
+            ) {
                 if (is_null($value->$vehicle_type) && is_null($value->$vehicle_brand_name)) return false;
 
                 /** @var VehicleCreateRequest $request */
