@@ -39,7 +39,7 @@ class CreateValidator
     private function isDriverAlreadyExist()
     {
         $profile = $this->profileRepository->checkExistingMobile($this->driverCreateRequest->getMobile());
-        if ($profile->driver) return true;
+        if ($profile && $profile->driver) return true;
         return false;
     }
 

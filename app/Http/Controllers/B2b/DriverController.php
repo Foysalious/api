@@ -190,7 +190,7 @@ class DriverController extends Controller
                 if (is_null($value->$name) && is_null($value->$driver_mobile)) return false;
 
                 /** @var CreateRequest $request */
-                $request = $create_request->setMobile($value->$driver_mobile)
+                $create_request = $create_request->setMobile($value->$driver_mobile)
                     ->setLicenseNumber($value->$license_number_field)
                     ->setLicenseClass($value->$license_class)
                     ->setName($value->$name)
@@ -203,7 +203,7 @@ class DriverController extends Controller
                     ->setAddress($value->$driver_address)
                     ->setAdminMember($admin_member);
 
-                $creator->setDriverCreateRequest($request);
+                $creator->setDriverCreateRequest($create_request);
                 if ($error = $creator->hasError()) {
                     $error_count++;
                     return false;
