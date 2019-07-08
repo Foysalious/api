@@ -22,9 +22,7 @@ class Creator
     private $resourceCreator;
     /** @var PartnerCreator $partnerCreator */
     private $partnerCreator;
-    /**
-     * @var PartnerCreateRequest
-     */
+    /** @var PartnerCreateRequest $partnerCreateRequest */
     private $partnerCreateRequest;
     /** @var $partner */
     private $partner;
@@ -71,10 +69,15 @@ class Creator
             $resource_mobile = $this->vendorCreateRequest->getResourceMobile();
             /** @var Profile $profile */
             $profile = $this->profileRepository->checkExistingMobile($resource_mobile);
+
             if (!$profile) {
                 $this->resourceCreator->setData($this->formatProfileSpecificData());
                 $resource = $this->resourceCreator->create();
-                $profile = $resource->profile;
+            } elseif (!$profile->resource) {
+                $this->resourceCreator->setData($this->formatProfileSpecificData());
+                $resource = $this->resourceCreator->create();
+            } else {
+                $resource = $profile->resource;
             }
 
             $request = $this->partnerCreateRequest
@@ -87,8 +90,13 @@ class Creator
                 ->setVatRegistrationNumber($this->vendorCreateRequest->getVatRegistrationNumber())
                 ->setVatRegistrationDocument($this->vendorCreateRequest->getVatRegistrationDocument());
 
-            $this->partner = $this->partnerCreator->setPartnerCreateRequest($request)->create();
-            $this->partner->resources()->save($profile->resource, ['resource_type' => 'Admin']);
+            if (!$resource->firstPartner()) {
+                $this->partner = $this->partnerCreator->setPartnerCreateRequest($request)->create();
+                $this->partner->resources()->save($resource, ['resource_type' => 'Admin']);
+            } else {
+                $this->partner = $resource->firstPartner();
+            }
+
             $this->partner->businesses()->save($this->vendorCreateRequest->getBusiness());
         });
 
