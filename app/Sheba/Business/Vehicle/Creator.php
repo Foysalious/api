@@ -1,5 +1,6 @@
 <?php namespace Sheba\Business\Vehicle;
 
+use App\Models\BusinessDepartment;
 use App\Models\Profile;
 use App\Models\Vehicle;
 use Carbon\Carbon;
@@ -65,6 +66,7 @@ class Creator
 
     private function formatVehicleSpecificData()
     {
+        $business_department_id = null;
         if ($this->vehicleCreateRequest->getVendorPhoneNumber()) {
             $resource_mobile = $this->vehicleCreateRequest->getVendorPhoneNumber();
             /** @var Profile $profile */
@@ -74,14 +76,21 @@ class Creator
             $owner_type = get_class($partner);
             $owner_id = $partner->id;
         } else {
-            $owner_type = get_class($this->vehicleCreateRequest->getBusiness());
-            $owner_id = $this->vehicleCreateRequest->getBusiness()->id;
+            $business = $this->vehicleCreateRequest->getBusiness();
+            $department_name = $this->vehicleCreateRequest->getVehicleDepartment();
+            $owner_type = get_class($business);
+            $owner_id = $business->id;
+            $business_department = BusinessDepartment::where([
+                ['business_id', $business->id],
+                ['name', 'like', '%'.$department_name.'%']
+            ])->first();
+            $business_department_id = $business_department ? $business_department->id : null;
         }
 
         return [
             'owner_type' => $owner_type,
             'owner_id' => $owner_id,
-            'business_department_id' => 1,
+            'business_department_id' => $business_department_id,
             'status' => 'active'
         ];
     }

@@ -143,7 +143,7 @@ class CreateRequest
      */
     public function setVendorPhoneNumber($vendor_phone_number)
     {
-        $this->vendorPhoneNumber = BDMobileFormatter::format($vendor_phone_number);
+        $this->vendorPhoneNumber = $vendor_phone_number ? BDMobileFormatter::format($vendor_phone_number) : null;
         return $this;
     }
 

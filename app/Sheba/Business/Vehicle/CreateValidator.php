@@ -27,9 +27,12 @@ class CreateValidator
     private function isVendorExist()
     {
         $resource_mobile = $this->vehicleCreateRequest->getVendorPhoneNumber();
-        $profile = $this->profileRepository->checkExistingMobile($resource_mobile);
-        if ($profile && $profile->resource && $profile->resource->firstPartner())
-            return true;
+        if (!$resource_mobile) return true;
+        if ($resource_mobile) {
+            $profile = $this->profileRepository->checkExistingMobile($resource_mobile);
+            if ($profile && $profile->resource && $profile->resource->firstPartner())
+                return true;
+        }
 
         return false;
     }

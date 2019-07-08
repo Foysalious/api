@@ -207,6 +207,7 @@ class VehiclesController extends Controller
                 $creator->setVehicleCreateRequest($create_request);
                 if ($error = $creator->hasError()) {
                     $error_count++;
+                    dump($error);
                 } else {
                     $creator->create();
                 }
@@ -217,6 +218,7 @@ class VehiclesController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
