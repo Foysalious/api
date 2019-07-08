@@ -46,7 +46,7 @@ class VehiclesController extends Controller
                 'model_year' => 'required|date|date_format:Y-m-d',
                 'seat_capacity' => 'required|integer',
                 'transmission_type' => 'required|string|in:auto,manual',
-                'vehicle_image' => 'sometimes|required|mimes:jpeg,png',
+                'vehicle_image' => 'file|mimes:jpeg,png',
                 'license_number' => 'required|unique:vehicle_registration_informations',
                 'license_number_image' => 'sometimes|required|mimes:jpeg,png',
                 'tax_token_number' => 'required|unique:vehicle_registration_informations',
