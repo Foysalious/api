@@ -126,6 +126,7 @@ class OrderController extends Controller
 
             $order = $order->calculate();
             $this->sendCustomerSms($order);
+            $this->sendCustomerEmail($order);
             $order->payment_status = $order->getPaymentStatus();
             $order->client_pos_order_id = $request->client_pos_order_id;
             return api_response($request, null, 200, ['msg' => 'Order Created Successfully', 'order' => $order]);
@@ -147,6 +148,12 @@ class OrderController extends Controller
             dispatch(new OrderBillSms($order));
     }
 
+    private function sendCustomerEmail($order)
+    {
+        if ($order->customer && $order->customer->profile->email)
+            dispatch(new OrderBillEmail($order));
+    }
+
     /**
      * @param Request $request
      * @param QuickCreator $creator
@@ -164,6 +171,8 @@ class OrderController extends Controller
 
             $order = $creator->setData($request->all())->create();
             $order = $order->calculate();
+            $this->sendCustomerSms($order);
+            $this->sendCustomerEmail($order);
             $order->payment_status = $order->getPaymentStatus();
 
             return api_response($request, null, 200, ['msg' => 'Order Created Successfully', 'order' => $order]);

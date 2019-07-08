@@ -6,7 +6,6 @@ use Carbon\Carbon;
 use GraphQL;
 use \Folklore\GraphQL\Support\Type as GraphQlType;
 use GraphQL\Type\Definition\Type;
-use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Logs\Customer\JobLogs;
 
 class OrderType extends GraphQlType
@@ -82,10 +81,10 @@ class OrderType extends GraphQlType
 
     protected function resolvePaidField($root)
     {
-        if (!isset($root['paid'])) {
+        if (!isset($root['paidWithLogistic'])) {
             $root->calculate(true);
         }
-        return (float)$root->paid;
+        return (float)$root->paidWithLogistic;
     }
 
     protected function resolvePaymentMethodField($root)
@@ -96,31 +95,29 @@ class OrderType extends GraphQlType
 
     protected function resolveDueField($root)
     {
-        if (!isset($root['due'])) {
+        if (!isset($root['dueWithLogistic'])) {
             $root->calculate(true);
         }
-        return (float)$root->due;
+        return (float)$root->dueWithLogistic;
     }
 
     protected function resolveDiscountedPriceField($root)
     {
-        if (!isset($root['totalPrice'])) {
+        if (!isset($root['grossAmountWithLogistic'])) {
             $root->calculate(true);
         }
-        return (float)$root->totalPrice;
+        return (float)$root->grossAmountWithLogistic;
     }
 
-    protected function resolveDeliveryChargeField($root) {
+    protected function resolveDeliveryChargeField($root)
+    {
         return (float) $root->jobs[0]->deliveryPrice;
     }
 
-    protected function resolveDeliveryDiscountField($root) {
-       $job = $root->jobs[0];
-        $delivery_discount = 0;
-        if(isset($job->otherDiscountsByType[DiscountTypes::DELIVERY]))
-            $delivery_discount = $job->otherDiscountsByType[DiscountTypes::DELIVERY];
-        return (float) $delivery_discount;
-     }
+    protected function resolveDeliveryDiscountField($root)
+    {
+        return (float) $root->jobs[0]->deliveryDiscount;
+    }
 
     protected function resolveTotalMaterialPriceField($root)
     {
@@ -132,10 +129,7 @@ class OrderType extends GraphQlType
 
     protected function resolveTotalDiscountField($root)
     {
-        if (!isset($root['totalDiscount'])) {
-            $root->calculate(true);
-        }
-        return (float)$root->totalDiscount;
+        return (float)$root->jobs[0]->totalDiscountWithoutOtherDiscounts;
     }
 
     protected function resolveOriginalPriceField($root)

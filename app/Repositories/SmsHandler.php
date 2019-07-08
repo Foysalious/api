@@ -15,6 +15,12 @@ class SmsHandler
         $this->sms = new Sms(); //app(Sms::class);
     }
 
+    public function setVendor($vendor)
+    {
+        $this->sms->setVendor($vendor);
+        return $this;
+    }
+    
     /**
      * @param $mobile
      * @param $variables

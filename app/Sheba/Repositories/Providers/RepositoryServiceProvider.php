@@ -1,6 +1,7 @@
 <?php namespace Sheba\Repositories\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Sheba\Repositories\Business\BusinessMemberRepository;
 use Sheba\Repositories\Business\DriverRepository;
 use Sheba\Repositories\Business\FormTemplateItemRepository;
 use Sheba\Repositories\Business\FormTemplateQuestionRepository;
@@ -11,6 +12,7 @@ use Sheba\Repositories\Business\InspectionItemStatusLogRepository;
 use Sheba\Repositories\Business\InspectionRepository;
 use Sheba\Repositories\Business\InspectionScheduleRepository;
 use Sheba\Repositories\Business\IssueRepository;
+use Sheba\Repositories\Business\MemberRepository;
 use Sheba\Repositories\Business\ProcurementItemFieldRepository;
 use Sheba\Repositories\Business\ProcurementItemRepository;
 use Sheba\Repositories\Business\ProcurementQuestionRepository;
@@ -19,6 +21,8 @@ use Sheba\Repositories\Business\PurchaseRequestItemFieldRepository;
 use Sheba\Repositories\Business\PurchaseRequestItemRepository;
 use Sheba\Repositories\Business\PurchaseRequestQuestionRepository;
 use Sheba\Repositories\Business\PurchaseRequestRepository;
+use Sheba\Repositories\Business\VehicleRepository;
+use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Repositories\Interfaces\DriverRepositoryInterface;
 use Sheba\Repositories\Interfaces\FormTemplateItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\FormTemplateQuestionRepositoryInterface;
@@ -29,6 +33,7 @@ use Sheba\Repositories\Interfaces\InspectionItemStatusLogRepositoryInterface;
 use Sheba\Repositories\Interfaces\InspectionRepositoryInterface;
 use Sheba\Repositories\Interfaces\InspectionScheduleRepositoryInterface;
 use Sheba\Repositories\Interfaces\IssueRepositoryInterface;
+use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementItemFieldRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementQuestionRepositoryInterface;
@@ -37,6 +42,7 @@ use Sheba\Repositories\Interfaces\PurchaseRequestItemFieldRepositoryInterface;
 use Sheba\Repositories\Interfaces\PurchaseRequestItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\PurchaseRequestQuestionRepositoryInterface;
 use Sheba\Repositories\Interfaces\PurchaseRequestRepositoryInterface;
+use Sheba\Repositories\Interfaces\VehicleRepositoryInterface;
 
 class RepositoryServiceProvider extends ServiceProvider
 {
@@ -60,5 +66,8 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(PurchaseRequestQuestionRepositoryInterface::class, PurchaseRequestQuestionRepository::class);
         $this->app->bind(ProcurementItemFieldRepositoryInterface::class, ProcurementItemFieldRepository::class);
         $this->app->bind(DriverRepositoryInterface::class, DriverRepository::class);
+        $this->app->bind(MemberRepositoryInterface::class, MemberRepository::class);
+        $this->app->bind(BusinessMemberRepositoryInterface::class, BusinessMemberRepository::class);
+        $this->app->bind(VehicleRepositoryInterface::class, VehicleRepository::class);
     }
 }

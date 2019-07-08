@@ -11,6 +11,7 @@ use App\Models\Vehicle;
 
 use App\Repositories\FileRepository;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use Sheba\Business\Driver\BulkUploadExcel;
@@ -27,7 +28,9 @@ use Carbon\Carbon;
 use DB;
 use Sheba\Repositories\ProfileRepository;
 use Throwable;
-use Excel;;
+use Excel;
+
+;
 
 class DriverController extends Controller
 {
@@ -76,8 +79,9 @@ class DriverController extends Controller
                 $driver = Driver::create($this->withCreateModificationField($driver_data));
 
                 if ($request->has('vehicle_id')) {
-                    $vehicle = Vehicle::get($request->vehicle_id);
-                    $driver->vehicle()->save($vehicle);
+                    $vehicle = Vehicle::find((int)$request->vehicle_id);
+                    $vehicle->current_driver_id = $driver->id;
+                    $vehicle->save();
                 }
                 $profile = $this->createDriverProfile($member, $driver, $request);
                 $new_member = $profile->member;
@@ -97,11 +101,13 @@ class DriverController extends Controller
                 $driver = $profile->driver;
                 if (!$driver) {
                     $driver = Driver::create($this->withCreateModificationField($driver_data));
-                    $profile_data = [
-                        'driver_id' => $driver->id,
-                    ];
+                    $profile_data = ['driver_id' => $driver->id];
                     $profile->update($this->withCreateModificationField($profile_data));
-
+                    if ($request->has('vehicle_id')) {
+                        $vehicle = Vehicle::find((int)$request->vehicle_id);
+                        $vehicle->current_driver_id = $driver->id;
+                        $vehicle->save();
+                    }
                     $new_member = $profile->member;
                     if (!$new_member) $new_member = $this->makeMember($profile);
 
@@ -124,45 +130,83 @@ class DriverController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
+    /**
+     * @param Request $request
+     * @param CreateRequest $create_request
+     * @param Creator $creator
+     * @return JsonResponse
+     */
     public function bulkStore(Request $request, CreateRequest $create_request, Creator $creator)
     {
         try {
             $this->validate($request, ['file' => 'required|file']);
 
-            $valid_extensions = ["xls", "xlsx", "xlm", "xla", "xlc", "xlt", "xlw", "csv"];
+            $valid_extensions = ["xls", "xlsx", "xlm", "xla", "xlc", "xlt", "xlw"];
             $extension = $request->file('file')->getClientOriginalExtension();
 
             if (!in_array($extension, $valid_extensions)) {
                 return api_response($request, null, 400, ['message' => 'File type not support']);
             }
 
+            $admin_member = $request->member;
+            $this->setModifier($admin_member);
+
             $file = Excel::selectSheets(BulkUploadExcel::SHEET)->load($request->file)->save();
             $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
 
             $data = Excel::selectSheets(BulkUploadExcel::SHEET)->load($file_path)->get();
-            $total = $data->count();
 
-            $data->each(function ($value, $key) use ($create_request, $creator, $total) {
-                $license_number_field = BulkUploadExcel::LICENSE_NUMBER_COLUMN_TITLE;
-                $license_class = BulkUploadExcel::LICENSE_CLASS_COLUMN_TITLE;
-                $driver_mobile = BulkUploadExcel::PHONE_NUMBER_COLUMN_TITLE;
+            $error_count = 0;
+            $license_number_field = BulkUploadExcel::LICENSE_NUMBER_COLUMN_TITLE;
+            $license_class = BulkUploadExcel::LICENSE_CLASS_COLUMN_TITLE;
+            $driver_mobile = BulkUploadExcel::PHONE_NUMBER_COLUMN_TITLE;
+            $name = BulkUploadExcel::DRIVER_NAME_COLUMN_TITLE;
+            $date_of_birth = BulkUploadExcel::DATE_OF_BIRTH_COLUMN_TITLE;
+            $blood_group = BulkUploadExcel::BLOOD_GROUP_COLUMN_TITLE;
+            $nid_number = BulkUploadExcel::NID_NUMBER_COLUMN_TITLE;
+            $department = BulkUploadExcel::DRIVER_DEPARTMENT_COLUMN_TITLE;
+            $vendor_mobile = BulkUploadExcel::VENDOR_PHONE_NUMBER_COLUMN_TITLE;
+            $driver_role = BulkUploadExcel::DRIVER_ROLE_COLUMN_TITLE;
+            $driver_address = BulkUploadExcel::ADDRESS_COLUMN_TITLE;
 
-                $request = $create_request->setDriverMobile($value->$driver_mobile)
+            $data->each(function ($value) use (
+                $create_request, $creator, $admin_member, &$error_count,
+                $license_number_field, $license_class, $driver_mobile, $name, $date_of_birth, $blood_group,
+                $nid_number, $department, $vendor_mobile, $driver_role, $driver_address
+            ) {
+
+                if (is_null($value->$name) && is_null($value->$driver_mobile)) return false;
+
+                /** @var CreateRequest $request */
+                $request = $create_request->setMobile($value->$driver_mobile)
                     ->setLicenseNumber($value->$license_number_field)
-                    ->setLicenseClass($value->$license_class);
+                    ->setLicenseClass($value->$license_class)
+                    ->setName($value->$name)
+                    ->setDateOfBirth($value->$date_of_birth)
+                    ->setBloodGroup($value->$blood_group)
+                    ->setNidNumber($value->$nid_number)
+                    ->setDepartment($value->$department)
+                    ->setVendorMobile($value->$vendor_mobile)
+                    ->setRole($value->$driver_role)
+                    ->setAddress($value->$driver_address)
+                    ->setAdminMember($admin_member);
 
+                $creator->setDriverCreateRequest($request);
+                if ($error = $creator->hasError()) {
+                    $error_count++;
+                    return false;
+                }
 
-                $driver_create = $creator->setDriverCreateRequest($request)->create();
+                $creator->create();
             });
 
-            $response_msg = "";
-            return api_response($request, null, 200, ['message' => $response_msg]);
+            return api_response($request, null, 200, ['message' => "Driver's Created Successfully, Error on: {$error_count} driver"]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
@@ -229,7 +273,7 @@ class DriverController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -287,7 +331,7 @@ class DriverController extends Controller
             }
             if (count($driver_lists) > 0) return api_response($request, $driver_lists, 200, ['driver_lists' => $driver_lists]);
             else  return api_response($request, null, 404);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -314,7 +358,7 @@ class DriverController extends Controller
             ];
 
             return api_response($request, $general_info, 200, ['general_info' => $general_info]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -347,7 +391,7 @@ class DriverController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -375,7 +419,7 @@ class DriverController extends Controller
             ];
 
             return api_response($request, $license_info, 200, ['license_info' => $license_info]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -426,7 +470,7 @@ class DriverController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -449,7 +493,7 @@ class DriverController extends Controller
             ];
 
             return api_response($request, $contract_info, 200, ['contract_info' => $contract_info]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -490,7 +534,7 @@ class DriverController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -516,7 +560,7 @@ class DriverController extends Controller
                 'additional_info' => $driver->additional_info,
             ];
             return api_response($request, $license_info, 200, ['license_info' => $license_info]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -556,7 +600,7 @@ class DriverController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -578,7 +622,7 @@ class DriverController extends Controller
             ];
 
             return api_response($request, $documents, 200, ['documents' => $documents]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -608,7 +652,7 @@ class DriverController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -642,7 +686,7 @@ class DriverController extends Controller
                 array_push($recent_assignment, $vehicle);
             }
             return api_response($request, $recent_assignment, 200, ['recent_assignment' => $recent_assignment]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
