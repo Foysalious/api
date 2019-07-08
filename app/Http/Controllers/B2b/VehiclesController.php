@@ -94,17 +94,20 @@ class VehiclesController extends Controller
                 'insurance_paper_image' => $request->hasFile('insurance_paper_image') ? $this->updateVehiclesDocuments('insurance_paper_image', $request->file('insurance_paper_image')) : '',
             ];
             $vehicle->registrationInformations()->create($this->withCreateModificationField($vehicle_registration_information_data));
+            $inspection = null;
             if ($request->has('form_template_id')) {
-                $request->merge(['vehicle_id' => $vehicle->id, 'inspector_id' => $member->id, 'form_template_id' => $request->form_template_id]);
+                $request->merge(['vehicle_id' => $vehicle->id, 'inspector_id' => $member->id, 'form_template_id' => $request->form_template_id,
+                    'schedule_type_value' => date('Y-m-d'), 'schedule_time' => date('h a')]);
                 /** @var Creator $creation_class */
                 $creation_class = $create_processor->setType('one_time')->getCreationClass();
                 $inspection = $creation_class->setData($request->all())->setBusiness($request->business)->create();
             }
-            return api_response($request, $vehicle, 200, ['vehicle' => $vehicle->id]);
+            return api_response($request, $vehicle, 200, ['vehicle' => $vehicle->id, 'inspection_id' => $inspection ? $inspection->id : null]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
