@@ -361,6 +361,8 @@ class DriverController extends Controller
                 'dob' => Carbon::parse($profile->dob)->format('j M, Y'),
                 #'blood_group' => $profile->blood_group,
                 'nid_no' => $profile->nid_no,
+                "nid_image_front" => $profile->nid_image_front,
+                "nid_image_back" => $profile->nid_image_back
             ];
 
             return api_response($request, $general_info, 200, ['general_info' => $general_info]);
