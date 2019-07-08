@@ -206,10 +206,9 @@ class DriverController extends Controller
                 $creator->setDriverCreateRequest($create_request);
                 if ($error = $creator->hasError()) {
                     $error_count++;
-                    return false;
+                } else {
+                    $creator->create();
                 }
-
-                $creator->create();
             });
 
             return api_response($request, null, 200, ['message' => "Driver's Created Successfully, Error on: {$error_count} driver"]);
