@@ -48,14 +48,14 @@ class VehiclesController extends Controller
                 'transmission_type' => 'required|string|in:auto,manual',
                 'vehicle_image' => 'file|mimes:jpeg,png',
                 'license_number' => 'required|unique:vehicle_registration_informations',
-                'license_number_image' => 'sometimes|required|mimes:jpeg,png',
+                'license_number_image' => 'mimes:jpeg,png',
                 'tax_token_number' => 'required|unique:vehicle_registration_informations',
-                'tax_token_image' => 'sometimes|required|mimes:jpeg,png',
+                'tax_token_image' => 'mimes:jpeg,png',
                 'fitness_start_date' => 'required|date|date_format:Y-m-d',
                 'fitness_end_date' => 'required|date|date_format:Y-m-d',
-                'fitness_paper_image' => 'sometimes|required|mimes:jpeg,png',
+                'fitness_paper_image' => 'mimes:jpeg,png',
                 'insurance_date' => 'required|date|date_format:Y-m-d',
-                'insurance_paper_image' => 'sometimes|required|mimes:jpeg,png',
+                'insurance_paper_image' => 'mimes:jpeg,png',
                 'department_id' => 'required|integer',
             ]);
 
