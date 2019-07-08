@@ -1,6 +1,5 @@
 <?php namespace Sheba\Repositories\Business;
 
-
 use App\Models\InspectionItemIssue;
 use Sheba\Repositories\BaseRepository;
 use Sheba\Repositories\Interfaces\IssueRepositoryInterface;

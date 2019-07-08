@@ -3,15 +3,22 @@
 use App\Models\Partner;
 use App\Models\PartnerStatusChangeLog;
 
+use Exception;
 use Sheba\PushNotificationHandler;
 
 class PartnerRepository extends BaseRepository
 {
+    public function __construct(Partner $partner)
+    {
+        parent::__construct();
+        $this->setModel($partner);
+    }
+
     /**
      * @param Partner $partner
      * @param $amount
      * @param $type
-     * @throws \Exception
+     * @throws Exception
      */
     public function updateWallet(Partner $partner, $amount, $type)
     {
@@ -37,7 +44,7 @@ class PartnerRepository extends BaseRepository
     /**
      * @param Partner $partner
      * @param $amount
-     * @throws \Exception
+     * @throws Exception
      */
     private function sendWalletWarningNotification(Partner $partner, $amount)
     {
@@ -49,7 +56,7 @@ class PartnerRepository extends BaseRepository
 
     /**
      * @param Partner $partner
-     * @throws \Exception
+     * @throws Exception
      */
     private function sendWalletExceededNotification(Partner $partner)
     {
@@ -60,7 +67,7 @@ class PartnerRepository extends BaseRepository
     /**
      * @param Partner $partner
      * @param $notification
-     * @throws \Exception
+     * @throws Exception
      */
     private function sendWalletNotification(Partner $partner, $notification)
     {

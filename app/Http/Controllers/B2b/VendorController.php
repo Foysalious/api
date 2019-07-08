@@ -22,7 +22,7 @@ class VendorController extends Controller
      * @param Creator $creator
      * @return JsonResponse
      */
-    public function store(Request $request, CreateRequest $create_request , Creator $creator)
+    public function store(Request $request, CreateRequest $create_request, Creator $creator)
     {
         try {
             $this->validate($request, [
@@ -33,10 +33,11 @@ class VendorController extends Controller
                 'resource_mobile' => 'required|string|mobile:bd'
             ]);
             $business = $request->business;
-            $this->setModifier($business);
+            $member = $request->member;
+            $this->setModifier($member);
 
             /** @var CreateRequest $request */
-            $request = $create_request->setBusiness($business)
+            $create_request = $create_request->setBusiness($business)
                 ->setVendorName($request->vendor_name)
                 ->setVendorMobile($request->vendor_mobile)
                 ->setVendorEmail($request->vendor_email)
@@ -52,14 +53,14 @@ class VendorController extends Controller
                 ->setResourceNidNumber($request->resource_nid_number)
                 ->setResourceNidDocument($request->resource_nid_document);
 
-            $creator->setVendorCreateRequest($request);
+            $creator->setVendorCreateRequest($create_request);
             if ($error = $creator->hasError()) {
                 return api_response($request, null, 400, ['message' => 'Error']);
             }
 
             $creator->create();
 
-            return api_response($request, null, 200, ['driver' => '']);
+            return api_response($request, null, 200, ['message' => 'Vendor Created Successfully']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);

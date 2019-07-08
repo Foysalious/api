@@ -1,7 +1,12 @@
 <?php namespace Sheba\Business\Vendor;
 
+use App\Models\Profile;
 use Sheba\ModificationFields;
 use DB;
+use Sheba\Partner\CreateRequest as PartnerCreateRequest;
+use Sheba\Repositories\ProfileRepository;
+use Sheba\Resource\ResourceCreator;
+use Sheba\Partner\Creator as PartnerCreator;
 
 class Creator
 {
@@ -11,10 +16,37 @@ class Creator
     private $vendorCreateRequest;
     /** @var CreateValidator $validator */
     private $validator;
+    /** @var ProfileRepository $profileRepository */
+    private $profileRepository;
+    /** @var ResourceCreator $resourceCreator */
+    private $resourceCreator;
+    /** @var PartnerCreator $partnerCreator */
+    private $partnerCreator;
+    /**
+     * @var PartnerCreateRequest
+     */
+    private $partnerCreateRequest;
+    /** @var $partner */
+    private $partner;
 
-    public function __construct(CreateValidator $validator)
+    /**
+     * Creator constructor.
+     * @param CreateValidator $validator
+     * @param ProfileRepository $profile_repo
+     * @param ResourceCreator $resource_creator
+     * @param PartnerCreator $partner_creator
+     * @param PartnerCreateRequest $partner_create_request
+     */
+    public function __construct(CreateValidator $validator, ProfileRepository $profile_repo,
+                                ResourceCreator $resource_creator, PartnerCreator $partner_creator,
+                                PartnerCreateRequest $partner_create_request)
     {
         $this->validator = $validator;
+        $this->profileRepository = $profile_repo;
+        $this->resourceCreator = $resource_creator;
+        $this->resourceCreator = $resource_creator;
+        $this->partnerCreator = $partner_creator;
+        $this->partnerCreateRequest = $partner_create_request;
     }
 
     /**
@@ -36,12 +68,36 @@ class Creator
     public function create()
     {
         DB::transaction(function () {
+            $resource_mobile = $this->vendorCreateRequest->getResourceMobile();
+            /** @var Profile $profile */
+            $profile = $this->profileRepository->checkExistingMobile($resource_mobile);
+            if (!$profile) {
+                $this->resourceCreator->setData($this->formatProfileSpecificData());
+                $this->resourceCreator->create();
+            }
 
+            $request = $this->partnerCreateRequest
+                ->setName($this->vendorCreateRequest->getVendorName())
+                ->setMobile($this->vendorCreateRequest->getVendorMobile())
+                ->setEmail($this->vendorCreateRequest->getVendorEmail())
+                ->setAddress($this->vendorCreateRequest->getVendorAddress())
+                ->setTradeLicense($this->vendorCreateRequest->getTradeLicenseNumber())
+                ->setTradeLicenseAttachment($this->vendorCreateRequest->getTradeLicenseDocument())
+                ->setVatRegistrationNumber($this->vendorCreateRequest->getVatRegistrationNumber())
+                ->setVatRegistrationDocument($this->vendorCreateRequest->getVatRegistrationDocument());
+
+            $this->partner = $this->partnerCreator->setPartnerCreateRequest($request)->create();
+            $this->partner->businesses()->save($this->vendorCreateRequest->getBusiness());
         });
     }
 
-    private function formatVehicleRegistrationInfoSpecificData()
+    private function formatProfileSpecificData()
     {
-
+        return [
+            'name' => $this->vendorCreateRequest->getResourceName(),
+            'mobile' => $this->vendorCreateRequest->getResourceMobile(),
+            'nid_no' => $this->vendorCreateRequest->getResourceNidNumber(),
+            'alternate_contact' => null
+        ];
     }
 }
