@@ -10,8 +10,16 @@ class BusinessRoute
             $api->group(['prefix' => '{business}'], function ($api) {
                 $api->get('members', 'B2b\MemberController@index');
                 $api->post('/invite', 'B2b\BusinessesController@inviteVendors');
-                $api->get('/vendors', 'B2b\BusinessesController@getVendorsList');
-                $api->get('/vendors/{vendor}/info', 'B2b\BusinessesController@getVendorInfo');
+
+                $api->group(['prefix' => 'vendors'], function ($api) {
+                    $api->get('/', 'B2b\BusinessesController@getVendorsList');
+                    $api->post('/', 'B2b\VendorController@store');
+                    $api->post('/bulk-store', 'B2b\VendorController@bulkStore');
+                    $api->group(['prefix' => '{vendor}'], function ($api) {
+                        $api->get('/info', 'B2b\BusinessesController@getVendorInfo');
+                    });
+                });
+
                 $api->post('orders', 'B2b\OrderController@placeOrder');
                 $api->get('trips', 'B2b\TripSchedulerController@getList');
                 $api->post('promotions/add', 'B2b\OrderController@applyPromo');

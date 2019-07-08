@@ -95,5 +95,4 @@ class Business extends Model
     {
         return $this->morphMany(Procurement::class, 'owner');
     }
-
 }
