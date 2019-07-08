@@ -73,7 +73,7 @@ class VehiclesController extends Controller
 
             $vehicle_data = [
                 'owner_type' => $request->has('vendor_id') ? "App\Models\Partner" : get_class($business),
-                'owner_id' =>  $request->has('vendor_id') ? $request->vendor_id : $business->id,
+                'owner_id' => $request->has('vendor_id') ? $request->vendor_id : $business->id,
                 'business_department_id' => $request->department_id,
                 'status' => 'active',
             ];
@@ -383,7 +383,9 @@ class VehiclesController extends Controller
                 'enlisted_from' => $vehicle->created_at->format('d/m/Y'),
                 'seat_capacity' => $basic_information->seat_capacity,
                 'department' => $vehicle->businessDepartment ? $vehicle->businessDepartment->name : null,
-                'vehicle_image' => $basic_information->vehicle_image
+                'vehicle_image' => $basic_information->vehicle_image,
+                'registration_number' => $basic_information->license_number,
+                'registration_number_image' => $basic_information->license_number_image,
             ];
 
             return api_response($request, $general_info, 200, ['general_info' => $general_info]);
