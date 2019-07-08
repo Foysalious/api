@@ -69,7 +69,6 @@ class Creator
             $resource_mobile = $this->vendorCreateRequest->getResourceMobile();
             /** @var Profile $profile */
             $profile = $this->profileRepository->checkExistingMobile($resource_mobile);
-
             if (!$profile) {
                 $this->resourceCreator->setData($this->formatProfileSpecificData());
                 $resource = $this->resourceCreator->create();
@@ -97,7 +96,8 @@ class Creator
                 $this->partner = $resource->firstPartner();
             }
 
-            $this->partner->businesses()->save($this->vendorCreateRequest->getBusiness());
+            if (!$this->alreadyAddSameBusiness())
+                $this->partner->businesses()->save($this->vendorCreateRequest->getBusiness());
         });
 
         return $this->partner;
@@ -111,5 +111,10 @@ class Creator
             'nid_no' => $this->vendorCreateRequest->getResourceNidNumber(),
             'alternate_contact' => null
         ];
+    }
+
+    private function alreadyAddSameBusiness()
+    {
+        return in_array($this->vendorCreateRequest->getBusiness()->id, $this->partner->businesses->pluck('id')->toArray());
     }
 }

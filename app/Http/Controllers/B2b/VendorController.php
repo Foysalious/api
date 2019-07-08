@@ -65,13 +65,12 @@ class VendorController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
-    public function bulkStore(Request $request)
+    public function bulkStore(Request $request, CreateRequest $create_request, Creator $creator)
     {
         try {
             $this->validate($request, ['file' => 'required|file']);
@@ -84,6 +83,7 @@ class VendorController extends Controller
             }
 
             $admin_member = $request->member;
+            $business = $request->business;
             $this->setModifier($admin_member);
 
             $file = Excel::selectSheets(BulkUploadExcel::SHEET)->load($request->file)->save();
@@ -92,9 +92,38 @@ class VendorController extends Controller
             $data = Excel::selectSheets(BulkUploadExcel::SHEET)->load($file_path)->get();
 
             $error_count = 0;
+            $vendor_name = BulkUploadExcel::VENDOR_NAME_COLUMN_TITLE;
+            $phone_number = BulkUploadExcel::PHONE_NUMBER_COLUMN_TITLE;
+            $contact_person_name = BulkUploadExcel::CONTACT_PERSON_NAME_COLUMN_TITLE;
+            $contact_person_mobile = BulkUploadExcel::CONTACT_PERSON_MOBILE_COLUMN_TITLE;
+            $address = BulkUploadExcel::ADDRESS_COLUMN_TITLE;
+            $email = BulkUploadExcel::EMAIL_COLUMN_TITLE;
 
+            $data->each(function ($value) use (
+                $create_request, $creator, $admin_member, &$error_count, $business,
+                $vendor_name, $phone_number, $contact_person_name, $contact_person_mobile, $address, $email
+            ) {
+                if (is_null($value->$vendor_name) && is_null($value->$phone_number)) return false;
 
-            return api_response($request, null, 200, ['message' => "Driver's Created Successfully, Error on: {$error_count} driver"]);
+                /** @var CreateRequest $request */
+                $create_request = $create_request->setBusiness($business)
+                    ->setVendorName($value->$vendor_name)
+                    ->setVendorMobile($value->$phone_number)
+                    ->setVendorEmail($value->$email)
+                    ->setVendorAddress($value->$address)
+                    ->setResourceName($value->$contact_person_name)
+                    ->setResourceMobile($value->$contact_person_mobile);
+
+                $creator->setVendorCreateRequest($create_request);
+                if ($error = $creator->hasError()) {
+                    $error_count++;
+                    return false;
+                }
+
+                $creator->create();
+            });
+
+            return api_response($request, null, 200, ['message' => "Vendor's Created Successfully, Error on: {$error_count} driver"]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
