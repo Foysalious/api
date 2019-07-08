@@ -126,10 +126,32 @@ class BusinessesController extends Controller
                 "service_type" => $master_categories,
                 "no_of_resource" => $resources,
                 "trade_license" => $basic_informations->trade_license,
-                "establishment_year" => $basic_informations->trade_license ? Carbon::parse($basic_informations->trade_license)->format('M, Y') : null,
+                "trade_license_attachment" => $basic_informations->trade_license_attachment,
+                "vat_registration_number" => $basic_informations->vat_registration_number,
+                "vat_registration_attachment" => $basic_informations->vat_registration_attachment,
+                "establishment_year" => $basic_informations->establishment_year ? Carbon::parse($basic_informations->establishment_year)->format('M, Y') : null,
             ];
-
             return api_response($request, $vendor, 200, ['vendor' => $vendor]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getVendorAdminInfo($business, $vendor, Request $request)
+    {
+        try {
+            $partner = Partner::find((int)$vendor);
+            $resource = $partner->admins->first();
+            $resource = [
+                "id" => $resource->id,
+                "name" => $resource->profile->name,
+                "mobile" => $resource->profile->mobile,
+                "nid" => $resource->profile->nid_no,
+                "nid_image_front" => $resource->nid_image_front,
+                "nid_image_back" => $resource->nid_image_back
+            ];
+            return api_response($request, $resource, 200, ['vendor' => $resource]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
