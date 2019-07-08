@@ -6,6 +6,7 @@ class PartnerRoute
     {
         $api->group(['prefix' => 'partners'], function ($api) {
             $api->get('performance-faqs', 'FaqController@getPartnerPerformanceFaqs');
+            $api->get('welcome', 'Auth\PartnerRegistrationController@getWelcomeMessage');
             $api->group(['prefix' => '{partner}'], function ($api) {
                 $api->get('/', 'PartnerController@show');
                 $api->get('locations', 'PartnerController@getLocations');
