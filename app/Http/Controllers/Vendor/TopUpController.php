@@ -21,7 +21,7 @@ class TopUpController extends Controller
                 'mobile' => 'required|string|mobile:bd',
                 'connection_type' => 'required|in:prepaid,postpaid',
                 'operator_id' => 'required|exists:topup_vendors,id',
-                'amount' => 'required|min:10|max:1000|numeric'
+                'amount' => 'required|min:10|max:50000|numeric'
             ]);
             $agent = $request->vendor;
             $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->operator_id);
