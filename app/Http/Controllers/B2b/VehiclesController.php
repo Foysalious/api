@@ -185,10 +185,10 @@ class VehiclesController extends Controller
                 $seat_capacity, $vendor_phone_number, $license_number, $tax_token_number, $fitness_validity_start,
                 $fitness_validity_end, $insurance_valid_till, $transmission_type, $business
             ) {
-                if (is_null($value->$vehicle_type) && is_null($value->$vehicle_brand_name)) return false;
+                if (is_null($value->$vehicle_type) && is_null($value->$vehicle_brand_name)) return;
 
                 /** @var VehicleCreateRequest $request */
-                $request = $create_request->setVehicleType($value->$vehicle_type)
+                $create_request = $create_request->setVehicleType($value->$vehicle_type)
                     ->setVehicleBrandName($value->$vehicle_brand_name)
                     ->setModelName($value->$model_name)
                     ->setModelYear($value->$model_year)
@@ -204,13 +204,12 @@ class VehiclesController extends Controller
                     ->setBusiness($business)
                     ->setAdminMember($admin_member);
 
-                $creator->setVehicleCreateRequest($request);
+                $creator->setVehicleCreateRequest($create_request);
                 if ($error = $creator->hasError()) {
                     $error_count++;
-                    return false;
+                } else {
+                    $creator->create();
                 }
-
-                $creator->create();
             });
 
             return api_response($request, null, 200, ['message' => "Driver's Created Successfully, Error on: {$error_count} driver"]);

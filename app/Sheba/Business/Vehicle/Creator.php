@@ -23,6 +23,7 @@ class Creator
     private $profileRepository;
     /** @var HiredVehicleRepositoryInterface $hiredVehicleRepository */
     private $hiredVehicleRepository;
+    /** @var Vehicle $vehicle */
     private $vehicle;
 
     public function __construct(VehicleRepositoryInterface $vehicle_repo, CreateValidator $validator,
@@ -55,8 +56,8 @@ class Creator
         DB::transaction(function () {
             /** @var Vehicle $vehicle */
             $this->vehicle = $this->vehicleRepository->create($this->formatVehicleSpecificData());
-            $vehicle->basicInformations()->create($this->withCreateModificationField($this->formatVehicleBasicInfoSpecificData()));
-            $vehicle->registrationInformations()->create($this->withCreateModificationField($this->formatVehicleRegistrationInfoSpecificData()));
+            $this->vehicle->basicInformations()->create($this->withCreateModificationField($this->formatVehicleBasicInfoSpecificData()));
+            $this->vehicle->registrationInformations()->create($this->withCreateModificationField($this->formatVehicleRegistrationInfoSpecificData()));
             if ($this->vehicleCreateRequest->getVendorPhoneNumber())
                 $this->attachWithVendor();
         });
@@ -91,7 +92,9 @@ class Creator
             'model_name' => $this->vehicleCreateRequest->getModelName(),
             'model_year' => $this->vehicleCreateRequest->getModelYear(),
             'seat_capacity' => $this->vehicleCreateRequest->getSeatCapacity(),
-            'transmission_type' => $this->vehicleCreateRequest->getTransmissionType()
+            'transmission_type' => $this->vehicleCreateRequest->getTransmissionType(),
+            'company_name' => $this->vehicleCreateRequest->getVehicleBrandName(),
+            'type' => $this->vehicleCreateRequest->getVehicleType()
         ];
     }
 
