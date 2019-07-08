@@ -363,6 +363,7 @@ class VehiclesController extends Controller
                 'enlisted_from' => $vehicle->created_at->format('d/m/Y'),
                 'seat_capacity' => $basic_information->seat_capacity,
                 'department' => $vehicle->businessDepartment ? $vehicle->businessDepartment->name : null,
+                'vehicle_image' => $basic_information->vehicle_image
             ];
 
             return api_response($request, $general_info, 200, ['general_info' => $general_info]);
