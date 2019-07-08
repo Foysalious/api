@@ -73,7 +73,8 @@ class Creator
             $profile = $this->profileRepository->checkExistingMobile($resource_mobile);
             if (!$profile) {
                 $this->resourceCreator->setData($this->formatProfileSpecificData());
-                $this->resourceCreator->create();
+                $resource = $this->resourceCreator->create();
+                $profile = $resource->profile;
             }
 
             $request = $this->partnerCreateRequest
@@ -87,6 +88,7 @@ class Creator
                 ->setVatRegistrationDocument($this->vendorCreateRequest->getVatRegistrationDocument());
 
             $this->partner = $this->partnerCreator->setPartnerCreateRequest($request)->create();
+            $this->partner->resources()->save($profile->resource, ['resource_type' => 'Admin']);
             $this->partner->businesses()->save($this->vendorCreateRequest->getBusiness());
         });
 
