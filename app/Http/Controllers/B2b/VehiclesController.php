@@ -385,8 +385,6 @@ class VehiclesController extends Controller
                 'seat_capacity' => $basic_information->seat_capacity,
                 'department' => $vehicle->businessDepartment ? $vehicle->businessDepartment->name : null,
                 'vehicle_image' => $basic_information->vehicle_image,
-                'registration_number' => $basic_information->license_number,
-                'registration_number_image' => $basic_information->license_number_image,
             ];
 
             return api_response($request, $general_info, 200, ['general_info' => $general_info]);
@@ -484,7 +482,10 @@ class VehiclesController extends Controller
             $registration_info = [
                 'vehicle_id' => $vehicle->id,
                 'license_number' => $registration_information->license_number,
+                'license_number_image' => $registration_information->license_number_image,
                 'tax_token_number' => $registration_information->tax_token_number,
+                'registration_number' => $basic_information->license_number,
+                'registration_number_image' => $basic_information->license_number_image,
                 'fitness_start_date' => Carbon::parse($registration_information->fitness_start_date)->format('Y-m-d'),
                 'fitness_end_date' => Carbon::parse($registration_information->fitness_end_date)->format('Y-m-d'),
                 'insurance_date' => Carbon::parse($registration_information->insurance_date)->format('Y-m-d'),
