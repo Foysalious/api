@@ -27,7 +27,6 @@ class InspectionController extends Controller
             $inspections = Inspection::with(['formTemplate', 'inspectionSchedule.inspections'])
                 ->where('business_id', $business->id)
                 ->orderBy('id', 'DESC');
-
             $inspection_lists = [];
             if ($request->has('filter') && $request->filter === 'process') {##Ongoing
                 $inspections = $inspections->where(function ($query) {
@@ -141,7 +140,7 @@ class InspectionController extends Controller
                 ->select(['id', 'status', 'result'])
                 ->get();
             $failed_items = $this->getFailedItems($inspection_items);
-            $failure_percent_in_last_seven_days = ($failed_items->count() / $inspection_items->count()) * 100;
+            $failure_percent_in_last_seven_days = $inspection_items->count() > 0 ? ($failed_items->count() / $inspection_items->count()) * 100 : 0;
             $inspection_items = $inspection_item_repository->getAllByBusiness((int)$business->id)
                 ->whereBetween('created_at', [Carbon::now()->subDays(14)->toDateTimeString(), Carbon::now()->subDays(7)->toDateTimeString()])
                 ->where('input_type', 'radio')
