@@ -14,6 +14,7 @@ class ResourceRepository extends BaseRepository
 
     public function __construct()
     {
+        parent::__construct();
         $this->profileRepo = new ProfileRepository();
     }
 
