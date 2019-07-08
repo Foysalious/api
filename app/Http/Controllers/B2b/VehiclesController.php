@@ -235,7 +235,7 @@ class VehiclesController extends Controller
                     'assigned_to' => $vehicle->businessDepartment ? $vehicle->businessDepartment->name : null,
                     'current_driver' => $driver ? $vehicle->driver->profile->name : 'N/S',
                     'license_number' => $registration_information ? $registration_information->license_number : null,
-                    'vehicle_image' => $basic_information->vehicle_img
+                    'vehicle_image' => $basic_information->vehicle_image
                 ];
                 array_push($vehicle_lists, $vehicle);
             }
