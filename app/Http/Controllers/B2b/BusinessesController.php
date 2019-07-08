@@ -151,8 +151,8 @@ class BusinessesController extends Controller
                 "name" => $resource->profile->name,
                 "mobile" => $resource->profile->mobile,
                 "nid" => $resource->profile->nid_no,
-                "nid_image_front" => $resource->nid_image_front,
-                "nid_image_back" => $resource->nid_image_back
+                "nid_image_front" => $resource->profile->nid_image_front,
+                "nid_image_back" => $resource->profile->nid_image_back
             ];
             return api_response($request, $resource, 200, ['vendor' => $resource]);
         } catch (\Throwable $e) {
