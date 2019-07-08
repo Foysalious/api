@@ -2,16 +2,19 @@
 
 use App\Models\BusinessTrip;
 use App\Models\BusinessTripRequest;
-use App\Models\Driver;
 use App\Models\Vehicle;
 use App\Models\VehicleRegistrationInformation;
 use App\Repositories\FileRepository;
-use FacebookAds\Http\Client;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
+use Excel;
 use Sheba\Business\Inspection\CreateProcessor;
 use Sheba\Business\Inspection\Creator;
 use Sheba\Business\Scheduler\TripScheduler;
+use Sheba\Business\Vehicle\BulkUploadExcel;
+use Sheba\Business\Vehicle\CreateRequest as VehicleCreateRequest;
+use Sheba\Business\Vehicle\Creator as VehicleCreator;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
@@ -19,6 +22,7 @@ use Illuminate\Http\Request;
 use App\Models\Member;
 use Carbon\Carbon;
 use DB;
+use Throwable;
 
 class VehiclesController extends Controller
 {
@@ -94,17 +98,106 @@ class VehiclesController extends Controller
                 'insurance_paper_image' => $request->hasFile('insurance_paper_image') ? $this->updateVehiclesDocuments('insurance_paper_image', $request->file('insurance_paper_image')) : '',
             ];
             $vehicle->registrationInformations()->create($this->withCreateModificationField($vehicle_registration_information_data));
+            $inspection = null;
             if ($request->has('form_template_id')) {
-                $request->merge(['vehicle_id' => $vehicle->id, 'inspector_id' => $member->id, 'form_template_id' => $request->form_template_id]);
+                $request->merge(['vehicle_id' => $vehicle->id, 'inspector_id' => $member->id, 'form_template_id' => $request->form_template_id,
+                    'schedule_type_value' => date('Y-m-d'), 'schedule_time' => date('h a')]);
                 /** @var Creator $creation_class */
                 $creation_class = $create_processor->setType('one_time')->getCreationClass();
                 $inspection = $creation_class->setData($request->all())->setBusiness($request->business)->create();
             }
-            return api_response($request, $vehicle, 200, ['vehicle' => $vehicle->id]);
+            return api_response($request, $vehicle, 200, ['vehicle' => $vehicle->id, 'inspection_id' => $inspection ? $inspection->id : null]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @param VehicleCreateRequest $create_request
+     * @param VehicleCreator $creator
+     * @return JsonResponse
+     */
+    public function bulkStore(Request $request, VehicleCreateRequest $create_request, VehicleCreator $creator)
+    {
+        try {
+            $this->validate($request, ['file' => 'required|file']);
+
+            $valid_extensions = ["xls", "xlsx", "xlm", "xla", "xlc", "xlt", "xlw"];
+            $extension = $request->file('file')->getClientOriginalExtension();
+
+            if (!in_array($extension, $valid_extensions)) {
+                return api_response($request, null, 400, ['message' => 'File type not support']);
+            }
+
+            $admin_member = $request->member;
+            $business = $admin_member->businesses->first();
+            $this->setModifier($admin_member);
+
+            $file = Excel::selectSheets(BulkUploadExcel::SHEET)->load($request->file)->save();
+            $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
+
+            $data = Excel::selectSheets(BulkUploadExcel::SHEET)->load($file_path)->get();
+
+            $error_count = 0;
+            $vehicle_type = BulkUploadExcel::VEHICLE_TYPE_COLUMN_TITLE;
+            $vehicle_brand_name = BulkUploadExcel::VEHICLE_BRAND_NAME_COLUMN_TITLE;
+            $model_name = BulkUploadExcel::MODEL_NAME_COLUMN_TITLE;
+            $model_year = BulkUploadExcel::MODEL_YEAR_COLUMN_TITLE;
+            $vehicle_department = BulkUploadExcel::VEHICLE_DEPARTMENT_COLUMN_TITLE;
+            $seat_capacity = BulkUploadExcel::SEAT_CAPACITY_COLUMN_TITLE;
+            $vendor_phone_number = BulkUploadExcel::VENDOR_PHONE_NUMBER_COLUMN_TITLE;
+            $license_number = BulkUploadExcel::LICENSE_NUMBER_COLUMN_TITLE;
+            $tax_token_number = BulkUploadExcel::TAX_TOKEN_NUMBER_COLUMN_TITLE;
+            $fitness_validity_start = BulkUploadExcel::FITNESS_VALIDITY_START_COLUMN_TITLE;
+            $fitness_validity_end = BulkUploadExcel::FITNESS_VALIDITY_END_COLUMN_TITLE;
+            $insurance_valid_till = BulkUploadExcel::INSURANCE_VALID_TILL_COLUMN_TITLE;
+            $transmission_type = BulkUploadExcel::TRANSMISSION_TYPE_COLUMN_TITLE;
+
+            $data->each(function ($value) use (
+                $create_request, $creator, $admin_member, &$error_count,
+                $vehicle_type, $vehicle_brand_name, $model_name, $model_year, $vehicle_department,
+                $seat_capacity, $vendor_phone_number, $license_number, $tax_token_number, $fitness_validity_start,
+                $fitness_validity_end, $insurance_valid_till, $transmission_type, $business
+            ) {
+                if (is_null($value->$vehicle_type) && is_null($value->$vehicle_brand_name)) return false;
+
+                /** @var VehicleCreateRequest $request */
+                $request = $create_request->setVehicleType($value->$vehicle_type)
+                    ->setVehicleBrandName($value->$vehicle_brand_name)
+                    ->setModelName($value->$model_name)
+                    ->setModelYear($value->$model_year)
+                    ->setVehicleDepartment($value->$vehicle_department)
+                    ->setSeatCapacity($value->$seat_capacity)
+                    ->setVendorPhoneNumber($value->$vendor_phone_number)
+                    ->setLicenseNumber($value->$license_number)
+                    ->setTaxTokenNumber($value->$tax_token_number)
+                    ->setFitnessValidityStart($value->$fitness_validity_start)
+                    ->setFitnessValidityEnd($value->$fitness_validity_end)
+                    ->setInsuranceValidTill($value->$insurance_valid_till)
+                    ->setTransmissionType($value->$transmission_type)
+                    ->setBusiness($business)
+                    ->setAdminMember($admin_member);
+
+                $creator->setVehicleCreateRequest($request);
+                if ($error = $creator->hasError()) {
+                    $error_count++;
+                    return false;
+                }
+
+                $creator->create();
+            });
+
+            return api_response($request, null, 200, ['message' => "Driver's Created Successfully, Error on: {$error_count} driver"]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -179,7 +272,7 @@ class VehiclesController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -242,7 +335,7 @@ class VehiclesController extends Controller
 
             if (count($vehicle_lists) > 0) return api_response($request, $vehicle_lists, 200, ['vehicle_lists' => $vehicle_lists]);
             else  return api_response($request, null, 404);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -273,7 +366,7 @@ class VehiclesController extends Controller
             ];
 
             return api_response($request, $general_info, 200, ['general_info' => $general_info]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -319,7 +412,7 @@ class VehiclesController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -346,7 +439,7 @@ class VehiclesController extends Controller
                 'insurance_date' => Carbon::parse($registration_information->insurance_date)->format('Y-m-d'),
             ];
             return api_response($request, $registration_info, 200, ['registration_info' => $registration_info]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -386,7 +479,7 @@ class VehiclesController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -417,7 +510,7 @@ class VehiclesController extends Controller
             ];
 
             return api_response($request, $specs_info, 200, ['specs_info' => $specs_info]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -461,7 +554,7 @@ class VehiclesController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -486,7 +579,7 @@ class VehiclesController extends Controller
                 array_push($recent_assignment, $vehicle);
             }
             return api_response($request, $recent_assignment, 200, ['recent_assignment' => $recent_assignment]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
