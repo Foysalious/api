@@ -1,11 +1,11 @@
 <?php namespace App\Http\Controllers\B2b;
 
-use App\Http\Validators\MobileNumberValidator;
 use App\Models\BusinessDepartment;
 use App\Models\BusinessMember;
 use App\Models\BusinessTrip;
 use App\Models\BusinessTripRequest;
 use App\Models\Driver;
+use App\Models\HiredDriver;
 use App\Models\Profile;
 use App\Models\Vehicle;
 
@@ -20,7 +20,6 @@ use Sheba\Business\Driver\Creator;
 use Sheba\Business\Scheduler\TripScheduler;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
-use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use App\Models\Member;
@@ -29,8 +28,6 @@ use DB;
 use Sheba\Repositories\ProfileRepository;
 use Throwable;
 use Excel;
-
-;
 
 class DriverController extends Controller
 {
@@ -77,12 +74,6 @@ class DriverController extends Controller
             $profile = $this->profileRepository->checkExistingMobile($request->mobile);
             if (!$profile) {
                 $driver = Driver::create($this->withCreateModificationField($driver_data));
-
-                if ($request->has('vehicle_id')) {
-                    $vehicle = Vehicle::find((int)$request->vehicle_id);
-                    $vehicle->current_driver_id = $driver->id;
-                    $vehicle->save();
-                }
                 $profile = $this->createDriverProfile($member, $driver, $request);
                 $new_member = $profile->member;
                 if (!$new_member) $new_member = $this->makeMember($profile);
@@ -103,11 +94,7 @@ class DriverController extends Controller
                     $driver = Driver::create($this->withCreateModificationField($driver_data));
                     $profile_data = ['driver_id' => $driver->id];
                     $profile->update($this->withCreateModificationField($profile_data));
-                    if ($request->has('vehicle_id')) {
-                        $vehicle = Vehicle::find((int)$request->vehicle_id);
-                        $vehicle->current_driver_id = $driver->id;
-                        $vehicle->save();
-                    }
+
                     $new_member = $profile->member;
                     if (!$new_member) $new_member = $this->makeMember($profile);
 
@@ -126,6 +113,25 @@ class DriverController extends Controller
                     return api_response($request, null, 403, ['message' => 'Driver already exits!']);
                 }
             }
+
+            if ($request->has('vehicle_id')) {
+                $vehicle = Vehicle::find((int)$request->vehicle_id);
+                $vehicle->current_driver_id = $driver->id;
+                $vehicle->save();
+            }
+
+            if ($request->has('vendor_id')) {
+                $data = [
+                    'hired_by_type' => get_class($business),
+                    'hired_by_id' => $business->id,
+                    'owner_type' => "App\Models\Partner",
+                    'owner_id' => $request->vendor_id,
+                    'driver_id' => $driver->id,
+                    'start' => Carbon::now()
+                ];
+                HiredDriver::create($this->withCreateModificationField($data));
+            }
+
             return api_response($request, $driver, 200, ['driver' => $driver->id]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());

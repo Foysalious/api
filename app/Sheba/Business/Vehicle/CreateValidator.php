@@ -1,9 +1,17 @@
 <?php namespace Sheba\Business\Vehicle;
 
+use Sheba\Repositories\ProfileRepository;
+
 class CreateValidator
 {
     /** @var CreateRequest $vehicleCreateRequest*/
     private $vehicleCreateRequest;
+    private $profileRepository;
+
+    public function __construct(ProfileRepository $profile_repo)
+    {
+        $this->profileRepository = $profile_repo;
+    }
 
     public function setVehicleCreateRequest(CreateRequest $create_request)
     {
@@ -13,7 +21,16 @@ class CreateValidator
 
     public function hasError()
     {
-        if (false)
-            return ['code' => 421, 'msg' => 'invalid.'];
+        if (!$this->isVendorExist()) return ['code' => 421, 'msg' => 'Vendor not exits!'];
+    }
+
+    private function isVendorExist()
+    {
+        $resource_mobile = $this->vehicleCreateRequest->getVendorPhoneNumber();
+        $profile = $this->profileRepository->checkExistingMobile($resource_mobile);
+        if ($profile && $profile->resource && $profile->resource->firstPartner())
+            return true;
+
+        return false;
     }
 }

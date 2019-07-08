@@ -3,6 +3,7 @@
 use App\Models\BusinessJoinRequest;
 use App\Models\Partner;
 use App\Models\Profile;
+use App\Models\Resource;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessMember;
@@ -62,6 +63,7 @@ class BusinessesController extends Controller
     {
         $profile = Profile::where('mobile', $mobile)->first();
         if (!$profile) return false;
+        /** @var Resource $resource */
         $resource = $profile->resource;
         if (!$resource) return false;
         $partner = $resource->firstPartner();
@@ -105,6 +107,7 @@ class BusinessesController extends Controller
     {
         try {
             $business = $request->business;
+            /** @var Partner $partner */
             $partner = Partner::find((int)$vendor);
             $basic_informations = $partner->basicInformations;
             $resources = $partner->resources->count();

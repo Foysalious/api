@@ -2,6 +2,8 @@
 
 use App\Models\BusinessTrip;
 use App\Models\BusinessTripRequest;
+use App\Models\HiredDriver;
+use App\Models\HiredVehicle;
 use App\Models\Vehicle;
 use App\Models\VehicleRegistrationInformation;
 use App\Repositories\FileRepository;
@@ -36,6 +38,12 @@ class VehiclesController extends Controller
         $this->fileRepository = $file_repository;
     }
 
+    /**
+     * @param $member
+     * @param Request $request
+     * @param CreateProcessor $create_processor
+     * @return JsonResponse
+     */
     public function store($member, Request $request, CreateProcessor $create_processor)
     {
         try {
@@ -64,8 +72,8 @@ class VehiclesController extends Controller
             $this->setModifier($member);
 
             $vehicle_data = [
-                'owner_type' => get_class($business),
-                'owner_id' => $business->id,
+                'owner_type' => $request->has('vendor_id') ? "App\Models\Partner" : get_class($business),
+                'owner_id' =>  $request->has('vendor_id') ? $request->vendor_id : $business->id,
                 'business_department_id' => $request->department_id,
                 'status' => 'active',
             ];
@@ -73,6 +81,18 @@ class VehiclesController extends Controller
                 $vehicle_data['current_driver_id'] = $request->driver_id;
             }
             $vehicle = Vehicle::create($this->withCreateModificationField($vehicle_data));
+
+            if ($request->has('vendor_id')) {
+                $data = [
+                    'hired_by_type' => get_class($business),
+                    'hired_by_id' => $business->id,
+                    'owner_type' => "App\Models\Partner",
+                    'owner_id' => $request->vendor_id,
+                    'vehicle_id' => $vehicle->id,
+                    'start' => Carbon::now()
+                ];
+                HiredVehicle::create($this->withCreateModificationField($data));
+            }
 
             $vehicle_basic_information_data = [
                 'type' => $request->type,
