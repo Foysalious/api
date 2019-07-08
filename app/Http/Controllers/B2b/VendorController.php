@@ -58,9 +58,9 @@ class VendorController extends Controller
                 return api_response($request, null, 400, ['message' => 'Error']);
             }
 
-            $creator->create();
+            $vendor = $creator->create();
 
-            return api_response($request, null, 200, ['message' => 'Vendor Created Successfully']);
+            return api_response($request, null, 200, ['vendor_id' => $vendor->id, 'message' => 'Vendor Created Successfully']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);

@@ -89,6 +89,8 @@ class Creator
             $this->partner = $this->partnerCreator->setPartnerCreateRequest($request)->create();
             $this->partner->businesses()->save($this->vendorCreateRequest->getBusiness());
         });
+
+        return $this->partner;
     }
 
     private function formatProfileSpecificData()
