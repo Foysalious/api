@@ -147,6 +147,8 @@ class BusinessRoute
                         $api->get('/registration-info', 'B2b\VehiclesController@getVehicleRegistrationInfo');
                         $api->post('/registration-info', 'B2b\VehiclesController@updateVehicleRegistrationInfo');
                         $api->get('/specs', 'B2b\VehiclesController@getVehicleSpecs');
+                        $api->get('handlers', 'B2b\VehiclesController@getVehicleHandlers');
+                        $api->post('/specs', 'B2b\VehiclesController@updateVehicleSpecs');
                         $api->post('/specs', 'B2b\VehiclesController@updateVehicleSpecs');
                         $api->get('/recent-assignment', 'B2b\VehiclesController@getVehicleRecentAssignment');
                     });

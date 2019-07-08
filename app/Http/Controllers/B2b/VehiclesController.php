@@ -4,6 +4,7 @@ use App\Models\BusinessTrip;
 use App\Models\BusinessTripRequest;
 use App\Models\HiredDriver;
 use App\Models\HiredVehicle;
+use App\Models\Partner;
 use App\Models\Vehicle;
 use App\Models\VehicleRegistrationInformation;
 use App\Repositories\FileRepository;
@@ -389,6 +390,33 @@ class VehiclesController extends Controller
             ];
 
             return api_response($request, $general_info, 200, ['general_info' => $general_info]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getVehicleHandlers($member, $vehicle, Request $request)
+    {
+        try {
+
+            $vehicle = Vehicle::find((int)$vehicle);
+            $partner = $vehicle->owner;
+            $general_info = [
+                'driver' => $vehicle->driver ? [
+                    'name' => $vehicle->driver->profile->name,
+                    'mobile' => $vehicle->driver->profile->mobile,
+                    'picture' => $vehicle->driver->profile->pro_pic,
+                ] : null,
+                'vendor' =>
+                    $partner instanceof Partner ? [
+                        'name' => $partner->name,
+                        'mobile' => $vehicle->getContactNumber(),
+                        'picture' => $partner->logo,
+                    ] : null
+
+            ];
+            return api_response($request, $general_info, 200, ['handler' => $general_info]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
