@@ -249,7 +249,7 @@ class Order
     }
 
     /**
-     * @param mixed $pay_url
+     * @param mixed $rider
      * @return Order
      */
     public function setRider($rider)
@@ -266,6 +266,28 @@ class Order
     {
         $this->status = $status;
         return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getStatus()
+    {
+        return $this->status;
+    }
+
+    /**
+     * @return string
+     * @throws \Exception
+     */
+    public function getReadableStatus()
+    {
+        return Statuses::getReadable($this->status);
+    }
+
+    public function isReschedulable()
+    {
+        return Statuses::isReschedulable($this->status);
     }
 
     /**
@@ -311,6 +333,7 @@ class Order
     {
         return [
             'status' => Statuses::getReadable($this->status),
+            'original_status' => $this->status,
             'data' => [
                 'rider' => $this->rider,
                 'order_id' => $this->id

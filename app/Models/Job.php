@@ -8,6 +8,7 @@ use Sheba\Helpers\TimeFrame;
 use Sheba\Jobs\CiCalculator;
 use Sheba\Dal\Complain\Model as Complain;
 use Sheba\Jobs\JobStatuses;
+use Sheba\Logistics\OrderGetter;
 use Sheba\Order\Code\Builder as CodeBuilder;
 use Sheba\Report\Updater\Job as ReportUpdater;
 
@@ -894,6 +895,24 @@ class Job extends BaseModel
     public function getExtraDiscount()
     {
         return $this->isOverDiscounted() ? $this->originalDiscount - $this->totalPrice : 0;
+    }
+
+    public function isLogisticCreated()
+    {
+        return $this->first_logistic_order_id || $this->last_logistic_order_id;
+    }
+
+    /**
+     * @return \Sheba\Logistics\DTO\Order|null
+     * @throws \Exception
+     */
+    public function getCurrentLogisticOrder()
+    {
+        if(!$this->isLogisticCreated()) return null;
+
+        /** @var OrderGetter $logistic_order_getter */
+        $logistic_order_getter = app(OrderGetter::class);
+        return $logistic_order_getter->setJob($this)->get();
     }
 
     public function toJson($options = 0)

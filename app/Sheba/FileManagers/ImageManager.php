@@ -1,6 +1,7 @@
 <?php namespace Sheba\FileManagers;
 
 use Intervention\Image\Facades\Image;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 abstract class ImageManager
 {
@@ -8,7 +9,7 @@ abstract class ImageManager
     protected $width;
     /** @var int $height */
     protected $height;
-    /** @var \Symfony\Component\HttpFoundation\File\UploadedFile $file */
+    /** @var UploadedFile $file */
     protected $file;
 
     /**
@@ -16,7 +17,7 @@ abstract class ImageManager
      */
     public function make()
     {
-        if($this->file instanceof  \Intervention\Image\Image) return $this->file;
+        if ($this->file instanceof \Intervention\Image\Image) return $this->file;
 
         $image = Image::make($this->file);
         $image->encode($this->file->getClientOriginalExtension());
