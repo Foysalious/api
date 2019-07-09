@@ -67,6 +67,8 @@ class Creator
     private function formatVehicleSpecificData()
     {
         $business_department_id = null;
+        $business = $this->vehicleCreateRequest->getBusiness();
+
         if ($this->vehicleCreateRequest->getVendorPhoneNumber()) {
             $resource_mobile = $this->vehicleCreateRequest->getVendorPhoneNumber();
             /** @var Profile $profile */
@@ -76,16 +78,16 @@ class Creator
             $owner_type = get_class($partner);
             $owner_id = $partner->id;
         } else {
-            $business = $this->vehicleCreateRequest->getBusiness();
-            $department_name = $this->vehicleCreateRequest->getVehicleDepartment();
             $owner_type = get_class($business);
             $owner_id = $business->id;
-            $business_department = BusinessDepartment::where([
-                ['business_id', $business->id],
-                ['name', 'like', '%'.$department_name.'%']
-            ])->first();
-            $business_department_id = $business_department ? $business_department->id : null;
         }
+
+        $department_name = $this->vehicleCreateRequest->getVehicleDepartment();
+        $business_department = BusinessDepartment::where([
+            ['business_id', $business->id],
+            ['name', 'like', '%'.$department_name.'%']
+        ])->first();
+        $business_department_id = $business_department ? $business_department->id : null;
 
         return [
             'owner_type' => $owner_type,
