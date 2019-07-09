@@ -12,7 +12,7 @@ class CreateProcessor
 
     public function getCreationClass()
     {
-        if ($this->type == 'once') {
+        if ($this->type == 'one_time') {
             return app(OneTimeInspectionCreator::class);
         } else {
             return app(ScheduleInspectionCreator::class);
