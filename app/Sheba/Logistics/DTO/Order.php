@@ -20,6 +20,8 @@ class Order
     private $pickedUrl;
     private $failureUrl;
     private $collectionUrl;
+    private $payUrl;
+    private $riderNotFoundUrl;
     /** @var VendorOrder */
     private $vendorOrder;
     private $paidAmount;
@@ -138,6 +140,24 @@ class Order
     }
 
     /**
+     * @return string
+     */
+    public function getRiderNotFoundUrl()
+    {
+        return $this->riderNotFoundUrl;
+    }
+
+    /**
+     * @param string $rider_not_found_url
+     * @return Order
+     */
+    public function setRiderNotFoundUrl($rider_not_found_url)
+    {
+        $this->riderNotFoundUrl = $rider_not_found_url;
+        return $this;
+    }
+
+    /**
      * @param VendorOrder $vendor_order
      *
      * @return Order
@@ -213,7 +233,16 @@ class Order
         $this->isDiscountInPercentage = $is_discount_in_percentage;
         return $this;
     }
-    
+
+    /**
+     * @param mixed $payUrl
+     */
+    public function setPayUrl($payUrl)
+    {
+        $this->payUrl = $payUrl;
+        return $this;
+    }
+
     /**
      * @return array
      */
@@ -238,12 +267,14 @@ class Order
             'picked_url'            => $this->pickedUrl,
             'failure_url'           => $this->failureUrl,
             'collection_url'        => $this->collectionUrl,
+            'pay_url'               => $this->payUrl,
+            'rider_not_found_url'   => $this->riderNotFoundUrl,
             'vendor_order_detail'   => $this->vendorOrder->toJson(),
             'paid_amount'           => $this->paidAmount,
             'is_instant'            => $this->isInstant,
             'collectable_amount'    => $this->collectableAmount,
             'discount'              => $this->discount,
-            'is_percentage'         => $this->isDiscountInPercentage
+            'is_percentage'         => $this->isDiscountInPercentage,
         ];
     }
 }

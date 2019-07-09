@@ -1,8 +1,8 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Sheba\Logistics\Natures as LogisticNatures;
-use Sheba\Logistics\OneWayInitEvents as OneWayLogisticInitEvents;
+use Sheba\Logistics\Literals\Natures as LogisticNatures;
+use Sheba\Logistics\Literals\OneWayInitEvents as OneWayLogisticInitEvents;
 use Sheba\Logistics\Repository\ParcelRepository;
 
 class Category extends Model

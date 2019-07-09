@@ -22,11 +22,6 @@ class TwoWayLogisticLastOrder extends TwoWayLogistic
         return parent::getCollectableAmount() + ($this->deliveryCharge - $this->getFirstOrderPaid());
     }
 
-    public function getPaidAmount()
-    {
-        return ($this->partnerOrder->overPaid > $this->deliveryCharge) ? $this->partnerOrder->overPaid - $this->deliveryCharge : 0;
-    }
-
     private function getFirstOrderPaid()
     {
         return parent::getPaidAmount();
