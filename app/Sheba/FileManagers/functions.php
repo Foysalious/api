@@ -966,3 +966,15 @@ if (!function_exists('getPosServiceBannerFolder')) {
         return $url . 'images/pos/services/banners/';
     }
 }
+
+if (!function_exists('getVatRegistrationImagesFolder')) {
+
+    function getVatRegistrationImagesFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url)
+            $url = env('S3_URL');
+
+        return $url . 'images/partner/vat_registration/vat_';
+    }
+}

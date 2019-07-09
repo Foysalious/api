@@ -164,6 +164,7 @@ class VehiclesController extends Controller
 
             $data = Excel::selectSheets(BulkUploadExcel::SHEET)->load($file_path)->get();
 
+            $total_count = 0;
             $error_count = 0;
             $vehicle_type = BulkUploadExcel::VEHICLE_TYPE_COLUMN_TITLE;
             $vehicle_brand_name = BulkUploadExcel::VEHICLE_BRAND_NAME_COLUMN_TITLE;
@@ -180,12 +181,17 @@ class VehiclesController extends Controller
             $transmission_type = BulkUploadExcel::TRANSMISSION_TYPE_COLUMN_TITLE;
 
             $data->each(function ($value) use (
-                $create_request, $creator, $admin_member, &$error_count,
+                $create_request, $creator, $admin_member, &$error_count, &$total_count,
                 $vehicle_type, $vehicle_brand_name, $model_name, $model_year, $vehicle_department,
                 $seat_capacity, $vendor_phone_number, $license_number, $tax_token_number, $fitness_validity_start,
                 $fitness_validity_end, $insurance_valid_till, $transmission_type, $business
             ) {
                 if (is_null($value->$vehicle_type) && is_null($value->$vehicle_brand_name)) return;
+                $total_count++;
+                if (!($value->$vehicle_type && $value->$vehicle_brand_name && $value->$vehicle_department)) {
+                    $error_count++;
+                    return;
+                }
 
                 /** @var VehicleCreateRequest $request */
                 $create_request = $create_request->setVehicleType($value->$vehicle_type)
@@ -207,18 +213,17 @@ class VehiclesController extends Controller
                 $creator->setVehicleCreateRequest($create_request);
                 if ($error = $creator->hasError()) {
                     $error_count++;
-                    dump($error);
                 } else {
                     $creator->create();
                 }
             });
 
-            return api_response($request, null, 200, ['message' => "Driver's Created Successfully, Error on: {$error_count} driver"]);
+            $response_message = ($total_count - $error_count) ." Vehicle's Created Successfully, Failed {$error_count} vehicle's";
+            return api_response($request, null, 200, ['message' => $response_message]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -314,7 +319,7 @@ class VehiclesController extends Controller
             } else {
                 list($offset, $limit) = calculatePagination($request);
                 $vehicles = Vehicle::with(['basicInformations', 'registrationInformations'])
-                    ->where(function($q) use ($business) {
+                    ->where(function ($q) use ($business) {
                         $hired_vehicles = $business->hiredVehicles()->with('vehicle')->active()->get()->pluck('vehicle.id');
                         $q->where('owner_id', $business->id)->orWhereIn('id', $hired_vehicles->toArray());
                     })->select('id', 'status', 'current_driver_id', 'business_department_id')
@@ -489,11 +494,14 @@ class VehiclesController extends Controller
                 'license_number' => $registration_information->license_number,
                 'license_number_image' => $registration_information->license_number_image,
                 'tax_token_number' => $registration_information->tax_token_number,
+                'tax_token_image' => $registration_information->tax_token_image,
                 'registration_number' => $basic_information->license_number,
                 'registration_number_image' => $basic_information->license_number_image,
                 'fitness_start_date' => Carbon::parse($registration_information->fitness_start_date)->format('Y-m-d'),
                 'fitness_end_date' => Carbon::parse($registration_information->fitness_end_date)->format('Y-m-d'),
+                'fitness_paper_image' => $registration_information->fitness_paper_image,
                 'insurance_date' => Carbon::parse($registration_information->insurance_date)->format('Y-m-d'),
+                'insurance_paper_image' => $registration_information->insurance_paper_image,
             ];
             return api_response($request, $registration_info, 200, ['registration_info' => $registration_info]);
         } catch (Throwable $e) {

@@ -81,6 +81,7 @@ class Creator
 
             $request = $this->partnerCreateRequest
                 ->setName($this->vendorCreateRequest->getVendorName())
+                ->setLogo($this->vendorCreateRequest->getVendorImage())
                 ->setMobile($this->vendorCreateRequest->getVendorMobile())
                 ->setEmail($this->vendorCreateRequest->getVendorEmail())
                 ->setAddress($this->vendorCreateRequest->getVendorAddress())
@@ -108,8 +109,9 @@ class Creator
         return [
             'name' => $this->vendorCreateRequest->getResourceName(),
             'mobile' => $this->vendorCreateRequest->getResourceMobile(),
-            'nid_no' => $this->vendorCreateRequest->getResourceNidNumber(),
-            'alternate_contact' => null
+            'nid_no' => $this->vendorCreateRequest->getResourceNidNumber() ? : null,
+            'alternate_contact' => null,
+            'nid_image' => $this->vendorCreateRequest->getResourceNidDocument()
         ];
     }
 

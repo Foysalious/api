@@ -5,6 +5,7 @@ use App\Models\Partner;
 class CreateRequest
 {
     private $name;
+    private $logo;
     private $subDomain;
     private $mobile;
     private $email;
@@ -183,6 +184,24 @@ class CreateRequest
     public function setVatRegistrationDocument($vat_registration_document)
     {
         $this->vatRegistrationDocument = $vat_registration_document;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getLogo()
+    {
+        return $this->logo;
+    }
+
+    /**
+     * @param mixed $logo
+     * @return CreateRequest
+     */
+    public function setLogo($logo)
+    {
+        $this->logo = $logo;
         return $this;
     }
 }
