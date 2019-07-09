@@ -272,6 +272,9 @@ class TripRequestController extends Controller
                 $drivers = $vehicleScheduler->getFreeDrivers();
                 if ($vehicles->count() > 0) $vehicle = $vehicles->random(1);
                 if ($drivers->count() > 0) $driver = $drivers->random(1);
+                if (!isset($vehicle) && !isset($driver)) {
+                    return api_response($request, null, 500, ["message" => "There is no free vehicle or driver"]);
+                }
                 $business_trip_request->vehicle_id = $vehicle;
                 $business_trip_request->driver_id = $driver;
                 $business_trip_request->status = 'accepted';
