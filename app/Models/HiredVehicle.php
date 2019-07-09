@@ -21,6 +21,6 @@ class HiredVehicle extends Model
     public function scopeActive($query)
     {
         $now = Carbon::now()->toDateTimeString();
-        return $query->whereRaw("(('$now' BETWEEN start AND end) OR ('$now'' >= start AND end IS NULL))");
+        return $query->whereRaw("(('$now' BETWEEN start AND end) OR ('$now' >= start AND end IS NULL))");
     }
 }
