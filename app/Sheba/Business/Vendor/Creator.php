@@ -1,5 +1,6 @@
 <?php namespace Sheba\Business\Vendor;
 
+use App\Models\Category;
 use App\Models\Profile;
 use Sheba\ModificationFields;
 use DB;
@@ -97,8 +98,12 @@ class Creator
                 $this->partner = $resource->firstPartner();
             }
 
-            if (!$this->alreadyAddSameBusiness())
-                $this->partner->businesses()->save($this->vendorCreateRequest->getBusiness());
+            if ($master_category = $this->vendorCreateRequest->getVendorMasterCategories()) {
+                $secondary_categories = Category::find($master_category)->children()->pluck('id')->toArray();
+                $this->partner->categories()->attach($secondary_categories);
+            }
+
+            if (!$this->alreadyAddSameBusiness()) $this->partner->businesses()->save($this->vendorCreateRequest->getBusiness());
         });
 
         return $this->partner;

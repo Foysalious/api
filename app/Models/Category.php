@@ -7,9 +7,7 @@ use Sheba\Logistics\Repository\ParcelRepository;
 
 class Category extends Model
 {
-    protected $guarded = [
-        'id'
-    ];
+    protected $guarded = ['id'];
 
     public function scopeParents($query)
     {
