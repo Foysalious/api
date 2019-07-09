@@ -168,6 +168,7 @@ class DriverController extends Controller
 
             $data = Excel::selectSheets(BulkUploadExcel::SHEET)->load($file_path)->get();
 
+            $total_count = 0;
             $error_count = 0;
             $license_number_field = BulkUploadExcel::LICENSE_NUMBER_COLUMN_TITLE;
             $license_class = BulkUploadExcel::LICENSE_CLASS_COLUMN_TITLE;
@@ -182,12 +183,15 @@ class DriverController extends Controller
             $driver_address = BulkUploadExcel::ADDRESS_COLUMN_TITLE;
 
             $data->each(function ($value) use (
-                $create_request, $creator, $admin_member, &$error_count,
+                $create_request, $creator, $admin_member, &$error_count,  &$total_count,
                 $license_number_field, $license_class, $driver_mobile, $name, $date_of_birth, $blood_group,
                 $nid_number, $department, $vendor_mobile, $driver_role, $driver_address
             ) {
-
-                if (is_null($value->$name) && is_null($value->$driver_mobile)) return false;
+                $total_count++;
+                if (!($value->$name && $value->$driver_mobile)) {
+                    $error_count++;
+                    return;
+                }
 
                 /** @var CreateRequest $request */
                 $create_request = $create_request->setMobile($value->$driver_mobile)
@@ -211,7 +215,8 @@ class DriverController extends Controller
                 }
             });
 
-            return api_response($request, null, 200, ['message' => "Driver's Created Successfully, Error on: {$error_count} driver"]);
+            $response_message = ($total_count - $error_count) ." Driver's Created Successfully, Failed {$error_count} driver's";
+            return api_response($request, null, 200, ['message' => $response_message]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);

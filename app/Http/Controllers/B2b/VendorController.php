@@ -97,6 +97,7 @@ class VendorController extends Controller
 
             $data = Excel::selectSheets(BulkUploadExcel::SHEET)->load($file_path)->get();
 
+            $total_count = 0;
             $error_count = 0;
             $vendor_name = BulkUploadExcel::VENDOR_NAME_COLUMN_TITLE;
             $phone_number = BulkUploadExcel::PHONE_NUMBER_COLUMN_TITLE;
@@ -104,13 +105,19 @@ class VendorController extends Controller
             $contact_person_mobile = BulkUploadExcel::CONTACT_PERSON_MOBILE_COLUMN_TITLE;
             $address = BulkUploadExcel::ADDRESS_COLUMN_TITLE;
             $email = BulkUploadExcel::EMAIL_COLUMN_TITLE;
+            $trade_license = BulkUploadExcel::TRADE_LICENSE_NUMBER_COLUMN_TITLE;
+            $vat_registration = BulkUploadExcel::VAT_REGISTRATION_NUMBER_COLUMN_TITLE;
 
             $data->each(function ($value) use (
-                $create_request, $creator, $admin_member, &$error_count, $business,
-                $vendor_name, $phone_number, $contact_person_name, $contact_person_mobile, $address, $email
+                $create_request, $creator, $admin_member, &$error_count, &$total_count, $business,
+                $vendor_name, $phone_number, $contact_person_name, $contact_person_mobile, $address, $email,
+                $trade_license, $vat_registration
             ) {
-                if (is_null($value->$vendor_name) && is_null($value->$phone_number)) return false;
-
+                $total_count++;
+                if (!($value->$vendor_name && $value->$phone_number && $value->$trade_license && $value->$vat_registration)) {
+                    $error_count++;
+                    return;
+                }
                 /** @var CreateRequest $request */
                 $create_request = $create_request->setBusiness($business)
                     ->setVendorName($value->$vendor_name)
@@ -118,18 +125,20 @@ class VendorController extends Controller
                     ->setVendorEmail($value->$email)
                     ->setVendorAddress($value->$address)
                     ->setResourceName($value->$contact_person_name)
-                    ->setResourceMobile($value->$contact_person_mobile);
+                    ->setResourceMobile($value->$contact_person_mobile)
+                    ->setTradeLicenseNumber($value->$trade_license)
+                    ->setVatRegistrationNumber($value->$vat_registration);
 
                 $creator->setVendorCreateRequest($create_request);
                 if ($error = $creator->hasError()) {
                     $error_count++;
-                    return false;
+                } else {
+                    $creator->create();
                 }
-
-                $creator->create();
             });
 
-            return api_response($request, null, 200, ['message' => "Vendor's Created Successfully, Error on: {$error_count} driver"]);
+            $response_message = ($total_count - $error_count) ." Vendor's Created Successfully, Failed {$error_count} vendor's";
+            return api_response($request, null, 200, ['message' => $response_message]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);

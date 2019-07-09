@@ -164,6 +164,7 @@ class VehiclesController extends Controller
 
             $data = Excel::selectSheets(BulkUploadExcel::SHEET)->load($file_path)->get();
 
+            $total_count = 0;
             $error_count = 0;
             $vehicle_type = BulkUploadExcel::VEHICLE_TYPE_COLUMN_TITLE;
             $vehicle_brand_name = BulkUploadExcel::VEHICLE_BRAND_NAME_COLUMN_TITLE;
@@ -180,12 +181,16 @@ class VehiclesController extends Controller
             $transmission_type = BulkUploadExcel::TRANSMISSION_TYPE_COLUMN_TITLE;
 
             $data->each(function ($value) use (
-                $create_request, $creator, $admin_member, &$error_count,
+                $create_request, $creator, $admin_member, &$error_count, &$total_count,
                 $vehicle_type, $vehicle_brand_name, $model_name, $model_year, $vehicle_department,
                 $seat_capacity, $vendor_phone_number, $license_number, $tax_token_number, $fitness_validity_start,
                 $fitness_validity_end, $insurance_valid_till, $transmission_type, $business
             ) {
-                if (is_null($value->$vehicle_type) && is_null($value->$vehicle_brand_name)) return;
+                $total_count++;
+                if (!($value->$vehicle_type && $value->$vehicle_brand_name && $value->$vehicle_department)) {
+                    $error_count++;
+                    return;
+                }
 
                 /** @var VehicleCreateRequest $request */
                 $create_request = $create_request->setVehicleType($value->$vehicle_type)
@@ -207,7 +212,6 @@ class VehiclesController extends Controller
                 $creator->setVehicleCreateRequest($create_request);
                 if ($error = $creator->hasError()) {
                     $error_count++;
-                    dump($error);
                 } else {
                     $creator->create();
                 }
@@ -218,7 +222,6 @@ class VehiclesController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
