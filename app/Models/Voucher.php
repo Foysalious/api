@@ -104,7 +104,6 @@ class Voucher extends Model
         return $query->where('is_created_by_sheba', 1);
     }
 
-
     /**
      * Scope a query to only include voucher.
      *

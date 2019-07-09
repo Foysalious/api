@@ -313,7 +313,11 @@ class VehiclesController extends Controller
                 $vehicles = Vehicle::whereIn('id', $car_ids->toArray())->with(['basicInformations', 'driver', 'registrationInformations'])->get();
             } else {
                 list($offset, $limit) = calculatePagination($request);
-                $vehicles = Vehicle::with(['basicInformations', 'registrationInformations'])->where('owner_id', $business->id)->select('id', 'status', 'current_driver_id', 'business_department_id')->orderBy('id', 'desc')->skip($offset)->limit($limit);
+                $vehicles = Vehicle::with(['basicInformations', 'registrationInformations'])->where('owner_id', $business->id)
+                    ->select('id', 'status', 'current_driver_id', 'business_department_id')->orderBy('id', 'desc')->skip($offset)->limit($limit);
+
+                $hired_vehicles = $business->hiredVehicles()->with('vehicle')->active()->get()->pluck('vehicle.id');
+                $vehicles->whereIn('id', $hired_vehicles->toArray());
 
                 if ($request->has('status'))
                     $vehicles = $vehicles->status($request->status);
