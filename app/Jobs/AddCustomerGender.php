@@ -102,6 +102,7 @@ class AddCustomerGender extends Job implements ShouldQueue
     private function setToRedis($data)
     {
         Redis::set('genderapi', $data);
+        Redis::expire('genderapi', 60 * 60);
     }
 
     /**
