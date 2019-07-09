@@ -70,6 +70,12 @@ class VendorController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @param CreateRequest $create_request
+     * @param Creator $creator
+     * @return JsonResponse
+     */
     public function bulkStore(Request $request, CreateRequest $create_request, Creator $creator)
     {
         try {
