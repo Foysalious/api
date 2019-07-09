@@ -2,6 +2,7 @@
 
 use Carbon\Carbon;
 use Sheba\Helpers\BasicGetter;
+use Sheba\Logistics\Literals\Statuses;
 
 class Order 
 {
@@ -29,6 +30,9 @@ class Order
     private $collectableAmount;
     private $discount;
     private $isDiscountInPercentage;
+    private $rider;
+    private $status;
+
     /**
      * @param int $id
      *
@@ -235,11 +239,32 @@ class Order
     }
 
     /**
-     * @param mixed $payUrl
+     * @param string $pay_url
+     * @return Order
      */
-    public function setPayUrl($payUrl)
+    public function setPayUrl($pay_url)
     {
-        $this->payUrl = $payUrl;
+        $this->payUrl = $pay_url;
+        return $this;
+    }
+
+    /**
+     * @param mixed $pay_url
+     * @return Order
+     */
+    public function setRider($rider)
+    {
+        $this->rider = $rider;
+        return $this;
+    }
+
+    /**
+     * @param string $status
+     * @return Order
+     */
+    public function setStatus($status)
+    {
+        $this->status = $status;
         return $this;
     }
 
@@ -275,6 +300,21 @@ class Order
             'collectable_amount'    => $this->collectableAmount,
             'discount'              => $this->discount,
             'is_percentage'         => $this->isDiscountInPercentage,
+        ];
+    }
+
+    /**
+     * @return array
+     * @throws \Exception
+     */
+    public function formatForPartner()
+    {
+        return [
+            'status' => Statuses::getReadable($this->status),
+            'data' => [
+                'rider' => $this->rider,
+                'order_id' => $this->id
+            ]
         ];
     }
 }

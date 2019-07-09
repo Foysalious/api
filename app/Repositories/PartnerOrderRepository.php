@@ -2,17 +2,20 @@
 
 use App\Models\PartnerOrder;
 use Carbon\Carbon;
-use Sheba\Jobs\DeliveryStatuses;
 use Sheba\Jobs\JobStatuses;
-use Sheba\Jobs\LogisticJobStatusCalculator;
+use Sheba\Logistics\OrderGetter;
 
 class PartnerOrderRepository
 {
+    /** @var PartnerJobRepository  */
     private $partnerJobRepository;
+    /** @var OrderGetter */
+    private $logisticOrderGetter;
 
     public function __construct()
     {
         $this->partnerJobRepository = new PartnerJobRepository();
+        $this->logisticOrderGetter = app(OrderGetter::class);
     }
 
     public function getOrderDetails($request)
@@ -89,8 +92,7 @@ class PartnerOrderRepository
 
             array_forget($job, ['partner_order', 'carRentalJobDetail']);
             if($job->first_logistic_order_id || $job->last_logistic_order_id) {
-                $status = new LogisticJobStatusCalculator($job);
-                $job['logistic'] = $status->calculate()->get();
+                $job['logistic'] = $this->logisticOrderGetter->setJob($job)->get()->formatForPartner();
             }
 
         })->sortByDesc('id')->values()->all();
@@ -198,12 +200,11 @@ class PartnerOrderRepository
         }]);
         $partner_orders = $this->filterEshopOrders($partner->partner_orders, $for);
 
-        return array_slice($partner_orders->each(function ($partner_order, $key) {
+        return array_slice($partner_orders->each(function ($partner_order) {
             $partner_order['version'] = $partner_order->is_v2 ? 'v2' : 'v1';
             $job = $partner_order->jobs[0];
             if($job->first_logistic_order_id || $job->last_logistic_order_id) {
-                $status = new LogisticJobStatusCalculator($job);
-                $partner_order['logistic'] = $status->calculate()->get();
+                $partner_order['logistic'] = $this->logisticOrderGetter->setJob($job)->get()->formatForPartner();
             }
             $partner_order['category_name'] = $partner_order->jobs[0]->category ? $partner_order->jobs[0]->category->name : null;
             removeRelationsAndFields($this->getInfo($partner_order));
