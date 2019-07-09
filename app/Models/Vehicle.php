@@ -61,4 +61,14 @@ class Vehicle extends Model
         return $query->where('status', $status);
     }
 
+    public function owner()
+    {
+        return $this->morphTo();
+    }
+
+    public function hiredBy()
+    {
+        return $this->morphToMany(HiredVehicle::class);
+    }
+
 }

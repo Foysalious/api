@@ -7,6 +7,8 @@ use Sheba\Repositories\Business\FormTemplateItemRepository;
 use Sheba\Repositories\Business\FormTemplateQuestionRepository;
 use Sheba\Repositories\Business\FormTemplateRepository;
 use Sheba\Repositories\Business\FuelLogRepository;
+use Sheba\Repositories\Business\HiredDriverRepository;
+use Sheba\Repositories\Business\HiredVehicleRepository;
 use Sheba\Repositories\Business\InspectionItemRepository;
 use Sheba\Repositories\Business\InspectionItemStatusLogRepository;
 use Sheba\Repositories\Business\InspectionRepository;
@@ -28,6 +30,8 @@ use Sheba\Repositories\Interfaces\FormTemplateItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\FormTemplateQuestionRepositoryInterface;
 use Sheba\Repositories\Interfaces\FormTemplateRepositoryInterface;
 use Sheba\Repositories\Interfaces\FuelLogRepositoryInterface;
+use Sheba\Repositories\Interfaces\HiredDriverRepositoryInterface;
+use Sheba\Repositories\Interfaces\HiredVehicleRepositoryInterface;
 use Sheba\Repositories\Interfaces\InspectionItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\InspectionItemStatusLogRepositoryInterface;
 use Sheba\Repositories\Interfaces\InspectionRepositoryInterface;
@@ -69,5 +73,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(MemberRepositoryInterface::class, MemberRepository::class);
         $this->app->bind(BusinessMemberRepositoryInterface::class, BusinessMemberRepository::class);
         $this->app->bind(VehicleRepositoryInterface::class, VehicleRepository::class);
+        $this->app->bind(HiredDriverRepositoryInterface::class, HiredDriverRepository::class);
+        $this->app->bind(HiredVehicleRepositoryInterface::class, HiredVehicleRepository::class);
     }
 }

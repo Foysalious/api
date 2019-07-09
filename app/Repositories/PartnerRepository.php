@@ -5,6 +5,7 @@ namespace App\Repositories;
 
 use App\Models\Category;
 use App\Models\HyperLocal;
+use App\Models\Location;
 use App\Models\Partner;
 use App\Models\PartnerWorkingHour;
 use Sheba\ModificationFields;
@@ -26,7 +27,7 @@ class PartnerRepository
     {
         $resources = $this->partner->handymanResources()->get()->unique();
         $resources->load('jobs', 'profile', 'reviews');
-        if ($verify !== null&&!$this->partner->isLite()) {
+        if ($verify !== null && !$this->partner->isLite()) {
             $resources = $resources->filter(function ($resource) use ($verify) {
                 return $resource->is_verified == $verify;
             });
@@ -122,18 +123,23 @@ class PartnerRepository
 
     public function getLocations()
     {
-        $geo_info = json_decode($this->partner->geo_informations);
-        if ($geo_info) {
-            $hyper_locations = HyperLocal::insideCircle($geo_info)
-                ->with('location')
-                ->get()
-                ->filter(function ($item) {
-                    return !empty($item->location);
-                })->pluck('location');
-            return $hyper_locations;
+        if ($this->partner->geo_informations) {
+            $geo_info = json_decode($this->partner->geo_informations);
+            if ($geo_info) {
+                $hyper_locations = HyperLocal::insideCircle($geo_info)
+                    ->with('location')
+                    ->get()
+                    ->filter(function ($item) {
+                        return !empty($item->location);
+                    })->pluck('location');
+                return $hyper_locations;
+            } else {
+                return [];
+            }
         } else {
-            return [];
+            return Location::published()->select('id', 'name')->get();
         }
+
     }
 
     public function saveDefaultWorkingHours($by)
@@ -142,7 +148,7 @@ class PartnerRepository
         $default_working_hours = getDefaultWorkingHours();
 
         foreach ($default_working_days as $day) {
-            $this->partner->workingHours()->save(new PartnerWorkingHour( array_merge($by, [
+            $this->partner->workingHours()->save(new PartnerWorkingHour(array_merge($by, [
                 'day' => $day,
                 'start_time' => $default_working_hours->start_time,
                 'end_time' => $default_working_hours->end_time

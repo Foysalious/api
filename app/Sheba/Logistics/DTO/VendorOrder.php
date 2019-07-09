@@ -10,8 +10,8 @@ class VendorOrder
     private $billUrl;
     /** @var string */
     private $detailUrl;
-    private $code;
     private $id;
+    private $code;
 
     /**
      * @param mixed $code
@@ -22,7 +22,6 @@ class VendorOrder
         $this->code = $code;
         return $this;
     }
-
     /**
      * @param mixed $id
      * @return VendorOrder
@@ -32,7 +31,6 @@ class VendorOrder
         $this->id = $id;
         return $this;
     }
-
 
     /**
      * @param string $url

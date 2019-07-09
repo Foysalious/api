@@ -1,6 +1,7 @@
 <?php namespace Sheba\Business\Driver;
 
 use App\Models\Business;
+use App\Models\Driver;
 use App\Models\Member;
 use App\Models\Profile;
 use App\Repositories\FileRepository;
@@ -8,6 +9,7 @@ use Carbon\Carbon;
 use DB;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Repositories\Interfaces\DriverRepositoryInterface;
+use Sheba\Repositories\Interfaces\HiredDriverRepositoryInterface;
 use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
 use Sheba\Repositories\ProfileRepository;
 
@@ -33,10 +35,15 @@ class Creator
     private $businessMemberRepository;
     /** @var CreateValidator $validator */
     private $validator;
+    /** @var HiredDriverRepositoryInterface $hiredDriverRepository */
+    private $hiredDriverRepository;
+    /** @var Driver $driver */
+    private $driver;
 
     public function __construct(FileRepository $file_repository, ProfileRepository $profile_repository,
                                 DriverRepositoryInterface $driver_repo, MemberRepositoryInterface $member_repo,
-                                BusinessMemberRepositoryInterface $business_member_repo, CreateValidator $validator)
+                                BusinessMemberRepositoryInterface $business_member_repo, CreateValidator $validator,
+                                HiredDriverRepositoryInterface $hired_driver_repo)
     {
         $this->fileRepository = $file_repository;
         $this->profileRepository = $profile_repository;
@@ -44,6 +51,7 @@ class Creator
         $this->memberRepository = $member_repo;
         $this->businessMemberRepository = $business_member_repo;
         $this->validator = $validator;
+        $this->hiredDriverRepository = $hired_driver_repo;
     }
 
     /**
@@ -67,15 +75,16 @@ class Creator
         DB::transaction(function () {
             $this->profile = $this->profileRepository->checkExistingMobile($this->driverCreateRequest->getMobile());
             if (!$this->profile) $this->profile = $this->profileRepository->store($this->formatProfileSpecificData());
-            $driver = $this->profile->driver;
-            if (!$driver) {
-                $driver = $this->driverRepository->create($this->formatDriverSpecificData());
-                $this->profileRepository->update($this->profile, ['driver_id' => $driver->id]);
+            $this->driver = $this->profile->driver;
+            if (!$this->driver) {
+                $this->driver = $this->driverRepository->create($this->formatDriverSpecificData());
+                $this->profileRepository->update($this->profile, ['driver_id' => $this->driver->id]);
             }
             $this->member = $this->profile->member;
             if (!$this->member) $this->member = $this->memberRepository->create($this->formatMemberSpecificData());
             $this->business = $this->driverCreateRequest->getAdminMember()->businesses->first();
             $this->businessMemberRepository->create($this->formatBusinessSpecificData());
+            $this->attachWithVendor();
         });
     }
 
@@ -116,5 +125,20 @@ class Creator
             'type' => 'Admin',
             'join_date' => Carbon::now()
         ];
+    }
+
+    private function attachWithVendor()
+    {
+        $resource_mobile = $this->driverCreateRequest->getVendorMobile();
+        $profile = $this->profileRepository->checkExistingMobile($resource_mobile);
+        $partner = $profile->resource->firstPartner();
+        $this->hiredDriverRepository->create([
+            'hired_by_type' => get_class($this->business),
+            'hired_by_id' => $this->business->id,
+            'owner_type' => "App\Models\Partner",
+            'owner_id' => $partner->id,
+            'driver_id' => $this->driver->id,
+            'start' => Carbon::now()
+        ]);
     }
 }

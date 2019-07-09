@@ -2,6 +2,7 @@
 
 use Carbon\Carbon;
 use Sheba\Helpers\BasicGetter;
+use Sheba\Logistics\Literals\Statuses;
 
 class Order 
 {
@@ -20,6 +21,8 @@ class Order
     private $pickedUrl;
     private $failureUrl;
     private $collectionUrl;
+    private $payUrl;
+    private $riderNotFoundUrl;
     /** @var VendorOrder */
     private $vendorOrder;
     private $paidAmount;
@@ -27,6 +30,9 @@ class Order
     private $collectableAmount;
     private $discount;
     private $isDiscountInPercentage;
+    private $rider;
+    private $status;
+
     /**
      * @param int $id
      *
@@ -138,6 +144,24 @@ class Order
     }
 
     /**
+     * @return string
+     */
+    public function getRiderNotFoundUrl()
+    {
+        return $this->riderNotFoundUrl;
+    }
+
+    /**
+     * @param string $rider_not_found_url
+     * @return Order
+     */
+    public function setRiderNotFoundUrl($rider_not_found_url)
+    {
+        $this->riderNotFoundUrl = $rider_not_found_url;
+        return $this;
+    }
+
+    /**
      * @param VendorOrder $vendor_order
      *
      * @return Order
@@ -213,7 +237,37 @@ class Order
         $this->isDiscountInPercentage = $is_discount_in_percentage;
         return $this;
     }
-    
+
+    /**
+     * @param string $pay_url
+     * @return Order
+     */
+    public function setPayUrl($pay_url)
+    {
+        $this->payUrl = $pay_url;
+        return $this;
+    }
+
+    /**
+     * @param mixed $pay_url
+     * @return Order
+     */
+    public function setRider($rider)
+    {
+        $this->rider = $rider;
+        return $this;
+    }
+
+    /**
+     * @param string $status
+     * @return Order
+     */
+    public function setStatus($status)
+    {
+        $this->status = $status;
+        return $this;
+    }
+
     /**
      * @return array
      */
@@ -238,12 +292,29 @@ class Order
             'picked_url'            => $this->pickedUrl,
             'failure_url'           => $this->failureUrl,
             'collection_url'        => $this->collectionUrl,
+            'pay_url'               => $this->payUrl,
+            'rider_not_found_url'   => $this->riderNotFoundUrl,
             'vendor_order_detail'   => $this->vendorOrder->toJson(),
             'paid_amount'           => $this->paidAmount,
             'is_instant'            => $this->isInstant,
             'collectable_amount'    => $this->collectableAmount,
             'discount'              => $this->discount,
-            'is_percentage'         => $this->isDiscountInPercentage
+            'is_percentage'         => $this->isDiscountInPercentage,
+        ];
+    }
+
+    /**
+     * @return array
+     * @throws \Exception
+     */
+    public function formatForPartner()
+    {
+        return [
+            'status' => Statuses::getReadable($this->status),
+            'data' => [
+                'rider' => $this->rider,
+                'order_id' => $this->id
+            ]
         ];
     }
 }

@@ -40,19 +40,13 @@ abstract class LogisticNature
     public function setJob(Job $job)
     {
         $this->job                      = $job;
-        $this->partnerOrder             = $job->partnerOrder;
+        $this->partnerOrder             = $job->partnerOrder->isCalculated ? $job->partnerOrder : $job->partnerOrder->calculate(true);
         $order                          = $this->partnerOrder->order;
         $this->partner                  = $this->partnerOrder->partner;
         $this->customer                 = $order->customer->profile;
         $this->customerDeliveryAddress  = $order->deliveryAddress;
-        $this->deliveryCharge           = $this->getDeliveryCharge();
+        $this->deliveryCharge           = $job->category->getShebaLogisticsPrice();
         return $this;
-    }
-
-    protected function getDeliveryCharge()
-    {
-        $parcel_details  = $this->parcelRepo->findBySlug($this->job->category->logistic_parcel_type);
-        return $parcel_details['price'];
     }
 
     /**
@@ -79,7 +73,7 @@ abstract class LogisticNature
         return (new Point())->setName($this->partner->name)
                 ->setAddress($this->partner->address)
                 ->setImage($this->partner->logo)
-                ->setMobile($this->partner->mobile)
+                ->setMobile($this->partner->getContactNumber())
                 ->setCoordinate($this->partner->getCoordinate());
     }
     
@@ -111,17 +105,14 @@ abstract class LogisticNature
 
     public function getCollectableAmount()
     {
-        $this->partnerOrder = ($this->partnerOrder->isCalculated) ? $this->partnerOrder : $this->partnerOrder->calculate(true);
-
         return $this->partnerOrder->due > 0 ? $this->partnerOrder->due : 0;
     }
 
     public function getDiscount()
     {
-        if ($this->job->isFlatPercentageDiscount()) return ['amount' => $this->job->discount_percentage, 'is_percentage' => true];
-
-        $amount = ($this->job->originalDiscount > $this->job->totalPrice) ? $this->job->originalDiscount - $this->job->totalPrice : 0;
-        return ['amount' => $amount, 'is_percentage' => false];
+        return $this->job->isFlatPercentageDiscount() ?
+            ['amount' => $this->job->discount_percentage, 'is_percentage' => true] :
+            ['amount' => $this->job->getExtraDiscount(), 'is_percentage' => false];
     }
 
     public function getPaidAmount()

@@ -1,8 +1,8 @@
 <?php namespace Sheba\Logistics\LogisticsNatures;
 
 use App\Models\Job;
-use Sheba\Logistics\Natures;
-use Sheba\Logistics\OrderKeys;
+use Sheba\Logistics\Literals\Natures;
+use Sheba\Logistics\Literals\OrderKeys;
 
 class NatureFactory
 {

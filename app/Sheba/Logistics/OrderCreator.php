@@ -2,6 +2,7 @@
 
 use App\Models\Category;
 use App\Models\Job;
+use Exception;
 use Sheba\Logistics\Repository\OrderRepository;
 use Sheba\Logistics\LogisticsNatures\NatureFactory;
 use Sheba\Logistics\DTO\Order;
@@ -42,7 +43,7 @@ class OrderCreator
 
     /**
      * @return Order
-     * @throws \Exception
+     * @throws Exception
      */
     public function create()
     {
@@ -58,12 +59,15 @@ class OrderCreator
             ->setDiscountByArray($logistic_nature->getDiscount())
             ->setPaidAmount($logistic_nature->getPaidAmount())
             ->setCustomerProfileId($this->job->partnerOrder->order->customer->profile->id)
-            ->setVendorOrder((new VendorOrder())->setDetailUrl($detail_url)->setBillUrl($detail_url . '/bills')->setCode($this->job->partner_order->order->code())->setId($this->job->partner_order->order->id))
+            ->setVendorOrder((new VendorOrder())->setDetailUrl($detail_url)->setBillUrl($detail_url . '/bills')->setCode($this->job->partner_order->order->code())
+                ->setId($this->job->partner_order->order->id))
             ->setParcelType($this->category->logistic_parcel_type)
             ->setSuccessUrl($base_url . '/logistic-completed')
             ->setPickedUrl($base_url . '/logistic-picked')
             ->setFailureUrl($base_url . '/logistic-completed')
-            ->setCollectionUrl($base_url . '/collect-by-logistic');
+            ->setPayUrl($base_url . '/logistic-paid')
+            ->setCollectionUrl($base_url . '/collect-by-logistic')
+            ->setRiderNotFoundUrl($base_url.'/rider-not-found');
 
         $logistic_order = $this->repo->store($order->toArray());
 

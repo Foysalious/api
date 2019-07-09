@@ -147,10 +147,10 @@ class OperationController extends Controller
     public function saveCategories($partner, Request $request)
     {
         try {
-            $this->validate($request, ['categories' => "required|string", 'category_name' => 'required|string']);
+            $this->validate($request, ['categories' => "required|string", 'category_name' => 'string']);
             $manager_resource = $request->manager_resource;
             $by = ["created_by" => $manager_resource->id, "created_by_name" => "Resource - " . $manager_resource->profile->name];
-            $categories = json_decode($request->categories);
+            $categories = array_unique(json_decode($request->categories));
             $categories = Category::whereIn('id', $categories)->get();
             $categories->load('services');
             $partner = $request->partner;

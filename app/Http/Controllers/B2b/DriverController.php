@@ -1,11 +1,11 @@
 <?php namespace App\Http\Controllers\B2b;
 
-use App\Http\Validators\MobileNumberValidator;
 use App\Models\BusinessDepartment;
 use App\Models\BusinessMember;
 use App\Models\BusinessTrip;
 use App\Models\BusinessTripRequest;
 use App\Models\Driver;
+use App\Models\HiredDriver;
 use App\Models\Profile;
 use App\Models\Vehicle;
 
@@ -20,7 +20,6 @@ use Sheba\Business\Driver\Creator;
 use Sheba\Business\Scheduler\TripScheduler;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
-use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use App\Models\Member;
@@ -29,8 +28,6 @@ use DB;
 use Sheba\Repositories\ProfileRepository;
 use Throwable;
 use Excel;
-
-;
 
 class DriverController extends Controller
 {
@@ -77,12 +74,6 @@ class DriverController extends Controller
             $profile = $this->profileRepository->checkExistingMobile($request->mobile);
             if (!$profile) {
                 $driver = Driver::create($this->withCreateModificationField($driver_data));
-
-                if ($request->has('vehicle_id')) {
-                    $vehicle = Vehicle::find((int)$request->vehicle_id);
-                    $vehicle->current_driver_id = $driver->id;
-                    $vehicle->save();
-                }
                 $profile = $this->createDriverProfile($member, $driver, $request);
                 $new_member = $profile->member;
                 if (!$new_member) $new_member = $this->makeMember($profile);
@@ -103,11 +94,7 @@ class DriverController extends Controller
                     $driver = Driver::create($this->withCreateModificationField($driver_data));
                     $profile_data = ['driver_id' => $driver->id];
                     $profile->update($this->withCreateModificationField($profile_data));
-                    if ($request->has('vehicle_id')) {
-                        $vehicle = Vehicle::find((int)$request->vehicle_id);
-                        $vehicle->current_driver_id = $driver->id;
-                        $vehicle->save();
-                    }
+
                     $new_member = $profile->member;
                     if (!$new_member) $new_member = $this->makeMember($profile);
 
@@ -126,6 +113,25 @@ class DriverController extends Controller
                     return api_response($request, null, 403, ['message' => 'Driver already exits!']);
                 }
             }
+
+            if ($request->has('vehicle_id')) {
+                $vehicle = Vehicle::find((int)$request->vehicle_id);
+                $vehicle->current_driver_id = $driver->id;
+                $vehicle->save();
+            }
+
+            if ($request->has('vendor_id')) {
+                $data = [
+                    'hired_by_type' => get_class($business),
+                    'hired_by_id' => $business->id,
+                    'owner_type' => "App\Models\Partner",
+                    'owner_id' => $request->vendor_id,
+                    'driver_id' => $driver->id,
+                    'start' => Carbon::now()
+                ];
+                HiredDriver::create($this->withCreateModificationField($data));
+            }
+
             return api_response($request, $driver, 200, ['driver' => $driver->id]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -162,6 +168,7 @@ class DriverController extends Controller
 
             $data = Excel::selectSheets(BulkUploadExcel::SHEET)->load($file_path)->get();
 
+            $total_count = 0;
             $error_count = 0;
             $license_number_field = BulkUploadExcel::LICENSE_NUMBER_COLUMN_TITLE;
             $license_class = BulkUploadExcel::LICENSE_CLASS_COLUMN_TITLE;
@@ -176,15 +183,19 @@ class DriverController extends Controller
             $driver_address = BulkUploadExcel::ADDRESS_COLUMN_TITLE;
 
             $data->each(function ($value) use (
-                $create_request, $creator, $admin_member, &$error_count,
+                $create_request, $creator, $admin_member, &$error_count,  &$total_count,
                 $license_number_field, $license_class, $driver_mobile, $name, $date_of_birth, $blood_group,
                 $nid_number, $department, $vendor_mobile, $driver_role, $driver_address
             ) {
-
-                if (is_null($value->$name) && is_null($value->$driver_mobile)) return false;
+                if (is_null($value->$name) && is_null($value->$driver_mobile)) return;
+                $total_count++;
+                if (!($value->$name && $value->$driver_mobile)) {
+                    $error_count++;
+                    return;
+                }
 
                 /** @var CreateRequest $request */
-                $request = $create_request->setMobile($value->$driver_mobile)
+                $create_request = $create_request->setMobile($value->$driver_mobile)
                     ->setLicenseNumber($value->$license_number_field)
                     ->setLicenseClass($value->$license_class)
                     ->setName($value->$name)
@@ -197,16 +208,16 @@ class DriverController extends Controller
                     ->setAddress($value->$driver_address)
                     ->setAdminMember($admin_member);
 
-                $creator->setDriverCreateRequest($request);
+                $creator->setDriverCreateRequest($create_request);
                 if ($error = $creator->hasError()) {
                     $error_count++;
-                    return false;
+                } else {
+                    $creator->create();
                 }
-
-                $creator->create();
             });
 
-            return api_response($request, null, 200, ['message' => "Driver's Created Successfully, Error on: {$error_count} driver"]);
+            $response_message = ($total_count - $error_count) ." Driver's Created Successfully, Failed {$error_count} driver's";
+            return api_response($request, null, 200, ['message' => $response_message]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
@@ -355,6 +366,8 @@ class DriverController extends Controller
                 'dob' => Carbon::parse($profile->dob)->format('j M, Y'),
                 #'blood_group' => $profile->blood_group,
                 'nid_no' => $profile->nid_no,
+                "nid_image_front" => $profile->nid_image_front,
+                "nid_image_back" => $profile->nid_image_back
             ];
 
             return api_response($request, $general_info, 200, ['general_info' => $general_info]);
@@ -409,11 +422,15 @@ class DriverController extends Controller
             $vehicle = $driver->vehicle;
             $license_info = [
                 'type' => $vehicle ? $vehicle->basicInformations->type : null,
+                'vehicle_image' => $vehicle ? $vehicle->basicInformations->vehicle_image : null,
+                'vehicle_model_name' => $vehicle ? $vehicle->basicInformations->model_name : null,
+                'vehicle_license_number' => $vehicle ? $vehicle->registrationInformations->license_number : null,
                 #'company_name' => $vehicle ? $vehicle->basicInformations->company_name : null,
                 #'model_name' => $vehicle ? $vehicle->basicInformations->model_name : null,
                 #'model_year' => $vehicle ? $vehicle->basicInformations->model_year : null,
                 'department_id' => $profile->member->businessMember->role ? $profile->member->businessMember->role->business_department_id : null,
                 'license_number' => $driver->license_number,
+                'license_number_image' => $driver->license_number_image,
                 'license_class' => $driver->license_class,
                 'issue_authority' => 'BRTA',
             ];

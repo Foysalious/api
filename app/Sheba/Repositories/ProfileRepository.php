@@ -127,6 +127,9 @@ class ProfileRepository extends BaseRepository
         if (isset($data['driver_id'])) {
             $profile_data['driver_id'] = $data['driver_id'];
         }
+        if (isset($data['nid_no'])) {
+            $profile_data['nid_no'] = $data['nid_no'];
+        }
 
         return $profile_data;
     }

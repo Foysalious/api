@@ -523,3 +523,14 @@ if (!function_exists('ramp')) {
         return max($value, 0);
     }
 }
+
+if (!function_exists('decodeGuzzleResponse')) {
+    /**
+     * @param $response
+     * @return array
+     */
+    function decodeGuzzleResponse($response)
+    {
+        return json_decode($response->getBody()->getContents(), true);
+    }
+}

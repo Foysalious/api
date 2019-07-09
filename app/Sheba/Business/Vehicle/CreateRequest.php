@@ -1,5 +1,8 @@
 <?php namespace Sheba\Business\Vehicle;
 
+use Carbon\Carbon;
+use Sheba\Helpers\Formatters\BDMobileFormatter;
+
 class CreateRequest
 {
     private $vehicleType;
@@ -86,7 +89,7 @@ class CreateRequest
      */
     public function setModelYear($model_year)
     {
-        $this->modelYear = $model_year;
+        $this->modelYear = Carbon::parse($model_year);
         return $this;
     }
 
@@ -140,7 +143,7 @@ class CreateRequest
      */
     public function setVendorPhoneNumber($vendor_phone_number)
     {
-        $this->vendorPhoneNumber = $vendor_phone_number;
+        $this->vendorPhoneNumber = $vendor_phone_number ? BDMobileFormatter::format($vendor_phone_number) : null;
         return $this;
     }
 

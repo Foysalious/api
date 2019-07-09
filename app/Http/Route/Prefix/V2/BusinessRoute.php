@@ -10,8 +10,19 @@ class BusinessRoute
             $api->group(['prefix' => '{business}'], function ($api) {
                 $api->get('members', 'B2b\MemberController@index');
                 $api->post('/invite', 'B2b\BusinessesController@inviteVendors');
+
+                $api->group(['prefix' => 'vendors'], function ($api) {
+                    $api->get('/', 'B2b\BusinessesController@getVendorsList');
+                    $api->post('/', 'B2b\VendorController@store');
+                    $api->post('/bulk-store', 'B2b\VendorController@bulkStore');
+                    $api->group(['prefix' => '{vendor}'], function ($api) {
+                        $api->get('/info', 'B2b\BusinessesController@getVendorInfo');
+                    });
+                });
+
                 $api->get('/vendors', 'B2b\BusinessesController@getVendorsList');
                 $api->get('/vendors/{vendor}/info', 'B2b\BusinessesController@getVendorInfo');
+                $api->get('/vendors/{vendor}/resource-info', 'B2b\BusinessesController@getVendorAdminInfo');
                 $api->post('orders', 'B2b\OrderController@placeOrder');
                 $api->get('trips', 'B2b\TripSchedulerController@getList');
                 $api->post('promotions/add', 'B2b\OrderController@applyPromo');
@@ -136,6 +147,8 @@ class BusinessRoute
                         $api->get('/registration-info', 'B2b\VehiclesController@getVehicleRegistrationInfo');
                         $api->post('/registration-info', 'B2b\VehiclesController@updateVehicleRegistrationInfo');
                         $api->get('/specs', 'B2b\VehiclesController@getVehicleSpecs');
+                        $api->get('handlers', 'B2b\VehiclesController@getVehicleHandlers');
+                        $api->post('/specs', 'B2b\VehiclesController@updateVehicleSpecs');
                         $api->post('/specs', 'B2b\VehiclesController@updateVehicleSpecs');
                         $api->get('/recent-assignment', 'B2b\VehiclesController@getVehicleRecentAssignment');
                     });
