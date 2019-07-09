@@ -55,7 +55,7 @@ class VendorController extends Controller
 
             $creator->setVendorCreateRequest($create_request);
             if ($error = $creator->hasError()) {
-                return api_response($request, null, 400, ['message' => 'Error']);
+                return api_response($request, null, 400, $error);
             }
 
             $vendor = $creator->create();
