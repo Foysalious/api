@@ -313,7 +313,7 @@ class VehiclesController extends Controller
             } else {
                 list($offset, $limit) = calculatePagination($request);
                 $vehicles = Vehicle::with(['basicInformations', 'registrationInformations'])
-                    ->where(function($q) use ($business) {
+                    ->where(function ($q) use ($business) {
                         $hired_vehicles = $business->hiredVehicles()->with('vehicle')->active()->get()->pluck('vehicle.id');
                         $q->where('owner_id', $business->id)->orWhereIn('id', $hired_vehicles->toArray());
                     })->select('id', 'status', 'current_driver_id', 'business_department_id')
@@ -488,11 +488,14 @@ class VehiclesController extends Controller
                 'license_number' => $registration_information->license_number,
                 'license_number_image' => $registration_information->license_number_image,
                 'tax_token_number' => $registration_information->tax_token_number,
+                'tax_token_image' => $registration_information->tax_token_image,
                 'registration_number' => $basic_information->license_number,
                 'registration_number_image' => $basic_information->license_number_image,
                 'fitness_start_date' => Carbon::parse($registration_information->fitness_start_date)->format('Y-m-d'),
                 'fitness_end_date' => Carbon::parse($registration_information->fitness_end_date)->format('Y-m-d'),
+                'fitness_paper_image' => $registration_information->fitness_paper_image,
                 'insurance_date' => Carbon::parse($registration_information->insurance_date)->format('Y-m-d'),
+                'insurance_paper_image' => $registration_information->insurance_paper_image,
             ];
             return api_response($request, $registration_info, 200, ['registration_info' => $registration_info]);
         } catch (Throwable $e) {
