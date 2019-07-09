@@ -514,6 +514,18 @@ if (!function_exists('getTradeLicenceImagesFolder')) {
     }
 }
 
+if (!function_exists('getTradeLicenceDocumentsFolder')) {
+
+    function getTradeLicenceDocumentsFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url)
+            $url = env('S3_URL');
+
+        return $url . 'partner/trade_license/trade_';
+    }
+}
+
 if (!function_exists('getTradeLicenseDefaultImage')) {
 
     /**
@@ -976,5 +988,17 @@ if (!function_exists('getVatRegistrationImagesFolder')) {
             $url = env('S3_URL');
 
         return $url . 'images/partner/vat_registration/vat_';
+    }
+}
+
+if (!function_exists('getVatRegistrationDocumentsFolder')) {
+
+    function getVatRegistrationDocumentsFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url)
+            $url = env('S3_URL');
+
+        return $url . 'partner/vat_registration/vat_';
     }
 }
