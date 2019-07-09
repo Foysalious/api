@@ -1,11 +1,14 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Models\Attachment;
 use App\Models\BusinessDepartment;
 use App\Models\BusinessRole;
 use App\Models\BusinessSmsTemplate;
+use App\Models\InspectionItemIssue;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessMember;
+use Sheba\Attachments\FilesAttachment;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use App\Models\Business;
@@ -16,6 +19,7 @@ use DB;
 class MemberController extends Controller
 {
     use ModificationFields;
+    use FilesAttachment;
 
     public function updateBusinessInfo($member, Request $request)
     {
@@ -165,6 +169,64 @@ class MemberController extends Controller
         }
     }
 
+    public function storeAttachment($member, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'file' => 'required'
+            ]);
+
+            $business_member = $request->business_member;
+            $member = $request->member;
+            $this->setModifier($member);
+            $model = "App\\Models\\" . ucfirst(camel_case($request->type));
+            $model = $model::find((int)$request->type_id);
+            if (!$request->hasFile('file'))
+                return redirect()->back();
+            $data = $this->storeAttachmentToCDN($request->file('file'));
+            $attachment = $model->attachments()->save(new Attachment($this->withBothModificationFields($data)));
+            return api_response($request, $attachment, 200, ['attachment' => $attachment->file]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getAttachments($member, Request $request)
+    {
+        try {
+            $business_member = $request->business_member;
+            $member = $request->member;
+            $model = "App\\Models\\" . ucfirst(camel_case($request->type));
+            $model = $model::find((int)$request->type_id);
+            if (!$model) return api_response($request, null, 404);
+            list($offset, $limit) = calculatePagination($request);
+            $attaches = Attachment::where('attachable_type', get_class($model))->where('attachable_id', $model->id)
+                ->select('id', 'title', 'file', 'file_type')->orderBy('id', 'DESC')->skip($offset)->limit($limit)->get();
+            $attach_lists = [];
+            foreach ($attaches as $attach) {
+                array_push($attach_lists, [
+                    'id' => $attach->id,
+                    'title' => $attach->title,
+                    'file' => $attach->file,
+                    'file_type' => $attach->file_type,
+                ]);
+            }
+
+            if (count($attach_lists) > 0) return api_response($request, $attach_lists, 200, ['attach_lists' => $attach_lists]);
+            else  return api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     private function tagDepartment(Business $business)
     {
         $departments = ['IT', 'FINANCE', 'HR', 'ADMIN', 'MARKETING', 'OPERATION', 'CXO'];
@@ -176,6 +238,8 @@ class MemberController extends Controller
         }
     }
 
+    /*$model = "App\\Models\\" . $order['user_type'];
+    return $model::find($order['user_id'])->profile->name;*/
 
     private function tagRole(Business $business)
     {

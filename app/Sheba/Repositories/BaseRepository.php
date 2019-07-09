@@ -62,7 +62,6 @@ class BaseRepository implements BaseRepositoryInterface
         return $this->model->find($id);
     }
 
-
     /**
      * @param $column_name
      * @param $value
@@ -136,7 +135,6 @@ class BaseRepository implements BaseRepositoryInterface
     {
         return $this->model->get();
     }
-
 
     /**
      * @param Model $model

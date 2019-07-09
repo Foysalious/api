@@ -96,4 +96,8 @@ class Business extends Model
         return $this->morphMany(Procurement::class, 'owner');
     }
 
+    public function hiredVehicles()
+    {
+        return $this->morphMany(HiredVehicle::class, 'hired_by');
+    }
 }

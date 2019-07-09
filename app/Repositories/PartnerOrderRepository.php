@@ -1,18 +1,22 @@
 <?php namespace App\Repositories;
 
+use App\Models\Job;
 use App\Models\PartnerOrder;
 use Carbon\Carbon;
-use Sheba\Jobs\DeliveryStatuses;
 use Sheba\Jobs\JobStatuses;
-use Sheba\Jobs\LogisticJobStatusCalculator;
+use Sheba\Logistics\OrderGetter;
 
 class PartnerOrderRepository
 {
+    /** @var PartnerJobRepository  */
     private $partnerJobRepository;
+    /** @var OrderGetter */
+    private $logisticOrderGetter;
 
     public function __construct()
     {
         $this->partnerJobRepository = new PartnerJobRepository();
+        $this->logisticOrderGetter = app(OrderGetter::class);
     }
 
     public function getOrderDetails($request)
@@ -40,7 +44,7 @@ class PartnerOrderRepository
         $partner_order['can_serve'] = $partner_order->order->isServeable();
         $partner_order['can_pay'] = $partner_order->order->isPayable();
 
-        $jobs = $partner_order->jobs->each(function ($job) use ($partner_order) {
+        $jobs = $partner_order->jobs->each(function (Job $job) use ($partner_order) {
             $job['partner_order'] = $partner_order;
             $job = $this->partnerJobRepository->getJobInfo($job);
             $services = [];
@@ -88,9 +92,8 @@ class PartnerOrderRepository
             $job['estimated_time'] = $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_time : null;
 
             array_forget($job, ['partner_order', 'carRentalJobDetail']);
-            if($job->first_logistic_order_id || $job->last_logistic_order_id) {
-                $status = new LogisticJobStatusCalculator($job);
-                $job['logistic'] = $status->calculate()->get();
+            if($job->isLogisticCreated()) {
+                $job['logistic'] = $job->getCurrentLogisticOrder()->formatForPartner();
             }
 
         })->sortByDesc('id')->values()->all();
@@ -198,12 +201,12 @@ class PartnerOrderRepository
         }]);
         $partner_orders = $this->filterEshopOrders($partner->partner_orders, $for);
 
-        return array_slice($partner_orders->each(function ($partner_order, $key) {
+        return array_slice($partner_orders->each(function ($partner_order) {
             $partner_order['version'] = $partner_order->is_v2 ? 'v2' : 'v1';
+            /** @var Job $job */
             $job = $partner_order->jobs[0];
-            if($job->first_logistic_order_id || $job->last_logistic_order_id) {
-                $status = new LogisticJobStatusCalculator($job);
-                $partner_order['logistic'] = $status->calculate()->get();
+            if($job->isLogisticCreated()) {
+                $partner_order['logistic'] = $job->getCurrentLogisticOrder()->formatForPartner();
             }
             $partner_order['category_name'] = $partner_order->jobs[0]->category ? $partner_order->jobs[0]->category->name : null;
             removeRelationsAndFields($this->getInfo($partner_order));

@@ -31,6 +31,8 @@ class TripSchedulerController extends Controller
                     });
                 });
             }
+            $business_member = $request->business_member;
+            if (!$business_member->is_super) $trips = $trips->where('member_id', $business_member->member_id);
             $trips = $trips->get();
             $filter = $request->filter;
             $final = [];
@@ -119,7 +121,8 @@ class TripSchedulerController extends Controller
                 'name' => $trip->vehicle->basicInformation->model_name,
                 'status' => ucfirst($trip->vehicle->status),
                 'department' => $trip->vehicle->businessDepartment->name,
-                'type' => $trip->vehicle->basicInformation->readable_type
+                'type' => $trip->vehicle->basicInformation->readable_type,
+                'vehicle_image' => $trip->vehicle->basicInformation->vehicle_image
             ],
         ];
     }

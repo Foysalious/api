@@ -17,7 +17,6 @@ class LogisticJobStatusCalculator
         'Delivery_Cancelled' => 'Cancelled'
     ];
     private $status;
-    private $rider;
     private $logisticOrderRepo;
     private $logisticOrder;
 
@@ -29,10 +28,8 @@ class LogisticJobStatusCalculator
 
     private function getLogisticOrderDetails()
     {
-        $order_id = $this->job->last_logistic_order_id ? $this->job->last_logistic_order_id : $this->job->first_logistic_order_id;
-//        dump($order_id);
-        if($order_id)
-            $this->logisticOrder = $this->logisticOrderRepo->find($order_id);
+        $order_id = $this->job->last_logistic_order_id ?: $this->job->first_logistic_order_id;
+        if($order_id) $this->logisticOrder = $this->logisticOrderRepo->find($order_id);
     }
 
     public function hasLogisticOrder()

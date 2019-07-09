@@ -33,14 +33,14 @@ class OneTimeInspectionCreator extends Creator
 
     protected function makeInspectionData()
     {
-        array_push($this->inspectionData, [
-            'member_id' => $this->data['member_id'],
+        $this->inspectionData = array_merge($this->inspectionData, [
+            'member_id' => $this->data['inspector_id'],
             'vehicle_id' => $this->data['vehicle_id'],
             'business_id' => $this->business->id,
             'is_published' => 1,
             'form_template_id' => $this->data['form_template_id'],
             'start_date' => Carbon::parse($this->data['schedule_type_value'] . ' ' . $this->data['schedule_time']),
-            'type' => $this->data['schedule_type'],
+            'type' => 'one_time',
         ]);
     }
 }

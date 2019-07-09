@@ -5,10 +5,18 @@ use App\Models\BusinessMember;
 use App\Models\BusinessTrip;
 use App\Models\BusinessTripRequest;
 use App\Models\Driver;
+use App\Models\HiredDriver;
 use App\Models\Profile;
+use App\Models\Vehicle;
+
 use App\Repositories\FileRepository;
+
+use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
+use Sheba\Business\Driver\BulkUploadExcel;
+use Sheba\Business\Driver\CreateRequest;
+use Sheba\Business\Driver\Creator;
 use Sheba\Business\Scheduler\TripScheduler;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
@@ -18,6 +26,8 @@ use App\Models\Member;
 use Carbon\Carbon;
 use DB;
 use Sheba\Repositories\ProfileRepository;
+use Throwable;
+use Excel;
 
 class DriverController extends Controller
 {
@@ -38,37 +48,35 @@ class DriverController extends Controller
         try {
             $this->validate($request, [
                 'license_number' => 'required',
-                'license_number_image' => 'required|mimes:jpeg,png',
+                'license_number_image' => 'sometimes|required|mimes:jpeg,png',
                 'license_class' => 'required',
                 'years_of_experience' => 'integer',
-
                 'name' => 'required|string',
                 'mobile' => 'required|string|mobile:bd',
                 'address' => 'required|string',
                 'dob' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
                 'nid_no' => 'required|integer',
-                'pro_pic' => 'required|mimes:jpeg,png',
+                'pro_pic' => 'sometimes|required|mimes:jpeg,png',
                 'role_id' => 'required|integer',
+                'nid_image_front' => 'sometimes|required|mimes:jpeg,png',
+                'nid_image_back' => 'sometimes|required|mimes:jpeg,png',
             ]);
-
-            $member = Member::find($member);
+            $member = $request->member;
             $this->setModifier($member);
 
             $driver_data = [
                 'status' => 'active',
                 'license_number' => $request->license_number,
-                'license_number_image' => $this->updateDriversDocuments('license_number_image', $request->file('license_number_image')),
+                'license_number_image' => $request->hasFile('license_number_image') ? $this->updateDriversDocuments('license_number_image', $request->file('license_number_image')) : '',
                 'license_class' => $request->license_class,
                 'years_of_experience' => $request->years_of_experience,
             ];
-
             $profile = $this->profileRepository->checkExistingMobile($request->mobile);
             if (!$profile) {
                 $driver = Driver::create($this->withCreateModificationField($driver_data));
                 $profile = $this->createDriverProfile($member, $driver, $request);
                 $new_member = $profile->member;
                 if (!$new_member) $new_member = $this->makeMember($profile);
-#
                 $business = $member->businesses->first();
                 #$business_department = BusinessDepartment::find((int)$request->department_id);
                 #$business_role = $business_department->businessRoles()->where('name', 'like', '%Driver%')->first();
@@ -84,9 +92,7 @@ class DriverController extends Controller
                 $driver = $profile->driver;
                 if (!$driver) {
                     $driver = Driver::create($this->withCreateModificationField($driver_data));
-                    $profile_data = [
-                        'driver_id' => $driver->id,
-                    ];
+                    $profile_data = ['driver_id' => $driver->id];
                     $profile->update($this->withCreateModificationField($profile_data));
 
                     $new_member = $profile->member;
@@ -108,12 +114,114 @@ class DriverController extends Controller
                 }
             }
 
-            return api_response($request, $driver, 200, ['driver' => $driver->id]);
+            if ($request->has('vehicle_id')) {
+                $vehicle = Vehicle::find((int)$request->vehicle_id);
+                $vehicle->current_driver_id = $driver->id;
+                $vehicle->save();
+            }
 
+            if ($request->has('vendor_id')) {
+                $data = [
+                    'hired_by_type' => get_class($business),
+                    'hired_by_id' => $business->id,
+                    'owner_type' => "App\Models\Partner",
+                    'owner_id' => $request->vendor_id,
+                    'driver_id' => $driver->id,
+                    'start' => Carbon::now()
+                ];
+                HiredDriver::create($this->withCreateModificationField($data));
+            }
+
+            return api_response($request, $driver, 200, ['driver' => $driver->id]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @param CreateRequest $create_request
+     * @param Creator $creator
+     * @return JsonResponse
+     */
+    public function bulkStore(Request $request, CreateRequest $create_request, Creator $creator)
+    {
+        try {
+            $this->validate($request, ['file' => 'required|file']);
+
+            $valid_extensions = ["xls", "xlsx", "xlm", "xla", "xlc", "xlt", "xlw"];
+            $extension = $request->file('file')->getClientOriginalExtension();
+
+            if (!in_array($extension, $valid_extensions)) {
+                return api_response($request, null, 400, ['message' => 'File type not support']);
+            }
+
+            $admin_member = $request->member;
+            $this->setModifier($admin_member);
+
+            $file = Excel::selectSheets(BulkUploadExcel::SHEET)->load($request->file)->save();
+            $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
+
+            $data = Excel::selectSheets(BulkUploadExcel::SHEET)->load($file_path)->get();
+
+            $total_count = 0;
+            $error_count = 0;
+            $license_number_field = BulkUploadExcel::LICENSE_NUMBER_COLUMN_TITLE;
+            $license_class = BulkUploadExcel::LICENSE_CLASS_COLUMN_TITLE;
+            $driver_mobile = BulkUploadExcel::PHONE_NUMBER_COLUMN_TITLE;
+            $name = BulkUploadExcel::DRIVER_NAME_COLUMN_TITLE;
+            $date_of_birth = BulkUploadExcel::DATE_OF_BIRTH_COLUMN_TITLE;
+            $blood_group = BulkUploadExcel::BLOOD_GROUP_COLUMN_TITLE;
+            $nid_number = BulkUploadExcel::NID_NUMBER_COLUMN_TITLE;
+            $department = BulkUploadExcel::DRIVER_DEPARTMENT_COLUMN_TITLE;
+            $vendor_mobile = BulkUploadExcel::VENDOR_PHONE_NUMBER_COLUMN_TITLE;
+            $driver_role = BulkUploadExcel::DRIVER_ROLE_COLUMN_TITLE;
+            $driver_address = BulkUploadExcel::ADDRESS_COLUMN_TITLE;
+
+            $data->each(function ($value) use (
+                $create_request, $creator, $admin_member, &$error_count,  &$total_count,
+                $license_number_field, $license_class, $driver_mobile, $name, $date_of_birth, $blood_group,
+                $nid_number, $department, $vendor_mobile, $driver_role, $driver_address
+            ) {
+                if (is_null($value->$name) && is_null($value->$driver_mobile)) return;
+                $total_count++;
+                if (!($value->$name && $value->$driver_mobile)) {
+                    $error_count++;
+                    return;
+                }
+
+                /** @var CreateRequest $request */
+                $create_request = $create_request->setMobile($value->$driver_mobile)
+                    ->setLicenseNumber($value->$license_number_field)
+                    ->setLicenseClass($value->$license_class)
+                    ->setName($value->$name)
+                    ->setDateOfBirth($value->$date_of_birth)
+                    ->setBloodGroup($value->$blood_group)
+                    ->setNidNumber($value->$nid_number)
+                    ->setDepartment($value->$department)
+                    ->setVendorMobile($value->$vendor_mobile)
+                    ->setRole($value->$driver_role)
+                    ->setAddress($value->$driver_address)
+                    ->setAdminMember($admin_member);
+
+                $creator->setDriverCreateRequest($create_request);
+                if ($error = $creator->hasError()) {
+                    $error_count++;
+                } else {
+                    $creator->create();
+                }
+            });
+
+            $response_message = ($total_count - $error_count) ." Driver's Created Successfully, Failed {$error_count} driver's";
+            return api_response($request, null, 200, ['message' => $response_message]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -132,7 +240,9 @@ class DriverController extends Controller
             #'gender' => $request->gender,
             'dob' => $request->dob,
             'nid_no' => $request->nid_no,
-            'pro_pic' => $this->updateProfilePicture('pro_pic', $request->file('pro_pic')),
+            'nid_image_front' => $request->hasFile('nid_image_front') ? $this->updateProfilesPicture('nid_image_front', $request->file('nid_image_front')) : '',
+            'nid_image_back' => $request->hasFile('nid_image_back') ? $this->updateProfilesPicture('nid_image_back', $request->file('nid_image_back')) : '',
+            'pro_pic' => $request->hasFile('pro_pic') ? $this->updateProfilesPicture('pro_pic', $request->file('pro_pic')) : '',
         ];
 
         return Profile::create($this->withCreateModificationField($profile_data));
@@ -174,7 +284,7 @@ class DriverController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -232,7 +342,7 @@ class DriverController extends Controller
             }
             if (count($driver_lists) > 0) return api_response($request, $driver_lists, 200, ['driver_lists' => $driver_lists]);
             else  return api_response($request, null, 404);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -256,10 +366,12 @@ class DriverController extends Controller
                 'dob' => Carbon::parse($profile->dob)->format('j M, Y'),
                 #'blood_group' => $profile->blood_group,
                 'nid_no' => $profile->nid_no,
+                "nid_image_front" => $profile->nid_image_front,
+                "nid_image_back" => $profile->nid_image_back
             ];
 
             return api_response($request, $general_info, 200, ['general_info' => $general_info]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -292,7 +404,7 @@ class DriverController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -310,17 +422,21 @@ class DriverController extends Controller
             $vehicle = $driver->vehicle;
             $license_info = [
                 'type' => $vehicle ? $vehicle->basicInformations->type : null,
+                'vehicle_image' => $vehicle ? $vehicle->basicInformations->vehicle_image : null,
+                'vehicle_model_name' => $vehicle ? $vehicle->basicInformations->model_name : null,
+                'vehicle_license_number' => $vehicle ? $vehicle->registrationInformations->license_number : null,
                 #'company_name' => $vehicle ? $vehicle->basicInformations->company_name : null,
                 #'model_name' => $vehicle ? $vehicle->basicInformations->model_name : null,
                 #'model_year' => $vehicle ? $vehicle->basicInformations->model_year : null,
                 'department_id' => $profile->member->businessMember->role ? $profile->member->businessMember->role->business_department_id : null,
                 'license_number' => $driver->license_number,
+                'license_number_image' => $driver->license_number_image,
                 'license_class' => $driver->license_class,
                 'issue_authority' => 'BRTA',
             ];
 
             return api_response($request, $license_info, 200, ['license_info' => $license_info]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -371,7 +487,7 @@ class DriverController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -394,7 +510,7 @@ class DriverController extends Controller
             ];
 
             return api_response($request, $contract_info, 200, ['contract_info' => $contract_info]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -435,7 +551,7 @@ class DriverController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -461,7 +577,7 @@ class DriverController extends Controller
                 'additional_info' => $driver->additional_info,
             ];
             return api_response($request, $license_info, 200, ['license_info' => $license_info]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -501,7 +617,7 @@ class DriverController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -523,7 +639,7 @@ class DriverController extends Controller
             ];
 
             return api_response($request, $documents, 200, ['documents' => $documents]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -553,7 +669,7 @@ class DriverController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -587,7 +703,7 @@ class DriverController extends Controller
                 array_push($recent_assignment, $vehicle);
             }
             return api_response($request, $recent_assignment, 200, ['recent_assignment' => $recent_assignment]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -606,11 +722,11 @@ class DriverController extends Controller
         return $picture_link;
     }
 
-    private function updateProfilePicture($image_for, $photo)
+    private function updateProfilesPicture($image_for, $photo)
     {
         $profile = new Profile();
 
-        if (basename($profile->image_for) != 'default.jpg') {
+        if (!empty($profile->{$image_for}) && basename($profile->{$image_for}) != 'default.jpg') {
             $filename = substr($profile->{$image_for}, strlen(config('sheba.s3_url')));
             $this->deleteOldImage($filename);
         }
@@ -634,5 +750,4 @@ class DriverController extends Controller
         $old_image = substr($filename, strlen(config('sheba.s3_url')));
         $this->fileRepository->deleteFileFromCDN($old_image);
     }
-
 }

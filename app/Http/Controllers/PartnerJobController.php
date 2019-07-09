@@ -13,8 +13,6 @@ use DB;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Sheba\Jobs\DeliveryStatuses;
-use Sheba\Jobs\LogisticJobStatusCalculator;
 use Sheba\PushNotificationHandler;
 
 class PartnerJobController extends Controller
@@ -49,9 +47,9 @@ class PartnerJobController extends Controller
             $jobs_with_resource = collect();
             foreach ($partner->partnerOrders as $partnerOrder) {
                 foreach ($partnerOrder->jobs as $job) {
-                    if($job->first_logistic_order_id || $job->last_logistic_order_id) {
-                        $status = new LogisticJobStatusCalculator($job);
-                        $job['logistic'] = $status->calculate()->get();
+                    /** @var Job $job */
+                    if($job->isLogisticCreated()) {
+                        $job['logistic'] = $job->getCurrentLogisticOrder()->formatForPartner();
                     }
                     if ($job->cancelRequests->where('status', 'Pending')->count() > 0) continue;
                     $job['location'] = $partnerOrder->order->location->name;

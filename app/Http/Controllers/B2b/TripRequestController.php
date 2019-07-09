@@ -37,7 +37,13 @@ class TripRequestController extends Controller
                 if ($status) $q->where('status', $status);
                 if ($car_type) $q->where('vehicle_type', $car_type);
             }]);
-            $business_trip_requests = $business->businessTripRequests;
+            if (!$business_member->is_super) {
+                $business_trip_requests = $business->businessTripRequests()
+                    ->where('member_id', $business_member->member_id)
+                    ->get();
+            } else {
+                $business_trip_requests = $business->businessTripRequests;
+            }
             foreach ($business_trip_requests as $business_trip_request) {
                 array_push($list, [
                     'id' => $business_trip_request->id,
@@ -224,7 +230,7 @@ class TripRequestController extends Controller
             $this->validate($request, ['status' => 'required|string|in:accept,reject']);
             if ($request->has('trip_request_id')) {
                 $business_trip_request = BusinessTripRequest::find((int)$request->trip_request_id);
-                if ($business_trip_request->status != 'pending' || !$will_auto_assign) return api_response($request, null, 403);
+                if ($business_trip_request->status != 'pending' && !$will_auto_assign) return api_response($request, null, 403);
             } else {
                 $business_trip_request = $this->storeTripRequest($request);
             }
@@ -266,6 +272,9 @@ class TripRequestController extends Controller
                 $drivers = $vehicleScheduler->getFreeDrivers();
                 if ($vehicles->count() > 0) $vehicle = $vehicles->random(1);
                 if ($drivers->count() > 0) $driver = $drivers->random(1);
+                if (!(isset($vehicle) && isset($driver))) {
+                    return api_response($request, null, 500, ["message" => "There is no free vehicle or driver"]);
+                }
                 $business_trip_request->vehicle_id = $vehicle;
                 $business_trip_request->driver_id = $driver;
                 $business_trip_request->status = 'accepted';

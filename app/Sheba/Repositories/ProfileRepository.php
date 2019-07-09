@@ -20,7 +20,6 @@ class ProfileRepository extends BaseRepository
         return Profile::create($this->withBothModificationFields($profile_data));
     }
 
-
     /**
      * @param Model $profile
      * @param array $data
@@ -125,6 +124,13 @@ class ProfileRepository extends BaseRepository
         if (isset($data['mobile'])) {
             $profile_data['mobile'] = formatMobile($data['mobile']);
         }
+        if (isset($data['driver_id'])) {
+            $profile_data['driver_id'] = $data['driver_id'];
+        }
+        if (isset($data['nid_no'])) {
+            $profile_data['nid_no'] = $data['nid_no'];
+        }
+
         return $profile_data;
     }
 }

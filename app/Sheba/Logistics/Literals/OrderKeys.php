@@ -1,4 +1,4 @@
-<?php namespace Sheba\Logistics;
+<?php namespace Sheba\Logistics\Literals;
 
 use Sheba\Helpers\ConstGetter;
 
