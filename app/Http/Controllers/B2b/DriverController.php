@@ -187,6 +187,7 @@ class DriverController extends Controller
                 $license_number_field, $license_class, $driver_mobile, $name, $date_of_birth, $blood_group,
                 $nid_number, $department, $vendor_mobile, $driver_role, $driver_address
             ) {
+                if (is_null($value->$name) && is_null($value->$driver_mobile)) return;
                 $total_count++;
                 if (!($value->$name && $value->$driver_mobile)) {
                     $error_count++;

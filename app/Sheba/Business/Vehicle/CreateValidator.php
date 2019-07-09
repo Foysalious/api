@@ -1,5 +1,6 @@
 <?php namespace Sheba\Business\Vehicle;
 
+use App\Models\VehicleRegistrationInformation;
 use Sheba\Repositories\ProfileRepository;
 
 class CreateValidator
@@ -22,6 +23,8 @@ class CreateValidator
     public function hasError()
     {
         if (!$this->isVendorExist()) return ['code' => 421, 'msg' => 'Vendor not exits!'];
+        if ($this->isLicenseNumberExist()) return ['code' => 421, 'msg' => 'License number already exist!'];
+        if ($this->isTaxTokenNumberExist()) return ['code' => 421, 'msg' => 'Tax Token number already exist!'];
     }
 
     private function isVendorExist()
@@ -35,5 +38,15 @@ class CreateValidator
         }
 
         return false;
+    }
+
+    private function isLicenseNumberExist()
+    {
+        return VehicleRegistrationInformation::where('license_number', $this->vehicleCreateRequest->getLicenseNumber())->first();
+    }
+
+    private function isTaxTokenNumberExist()
+    {
+        return VehicleRegistrationInformation::where('tax_token_number', $this->vehicleCreateRequest->getTaxTokenNumber())->first();
     }
 }

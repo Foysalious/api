@@ -186,6 +186,7 @@ class VehiclesController extends Controller
                 $seat_capacity, $vendor_phone_number, $license_number, $tax_token_number, $fitness_validity_start,
                 $fitness_validity_end, $insurance_valid_till, $transmission_type, $business
             ) {
+                if (is_null($value->$vehicle_type) && is_null($value->$vehicle_brand_name)) return;
                 $total_count++;
                 if (!($value->$vehicle_type && $value->$vehicle_brand_name && $value->$vehicle_department)) {
                     $error_count++;
@@ -217,7 +218,8 @@ class VehiclesController extends Controller
                 }
             });
 
-            return api_response($request, null, 200, ['message' => "Driver's Created Successfully, Error on: {$error_count} driver"]);
+            $response_message = ($total_count - $error_count) ." Vehicle's Created Successfully, Failed {$error_count} vehicle's";
+            return api_response($request, null, 200, ['message' => $response_message]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
