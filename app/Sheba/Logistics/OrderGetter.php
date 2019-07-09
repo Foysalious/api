@@ -28,7 +28,7 @@ class OrderGetter
     private function getLogisticOrderDetails()
     {
         $order_id = $this->job->last_logistic_order_id ?: $this->job->first_logistic_order_id;
-        if($order_id) return null;
+        if(!$order_id) return null;
         return $this->repo->find($order_id);
     }
 

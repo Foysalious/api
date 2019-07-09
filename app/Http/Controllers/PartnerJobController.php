@@ -13,7 +13,6 @@ use DB;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Sheba\Logistics\OrderGetter;
 use Sheba\PushNotificationHandler;
 
 class PartnerJobController extends Controller
@@ -27,7 +26,7 @@ class PartnerJobController extends Controller
         $this->jobStatuses = constants('JOB_STATUSES');
     }
 
-    public function index($partner, Request $request, OrderGetter $logistic_order_getter)
+    public function index($partner, Request $request)
     {
         try {
             $this->validate($request, [
@@ -48,8 +47,9 @@ class PartnerJobController extends Controller
             $jobs_with_resource = collect();
             foreach ($partner->partnerOrders as $partnerOrder) {
                 foreach ($partnerOrder->jobs as $job) {
-                    if($job->first_logistic_order_id || $job->last_logistic_order_id) {
-                        $job['logistic'] = $logistic_order_getter->setJob($job)->get()->formatForPartner();
+                    /** @var Job $job */
+                    if($job->isLogisticCreated()) {
+                        $job['logistic'] = $job->getCurrentLogisticOrder()->formatForPartner();
                     }
                     if ($job->cancelRequests->where('status', 'Pending')->count() > 0) continue;
                     $job['location'] = $partnerOrder->order->location->name;
