@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class HiredVehicle extends Model
@@ -19,6 +20,7 @@ class HiredVehicle extends Model
      */
     public function scopeActive($query)
     {
-        return $query->whereRaw('((NOW() BETWEEN start_date AND end_date) OR (NOW() >= start_date AND end_date IS NULL))');
+        $now = Carbon::now()->toDateTimeString();
+        return $query->whereRaw("(($now BETWEEN start AND end) OR ($now >= start AND end IS NULL))");
     }
 }
