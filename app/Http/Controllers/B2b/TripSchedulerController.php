@@ -121,7 +121,8 @@ class TripSchedulerController extends Controller
                 'name' => $trip->vehicle->basicInformation->model_name,
                 'status' => ucfirst($trip->vehicle->status),
                 'department' => $trip->vehicle->businessDepartment->name,
-                'type' => $trip->vehicle->basicInformation->readable_type
+                'type' => $trip->vehicle->basicInformation->readable_type,
+                'vehicle_image' => $trip->vehicle->basicInformation->vehicle_image
             ],
         ];
     }
