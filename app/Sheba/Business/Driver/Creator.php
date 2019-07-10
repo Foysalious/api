@@ -84,7 +84,7 @@ class Creator
             if (!$this->member) $this->member = $this->memberRepository->create($this->formatMemberSpecificData());
             $this->business = $this->driverCreateRequest->getAdminMember()->businesses->first();
             $this->businessMemberRepository->create($this->formatBusinessSpecificData());
-            $this->attachWithVendor();
+            if ($this->driverCreateRequest->getVendorMobile()) $this->attachWithVendor();
         });
     }
 

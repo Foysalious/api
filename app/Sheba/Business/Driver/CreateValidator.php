@@ -45,6 +45,8 @@ class CreateValidator
 
     private function isVendorExist()
     {
+        if (!$this->driverCreateRequest->getVendorMobile()) return true;
+
         $resource_mobile = $this->driverCreateRequest->getVendorMobile();
         $profile = $this->profileRepository->checkExistingMobile($resource_mobile);
         if ($profile && $profile->resource && $profile->resource->firstPartner())
