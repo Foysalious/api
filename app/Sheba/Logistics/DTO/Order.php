@@ -332,7 +332,7 @@ class Order
     public function formatForPartner()
     {
         return [
-            'status' => Statuses::getReadable($this->status),
+            'status' => $this->getReadableStatus(),
             'original_status' => $this->status,
             'data' => [
                 'rider' => $this->rider,

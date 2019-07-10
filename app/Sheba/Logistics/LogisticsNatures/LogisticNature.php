@@ -94,8 +94,17 @@ abstract class LogisticNature
      */
     public function getPickupTime()
     {
-        return Carbon::parse($this->job->schedule_date . ' ' . $this->job->preferred_time_start)
-            ->subMinutes(self::PICK_UP_PREPARATION_TIME);
+        return $this->getPickupTimeFromDateTime($this->job->schedule_date, $this->job->preferred_time_start);
+    }
+
+    /**
+     * @param $date
+     * @param $time
+     * @return Carbon
+     */
+    public function getPickupTimeFromDateTime($date, $time)
+    {
+        return Carbon::parse($date . ' ' . $time)->subMinutes(self::PICK_UP_PREPARATION_TIME);
     }
 
     public function isInstant()

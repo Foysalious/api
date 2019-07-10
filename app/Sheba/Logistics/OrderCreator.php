@@ -3,25 +3,17 @@
 use App\Models\Category;
 use App\Models\Job;
 use Exception;
-use Sheba\Logistics\Repository\OrderRepository;
 use Sheba\Logistics\LogisticsNatures\NatureFactory;
 use Sheba\Logistics\DTO\Order;
 use Sheba\Logistics\DTO\VendorOrder;
 
-class OrderCreator
+class OrderCreator extends OrderHandler
 {
-    /** @var OrderRepository */
-    private $repo;
     /** @var Job */
     private $job;
     /** @var Category $category */
     private $category;
     private $key;
-
-    public function __construct(OrderRepository $repo)
-    {
-        $this->repo = $repo;
-    }
 
     public function setJob(Job $job)
     {
@@ -51,6 +43,9 @@ class OrderCreator
         $detail_url = config('sheba.api_url') . '/v1/vendors/orders/' . $this->job->partnerOrder->order_id;
         $logistic_nature = NatureFactory::getLogisticNature($this->job, $this->key);
 
+        $vendor_order = (new VendorOrder())->setDetailUrl($detail_url)->setBillUrl($detail_url . '/bills')
+            ->setCode($this->job->partner_order->order->code())->setId($this->job->partner_order->order->id);
+
         $order = (new Order())->setPickUp($logistic_nature->getPickUp())
             ->setDropOff($logistic_nature->getDropOff())
             ->setSchedule($logistic_nature->getPickupTime())
@@ -59,8 +54,7 @@ class OrderCreator
             ->setDiscountByArray($logistic_nature->getDiscount())
             ->setPaidAmount($logistic_nature->getPaidAmount())
             ->setCustomerProfileId($this->job->partnerOrder->order->customer->profile->id)
-            ->setVendorOrder((new VendorOrder())->setDetailUrl($detail_url)->setBillUrl($detail_url . '/bills')->setCode($this->job->partner_order->order->code())
-                ->setId($this->job->partner_order->order->id))
+            ->setVendorOrder($vendor_order)
             ->setParcelType($this->category->logistic_parcel_type)
             ->setSuccessUrl($base_url . '/logistic-completed')
             ->setPickedUrl($base_url . '/logistic-picked')

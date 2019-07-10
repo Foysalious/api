@@ -73,14 +73,23 @@ class Job extends BaseModel
     /** @var float|int */
     public $discountWithoutDeliveryDiscount;
     public $logisticDueWithoutDiscount;
+    /** @var \Sheba\Logistics\DTO\Order */
+    private $currentLogisticOrder;
+    /** @var \Sheba\Logistics\DTO\Order */
+    private $firstLogisticOrder;
+    /** @var \Sheba\Logistics\DTO\Order */
+    private $lastLogisticOrder;
 
     /** @var CodeBuilder */
     private $codeBuilder;
+    /** @var OrderGetter */
+    private $logisticOrderGetter;
 
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
         $this->codeBuilder = new CodeBuilder();
+        $this->logisticOrderGetter = app(OrderGetter::class);
     }
 
     public function service()
@@ -902,6 +911,11 @@ class Job extends BaseModel
         return $this->first_logistic_order_id || $this->last_logistic_order_id;
     }
 
+    public function getCurrentLogisticOrderId()
+    {
+        return $this->last_logistic_order_id ?: $this->first_logistic_order_id;
+    }
+
     /**
      * @return \Sheba\Logistics\DTO\Order|null
      * @throws \Exception
@@ -910,9 +924,60 @@ class Job extends BaseModel
     {
         if(!$this->isLogisticCreated()) return null;
 
-        /** @var OrderGetter $logistic_order_getter */
-        $logistic_order_getter = app(OrderGetter::class);
-        return $logistic_order_getter->setJob($this)->get();
+        if($this->currentLogisticOrder) return $this->currentLogisticOrder;
+
+        $this->currentLogisticOrder = $this->logisticOrderGetter->get($this->getCurrentLogisticOrderId());
+        return $this->currentLogisticOrder;
+    }
+
+    /**
+     * @return \Sheba\Logistics\DTO\Order|null
+     * @throws \Exception
+     */
+    public function getFirstLogisticOrder()
+    {
+        if(!$this->first_logistic_order_id) return null;
+
+        if($this->firstLogisticOrder) return $this->firstLogisticOrder;
+
+        $this->firstLogisticOrder = $this->logisticOrderGetter->get($this->first_logistic_order_id);
+        return $this->firstLogisticOrder;
+    }
+
+    /**
+     * @return \Sheba\Logistics\DTO\Order|null
+     * @throws \Exception
+     */
+    public function getLastLogisticOrder()
+    {
+        if(!$this->last_logistic_order_id) return null;
+
+        if($this->lastLogisticOrder) return $this->lastLogisticOrder;
+
+        $this->lastLogisticOrder = $this->logisticOrderGetter->get($this->last_logistic_order_id);
+        return $this->lastLogisticOrder;
+    }
+
+    /**
+     * @return bool
+     * @throws \Exception
+     */
+    public function isReschedulable()
+    {
+        if($this->isCancelled() || $this->isServed()) return false;
+        if(!$this->cancelRequest->isEmpty() && $this->isCancelRequestPending()) return false;
+        if($this->isNotReschedulableForLogistic()) return false;
+        return true;
+    }
+
+    /**
+     * @return bool
+     * @throws \Exception
+     */
+    public function isNotReschedulableForLogistic()
+    {
+        return $this->last_logistic_order_id ||
+            ( $this->first_logistic_order_id && !$this->getFirstLogisticOrder()->isReschedulable() );
     }
 
     public function toJson($options = 0)

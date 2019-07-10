@@ -1,5 +1,6 @@
 <?php namespace Sheba\Logistics\Literals;
 
+use Carbon\Carbon;
 use Sheba\Helpers\ConstGetter;
 
 class Statuses
@@ -35,6 +36,6 @@ class Statuses
 
     public static function isReschedulable($status)
     {
-        return in_array($status, [self::PENDING, self::RIDER_NOT_FOUND, self::SEARCH_STARTED]);
+        return in_array($status, [self::PENDING, self::RIDER_NOT_FOUND/*, self::SEARCH_STARTED*/]);
     }
 }
