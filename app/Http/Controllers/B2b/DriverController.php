@@ -183,7 +183,7 @@ class DriverController extends Controller
             $driver_address = BulkUploadExcel::ADDRESS_COLUMN_TITLE;
 
             $data->each(function ($value) use (
-                $create_request, $creator, $admin_member, &$error_count,  &$total_count,
+                $create_request, $creator, $admin_member, &$error_count, &$total_count,
                 $license_number_field, $license_class, $driver_mobile, $name, $date_of_birth, $blood_group,
                 $nid_number, $department, $vendor_mobile, $driver_role, $driver_address
             ) {
@@ -216,7 +216,7 @@ class DriverController extends Controller
                 }
             });
 
-            $response_message = ($total_count - $error_count) ." Driver's Created Successfully, Failed {$error_count} driver's";
+            $response_message = ($total_count - $error_count) . " Driver's Created Successfully, Failed {$error_count} driver's";
             return api_response($request, null, 200, ['message' => $response_message]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -309,6 +309,8 @@ class DriverController extends Controller
                             $q->where('businesses.id', $business->id);
                         });
                     });
+                })->orWhereHas('hiredBy', function ($q) use ($business) {
+                    $q->whichIsHiredByBusiness($business->id);
                 })->with('profile', 'vehicle.basicInformation')->orderBy('id', 'desc')->skip($offset)->limit($limit);
 
                 if ($request->has('status'))

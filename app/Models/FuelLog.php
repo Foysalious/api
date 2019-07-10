@@ -26,31 +26,33 @@ class FuelLog extends Model
 
     public function scopeFuelLogs($query, $business)
     {
-        return $query->whereHas('vehicle', function ($query) use ($business) {
-            $query->where('owner_id', $business->id);
-        })->with('vehicle')->orderBy('id', 'DESC');
+        return $query->ofBusiness($business)->with('vehicle')->orderBy('id', 'DESC');
     }
 
     public function scopeTotalFuelCost($query, $start_date, $end_date, $business)
     {
-        return $query->whereHas('vehicle', function ($query) use ($business) {
-            $query->where('owner_id', $business->id);
-        })->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59'])->sum('price');
+        return $query->ofBusiness($business)->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59'])->sum('price');
     }
 
     public function scopeTotalLitres($query, $start_date, $end_date, $business)
     {
-        return $query->whereHas('vehicle', function ($query) use ($business) {
-            $query->where('owner_id', $business->id);
-        })->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59'])
+        return $query->ofBusiness($business)->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59'])
             ->where('unit', 'LIKE', 'ltr');
     }
 
     public function scopeTotalGallons($query, $start_date, $end_date, $business)
     {
-        return $query->whereHas('vehicle', function ($query) use ($business) {
-            $query->where('owner_id', $business->id);
-        })->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59'])
+        return $query->ofBusiness($business)->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59'])
             ->where('unit', 'LIKE', 'cubic_feet');
+    }
+
+    public function scopeOfBusiness($query, Business $business)
+    {
+        return $query->whereHas('vehicle', function ($query) use ($business) {
+            $query->where('owner_id', $business->id)
+                ->orWhereHas('hiredBy', function ($q) use ($business) {
+                    $q->hiredByBusiness($business->id);
+                });
+        });
     }
 }

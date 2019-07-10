@@ -23,4 +23,9 @@ class HiredVehicle extends Model
         $now = Carbon::now()->toDateTimeString();
         return $query->whereRaw("(('$now' BETWEEN start AND end) OR ('$now' >= start AND end IS NULL))");
     }
+
+    public function scopeHiredByBusiness($query, $business_id)
+    {
+        return $query->where([['hired_by_type', "App\\Models\\Business"], ['hired_by_id', $business_id]]);
+    }
 }

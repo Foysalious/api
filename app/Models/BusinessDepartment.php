@@ -17,4 +17,9 @@ class BusinessDepartment extends Model
     {
         return $this->hasMany(Vehicle::class);
     }
+
+    public function business()
+    {
+        return $this->belongsTo(Business::class);
+    }
 }
