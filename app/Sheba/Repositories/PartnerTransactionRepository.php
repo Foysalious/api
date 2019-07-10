@@ -25,7 +25,7 @@ class PartnerTransactionRepository
         if ($data['amount'] > 0) {
             $data['created_at'] = Carbon::now();
             $transaction = $this->partner->transactions()->save(new PartnerTransaction($data));
-            (new PartnerRepository())->updateWallet($this->partner, $data['amount'], $data['type']);
+            (new PartnerRepository(new Partner()))->updateWallet($this->partner, $data['amount'], $data['type']);
             if (is_array($tags) && !empty($tags[0])) $transaction->tags()->sync($tags);
         }
         return $transaction;

@@ -17,7 +17,7 @@ class StatusChanger
         $this->partner = $partner;
         $this->data = $data;
         $this->oldStatus = $partner->status;
-        $this->partnerRepo = new PartnerRepository();
+        $this->partnerRepo = new PartnerRepository(new Partner());
     }
 
     public function hasError()
