@@ -54,7 +54,7 @@ class Category extends Model
 
     public function publishedServices()
     {
-        return $this->hasMany(Service::class)->where('services.publication_status',1);
+        return $this->hasMany(Service::class)->where('services.publication_status', 1);
     }
 
     public function reviews()
@@ -105,6 +105,11 @@ class Category extends Model
     public function scopePublishedForPartner($query)
     {
         return $query->where('is_published_for_partner', 1);
+    }
+
+    public function scopePublishedForPartnerOnboarding($query)
+    {
+        return $query->where('is_published_for_partner_onboarding', 1);
     }
 
     public function scopePublishedForAll($query)
