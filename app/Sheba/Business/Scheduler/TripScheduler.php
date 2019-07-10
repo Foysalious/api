@@ -10,6 +10,7 @@ class TripScheduler
     private $startDate;
     private $endDate;
     private $businessDepartment;
+    private $business;
 
     public function setStartDate($start_date)
     {
@@ -38,6 +39,9 @@ class TripScheduler
     public function getFreeVehicles()
     {
         $vehicle_ids = $this->businessDepartment->vehicles->pluck('id')->toArray();
+        $hired_vehicles = $this->business->hiredVehicles;
+        $hired_vehicle_ids = $hired_vehicles->count() > 0 ? $hired_vehicles->pluck('vehicle_id')->toArray() : [];
+        $vehicle_ids = array_unique(array_merge($vehicle_ids, $hired_vehicle_ids));
         $booked_trips = BusinessTrip::whereIn('vehicle_id', $vehicle_ids)
             ->where(function ($query) {
                 $query->where([['start_date', '>', $this->startDate], ['start_date', '<', $this->endDate]]);
@@ -58,6 +62,9 @@ class TripScheduler
                 array_push($driver_ids, $member->profile->driver->id);
             }
         }
+        $hired_drivers = $this->business->hiredDrivers;
+        $hired_drivers_ids = $hired_drivers->count() > 0 ? $hired_drivers->pluck('driver_id')->toArray() : [];
+        $driver_ids = array_unique(array_merge($driver_ids, $hired_drivers_ids));
         $booked_trips = BusinessTrip::whereIn('driver_id', $driver_ids)
             ->where(function ($query) {
                 $query->where([['start_date', '>', $this->startDate], ['start_date', '<', $this->endDate]]);
