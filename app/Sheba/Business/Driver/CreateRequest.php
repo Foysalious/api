@@ -176,7 +176,7 @@ class CreateRequest
      */
     public function setVendorMobile($vendor_mobile)
     {
-        $this->vendorMobile = BDMobileFormatter::format($vendor_mobile);
+        $this->vendorMobile = $vendor_mobile ? BDMobileFormatter::format($vendor_mobile) : null;
         return $this;
     }
 
