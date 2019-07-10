@@ -74,7 +74,19 @@ class Vehicle extends Model
 
     public function isOwn($business_id)
     {
-        return $this->owner_id == $business_id && $this->ownner_type === "App\\Models\\Business"?1:0;
+        return $this->owner_id == $business_id && $this->owner_type === "App\\Models\\Business" ? 1 : 0;
+    }
+
+    public function scopeWhoseOwnerIsBusiness($query, $business_id = null)
+    {
+        $query = $query->where('owner_type', "App\\Models\\Business");
+        if (!$business_id) $query = $query->where('owner_id', (int)$business_id);
+        return $query;
+    }
+
+    public function scopeWhoseOwnerIsNotBusiness($query)
+    {
+        return $query->where('owner_type', '<>', "App\\Models\\Business");
     }
 
 }

@@ -343,6 +343,10 @@ class VehiclesController extends Controller
                         });
                     });
                 }
+                if ($request->has('owner_type')) {
+                    if ($request->owner_type == 'own') $vehicles->whoseOwnerIsBusiness($business->id);
+                    elseif ($request->owner_type == 'hired') $vehicles->whoseOwnerIsNotBusiness();
+                }
                 $vehicles = $vehicles->get();
             }
             $vehicle_lists = [];
