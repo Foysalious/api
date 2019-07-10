@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class Vehicle extends Model
@@ -68,7 +69,24 @@ class Vehicle extends Model
 
     public function hiredBy()
     {
-        return $this->morphToMany(HiredVehicle::class);
+        return $this->hasMany(HiredVehicle::class)->where('end', null)->orWhere('end', '>=', Carbon::now());
+    }
+
+    public function isOwn($business_id)
+    {
+        return $this->owner_id == $business_id && $this->owner_type === "App\\Models\\Business" ? 1 : 0;
+    }
+
+    public function scopeWhoseOwnerIsBusiness($query, $business_id = null)
+    {
+        $query = $query->where('owner_type', "App\\Models\\Business");
+        if (!$business_id) $query = $query->where('owner_id', (int)$business_id);
+        return $query;
+    }
+
+    public function scopeWhoseOwnerIsNotBusiness($query)
+    {
+        return $query->where('owner_type', '<>', "App\\Models\\Business");
     }
 
 }
