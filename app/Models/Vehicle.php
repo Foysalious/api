@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class Vehicle extends Model
@@ -68,7 +69,12 @@ class Vehicle extends Model
 
     public function hiredBy()
     {
-        return $this->morphToMany(HiredVehicle::class);
+        return $this->hasMany(HiredVehicle::class)->where('end', null)->orWhere('end', '>=', Carbon::now());
+    }
+
+    public function isOwn($business_id)
+    {
+        return $this->owner_id == $business_id && $this->ownner_type === "App\\Models\\Business"?1:0;
     }
 
 }

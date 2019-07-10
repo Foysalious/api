@@ -218,7 +218,7 @@ class VehiclesController extends Controller
                 }
             });
 
-            $response_message = ($total_count - $error_count) ." Vehicle's Created Successfully, Failed {$error_count} vehicle's";
+            $response_message = ($total_count - $error_count) . " Vehicle's Created Successfully, Failed {$error_count} vehicle's";
             return api_response($request, null, 200, ['message' => $response_message]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -322,7 +322,7 @@ class VehiclesController extends Controller
                     ->where(function ($q) use ($business) {
                         $hired_vehicles = $business->hiredVehicles()->with('vehicle')->active()->get()->pluck('vehicle.id');
                         $q->where('owner_id', $business->id)->orWhereIn('id', $hired_vehicles->toArray());
-                    })->select('id', 'status', 'current_driver_id', 'business_department_id')
+                    })->select('id', 'status', 'current_driver_id', 'business_department_id', 'owner_type')
                     ->orderBy('id', 'desc')->skip($offset)->limit($limit);
 
                 if ($request->has('status'))
@@ -359,7 +359,8 @@ class VehiclesController extends Controller
                     'assigned_to' => $vehicle->businessDepartment ? $vehicle->businessDepartment->name : null,
                     'current_driver' => $driver ? $vehicle->driver->profile->name : 'N/S',
                     'license_number' => $registration_information ? $registration_information->license_number : null,
-                    'vehicle_image' => $basic_information->vehicle_image
+                    'vehicle_image' => $basic_information->vehicle_image,
+                    'is_own' => $vehicle->isOwn($business->id),
                 ];
                 array_push($vehicle_lists, $vehicle);
             }
