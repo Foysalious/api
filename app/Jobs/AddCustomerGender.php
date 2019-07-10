@@ -26,16 +26,41 @@ class AddCustomerGender extends Job implements ShouldQueue
 
     public function handle()
     {
-        if (config('app.env') == 'production' && empty($this->profile->gender) && $this->attempts() <= 1 && !$this->isLimitOverForToday()) {
-            $gender = $this->getGender();
-            if ($gender) $this->addGender($gender);
+        if (config('app.env') == 'production' && empty($this->profile->gender) && $this->attempts() <= 1) {
+            foreach ($this->keys as $key) {
+                if (!$this->isLimitOverForToday($key)) {
+                    $this->setApiKey($key);
+                    if ($gender = $this->getGender()) {
+                        $this->addGender($gender);
+                        break;
+                    }
+                }
+            }
         }
     }
 
-    private function addGender($gender)
+    private function isLimitOverForToday($key)
     {
-        $this->profile->gender = ucfirst($gender);
-        $this->profile->update();
+        if ($gender_api = $this->getFromRedis()) {
+            $redis_key = collect(json_decode($gender_api))->where('key', $key)->first();
+            return !$redis_key || !$this->isKeyExpired($redis_key) ? 0 : 1;
+        } else {
+            return 0;
+        }
+    }
+
+    private function getFromRedis()
+    {
+        return Redis::get('genderapi');
+    }
+
+    /**
+     * @param $redis_key
+     * @return bool
+     */
+    private function isKeyExpired($redis_key)
+    {
+        return Carbon::createFromTimestamp($redis_key->expired_at)->isToday();
     }
 
     private function setApiKey($api_key)
@@ -77,40 +102,17 @@ class AddCustomerGender extends Job implements ShouldQueue
         return null;
     }
 
-    private function isLimitOverForToday()
-    {
-        if ($gender_api = $this->getFromRedis()) {
-            $gender_api = collect(json_decode($gender_api));
-            foreach ($this->keys as $key) {
-                $redis_key = $gender_api->where('key', $key)->first();
-                if ($redis_key == null || $this->isKeyExpired($redis_key) == false) {
-                    $this->setApiKey($key);
-                    return 0;
-                }
-            }
-            return 1;
-        };
-        $this->setApiKey($this->keys[0]);
-        return 0;
-    }
-
-    private function getFromRedis()
-    {
-        return Redis::get('genderapi');
-    }
-
     private function setToRedis($data)
     {
         Redis::set('genderapi', $data);
         Redis::expire('genderapi', 60 * 60);
     }
 
-    /**
-     * @param $redis_key
-     * @return bool
-     */
-    private function isKeyExpired($redis_key)
+    private function addGender($gender)
     {
-        return Carbon::createFromTimestamp($redis_key->expired_at)->isToday();
+        $this->profile->gender = ucfirst($gender);
+        $this->profile->update();
     }
+
+
 }
