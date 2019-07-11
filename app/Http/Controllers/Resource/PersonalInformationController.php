@@ -53,9 +53,9 @@ class PersonalInformationController extends Controller
         try {
             $request->merge(['mobile' => trim($request->mobile)]);
             $this->validate($request, [
-                'nid_no' => 'required_without:resource|string|unique:resources,nid_no',
-                'nid_back' => 'required_without:resource|file',
-                'nid_front' => 'required_without:resource|file',
+                'nid_no' => 'string|unique:resources,nid_no',
+                'nid_back' => 'file',
+                'nid_front' => 'file',
                 'name' => 'string',
                 'address' => 'string',
                 'picture' => 'file',
