@@ -70,11 +70,20 @@ abstract class LogisticNature
      */
     protected function getPartnerPoint()
     {
-        return (new Point())->setName($this->partner->name)
-                ->setAddress($this->partner->address)
-                ->setImage($this->partner->logo)
-                ->setMobile($this->partner->getContactNumber())
-                ->setCoordinate($this->partner->getCoordinate());
+        return $this->createPartnerPoint($this->partner);
+    }
+
+    /**
+     * @param Partner $partner
+     * @return Point
+     */
+    public function createPartnerPoint(Partner $partner)
+    {
+        return (new Point())->setName($partner->name)
+            ->setAddress($partner->address)
+            ->setImage($partner->logo)
+            ->setMobile($partner->getContactNumber())
+            ->setCoordinate($partner->getCoordinate());
     }
     
     /**

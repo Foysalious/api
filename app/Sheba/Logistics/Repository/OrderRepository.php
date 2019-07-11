@@ -29,6 +29,18 @@ class OrderRepository extends BaseRepository
 
     /**
      * @param Order $order
+     * @param $data
+     * @return mixed
+     * @throws LogisticServerError
+     */
+    public function update(Order $order, $data)
+    {
+        $result = $this->client->put("orders/$order->id", $data);
+        return !empty($result) ? true : false;
+    }
+
+    /**
+     * @param Order $order
      * @param $date
      * @param $time
      * @return mixed

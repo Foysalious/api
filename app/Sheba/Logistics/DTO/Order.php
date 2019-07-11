@@ -300,6 +300,17 @@ class Order
         return Statuses::hasStarted($this->status);
     }
 
+    public function getPickUpArray()
+    {
+        return [
+            'pickup_name'           => $this->pickUp->name,
+            'pickup_image'          => $this->pickUp->image,
+            'pickup_mobile'         => $this->pickUp->mobile,
+            'pickup_address'        => $this->pickUp->address,
+            'pickup_address_geo'    => $this->pickUp->coordinate->toJson()
+        ];
+    }
+
     /**
      * @return array
      */
@@ -308,12 +319,8 @@ class Order
         return [
             'customer_profile_id'   => $this->customerProfileId,
             'date'                  => $this->schedule->toDateString(),
-            'time'                  => $this->schedule->toTimeString(),
-            'pickup_name'           => $this->pickUp->name,
-            'pickup_image'          => $this->pickUp->image,
-            'pickup_mobile'         => $this->pickUp->mobile,
-            'pickup_address'        => $this->pickUp->address,
-            'pickup_address_geo'    => $this->pickUp->coordinate->toJson(),
+            'time'                  => $this->schedule->toTimeString()
+        ] + $this->getPickUpArray() + [
             'delivery_name'         => $this->dropOff->name,
             'delivery_image'        => $this->dropOff->image,
             'delivery_mobile'       => $this->dropOff->mobile,

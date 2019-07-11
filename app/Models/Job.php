@@ -8,7 +8,7 @@ use Sheba\Helpers\TimeFrame;
 use Sheba\Jobs\CiCalculator;
 use Sheba\Dal\Complain\Model as Complain;
 use Sheba\Jobs\JobStatuses;
-use Sheba\Logistics\OrderGetter;
+use Sheba\Logistics\OrderManager;
 use Sheba\Order\Code\Builder as CodeBuilder;
 use Sheba\Report\Updater\Job as ReportUpdater;
 
@@ -82,14 +82,14 @@ class Job extends BaseModel
 
     /** @var CodeBuilder */
     private $codeBuilder;
-    /** @var OrderGetter */
-    private $logisticOrderGetter;
+    /** @var OrderManager */
+    private $logisticOrderManager;
 
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
         $this->codeBuilder = new CodeBuilder();
-        $this->logisticOrderGetter = app(OrderGetter::class);
+        $this->logisticOrderManager = app(OrderManager::class);
     }
 
     public function service()
@@ -926,7 +926,7 @@ class Job extends BaseModel
 
         if($this->currentLogisticOrder) return $this->currentLogisticOrder;
 
-        $this->currentLogisticOrder = $this->logisticOrderGetter->get($this->getCurrentLogisticOrderId());
+        $this->currentLogisticOrder = $this->logisticOrderManager->get($this->getCurrentLogisticOrderId());
         return $this->currentLogisticOrder;
     }
 
@@ -940,7 +940,7 @@ class Job extends BaseModel
 
         if($this->firstLogisticOrder) return $this->firstLogisticOrder;
 
-        $this->firstLogisticOrder = $this->logisticOrderGetter->get($this->first_logistic_order_id);
+        $this->firstLogisticOrder = $this->logisticOrderManager->get($this->first_logistic_order_id);
         return $this->firstLogisticOrder;
     }
 
@@ -954,7 +954,7 @@ class Job extends BaseModel
 
         if($this->lastLogisticOrder) return $this->lastLogisticOrder;
 
-        $this->lastLogisticOrder = $this->logisticOrderGetter->get($this->last_logistic_order_id);
+        $this->lastLogisticOrder = $this->logisticOrderManager->get($this->last_logistic_order_id);
         return $this->lastLogisticOrder;
     }
 
