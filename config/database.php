@@ -35,16 +35,8 @@ return [
         ],
         'mongodb' => [
             'driver' => 'mongodb',
-            /*'database' => env('MONGO_DB_DATABASE', 'sheba'),
-            'dsn' => env('MONGO_DB_DSN')*/
-            'host' => env('MONGO_DB_HOST', '127.0.0.1'),
-            'port' => env('MONGO_DB_PORT', 27017),
-            'database' => env('MONGO_DB_DATABASE'),
-            'username' => env('MONGO_DB_USERNAME'),
-            'password' => env('MONGO_DB_PASSWORD'),
-            'options' => [
-                'database' => env('MONGO_DB_DATABASE') // sets the authentication database required by mongo 3
-            ]
+            'database' => env('MONGO_DB_DATABASE', 'sheba'),
+            'dsn' => env('MONGO_DB_DSN')
         ]
     ],
     'migrations' => 'migrations',
