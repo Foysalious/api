@@ -36,6 +36,16 @@ class Statuses
 
     public static function isReschedulable($status)
     {
+        return self::isPickUpDataChangeable($status);
+    }
+
+    public static function isPickUpDataChangeable($status)
+    {
+        return self::hasStarted($status);
+    }
+
+    public static function hasStarted($status)
+    {
         return in_array($status, [self::PENDING, self::RIDER_NOT_FOUND/*, self::SEARCH_STARTED*/]);
     }
 }

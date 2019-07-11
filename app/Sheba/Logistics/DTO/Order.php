@@ -290,6 +290,16 @@ class Order
         return Statuses::isReschedulable($this->status);
     }
 
+    public function isPickUpDataChangeable()
+    {
+        return Statuses::isPickUpDataChangeable($this->status);
+    }
+
+    public function hasStarted()
+    {
+        return Statuses::hasStarted($this->status);
+    }
+
     /**
      * @return array
      */

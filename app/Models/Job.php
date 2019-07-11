@@ -964,9 +964,9 @@ class Job extends BaseModel
      */
     public function isReschedulable()
     {
-        if($this->isCancelled() || $this->isServed()) return false;
-        if(!$this->cancelRequest->isEmpty() && $this->isCancelRequestPending()) return false;
-        if($this->isNotReschedulableForLogistic()) return false;
+        if($this->isClosed()) return false;
+        if($this->isCancelRequestPending()) return false;
+        if($this->hasLogisticStarted()) return false;
         return true;
     }
 
@@ -974,10 +974,34 @@ class Job extends BaseModel
      * @return bool
      * @throws \Exception
      */
-    public function isNotReschedulableForLogistic()
+    public function isPartnerChangeable()
+    {
+        if($this->site == 'partner') return false;
+        if($this->isClosed()) return false;
+        if($this->isCancelRequestPending()) return false;
+        if($this->hasLogisticStarted()) return false;
+        return true;
+    }
+
+    /**
+     * @return bool
+     * @throws \Exception
+     */
+    public function isResourceChangeable()
+    {
+        if($this->isClosed()) return false;
+        if($this->isCancelRequestPending()) return false;
+        return true;
+    }
+
+    /**
+     * @return bool
+     * @throws \Exception
+     */
+    public function hasLogisticStarted()
     {
         return $this->last_logistic_order_id ||
-            ( $this->first_logistic_order_id && !$this->getFirstLogisticOrder()->isReschedulable() );
+            ( $this->first_logistic_order_id && !$this->getFirstLogisticOrder()->hasStarted() );
     }
 
     public function toJson($options = 0)
