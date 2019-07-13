@@ -9,8 +9,8 @@ class Route
                 $api->post('registration/partner', 'Auth\PartnerRegistrationController@registerByProfile')->middleware('jwtAuth');
             });
             $api->get('validate-location', 'LocationController@validateLocation');
-            $api->get('partners', 'PartnerLocationController@getPartners');
-            $api->get('lite-partners', 'PartnerLocationController@getLitePartners');
+            $api->get('partners', 'PartnerLocationController@getPartners')->middleware('throttle:6');
+            $api->get('lite-partners', 'PartnerLocationController@getLitePartners')->middleware('throttle:6');
             $api->post('subscription', 'PushSubscriptionController@store');
             $api->get('car-rental-info', 'ShebaController@sendCarRentalInfo');
             $api->get('payments', 'ShebaController@getPayments');
