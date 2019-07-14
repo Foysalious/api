@@ -26,11 +26,11 @@ class ProcurementController extends Controller
                 'estimated_price' => 'required|string',
                 'items' => 'required|string',
                 'questions' => 'required|string',
-                'order_start_date' => 'sometimes|date_format:Y-m-d h:i:s',
-                'order_end_date' => 'sometimes|date_format:Y-m-d h:i:s',
-                'interview_date' => 'sometimes|date_format:Y-m-d h:i:s',
-                'tender_start_date' => 'sometimes|date_format:Y-m-d h:i:s',
-                'tender_end_date' => 'sometimes|date_format:Y-m-d h:i:s',
+                'order_start_date' => 'sometimes|date_format:Y-m-d',
+                'order_end_date' => 'sometimes|date_format:Y-m-d',
+                'interview_date' => 'sometimes|date_format:Y-m-d',
+                'tender_start_date' => 'sometimes|date_format:Y-m-d',
+                'tender_end_date' => 'sometimes|date_format:Y-m-d',
             ]);
             if (!$access_control->setBusinessMember($request->business_member)->hasAccess('procurement.rw')) return api_response($request, null, 403);
             $this->setModifier($request->manager_member);

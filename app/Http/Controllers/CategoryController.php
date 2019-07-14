@@ -38,11 +38,14 @@ class CategoryController extends Controller
             $is_partner = ($request->has('is_partner') && (int)$request->is_partner)
                 || in_array($request->header('portal-name'), ['manager-app', 'bondhu-app']);
             $is_b2b = $request->has('is_b2b') && (int)$request->is_b2b;
+            $is_partner_registration = $request->has('is_partner_registration') && (int)$request->is_partner_registration;
             if ($is_business) {
                 $q->publishedForBusiness();
-            } else if ($is_partner) {
+            } elseif ($is_partner) {
                 $q->publishedForPartner();
-            } else if ($is_b2b) {
+            } elseif ($is_partner_registration) {
+                $q->publishedForPartnerOnboarding();
+            } elseif ($is_b2b) {
                 $q->publishedForB2b();
             } else {
                 $q->published();

@@ -5,10 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Review;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\ModificationFields;
 use Sheba\Reward\ActionRewardDispatcher;
 
 class ReviewController extends Controller
 {
+    use ModificationFields;
+
     public function store($customer, $job, Request $request, ActionRewardDispatcher $dispatcher)
     {
         try {
@@ -17,6 +20,7 @@ class ReviewController extends Controller
             if ($job->status != 'Served') return api_response($request, null, 403, ['message' => 'Your Order hasn\'t been closed yet.']);
             $review = $job->review;
             $customer = $request->customer;
+            $this->setModifier($customer);
             if ($review == null) {
                 $review = new Review();
                 $review->rating = $request->rating;
@@ -25,14 +29,12 @@ class ReviewController extends Controller
                 $review->partner_id = $job->partner_order->partner_id;
                 $review->category_id = $job->category_id;
                 $review->customer_id = $customer->id;
-                $review->created_by = $customer->id;
-                $review->created_by_name = "Customer - " . $customer->profile->name;
+                $this->withCreateModificationField($review);
                 $review->save();
                 $dispatcher->run('rating', $job->partner_order->partner, $review);
             } else {
                 $review->rating = $request->rating;
-                $review->updated_by = $customer->id;
-                $review->updated_by_name = "Customer - " . $customer->profile->name;
+                $this->withUpdateModificationField($review);
                 $review->update();
                 $review->rates()->delete();
             }

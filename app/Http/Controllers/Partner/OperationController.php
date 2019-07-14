@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 
 use App\Models\Category;
 use App\Models\CategoryPartner;
+use App\Models\CategoryRequest;
 use App\Models\HyperLocal;
 use App\Models\Partner;
 use App\Models\PartnerGeoChangeLog;
@@ -146,16 +147,16 @@ class OperationController extends Controller
     public function saveCategories($partner, Request $request)
     {
         try {
-            $this->validate($request, ['categories' => "required|string"]);
+            $this->validate($request, ['categories' => "required|string", 'category_name' => 'string']);
             $manager_resource = $request->manager_resource;
             $by = ["created_by" => $manager_resource->id, "created_by_name" => "Resource - " . $manager_resource->profile->name];
-            $categories = json_decode($request->categories);
+            $categories = array_unique(json_decode($request->categories));
             $categories = Category::whereIn('id', $categories)->get();
             $categories->load('services');
             $partner = $request->partner;
             list($services, $category_partners) = $this->makeCategoryPartnerWithServices($partner, $categories, $by);
-
-            DB::transaction(function () use ($partner, $category_partners, $services) {
+            $category_name = $request->category_name;
+            DB::transaction(function () use ($partner, $category_partners, $services, $category_name) {
                 $partner->categories()->sync($category_partners);
                 $partner_resources = PartnerResource::whereIn('id', $partner->handymanResources->pluck('pivot.id')->toArray())->get();
                 $category_ids = $partner->categories->pluck('id')->toArray();
@@ -168,6 +169,7 @@ class OperationController extends Controller
                     $status_changer = new StatusChanger($partner, ['status' => constants('PARTNER_STATUSES')['Waiting']]);
                     $status_changer->change();
                 }
+                if ($category_name) CategoryRequest::create(['partner_id' => $partner->id, 'category_name' => $category_name]);
             });
 
             return api_response($request, $partner, 200);

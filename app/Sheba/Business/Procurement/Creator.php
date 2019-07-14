@@ -167,12 +167,9 @@ class Creator
         foreach ($fields as $field) {
             array_push($this->procurementItemFieldData, [
                 'title' => $field->title,
-                'short_description' => $field->short_description,
-                'long_description' => $field->instructions,
                 'input_type' => $field->type,
+                'result' => $field->result,
                 'procurement_item_id' => $procurement_item->id,
-                'variables' => json_encode(['is_required' => $field->is_required]),
-                'result' => $field->result
             ]);
         }
     }
@@ -184,11 +181,11 @@ class Creator
         foreach ($questions as $question) {
             array_push($this->procurementQuestionData, [
                 'title' => $question->title,
-                'short_description' => $question->short_description,
-                'long_description' => $question->instructions,
+                'short_description' => isset($question->short_description) ? $question->short_description : '',
+                'long_description' => isset($question->instructions) ? $question->instructions : '',
                 'input_type' => $question->type,
                 'procurement_id' => $procurement->id,
-                'variables' => json_encode(['is_required' => $question->is_required]),
+                'variables' => isset($question->is_required) ? json_encode(['is_required' => $question->is_required]) : '',
             ]);
         }
     }

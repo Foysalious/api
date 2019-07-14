@@ -45,7 +45,8 @@ class TripSchedulerController extends Controller
                         'name' => $vehicle->basicInformation->model_name,
                         'status' => ucfirst($vehicle->status),
                         'department' => $vehicle->businessDepartment->name,
-                        'type' => $vehicle->basicInformation->readable_type
+                        'type' => $vehicle->basicInformation->readable_type,
+                        'image' => $vehicle->basicInformation->vehicle_image
                     ];
                     $trip_data = [];
                     foreach ($trips as $trip) {

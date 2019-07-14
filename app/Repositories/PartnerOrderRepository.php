@@ -4,19 +4,15 @@ use App\Models\Job;
 use App\Models\PartnerOrder;
 use Carbon\Carbon;
 use Sheba\Jobs\JobStatuses;
-use Sheba\Logistics\OrderGetter;
 
 class PartnerOrderRepository
 {
     /** @var PartnerJobRepository  */
     private $partnerJobRepository;
-    /** @var OrderGetter */
-    private $logisticOrderGetter;
 
     public function __construct()
     {
         $this->partnerJobRepository = new PartnerJobRepository();
-        $this->logisticOrderGetter = app(OrderGetter::class);
     }
 
     public function getOrderDetails($request)

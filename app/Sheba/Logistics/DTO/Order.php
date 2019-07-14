@@ -290,6 +290,27 @@ class Order
         return Statuses::isReschedulable($this->status);
     }
 
+    public function isPickUpDataChangeable()
+    {
+        return Statuses::isPickUpDataChangeable($this->status);
+    }
+
+    public function hasStarted()
+    {
+        return Statuses::hasStarted($this->status);
+    }
+
+    public function getPickUpArray()
+    {
+        return [
+            'pickup_name'           => $this->pickUp->name,
+            'pickup_image'          => $this->pickUp->image,
+            'pickup_mobile'         => $this->pickUp->mobile,
+            'pickup_address'        => $this->pickUp->address,
+            'pickup_address_geo'    => $this->pickUp->coordinate->toJson()
+        ];
+    }
+
     /**
      * @return array
      */
@@ -298,12 +319,8 @@ class Order
         return [
             'customer_profile_id'   => $this->customerProfileId,
             'date'                  => $this->schedule->toDateString(),
-            'time'                  => $this->schedule->toTimeString(),
-            'pickup_name'           => $this->pickUp->name,
-            'pickup_image'          => $this->pickUp->image,
-            'pickup_mobile'         => $this->pickUp->mobile,
-            'pickup_address'        => $this->pickUp->address,
-            'pickup_address_geo'    => $this->pickUp->coordinate->toJson(),
+            'time'                  => $this->schedule->toTimeString()
+        ] + $this->getPickUpArray() + [
             'delivery_name'         => $this->dropOff->name,
             'delivery_image'        => $this->dropOff->image,
             'delivery_mobile'       => $this->dropOff->mobile,
@@ -332,7 +349,7 @@ class Order
     public function formatForPartner()
     {
         return [
-            'status' => Statuses::getReadable($this->status),
+            'status' => $this->getReadableStatus(),
             'original_status' => $this->status,
             'data' => [
                 'rider' => $this->rider,

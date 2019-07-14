@@ -41,6 +41,17 @@ class LogisticClient
     }
 
     /**
+     * @param $uri
+     * @param $data
+     * @return mixed
+     * @throws LogisticServerError
+     */
+    public function put($uri, $data)
+    {
+        return $this->call('put', $uri, $data);
+    }
+
+    /**
      * @param $method
      * @param $uri
      * @param null $data
