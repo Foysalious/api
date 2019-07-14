@@ -128,7 +128,7 @@ class PersonalInformationController extends Controller
             $profile = $resource->profile;
 
             $rules = [
-                'nid_no' => 'required|string|unique:resources,nid_no,' . $resource->id,
+                'nid_no' => 'string|unique:resources,nid_no,' . $resource->id,
                 'name' => 'string',
                 'gender' => 'string|in:Male,Female,Other',
                 'birthday' => 'date_format:Y-m-d|before:' . date('Y-m-d'),
