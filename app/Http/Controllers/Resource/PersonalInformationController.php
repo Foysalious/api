@@ -86,6 +86,11 @@ class PersonalInformationController extends Controller
                 return api_response($request, 1, 200);
             } else {
                 $partnerResourceCreator->setPartner($partner);
+                if($request->hasFile('nid_front') && $request->hasFile('nid_back')) {
+                    $nid_image = $this->mergeFrontAndBackNID($request->file('nid_front'), $request->file('nid_back'));
+                } else {
+                    $nid_image = null;
+                }
                 $partnerResourceCreator->setData(array(
                     'mobile' => $request->mobile,
                     'name' => $request->name,
@@ -94,7 +99,7 @@ class PersonalInformationController extends Controller
                     'category_ids' => $partner->categories->pluck('id')->toArray(),
                     'resource_types' => ['Handyman'],
                     'nid_no' => $request->nid_no,
-                    'nid_image' => $this->mergeFrontAndBackNID($request->file('nid_front'), $request->file('nid_back')),
+                    'nid_image' => $nid_image,
                     'alternate_contact' => $request->has('additional_mobile') ? $request->additional_mobile : null
                 ));
                 if ($error = $partnerResourceCreator->hasError()) {
