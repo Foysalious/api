@@ -118,6 +118,7 @@ class OrderController extends Controller
                 'paid_amount' => 'sometimes|required|numeric',
                 'payment_method' => 'sometimes|required|string|in:' . implode(',', config('pos.payment_method'))
             ]);
+            $partner = $request->partner;
             $this->setModifier($request->manager_resource);
 
             $creator->setData($request->all());
@@ -125,7 +126,7 @@ class OrderController extends Controller
             $order = $creator->create();
 
             $order = $order->calculate();
-            $this->sendCustomerSms($order);
+            if ($partner->wallet >= 1) $this->sendCustomerSms($order);
             $this->sendCustomerEmail($order);
             $order->payment_status = $order->getPaymentStatus();
             $order->client_pos_order_id = $request->client_pos_order_id;
@@ -167,11 +168,12 @@ class OrderController extends Controller
                 /*'paid_amount' => 'required|numeric',
                 'payment_method' => 'required|string|in:' . implode(',', config('pos.payment_method'))*/
             ]);
+            $partner = $request->partner;
             $this->setModifier($request->manager_resource);
 
             $order = $creator->setData($request->all())->create();
             $order = $order->calculate();
-            $this->sendCustomerSms($order);
+            if ($partner->wallet >= 1) $this->sendCustomerSms($order);
             $this->sendCustomerEmail($order);
             $order->payment_status = $order->getPaymentStatus();
 
@@ -250,6 +252,7 @@ class OrderController extends Controller
     public function sendSms(Request $request)
     {
         try {
+            $partner = $request->partner;
             $this->setModifier($request->manager_resource);
             /** @var PosOrder $order */
             $order = PosOrder::with('items')->find($request->order)->calculate();
@@ -258,8 +261,12 @@ class OrderController extends Controller
             if (!$order->customer) return api_response($request, null, 404, ['msg' => 'Customer not found']);
             if (!$order->customer->profile->mobile) return api_response($request, null, 404, ['msg' => 'Customer mobile not found']);
 
-            dispatch(new OrderBillSms($order));
-            return api_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
+            if ($partner->wallet >= 1) {
+                dispatch(new OrderBillSms($order));
+                return api_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
+            } else {
+                return api_response($request, null, 404, ['msg' => 'Insufficient Wallet']);
+            }
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
