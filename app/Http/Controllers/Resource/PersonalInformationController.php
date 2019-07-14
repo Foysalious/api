@@ -138,12 +138,12 @@ class PersonalInformationController extends Controller
             ];
 
             if (!$profile->pro_pic) {
-                $rules['picture'] = 'required|file';
+                $rules['picture'] = 'file';
             }
 
             if (!$resource->nid_image) {
-                $rules['nid_back'] = 'required|file';
-                $rules['nid_front'] = 'required|file';
+                $rules['nid_back'] = 'file';
+                $rules['nid_front'] = 'file';
             }
 
             $this->validate($request, $rules, ['mobile' => 'Invalid mobile number!', 'unique' => 'Duplicate Nid No!']);
