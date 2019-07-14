@@ -44,7 +44,7 @@ class PartnerRegistrationController extends Controller
         try {
             $data = [
                 'image' => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/images/manager_app/offer.png",
-                'message' => 'আপনি সেবা ম্যানেজারে সফলভাবে রেজিস্ট্রেশন সম্পন্ন করেছেন। আপনি এখন এক্স প্যাকেজে আছেন। '
+                'message' => 'আপনি সেবা ম্যানেজারে সফলভাবে রেজিস্ট্রেশন সম্পন্ন করেছেন। আপনি এখন আশা প্যাকেজে আছেন।'
             ];
             return api_response($request, null, 200, ['info' => $data]);
         } catch (\Throwable $e) {
