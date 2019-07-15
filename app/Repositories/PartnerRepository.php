@@ -26,13 +26,18 @@ class PartnerRepository
     public function handymanResources($verify = null, $category_id = null, $date = null, $preferred_time = null)
     {
         $resources = $this->partner->handymanResources()->get()->unique();
-        $resources->load('jobs', 'profile', 'reviews');
+        $resources->load(['jobs' => function ($q) {
+            $q->where('status', '<>', constants('JOB_STATUSES')['Cancelled']);
+        }, 'profile' => function ($q) {
+            $q->select('id', 'name', 'mobile', 'pro_pic');
+        }, 'reviews' => function ($q) {
+            $q->select('id', 'rating', 'resource_id', 'category_id');
+        }]);
         if ($verify !== null && !$this->partner->isLite()) {
             $resources = $resources->filter(function ($resource) use ($verify) {
                 return $resource->is_verified == $verify;
             });
         };
-
         $job = null;
         if ($category_id != null) {
             $resources = $resources->map(function ($resource) use ($category_id) {
