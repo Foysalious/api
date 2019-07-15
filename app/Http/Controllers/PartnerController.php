@@ -388,6 +388,7 @@ class PartnerController extends Controller
     public function getResources($partner, Request $request)
     {
         try {
+            ini_set('memory_limit', '2048M');
             $this->validate($request, ['type' => 'sometimes|required|string', 'verified' => 'sometimes|required', 'job_id' => 'sometimes|required|numeric|exists:jobs,id', 'category_id' => 'sometimes|required|numeric', 'date' => 'sometimes|required|date', 'time' => 'sometimes|required',]);
             $partnerRepo = new PartnerRepository($request->partner);
             $verified = $request->has('verified') ? (int)$request->verified : null;
