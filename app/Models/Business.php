@@ -3,8 +3,11 @@
 use Illuminate\Database\Eloquent\Model;
 use Sheba\ModificationFields;
 use Sheba\Payment\Wallet;
+use Sheba\TopUp\TopUpAgent;
+use Sheba\TopUp\TopUpCommission;
+use Sheba\TopUp\TopUpTransaction;
 
-class Business extends Model
+class Business extends Model implements TopUpAgent
 {
     use Wallet;
     use ModificationFields;
@@ -104,5 +107,33 @@ class Business extends Model
     public function hiredDrivers()
     {
         return $this->morphMany(HiredDriver::class, 'hired_by');
+    }
+
+    public function doRecharge($vendor_id, $mobile_number, $amount, $type)
+    {
+        // TODO: Implement doRecharge() method.
+    }
+
+    public function topUpTransaction(TopUpTransaction $transaction)
+    {
+        // TODO: Implement topUpTransaction() method.
+    }
+
+    public function refund($amount, $log)
+    {
+        // TODO: Implement refund() method.
+    }
+
+    public function calculateCommission($amount, TopUpVendor $topup_vendor)
+    {
+        // TODO: Implement calculateCommission() method.
+    }
+
+    /**
+     * @return TopUpCommission
+     */
+    public function getCommission()
+    {
+        return new \Sheba\TopUp\Commission\Business();
     }
 }
