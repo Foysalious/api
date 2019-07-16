@@ -62,10 +62,25 @@ class PaymentLinkController extends Controller
                 return api_response($request, 1, 404);
             }
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
+    public function getDefaultLink($partner, Request $request)
+    {
+        try {
+            if (1) {
+                $default_payment_link = [
+                    'payment_link' => 'https:\/\/sheba.xyz\/p\/@Venus',
+                ];
+                return api_response($request, $default_payment_link, 200, ['data' => $default_payment_link]);
+            } else {
+                return api_response($request, 1, 404);
+            }
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }
