@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Repositories\CustomerRepository;
 use App\Repositories\ProfileRepository;
@@ -26,22 +24,21 @@ class EkshebaController extends Controller
         $this->profileRepository = new ProfileRepository();
     }
 
-    public function authenticate(Request $request, EkshebaAuthenticate $authenticate){
-        try{
-            $this->validate($request,[
-                'eksheba_token' => 'required'
-            ]);
+    public function authenticate(Request $request, EkshebaAuthenticate $authenticate)
+    {
+        try {
+            $this->validate($request, ['eksheba_token' => 'required']);
 
             $response = $this->_getEkshebaUserInfo($request->eksheba_token);
 
-            if($response->status) {
-                if(isset($response->data)) {
+            if ($response->status) {
+                if (isset($response->data)) {
                     $user = $response->data;
                     $customer = $authenticate->setName($user->name_en)->setMobile($user->mobile)->setaffiliate()->getaffiliate();
                     $customer->name = $user->name_en;
                     $customer->eksheba_token = $response->data->token;
                     $customer->auth_token = $customer->remember_token;
-                    return api_response($request, null, 200,  ['user'=> $customer]);
+                    return api_response($request, null, 200, ['user' => $customer]);
                 }
             }
             return api_response($request, null, 404);
@@ -50,16 +47,16 @@ class EkshebaController extends Controller
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
-            return api_response($request, null, 500, ['message'=> $e->getMessage()]);
+            return api_response($request, null, 500, ['message' => $e->getMessage()]);
         }
     }
 
     public function saveEkshebaData(Request $request, EkshebaOrder $order)
     {
-        $response = $order->generateOrder($request->token,$request->name,$request->amount);
-        return api_response($request, null, 200,  [$response]);
+        $response = $order->generateOrder($request->token, $request->name, $request->amount);
+        return api_response($request, null, 200, [$response]);
     }
-    
+
     private function _getEkshebaUserInfo($eksheba_token)
     {
         try {
