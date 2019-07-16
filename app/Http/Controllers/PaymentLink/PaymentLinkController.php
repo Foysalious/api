@@ -71,10 +71,8 @@ class PaymentLinkController extends Controller
     {
         try {
             if (1) {
-                $default_payment_link = [
-                    'payment_link' => 'https:\/\/sheba.xyz\/p\/@Venus',
-                ];
-                return api_response($request, $default_payment_link, 200, ['data' => $default_payment_link]);
+                $default_payment_link = ['https:\/\/sheba.xyz\/p\/@Venus'];
+                return api_response($request, $default_payment_link, 200, ['default_payment_link' => $default_payment_link]);
             } else {
                 return api_response($request, 1, 404);
             }
