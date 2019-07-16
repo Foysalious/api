@@ -17,8 +17,7 @@ class PaymentLinkController extends Controller
     {
         try {
             if (1) {
-                $payment_links = [];
-                $links = [
+                $payment_links = [
                     [
                         'id' => '#123456',
                         'purpose' => 'Mobile home delivery',
@@ -54,9 +53,7 @@ class PaymentLinkController extends Controller
                         'amount' => 220,
                         'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('d M\'y h:i a'),
                     ]
-
                 ];
-                array_push($payment_links, $links);
                 return api_response($request, $payment_links, 200, ['payment_links' => $payment_links]);
             } else {
                 return api_response($request, 1, 404);
