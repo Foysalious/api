@@ -37,6 +37,7 @@ class ComplainController extends Controller
 
     public function index(Request $request, $customer, $job = null)
     {
+        ini_set('memory_limit', '2048M');
         $job = $job ?: $request->job_id;
         try {
             $this->validate($request, [
