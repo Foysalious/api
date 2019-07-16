@@ -17,8 +17,8 @@ class PaymentLinkController extends Controller
     {
         try {
             if (1) {
-                $current_payment_links = [];
-                $payment_links = [
+                $payment_links = [];
+                $links = [
                     [
                         'id' => '#123456',
                         'purpose' => 'Mobile home delivery',
@@ -56,8 +56,8 @@ class PaymentLinkController extends Controller
                     ]
 
                 ];
-                array_push($current_payment_links, $payment_links);
-                return api_response($request, $current_payment_links, 200, ['current_payment_links' => $current_payment_links]);
+                array_push($payment_links, $links);
+                return api_response($request, $payment_links, 200, ['payment_links' => $payment_links]);
             } else {
                 return api_response($request, 1, 404);
             }
