@@ -54,6 +54,11 @@ class PartnerRoute
                 $api->get('/bank-interest', 'SpLoanController@getBankInterest');
             });
 
+            $api->group(['prefix' => 'payment-links'], function ($api) {
+                $api->get('/', 'PaymentLink\PaymentLinkController@index');
+                $api->post('/', 'PaymentLink\PaymentLinkController@store');
+            });
+
             $api->group(['prefix' => 'pos'], function ($api) {
                 $api->group(['prefix' => 'categories'], function ($api) {
                     $api->get('/', 'Pos\CategoryController@index');
