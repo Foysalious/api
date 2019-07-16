@@ -138,4 +138,30 @@ class PaymentLinkController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function paymentLinkPaymentDetails($partner, $payment, Request $request)
+    {
+        try {
+            if (1) {
+                $payment_details = [
+                    'id' => 1,
+                    'payment-code' => '#156412',
+                    'customer_name' => 'Sabbir',
+                    'customer_number' => '01678099565',
+                    'link-code' => '#P-123456',
+                    'purpose' => 'Mobile home delivery',
+                    'payment_type' => 'Bkash',
+                    'amount' => 220,
+                    'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('d M\'y h:i a'),
+                    'tnx_id' => 24359487,
+                ];
+                return api_response($request, $payment_details, 200, ['payment_details' => $payment_details]);
+            } else {
+                return api_response($request, 1, 404);
+            }
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }
