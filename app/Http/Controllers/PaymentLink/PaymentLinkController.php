@@ -19,35 +19,40 @@ class PaymentLinkController extends Controller
             if (1) {
                 $payment_links = [
                     [
-                        'id' => '#123456',
+                        'id' => 1,
+                        'code' => '#123456',
                         'purpose' => 'Mobile home delivery',
                         'status' => 'active',
                         'amount' => 200,
                         'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('d M\'y h:i a'),
                     ],
                     [
-                        'id' => '#123456',
+                        'id' => 2,
+                        'code' => '#123456',
                         'purpose' => 'Mobile home delivery',
                         'status' => 'inactive',
                         'amount' => 200,
                         'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('d M\'y h:i a'),
                     ],
                     [
-                        'id' => '#123456',
+                        'id' => 3,
+                        'code' => '#123456',
                         'purpose' => 'Mobile home delivery',
                         'status' => 'active',
                         'amount' => 290,
                         'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('d M\'y h:i a'),
                     ],
                     [
-                        'id' => '#123456',
+                        'id' => 4,
+                        'code' => '#123456',
                         'purpose' => 'Mobile home delivery',
                         'status' => 'active',
                         'amount' => 200,
                         'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('d M\'y h:i a'),
                     ],
                     [
-                        'id' => '#123456',
+                        'id' => 5,
+                        'code' => '#123456',
                         'purpose' => 'Mobile home delivery',
                         'status' => 'inactive',
                         'amount' => 220,
@@ -85,25 +90,29 @@ class PaymentLinkController extends Controller
             if (1) {
                 $all_payment = [
                     [
-                        'id' => '#156412',
+                        'id' => 1,
+                        'code' => '#156412',
                         'name' => 'Shamim Reza',
                         'amount' => 220,
                         'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('d M\'y h:i a'),
                     ],
                     [
-                        'id' => '#156412',
+                        'id' => 2,
+                        'code' => '#156412',
                         'name' => 'Ramzaan',
                         'amount' => 220,
                         'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('d M\'y h:i a'),
                     ],
                     [
-                        'id' => '#156412',
+                        'id' => 3,
+                        'code' => '#156412',
                         'name' => 'Sabbir',
                         'amount' => 220,
                         'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('d M\'y h:i a'),
                     ],
                     [
-                        'id' => '#156412',
+                        'id' => 4,
+                        'code' => '#156412',
                         'name' => 'Sabbir',
                         'amount' => 220,
                         'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('d M\'y h:i a'),
@@ -111,9 +120,10 @@ class PaymentLinkController extends Controller
 
                 ];
                 $payment_link_payments = [
-                    'id' => '#123456',
+                    'id' => 1,
+                    'code' => '#123456',
                     'purpose' => 'Mobile home delivery',
-                    'status' => 'inactive',
+                    'status' => 'active',
                     'amount' => 220,
                     'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('d M\'y h:i a'),
                     'total_payments' => 4,
