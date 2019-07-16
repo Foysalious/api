@@ -142,6 +142,12 @@ class Route
             (new AffiliateRoute())->set($api);
             (new PartnerRoute())->set($api);
 
+
+            $api->group(['prefix' => 'top-up'], function ($api) {
+                $api->get('/vendor', 'TopUp\TopUpController@getVendor');
+                $api->post('/', 'TopUp\TopUpController@topUp');
+            });
+
             $api->group(['prefix' => 'resources/{resource}', 'middleware' => ['resource.auth']], function ($api) {
                 $api->group(['prefix' => 'jobs'], function ($api) {
                     $api->group(['prefix' => '{job}', 'middleware' => ['resource_job.auth']], function ($api) {
