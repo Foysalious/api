@@ -149,6 +149,7 @@ class PaymentLinkController extends Controller
                     'customer_name' => 'Sabbir',
                     'customer_number' => '01678099565',
                     'link-code' => '#P-123456',
+                    'link' => 'https://sheba.xyz/p/@VenusBeauty',
                     'purpose' => 'Mobile home delivery',
                     'payment_type' => 'Bkash',
                     'amount' => 220,
