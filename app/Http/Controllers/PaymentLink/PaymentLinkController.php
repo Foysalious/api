@@ -84,7 +84,7 @@ class PaymentLinkController extends Controller
         }
     }
 
-    public function getPaymentLinkPayments($partner, $payment_link, Request $request)
+    public function getPaymentLinkPayments($partner, $link, Request $request)
     {
         try {
             if (1) {
