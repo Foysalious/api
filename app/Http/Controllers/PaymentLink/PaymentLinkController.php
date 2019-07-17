@@ -1,12 +1,10 @@
 <?php namespace App\Http\Controllers\PaymentLink;
 
-use GuzzleHttp\Client;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
-use App\Models\Partner;
-use App\Models\Profile;
+use GuzzleHttp\Client;
 use Carbon\Carbon;
 use DB;
 
@@ -100,7 +98,24 @@ class PaymentLinkController extends Controller
             $this->validate($request, [
                 'status' => 'required'
             ]);
-            return api_response($request, 1, 200);
+            $url = config('sheba.payment_link_url') . '/api/v1/payment-links/' . $link;
+            $url = "$url?status=$request->status";
+            $client = new Client();
+            $result = $client->request('PUT', $url, []);
+            $result = json_decode($result->getBody());
+            if ($result->code == 200) {
+                $payment_link = [
+                    'reason' => $result->link->reason,
+                    'status' => $result->link->status,
+                    'amount' => $result->link->amount,
+                    'link' => $result->link->link,
+                ];
+                return api_response($request, $payment_link, 200, ['payment_link' => $payment_link]);
+            } elseif ($result->code == 404) {
+                return api_response($request, 1, 404);
+            } else {
+                return api_response($request, null, 500);
+            }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
