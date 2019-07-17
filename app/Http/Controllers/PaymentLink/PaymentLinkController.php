@@ -14,7 +14,7 @@ class PaymentLinkController extends Controller
 {
     use ModificationFields;
 
-    public function index($partner, Request $request)
+    public function index(Request $request)
     {
         try {
             if (1) {
@@ -70,7 +70,7 @@ class PaymentLinkController extends Controller
         }
     }
 
-    public function store($partner, Request $request)
+    public function store(Request $request)
     {
         try {
             $this->validate($request, [
@@ -110,7 +110,7 @@ class PaymentLinkController extends Controller
         }
     }
 
-    public function statusChange($partner, $link, Request $request)
+    public function statusChange($link, Request $request)
     {
         try {
             $this->validate($request, [
@@ -126,7 +126,7 @@ class PaymentLinkController extends Controller
         }
     }
 
-    public function getDefaultLink($partner, Request $request)
+    public function getDefaultLink(Request $request)
     {
         try {
             if (1) {
@@ -141,7 +141,7 @@ class PaymentLinkController extends Controller
         }
     }
 
-    public function getPaymentLinkPayments($partner, $link, Request $request)
+    public function getPaymentLinkPayments($link, Request $request)
     {
         try {
             if (1) {
@@ -197,7 +197,7 @@ class PaymentLinkController extends Controller
         }
     }
 
-    public function paymentLinkPaymentDetails($partner, $payment, Request $request)
+    public function paymentLinkPaymentDetails($payment, Request $request)
     {
         try {
             if (1) {
