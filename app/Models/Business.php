@@ -5,12 +5,12 @@ use Sheba\ModificationFields;
 use Sheba\Payment\Wallet;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpCommission;
+use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
 
 class Business extends Model implements TopUpAgent
 {
-    use Wallet;
-    use ModificationFields;
+    use Wallet, ModificationFields, TopUpTrait;
     protected $guarded = ['id'];
 
     public function members()
@@ -47,7 +47,6 @@ class Business extends Model implements TopUpAgent
     {
         return $this->belongsTo(BusinessCategory::class);
     }
-
 
     public function bonuses()
     {
@@ -109,31 +108,14 @@ class Business extends Model implements TopUpAgent
         return $this->morphMany(HiredDriver::class, 'hired_by');
     }
 
-    public function doRecharge($vendor_id, $mobile_number, $amount, $type)
+    public function getCommission()
     {
-        // TODO: Implement doRecharge() method.
+        return new \Sheba\TopUp\Commission\Business();
     }
 
     public function topUpTransaction(TopUpTransaction $transaction)
     {
-        // TODO: Implement topUpTransaction() method.
-    }
-
-    public function refund($amount, $log)
-    {
-        // TODO: Implement refund() method.
-    }
-
-    public function calculateCommission($amount, TopUpVendor $topup_vendor)
-    {
-        // TODO: Implement calculateCommission() method.
-    }
-
-    /**
-     * @return TopUpCommission
-     */
-    public function getCommission()
-    {
-        return new \Sheba\TopUp\Commission\Business();
+        $this->debitWallet($transaction->getAmount());
+        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
     }
 }
