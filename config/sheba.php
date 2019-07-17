@@ -4,6 +4,7 @@ return [
     'front_url' => env('SHEBA_FRONT_END_URL'),
     'admin_url' => env('SHEBA_BACKEND_URL'),
     'api_url' => env('SHEBA_API_URL'),
+    'payment_link_url' => env('SHEBA_PAYMENT_LINK_URL'),
     'logistic_url' => env('SHEBA_LOGISTIC_URL'),
     'business_url' => env('SHEBA_BUSINESS_URL'),
     'wallet_url' => env('SHEBA_WALLET_URL', 'https://wallet.sheba.xyz'),
