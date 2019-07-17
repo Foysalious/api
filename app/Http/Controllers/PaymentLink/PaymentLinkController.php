@@ -17,52 +17,36 @@ class PaymentLinkController extends Controller
     public function index(Request $request)
     {
         try {
-            if (1) {
-                $payment_links = [
-                    [
-                        'id' => 1,
-                        'code' => '#123456',
-                        'purpose' => 'Mobile home delivery',
-                        'status' => 'active',
-                        'amount' => 200,
-                        'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('Y-m-d h:i a'),
-                    ],
-                    [
-                        'id' => 2,
-                        'code' => '#123456',
-                        'purpose' => 'Mobile home delivery',
-                        'status' => 'inactive',
-                        'amount' => 200,
-                        'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('Y-m-d h:i a'),
-                    ],
-                    [
-                        'id' => 3,
-                        'code' => '#123456',
-                        'purpose' => 'Mobile home delivery',
-                        'status' => 'active',
-                        'amount' => 290,
-                        'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('Y-m-d h:i a'),
-                    ],
-                    [
-                        'id' => 4,
-                        'code' => '#123456',
-                        'purpose' => 'Mobile home delivery',
-                        'status' => 'active',
-                        'amount' => 200,
-                        'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('Y-m-d h:i a'),
-                    ],
-                    [
-                        'id' => 5,
-                        'code' => '#123456',
-                        'purpose' => 'Mobile home delivery',
-                        'status' => 'inactive',
-                        'amount' => 220,
-                        'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('Y-m-d h:i a'),
-                    ]
-                ];
+            $user_type = $request->type;
+            $user_id = $request->user->id;
+
+            $url = config('sheba.payment_link_url') . '/api/v1/payment-links';
+            $url = "$url?userType=$user_type&userId=$user_id";
+            $response = (new Client())->get($url)->getBody()->getContents();
+            $response = json_decode($response, 1);
+
+
+            $payment_links = [];
+            if ($response['code'] == 200) {
+                list($offset, $limit) = calculatePagination($request);
+                $links = collect($response['links'])->slice($offset)->take($limit);
+                foreach ($links as $link) {
+                    $link = [
+                        'id' => $link['linkId'],
+                        'code' => '#' . $link['linkId'],
+                        'purpose' => $link['reason'],
+                        'status' => $link['status'],
+                        'amount' => $link['amount'],
+                        'link' => $link['link'],
+                        'created_at' => date('Y-m-d h:i a', $link['createdAt'] / 1000),
+                    ];
+                    array_push($payment_links, $link);
+                }
                 return api_response($request, $payment_links, 200, ['payment_links' => $payment_links]);
-            } else {
+            } elseif ($response['code'] == 404) {
                 return api_response($request, 1, 404);
+            } else {
+                return api_response($request, null, 500);
             }
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
