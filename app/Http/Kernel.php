@@ -4,6 +4,7 @@ namespace App\Http;
 
 use App\Http\Middleware\B2B\OrderMiddleware;
 use App\Http\Middleware\CheckForMaintenanceMode;
+use App\Http\Middleware\TopUp\TopUpAuthMiddleware;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
 class Kernel extends HttpKernel
@@ -73,5 +74,6 @@ class Kernel extends HttpKernel
         'vendor.auth' => \App\Http\Middleware\VendorMiddleware::class,
         'jwtAuth' => \App\Http\Middleware\JWTAuthentication::class,
         'business_order.auth' => OrderMiddleware::class,
+        'topUp.auth' => TopUpAuthMiddleware::class,
     ];
 }
