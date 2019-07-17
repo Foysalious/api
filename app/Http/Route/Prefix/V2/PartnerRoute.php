@@ -57,6 +57,7 @@ class PartnerRoute
             $api->group(['prefix' => 'payment-links'], function ($api) {
                 $api->get('/', 'PaymentLink\PaymentLinkController@index');
                 $api->post('/', 'PaymentLink\PaymentLinkController@store');
+                $api->post('/{link}', 'PaymentLink\PaymentLinkController@statusChange');
                 $api->get('/default', 'PaymentLink\PaymentLinkController@getDefaultLink');
                 $api->get('/{link}/payments', 'PaymentLink\PaymentLinkController@getPaymentLinkPayments');
                 $api->get('/payments/{payment}', 'PaymentLink\PaymentLinkController@paymentLinkPaymentDetails');
