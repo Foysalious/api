@@ -1,14 +1,24 @@
 <?php namespace App\Http\Middleware\TopUp;
 
-use App\Models\Partner;
 use Closure;
+use Illuminate\Http\Request;
+use Sheba\Auth\Auth;
+use Sheba\Auth\JWTAuth;
+use Sheba\Auth\RememberTokenAuth;
 
 class TopUpAuthMiddleware
 {
+    public $auth;
+    public $request;
+    public $rememberTokenAuth;
+    public $JWTAuth;
 
-    public function __construct()
+    public function __construct(Auth $auth, RememberTokenAuth $remember_token_auth, JWTAuth $jwt_auth)
     {
-        dd(1212);
+        $this->auth = $auth;
+        $this->rememberTokenAuth = $remember_token_auth;
+        $this->JWTAuth = $jwt_auth;
+        $this->auth->setStrategy($this->JWTAuth)->setRequest(\request());
     }
 
     /**
@@ -20,6 +30,11 @@ class TopUpAuthMiddleware
      */
     public function handle($request, Closure $next)
     {
-        dd(1);
+        $user = $this->auth->authenticate();
+        if ($user) {
+            return $next($request);
+        } else {
+            return api_response($request, null, 403, ["message" => "You're not authorized to access this user."]);
+        }
     }
 }
