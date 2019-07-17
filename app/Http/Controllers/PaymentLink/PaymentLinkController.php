@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\PaymentLink;
 
+use GuzzleHttp\Client;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use Sheba\ModificationFields;
@@ -74,10 +75,32 @@ class PaymentLinkController extends Controller
         try {
             $this->validate($request, [
                 'amount' => 'required',
-                'purpose' => 'required'
+                'purpose' => 'required',
             ]);
-            $payment_link = 'https://accounts.dev-sheba.xyz/login?redirect_url=https://bondhu.dev-sheba.xyz/';
-            return api_response($request, $payment_link, 200, ['payment_link' => $payment_link]);
+
+            $data = [
+                'amount' => $request->amount,
+                'reason' => $request->purpose,
+                'userId' => $request->user->id,
+                'userName' => $request->user->name,
+                'userType' => $request->type
+            ];
+            $url = config('sheba.payment_link_url') . '/api/v1/payment-links';
+            $client = new Client();
+            $result = $client->request('POST', $url, ['form_params' => $data]);
+            $result = json_decode($result->getBody());
+
+            if ($result->code == 200) {
+                $payment_link = [
+                    'reason' => $result->link->reason,
+                    'status' => $result->link->status,
+                    'amount' => $result->link->amount,
+                    'link' => $result->link->link,
+                ];
+                return api_response($request, $payment_link, 200, ['payment_link' => $payment_link]);
+            } else {
+                return api_response($request, null, 500);
+            }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
@@ -86,10 +109,6 @@ class PaymentLinkController extends Controller
             return api_response($request, null, 500);
         }
     }
-/*
-$client = new Client();
-$result = $client->request('POST', $this->sessionUrl, ['form_params' => $data]);
-return json_decode($result->getBody());*/
 
     public function statusChange($partner, $link, Request $request)
     {
