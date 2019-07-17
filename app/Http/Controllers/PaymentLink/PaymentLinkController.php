@@ -86,6 +86,10 @@ class PaymentLinkController extends Controller
             return api_response($request, null, 500);
         }
     }
+/*
+$client = new Client();
+$result = $client->request('POST', $this->sessionUrl, ['form_params' => $data]);
+return json_decode($result->getBody());*/
 
     public function statusChange($partner, $link, Request $request)
     {
@@ -157,6 +161,7 @@ class PaymentLinkController extends Controller
                     'id' => 1,
                     'code' => '#123456',
                     'purpose' => 'Mobile home delivery',
+                    'payment_link' => 'https:sheba.xyz@Venus',
                     'status' => 'active',
                     'amount' => 220,
                     'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('Y-m-d h:i a'),
