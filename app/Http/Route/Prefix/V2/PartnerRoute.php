@@ -54,16 +54,6 @@ class PartnerRoute
                 $api->get('/bank-interest', 'SpLoanController@getBankInterest');
             });
 
-            $api->group(['prefix' => 'payment-links'], function ($api) {
-                $api->get('/', 'PaymentLink\PaymentLinkController@index');
-                $api->post('/', 'PaymentLink\PaymentLinkController@store');
-                $api->post('/{link}', 'PaymentLink\PaymentLinkController@statusChange');
-                $api->get('/default', 'PaymentLink\PaymentLinkController@getDefaultLink');
-                $api->get('/{link}/payments', 'PaymentLink\PaymentLinkController@getPaymentLinkPayments');
-                $api->get('/payments/{payment}', 'PaymentLink\PaymentLinkController@paymentLinkPaymentDetails');
-                $api->post('/', 'PaymentLink\PaymentLinkController@store');
-            });
-
             $api->group(['prefix' => 'pos'], function ($api) {
                 $api->group(['prefix' => 'categories'], function ($api) {
                     $api->get('/', 'Pos\CategoryController@index');
@@ -224,6 +214,8 @@ class PartnerRoute
             $api->get('served-customers', 'PartnerController@getServedCustomers');
             $api->post('change-leave-status', 'PartnerController@changeLeaveStatus');
         });
+
+        (new PaymentLinkRoute())->set($api);
 
         $api->post('training-status-update', 'ResourceController@trainingStatusUpdate');
     }

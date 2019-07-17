@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 
 class Auth
 {
+    /** @var Authentication $authentication */
     private $authentication;
     private $request;
 
