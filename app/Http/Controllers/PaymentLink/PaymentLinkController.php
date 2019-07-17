@@ -184,7 +184,7 @@ return json_decode($result->getBody());*/
             if (1) {
                 $payment_details = [
                     'id' => 1,
-                    'payment-code' => '#156412',
+                    'payment_code' => '#156412',
                     'customer_name' => 'Sabbir',
                     'customer_number' => '01678099565',
                     'link_code' => '#P-123456',
