@@ -15,15 +15,11 @@ class JWTAuth implements Authentication
             $token = Auth::getToken();
             $payload = Auth::getPayload($token)->toArray();
         } catch (JWTException $e) {
-            return api_response($this->request, null, 401);
+            return null;
         }
         $user = $payload['avatar'];
         $model = "App\\Models\\" . ucfirst(camel_case($user['type']));
-
-        $user = $model::where([
-            ['id', $user['type_id']]
-        ])->with('profile')->first();
-        return $user;
+        return $model::find($user['type_id']);
 
     }
 
