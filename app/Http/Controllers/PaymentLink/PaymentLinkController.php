@@ -187,7 +187,7 @@ return json_decode($result->getBody());*/
                     'payment-code' => '#156412',
                     'customer_name' => 'Sabbir',
                     'customer_number' => '01678099565',
-                    'link-code' => '#P-123456',
+                    'link_code' => '#P-123456',
                     'link' => 'https://sheba.xyz/p/@VenusBeauty',
                     'purpose' => 'Mobile home delivery',
                     'payment_type' => 'Bkash',
