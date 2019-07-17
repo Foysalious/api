@@ -24,7 +24,7 @@ class PaymentLinkController extends Controller
                         'purpose' => 'Mobile home delivery',
                         'status' => 'active',
                         'amount' => 200,
-                        'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('d M\'y h:i a'),
+                        'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('Y-m-d h:i a'),
                     ],
                     [
                         'id' => 2,
@@ -32,7 +32,7 @@ class PaymentLinkController extends Controller
                         'purpose' => 'Mobile home delivery',
                         'status' => 'inactive',
                         'amount' => 200,
-                        'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('d M\'y h:i a'),
+                        'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('Y-m-d h:i a'),
                     ],
                     [
                         'id' => 3,
@@ -40,7 +40,7 @@ class PaymentLinkController extends Controller
                         'purpose' => 'Mobile home delivery',
                         'status' => 'active',
                         'amount' => 290,
-                        'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('d M\'y h:i a'),
+                        'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('Y-m-d h:i a'),
                     ],
                     [
                         'id' => 4,
@@ -48,7 +48,7 @@ class PaymentLinkController extends Controller
                         'purpose' => 'Mobile home delivery',
                         'status' => 'active',
                         'amount' => 200,
-                        'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('d M\'y h:i a'),
+                        'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('Y-m-d h:i a'),
                     ],
                     [
                         'id' => 5,
@@ -56,7 +56,7 @@ class PaymentLinkController extends Controller
                         'purpose' => 'Mobile home delivery',
                         'status' => 'inactive',
                         'amount' => 220,
-                        'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('d M\'y h:i a'),
+                        'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('Y-m-d h:i a'),
                     ]
                 ];
                 return api_response($request, $payment_links, 200, ['payment_links' => $payment_links]);
@@ -94,28 +94,28 @@ class PaymentLinkController extends Controller
                         'code' => '#156412',
                         'name' => 'Shamim Reza',
                         'amount' => 220,
-                        'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('d M\'y h:i a'),
+                        'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('Y-m-d h:i a'),
                     ],
                     [
                         'id' => 2,
                         'code' => '#156412',
                         'name' => 'Ramzaan',
                         'amount' => 220,
-                        'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('d M\'y h:i a'),
+                        'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('Y-m-d h:i a'),
                     ],
                     [
                         'id' => 3,
                         'code' => '#156412',
                         'name' => 'Sabbir',
                         'amount' => 220,
-                        'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('d M\'y h:i a'),
+                        'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('Y-m-d h:i a'),
                     ],
                     [
                         'id' => 4,
                         'code' => '#156412',
                         'name' => 'Sabbir',
                         'amount' => 220,
-                        'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('d M\'y h:i a'),
+                        'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('Y-m-d h:i a'),
                     ],
 
                 ];
@@ -125,7 +125,7 @@ class PaymentLinkController extends Controller
                     'purpose' => 'Mobile home delivery',
                     'status' => 'active',
                     'amount' => 220,
-                    'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('d M\'y h:i a'),
+                    'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('Y-m-d h:i a'),
                     'total_payments' => 4,
                     'payments' => $all_payment
                 ];
@@ -153,7 +153,7 @@ class PaymentLinkController extends Controller
                     'purpose' => 'Mobile home delivery',
                     'payment_type' => 'Bkash',
                     'amount' => 220,
-                    'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('d M\'y h:i a'),
+                    'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('Y-m-d h:i a'),
                     'tnx_id' => 24359487,
                 ];
                 return api_response($request, $payment_details, 200, ['payment_details' => $payment_details]);
