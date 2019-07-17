@@ -1,4 +1,4 @@
-<?php namespace App\Http\Middleware\TopUp;
+<?php namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
@@ -6,7 +6,7 @@ use Sheba\Auth\Auth;
 use Sheba\Auth\JWTAuth;
 use Sheba\Auth\RememberTokenAuth;
 
-class PaymentLinkMiddleware
+class PaymentLinkAuthMiddleware
 {
     public $auth;
     public $request;
