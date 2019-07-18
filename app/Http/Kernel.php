@@ -74,6 +74,7 @@ class Kernel extends HttpKernel
         'admin.auth' => \App\Http\Middleware\AdminAuthMiddleware::class,
         'vendor.auth' => \App\Http\Middleware\VendorMiddleware::class,
         'jwtAuth' => \App\Http\Middleware\JWTAuthentication::class,
+        'jwtGlobalAuth' => \App\Http\Middleware\JWTAuthMiddleware::class,
         'business_order.auth' => OrderMiddleware::class,
         'topUp.auth' => TopUpAuthMiddleware::class,
         'paymentLink.auth' => PaymentLinkAuthMiddleware::class,
