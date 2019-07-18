@@ -42,7 +42,8 @@ class DashboardController extends Controller
             $rating = (string)(is_null($rating) ? 0 : $rating);
             $successful_jobs = $partner->notCancelledJobs();
             $sales_stats = (new PartnerSalesStatistics($partner))->calculate();
-            $upgradable_package = (new PartnerSubscriber($partner))->getUpgradablePackage();
+            // $upgradable_package = (new PartnerSubscriber($partner))->getUpgradablePackage();
+            $upgradable_package = null;
             $new_order = $this->newOrdersCount($partner, $request);
 
             $total_due_for_pos_orders = 0;
