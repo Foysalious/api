@@ -9,26 +9,26 @@ use Illuminate\Http\Request;
 use GuzzleHttp\Client;
 use Carbon\Carbon;
 use DB;
+use Sheba\PaymentLink\PaymentLinkClient;
 
 class PaymentLinkController extends Controller
 {
     use ModificationFields;
+    private $paymentLinkClient;
+
+    public function __construct(PaymentLinkClient $payment_link_client)
+    {
+        $this->paymentLinkClient = $payment_link_client;
+    }
 
     public function index(Request $request)
     {
         try {
-            $user_type = $request->type;
-            $user_id = $request->user->id;
-
-            $url = config('sheba.payment_link_url') . '/api/v1/payment-links';
-            $url = "$url?userType=$user_type&userId=$user_id";
-            $response = (new Client())->get($url)->getBody()->getContents();
-            $response = json_decode($response, 1);
-
+            $payment_links_list = $this->paymentLinkClient->paymentLinkList($request);
             $payment_links = [];
-            if ($response['code'] == 200) {
+            if ($payment_links_list) {
                 list($offset, $limit) = calculatePagination($request);
-                $links = collect($response['links'])->slice($offset)->take($limit);
+                $links = collect($payment_links_list)->slice($offset)->take($limit);
                 foreach ($links as $link) {
                     $link = [
                         'id' => $link['linkId'],
@@ -41,10 +41,8 @@ class PaymentLinkController extends Controller
                     array_push($payment_links, $link);
                 }
                 return api_response($request, $payment_links, 200, ['payment_links' => $payment_links]);
-            } elseif ($response['code'] == 404) {
-                return api_response($request, 1, 404);
             } else {
-                return api_response($request, null, 500);
+                return api_response($request, 1, 404);
             }
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
