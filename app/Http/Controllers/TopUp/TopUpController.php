@@ -11,6 +11,7 @@ use Sheba\TopUp\TopUpRequest;
 use Illuminate\Http\Request;
 use App\Models\TopUpVendor;
 use Sheba\TopUp\TopUpExcel;
+use Sheba\Reports\ExcelHandler;
 use Sheba\TopUp\Creator;
 use Throwable;
 use Validator;
@@ -183,7 +184,6 @@ class TopUpController extends Controller
 
             return response()->json(['code' => 200, 'data' => $topup_data, 'total_topups' => $total_topups, 'offset' => $offset]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
