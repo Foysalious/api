@@ -71,7 +71,6 @@ class PaymentLinkController extends Controller
             $client = new Client();
             $result = $client->request('POST', $url, ['form_params' => $data]);
             $result = json_decode($result->getBody());
-
             if ($result->code == 200) {
                 $payment_link = [
                     'reason' => $result->link->reason,
