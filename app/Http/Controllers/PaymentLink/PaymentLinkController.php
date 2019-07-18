@@ -150,11 +150,12 @@ class PaymentLinkController extends Controller
                 $payables = Payable::where([
                     ['type', 'payment_link'],
                     ['type_id', $link['linkId']],
-                ])->select('id', 'type', 'type_id', 'amount')->with([
-                    'payment' => function ($query) {
-                        $query->where('status', 'completed')
-                            ->select('id', 'payable_id', 'status', 'created_by_type', 'created_by', 'created_by_name', 'created_at');
-                    }]);
+                ])->select('id', 'type', 'type_id', 'amount')
+                    ->with([
+                        'payment' => function ($query) {
+                            $query->where('status', 'completed')
+                                ->select('id', 'payable_id', 'status', 'created_by_type', 'created_by', 'created_by_name', 'created_at');
+                        }]);
 
                 $all_payment = [];
                 foreach ($payables->get() as $payable) {
@@ -203,15 +204,17 @@ class PaymentLinkController extends Controller
                     'payable' => function ($query) {
                         $query->select('id', 'type', 'type_id', 'amount');
                     }
-                ])->first();
+                ], 'paymentDetails')->first();
+
             $model = $payment->created_by_type;
             $user = $model::find($payment->created_by);
             if ($response['code'] == 200) {
                 $link = $response['link'];
+                $payment_detail = $payment->paymentDetails ? $payment->paymentDetails->last() : null;
                 $payment_details = [
                     'customer_name' => $payment->created_by_name,
                     'customer_number' => $user->mobile,
-                    'payment_type' => 'N/A',
+                    'payment_type' => $payment_detail->readableMethod,
                     'id' => $payment->id,
                     'payment_code' => '#' . $payment->id,
                     'amount' => $payment->payable->amount,
@@ -219,8 +222,7 @@ class PaymentLinkController extends Controller
                     'link' => $link['link'],
                     'link_code' => '#' . $link['linkId'],
                     'purpose' => $link['reason'],
-                    'status' => $link['isActive'] == 1 ? 'active' : 'inactive',
-                    'tnx_id' => 'N/A',
+                    'status' => $link['isActive'] == 1 ? 'active' : 'inactive'
                 ];
                 return api_response($request, $payment_details, 200, ['payment_details' => $payment_details]);
             } else {
