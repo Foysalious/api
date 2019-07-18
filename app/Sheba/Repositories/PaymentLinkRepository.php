@@ -27,7 +27,7 @@ class PaymentLinkRepository
         $response = $this->client->get($url)->getBody()->getContents();
         $result = json_decode($response, true);
         if ($result['code'] == 200) {
-            return $result['links'];
+            return $result['links'][0];
         } else {
             throw new PayableNotFound();
         }

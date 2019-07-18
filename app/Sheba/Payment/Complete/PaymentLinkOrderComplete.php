@@ -1,8 +1,7 @@
-<?php namespace App\Sheba\Payment\Complete;
+<?php namespace Sheba\Payment\Complete;
 
 
 use Sheba\ModificationFields;
-use Sheba\Payment\Complete\PaymentComplete;
 
 class PaymentLinkOrderComplete extends PaymentComplete
 {
