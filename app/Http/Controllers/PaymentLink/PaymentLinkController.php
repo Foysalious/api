@@ -33,6 +33,7 @@ class PaymentLinkController extends Controller
                         'id' => $link['linkId'],
                         'code' => '#' . $link['linkId'],
                         'purpose' => $link['reason'],
+                        'type' => $link['type'],
                         'status' => $link['status'],
                         'amount' => $link['amount'],
                         'link' => $link['link'],
@@ -75,6 +76,7 @@ class PaymentLinkController extends Controller
             if ($result->code == 200) {
                 $payment_link = [
                     'reason' => $result->link->reason,
+                    'type' => $result->link->type,
                     'status' => $result->link->status,
                     'amount' => $result->link->amount,
                     'link' => $result->link->link,
@@ -106,6 +108,7 @@ class PaymentLinkController extends Controller
             if ($result->code == 200) {
                 $payment_link = [
                     'reason' => $result->link->reason,
+                    'type' => $result->link->type,
                     'status' => $result->link->status,
                     'amount' => $result->link->amount,
                     'link' => $result->link->link,
