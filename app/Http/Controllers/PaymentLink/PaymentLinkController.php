@@ -125,7 +125,7 @@ class PaymentLinkController extends Controller
     public function getDefaultLink(Request $request)
     {
         try {
-            $default_payment_link = $this->paymentLinkClient->paymentDefaultLink($request);
+            $default_payment_link = $this->paymentLinkClient->defaultPaymentLink($request);
             if ($default_payment_link) {
                 $default_payment_link = $default_payment_link[0]['link'];
                 return api_response($request, $default_payment_link, 200, ['default_payment_link' => $default_payment_link]);

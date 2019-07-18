@@ -22,7 +22,7 @@ class PaymentLinkClient
         }
     }
 
-    public function paymentDefaultLink(Request $request)
+    public function defaultPaymentLink(Request $request)
     {
         try {
             $user_type = $request->type;

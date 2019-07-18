@@ -43,6 +43,7 @@ class Cors2MiddleWare
             "http://sheba.dev",
             "http://bondhu.dev-sheba.xyz",
             "https://bondhu.dev-sheba.xyz",
+            "https://topup.dev-sheba.xyz",
             null,
             "null",
             "chrome-extension://fhbjgbiflinjbdggehcddcbncdddomop",
