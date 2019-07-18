@@ -145,9 +145,9 @@ class PaymentLinkController extends Controller
             $response = (new Client())->get($url)->getBody()->getContents();
             $response = json_decode($response, 1);
             if ($response['code'] == 200) {
-
                 $link = $response['link'];
-                $payables = Payable::where([
+
+                /*$payables = Payable::where([
                     ['type', 'payment_link'],
                     ['type_id', $link['linkId']],
                 ])->select('id', 'type', 'type_id', 'amount')
@@ -155,7 +155,13 @@ class PaymentLinkController extends Controller
                         'payment' => function ($query) {
                             $query->where('status', 'completed')
                                 ->select('id', 'payable_id', 'status', 'created_by_type', 'created_by', 'created_by_name', 'created_at');
-                        }]);
+                        }]);*/
+                $payables = Payable::whereHas('payment', function ($query) {
+                    $query->where('status', 'completed')->select('id', 'payable_id', 'status', 'created_by_type', 'created_by', 'created_by_name', 'created_at');
+                })->where([
+                    ['type', 'payment_link'],
+                    ['type_id', $link['linkId']],
+                ])->select('id', 'type', 'type_id', 'amount');
 
                 $all_payment = [];
                 foreach ($payables->get() as $payable) {
@@ -185,6 +191,7 @@ class PaymentLinkController extends Controller
                 return api_response($request, 1, 404);
             }
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
