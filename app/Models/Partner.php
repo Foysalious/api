@@ -155,6 +155,11 @@ class Partner extends Model implements Rewardable, TopUpAgent
         return $this->hasMany(PartnerDailyStat::class);
     }
 
+    public function topups()
+    {
+        return $this->hasMany(TopUpOrder::class, 'agent_id')->where('agent_type', 'App\\Models\\Partner');
+    }
+
     public function commission($service_id)
     {
         $service_category = Service::find($service_id)->category->id;
