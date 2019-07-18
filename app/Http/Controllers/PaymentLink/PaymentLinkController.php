@@ -212,13 +212,14 @@ class PaymentLinkController extends Controller
                         $query->select('id', 'type', 'type_id', 'amount');
                     }
                 ])->first();
-
+            $model = $payment->created_by_type;
+            $user = $model::find($payment->created_by);
             if ($response['code'] == 200) {
                 $link = $response['link'];
                 $payment_details = [
                     'customer_name' => $payment->created_by_name,
-                    'customer_number' => '01678099565',
-                    'payment_type' => 'Bkash',
+                    'customer_number' => $user->mobile,
+                    'payment_type' => 'N/A',
                     'id' => $payment->id,
                     'payment_code' => '#' . $payment->id,
                     'amount' => $payment->payable->amount,
@@ -227,7 +228,7 @@ class PaymentLinkController extends Controller
                     'link_code' => '#' . $link['linkId'],
                     'purpose' => $link['reason'],
                     'status' => $link['isActive'] == 1 ? 'active' : 'inactive',
-                    'tnx_id' => 24359487,
+                    'tnx_id' => 'N/A',
                 ];
                 return api_response($request, $payment_details, 200, ['payment_details' => $payment_details]);
             } else {
