@@ -103,19 +103,14 @@ class PaymentLinkController extends Controller
             } else {
                 $status = 0;
             }
+
             $url = config('sheba.payment_link_url') . '/api/v1/payment-links/' . $link;
-            $url = "$url?status=$status";
+            $url = "$url?isActive=$status";
             $client = new Client();
             $result = $client->request('PUT', $url, []);
             $result = json_decode($result->getBody());
             if ($result->code == 200) {
-                $payment_link = [
-                    'reason' => $result->link->reason,
-                    'type' => $result->link->type,
-                    'status' => $result->link->isActive == 1 ? 'active' : 'inactive',
-                    'amount' => $result->link->amount,
-                ];
-                return api_response($request, $payment_link, 200, ['payment_link' => $payment_link]);
+                return api_response($request, 1, 200);
             } elseif ($result->code == 404) {
                 return api_response($request, 1, 404);
             } else {
