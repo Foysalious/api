@@ -34,7 +34,7 @@ class PaymentLinkController extends Controller
                         'id' => $link['linkId'],
                         'code' => '#' . $link['linkId'],
                         'purpose' => $link['reason'],
-                        'status' => $link['is_active'] == 1 ? 'active' : 'inactive',
+                        'status' => $link['isActive'] == 1 ? 'active' : 'inactive',
                         'amount' => $link['amount'],
                         'created_at' => date('Y-m-d h:i a', $link['createdAt'] / 1000),
                     ];
