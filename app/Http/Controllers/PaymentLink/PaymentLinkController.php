@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\PaymentLink;
 
+use App\Models\Payable;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use Sheba\ModificationFields;
@@ -142,47 +143,42 @@ class PaymentLinkController extends Controller
     public function getPaymentLinkPayments($link, Request $request)
     {
         try {
-            if (1) {
-                $all_payment = [
-                    [
-                        'id' => 1,
-                        'code' => '#156412',
-                        'name' => 'Shamim Reza',
-                        'amount' => 220,
-                        'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('Y-m-d h:i a'),
-                    ],
-                    [
-                        'id' => 2,
-                        'code' => '#156412',
-                        'name' => 'Ramzaan',
-                        'amount' => 220,
-                        'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('Y-m-d h:i a'),
-                    ],
-                    [
-                        'id' => 3,
-                        'code' => '#156412',
-                        'name' => 'Sabbir',
-                        'amount' => 220,
-                        'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('Y-m-d h:i a'),
-                    ],
-                    [
-                        'id' => 4,
-                        'code' => '#156412',
-                        'name' => 'Sabbir',
-                        'amount' => 220,
-                        'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('Y-m-d h:i a'),
-                    ],
+            $url = config('sheba.payment_link_url') . '/api/v1/payment-links/' . $link;
+            $response = (new Client())->get($url)->getBody()->getContents();
+            $response = json_decode($response, 1);
+            if ($response['code'] == 200) {
 
-                ];
+                $link = $response['link'];
+                $payables = Payable::where([
+                    ['type', 'payment_link'],
+                    ['type_id', $link['linkId']],
+                ])->select('id', 'type', 'type_id', 'amount')->with([
+                    'payment' => function ($query) {
+                        $query->where('status', 'completed')
+                            ->select('id', 'payable_id', 'status', 'created_by_type', 'created_by', 'created_by_name', 'created_at');
+                    }]);
+
+                $all_payment = [];
+                foreach ($payables->get() as $payable) {
+                    $payment = $payable->payment ? $payable->payment : null;
+                    $payment = [
+                        'id' => $payment ? $payment->id : null,
+                        'code' => $payment ? '#' . $payment->id : null,
+                        'name' => $payment ? $payment->created_by_name : null,
+                        'amount' => $payment ? $payable->amount : null,
+                        'created_at' => $payment ? Carbon::parse($payment->created_at)->format('Y-m-d h:i a') : null,
+                    ];
+                    array_push($all_payment, $payment);
+                }
                 $payment_link_payments = [
-                    'id' => 1,
-                    'code' => '#123456',
-                    'purpose' => 'Mobile home delivery',
-                    'payment_link' => 'https:sheba.xyz@Venus',
-                    'status' => 'active',
-                    'amount' => 220,
-                    'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('Y-m-d h:i a'),
-                    'total_payments' => 4,
+                    'id' => $link['linkId'],
+                    'code' => '#' . $link['linkId'],
+                    'purpose' => $link['reason'],
+                    'status' => $link['status'],
+                    'payment_link' => $link['link'],
+                    'amount' => $link['amount'],
+                    'total_payments' => $payables->count(),
+                    'created_at' => date('Y-m-d h:i a', $link['createdAt'] / 1000),
                     'payments' => $all_payment
                 ];
                 return api_response($request, $payment_link_payments, 200, ['payment_link_payments' => $payment_link_payments]);
