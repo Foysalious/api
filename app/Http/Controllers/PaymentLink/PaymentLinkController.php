@@ -33,10 +33,8 @@ class PaymentLinkController extends Controller
                         'id' => $link['linkId'],
                         'code' => '#' . $link['linkId'],
                         'purpose' => $link['reason'],
-                        'type' => $link['type'],
                         'status' => $link['status'],
                         'amount' => $link['amount'],
-                        'link' => $link['link'],
                         'created_at' => date('Y-m-d h:i a', $link['createdAt'] / 1000),
                     ];
                     array_push($payment_links, $link);
@@ -111,7 +109,6 @@ class PaymentLinkController extends Controller
                     'type' => $result->link->type,
                     'status' => $result->link->status,
                     'amount' => $result->link->amount,
-                    'link' => $result->link->link,
                 ];
                 return api_response($request, $payment_link, 200, ['payment_link' => $payment_link]);
             } elseif ($result->code == 404) {
