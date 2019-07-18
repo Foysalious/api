@@ -57,7 +57,6 @@ class PaymentLinkController extends Controller
                 'amount' => 'required',
                 'purpose' => 'required',
             ]);
-
             $data = [
                 'amount' => $request->amount,
                 'reason' => $request->purpose,
@@ -126,8 +125,9 @@ class PaymentLinkController extends Controller
     public function getDefaultLink(Request $request)
     {
         try {
-            if (1) {
-                $default_payment_link = 'https:sheba.xyz@Venus';
+            $default_payment_link = $this->paymentLinkClient->paymentDefaultLink($request);
+            if ($default_payment_link) {
+                $default_payment_link = $default_payment_link[0]['link'];
                 return api_response($request, $default_payment_link, 200, ['default_payment_link' => $default_payment_link]);
             } else {
                 return api_response($request, 1, 404);
@@ -146,16 +146,6 @@ class PaymentLinkController extends Controller
             $response = json_decode($response, 1);
             if ($response['code'] == 200) {
                 $link = $response['link'];
-
-                /*$payables = Payable::where([
-                    ['type', 'payment_link'],
-                    ['type_id', $link['linkId']],
-                ])->select('id', 'type', 'type_id', 'amount')
-                    ->with([
-                        'payment' => function ($query) {
-                            $query->where('status', 'completed')
-                                ->select('id', 'payable_id', 'status', 'created_by_type', 'created_by', 'created_by_name', 'created_at');
-                        }]);*/
                 $payables = Payable::whereHas('payment', function ($query) {
                     $query->where('status', 'completed')->select('id', 'payable_id', 'status', 'created_by_type', 'created_by', 'created_by_name', 'created_at');
                 })->where([
@@ -191,7 +181,6 @@ class PaymentLinkController extends Controller
                 return api_response($request, 1, 404);
             }
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
