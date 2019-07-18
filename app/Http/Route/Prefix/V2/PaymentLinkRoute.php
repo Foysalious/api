@@ -10,7 +10,7 @@ class PaymentLinkRoute
             $api->post('/{link}', 'PaymentLink\PaymentLinkController@statusChange');
             $api->get('/default', 'PaymentLink\PaymentLinkController@getDefaultLink');
             $api->get('/{link}/payments', 'PaymentLink\PaymentLinkController@getPaymentLinkPayments');
-            $api->get('/payments/{payment}', 'PaymentLink\PaymentLinkController@paymentLinkPaymentDetails');
+            $api->get('/{link}/payments/{payment}', 'PaymentLink\PaymentLinkController@paymentLinkPaymentDetails');
         });
     }
 }
