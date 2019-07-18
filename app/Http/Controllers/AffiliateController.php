@@ -556,10 +556,6 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
                 'type' => 'required|in:bkash',
             ]);
 
-            /*if ($request->ip() != "103.4.146.66") {
-                return api_response($request, null, 500, ['message' => "Temporary Recharge Off"]);
-            }*/
-
             $affiliate = $request->affiliate;
             $transaction = (new Registrar())->register($affiliate, $request->type, $request->transaction_id);
 
@@ -598,13 +594,14 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
                 [
                     'name' => 'Bkash',
                     'details' => [
-                        'transaction_id' => $transaction['amount'],
+                        'transaction_id' => $transaction['transaction_id'],
                         'gateway' => 'bkash',
                         'details' => $transaction['details']
                     ]
                 ]
             ),
-            'type' => 'Credit', 'log' => 'Moneybag Refilled'
+            'type' => 'Credit',
+            'log' => 'Moneybag Refilled'
         ];
     }
 

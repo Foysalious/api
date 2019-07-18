@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use App\Sheba\PaymentLink\PaymentLinkOrder;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Payment\Complete\PaymentComplete;
 use Sheba\Payment\PayableType;
@@ -27,6 +28,8 @@ class Payable extends Model
             return 'transport_ticket_purchase';
         } else if ($this->type == 'utility_order') {
             return 'utility_order';
+        } else if ($this->type == 'payment_link') {
+            return 'payment_link';
         }
     }
 
@@ -45,8 +48,10 @@ class Payable extends Model
             $class_name .= 'MovieTicketPurchaseComplete';
         } else if ($this->completion_type == 'transport_ticket_purchase') {
             $class_name .= 'TransportTicketPurchaseComplete';
-        } else if ($this->type == 'utility_order') {
+        } else if ($this->completion_type == 'utility_order') {
             $class_name .= 'UtilityOrderComplete';
+        } else if ($this->completion_type == 'payment_link') {
+            $class_name .= 'PaymentLinkOrderComplete';
         }
 
         return app($class_name);
@@ -115,6 +120,8 @@ class Payable extends Model
     {
         if ($this->type == 'utility_order') {
             return (new UtilityOrder())->setPayable($this);
+        } elseif ($this->type == 'payment_link') {
+            return (new PaymentLinkOrder())->setPayable($this);
         } else {
             return ($this->getPayableModel())::find($this->type_id);
         }
