@@ -45,8 +45,10 @@ class Payable extends Model
             $class_name .= 'MovieTicketPurchaseComplete';
         } else if ($this->completion_type == 'transport_ticket_purchase') {
             $class_name .= 'TransportTicketPurchaseComplete';
-        } else if ($this->type == 'utility_order') {
+        } else if ($this->completion_type == 'utility_order') {
             $class_name .= 'UtilityOrderComplete';
+        } else if ($this->completion_type == 'payment_link') {
+            $class_name .= 'PaymentLinkOrderComplete';
         }
 
         return app($class_name);

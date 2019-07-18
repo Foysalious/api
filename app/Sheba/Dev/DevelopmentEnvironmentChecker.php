@@ -9,8 +9,8 @@ class DevelopmentEnvironmentChecker
      */
     public function check()
     {
-        $this->checkNpmPackages();
-        $this->checkGitHooks();
+//        $this->checkNpmPackages();
+//        $this->checkGitHooks();
     }
 
     /**
