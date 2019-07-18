@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\PaymentLink;
 
 use App\Models\Payable;
+use App\Models\Payment;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use Sheba\ModificationFields;
@@ -33,7 +34,7 @@ class PaymentLinkController extends Controller
                         'id' => $link['linkId'],
                         'code' => '#' . $link['linkId'],
                         'purpose' => $link['reason'],
-                        'status' => $link['status'],
+                        'status' => $link['isActive'] == 1 ? 'active' : 'inactive',
                         'amount' => $link['amount'],
                         'created_at' => date('Y-m-d h:i a', $link['createdAt'] / 1000),
                     ];
@@ -70,12 +71,11 @@ class PaymentLinkController extends Controller
             $client = new Client();
             $result = $client->request('POST', $url, ['form_params' => $data]);
             $result = json_decode($result->getBody());
-
             if ($result->code == 200) {
                 $payment_link = [
                     'reason' => $result->link->reason,
                     'type' => $result->link->type,
-                    'status' => $result->link->status,
+                    'status' => $result->link->isActive == 1 ? 'active' : 'inactive',
                     'amount' => $result->link->amount,
                     'link' => $result->link->link,
                 ];
@@ -98,8 +98,13 @@ class PaymentLinkController extends Controller
             $this->validate($request, [
                 'status' => 'required'
             ]);
+            if ($request->status == 'active') {
+                $status = 1;
+            } else {
+                $status = 0;
+            }
             $url = config('sheba.payment_link_url') . '/api/v1/payment-links/' . $link;
-            $url = "$url?status=$request->status";
+            $url = "$url?status=$status";
             $client = new Client();
             $result = $client->request('PUT', $url, []);
             $result = json_decode($result->getBody());
@@ -107,7 +112,7 @@ class PaymentLinkController extends Controller
                 $payment_link = [
                     'reason' => $result->link->reason,
                     'type' => $result->link->type,
-                    'status' => $result->link->status,
+                    'status' => $result->link->isActive == 1 ? 'active' : 'inactive',
                     'amount' => $result->link->amount,
                 ];
                 return api_response($request, $payment_link, 200, ['payment_link' => $payment_link]);
@@ -174,7 +179,7 @@ class PaymentLinkController extends Controller
                     'id' => $link['linkId'],
                     'code' => '#' . $link['linkId'],
                     'purpose' => $link['reason'],
-                    'status' => $link['status'],
+                    'status' => $link['isActive'] == 1 ? 'active' : 'inactive',
                     'payment_link' => $link['link'],
                     'amount' => $link['amount'],
                     'total_payments' => $payables->count(),
@@ -191,27 +196,44 @@ class PaymentLinkController extends Controller
         }
     }
 
-    public function paymentLinkPaymentDetails($payment, Request $request)
+    public function paymentLinkPaymentDetails($link, $payment, Request $request)
     {
         try {
-            if (1) {
+
+            $url = config('sheba.payment_link_url') . '/api/v1/payment-links/' . $link;
+            $response = (new Client())->get($url)->getBody()->getContents();
+            $response = json_decode($response, 1);
+
+            $payment = Payment::where('id', $payment)
+                ->select('id', 'payable_id', 'status', 'created_by_type', 'created_by', 'created_by_name', 'created_at')
+                ->with([
+                    'payable' => function ($query) {
+                        $query->select('id', 'type', 'type_id', 'amount');
+                    }
+                ])->first();
+            $model = $payment->created_by_type;
+            $user = $model::find($payment->created_by);
+            if ($response['code'] == 200) {
+                $link = $response['link'];
                 $payment_details = [
-                    'id' => 1,
-                    'payment_code' => '#156412',
-                    'customer_name' => 'Sabbir',
-                    'customer_number' => '01678099565',
-                    'link_code' => '#P-123456',
-                    'link' => 'https://sheba.xyz/p/@VenusBeauty',
-                    'purpose' => 'Mobile home delivery',
-                    'payment_type' => 'Bkash',
-                    'amount' => 220,
-                    'created_at' => Carbon::parse('2019-07-18 18:05:51')->format('Y-m-d h:i a'),
-                    'tnx_id' => 24359487,
+                    'customer_name' => $payment->created_by_name,
+                    'customer_number' => $user->mobile,
+                    'payment_type' => 'N/A',
+                    'id' => $payment->id,
+                    'payment_code' => '#' . $payment->id,
+                    'amount' => $payment->payable->amount,
+                    'created_at' => Carbon::parse($payment->created_at)->format('Y-m-d h:i a'),
+                    'link' => $link['link'],
+                    'link_code' => '#' . $link['linkId'],
+                    'purpose' => $link['reason'],
+                    'status' => $link['isActive'] == 1 ? 'active' : 'inactive',
+                    'tnx_id' => 'N/A',
                 ];
                 return api_response($request, $payment_details, 200, ['payment_details' => $payment_details]);
             } else {
                 return api_response($request, 1, 404);
             }
+
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
