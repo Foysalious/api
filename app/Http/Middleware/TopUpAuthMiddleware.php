@@ -32,6 +32,8 @@ class TopUpAuthMiddleware
     {
         $user = $this->auth->authenticate();
         if ($user) {
+            $type = strtolower(class_basename($user));
+            $request->merge([$type => $user, 'type' => $type, 'user' => $user]);
             return $next($request);
         } else {
             return api_response($request, null, 403, ["message" => "You're not authorized to access this user."]);

@@ -23,6 +23,7 @@ class TopUpController extends Controller
         try {
             if ($request->type == 'customer') $agent = "App\\Models\\Customer";
             elseif ($request->type == 'partner') $agent = "App\\Models\\Partner";
+            elseif ($request->type == 'business') $agent = "App\\Models\\Business";
             else $agent = "App\\Models\\Affiliate";
             $vendors = TopUpVendor::select('id', 'name', 'is_published')->published()->get();
             $error_message = "Currently, we’re supporting";
@@ -56,7 +57,7 @@ class TopUpController extends Controller
                 'vendor_id' => 'required|exists:topup_vendors,id',
                 'amount' => 'required|min:10|max:1000|numeric'
             ]);
-            $agent = $this->getAgent($request);
+            $agent = $request->user;
             $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id);
             if ($top_up_request->hasError()) return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
             $topup_order = $creator->setTopUpRequest($top_up_request)->create();
@@ -88,7 +89,7 @@ class TopUpController extends Controller
                 return api_response($request, null, 400, ['message' => 'File type not support']);
             }
 
-            $agent = $this->getAgent($request);
+            $agent = $request->user;
 
             $file = Excel::selectSheets(TopUpExcel::SHEET)->load($request->file)->save();
             $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
