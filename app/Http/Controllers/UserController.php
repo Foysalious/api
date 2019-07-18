@@ -2,19 +2,23 @@
 
 
 use Illuminate\Http\Request;
+use Sheba\ShebaUser;
 
 class UserController extends Controller
 {
 
-    public function show(Request $request)
+    public function show(Request $request, ShebaUser $sheba_user)
     {
         try {
-            $user = $request->user;
+            $sheba_user->setUser($request->user);
             $data = [
-                'name' => $user->name,
+                'name' => $sheba_user->getName(),
+                'image' => $sheba_user->getImage(),
+                'balance' => $sheba_user->getWallet(),
             ];
-//            return api_response($request,200,)
+            return api_response($request, $data, 200, ['data' => $data]);
         } catch (\Throwable $e) {
+            dd($e);
             return api_response($request, null, 500);
         }
     }

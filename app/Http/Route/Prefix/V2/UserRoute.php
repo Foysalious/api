@@ -5,7 +5,7 @@ class UserRoute
 {
     public function set($api)
     {
-        $api->group(['prefix' => 'user'], function ($api) {
+        $api->group(['prefix' => 'user', 'middleware' => 'jwtGlobalAuth'], function ($api) {
             $api->get('/', 'UserController@show');
         });
     }
