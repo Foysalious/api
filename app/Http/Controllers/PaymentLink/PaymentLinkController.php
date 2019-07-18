@@ -23,7 +23,6 @@ class PaymentLinkController extends Controller
             $response = (new Client())->get($url)->getBody()->getContents();
             $response = json_decode($response, 1);
 
-
             $payment_links = [];
             if ($response['code'] == 200) {
                 list($offset, $limit) = calculatePagination($request);

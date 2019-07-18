@@ -68,6 +68,11 @@ class Business extends Model implements TopUpAgent
         return $this->morphMany(BonusLog::class, 'user');
     }
 
+    public function topups()
+    {
+        return $this->hasMany(TopUpOrder::class, 'agent_id')->where('agent_type', 'App\\Models\\Business');
+    }
+
     public function shebaCredit()
     {
         return $this->wallet + $this->shebaBonusCredit();

@@ -147,6 +147,7 @@ class Route
                 $api->get('/vendor', 'TopUp\TopUpController@getVendor');
                 $api->post('/', 'TopUp\TopUpController@topUp');
                 $api->post('/bulk', 'TopUp\TopUpController@bulkTopUp');
+                $api->get('/history', 'TopUp\TopUpController@topUpHistory');
             });
 
             $api->group(['prefix' => 'resources/{resource}', 'middleware' => ['resource.auth']], function ($api) {
