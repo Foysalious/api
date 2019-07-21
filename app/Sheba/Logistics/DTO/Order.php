@@ -254,6 +254,7 @@ class Order
      */
     public function setRider($rider)
     {
+        if (empty($rider)) $rider = null;
         $this->rider = $rider;
         return $this;
     }
