@@ -99,7 +99,8 @@ class PaymentLinkController extends Controller
             $this->validate($request, [
                 'status' => 'required'
             ]);
-            $payment_link_status_change = $this->paymentLinkClient->paymentLinkStatusChange($link, $request);
+            $this->creator->setStatus($request->status)->setPaymentLinkId($link);
+            $payment_link_status_change = $this->creator->editStatus();
             if ($payment_link_status_change) {
                 return api_response($request, 1, 200);
             } else {

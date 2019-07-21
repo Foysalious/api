@@ -31,6 +31,11 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
         return $this->paymentLinkClient->storePaymentLink($attributes);
     }
 
+    public function statusUpdate($link, array $data)
+    {
+        return $this->paymentLinkClient->paymentLinkStatusChange($link, $data);
+    }
+
     public function payables($payment_link_details)
     {
         return Payable::whereHas('payment', function ($query) {

@@ -72,10 +72,10 @@ class PaymentLinkClient
         }
     }
 
-    public function paymentLinkStatusChange($link, Request $request)
+    public function paymentLinkStatusChange($link, $data)
     {
         try {
-            if ($request->status == 'active') {
+            if ($data['status'] == 'active') {
                 $status = 1;
             } else {
                 $status = 0;

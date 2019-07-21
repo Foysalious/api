@@ -13,6 +13,8 @@ class Creator
     private $userName;
     private $userType;
     private $isDefault;
+    private $status;
+    private $linkId;
     private $data;
 
     /**
@@ -60,6 +62,17 @@ class Creator
         return $this;
     }
 
+    public function setStatus($status)
+    {
+        $this->status = $status;
+        return $this;
+    }
+
+    public function setPaymentLinkId($link_id)
+    {
+        $this->linkId = $link_id;
+    }
+
     /**
      * @method PaymentLinkRepository create
      */
@@ -68,6 +81,18 @@ class Creator
     {
         $this->makeData();
         return $this->paymentLinkRepo->create($this->data);
+    }
+
+
+    /**
+     * @method PaymentLinkRepository statusUpdate
+     */
+    public function editStatus()
+    {
+        $this->data = [
+            'status' => $this->status
+        ];
+        return $this->paymentLinkRepo->statusUpdate($this->linkId, $this->data);
     }
 
     private function makeData()
