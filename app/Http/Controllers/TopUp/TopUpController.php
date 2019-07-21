@@ -34,7 +34,7 @@ class TopUpController extends Controller
                 $vendor_commission = TopUpVendorCommission::where([['topup_vendor_id', $vendor->id], ['type', $agent]])->first();
                 $asset_name = strtolower(trim(preg_replace('/\s+/', '_', $vendor->name)));
                 array_add($vendor, 'asset', $asset_name);
-                array_add($vendor, 'agent_commission', $vendor_commission->agent_commission);
+                array_add($vendor, 'agent_commission', $vendor_commission ? $vendor_commission->agent_commission : null);
                 array_add($vendor, 'is_prepaid_available', 1);
                 array_add($vendor, 'is_postpaid_available', ($vendor->id != 6) ? 1 : 0);
                 if ($vendor->is_published) $error_message .= ',' . $vendor->name;
