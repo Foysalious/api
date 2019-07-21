@@ -58,7 +58,10 @@ class PaymentLinkClient
     public function storePaymentLink($data)
     {
         try {
-            if ($data['isDefault'] != null) unset($data['reason']);
+            if ($data['isDefault'] != null) {
+                $data['amount'] = 0;
+                unset($data['reason']);
+            }
             $response = $this->client->request('POST', $this->baseUrl, ['form_params' => $data]);
             $response = json_decode($response->getBody());
             if ($response->code == 200)

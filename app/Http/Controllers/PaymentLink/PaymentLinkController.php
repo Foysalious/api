@@ -18,11 +18,13 @@ class PaymentLinkController extends Controller
     use ModificationFields;
     private $paymentLinkClient;
     private $paymentLinkRepo;
+    private $creator;
 
-    public function __construct(PaymentLinkClient $payment_link_client, PaymentLinkRepository $payment_link_repo)
+    public function __construct(PaymentLinkClient $payment_link_client, PaymentLinkRepository $payment_link_repo, Creator $creator)
     {
         $this->paymentLinkClient = $payment_link_client;
         $this->paymentLinkRepo = $payment_link_repo;
+        $this->creator = $creator;
     }
 
     public function index(Request $request)
@@ -54,21 +56,21 @@ class PaymentLinkController extends Controller
         }
     }
 
-    public function store(Request $request, Creator $creator)
+    public function store(Request $request)
     {
         try {
             $this->validate($request, [
                 'amount' => 'required',
                 'purpose' => 'required',
             ]);
-            $creator->setIsDefault($request->isDefault)
+            $this->creator->setIsDefault($request->isDefault)
                 ->setAmount($request->amount)
                 ->setReason($request->purpose)
                 ->setUserName($request->user->name)
                 ->setUserId($request->user->id)
                 ->setUserType($request->type);
 
-            $payment_link_store = $creator->save();
+            $payment_link_store = $this->creator->save();
 
             if ($payment_link_store) {
                 $payment_link = [
@@ -116,12 +118,19 @@ class PaymentLinkController extends Controller
     {
         try {
             $default_payment_link = $this->paymentLinkClient->defaultPaymentLink($request);
-            if (!$default_payment_link) {
+            if ($default_payment_link) {
                 $default_payment_link = $default_payment_link[0]['link'];
                 return api_response($request, $default_payment_link, 200, ['default_payment_link' => $default_payment_link]);
             } else {
                 $request->merge(['isDefault' => 1]);
-                $store_default_link = $this->paymentLinkClient->storePaymentLink($request);
+                $this->creator->setIsDefault($request->isDefault)
+                    ->setAmount($request->amount)
+                    ->setReason($request->purpose)
+                    ->setUserName($request->user->name)
+                    ->setUserId($request->user->id)
+                    ->setUserType($request->type);
+
+                $store_default_link = $this->creator->save();
                 $default_payment_link = $store_default_link->link;
                 return api_response($request, $default_payment_link, 200, ['default_payment_link' => $default_payment_link]);
             }

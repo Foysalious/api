@@ -2,6 +2,7 @@
 
 
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
+use Sheba\Repositories\PaymentLinkRepository;
 
 class Creator
 {
@@ -14,6 +15,10 @@ class Creator
     private $isDefault;
     private $data;
 
+    /**
+     * Creator constructor.
+     * @param PaymentLinkRepositoryInterface $payment_link_repository
+     */
     public function __construct(PaymentLinkRepositoryInterface $payment_link_repository)
     {
         $this->paymentLinkRepo = $payment_link_repository;
@@ -54,6 +59,10 @@ class Creator
         $this->isDefault = $is_default;
         return $this;
     }
+
+    /**
+     * @method PaymentLinkRepository create
+     */
 
     public function save()
     {

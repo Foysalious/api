@@ -2,8 +2,6 @@
 
 
 use App\Models\Payable;
-use App\Sheba\Payment\Exceptions\PayableNotFound;
-use GuzzleHttp\Client;
 use Sheba\PaymentLink\PaymentLinkClient;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 
@@ -22,6 +20,12 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
         return $this->paymentLinkClient->getPaymentLinkDetails($userId, $userType, $identifier);
     }
 
+    /**
+     * @param array $attributes
+     * @return \Illuminate\Database\Eloquent\Model|null
+     * @method PaymentLinkRepository create
+     * @override
+     */
     public function create(array $attributes)
     {
         return $this->paymentLinkClient->storePaymentLink($attributes);
