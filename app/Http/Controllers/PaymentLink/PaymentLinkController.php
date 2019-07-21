@@ -144,7 +144,7 @@ class PaymentLinkController extends Controller
     public function getPaymentLinkPayments($link, Request $request)
     {
         try {
-            $payment_link_details = $this->paymentLinkClient->paymentLinkDetails($link, $request);
+            $payment_link_details = $this->paymentLinkClient->paymentLinkDetails($link);
             if ($payment_link_details) {
                 $payables = $this->paymentLinkRepo->payables($payment_link_details);
                 $all_payment = [];
@@ -183,19 +183,11 @@ class PaymentLinkController extends Controller
     public function paymentLinkPaymentDetails($link, $payment, Request $request)
     {
         try {
-            $payment_link_payment_details = $this->paymentLinkClient->paymentLinkDetails($link, $request);
-
-            $payment = Payment::where('id', $payment)
-                ->select('id', 'payable_id', 'status', 'created_by_type', 'created_by', 'created_by_name', 'created_at')
-                ->with([
-                    'payable' => function ($query) {
-                        $query->select('id', 'type', 'type_id', 'amount');
-                    }
-                ], 'paymentDetails')->first();
+            $payment_link_payment_details = $this->paymentLinkRepo->paymentLinkDetails($link);
+            $payment = $this->paymentLinkRepo->payment($payment);
 
             $model = $payment->created_by_type;
             $user = $model::find($payment->created_by);
-
             if ($payment_link_payment_details) {
                 $payment_detail = $payment->paymentDetails ? $payment->paymentDetails->last() : null;
                 $payment_details = [
