@@ -7,12 +7,15 @@ use App\Models\Location;
 use App\Models\Partner;
 use App\Models\Profile;
 use App\Sheba\Geo;
+use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
 use Sheba\Location\Distance\DistanceStrategy;
 use Sheba\ModificationFields;
+use Throwable;
 
 class CustomerDeliveryAddressController extends Controller
 {
@@ -53,7 +56,7 @@ class CustomerDeliveryAddressController extends Controller
             $customer_delivery_addresses = $customer_delivery_addresses->sortByDesc('count')->values()->all();
             return api_response($request, $customer_delivery_addresses, 200, ['addresses' => $customer_delivery_addresses,
                 'name' => $customer->profile->name, 'mobile' => $customer->profile->mobile]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -109,7 +112,7 @@ class CustomerDeliveryAddressController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -143,7 +146,7 @@ class CustomerDeliveryAddressController extends Controller
             $new_address = new CustomerDeliveryAddress();
             $delivery_address = $this->_store($customer, $new_address, $request);
             return api_response($request, 1, 200, ['address' => $delivery_address->id]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -159,6 +162,8 @@ class CustomerDeliveryAddressController extends Controller
         if ($request->has('street_address')) $delivery_address->street_address = trim($request->street_address);
         if ($request->has('landmark')) $delivery_address->landmark = trim($request->landmark);
         if ($request->has('lat') && $request->has('lng')) $delivery_address->geo_informations = json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]);
+        if ($request->has('is_save') && !$request->is_save) $delivery_address->deleted_at = Carbon::now();
+
         return $delivery_address;
     }
 
@@ -190,7 +195,7 @@ class CustomerDeliveryAddressController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -203,13 +208,14 @@ class CustomerDeliveryAddressController extends Controller
         $this->setModifier($customer);
         $this->withCreateModificationField($delivery_address);
         $delivery_address->save();
+
         return $delivery_address;
     }
 
     /**
      * @param Customer $customer
      * @param CustomerDeliveryAddress $address
-     * @throws \Exception
+     * @throws Exception
      */
     private function _delete(Customer $customer, CustomerDeliveryAddress $address)
     {
@@ -227,7 +233,7 @@ class CustomerDeliveryAddressController extends Controller
                 $this->_delete($request->customer, $address);
                 return api_response($request, null, 200);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -272,7 +278,7 @@ class CustomerDeliveryAddressController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -311,7 +317,7 @@ class CustomerDeliveryAddressController extends Controller
             $new_address = new CustomerDeliveryAddress();
             $delivery_address = $this->_store($customer, $new_address, $request);
             return api_response($request, 1, 200, ['address' => $delivery_address->id]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
