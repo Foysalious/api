@@ -39,4 +39,62 @@ class PaymentLinkClient
             return null;
         }
     }
+
+    public function storePaymentLink(Request $request)
+    {
+        try {
+            $data = [
+                'amount' => $request->amount,
+                'reason' => $request->purpose,
+                'userId' => $request->user->id,
+                'userName' => $request->user->name,
+                'userType' => $request->type
+            ];
+            $url = config('sheba.payment_link_url') . '/api/v1/payment-links';
+            $client = new Client();
+            $response = $client->request('POST', $url, ['form_params' => $data]);
+            $response = json_decode($response->getBody());
+            if ($response->code == 200)
+                return $response->link;
+            return null;
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    public function paymentLinkStatusChange($link, Request $request)
+    {
+        try {
+            if ($request->status == 'active') {
+                $status = 1;
+            } else {
+                $status = 0;
+            }
+
+            $url = config('sheba.payment_link_url') . '/api/v1/payment-links/' . $link;
+            $url = "$url?isActive=$status";
+            $client = new Client();
+            $response = $client->request('PUT', $url, []);
+            $response = json_decode($response->getBody());
+            if ($response->code == 200)
+                return $response;
+            return null;
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    public function paymentLinkDetails($link, Request $request)
+    {
+        try {
+            $url = config('sheba.payment_link_url') . '/api/v1/payment-links/' . $link;
+            $response = (new Client())->get($url)->getBody()->getContents();
+            $response = json_decode($response, 1);
+            if ($response['code'] == 200)
+                return $response['link'];
+            return null;
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
 }

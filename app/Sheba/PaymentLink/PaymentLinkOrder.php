@@ -1,8 +1,4 @@
-<?php
-
-
-namespace App\Sheba\PaymentLink;
-
+<?php namespace App\Sheba\PaymentLink;
 
 use App\Models\Payable;
 use Sheba\Payment\PayableType;
