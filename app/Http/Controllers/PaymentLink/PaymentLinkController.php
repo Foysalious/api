@@ -1,24 +1,28 @@
 <?php namespace App\Http\Controllers\PaymentLink;
 
-use App\Models\Payable;
-use App\Models\Payment;
 use Illuminate\Validation\ValidationException;
+use Sheba\PaymentLink\Creator;
+use Sheba\PaymentLink\PaymentLinkClient;
 use App\Http\Controllers\Controller;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
+use App\Models\Payable;
+use App\Models\Payment;
 use GuzzleHttp\Client;
 use Carbon\Carbon;
 use DB;
-use Sheba\PaymentLink\PaymentLinkClient;
+use Sheba\Repositories\PaymentLinkRepository;
 
 class PaymentLinkController extends Controller
 {
     use ModificationFields;
     private $paymentLinkClient;
+    private $paymentLinkRepo;
 
-    public function __construct(PaymentLinkClient $payment_link_client)
+    public function __construct(PaymentLinkClient $payment_link_client, PaymentLinkRepository $payment_link_repo)
     {
         $this->paymentLinkClient = $payment_link_client;
+        $this->paymentLinkRepo = $payment_link_repo;
     }
 
     public function index(Request $request)
@@ -50,14 +54,22 @@ class PaymentLinkController extends Controller
         }
     }
 
-    public function store(Request $request)
+    public function store(Request $request, Creator $creator)
     {
         try {
             $this->validate($request, [
                 'amount' => 'required',
                 'purpose' => 'required',
             ]);
-            $payment_link_store = $this->paymentLinkClient->storePaymentLink($request);
+            $creator->setIsDefault($request->isDefault)
+                ->setAmount($request->amount)
+                ->setReason($request->purpose)
+                ->setUserName($request->user->name)
+                ->setUserId($request->user->id)
+                ->setUserType($request->type);
+
+            $payment_link_store = $creator->save();
+
             if ($payment_link_store) {
                 $payment_link = [
                     'reason' => $payment_link_store->reason,
@@ -124,14 +136,7 @@ class PaymentLinkController extends Controller
         try {
             $payment_link_details = $this->paymentLinkClient->paymentLinkDetails($link, $request);
             if ($payment_link_details) {
-                $payables = Payable::whereHas('payment', function ($query) {
-                    $query->where('status', 'completed');
-                })->where([
-                    ['type', 'payment_link'],
-                    ['type_id', $payment_link_details['linkId']],
-                ])->with(['payment' => function ($q) {
-                    $q->select('id', 'payable_id', 'status', 'created_by_type', 'created_by', 'created_by_name', 'created_at');
-                }])->select('id', 'type', 'type_id', 'amount');
+                $payables = $this->paymentLinkRepo->payables($payment_link_details);
                 $all_payment = [];
                 foreach ($payables->get() as $payable) {
                     $payment = $payable->payment ? $payable->payment : null;

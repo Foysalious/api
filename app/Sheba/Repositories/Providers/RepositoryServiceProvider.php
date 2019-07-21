@@ -38,6 +38,7 @@ use Sheba\Repositories\Interfaces\InspectionRepositoryInterface;
 use Sheba\Repositories\Interfaces\InspectionScheduleRepositoryInterface;
 use Sheba\Repositories\Interfaces\IssueRepositoryInterface;
 use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
+use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementItemFieldRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementQuestionRepositoryInterface;
@@ -47,6 +48,7 @@ use Sheba\Repositories\Interfaces\PurchaseRequestItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\PurchaseRequestQuestionRepositoryInterface;
 use Sheba\Repositories\Interfaces\PurchaseRequestRepositoryInterface;
 use Sheba\Repositories\Interfaces\VehicleRepositoryInterface;
+use Sheba\Repositories\PaymentLinkRepository;
 
 class RepositoryServiceProvider extends ServiceProvider
 {
@@ -75,5 +77,6 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(VehicleRepositoryInterface::class, VehicleRepository::class);
         $this->app->bind(HiredDriverRepositoryInterface::class, HiredDriverRepository::class);
         $this->app->bind(HiredVehicleRepositoryInterface::class, HiredVehicleRepository::class);
+        $this->app->bind(PaymentLinkRepositoryInterface::class, PaymentLinkRepository::class);
     }
 }
