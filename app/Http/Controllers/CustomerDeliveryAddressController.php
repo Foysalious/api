@@ -9,6 +9,7 @@ use App\Models\Profile;
 use App\Sheba\Geo;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Location\Coords;
@@ -21,6 +22,11 @@ class CustomerDeliveryAddressController extends Controller
 {
     use ModificationFields;
 
+    /**
+     * @param $customer
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function index($customer, Request $request)
     {
         try {
@@ -36,7 +42,7 @@ class CustomerDeliveryAddressController extends Controller
             $customer_delivery_addresses = $customer_delivery_addresses->map(function ($customer_delivery_address) use ($customer_order_addresses) {
                 $customer_delivery_address['count'] = $this->getOrderCount($customer_order_addresses, $customer_delivery_address);
                 $geo = json_decode($customer_delivery_address['geo_informations']);
-                $customer_delivery_address['geo_informations'] = $geo ? array('lat' => (double)$geo->lat, 'lng' => (double)$geo->lng) : null;
+                $customer_delivery_address['geo_informations'] = $geo ? ['lat' => (double)$geo->lat, 'lng' => (double)$geo->lng] : null;
                 return $customer_delivery_address;
             });
             if ($location) $customer_delivery_addresses = $customer_delivery_addresses->where('location_id', $location->id);
@@ -54,8 +60,11 @@ class CustomerDeliveryAddressController extends Controller
                 });
             }
             $customer_delivery_addresses = $customer_delivery_addresses->sortByDesc('count')->values()->all();
-            return api_response($request, $customer_delivery_addresses, 200, ['addresses' => $customer_delivery_addresses,
-                'name' => $customer->profile->name, 'mobile' => $customer->profile->mobile]);
+
+            $address_position = $this->findHomeAndWorkAddressPosition($customer_delivery_addresses);
+            $customer_delivery_addresses = $this->filterAddressByHomeAndWork($address_position, $customer_delivery_addresses);
+
+            return api_response($request, $customer_delivery_addresses, 200, ['addresses' => $customer_delivery_addresses, 'name' => $customer->profile->name, 'mobile' => $customer->profile->mobile]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -118,10 +127,7 @@ class CustomerDeliveryAddressController extends Controller
         }
     }
 
-    private function get()
-    {
-
-    }
+    private function get() {}
 
     public function store($customer, Request $request)
     {
@@ -321,5 +327,43 @@ class CustomerDeliveryAddressController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    /**
+     * RETURN INDEX OF HOME AND WORK, IF PRESENT
+     *
+     * @param $delivery_addresses
+     * @return mixed
+     */
+    private function findHomeAndWorkAddressPosition($delivery_addresses)
+    {
+        $address_position = ['home' => null, 'work' => null];
+        foreach($delivery_addresses as $index => $customer_delivery_address) {
+            $address_name = strtolower($customer_delivery_address->name);
+            if (strpos($address_name, 'home') !== FALSE) $address_position['home'] = $index;
+            if (strpos($address_name, 'work') !== FALSE) $address_position['work'] = $index;
+        }
+
+        return $address_position;
+    }
+
+    /**
+     * @param $address_position
+     * @param $customer_delivery_addresses
+     * @return mixed
+     */
+    private function filterAddressByHomeAndWork($address_position, $customer_delivery_addresses)
+    {
+        $home_address_index = $address_position['home'];
+        $work_address_index = $address_position['work'];
+
+        $home_address_element = !is_null($home_address_index) ? $customer_delivery_addresses[$home_address_index] : [];
+        $work_address_element = !is_null($work_address_index) ? $customer_delivery_addresses[$work_address_index] : [];
+
+        unset($customer_delivery_addresses[$home_address_index], $customer_delivery_addresses[$work_address_index]);
+        array_unshift($customer_delivery_addresses, $home_address_element, $work_address_element);
+        $customer_delivery_addresses = array_filter($customer_delivery_addresses);
+
+        return collect($customer_delivery_addresses)->values()->all();
     }
 }
