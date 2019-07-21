@@ -127,6 +127,7 @@ class MemberController extends Controller
                 'nid_no' => $profile->nid_no,
                 'address' => $profile->address,
                 'business_id' => $business ? $business->id : null,
+                'token' => $member->remember_token
             ];
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {

@@ -65,7 +65,7 @@ class Checkout
         $this->setModifier($this->customer);
 
         if ($request->has('address_id') && !empty($request->address_id)) {
-            $address = $this->customer->delivery_addresses()->where('id', (int)$request->address_id)->first();
+            $address = $this->customer->delivery_addresses()->withTrashed()->where('id', (int)$request->address_id)->first();
             if ($address->mobile != formatMobile(trim($request->mobile))) {
                 $new_address = $address->replicate();
                 $new_address->mobile = formatMobile(trim($request->mobile));
