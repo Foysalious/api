@@ -44,12 +44,14 @@ class PaymentLinkClient
     {
         try {
             $data = [
-                'amount' => $request->amount,
+                'amount' => $request->has('isDefault') ? 0 : $request->amount,
                 'reason' => $request->purpose,
+                'isDefault' => $request->has('isDefault') ? $request->isDefault : 0,
                 'userId' => $request->user->id,
                 'userName' => $request->user->name,
-                'userType' => $request->type
+                'userType' => $request->type,
             ];
+            if ($request->has('isDefault')) unset($data['reason']);
             $url = config('sheba.payment_link_url') . '/api/v1/payment-links';
             $client = new Client();
             $response = $client->request('POST', $url, ['form_params' => $data]);
