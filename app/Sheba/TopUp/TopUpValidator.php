@@ -1,6 +1,7 @@
 <?php namespace Sheba\TopUp;
 
 use App\Http\Validators\MobileNumberValidator;
+use App\Models\TopUpOrder;
 use Sheba\TopUp\Vendor\Response\TopUpErrorResponse;
 use Sheba\TopUp\Vendor\Response\TopUpWalletErrorResponse;
 use Sheba\TopUp\Vendor\Vendor;
@@ -15,6 +16,10 @@ class TopUpValidator
 
     /** @var TopUpRequest */
     private $request;
+
+
+    /** @var TopUpOrder */
+    private $topUpOrder;
 
     /** @var boolean */
     private $hasError;
@@ -49,6 +54,12 @@ class TopUpValidator
     public function setRequest(TopUpRequest $request)
     {
         $this->request = $request;
+        return $this;
+    }
+
+    public function setTopUpOrder(TopUpOrder $order)
+    {
+        $this->topUpOrder = $order;
         return $this;
     }
 
