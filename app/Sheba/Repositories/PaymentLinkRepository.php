@@ -10,10 +10,10 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
 {
     private $paymentLinkClient;
 
-    public function __construct(PaymentLinkClient $payment_link_client)
+    public function __construct()
     {
+        $this->paymentLinkClient = new PaymentLinkClient();
         parent::__construct();
-        $this->paymentLinkClient = $payment_link_client;
     }
 
     public function getPaymentLinkDetails($userId, $userType, $identifier)
