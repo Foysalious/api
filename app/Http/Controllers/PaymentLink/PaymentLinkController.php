@@ -119,8 +119,12 @@ class PaymentLinkController extends Controller
     {
         try {
             $default_payment_link = $this->paymentLinkClient->defaultPaymentLink($request);
-            if ($default_payment_link) {
-                $default_payment_link = $default_payment_link[0]['link'];
+            if (!$default_payment_link) {
+                $default_payment_link = [
+                    'link_id' => $default_payment_link[0]['linkId'],
+                    'link' => $default_payment_link[0]['link'],
+                    'amount' => $default_payment_link[0]['amount'],
+                ];
                 return api_response($request, $default_payment_link, 200, ['default_payment_link' => $default_payment_link]);
             } else {
                 $request->merge(['isDefault' => 1]);
@@ -132,7 +136,11 @@ class PaymentLinkController extends Controller
                     ->setUserType($request->type);
 
                 $store_default_link = $this->creator->save();
-                $default_payment_link = $store_default_link->link;
+                $default_payment_link = [
+                    'link_id' => $store_default_link->linkId,
+                    'link' => $store_default_link->link,
+                    'amount' => $store_default_link->amount,
+                ];
                 return api_response($request, $default_payment_link, 200, ['default_payment_link' => $default_payment_link]);
             }
         } catch (\Throwable $e) {
