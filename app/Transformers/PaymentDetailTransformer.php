@@ -5,13 +5,11 @@ use League\Fractal\TransformerAbstract;
 
 class PaymentDetailTransformer extends TransformerAbstract
 {
-    public function transform($payment,$payment_detail,$payment_link_payment_details)
+    public function transform($payment, $payment_detail, $payment_link_payment_details)
     {
-        $model = $payment->created_by_type;
-        $user = $model::find($payment->created_by);
         return [
-            'customer_name' => $payment->created_by_name,
-            'customer_number' => $user->mobile,
+            'customer_name' => $payment->payable->user->name,
+            'customer_number' => $payment->payable->getMobile(),
             'payment_type' => $payment_detail->readableMethod,
             'id' => $payment->id,
             'payment_code' => '#' . $payment->id,
