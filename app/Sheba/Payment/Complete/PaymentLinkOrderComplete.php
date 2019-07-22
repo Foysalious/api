@@ -2,7 +2,6 @@
 
 
 use App\Models\PosOrder;
-use App\Repositories\PaymentRepository;
 use Sheba\ModificationFields;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\Repositories\PaymentLinkRepository;
@@ -47,7 +46,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
                         'amount' => $this->payment->payable->amount,
                         'method' => $this->payment->payable->type
                     ];
-                    $payment_creator = new PaymentCreator(new PaymentRepository());
+                    $payment_creator = app(PaymentCreator::class);
                     $payment_creator->credit($payment_data);
                     $repository->statusUpdate($linkDetails['linkId'], 0);
                     return true;
@@ -56,6 +55,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
                 return false;
             }
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return false;
         }
     }
