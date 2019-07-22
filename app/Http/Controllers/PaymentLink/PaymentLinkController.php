@@ -72,11 +72,10 @@ class PaymentLinkController extends Controller
                 ->setUserName($request->user->name)
                 ->setUserId($request->user->id)
                 ->setUserType($request->type)
-                ->setTargetId($request->posOrderId)
+                ->setTargetId($request->pos_order_id)
                 ->setTargetType('pos_order');
 
             $payment_link_store = $this->creator->save();
-
             if ($payment_link_store) {
                 $payment_link = [
                     'link_id' => $payment_link_store->linkId,
