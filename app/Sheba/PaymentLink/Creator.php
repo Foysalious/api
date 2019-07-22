@@ -15,6 +15,8 @@ class Creator
     private $isDefault;
     private $status;
     private $linkId;
+    private $targetId;
+    private $target;
     private $data;
 
     /**
@@ -71,6 +73,29 @@ class Creator
     public function setPaymentLinkId($link_id)
     {
         $this->linkId = $link_id;
+        return $this;
+    }
+
+    public function setTargetId($target_id)
+    {
+        $this->targetId = $target_id;
+        return $this;
+    }
+
+    public function setTarget($target)
+    {
+        $this->target = $target;
+        return $this;
+    }
+
+    /**
+     * @method PaymentLinkRepository statusUpdate
+     */
+    public function editStatus()
+    {
+        if ($this->status == 'active') $this->status = 1;
+        $this->status = 0;
+        return $this->paymentLinkRepo->statusUpdate($this->linkId, $this->status);
     }
 
     /**
@@ -83,17 +108,6 @@ class Creator
         return $this->paymentLinkRepo->create($this->data);
     }
 
-
-    /**
-     * @method PaymentLinkRepository statusUpdate
-     */
-    public function editStatus()
-    {
-        if ($this->status == 'active') $this->status = 1;
-        $this->status = 0;
-        return $this->paymentLinkRepo->statusUpdate($this->linkId, $this->status);
-    }
-
     private function makeData()
     {
         $this->data = [
@@ -103,8 +117,10 @@ class Creator
             'userId' => $this->userId,
             'userName' => $this->userName,
             'userType' => $this->userType,
+            'targetId' => (int)$this->targetId,
+            'target' => $this->target,
         ];
         if ($this->isDefault) unset($this->data['reason']);
-
+        if (!$this->targetId) unset($this->data['targetId'], $this->data['target']);
     }
 }
