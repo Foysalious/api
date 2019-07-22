@@ -66,18 +66,22 @@ class TopUp
      */
     public function recharge(TopUpOrder $topup_order)
     {
-        $this->response = $this->vendor->recharge($topup_order);
-        if ($this->response->hasSuccess()) {
-            $response = $this->response->getSuccess();
-            DB::transaction(function () use ($response, $topup_order) {
-                $this->setModifier($this->agent);
-                $topup_order = $this->updateSuccessfulTopOrder($topup_order, $response);
-                $this->agent->getCommission()->setTopUpOrder($topup_order)->disburse();
-                $this->vendor->deductAmount($topup_order->amount);
-                $this->isSuccessful = true;
-            });
+        if ($this->validator->setTopupOrder($topup_order)->validate()->hasError()) {
+            $this->updateFailedTopOrder($topup_order, $this->validator->getError());
         } else {
-            $this->updateFailedTopOrder($topup_order, $this->response->getError());
+            $this->response = $this->vendor->recharge($topup_order);
+            if ($this->response->hasSuccess()) {
+                $response = $this->response->getSuccess();
+                DB::transaction(function () use ($response, $topup_order) {
+                    $this->setModifier($this->agent);
+                    $topup_order = $this->updateSuccessfulTopOrder($topup_order, $response);
+                    $this->agent->getCommission()->setTopUpOrder($topup_order)->disburse();
+                    $this->vendor->deductAmount($topup_order->amount);
+                    $this->isSuccessful = true;
+                });
+            } else {
+                $this->updateFailedTopOrder($topup_order, $this->response->getError());
+            }
         }
     }
 

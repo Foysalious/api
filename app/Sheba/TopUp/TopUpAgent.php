@@ -16,4 +16,6 @@ interface TopUpAgent
      * @return TopUpCommission
      */
     public function getCommission();
+
+    public function getMobile();
 }

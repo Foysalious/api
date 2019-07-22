@@ -26,8 +26,9 @@ class PaymentLinkClient
         try {
             $user_type = $request->type;
             $user_id = $request->user->id;
+            $search_value = $request->search;
 
-            $url = "$this->baseUrl?userType=$user_type&userId=$user_id";
+            $url = "$this->baseUrl?userType=$user_type&userId=$user_id&search=$search_value";
             $response = $this->client->get($url)->getBody()->getContents();
             $response = json_decode($response, 1);
             if ($response['code'] == 200)

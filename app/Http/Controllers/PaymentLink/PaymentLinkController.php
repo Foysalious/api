@@ -2,17 +2,17 @@
 
 use App\Transformers\PaymentDetailTransformer;
 use Illuminate\Validation\ValidationException;
-use Sheba\PaymentLink\Creator;
+use League\Fractal\Resource\Collection;
+use App\Transformers\PaymentLinkArrayTransform;
+use Sheba\Repositories\PaymentLinkRepository;
 use Sheba\PaymentLink\PaymentLinkClient;
 use App\Http\Controllers\Controller;
+use Sheba\PaymentLink\Creator;
 use Sheba\ModificationFields;
+use League\Fractal\Manager;
 use Illuminate\Http\Request;
-use App\Models\Payable;
-use App\Models\Payment;
-use GuzzleHttp\Client;
 use Carbon\Carbon;
 use DB;
-use Sheba\Repositories\PaymentLinkRepository;
 
 class PaymentLinkController extends Controller
 {
@@ -34,21 +34,12 @@ class PaymentLinkController extends Controller
     {
         try {
             $payment_links_list = $this->paymentLinkClient->paymentLinkList($request);
-            $payment_links = [];
             if ($payment_links_list) {
                 list($offset, $limit) = calculatePagination($request);
                 $links = collect($payment_links_list)->slice($offset)->take($limit);
-                foreach ($links as $link) {
-                    $link = [
-                        'id' => $link['linkId'],
-                        'code' => '#' . $link['linkId'],
-                        'purpose' => $link['reason'],
-                        'status' => $link['isActive'] == 1 ? 'active' : 'inactive',
-                        'amount' => $link['amount'],
-                        'created_at' => date('Y-m-d h:i a', $link['createdAt'] / 1000),
-                    ];
-                    array_push($payment_links, $link);
-                }
+                $fractal = new Manager();
+                $resource = new Collection($links, new PaymentLinkArrayTransform());
+                $payment_links = $fractal->createData($resource)->toArray()['data'];
                 return api_response($request, $payment_links, 200, ['payment_links' => $payment_links]);
             } else {
                 return api_response($request, 1, 404);
@@ -198,9 +189,10 @@ class PaymentLinkController extends Controller
         try {
             $payment_link_payment_details = $this->paymentLinkRepo->paymentLinkDetails($link);
             $payment = $this->paymentLinkRepo->payment($payment);
+
             if ($payment_link_payment_details) {
                 $payment_detail = $payment->paymentDetails ? $payment->paymentDetails->last() : null;
-                $payment_details = $this->paymentDetailTransformer->transform($payment, $payment_detail,$payment_link_payment_details);
+                $payment_details = $this->paymentDetailTransformer->transform($payment, $payment_detail, $payment_link_payment_details);
                 return api_response($request, $payment_details, 200, ['payment_details' => $payment_details]);
             } else {
                 return api_response($request, 1, 404);

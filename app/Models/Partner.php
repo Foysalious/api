@@ -622,4 +622,9 @@ class Partner extends Model implements Rewardable, TopUpAgent
     {
         return $this->hasOne(PartnerPosSetting::class);
     }
+
+    public function getMobile()
+    {
+        return $this->getContactNumber();
+    }
 }

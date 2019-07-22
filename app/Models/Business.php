@@ -123,4 +123,9 @@ class Business extends Model implements TopUpAgent
         $this->debitWallet($transaction->getAmount());
         $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
     }
+
+    public function getMobile()
+    {
+        return '+8801678242934';
+    }
 }

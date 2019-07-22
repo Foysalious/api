@@ -1,6 +1,7 @@
 <?php namespace Sheba\TopUp;
 
 use App\Http\Validators\MobileNumberValidator;
+use App\Models\TopUpOrder;
 use Sheba\TopUp\Vendor\Response\TopUpErrorResponse;
 use Sheba\TopUp\Vendor\Response\TopUpWalletErrorResponse;
 use Sheba\TopUp\Vendor\Vendor;
@@ -15,6 +16,10 @@ class TopUpValidator
 
     /** @var TopUpRequest */
     private $request;
+
+
+    /** @var TopUpOrder */
+    private $topUpOrder;
 
     /** @var boolean */
     private $hasError;
@@ -52,17 +57,23 @@ class TopUpValidator
         return $this;
     }
 
+    public function setTopUpOrder(TopUpOrder $order)
+    {
+        $this->topUpOrder = $order;
+        return $this;
+    }
+
     public function validate()
     {
         if (!$this->vendor->isPublished()) {
             $this->error = new TopUpErrorResponse();
             $this->error->errorCode = 421;
             $this->error->errorMessage = "Unsupported operator.";
-        } else if (!(new MobileNumberValidator())->validateBangladeshi($this->request->getMobile())) {
+        } else if (!(new MobileNumberValidator())->validateBangladeshi($this->topUpOrder->payee_mobile)) {
             $this->error = new TopUpErrorResponse();
             $this->error->errorCode = 421;
             $this->error->errorMessage = "Invalid number.";
-        } else if ($this->agent->wallet < $this->request->getAmount()) {
+        } else if ($this->agent->wallet < $this->topUpOrder->amount) {
             $this->error = new TopUpWalletErrorResponse();
         }
 

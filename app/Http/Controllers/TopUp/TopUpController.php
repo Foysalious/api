@@ -34,7 +34,7 @@ class TopUpController extends Controller
                 $vendor_commission = TopUpVendorCommission::where([['topup_vendor_id', $vendor->id], ['type', $agent]])->first();
                 $asset_name = strtolower(trim(preg_replace('/\s+/', '_', $vendor->name)));
                 array_add($vendor, 'asset', $asset_name);
-                array_add($vendor, 'agent_commission', $vendor_commission ? $vendor_commission->agent_commission : null);
+                array_add($vendor, 'agent_commission', $vendor_commission ? $vendor_commission->agent_commission : 0);
                 array_add($vendor, 'is_prepaid_available', 1);
                 array_add($vendor, 'is_postpaid_available', ($vendor->id != 6) ? 1 : 0);
                 if ($vendor->is_published) $error_message .= ',' . $vendor->name;
@@ -111,7 +111,7 @@ class TopUpController extends Controller
                 $request = $top_up_request->setType($value->$type_field)
                     ->setMobile(BDMobileFormatter::format($value->$mobile_field))->setAmount($value->$amount_field)->setAgent($agent)->setVendorId($vendor_id);
                 $topup_order = $creator->setTopUpRequest($request)->create();
-                dispatch(new TopUpExcelJob($agent, $vendor_id, $topup_order, $file_path, $key + 2, $total));
+                if (!$top_up_request->hasError()) dispatch(new TopUpExcelJob($agent, $vendor_id, $topup_order, $file_path, $key + 2, $total));
             });
 
             $response_msg = "Your top-up request has been received and will be transferred and notified shortly.";
