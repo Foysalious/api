@@ -2,8 +2,10 @@
 
 
 use App\Models\Payable;
-use App\Sheba\Payment\Exceptions\PaymentAmountNotSet;
 use Carbon\Carbon;
+use Sheba\Payment\Exceptions\PayableNotFound;
+use Sheba\Payment\Exceptions\PaymentAmountNotSet;
+use Sheba\Payment\Exceptions\PaymentLinkInactive;
 use Sheba\Repositories\PaymentLinkRepository;
 
 class PaymentLinkOrderAdapter
@@ -15,7 +17,8 @@ class PaymentLinkOrderAdapter
      * @param null $amount
      * @return $this
      * @throws PaymentAmountNotSet
-     * @throws \App\Sheba\Payment\Exceptions\PayableNotFound
+     * @throws PaymentLinkInactive
+     * @throws PayableNotFound
      */
     public function setPaymentLink($identifier, $amount = null)
     {
@@ -25,6 +28,7 @@ class PaymentLinkOrderAdapter
         } else {
             $this->amount = $amount;
         }
+        if (!$this->paymentLink['isActive']) throw new PaymentLinkInactive();
         if (empty($this->amount)) throw new PaymentAmountNotSet();
         return $this;
     }
@@ -70,7 +74,7 @@ class PaymentLinkOrderAdapter
     /**
      * @param $identifier
      * @return mixed
-     * @throws \App\Sheba\Payment\Exceptions\PayableNotFound
+     * @throws PayableNotFound
      */
     private function get($identifier)
     {

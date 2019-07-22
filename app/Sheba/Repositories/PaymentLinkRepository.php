@@ -3,6 +3,7 @@
 
 use App\Models\Payable;
 use App\Models\Payment;
+use Sheba\Payment\Exceptions\PayableNotFound;
 use Sheba\PaymentLink\PaymentLinkClient;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 
@@ -21,7 +22,7 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
      * @param $userType
      * @param $identifier
      * @return mixed
-     * @throws \App\Sheba\Payment\Exceptions\PayableNotFound
+     * @throws PayableNotFound
      */
     public function getPaymentLinkDetails($userId, $userType, $identifier)
     {
@@ -70,6 +71,15 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
                     $query->select('id', 'type', 'type_id', 'amount', 'user_type', 'user_id');
                 }
             ], 'paymentDetails')->first();
+    }
+
+    /**
+     * @param $linkId
+     * @return mixed
+     */
+    public function getPaymentLinkByLinkId($linkId)
+    {
+        return $this->paymentLinkClient->getPaymentLinkByLinkId($linkId);
     }
 
 }
