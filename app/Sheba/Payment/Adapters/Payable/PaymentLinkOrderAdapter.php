@@ -12,7 +12,7 @@ class PaymentLinkOrderAdapter
     public function setPaymentLink($identifier, $amount = null)
     {
         $this->paymentLink = $this->get($identifier);
-        if ($this->paymentLink['amount']) {
+        if (!empty($this->paymentLink['amount'])) {
             $this->amount = $this->paymentLink['amount'];
         } else {
             $this->amount = $amount;
