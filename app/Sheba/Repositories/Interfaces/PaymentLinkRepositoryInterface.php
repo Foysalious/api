@@ -3,6 +3,7 @@
 
 interface PaymentLinkRepositoryInterface extends BaseRepositoryInterface
 {
-    public function statusUpdate($id, array $data);
+    public function statusUpdate($id, $status);
+
     public function paymentLinkDetails($id);
 }

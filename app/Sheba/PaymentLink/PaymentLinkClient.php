@@ -68,15 +68,9 @@ class PaymentLinkClient
         }
     }
 
-    public function paymentLinkStatusChange($link, $data)
+    public function paymentLinkStatusChange($link, $status)
     {
         try {
-            if ($data['status'] == 'active') {
-                $status = 1;
-            } else {
-                $status = 0;
-            }
-
             $url = $this->baseUrl . '/' . $link . '?isActive=' . $status;
             $response = $this->client->request('PUT', $url, []);
             $response = json_decode($response->getBody());

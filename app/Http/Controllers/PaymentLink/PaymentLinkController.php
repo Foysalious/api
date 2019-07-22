@@ -74,6 +74,7 @@ class PaymentLinkController extends Controller
 
             if ($payment_link_store) {
                 $payment_link = [
+                    'link_id' => $payment_link_store->linkId,
                     'reason' => $payment_link_store->reason,
                     'type' => $payment_link_store->type,
                     'status' => $payment_link_store->isActive == 1 ? 'active' : 'inactive',
