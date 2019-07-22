@@ -1,4 +1,4 @@
-<?php namespace App\Sheba\Payment\Exceptions;
+<?php namespace Sheba\Payment\Exceptions;
 
 use Exception;
 use Throwable;

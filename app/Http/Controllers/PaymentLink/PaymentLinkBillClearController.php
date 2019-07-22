@@ -3,7 +3,9 @@
 
 use App\Http\Controllers\Controller;
 use App\Sheba\Payment\Adapters\Payable\PaymentLinkOrderAdapter;
-use App\Sheba\Payment\Exceptions\PayableNotFound;
+use Sheba\Payment\Exceptions\PayableNotFound;
+use Sheba\Payment\Exceptions\PaymentAmountNotSet;
+use Sheba\Payment\Exceptions\PaymentLinkInactive;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Payment\ShebaPayment;
@@ -25,6 +27,10 @@ class PaymentLinkBillClearController extends Controller
                 $payable = $paymentLinkOrderAdapter->setUserType($user_type)->setUser($user)
                     ->setPaymentLink($request->identifier, $request->get('amount'))->getPayable();
             } catch (PayableNotFound $e) {
+                return api_response($request, null, 404, ['message' => $e->getMessage()]);
+            } catch (PaymentAmountNotSet $e) {
+                return api_response($request, null, 404, ['message' => $e->getMessage()]);
+            } catch (PaymentLinkInactive $e) {
                 return api_response($request, null, 404, ['message' => $e->getMessage()]);
             }
             if ($payment_method == 'wallet' && $user->shebaCredit() < $payable->amount) return api_response($request, null, 403, ['message' => "You don't have sufficient balance"]);

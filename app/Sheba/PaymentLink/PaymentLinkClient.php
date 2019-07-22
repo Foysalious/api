@@ -1,8 +1,8 @@
 <?php namespace Sheba\PaymentLink;
 
-use App\Sheba\Payment\Exceptions\PayableNotFound;
-use Illuminate\Http\Request;
+use Sheba\Payment\Exceptions\PayableNotFound;
 use GuzzleHttp\Client;
+use Illuminate\Http\Request;
 
 class PaymentLinkClient
 {
@@ -96,6 +96,13 @@ class PaymentLinkClient
         }
     }
 
+    /**
+     * @param $userId
+     * @param $userType
+     * @param $identifier
+     * @return mixed
+     * @throws PayableNotFound
+     */
     public function getPaymentLinkDetails($userId, $userType, $identifier)
     {
         $url = $this->baseUrl . '?userId=' . $userId . '&userType=' . $userType . '&linkIdentifier=' . $identifier;
@@ -106,5 +113,16 @@ class PaymentLinkClient
         } else {
             throw new PayableNotFound();
         }
+    }
+
+    /**
+     * @param $linkId
+     * @return mixed
+     */
+    public function getPaymentLinkByLinkId($linkId)
+    {
+        $url = $this->baseUrl . '?linkId=' . $linkId . '&isActive=1';
+        $response = $this->client->get($url)->getBody()->getContents();
+        return json_decode($response, true);
     }
 }
