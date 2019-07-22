@@ -238,4 +238,9 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
         $this->debitWallet($transaction->getAmount());
         $this->walletTransaction(['amount' => $transaction->getAmount(), 'event_type' => $transaction->getEventType(), 'event_id' => $transaction->getEventId(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
     }
+
+    public function getMobile()
+    {
+        return $this->profile->mobile;
+    }
 }

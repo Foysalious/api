@@ -37,4 +37,9 @@ class Vendor extends Model implements TopUpAgent
     {
         return $this->hasMany(TopUpOrder::class, 'agent_id')->where('agent_type', 'App\\Models\\Vendor');
     }
+
+    public function getMobile()
+    {
+        return '+8801678242934';
+    }
 }

@@ -77,7 +77,7 @@ class TopUpExcelJob extends TopUpJob
             unlink($this->file);
 
             $msg = "Your top up request has been processed. You can find the results here: " . $file_path;
-            $this->sms->shoot($this->agent->profile->mobile, $msg);
+            $this->sms->shoot($this->agent->getMobile(), $msg);
         }
     }
 }

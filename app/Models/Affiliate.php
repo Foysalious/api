@@ -285,4 +285,9 @@ class Affiliate extends Model implements TopUpAgent, MovieAgent, TransportAgent,
     {
         return $this->transactions()->where('type', 'Credit')->where('log', '<>', 'Credit Purchase')->sum('amount');
     }
+
+    public function getMobile()
+    {
+        return $this->profile->mobile;
+    }
 }
