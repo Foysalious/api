@@ -16,7 +16,7 @@ class Creator
     private $status;
     private $linkId;
     private $targetId;
-    private $target;
+    private $targetType;
     private $data;
 
     /**
@@ -82,9 +82,9 @@ class Creator
         return $this;
     }
 
-    public function setTarget($target)
+    public function setTargetType($target_type)
     {
-        $this->target = $target;
+        $this->targetType = $target_type;
         return $this;
     }
 
@@ -121,9 +121,9 @@ class Creator
             'userName' => $this->userName,
             'userType' => $this->userType,
             'targetId' => (int)$this->targetId,
-            'target' => $this->target,
+            'targetType' => $this->targetType,
         ];
         if ($this->isDefault) unset($this->data['reason']);
-        if (!$this->targetId) unset($this->data['targetId'], $this->data['target']);
+        if (!$this->targetId) unset($this->data['targetId'], $this->data['targetType']);
     }
 }
