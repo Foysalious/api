@@ -93,8 +93,11 @@ class Creator
      */
     public function editStatus()
     {
-        if ($this->status == 'active') $this->status = 1;
-        $this->status = 0;
+        if ($this->status == 'active') {
+            $this->status = 1;
+        } else {
+            $this->status = 0;
+        }
         return $this->paymentLinkRepo->statusUpdate($this->linkId, $this->status);
     }
 
