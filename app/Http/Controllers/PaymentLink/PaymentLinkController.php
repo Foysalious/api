@@ -119,7 +119,7 @@ class PaymentLinkController extends Controller
     {
         try {
             $default_payment_link = $this->paymentLinkClient->defaultPaymentLink($request);
-            if (!$default_payment_link) {
+            if ($default_payment_link) {
                 $default_payment_link = [
                     'link_id' => $default_payment_link[0]['linkId'],
                     'link' => $default_payment_link[0]['link'],
