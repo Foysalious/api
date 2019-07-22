@@ -16,6 +16,13 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
         parent::__construct();
     }
 
+    /**
+     * @param $userId
+     * @param $userType
+     * @param $identifier
+     * @return mixed
+     * @throws \App\Sheba\Payment\Exceptions\PayableNotFound
+     */
     public function getPaymentLinkDetails($userId, $userType, $identifier)
     {
         return $this->paymentLinkClient->getPaymentLinkDetails($userId, $userType, $identifier);
