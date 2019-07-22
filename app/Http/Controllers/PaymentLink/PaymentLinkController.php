@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\PaymentLink;
 
+use App\Transformers\PaymentDetailTransformer;
 use Illuminate\Validation\ValidationException;
 use Sheba\PaymentLink\Creator;
 use Sheba\PaymentLink\PaymentLinkClient;
@@ -19,12 +20,14 @@ class PaymentLinkController extends Controller
     private $paymentLinkClient;
     private $paymentLinkRepo;
     private $creator;
+    private $paymentDetailTransformer;
 
     public function __construct(PaymentLinkClient $payment_link_client, PaymentLinkRepository $payment_link_repo, Creator $creator)
     {
         $this->paymentLinkClient = $payment_link_client;
         $this->paymentLinkRepo = $payment_link_repo;
         $this->creator = $creator;
+        $this->paymentDetailTransformer = new PaymentDetailTransformer();
     }
 
     public function index(Request $request)
@@ -196,24 +199,9 @@ class PaymentLinkController extends Controller
         try {
             $payment_link_payment_details = $this->paymentLinkRepo->paymentLinkDetails($link);
             $payment = $this->paymentLinkRepo->payment($payment);
-
-            $model = $payment->created_by_type;
-            $user = $model::find($payment->created_by);
             if ($payment_link_payment_details) {
                 $payment_detail = $payment->paymentDetails ? $payment->paymentDetails->last() : null;
-                $payment_details = [
-                    'customer_name' => $payment->created_by_name,
-                    'customer_number' => $user->mobile,
-                    'payment_type' => $payment_detail->readableMethod,
-                    'id' => $payment->id,
-                    'payment_code' => '#' . $payment->id,
-                    'amount' => $payment->payable->amount,
-                    'created_at' => Carbon::parse($payment->created_at)->format('Y-m-d h:i a'),
-                    'link' => $payment_link_payment_details['link'],
-                    'link_code' => '#' . $payment_link_payment_details['linkId'],
-                    'purpose' => $payment_link_payment_details['reason'],
-                    'status' => $payment_link_payment_details['isActive'] == 1 ? 'active' : 'inactive'
-                ];
+                $payment_details = $this->paymentDetailTransformer->transform($payment, $payment_detail,$payment_link_payment_details);
                 return api_response($request, $payment_details, 200, ['payment_details' => $payment_details]);
             } else {
                 return api_response($request, 1, 404);
