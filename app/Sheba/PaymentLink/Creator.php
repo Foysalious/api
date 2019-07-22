@@ -98,12 +98,14 @@ class Creator
     private function makeData()
     {
         $this->data = [
-            'amount' => $this->amount,
+            'amount' => $this->isDefault ? 0 : $this->amount,
             'reason' => $this->reason,
-            'isDefault' => $this->isDefault,
+            'isDefault' => $this->isDefault ? $this->isDefault : 0,
             'userId' => $this->userId,
             'userName' => $this->userName,
             'userType' => $this->userType,
         ];
+        if ($this->isDefault) unset($this->data['reason']);
+
     }
 }
