@@ -89,10 +89,9 @@ class Creator
      */
     public function editStatus()
     {
-        $this->data = [
-            'status' => $this->status
-        ];
-        return $this->paymentLinkRepo->statusUpdate($this->linkId, $this->data);
+        if ($this->status == 'active') $this->status = 1;
+        $this->status = 0;
+        return $this->paymentLinkRepo->statusUpdate($this->linkId, $this->status);
     }
 
     private function makeData()

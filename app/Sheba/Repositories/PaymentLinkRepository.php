@@ -39,9 +39,9 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
         return $this->paymentLinkClient->storePaymentLink($attributes);
     }
 
-    public function statusUpdate($link, array $data)
+    public function statusUpdate($link, $status)
     {
-        return $this->paymentLinkClient->paymentLinkStatusChange($link, $data);
+        return $this->paymentLinkClient->paymentLinkStatusChange($link, $status);
     }
 
     public function paymentLinkDetails($id)
