@@ -34,12 +34,15 @@ class PaymentLinkController extends Controller
     {
         try {
             $payment_links_list = $this->paymentLinkClient->paymentLinkList($request);
+            $payment_links_list = array_where($payment_links_list, function ($key, $link) {
+                return array_key_exists('targetType', $link) ? $link['targetType'] == null : $link;
+            });
             if ($payment_links_list) {
                 list($offset, $limit) = calculatePagination($request);
                 $links = collect($payment_links_list)->slice($offset)->take($limit);
                 $fractal = new Manager();
-                $resource = new Collection($links, new PaymentLinkArrayTransform());
-                $payment_links = $fractal->createData($resource)->toArray()['data'];
+                $resources = new Collection($links, new PaymentLinkArrayTransform());
+                $payment_links = $fractal->createData($resources)->toArray()['data'];
                 return api_response($request, $payment_links, 200, ['payment_links' => $payment_links]);
             } else {
                 return api_response($request, 1, 404);
