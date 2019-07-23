@@ -1,23 +1,23 @@
 <?php namespace App\Http\Controllers\TopUp;
 
-use Sheba\Helpers\Formatters\BDMobileFormatter;
-use Illuminate\Validation\ValidationException;
-use Sheba\TopUp\Vendor\VendorFactory;
-use App\Models\TopUpVendorCommission;
 use App\Http\Controllers\Controller;
-use Sheba\TopUp\Jobs\TopUpExcelJob;
-use Sheba\TopUp\Jobs\TopUpJob;
-use Sheba\TopUp\TopUpRequest;
-use Illuminate\Http\Request;
 use App\Models\TopUpVendor;
-use Sheba\TopUp\TopUpExcel;
+use App\Models\TopUpVendorCommission;
+use DB;
+use Excel;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\Reports\ExcelHandler;
 use Sheba\TopUp\Creator;
+use Sheba\TopUp\Jobs\TopUpExcelJob;
+use Sheba\TopUp\Jobs\TopUpJob;
+use Sheba\TopUp\TopUpExcel;
+use Sheba\TopUp\TopUpRequest;
+use Sheba\TopUp\Vendor\VendorFactory;
+use Storage;
 use Throwable;
 use Validator;
-use Storage;
-use Excel;
-use DB;
 
 class TopUpController extends Controller
 {
@@ -104,12 +104,12 @@ class TopUpController extends Controller
                 $type_field = TopUpExcel::TYPE_COLUMN_TITLE;
                 $mobile_field = TopUpExcel::MOBILE_COLUMN_TITLE;
                 $amount_field = TopUpExcel::AMOUNT_COLUMN_TITLE;
-
+                $name_field = TopUpExcel::NAME_COLUMN_TITLE;
                 if (!$value->$operator_field) return;
 
                 $vendor_id = $vendor->getIdByName($value->$operator_field);
                 $request = $top_up_request->setType($value->$type_field)
-                    ->setMobile(BDMobileFormatter::format($value->$mobile_field))->setAmount($value->$amount_field)->setAgent($agent)->setVendorId($vendor_id);
+                    ->setMobile(BDMobileFormatter::format($value->$mobile_field))->setAmount($value->$amount_field)->setAgent($agent)->setVendorId($vendor_id)->setName($value->$name_field);
                 $topup_order = $creator->setTopUpRequest($request)->create();
                 if (!$top_up_request->hasError()) dispatch(new TopUpExcelJob($agent, $vendor_id, $topup_order, $file_path, $key + 2, $total));
             });
@@ -149,7 +149,7 @@ class TopUpController extends Controller
             if (isset($request->from) && $request->from !== "null") $topups = $topups->whereBetween('created_at', [$request->from . " 00:00:00", $request->to . " 23:59:59"]);
             if (isset($request->vendor_id) && $request->vendor_id !== "null") $topups = $topups->where('vendor_id', $request->vendor_id);
             if (isset($request->status) && $request->status !== "null") $topups = $topups->where('status', $request->status);
-            if (isset($request->q) && $request->q !== "null") $topups = $topups->where('payee_mobile', 'LIKE', '%' . $request->q . '%');
+            if (isset($request->q) && $request->q !== "null") $topups = $topups->where('payee_mobile', 'LIKE', '%' . $request->q . '%')->orWhere('payee_name', 'LIKE', '%' . $request->q . '%');
 
             $total_topups = $topups->count();
             if ($is_excel_report) {
