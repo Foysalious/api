@@ -33,7 +33,7 @@ class PaymentLinkController extends Controller
     public function index(Request $request)
     {
         try {
-            $payment_links_list = $this->paymentLinkClient->paymentLinkList($request);
+            $payment_links_list = $this->paymentLinkRepo->getPaymentLinkList($request);
             $payment_links_list = array_where($payment_links_list, function ($key, $link) {
                 return array_key_exists('targetType', $link) ? $link['targetType'] == null : $link;
             });
