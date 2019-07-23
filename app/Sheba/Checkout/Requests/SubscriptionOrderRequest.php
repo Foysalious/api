@@ -1,7 +1,4 @@
-<?php
-
-namespace Sheba\Checkout\Requests;
-
+<?php namespace Sheba\Checkout\Requests;
 
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
@@ -21,7 +18,6 @@ class SubscriptionOrderRequest extends PartnerListRequest
     /** @var $billingCycleEnd Carbon */
     private $billingCycleEnd;
     protected $location;
-
     private $deliveryName;
     private $deliveryMobile;
     private $additionalInfo;
@@ -51,7 +47,11 @@ class SubscriptionOrderRequest extends PartnerListRequest
 
     private function setAddress()
     {
-        $this->address = CustomerDeliveryAddress::where('id', $this->request->address_id)->where('customer_id', $this->customer->id)->first();
+        $this->address = CustomerDeliveryAddress::withTrashed()
+            ->where('id', $this->request->address_id)
+            ->where('customer_id', $this->customer->id)
+            ->first();
+
         $this->decodeGeo();
         $this->calculateLocation();
     }

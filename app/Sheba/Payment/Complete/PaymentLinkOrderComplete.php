@@ -50,6 +50,8 @@ class PaymentLinkOrderComplete extends PaymentComplete
                     $payment_creator->credit($payment_data);
                     $repository->statusUpdate($linkDetails['linkId'], 0);
                     return true;
+                } else {
+                    return false;
                 }
             } else {
                 return false;

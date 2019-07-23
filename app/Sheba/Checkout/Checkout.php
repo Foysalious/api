@@ -212,6 +212,12 @@ class Checkout
                     $charge = $delivery_charge->get();
                     $job_data['delivery_charge'] = $delivery_charge->doesUseShebaLogistic() ? 0 : $charge;
                     $job_data['logistic_charge'] = $delivery_charge->doesUseShebaLogistic() ? $charge : 0;
+                    if($delivery_charge->doesUseShebaLogistic()) {
+                        $job_data['needs_logistic'] = 1;
+                        $job_data['logistic_parcel_type'] = $this->partnerListRequest->selectedCategory->logistic_parcel_type;
+                        $job_data['logistic_nature'] = $this->partnerListRequest->selectedCategory->logistic_nature;
+                        $job_data['one_way_logistic_init_event'] = $this->partnerListRequest->selectedCategory->one_way_logistic_init_event;
+                    }
                     $discount = $this->discountRepo->findValidForAgainst(DiscountTypes::DELIVERY, $category, $partner);
                     if($discount) {
                         $applied_amount = $discount->getApplicableAmount($charge);

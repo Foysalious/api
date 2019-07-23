@@ -2,6 +2,7 @@
 
 use App\Models\PosOrder;
 use League\Fractal\TransformerAbstract;
+use Sheba\Repositories\PaymentLinkRepository;
 
 class PosOrderTransformer extends TransformerAbstract
 {
@@ -9,7 +10,7 @@ class PosOrderTransformer extends TransformerAbstract
 
     public function transform(PosOrder $order)
     {
-        return [
+        $data = [
             'id' => $order->id,
             'previous_order_id' => $order->previous_order_id,
             'created_by_name' => $order->created_by_name,
@@ -25,6 +26,21 @@ class PosOrderTransformer extends TransformerAbstract
             'is_refundable' => $order->isRefundable(),
             'refund_status' => $order->getRefundStatus()
         ];
+        if ($data['due'] > 0) {
+            $repo = new PaymentLinkRepository();
+            $response = $repo->getPaymentLinkByTargetIdType($data['id']);
+            if ($response['code'] == 200) {
+                $details = $response['links'][0];
+                $data['payment_link'] = [
+                    'id' => $details['linkId'],
+                    'status' => $details['isActive'] ? 'active' : 'inactive',
+                    'link' => $details['link'],
+                    'created_at' => date('d-m-Y h:s A', $details['createdAt'] / 1000)
+                ];
+
+            }
+        }
+        return $data;
     }
 
     public function includeItems($order)
