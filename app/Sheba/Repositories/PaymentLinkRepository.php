@@ -3,6 +3,7 @@
 
 use App\Models\Payable;
 use App\Models\Payment;
+use Illuminate\Http\Request;
 use Sheba\Payment\Exceptions\PayableNotFound;
 use Sheba\PaymentLink\PaymentLinkClient;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
@@ -15,6 +16,11 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
     {
         $this->paymentLinkClient = new PaymentLinkClient();
         parent::__construct();
+    }
+
+    public function getPaymentLinkList(Request $request)
+    {
+        return $this->paymentLinkClient->paymentLinkList($request);
     }
 
     /**
