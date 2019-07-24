@@ -844,7 +844,7 @@ class Job extends BaseModel
 
     public function needsLogistic()
     {
-        return $this->needs_logistic;
+        return (bool)$this->needs_logistic;
     }
 
     /**
