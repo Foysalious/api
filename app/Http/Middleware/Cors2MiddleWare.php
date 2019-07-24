@@ -10,8 +10,8 @@ class Cors2MiddleWare
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request $request
-     * @param  \Closure $next
+     * @param \Illuminate\Http\Request $request
+     * @param \Closure $next
      * @return mixed
      */
     public function handle($request, Closure $next)
@@ -70,7 +70,8 @@ class Cors2MiddleWare
             "http://0.0.0.0:3333",
             "http://b2b.sheba.test",
             "https://b2b.dev-sheba.xyz",
-            "https://business.sheba.xyz"
+            "https://business.sheba.xyz",
+            "https://pl.dev-sheba.xyz"
         ];
         // ALLOW OPTIONS METHOD
         $headers['Access-Control-Allow-Credentials'] = 'true';
