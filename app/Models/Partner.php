@@ -486,7 +486,8 @@ class Partner extends Model implements Rewardable, TopUpAgent
 
         return $this->jobs()->whereNotExists(function ($q) {
             $q->from('job_cancel_requests')->whereRaw('job_id = jobs.id');
-        })->get();
+        })->select('jobs.id', 'schedule_date', 'status')->get();
+
     }
 
     public function todayJobs($jobs = null)
