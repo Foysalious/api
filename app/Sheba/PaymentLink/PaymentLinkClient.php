@@ -122,7 +122,7 @@ class PaymentLinkClient
      */
     public function getPaymentLinkByLinkId($linkId)
     {
-        $url = $this->baseUrl . '?linkId=' . $linkId . '&isActive=1';
+        $url = $this->baseUrl . '?linkId=' . $linkId;
         $response = $this->client->get($url)->getBody()->getContents();
         return json_decode($response, true);
     }
