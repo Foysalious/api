@@ -255,7 +255,7 @@ class ShebaController extends Controller
                 return api_response($request, null, 404, ['message' => $message]);
             }
             $info = ['amount' => $payment->payable->amount, 'method' => $payment->paymentDetails->last()->readable_method, 'description' => $payment->payable->description,
-                'created_at'=>$payment->created_at->format('jS M, Y, h:i A')];
+                'created_at' => $payment->created_at->format('jS M, Y, h:i A')];
             $info = array_merge($info, $this->getInfoForPaymentLink($payment->payable));
             if ($payment->status == 'validated' || $payment->status == 'failed') {
                 return api_response($request, 1, 200, ['info' => $info,
@@ -301,7 +301,8 @@ class ShebaController extends Controller
             return [
                 'payment_receiver' => [
                     'name' => $user->name,
-                    'image' => $user->logo
+                    'image' => $user->logo,
+                    'mobile' => $user->getMobile()
                 ]
             ];
         } else
