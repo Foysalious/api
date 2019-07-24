@@ -14,6 +14,7 @@ class TopUpRequest
     private $vendor;
     private $vendorFactory;
     private $errorMessage;
+    private $name;
 
     public function __construct(VendorFactory $vendor_factory)
     {
@@ -124,5 +125,23 @@ class TopUpRequest
     public function getErrorMessage()
     {
         return $this->errorMessage;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * @param mixed $name
+     * @return TopUpRequest
+     */
+    public function setName($name)
+    {
+        $this->name = $name;
+        return $this;
     }
 }

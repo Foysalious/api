@@ -35,6 +35,7 @@ class PosOrderTransformer extends TransformerAbstract
                     'id' => $details['linkId'],
                     'status' => $details['isActive'] ? 'active' : 'inactive',
                     'link' => $details['link'],
+                    'amount' => $details['amount'],
                     'created_at' => date('d-m-Y h:s A', $details['createdAt'] / 1000)
                 ];
 
