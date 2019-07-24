@@ -35,6 +35,9 @@ class AvailableMethods
                 case 'utility':
                     $payments = self::getUtilityPayments($version_code, $platform_name);
                     break;
+                case 'payment_link':
+                    $payments = self::getPaymentLinkPayments($version_code, $platform_name);
+                    break;
                 default:
                     throw new \Exception('Invalid Payable Type');
                     break;
@@ -102,10 +105,19 @@ class AvailableMethods
         ];
     }
 
-    private static function getUtilityPayments($version_code,  $platform_name)
+    private static function getUtilityPayments($version_code, $platform_name)
     {
         return [
             self::shebaCredit(),
+            self::bkash(),
+            self::cbl($version_code, $platform_name),
+            self::ssl()
+        ];
+    }
+
+    private static function getPaymentLinkPayments($version_code, $platform_name)
+    {
+        return [
             self::bkash(),
             self::cbl($version_code, $platform_name),
             self::ssl()
