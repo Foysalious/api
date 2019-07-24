@@ -138,4 +138,16 @@ class PaymentLinkClient
         $response = $this->client->get($uri)->getBody()->getContents();
         return json_decode($response, true);
     }
+
+    public function getPaymentLinkByIdentifier($identifier)
+    {
+        $url = $this->baseUrl . '?linkIdentifier=' . $identifier;
+        $response = $this->client->get($url)->getBody()->getContents();
+        $result = json_decode($response, true);
+        if ($result['code'] == 200) {
+            return $result['links'][0];
+        } else {
+            return null;
+        }
+    }
 }

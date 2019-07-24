@@ -23,6 +23,7 @@ class PaymentLinkOrderAdapter
     public function setPaymentLink($identifier, $amount = null)
     {
         $this->paymentLink = $this->get($identifier);
+        if (!$this->paymentLink) throw new PayableNotFound();
         if (!empty($this->paymentLink['amount'])) {
             $this->amount = $this->paymentLink['amount'];
         } else {
@@ -62,7 +63,7 @@ class PaymentLinkOrderAdapter
         $payable->type = 'payment_link';
         $payable->type_id = $this->paymentLink['linkId'];
         $payable->user_id = $this->user->id;
-        $payable->user_type = $this->userType;
+        $payable->user_type = "App\\Models\\" . class_basename($this->user);
         $payable->amount = $this->amount;
         $payable->completion_type = "payment_link";
         $payable->success_url = config('sheba.front_url') . '/profile/payments-links/' . $this->paymentLink['linkId'];
@@ -71,15 +72,9 @@ class PaymentLinkOrderAdapter
         return $payable;
     }
 
-    /**
-     * @param $identifier
-     * @return mixed
-     * @throws PayableNotFound
-     */
     private function get($identifier)
     {
-        $type = strtolower(class_basename($this->userType));
-        return (new PaymentLinkRepository())->getPaymentLinkDetails($this->user->id, $type, $identifier);
+        return (new PaymentLinkRepository())->findByIdentifier($identifier);
 
     }
 }

@@ -24,7 +24,9 @@ use Sheba\Repositories\Business\PurchaseRequestItemRepository;
 use Sheba\Repositories\Business\PurchaseRequestQuestionRepository;
 use Sheba\Repositories\Business\PurchaseRequestRepository;
 use Sheba\Repositories\Business\VehicleRepository;
+use Sheba\Repositories\CustomerRepository;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
+use Sheba\Repositories\Interfaces\CustomerRepositoryInterface;
 use Sheba\Repositories\Interfaces\DriverRepositoryInterface;
 use Sheba\Repositories\Interfaces\FormTemplateItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\FormTemplateQuestionRepositoryInterface;
@@ -43,12 +45,14 @@ use Sheba\Repositories\Interfaces\ProcurementItemFieldRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementQuestionRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
+use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Sheba\Repositories\Interfaces\PurchaseRequestItemFieldRepositoryInterface;
 use Sheba\Repositories\Interfaces\PurchaseRequestItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\PurchaseRequestQuestionRepositoryInterface;
 use Sheba\Repositories\Interfaces\PurchaseRequestRepositoryInterface;
 use Sheba\Repositories\Interfaces\VehicleRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
+use Sheba\Repositories\ProfileRepository;
 
 class RepositoryServiceProvider extends ServiceProvider
 {
@@ -78,5 +82,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(HiredDriverRepositoryInterface::class, HiredDriverRepository::class);
         $this->app->bind(HiredVehicleRepositoryInterface::class, HiredVehicleRepository::class);
         $this->app->bind(PaymentLinkRepositoryInterface::class, PaymentLinkRepository::class);
+        $this->app->bind(ProfileRepositoryInterface::class, ProfileRepository::class);
+        $this->app->bind(CustomerRepositoryInterface::class, CustomerRepository::class);
     }
 }

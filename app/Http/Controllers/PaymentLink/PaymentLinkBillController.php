@@ -3,6 +3,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Sheba\Payment\Adapters\Payable\PaymentLinkOrderAdapter;
+use Sheba\Customer\Creator;
 use Sheba\Payment\Exceptions\PayableNotFound;
 use Sheba\Payment\Exceptions\PaymentAmountNotSet;
 use Sheba\Payment\Exceptions\PaymentLinkInactive;
@@ -10,21 +11,22 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Payment\ShebaPayment;
 
-class PaymentLinkBillClearController extends Controller
+class PaymentLinkBillController extends Controller
 {
-    public function clearBill(Request $request, PaymentLinkOrderAdapter $paymentLinkOrderAdapter)
+    public function clearBill(Request $request, PaymentLinkOrderAdapter $paymentLinkOrderAdapter, Creator $customerCreator)
     {
         try {
             $this->validate($request, [
-                'payment_method' => 'required|in:online,wallet,bkash,cbl',
+                'payment_method' => 'required|in:online,bkash,cbl',
                 'amount' => 'sometimes|required|numeric',
-                'identifier' => 'required'
+                'identifier' => 'required',
+                'name' => 'required',
+                'mobile' => 'required|string|mobile:bd'
             ]);
             $payment_method = $request->payment_method;
-            $user_type = "App\\Models\\" . ucfirst($request->type);
-            $user = $request->user;
+            $user = $customerCreator->setMobile($request->mobile)->setName($request->name)->create();
             try {
-                $payable = $paymentLinkOrderAdapter->setUserType($user_type)->setUser($user)
+                $payable = $paymentLinkOrderAdapter->setUser($user)
                     ->setPaymentLink($request->identifier, $request->get('amount'))->getPayable();
             } catch (PayableNotFound $e) {
                 return api_response($request, null, 404, ['message' => $e->getMessage()]);

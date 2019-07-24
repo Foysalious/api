@@ -4,6 +4,7 @@ use App\Transformers\PaymentDetailTransformer;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Resource\Collection;
 use App\Transformers\PaymentLinkArrayTransform;
+use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
 use Sheba\PaymentLink\PaymentLinkClient;
 use App\Http\Controllers\Controller;
@@ -48,6 +49,36 @@ class PaymentLinkController extends Controller
                 return api_response($request, 1, 404);
             }
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function show($identifier, Request $request, PaymentLinkRepositoryInterface $paymentLinkRepository)
+    {
+        try {
+            $link = $paymentLinkRepository->findByIdentifier($identifier);
+            if ($link) {
+                $model_name = "App\\Models\\" . (ucfirst($link['userType']));
+                $user = $model_name::find($link['userId']);
+                return api_response($request, $link, 200, ['link' => [
+                    'id' => $link['linkId'],
+                    'identifier' => $link['linkIdentifier'],
+                    'purpose' => $link['reason'],
+                    'amount' => $link['amount'],
+                    'payment_receiver' => [
+                        'name' => $user->name,
+                        'image' => $user->logo
+                    ]
+                ]]);
+            } else {
+                return api_response($request, null, 404);
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -192,7 +223,6 @@ class PaymentLinkController extends Controller
         try {
             $payment_link_payment_details = $this->paymentLinkRepo->paymentLinkDetails($link);
             $payment = $this->paymentLinkRepo->payment($payment);
-
             if ($payment_link_payment_details) {
                 $payment_detail = $payment->paymentDetails ? $payment->paymentDetails->last() : null;
                 $payment_details = $this->paymentDetailTransformer->transform($payment, $payment_detail, $payment_link_payment_details);

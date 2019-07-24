@@ -92,4 +92,9 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
         return $this->paymentLinkClient->getPaymentLinkByTargetIdType($id, $type);
     }
 
+    public function findByIdentifier($identifier)
+    {
+        return $this->paymentLinkClient->getPaymentLinkByIdentifier($identifier);
+    }
+
 }
