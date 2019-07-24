@@ -18,7 +18,6 @@ class UserController extends Controller
             ];
             return api_response($request, $data, 200, ['data' => $data]);
         } catch (\Throwable $e) {
-            dd($e);
             return api_response($request, null, 500);
         }
     }

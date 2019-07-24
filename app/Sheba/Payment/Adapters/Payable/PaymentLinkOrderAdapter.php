@@ -65,8 +65,9 @@ class PaymentLinkOrderAdapter
         $payable->user_id = $this->user->id;
         $payable->user_type = "App\\Models\\" . class_basename($this->user);
         $payable->amount = $this->amount;
+        $payable->description = $this->paymentLink['reason'];
         $payable->completion_type = "payment_link";
-        $payable->success_url = config('sheba.front_url') . '/profile/payments-links/' . $this->paymentLink['linkId'];
+        $payable->success_url = config('sheba.front_url') . '/payments/' . $this->paymentLink['linkIdentifier'] . '/success';
         $payable->created_at = Carbon::now();
         $payable->save();
         return $payable;

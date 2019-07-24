@@ -40,7 +40,7 @@ class Creator
         if (!$profile) $profile = $this->profileCreator->setName($this->name)->setMobile($this->mobile)->create();
         $customer = $profile->customer;
         $this->setModifier($profile);
-        if (!$customer) $customer = $this->customerRepository->create(['profile_id' => $profile]);
+        if (!$customer) $customer = $this->customerRepository->create(['profile_id' => $profile->id]);
         return $customer;
     }
 
