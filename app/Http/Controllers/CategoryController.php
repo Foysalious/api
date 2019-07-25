@@ -168,8 +168,8 @@ class CategoryController extends Controller
             $categories = $categories->get();
             foreach ($categories as &$category) {
                 array_forget($category, 'parent_id');
-                foreach ($category->children as &$category) {
-                    array_forget($category, 'parent_id');
+                foreach ($category->children as &$child) {
+                    array_forget($child, 'parent_id');
                 }
             }
             return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $categories]) : api_response($request, null, 404);
