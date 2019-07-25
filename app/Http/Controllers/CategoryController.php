@@ -136,24 +136,21 @@ class CategoryController extends Controller
         try {
             $this->validate($request, ['lat' => 'required|numeric', 'lng' => 'required|numeric']);
             $with = '';
-            if ($hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first()) {
-                /** @var Location $location */
-                $location = $hyper_location->location;
+            if ($hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->first()) {
+                $location_id = $hyper_location->location_id;
                 $best_deal_categories_id = explode(',', config('sheba.best_deal_ids'));
-                $best_deal_category = CategoryGroupCategory::select('id', 'category_id')->whereIn('category_group_id', $best_deal_categories_id)->pluck('category_id')->toArray();
+                $best_deal_category = CategoryGroupCategory::select('category_group_id', 'category_id')->whereIn('category_group_id', $best_deal_categories_id)->pluck('category_id')->toArray();
+                dd($best_deal_category);
 
-                $categories = Category::where('parent_id', null)->orderBy('order');
-                if ($location) {
-                    $categories = $categories->whereHas('locations', function ($q) use ($location) {
-                        $q->where('locations.id', $location->id);
+                $categories = Category::published()->where('parent_id', null)->orderBy('order');
+                $categories = $categories->whereHas('locations', function ($q) use ($location_id) {
+                    $q->where('locations.id', $location_id);
+                });
+                $categories = $categories->whereHas('children', function ($q) use ($location_id, $request) {
+                    $q->published()->whereHas('locations', function ($query) use ($location_id) {
+                        $query->where('locations.id', $location_id);
                     });
-                    $categories = $categories->whereHas('allChildren', function ($q) use ($location, $request, $filter_publication) {
-                        $filter_publication($q);
-                        $q->whereHas('locations', function ($query) use ($location) {
-                            $query->where('locations.id', $location->id);
-                        });
-                    });
-                }
+                });
                 $categories = $categories->select('id', 'name', 'bn_name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id');
 
                 if ($request->has('with')) {
@@ -205,7 +202,11 @@ class CategoryController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

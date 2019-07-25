@@ -31,7 +31,7 @@ class Creator
 
     public function create()
     {
-        if ($profile = $this->profileRepository->findByMobile($this->mobile)) return $profile;
+        if ($profile = $this->profileRepository->findByMobile($this->mobile)->first()) return $profile;
         $this->makeData();
         return $this->profileRepository->create($this->crateData);
     }
