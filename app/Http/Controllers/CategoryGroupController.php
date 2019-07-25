@@ -23,14 +23,15 @@ class CategoryGroupController extends Controller
                 'name' => 'sometimes|required|string',
                 'location' => 'sometimes|numeric',
                 'lat' => 'sometimes|numeric',
-                'lng' => 'required_with:lat'
+                'lng' => 'required_with:lat',
             ]);
+
             $location = null;
             if ($request->has('location')) {
                 $location = Location::find($request->location)->id;
             } else if ($request->has('lat')) {
                 $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
-                if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
+                if (!is_null($hyperLocation)) $location = $hyperLocation->location_id;
             }
             $location = !is_null($location) ? $location : 4;
             $for = $this->getPublishedFor($request->for);
@@ -38,25 +39,24 @@ class CategoryGroupController extends Controller
                 $categories = $this->getCategoryByColumn('name', $request->name, $location);
                 return $categories ? api_response($request, $categories, 200, ['category' => $categories]) : api_response($request, null, 404);
             }
-            $with = '';
             $categoryGroups = CategoryGroup::$for()->select('id', 'name', 'app_thumb', 'app_banner')
                 ->whereHas('locations', function ($query) use ($location) {
-                    $query->where('locations.id', $location);
+                    $query->select('locations.id')->where('locations.id', $location);
                 })
                 ->get();
-
             if ($request->has('with')) {
                 $with = $request->with;
                 if ($with == 'categories') {
                     $categoryGroups->load(['categories' => function ($query) use ($location) {
-                        return $query->published()->orderBy('category_group_category.order')
+                        $query->published()->orderBy('category_group_category.order')
                             ->whereHas('services', function ($q) use ($location) {
-                                $q->published()->whereHas('locations', function ($q) use ($location) {
-                                    $q->where('locations.id', $location);
+                                $q->select('services.id')->published()->whereHas('locations', function ($q) use ($location) {
+                                    $q->select('locations.id')->where('locations.id', $location);
                                 });
                             })->whereHas('locations', function ($query) use ($location) {
-                                $query->where('locations.id', $location);
+                                $query->select('locations.id')->where('locations.id', $location);
                             });
+                        if (\request()->has('new')) $query->select('id', 'name', 'thumb', 'app_thumb');
                     }]);
                     $categoryGroups = $categoryGroups->each(function ($category_group) {
                         $category_group->categories->each(function ($category) {
@@ -99,7 +99,7 @@ class CategoryGroupController extends Controller
             }
 
             $filter_location = function ($q) use ($location) {
-                if(!$location) return;
+                if (!$location) return;
                 $q->whereHas('locations', function ($q) use ($location) {
                     $q->where('locations.id', $location);
                 });
