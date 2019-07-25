@@ -88,6 +88,8 @@ class Payable extends Model
             return $this->user->profile->name;
         } elseif ($this->user instanceof Business) {
             return $this->user->name;
+        } elseif ($this->user instanceof Partner) {
+            return $this->user->name;
         }
     }
 
