@@ -30,7 +30,9 @@ class CustomerDeliveryAddressController extends Controller
     public function index($customer, Request $request)
     {
         try {
-            $customer = $request->customer;
+            $customer = $request->customer->load(['profile' => function ($q) {
+                $q->select('id', 'name', 'mobile');
+            }]);
             $location = null;
             $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'location_id', 'address', 'name', 'geo_informations', 'flat_no')->get();
             if ($request->has('lat') && $request->has('lng')) {
@@ -63,8 +65,8 @@ class CustomerDeliveryAddressController extends Controller
 
             $address_position = $this->findHomeAndWorkAddressPosition($customer_delivery_addresses);
             $customer_delivery_addresses = $this->filterAddressByHomeAndWork($address_position, $customer_delivery_addresses);
-
-            return api_response($request, $customer_delivery_addresses, 200, ['addresses' => $customer_delivery_addresses, 'name' => $customer->profile->name, 'mobile' => $customer->profile->mobile]);
+            return api_response($request, $customer_delivery_addresses, 200, ['addresses' => $customer_delivery_addresses,
+                'name' => $customer->profile->name, 'mobile' => $customer->profile->mobile]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -126,8 +128,6 @@ class CustomerDeliveryAddressController extends Controller
             return api_response($request, null, 500);
         }
     }
-
-    private function get() {}
 
     public function store($customer, Request $request)
     {
@@ -338,7 +338,7 @@ class CustomerDeliveryAddressController extends Controller
     private function findHomeAndWorkAddressPosition($delivery_addresses)
     {
         $address_position = ['home' => null, 'work' => null];
-        foreach($delivery_addresses as $index => $customer_delivery_address) {
+        foreach ($delivery_addresses as $index => $customer_delivery_address) {
             $address_name = strtolower($customer_delivery_address->name);
             if ($address_name == 'home') $address_position['home'] = $index;
             if ($address_name == 'work') $address_position['work'] = $index;
