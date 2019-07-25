@@ -302,7 +302,12 @@ class ShebaController extends Controller
                 'payment_receiver' => [
                     'name' => $user->name,
                     'image' => $user->logo,
-                    'mobile' => $user->getMobile()
+                    'mobile' => $user->getMobile(),
+                    'address' => $user->address
+                ],
+                'user' => [
+                    'name' => $payable->user->profile->name,
+                    'mobile' => $payable->user->profile->mobile
                 ]
             ];
         } else
