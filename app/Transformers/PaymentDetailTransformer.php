@@ -8,7 +8,7 @@ class PaymentDetailTransformer extends TransformerAbstract
     public function transform($payment, $payment_detail, $payment_link_payment_details)
     {
         return [
-            'customer_name' => $payment->payable->user->name,
+            'customer_name' => $payment->payable->getName(),
             'customer_number' => $payment->payable->getMobile(),
             'payment_type' => $payment_detail->readableMethod,
             'id' => $payment->id,
