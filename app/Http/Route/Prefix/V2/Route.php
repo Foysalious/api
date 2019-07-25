@@ -6,6 +6,7 @@ class Route
     {
         $api->group(['prefix' => 'v2', 'namespace' => 'App\Http\Controllers'], function ($api) {
             (new UserRoute())->set($api);
+            (new CategoryRoute())->set($api);
             $api->group(['prefix' => 'profile'], function ($api) {
                 $api->post('registration/partner', 'Auth\PartnerRegistrationController@registerByProfile')->middleware('jwtAuth');
             });

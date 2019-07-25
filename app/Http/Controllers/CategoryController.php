@@ -131,6 +131,87 @@ class CategoryController extends Controller
         }
     }
 
+    public function getAllCategories(Request $request)
+    {
+        try {
+            $this->validate($request, ['lat' => 'required|numeric', 'lng' => 'required|numeric']);
+            $with = '';
+            if ($hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->first()) {
+                $location_id = $hyper_location->location_id;
+                $best_deal_categories_id = explode(',', config('sheba.best_deal_ids'));
+                $best_deal_category = CategoryGroupCategory::select('category_group_id', 'category_id')->whereIn('category_group_id', $best_deal_categories_id)->pluck('category_id')->toArray();
+                dd($best_deal_category);
+
+                $categories = Category::published()->where('parent_id', null)->orderBy('order');
+                $categories = $categories->whereHas('locations', function ($q) use ($location_id) {
+                    $q->where('locations.id', $location_id);
+                });
+                $categories = $categories->whereHas('children', function ($q) use ($location_id, $request) {
+                    $q->published()->whereHas('locations', function ($query) use ($location_id) {
+                        $query->where('locations.id', $location_id);
+                    });
+                });
+                $categories = $categories->select('id', 'name', 'bn_name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id');
+
+                if ($request->has('with')) {
+                    $with = $request->with;
+                    if ($with == 'children') {
+                        $categories->with(['allChildren' => function ($q) use ($location, $filter_publication, $best_deal_category) {
+                            if (!is_null($location)) {
+                                $q->whereHas('locations', function ($q) use ($location) {
+                                    $q->where('locations.id', $location->id);
+                                });
+                                $q->whereHas('services', function ($q) use ($location) {
+                                    $q->published()->whereHas('locations', function ($q) use ($location) {
+                                        $q->where('locations.id', $location->id);
+                                    });
+                                });
+                            }
+                            $q->whereNotIn('id', $best_deal_category);
+                            $filter_publication($q);
+                            $q->orderBy('order');
+                        }]);
+                    }
+                }
+
+                $filter_publication($categories);
+                //$categories = $request->has('is_business') && (int)$request->is_business ? $categories->publishedForBusiness() : $categories->published();
+                $categories = $categories->get();
+
+                foreach ($categories as $key => &$category) {
+                    if ($with == 'children') {
+                        $category->children = $category->allChildren;
+                        unset($category->allChildren);
+                        if ($category->children->isEmpty()) {
+                            $categories->forget($key);
+                            continue;
+                        }
+                        $category->children->sortBy('order')->each(function (&$child) {
+                            removeRelationsAndFields($child);
+                        });
+                    }
+                }
+
+                $categories_final = array();
+                foreach ($categories as $category) {
+                    array_push($categories_final, $category);
+                }
+
+                return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $categories_final]) : api_response($request, null, 404);
+
+            } else {
+                return api_response($request, null, 404);
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     public function show($category, Request $request)
     {
         try {
