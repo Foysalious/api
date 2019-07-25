@@ -340,8 +340,8 @@ class CustomerDeliveryAddressController extends Controller
         $address_position = ['home' => null, 'work' => null];
         foreach($delivery_addresses as $index => $customer_delivery_address) {
             $address_name = strtolower($customer_delivery_address->name);
-            if (strpos($address_name, 'home') !== FALSE) $address_position['home'] = $index;
-            if (strpos($address_name, 'work') !== FALSE) $address_position['work'] = $index;
+            if ($address_name == 'home') $address_position['home'] = $index;
+            if ($address_name == 'work') $address_position['work'] = $index;
         }
 
         return $address_position;
