@@ -8,6 +8,7 @@
         <table>
             <tr>
                 <th>No</th>
+                <th>Payee Name</th>
                 <th>Payee Mobile</th>
                 <th>Amount</th>
                 <th>Operator</th>

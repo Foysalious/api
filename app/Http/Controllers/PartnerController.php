@@ -1119,10 +1119,19 @@ class PartnerController extends Controller
      */
     public function getServedCustomers($partner, Request $request)
     {
+        ini_set('memory_limit', '6096M');
+        ini_set('max_execution_time', 660);
+
         try {
-            $partner_orders = PartnerOrder::where('partner_id', $partner)->whereNotNull('closed_and_paid_at')->with(['jobs' => function ($q) {
-                    $q->with('category');
-                }, 'order.customer.profile'])->orderBy('closed_and_paid_at', 'desc')->get();
+            $partner_orders = PartnerOrder::where('partner_id', $partner)
+                ->whereNotNull('closed_and_paid_at')
+                ->with(['jobs' => function ($q) {
+                    $q->with(['category' => function ($q1) {
+                        $q1->select('id', 'name');
+                    }]);
+                }, 'order.customer.profile'])
+                ->orderBy('closed_and_paid_at', 'desc')
+                ->get();
 
             $served_customers = collect();
             foreach ($partner_orders as $partner_order) {
