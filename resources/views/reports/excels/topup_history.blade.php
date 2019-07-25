@@ -17,6 +17,7 @@
             @foreach($topup_data as $key => $topup)
                 <tr>
                     <td>{{ ++$key }}</td>
+                    <td>{{$topup['payee_name']}}</td>
                     <td>`{{ $topup['payee_mobile'] }}`</td>
                     <td>{{ $topup['amount'] }}</td>
                     <td>{{ $topup['operator'] }}</td>
