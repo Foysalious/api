@@ -534,3 +534,16 @@ if (!function_exists('decodeGuzzleResponse')) {
         return json_decode($response->getBody()->getContents(), true);
     }
 }
+
+if (!function_exists('isAssoc')) {
+    /**
+     * @param $arr
+     * @return bool
+     */
+    function isAssoc($arr)
+    {
+        if (!is_array($arr)) return false;
+        if ([] === $arr) return false;
+        return array_keys($arr) !== range(0, count($arr) - 1);
+    }
+}
