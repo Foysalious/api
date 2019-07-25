@@ -4,20 +4,22 @@ use App\Exceptions\HyperLocationNotFoundException;
 use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
 use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
+
 use App\Models\Category;
 use App\Models\CategoryPartner;
 use App\Models\DeliveryChargeUpdateRequest;
 use App\Models\HyperLocal;
 use App\Models\Job;
 use App\Models\Location;
-use App\Models\Order;
 use App\Models\Partner;
 use App\Models\PartnerOrder;
+use App\Models\PartnerPosCustomer;
 use App\Models\PartnerResource;
 use App\Models\PartnerService;
 use App\Models\PartnerServicePricesUpdate;
 use App\Models\ReviewQuestionAnswer;
 use App\Models\Service;
+
 use App\Repositories\DiscountRepository;
 use App\Repositories\NotificationRepository;
 use App\Repositories\PartnerOrderRepository;
@@ -26,14 +28,17 @@ use App\Repositories\PartnerServiceRepository;
 use App\Repositories\ResourceJobRepository;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
+
 use App\Sheba\Checkout\PartnerList;
-use App\Sheba\Checkout\PartnerPrice;
 use App\Sheba\Checkout\Validation;
-use Carbon\Carbon;
+
+
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Redis;
+
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
 use Sheba\Checkout\Partners\LitePartnerList;
 use Sheba\Checkout\Requests\PartnerListRequest;
@@ -42,11 +47,15 @@ use Sheba\Manager\JobList;
 use Sheba\ModificationFields;
 use Sheba\Partner\LeaveStatus;
 use Sheba\Reward\PartnerReward;
+
+use Carbon\Carbon;
+use Throwable;
 use Validator;
 
 class PartnerController extends Controller
 {
     use ModificationFields;
+
     private $serviceRepository;
     private $partnerServiceRepository;
     private $reviewRepository;
@@ -269,7 +278,7 @@ class PartnerController extends Controller
             }
             $info->put('geo_informations', $geo_informations);
             return api_response($request, $info, 200, ['info' => $info]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -307,7 +316,7 @@ class PartnerController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -379,7 +388,7 @@ class PartnerController extends Controller
             }
             $info = array('rating' => $avg_rating, 'total_reviews' => $reviews->count(), 'reviews' => array_slice($reviews->values()->all(), $offset, $limit), 'breakdown' => $breakdown);
             return api_response($request, $info, 200, ['info' => $info]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -415,7 +424,7 @@ class PartnerController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -471,7 +480,7 @@ class PartnerController extends Controller
                 'has_reward_campaign' => count($partner_reward->upcoming()) > 0 ? 1 : 0
             ];
             return api_response($request, $info, 200, ['info' => $info]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -490,7 +499,7 @@ class PartnerController extends Controller
             $breakdown = $this->partnerOrderRepository->getWeeklyBreakdown($partner_orders, $start_time, $end_time);
             $info = array('today' => $sales_stats->today->sale, 'week' => $sales_stats->week->sale, 'month' => $sales_stats->month->sale, 'year' => $sales_stats->year->sale, 'total' => $sales_stats->lifetime->sale);
             return api_response($request, $info, 200, ['info' => $info, 'breakdown' => $breakdown, 'orders' => $partner_orders]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -520,7 +529,7 @@ class PartnerController extends Controller
             $info->put('leave_status', (new LeaveStatus($partner))->getCurrentStatus());
 
             return api_response($request, $info, 200, ['info' => $info]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -536,7 +545,7 @@ class PartnerController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -602,7 +611,7 @@ class PartnerController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -629,7 +638,7 @@ class PartnerController extends Controller
             if ($locations->count() == 0) return api_response($request, null, 404);
 
             return api_response($request, $locations, 200, ['locations' => $locations]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -693,7 +702,7 @@ class PartnerController extends Controller
             }
 
             return api_response($request, null, 404);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -753,7 +762,7 @@ class PartnerController extends Controller
                 return api_response($request, $master_categories, 200, ['master_categories' => $master_categories, 'number_of_services_with_sheba_delivery' => $number_of_services_with_sheba_delivery]);
             }
             return api_response($request, null, 404);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -774,7 +783,7 @@ class PartnerController extends Controller
             } else {
                 return api_response($request, null, 500);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return api_response($request, null, 500);
         }
     }
@@ -790,7 +799,7 @@ class PartnerController extends Controller
                 return api_response($request, $secondary_category, 200, ['secondary_category' => $secondary_category]);
             }
             return api_response($request, null, 404);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -825,7 +834,7 @@ class PartnerController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -844,7 +853,7 @@ class PartnerController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -878,7 +887,7 @@ class PartnerController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -895,7 +904,7 @@ class PartnerController extends Controller
                     $query->from('category_location')->where('location_id', $location)->whereRaw('category_id=categories.id');
                 })->get();
             return api_response($request, $request, 200, ['categories' => $categories]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return api_response($request, null, 500);
         }
     }
@@ -924,7 +933,7 @@ class PartnerController extends Controller
                 ->get();
 
             return api_response($request, $request, 200, ['services' => $service]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return api_response($request, null, 500, ['message' => $e->getMessage()]);
         }
     }
@@ -1026,7 +1035,7 @@ class PartnerController extends Controller
                 $master_category['sub_categories']->push(['id' => $category->id, 'name' => $category->name, 'app_thumb' => $category->app_thumb, 'icon' => $category->icon, 'icon_png' => $category->icon_png]);
             }
             return api_response($request, $master_categories, 200, ['categories' => $master_categories]);
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             app('sentry')->captureException($exception);
             return api_response($request, null, 500);
         }
@@ -1063,7 +1072,7 @@ class PartnerController extends Controller
                 ]));
                 return api_response($request, 1, 200);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -1103,26 +1112,32 @@ class PartnerController extends Controller
         return [$old, $new];
     }
 
+    /**
+     * @param $partner
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getServedCustomers($partner, Request $request)
     {
         try {
-            $partner_orders = PartnerOrder::where('partner_id', $partner)->whereNotNull('closed_and_paid_at')
-                ->with(['jobs' => function ($q) {
+            $partner_orders = PartnerOrder::where('partner_id', $partner)->whereNotNull('closed_and_paid_at')->with(['jobs' => function ($q) {
                     $q->with('category');
                 }, 'order.customer.profile'])->orderBy('closed_and_paid_at', 'desc')->get();
+
             $served_customers = collect();
             foreach ($partner_orders as $partner_order) {
                 if (!$partner_order->order->customer || !$partner_order->order->customer->profile->mobile) continue;
-                if (!$served_customers->contains('mobile', $partner_order->order->customer->profile->mobile))
-                    $served_customers->push([
-                        'name' => $partner_order->order->customer->profile->name,
-                        'mobile' => $partner_order->order->customer->profile->mobile,
-                        'image' => $partner_order->order->customer->profile->pro_pic,
-                        'category' => $partner_order->jobs[0]->category->name
-                    ]);
+                if (!$served_customers->contains('mobile', $partner_order->order->customer->profile->mobile)) $customer = $partner_order->order->customer->profile;
+                $served_customers->push(['name' => $customer->name, 'mobile' => $customer->mobile, 'image' => $customer->pro_pic, 'category' => $partner_order->jobs[0]->category->name]);
             }
+
+            PartnerPosCustomer::with('customer.profile')->byPartner($partner)->get()->each(function ($pos_customer) use ($served_customers) {
+                    $customer = $pos_customer->customer->profile;
+                    $served_customers->push(['name' => $customer->name, 'mobile' => $customer->mobile, 'image' => $customer->pro_pic, 'category' => 'Pos Category']);
+                });
+
             return api_response($request, $served_customers, 200, ['customers' => $served_customers]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -1133,7 +1148,7 @@ class PartnerController extends Controller
         try {
             $status = (new LeaveStatus(Partner::find($partner)))->changeStatus()->getCurrentStatus();
             return api_response($request, $status, 200, ['status' => $status]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

@@ -144,25 +144,26 @@ class CategoryController extends Controller
                 ->whereIn('category_group_id', $best_deal_category_group_id)->pluck('category_id')->toArray();
             $categories = Category::published()
                 ->whereHas('locations', function ($q) use ($location_id) {
-                    $q->where('locations.id', $location_id);
+                    $q->select('locations.id')->where('locations.id', $location_id);
                 })
                 ->whereHas('children', function ($q) use ($location_id, $request) {
-                    $q->published()->whereHas('locations', function ($query) use ($location_id) {
-                        $query->where('locations.id', $location_id);
+                    $q->select('id', 'parent_id')->published()->whereHas('locations', function ($q) use ($location_id) {
+                        $q->select('locations.id')->where('locations.id', $location_id);
                     });
                 })
                 ->select('id', 'name', 'parent_id')
                 ->parent()->orderBy('order');
             if ($with) {
                 $categories->with(['children' => function ($q) use ($location_id, $best_deal_category_ids) {
-                    $q->whereHas('locations', function ($q) use ($location_id) {
-                        $q->where('locations.id', $location_id);
-                    })->whereHas('services', function ($q) use ($location_id) {
-                        $q->published()->whereHas('locations', function ($q) use ($location_id) {
-                            $q->where('locations.id', $location_id);
-                        });
-                    })->whereNotIn('id', $best_deal_category_ids)->published()->orderBy('order')
-                        ->select('id', 'name', 'thumb', 'parent_id');
+                    $q->select('id', 'name', 'thumb', 'parent_id')
+                        ->whereHas('locations', function ($q) use ($location_id) {
+                            $q->select('locations.id')->where('locations.id', $location_id);
+                        })->whereHas('services', function ($q) use ($location_id) {
+                            $q->select('services.id')->published()->whereHas('locations', function ($q) use ($location_id) {
+                                $q->select('locations.id')->where('locations.id', $location_id);
+                            });
+                        })->whereNotIn('id', $best_deal_category_ids)
+                        ->published()->orderBy('order');
                 }]);
             }
             $categories = $categories->get();
@@ -173,7 +174,6 @@ class CategoryController extends Controller
                 }
             }
             return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $categories]) : api_response($request, null, 404);
-
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
