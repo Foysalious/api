@@ -262,10 +262,12 @@ class ShebaController extends Controller
                 return api_response($request, 1, 200, ['info' => $info,
                     'message' => 'Your payment has been received but there was a system error. It will take some time to update your transaction. Call 16516 for support.']);
             } else {
-                if ($request->has('invoice') && (int)$request->invoice == 1) {
                     $handler = new PdfHandler();
-                    return $handler->setData($info)->setName('Transaction Invoice')->setViewFile('transaction_invoice')->download();
-                }
+                $invoiceLink = $handler->setData($info)
+                    ->setName('Transaction Invoice')
+                    ->setViewFile('transaction_invoice')
+                    ->save();
+                $info['invoice_link'] = $invoiceLink;
                 return api_response($request, 1, 200, ['info' => $info]);
             }
         } catch (ValidationException $e) {
@@ -275,6 +277,7 @@ class ShebaController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
