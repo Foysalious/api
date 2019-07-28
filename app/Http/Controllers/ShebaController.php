@@ -234,7 +234,7 @@ class ShebaController extends Controller
         }
     }
 
-    public function checkTransactionStatus(Request $request, $transactionID)
+    public function checkTransactionStatus(Request $request, $transactionID, PdfHandler $pdfHandler)
     {
         try {
             $this->validate($request, [
@@ -263,15 +263,13 @@ class ShebaController extends Controller
                 'created_at' => $payment->created_at->format('jS M, Y, h:i A')
             ];
             $info = array_merge($info, $this->getInfoForPaymentLink($payment->payable));
-            if ($request->with == 'invoice') {
-                $handler = new PdfHandler();
-                $info['invoice_link'] = $handler->setData($info)->setName('Transaction Invoice')->setViewFile('transaction_invoice')->save();
-                return api_response($request, 1, 200, ['info' => $info]);
-            }
+            if ($request->with == 'invoice') $info['invoice_link'] = $pdfHandler->setData($info)->setName('Transaction Invoice')->setViewFile('transaction_invoice')->save();
             if ($payment->status == 'validated' || $payment->status == 'failed') {
-                return api_response($request, 1, 200, ['info' => $info,
-                    'message' => 'Your payment has been received but there was a system error. It will take some time to update your transaction. Call 16516 for support.']);
+                $message = 'Your payment has been received but there was a system error. It will take some time to update your transaction. Call 16516 for support.';
+            } else {
+                $message = 'Successful';
             }
+            return api_response($request, null, 200, ['info' => $info, 'message' => $message]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
