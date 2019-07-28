@@ -244,6 +244,7 @@ class ShebaController extends Controller
                 'paycharge_type' => 'in:order,recharge',
                 'payment_method' => 'in:online,bkash',
                 'job_id' => 'sometimes|required',
+                'with' => 'string|in:invoice'
             ]);
             $payment = Payment::where('transaction_id', $transactionID)->whereIn('status', ['failed', 'validated', 'completed'])->first();
             if (!$payment) {
@@ -255,20 +256,21 @@ class ShebaController extends Controller
                 }
                 return api_response($request, null, 404, ['message' => $message]);
             }
-            $info = ['amount' => $payment->payable->amount, 'method' => $payment->paymentDetails->last()->readable_method, 'description' => $payment->payable->description,
-                'created_at' => $payment->created_at->format('jS M, Y, h:i A')];
+            $info = [
+                'amount' => $payment->payable->amount,
+                'method' => $payment->paymentDetails->last()->readable_method,
+                'description' => $payment->payable->description,
+                'created_at' => $payment->created_at->format('jS M, Y, h:i A')
+            ];
             $info = array_merge($info, $this->getInfoForPaymentLink($payment->payable));
+            if ($request->with == 'invoice') {
+                $handler = new PdfHandler();
+                $info['invoice_link'] = $handler->setData($info)->setName('Transaction Invoice')->setViewFile('transaction_invoice')->save();
+                return api_response($request, 1, 200, ['info' => $info]);
+            }
             if ($payment->status == 'validated' || $payment->status == 'failed') {
                 return api_response($request, 1, 200, ['info' => $info,
                     'message' => 'Your payment has been received but there was a system error. It will take some time to update your transaction. Call 16516 for support.']);
-            } else {
-                    $handler = new PdfHandler();
-                $invoiceLink = $handler->setData($info)
-                    ->setName('Transaction Invoice')
-                    ->setViewFile('transaction_invoice')
-                    ->save();
-                $info['invoice_link'] = $invoiceLink;
-                return api_response($request, 1, 200, ['info' => $info]);
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -277,6 +279,7 @@ class ShebaController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
