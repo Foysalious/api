@@ -1,6 +1,5 @@
 <?php namespace Sheba\Payment\Complete;
 
-use App\Models\Partner;
 use App\Models\PosOrder;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
@@ -12,6 +11,7 @@ use DB;
 class PaymentLinkOrderComplete extends PaymentComplete
 {
     use ModificationFields;
+    /** @var PaymentLinkRepository */
     private $paymentLinkRepository;
     /** @var array $paymentLink */
     private $paymentLink;
@@ -34,7 +34,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
                 $this->payment->transaction_details = null;
                 $this->completePayment();
                 $amount = $this->getAmountAfterCommission();
-                $this->payment->payable->user->rechargeWallet($amount, [
+                $this->getPaymentLinkReceiver()->rechargeWallet($amount, [
                     'amount' => $amount,
                     'transaction_details' => $this->payment->getShebaTransaction()->toJson(),
                     'type' => 'Credit', 'log' => 'Credited through payment link payment'
@@ -52,7 +52,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
     {
         try {
             $response = $this->paymentLinkRepository->getPaymentLinkByLinkId($this->payment->payable->type_id);
-            $this->paymentLink = $response['links'][0];
+            return $response['links'][0];
         } catch (RequestException $e) {
             throw $e;
         }
@@ -77,5 +77,11 @@ class PaymentLinkOrderComplete extends PaymentComplete
     {
         if (strtolower($this->paymentLink['userType']) == 'partner') return ($this->payment->payable->amount * 97.5) / 100;
         else return $this->payment->payable->amount;
+    }
+
+    private function getPaymentLinkReceiver()
+    {
+        $model_name = "App\\Models\\" . ucfirst($this->paymentLink['userType']);
+        return $model_name::find($this->paymentLink['userId']);
     }
 }
