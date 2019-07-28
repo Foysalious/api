@@ -263,7 +263,7 @@ class ShebaController extends Controller
                 'created_at' => $payment->created_at->format('jS M, Y, h:i A')
             ];
             $info = array_merge($info, $this->getInfoForPaymentLink($payment->payable));
-            if ($request->with == 'invoice') $info['invoice_link'] = $pdfHandler->setData($info)->setName('Transaction Invoice')->setViewFile('transaction_invoice')->save();
+            if ($request->with == 'invoice') $info['invoice_link'] = $pdfHandler->setData($info)->setName($transactionID)->setViewFile('transaction_invoice')->save();
             if ($payment->status == 'validated' || $payment->status == 'failed') {
                 $message = 'Your payment has been received but there was a system error. It will take some time to update your transaction. Call 16516 for support.';
             } else {

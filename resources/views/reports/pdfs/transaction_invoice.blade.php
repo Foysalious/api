@@ -2,7 +2,23 @@
 <html lang="en">
 <head>
     <title> Invoice </title>
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        .invoice-table tr {
+            color: #689ab8;
+            font-size: 14px;
+        }
+
+        .invoice-table tr img {
+
+        }
+
+        .terms {
+            font-size: 12px;
+            padding-top: 20px;
+            border-top: 1px solid #e1e1e1;
+            color: #4a4a4a;
+        }
+    </style>
 </head>
 
 <body>
@@ -50,22 +66,24 @@
         <td>
             <table style="width: 100%;color: #636363;" class="invoice-table" cellpadding="5">
                 <tr>
-                    <td><i class="material-icons">account_balance_wallet</i></td>
+                    <td>
+                        <img src="https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/icons/bag.png"/>
+                    </td>
                     <td>Payment amount</td>
                     <td align="right">BDT {{$amount}}</td>
                 </tr>
                 <tr>
-                    <td><i class="material-icons">info</i></td>
+                    <td><img src="https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/icons/info.png"/></td>
                     <td>Payment purpose</td>
                     <td align="right">{{$description}}</td>
                 </tr>
                 <tr>
-                    <td><i class="material-icons">event_available</i></td>
+                    <td><img src="https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/icons/check.png"/></td>
                     <td>Payment time</td>
                     <td align="right">{{$created_at}}</td>
                 </tr>
                 <tr>
-                    <td><i class="material-icons">style</i></td>
+                    <td><img src="https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/icons/credit.png"/></td>
                     <td>Payment type</td>
                     <td align="right">{{$method}}</td>
                 </tr>
@@ -74,28 +92,12 @@
     </tr>
     <tr>
         <td>
-            <p class="terms"><strong>Terms and Note:</strong> If needed, it can take a maximum of 15 days to get your refund. You will only get return by the way you pay.</p>
+            <p class="terms"><strong>Terms and Note:</strong> If needed, it can take a maximum of 15 days to get your
+                refund. You will only get return by the way you pay.</p>
         </td>
     </tr>
     </tbody>
 </table>
 
-<style>
-    .invoice-table tr {
-        color: #689ab8;
-        font-size: 14px;
-    }
-    .invoice-table tr i {
-        font-size: 14px;
-        position: relative;
-        top: 2px
-    }
-    .terms {
-        font-size: 12px;
-        padding-top: 20px;
-        border-top: 1px solid #e1e1e1;
-        color: #4a4a4a;
-    }
-</style>
 </body>
 </html>
