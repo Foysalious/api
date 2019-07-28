@@ -5,6 +5,8 @@ class Route
     public function set($api)
     {
         $api->group(['prefix' => 'v2', 'namespace' => 'App\Http\Controllers'], function ($api) {
+            (new UserRoute())->set($api);
+            (new CategoryRoute())->set($api);
             $api->group(['prefix' => 'profile'], function ($api) {
                 $api->post('registration/partner', 'Auth\PartnerRegistrationController@registerByProfile')->middleware('jwtAuth');
             });
@@ -18,6 +20,7 @@ class Route
             $api->post('service-requests', 'ServiceRequestController@store');
             $api->get('validate-transaction-id', 'PartnerTransactionController@validateTransactionId');
             $api->post('transactions/{transactionID}', 'ShebaController@checkTransactionStatus');
+            $api->get('transactions/{transactionID}', 'ShebaController@checkTransactionStatus');
             $api->post('password/email', 'Auth\PasswordController@sendResetPasswordEmail');
             $api->post('password/validate', 'Auth\PasswordController@validatePasswordResetCode');
             $api->post('password/reset', 'Auth\PasswordController@reset');
@@ -141,6 +144,13 @@ class Route
             (new CustomerRoute())->set($api);
             (new AffiliateRoute())->set($api);
             (new PartnerRoute())->set($api);
+
+            $api->group(['prefix' => 'top-up', 'middleware' => ['topUp.auth']], function ($api) {
+                $api->get('/vendor', 'TopUp\TopUpController@getVendor');
+                $api->post('/', 'TopUp\TopUpController@topUp');
+                $api->post('/bulk', 'TopUp\TopUpController@bulkTopUp');
+                $api->get('/history', 'TopUp\TopUpController@topUpHistory');
+            });
 
             $api->group(['prefix' => 'resources/{resource}', 'middleware' => ['resource.auth']], function ($api) {
                 $api->group(['prefix' => 'jobs'], function ($api) {

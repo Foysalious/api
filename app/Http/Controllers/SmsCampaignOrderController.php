@@ -6,17 +6,22 @@ use App\Models\SmsCampaignOrder;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
+use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\SmsCampaign\SmsCampaign;
+use Sheba\SmsCampaign\SmsExcel;
 use Sheba\SmsCampaign\SmsLogs;
 use Sheba\UrlShortener\ShortenUrl;
+
+use DB;
+use Excel;
 
 class SmsCampaignOrderController extends Controller
 {
     public function getSettings(Request $request)
     {
-        try{
+        try {
             return api_response($request, null, 200, ['settings' => constants('SMS_CAMPAIGN')]);
-        }   catch (\Throwable $e) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -29,14 +34,20 @@ class SmsCampaignOrderController extends Controller
                 $customers = json_decode(request()->customers, true);
                 $request['customers'] = $customers;
             }
-            $this->validate($request, [
-                'title' => 'required',
-                'message' => 'required',
-                'customers' => 'required|array',
-                'customers.*.mobile' => 'required|mobile:bd'
-            ]);
+            $data = ['title' => 'required', 'message' => 'required'];
+            if ($request->has('customers')) {
+                $data += [
+                    'customers' => 'required|array',
+                    'customers.*.mobile' => 'required|mobile:bd'
+                ];
+            }
+            if ($request->hasFile('file')) $data += ['file' => 'required|file'];
+            $this->validate($request, $data);
 
             $requests = $request->all();
+            if ($request->hasFile('file')) {
+                $this->pickDataFromExcel($request, $campaign);
+            }
             $campaign = $campaign->formatRequest($requests);
 
             if ($campaign->partnerHasEnoughBalance()) {
@@ -59,15 +70,36 @@ class SmsCampaignOrderController extends Controller
         }
     }
 
+    private function pickDataFromExcel(Request $request, SmsCampaign $campaign)
+    {
+        $valid_extensions = ["xls", "xlsx", "xlm", "xla", "xlc", "xlt", "xlw"];
+        $extension = $request->file('file')->getClientOriginalExtension();
+
+        if (!in_array($extension, $valid_extensions)) {
+            return api_response($request, null, 400, ['message' => 'File type not support']);
+        }
+
+        $file = Excel::selectSheets(SmsExcel::SHEET)->load($request->file)->save();
+        $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
+
+        $data = Excel::selectSheets(SmsExcel::SHEET)->load($file_path)->get();
+        $total = $data->count();
+
+        $data->each(function ($value, $key) use ($file_path, $total, $campaign) {
+            $mobile_field = SmsExcel::MOBILE_COLUMN_TITLE;
+            $campaign->setMobile(BDMobileFormatter::format($value->$mobile_field))->pushMobileNumber();
+        });
+    }
+
     public function getTemplates($partner, Request $request)
     {
         try {
             $partner = Partner::find($partner);
-            $deep_link = config('sheba.front_url').'/partners/'.$partner->sub_domain;;
-            $templates =  config('sms_campaign_templates');
+            $deep_link = config('sheba.front_url') . '/partners/' . $partner->sub_domain;;
+            $templates = config('sms_campaign_templates');
             foreach ($templates as $index => $template) {
-                $template = (object) $template;
-                $template->message.=' '.$deep_link;
+                $template = (object)$template;
+                $template->message .= ' ' . $deep_link;
                 $templates[$index] = $template;
             }
             return api_response($request, null, 200, ['templates' => $templates, 'deep_link' => $deep_link]);
@@ -80,9 +112,9 @@ class SmsCampaignOrderController extends Controller
 
     public function getDeepLink($partner, ShortenUrl $shortenUrl)
     {
-        $url_to_shorten = config('sheba.front_url').'/partners/'.$partner->sub_domain;
-        if(!$partner->bitly_url) {
-            $deep_link = $shortenUrl->shorten('bit.ly',$url_to_shorten)['link'];
+        $url_to_shorten = config('sheba.front_url') . '/partners/' . $partner->sub_domain;
+        if (!$partner->bitly_url) {
+            $deep_link = $shortenUrl->shorten('bit.ly', $url_to_shorten)['link'];
             $partner->bitly_url = $deep_link;
             $partner->save();
         }
@@ -92,11 +124,11 @@ class SmsCampaignOrderController extends Controller
     public function getHistory($partner, Request $request)
     {
         try {
-            $history = SmsCampaignOrder::where('partner_id',$partner)->with('order_receivers')->orderBy('created_at','desc')->get();
+            $history = SmsCampaignOrder::where('partner_id', $partner)->with('order_receivers')->orderBy('created_at', 'desc')->get();
             $total_history = [];
             foreach ($history as $item) {
                 $current_history = [
-                    'id'=>$item->id,
+                    'id' => $item->id,
                     'name' => $item->title,
                     'cost' => $item->total_cost,
                     'created_at' => $item->created_at->format('Y-m-d H:i:s')
@@ -113,7 +145,7 @@ class SmsCampaignOrderController extends Controller
 
     public function getHistoryDetails($partner, $history, Request $request)
     {
-        try{
+        try {
             $details = SmsCampaignOrder::find($history);
             $data = [
                 'id' => $details->id,

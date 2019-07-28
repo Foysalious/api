@@ -8,7 +8,10 @@ use Sheba\Helpers\TimeFrame;
 use Sheba\Jobs\CiCalculator;
 use Sheba\Dal\Complain\Model as Complain;
 use Sheba\Jobs\JobStatuses;
+use Sheba\Logistics\Literals\Natures as LogisticNatures;
+use Sheba\Logistics\Literals\OneWayInitEvents as OneWayLogisticInitEvents;
 use Sheba\Logistics\OrderManager;
+use Sheba\Logistics\Repository\ParcelRepository;
 use Sheba\Order\Code\Builder as CodeBuilder;
 use Sheba\Report\Updater\Job as ReportUpdater;
 
@@ -838,6 +841,62 @@ class Job extends BaseModel
         ])->first();
     }
 
+
+    public function needsLogistic()
+    {
+        return (bool)$this->needs_logistic;
+    }
+
+    /**
+     * @return bool
+     */
+    public function needsTwoWayLogistic()
+    {
+        return $this->needsLogistic() && $this->logistic_nature == LogisticNatures::TWO_WAY;
+    }
+
+    /**
+     * @return bool
+     */
+    public function needsOneWayLogistic()
+    {
+        return $this->needsLogistic() && $this->logistic_nature == LogisticNatures::ONE_WAY;
+    }
+
+    /**
+     * @return bool
+     */
+    public function needsOneWayLogisticOnAccept()
+    {
+        return $this->needsOneWayLogistic() && $this->one_way_logistic_init_event == OneWayLogisticInitEvents::ORDER_ACCEPT;
+    }
+
+    /**
+     * @return bool
+     */
+    public function needsLogisticOnAccept()
+    {
+        return $this->needsTwoWayLogistic() || $this->needsOneWayLogisticOnAccept();
+    }
+
+    /**
+     * @return bool
+     */
+    public function needsLogisticOnReadyToPick()
+    {
+        return $this->needsTwoWayLogistic() || $this->isOneWayReadyToPick();
+    }
+
+    public function isOneWayReadyToPick()
+    {
+        return $this->needsOneWayLogistic() && $this->one_way_logistic_init_event == OneWayLogisticInitEvents::READY_TO_PICK;
+    }
+
+    public function isLastLogisticOrderForTwoWay($id)
+    {
+        return $this->isTwoWay() && $this->last_logistic_order_id == $id;
+    }
+
     /**
      * @param $id
      * @return bool
@@ -850,28 +909,22 @@ class Job extends BaseModel
 
     public function isOneWay()
     {
-        return $this->category->needsOneWayLogistic();
+        return $this->needsOneWayLogistic();
     }
 
     public function isTwoWay()
     {
-        return $this->category->needsTwoWayLogistic();
+        return $this->needsTwoWayLogistic();
     }
 
-    public function needsLogistic()
+    public function getShebaLogisticsPrice()
     {
-        return $this->category->needsLogistic() &&
-            ($this->logistic_enabled_manually || ($this->getPartnerCategory() && $this->getPartnerCategory()->needsShebaLogistic()));
-    }
+        $parcel_repo = app(ParcelRepository::class);
+        $parcel_details = $parcel_repo->findBySlug($this->logistic_parcel_type);
 
-    public function isLastLogisticOrderForTwoWay($id)
-    {
-        return $this->isTwoWay() && $this->last_logistic_order_id == $id;
-    }
+        if (!isset($parcel_details['price'])) return 0;
 
-    public function isOneWayReadyToPick()
-    {
-        return $this->category->needsOneWayLogisticOnReadyToPick();
+        return $this->needsTwoWayLogistic() ? $parcel_details['price'] * 2 : $parcel_details['price'];
     }
 
     public function isPayable()

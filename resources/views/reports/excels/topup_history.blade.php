@@ -8,6 +8,7 @@
         <table>
             <tr>
                 <th>No</th>
+                <th>Payee Name</th>
                 <th>Payee Mobile</th>
                 <th>Amount</th>
                 <th>Operator</th>
@@ -17,6 +18,7 @@
             @foreach($topup_data as $key => $topup)
                 <tr>
                     <td>{{ ++$key }}</td>
+                    <td>{{$topup['payee_name']}}</td>
                     <td>`{{ $topup['payee_mobile'] }}`</td>
                     <td>{{ $topup['amount'] }}</td>
                     <td>{{ $topup['operator'] }}</td>

@@ -10,8 +10,8 @@ class Cors2MiddleWare
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request $request
-     * @param  \Closure $next
+     * @param \Illuminate\Http\Request $request
+     * @param \Closure $next
      * @return mixed
      */
     public function handle($request, Closure $next)
@@ -25,6 +25,8 @@ class Cors2MiddleWare
             "http://localhost:8083",
             "http://localhost:8084",
             "http://localhost:3333",
+            "http://localhost:3335",
+            "http://localhost:3000",
             "http://103.26.139.148",
             "http://144.76.92.216",
             "https://developer.sslcommerz.com",
@@ -43,6 +45,7 @@ class Cors2MiddleWare
             "http://sheba.dev",
             "http://bondhu.dev-sheba.xyz",
             "https://bondhu.dev-sheba.xyz",
+            "https://topup.dev-sheba.xyz",
             null,
             "null",
             "chrome-extension://fhbjgbiflinjbdggehcddcbncdddomop",
@@ -67,7 +70,8 @@ class Cors2MiddleWare
             "http://0.0.0.0:3333",
             "http://b2b.sheba.test",
             "https://b2b.dev-sheba.xyz",
-            "https://business.sheba.xyz"
+            "https://business.sheba.xyz",
+            "https://pl.dev-sheba.xyz"
         ];
         // ALLOW OPTIONS METHOD
         $headers['Access-Control-Allow-Credentials'] = 'true';

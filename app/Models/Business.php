@@ -3,11 +3,14 @@
 use Illuminate\Database\Eloquent\Model;
 use Sheba\ModificationFields;
 use Sheba\Payment\Wallet;
+use Sheba\TopUp\TopUpAgent;
+use Sheba\TopUp\TopUpCommission;
+use Sheba\TopUp\TopUpTrait;
+use Sheba\TopUp\TopUpTransaction;
 
-class Business extends Model
+class Business extends Model implements TopUpAgent
 {
-    use Wallet;
-    use ModificationFields;
+    use Wallet, ModificationFields, TopUpTrait;
     protected $guarded = ['id'];
 
     public function members()
@@ -45,7 +48,6 @@ class Business extends Model
         return $this->belongsTo(BusinessCategory::class);
     }
 
-
     public function bonuses()
     {
         return $this->morphMany(Bonus::class, 'user');
@@ -64,6 +66,11 @@ class Business extends Model
     public function bonusLogs()
     {
         return $this->morphMany(BonusLog::class, 'user');
+    }
+
+    public function topups()
+    {
+        return $this->hasMany(TopUpOrder::class, 'agent_id')->where('agent_type', 'App\\Models\\Business');
     }
 
     public function shebaCredit()
@@ -104,5 +111,21 @@ class Business extends Model
     public function hiredDrivers()
     {
         return $this->morphMany(HiredDriver::class, 'hired_by');
+    }
+
+    public function getCommission()
+    {
+        return new \Sheba\TopUp\Commission\Business();
+    }
+
+    public function topUpTransaction(TopUpTransaction $transaction)
+    {
+        $this->debitWallet($transaction->getAmount());
+        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
+    }
+
+    public function getMobile()
+    {
+        return '+8801678242934';
     }
 }

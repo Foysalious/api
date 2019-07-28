@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\HyperLocal;
 use App\Models\Job;
 use App\Models\OfferShowcase;
+use App\Models\Payable;
 use App\Models\Payment;
 use App\Models\Resource;
 use App\Models\Service;
@@ -13,25 +14,29 @@ use App\Models\Slider;
 use App\Models\SliderPortal;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
+use Cache;
+use DB;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 use Sheba\Payment\AvailableMethods;
+use Sheba\Reports\PdfHandler;
+use Sheba\Repositories\PaymentLinkRepository;
 use Validator;
-use DB;
-use Cache;
 
 class ShebaController extends Controller
 {
     use DispatchesJobs;
     private $serviceRepository;
     private $reviewRepository;
+    private $paymentLinkrepository;
 
-    public function __construct(ServiceRepository $service_repo, ReviewRepository $review_repo)
+    public function __construct(ServiceRepository $service_repo, ReviewRepository $review_repo, PaymentLinkRepository $paymentLinkRepository)
     {
         $this->serviceRepository = $service_repo;
         $this->reviewRepository = $review_repo;
+        $this->paymentLinkrepository = $paymentLinkRepository;
     }
 
     public function getInfo()
@@ -229,7 +234,7 @@ class ShebaController extends Controller
         }
     }
 
-    public function checkTransactionStatus(Request $request, $transactionID)
+    public function checkTransactionStatus(Request $request, $transactionID, PdfHandler $pdfHandler)
     {
         try {
             $this->validate($request, [
@@ -239,6 +244,7 @@ class ShebaController extends Controller
                 'paycharge_type' => 'in:order,recharge',
                 'payment_method' => 'in:online,bkash',
                 'job_id' => 'sometimes|required',
+                'with' => 'string|in:invoice'
             ]);
             $payment = Payment::where('transaction_id', $transactionID)->whereIn('status', ['failed', 'validated', 'completed'])->first();
             if (!$payment) {
@@ -250,13 +256,20 @@ class ShebaController extends Controller
                 }
                 return api_response($request, null, 404, ['message' => $message]);
             }
-            $info = array('amount' => $payment->payable->amount);
+            $info = [
+                'amount' => $payment->payable->amount,
+                'method' => $payment->paymentDetails->last()->readable_method,
+                'description' => $payment->payable->description,
+                'created_at' => $payment->created_at->format('jS M, Y, h:i A')
+            ];
+            $info = array_merge($info, $this->getInfoForPaymentLink($payment->payable));
+            if ($request->with == 'invoice') $info['invoice_link'] = $pdfHandler->setData($info)->setName($transactionID)->setViewFile('transaction_invoice')->save();
             if ($payment->status == 'validated' || $payment->status == 'failed') {
-                return api_response($request, 1, 200, ['info' => $info,
-                    'message' => 'Your payment has been received but there was a system error. It will take some time to update your transaction. Call 16516 for support.']);
+                $message = 'Your payment has been received but there was a system error. It will take some time to update your transaction. Call 16516 for support.';
             } else {
-                return api_response($request, 1, 200, ['info' => $info]);
+                $message = 'Successful';
             }
+            return api_response($request, null, 200, ['info' => $info, 'message' => $message]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
@@ -283,5 +296,29 @@ class ShebaController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function getInfoForPaymentLink(Payable $payable)
+    {
+        if ($payable->type == 'payment_link') {
+            $response = $this->paymentLinkrepository->getPaymentLinkByLinkId($payable->type_id);
+            $link = $response['links'][0];
+            $model_name = "App\\Models\\" . ucfirst($link['userType']);
+            $user = $model_name::find($link['userId']);
+            return [
+                'payment_receiver' => [
+                    'name' => $user->name,
+                    'image' => $user->logo,
+                    'mobile' => $user->getMobile(),
+                    'address' => $user->address
+                ],
+                'user' => [
+                    'name' => $payable->user->profile->name,
+                    'mobile' => $payable->user->profile->mobile
+                ]
+            ];
+        } else
+            return [];
+
     }
 }

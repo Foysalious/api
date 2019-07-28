@@ -4,17 +4,28 @@ use App\Helper\BangladeshiMobileValidator;
 use App\Models\Profile;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Hash;
+use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 
-class ProfileRepository extends BaseRepository
+class ProfileRepository extends BaseRepository implements ProfileRepositoryInterface
 {
+    public function __construct(Profile $profile)
+    {
+        parent::__construct();
+        $this->setModel($profile);
+    }
+
+    public function findByMobile($mobile)
+    {
+        return $this->model->where('mobile', 'like', '%' . formatMobile($mobile) . '%');
+    }
+
     /**
      * Store a resource profile.
      *
      * @param $data
      * @return Profile
      */
-    public function store($data)
+    public function store(array $data)
     {
         $profile_data = $this->profileDataFormat($data);
         return Profile::create($this->withBothModificationFields($profile_data));

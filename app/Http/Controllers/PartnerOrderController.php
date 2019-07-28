@@ -74,14 +74,13 @@ class PartnerOrderController extends Controller
                 $partner = $request->partner->load(['jobs' => function ($q) {
                     $q->status(array(constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']))->select('jobs.id', 'jobs.partner_order_id')
                         ->whereDoesntHave('cancelRequests', function ($q) {
-                            $q->where('status', 'Pending');
+                            $q->select('id', 'job_id', 'status')->where('status', 'Pending');
                         })->with(['partnerOrder' => function ($q) {
                             $q->select('id', 'order_id')->with(['order' => function ($q) {
                                 $q->select('id', 'subscription_order_id');
                             }]);
                         }]);
                 }]);
-
                 $total_new_orders = $partner->jobs->pluck('partnerOrder')->unique()->pluck('order')
                     ->groupBy('subscription_order_id')
                     ->map(function ($order, $key) {
@@ -206,7 +205,7 @@ class PartnerOrderController extends Controller
                 'total_sheba_discount_amount' => (double)$partner_order->totalShebaDiscount,
                 'total_partner_discount_amount' => (double)$partner_order->totalPartnerDiscount,
                 'delivery_charge' => (double)$partner_order->deliveryCharge + $partner_order->totalLogisticCharge,
-                'is_logistic'=> $partner_order->order->isLogisticOrder(),
+                'is_logistic' => $partner_order->order->isLogisticOrder(),
                 'is_ready_to_pick' => $partner_order->order->isReadyToPick(),
             ];
             return api_response($request, $partner_order, 200, ['order' => $partner_order]);
@@ -357,7 +356,7 @@ class PartnerOrderController extends Controller
         }
     }
 
-    public function retryRiderSearch($partner, $order_id, $logistic_order_id ,Request $request, OrderRepository $order_repository)
+    public function retryRiderSearch($partner, $order_id, $logistic_order_id, Request $request, OrderRepository $order_repository)
     {
         $order_repository->retryRiderSearch($logistic_order_id);
         return api_response($request, null, 200, ['message' => 'Order search restarted']);

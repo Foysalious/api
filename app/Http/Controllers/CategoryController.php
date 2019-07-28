@@ -131,6 +131,58 @@ class CategoryController extends Controller
         }
     }
 
+    public function getAllCategories(Request $request)
+    {
+        try {
+            $this->validate($request, ['lat' => 'required|numeric', 'lng' => 'required|numeric', 'with' => 'sometimes|string|in:children']);
+            $with = $request->with;
+            $hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->first();
+            if (!$hyper_location) return api_response($request, null, 404);
+            $location_id = $hyper_location->location_id;
+            $best_deal_category_group_id = explode(',', config('sheba.best_deal_ids'));
+            $best_deal_category_ids = CategoryGroupCategory::select('category_group_id', 'category_id')
+                ->whereIn('category_group_id', $best_deal_category_group_id)->pluck('category_id')->toArray();
+            $categories = Category::published()
+                ->whereHas('locations', function ($q) use ($location_id) {
+                    $q->select('locations.id')->where('locations.id', $location_id);
+                })
+                ->whereHas('children', function ($q) use ($location_id, $request) {
+                    $q->select('id', 'parent_id')->published()->whereHas('locations', function ($q) use ($location_id) {
+                        $q->select('locations.id')->where('locations.id', $location_id);
+                    });
+                })
+                ->select('id', 'name', 'parent_id')
+                ->parent()->orderBy('order');
+            if ($with) {
+                $categories->with(['children' => function ($q) use ($location_id, $best_deal_category_ids) {
+                    $q->select('id', 'name', 'thumb', 'parent_id', 'app_thumb')
+                        ->whereHas('locations', function ($q) use ($location_id) {
+                            $q->select('locations.id')->where('locations.id', $location_id);
+                        })->whereHas('services', function ($q) use ($location_id) {
+                            $q->select('services.id')->published()->whereHas('locations', function ($q) use ($location_id) {
+                                $q->select('locations.id')->where('locations.id', $location_id);
+                            });
+                        })->whereNotIn('id', $best_deal_category_ids)
+                        ->published()->orderBy('order');
+                }]);
+            }
+            $categories = $categories->get();
+            foreach ($categories as &$category) {
+                array_forget($category, 'parent_id');
+                foreach ($category->children as &$child) {
+                    array_forget($child, 'parent_id');
+                }
+            }
+            return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $categories]) : api_response($request, null, 404);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     public function show($category, Request $request)
     {
         try {

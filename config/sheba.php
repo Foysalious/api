@@ -7,6 +7,8 @@ return [
     'logistic_url' => env('SHEBA_LOGISTIC_URL'),
     'business_url' => env('SHEBA_BUSINESS_URL'),
     'wallet_url' => env('SHEBA_WALLET_URL', 'https://wallet.sheba.xyz'),
+    'payment_link_url' => env('SHEBA_PAYMENT_LINK_URL'),
+    'payment_link_web_url' => env('SHEBA_PAYMENT_LINK_WEB_URL', 'https://payments.sheba.xyz'),
     's3_url' => env('S3_URL'),
     'socket_url' => env('SHEBA_SOCKET_URL'),
     'socket_on' => env('SHEBA_SOCKET_ON', true),

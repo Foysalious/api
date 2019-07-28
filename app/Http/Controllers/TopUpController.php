@@ -115,7 +115,7 @@ class TopUpController extends Controller
                 $request = $top_up_request->setType($value->$type_field)
                     ->setMobile(BDMobileFormatter::format($value->$mobile_field))->setAmount($value->$amount_field)->setAgent($agent)->setVendorId($vendor_id);
                 $topup_order = $creator->setTopUpRequest($request)->create();
-                dispatch(new TopUpExcelJob($agent, $vendor_id, $topup_order, $file_path, $key + 2, $total));
+                if (!$top_up_request->hasError()) dispatch(new TopUpExcelJob($agent, $vendor_id, $topup_order, $file_path, $key + 2, $total));
             });
 
             $response_msg = "Your top-up request has been received and will be transferred and notified shortly.";

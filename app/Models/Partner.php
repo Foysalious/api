@@ -1,20 +1,20 @@
 <?php namespace App\Models;
 
+use Carbon\Carbon;
+use DB;
+use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\Complain\Model as Complain;
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
 use Sheba\Location\Distance\DistanceStrategy;
 use Sheba\Partner\BadgeResolver;
+use Sheba\Payment\Wallet;
 use Sheba\Reward\Rewardable;
 use Sheba\Subscription\Partner\PartnerSubscriber;
-use Sheba\Payment\Wallet;
-use Carbon\Carbon;
-use Sheba\Dal\Complain\Model as Complain;
-use Illuminate\Database\Eloquent\Model;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
 use Sheba\Voucher\VoucherCodeGenerator;
-use DB;
 
 class Partner extends Model implements Rewardable, TopUpAgent
 {
@@ -155,6 +155,11 @@ class Partner extends Model implements Rewardable, TopUpAgent
         return $this->hasMany(PartnerDailyStat::class);
     }
 
+    public function topups()
+    {
+        return $this->hasMany(TopUpOrder::class, 'agent_id')->where('agent_type', 'App\\Models\\Partner');
+    }
+
     public function commission($service_id)
     {
         $service_category = Service::find($service_id)->category->id;
@@ -184,6 +189,16 @@ class Partner extends Model implements Rewardable, TopUpAgent
     {
         $leave = $this->runningLeave();
         return ($leave && !$leave->end_date) ? true : false;
+    }
+
+    public function shebaCredit()
+    {
+        return $this->wallet + $this->shebaBonusCredit();
+    }
+
+    public function shebaBonusCredit()
+    {
+        return (double)$this->bonuses()->where('status', 'valid')->sum('amount');
     }
 
     public function hasLeave($date)
@@ -471,7 +486,8 @@ class Partner extends Model implements Rewardable, TopUpAgent
 
         return $this->jobs()->whereNotExists(function ($q) {
             $q->from('job_cancel_requests')->whereRaw('job_id = jobs.id');
-        })->get();
+        })->select('jobs.id', 'schedule_date', 'status')->get();
+
     }
 
     public function todayJobs($jobs = null)

@@ -15,17 +15,21 @@ class SettingsController extends Controller
         try {
             $customer = $request->customer;
             $customer->load(['partnerOrders' => function ($q) {
-                $q->select('partner_orders.created_at', 'partner_orders.cancelled_at', 'partner_orders.id', 'order_id', 'closed_at', 'partner_orders.partner_id')->where([['cancelled_at', null], ['partner_orders.created_at', '>=', Carbon::today()->subDays(30)]])->with(['partner' => function ($q) {
-                    $q->select('partners.id', 'partners.name');
-                }, 'jobs' => function ($q) {
-                    $q->select('jobs.id', 'partner_order_id', 'resource_id', 'category_id')->with(['review', 'category' => function ($q) {
-                        $q->select('categories.id', 'categories.name');
-                    }, 'resource' => function ($q) {
-                        $q->select('resources.id', 'resources.profile_id')->with(['profile' => function ($q) {
-                            $q->select('profiles.id', 'profiles.pro_pic', 'profiles.name');
+                $q->select('partner_orders.created_at', 'partner_orders.cancelled_at', 'partner_orders.id', 'order_id', 'closed_at', 'partner_orders.partner_id')
+                    ->where([['cancelled_at', null], ['partner_orders.created_at', '>=', Carbon::today()->subDays(30)]])
+                    ->with(['partner' => function ($q) {
+                        $q->select('partners.id', 'partners.name');
+                    }, 'jobs' => function ($q) {
+                        $q->select('jobs.id', 'partner_order_id', 'resource_id', 'category_id')->with(['review' => function ($q) {
+                            $q->select('reviews.id', 'reviews.job_id', 'rating');
+                        }, 'category' => function ($q) {
+                            $q->select('categories.id', 'categories.name');
+                        }, 'resource' => function ($q) {
+                            $q->select('resources.id', 'resources.profile_id')->with(['profile' => function ($q) {
+                                $q->select('profiles.id', 'profiles.pro_pic', 'profiles.name');
+                            }]);
                         }]);
-                    }]);
-                }])->orderBy('id', 'desc')->take(1);
+                    }])->orderBy('id', 'desc')->take(1);
             }, 'customerReviews' => function ($q) {
                 $q->select('customer_reviews.id', 'customer_reviews.customer_id', 'customer_reviews.rating');
             }]);
@@ -33,7 +37,7 @@ class SettingsController extends Controller
             $partner_order = $customer->partnerOrders->first();
             $job = $partner_order ? $partner_order->jobs->first() : null;
 
-            if (!$this->canTakeReview($job)) {
+            if (!$this->canTakeReview($job, $partner_order)) {
                 $job = null;
             }
 
@@ -53,15 +57,15 @@ class SettingsController extends Controller
         }
     }
 
-    protected function canTakeReview($job)
+    protected function canTakeReview($job, $partner_order)
     {
         if (!$job) return false;
         $review = $job->review;
 
         if (!is_null($review) && $review->rating > 0) {
             return false;
-        } else if ($job->partnerOrder->closed_at) {
-            $closed_date = Carbon::parse($job->partnerOrder->closed_at);
+        } else if ($partner_order->closed_at) {
+            $closed_date = Carbon::parse($partner_order->closed_at);
             $now = Carbon::now();
             $difference = $closed_date->diffInDays($now);
 

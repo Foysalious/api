@@ -145,7 +145,7 @@ class PartnerRoute
                     $api->get('bills', 'PartnerOrderController@getBillsV2');
                     $api->post('services', 'PartnerOrderController@addService');
                     $api->post('collect', 'PartnerOrderController@collectMoney');
-                    $api->get('retry-rider-search/{logistic_order_id}','PartnerOrderController@retryRiderSearch');
+                    $api->get('retry-rider-search/{logistic_order_id}', 'PartnerOrderController@retryRiderSearch');
                 });
             });
             $api->group(['prefix' => 'jobs'], function ($api) {
@@ -214,6 +214,8 @@ class PartnerRoute
             $api->get('served-customers', 'PartnerController@getServedCustomers');
             $api->post('change-leave-status', 'PartnerController@changeLeaveStatus');
         });
+
+        (new PaymentLinkRoute())->set($api);
 
         $api->post('training-status-update', 'ResourceController@trainingStatusUpdate');
     }

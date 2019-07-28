@@ -1,5 +1,6 @@
 <?php namespace Sheba;
 
+use App\Models\Business;
 use App\Models\Partner;
 use App\Models\User;
 use App\Models\Vendor;
@@ -15,7 +16,7 @@ trait ModificationFields
     private function isOfValidClass($obj)
     {
         $this->modifierModelName = substr(strrchr(get_class($obj), '\\'), 1);
-        return in_array($this->modifierModelName, ['Customer', 'Resource', 'Partner', 'User', 'Member', 'Affiliate', 'Vendor']);
+        return in_array($this->modifierModelName, ['Customer', 'Resource', 'Partner', 'User', 'Member', 'Affiliate', 'Vendor', 'Business']);
     }
 
     public function setModifier($entity)
@@ -132,7 +133,7 @@ trait ModificationFields
             $name = $user->department->name . ' - ' . $user->name;
         } else if ($this->isOfValidClass($this->modifier)) {
             $id = $this->modifier->id;
-            $name = $this->modifierModelName . '-' . (($this->modifier instanceof User || $this->modifier instanceof Partner || $this->modifier instanceof Vendor) ? $this->modifier->name : $this->modifier->profile->name);
+            $name = $this->modifierModelName . '-' . (($this->modifier instanceof User || $this->modifier instanceof Partner || $this->modifier instanceof Vendor || $this->modifier instanceof Business) ? $this->modifier->name : $this->modifier->profile->name);
         }
 
         return [$id, $name, $time];

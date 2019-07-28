@@ -1,54 +1,25 @@
 <?php namespace Sheba\Repositories;
 
+
 use App\Models\Customer;
-use Carbon\Carbon;
+use Sheba\Repositories\Interfaces\CustomerRepositoryInterface;
+use Sheba\Voucher\Creator\Referral;
 
-class CustomerRepository extends BaseRepository
+class CustomerRepository extends BaseRepository implements CustomerRepositoryInterface
 {
-    public function getTodayRegisteredCustomers()
+    public function __construct(Customer $customer)
     {
-        return $this->getRegisteredCustomersOf(Carbon::today());
+        parent::__construct();
+        $this->setModel($customer);
     }
 
-    public function countTodayRegisteredCustomers()
+    public function create(array $attributes)
     {
-        return $this->countRegisteredCustomersOf(Carbon::today());
+        $attributes['remember_token'] = str_random(255);
+        $customer = $this->model->create($this->withCreateModificationField($attributes));
+        $customer = $customer::find($customer->id);
+        new Referral($customer);
+        return $customer;
     }
 
-    public function getRegisteredCustomersOf(Carbon $date)
-    {
-        return $this->registeredCustomersByDateQuery($date)->get();
-    }
-
-    public function countRegisteredCustomersOf(Carbon $date)
-    {
-        return $this->registeredCustomersByDateQuery($date)->count();
-    }
-
-    private function registeredCustomersByDateQuery(Carbon $date)
-    {
-        return Customer::whereDate('created_at', '=', $date->toDateString());
-    }
-
-    /**
-     * @param Customer $customer
-     * @param $amount
-     * @param $type
-     * @throws \Exception
-     */
-    public function updateWallet(Customer $customer, $amount, $type)
-    {
-        $new_wallet = ($type == 'Debit') ? ($customer->wallet - $amount) : ($customer->wallet + $amount);
-        $this->update($customer, ['wallet' => $new_wallet]);
-    }
-
-    /**
-     * @param Customer $customer
-     * @param $point
-     */
-    public function updateRewardPoint(Customer $customer, $point)
-    {
-        $new_reward_point = $customer->reward_point + $point;
-        $this->update($customer, ['reward_point' => $new_reward_point]);
-    }
 }
