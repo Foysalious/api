@@ -18,13 +18,13 @@ class PaymentLinkOrderComplete extends PaymentComplete
     {
         parent::__construct();
         $this->paymentLinkRepository = new PaymentLinkRepository();
-        $this->paymentLink = $this->getPaymentLink();
     }
 
     public function complete()
     {
         try {
             if ($this->payment->isComplete()) return $this->payment;
+            $this->paymentLink = $this->getPaymentLink();
             $this->paymentRepository->setPayment($this->payment);
             $payable = $this->payment->payable;
             $this->setModifier($customer = $payable->user);
