@@ -11,6 +11,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
 {
     use ModificationFields;
     private $paymentLinkRepository;
+    /** @var array $paymentLink */
     private $paymentLink;
 
     public function __construct()
@@ -46,8 +47,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
     private function getPaymentLink()
     {
         $response = $this->paymentLinkRepository->getPaymentLinkByLinkId($this->payment->payable->type_id);
-        if ($response['code'] == 200 && $response['links'][0]) $this->paymentLink = $response['links'][0];
-        else return null;
+        $this->paymentLink = $response['links'][0];
     }
 
     private function clearPosOrder()
@@ -67,7 +67,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
 
     private function getAmountAfterCommission()
     {
-        if ($this->payment->payable->user instanceof Partner) return ($this->payment->payable->amount * 97.5) / 100;
+        if (strtolower($this->paymentLink['userType']) == 'partner') return ($this->payment->payable->amount * 97.5) / 100;
         else return $this->payment->payable->amount;
     }
 }
