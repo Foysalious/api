@@ -35,10 +35,10 @@ class PaymentLinkController extends Controller
     {
         try {
             $payment_links_list = $this->paymentLinkRepo->getPaymentLinkList($request);
-            $payment_links_list = array_where($payment_links_list, function ($key, $link) {
-                return array_key_exists('targetType', $link) ? $link['targetType'] == null : $link;
-            });
             if ($payment_links_list) {
+                $payment_links_list = array_where($payment_links_list, function ($key, $link) {
+                    return array_key_exists('targetType', $link) ? $link['targetType'] == null : $link;
+                });
                 list($offset, $limit) = calculatePagination($request);
                 $links = collect($payment_links_list)->slice($offset)->take($limit);
                 $fractal = new Manager();
