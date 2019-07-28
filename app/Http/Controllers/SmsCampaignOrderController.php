@@ -34,13 +34,15 @@ class SmsCampaignOrderController extends Controller
                 $customers = json_decode(request()->customers, true);
                 $request['customers'] = $customers;
             }
-            $this->validate($request, [
-                'title' => 'required',
-                'message' => 'required',
-                'file' => 'required_without:customers|file',
-                'customers' => 'required_without:file|array',
-                'customers.*.mobile' => 'required_without:file|mobile:bd'
-            ]);
+            $data = ['title' => 'required', 'message' => 'required'];
+            if ($request->has('customers')) {
+                $data += [
+                    'customers' => 'required|array',
+                    'customers.*.mobile' => 'required|mobile:bd'
+                ];
+            }
+            if ($request->hasFile('file')) $data += ['file' => 'required|file'];
+            $this->validate($request, $data);
 
             $requests = $request->all();
             if ($request->hasFile('file')) {
