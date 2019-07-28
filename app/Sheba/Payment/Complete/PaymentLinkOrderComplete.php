@@ -6,6 +6,7 @@ use GuzzleHttp\Exception\RequestException;
 use Sheba\ModificationFields;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\Repositories\PaymentLinkRepository;
+use DB;
 
 class PaymentLinkOrderComplete extends PaymentComplete
 {
@@ -25,19 +26,21 @@ class PaymentLinkOrderComplete extends PaymentComplete
         try {
             if ($this->payment->isComplete()) return $this->payment;
             $this->paymentLink = $this->getPaymentLink();
-            $this->paymentRepository->setPayment($this->payment);
-            $payable = $this->payment->payable;
-            $this->setModifier($customer = $payable->user);
-            $this->payment->transaction_details = null;
-            $this->clearPosOrder();
-            $this->completePayment();
-            $amount = $this->getAmountAfterCommission();
-            $this->payment->payable->user->rechargeWallet($amount, [
-                'amount' => $amount,
-                'transaction_details' => $this->payment->getShebaTransaction()->toJson(),
-                'type' => 'Credit', 'log' => 'Credited through payment link payment'
-            ]);
-        } catch (RequestException $e) {
+            DB::transaction(function () {
+                $this->paymentRepository->setPayment($this->payment);
+                $payable = $this->payment->payable;
+                $this->setModifier($customer = $payable->user);
+                $this->payment->transaction_details = null;
+                $this->completePayment();
+                $amount = $this->getAmountAfterCommission();
+                $this->payment->payable->user->rechargeWallet($amount, [
+                    'amount' => $amount,
+                    'transaction_details' => $this->payment->getShebaTransaction()->toJson(),
+                    'type' => 'Credit', 'log' => 'Credited through payment link payment'
+                ]);
+                $this->clearPosOrder();
+            });
+        } catch (\Throwable $e) {
             $this->failPayment();
             throw $e;
         }
@@ -46,8 +49,12 @@ class PaymentLinkOrderComplete extends PaymentComplete
 
     private function getPaymentLink()
     {
-        $response = $this->paymentLinkRepository->getPaymentLinkByLinkId($this->payment->payable->type_id);
-        $this->paymentLink = $response['links'][0];
+        try {
+            $response = $this->paymentLinkRepository->getPaymentLinkByLinkId($this->payment->payable->type_id);
+            $this->paymentLink = $response['links'][0];
+        } catch (RequestException $e) {
+            throw $e;
+        }
     }
 
     private function clearPosOrder()
