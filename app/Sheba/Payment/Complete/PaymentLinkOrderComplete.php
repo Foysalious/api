@@ -3,6 +3,7 @@
 use App\Models\Partner;
 use App\Models\PosOrder;
 use GuzzleHttp\Exception\RequestException;
+use Illuminate\Database\QueryException;
 use Sheba\ModificationFields;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\Repositories\PaymentLinkRepository;
@@ -40,7 +41,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
                 ]);
                 $this->clearPosOrder();
             });
-        } catch (\Throwable $e) {
+        } catch (QueryException $e) {
             $this->failPayment();
             throw $e;
         }
