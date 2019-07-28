@@ -21,13 +21,14 @@ class PaymentLinkBillController extends Controller
                 'amount' => 'sometimes|required|numeric',
                 'identifier' => 'required',
                 'name' => 'required',
-                'mobile' => 'required|string|mobile:bd'
+                'mobile' => 'required|string|mobile:bd',
+                'purpose' => 'string'
             ]);
             $payment_method = $request->payment_method;
             $user = $customerCreator->setMobile($request->mobile)->setName($request->name)->create();
             try {
                 $payable = $paymentLinkOrderAdapter->setUser($user)
-                    ->setPaymentLink($request->identifier, $request->get('amount'))->getPayable();
+                    ->setPaymentLink($request->identifier, $request->get('amount'))->setPurpose($request->purpose)->getPayable();
             } catch (PayableNotFound $e) {
                 return api_response($request, null, 404, ['message' => $e->getMessage()]);
             } catch (PaymentAmountNotSet $e) {

@@ -39,7 +39,7 @@ class CategoryGroupController extends Controller
                 $categories = $this->getCategoryByColumn('name', $request->name, $location);
                 return $categories ? api_response($request, $categories, 200, ['category' => $categories]) : api_response($request, null, 404);
             }
-            $categoryGroups = CategoryGroup::$for()->select('id', 'name', 'app_thumb', 'app_banner')
+            $categoryGroups = CategoryGroup::$for()->select('id', 'name')
                 ->whereHas('locations', function ($query) use ($location) {
                     $query->select('locations.id')->where('locations.id', $location);
                 })

@@ -30,7 +30,9 @@ class CustomerDeliveryAddressController extends Controller
     public function index($customer, Request $request)
     {
         try {
-            $customer = $request->customer;
+            $customer = $request->customer->load(['profile' => function ($q) {
+                $q->select('id', 'name', 'mobile');
+            }]);
             $location = null;
             $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'location_id', 'address', 'name', 'geo_informations', 'flat_no')->get();
             if ($request->has('lat') && $request->has('lng')) {
@@ -63,8 +65,8 @@ class CustomerDeliveryAddressController extends Controller
 
             $address_position = $this->findHomeAndWorkAddressPosition($customer_delivery_addresses);
             $customer_delivery_addresses = $this->filterAddressByHomeAndWork($address_position, $customer_delivery_addresses);
-
-            return api_response($request, $customer_delivery_addresses, 200, ['addresses' => $customer_delivery_addresses, 'name' => $customer->profile->name, 'mobile' => $customer->profile->mobile]);
+            return api_response($request, $customer_delivery_addresses, 200, ['addresses' => $customer_delivery_addresses,
+                'name' => $customer->profile->name, 'mobile' => $customer->profile->mobile]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -82,10 +84,13 @@ class CustomerDeliveryAddressController extends Controller
             $customer = $request->customer;
             $location = null;
             $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'location_id', 'address', 'name', 'geo_informations', 'flat_no')->get();
+
             /*$hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->first();
             if ($hyper_location) $location = $hyper_location->location;*/
-            $location = Location::find(1);
+
+            $location = Location::find(4);
             if ($location == null) return api_response($request, null, 404, ['message' => "No address at this location"]);
+
             $customer_order_addresses = $customer->orders()->selectRaw('delivery_address,count(*) as c')->groupBy('delivery_address')->orderBy('c', 'desc')->get();
             $target = new Coords((double)$request->lat, (double)$request->lng);
             $customer_delivery_addresses = $customer_delivery_addresses->reject(function ($address) {
@@ -97,9 +102,11 @@ class CustomerDeliveryAddressController extends Controller
                 $customer_delivery_address['is_valid'] = 1;
                 $address = new Coords($customer_delivery_address['geo_informations']['lat'], $customer_delivery_address['geo_informations']['lng']);
                 $customer_delivery_address['is_same'] = $address->isSameTo($target);
+
                 return $customer_delivery_address;
             });
-//            if ($location) $customer_delivery_addresses = $customer_delivery_addresses->where('location_id', $location->id);
+
+            // if ($location) $customer_delivery_addresses = $customer_delivery_addresses->where('location_id', $location->id);
             if ($request->has('partner') && (int)$request->partner > 0) {
                 $partner = Partner::find((int)$request->partner);
                 $partner_geo = json_decode($partner->geo_informations);
@@ -115,9 +122,14 @@ class CustomerDeliveryAddressController extends Controller
                     return $customer_delivery_address;
                 });
             }
-            $customer_delivery_addresses = $customer_delivery_addresses->sortByDesc('count')->values()->all();
-            return api_response($request, $customer_delivery_addresses, 200, ['addresses' => $customer_delivery_addresses,
-                'name' => $customer->profile->name, 'mobile' => $customer->profile->mobile]);
+
+            $customer_delivery_addresses = $customer_delivery_addresses->sortByDesc('count')->sortByDesc('is_same')->values()->all();
+
+            return api_response($request, $customer_delivery_addresses, 200, [
+                'addresses' => $customer_delivery_addresses,
+                'name' => $customer->profile->name,
+                'mobile' => $customer->profile->mobile
+            ]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
@@ -126,8 +138,6 @@ class CustomerDeliveryAddressController extends Controller
             return api_response($request, null, 500);
         }
     }
-
-    private function get() {}
 
     public function store($customer, Request $request)
     {
@@ -338,7 +348,7 @@ class CustomerDeliveryAddressController extends Controller
     private function findHomeAndWorkAddressPosition($delivery_addresses)
     {
         $address_position = ['home' => null, 'work' => null];
-        foreach($delivery_addresses as $index => $customer_delivery_address) {
+        foreach ($delivery_addresses as $index => $customer_delivery_address) {
             $address_name = strtolower($customer_delivery_address->name);
             if ($address_name == 'home') $address_position['home'] = $index;
             if ($address_name == 'work') $address_position['work'] = $index;

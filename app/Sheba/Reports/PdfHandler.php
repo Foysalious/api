@@ -34,9 +34,9 @@ class PdfHandler extends Handler
         if (!is_dir(public_path('temp'))) {
             mkdir(public_path('temp'), 0777, true);
         }
-        $path = public_path('temp') . $this->filename . time() . '.' . $this->downloadFormat;
+        $path = public_path('temp') . '/' . $this->filename . time() . '.' . $this->downloadFormat;
         $this->pdf->save($path);
-        $cdn = $this->saveFileToCDN($path, 'invoice/pdf/', $this->filename . '.' . $this->downloadFormat);
+        $cdn = $this->saveFileToCDN($path, 'invoices/pdf/', $this->filename . '.' . $this->downloadFormat);
         File::delete($path);
         return $cdn;
 
