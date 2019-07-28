@@ -10,7 +10,7 @@ use Sheba\Repositories\PaymentLinkRepository;
 
 class PaymentLinkOrderAdapter
 {
-    private $paymentLink, $amount, $userType, $user;
+    private $paymentLink, $amount, $userType, $user, $purpose;
 
     /**
      * @param $identifier
@@ -31,6 +31,12 @@ class PaymentLinkOrderAdapter
         }
         if (!$this->paymentLink['isActive']) throw new PaymentLinkInactive();
         if (empty($this->amount)) throw new PaymentAmountNotSet();
+        return $this;
+    }
+
+    public function setPurpose($purpose)
+    {
+        $this->purpose = $purpose;
         return $this;
     }
 
@@ -65,7 +71,7 @@ class PaymentLinkOrderAdapter
         $payable->user_id = $this->user->id;
         $payable->user_type = "App\\Models\\" . class_basename($this->user);
         $payable->amount = $this->amount;
-        $payable->description = $this->paymentLink['reason'];
+        $payable->description = !empty($this->paymentLink['reason']) ? $this->paymentLink['reason'] : $this->purpose;
         $payable->completion_type = "payment_link";
         $payable->success_url = config('sheba.payment_link_web_url') . '/' . $this->paymentLink['linkIdentifier'] . '/success';
         $payable->created_at = Carbon::now();
