@@ -17,6 +17,7 @@ class SmsCampaign
     private $mobileNumbers = array();
     private $customers;
     private $title;
+    private $mobile;
     private $message;
     private $sms_count;
     /** @var Partner $partner */
@@ -27,12 +28,26 @@ class SmsCampaign
         $this->smsHandler = $smsHandler;
     }
 
+    public function setMobile($mobile)
+    {
+        $this->mobile = formatMobile($mobile);
+        return $this;
+    }
+
+    public function pushMobileNumber()
+    {
+        array_push($this->mobileNumbers, $this->mobile);
+        return $this;
+    }
+
     public function formatRequest($request)
     {
-        foreach ($request['customers'] as $customer) {
-            array_push($this->mobileNumbers, formatMobile($customer['mobile']));
+        if (!isset($request['file'])) {
+            foreach ($request['customers'] as $customer) {
+                array_push($this->mobileNumbers, formatMobile($customer['mobile']));
+            }
+            $this->customers = $request['customers'];
         }
-        $this->customers = $request['customers'];
         $this->title = $request['title'];
         $this->message = $request['message'];
         $this->partner = $request['partner'];
@@ -46,7 +61,6 @@ class SmsCampaign
     {
         if ($this->partnerHasEnoughBalance()) {
             $response = (object)$this->smsHandler->sendBulkMessages($this->mobileNumbers, $this->message);
-
             $campaign_order_data = ['title' => $this->title, 'message' => $this->message, 'partner_id' => $this->partner->id, 'rate_per_sms' => constants('SMS_CAMPAIGN.rate_per_sms'), 'bulk_id' => isset($response->bulkId) ? $response->bulkId : null];
             $campaign_order = SmsCampaignOrder::create($this->withBothModificationFields($campaign_order_data));
             $amount_to_be_deducted = 0.0;
@@ -54,7 +68,7 @@ class SmsCampaign
             foreach ($response->messages as $index => $message) {
                 $message = (object)$message;
                 $amount_to_be_deducted += ($this->sms_count * constants('SMS_CAMPAIGN.rate_per_sms'));
-                $orderDetails = ['sms_campaign_order_id' => $campaign_order->id, 'receiver_number' => $message->to, 'receiver_name' => $this->customers[$index]['name'], 'message_id' => $message->messageId, 'status' => constants('SMS_CAMPAIGN_RECEIVER_STATUSES.pending'), 'sms_count' => $this->sms_count];
+                $orderDetails = ['sms_campaign_order_id' => $campaign_order->id, 'receiver_number' => $message->to, 'receiver_name' => $this->customers ? $this->customers[$index]['name'] : null, 'message_id' => $message->messageId, 'status' => constants('SMS_CAMPAIGN_RECEIVER_STATUSES.pending'), 'sms_count' => $this->sms_count];
                 SmsCampaignOrderReceiver::create($this->withBothModificationFields($orderDetails));
             }
 

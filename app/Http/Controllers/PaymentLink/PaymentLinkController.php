@@ -35,10 +35,10 @@ class PaymentLinkController extends Controller
     {
         try {
             $payment_links_list = $this->paymentLinkRepo->getPaymentLinkList($request);
-            $payment_links_list = array_where($payment_links_list, function ($key, $link) {
-                return array_key_exists('targetType', $link) ? $link['targetType'] == null : $link;
-            });
             if ($payment_links_list) {
+                $payment_links_list = array_where($payment_links_list, function ($key, $link) {
+                    return array_key_exists('targetType', $link) ? $link['targetType'] == null : $link;
+                });
                 list($offset, $limit) = calculatePagination($request);
                 $links = collect($payment_links_list)->slice($offset)->take($limit);
                 $fractal = new Manager();
@@ -190,7 +190,7 @@ class PaymentLinkController extends Controller
                     $payment = [
                         'id' => $payment ? $payment->id : null,
                         'code' => $payment ? '#' . $payment->id : null,
-                        'name' => $payment ? $payment->created_by_name : null,
+                        'name' => $payment ? $payment->payable->getName() : null,
                         'amount' => $payment ? $payable->amount : null,
                         'created_at' => $payment ? Carbon::parse($payment->created_at)->format('Y-m-d h:i a') : null,
                     ];
