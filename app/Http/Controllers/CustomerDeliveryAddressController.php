@@ -84,10 +84,13 @@ class CustomerDeliveryAddressController extends Controller
             $customer = $request->customer;
             $location = null;
             $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'location_id', 'address', 'name', 'geo_informations', 'flat_no')->get();
+
             /*$hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->first();
             if ($hyper_location) $location = $hyper_location->location;*/
-            $location = Location::find(1);
+
+            $location = Location::find(4);
             if ($location == null) return api_response($request, null, 404, ['message' => "No address at this location"]);
+
             $customer_order_addresses = $customer->orders()->selectRaw('delivery_address,count(*) as c')->groupBy('delivery_address')->orderBy('c', 'desc')->get();
             $target = new Coords((double)$request->lat, (double)$request->lng);
             $customer_delivery_addresses = $customer_delivery_addresses->reject(function ($address) {
@@ -99,9 +102,11 @@ class CustomerDeliveryAddressController extends Controller
                 $customer_delivery_address['is_valid'] = 1;
                 $address = new Coords($customer_delivery_address['geo_informations']['lat'], $customer_delivery_address['geo_informations']['lng']);
                 $customer_delivery_address['is_same'] = $address->isSameTo($target);
+
                 return $customer_delivery_address;
             });
-//            if ($location) $customer_delivery_addresses = $customer_delivery_addresses->where('location_id', $location->id);
+
+            // if ($location) $customer_delivery_addresses = $customer_delivery_addresses->where('location_id', $location->id);
             if ($request->has('partner') && (int)$request->partner > 0) {
                 $partner = Partner::find((int)$request->partner);
                 $partner_geo = json_decode($partner->geo_informations);
@@ -117,9 +122,14 @@ class CustomerDeliveryAddressController extends Controller
                     return $customer_delivery_address;
                 });
             }
-            $customer_delivery_addresses = $customer_delivery_addresses->sortByDesc('count')->values()->all();
-            return api_response($request, $customer_delivery_addresses, 200, ['addresses' => $customer_delivery_addresses,
-                'name' => $customer->profile->name, 'mobile' => $customer->profile->mobile]);
+
+            $customer_delivery_addresses = $customer_delivery_addresses->sortByDesc('count')->sortByDesc('is_same')->values()->all();
+
+            return api_response($request, $customer_delivery_addresses, 200, [
+                'addresses' => $customer_delivery_addresses,
+                'name' => $customer->profile->name,
+                'mobile' => $customer->profile->mobile
+            ]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
