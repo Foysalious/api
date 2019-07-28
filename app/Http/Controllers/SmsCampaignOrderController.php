@@ -43,7 +43,7 @@ class SmsCampaignOrderController extends Controller
             ]);
 
             $requests = $request->all();
-            if ($request->has('file')) {
+            if ($request->hasFile('file')) {
                 $valid_extensions = ["xls", "xlsx", "xlm", "xla", "xlc", "xlt", "xlw"];
                 $extension = $request->file('file')->getClientOriginalExtension();
 
