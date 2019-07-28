@@ -190,7 +190,7 @@ class PaymentLinkController extends Controller
                     $payment = [
                         'id' => $payment ? $payment->id : null,
                         'code' => $payment ? '#' . $payment->id : null,
-                        'name' => $payment ? $payment->created_by_name : null,
+                        'name' => $payment ? $payment->payable->getName() : null,
                         'amount' => $payment ? $payable->amount : null,
                         'created_at' => $payment ? Carbon::parse($payment->created_at)->format('Y-m-d h:i a') : null,
                     ];
