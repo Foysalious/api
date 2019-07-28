@@ -44,23 +44,7 @@ class SmsCampaignOrderController extends Controller
 
             $requests = $request->all();
             if ($request->hasFile('file')) {
-                $valid_extensions = ["xls", "xlsx", "xlm", "xla", "xlc", "xlt", "xlw"];
-                $extension = $request->file('file')->getClientOriginalExtension();
-
-                if (!in_array($extension, $valid_extensions)) {
-                    return api_response($request, null, 400, ['message' => 'File type not support']);
-                }
-
-                $file = Excel::selectSheets(SmsExcel::SHEET)->load($request->file)->save();
-                $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
-
-                $data = Excel::selectSheets(SmsExcel::SHEET)->load($file_path)->get();
-                $total = $data->count();
-
-                $data->each(function ($value, $key) use ($file_path, $total, $campaign) {
-                    $mobile_field = SmsExcel::MOBILE_COLUMN_TITLE;
-                    $campaign->setMobile(BDMobileFormatter::format($value->$mobile_field))->pushMobileNumber();
-                });
+                $this->pickDataFromExcel($request, $campaign);
             }
             $campaign = $campaign->formatRequest($requests);
 
@@ -78,11 +62,31 @@ class SmsCampaignOrderController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             $code = $e->getCode();
             return api_response($request, null, 500, ['message' => $e->getMessage(), 'code' => $code ? $code : 500]);
         }
+    }
+
+    private function pickDataFromExcel(Request $request, SmsCampaign $campaign)
+    {
+        $valid_extensions = ["xls", "xlsx", "xlm", "xla", "xlc", "xlt", "xlw"];
+        $extension = $request->file('file')->getClientOriginalExtension();
+
+        if (!in_array($extension, $valid_extensions)) {
+            return api_response($request, null, 400, ['message' => 'File type not support']);
+        }
+
+        $file = Excel::selectSheets(SmsExcel::SHEET)->load($request->file)->save();
+        $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
+
+        $data = Excel::selectSheets(SmsExcel::SHEET)->load($file_path)->get();
+        $total = $data->count();
+
+        $data->each(function ($value, $key) use ($file_path, $total, $campaign) {
+            $mobile_field = SmsExcel::MOBILE_COLUMN_TITLE;
+            $campaign->setMobile(BDMobileFormatter::format($value->$mobile_field))->pushMobileNumber();
+        });
     }
 
     public function getTemplates($partner, Request $request)
