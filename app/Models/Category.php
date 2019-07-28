@@ -17,6 +17,11 @@ class Category extends Model
         ]);
     }
 
+    public function scopeParent($query)
+    {
+       return $query->where('parent_id', null);
+    }
+
     public static function getRentACarSecondaries()
     {
         return config('sheba.car_rental.secondary_category_ids');
@@ -39,7 +44,7 @@ class Category extends Model
 
     public function children()
     {
-        return $this->hasMany(Category::class, 'parent_id')->has('publishedServices', '>', 0)->published();
+        return $this->hasMany(Category::class, 'parent_id');
     }
 
     public function allChildren()

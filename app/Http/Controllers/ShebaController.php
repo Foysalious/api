@@ -14,15 +14,16 @@ use App\Models\Slider;
 use App\Models\SliderPortal;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
+use Cache;
+use DB;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 use Sheba\Payment\AvailableMethods;
+use Sheba\Reports\PdfHandler;
 use Sheba\Repositories\PaymentLinkRepository;
 use Validator;
-use DB;
-use Cache;
 
 class ShebaController extends Controller
 {
@@ -261,6 +262,12 @@ class ShebaController extends Controller
                 return api_response($request, 1, 200, ['info' => $info,
                     'message' => 'Your payment has been received but there was a system error. It will take some time to update your transaction. Call 16516 for support.']);
             } else {
+                    $handler = new PdfHandler();
+                $invoiceLink = $handler->setData($info)
+                    ->setName('Transaction Invoice')
+                    ->setViewFile('transaction_invoice')
+                    ->save();
+                $info['invoice_link'] = $invoiceLink;
                 return api_response($request, 1, 200, ['info' => $info]);
             }
         } catch (ValidationException $e) {

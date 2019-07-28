@@ -170,6 +170,7 @@ return [
         Sheba\Notification\NotificationServiceProvider::class,
         App\Providers\CollectionServiceProvider::class,
         Sheba\Repositories\Providers\RepositoryServiceProvider::class,
+        Barryvdh\DomPDF\ServiceProvider::class,
     ],
 
     /*
@@ -222,6 +223,7 @@ return [
         'Clockwork' => Clockwork\Support\Laravel\Facade::class,
         'GraphQL' => Folklore\GraphQL\Support\Facades\GraphQL::class,
         'Image' => Intervention\Image\Facades\Image::class,
-        'Excel' => Maatwebsite\Excel\Facades\Excel::class
+        'Excel' => Maatwebsite\Excel\Facades\Excel::class,
+        'PDF' => Barryvdh\DomPDF\Facade::class,
     ]
 ];
