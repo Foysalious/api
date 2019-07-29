@@ -42,9 +42,12 @@ class CustomerDeliveryAddressController extends Controller
             }
             $customer_order_addresses = $customer->orders()->selectRaw('delivery_address,count(*) as c')->groupBy('delivery_address')->orderBy('c', 'desc')->get();
             $customer_delivery_addresses = $customer_delivery_addresses->map(function ($customer_delivery_address) use ($customer_order_addresses) {
+                if (empty($customer_delivery_address->name)) $customer_delivery_address['name'] = '';
+                if (empty($customer_delivery_address->address)) $customer_delivery_address['address'] = '';
                 $customer_delivery_address['count'] = $this->getOrderCount($customer_order_addresses, $customer_delivery_address);
                 $geo = json_decode($customer_delivery_address['geo_informations']);
                 $customer_delivery_address['geo_informations'] = $geo ? ['lat' => (double)$geo->lat, 'lng' => (double)$geo->lng] : null;
+
                 return $customer_delivery_address;
             });
             if ($location) $customer_delivery_addresses = $customer_delivery_addresses->where('location_id', $location->id);
@@ -65,8 +68,12 @@ class CustomerDeliveryAddressController extends Controller
 
             $address_position = $this->findHomeAndWorkAddressPosition($customer_delivery_addresses);
             $customer_delivery_addresses = $this->filterAddressByHomeAndWork($address_position, $customer_delivery_addresses);
-            return api_response($request, $customer_delivery_addresses, 200, ['addresses' => $customer_delivery_addresses,
-                'name' => $customer->profile->name, 'mobile' => $customer->profile->mobile]);
+
+            return api_response($request, $customer_delivery_addresses, 200, [
+                'addresses' => $customer_delivery_addresses,
+                'name' => $customer->profile->name,
+                'mobile' => $customer->profile->mobile
+            ]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
