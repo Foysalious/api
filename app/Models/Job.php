@@ -8,6 +8,7 @@ use Sheba\Helpers\TimeFrame;
 use Sheba\Jobs\CiCalculator;
 use Sheba\Dal\Complain\Model as Complain;
 use Sheba\Jobs\JobStatuses;
+use Sheba\Jobs\Premises;
 use Sheba\Logistics\Literals\Natures as LogisticNatures;
 use Sheba\Logistics\Literals\OneWayInitEvents as OneWayLogisticInitEvents;
 use Sheba\Logistics\OrderManager;
@@ -1055,6 +1056,16 @@ class Job extends BaseModel
     {
         return $this->last_logistic_order_id ||
             ( $this->first_logistic_order_id && !$this->getFirstLogisticOrder()->hasStarted() );
+    }
+
+    public function isOnCustomerPremise()
+    {
+        return $this->site == Premises::CUSTOMER;
+    }
+
+    public function isOnPartnerPremise()
+    {
+        return $this->site == Premises::PARTNER;
     }
 
     public function toJson($options = 0)
