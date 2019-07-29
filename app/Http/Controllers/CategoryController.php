@@ -230,10 +230,9 @@ class CategoryController extends Controller
 
             $best_deal_categories_id = explode(',', config('sheba.best_deal_ids'));
             $best_deal_category = CategoryGroupCategory::whereIn('category_group_id', $best_deal_categories_id)->pluck('category_id')->toArray();
-
             if ($location) {
                 $children = $category->load(['children' => function ($q) use ($best_deal_category, $location) {
-                    $q->whereNotIn('id', $best_deal_category)
+                    $q->published()->whereNotIn('id', $best_deal_category)
                         ->whereHas('locations', function ($q) use ($location) {
                             $q->where('locations.id', $location->id);
                         });
