@@ -1,7 +1,4 @@
-<?php
-
-namespace Sheba\Bkash\Modules\Normal\Methods\Payout\Responses;
-
+<?php namespace Sheba\Bkash\Modules\Normal\Methods\Payout\Responses;
 
 class B2CPaymentResponse
 {
@@ -25,22 +22,11 @@ class B2CPaymentResponse
 
     public function getSuccess()
     {
-        return array(
-            'completed_time' => $this->response->completedTime,
-            'trxID' => $this->response->trxID,
-            'status' => $this->response->transactionStatus,
-            'amount' => (double)$this->response->amount,
-            'invoice_no' => $this->response->merchantInvoiceNumber,
-            'receiver_bkash_no' => $this->response->receiverMSISDN,
-            'b2cfee' => (int)isset($this->response->b2cFee) ? $this->response->b2cFee : 0
-        );
+        return array('completed_time' => $this->response->completedTime, 'trxID' => $this->response->trxID, 'status' => $this->response->transactionStatus, 'amount' => (double)$this->response->amount, 'invoice_no' => $this->response->merchantInvoiceNumber, 'receiver_bkash_no' => $this->response->receiverMSISDN, 'b2cfee' => (int)isset($this->response->b2cFee) ? $this->response->b2cFee : 0);
     }
 
     public function getError()
     {
-        return array(
-            'code' => (int)$this->response->errorCode,
-            'message' => $this->response->errorMessage
-        );
+        return ['code' => (int)$this->response->errorCode, 'message' => $this->response->errorMessage];
     }
 }

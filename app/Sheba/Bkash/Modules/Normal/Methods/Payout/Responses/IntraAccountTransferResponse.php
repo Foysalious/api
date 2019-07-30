@@ -1,6 +1,5 @@
 <?php namespace Sheba\Bkash\Modules\Normal\Methods\Payout\Responses;
 
-
 class IntraAccountTransferResponse
 {
     private $response;
@@ -20,5 +19,4 @@ class IntraAccountTransferResponse
     {
         return isset($this->response->transactionStatus) ? $this->response->transactionStatus == 'Completed' : false;
     }
-    
 }

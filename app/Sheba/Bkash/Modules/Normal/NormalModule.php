@@ -32,7 +32,6 @@ class NormalModule extends BkashModule
     public function getMethod($enum)
     {
         if ($enum == 'payout') return new NormalPayout();
-        if ($enum == 'support') return new SupportingOperation();
-        else return null;
+        if ($enum == 'support') return new SupportingOperation(); else return null;
     }
 }
