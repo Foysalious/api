@@ -1,7 +1,4 @@
-<?php
-
-
-namespace Sheba\Bkash\Modules\Normal\Methods\Other;
+<?php namespace Sheba\Bkash\Modules\Normal\Methods\Other;
 
 use Sheba\Bkash\Modules\BkashAuth;
 use Sheba\Bkash\Modules\Normal\NormalModule;
@@ -11,10 +8,7 @@ class SupportingOperation extends NormalModule
     public function setBkashAuth()
     {
         $this->bkashAuth = new BkashAuth();
-        $this->bkashAuth->setKey(config('bkash.payout.app_key'))
-            ->setSecret(config('bkash.payout.app_secret'))
-            ->setUsername(config('bkash.payout.username'))
-            ->setPassword(config('bkash.payout.password'))->setUrl(config('bkash.payout.url'));
+        $this->bkashAuth->setKey(config('bkash.payout.app_key'))->setSecret(config('bkash.payout.app_secret'))->setUsername(config('bkash.payout.username'))->setPassword(config('bkash.payout.password'))->setUrl(config('bkash.payout.url'));
     }
 
     public function setAppKey($key)
@@ -73,10 +67,6 @@ class SupportingOperation extends NormalModule
 
     private function getHeader()
     {
-        return [
-            'Content-Type:application/json',
-            'authorization:' . $this->getToken(),
-            'x-app-key:' . $this->bkashAuth->appKey
-        ];
+        return ['Content-Type:application/json', 'authorization:' . $this->getToken(), 'x-app-key:' . $this->bkashAuth->appKey];
     }
 }

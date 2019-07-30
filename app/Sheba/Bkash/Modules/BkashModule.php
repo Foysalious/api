@@ -14,5 +14,4 @@ abstract class BkashModule
     abstract protected function setToken();
 
     abstract public function getMethod($enum);
-
 }
