@@ -397,13 +397,6 @@ class CategoryController extends Controller
                     }
                     $category['services'] = $services;
                     $category['subscriptions'] = $subscriptions;
-                    /*if ($subscriptions->count()) {
-                        $category['subscription_faq'] = [
-                            'title' => 'Subscribe & save money',
-                            'body' => 'Save BDT 20 in every meter by subscribing for one month!'
-                        ];
-                    }*/
-
                     if ($subscriptions->count()) {
                         $category['subscription_faq'] = $subscription_faq;
                     }
