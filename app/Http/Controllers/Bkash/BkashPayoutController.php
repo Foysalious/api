@@ -1,7 +1,6 @@
-<?php
+<?php namespace App\Http\Controllers\Bkash;
 
-namespace App\Http\Controllers\Bkash;
-
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 use App\Http\Controllers\Controller;
@@ -10,24 +9,28 @@ use Sheba\Bkash\Modules\Normal\Methods\Other\SupportingOperation;
 use Sheba\Bkash\Modules\Normal\Methods\Payout\NormalPayout;
 use Sheba\Bkash\ShebaBkash;
 
+use Illuminate\Support\Facades\Redis;
+use Throwable;
+
 class BkashPayoutController extends Controller
 {
     public function pay(Request $request, ShebaBkash $sheba_bkash)
     {
-        if ($request->token != 'ShebaAdminPanelToken!@#$!@#') {
-            return api_response($request, null, 400);
-        }
+        if ($request->token != 'ShebaAdminPanelToken!@#$!@#') return api_response($request, null, 400);
 
         try {
             $this->validate($request, ['amount' => 'required|numeric', 'bkash_number' => 'required|string|mobile:bd', 'request_id' => 'required']);
             /** @var NormalPayout $payout */
             $payout = $sheba_bkash->setModule('normal')->getModuleMethod('payout');
             $response = $payout->sendPayment($request->amount, $request->request_id, $request->bkash_number);
-            if (!$response) return api_response($request, null, 500, ['message' => 'Intra account transfer failed']);
-            else {
+
+            if (!$response) {
+                return api_response($request, null, 500, ['message' => 'Intra account transfer failed']);
+            } else {
                 if ($response->hasSuccess()) {
                     return api_response($request, $response->getSuccess(), 200, $response->getSuccess());
                 } else {
+                    Redis::set('partner_transaction_failed_' . time(), json_encode($response->getError()));
                     return api_response($request, $response->getError(), 500, $response->getError());
                 }
             }
@@ -37,7 +40,7 @@ class BkashPayoutController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, null, 400);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $e->getMessage()]);
             $sentry->captureException($e);
@@ -45,32 +48,34 @@ class BkashPayoutController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @param ShebaBkash $sheba_bkash
+     * @return JsonResponse
+     */
     public function queryBalance(Request $request, ShebaBkash $sheba_bkash)
     {
         try {
-            $this->validate($request, [
-                'app_key' => 'required',
-                'app_secret' => 'required',
-                'username' => 'required',
-                'password' => 'required',
-            ]);
+            $this->validate($request, ['app_key' => 'required', 'app_secret' => 'required', 'username' => 'required', 'password' => 'required',]);
             /** @var SupportingOperation $support */
             $support = $sheba_bkash->setModule('normal')->getModuleMethod('support');
-            $support->setAppKey($request->app_key)->setAppSecret($request->app_secret)
-                ->setUsername($request->username)->setPassword($request->password)->setUrl("https://checkout.pay.bka.sh/v1.2.0-beta");
+            $support->setAppKey($request->app_key)->setAppSecret($request->app_secret)->setUsername($request->username)->setPassword($request->password)->setUrl("https://checkout.pay.bka.sh/v1.2.0-beta");
             $result = $support->queryBalance();
             if (!isset($result->errorCode)) return api_response($request, $result, 200, ['data' => $result->organizationBalance]);
+
             return api_response($request, null, 500);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
+
             return api_response($request, null, 400);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $e->getMessage()]);
             $sentry->captureException($e);
+
             return api_response($request, null, 500, ['message' => $e->getMessage()]);
         }
     }
