@@ -372,11 +372,13 @@ class CategoryController extends Controller
                         $subscription['offers'] = $subscription->getDiscountOffers();
                         if ($subscription->faq) {
                             $faq = json_decode($subscription->faq);
-                            $subscription_faq = [
-                                'title' => $faq->title,
-                                'body' => $faq->description,
-                                'image' => $faq->image_link,
-                            ];
+                            if ($faq->title && $faq->description) {
+                                $subscription_faq = [
+                                    'title' => $faq->title,
+                                    'body' => $faq->description,
+                                    'image' => $faq->image_link ? $faq->image_link : "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/categories_images/thumbs/1564579810_subscription_image_link.png",
+                                ];
+                            }
                         }
 
                         removeRelationsAndFields($service);
