@@ -157,7 +157,7 @@ class AvailableMethods
         return [
             'name' => 'Other Debit/Credit',
             'is_published' => 1,
-            'description' => 'Save & get 10% off',
+            'description' => '',
             'asset' => 'ssl',
             'method_name' => 'online'
         ];
