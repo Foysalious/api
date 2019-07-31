@@ -59,7 +59,7 @@ class ResourceCreator
     {
         $this->saveImages();
         $this->data['mobile'] = formatMobileAux($this->data['mobile']);
-        $this->data['alternate_contact'] =  $this->data['alternate_contact'] ? formatMobileAux($this->data['alternate_contact']) : null;
+        $this->data['alternate_contact'] = $this->data['alternate_contact'] ? formatMobileAux($this->data['alternate_contact']) : null;
         $this->format();
         $this->attachProfile();
         $this->data['remember_token'] = str_random(255);
