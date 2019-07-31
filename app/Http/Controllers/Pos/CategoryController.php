@@ -1,7 +1,6 @@
 <?php namespace App\Http\Controllers\Pos;
 
 use App\Http\Controllers\Controller;
-use App\Models\PartnerPosSetting;
 use App\Models\PosCategory;
 use Illuminate\Http\Request;
 
@@ -11,6 +10,8 @@ class CategoryController extends Controller
     {
         try {
             $partner = $request->partner;
+            $total_stock = 0.00;
+            $total_selling_price = 0.00;
             $sub_categories = PosCategory::child()->published()
                 ->with(['services' => function ($service_query) use ($partner) {
                     $service_query->partner($partner->id)
@@ -23,7 +24,21 @@ class CategoryController extends Controller
                 ->get();
 
             if (!$sub_categories) return api_response($request, null, 404);
-            return api_response($request, $sub_categories, 200, ['categories' => $sub_categories]);
+
+            $sub_categories->each(function ($category) use (&$total_stock, &$total_selling_price) {
+                $category->services->each(function ($service) use (&$total_stock, &$total_selling_price) {
+                    $service->unit = $service->unit ? constants('POS_SERVICE_UNITS')[$service->unit] : null;
+                    $total_stock += $service->stock;
+                    $total_selling_price += $service->price;
+                });
+            });
+
+            $data = [];
+            $data['categories'] = $sub_categories;
+            $data['total_stock'] = (double)$total_stock;
+            $data['total_selling_price'] = (double)$total_selling_price;
+
+            return api_response($request, $sub_categories, 200, $data);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -53,7 +68,7 @@ class CategoryController extends Controller
 
     private function getSelectColumnsOfService()
     {
-        return ['id', 'partner_id', 'pos_category_id', 'name', 'publication_status', 'thumb', 'banner', 'app_thumb', 'app_banner', 'cost', 'price', 'vat_percentage', 'stock'];
+        return ['id', 'partner_id', 'pos_category_id', 'name', 'publication_status', 'thumb', 'banner', 'app_thumb', 'app_banner', 'cost', 'price', 'vat_percentage', 'stock', 'unit'];
     }
 
     private function getSelectColumnsOfServiceDiscount()

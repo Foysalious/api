@@ -3,16 +3,15 @@
 use App\Models\Category;
 use App\Models\CategoryGroup;
 use App\Models\HyperLocal;
-
 use App\Models\Location;
 use App\Models\OfferShowcase;
+use Cache;
 use Carbon\Carbon;
 use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
-use Cache;
 use Sheba\AppSettings\HomePageSetting\DS\Builders\ItemBuilder;
 use Throwable;
 
@@ -75,12 +74,14 @@ class HomePageSettingController extends Controller
             $store = Cache::store('redis');
             $portals = config('sheba.portals');
             $screens = config('sheba.screen');
+            $platforms = constants('DEVELOPMENT_PLATFORMS');
             $this->validate($request, [
                 'for' => 'string|in:app,web,app_json,app_json_revised',
                 'portal' => 'in:' . implode(',', $portals),
                 'screen' => 'in:' . implode(',', $screens),
                 'location' => 'numeric',
                 'lat' => 'numeric',
+                'platform' => 'sometimes|in:' . implode(',', $platforms),
                 'lng' => 'numeric'
             ]);
             $setting_key = null;
@@ -92,9 +93,10 @@ class HomePageSettingController extends Controller
                 if (!is_null($hyperLocation)) $location = $hyperLocation->location_id;
             }
             if ($request->has('portal') && $request->has('screen')) {
-                $setting_key = 'NewScreenSetting::' . snake_case(camel_case($request->portal)) . '_' . $request->screen . "_" . $location;
+                $platform = $this->getPlatform($request);
+                $setting_key = 'NewScreenSetting::' . snake_case(camel_case($request->portal)) . '_' . $request->screen . "_" . strtolower($platform) . "_" . $location;
             } else {
-                $setting_key = 'NewScreenSetting::customer_app_home_4';
+                $setting_key = 'NewScreenSetting::customer_app_home_android_4';
             }
 
             $settings = $store->get($setting_key);
@@ -124,6 +126,21 @@ class HomePageSettingController extends Controller
         }
     }
 
+    private function getPlatform(Request $request)
+    {
+        if ($request->has('platform')) {
+            $platform = $request->platform;
+        } else {
+            if ($request->portal == 'customer-app') {
+                $platform = 'android';
+            } else if ($request->portal == 'customer-portal') {
+                $platform = 'web';
+            } else {
+                $platform = 'all';
+            }
+        }
+        return $platform;
+    }
     private function getLocationId(Request $request)
     {
         $location = '';
