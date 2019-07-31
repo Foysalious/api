@@ -6,16 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use App\Models\Resource as ReSrc;
 use App\Models\PartnerResource;
+use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 
 class ResourceRepository extends BaseRepository
 {
     /** @var ProfileRepository */
     protected $profileRepo;
 
-    public function __construct()
+    public function __construct(ProfileRepositoryInterface $profileRepo)
     {
         parent::__construct();
-        $this->profileRepo = new ProfileRepository();
+        $this->profileRepo = $profileRepo;
     }
 
     /**
