@@ -29,7 +29,7 @@ class CategoryController extends Controller
                 $category->services->each(function ($service) use (&$total_stock, &$total_selling_price) {
                     $service->unit = $service->unit ? constants('POS_SERVICE_UNITS')[$service->unit] : null;
                     $total_stock += $service->stock;
-                    $total_selling_price += $service->price;
+                    $total_selling_price += $service->cost * $service->stock;
                 });
             });
 
