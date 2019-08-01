@@ -62,6 +62,7 @@ class PartnerRoute
                 $api->group(['prefix' => 'services'], function ($api) {
                     $api->get('/', 'Pos\ServiceController@index');
                     $api->post('/', 'Pos\ServiceController@store');
+                    $api->get('/units', 'Pos\ServiceController@getUnits');
                     $api->group(['prefix' => '{service}'], function ($api) {
                         $api->get('/', 'Pos\ServiceController@show');
                         $api->post('/', 'Pos\ServiceController@update');
