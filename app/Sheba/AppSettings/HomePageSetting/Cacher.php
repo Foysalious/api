@@ -40,7 +40,7 @@ class Cacher
             $elements = $setting->elements;
             $location_ids = $elements->pluck('pivot.location_id')->unique();
             foreach ($location_ids as $location_id) {
-                $home_page_settings = $this->getter->setLocation($location_id)->setPortal($setting->portal_name)->setScreen($setting->screen)->getSettings()->toJson();
+                $home_page_settings = $this->getter->setLocation($location_id)->setPortal($setting->portal_name)->setScreen($setting->screen)->setPlatform($setting->platform)->getSettings()->toJson();
                 $portal_name = snake_case(camel_case($setting->portal_name));
                 $cache_name = sprintf("%s::%s_%s_%d", $this->redisNameSpace, $portal_name, $setting->screen, $location_id);
                 $store->forever($cache_name, $home_page_settings);
