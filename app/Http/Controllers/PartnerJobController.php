@@ -48,7 +48,7 @@ class PartnerJobController extends Controller
             foreach ($partner->partnerOrders as $partnerOrder) {
                 foreach ($partnerOrder->jobs as $job) {
                     /** @var Job $job */
-                    if($job->isLogisticCreated()) {
+                    if ($job->isLogisticCreated()) {
                         $job['logistic'] = $job->getCurrentLogisticOrder()->formatForPartner();
                     }
                     if ($job->cancelRequests->where('status', 'Pending')->count() > 0) continue;
