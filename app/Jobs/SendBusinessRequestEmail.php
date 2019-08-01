@@ -2,10 +2,10 @@
 
 namespace App\Jobs;
 
-use Illuminate\Contracts\Mail\Mailer;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Mail;
 
 class SendBusinessRequestEmail extends Job implements ShouldQueue
 {
@@ -24,7 +24,7 @@ class SendBusinessRequestEmail extends Job implements ShouldQueue
      * @param Mailer $mailer
      * @return void
      */
-    public function handle(Mailer $mailer)
+    public function handle(Mail $mailer)
     {
         if ($this->attempts() <= 2) {
             $template = $this->template ?: 'emails.profile-creation';
