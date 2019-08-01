@@ -100,7 +100,8 @@ class ServiceController extends Controller
             $this->validate($request, [
                 'name' => 'required',
                 'category_id' => 'required|in:' . implode(',', $secondaries_categories),
-                'price' => 'required'
+                'price' => 'required',
+                'unit' => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS')))
             ]);
             $this->setModifier($request->partner);
             $partner_pos_service = $creator->setData($request->all())->create();
@@ -130,6 +131,9 @@ class ServiceController extends Controller
     public function update(Request $request, ProductUpdater $updater, PosServiceDiscountRepository $discount_repo)
     {
         try {
+            $this->validate($request, [
+                'unit' => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS')))
+            ]);
             $this->setModifier($request->partner);
             $partner_pos_service = PartnerPosService::find($request->service);
             if (!$partner_pos_service) return api_response($request, null, 400, ['msg' => 'Service Not Found']);
