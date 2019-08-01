@@ -90,7 +90,6 @@ class PartnerController extends Controller
     public function show($partner, Request $request)
     {
         try {
-
             ini_set('memory_limit', '6096M');
             ini_set('max_execution_time', 660);
 
@@ -132,7 +131,7 @@ class PartnerController extends Controller
                     $q->select('resources.id', 'profile_id', 'is_verified')->with('profile');
                 }, 'review' => function ($q) {
                     $q->select('id', 'job_id', 'resource_id', 'customer_id', 'rating', 'review', 'category_id', 'created_at')
-                        ->with('customer.profile');
+                        ->with('customer.profile')->with('category');
                 }]);
             }, 'services' => function ($q) {
                 $q->where('partner_service.is_verified', 1);
@@ -279,6 +278,7 @@ class PartnerController extends Controller
             $info->put('geo_informations', $geo_informations);
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

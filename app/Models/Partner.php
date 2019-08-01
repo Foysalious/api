@@ -576,6 +576,11 @@ class Partner extends Model implements Rewardable, TopUpAgent
 
     public function servingMasterCategories()
     {
+        $this->load(['categories' => function ($q) {
+            $q->with(['parent' => function ($q) {
+                $q->select('id', 'categories.name');
+            }]);
+        }]);
         return $this->categories->pluck('parent.name')->unique()->implode(', ');
     }
 
