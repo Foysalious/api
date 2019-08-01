@@ -49,7 +49,6 @@ class IndexRoute
                 $api->group(['prefix' => 'services'], function ($api) {
                     $api->get('/', 'Pos\ServiceController@index');
                     $api->get('/', 'Pos\ServiceController@index');
-                    $api->get('/units', 'Pos\ServiceController@getUnits');
                     $api->post('/', 'Pos\ServiceController@store');
                     $api->group(['prefix' => '{service}'], function ($api) {
                         $api->get('/', 'Pos\ServiceController@show');
