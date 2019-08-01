@@ -2,17 +2,16 @@
 
 namespace App\Jobs;
 
-use App\Jobs\Job;
 use Illuminate\Contracts\Mail\Mailer;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 
 class SendBusinessRequestEmail extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
 
-    private $email;
+    private $email, $password, $template, $subject;
 
     public function __construct($email)
     {
@@ -28,10 +27,44 @@ class SendBusinessRequestEmail extends Job implements ShouldQueue
     public function handle(Mailer $mailer)
     {
         if ($this->attempts() <= 2) {
-            $mailer->send('emails.profile-creation', ['email' => $this->email], function ($m) {
+            $template = $this->template ?: 'emails.profile-creation';
+            $subject = $this->subject ?: 'Profile Creation';
+            $email = $this->email;
+            $mailer->send($template, ['email' => $this->email, 'password' => $this->password], function ($m) use ($subject, $email) {
                 $m->from('mail@sheba.xyz', 'Sheba.xyz');
-                $m->to($this->email)->subject('Profile Creation');
+                $m->name('Sheba Accounts');
+                $m->to($email)->subject($subject);
             });
         }
+    }
+
+    /**
+     * @param mixed $password
+     * @return SendBusinessRequestEmail
+     */
+    public function setPassword($password)
+    {
+        $this->password = $password;
+        return $this;
+    }
+
+    /**
+     * @param mixed $template
+     * @return SendBusinessRequestEmail
+     */
+    public function setTemplate($template)
+    {
+        $this->template = $template;
+        return $this;
+    }
+
+    /**
+     * @param mixed $subject
+     * @return SendBusinessRequestEmail
+     */
+    public function setSubject($subject)
+    {
+        $this->subject = $subject;
+        return $this;
     }
 }

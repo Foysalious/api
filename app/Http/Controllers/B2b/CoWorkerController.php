@@ -1,22 +1,20 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Http\Controllers\Controller;
 use App\Jobs\SendBusinessRequestEmail;
 use App\Models\BusinessDepartment;
 use App\Models\BusinessMember;
 use App\Models\BusinessRole;
-use App\Models\BusinessTrip;
-use App\Models\Driver;
+use App\Models\Member;
 use App\Models\Profile;
 use App\Repositories\FileRepository;
+use Carbon\Carbon;
+use DB;
+use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use App\Http\Controllers\Controller;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
-use Illuminate\Http\Request;
-use App\Models\Member;
-use Carbon\Carbon;
-use DB;
 use Sheba\Repositories\ProfileRepository;
 
 class CoWorkerController extends Controller
@@ -76,7 +74,7 @@ class CoWorkerController extends Controller
                 } else {
                     $co_member->push($old_member);
                 }
-
+                $this->sendExistingUserMail($profile);
                 $business = $member->businesses->first();
                 $member_business_data = [
                     'business_id' => $business->id,
@@ -287,12 +285,13 @@ class CoWorkerController extends Controller
     private function createProfile($member, Request $request)
     {
         $this->setModifier($member);
+        $password = str_random(6);
         $profile_data = [
             'remember_token' => str_random(255),
             'mobile' => !empty($request->mobile) ? formatMobile($request->mobile) : null,
             'name' => $request->name,
             'email' => $request->email,
-            'password' => bcrypt('sheba#test1')
+            'password' => bcrypt($password)
             ##'gender' => $request->gender,
             #'dob' => $request->dob,
             #'nid_no' => $request->nid_no,
@@ -301,7 +300,7 @@ class CoWorkerController extends Controller
             #'driver_id' => $driver->id,
         ];
         $profile = Profile::create($this->withCreateModificationField($profile_data));
-        dispatch(new SendBusinessRequestEmail($request->email));
+        dispatch((new SendBusinessRequestEmail($request->email))->setPassword($password)->setTemplate('emails.co-worker-invitation'));
         return $profile;
     }
 
@@ -313,5 +312,17 @@ class CoWorkerController extends Controller
         $member->remember_token = str_random(255);
         $member->save();
         return $member;
+    }
+
+    private function sendExistingUserMail($profile)
+    {
+        $CMail = new SendBusinessRequestEmail($profile->email);
+        if (empty($profile->password)) {
+            $profile->password = str_random(6);
+            $CMail->setPassword($profile->password);
+            $profile->save();
+        }
+        $CMail->setTemplate('emails.co-worker-invitation');
+        dispatch($CMail);
     }
 }
