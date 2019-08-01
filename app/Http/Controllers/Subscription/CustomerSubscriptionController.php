@@ -173,6 +173,7 @@ class CustomerSubscriptionController extends Controller
                     'address' => $subscription_order->deliveryAddress ? $subscription_order->deliveryAddress->address : "",
                     'location_name' => $subscription_order->location ? $subscription_order->location->name : "",
                     'ordered_for' => $subscription_order->deliveryAddress ? $subscription_order->deliveryAddress->name : "",
+                    'is_paid' => $subscription_order->isPaid(),
 
                     "total_orders" => $served_orders->count(),
                     "preferred_time" => $schedules->first()->time,
