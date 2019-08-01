@@ -173,6 +173,7 @@ class CustomerSubscriptionController extends Controller
                     'address' => $subscription_order->deliveryAddress ? $subscription_order->deliveryAddress->address : "",
                     'location_name' => $subscription_order->location ? $subscription_order->location->name : "",
                     'ordered_for' => $subscription_order->deliveryAddress ? $subscription_order->deliveryAddress->name : "",
+                    'is_paid' => $subscription_order->isPaid(),
 
                     "total_orders" => $served_orders->count(),
                     "preferred_time" => $schedules->first()->time,
@@ -267,7 +268,6 @@ class CustomerSubscriptionController extends Controller
             $service_subscription = $service->subscription;
 
             $schedules = collect(json_decode($subscription_order->schedules));
-
             $subscription_order_details = [
                 "subscription_code" => $subscription_order->code(),
                 'service_id' => $service->id,
@@ -309,10 +309,10 @@ class CustomerSubscriptionController extends Controller
                 'discount' => $service_details->discount,
                 'total_price' => $service_details->discounted_price,
                 "paid_on" => !empty($subscription_order->paid_at) ? Carbon::parse($subscription_order->paid_at)->format('M-j, Y') : null,
+                'is_paid' => $subscription_order->isPaid(),
                 "orders" => $format_partner_orders,
                 'schedule_dates' => $schedule_dates
             ];
-
 
             return api_response($request, $subscription_order_details, 200, ['subscription_order_details' => $subscription_order_details]);
         } catch (\Throwable $e) {

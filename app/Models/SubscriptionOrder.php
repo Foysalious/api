@@ -71,4 +71,9 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface, Pay
     {
         return (double)json_decode($this->service_details)->discounted_price;
     }
+
+    public function isPaid()
+    {
+        return $this->paid_at ? 1 : 0;
+    }
 }
