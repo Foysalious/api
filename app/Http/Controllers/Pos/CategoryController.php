@@ -11,32 +11,32 @@ class CategoryController extends Controller
         try {
             $partner = $request->partner;
             $total_stock = 0.00;
-            $total_selling_price = 0.00;
+            $total_buying_price = 0.00;
             $sub_categories = PosCategory::child()->published()
                 ->with(['services' => function ($service_query) use ($partner) {
                     $service_query->partner($partner->id)
                         ->with(['discounts' => function ($discounts_query) {
                             $discounts_query->runningDiscounts()->select($this->getSelectColumnsOfServiceDiscount());
                         }])
-                    ->select($this->getSelectColumnsOfService());
+                        ->select($this->getSelectColumnsOfService());
                 }])
                 ->select($this->getSelectColumnsOfCategory())
                 ->get();
 
             if (!$sub_categories) return api_response($request, null, 404);
 
-            $sub_categories->each(function ($category) use (&$total_stock, &$total_selling_price) {
-                $category->services->each(function ($service) use (&$total_stock, &$total_selling_price) {
+            $sub_categories->each(function ($category) use (&$total_stock, &$total_buying_price) {
+                $category->services->each(function ($service) use (&$total_stock, &$total_buying_price) {
                     $service->unit = $service->unit ? constants('POS_SERVICE_UNITS')[$service->unit] : null;
                     $total_stock += $service->stock;
-                    $total_selling_price += $service->cost * $service->stock;
+                    $total_buying_price += $service->cost * $service->stock;
                 });
             });
 
             $data = [];
             $data['categories'] = $sub_categories;
             $data['total_stock'] = (double)$total_stock;
-            $data['total_selling_price'] = (double)$total_selling_price;
+            $data['total_buying_price'] = (double)$total_buying_price;
 
             return api_response($request, $sub_categories, 200, $data);
         } catch (\Throwable $e) {

@@ -130,6 +130,8 @@ class HomePageSettingController extends Controller
     {
         if ($request->has('platform')) {
             $platform = $request->platform;
+        } elseif ($request->hasHeader('Platform-Name')) {
+            $platform = $request->header('Platform-Name');
         } else {
             if ($request->portal == 'customer-app') {
                 $platform = 'android';
@@ -138,6 +140,9 @@ class HomePageSettingController extends Controller
             } else {
                 $platform = 'all';
             }
+        }
+        if (!isset($platform)) {
+            $platform = 'android';
         }
         return $platform;
     }

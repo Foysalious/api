@@ -588,6 +588,7 @@ return [
         env('SHEBA_MANGER_APP') => 'Partner',
         'user' => 'Profile'
     ],
+    'DEVELOPMENT_PLATFORMS' => ['android', 'ios', 'web', 'all'],
     'POS_SERVICE_UNITS' => [
         'ft'    => ['bn' => 'ফুট', 'en' => 'ft'],
         'sft'   => ['bn' => 'স্কয়ার ফিট', 'en' => 'sft'],
