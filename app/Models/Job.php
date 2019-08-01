@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Database\Query\Builder;
 use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Dal\JobDiscount\JobDiscount;
@@ -900,7 +901,7 @@ class Job extends BaseModel
     /**
      * @param $id
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
     public function isLastLogisticOrder($id)
     {
@@ -971,21 +972,20 @@ class Job extends BaseModel
 
     /**
      * @return \Sheba\Logistics\DTO\Order|null
-     * @throws \Exception
+     * @throws Exception
      */
     public function getCurrentLogisticOrder()
     {
-        if(!$this->isLogisticCreated()) return null;
+        if (!$this->isLogisticCreated()) return null;
+        if ($this->currentLogisticOrder) return $this->currentLogisticOrder;
+        $this->currentLogisticOrder = $this->logisticOrderManager->getMinimal($this->getCurrentLogisticOrderId());
 
-        if($this->currentLogisticOrder) return $this->currentLogisticOrder;
-
-        $this->currentLogisticOrder = $this->logisticOrderManager->get($this->getCurrentLogisticOrderId());
         return $this->currentLogisticOrder;
     }
 
     /**
      * @return \Sheba\Logistics\DTO\Order|null
-     * @throws \Exception
+     * @throws Exception
      */
     public function getFirstLogisticOrder()
     {
@@ -999,7 +999,7 @@ class Job extends BaseModel
 
     /**
      * @return \Sheba\Logistics\DTO\Order|null
-     * @throws \Exception
+     * @throws Exception
      */
     public function getLastLogisticOrder()
     {
@@ -1013,7 +1013,7 @@ class Job extends BaseModel
 
     /**
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
     public function isReschedulable()
     {
@@ -1025,7 +1025,7 @@ class Job extends BaseModel
 
     /**
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
     public function isPartnerChangeable()
     {
@@ -1038,7 +1038,7 @@ class Job extends BaseModel
 
     /**
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
     public function isResourceChangeable()
     {
@@ -1049,7 +1049,7 @@ class Job extends BaseModel
 
     /**
      * @return bool
-     * @throws \Exception
+     * @throws Exception
      */
     public function hasLogisticStarted()
     {

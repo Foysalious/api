@@ -85,6 +85,20 @@ class OrderManager
     }
 
     /**
+     * @param $order_id
+     * @return Order
+     * * @throws Exceptions\LogisticServerError
+     */
+    public function getMinimal($order_id)
+    {
+        $data = $this->repo->findMinimal($order_id);
+        $order = new Order();
+        $order->setStatus($data['status'])->setRider($data['rider'])->setId($data['id']);
+
+        return $order;
+    }
+
+    /**
      * @param $date
      * @param $time
      * @throws Exceptions\LogisticServerError
