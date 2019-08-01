@@ -24,13 +24,13 @@ class SendBusinessRequestEmail extends Job implements ShouldQueue
      * @param Mailer $mailer
      * @return void
      */
-    public function handle(Mail $mailer)
+    public function handle()
     {
         if ($this->attempts() <= 2) {
             $template = $this->template ?: 'emails.profile-creation';
             $subject = $this->subject ?: 'Profile Creation';
             $email = $this->email;
-            $mailer->send($template, ['email' => $this->email, 'password' => $this->password], function ($m) use ($subject, $email) {
+            Mail::send($template, ['email' => $this->email, 'password' => $this->password], function ($m) use ($subject, $email) {
                 $m->from('mail@sheba.xyz', 'Sheba.xyz');
                 $m->name('Sheba Accounts');
                 $m->to($email)->subject($subject);
