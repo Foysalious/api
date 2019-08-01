@@ -3,6 +3,7 @@
 use App\Models\PosOrder;
 use App\Models\PosOrderItem;
 use Sheba\Pos\Product\StockManager;
+use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
 use Sheba\Pos\Repositories\PosOrderItemRepository;
 use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Pos\Repositories\PosServiceRepository;
@@ -23,7 +24,7 @@ class Updater
     private $stockManager;
 
     public function __construct(PosOrderRepository $order_repo, PosOrderItemRepository $item_repo,
-                                PosServiceRepository $service_repo, StockManager $stock_manager)
+                                PosServiceRepositoryInterface $service_repo, StockManager $stock_manager)
     {
         $this->orderRepo = $order_repo;
         $this->itemRepo = $item_repo;

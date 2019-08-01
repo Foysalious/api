@@ -6,7 +6,7 @@ class PosRoute
     public function set($api)
     {
         $api->group(['prefix' => 'pos'], function ($api) {
-            $api->get('/units', 'Pos\ServiceController@getUnits');
+            $api->get('units', 'Pos\ServiceController@getUnits');
         });
     }
 }

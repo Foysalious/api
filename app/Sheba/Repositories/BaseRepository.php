@@ -73,6 +73,15 @@ class BaseRepository implements BaseRepositoryInterface
     }
 
     /**
+     * @param $value
+     * @return $this
+     */
+    public function whereRaw($value)
+    {
+        $this->model->whereRaw($value);
+    }
+
+    /**
      * @param $column_name
      * @param array $value
      * @return $this
@@ -171,4 +180,5 @@ class BaseRepository implements BaseRepositoryInterface
     {
         // TODO: Implement getByFieldOn() method.
     }
+
 }

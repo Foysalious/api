@@ -27,6 +27,12 @@ interface BaseRepositoryInterface
     public function where($column_name, $value);
 
     /**
+     * @param $value
+     * @return $this
+     */
+    public function whereRaw($value);
+
+    /**
      * @param $column_name
      * @param array $value
      * @return $this
