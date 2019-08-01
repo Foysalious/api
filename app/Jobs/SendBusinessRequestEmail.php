@@ -32,7 +32,6 @@ class SendBusinessRequestEmail extends Job implements ShouldQueue
             $email = $this->email;
             Mail::send($template, ['email' => $this->email, 'password' => $this->password], function ($m) use ($subject, $email) {
                 $m->from('mail@sheba.xyz', 'Sheba.xyz');
-                $m->name('Sheba Accounts');
                 $m->to($email)->subject($subject);
             });
         }
