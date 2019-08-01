@@ -1,5 +1,7 @@
 <?php namespace App\Http\Route\Prefix\V2;
 
+use App\Http\Route\Prefix\V2\Partner\PartnerRoute;
+
 class Route
 {
     public function set($api)
@@ -144,7 +146,7 @@ class Route
             (new CustomerRoute())->set($api);
             (new AffiliateRoute())->set($api);
             (new PartnerRoute())->set($api);
-
+            (new PaymentLinkRoute())->set($api);
             $api->group(['prefix' => 'top-up', 'middleware' => ['topUp.auth']], function ($api) {
                 $api->get('/vendor', 'TopUp\TopUpController@getVendor');
                 $api->post('/', 'TopUp\TopUpController@topUp');
