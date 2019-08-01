@@ -21,7 +21,6 @@ class SendBusinessRequestEmail extends Job implements ShouldQueue
     /**
      * Execute the job.
      *
-     * @param Mailer $mailer
      * @return void
      */
     public function handle()
