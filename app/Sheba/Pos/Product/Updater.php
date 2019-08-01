@@ -81,7 +81,7 @@ class Updater
             $this->updatedData['cost'] = $this->data['cost'];
         }
 
-        if ((isset($this->data['price']) && $this->data['price'] != $this->service->cost)) {
+        if ((isset($this->data['price']) && $this->data['price'] != $this->service->price)) {
             $this->updatedData['price'] = $this->data['price'];
         }
 
