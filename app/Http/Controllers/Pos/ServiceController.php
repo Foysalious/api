@@ -193,8 +193,8 @@ class ServiceController extends Controller
     {
         try {
             $units = [];
-            $unitsd = constants('POS_SERVICE_UNITS');
-            foreach ($unitsd as $key => $unit) {
+            $all_units = constants('POS_SERVICE_UNITS');
+            foreach ($all_units as $key => $unit) {
                 array_push($units, $unit);
             }
             return api_response($request, $units, 200, ['units' => $units]);
