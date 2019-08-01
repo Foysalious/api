@@ -1,24 +1,11 @@
-<?php namespace App\Http\Route\Prefix\V2;
+<?php namespace App\Http\Route\Prefix\V2\Partner\ID\Auth;
 
-class PartnerRoute
+
+class IndexRoute
 {
     public function set($api)
     {
-        $api->group(['prefix' => 'partners'], function ($api) {
-            $api->get('performance-faqs', 'FaqController@getPartnerPerformanceFaqs');
-            $api->get('welcome', 'Auth\PartnerRegistrationController@getWelcomeMessage');
-            $api->group(['prefix' => '{partner}'], function ($api) {
-                $api->get('/', 'PartnerController@show');
-                $api->get('locations', 'PartnerController@getLocations');
-                $api->get('locations/all', 'LocationController@getPartnerServiceLocations');
-                $api->get('categories', 'PartnerController@getCategories');
-                $api->get('categories/{category}/services', 'PartnerController@getServices');
-                $api->get('categories/{category}/addable-services', 'PartnerController@getAddableServices');
-            });
-            $api->get('rewards/faqs', 'Partner\PartnerRewardController@getFaqs');
-        });
-
-        $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['manager.auth']], function ($api) {
+        $api->group(['prefix' => '{partner}', 'middleware' => ['manager.auth']], function ($api) {
             $api->get('dashboard', 'Partner\DashboardController@get');
             $api->group(['prefix' => 'e-shop'], function ($api) {
                 $api->group(['prefix' => 'order'], function ($api) {
@@ -62,7 +49,6 @@ class PartnerRoute
                 $api->group(['prefix' => 'services'], function ($api) {
                     $api->get('/', 'Pos\ServiceController@index');
                     $api->post('/', 'Pos\ServiceController@store');
-                    $api->get('/units', 'Pos\ServiceController@getUnits');
                     $api->group(['prefix' => '{service}'], function ($api) {
                         $api->get('/', 'Pos\ServiceController@show');
                         $api->post('/', 'Pos\ServiceController@update');
@@ -215,9 +201,5 @@ class PartnerRoute
             $api->get('served-customers', 'PartnerController@getServedCustomers');
             $api->post('change-leave-status', 'PartnerController@changeLeaveStatus');
         });
-
-        (new PaymentLinkRoute())->set($api);
-
-        $api->post('training-status-update', 'ResourceController@trainingStatusUpdate');
     }
 }
