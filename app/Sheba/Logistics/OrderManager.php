@@ -80,6 +80,7 @@ class OrderManager
         $data = $this->repo->find($order_id);
         $order = new Order();
         $order->setStatus($data['status'])->setRider($data['rider'])->setId($data['id']);
+
         return $order;
     }
 
