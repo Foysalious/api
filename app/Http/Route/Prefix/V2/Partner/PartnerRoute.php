@@ -3,6 +3,7 @@
 
 use App\Http\Route\Prefix\V2\Partner\ID\NonAuth\IndexRoute as IDNonAuthRoute;
 use App\Http\Route\Prefix\V2\Partner\ID\Auth\IndexRoute as IDAuthRoute;
+use App\Http\Route\Prefix\V2\Partner\PosRoute as PosRoute;
 
 class PartnerRoute
 {
@@ -11,6 +12,7 @@ class PartnerRoute
         $api->group(['prefix' => 'partners'], function ($api) {
             (new IDNonAuthRoute())->set($api);
             (new IDAuthRoute())->set($api);
+            (new PosRoute())->set($api);
             $api->get('performance-faqs', 'FaqController@getPartnerPerformanceFaqs');
             $api->get('welcome', 'Auth\PartnerRegistrationController@getWelcomeMessage');
             $api->get('rewards/faqs', 'Partner\PartnerRewardController@getFaqs');

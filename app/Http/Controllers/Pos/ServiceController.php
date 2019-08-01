@@ -20,6 +20,7 @@ use Illuminate\Validation\ValidationException;
 use Sheba\ModificationFields;
 use Sheba\Pos\Repositories\PosServiceDiscountRepository;
 use Throwable;
+use Tinify\Exception;
 
 class ServiceController extends Controller
 {
@@ -41,21 +42,21 @@ class ServiceController extends Controller
                 $base_query->whereIn('pos_category_id', $category_ids);
             }
 
-                $base_query->select($this->getSelectColumnsOfService())
+            $base_query->select($this->getSelectColumnsOfService())
                 ->partner($partner->id)->get()
                 ->each(function ($service) use (&$services) {
                     $services[] = [
-                        'id'                    => $service->id,
-                        'name'                  => $service->name,
-                        'app_thumb'             => $service->app_thumb,
-                        'app_banner'            => $service->app_banner,
-                        'price'                 => $service->price,
-                        'stock'                 => $service->stock,
-                        'discount_applicable'   => $service->discount() ? true : false,
-                        'discounted_price'      => $service->discount() ? $service->getDiscountedAmount() : 0,
-                        'vat_percentage'        => $service->vat_percentage
+                        'id' => $service->id,
+                        'name' => $service->name,
+                        'app_thumb' => $service->app_thumb,
+                        'app_banner' => $service->app_banner,
+                        'price' => $service->price,
+                        'stock' => $service->stock,
+                        'discount_applicable' => $service->discount() ? true : false,
+                        'discounted_price' => $service->discount() ? $service->getDiscountedAmount() : 0,
+                        'vat_percentage' => $service->vat_percentage
                     ];
-            });
+                });
             if (!$services) return api_response($request, null, 404);
 
             return api_response($request, $services, 200, ['services' => $services]);
@@ -182,6 +183,21 @@ class ServiceController extends Controller
             $deleter->delete($request->service);
 
             return api_response($request, null, 200, ['msg' => 'Product Updated Successfully']);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getUnits(Request $request)
+    {
+        try {
+            $units = [];
+            $all_units = constants('POS_SERVICE_UNITS');
+            foreach ($all_units as $key => $unit) {
+                array_push($units, $unit);
+            }
+            return api_response($request, $units, 200, ['units' => $units]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

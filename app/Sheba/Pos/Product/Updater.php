@@ -38,7 +38,6 @@ class Updater
         $this->saveImages();
         $this->format();
         $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'is_vat_percentage_off', 'is_stock_off']);
-
         if (!empty($this->updatedData)) $this->serviceRepo->update($this->service, $this->updatedData);
     }
 
@@ -81,7 +80,7 @@ class Updater
             $this->updatedData['cost'] = $this->data['cost'];
         }
 
-        if ((isset($this->data['price']) && $this->data['price'] != $this->service->cost)) {
+        if ((isset($this->data['price']) && $this->data['price'] != $this->service->price)) {
             $this->updatedData['price'] = $this->data['price'];
         }
 
@@ -91,6 +90,10 @@ class Updater
 
         if ((isset($this->data['category_id']) && $this->data['category_id'] != $this->service->pos_category_id)) {
             $this->updatedData['pos_category_id'] = $this->data['category_id'];
+        }
+
+        if ((isset($this->data['unit']) && $this->data['unit'] != $this->service->unit)) {
+            $this->updatedData['unit'] = $this->data['unit'];
         }
     }
 

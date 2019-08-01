@@ -1,6 +1,7 @@
 <?php namespace Sheba\Logistics\DTO;
 
 use Carbon\Carbon;
+use Exception;
 use Sheba\Helpers\BasicGetter;
 use Sheba\Logistics\Literals\Statuses;
 
@@ -279,7 +280,7 @@ class Order
 
     /**
      * @return string
-     * @throws \Exception
+     * @throws Exception
      */
     public function getReadableStatus()
     {
@@ -345,7 +346,7 @@ class Order
 
     /**
      * @return array
-     * @throws \Exception
+     * @throws Exception
      */
     public function formatForPartner()
     {

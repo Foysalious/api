@@ -17,6 +17,17 @@ class OrderRepository extends BaseRepository
     }
 
     /**
+     * @param $id
+     * @return mixed
+     * @throws LogisticServerError
+     */
+    public function findMinimal($id)
+    {
+        $result = $this->client->get("orders/$id/minimal");
+        return !empty($result) ? $result['data'] : $result;
+    }
+
+    /**
      * @param $data
      * @return mixed
      * @throws LogisticServerError
