@@ -5,6 +5,7 @@ use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
+use Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
 use Sheba\Repositories\PartnerBasicInformationRepository;
 use Sheba\Repositories\PartnerRepository;
 use DB;
@@ -22,7 +23,7 @@ class Creator
     /** @var Partner $partner */
     private $partner;
 
-    public function __construct(PartnerRepository $partner_repository, PartnerBasicInformationRepository $basic_information_repository)
+    public function __construct(PartnerRepositoryInterface $partner_repository, PartnerBasicInformationRepository $basic_information_repository)
     {
         $this->partnerRepository = $partner_repository;
         $this->partnerBasicInformationRepository = $basic_information_repository;

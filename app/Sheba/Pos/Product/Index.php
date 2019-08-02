@@ -1,15 +1,12 @@
 <?php namespace Sheba\Pos\Product;
 
-
-use phpDocumentor\Reflection\Types\Boolean;
-use phpDocumentor\Reflection\Types\Integer;
 use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
 
 class Index
 {
     private $posServiceRepository;
     private $partnerId;
-    private $publishedForShop;
+    private $isPublishedForShop;
     private $isPublished;
 
     public function __construct(PosServiceRepositoryInterface $pos_service_repository)
