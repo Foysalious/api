@@ -30,7 +30,7 @@ class VendorFactory
      */
     public function getById($id)
     {
-        if(!in_array($id, $this->getConstants())) {
+        if (!in_array($id, $this->getConstants())) {
             throw new Exception('Invalid Vendor');
         }
         return app($this->classes[$id - 1])->setModel($this->getModel($id));
@@ -43,7 +43,7 @@ class VendorFactory
      */
     public function getByName($name)
     {
-        if(!in_array($name, array_keys($this->getConstants()))) {
+        if (!in_array($name, array_keys($this->getConstants()))) {
             throw new Exception('Invalid Vendor');
         }
         $id = $this->getConstants()[$name];
@@ -57,7 +57,7 @@ class VendorFactory
      */
     public function getIdByName($name)
     {
-        if(!in_array($name, array_keys($this->getConstants()))) {
+        if (!in_array($name, array_keys($this->getConstants()))) {
             throw new Exception('Invalid Vendor');
         }
         return $this->getConstants()[$name];
@@ -83,7 +83,7 @@ class VendorFactory
      */
     public static function sslVendorsId()
     {
-        return [self::GP, self::TELETALK];
+        return [self::GP, self::TELETALK, self::BANGLALINK];
     }
 
     /**
