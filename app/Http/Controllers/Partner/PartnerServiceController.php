@@ -21,7 +21,7 @@ class PartnerServiceController extends Controller
         }])->get();
         $master_categories = collect();
         foreach ($partner_services as $partner_service) {
-            if ($partner_service->service->publication_status || $partner_service->service->is_published_for_backend)  {
+            if ($partner_service->service->publication_status || $partner_service->service->is_published_for_backend) {
                 $master_category = $partner_service->service->category->parent;
                 $master_category_in_collection = $master_categories->where('id', $master_category->id)->first();
                 if (!$master_category_in_collection) {
@@ -74,7 +74,7 @@ class PartnerServiceController extends Controller
             $service_ids = explode(',', $request->id);
             foreach ($service_ids as $service_id) {
                 $response = $this->validateAndStoreIndividualService($service_id, $partner, $request);
-                if(!is_null($response)) return $response;
+                if (!is_null($response)) return $response;
             }
             return api_response($request, 1, 200);
         } catch (\Throwable $e) {
@@ -130,6 +130,7 @@ class PartnerServiceController extends Controller
     private function _updateRequest($data, Partner $partner, Service $service)
     {
         $partner_service = $service->pivot;
+        $service_variable = $service->variable();
         $update_data = [
             'partner_service_id' => $partner_service->id,
             'old_options' => $partner_service->options,
@@ -144,11 +145,11 @@ class PartnerServiceController extends Controller
         }
 
         if ($service->is_base_price_applicable) {
-            $update_data['old_base_prices'] = $partner_service->base_prices ?: $data['base_prices'];
-            $update_data['new_base_prices'] = $data['base_prices'];
+            $update_data['old_base_prices'] = $partner_service->base_prices ?: json_encode($service_variable->base_prices);
+            $update_data['new_base_prices'] = json_encode($service_variable->base_prices);
 
-            $update_data['old_base_quantity'] = $partner_service->base_quantity ?: $data['base_quantity'];
-            $update_data['new_base_quantity'] = $data['base_quantity'];
+            $update_data['old_base_quantity'] = $partner_service->base_quantity ?: json_encode($service_variable->base_quantity);
+            $update_data['new_base_quantity'] = json_encode($service_variable->base_quantity);
         }
         PartnerServicePricesUpdate::create($this->withCreateModificationField($update_data));
         notify()->department(9)->send($this->createNotificationData($partner, $service));
@@ -176,7 +177,7 @@ class PartnerServiceController extends Controller
     {
         $service = Service::find((int)$service_id);
         if (!$service) return api_response($request, null, 404, ['message' => 'Service not found']);
-        if ($partner->services()->find($service->id)) return api_response($request, null, 403, ['message' => 'Service already added.','service_id' => $service_id]);
+        if ($partner->services()->find($service->id)) return api_response($request, null, 403, ['message' => 'Service already added.', 'service_id' => $service_id]);
         if (!$partner->categories()->find($service->category_id)) return api_response($request, null, 403, ['message' => 'Category not added.']);
         /**@var Service $service * */
         $variables = json_decode($service->variables);
