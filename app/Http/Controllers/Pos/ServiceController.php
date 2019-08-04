@@ -66,7 +66,7 @@ class ServiceController extends Controller
     }
 
 
-    public function show($service, Request $request)
+    public function show($partner,$service, Request $request)
     {
         try {
             $service = PartnerPosService::with('category', 'discounts')->find($service);
