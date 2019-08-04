@@ -27,7 +27,8 @@ use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Checkout\Services\ServiceObject;
 use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Dal\Discount\InvalidDiscountType;
-use Sheba\Jobs\JobDiscountHandler;
+use Sheba\JobDiscount\JobDiscountCheckingParams;
+use Sheba\JobDiscount\JobDiscountHandler;
 use Sheba\Jobs\JobStatuses;
 use Sheba\Jobs\PreferredTime;
 use Sheba\ModificationFields;
@@ -356,9 +357,10 @@ class Checkout
             $job_data['logistic_nature'] = $this->category->logistic_nature;
             $job_data['one_way_logistic_init_event'] = $this->category->one_way_logistic_init_event;
         }
-        $this->jobDiscountHandler->setType(DiscountTypes::DELIVERY)
-            ->setCategory($this->category)->setPartner($this->partner)
-            ->setDiscountableAmount($charge)->calculateDiscount();
+        $discount_checking_params = (new JobDiscountCheckingParams())
+            ->setDiscountableAmount($charge)->setOrderAmount($this->orderAmount);
+        $this->jobDiscountHandler->setType(DiscountTypes::DELIVERY)->setCategory($this->category)
+            ->setPartner($this->partner)->setCheckingParams($discount_checking_params)->calculate();
 
         if($this->jobDiscountHandler->hasDiscount()) {
             $job_data['discount'] += $this->jobDiscountHandler->getApplicableAmount();
