@@ -6,6 +6,7 @@ class Index
 {
     private $posServiceRepository;
     private $partnerId;
+    private $partnerSlug;
     private $isPublishedForShop;
     private $isPublished;
 
@@ -48,14 +49,26 @@ class Index
         return $this;
     }
 
+    public function setPartnerSlug($slug)
+    {
+        $this->partnerSlug = $slug;
+        return $this;
+    }
+
 
     public function fetch()
     {
-        return $this->posServiceRepository->where('publication_status', $this->isPublished)
+        $query = $this->posServiceRepository
+            ->where('publication_status', $this->isPublished)
             ->where('is_published_for_shop', $this->isPublishedForShop)
-            ->where('partner_id', $this->partnerId)
             ->whereRaw("stock > 0")
-            ->select(['id', 'name', 'thumb', 'price', 'unit', 'stock'])
-            ->get();
+            ->select(['id', 'name', 'thumb', 'price', 'unit', 'stock']);
+        if ($this->partnerId) $query = $query->where('partner_id', $this->partnerId);
+        else {
+            $query = $query->whereHas('partner', function ($q) {
+                $q->where('sub_domain', $this->partnerSlug);
+            });
+        }
+        return $query->get();
     }
 }

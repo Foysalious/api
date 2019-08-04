@@ -6,7 +6,7 @@ class PosRoute
     public function set($api)
     {
         $api->group(['prefix' => 'pos'], function ($api) {
-            $api->get('shop-products', 'Partner\PartnerPosController@getShopProducts');
+            $api->get('products', 'Partner\PartnerPosController@getProducts');
         });
     }
 }
