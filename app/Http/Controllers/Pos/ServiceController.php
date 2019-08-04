@@ -66,15 +66,12 @@ class ServiceController extends Controller
         }
     }
 
-    /**
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function show(Request $request)
+
+    public function show($service, Request $request)
     {
         try {
-            $service = PartnerPosService::with('category', 'discounts')->find($request->service);
-            if (!$service) return api_response($request, null, 404, ['msg' => 'Service Not Found']);
+            $service = PartnerPosService::with('category', 'discounts')->find($service);
+            if (!$service) return api_response($request, null, 404);
 
             $manager = new Manager();
             $manager->setSerializer(new ArraySerializer());
