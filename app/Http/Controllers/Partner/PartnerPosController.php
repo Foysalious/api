@@ -19,6 +19,7 @@ class PartnerPosController extends Controller
             if (count($products) > 0) return api_response($request, $products, 200, ['products' => $products]);
             else return api_response($request, null, 404);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             api_response($request, null, 500);
         }
     }
