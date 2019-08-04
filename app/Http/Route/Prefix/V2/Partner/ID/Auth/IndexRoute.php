@@ -53,6 +53,7 @@ class IndexRoute
                         $api->get('/', 'Pos\ServiceController@show');
                         $api->post('/', 'Pos\ServiceController@update');
                         $api->delete('/', 'Pos\ServiceController@destroy');
+                        $api->post('/toggle-publish-for-shop', 'Pos\ServiceController@togglePublishForShopStatus');
                     });
                 });
                 $api->group(['prefix' => 'orders'], function ($api) {
