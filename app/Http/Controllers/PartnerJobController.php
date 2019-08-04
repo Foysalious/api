@@ -6,7 +6,7 @@ use App\Models\JobUpdateLog;
 use App\Models\Resource;
 use App\Repositories\PartnerOrderRepository;
 use App\Repositories\ResourceJobRepository;
-use App\Sheba\JobTime;
+use Sheba\Jobs\JobTime;
 use App\Sheba\UserRequestInformation;
 use Carbon\Carbon;
 use DB;

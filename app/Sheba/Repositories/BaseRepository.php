@@ -118,9 +118,10 @@ class BaseRepository implements BaseRepositoryInterface
     public function select(array $column_name)
     {
         $select = $column_name[0];
-        foreach ($column_name as $column) {
+        foreach (array_slice($column_name, 1) as $column) {
             $select .= ',' . $column;
         }
+        dd($select);
         return $this->model->select($select);
     }
 

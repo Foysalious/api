@@ -3,21 +3,19 @@
 use App\Http\Controllers\Controller;
 use App\Models\PartnerPosService;
 use App\Models\PartnerPosServiceDiscount;
-
 use App\Models\PosCategory;
-use App\Transformers\CustomSerializer;
 use App\Transformers\PosServiceTransformer;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use League\Fractal\Serializer\ArraySerializer;
+use Sheba\ModificationFields;
 use Sheba\Pos\Product\Creator as ProductCreator;
 use Sheba\Pos\Product\Deleter;
 use Sheba\Pos\Product\Updater as ProductUpdater;
-use Carbon\Carbon;
-use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
-use Sheba\ModificationFields;
 use Sheba\Pos\Repositories\PosServiceDiscountRepository;
 use Throwable;
 use Tinify\Exception;
@@ -54,7 +52,8 @@ class ServiceController extends Controller
                         'stock' => $service->stock,
                         'discount_applicable' => $service->discount() ? true : false,
                         'discounted_price' => $service->discount() ? $service->getDiscountedAmount() : 0,
-                        'vat_percentage' => $service->vat_percentage
+                        'vat_percentage' => $service->vat_percentage,
+                        'is_published_for_shop' => (int)$service->is_published_for_shop
                     ];
                 });
             if (!$services) return api_response($request, null, 404);
@@ -66,15 +65,12 @@ class ServiceController extends Controller
         }
     }
 
-    /**
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function show(Request $request)
+
+    public function show($partner,$service, Request $request)
     {
         try {
-            $service = PartnerPosService::with('category', 'discounts')->find($request->service);
-            if (!$service) return api_response($request, null, 404, ['msg' => 'Service Not Found']);
+            $service = PartnerPosService::with('category', 'discounts')->find($service);
+            if (!$service) return api_response($request, null, 404);
 
             $manager = new Manager();
             $manager->setSerializer(new ArraySerializer());
@@ -208,6 +204,16 @@ class ServiceController extends Controller
         }
     }
 
+    public function togglePublishForShopStatus(Request $request, $partner, $service)
+    {
+        $posService = PartnerPosService::query()->where([['id', $service], ['partner_id', $partner]])->first();
+        if (empty($posService)) {
+            return api_response($request, null, 404, ['message' => 'Requested service not found']);
+        }
+        $posService->is_published_for_shop = !(int)$posService->is_published_for_shop;
+        $posService->save();
+        return api_response($request, null, 200, ['message' => 'Service successfully ' . ($posService->is_published_for_shop ? 'published' : 'unpublished')]);
+    }
     /**
      * @param Request $request
      * @param PartnerPosService $partner_pos_service
@@ -225,6 +231,6 @@ class ServiceController extends Controller
 
     private function getSelectColumnsOfService()
     {
-        return ['id', 'name', 'app_thumb', 'app_banner', 'price', 'stock', 'vat_percentage'];
+        return ['id', 'name', 'app_thumb', 'app_banner', 'price', 'stock', 'vat_percentage', 'is_published_for_shop'];
     }
 }

@@ -1,7 +1,4 @@
-<?php
-
-namespace App\Sheba;
-
+<?php namespace Sheba\Jobs;
 
 use Carbon\Carbon;
 
@@ -49,7 +46,7 @@ class JobTime
     {
         $today_slots = [];
         foreach (constants('JOB_PREFERRED_TIMES') as $time) {
-            if ($time == "Anytime" || Carbon::now()->lte(Carbon::createFromTimestamp(strtotime(explode(' - ', $time)[1])))) {
+            if ($time == "Anytime" || Carbon::now()->lte((new PreferredTime($time))->getEnd())) {
                 $today_slots[$time] = $time;
             }
         }

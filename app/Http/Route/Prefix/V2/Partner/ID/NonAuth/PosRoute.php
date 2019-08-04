@@ -7,6 +7,7 @@ class PosRoute
     {
         $api->group(['prefix' => 'pos'], function ($api) {
             $api->get('products', 'Partner\PartnerPosController@getProducts');
+            $api->get('products/{product}', 'Pos\ServiceController@show');
         });
     }
 }
