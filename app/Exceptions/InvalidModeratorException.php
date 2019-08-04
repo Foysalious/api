@@ -9,7 +9,10 @@
 namespace App\Exceptions;
 
 
-class InvalidModeratorException extends \Exception
+use Exception;
+use Throwable;
+
+class InvalidModeratorException extends Exception
 {
     public function __construct($message = "", $code = 402, Throwable $previous = null)
     {

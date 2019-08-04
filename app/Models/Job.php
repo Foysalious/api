@@ -9,6 +9,7 @@ use Sheba\Helpers\TimeFrame;
 use Sheba\Jobs\CiCalculator;
 use Sheba\Dal\Complain\Model as Complain;
 use Sheba\Jobs\JobStatuses;
+use Sheba\Jobs\PreferredTime;
 use Sheba\Jobs\Premises;
 use Sheba\Logistics\Literals\Natures as LogisticNatures;
 use Sheba\Logistics\Literals\OneWayInitEvents as OneWayLogisticInitEvents;
@@ -670,8 +671,7 @@ class Job extends BaseModel
     public function getReadablePreferredTimeAttribute()
     {
         if ($this->preferred_time !== 'Anytime') {
-            $time = explode('-', $this->preferred_time);
-            return (Carbon::parse($time[0]))->format('g:i A') . '-' . (Carbon::parse($time[1]))->format('g:i A');
+            return (new PreferredTime($this->preferred_time))->toReadableString();
         }
         return $this->preferred_time;
     }
