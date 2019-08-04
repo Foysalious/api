@@ -62,7 +62,10 @@ class Index
             ->where('publication_status', $this->isPublished)
             ->where('is_published_for_shop', $this->isPublishedForShop)
             ->whereRaw("stock > 0")
-            ->select(['id', 'name', 'thumb', 'price', 'unit', 'stock']);
+//            ->whereHas('category', function ($q) {
+//                $q->published();
+//            })
+            ->select(['id', 'name', 'thumb', 'price', 'unit', 'stock', 'pos_category_id', 'vat_percentage']);
         if ($this->partnerId) $query = $query->where('partner_id', $this->partnerId);
         else {
             $query = $query->whereHas('partner', function ($q) {
