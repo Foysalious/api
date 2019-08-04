@@ -27,9 +27,9 @@ class CategoryController extends Controller
             if (!$sub_categories) return api_response($request, null, 404);
 
             $sub_categories->each(function ($category) use (&$total_items, &$total_buying_price) {
-                $category->services->each(function ($service) use (&$total_item, &$total_buying_price) {
+                $category->services->each(function ($service) use (&$total_items, &$total_buying_price) {
                     $service->unit = $service->unit ? constants('POS_SERVICE_UNITS')[$service->unit] : null;
-                    $total_item ++;
+                    $total_items++;
                     $total_buying_price += $service->cost * $service->stock;
                 });
             });
