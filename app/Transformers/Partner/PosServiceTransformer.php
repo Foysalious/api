@@ -3,7 +3,7 @@
 
 use League\Fractal\TransformerAbstract;
 
-class ShopProductTransformer extends TransformerAbstract
+class PosServiceTransformer extends TransformerAbstract
 {
 
     public function transform($pos_service)

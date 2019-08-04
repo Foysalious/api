@@ -1,7 +1,7 @@
 <?php namespace App\Http\Controllers\Partner;
 
 use App\Http\Controllers\Controller;
-use App\Transformers\Partner\ShopProductTransformer;
+use App\Transformers\Partner\PosServiceTransformer;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
@@ -20,8 +20,11 @@ class PartnerPosController extends Controller
             $products = $products->fetch();
             if (count($products) > 0) {
                 $categories = $posCategoryRepository->whereIn('id', $products->pluck('pos_category_id')->unique()->toArray())->select(['id', 'name'])->get();
-                $resource = new Collection($products, new ShopProductTransformer());
-                return api_response($request, $products, 200, ['products' => $fractal->createData($resource)->toArray()['data'], 'categories' => $categories]);
+                $resource = new Collection($products, new PosServiceTransformer());
+                return api_response($request, $products, 200, ['products' => $fractal->createData($resource)->toArray()['data'], 'categories' => $categories->map(function ($category) use ($products) {
+                    $category['total_products'] = $products->where('pos_category_id', $category->id)->count();
+                    return $category;
+                })]);
             } else return api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
