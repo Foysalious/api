@@ -41,4 +41,9 @@ class PartnerWithdrawalRequest extends Model
         $end_time = $date->copy()->next($this->deadline)->setTime(17, 59, 59)->toDateTimeString();
         return [$start_time, $end_time];
     }
+
+    public function scopeActive($query)
+    {
+        return $query->whereIn('status', ['pending', 'approval_pending', 'approved']);
+    }
 }
