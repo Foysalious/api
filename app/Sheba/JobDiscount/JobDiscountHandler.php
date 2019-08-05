@@ -94,7 +94,16 @@ class JobDiscountHandler
 
     public function getData()
     {
-        return ['discount_id' => $this->discount->id, 'type' => $this->discount->type, 'amount' => $this->getApplicableAmount(), 'original_amount' => $this->discount->amount, 'is_percentage' => $this->discount->is_percentage, 'cap' => $this->discount->cap, 'sheba_contribution' => $this->discount->sheba_contribution, 'partner_contribution' => $this->discount->partner_contribution,];
+        return [
+            'discount_id' => $this->discount->id,
+            'type' => $this->discount->type,
+            'amount' => $this->getApplicableAmount(),
+            'original_amount' => $this->discount->amount,
+            'is_percentage' => $this->discount->is_percentage,
+            'cap' => $this->discount->cap,
+            'sheba_contribution' => $this->discount->sheba_contribution,
+            'partner_contribution' => $this->discount->partner_contribution
+        ];
     }
 
     public function create(Job $job)
@@ -102,7 +111,7 @@ class JobDiscountHandler
         $discount_data = $this->getData();
         if (empty($discount_data)) return;
         $discount_data['job_id'] = $job->id;
-        $this->jobDiscountRepo->create($this->getData());
+        $this->jobDiscountRepo->create($discount_data);
     }
 
     /**
