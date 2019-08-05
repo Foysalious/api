@@ -9,8 +9,9 @@ use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Sheba\Checkout\Adapters\SubscriptionOrderAdapter;
-use Sheba\Dal\Discount\DiscountRepository;
 use Sheba\Dal\Discount\DiscountTypes;
+use Sheba\JobDiscount\JobDiscountCheckingParams;
+use Sheba\JobDiscount\JobDiscountHandler;
 use Sheba\ModificationFields;
 use Sheba\RequestIdentification;
 use Throwable;
@@ -22,12 +23,12 @@ class OrderComplete extends PaymentComplete
     CONST ONLINE_PAYMENT_THRESHOLD_MINUTES = 9;
     CONST ONLINE_PAYMENT_DISCOUNT = 10;
 
-    private $discountRepo;
+    private $jobDiscountHandler;
 
-    public function __construct(DiscountRepository $discount_repo)
+    public function __construct(JobDiscountHandler $job_discount_handler)
     {
         parent::__construct();
-        $this->discountRepo = $discount_repo;
+        $this->jobDiscountHandler = $job_discount_handler;
     }
 
     /**
@@ -120,26 +121,25 @@ class OrderComplete extends PaymentComplete
         }
     }
 
+    /**
+     * @param PartnerOrder $partner_order
+     * @throws \Sheba\Dal\Discount\InvalidDiscountType
+     */
     private function giveOnlineDiscount(PartnerOrder $partner_order)
     {
         $partner_order->calculate(true);
         $job = $partner_order->getActiveJob();
         if ($job->isOnlinePaymentDiscountApplicable()) {
-            $discount = $this->discountRepo->findValidFor(DiscountTypes::ONLINE_PAYMENT);
-            if($discount) {
-                $applied_amount = $discount->getApplicableAmount($partner_order->due);
-                $job->discounts()->create($this->withBothModificationFields([
-                    'discount_id' => $discount->id,
-                    'type' => $discount->type,
-                    'amount' => $applied_amount,
-                    'original_amount' => $discount->amount,
-                    'is_percentage' => $discount->is_percentage,
-                    'cap' => $discount->cap,
-                    'sheba_contribution' => $discount->sheba_contribution,
-                    'partner_contribution' => $discount->partner_contribution,
-                ]));
 
-                $job->discount += $applied_amount;
+            $discount_checking_params = (new JobDiscountCheckingParams())
+                ->setDiscountableAmount($partner_order->due)->setOrderAmount($partner_order->grossAmount);
+
+            $this->jobDiscountHandler->setType(DiscountTypes::ONLINE_PAYMENT)
+                ->setCheckingParams($discount_checking_params)->calculate();
+
+            if($this->jobDiscountHandler->hasDiscount()) {
+                $this->jobDiscountHandler->create($job);
+                $job->discount += $this->jobDiscountHandler->getApplicableAmount();
                 $job->update();
             }
         }

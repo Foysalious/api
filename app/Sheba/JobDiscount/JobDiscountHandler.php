@@ -1,10 +1,11 @@
-<?php namespace Sheba\Jobs;
+<?php namespace Sheba\JobDiscount;
 
 use App\Models\Category;
 use App\Models\Job;
 use App\Models\Partner;
 use Sheba\Dal\Discount\Discount;
 use Sheba\Dal\Discount\DiscountRepository;
+use Sheba\Dal\Discount\DiscountRules;
 use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Dal\JobDiscount\JobDiscountRepository;
@@ -21,7 +22,8 @@ class JobDiscountHandler
     private $category;
     /** @var Partner */
     private $partner;
-    private $discountableAmount;
+    /** @var JobDiscountCheckingParams */
+    private $params;
 
     /** @var Discount */
     private $discount;
@@ -56,18 +58,29 @@ class JobDiscountHandler
         return $this;
     }
 
-    public function setDiscountableAmount($amount)
+    public function setCheckingParams(JobDiscountCheckingParams $params)
     {
-        $this->discountableAmount = $amount;
+        $this->params = $params;
         return $this;
     }
 
-    public function calculateDiscount()
+    public function calculate()
     {
         $against = [];
         if($this->category) $against[] = $this->category;
         if($this->partner) $against[] = $this->partner;
-        $this->discount = $this->discountRepo->findValidForAgainst($this->type, $against);
+        if(empty($against)) {
+            $discounts = $this->discountRepo->getValidForAgainst($this->type, $against);
+        } else {
+            $discounts = $this->discountRepo->getValidFor($this->type);
+        }
+
+        foreach ($discounts as $discount) {
+            if($this->check($discount)) {
+                $this->discount = $discount;
+                break;
+            }
+        }
     }
 
     public function hasDiscount()
@@ -77,7 +90,7 @@ class JobDiscountHandler
 
     public function getApplicableAmount()
     {
-        return $this->discount->getApplicableAmount($this->discountableAmount);
+        return $this->discount->getApplicableAmount($this->params->getDiscountableAmount());
     }
 
     public function getData()
@@ -100,5 +113,17 @@ class JobDiscountHandler
         if(empty($discount_data)) return;
         $discount_data['job_id'] = $job->id;
         $this->jobDiscountRepo->create($this->getData());
+    }
+
+    /**
+     * @param Discount $discount
+     * @return bool
+     */
+    private function check(Discount $discount)
+    {
+        /** @var DiscountRules $rules */
+        $rules = $discount->rules;
+        if($this->params->getOrderAmount() < $rules->getMinOrderAmount()) return false;
+        return true;
     }
 }
