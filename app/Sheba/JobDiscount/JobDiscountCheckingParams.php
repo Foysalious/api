@@ -1,6 +1,5 @@
 <?php namespace Sheba\JobDiscount;
 
-
 class JobDiscountCheckingParams
 {
     /** @var float */
