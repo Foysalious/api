@@ -4,6 +4,7 @@ use Carbon\Carbon;
 use DB;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Dal\Complain\Model as Complain;
+use Sheba\HasWallet;
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
 use Sheba\Location\Distance\DistanceStrategy;
@@ -16,7 +17,7 @@ use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
 use Sheba\Voucher\VoucherCodeGenerator;
 
-class Partner extends Model implements Rewardable, TopUpAgent
+class Partner extends Model implements Rewardable, TopUpAgent, HasWallet
 {
     use Wallet;
     use TopUpTrait;

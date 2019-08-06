@@ -3,6 +3,7 @@
 use App\Models\PosOrder;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
+use Sheba\HasWallet;
 use Sheba\ModificationFields;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
@@ -16,11 +17,13 @@ class PaymentLinkOrderComplete extends PaymentComplete
     private $paymentLinkRepository;
     /** @var array $paymentLink */
     private $paymentLink;
+    private $paymentLinkCommission;
 
     public function __construct()
     {
         parent::__construct();
         $this->paymentLinkRepository = app(PaymentLinkRepositoryInterface::class);
+        $this->paymentLinkCommission = 2.5;
     }
 
     public function complete()
@@ -34,12 +37,13 @@ class PaymentLinkOrderComplete extends PaymentComplete
                 $this->setModifier($customer = $payable->user);
                 $this->payment->transaction_details = null;
                 $this->completePayment();
-                $amount = $this->getAmountAfterCommission();
-                $this->getPaymentLinkReceiver()->rechargeWallet($amount, [
-                    'amount' => $amount,
+                $recharge_wallet_amount = $this->payment->payable->amount;
+                $payment_receiver = $this->getPaymentLinkReceiver();
+                $payment_receiver->rechargeWallet($recharge_wallet_amount, [
                     'transaction_details' => $this->payment->getShebaTransaction()->toJson(),
-                    'type' => 'Credit', 'log' => 'Credited through payment link payment'
+                    'log' => 'Credited through payment link payment'
                 ]);
+                $payment_receiver->minusWallet($this->getPaymentLinkFee($recharge_wallet_amount), ['log' => 'Amount deducted for as PaymentLink charge']);
                 $this->clearPosOrder();
             });
         } catch (QueryException $e) {
@@ -74,15 +78,18 @@ class PaymentLinkOrderComplete extends PaymentComplete
         }
     }
 
-    private function getAmountAfterCommission()
-    {
-        if (strtolower($this->paymentLink['userType']) == 'partner') return ($this->payment->payable->amount * 97.5) / 100;
-        else return $this->payment->payable->amount;
-    }
-
+    /**
+     * @return HasWallet
+     */
     private function getPaymentLinkReceiver()
     {
         $model_name = "App\\Models\\" . ucfirst($this->paymentLink['userType']);
         return $model_name::find($this->paymentLink['userId']);
     }
+    
+    private function getPaymentLinkFee($amount)
+    {
+        return ($amount * $this->paymentLinkCommission) / 100;
+    }
+
 }

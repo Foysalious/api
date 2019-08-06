@@ -19,6 +19,16 @@ trait Wallet
     {
         DB::transaction(function () use ($amount, $transaction_data) {
             $this->creditWallet($amount);
+            $transaction_data = array_merge($transaction_data, ['amount' => $amount, 'type' => 'Credit']);
+            $this->walletTransaction($transaction_data);
+        });
+    }
+
+    public function minusWallet($amount, $transaction_data)
+    {
+        DB::transaction(function () use ($amount, $transaction_data) {
+            $this->debitWallet($amount);
+            $transaction_data = array_merge($transaction_data, ['amount' => $amount, 'type' => 'Debit']);
             $this->walletTransaction($transaction_data);
         });
     }
