@@ -3,8 +3,8 @@
 namespace App\GraphQL\Type;
 
 use Carbon\Carbon;
+use Folklore\GraphQL\Support\Type as GraphQlType;
 use GraphQL;
-use \Folklore\GraphQL\Support\Type as GraphQlType;
 use GraphQL\Type\Definition\Type;
 
 class JobType extends GraphQlType
@@ -23,8 +23,10 @@ class JobType extends GraphQlType
             'due' => ['type' => Type::float()],
             'status' => ['type' => Type::string()],
             'pickup_address' => ['type' => Type::string()],
+            'pickup_address_geo' => ['type' => Type::string()],
             'pickup_area' => ['type' => Type::string()],
             'destination_area' => ['type' => Type::string()],
+            'destination_address_geo' => ['type' => Type::string()],
             'destination_address' => ['type' => Type::string()],
             'schedule_date' => ['type' => Type::string()],
             'schedule_date_timestamp' => ['type' => Type::int()],
@@ -46,6 +48,7 @@ class JobType extends GraphQlType
             'can_take_review' => ['type' => Type::boolean()],
             'can_pay' => ['type' => Type::boolean()],
             'can_add_promo' => ['type' => Type::int()],
+            'is_car_rental' => ['type' => Type::boolean()]
         ];
     }
 
@@ -220,6 +223,21 @@ class JobType extends GraphQlType
         else {
             return $due > 0;
         }
+    }
+
+    protected function resolveIsCarRentalField($root, $args)
+    {
+        return !!$root->isRentCar();
+    }
+
+    protected function resolvePickupAddressGeoField($root, $args)
+    {
+        return $root->carRentalJobDetail ? $root->carRentalJobDetail->pickup_address_geo : null;
+    }
+
+    protected function resolveDestinationAddressGeoField($root, $args)
+    {
+        return $root->carRentalJobDetail ? $root->carRentalJobDetail->destination_address_geo : null;
     }
 
 }
