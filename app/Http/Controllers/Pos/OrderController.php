@@ -130,6 +130,7 @@ class OrderController extends Controller
             $this->sendCustomerEmail($order);
             $order->payment_status = $order->getPaymentStatus();
             $order->client_pos_order_id = $request->client_pos_order_id;
+            $order->net_bill = $order->getNetBill();
             return api_response($request, null, 200, ['msg' => 'Order Created Successfully', 'order' => $order]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());

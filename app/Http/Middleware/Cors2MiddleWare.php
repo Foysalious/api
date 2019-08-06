@@ -30,6 +30,7 @@ class Cors2MiddleWare
             "http://localhost:3000",
             "http://103.26.139.148",
             "http://144.76.92.216",
+            "http://sheba.test",
             "https://developer.sslcommerz.com",
             "https://www.sslcommerz.com",
             "http://dev-sheba.xyz",

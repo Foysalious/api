@@ -64,8 +64,7 @@ class ServiceController extends Controller
             return api_response($request, null, 500);
         }
     }
-
-
+    
     public function show($partner,$service, Request $request)
     {
         try {
