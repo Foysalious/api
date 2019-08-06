@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 
 use App\Models\PosOrder;
 
+use App\Sheba\Payment\Adapters\Payable\PaymentLinkOrderAdapter;
 use App\Transformers\CustomSerializer;
 use App\Transformers\PosOrderTransformer;
 
@@ -16,6 +17,8 @@ use League\Fractal\Resource\Item;
 
 use Sheba\ModificationFields;
 
+use Sheba\Payment\ShebaPayment;
+use Sheba\PaymentLink\PaymentLinkTransformer;
 use Sheba\Pos\Jobs\OrderBillEmail;
 use Sheba\Pos\Jobs\OrderBillSms;
 use Sheba\Pos\Order\Creator;
@@ -28,6 +31,7 @@ use Sheba\Pos\Order\RefundNatures\ReturnNatures;
 use Sheba\Pos\Order\Updater;
 use Sheba\Profile\Creator as ProfileCreator;
 use Sheba\Pos\Customer\Creator as PosCustomerCreator;
+use Sheba\PaymentLink\Creator as PaymentLinkCreator;
 use Sheba\Repositories\PartnerRepository;
 use Throwable;
 
@@ -108,7 +112,7 @@ class OrderController extends Controller
     }
 
 
-    public function store($partner, Request $request, Creator $creator, ProfileCreator $profileCreator, PosCustomerCreator $posCustomerCreator, PartnerRepository $partnerRepository)
+    public function store($partner, Request $request, Creator $creator, ProfileCreator $profileCreator, PosCustomerCreator $posCustomerCreator, PartnerRepository $partnerRepository, PaymentLinkCreator $paymentLinkCreator, PaymentLinkOrderAdapter $paymentLinkOrderAdapter)
     {
         try {
             $this->validate($request, [
@@ -118,11 +122,12 @@ class OrderController extends Controller
                 'customer_name' => 'string',
                 'customer_mobile' => 'string',
                 'customer_address' => 'string',
-                'customer_id' => 'numeric',
+                'nPos' => 'numeric',
                 'discount' => 'numeric',
                 'is_percentage' => 'numeric',
                 'previous_order_id' => 'numeric'
             ]);
+            $link = null;
             if ($request->manager_resource) {
                 $partner = $request->partner;
                 $this->setModifier($request->manager_resource);
@@ -143,7 +148,16 @@ class OrderController extends Controller
             $order->payment_status = $order->getPaymentStatus();
             $order->client_pos_order_id = $request->client_pos_order_id;
             $order->net_bill = $order->getNetBill();
-            return api_response($request, null, 200, ['msg' => 'Order Created Successfully', 'order' => $order]);
+            if ($request->payment_method == 'payment_link') {
+                $paymentLink = $paymentLinkCreator->setAmount($order->net_bill)->setReason("PosOrder: $order->id payment")->setUserName($partner->name)->setUserId($partner->id)
+                    ->setUserType('partner')
+                    ->setTargetId($order->id)
+                    ->setTargetType('pos_order')->save();
+                $transformer = new PaymentLinkTransformer();
+                $transformer->setResponse($paymentLink);
+                $link = ['link' => $transformer->getLink()];
+            }
+            return api_response($request, null, 200, ['message' => 'Order Created Successfully', 'order' => $order, 'payment' => $link]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');

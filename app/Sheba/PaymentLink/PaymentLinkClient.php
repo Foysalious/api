@@ -56,6 +56,11 @@ class PaymentLinkClient
         }
     }
 
+    /**
+     * @param $data
+     * @return \stdClass|null
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
     public function storePaymentLink($data)
     {
         try {
@@ -139,6 +144,10 @@ class PaymentLinkClient
         return json_decode($response, true);
     }
 
+    /**
+     * @param $identifier
+     * @return \stdClass|null
+     */
     public function getPaymentLinkByIdentifier($identifier)
     {
         $url = $this->baseUrl . '?linkIdentifier=' . $identifier;

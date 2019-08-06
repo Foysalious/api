@@ -1,5 +1,5 @@
 <?php
 
 return [
-    'payment_method' => ['cod', 'bkash', 'online', 'others', 'paymnet_link']
+    'payment_method' => ['cod', 'bkash', 'online', 'others', 'payment_link']
 ];

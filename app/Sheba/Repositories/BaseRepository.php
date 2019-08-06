@@ -121,7 +121,6 @@ class BaseRepository implements BaseRepositoryInterface
         foreach (array_slice($column_name, 1) as $column) {
             $select .= ',' . $column;
         }
-        dd($select);
         return $this->model->select($select);
     }
 

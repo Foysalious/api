@@ -10,10 +10,11 @@ use Sheba\Payment\Exceptions\PaymentLinkInactive;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Payment\ShebaPayment;
+use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 
 class PaymentLinkBillController extends Controller
 {
-    public function clearBill(Request $request, PaymentLinkOrderAdapter $paymentLinkOrderAdapter, Creator $customerCreator)
+    public function clearBill(Request $request, PaymentLinkOrderAdapter $paymentLinkOrderAdapter, Creator $customerCreator, PaymentLinkRepositoryInterface $paymentLinkRepository)
     {
         try {
             $this->validate($request, [
@@ -26,16 +27,9 @@ class PaymentLinkBillController extends Controller
             ]);
             $payment_method = $request->payment_method;
             $user = $customerCreator->setMobile($request->mobile)->setName($request->name)->create();
-            try {
-                $payable = $paymentLinkOrderAdapter->setUser($user)
-                    ->setPaymentLink($request->identifier, $request->get('amount'))->setPurpose($request->purpose)->getPayable();
-            } catch (PayableNotFound $e) {
-                return api_response($request, null, 404, ['message' => $e->getMessage()]);
-            } catch (PaymentAmountNotSet $e) {
-                return api_response($request, null, 404, ['message' => $e->getMessage()]);
-            } catch (PaymentLinkInactive $e) {
-                return api_response($request, null, 404, ['message' => $e->getMessage()]);
-            }
+            $payment_link = $paymentLinkRepository->findByIdentifier($request->identifier);
+            $payable = $paymentLinkOrderAdapter->setPayableUser($user)
+                ->setPaymentLink($payment_link)->setAmount($request->amount)->setDescription($request->purpose)->getPayable();
             if ($payment_method == 'wallet' && $user->shebaCredit() < $payable->amount) return api_response($request, null, 403, ['message' => "You don't have sufficient balance"]);
             $payment = (new ShebaPayment($payment_method))->init($payable);
             return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);

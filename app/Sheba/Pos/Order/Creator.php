@@ -71,6 +71,9 @@ class Creator
         return $this;
     }
 
+    /**
+     * @return \App\Models\PosOrder
+     */
     public function create()
     {
         $order_data['partner_id'] = $this->partner->id;

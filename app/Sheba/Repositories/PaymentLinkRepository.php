@@ -6,16 +6,20 @@ use App\Models\Payment;
 use Illuminate\Http\Request;
 use Sheba\Payment\Exceptions\PayableNotFound;
 use Sheba\PaymentLink\PaymentLinkClient;
+use Sheba\PaymentLink\PaymentLinkTransformer;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 
 class PaymentLinkRepository extends BaseRepository implements PaymentLinkRepositoryInterface
 {
     private $paymentLinkClient;
+    private $paymentLinkTransformer;
 
-    public function __construct()
+    public function __construct(PaymentLinkTransformer $paymentLinkTransformer)
     {
-        $this->paymentLinkClient = new PaymentLinkClient();
         parent::__construct();
+        $this->paymentLinkClient = new PaymentLinkClient();
+        $this->paymentLinkTransformer = $paymentLinkTransformer;
+
     }
 
     public function getPaymentLinkList(Request $request)
@@ -35,11 +39,11 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
         return $this->paymentLinkClient->getPaymentLinkDetails($userId, $userType, $identifier);
     }
 
+
     /**
      * @param array $attributes
-     * @return \Illuminate\Database\Eloquent\Model|null
-     * @method PaymentLinkRepository create
-     * @override
+     * @return \stdClass|null
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function create(array $attributes)
     {
@@ -98,9 +102,13 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
         return $this->paymentLinkClient->getPaymentLinkByTargetIdType($id, $type);
     }
 
+    /**
+     * @param $identifier
+     * @return PaymentLinkTransformer
+     */
     public function findByIdentifier($identifier)
     {
-        return $this->paymentLinkClient->getPaymentLinkByIdentifier($identifier);
+        return $this->paymentLinkTransformer->setResponse($this->paymentLinkClient->getPaymentLinkByIdentifier($identifier));
     }
 
 }
