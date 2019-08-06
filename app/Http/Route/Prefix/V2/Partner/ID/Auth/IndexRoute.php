@@ -1,6 +1,5 @@
 <?php namespace App\Http\Route\Prefix\V2\Partner\ID\Auth;
 
-
 class IndexRoute
 {
     public function set($api)
@@ -13,7 +12,6 @@ class IndexRoute
                     $api->get('/{order}', 'EShopOrderController@show');
                 });
             });
-
             $api->group(['prefix' => 'loans'], function ($api) {
                 $api->post('/', 'SpLoanController@store');
                 $api->get('/personal-info', 'SpLoanController@getPersonalInformation');
@@ -40,7 +38,6 @@ class IndexRoute
                 $api->get('/homepage', 'SpLoanController@getHomepage');
                 $api->get('/bank-interest', 'SpLoanController@getBankInterest');
             });
-
             $api->group(['prefix' => 'pos'], function ($api) {
                 $api->group(['prefix' => 'categories'], function ($api) {
                     $api->get('/', 'Pos\CategoryController@index');
@@ -71,7 +68,6 @@ class IndexRoute
                 $api->resources(['customers' => 'Pos\CustomerController']);
                 $api->get('settings', 'Pos\SettingController@getSettings');
             });
-
             $api->group(['prefix' => 'categories'], function ($api) {
                 $api->get('/all', 'CategoryController@getPartnerLocationCategory');
                 $api->get('/tree', 'PartnerController@getCategoriesTree');
@@ -85,22 +81,19 @@ class IndexRoute
                     $api->post('/services/{service}', 'PartnerController@changePublicationStatus');
                 });
             });
-
             $api->post('/bkash', 'PartnerController@storeBkashNumber');
-
             $api->get('services', 'Partner\PartnerServiceController@index');
-
             $api->group(['prefix' => 'services'], function ($api) {
                 $api->get('/', 'Partner\PartnerServiceController@index');
                 $api->post('/', 'Partner\PartnerServiceController@store');
                 $api->put('{service}', 'Partner\PartnerServiceController@update');
             });
-
             $api->get('operations', 'Partner\OperationController@index');
             $api->post('operations', 'Partner\OperationController@store');
             $api->post('register', 'CustomerController@store');
             $api->post('categories', 'Partner\OperationController@saveCategories');
             $api->post('add-categories', 'CategoryController@addCategories');
+            $api->post('vat-registration-number', 'PartnerController@addVatRegistrationNumber');
             $api->post('top-up', 'TopUpController@topUp');
             $api->get('search', 'SearchController@search');
             $api->group(['prefix' => 'subscriptions'], function ($api) {
@@ -108,13 +101,11 @@ class IndexRoute
                 $api->post('/', 'Partner\PartnerSubscriptionController@store');
                 $api->post('/upgrade', 'Partner\PartnerSubscriptionController@update');
             });
-
             $api->group(['prefix' => 'customer-subscriptions'], function ($api) {
                 $api->get('order-lists', 'Partner\CustomerSubscriptionController@index');
                 $api->get('{subscription}/details', 'Partner\CustomerSubscriptionController@show');
                 $api->post('{subscription}/bulk-accept ', 'Partner\CustomerSubscriptionController@bulkAccept');
             });
-
             $api->group(['prefix' => 'resources'], function ($api) {
                 $api->post('/', 'Resource\PersonalInformationController@store');
                 $api->group(['prefix' => '{resource}', 'middleware' => ['partner_resource.auth']], function ($api) {

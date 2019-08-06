@@ -1,42 +1,33 @@
 <?php namespace App\Sheba\Payment\Adapters\Payable;
 
-
 use App\Models\Payable;
 use Carbon\Carbon;
-use Sheba\Payment\Exceptions\PayableNotFound;
-use Sheba\Payment\Exceptions\PaymentAmountNotSet;
-use Sheba\Payment\Exceptions\PaymentLinkInactive;
-use Sheba\Repositories\PaymentLinkRepository;
+use Sheba\PaymentLink\PaymentLinkTransformer;
 
 class PaymentLinkOrderAdapter
 {
-    private $paymentLink, $amount, $userType, $user, $purpose;
+    /** @var PaymentLinkTransformer */
+    private $paymentLink;
+    private $amount;
+    private $payableUser;
+    private $description;
 
-    /**
-     * @param $identifier
-     * @param null $amount
-     * @return $this
-     * @throws PaymentAmountNotSet
-     * @throws PaymentLinkInactive
-     * @throws PayableNotFound
-     */
-    public function setPaymentLink($identifier, $amount = null)
+
+    public function setPaymentLink(PaymentLinkTransformer $paymentLinkTransformer)
     {
-        $this->paymentLink = $this->get($identifier);
-        if (!$this->paymentLink) throw new PayableNotFound();
-        if (!empty($this->paymentLink['amount'])) {
-            $this->amount = $this->paymentLink['amount'];
-        } else {
-            $this->amount = $amount;
-        }
-        if (!$this->paymentLink['isActive']) throw new PaymentLinkInactive();
-        if (empty($this->amount)) throw new PaymentAmountNotSet();
+        $this->paymentLink = $paymentLinkTransformer;
         return $this;
     }
 
-    public function setPurpose($purpose)
+    public function setAmount($amount)
     {
-        $this->purpose = $purpose;
+        $this->amount = $amount;
+        return $this;
+    }
+
+    public function setDescription($purpose)
+    {
+        $this->description = $purpose;
         return $this;
     }
 
@@ -44,19 +35,9 @@ class PaymentLinkOrderAdapter
      * @param $user
      * @return $this
      */
-    public function setUser($user)
+    public function setPayableUser($user)
     {
-        $this->user = $user;
-        return $this;
-    }
-
-    /**
-     * @param $type
-     * @return $this
-     */
-    public function setUserType($type)
-    {
-        $this->userType = $type;
+        $this->payableUser = $user;
         return $this;
     }
 
@@ -65,23 +46,30 @@ class PaymentLinkOrderAdapter
      */
     public function getPayable(): Payable
     {
+        $this->resolveDescription();
         $payable = new Payable();
         $payable->type = 'payment_link';
-        $payable->type_id = $this->paymentLink['linkId'];
-        $payable->user_id = $this->user->id;
-        $payable->user_type = "App\\Models\\" . class_basename($this->user);
-        $payable->amount = $this->amount;
-        $payable->description = !empty($this->paymentLink['reason']) ? $this->paymentLink['reason'] : $this->purpose;
+        $payable->type_id = $this->paymentLink->getLinkID();
+        $payable->user_id = $this->payableUser->id;
+        $payable->user_type = "App\\Models\\" . class_basename($this->payableUser);
+        $payable->amount = $this->getAmount();
+        $payable->description = $this->description;
         $payable->completion_type = "payment_link";
-        $payable->success_url = config('sheba.payment_link_web_url') . '/' . $this->paymentLink['linkIdentifier'] . '/success';
+        $payable->success_url = config('sheba.payment_link_web_url') . '/' . $this->paymentLink->getLinkIdentifier() . '/success';
         $payable->created_at = Carbon::now();
         $payable->save();
         return $payable;
     }
 
-    private function get($identifier)
+    private function getAmount()
     {
-        return (new PaymentLinkRepository())->findByIdentifier($identifier);
+        $amount = $this->paymentLink->getAmount();
+        return $amount ? (double)$amount : $this->amount;
+    }
 
+    private function resolveDescription()
+    {
+        $reason = $this->paymentLink->getReason();
+        $this->description = $reason ? $reason : $this->description;
     }
 }

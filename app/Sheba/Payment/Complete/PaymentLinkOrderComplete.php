@@ -5,6 +5,7 @@ use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
 use Sheba\ModificationFields;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
+use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
 use DB;
 
@@ -19,7 +20,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
     public function __construct()
     {
         parent::__construct();
-        $this->paymentLinkRepository = new PaymentLinkRepository();
+        $this->paymentLinkRepository = app(PaymentLinkRepositoryInterface::class);
     }
 
     public function complete()

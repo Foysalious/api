@@ -1,9 +1,8 @@
 <?php namespace Sheba\Pos\Order;
 
-use App\Models\Customer;
 use App\Models\Partner;
+use App\Models\PosCustomer;
 use App\Models\PartnerPosService;
-use App\Models\Service;
 use Sheba\Pos\Product\StockManager;
 use Sheba\Pos\Repositories\PosOrderItemRepository;
 use Sheba\Pos\Repositories\PosOrderRepository;
@@ -24,10 +23,11 @@ class Creator
     private $stockManager;
     /** @var OrderCreateValidator $createValidator */
     private $createValidator;
-    /** @var Customer $customer */
+    /** @var PosCustomer $customer */
     private $customer;
     /** @var Partner $partner */
     private $partner;
+    private $address;
 
     public function __construct(PosOrderRepository $order_repo, PosOrderItemRepository $item_repo,
                                 PaymentCreator $payment_creator, StockManager $stock_manager,
@@ -60,7 +60,7 @@ class Creator
         return $this;
     }
 
-    public function setCustomer(Customer $customer)
+    public function setCustomer(PosCustomer $customer)
     {
         $this->customer = $customer;
         return $this;
@@ -72,13 +72,22 @@ class Creator
         return $this;
     }
 
+    public function setAddress($address)
+    {
+        $this->address = $address;
+        return $this;
+    }
+
+    /**
+     * @return \App\Models\PosOrder
+     */
     public function create()
     {
         $order_data['partner_id'] = $this->partner->id;
         $order_data['customer_id'] = $this->resolveCustomerId();
+        $order_data['address'] = $this->address;
         $order_data['previous_order_id'] = (isset($this->data['previous_order_id']) && $this->data['previous_order_id']) ? $this->data['previous_order_id'] : null;
         $order = $this->orderRepo->save($order_data);
-        dd($order);
         $services = json_decode($this->data['services'], true);
         foreach ($services as $service) {
             $original_service = PartnerPosService::find($service['id']);

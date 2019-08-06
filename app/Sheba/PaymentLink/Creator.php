@@ -26,6 +26,8 @@ class Creator
     public function __construct(PaymentLinkRepositoryInterface $payment_link_repository)
     {
         $this->paymentLinkRepo = $payment_link_repository;
+        $this->isDefault = 0;
+        $this->amount = null;
     }
 
     public function setAmount($amount)
@@ -101,9 +103,6 @@ class Creator
         return $this->paymentLinkRepo->statusUpdate($this->linkId, $this->status);
     }
 
-    /**
-     * @method PaymentLinkRepository create
-     */
 
     public function save()
     {
@@ -114,9 +113,9 @@ class Creator
     private function makeData()
     {
         $this->data = [
-            'amount' => $this->isDefault ? 0 : $this->amount,
+            'amount' => $this->amount,
             'reason' => $this->reason,
-            'isDefault' => $this->isDefault ? $this->isDefault : 0,
+            'isDefault' => $this->isDefault,
             'userId' => $this->userId,
             'userName' => $this->userName,
             'userType' => $this->userType,
