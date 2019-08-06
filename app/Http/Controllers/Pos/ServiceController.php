@@ -64,19 +64,23 @@ class ServiceController extends Controller
             return api_response($request, null, 500);
         }
     }
-    
-    public function show($partner,$service, Request $request)
+
+    public function show($partner, $service, Request $request)
     {
         try {
             $service = PartnerPosService::with('category', 'discounts')->find($service);
             if (!$service) return api_response($request, null, 404);
-
+            $partner = $service->partner;
             $manager = new Manager();
             $manager->setSerializer(new ArraySerializer());
             $resource = new Item($service, new PosServiceTransformer());
             $service = $manager->createData($resource)->toArray();
 
-            return api_response($request, $service, 200, ['service' => $service]);
+            return api_response($request, $service, 200, ['service' => $service, 'partner' => [
+                'id' => $partner->id,
+                'name' => $partner->name,
+                'logo' => $partner->logo
+            ]]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -213,6 +217,7 @@ class ServiceController extends Controller
         $posService->save();
         return api_response($request, null, 200, ['message' => 'Service successfully ' . ($posService->is_published_for_shop ? 'published' : 'unpublished')]);
     }
+
     /**
      * @param Request $request
      * @param PartnerPosService $partner_pos_service

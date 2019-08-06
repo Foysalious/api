@@ -1,6 +1,7 @@
 <?php namespace Sheba\Analysis\PartnerSale;
 
 use App\Models\Partner;
+use Exception;
 use Illuminate\Support\Collection;
 use Sheba\Helpers\TimeFrame;
 
@@ -27,7 +28,7 @@ abstract class PartnerSale
 
     public function setParams($frequency = 'day')
     {
-        if(!in_array($frequency, ['day', 'week', 'month', 'year'])) throw new \Exception('Invalid frequency');
+        if (!in_array($frequency, ['day', 'week', 'month', 'year'])) throw new Exception('Invalid frequency');
         $this->frequency = $frequency;
         return $this;
     }

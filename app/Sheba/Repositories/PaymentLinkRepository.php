@@ -104,11 +104,12 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
 
     /**
      * @param $identifier
-     * @return PaymentLinkTransformer
+     * @return PaymentLinkTransformer|null
      */
     public function findByIdentifier($identifier)
     {
-        return $this->paymentLinkTransformer->setResponse($this->paymentLinkClient->getPaymentLinkByIdentifier($identifier));
+        $response = json_decode(json_encode($this->paymentLinkClient->getPaymentLinkByIdentifier($identifier)));
+        return $response ? $this->paymentLinkTransformer->setResponse($response) : null;
     }
 
 }
