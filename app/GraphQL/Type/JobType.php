@@ -232,7 +232,7 @@ class JobType extends GraphQlType
 
     protected function resolvePickupAddressGeoField($root, $args)
     {
-        return $root->carRentalJobDetail ? $root->carRentalJobDetail->pickup_address_geo : null;
+        return $root->carRentalJobDetail ? $root->carRentalJobDetail->pick_up_address_geo : null;
     }
 
     protected function resolveDestinationAddressGeoField($root, $args)
