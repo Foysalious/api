@@ -5,6 +5,8 @@ use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Sheba\Analysis\PartnerSale\PartnerSale;
 use Sheba\Helpers\TimeFrame;
+use Sheba\Payment\Statuses;
+use Sheba\Pos\Order\OrderPaymentStatuses;
 use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Repositories\PartnerOrderRepository;
 
@@ -25,19 +27,32 @@ class Basic extends PartnerSale
 
         $this->posOrders = new PosOrderRepository();
         $pos_orders = $this->posOrders->getCreatedOrdersBetween($this->timeFrame, $this->partner);
-        $pos_orders->map(function ($pos_order) {
+        $pos_payment_status_wise_count = [OrderPaymentStatuses::PAID => 0, OrderPaymentStatuses::DUE => 0];
+        $pos_orders->map(function ($pos_order) use (&$pos_payment_status_wise_count) {
             /** @var PosOrder $pos_order */
-            return $pos_order->sale = $pos_order->getNetBill();
+            $pos_order->sale = $pos_order->getNetBill();
+            $pos_order->paidAmount = $pos_order->getPaid();
+            $pos_order->dueAmount = $pos_order->getDue();
+            $pos_payment_status_wise_count[$pos_order->getPaymentStatus()]++;
         });
+
+        $pos_sales_count = $pos_orders->count();
         $pos_sales = $pos_orders->sum('sale');
+        $pos_paid = $pos_orders->sum('paidAmount');
+        $pos_due = $pos_orders->sum('dueAmount');
 
         $data['sheba_sales'] = $orders->sum('totalPrice');
-        $data['pos_sales']   = $pos_sales;
+        $data['pos_sales'] = $pos_sales;
         $data['total_sales'] = $data['sheba_sales'] + $data['pos_sales'];
 
-        $data['order_accepted']     = $accepted_orders ? $accepted_orders->count : 0;
-        $data['order_completed']    = $orders->count();
-        $data['pos_order_created']  = $pos_orders->count();
+        $data['order_accepted'] = $accepted_orders ? $accepted_orders->count : 0;
+        $data['order_completed'] = $orders->count();
+        $data['pos_order_created'] = $pos_orders->count();
+        $data['pos'] = [
+            'sales' => ['count' => $pos_sales_count, 'amount' => $pos_sales],
+            'paid'  => ['count' => $pos_payment_status_wise_count[OrderPaymentStatuses::PAID], 'amount' => $pos_paid],
+            'due'   => ['count' => $pos_payment_status_wise_count[OrderPaymentStatuses::DUE], 'amount' => $pos_due]
+        ];
 
         if ($this->frequency == self::DAY_BASE) {
             $data['day'] = $this->timeFrame->start->format('Y-m-d');
@@ -86,8 +101,7 @@ class Basic extends PartnerSale
      */
     private function payableTo($sheba_receivable, $sp_payable)
     {
-        if (!$sheba_receivable && !$sp_payable) return [null, 0];
-        elseif ($sheba_receivable) return ['sheba', $sheba_receivable];
+        if (!$sheba_receivable && !$sp_payable) return [null, 0]; elseif ($sheba_receivable) return ['sheba', $sheba_receivable];
         elseif ($sp_payable) return ['partner', $sp_payable];
     }
 
@@ -128,7 +142,7 @@ class Basic extends PartnerSale
     private function initData($type, $limit = null)
     {
         if ($type == self::WEEK_BASE) {
-            for($date = $this->timeFrame->start->copy(); $date->lte($this->timeFrame->end); $date->addDay()) {
+            for ($date = $this->timeFrame->start->copy(); $date->lte($this->timeFrame->end); $date->addDay()) {
                 $this->data[$date->format('D')] = ['value' => $date->format('D'), 'date' => $date->format('d M'), 'amount' => 0];
             }
         } elseif ($type == self::MONTH_BASE) {
