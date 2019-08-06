@@ -27,16 +27,18 @@
     <tr style="border-bottom: 1px solid #ddd">
         <td>
             <table style="width: 100%;border-bottom: 1px solid #ddd">
-                <tr>
-                    <td width="120"><img style="max-width: 120px" src="{{$payment_receiver['image']}}" alt=""></td>
-                    <td colspan="3">
-                        <div style="text-align: left;padding: 10px 20px;">
-                            <span>{{$payment_receiver['name']}}</span><br>
-                            <span style="color: #B0BEC5;">{{$payment_receiver['mobile']}}</span><br>
-                            <span style="color: #B0BEC5;">{{$payment_receiver['address']}}</span>
-                        </div>
-                    </td>
-                </tr>
+                @if(isset($payment_receiver))
+                    <tr>
+                        <td width="120"><img style="max-width: 120px" src="{{$payment_receiver['image']}}" alt=""></td>
+                        <td colspan="3">
+                            <div style="text-align: left;padding: 10px 20px;">
+                                <span>{{$payment_receiver['name']}}</span><br>
+                                <span style="color: #B0BEC5;">{{$payment_receiver['mobile']}}</span><br>
+                                <span style="color: #B0BEC5;">{{$payment_receiver['address']}}</span>
+                            </div>
+                        </td>
+                    </tr>
+                @endif
             </table>
         </td>
     </tr>
@@ -46,11 +48,13 @@
             <table style="width: 100%;border-bottom: 1px solid #ddd;padding-bottom: 4px">
                 <tr>
                     <td colspan="3" style="border-left: 4px solid #1b4280">
-                        <div style="padding: 10px 20px">
-                            <span style="color: #B0BEC5;">Bill to</span><br>
-                            <span style="font-weight: bold;">{{$user['name']}}</span><br>
-                            <span style="color: #B0BEC5">{{$user['mobile']}}</span>
-                        </div>
+                        @if(isset($user))
+                            <div style="padding: 10px 20px">
+                                <span style="color: #B0BEC5;">Bill to</span><br>
+                                <span style="font-weight: bold;">{{$user['name']}}</span><br>
+                                <span style="color: #B0BEC5">{{$user['mobile']}}</span>
+                            </div>
+                        @endif
                     </td>
                     <td align="right">
                         <div style="text-align: right">
@@ -62,6 +66,58 @@
             </table>
         </td>
     </tr>
+    @if(isset($pos_order))
+        <tr>
+            <td>
+                <table style="border-bottom: 1px solid #ddd;width: 100%;color: #929292">
+                    <thead>
+                    <tr>
+                        <th>Product Name</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                        <th align="right">Total Price</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?php $subtotal = 0;?>
+                    @foreach($pos_order['items'] as $item)
+                        <tr>
+                            <td style="color: #828282">{{$item->service_name}}</td>
+                            <td style="color: #828282">{{$item->quantity}}</td>
+                            <td style="color: #828282">{{$item->unit_price}}</td>
+                            <?php $total = (double)$item->quantity * (double)$item->unit_price; $subtotal += $total;?>
+                            <td align="right" style="color: #626262">{{$total}}</td>
+                        </tr>
+                    @endforeach
+                    <tr style="border-top-color: black;border-top-width: 1px ;border-top-style: sold;mso-border-top-width-alt: 1px" bordercolor="black">
+                        <td colspan="3" align="right">Total</td>
+                        <td align="right" style="color: #626262">{{$pos_order['total']}}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3" align="right">Total Vat</td>
+                        <td align="right" style="color: #626262">{{$pos_order['vat']}}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3" align="right">Total Discount</td>
+                        <td align="right" style="color: #626262">{{$pos_order['discount']}}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3" align="right">Total Payable</td>
+                        <td align="right" style="color: #626262">{{$pos_order['grand_total']}}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3" align="right">Paid</td>
+                        <td align="right" style="color: #626262">{{$pos_order['paid']}}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3" align="right">Due</td>
+                        <td align="right" style="color: #626262">{{$pos_order['due']}}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </td>
+        </tr>
+    @endif
     <tr>
         <td>
             <table style="width: 100%;color: #636363;" class="invoice-table" cellpadding="5">

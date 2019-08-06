@@ -8,6 +8,7 @@ use App\Models\Job;
 use App\Models\OfferShowcase;
 use App\Models\Payable;
 use App\Models\Payment;
+use App\Models\PosOrder;
 use App\Models\Resource;
 use App\Models\Service;
 use App\Models\Slider;
@@ -277,6 +278,7 @@ class ShebaController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -305,7 +307,11 @@ class ShebaController extends Controller
             $link = $response['links'][0];
             $model_name = "App\\Models\\" . ucfirst($link['userType']);
             $user = $model_name::find($link['userId']);
-            return [
+            if ($link['targetType'] == 'pos_order') {
+                $pos_order = PosOrder::find($link['targetId'])->calculate();
+
+            }
+            $data = [
                 'payment_receiver' => [
                     'name' => $user->name,
                     'image' => $user->logo,
@@ -317,6 +323,10 @@ class ShebaController extends Controller
                     'mobile' => $payable->user->profile->mobile
                 ]
             ];
+            if (isset($pos_order)) {
+                $data['pos_order'] = ['items' => $pos_order->items, 'discount' => $pos_order->getAppliedDiscount(), 'total' => $pos_order->getNetBill(), 'grand_total' => $pos_order->getTotalBill(), 'paid' => $pos_order->getPaid(), 'due' => $pos_order->getDue(), 'status' => $pos_order->getPaymentStatus(), 'vat' => $pos_order->getTotalVat()];
+            }
+            return $data;
         } else
             return [];
 
