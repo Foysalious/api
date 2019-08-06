@@ -1,12 +1,8 @@
 <?php namespace App\Http\Controllers\PaymentLink;
 
-
 use App\Http\Controllers\Controller;
 use App\Sheba\Payment\Adapters\Payable\PaymentLinkOrderAdapter;
 use Sheba\Customer\Creator;
-use Sheba\Payment\Exceptions\PayableNotFound;
-use Sheba\Payment\Exceptions\PaymentAmountNotSet;
-use Sheba\Payment\Exceptions\PaymentLinkInactive;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Payment\ShebaPayment;
@@ -19,11 +15,11 @@ class PaymentLinkBillController extends Controller
         try {
             $this->validate($request, [
                 'payment_method' => 'required|in:online,bkash,cbl',
-                'amount' => 'sometimes|required|numeric',
+                'amount' => 'numeric',
+                'purpose' => 'string',
                 'identifier' => 'required',
                 'name' => 'required',
                 'mobile' => 'required|string|mobile:bd',
-                'purpose' => 'string'
             ]);
             $payment_method = $request->payment_method;
             $user = $customerCreator->setMobile($request->mobile)->setName($request->name)->create();

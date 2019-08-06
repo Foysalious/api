@@ -104,10 +104,6 @@ class Creator
     }
 
 
-    /**
-     * @return \stdClass|null
-     * @throws \GuzzleHttp\Exception\GuzzleException
-     */
     public function save()
     {
         $this->makeData();

@@ -11,7 +11,7 @@ interface PaymentLinkRepositoryInterface extends BaseRepositoryInterface
 
     /**
      * @param $identifier
-     * @return PaymentLinkTransformer
+     * @return PaymentLinkTransformer|null
      */
     public function findByIdentifier($identifier);
 
