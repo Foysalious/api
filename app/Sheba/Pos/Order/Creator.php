@@ -27,6 +27,7 @@ class Creator
     private $customer;
     /** @var Partner $partner */
     private $partner;
+    private $address;
 
     public function __construct(PosOrderRepository $order_repo, PosOrderItemRepository $item_repo,
                                 PaymentCreator $payment_creator, StockManager $stock_manager,
@@ -71,6 +72,12 @@ class Creator
         return $this;
     }
 
+    public function setAddress($address)
+    {
+        $this->address = $address;
+        return $this;
+    }
+
     /**
      * @return \App\Models\PosOrder
      */
@@ -78,6 +85,7 @@ class Creator
     {
         $order_data['partner_id'] = $this->partner->id;
         $order_data['customer_id'] = $this->resolveCustomerId();
+        $order_data['address'] = $this->address;
         $order_data['previous_order_id'] = (isset($this->data['previous_order_id']) && $this->data['previous_order_id']) ? $this->data['previous_order_id'] : null;
         $order = $this->orderRepo->save($order_data);
         $services = json_decode($this->data['services'], true);
