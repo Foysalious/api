@@ -5,7 +5,6 @@ use App\Models\SubscriptionOrder;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Sheba\Checkout\Adapters\SubscriptionOrderAdapter;
-use Sheba\Dal\Discount\DiscountRepository;
 use Sheba\ModificationFields;
 use Throwable;
 use DB;
