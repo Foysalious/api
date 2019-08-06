@@ -5,10 +5,19 @@ class PaymentLinkTransformer
 {
     private $response;
 
+    /**
+     * @param \stdClass $response
+     * @return $this
+     */
     public function setResponse(\stdClass $response)
     {
         $this->response = $response;
         return $this;
+    }
+
+    public function getResponse()
+    {
+        return $this->response;
     }
 
     public function getLinkID()
@@ -50,7 +59,7 @@ class PaymentLinkTransformer
 
     public function getUser()
     {
-        $model_name = ucfirst($this->response->userType);
+        $model_name = "App\\Models\\" . ucfirst($this->response->userType);
         return $model_name::find($this->response->userId);
     }
 
@@ -59,10 +68,25 @@ class PaymentLinkTransformer
      */
     public function getTarget()
     {
-        if ($this->response->target) {
-            $model_name = ucfirst($this->response->targetType);
+        if ($this->response->targetType) {
+            $model_name = $this->resolveTargetClass();
             return $model_name::find($this->response->targetId);
         } else
             return null;
+    }
+
+    /**
+     * @return null
+     */
+    public function getPayer()
+    {
+        $order = $this->getTarget();
+        return $order ? $order->customer->profile : null;
+    }
+
+    private function resolveTargetClass()
+    {
+        $model_name = "App\\Models\\";
+        if ($this->response->targetType == 'pos_order') return $model_name . 'PosOrder';
     }
 }
