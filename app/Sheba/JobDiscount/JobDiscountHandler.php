@@ -3,6 +3,7 @@
 use App\Models\Category;
 use App\Models\Job;
 use App\Models\Partner;
+
 use Sheba\Dal\Discount\Discount;
 use Sheba\Dal\Discount\DiscountRepository;
 use Sheba\Dal\Discount\DiscountRules;
@@ -16,7 +17,6 @@ class JobDiscountHandler
     private $discountRepo;
     /** @var JobDiscountRepository */
     private $jobDiscountRepo;
-
     private $type;
     /** @var Category */
     private $category;
@@ -24,7 +24,6 @@ class JobDiscountHandler
     private $partner;
     /** @var JobDiscountCheckingParams */
     private $params;
-
     /** @var Discount */
     private $discount;
 
@@ -67,16 +66,16 @@ class JobDiscountHandler
     public function calculate()
     {
         $against = [];
-        if($this->category) $against[] = $this->category;
-        if($this->partner) $against[] = $this->partner;
-        if(empty($against)) {
+        if ($this->category) $against[] = $this->category;
+        if ($this->partner) $against[] = $this->partner;
+        if (empty($against)) {
             $discounts = $this->discountRepo->getValidForAgainst($this->type, $against);
         } else {
             $discounts = $this->discountRepo->getValidFor($this->type);
         }
 
         foreach ($discounts as $discount) {
-            if($this->check($discount)) {
+            if ($this->check($discount)) {
                 $this->discount = $discount;
                 break;
             }
@@ -103,16 +102,16 @@ class JobDiscountHandler
             'is_percentage' => $this->discount->is_percentage,
             'cap' => $this->discount->cap,
             'sheba_contribution' => $this->discount->sheba_contribution,
-            'partner_contribution' => $this->discount->partner_contribution,
+            'partner_contribution' => $this->discount->partner_contribution
         ];
     }
 
     public function create(Job $job)
     {
         $discount_data = $this->getData();
-        if(empty($discount_data)) return;
+        if (empty($discount_data)) return;
         $discount_data['job_id'] = $job->id;
-        $this->jobDiscountRepo->create($this->getData());
+        $this->jobDiscountRepo->create($discount_data);
     }
 
     /**
@@ -123,7 +122,7 @@ class JobDiscountHandler
     {
         /** @var DiscountRules $rules */
         $rules = $discount->rules;
-        if($this->params->getOrderAmount() < $rules->getMinOrderAmount()) return false;
+        if ($this->params->getOrderAmount() < $rules->getMinOrderAmount()) return false;
         return true;
     }
 }

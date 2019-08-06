@@ -26,7 +26,8 @@ use Sheba\Pos\Order\RefundNatures\Natures;
 use Sheba\Pos\Order\RefundNatures\RefundNature;
 use Sheba\Pos\Order\RefundNatures\ReturnNatures;
 use Sheba\Pos\Order\Updater;
-
+use Sheba\Customer\Creator as CustomerCreator;
+use Sheba\Repositories\PartnerRepository;
 use Throwable;
 
 class OrderController extends Controller
@@ -105,26 +106,33 @@ class OrderController extends Controller
         }
     }
 
-    /**
-     * @param Request $request
-     * @param Creator $creator
-     * @return array
-     */
-    public function store(Request $request, Creator $creator)
+
+    public function store($partner, Request $request, Creator $creator, CustomerCreator $customerCreator, PartnerRepository $partnerRepository)
     {
         try {
             $this->validate($request, [
                 'services' => 'required|string',
                 'paid_amount' => 'sometimes|required|numeric',
-                'payment_method' => 'sometimes|required|string|in:' . implode(',', config('pos.payment_method'))
+                'payment_method' => 'sometimes|required|string|in:' . implode(',', config('pos.payment_method')),
+                'customer_name' => 'string',
+                'customer_mobile' => 'string',
+                'customer_address' => 'string',
+                'customer_id' => 'numeric',
+                'discount' => 'numeric',
+                'is_percentage' => 'numeric',
+                'previous_order_id' => 'numeric'
             ]);
-            $partner = $request->partner;
-            $this->setModifier($request->manager_resource);
-
-            $creator->setData($request->all());
+            if ($request->manager_resource) {
+                $partner = $request->partner;
+                $this->setModifier($request->manager_resource);
+            } else {
+                $partner = $partnerRepository->find((int)$partner);
+                $customer = $customerCreator->setMobile($request->customer_mobile)->setName($request->customer_name)->create();
+                $creator->setCustomer($customer);
+            }
+            $creator->setPartner($partner)->setData($request->all());
             if ($error = $creator->hasError()) return $error;
             $order = $creator->create();
-
             $order = $order->calculate();
             if ($partner->wallet >= 1) $this->sendCustomerSms($order);
             $this->sendCustomerEmail($order);
@@ -139,6 +147,7 @@ class OrderController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

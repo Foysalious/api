@@ -633,4 +633,9 @@ class Partner extends Model implements Rewardable, TopUpAgent
     {
         return $this->getContactNumber();
     }
+
+    public function isAllowedToSendWithdrawalRequest()
+    {
+        return !($this->withdrawalRequests()->active()->count() > 0);
+    }
 }

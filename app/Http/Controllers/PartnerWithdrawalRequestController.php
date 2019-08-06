@@ -1,13 +1,12 @@
-<?php
-
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Models\Partner;
 use App\Models\PartnerWithdrawalRequest;
 use App\Sheba\UserRequestInformation;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 use Validator;
 
 class PartnerWithdrawalRequestController extends Controller
@@ -27,23 +26,40 @@ class PartnerWithdrawalRequestController extends Controller
             } else {
                 return api_response($request, null, 404, ['can_withdraw' => $can_withdraw, 'status' => $status, 'wallet' => $request->partner->wallet]);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
+    /**
+     * @param $partner
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function store($partner, Request $request)
     {
         try {
-            $this->validate($request, ['amount' => 'required|numeric', 'payment_method' => 'required|in:bkash,bank', 'bkash_number' => 'required_if:payment_method,bkash|mobile:bd', 'code' => 'required_if:payment_method,bkash|string']);
+            $this->validate($request, [
+                'amount' => 'required|numeric',
+                'payment_method' => 'required|in:bkash,bank',
+                'bkash_number' => 'required_if:payment_method,bkash|mobile:bd',
+                'code' => 'required_if:payment_method,bkash|string'
+            ]);
+
+            /** @var Partner $partner */
             $partner = $request->partner;
-//            Number Match validations
+            /**
+             * Number Match validations
+             */
             $authenticate_data = (new FacebookAccountKit())->authenticateKit($request->code);
             if (trim_phone_number($request->bkash_number) != trim_phone_number($authenticate_data['mobile'])) {
                 return api_response($request, null, 400, ['message' => 'Your provided bkash number and verification number did not match,please verify using your bkash number']);
             }
-//            Limit Validation
+
+            /**
+             * Limit Validation
+             */
             $limitBkash = constants('WITHDRAW_LIMIT')['bkash'];
             $limitBank = constants('WITHDRAW_LIMIT')['bank'];
             if ($request->payment_method == 'bkash' && ((double)$request->amount < $limitBkash['min'] || (double)$request->amount > $limitBkash['max'])) {
@@ -51,10 +67,12 @@ class PartnerWithdrawalRequestController extends Controller
             } else if ($request->payment_method == 'bank' && ((double)$request->amount < $limitBank['min'] || (double)$request->amount > $limitBank['max'])) {
                 return api_response($request, null, 400, ['message' => 'Payment Limit mismatch for bank minimum limit ' . $limitBank['min'] . ' TK and maximum ' . $limitBank['max'] . ' TK']);
             }
-            $activePartnerWithdrawalRequest = $partner->withdrawalRequests()->pending()->first();
+
+            $allowed_to_send_request = $partner->isAllowedToSendWithdrawalRequest();
             $valid_maximum_requested_amount = (double)$partner->wallet - (double)$partner->walletSetting->security_money;
-            if ($activePartnerWithdrawalRequest || ($request->amount > $valid_maximum_requested_amount)) {
-                if ($activePartnerWithdrawalRequest) $message = "You have already sent a Withdrawal Request";
+
+            if (!$allowed_to_send_request || ((double)$request->amount > $valid_maximum_requested_amount)) {
+                if (!$allowed_to_send_request) $message = "You have already sent a Withdrawal Request";
                 else $message = "You don't have sufficient balance";
                 return api_response($request, null, 403, ['message' => $message]);
             }
@@ -67,6 +85,7 @@ class PartnerWithdrawalRequestController extends Controller
                 'created_by' => $request->manager_resource->id,
                 'created_by_name' => 'Resource - ' . $request->manager_resource->profile->name,
             ]));
+
             return api_response($request, $new_withdrawal, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -74,7 +93,7 @@ class PartnerWithdrawalRequestController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -102,7 +121,7 @@ class PartnerWithdrawalRequestController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -114,7 +133,7 @@ class PartnerWithdrawalRequestController extends Controller
             $partner = $request->partner;
             list($can_withdraw, $status) = $this->canWithdraw($partner);
             return api_response($request, $status, 200, ['status' => $status, 'can_withdraw' => $can_withdraw]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -136,7 +155,7 @@ class PartnerWithdrawalRequestController extends Controller
             } else {
                 return api_response($request, '', 403, ['result' => 'You can not update this withdraw request']);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -157,6 +176,4 @@ class PartnerWithdrawalRequestController extends Controller
         }
         return [$can_withdraw, $status];
     }
-
-
 }

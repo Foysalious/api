@@ -1,5 +1,7 @@
 <?php namespace Sheba\Pos\Order;
 
+use App\Models\Customer;
+use App\Models\Partner;
 use App\Models\PartnerPosService;
 use App\Models\Service;
 use Sheba\Pos\Product\StockManager;
@@ -22,6 +24,10 @@ class Creator
     private $stockManager;
     /** @var OrderCreateValidator $createValidator */
     private $createValidator;
+    /** @var Customer $customer */
+    private $customer;
+    /** @var Partner $partner */
+    private $partner;
 
     public function __construct(PosOrderRepository $order_repo, PosOrderItemRepository $item_repo,
                                 PaymentCreator $payment_creator, StockManager $stock_manager,
@@ -54,13 +60,25 @@ class Creator
         return $this;
     }
 
+    public function setCustomer(Customer $customer)
+    {
+        $this->customer = $customer;
+        return $this;
+    }
+
+    public function setPartner(Partner $partner)
+    {
+        $this->partner = $partner;
+        return $this;
+    }
+
     public function create()
     {
-        $order_data['partner_id'] = $this->data['partner']['id'];
-        $order_data['customer_id'] = (isset($this->data['customer_id']) && $this->data['customer_id']) ? $this->data['customer_id'] : null;
+        $order_data['partner_id'] = $this->partner->id;
+        $order_data['customer_id'] = $this->resolveCustomerId();
         $order_data['previous_order_id'] = (isset($this->data['previous_order_id']) && $this->data['previous_order_id']) ? $this->data['previous_order_id'] : null;
         $order = $this->orderRepo->save($order_data);
-
+        dd($order);
         $services = json_decode($this->data['services'], true);
         foreach ($services as $service) {
             $original_service = PartnerPosService::find($service['id']);
@@ -99,5 +117,14 @@ class Creator
         $this->orderRepo->update($order, $order_discount_data);
 
         return $order;
+    }
+
+    /**
+     * @return mixed|null
+     */
+    private function resolveCustomerId()
+    {
+        if ($this->customer) return $this->customer->id;
+        else return (isset($this->data['customer_id']) && $this->data['customer_id']) ? $this->data['customer_id'] : null;
     }
 }
