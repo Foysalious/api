@@ -1167,5 +1167,31 @@ class PartnerController extends Controller
         return $category->is_home_delivery_applied && $category->is_logistic_available
             && $request->has('uses_sheba_logistic') && $request->uses_sheba_logistic;
     }
+
+    /**
+     * VAT REGISTRATION NUMBER ADD FOR PARTNER
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function addVatRegistrationNumber(Request $request)
+    {
+        try {
+            $this->validate($request, ['vat_registration_number' => 'required']);
+            /** @var Partner $partner */
+            $partner = $request->partner;
+            $partner->basicInformations()->update($this->withUpdateModificationField(['vat_registration_number' => $request->vat_registration_number]));
+            return api_response($request, null, 200, ['msg' => 'Vat Registration Number Update Successfully']);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }
 
