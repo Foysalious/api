@@ -48,7 +48,9 @@ class JobType extends GraphQlType
             'can_take_review' => ['type' => Type::boolean()],
             'can_pay' => ['type' => Type::boolean()],
             'can_add_promo' => ['type' => Type::int()],
-            'is_car_rental' => ['type' => Type::boolean()]
+            'is_car_rental' => ['type' => Type::boolean()],
+            'pickup_location_id' => ['type' => Type::int()],
+            'destination_location_id' => ['type' => Type::int()],
         ];
     }
 
@@ -238,6 +240,24 @@ class JobType extends GraphQlType
     protected function resolveDestinationAddressGeoField($root, $args)
     {
         return $root->carRentalJobDetail ? $root->carRentalJobDetail->destination_address_geo : null;
+    }
+
+    protected function resolvePickupLocationIdField($root, $args)
+    {
+        if ($root->carRentalJobDetail) {
+            return $root->carRentalJobDetail->pickUpLocation ? $root->carRentalJobDetail->pickUpLocation->location_id : null;
+        } else {
+            return null;
+        }
+    }
+
+    protected function resolveDestinationLocationIdField($root, $args)
+    {
+        if ($root->carRentalJobDetail) {
+            return $root->carRentalJobDetail->destinationLocation ? $root->carRentalJobDetail->destinationLocation->location_id : null;
+        } else {
+            return null;
+        }
     }
 
 }
