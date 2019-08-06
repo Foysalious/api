@@ -1180,6 +1180,7 @@ class PartnerController extends Controller
             $this->validate($request, ['vat_registration_number' => 'required']);
             /** @var Partner $partner */
             $partner = $request->partner;
+            $this->setModifier($request->manager_resource);
             $partner->basicInformations()->update($this->withUpdateModificationField(['vat_registration_number' => $request->vat_registration_number]));
             return api_response($request, null, 200, ['msg' => 'Vat Registration Number Update Successfully']);
         } catch (ValidationException $e) {
