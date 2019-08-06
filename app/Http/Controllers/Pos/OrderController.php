@@ -26,7 +26,8 @@ use Sheba\Pos\Order\RefundNatures\Natures;
 use Sheba\Pos\Order\RefundNatures\RefundNature;
 use Sheba\Pos\Order\RefundNatures\ReturnNatures;
 use Sheba\Pos\Order\Updater;
-use Sheba\Customer\Creator as CustomerCreator;
+use Sheba\Profile\Creator as ProfileCreator;
+use Sheba\Pos\Customer\Creator as PosCustomerCreator;
 use Sheba\Repositories\PartnerRepository;
 use Throwable;
 
@@ -107,7 +108,7 @@ class OrderController extends Controller
     }
 
 
-    public function store($partner, Request $request, Creator $creator, CustomerCreator $customerCreator, PartnerRepository $partnerRepository)
+    public function store($partner, Request $request, Creator $creator, ProfileCreator $profileCreator, PosCustomerCreator $posCustomerCreator, PartnerRepository $partnerRepository)
     {
         try {
             $this->validate($request, [
@@ -127,8 +128,11 @@ class OrderController extends Controller
                 $this->setModifier($request->manager_resource);
             } else {
                 $partner = $partnerRepository->find((int)$partner);
-                $customer = $customerCreator->setMobile($request->customer_mobile)->setName($request->customer_name)->create();
-                $creator->setCustomer($customer);
+                $profile = $profileCreator->setMobile($request->customer_mobile)->setName($request->customer_name)->create();
+                $partner_pos_customer = $posCustomerCreator->setProfile($profile)->setPartner($partner)->create();
+                $pos_customer = $partner_pos_customer->customer;
+                $this->setModifier($profile->customer);
+                $creator->setCustomer($pos_customer);
             }
             $creator->setPartner($partner)->setData($request->all());
             if ($error = $creator->hasError()) return $error;
@@ -147,7 +151,6 @@ class OrderController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
