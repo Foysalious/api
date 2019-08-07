@@ -147,8 +147,8 @@ class CategoryController extends Controller
                 ->whereHas('locations', function ($q) use ($location_id) {
                     $q->select('locations.id')->where('locations.id', $location_id);
                 })
-                ->whereHas('children', function ($q) use ($location_id, $request, $best_deal_category_ids) {
-                    $q->select('id', 'parent_id')->published()
+                ->whereHas('children', function ($q) use ($location_id, $best_deal_category_ids) {
+                    $q->select('id', 'parent_id')->where('publication_status', 1)
                         ->whereHas('locations', function ($q) use ($location_id) {
                             $q->select('locations.id')->where('locations.id', $location_id);
                         })->whereHas('services', function ($q) use ($location_id) {
