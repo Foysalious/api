@@ -119,7 +119,7 @@ class CustomerController extends Controller
     public function update(Request $request, $partner, PosCustomer $customer, Updater $updater)
     {
         try {
-            $this->validate($request, []);
+            $this->validate($request, ['mobile' => 'required|mobile:bd']);
             $this->setModifier($request->manager_resource);
             $updater->setCustomer($customer)->setData($request->except(['partner_id','remember_token']));
             if ($error = $updater->hasError())
@@ -134,6 +134,7 @@ class CustomerController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

@@ -73,7 +73,7 @@ class Updater
         /** @var Profile $profile */
         $profile = $this->profileRepo->checkExistingProfile($this->data['mobile'], isset($this->data['email']) ? $this->data['email'] : null);
         if ($profile && $profile->id != $this->posCustomer->profile_id) return ['mobile' => 'Profile already exists'];
-        else $this->setProfile($profile);
+        if ($profile) $this->setProfile($profile);
 
         return false;
     }
