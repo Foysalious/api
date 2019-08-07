@@ -65,6 +65,12 @@ class ServiceController extends Controller
         }
     }
 
+    /**
+     * @param $partner
+     * @param $service
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function show($partner, $service, Request $request)
     {
         try {
