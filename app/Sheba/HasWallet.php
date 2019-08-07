@@ -13,5 +13,5 @@ interface HasWallet
 
     public function debitWallet($amount);
 
-    public function walletTransaction($transaction_data);
+    public function walletTransaction($transaction_data): PartnerTransaction;
 }

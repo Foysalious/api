@@ -61,7 +61,7 @@ trait Wallet
         $this->update();
     }
 
-    public function walletTransaction($transaction_data)
+    public function walletTransaction($transaction_data): PartnerTransaction
     {
         $data = array_merge($transaction_data, ['created_at' => Carbon::now()]);
         $user_transaction = $this->getUserTransaction()->fill($data);
