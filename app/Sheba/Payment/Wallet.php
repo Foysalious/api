@@ -20,7 +20,7 @@ trait Wallet
      * @param $transaction_data
      * @return PartnerTransaction
      */
-    public function rechargeWallet($amount, $transaction_data)
+    public function rechargeWallet($amount, $transaction_data): PartnerTransaction
     {
         /** @var PartnerTransaction $transaction */
         $transaction = null;
@@ -37,7 +37,7 @@ trait Wallet
      * @param $transaction_data
      * @return PartnerTransaction
      */
-    public function minusWallet($amount, $transaction_data)
+    public function minusWallet($amount, $transaction_data): PartnerTransaction
     {
         /** @var PartnerTransaction $transaction */
         $transaction = null;
