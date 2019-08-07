@@ -1,5 +1,6 @@
 <?php namespace Sheba\Payment\Complete;
 
+use App\Jobs\Partner\PaymentLink\SendPaymentLinkSms;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
 use Sheba\HasWallet;
@@ -7,6 +8,7 @@ use Sheba\ModificationFields;
 use Sheba\PaymentLink\InvoiceCreator;
 use Sheba\PaymentLink\PaymentLinkTransformer;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
+use Sheba\PushNotificationHandler;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
 use DB;
@@ -50,6 +52,8 @@ class PaymentLinkOrderComplete extends PaymentComplete
             throw $e;
         }
         $this->saveInvoice();
+        dispatch(new SendPaymentLinkSms($this->payment, $this->paymentLink));
+        $this->notifyManager();
         return $this->payment;
     }
 
@@ -107,4 +111,20 @@ class PaymentLinkOrderComplete extends PaymentComplete
             return null;
         }
     }
+
+    private function notifyManager()
+    {
+//        $topic = config('sheba.push_notification_topic_name.manager') . $partner->id;
+//        $channel = config('sheba.push_notification_channel_name.manager');
+//        $sound = config('sheba.push_notification_sound.manager');
+//
+//        (new PushNotificationHandler())->send([
+//            "title" => 'ওয়ালেট ওয়ার্নিং!',
+//            "message" => $notification,
+//            "event_type" => 'WalletWarning',
+//            "sound" => "notification_sound",
+//            "channel_id" => $channel
+//        ], $topic, $channel, $sound);
+    }
+
 }

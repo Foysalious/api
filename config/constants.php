@@ -590,18 +590,18 @@ return [
     ],
     'DEVELOPMENT_PLATFORMS' => ['android', 'ios', 'web', 'all'],
     'POS_SERVICE_UNITS' => [
-        'ft'    => ['bn' => 'ফুট', 'en' => 'ft'],
-        'sft'   => ['bn' => 'স্কয়ার ফিট', 'en' => 'sft'],
-        'sq.m'  => ['bn' => 'স্কয়ার মিটার', 'en' => 'sq.m'],
-        'kg'    => ['bn' => 'কেজি', 'en' => 'kg'],
+        'ft' => ['bn' => 'ফুট', 'en' => 'ft'],
+        'sft' => ['bn' => 'স্কয়ার ফিট', 'en' => 'sft'],
+        'sq.m' => ['bn' => 'স্কয়ার মিটার', 'en' => 'sq.m'],
+        'kg' => ['bn' => 'কেজি', 'en' => 'kg'],
         'piece' => ['bn' => 'পিস', 'en' => 'piece'],
-        'km'    => ['bn' => 'কিমি', 'en' => 'km'],
+        'km' => ['bn' => 'কিমি', 'en' => 'km'],
         'litre' => ['bn' => 'লিটার', 'en' => 'liter'],
         'meter' => ['bn' => 'মিটার', 'en' => 'meter'],
         'dozon' => ['bn' => 'ডজন', 'en' => 'dozon'],
-        'inch'  => ['bn' => 'ইঞ্চি', 'en' => 'inch'],
+        'inch' => ['bn' => 'ইঞ্চি', 'en' => 'inch'],
         'bosta' => ['bn' => 'বস্তা', 'en' => 'bosta'],
-        'unit'  => ['bn' => 'ইউনিট', 'en' => 'unit'],
-        'set'   => ['bn' => 'সেট', 'en' => 'set']
+        'unit' => ['bn' => 'ইউনিট', 'en' => 'unit'],
+        'set' => ['bn' => 'সেট', 'en' => 'set']
     ]
 ];
