@@ -126,7 +126,7 @@
                         <img src="https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/icons/bag.png"/>
                     </td>
                     <td style="color: #383d46;">Payment amount</td>
-                    <td style="color: #383d46;" align="right">BDT {{$amount}}</td>
+                    <td style="color: #383d46;" align="right">BDT {{number_format($amount,2)}}</td>
                 </tr>
                 <tr>
                     <td><img src="https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/icons/info.png"/></td>
