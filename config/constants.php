@@ -520,10 +520,10 @@ return [
             'text' => 'Invalid Service',
             'value' => 'invalid_service'
         ]
-//        [
-//            'text' => 'Other',
-//            'value' => 'other'
-//        ]
+        /*[
+            'text' => 'Other',
+            'value' => 'other'
+        ]*/
     ],
     'SMS_CAMPAIGN_RECEIVER_STATUSES' => [
         'pending' => 'pending',
