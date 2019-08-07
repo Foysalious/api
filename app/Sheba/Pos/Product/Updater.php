@@ -97,6 +97,10 @@ class Updater
         if ((isset($this->data['unit']) && $this->data['unit'] != $this->service->unit)) {
             $this->updatedData['unit'] = $this->data['unit'];
         }
+
+        if ((isset($this->data['description']) && $this->data['description'] != $this->service->description)) {
+            $this->updatedData['description'] = $this->data['description'];
+        }
     }
 
     private function hasFile($filename)
