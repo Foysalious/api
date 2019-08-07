@@ -2,6 +2,7 @@
 
 
 use Sheba\PaymentLink\PaymentLinkTransformer;
+use Sheba\PaymentLink\UrlTransformer;
 
 interface PaymentLinkRepositoryInterface extends BaseRepositoryInterface
 {
@@ -14,6 +15,13 @@ interface PaymentLinkRepositoryInterface extends BaseRepositoryInterface
      * @return PaymentLinkTransformer|null
      */
     public function findByIdentifier($identifier);
+
+
+    /**
+     * @param $url
+     * @return UrlTransformer
+     */
+    public function createShortUrl($url);
 
     /**
      * @param array $attributes

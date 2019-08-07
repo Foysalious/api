@@ -39,6 +39,7 @@ class PaymentLinkClient
         }
     }
 
+
     public function defaultPaymentLink(Request $request)
     {
         try {
@@ -156,6 +157,16 @@ class PaymentLinkClient
         if ($result['code'] == 200) {
             return $result['links'][0];
         } else {
+            return null;
+        }
+    }
+
+    public function createShortUrl($url)
+    {
+        try {
+            $response = $this->client->request('POST', config('sheba.payment_link_url') . '/api/v1/urls', ['form_params' => ['originalUrl' => $url]]);
+            return json_decode($response->getBody());
+        } catch (\Throwable $e) {
             return null;
         }
     }
