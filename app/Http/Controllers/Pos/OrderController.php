@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Controller;
 
+use App\Models\PosCustomer;
 use App\Models\PosOrder;
 
 use App\Sheba\Payment\Adapters\Payable\PaymentLinkOrderAdapter;
@@ -274,15 +275,21 @@ class OrderController extends Controller
      * SMS TO CUSTOMER ABOUT POS ORDER BILLS
      *
      * @param Request $request
+     * @param Updater $updater
      * @return JsonResponse
      */
-    public function sendSms(Request $request)
+    public function sendSms(Request $request, Updater $updater)
     {
         try {
             $partner = $request->partner;
             $this->setModifier($request->manager_resource);
             /** @var PosOrder $order */
             $order = PosOrder::with('items')->find($request->order)->calculate();
+
+            if ($request->has('customer_id') && is_null($order->customer_id)) {
+                $requested_customer = PosCustomer::find($request->customer_id);
+                $order = $updater->setOrder($order)->setData(['customer_id' => $requested_customer->id])->update();
+            }
 
             if (!$order) return api_response($request, null, 404, ['msg' => 'Order not found']);
             if (!$order->customer) return api_response($request, null, 404, ['msg' => 'Customer not found']);

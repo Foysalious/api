@@ -55,6 +55,8 @@ class Updater
                 $this->itemRepo->update($item, $service_data);
             }
         }
+        if (isset($this->data['customer_id']))
+            return $this->orderRepo->update($this->order, $this->data);
     }
 
     /**

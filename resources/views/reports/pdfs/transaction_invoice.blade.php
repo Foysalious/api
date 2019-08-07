@@ -69,49 +69,49 @@
     @if(isset($pos_order))
         <tr>
             <td>
-                <table style="border-bottom: 1px solid #ddd;width: 100%;color: #929292">
+                <table style="border-bottom: 1px solid #ddd;width: 100%;color: #929292" cellspacing="5">
                     <thead>
                     <tr>
-                        <th>Product Name</th>
-                        <th>Quantity</th>
-                        <th>Unit Price</th>
-                        <th align="right">Total Price</th>
+                        <th style="color: #9b9b9b">Product Name</th>
+                        <th style="color: #9b9b9b">Quantity</th>
+                        <th style="color: #9b9b9b">Unit Price</th>
+                        <th style="color: #9b9b9b" align="right">Total Price</th>
                     </tr>
                     </thead>
                     <tbody>
                     <?php $subtotal = 0;?>
                     @foreach($pos_order['items'] as $item)
                         <tr>
-                            <td style="color: #828282">{{$item->service_name}}</td>
-                            <td style="color: #828282">{{$item->quantity}}</td>
-                            <td style="color: #828282">{{$item->unit_price}}</td>
+                            <td style="color: #383d46">{{$item->service_name}}</td>
+                            <td style="color: #383d46">{{$item->quantity}}</td>
+                            <td style="color: #383d46">BDT {{number_format($item->unit_price,2)}}</td>
                             <?php $total = (double)$item->quantity * (double)$item->unit_price; $subtotal += $total;?>
-                            <td align="right" style="color: #626262">{{$total}}</td>
+                            <td align="right" style="color: #383d46">BDT {{number_format($total,2)}}</td>
                         </tr>
                     @endforeach
-                    <tr style="border-top-color: black;border-top-width: 1px ;border-top-style: sold;mso-border-top-width-alt: 1px" bordercolor="black">
-                        <td colspan="3" align="right">Total</td>
-                        <td align="right" style="color: #626262">{{$pos_order['total']}}</td>
+                    <tr>
+                        <td  style="border-top-color: #9b9d9b;border-top-width: 1px ;border-top-style: solid;mso-border-top-width-alt: 1px" bordercolor="#9b9d9b" colspan="3" align="right">Total</td>
+                        <td  style="border-top-color: #9b9d9b;border-top-width: 1px ;border-top-style: solid;mso-border-top-width-alt: 1px" bordercolor="#9b9d9b" align="right" style="color: #9b9b9b">BDT {{number_format($pos_order['total'])}}</td>
                     </tr>
                     <tr>
                         <td colspan="3" align="right">Total Vat</td>
-                        <td align="right" style="color: #626262">{{$pos_order['vat']}}</td>
+                        <td align="right" style="color: #9b9b9b">BDT {{number_format($pos_order['vat'],2)}}</td>
                     </tr>
                     <tr>
                         <td colspan="3" align="right">Total Discount</td>
-                        <td align="right" style="color: #626262">{{$pos_order['discount']}}</td>
+                        <td align="right" style="color: #9b9b9b">BDT {{number_format($pos_order['discount'],2)}}</td>
                     </tr>
                     <tr>
                         <td colspan="3" align="right">Total Payable</td>
-                        <td align="right" style="color: #626262">{{$pos_order['grand_total']}}</td>
+                        <td align="right" style="color: #9b9b9b">BDT {{number_format($pos_order['grand_total'],2)}}</td>
                     </tr>
                     <tr>
                         <td colspan="3" align="right">Paid</td>
-                        <td align="right" style="color: #626262">{{$pos_order['paid']}}</td>
+                        <td align="right" style="color: #9b9b9b">BDT {{number_format($pos_order['paid'],2)}}</td>
                     </tr>
                     <tr>
                         <td colspan="3" align="right">Due</td>
-                        <td align="right" style="color: #626262">{{$pos_order['due']}}</td>
+                        <td align="right" style="color: #9b9b9b">BDT {{number_format($pos_order['due'],2)}}</td>
                     </tr>
                     </tbody>
                 </table>
@@ -120,28 +120,28 @@
     @endif
     <tr>
         <td>
-            <table style="width: 100%;color: #636363;" class="invoice-table" cellpadding="5">
+            <table style="width: 100%;color: #383d46;" class="invoice-table" cellpadding="5">
                 <tr>
                     <td>
                         <img src="https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/icons/bag.png"/>
                     </td>
-                    <td>Payment amount</td>
-                    <td align="right">BDT {{$amount}}</td>
+                    <td style="color: #383d46;">Payment amount</td>
+                    <td style="color: #383d46;" align="right">BDT {{number_format($amount,2)}}</td>
                 </tr>
                 <tr>
                     <td><img src="https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/icons/info.png"/></td>
-                    <td>Payment purpose</td>
-                    <td align="right">{{$description}}</td>
+                    <td style="color: #383d46;">Payment purpose</td>
+                    <td style="color: #383d46;" align="right">{{$description}}</td>
                 </tr>
                 <tr>
                     <td><img src="https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/icons/check.png"/></td>
-                    <td>Payment time</td>
-                    <td align="right">{{$created_at}}</td>
+                    <td style="color: #383d46;">Payment time</td>
+                    <td style="color: #383d46;" align="right">{{$created_at}}</td>
                 </tr>
                 <tr>
                     <td><img src="https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/icons/credit.png"/></td>
-                    <td>Payment type</td>
-                    <td align="right">{{$method}}</td>
+                    <td style="color: #383d46;">Payment type</td>
+                    <td style="color: #383d46;" align="right">{{$method}}</td>
                 </tr>
             </table>
         </td>
