@@ -7,18 +7,21 @@ use Illuminate\Http\Request;
 use Sheba\Payment\Exceptions\PayableNotFound;
 use Sheba\PaymentLink\PaymentLinkClient;
 use Sheba\PaymentLink\PaymentLinkTransformer;
+use Sheba\PaymentLink\UrlTransformer;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 
 class PaymentLinkRepository extends BaseRepository implements PaymentLinkRepositoryInterface
 {
     private $paymentLinkClient;
     private $paymentLinkTransformer;
+    private $urlTransformer;
 
-    public function __construct(PaymentLinkTransformer $paymentLinkTransformer)
+    public function __construct(PaymentLinkTransformer $paymentLinkTransformer, UrlTransformer $urlTransformer)
     {
         parent::__construct();
         $this->paymentLinkClient = new PaymentLinkClient();
         $this->paymentLinkTransformer = $paymentLinkTransformer;
+        $this->urlTransformer = $urlTransformer;
 
     }
 
@@ -115,4 +118,9 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
         return $response ? $this->paymentLinkTransformer->setResponse($response) : null;
     }
 
+    public function createShortUrl($url)
+    {
+        $response = json_decode(json_encode($this->paymentLinkClient->createShortUrl($url)));
+        return $response ? $this->urlTransformer->setResponse($response) : null;
+    }
 }

@@ -52,6 +52,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             throw $e;
         }
         $this->saveInvoice();
+        $this->
         dispatch(new SendPaymentLinkSms($this->payment, $this->paymentLink));
         $this->notifyManager();
         return $this->payment;
@@ -105,7 +106,9 @@ class PaymentLinkOrderComplete extends PaymentComplete
     protected function saveInvoice()
     {
         try {
-            $this->payment->invoice_id = $this->invoiceCreator->setPaymentLink($this->paymentLink)->setPayment($this->payment)->save();
+            $invoice_link = $this->invoiceCreator->setPaymentLink($this->paymentLink)->setPayment($this->payment)->save();
+            $url = $this->paymentLinkRepository->createShortUrl($invoice_link);
+            $this->payment->invoice_link = $url->getShortUrl();
             $this->payment->update();
         } catch (QueryException $e) {
             return null;
