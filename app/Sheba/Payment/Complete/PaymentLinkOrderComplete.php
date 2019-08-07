@@ -31,19 +31,14 @@ class PaymentLinkOrderComplete extends PaymentComplete
         try {
             if ($this->payment->isComplete()) return $this->payment;
             $this->paymentLink = $this->getPaymentLink();
-            DB::transaction(function () {
+            $payment_receiver = $this->getPaymentLinkReceiver();
+            DB::transaction(function () use ($payment_receiver) {
                 $this->paymentRepository->setPayment($this->payment);
                 $payable = $this->payment->payable;
                 $this->setModifier($customer = $payable->user);
                 $this->payment->transaction_details = null;
                 $this->completePayment();
-                $recharge_wallet_amount = $this->payment->payable->amount;
-                $payment_receiver = $this->getPaymentLinkReceiver();
-                $payment_receiver->rechargeWallet($recharge_wallet_amount, [
-                    'transaction_details' => $this->payment->getShebaTransaction()->toJson(),
-                    'log' => 'Credited through payment link payment'
-                ]);
-                $payment_receiver->minusWallet($this->getPaymentLinkFee($recharge_wallet_amount), ['log' => 'Amount deducted for as PaymentLink charge']);
+                $this->processTransactions($payment_receiver);
                 $this->clearPosOrder();
             });
         } catch (QueryException $e) {
@@ -86,7 +81,19 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $model_name = "App\\Models\\" . ucfirst($this->paymentLink['userType']);
         return $model_name::find($this->paymentLink['userId']);
     }
-    
+
+    private function processTransactions(HasWallet $payment_receiver)
+    {
+        $recharge_wallet_amount = $this->payment->payable->amount;
+        $formatted_recharge_amount = number_format($recharge_wallet_amount, 2);
+        $recharge_log = "$formatted_recharge_amount TK has been collected from {$this->payment->payable->getName()}, {$this->paymentLink['reason']}";
+        $recharge_transaction = $payment_receiver->rechargeWallet($recharge_wallet_amount, ['transaction_details' => $this->payment->getShebaTransaction()->toJson(), 'log' => $recharge_log]);
+        $minus_wallet_amount = $this->getPaymentLinkFee($recharge_wallet_amount);
+        $formatted_minus_amount = number_format($minus_wallet_amount, 2);
+        $minus_log = "$formatted_minus_amount TK has been charged as link service fees against of Transc ID: {$recharge_transaction->id}, and Transc amount: $formatted_recharge_amount";
+        $payment_receiver->minusWallet($minus_wallet_amount, ['log' => $minus_log]);
+    }
+
     private function getPaymentLinkFee($amount)
     {
         return ($amount * $this->paymentLinkCommission) / 100;
