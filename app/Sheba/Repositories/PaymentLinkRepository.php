@@ -121,6 +121,6 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
     public function createShortUrl($url)
     {
         $response = json_decode(json_encode($this->paymentLinkClient->createShortUrl($url)));
-        return $response ? $this->urlTransformer->setResponse($response) : null;
+        return $response && $response->code == 200 ? $this->urlTransformer->setResponse($response->url) : null;
     }
 }
