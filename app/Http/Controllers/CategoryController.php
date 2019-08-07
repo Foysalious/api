@@ -142,17 +142,24 @@ class CategoryController extends Controller
             $best_deal_category_group_id = explode(',', config('sheba.best_deal_ids'));
             $best_deal_category_ids = CategoryGroupCategory::select('category_group_id', 'category_id')
                 ->whereIn('category_group_id', $best_deal_category_group_id)->pluck('category_id')->toArray();
+
             $categories = Category::published()
                 ->whereHas('locations', function ($q) use ($location_id) {
                     $q->select('locations.id')->where('locations.id', $location_id);
                 })
-                ->whereHas('children', function ($q) use ($location_id, $request) {
-                    $q->select('id', 'parent_id')->published()->whereHas('locations', function ($q) use ($location_id) {
-                        $q->select('locations.id')->where('locations.id', $location_id);
-                    });
+                ->whereHas('children', function ($q) use ($location_id, $request, $best_deal_category_ids) {
+                    $q->select('id', 'parent_id')->published()
+                        ->whereHas('locations', function ($q) use ($location_id) {
+                            $q->select('locations.id')->where('locations.id', $location_id);
+                        })->whereHas('services', function ($q) use ($location_id) {
+                            $q->select('services.id')->published()->whereHas('locations', function ($q) use ($location_id) {
+                                $q->select('locations.id')->where('locations.id', $location_id);
+                            });
+                        })->whereNotIn('id', $best_deal_category_ids);
                 })
                 ->select('id', 'name', 'parent_id')
                 ->parent()->orderBy('order');
+
             if ($with) {
                 $categories->with(['children' => function ($q) use ($location_id, $best_deal_category_ids) {
                     $q->select('id', 'name', 'thumb', 'parent_id', 'app_thumb')
@@ -172,6 +179,10 @@ class CategoryController extends Controller
                 foreach ($category->children as &$child) {
                     array_forget($child, 'parent_id');
                 }
+            }
+
+            foreach ($categories as &$category) {
+                if (is_null($category->children)) app('sentry')->captureException(new \Exception('Category null on ' . $category->id));
             }
             return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $categories]) : api_response($request, null, 404);
         } catch (ValidationException $e) {
