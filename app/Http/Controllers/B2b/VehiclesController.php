@@ -694,4 +694,26 @@ class VehiclesController extends Controller
     {
         return $filename = Carbon::now()->timestamp . '_vehicle_image_' . $vehicle->id . '.' . $photo->extension();
     }
+
+    public function unTagVehicleDriver($member, $vehicle, Request $request)
+    {
+        try {
+            $vehicle = Vehicle::find((int)$vehicle);
+
+            if(!$vehicle) return api_response($request, 1, 404);
+
+            if(!$request->driver_id) {
+                $vehicle->update(['current_driver_id' => null]);
+            } else {
+                $vehicle->update(['current_driver_id' => $request->driver_id]);
+            }
+
+
+
+            return api_response($request, 1, 200);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }
