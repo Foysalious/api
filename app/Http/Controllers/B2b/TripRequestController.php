@@ -193,7 +193,7 @@ class TripRequestController extends Controller
                 'member' => [
                     'name' => $trip->member->profile->name,
                     'image' => $trip->member->profile->pro_pic,
-                    'designation' => 'Manager'
+                    'designation' => $trip->member->businessMember ? $trip->member->businessMember->role ? $trip->member->businessMember->role->name : 'N/A' : 'N/A'
                 ],
                 'comments' => $comments,
                 'driver' => [
