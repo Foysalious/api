@@ -86,7 +86,7 @@
                             <td style="color: #383d46">{{$item->quantity}}</td>
                             <td style="color: #383d46">BDT {{number_format($item->unit_price,2)}}</td>
                             <?php $total = (double)$item->quantity * (double)$item->unit_price; $subtotal += $total;?>
-                            <td align="right" style="color: #383d46"">BDT {{number_format($total,2)}}</td>
+                            <td align="right" style="color: #383d46">BDT {{number_format($total,2)}}</td>
                         </tr>
                     @endforeach
                     <tr>
