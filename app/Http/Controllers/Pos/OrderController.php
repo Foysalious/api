@@ -158,6 +158,7 @@ class OrderController extends Controller
                 $transformer->setResponse($paymentLink);
                 $link = ['link' => $transformer->getLink()];
             }
+            $order = ['id' => $order->id, 'payment_status' => $order->payment_status];
             return api_response($request, null, 200, ['message' => 'Order Created Successfully', 'order' => $order, 'payment' => $link]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
