@@ -62,4 +62,9 @@ class SubscriptionOrderComplete extends PaymentComplete
         $subscription_order = new SubscriptionOrderAdapter($payable_model);
         $subscription_order->convertToOrder();
     }
+
+    protected function saveInvoice()
+    {
+        // TODO: Implement saveInvoice() method.
+    }
 }

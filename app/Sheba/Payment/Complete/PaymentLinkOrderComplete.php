@@ -1,10 +1,11 @@
 <?php namespace Sheba\Payment\Complete;
 
-use App\Models\PosOrder;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
 use Sheba\HasWallet;
 use Sheba\ModificationFields;
+use Sheba\PaymentLink\InvoiceCreator;
+use Sheba\PaymentLink\PaymentLinkTransformer;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
@@ -15,14 +16,17 @@ class PaymentLinkOrderComplete extends PaymentComplete
     use ModificationFields;
     /** @var PaymentLinkRepository */
     private $paymentLinkRepository;
-    /** @var array $paymentLink */
+    /** @var PaymentLinkTransformer $paymentLink */
     private $paymentLink;
     private $paymentLinkCommission;
+    /** @var InvoiceCreator $invoiceCreator */
+    private $invoiceCreator;
 
     public function __construct()
     {
         parent::__construct();
         $this->paymentLinkRepository = app(PaymentLinkRepositoryInterface::class);
+        $this->invoiceCreator = app(InvoiceCreator::class);
         $this->paymentLinkCommission = 2.5;
     }
 
@@ -31,7 +35,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
         try {
             if ($this->payment->isComplete()) return $this->payment;
             $this->paymentLink = $this->getPaymentLink();
-            $payment_receiver = $this->getPaymentLinkReceiver();
+            $payment_receiver = $this->paymentLink->getPaymentReceiver();
             DB::transaction(function () use ($payment_receiver) {
                 $this->paymentRepository->setPayment($this->payment);
                 $payable = $this->payment->payable;
@@ -45,14 +49,17 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $this->failPayment();
             throw $e;
         }
+        $this->saveInvoice();
         return $this->payment;
     }
 
+    /**
+     * @return PaymentLinkTransformer
+     */
     private function getPaymentLink()
     {
         try {
-            $response = $this->paymentLinkRepository->getPaymentLinkByLinkId($this->payment->payable->type_id);
-            return $response['links'][0];
+            return $this->paymentLinkRepository->getPaymentLinkByLinkId($this->payment->payable->type_id);
         } catch (RequestException $e) {
             throw $e;
         }
@@ -60,33 +67,25 @@ class PaymentLinkOrderComplete extends PaymentComplete
 
     private function clearPosOrder()
     {
-        if (isset($this->paymentLink['targetType']) && $this->paymentLink['targetType'] == 'pos_order') {
-            $order = PosOrder::find($this->paymentLink['targetId']);
+        $target = $this->paymentLink->getTarget();
+        if ($target) {
             $payment_data = [
-                'pos_order_id' => $order->id,
+                'pos_order_id' => $target->id,
                 'amount' => $this->payment->payable->amount,
                 'method' => $this->payment->payable->type
             ];
             $payment_creator = app(PaymentCreator::class);
             $payment_creator->credit($payment_data);
-            $this->paymentLinkRepository->statusUpdate($this->paymentLink['linkId'], 0);
+            $this->paymentLinkRepository->statusUpdate($this->paymentLink->getLinkID(), 0);
         }
     }
 
-    /**
-     * @return HasWallet
-     */
-    private function getPaymentLinkReceiver()
-    {
-        $model_name = "App\\Models\\" . ucfirst($this->paymentLink['userType']);
-        return $model_name::find($this->paymentLink['userId']);
-    }
 
     private function processTransactions(HasWallet $payment_receiver)
     {
         $recharge_wallet_amount = $this->payment->payable->amount;
         $formatted_recharge_amount = number_format($recharge_wallet_amount, 2);
-        $recharge_log = "$formatted_recharge_amount TK has been collected from {$this->payment->payable->getName()}, {$this->paymentLink['reason']}";
+        $recharge_log = "$formatted_recharge_amount TK has been collected from {$this->payment->payable->getName()}, {$this->paymentLink->getReason()}";
         $recharge_transaction = $payment_receiver->rechargeWallet($recharge_wallet_amount, ['transaction_details' => $this->payment->getShebaTransaction()->toJson(), 'log' => $recharge_log]);
         $minus_wallet_amount = $this->getPaymentLinkFee($recharge_wallet_amount);
         $formatted_minus_amount = number_format($minus_wallet_amount, 2);
@@ -99,4 +98,13 @@ class PaymentLinkOrderComplete extends PaymentComplete
         return ($amount * $this->paymentLinkCommission) / 100;
     }
 
+    protected function saveInvoice()
+    {
+        try {
+            $this->payment->invoice_id = $this->invoiceCreator->setPaymentLink($this->paymentLink)->setPayment($this->payment)->save();
+            $this->payment->update();
+        } catch (QueryException $e) {
+            return null;
+        }
+    }
 }

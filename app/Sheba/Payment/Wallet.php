@@ -15,12 +15,8 @@ use DB;
 
 trait Wallet
 {
-    /**
-     * @param $amount
-     * @param $transaction_data
-     * @return PartnerTransaction
-     */
-    public function rechargeWallet($amount, $transaction_data): PartnerTransaction
+   
+    public function rechargeWallet($amount, $transaction_data)
     {
         /** @var PartnerTransaction $transaction */
         $transaction = null;
@@ -32,12 +28,8 @@ trait Wallet
         return $transaction;
     }
 
-    /**
-     * @param $amount
-     * @param $transaction_data
-     * @return PartnerTransaction
-     */
-    public function minusWallet($amount, $transaction_data): PartnerTransaction
+
+    public function minusWallet($amount, $transaction_data)
     {
         /** @var PartnerTransaction $transaction */
         $transaction = null;
@@ -61,7 +53,7 @@ trait Wallet
         $this->update();
     }
 
-    public function walletTransaction($transaction_data): PartnerTransaction
+    public function walletTransaction($transaction_data)
     {
         $data = array_merge($transaction_data, ['created_at' => Carbon::now()]);
         $user_transaction = $this->getUserTransaction()->fill($data);

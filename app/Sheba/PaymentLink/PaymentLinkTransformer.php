@@ -1,6 +1,8 @@
 <?php namespace Sheba\PaymentLink;
 
 
+use Sheba\HasWallet;
+
 class PaymentLinkTransformer
 {
     private $response;
@@ -57,7 +59,10 @@ class PaymentLinkTransformer
         return $this->response->isDefault;
     }
 
-    public function getUser()
+    /**
+     * @return HasWallet
+     */
+    public function getPaymentReceiver()
     {
         $model_name = "App\\Models\\" . ucfirst($this->response->userType);
         return $model_name::find($this->response->userId);

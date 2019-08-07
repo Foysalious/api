@@ -59,7 +59,7 @@ class PaymentLinkController extends Controller
         try {
             $link = $paymentLinkRepository->findByIdentifier($identifier);
             if ($link && (int)$link->getIsActive()) {
-                $user = $link->getUser();
+                $user = $link->getPaymentReceiver();
                 $payer = $link->getPayer();
                 return api_response($request, $link, 200, ['link' => [
                     'id' => $link->getLinkID(),

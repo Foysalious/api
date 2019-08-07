@@ -51,8 +51,8 @@
                         @if(isset($user))
                             <div style="padding: 10px 20px">
                                 <span style="color: #B0BEC5;">Bill to</span><br>
-                                <span style="font-weight: bold;">{{$user['name']}}</span><br>
-                                <span style="color: #B0BEC5">{{$user['mobile']}}</span>
+                                <span style="font-weight: bold;">{{$payer['name']}}</span><br>
+                                <span style="color: #B0BEC5">{{$payer['mobile']}}</span>
                             </div>
                         @endif
                     </td>
@@ -90,8 +90,12 @@
                         </tr>
                     @endforeach
                     <tr>
-                        <td  style="border-top-color: #9b9d9b;border-top-width: 1px ;border-top-style: solid;mso-border-top-width-alt: 1px" bordercolor="#9b9d9b" colspan="3" align="right">Total</td>
-                        <td  style="border-top-color: #9b9d9b;border-top-width: 1px ;border-top-style: solid;mso-border-top-width-alt: 1px" bordercolor="#9b9d9b" align="right" style="color: #9b9b9b">BDT {{number_format($pos_order['total'])}}</td>
+                        <td style="border-top-color: #9b9d9b;border-top-width: 1px ;border-top-style: solid;mso-border-top-width-alt: 1px"
+                            bordercolor="#9b9d9b" colspan="3" align="right">Total
+                        </td>
+                        <td style="border-top-color: #9b9d9b;border-top-width: 1px ;border-top-style: solid;mso-border-top-width-alt: 1px"
+                            bordercolor="#9b9d9b" align="right" style="color: #9b9b9b">
+                            BDT {{number_format($pos_order['total'])}}</td>
                     </tr>
                     <tr>
                         <td colspan="3" align="right">Total Vat</td>

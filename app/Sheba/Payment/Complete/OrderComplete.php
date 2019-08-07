@@ -144,4 +144,9 @@ class OrderComplete extends PaymentComplete
             }
         }
     }
+
+    protected function saveInvoice()
+    {
+        // TODO: Implement saveInvoice() method.
+    }
 }

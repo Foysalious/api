@@ -238,15 +238,6 @@ class ShebaController extends Controller
     public function checkTransactionStatus(Request $request, $transactionID, PdfHandler $pdfHandler)
     {
         try {
-            $this->validate($request, [
-                'user_id' => 'numeric',
-                'user_type' => 'in:customer',
-                'remember_token' => 'string',
-                'paycharge_type' => 'in:order,recharge',
-                'payment_method' => 'in:online,bkash',
-                'job_id' => 'sometimes|required',
-                'with' => 'string|in:invoice'
-            ]);
             $payment = Payment::where('transaction_id', $transactionID)->whereIn('status', ['failed', 'validated', 'completed'])->first();
             if (!$payment) {
                 $payment = Payment::where('transaction_id', $transactionID)->first();
@@ -261,22 +252,16 @@ class ShebaController extends Controller
                 'amount' => $payment->payable->amount,
                 'method' => $payment->paymentDetails->last()->readable_method,
                 'description' => $payment->payable->description,
-                'created_at' => $payment->created_at->format('jS M, Y, h:i A')
+                'created_at' => $payment->created_at->format('jS M, Y, h:i A'),
+                'invoice_link' => $payment->invoice_link
             ];
             $info = array_merge($info, $this->getInfoForPaymentLink($payment->payable));
-            if ($request->with == 'invoice') $info['invoice_link'] = $pdfHandler->setData($info)->setName($transactionID)->setViewFile('transaction_invoice')->save();
             if ($payment->status == 'validated' || $payment->status == 'failed') {
                 $message = 'Your payment has been received but there was a system error. It will take some time to update your transaction. Call 16516 for support.';
             } else {
                 $message = 'Successful';
             }
             return api_response($request, null, 200, ['info' => $info, 'message' => $message]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -301,15 +286,10 @@ class ShebaController extends Controller
 
     public function getInfoForPaymentLink(Payable $payable)
     {
+        $data = [];
         if ($payable->type == 'payment_link') {
-            $response = $this->paymentLinkrepository->getPaymentLinkByLinkId($payable->type_id);
-            $link = $response['links'][0];
-            $model_name = "App\\Models\\" . ucfirst($link['userType']);
-            $user = $model_name::find($link['userId']);
-            if ($link['targetType'] == 'pos_order') {
-                $pos_order = PosOrder::find($link['targetId'])->calculate();
-
-            }
+            $payment_link = $this->paymentLinkrepository->getPaymentLinkByLinkId($payable->type_id);
+            $user = $payment_link->getPaymentReceiver();
             $data = [
                 'payment_receiver' => [
                     'name' => $user->name,
@@ -317,17 +297,13 @@ class ShebaController extends Controller
                     'mobile' => $user->getMobile(),
                     'address' => $user->address
                 ],
-                'user' => [
+                'payer' => [
                     'name' => $payable->user->profile->name,
                     'mobile' => $payable->user->profile->mobile
                 ]
             ];
-            if (isset($pos_order)) {
-                $data['pos_order'] = ['items' => $pos_order->items, 'discount' => $pos_order->getAppliedDiscount(), 'total' => $pos_order->getNetBill(), 'grand_total' => $pos_order->getTotalBill(), 'paid' => $pos_order->getPaid(), 'due' => $pos_order->getDue(), 'status' => $pos_order->getPaymentStatus(), 'vat' => $pos_order->getTotalVat()];
-            }
-            return $data;
-        } else
-            return [];
+        }
+        return $data;
 
     }
 }

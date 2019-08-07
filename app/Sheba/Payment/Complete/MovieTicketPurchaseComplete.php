@@ -61,4 +61,9 @@ class MovieTicketPurchaseComplete extends PaymentComplete
         }
         return $this->payment;
     }
+
+    protected function saveInvoice()
+    {
+        // TODO: Implement saveInvoice() method.
+    }
 }
