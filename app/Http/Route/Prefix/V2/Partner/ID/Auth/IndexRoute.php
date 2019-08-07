@@ -65,6 +65,7 @@ class IndexRoute
                         $api->get('/send-email', 'Pos\OrderController@sendEmail');
                     });
                 });
+                $api->post('customers/{customer}', 'Pos\CustomerController@update');
                 $api->resources(['customers' => 'Pos\CustomerController']);
                 $api->get('settings', 'Pos\SettingController@getSettings');
                 $api->post('due-payment-request-sms', 'Pos\SettingController@duePaymentRequestSms');
