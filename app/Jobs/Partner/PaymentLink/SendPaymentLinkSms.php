@@ -11,7 +11,7 @@ use Sheba\Sms\Sms;
 
 class SendPaymentLinkSms extends Job implements ShouldQueue
 {
-    use InteractsWithQueue, SerializesModels;
+    use InteractsWithQueue;
     private $paymentLink;
     private $payment;
     private $sms;
