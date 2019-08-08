@@ -14,6 +14,7 @@ use App\Models\Order;
 use App\Models\Partner;
 use App\Models\PartnerOrder;
 use App\Models\Service;
+use App\Models\Voucher;
 use App\Repositories\CustomerRepository;
 use App\Repositories\PartnerServiceRepository;
 use App\Repositories\VoucherRepository;
@@ -29,6 +30,7 @@ use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\JobDiscount\JobDiscountCheckingParams;
 use Sheba\JobDiscount\JobDiscountHandler;
+use Sheba\Jobs\JobLogsCreator;
 use Sheba\Jobs\JobStatuses;
 use Sheba\Jobs\PreferredTime;
 use Sheba\ModificationFields;
@@ -191,6 +193,7 @@ class Checkout
                     $data['car_rental_job_detail']->save();
                 }
                 $order->partnerOrders->push($partner_order);
+                if ($order->voucher_id) (new JobLogsCreator($job))->addPromo(Voucher::find($order->voucher_id));
             });
         } catch (QueryException $e) {
             app('sentry')->captureException($e);
