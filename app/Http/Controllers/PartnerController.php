@@ -808,12 +808,16 @@ class PartnerController extends Controller
     {
         try {
             if ($partner = Partner::find((int)$partner)) {
-                $service = $partner->services()->select('services.id', 'name', 'variable_type', 'services.min_quantity', 'services.variables')->where('services.id', $service)->first();
+                $service = $partner->services()->select('services.id', 'name', 'variable_type', 'services.min_quantity', 'services.variables')
+                    ->where('services.id', $service)
+                    ->first();
+
                 if (count($service) > 0) {
                     $variables = json_decode($service->variables);
                     $partner_service_price_update = PartnerServicePricesUpdate::where('partner_service_id', $service->pivot->id)->where('status', 'Pending')->first();
                     $old_prices = $partner_service_price_update ? json_decode($partner_service_price_update->old_prices, 1) : null;
                     $new_prices = $partner_service_price_update ? json_decode($partner_service_price_update->new_prices, 1) : json_decode($service->pivot->prices, 1);
+
                     if ($service->variable_type == 'Options') {
                         $service['questions'] = $this->formatServiceQuestions($variables->options);
                         $service['option_prices'] = $this->formatOptionWithOldPrice($new_prices, $old_prices);
@@ -821,7 +825,7 @@ class PartnerController extends Controller
                         $service['fixed_old_price'] = null;
                     } else {
                         $service['questions'] = $service['option_prices'] = [];
-                        $service['fixed_price'] = (double)$variables->price;
+                        $service['fixed_price'] = (double)$service->pivot->prices;
                         $service['fixed_old_price'] = $partner_service_price_update ? (double)$partner_service_price_update->new_prices : null;
                     }
                     array_forget($service, 'variables');
