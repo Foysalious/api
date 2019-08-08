@@ -129,7 +129,7 @@ class JobType extends GraphQlType
 
     protected function resolveDueField($root, $args)
     {
-        return (double)$root->partnerOrder->calculate(true)->due;
+        return (double)$root->partnerOrder->calculate(true)->dueWithLogistic;
     }
 
     protected function resolveComplainsField($root, $args, $fields)

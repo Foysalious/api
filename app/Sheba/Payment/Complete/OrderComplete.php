@@ -7,9 +7,11 @@ use App\Models\SubscriptionOrder;
 use Carbon\Carbon;
 use Exception;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use Sheba\Checkout\Adapters\SubscriptionOrderAdapter;
 use Sheba\Dal\Discount\DiscountTypes;
+use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\JobDiscount\JobDiscountCheckingParams;
 use Sheba\JobDiscount\JobDiscountHandler;
 use Sheba\ModificationFields;
@@ -34,6 +36,7 @@ class OrderComplete extends PaymentComplete
     /**
      * @return Payment
      * @throws Exception
+     * @throws GuzzleException
      */
     public function complete()
     {
@@ -68,24 +71,32 @@ class OrderComplete extends PaymentComplete
     }
 
 
-    private function clearPartnerOrderPayment(PartnerOrder $partner_order, $customer, PaymentDetail $paymentDetail, $has_error)
+    /**
+     * @param PartnerOrder $partner_order
+     * @param $customer
+     * @param PaymentDetail $payment_detail
+     * @param $has_error
+     * @return bool
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    private function clearPartnerOrderPayment(PartnerOrder $partner_order, $customer, PaymentDetail $payment_detail, $has_error)
     {
         $client = new Client();
-        /* @var PaymentDetail $paymentDetail */
         $res = $client->request('POST', config('sheba.admin_url') . '/api/partner-order/' . $partner_order->id . '/collect',
             [
                 'form_params' => array_merge([
                     'customer_id' => $partner_order->order->customer->id,
                     'remember_token' => $partner_order->order->customer->remember_token,
-                    'sheba_collection' => (double)$paymentDetail->amount,
-                    'payment_method' => ucfirst($paymentDetail->method),
+                    'sheba_collection' => (double)$payment_detail->amount,
+                    'payment_method' => ucfirst($payment_detail->method),
                     'created_by_type' => 'App\\Models\\Customer',
-                    'transaction_detail' => json_encode($paymentDetail->formatPaymentDetail())
+                    'transaction_detail' => json_encode($payment_detail->formatPaymentDetail())
                 ], (new RequestIdentification())->get())
             ]);
         $response = json_decode($res->getBody());
         if ($response->code == 200) {
-            if (strtolower($paymentDetail->method) == 'wallet') dispatchReward()->run('wallet_cashback', $customer, $paymentDetail->amount, $partner_order);
+            if (strtolower($payment_detail->method) == 'wallet') dispatchReward()->run('wallet_cashback', $customer, $payment_detail->amount, $partner_order);
         } else {
             $has_error = true;
             throw new Exception('OrderComplete collect api failure. code:' . $response->code);
@@ -123,7 +134,7 @@ class OrderComplete extends PaymentComplete
 
     /**
      * @param PartnerOrder $partner_order
-     * @throws \Sheba\Dal\Discount\InvalidDiscountType
+     * @throws InvalidDiscountType
      */
     private function giveOnlineDiscount(PartnerOrder $partner_order)
     {
