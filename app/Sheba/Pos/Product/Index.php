@@ -61,8 +61,9 @@ class Index
         $query = $this->posServiceRepository
             ->where('publication_status', $this->isPublished)
             ->where('is_published_for_shop', $this->isPublishedForShop)
-            ->whereRaw('stock > 0')->orWhere('stock', null)
-            ->select('id', 'name', 'thumb', 'price', 'unit', 'stock', 'pos_category_id', 'vat_percentage');
+            ->where(function ($q) {
+                $q->whereRaw('stock > 0')->orWhere('stock', null);
+            })->select('id', 'name', 'thumb', 'price', 'unit', 'stock', 'pos_category_id', 'vat_percentage');
         if ($this->partnerId) $query = $query->where('partner_id', $this->partnerId);
         else {
             $query = $query->whereHas('partner', function ($q) {
