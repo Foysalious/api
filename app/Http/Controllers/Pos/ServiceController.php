@@ -166,6 +166,7 @@ class ServiceController extends Controller
             if ($request->is_discount_off == 'false' && !$request->discount_id) {
                 $this->createServiceDiscount($request, $partner_pos_service);
             }
+            $partner_pos_service->unit = $partner_pos_service->unit ? constants('POS_SERVICE_UNITS')[$partner_pos_service->unit] : null;
 
             return api_response($request, null, 200, ['msg' => 'Product Updated Successfully', 'service' => $partner_pos_service]);
         } catch (ValidationException $e) {
