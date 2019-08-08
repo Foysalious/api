@@ -30,7 +30,7 @@ class PosServiceTransformer extends TransformerAbstract
             'discount_applicable' => $service_discount ? true : false,
             'discounted_price' => $service_discount ? (double)$service->getDiscountedAmount() : 0,
             'discount_end_time' => $service_discount ? $service_discount->end_date->format('Y-m-d') : null,
-            'product_link' => config('sheba.front_url') . '/partners/' . $service->partner->sub_domain
+            'product_link' => config('sheba.front_url') . '/p/' . $service->partner->sub_domain
         ];
     }
 }
