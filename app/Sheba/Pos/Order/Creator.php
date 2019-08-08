@@ -3,6 +3,7 @@
 use App\Models\Partner;
 use App\Models\PosCustomer;
 use App\Models\PartnerPosService;
+use App\Models\PosOrder;
 use Sheba\Pos\Product\StockManager;
 use Sheba\Pos\Repositories\PosOrderItemRepository;
 use Sheba\Pos\Repositories\PosOrderRepository;
@@ -79,7 +80,7 @@ class Creator
     }
 
     /**
-     * @return \App\Models\PosOrder
+     * @return PosOrder
      */
     public function create()
     {

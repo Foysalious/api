@@ -22,12 +22,20 @@ abstract class RefundNature
         $this->updater = $updater;
     }
 
+    /**
+     * @param PosOrder $order
+     * @return $this
+     */
     public function setOrder(PosOrder $order)
     {
         $this->order = $order->calculate();
         return $this;
     }
 
+    /**
+     * @param array $data
+     * @return $this
+     */
     public function setData(array $data)
     {
         $this->data = $data;
