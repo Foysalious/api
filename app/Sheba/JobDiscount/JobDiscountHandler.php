@@ -41,7 +41,7 @@ class JobDiscountHandler
     public function setType($type)
     {
         DiscountTypes::checkIfValid($type);
-        $this->type = DiscountTypes::DELIVERY;
+        $this->type = $type;
         return $this;
     }
 
