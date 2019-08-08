@@ -12,6 +12,8 @@ class PosServiceTransformer extends TransformerAbstract
             'name' => $service->name,
             'app_thumb' => $service->app_thumb,
             'app_banner' => $service->app_banner,
+            'thumb' => $service->thumb,
+            'banner' => $service->banner,
             'is_published_for_shop' => (int)$service->is_published_for_shop,
             'price' => $service->price,
             'cost' => $service->cost,
