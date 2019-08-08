@@ -191,7 +191,6 @@ class Checkout
                     $data['car_rental_job_detail']->save();
                 }
                 $order->partnerOrders->push($partner_order);
-                dd($order);
             });
         } catch (QueryException $e) {
             app('sentry')->captureException($e);
