@@ -107,11 +107,11 @@ class JobController extends Controller
             $job_collection->put('status', $job->status);
             $job_collection->put('rating', $job->review ? $job->review->rating : null);
             $job_collection->put('review', $job->review ? $job->review->calculated_review : null);
-            $job_collection->put('original_price', ((double)$job->partnerOrder->jobPrices + (double)$job->logistic_charge));
+            $job_collection->put('original_price', (double)$job->partnerOrder->jobPricesWithLogistic);
             $job_collection->put('discount', (double)$job->partnerOrder->totalDiscount);
             $job_collection->put('payment_method', $this->formatPaymentMethod($job->partnerOrder->payment_method));
-            $job_collection->put('price', (double)$job->partnerOrder->totalPrice + (double)($job->logistic_charge - $delivery_discount));
-            $job_collection->put('isDue', (double)($job->partnerOrder->due + ($logistic_due - $delivery_discount)) > 0 ? 1 : 0);
+            $job_collection->put('price', (double)$job->partnerOrder->grossAmountWithLogistic);
+            $job_collection->put('isDue', $job->partnerOrder->isDueWithLogistic() ? 1 : 0);
             $job_collection->put('isRentCar', $job->isRentCar());
             $job_collection->put('is_on_premise', $job->isOnPremise());
             $job_collection->put('customer_favorite', $job->customerFavorite ? $job->customerFavorite->id : null);

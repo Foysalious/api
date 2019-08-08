@@ -6,6 +6,7 @@ use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Order\Code\Builder as CodeBuilder;
+use Sheba\PartnerOrder\PartnerOrderPaymentStatuses;
 use Sheba\PartnerOrder\PartnerOrderStatuses;
 use Sheba\PartnerOrder\StatusCalculator;
 use Sheba\Payment\PayableType;
@@ -443,4 +444,25 @@ class PartnerOrder extends Model implements PayableType
     {
         return $this->jobs->first();
     }
+
+    public function isDue()
+    {
+        return $this->paymentStatus == PartnerOrderPaymentStatuses::DUE;
+    }
+
+    public function isPaid()
+    {
+        return $this->paymentStatus == PartnerOrderPaymentStatuses::PAID;
+    }
+
+    public function isDueWithLogistic()
+    {
+        return $this->dueWithLogistic != 0.00;
+    }
+
+    public function isPaidWithLogistic()
+    {
+        return $this->dueWithLogistic == 0.00;
+    }
+
 }
