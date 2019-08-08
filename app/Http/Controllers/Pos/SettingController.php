@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\Pos;
 
 use App\Http\Controllers\Controller;
+use App\Models\Partner;
 use App\Models\PartnerPosSetting;
 use App\Models\PosCustomer;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
@@ -23,6 +24,7 @@ class SettingController extends Controller
     public function getSettings(Request $request, Creator $creator)
     {
         try {
+            /** @var Partner $partner */
             $partner = $request->partner;
             $settings = PartnerPosSetting::byPartner($partner->id)->first();
             if (!$settings) {
@@ -30,6 +32,7 @@ class SettingController extends Controller
                 $creator->setData($data)->create();
                 $settings = PartnerPosSetting::byPartner($partner->id)->first();
             }
+            $settings->vat_registration_number = $partner->basicInformations->vat_registration_number;
             removeRelationsAndFields($settings);
             return api_response($request, $settings, 200, ['settings' => $settings]);
         } catch (Throwable $e) {
