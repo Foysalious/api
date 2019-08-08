@@ -48,7 +48,7 @@
             <table style="width: 100%;border-bottom: 1px solid #ddd;padding-bottom: 4px">
                 <tr>
                     <td colspan="3" style="border-left: 4px solid #1b4280">
-                        @if(isset($user))
+                        @if(isset($payer))
                             <div style="padding: 10px 20px">
                                 <span style="color: #B0BEC5;">Bill to</span><br>
                                 <span style="font-weight: bold;">{{$payer['name']}}</span><br>
