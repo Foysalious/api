@@ -322,7 +322,7 @@ class VehiclesController extends Controller
                     ->where(function ($q) use ($business) {
                         $hired_vehicles = $business->hiredVehicles()->with('vehicle')->active()->get()->pluck('vehicle.id');
                         $q->where('owner_id', $business->id)->orWhereIn('id', $hired_vehicles->toArray());
-                    })->select('id', 'status', 'current_driver_id', 'business_department_id', 'owner_type')
+                    })->select('id', 'status', 'current_driver_id', 'business_department_id', 'owner_type','owner_id')
                     ->orderBy('id', 'desc')->skip($offset)->limit($limit);
 
                 if ($request->has('status'))
@@ -347,6 +347,7 @@ class VehiclesController extends Controller
                     if ($request->owner_type == 'own') $vehicles->whoseOwnerIsBusiness($business->id);
                     elseif ($request->owner_type == 'hired') $vehicles->whoseOwnerIsNotBusiness();
                 }
+
                 $vehicles = $vehicles->get();
             }
             $vehicle_lists = [];
