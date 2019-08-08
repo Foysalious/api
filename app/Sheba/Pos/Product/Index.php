@@ -56,16 +56,13 @@ class Index
     }
 
 
-    public function fetch()
+    public function getAvailableProducts()
     {
         $query = $this->posServiceRepository
             ->where('publication_status', $this->isPublished)
             ->where('is_published_for_shop', $this->isPublishedForShop)
-            ->whereRaw("stock > 0")
-//            ->whereHas('category', function ($q) {
-//                $q->published();
-//            })
-            ->select(['id', 'name', 'thumb', 'price', 'unit', 'stock', 'pos_category_id', 'vat_percentage']);
+            ->whereRaw('stock > 0')->orWhere('stock', null)
+            ->select('id', 'name', 'thumb', 'price', 'unit', 'stock', 'pos_category_id', 'vat_percentage');
         if ($this->partnerId) $query = $query->where('partner_id', $this->partnerId);
         else {
             $query = $query->whereHas('partner', function ($q) {
