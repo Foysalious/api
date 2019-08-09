@@ -24,8 +24,8 @@ class PerformanceController extends Controller
             $performance->setPartner($request->partner)->setTimeFrame($time_frame)->calculate();
 
             $data = [
-                    'timeline' => $time_frame->start->toDateString() . ' - ' . $time_frame->end->toDateString()
-                ] + $performance->getData()->toArray();
+                'timeline' => $time_frame->start->toDateString() . ' - ' . $time_frame->end->toDateString()
+            ] + $performance->getData();
 
             return api_response($request, $performance, 200, ['data' => $data]);
         } catch (ValidationException $e) {

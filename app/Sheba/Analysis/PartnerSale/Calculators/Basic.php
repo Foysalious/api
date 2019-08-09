@@ -54,6 +54,8 @@ class Basic extends PartnerSale
             'due'   => ['count' => $pos_payment_status_wise_count[OrderPaymentStatuses::DUE], 'amount' => $pos_due]
         ];
 
+        $this->formatTimeline($data);
+
         if ($this->frequency == self::DAY_BASE) {
             $data['day'] = $this->timeFrame->start->format('Y-m-d');
             $data['timeline'] = $this->timeFrame->start->format('l, M d');
@@ -150,5 +152,25 @@ class Basic extends PartnerSale
                 $this->data[$i] = ['value' => $i, 'amount' => 0];
             }
         }
+    }
+
+    private function formatTimeline(&$data)
+    {
+        if ($this->frequency == self::DAY_BASE) {
+            $data['day'] = $this->timeFrame->start->format('Y-m-d');
+            $data['timeline'] = $this->timeFrame->start->format('l, M d');
+        } else if ($this->frequency == self::WEEK_BASE) {
+            $data['timeline'] = $this->timeFrame->start->format('M d') . ' - ' . $this->timeFrame->end->format('M d');
+        } else if ($this->frequency == self::MONTH_BASE) {
+            $data['timeline'] = $this->timeFrame->start->format('F');
+            $data['day'] = $this->timeFrame->start->format('Y-m-d');
+        } else if ($this->frequency == self::YEAR_BASE) {
+            $data['timeline'] = 'Year ' . $this->timeFrame->start->year;
+            $data['day'] = $this->timeFrame->start->format('Y-m-d');
+        }
+        $data['time_frame'] = [
+            'start' => $this->timeFrame->start->toDateString(),
+            'end' => $this->timeFrame->end->toDateString()
+        ];
     }
 }

@@ -4,7 +4,9 @@ use Carbon\Carbon;
 
 class TimeFrame
 {
+    /** @var Carbon */
     public $start;
+    /** @var Carbon */
     public $end;
 
     public function __construct($start = null, $end = null)

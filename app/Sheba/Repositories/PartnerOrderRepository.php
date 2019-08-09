@@ -33,6 +33,11 @@ class PartnerOrderRepository
         return $this->calculate($this->closedQuery($date)->get());
     }
 
+    /**
+     * @param TimeFrame $time_frame
+     * @param Partner|null $partner
+     * @return Collection
+     */
     public function getClosedOrdersBetween(TimeFrame $time_frame, Partner $partner = null)
     {
         if ($partner) return $this->getClosedOrdersBetweenDateByPartner($time_frame, $partner);
