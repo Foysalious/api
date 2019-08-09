@@ -68,7 +68,7 @@ class JobDiscountHandler
         $against = [];
         if ($this->category) $against[] = $this->category;
         if ($this->partner) $against[] = $this->partner;
-        if (empty($against)) {
+        if (!empty($against)) {
             $discounts = $this->discountRepo->getValidForAgainst($this->type, $against);
         } else {
             $discounts = $this->discountRepo->getValidFor($this->type);

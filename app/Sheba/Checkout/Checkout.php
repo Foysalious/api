@@ -291,7 +291,26 @@ class Checkout
     private function createJob(PartnerOrder $partner_order, $data)
     {
         $preferred_time = new PreferredTime($data['time']);
-        $job_data = ['category_id' => $data['category_id'], 'partner_order_id' => $partner_order->id, 'schedule_date' => $data['date'], 'preferred_time' => $preferred_time->toString(), 'preferred_time_start' => $preferred_time->getStartString(), 'preferred_time_end' => $preferred_time->getEndString(), 'crm_id' => $data['crm_id'], 'job_additional_info' => $data['additional_information'], 'category_answers' => $data['category_answers'], 'commission_rate' => $this->category->commission($this->partner->id), 'material_commission_rate' => config('sheba.material_commission_rate'), 'discount' => isset($data['discount']) ? $data['discount'] : 0, 'sheba_contribution' => isset($data['sheba_contribution']) ? $data['sheba_contribution'] : 0, 'partner_contribution' => isset($data['partner_contribution']) ? $data['partner_contribution'] : 0, 'discount_percentage' => isset($data['discount_percentage']) ? $data['discount_percentage'] : 0, 'resource_id' => isset($data['resource_id']) ? $data['resource_id'] : null, 'status' => isset($data['resource_id']) ? JobStatuses::ACCEPTED : JobStatuses::PENDING, 'site' => $data['site']];
+        $job_data = [
+            'category_id' => $data['category_id'],
+            'partner_order_id' => $partner_order->id,
+            'schedule_date' => $data['date'],
+            'preferred_time' => $preferred_time->toString(),
+            'preferred_time_start' => $preferred_time->getStartString(),
+            'preferred_time_end' => $preferred_time->getEndString(),
+            'crm_id' => $data['crm_id'],
+            'job_additional_info' => $data['additional_information'],
+            'category_answers' => $data['category_answers'],
+            'commission_rate' => $this->category->commission($this->partner->id),
+            'material_commission_rate' => config('sheba.material_commission_rate'),
+            'discount' => isset($data['discount']) ? $data['discount'] : 0,
+            'sheba_contribution' => isset($data['sheba_contribution']) ? $data['sheba_contribution'] : 0,
+            'partner_contribution' => isset($data['partner_contribution']) ? $data['partner_contribution'] : 0,
+            'discount_percentage' => isset($data['discount_percentage']) ? $data['discount_percentage'] : 0,
+            'resource_id' => isset($data['resource_id']) ? $data['resource_id'] : null,
+            'status' => isset($data['resource_id']) ? JobStatuses::ACCEPTED : JobStatuses::PENDING,
+            'site' => $data['site']
+        ];
 
         if (!$data['is_on_premise']) $this->handleDelivery($job_data);
 
@@ -316,7 +335,8 @@ class Checkout
             $job_data['one_way_logistic_init_event'] = $this->category->one_way_logistic_init_event;
         }
         $discount_checking_params = (new JobDiscountCheckingParams())->setDiscountableAmount($charge)->setOrderAmount($this->orderAmount);
-        $this->jobDiscountHandler->setType(DiscountTypes::DELIVERY)->setCategory($this->category)->setPartner($this->partner)->setCheckingParams($discount_checking_params)->calculate();
+        $this->jobDiscountHandler->setType(DiscountTypes::DELIVERY)->setCategory($this->category)
+            ->setPartner($this->partner)->setCheckingParams($discount_checking_params)->calculate();
 
         if ($this->jobDiscountHandler->hasDiscount()) {
             $job_data['discount'] += $this->jobDiscountHandler->getApplicableAmount();
