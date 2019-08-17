@@ -378,7 +378,7 @@ class Job extends BaseModel
             $partner_contribution_amount = ($discount->amount * $discount->partner_contribution) / 100;
             $this->otherDiscountContributionSheba += $sheba_contribution_amount;
             $this->otherDiscountContributionPartner += $partner_contribution_amount;
-            if(!array_key_exists($discount->type, $this->otherDiscountsByType)) {
+            if (!array_key_exists($discount->type, $this->otherDiscountsByType)) {
                 $this->otherDiscountsByType[$discount->type] = 0;
                 $this->otherDiscountContributionShebaByType[$discount->type] = 0;
                 $this->otherDiscountContributionPartnerByType[$discount->type] = 0;

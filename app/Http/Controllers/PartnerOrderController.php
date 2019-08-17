@@ -205,6 +205,9 @@ class PartnerOrderController extends Controller
                 'total_sheba_discount_amount' => (double)$partner_order->totalShebaDiscount,
                 'total_partner_discount_amount' => (double)$partner_order->totalPartnerDiscount,
                 'delivery_charge' => (double)$partner_order->deliveryCharge + $partner_order->totalLogisticCharge,
+                'delivery_discount' => (double)$partner_order->totalDeliveryDiscount,
+                'sheba_delivery_discount_amount' => (double)$partner_order->totalDeliveryDiscountShebaContribution,
+                'partner_delivery_discount_amount' => (double)$partner_order->totalDeliveryDiscountPartnerContribution,
                 'is_logistic' => $partner_order->order->isLogisticOrder(),
                 'is_ready_to_pick' => $partner_order->order->isReadyToPick(),
             ];
