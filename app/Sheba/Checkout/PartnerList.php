@@ -669,4 +669,8 @@ class PartnerList
         });
         $this->notFoundValues['location'] = $this->getPartnerIds();
     }
+
+    public function getNotShowingReason(){
+        return $this->notFoundValues;
+    }
 }
