@@ -46,6 +46,7 @@ class Updater
 
     public function update()
     {
+        array_forget($this->data, 'remember_token');
         if (isset($this->data['services'])) {
             $services = json_decode($this->data['services'], true);
             foreach ($services as $service) {
