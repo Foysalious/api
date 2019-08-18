@@ -56,7 +56,9 @@ class PaymentLinkOrderComplete extends PaymentComplete
         }
         $this->payment = $this->saveInvoice();
         if ($this->paymentLink->getTarget()) {
-            dispatch(new SendPaymentLinkSms($this->payment, $this->paymentLink));
+            $payment = $this->payment;
+            $payment_link = $this->paymentLink;
+            dispatch(new SendPaymentLinkSms($payment, $payment_link));
             $this->notifyManager($this->payment, $this->paymentLink);
         }
         return $this->payment;
