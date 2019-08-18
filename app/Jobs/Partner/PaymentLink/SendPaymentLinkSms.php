@@ -45,7 +45,7 @@ class SendPaymentLinkSms extends Job implements ShouldQueue
             $this->sms->shoot($payment_receiver->getMobile(), $log);
             $target = $this->paymentLink->getTarget();
             $variable = "paid $formatted_collected_amount TK";
-            if ($target) $variable = "placed an order, ID: {$target->id}. $formatted_collected_amount TK has been paid";
+            if ($target) $variable = "placed an order, ID : {$target->id}.Amount $formatted_collected_amount TK has been paid";
             $log = "You have successfully $variable To {$payment_receiver->name} through {$this->payment->paymentDetails->last()->readable_method}.";
             $log .= $money_receipt ? " Money receipt: $money_receipt" : '';
             $this->sms->shoot($this->payment->payable->getMobile(), $log);
