@@ -17,6 +17,8 @@ class PosOrderItem extends Model
     private $total;
     /** @var float|int */
     private $price;
+    /** @var float|int */
+    private $priceAfterDiscount;
     /** @var bool */
     public $isCalculated;
 
@@ -34,7 +36,8 @@ class PosOrderItem extends Model
     {
         $this->price = ($this->unit_price * $this->quantity);
         $this->discountAmount = ($this->price > $this->discount) ? $this->discount : $this->price;
-        $this->vat = ($this->discountAmount * $this->vat_percentage) / 100;
+        $this->priceAfterDiscount = $this->price - $this->discountAmount;
+        $this->vat = ($this->priceAfterDiscount * $this->vat_percentage) / 100;
         $this->priceWithVat = $this->price + $this->vat;
         $this->total = $this->priceWithVat - $this->discount;
         $this->isCalculated = true;
