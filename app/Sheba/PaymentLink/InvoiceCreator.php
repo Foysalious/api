@@ -43,14 +43,14 @@ class InvoiceCreator
                 'mobile' => $user->getMobile(),
                 'address' => $user->address
             ],
-            'payer' => [
+            'user' => [
                 'name' => $this->payment->payable->getName(),
                 'mobile' => $this->payment->payable->getMobile()
             ],
             'pos_order' => $pos_order ? [
                 'items' => $pos_order->items,
-                'discount' => $pos_order->getAppliedDiscount(),
-                'total' => $pos_order->getNetBill(),
+                'discount' => $pos_order->getTotalDiscount(),
+                'total' => $pos_order->getTotalPrice(),
                 'grand_total' => $pos_order->getTotalBill(),
                 'paid' => $pos_order->getPaid(), 'due' => $pos_order->getDue(),
                 'status' => $pos_order->getPaymentStatus(),
