@@ -34,7 +34,7 @@ class Updater
 
     public function setOrder(PosOrder $order)
     {
-        $this->order = $order;
+        $this->order = $order->calculate();
         return $this;
     }
 
@@ -46,18 +46,20 @@ class Updater
 
     public function update()
     {
-        array_forget($this->data, 'remember_token');
         if (isset($this->data['services'])) {
             $services = json_decode($this->data['services'], true);
             foreach ($services as $service) {
                 $item = $this->itemRepo->findByService($this->order, $service['id']);
                 $service_data['quantity'] = $service['quantity'];
+                if ($item->discount ) $service_data['discount'] = ($item->discount / $item->quantity) * $service['quantity'];
                 $this->manageStock($item, $service['id'], $service['quantity']);
                 $this->itemRepo->update($item, $service_data);
             }
         }
-        if (isset($this->data['customer_id']))
-            return $this->orderRepo->update($this->order, $this->data);
+
+        $order_data = [];
+        if (isset($this->data['customer_id'])) $order_data['customer_id'] = $this->data['customer_id'];
+        return $this->orderRepo->update($this->order, $order_data);
     }
 
     /**
