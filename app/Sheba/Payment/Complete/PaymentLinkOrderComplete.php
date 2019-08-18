@@ -122,10 +122,10 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $topic = config('sheba.push_notification_topic_name.manager') . $partner->id;
         $channel = config('sheba.push_notification_channel_name.manager');
         $sound = config('sheba.push_notification_sound.manager');
-
+        $formatted_amount = number_format($payment_link->getAmount(), 2);
         (new PushNotificationHandler())->send([
             "title" => 'Order Successful',
-            "message" => "{$payment_link->getAmount()}Tk has been collected from {$payment_link->getPayer()->profile->name} by order link- {$payment_link->getLinkID()}",
+            "message" => "$formatted_amount Tk has been collected from {$payment_link->getPayer()->profile->name} by order link- {$payment_link->getLinkID()}",
             "event_type" => 'PosOrder',
             "event_id" => $payment_link->getTarget()->id,
             "sound" => "notification_sound",
