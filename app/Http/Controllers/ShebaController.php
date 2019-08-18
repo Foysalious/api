@@ -266,7 +266,7 @@ class ShebaController extends Controller
             ];
             $info = array_merge($info, $this->getInfoForPaymentLink($payment->payable));
             if ($request->with == 'invoice') {
-                $info['invoice_link'] = $pdfHandler->setData($info)->setName($transactionID)->setViewFile('transaction_invoice')->download();
+                $info['invoice_link'] = $pdfHandler->setData($info)->setName($transactionID)->setViewFile('transaction_invoice')->save();
                 return $info['invoice_link'];
             }
             if ($payment->status == 'validated' || $payment->status == 'failed') {
@@ -282,7 +282,6 @@ class ShebaController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
