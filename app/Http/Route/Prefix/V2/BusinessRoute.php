@@ -134,6 +134,9 @@ class BusinessRoute
         });
         $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {
             $api->group(['prefix' => '{member}'], function ($api) {
+                $api->get('info', 'B2b\MemberController@getMemberInfo');
+                $api->get('get-business-info', 'B2b\MemberController@getBusinessInfo');
+                $api->post('update-business-info', 'B2b\MemberController@updateBusinessInfo');
                 $api->post('/attachments', 'B2b\MemberController@storeAttachment');
                 $api->get('/attachments', 'B2b\MemberController@getAttachments');
                 $api->group(['prefix' => 'vehicles'], function ($api) {
