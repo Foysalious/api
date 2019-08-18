@@ -35,7 +35,7 @@ class PosOrderItem extends Model
         $this->price = ($this->unit_price * $this->quantity);
         $this->discountAmount = ($this->price > $this->discount) ? $this->discount : $this->price;
         $this->vat = ($this->discountAmount * $this->vat_percentage) / 100;
-        $this->priceWithVat = $this->discountAmount + $this->vat;
+        $this->priceWithVat = $this->price + $this->vat;
         $this->total = $this->priceWithVat - $this->discount;
         $this->isCalculated = true;
         $this->_formatAllToTaka();
