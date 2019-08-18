@@ -69,7 +69,10 @@ class CategoryController extends Controller
 
     private function getSelectColumnsOfService()
     {
-        return ['id', 'partner_id', 'pos_category_id', 'name', 'publication_status', 'thumb', 'banner', 'app_thumb', 'app_banner', 'cost', 'price', 'vat_percentage', 'stock', 'unit'];
+        return [
+            'id', 'partner_id', 'pos_category_id', 'name', 'publication_status', 'is_published_for_shop',
+            'thumb', 'banner', 'app_thumb', 'app_banner', 'cost', 'price', 'vat_percentage', 'stock', 'unit'
+        ];
     }
 
     private function getSelectColumnsOfServiceDiscount()
