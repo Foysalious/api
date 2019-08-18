@@ -4,13 +4,14 @@ use App\Jobs\Job;
 use App\Models\Payment;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 use Sheba\PaymentLink\PaymentLinkTransformer;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Sms\Sms;
 
 class SendPaymentLinkSms extends Job implements ShouldQueue
 {
-    use InteractsWithQueue;
+    use InteractsWithQueue, SerializesModels;
     private $paymentLink;
     private $payment;
     private $sms;
