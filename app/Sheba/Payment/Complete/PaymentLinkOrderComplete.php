@@ -4,6 +4,7 @@ use App\Jobs\Partner\PaymentLink\SendPaymentLinkSms;
 use App\Models\Payment;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 use Sheba\HasWallet;
 use Sheba\ModificationFields;
 use Sheba\PaymentLink\InvoiceCreator;
@@ -16,6 +17,7 @@ use DB;
 
 class PaymentLinkOrderComplete extends PaymentComplete
 {
+    use DispatchesJobs;
     use ModificationFields;
     /** @var PaymentLinkRepository */
     private $paymentLinkRepository;
