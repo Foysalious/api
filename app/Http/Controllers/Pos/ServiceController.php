@@ -114,6 +114,7 @@ class ServiceController extends Controller
             if ($request->has('discount_amount') && $request->discount_amount > 0) {
                 $this->createServiceDiscount($request, $partner_pos_service);
             }
+            $partner_pos_service->unit = $partner_pos_service->unit ? constants('POS_SERVICE_UNITS')[$partner_pos_service->unit] : null;
             return api_response($request, null, 200, ['msg' => 'Product Created Successfully', 'service' => $partner_pos_service]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -167,7 +168,6 @@ class ServiceController extends Controller
                 $this->createServiceDiscount($request, $partner_pos_service);
             }
             $partner_pos_service->unit = $partner_pos_service->unit ? constants('POS_SERVICE_UNITS')[$partner_pos_service->unit] : null;
-
             return api_response($request, null, 200, ['msg' => 'Product Updated Successfully', 'service' => $partner_pos_service]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
