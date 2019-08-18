@@ -17,13 +17,11 @@ class SendPaymentLinkSms extends Job implements ShouldQueue
     private $sms;
     private $paymentLinkRepository;
 
-
     public function __construct(Payment $payment, PaymentLinkTransformer $paymentLink)
     {
         $this->payment = $payment;
         $this->paymentLink = $paymentLink;
         $this->sms = new Sms();
-        $this->paymentLinkRepository = app(PaymentLinkRepositoryInterface::class);
     }
 
     /**
@@ -34,6 +32,7 @@ class SendPaymentLinkSms extends Job implements ShouldQueue
     public function handle()
     {
         if (config('sheba.payment_link.sms') && $this->attempts() <= 2) {
+            $this->paymentLinkRepository = app(PaymentLinkRepositoryInterface::class);
             $money_receipt = null;
             if ($this->payment->invoice_link) {
                 $url = $this->paymentLinkRepository->createShortUrl($this->payment->invoice_link);
