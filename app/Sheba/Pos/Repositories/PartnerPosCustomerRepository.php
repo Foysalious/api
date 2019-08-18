@@ -5,6 +5,12 @@ use Sheba\Repositories\BaseRepository;
 
 class PartnerPosCustomerRepository extends BaseRepository
 {
+    public function __construct(PartnerPosCustomer $partner_pos_customer)
+    {
+        parent::__construct();
+        $this->setModel($partner_pos_customer);
+    }
+
     /**
      * @param array $data
      * @return PartnerPosCustomer

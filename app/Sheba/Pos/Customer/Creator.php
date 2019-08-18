@@ -88,10 +88,12 @@ class Creator
         $this->saveImages();
         $this->format();
         $this->data['profile_id'] = $this->resolveProfileId();
-        $this->createPosCustomer();
+        $customer = $this->createPosCustomer();
         $this->data['partner_id'] = $this->partner ? $this->partner->id : $this->data['partner']->id;
         $this->data = array_except($this->data, ['mobile', 'name', 'email', 'address', 'profile_image', 'partner', 'manager_resource', 'profile_id']);
-        return $this->partnerPosCustomers->save($this->data);
+        $partner_pos_customer = $this->partnerPosCustomers->where('partner_id', $this->data['partner_id'])->where('customer_id', $customer->id)->first();
+        if (!$partner_pos_customer) $partner_pos_customer = $this->partnerPosCustomers->save($this->data);
+        return $partner_pos_customer;
     }
 
     private function saveImages()
@@ -129,6 +131,7 @@ class Creator
             $customer = $this->posCustomers->save(['profile_id' => $this->profile->id]);
 
         $this->data['customer_id'] = $customer->id;
+        return $customer;
     }
 
     private function format()

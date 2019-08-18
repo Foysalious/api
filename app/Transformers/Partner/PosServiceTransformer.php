@@ -12,6 +12,7 @@ class PosServiceTransformer extends TransformerAbstract
             'id' => $pos_service->id,
             'name' => $pos_service->name,
             'thumb' => $pos_service->thumb,
+            'app_thumb' => $pos_service->app_thumb,
             'original_price' => (double)$pos_service->price,
             'vat_included_price' => $pos_service->price + ($pos_service->price * $pos_service->vat_percentage) / 100,
             'vat_percentage' => (double)$pos_service->vat_percentage,

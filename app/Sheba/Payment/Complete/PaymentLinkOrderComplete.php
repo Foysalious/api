@@ -1,8 +1,10 @@
 <?php namespace Sheba\Payment\Complete;
 
 use App\Jobs\Partner\PaymentLink\SendPaymentLinkSms;
+use App\Models\Payment;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 use Sheba\HasWallet;
 use Sheba\ModificationFields;
 use Sheba\PaymentLink\InvoiceCreator;
@@ -15,6 +17,7 @@ use DB;
 
 class PaymentLinkOrderComplete extends PaymentComplete
 {
+    use DispatchesJobs;
     use ModificationFields;
     /** @var PaymentLinkRepository */
     private $paymentLinkRepository;
@@ -52,8 +55,12 @@ class PaymentLinkOrderComplete extends PaymentComplete
             throw $e;
         }
         $this->payment = $this->saveInvoice();
-        dispatch(new SendPaymentLinkSms($this->payment, $this->paymentLink));
-        $this->notifyManager();
+        if ($this->paymentLink->getTarget()) {
+            $payment = $this->payment;
+            $payment_link = $this->paymentLink;
+            dispatch(new SendPaymentLinkSms($payment, $payment_link));
+            $this->notifyManager($this->payment, $this->paymentLink);
+        }
         return $this->payment;
     }
 
@@ -113,19 +120,21 @@ class PaymentLinkOrderComplete extends PaymentComplete
         }
     }
 
-    private function notifyManager()
+    private function notifyManager(Payment $payment, PaymentLinkTransformer $payment_link)
     {
-//        $topic = config('sheba.push_notification_topic_name.manager') . $partner->id;
-//        $channel = config('sheba.push_notification_channel_name.manager');
-//        $sound = config('sheba.push_notification_sound.manager');
-//
-//        (new PushNotificationHandler())->send([
-//            "title" => 'ওয়ালেট ওয়ার্নিং!',
-//            "message" => $notification,
-//            "event_type" => 'WalletWarning',
-//            "sound" => "notification_sound",
-//            "channel_id" => $channel
-//        ], $topic, $channel, $sound);
+        $partner = $payment_link->getPaymentReceiver();
+        $topic = config('sheba.push_notification_topic_name.manager') . $partner->id;
+        $channel = config('sheba.push_notification_channel_name.manager');
+        $sound = config('sheba.push_notification_sound.manager');
+        $formatted_amount = number_format($payment_link->getAmount(), 2);
+        (new PushNotificationHandler())->send([
+            "title" => 'Order Successful',
+            "message" => "$formatted_amount Tk has been collected from {$payment_link->getPayer()->name} by order link- {$payment_link->getLinkID()}",
+            "event_type" => 'PosOrder',
+            "event_id" => $payment_link->getTarget()->id,
+            "sound" => "notification_sound",
+            "channel_id" => $channel
+        ], $topic, $channel, $sound);
     }
 
 }
