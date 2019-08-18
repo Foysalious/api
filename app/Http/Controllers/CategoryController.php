@@ -304,6 +304,7 @@ class CategoryController extends Controller
     {
         ini_set('memory_limit', '2048M');
         try {
+            $subscription_faq = null;
             if ($request->has('location')) {
                 $location = $request->location != '' ? $request->location : 4;
             } else {
@@ -380,6 +381,17 @@ class CategoryController extends Controller
                         $subscription['thumb'] = $service['thumb'];
                         $subscription['banner'] = $service['banner'];
                         $subscription['offers'] = $subscription->getDiscountOffers();
+                        if ($subscription->faq) {
+                            $faq = json_decode($subscription->faq);
+                            if ($faq->title && $faq->description) {
+                                $subscription_faq = [
+                                    'title' => $faq->title,
+                                    'body' => $faq->description,
+                                    'image' => $faq->image_link ? $faq->image_link : "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/categories_images/thumbs/1564579810_subscription_image_link.png",
+                                ];
+                            }
+                        }
+
                         removeRelationsAndFields($service);
                         $subscriptions->push($subscription);
                     }
@@ -397,10 +409,7 @@ class CategoryController extends Controller
                     $category['services'] = $services;
                     $category['subscriptions'] = $subscriptions;
                     if ($subscriptions->count()) {
-                        $category['subscription_faq'] = [
-                            'title' => 'Subscribe & save money',
-                            'body' => 'Save BDT 20 in every meter by subscribing for one month!'
-                        ];
+                        $category['subscription_faq'] = $subscription_faq;
                     }
                     return api_response($request, $category, 200, ['category' => $category]);
                 } else

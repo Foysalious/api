@@ -4,8 +4,10 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
+use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Order\Code\Builder as CodeBuilder;
+use Sheba\PartnerOrder\PartnerOrderPaymentStatuses;
 use Sheba\PartnerOrder\PartnerOrderStatuses;
 use Sheba\PartnerOrder\StatusCalculator;
 use Sheba\Payment\PayableType;
@@ -67,6 +69,9 @@ class PartnerOrder extends Model implements PayableType
     public $totalLogisticDueWithoutDiscount;
     public $jobPricesWithLogistic;
     public $grossAmountWithLogistic;
+    public $totalDeliveryDiscount = 0.00;
+    public $totalDeliveryDiscountShebaContribution = 0.00;
+    public $totalDeliveryDiscountPartnerContribution = 0.00;
 
     /** @var CodeBuilder */
     private $codeBuilder;
@@ -227,6 +232,9 @@ class PartnerOrder extends Model implements PayableType
         $this->totalLogisticPaid += $job->logistic_paid;
         $this->totalLogisticDue += $job->logisticDue;
         $this->totalLogisticDueWithoutDiscount += $job->logisticDueWithoutDiscount;
+        $this->totalDeliveryDiscount += $job->deliveryDiscount;
+        $this->totalDeliveryDiscountShebaContribution += isset($job->otherDiscountContributionShebaByType[DiscountTypes::DELIVERY]) ? $job->otherDiscountContributionShebaByType[DiscountTypes::DELIVERY] : 0.00;
+        $this->totalDeliveryDiscountPartnerContribution += isset($job->otherDiscountContributionPartnerByType[DiscountTypes::DELIVERY]) ? $job->otherDiscountContributionPartnerByType[DiscountTypes::DELIVERY] : 0.00;
     }
 
     private function _calculateRoundingCutOff()
@@ -442,5 +450,25 @@ class PartnerOrder extends Model implements PayableType
     public function getActiveJobAttribute()
     {
         return $this->jobs->first();
+    }
+
+    public function isDue()
+    {
+        return $this->paymentStatus == PartnerOrderPaymentStatuses::DUE;
+    }
+
+    public function isPaid()
+    {
+        return $this->paymentStatus == PartnerOrderPaymentStatuses::PAID;
+    }
+
+    public function isDueWithLogistic()
+    {
+        return $this->dueWithLogistic != 0.00;
+    }
+
+    public function isPaidWithLogistic()
+    {
+        return $this->dueWithLogistic == 0.00;
     }
 }

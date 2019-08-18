@@ -23,6 +23,11 @@ class PosOrderRepository extends BaseRepository
         return $this->getOrdersOfDateByPartner(Carbon::today(), $partner);
     }
 
+    /**
+     * @param TimeFrame $time_frame
+     * @param Partner|null $partner
+     * @return Collection
+     */
     public function getCreatedOrdersBetween(TimeFrame $time_frame, Partner $partner = null)
     {
         if ($partner) return $this->getCreatedOrdersBetweenDateByPartner($time_frame, $partner);

@@ -6,16 +6,23 @@ use App\Models\Payment;
 use Illuminate\Http\Request;
 use Sheba\Payment\Exceptions\PayableNotFound;
 use Sheba\PaymentLink\PaymentLinkClient;
+use Sheba\PaymentLink\PaymentLinkTransformer;
+use Sheba\PaymentLink\UrlTransformer;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 
 class PaymentLinkRepository extends BaseRepository implements PaymentLinkRepositoryInterface
 {
     private $paymentLinkClient;
+    private $paymentLinkTransformer;
+    private $urlTransformer;
 
-    public function __construct()
+    public function __construct(PaymentLinkTransformer $paymentLinkTransformer, UrlTransformer $urlTransformer)
     {
-        $this->paymentLinkClient = new PaymentLinkClient();
         parent::__construct();
+        $this->paymentLinkClient = new PaymentLinkClient();
+        $this->paymentLinkTransformer = $paymentLinkTransformer;
+        $this->urlTransformer = $urlTransformer;
+
     }
 
     public function getPaymentLinkList(Request $request)
@@ -35,11 +42,11 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
         return $this->paymentLinkClient->getPaymentLinkDetails($userId, $userType, $identifier);
     }
 
+
     /**
      * @param array $attributes
-     * @return \Illuminate\Database\Eloquent\Model|null
-     * @method PaymentLinkRepository create
-     * @override
+     * @return \stdClass|null
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function create(array $attributes)
     {
@@ -79,13 +86,16 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
             ], 'paymentDetails')->first();
     }
 
+
     /**
      * @param $linkId
-     * @return mixed
+     * @return PaymentLinkTransformer|null
      */
     public function getPaymentLinkByLinkId($linkId)
     {
-        return $this->paymentLinkClient->getPaymentLinkByLinkId($linkId);
+        $response = $this->paymentLinkClient->getPaymentLinkByLinkId($linkId);
+        $response = json_decode(json_encode($response['links'][0]));
+        return $response ? $this->paymentLinkTransformer->setResponse($response) : null;
     }
 
     /**
@@ -98,9 +108,19 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
         return $this->paymentLinkClient->getPaymentLinkByTargetIdType($id, $type);
     }
 
+    /**
+     * @param $identifier
+     * @return PaymentLinkTransformer|null
+     */
     public function findByIdentifier($identifier)
     {
-        return $this->paymentLinkClient->getPaymentLinkByIdentifier($identifier);
+        $response = json_decode(json_encode($this->paymentLinkClient->getPaymentLinkByIdentifier($identifier)));
+        return $response ? $this->paymentLinkTransformer->setResponse($response) : null;
     }
 
+    public function createShortUrl($url)
+    {
+        $response = json_decode(json_encode($this->paymentLinkClient->createShortUrl($url)));
+        return $response && $response->code == 200 ? $this->urlTransformer->setResponse($response->url) : null;
+    }
 }

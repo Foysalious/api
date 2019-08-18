@@ -7,6 +7,7 @@ use Sheba\Pos\Order\Creator;
 use Sheba\Pos\Order\Updater;
 use Sheba\Pos\Payment\Transfer as PaymentTransfer;
 use Sheba\Pos\Product\StockManager;
+use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
 use Sheba\Pos\Repositories\PosServiceRepository;
 
 class ExchangePosItem extends RefundNature
@@ -23,7 +24,7 @@ class ExchangePosItem extends RefundNature
     private $paymentTransfer;
 
     public function __construct(LogCreator $log_creator, Updater $updater,
-                                PosServiceRepository $service_repo, StockManager $stock_manager, PaymentTransfer $transfer)
+                                PosServiceRepositoryInterface $service_repo, StockManager $stock_manager, PaymentTransfer $transfer)
     {
         parent::__construct($log_creator, $updater);
         $this->stockManager = $stock_manager;
@@ -36,7 +37,7 @@ class ExchangePosItem extends RefundNature
         $creator = app(Creator::class);
         $this->stockRefill();
         $this->data['previous_order_id'] = $this->order->id;
-        $this->newOrder = $creator->setData($this->data)->create();
+        $this->newOrder = $creator->setPartner($this->order->partner)->setData($this->data)->create();
         $this->generateDetails();
         $this->saveLog();
         $this->transferPaidAmount();

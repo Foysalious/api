@@ -90,7 +90,6 @@ class PartnerController extends Controller
     public function show($partner, Request $request)
     {
         try {
-
             ini_set('memory_limit', '6096M');
             ini_set('max_execution_time', 660);
 
@@ -132,7 +131,7 @@ class PartnerController extends Controller
                     $q->select('resources.id', 'profile_id', 'is_verified')->with('profile');
                 }, 'review' => function ($q) {
                     $q->select('id', 'job_id', 'resource_id', 'customer_id', 'rating', 'review', 'category_id', 'created_at')
-                        ->with('customer.profile');
+                        ->with('customer.profile')->with('category');
                 }]);
             }, 'services' => function ($q) {
                 $q->where('partner_service.is_verified', 1);
@@ -610,7 +609,7 @@ class PartnerController extends Controller
             return api_response($request, null, 400, ['message' => 'Please try with inside city for this location.', 'code' => 702]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
+            return api_response($request, $message, 400, ['mesNbRousage' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -713,12 +712,12 @@ class PartnerController extends Controller
         try {
             $partner = Partner::with(['categories' => function ($query) {
                 return $query->select('categories.id', 'name', 'parent_id', 'thumb', 'app_thumb', 'categories.is_home_delivery_applied',
-                    'categories.is_partner_premise_applied','categories.is_logistic_available','categories.logistic_parcel_type')->published()->with(['parent' => function ($query) {
+                    'categories.is_partner_premise_applied', 'categories.is_logistic_available', 'categories.logistic_parcel_type')->published()->with(['parent' => function ($query) {
                     return $query->select('id', 'name', 'thumb', 'app_thumb');
                 }]);
             }])->find($partner);
             if ($partner) {
-                $number_of_services_with_sheba_delivery  = 0;
+                $number_of_services_with_sheba_delivery = 0;
                 $master_categories = collect();
                 foreach ($partner->categories as $category) {
                     $published_services = $partner->services()->where('category_id', $category->id)->wherePivot('is_published', 1)->wherePivot('is_verified', 1)->published()->count();
@@ -731,25 +730,25 @@ class PartnerController extends Controller
                     }
 
 
-                    $category_partner = CategoryPartner::where('category_id',$category->id)->where('partner_id',$partner->id)->first();
-                    $delivery_charge_update_request = DeliveryChargeUpdateRequest::where('category_partner_id',$category_partner->id)->first();
+                    $category_partner = CategoryPartner::where('category_id', $category->id)->where('partner_id', $partner->id)->first();
+                    $delivery_charge_update_request = DeliveryChargeUpdateRequest::where('category_partner_id', $category_partner->id)->first();
 
                     $logistic_price = 0;
-                    if($category->logistic_parcel_type) {
-                        $type = (object) $parcelRepository->findBySlug($category->logistic_parcel_type);
-                        if($type) {
+                    if ($category->logistic_parcel_type) {
+                        $type = (object)$parcelRepository->findBySlug($category->logistic_parcel_type);
+                        if ($type) {
                             $logistic_price = $type->price;
                         }
 
                     }
 
-                    if($category->is_logistic_available) $number_of_services_with_sheba_delivery++;
+                    if ($category->is_logistic_available) $number_of_services_with_sheba_delivery++;
                     $category = [
                         'id' => $category->id, 'name' => $category->name, 'parent_id' => $category->parent_id, 'thumb' => $category->thumb, 'app_thumb' => $category->app_thumb,
                         'is_verified' => $category->pivot->is_verified, 'is_sheba_home_delivery_applied' => $category->is_home_delivery_applied,
                         'is_sheba_partner_premise_applied' => $category->is_partner_premise_applied, 'is_home_delivery_applied' => $category->pivot->is_home_delivery_applied,
                         'is_partner_premise_applied' => $category->pivot->is_partner_premise_applied,
-                        'delivery_charge' => $category->pivot->is_home_delivery_applied ? (double)$category->pivot->delivery_charge :  $logistic_price ,
+                        'delivery_charge' => $category->pivot->is_home_delivery_applied ? (double)$category->pivot->delivery_charge : $logistic_price,
                         'published_services' => $published_services,
                         'unpublished_services' => $unpublished_services,
                         'is_logistic_available' => $category->is_logistic_available,
@@ -1054,14 +1053,14 @@ class PartnerController extends Controller
             $this->setModifier($partner);
             if ($category_partner->is_verified) {
                 if ($this->isRequestCreatable($request->partner_id, $request->category_id)) {
-                    if($request->has('bulk')) {
-                        $categories = $partner->categories()->where('is_logistic_available',true)->pluck('categories.id')->toArray();
-                        $category_partners = CategoryPartner::whereIn('category_id',$categories)->where('partner_id',$partner->id);
+                    if ($request->has('bulk')) {
+                        $categories = $partner->categories()->where('is_logistic_available', true)->pluck('categories.id')->toArray();
+                        $category_partners = CategoryPartner::whereIn('category_id', $categories)->where('partner_id', $partner->id);
                         foreach ($category_partners as $current_category_partner) {
                             $this->createDeliveryChargeUpdateRequest($current_category_partner, $request);
                         }
                     } else {
-                        $this->createDeliveryChargeUpdateRequest($category_partner,$request);
+                        $this->createDeliveryChargeUpdateRequest($category_partner, $request);
                     }
                     return api_response($request, 1, 200, ['message' => 'Your home delivery charge will be updated within 2 working days.']);
                 } else {
@@ -1145,9 +1144,9 @@ class PartnerController extends Controller
             }
 
             PartnerPosCustomer::with('customer.profile')->byPartner($partner)->get()->each(function ($pos_customer) use ($served_customers) {
-                    $customer = $pos_customer->customer->profile;
-                    $served_customers->push(['name' => $customer->name, 'mobile' => $customer->mobile, 'image' => $customer->pro_pic, 'category' => 'Pos Category']);
-                });
+                $customer = $pos_customer->customer->profile;
+                $served_customers->push(['name' => $customer->name, 'mobile' => $customer->mobile, 'image' => $customer->pro_pic, 'category' => 'Pos Category']);
+            });
 
             return api_response($request, $served_customers, 200, ['customers' => $served_customers]);
         } catch (Throwable $e) {
@@ -1171,6 +1170,33 @@ class PartnerController extends Controller
     {
         return $category->is_home_delivery_applied && $category->is_logistic_available
             && $request->has('uses_sheba_logistic') && $request->uses_sheba_logistic;
+    }
+
+    /**
+     * VAT REGISTRATION NUMBER ADD FOR PARTNER
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function addVatRegistrationNumber(Request $request)
+    {
+        try {
+            $this->validate($request, ['vat_registration_number' => 'required']);
+            /** @var Partner $partner */
+            $partner = $request->partner;
+            $this->setModifier($request->manager_resource);
+            $partner->basicInformations()->update($this->withUpdateModificationField(['vat_registration_number' => $request->vat_registration_number]));
+            return api_response($request, null, 200, ['msg' => 'Vat Registration Number Update Successfully']);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 }
 

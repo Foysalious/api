@@ -58,18 +58,22 @@ class PaymentLinkController extends Controller
     {
         try {
             $link = $paymentLinkRepository->findByIdentifier($identifier);
-            if ($link && (int)$link['isActive']) {
-                $model_name = "App\\Models\\" . (ucfirst($link['userType']));
-                $user = $model_name::find($link['userId']);
+            if ($link && (int)$link->getIsActive()) {
+                $user = $link->getPaymentReceiver();
+                $payer = $link->getPayer();
                 return api_response($request, $link, 200, ['link' => [
-                    'id' => $link['linkId'],
-                    'identifier' => $link['linkIdentifier'],
-                    'purpose' => $link['reason'],
-                    'amount' => $link['amount'],
+                    'id' => $link->getLinkID(),
+                    'identifier' => $link->getLinkIdentifier(),
+                    'purpose' => $link->getReason(),
+                    'amount' => $link->getAmount(),
                     'payment_receiver' => [
                         'name' => $user->name,
                         'image' => $user->logo
-                    ]
+                    ],
+                    'payer' => $payer ? [
+                        'name' => $payer->name,
+                        'mobile' => $payer->mobile
+                    ] : null
                 ]]);
             } else {
                 return api_response($request, null, 404);

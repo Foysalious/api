@@ -134,6 +134,9 @@ class BusinessRoute
         });
         $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {
             $api->group(['prefix' => '{member}'], function ($api) {
+                $api->get('info', 'B2b\MemberController@getMemberInfo');
+                $api->get('get-business-info', 'B2b\MemberController@getBusinessInfo');
+                $api->post('update-business-info', 'B2b\MemberController@updateBusinessInfo');
                 $api->post('/attachments', 'B2b\MemberController@storeAttachment');
                 $api->get('/attachments', 'B2b\MemberController@getAttachments');
                 $api->group(['prefix' => 'vehicles'], function ($api) {
@@ -148,6 +151,7 @@ class BusinessRoute
                         $api->post('/registration-info', 'B2b\VehiclesController@updateVehicleRegistrationInfo');
                         $api->get('/specs', 'B2b\VehiclesController@getVehicleSpecs');
                         $api->get('handlers', 'B2b\VehiclesController@getVehicleHandlers');
+                        $api->put('/driver', 'B2b\VehiclesController@unTagVehicleDriver');
                         $api->post('/specs', 'B2b\VehiclesController@updateVehicleSpecs');
                         $api->post('/specs', 'B2b\VehiclesController@updateVehicleSpecs');
                         $api->get('/recent-assignment', 'B2b\VehiclesController@getVehicleRecentAssignment');

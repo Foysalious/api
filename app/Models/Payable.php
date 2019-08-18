@@ -42,6 +42,8 @@ class Payable extends Model
             $class_name .= 'RechargeComplete';
         } else if ($this->completion_type == 'order') {
             $class_name .= 'OrderComplete';
+        } else if ($this->completion_type == 'subscription_order') {
+            $class_name .= 'SubscriptionOrderComplete';
         } else if ($this->completion_type == 'gift_card_purchase') {
             $class_name .= 'GiftCardPurchaseComplete';
         } else if ($this->completion_type == 'movie_ticket_purchase') {

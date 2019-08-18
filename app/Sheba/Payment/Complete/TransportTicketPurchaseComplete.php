@@ -105,4 +105,9 @@ class TransportTicketPurchaseComplete extends PaymentComplete
         /** @var BdTickets $vendor */
         $vendor->deduceAmount($transport_ticket_order, $amount, $transaction_id);
     }
+
+    protected function saveInvoice()
+    {
+        // TODO: Implement saveInvoice() method.
+    }
 }

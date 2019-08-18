@@ -2,10 +2,17 @@
 
 use App\Models\PartnerPosService;
 use Exception;
+use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
 use Sheba\Repositories\BaseRepository;
 
-class PosServiceRepository extends BaseRepository
+class PosServiceRepository extends BaseRepository implements PosServiceRepositoryInterface
 {
+    public function __construct(PartnerPosService $partnerPosService)
+    {
+        parent::__construct();
+        $this->setModel($partnerPosService);
+    }
+
     /**
      * @param $id
      * @return mixed
@@ -28,4 +35,5 @@ class PosServiceRepository extends BaseRepository
     {
         return $service->delete();
     }
+
 }

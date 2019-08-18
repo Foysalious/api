@@ -9,6 +9,8 @@ use Sheba\Helpers\TimeFrame;
 use Sheba\Jobs\CiCalculator;
 use Sheba\Dal\Complain\Model as Complain;
 use Sheba\Jobs\JobStatuses;
+use Sheba\Jobs\PreferredTime;
+use Sheba\Jobs\Premises;
 use Sheba\Logistics\Literals\Natures as LogisticNatures;
 use Sheba\Logistics\Literals\OneWayInitEvents as OneWayLogisticInitEvents;
 use Sheba\Logistics\OrderManager;
@@ -376,7 +378,7 @@ class Job extends BaseModel
             $partner_contribution_amount = ($discount->amount * $discount->partner_contribution) / 100;
             $this->otherDiscountContributionSheba += $sheba_contribution_amount;
             $this->otherDiscountContributionPartner += $partner_contribution_amount;
-            if(!array_key_exists($discount->type, $this->otherDiscountsByType)) {
+            if (!array_key_exists($discount->type, $this->otherDiscountsByType)) {
                 $this->otherDiscountsByType[$discount->type] = 0;
                 $this->otherDiscountContributionShebaByType[$discount->type] = 0;
                 $this->otherDiscountContributionPartnerByType[$discount->type] = 0;
@@ -669,8 +671,7 @@ class Job extends BaseModel
     public function getReadablePreferredTimeAttribute()
     {
         if ($this->preferred_time !== 'Anytime') {
-            $time = explode('-', $this->preferred_time);
-            return (Carbon::parse($time[0]))->format('g:i A') . '-' . (Carbon::parse($time[1]))->format('g:i A');
+            return (new PreferredTime($this->preferred_time))->toReadableString();
         }
         return $this->preferred_time;
     }
@@ -1055,6 +1056,16 @@ class Job extends BaseModel
     {
         return $this->last_logistic_order_id ||
             ( $this->first_logistic_order_id && !$this->getFirstLogisticOrder()->hasStarted() );
+    }
+
+    public function isOnCustomerPremise()
+    {
+        return $this->site == Premises::CUSTOMER;
+    }
+
+    public function isOnPartnerPremise()
+    {
+        return $this->site == Premises::PARTNER;
     }
 
     public function toJson($options = 0)

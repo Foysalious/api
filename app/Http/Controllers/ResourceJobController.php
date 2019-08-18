@@ -1,14 +1,13 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Repositories\ResourceJobRepository;
-use App\Sheba\JobTime;
+use Sheba\Jobs\JobTime;
 use Carbon\Carbon;
 use DB;
 use Dingo\Api\Routing\Helpers;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Jobs\PreferredTime;
 use Validator;
 
 class ResourceJobController extends Controller
@@ -172,7 +171,8 @@ class ResourceJobController extends Controller
                 $job_time = new JobTime($request->schedule_date, $request->preferred_time);
                 $job_time->validate();
                 if ($job_time->isValid) {
-                    if (!scheduler($job->resource)->isAvailableForCategory($request->schedule_date, explode('-', $request->preferred_time)[0], $job->category)) {
+                    $preferred_time = new PreferredTime($request->preferred_time);
+                    if (!scheduler($job->resource)->isAvailableForCategory($request->schedule_date, $preferred_time->getStartString(), $job->category)) {
                         return api_response($request, null, 403, ['message' => 'Resource is not available at this time. Please select different date time or change the resource']);
                     }
                     $response = $this->resourceJobRepository->reschedule($job->id, $request);

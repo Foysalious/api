@@ -69,4 +69,9 @@ class AdvancedOrderComplete extends PaymentComplete
             $job->update();
         }
     }
+
+    protected function saveInvoice()
+    {
+        // TODO: Implement saveInvoice() method.
+    }
 }

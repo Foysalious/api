@@ -1,5 +1,6 @@
 <?php namespace Sheba\Pos\Customer;
 
+use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
 use App\Models\PosCustomer;
 use Illuminate\Http\UploadedFile;
@@ -22,6 +23,10 @@ class Creator
     private $partnerPosCustomers;
     /** @var PosCustomerRepository $posCustomers */
     private $posCustomers;
+    /** @var Profile */
+    private $profile;
+    /** @var Partner */
+    private $partner;
 
     public function __construct(ProfileRepository $profile_repo, PartnerPosCustomerRepository $customer_repo, PosCustomerRepository $pos_customer_repo)
     {
@@ -33,6 +38,18 @@ class Creator
     public function setData($data)
     {
         $this->data = $data;
+        return $this;
+    }
+
+    public function setProfile(Profile $profile)
+    {
+        $this->profile = $profile;
+        return $this;
+    }
+
+    public function setPartner(Partner $partner)
+    {
+        $this->partner = $partner;
         return $this;
     }
 
@@ -52,7 +69,7 @@ class Creator
     {
         $mobile_profile = $this->profiles->checkExistingMobile($this->data['mobile']);
         if ($mobile_profile && $mobile_profile->posCustomer) {
-            if(PartnerPosCustomer::where('customer_id',$mobile_profile->posCustomer->id)->where('partner_id',$this->data['partner']->id)->exists())
+            if (PartnerPosCustomer::where('customer_id', $mobile_profile->posCustomer->id)->where('partner_id', $this->data['partner']->id)->exists())
                 return ['mobile' => 'Mobile already exists'];
         };
         if (isset($this->data['email']) && !empty($this->data['email'])) {
@@ -70,16 +87,18 @@ class Creator
     {
         $this->saveImages();
         $this->format();
-        $this->attachProfile();
-        $this->createPosCustomer();
-        $this->data['partner_id'] = $this->data['partner']->id;
-        $this->data = array_except($this->data, ['mobile', 'name', 'email', 'address', 'profile_image','partner','manager_resource','profile_id']);
-        return $this->partnerPosCustomers->save($this->data);
+        $this->data['profile_id'] = $this->resolveProfileId();
+        $customer = $this->createPosCustomer();
+        $this->data['partner_id'] = $this->partner ? $this->partner->id : $this->data['partner']->id;
+        $this->data = array_except($this->data, ['mobile', 'name', 'email', 'address', 'profile_image', 'partner', 'manager_resource', 'profile_id']);
+        $partner_pos_customer = $this->partnerPosCustomers->where('partner_id', $this->data['partner_id'])->where('customer_id', $customer->id)->first();
+        if (!$partner_pos_customer) $partner_pos_customer = $this->partnerPosCustomers->save($this->data);
+        return $partner_pos_customer;
     }
 
     private function saveImages()
     {
-        if ($this->hasFile('profile_image')) $this->data['profile_image'] = $this->saveProfileImage();
+        if (!$this->profile && $this->hasFile('profile_image')) $this->data['profile_image'] = $this->saveProfileImage();
     }
 
     /**
@@ -93,29 +112,33 @@ class Creator
         return $this->saveImageToCDN($avatar, getResourceAvatarFolder(), $avatar_filename);
     }
 
-    private function attachProfile()
+    private function resolveProfileId()
     {
-        $profile = $this->profiles->checkExistingProfile($this->data['mobile'], isset($this->data['email']) ? $this->data['email'] : null);
-        if (!($profile instanceof Profile)) $profile = $this->profiles->store($this->data);
-        $this->data['profile_id'] = $profile->id;
+        if (!$this->profile) {
+            $profile = $this->profiles->checkExistingProfile($this->data['mobile'], isset($this->data['email']) ? $this->data['email'] : null);
+            if (!($profile instanceof Profile)) $profile = $this->profiles->store($this->data);
+            $this->setProfile($profile);
+        }
+        return $this->profile->id;
     }
 
     private function createPosCustomer()
     {
-        $customer_query = PosCustomer::where('profile_id',$this->data['profile_id']);
-        if($customer_query->exists()) {
+        $customer_query = PosCustomer::where('profile_id', $this->profile->id);
+        if ($customer_query->exists()) {
             $customer = $customer_query->first();
         } else
-            $customer = $this->posCustomers->save(['profile_id' => $this->data['profile_id']]);
+            $customer = $this->posCustomers->save(['profile_id' => $this->profile->id]);
 
         $this->data['customer_id'] = $customer->id;
+        return $customer;
     }
 
     private function format()
     {
-        $this->data['mobile']   = formatMobileAux($this->data['mobile']);
-        $this->data['email']    = (isset($this->data['email']) && !empty($this->data['email'])) ? $this->data['email'] : null;
-        $this->data['note']     = isset($this->data['note']) ? $this->data['note'] : null;
+        $this->data['mobile'] = $this->profile ? $this->profile->mobile : formatMobileAux($this->data['mobile']);
+        $this->data['email'] = (isset($this->data['email']) && !empty($this->data['email'])) ? $this->data['email'] : null;
+        $this->data['note'] = isset($this->data['note']) ? $this->data['note'] : null;
     }
 
     /**

@@ -1,7 +1,6 @@
 <?php namespace App\Http\Controllers\Pos;
 
 use App\Http\Controllers\Controller;
-use App\Models\PartnerPosSetting;
 use App\Models\PosCategory;
 use Illuminate\Http\Request;
 
@@ -11,19 +10,36 @@ class CategoryController extends Controller
     {
         try {
             $partner = $request->partner;
+            $total_items = 0.00;
+            $total_buying_price = 0.00;
+
             $sub_categories = PosCategory::child()->published()
                 ->with(['services' => function ($service_query) use ($partner) {
                     $service_query->partner($partner->id)
                         ->with(['discounts' => function ($discounts_query) {
                             $discounts_query->runningDiscounts()->select($this->getSelectColumnsOfServiceDiscount());
                         }])
-                    ->select($this->getSelectColumnsOfService());
+                        ->select($this->getSelectColumnsOfService());
                 }])
                 ->select($this->getSelectColumnsOfCategory())
                 ->get();
 
             if (!$sub_categories) return api_response($request, null, 404);
-            return api_response($request, $sub_categories, 200, ['categories' => $sub_categories]);
+
+            $sub_categories->each(function ($category) use (&$total_items, &$total_buying_price) {
+                $category->services->each(function ($service) use (&$total_items, &$total_buying_price) {
+                    $service->unit = $service->unit ? constants('POS_SERVICE_UNITS')[$service->unit] : null;
+                    $total_items++;
+                    $total_buying_price += $service->cost * $service->stock;
+                });
+            });
+
+            $data = [];
+            $data['categories'] = $sub_categories;
+            $data['total_items'] = (double)$total_items;
+            $data['total_buying_price'] = (double)$total_buying_price;
+
+            return api_response($request, $sub_categories, 200, $data);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -53,7 +69,10 @@ class CategoryController extends Controller
 
     private function getSelectColumnsOfService()
     {
-        return ['id', 'partner_id', 'pos_category_id', 'name', 'publication_status', 'thumb', 'banner', 'app_thumb', 'app_banner', 'cost', 'price', 'vat_percentage', 'stock'];
+        return [
+            'id', 'partner_id', 'pos_category_id', 'name', 'publication_status', 'is_published_for_shop',
+            'thumb', 'banner', 'app_thumb', 'app_banner', 'cost', 'price', 'vat_percentage', 'stock', 'unit'
+        ];
     }
 
     private function getSelectColumnsOfServiceDiscount()

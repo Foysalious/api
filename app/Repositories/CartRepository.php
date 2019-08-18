@@ -1,12 +1,9 @@
-<?php
-
-namespace App\Repositories;
-
+<?php namespace App\Repositories;
 
 use App\Models\PartnerService;
 use App\Models\PartnerServiceDiscount;
 use App\Models\Quotation;
-use App\Sheba\JobTime;
+use Sheba\Jobs\JobTime;
 use Carbon\Carbon;
 
 class CartRepository

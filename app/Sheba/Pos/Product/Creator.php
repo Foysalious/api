@@ -4,6 +4,7 @@ use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
+use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
 use Sheba\Pos\Repositories\PosServiceRepository;
 
 class Creator
@@ -13,7 +14,7 @@ class Creator
     private $data;
     private $serviceRepo;
 
-    public function __construct(PosServiceRepository $service_repo)
+    public function __construct(PosServiceRepositoryInterface $service_repo)
     {
         $this->serviceRepo = $service_repo;
     }

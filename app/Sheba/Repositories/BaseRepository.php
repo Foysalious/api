@@ -73,6 +73,15 @@ class BaseRepository implements BaseRepositoryInterface
     }
 
     /**
+     * @param $value
+     * @return $this
+     */
+    public function whereRaw($value)
+    {
+        $this->model->whereRaw($value);
+    }
+
+    /**
      * @param $column_name
      * @param array $value
      * @return $this
@@ -109,7 +118,7 @@ class BaseRepository implements BaseRepositoryInterface
     public function select(array $column_name)
     {
         $select = $column_name[0];
-        foreach ($column_name as $column) {
+        foreach (array_slice($column_name, 1) as $column) {
             $select .= ',' . $column;
         }
         return $this->model->select($select);
@@ -171,4 +180,5 @@ class BaseRepository implements BaseRepositoryInterface
     {
         // TODO: Implement getByFieldOn() method.
     }
+
 }

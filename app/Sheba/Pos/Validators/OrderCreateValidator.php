@@ -1,6 +1,7 @@
 <?php namespace Sheba\Pos\Validators;
 
 use Sheba\Pos\Product\StockManager;
+use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
 use Sheba\Pos\Repositories\PosServiceRepository;
 
 class OrderCreateValidator extends Validator
@@ -10,7 +11,7 @@ class OrderCreateValidator extends Validator
     /** @var PosServiceRepository $posServiceRepo */
     private $posServiceRepo;
 
-    public function __construct(StockManager $stock_manager, PosServiceRepository $pos_service_repo)
+    public function __construct(StockManager $stock_manager, PosServiceRepositoryInterface $pos_service_repo)
     {
         $this->stockManager = $stock_manager;
         $this->posServiceRepo = $pos_service_repo;

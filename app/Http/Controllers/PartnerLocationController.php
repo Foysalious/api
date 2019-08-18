@@ -60,6 +60,7 @@ class PartnerLocationController extends Controller
                 $is_available = count($available_partners) != 0 ? 1 : 0;
                 return api_response($request, $is_available, 200, ['is_available' => $is_available, 'available_partners' => count($available_partners)]);
             }
+            if ($request->has('show_reason')) return api_response($request, null, 200, ['reason' => $partner_list->getNotShowingReason()]);
             if ($partner_list->hasPartners) {
                 $partner_list->addPricing();
                 $partner_list->addInfo();

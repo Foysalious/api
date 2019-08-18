@@ -204,9 +204,15 @@ class PartnerOrderController extends Controller
                 'discount' => (double)$partner_order->totalDiscount,
                 'total_sheba_discount_amount' => (double)$partner_order->totalShebaDiscount,
                 'total_partner_discount_amount' => (double)$partner_order->totalPartnerDiscount,
+                'service_discount' => (double)($partner_order->totalDiscount - $partner_order->totalDeliveryDiscount),
+                'total_sheba_service_discount_amount' => (double)($partner_order->totalShebaDiscount - $partner_order->totalDeliveryDiscountShebaContribution),
+                'total_partner_service_discount_amount' => (double)($partner_order->totalPartnerDiscount - $partner_order->totalDeliveryDiscountPartnerContribution),
                 'delivery_charge' => (double)$partner_order->deliveryCharge + $partner_order->totalLogisticCharge,
+                'delivery_discount' => (double)$partner_order->totalDeliveryDiscount,
+                'sheba_delivery_discount_amount' => (double)$partner_order->totalDeliveryDiscountShebaContribution,
+                'partner_delivery_discount_amount' => (double)$partner_order->totalDeliveryDiscountPartnerContribution,
                 'is_logistic' => $partner_order->order->isLogisticOrder(),
-                'is_ready_to_pick' => $partner_order->order->isReadyToPick(),
+                'is_ready_to_pick' => $partner_order->order->isReadyToPick()
             ];
             return api_response($request, $partner_order, 200, ['order' => $partner_order]);
         } catch (\Throwable $e) {

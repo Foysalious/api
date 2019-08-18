@@ -322,7 +322,7 @@ class VehiclesController extends Controller
                     ->where(function ($q) use ($business) {
                         $hired_vehicles = $business->hiredVehicles()->with('vehicle')->active()->get()->pluck('vehicle.id');
                         $q->where('owner_id', $business->id)->orWhereIn('id', $hired_vehicles->toArray());
-                    })->select('id', 'status', 'current_driver_id', 'business_department_id', 'owner_type')
+                    })->select('id', 'status', 'current_driver_id', 'business_department_id', 'owner_type','owner_id')
                     ->orderBy('id', 'desc')->skip($offset)->limit($limit);
 
                 if ($request->has('status'))
@@ -347,6 +347,7 @@ class VehiclesController extends Controller
                     if ($request->owner_type == 'own') $vehicles->whoseOwnerIsBusiness($business->id);
                     elseif ($request->owner_type == 'hired') $vehicles->whoseOwnerIsNotBusiness();
                 }
+
                 $vehicles = $vehicles->get();
             }
             $vehicle_lists = [];
@@ -693,5 +694,27 @@ class VehiclesController extends Controller
     private function makeVehicleImageName(Vehicle $vehicle, $photo)
     {
         return $filename = Carbon::now()->timestamp . '_vehicle_image_' . $vehicle->id . '.' . $photo->extension();
+    }
+
+    public function unTagVehicleDriver($member, $vehicle, Request $request)
+    {
+        try {
+            $vehicle = Vehicle::find((int)$vehicle);
+
+            if(!$vehicle) return api_response($request, 1, 404);
+
+            if(!$request->driver_id) {
+                $vehicle->update(['current_driver_id' => null]);
+            } else {
+                $vehicle->update(['current_driver_id' => $request->driver_id]);
+            }
+
+
+
+            return api_response($request, 1, 200);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 }

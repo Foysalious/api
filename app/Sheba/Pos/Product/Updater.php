@@ -5,6 +5,7 @@ use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
+use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
 use Sheba\Pos\Repositories\PosServiceRepository;
 
 class Updater
@@ -13,10 +14,11 @@ class Updater
 
     private $data;
     private $updatedData;
+    /** @var PosServiceRepositoryInterface  */
     private $serviceRepo;
     private $service;
 
-    public function __construct(PosServiceRepository $service_repo)
+    public function __construct(PosServiceRepositoryInterface $service_repo)
     {
         $this->serviceRepo = $service_repo;
     }
@@ -38,7 +40,6 @@ class Updater
         $this->saveImages();
         $this->format();
         $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'is_vat_percentage_off', 'is_stock_off']);
-
         if (!empty($this->updatedData)) $this->serviceRepo->update($this->service, $this->updatedData);
     }
 
@@ -91,6 +92,14 @@ class Updater
 
         if ((isset($this->data['category_id']) && $this->data['category_id'] != $this->service->pos_category_id)) {
             $this->updatedData['pos_category_id'] = $this->data['category_id'];
+        }
+
+        if ((isset($this->data['unit']) && $this->data['unit'] != $this->service->unit)) {
+            $this->updatedData['unit'] = $this->data['unit'];
+        }
+
+        if ((isset($this->data['description']) && $this->data['description'] != $this->service->description)) {
+            $this->updatedData['description'] = $this->data['description'];
         }
     }
 

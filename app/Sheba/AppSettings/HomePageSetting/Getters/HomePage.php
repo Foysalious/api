@@ -1,6 +1,5 @@
 <?php namespace App\Sheba\AppSettings\HomePageSetting\Getters;
 
-use App\Models\Category;
 use App\Models\CategoryGroup;
 use App\Models\Grid;
 use App\Models\HomeMenu;
@@ -35,7 +34,7 @@ class HomePage extends Getter
     {
         if (empty($this->getPortal()) || empty($this->getScreen()) || empty($this->getLocation())) return false;
         $location_ids = $this->getLocation();
-        $this->screenSettings = ScreenSetting::where(['portal_name' => $this->getPortal(), 'screen' => $this->getScreen()])
+        $this->screenSettings = ScreenSetting::where(['portal_name' => $this->getPortal(), 'screen' => $this->getScreen(), 'platform' => $this->getPlatform()])
             ->with(['elements' => function ($q) use ($location_ids) {
                 $q->where('location_id', $location_ids)->orderBy('pivot_order');
             }])->whereHas('elements', function ($q) use ($location_ids) {

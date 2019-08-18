@@ -15,12 +15,30 @@ use DB;
 
 trait Wallet
 {
+   
     public function rechargeWallet($amount, $transaction_data)
     {
-        DB::transaction(function () use ($amount, $transaction_data) {
+        /** @var PartnerTransaction $transaction */
+        $transaction = null;
+        DB::transaction(function () use ($amount, $transaction_data, &$transaction) {
             $this->creditWallet($amount);
-            $this->walletTransaction($transaction_data);
+            $transaction_data = array_merge($transaction_data, ['amount' => $amount, 'type' => 'Credit']);
+            $transaction = $this->walletTransaction($transaction_data);
         });
+        return $transaction;
+    }
+
+
+    public function minusWallet($amount, $transaction_data)
+    {
+        /** @var PartnerTransaction $transaction */
+        $transaction = null;
+        DB::transaction(function () use ($amount, $transaction_data, &$transaction) {
+            $this->debitWallet($amount);
+            $transaction_data = array_merge($transaction_data, ['amount' => $amount, 'type' => 'Debit']);
+            $transaction = $this->walletTransaction($transaction_data);
+        });
+        return $transaction;
     }
 
     public function creditWallet($amount)

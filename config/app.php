@@ -1,5 +1,6 @@
 <?php
 
+
 return [
 
     /*
@@ -165,12 +166,14 @@ return [
         Folklore\GraphQL\ServiceProvider::class,
         Intervention\Image\ImageServiceProvider::class,
         Maatwebsite\Excel\ExcelServiceProvider::class,
+        Barryvdh\DomPDF\ServiceProvider::class,
+
         App\Providers\CustomValidatorProvider::class,
         Sheba\Dal\Providers\RepositoriesServiceProvider::class,
         Sheba\Notification\NotificationServiceProvider::class,
         App\Providers\CollectionServiceProvider::class,
         Sheba\Repositories\Providers\RepositoryServiceProvider::class,
-        Barryvdh\DomPDF\ServiceProvider::class,
+        Sheba\Pos\Repositories\PosRepositoryServiceProvider::class,
     ],
 
     /*

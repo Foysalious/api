@@ -39,6 +39,7 @@ class PaymentLinkClient
         }
     }
 
+
     public function defaultPaymentLink(Request $request)
     {
         try {
@@ -56,6 +57,11 @@ class PaymentLinkClient
         }
     }
 
+    /**
+     * @param $data
+     * @return \stdClass|null
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
     public function storePaymentLink($data)
     {
         try {
@@ -139,6 +145,10 @@ class PaymentLinkClient
         return json_decode($response, true);
     }
 
+    /**
+     * @param $identifier
+     * @return \stdClass|null
+     */
     public function getPaymentLinkByIdentifier($identifier)
     {
         $url = $this->baseUrl . '?linkIdentifier=' . $identifier;
@@ -147,6 +157,16 @@ class PaymentLinkClient
         if ($result['code'] == 200) {
             return $result['links'][0];
         } else {
+            return null;
+        }
+    }
+
+    public function createShortUrl($url)
+    {
+        try {
+            $response = $this->client->request('POST', config('sheba.payment_link_url') . '/api/v1/urls', ['form_params' => ['originalUrl' => $url]]);
+            return json_decode($response->getBody());
+        } catch (\Throwable $e) {
             return null;
         }
     }

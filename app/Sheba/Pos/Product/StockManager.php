@@ -1,6 +1,7 @@
 <?php namespace Sheba\Pos\Product;
 
 use App\Models\PartnerPosService;
+use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
 use Sheba\Pos\Repositories\PosServiceRepository;
 
 class StockManager
@@ -10,7 +11,7 @@ class StockManager
     /**  @var PartnerPosService $service */
     private $service;
 
-    public function __construct(PosServiceRepository $service_repo)
+    public function __construct(PosServiceRepositoryInterface $service_repo)
     {
         $this->serviceRepo = $service_repo;
     }
@@ -28,7 +29,7 @@ class StockManager
 
     /**
      * @param $quantity |double
-     * @return bool|int
+     * @return \Illuminate\Database\Eloquent\Model
      */
     public function increase($quantity)
     {
@@ -37,7 +38,7 @@ class StockManager
 
     /**
      * @param $quantity |double
-     * @return bool|int
+     * @return \Illuminate\Database\Eloquent\Model
      */
     public function decrease($quantity)
     {

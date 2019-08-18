@@ -372,8 +372,7 @@ class PartnerList
         $original_delivery_charge = $this->deliveryCharge->setCategoryPartnerPivot($category_pivot)->get();
         $discount = $this->discountRepo->findValidForAgainst(DiscountTypes::DELIVERY, $this->partnerListRequest->selectedCategory, $partner);
         $discount_amount = 0;
-        if($discount)
-            $discount_amount =  $discount->getApplicableAmount($original_delivery_charge);
+        if ($discount) $discount_amount = $discount->getApplicableAmount($original_delivery_charge);
         $discounted_delivery_charge = $original_delivery_charge - $discount_amount;
         $delivery_charge = $discounted_delivery_charge;
 
@@ -669,5 +668,9 @@ class PartnerList
             return $results[$partner->id] <= (double)json_decode($partner->geo_informations)->radius * 1000;
         });
         $this->notFoundValues['location'] = $this->getPartnerIds();
+    }
+
+    public function getNotShowingReason(){
+        return $this->notFoundValues;
     }
 }

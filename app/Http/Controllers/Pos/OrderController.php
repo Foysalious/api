@@ -2,8 +2,10 @@
 
 use App\Http\Controllers\Controller;
 
+use App\Models\PosCustomer;
 use App\Models\PosOrder;
 
+use App\Sheba\Payment\Adapters\Payable\PaymentLinkOrderAdapter;
 use App\Transformers\CustomSerializer;
 use App\Transformers\PosOrderTransformer;
 
@@ -16,6 +18,8 @@ use League\Fractal\Resource\Item;
 
 use Sheba\ModificationFields;
 
+use Sheba\Payment\ShebaPayment;
+use Sheba\PaymentLink\PaymentLinkTransformer;
 use Sheba\Pos\Jobs\OrderBillEmail;
 use Sheba\Pos\Jobs\OrderBillSms;
 use Sheba\Pos\Order\Creator;
@@ -26,7 +30,10 @@ use Sheba\Pos\Order\RefundNatures\Natures;
 use Sheba\Pos\Order\RefundNatures\RefundNature;
 use Sheba\Pos\Order\RefundNatures\ReturnNatures;
 use Sheba\Pos\Order\Updater;
-
+use Sheba\Profile\Creator as ProfileCreator;
+use Sheba\Pos\Customer\Creator as PosCustomerCreator;
+use Sheba\PaymentLink\Creator as PaymentLinkCreator;
+use Sheba\Repositories\PartnerRepository;
 use Throwable;
 
 class OrderController extends Controller
@@ -105,32 +112,53 @@ class OrderController extends Controller
         }
     }
 
-    /**
-     * @param Request $request
-     * @param Creator $creator
-     * @return array
-     */
-    public function store(Request $request, Creator $creator)
+    public function store($partner, Request $request, Creator $creator, ProfileCreator $profileCreator, PosCustomerCreator $posCustomerCreator, PartnerRepository $partnerRepository, PaymentLinkCreator $paymentLinkCreator, PaymentLinkOrderAdapter $paymentLinkOrderAdapter)
     {
         try {
             $this->validate($request, [
                 'services' => 'required|string',
                 'paid_amount' => 'sometimes|required|numeric',
-                'payment_method' => 'sometimes|required|string|in:' . implode(',', config('pos.payment_method'))
+                'payment_method' => 'sometimes|required|string|in:' . implode(',', config('pos.payment_method')),
+                'customer_name' => 'string',
+                'customer_mobile' => 'string',
+                'customer_address' => 'string',
+                'nPos' => 'numeric',
+                'discount' => 'numeric',
+                'is_percentage' => 'numeric',
+                'previous_order_id' => 'numeric'
             ]);
-            $partner = $request->partner;
-            $this->setModifier($request->manager_resource);
-
-            $creator->setData($request->all());
+            $link = null;
+            if ($request->manager_resource) {
+                $partner = $request->partner;
+                $this->setModifier($request->manager_resource);
+            } else {
+                $partner = $partnerRepository->find((int)$partner);
+                $profile = $profileCreator->setMobile($request->customer_mobile)->setName($request->customer_name)->create();
+                $partner_pos_customer = $posCustomerCreator->setProfile($profile)->setPartner($partner)->create();
+                $pos_customer = $partner_pos_customer->customer;
+                $this->setModifier($profile->customer);
+                $creator->setCustomer($pos_customer);
+            }
+            $creator->setPartner($partner)->setData($request->all());
             if ($error = $creator->hasError()) return $error;
             $order = $creator->create();
-
             $order = $order->calculate();
             if ($partner->wallet >= 1) $this->sendCustomerSms($order);
             $this->sendCustomerEmail($order);
             $order->payment_status = $order->getPaymentStatus();
             $order->client_pos_order_id = $request->client_pos_order_id;
-            return api_response($request, null, 200, ['msg' => 'Order Created Successfully', 'order' => $order]);
+            $order->net_bill = $order->getNetBill();
+            if ($request->payment_method == 'payment_link') {
+                $paymentLink = $paymentLinkCreator->setAmount($order->net_bill)->setReason("PosOrder ID: $order->id Due payment")->setUserName($partner->name)->setUserId($partner->id)
+                    ->setUserType('partner')
+                    ->setTargetId($order->id)
+                    ->setTargetType('pos_order')->save();
+                $transformer = new PaymentLinkTransformer();
+                $transformer->setResponse($paymentLink);
+                $link = ['link' => $transformer->getLink()];
+            }
+            $order = ['id' => $order->id, 'payment_status' => $order->payment_status, 'net_bill' => $order->net_bill];
+            return api_response($request, null, 200, ['message' => 'Order Created Successfully', 'order' => $order, 'payment' => $link]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
@@ -247,15 +275,21 @@ class OrderController extends Controller
      * SMS TO CUSTOMER ABOUT POS ORDER BILLS
      *
      * @param Request $request
+     * @param Updater $updater
      * @return JsonResponse
      */
-    public function sendSms(Request $request)
+    public function sendSms(Request $request, Updater $updater)
     {
         try {
             $partner = $request->partner;
             $this->setModifier($request->manager_resource);
             /** @var PosOrder $order */
             $order = PosOrder::with('items')->find($request->order)->calculate();
+
+            if ($request->has('customer_id') && is_null($order->customer_id)) {
+                $requested_customer = PosCustomer::find($request->customer_id);
+                $order = $updater->setOrder($order)->setData(['customer_id' => $requested_customer->id])->update();
+            }
 
             if (!$order) return api_response($request, null, 404, ['msg' => 'Order not found']);
             if (!$order->customer) return api_response($request, null, 404, ['msg' => 'Customer not found']);
@@ -277,14 +311,20 @@ class OrderController extends Controller
      * EMAIL TO CUSTOMER ABOUT POS ORDER BILLS
      *
      * @param Request $request
+     * @param Updater $updater
      * @return JsonResponse
      */
-    public function sendEmail(Request $request)
+    public function sendEmail(Request $request, Updater $updater)
     {
         try {
             $this->setModifier($request->manager_resource);
             /** @var PosOrder $order */
             $order = PosOrder::with('items')->find($request->order)->calculate();
+
+            if ($request->has('customer_id') && is_null($order->customer_id)) {
+                $requested_customer = PosCustomer::find($request->customer_id);
+                $order = $updater->setOrder($order)->setData(['customer_id' => $requested_customer->id])->update();
+            }
 
             if (!$order) return api_response($request, null, 404, ['msg' => 'Order not found']);
             if (!$order->customer) return api_response($request, null, 404, ['msg' => 'Customer not found']);

@@ -31,5 +31,10 @@ class UtilityOrderComplete extends PaymentComplete
         }
         return $this->payment;
     }
+
+    protected function saveInvoice()
+    {
+        // TODO: Implement saveInvoice() method.
+    }
 }
 

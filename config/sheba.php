@@ -130,4 +130,7 @@ return [
         'date_range_service_ids' => explode(',', env('RENT_A_CAR_SERVICE_ID_FOR_DATE_RANGE')),
         'destination_fields_service_ids' => explode(',', env('RENT_A_CAR_SERVICE_ID_FOR_DESTINATION_FIELD')),
     ],
+    'payment_link' => [
+        'sms' => env('SEND_PAYMENT_LINK_SMS', 1)
+    ]
 ];

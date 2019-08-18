@@ -9,7 +9,7 @@ abstract class PaymentComplete
     /** @var Payment $partner_order_payment */
     protected $payment;
 
-    /** @var PaymentRepository  */
+    /** @var PaymentRepository */
     protected $paymentRepository;
 
     public function __construct()
@@ -24,6 +24,8 @@ abstract class PaymentComplete
     }
 
     public abstract function complete();
+
+    protected abstract function saveInvoice();
 
     protected function failPayment()
     {

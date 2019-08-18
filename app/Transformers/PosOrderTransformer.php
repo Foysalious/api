@@ -2,6 +2,7 @@
 
 use App\Models\PosOrder;
 use League\Fractal\TransformerAbstract;
+use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
 
 class PosOrderTransformer extends TransformerAbstract
@@ -27,7 +28,7 @@ class PosOrderTransformer extends TransformerAbstract
             'refund_status' => $order->getRefundStatus()
         ];
         if ($data['due'] > 0) {
-            $repo = new PaymentLinkRepository();
+            $repo = app(PaymentLinkRepositoryInterface::class);
             $response = $repo->getPaymentLinkByTargetIdType($data['id']);
             if ($response['code'] == 200) {
                 $details = $response['links'][0];

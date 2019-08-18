@@ -1,5 +1,7 @@
 <?php namespace App\Http\Route\Prefix\V2;
 
+use App\Http\Route\Prefix\V2\Partner\PartnerRoute;
+
 class Route
 {
     public function set($api)
@@ -7,6 +9,11 @@ class Route
         $api->group(['prefix' => 'v2', 'namespace' => 'App\Http\Controllers'], function ($api) {
             (new UserRoute())->set($api);
             (new CategoryRoute())->set($api);
+            (new PaymentLinkRoute())->set($api);
+            (new CustomerRoute())->set($api);
+            (new AffiliateRoute())->set($api);
+            (new PartnerRoute())->set($api);
+            $api->post('training-status-update', 'ResourceController@trainingStatusUpdate');
             $api->group(['prefix' => 'profile'], function ($api) {
                 $api->post('registration/partner', 'Auth\PartnerRegistrationController@registerByProfile')->middleware('jwtAuth');
             });
@@ -110,12 +117,6 @@ class Route
                 });
             });
 
-            $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {
-                $api->get('/{member}/info', 'B2b\MemberController@getMemberInfo');
-                $api->get('/{member}/get-business-info', 'B2b\MemberController@getBusinessInfo');
-                $api->post('/{member}/update-business-info', 'B2b\MemberController@updateBusinessInfo');
-            });
-
             (new BusinessRoute())->set($api);
 
             $api->group(['prefix' => 'categories'], function ($api) {
@@ -141,9 +142,6 @@ class Route
                 $api->get('{location}/partners', 'PartnerController@findPartners');
                 $api->get('current', 'LocationController@getCurrent');
             });
-            (new CustomerRoute())->set($api);
-            (new AffiliateRoute())->set($api);
-            (new PartnerRoute())->set($api);
 
             $api->group(['prefix' => 'top-up', 'middleware' => ['topUp.auth']], function ($api) {
                 $api->get('/vendor', 'TopUp\TopUpController@getVendor');
