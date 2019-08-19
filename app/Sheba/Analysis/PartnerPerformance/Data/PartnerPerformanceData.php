@@ -67,7 +67,7 @@ class PartnerPerformanceData
 
     public function toArray()
     {
-        return collect([
+        return [
             'score' => ($this->completed->getRate() + $this->no_complain->getRate() + $this->timely_accepted->getRate() + $this->timely_processed->getRate()) / 4,
             'summary' => [
                 'order_received' => $this->order_received,
@@ -81,6 +81,6 @@ class PartnerPerformanceData
             'no_complain' => $this->no_complain->toArray(),
             'timely_accepted' => $this->timely_accepted->toArray(),
             'timely_processed' => $this->timely_processed->toArray()
-        ]);
+        ];
     }
 }
