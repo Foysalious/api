@@ -18,7 +18,7 @@ class PartnerSubscriptionController extends Controller
         try {
             $partner = $request->partner;
             $partner_subscription_packages = PartnerSubscriptionPackage::validDiscounts()
-                ->where('name', '!=', 'LITE')->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'rules', 'usps', 'badge')
+                ->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'rules', 'usps', 'badge')
                 ->get();
 
             foreach ($partner_subscription_packages as $package) {
