@@ -43,7 +43,7 @@ class PosOrder extends Model
         $this->netBill = $this->totalBill - $this->appliedDiscount;
         $this->_calculatePaidAmount();
         $this->paid = $this->paid ?: 0;
-        $this->due = $this->netBill - $this->paid;
+        $this->due = ($this->netBill - $this->paid) > 0 ? ($this->netBill - $this->paid ) : 0;
         $this->_setPaymentStatus();
         $this->isCalculated = true;
         $this->_formatAllToTaka();
