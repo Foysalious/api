@@ -9,6 +9,7 @@ use App\Sheba\Payment\Adapters\Payable\PaymentLinkOrderAdapter;
 use App\Transformers\CustomSerializer;
 use App\Transformers\PosOrderTransformer;
 
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -16,6 +17,7 @@ use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 
+use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 
 use Sheba\Payment\ShebaPayment;
@@ -30,6 +32,7 @@ use Sheba\Pos\Order\RefundNatures\Natures;
 use Sheba\Pos\Order\RefundNatures\RefundNature;
 use Sheba\Pos\Order\RefundNatures\ReturnNatures;
 use Sheba\Pos\Order\Updater;
+use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Profile\Creator as ProfileCreator;
 use Sheba\Pos\Customer\Creator as PosCustomerCreator;
 use Sheba\PaymentLink\Creator as PaymentLinkCreator;
@@ -75,9 +78,23 @@ class OrderController extends Controller
             }
 
             $orders_formatted = [];
+
+            $pos_orders_repo = new PosOrderRepository();
+            $pos_sales = [];
+            foreach (array_keys($final_orders) as $date) {
+                $timeFrame = new TimeFrame();
+                $timeFrame->forADay(Carbon::parse($date))->getArray();
+                $pos_orders = $pos_orders_repo->getCreatedOrdersBetween($timeFrame, $partner);
+                $pos_orders->map(function ($pos_order) {
+                    /** @var PosOrder $pos_order */
+                    $pos_order->sale = $pos_order->getNetBill();
+                });
+                $pos_sales[$date] = $pos_orders->sum('sale');
+            }
+
             foreach ($final_orders as $key => $value) {
                 if (count($value) > 0) {
-                    $order_list = ['date' => $key, 'orders' => $value];
+                    $order_list = ['date' => $key, 'total_sale' => $pos_sales[$key], 'orders' => $value];
                     array_push($orders_formatted, $order_list);
                 }
             }
