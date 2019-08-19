@@ -19,7 +19,6 @@ class InfoCallController extends Controller
             $info_calls = $info_calls->filter(function ($info_call) {
                 return is_null($info_call->order);
             });
-            #dd($info_calls);
             $info_call_lists = collect([]);
             foreach ($info_calls as $info_call) {
                 $info = [
