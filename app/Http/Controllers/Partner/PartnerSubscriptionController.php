@@ -17,7 +17,10 @@ class PartnerSubscriptionController extends Controller
     {
         try {
             $partner = $request->partner;
-            $partner_subscription_packages = PartnerSubscriptionPackage::validDiscounts()->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'rules', 'usps', 'badge')->get();
+            $partner_subscription_packages = PartnerSubscriptionPackage::validDiscounts()
+                ->where('name', '!=', 'LITE')->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'rules', 'usps', 'badge')
+                ->get();
+
             foreach ($partner_subscription_packages as $package) {
                 $package['rules'] = $this->calculateDiscount(json_decode($package->rules, 1), $package);
                 $package['is_subscribed'] = (int)($partner->package_id == $package->id);
@@ -136,8 +139,8 @@ class PartnerSubscriptionController extends Controller
         $yearly_discounted_price = $rules['fee']['yearly']['original_price'] - $rules['fee']['yearly']['discount'];
         $rules['fee']['yearly']['discounted_price'] = $yearly_discounted_price > 0 ? $yearly_discounted_price : 0;
         $rules['fee']['yearly']['discount_note'] = $this->discountNote($package, 'yearly');
-        $rules['fee']['yearly']['original_price_breakdown'] = round($rules['fee']['yearly']['original_price']/12,2);
-        $rules['fee']['yearly']['discounted_price_breakdown'] = round(  $rules['fee']['yearly']['discounted_price']/12,2);
+        $rules['fee']['yearly']['original_price_breakdown'] = round($rules['fee']['yearly']['original_price'] / 12, 2);
+        $rules['fee']['yearly']['discounted_price_breakdown'] = round($rules['fee']['yearly']['discounted_price'] / 12, 2);
         $rules['fee']['yearly']['breakdown_type'] = 'monthly';
 
         array_forget($rules, ['fee.monthly.value', 'fee.yearly.value']);
