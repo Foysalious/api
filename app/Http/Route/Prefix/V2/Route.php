@@ -181,6 +181,11 @@ class Route
             $api->group(['prefix' => 'proxy'], function ($api) {
                 $api->post('/top-up', 'ProxyController@pretupsTopUp');
             });
+
+            /**
+             * EMI INFO
+             */
+            $api->get('emi-info', 'ShebaController@getEmiInfo');
         });
         return $api;
     }
