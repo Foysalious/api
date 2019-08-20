@@ -1,8 +1,4 @@
-<?php
-
-
-namespace Sheba\TopUp;
-
+<?php namespace Sheba\TopUp;
 
 use App\Models\TopUpOrder;
 use Sheba\ModificationFields;
@@ -10,6 +6,7 @@ use Sheba\ModificationFields;
 class Creator
 {
     use ModificationFields;
+
     /** @var TopUpRequest */
     private $topUpRequest;
 
