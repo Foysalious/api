@@ -19,7 +19,10 @@ class CustomerRoute
                     $api->get('/details/{id}', 'InfoCallController@getDetails');
                     $api->post('/', 'InfoCallController@store');
                 });
-                $api->put('notifications', 'CustomerNotificationController@update');
+                $api->group(['prefix' => 'notifications'], function ($api) {
+                    $api->put('/', 'CustomerNotificationController@update');
+                    $api->get('/orders', 'CustomerNotificationController@index');
+                });
                 $api->post('top-up', 'TopUpController@topUp');
                 $api->group(['prefix' => 'bkash'], function ($api) {
                     $api->post('create', 'BkashController@create')->middleware('customer_job.auth');
