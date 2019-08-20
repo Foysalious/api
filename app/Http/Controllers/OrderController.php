@@ -102,7 +102,7 @@ class OrderController extends Controller
                         $payment = $payment->getFormattedPayment();
                     }
                 }
-//                $this->sendNotifications($customer, $order);
+                $this->sendNotifications($customer, $order);
                 $partner = $order->partnerOrders()->first()->partner;
                 return api_response($request, $order, 200, ['link' => $link, 'job_id' => $order->jobs->first()->id, 'provider_mobile' => $partner->getContactNumber(),
                     'order_code' => $order->code(), 'payment' => $payment]);
