@@ -97,6 +97,21 @@ class SettingsController extends Controller
         }
     }
 
+    public function giveRating($customer, Request $request)
+    {
+        try {
+            /** @var Customer $customer */
+            $customer = $request->customer;
+
+            $data['has_rated_customer_app'] = (int)$request->has_rated_customer_app;
+            $customer->update($data);
+            return api_response($request,null, 200);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     public function addPayment($customer, Request $request, PaymentSetting $paymentSetting)
     {
         try {
