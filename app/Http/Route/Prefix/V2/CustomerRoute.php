@@ -11,6 +11,7 @@ class CustomerRoute
                 $api->post('purchase-gift-card', 'GiftCardController@purchaseGiftCard');
                 $api->group(['prefix' => 'settings'], function ($api) {
                     $api->get('/', 'Settings\SettingsController@getCustomerSettings');
+                    $api->post('/rating', 'Settings\SettingsController@giveRating');
                     $api->get('review', 'Settings\SettingsController@getCustomerReviewSettings');
                     $api->get('payment', 'Settings\SettingsController@addPayment');
                 });
