@@ -307,4 +307,40 @@ class ShebaController extends Controller
         }
     }
 
+    public function getEmiInfo(Request $request)
+    {
+
+
+        try {
+            $amount = $request->amount;
+
+            if (!$amount) {
+                return api_response($request, null, 400, ['message' => 'Amount missing']);
+            }
+
+            $monthly_payment = [
+                [
+                    "number_of_months" => 3,
+                    "amount" => $amount/3
+                ],
+                [
+                    "number_of_months" => 5,
+                    "amount" => $amount/5,
+                ],
+                [
+                    "number_of_months" => 12,
+                    "amount" => ($amount + ($amount*0.05))/12
+                ]
+            ];
+
+            $emi_data = [
+                "monthly_payment" => $monthly_payment
+            ];
+
+            return api_response($request, null, 200, ['info' => $emi_data]);
+        } catch (\Exception $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
 }
