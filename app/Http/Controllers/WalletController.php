@@ -35,7 +35,7 @@ class WalletController extends Controller
         }
     }
 
-    public function recharge(Request $request)
+    public function recharge(Request $request, ShebaPayment $sheba_payment)
     {
         try {
             $this->validate($request, [
@@ -50,7 +50,7 @@ class WalletController extends Controller
             $user = $class_name::where([['id', (int)$request->user_id], ['remember_token', $request->remember_token]])->first();
             if (!$user) return api_response($request, null, 404, ['message' => 'User Not found.']);
             $recharge_adapter = new RechargeAdapter($user, $request->amount);
-            $payment = (new ShebaPayment($request->payment_method))->init($recharge_adapter->getPayable());
+            $payment = $sheba_payment->setMethod($request->payment_method)->init($recharge_adapter->getPayable());
             return api_response($request, $payment, 200, ['link' => $payment['link'], 'payment' => $payment->getFormattedPayment()]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());

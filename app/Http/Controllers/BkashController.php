@@ -7,14 +7,13 @@ use Sheba\Payment\ShebaPayment;
 
 class BkashController extends Controller
 {
-    public function validatePayment(Request $request)
+    public function validatePayment(Request $request,ShebaPayment $sheba_payment)
     {
         try {
             $this->validate($request, ['paymentID' => 'required']);
             $payment = Payment::where('gateway_transaction_id', $request->paymentID)->valid()->first();
             if (!$payment) return api_response($request, null, 404, ['message' => 'Valid Payment not found.']);
-            $sheba_payment = new ShebaPayment('bkash');
-            $payment = $sheba_payment->complete($payment);
+            $payment = $sheba_payment->setMethod('bkash')->complete($payment);
             $redirect_url = $payment->payable->success_url . '?invoice_id=' . $payment->transaction_id;
             if ($payment->isComplete()) {
                 return api_response($request, 1, 200, ['payment' => array('redirect_url' => $redirect_url)]);
