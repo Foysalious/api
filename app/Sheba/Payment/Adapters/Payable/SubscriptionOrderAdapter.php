@@ -29,4 +29,9 @@ class SubscriptionOrderAdapter implements PayableAdapter
         $payable->save();
         return $payable;
     }
+
+    public function setEmiMonth($month)
+    {
+        // TODO: Implement setEmiMonth() method.
+    }
 }

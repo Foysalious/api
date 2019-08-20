@@ -14,12 +14,14 @@ class OrderAdapter implements PayableAdapter
     private $userType;
     /** @var Job $job */
     private $job;
+    private $emiMonth;
 
     public function __construct(PartnerOrder $partner_order, $is_advanced_payment = false)
     {
         $this->partnerOrder = $partner_order;
         $this->partnerOrder->calculate(true);
         $this->isAdvancedPayment = $is_advanced_payment;
+        $this->emiMonth = null;
         $this->setUser();
     }
 
@@ -33,6 +35,7 @@ class OrderAdapter implements PayableAdapter
         $payable->user_type = $this->userType;
         $due = (double)$this->partnerOrder->dueWithLogistic;
         $payable->amount = $this->calculateAmount($due);
+        $payable->emi_month = $this->emiMonth;
         $payable->completion_type = $this->isAdvancedPayment ? 'advanced_order' : "order";
         $payable->success_url = $this->getSuccessUrl();
         $payable->fail_url = $this->getFailUrl();
@@ -89,5 +92,15 @@ class OrderAdapter implements PayableAdapter
     public function setModelForPayable($model)
     {
         // TODO: Implement setModelForPayable() method.
+    }
+
+    /**
+     * @param $month |int
+     * @return $this
+     */
+    public function setEmiMonth($month)
+    {
+        $this->emiMonth = (int)$month;
+        return $this;
     }
 }

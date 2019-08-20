@@ -33,4 +33,9 @@ class RechargeAdapter implements PayableAdapter
     {
         // TODO: Implement setModelForPayable() method.
     }
+
+    public function setEmiMonth($month)
+    {
+        // TODO: Implement setNumberOfEmiMonth() method.
+    }
 }

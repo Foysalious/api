@@ -77,7 +77,8 @@ class OrderController extends Controller
                 'address_id' => 'required_without:address',
                 'resource' => 'sometimes|numeric',
                 'is_on_premise' => 'sometimes|numeric',
-                'partner_id' => 'sometimes|required|numeric'
+                'partner_id' => 'sometimes|required|numeric',
+                'emi_month' => 'numeric'
             ], ['mobile' => 'Invalid mobile number!']);
             $customer = $request->customer;
             $validation = new Validation($request);
@@ -101,7 +102,7 @@ class OrderController extends Controller
                         $payment = $payment->getFormattedPayment();
                     }
                 }
-                $this->sendNotifications($customer, $order);
+//                $this->sendNotifications($customer, $order);
                 $partner = $order->partnerOrders()->first()->partner;
                 return api_response($request, $order, 200, ['link' => $link, 'job_id' => $order->jobs->first()->id, 'provider_mobile' => $partner->getContactNumber(),
                     'order_code' => $order->code(), 'payment' => $payment]);
@@ -246,6 +247,7 @@ class OrderController extends Controller
     {
         try {
             $order_adapter = new OrderAdapter($order->partnerOrders[0], 1);
+            $order_adapter->setEmiMonth(\request()->emi_month);
             $payment = new ShebaPayment();
             $payment = $payment->setMethod($payment_method)->init($order_adapter->getPayable());
             return $payment->isInitiated() ? $payment : null;
