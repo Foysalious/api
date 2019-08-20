@@ -22,6 +22,8 @@ use Sheba\Checkout\DeliveryCharge;
 use Sheba\Checkout\Partners\PartnerUnavailabilityReasons;
 use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Dal\Discount\DiscountTypes;
+use Sheba\JobDiscount\JobDiscountCheckingParams;
+use Sheba\JobDiscount\JobDiscountHandler;
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
 use Sheba\Location\Distance\DistanceStrategy;
@@ -60,6 +62,8 @@ class PartnerList
     protected $deliveryCharge;
     /** @var DiscountRepository */
     protected $discountRepo;
+    /** @var JobDiscountHandler */
+    private $jobDiscountHandler;
 
     use ModificationFields;
 
@@ -78,6 +82,7 @@ class PartnerList
             'handyman' => []
         ];
         $this->discountRepo = app(DiscountRepository::class);
+        $this->jobDiscountHandler = app(JobDiscountHandler::class);
     }
 
     public function setPartnerListRequest(PartnerListRequest $partner_list_request)
@@ -297,6 +302,9 @@ class PartnerList
         return $preparation_time->lte($start_time) || $preparation_time->between($start_time, $end_time) ? 1 : 0;
     }
 
+    /**
+     * @throws \Sheba\Dal\Discount\InvalidDiscountType
+     */
     public function addPricing()
     {
         $pivot = collect();
@@ -325,6 +333,11 @@ class PartnerList
         }
     }
 
+    /**
+     * @param $partner
+     * @return array
+     * @throws \Sheba\Dal\Discount\InvalidDiscountType
+     */
     protected function calculateServicePricingAndBreakdownOfPartner($partner)
     {
         $total_service_price = [
@@ -370,14 +383,20 @@ class PartnerList
         $total_service_price['discount'] = (int)$total_service_price['discount'];
 
         $original_delivery_charge = $this->deliveryCharge->setCategoryPartnerPivot($category_pivot)->get();
-        $discount = $this->discountRepo->findValidForAgainst(DiscountTypes::DELIVERY, $this->partnerListRequest->selectedCategory, $partner);
         $discount_amount = 0;
-        if ($discount) $discount_amount = $discount->getApplicableAmount($original_delivery_charge);
-        $discounted_delivery_charge = $original_delivery_charge - $discount_amount;
-        $delivery_charge = $discounted_delivery_charge;
+        $discount_checking_params = (new JobDiscountCheckingParams())->setDiscountableAmount($original_delivery_charge)
+            ->setOrderAmount($total_service_price['discounted_price']);
+        $this->jobDiscountHandler->setType(DiscountTypes::DELIVERY)->setCategory($this->partnerListRequest->selectedCategory)
+            ->setPartner($partner)->setCheckingParams($discount_checking_params)->calculate();
 
-        $total_service_price['discounted_price'] += $delivery_charge;
-        $total_service_price['original_price'] += $delivery_charge;
+        if ($this->jobDiscountHandler->hasDiscount()) {
+            $discount_amount += $this->jobDiscountHandler->getApplicableAmount();
+        }
+
+        $discounted_delivery_charge = $original_delivery_charge - $discount_amount;
+
+        $total_service_price['discounted_price'] += $discounted_delivery_charge;
+        $total_service_price['original_price'] += $discounted_delivery_charge;
         $total_service_price['delivery_charge'] = $original_delivery_charge;
         $total_service_price['discounted_delivery_charge'] = $discounted_delivery_charge;
         $total_service_price['has_home_delivery'] = (int)$category_pivot->is_home_delivery_applied ? 1 : 0;
@@ -670,7 +689,8 @@ class PartnerList
         $this->notFoundValues['location'] = $this->getPartnerIds();
     }
 
-    public function getNotShowingReason(){
+    public function getNotShowingReason()
+    {
         return $this->notFoundValues;
     }
 }

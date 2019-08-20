@@ -1,6 +1,5 @@
 <?php namespace Sheba\TopUp\Vendor\Internal;
 
-
 use App\Models\TopUpOrder;
 use Sheba\Logs\ErrorLog;
 use Sheba\TopUp\Vendor\Response\SslResponse;
@@ -41,8 +40,7 @@ class SslClient
             $s_url = config('sheba.api_url') . '/v2/top-up/success/ssl';
             $f_url = config('sheba.api_url') . '/v2/top-up/fail/ssl';
             $calling_method = "GET";
-            $create_recharge_response = $client->CreateRecharge($this->clientId, $this->clientPassword, $guid, $operator_id,
-                $mobile, $topup_order->amount, $connection_type, $sender_id, $priority, $s_url, $f_url, $calling_method);
+            $create_recharge_response = $client->CreateRecharge($this->clientId, $this->clientPassword, $guid, $operator_id, $mobile, $topup_order->amount, $connection_type, $sender_id, $priority, $s_url, $f_url, $calling_method);
             $vr_guid = $create_recharge_response->vr_guid;
             $recharge_response = $client->InitRecharge($this->clientId, $this->clientPassword, $guid, $vr_guid);
             $recharge_response->guid = $guid;
