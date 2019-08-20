@@ -321,15 +321,19 @@ class ShebaController extends Controller
             $monthly_payment = [
                 [
                     "number_of_months" => 3,
-                    "amount" => $amount/3
+                    "amount" => ($amount + ($amount*0.03))/3
                 ],
                 [
-                    "number_of_months" => 5,
-                    "amount" => $amount/5,
+                    "number_of_months" => 6,
+                    "amount" => ($amount + ($amount*0.045))/6
+                ],
+                [
+                    "number_of_months" => 9,
+                    "amount" => ($amount + ($amount*0.065))/9
                 ],
                 [
                     "number_of_months" => 12,
-                    "amount" => ($amount + ($amount*0.05))/12
+                    "amount" => ($amount + ($amount*0.085))/12
                 ]
             ];
 
