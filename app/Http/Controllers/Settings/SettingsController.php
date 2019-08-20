@@ -80,6 +80,7 @@ class SettingsController extends Controller
         try {
             /** @var Customer $customer */
             $customer = $request->customer;
+            $reviews = $customer->reviews()->where('rating', '=', 5);
             $settings = [
                 'credit' => $customer->shebaCredit(),
                 'rating' => round($customer->customerReviews->avg('rating'), 2),
@@ -87,7 +88,7 @@ class SettingsController extends Controller
                     'is_bkash_saved' => $customer->profile->bkash_agreement_id ? 1 : 0
                 ],
                 'pending_order' => $customer->partnerOrders->where('closed_and_paid_at', null)->where('cancelled_at', null)->count(),
-                'has_rated_sheba_app' => 1
+                'show_app_rating' => ($reviews->count() >= 3) ? 1 : 0
             ];
             return api_response($request, $settings, 200, ['settings' => $settings]);
         } catch (\Throwable $e) {
