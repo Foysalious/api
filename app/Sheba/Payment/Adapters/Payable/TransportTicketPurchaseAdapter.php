@@ -30,4 +30,9 @@ class TransportTicketPurchaseAdapter implements PayableAdapter
 
         return $payable;
     }
+
+    public function setEmiMonth($month)
+    {
+        // TODO: Implement setEmiMonth() method.
+    }
 }

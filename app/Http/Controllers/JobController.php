@@ -476,17 +476,20 @@ class JobController extends Controller
         }
     }
 
-    public function clearBills($customer, $job, Request $request)
+    public function clearBills($customer, $job, Request $request, ShebaPayment $payment)
     {
         try {
             $this->validate($request, [
                 'payment_method' => 'sometimes|required|in:online,wallet,bkash,cbl,partner_wallet',
+                'emi_month' => 'numeric'
             ]);
-            if ($request->payment_method == 'bkash' && $this->hasPreviousBkashTransaction($request->job->partner_order_id)) {
+            $payment_method = $request->has('payment_method') ? $request->payment_method : 'online';
+            if ($payment_method == 'bkash' && $this->hasPreviousBkashTransaction($request->job->partner_order_id)) {
                 return api_response($request, null, 500, ['message' => "Can't send multiple requests within 1 minute."]);
             }
             $order_adapter = new OrderAdapter($request->job->partnerOrder);
-            $payment = (new ShebaPayment($request->has('payment_method') ? $request->payment_method : 'online'))->init($order_adapter->getPayable());
+            $order_adapter->setEmiMonth($request->emi_month);
+            $payment = $payment->setMethod($payment_method)->init($order_adapter->getPayable());
             return api_response($request, $payment, 200, ['link' => $payment->redirect_url, 'payment' => $payment->getFormattedPayment()]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());

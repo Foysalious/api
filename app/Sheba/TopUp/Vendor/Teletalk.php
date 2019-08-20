@@ -1,6 +1,4 @@
-<?php
-
-namespace Sheba\TopUp\Vendor;
+<?php namespace Sheba\TopUp\Vendor;
 
 use Sheba\TopUp\Vendor\Internal\Ssl;
 

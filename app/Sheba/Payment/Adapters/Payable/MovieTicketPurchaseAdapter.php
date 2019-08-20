@@ -22,10 +22,15 @@ class MovieTicketPurchaseAdapter implements PayableAdapter
         $payable->user_type = get_class($this->movieTicketOrder->agent);
         $payable->amount = $this->movieTicketOrder->amount;
         $payable->completion_type = "movie_ticket_purchase";
-        $payable->success_url = config('sheba.front_url') . '/movie-tickets/'.$this->movieTicketOrder->id;
+        $payable->success_url = config('sheba.front_url') . '/movie-tickets/' . $this->movieTicketOrder->id;
         $payable->created_at = Carbon::now();
         $payable->save();
 
         return $payable;
+    }
+
+    public function setEmiMonth($month)
+    {
+        // TODO: Implement setEmiMonth() method.
     }
 }

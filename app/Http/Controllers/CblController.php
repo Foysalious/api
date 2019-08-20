@@ -9,7 +9,7 @@ use Sheba\Payment\ShebaPayment;
 
 class CblController extends Controller
 {
-    public function validateCblPGR(Request $request)
+    public function validateCblPGR(Request $request,ShebaPayment $sheba_payment)
     {
         $xml = simplexml_load_string($request->xmlmsg);
         $invoice = "SHEBA_CBL_" . $xml->OrderID->__toString();
@@ -19,8 +19,7 @@ class CblController extends Controller
             $this->validate($request, [
                 'xmlmsg' => 'required|string',
             ]);
-            $sheba_payment = new ShebaPayment('cbl');
-            $payment = $sheba_payment->complete($payment);
+            $payment = $sheba_payment->setMethod('cbl')->complete($payment);
             $payable = $payment->payable;
             return redirect($payable->success_url . '?invoice_id=' . $payment->transaction_id);
         } catch (\Throwable $e) {
