@@ -16,11 +16,8 @@ use DB;
 
 class PartnerWalletController extends Controller
 {
-    /**
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function validatePayment(Request $request)
+    
+    public function validatePayment(Request $request, ShebaPayment $sheba_payment)
     {
         try {
             /** @var Payment $payment */
@@ -30,8 +27,7 @@ class PartnerWalletController extends Controller
             elseif ($payment->isComplete()) return api_response($request, 1, 200, ['message' => 'Payment completed']);
             elseif (!$payment->canComplete()) return api_response($request, null, 400, ['message' => 'Payment validation failed.']);
 
-            $sheba_payment = new ShebaPayment('partner_wallet');
-            $payment = $sheba_payment->complete($payment);
+            $payment = $sheba_payment->setMethod('partner_wallet')->complete($payment);
 
             if ($payment->isComplete()) $message = 'Payment successfully completed';
             elseif ($payment->isPassed()) $message = 'Your payment has been received but there was a system error. It will take some time to transaction your order. Call 16516 for support.';

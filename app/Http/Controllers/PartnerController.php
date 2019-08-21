@@ -4,7 +4,6 @@ use App\Exceptions\HyperLocationNotFoundException;
 use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
 use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
-
 use App\Models\Category;
 use App\Models\CategoryPartner;
 use App\Models\DeliveryChargeUpdateRequest;
@@ -19,7 +18,6 @@ use App\Models\PartnerService;
 use App\Models\PartnerServicePricesUpdate;
 use App\Models\ReviewQuestionAnswer;
 use App\Models\Service;
-
 use App\Repositories\DiscountRepository;
 use App\Repositories\NotificationRepository;
 use App\Repositories\PartnerOrderRepository;
@@ -28,17 +26,13 @@ use App\Repositories\PartnerServiceRepository;
 use App\Repositories\ResourceJobRepository;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
-
 use App\Sheba\Checkout\PartnerList;
 use App\Sheba\Checkout\Validation;
-
-
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Redis;
-
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
 use Sheba\Checkout\Partners\LitePartnerList;
 use Sheba\Checkout\Requests\PartnerListRequest;
@@ -47,10 +41,9 @@ use Sheba\Manager\JobList;
 use Sheba\ModificationFields;
 use Sheba\Partner\LeaveStatus;
 use Sheba\Reward\PartnerReward;
-
-use Carbon\Carbon;
 use Throwable;
 use Validator;
+
 
 class PartnerController extends Controller
 {
@@ -1197,6 +1190,21 @@ class PartnerController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function changeLogo($partner, Request $request)
+    {
+        try {
+            $this->validate($request, ['logo' => 'required|file|image']);
+        } catch (ValidationException $e) {
+            $messages = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, null, 400, ['message' => $messages]);
+        }
+        $partner = Partner::find($partner);
+        if (!in_array($partner->status, ['Unverified', 'Onboarded'])) return api_response($request, null, 400, ['message' => 'Can not change logo after verification']);
+        $repo = new PartnerRepository($partner);
+        $logo = $repo->updateLogo($request);
+        return api_response($request, $logo, 200, ['logo' => $logo]);
     }
 }
 

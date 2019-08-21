@@ -9,7 +9,7 @@ use Sheba\Payment\ShebaPayment;
 class UtilityController extends Controller
 {
 
-    public function clearBills($utility_order, Request $request, UtilityOrderAdapter $utility_order_adapter)
+    public function clearBills($utility_order, Request $request, UtilityOrderAdapter $utility_order_adapter, ShebaPayment $sheba_payment)
     {
         try {
             $this->validate($request, [
@@ -23,7 +23,7 @@ class UtilityController extends Controller
             $user = $user::where([['remember_token', $request->token], ['id', $request->user_id]])->first();
             $payable = $utility_order_adapter->setUtilityOrder($utility_order)->getPayable();
             if ($payment_method == 'wallet' && $user->shebaCredit() < $payable->amount) return api_response($request, null, 403, ['message' => "You don't have sufficient balance"]);
-            $payment = (new ShebaPayment($payment_method))->init($payable);
+            $payment = $sheba_payment->setMethod($payment_method)->init($payable);
             return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());

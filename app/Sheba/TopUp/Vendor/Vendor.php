@@ -51,5 +51,4 @@ abstract class Vendor
         $recharge_history->amount = $amount;
         $recharge_history->save();
     }
-
 }
