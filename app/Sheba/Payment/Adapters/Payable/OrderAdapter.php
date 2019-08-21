@@ -35,7 +35,7 @@ class OrderAdapter implements PayableAdapter
         $payable->user_type = $this->userType;
         $due = (double)$this->partnerOrder->dueWithLogistic;
         $payable->amount = $this->calculateAmount($due);
-        $payable->emi_month = $this->emiMonth;
+        $payable->emi_month = $this->resolveEmiMonth($payable);
         $payable->completion_type = $this->isAdvancedPayment ? 'advanced_order' : "order";
         $payable->success_url = $this->getSuccessUrl();
         $payable->fail_url = $this->getFailUrl();
@@ -44,20 +44,13 @@ class OrderAdapter implements PayableAdapter
         return $payable;
     }
 
+
     private function calculateAmount($due)
     {
         if ($this->job->isOnlinePaymentDiscountApplicable()) {
             $due -= ($due * (config('sheba.online_payment_discount_percentage') / 100));
         }
         return $due;
-    }
-
-    private function getShebaLogisticsPrice()
-    {
-        if ($this->job->needsLogistic())
-            return $this->job->category->getShebaLogisticsPrice();
-
-        return 0;
     }
 
     private function setUser()
@@ -88,6 +81,10 @@ class OrderAdapter implements PayableAdapter
         else return config('sheba.front_url');
     }
 
+    private function resolveEmiMonth(Payable $payable)
+    {
+        return $payable->amount >= config('sheba.min_order_amount_for_emi') ? $this->emiMonth : null;
+    }
 
     public function setModelForPayable($model)
     {
@@ -103,4 +100,5 @@ class OrderAdapter implements PayableAdapter
         $this->emiMonth = (int)$month;
         return $this;
     }
+
 }
