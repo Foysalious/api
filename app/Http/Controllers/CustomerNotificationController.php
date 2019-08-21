@@ -67,7 +67,6 @@ class CustomerNotificationController extends Controller
             array_push($notifications, $notification_1, $notification_2);
             return api_response($request, null, 200, ['notifications' => $notifications]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
