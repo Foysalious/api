@@ -22,7 +22,7 @@ class CustomerRoute
                 });
                 $api->group(['prefix' => 'notifications'], function ($api) {
                     $api->put('/', 'CustomerNotificationController@update');
-                    $api->get('/orders', 'CustomerNotificationController@index');
+                    $api->get('/', 'CustomerNotificationController@index');
                 });
                 $api->post('top-up', 'TopUpController@topUp');
                 $api->group(['prefix' => 'bkash'], function ($api) {
