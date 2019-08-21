@@ -58,8 +58,9 @@ class OfferFilter
                 if ($offer->isVoucher()) {
                     $voucher_rule = new VoucherRuleChecker($offer->target->rules);
                     $is_applicable = 0;
-                    foreach ($category_ids as $id) {
-                        if ($voucher_rule->checkCategory($id)) $is_applicable = 1;
+                    $categories = Category::whereIn('id', $category_ids)->with('parent')->get();
+                    foreach ($categories as $category) {
+                        $is_applicable = $voucher_rule->checkCategory($category->id) && $voucher_rule->checkMasterCategory($category->parent->id);
                     }
                     if (!$is_applicable) {
                         unset($this->offers[$key]);
@@ -103,7 +104,7 @@ class OfferFilter
             }
             if ($this->location) {
                 $locations = $offer->locations->pluck('id')->toArray();
-                if(!in_array($this->location->id, $locations))
+                if (!in_array($this->location->id, $locations))
                     unset($this->offers[$key]);
             }
         }
