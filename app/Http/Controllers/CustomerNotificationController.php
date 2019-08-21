@@ -17,8 +17,8 @@ class CustomerNotificationController extends Controller
             }]));*/
             $notifications = [];
             $notification_1 = [
-                'type_id' => 188596,
-                'type' => 'Customer',
+                'type_id' => 154919,
+                'type' => 'Order',
                 'text' => 'Pure Milk',
                 'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/categories_images/thumbs/1549878615_dairy_milk_and_ghee.png',
                 'statuses' => [
@@ -40,8 +40,8 @@ class CustomerNotificationController extends Controller
                 ]
             ];
             $notification_2 = [
-                'type_id' => 188596,
-                'type' => 'Customer',
+                'type_id' => 154919,
+                'type' => 'Order',
                 'text' => 'Pure Milk',
                 'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/categories_images/thumbs/1549878615_dairy_milk_and_ghee.png',
                 'statuses' => [
