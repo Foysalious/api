@@ -173,11 +173,7 @@ class CustomerNotificationController extends Controller
             }
 
             $notifications = collect($notifications)->sortByDesc('created_at')->values();
-            /*$notifications = array_values(array_sort($notifications, function ($value) {
-                return $value['created_at'];
-            }));
-
-            dd($notifications);*/
+            
             /*$notifications = [];
             $notification_1 = [
                 'type_id' => 154919,
