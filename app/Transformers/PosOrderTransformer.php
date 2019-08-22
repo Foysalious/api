@@ -7,8 +7,12 @@ use Sheba\Repositories\PaymentLinkRepository;
 
 class PosOrderTransformer extends TransformerAbstract
 {
-    protected $defaultIncludes = ['items', 'customer', 'payments'];
+    protected $defaultIncludes = ['items', 'customer', 'payments', 'return_orders'];
 
+    /**
+     * @param PosOrder $order
+     * @return array
+     */
     public function transform(PosOrder $order)
     {
         $data = [
@@ -25,7 +29,8 @@ class PosOrderTransformer extends TransformerAbstract
             'due' => $order->getDue(),
             'customer' => null,
             'is_refundable' => $order->isRefundable(),
-            'refund_status' => $order->getRefundStatus()
+            'refund_status' => $order->getRefundStatus(),
+            'return_orders' => null
         ];
         if ($data['due'] > 0) {
             $repo = app(PaymentLinkRepositoryInterface::class);
@@ -65,5 +70,13 @@ class PosOrderTransformer extends TransformerAbstract
     {
         $collection = $this->item($order->customer, new PosCustomerTransformer());
         return $collection->getData() ? $collection : null;
+    }
+
+    public function includeReturnOrders($order)
+    {
+        $collection = $this->collection($order->refundLogs()->get(), new PosOrderReturnedTransformer());
+        return $collection->getData() ? $collection : $this->item(null, function () {
+            return [];
+        });
     }
 }

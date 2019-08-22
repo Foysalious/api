@@ -6,6 +6,7 @@ use Sheba\Helpers\TimeFrame;
 use Sheba\Pos\Log\Supported\Types;
 use Sheba\Pos\Order\OrderPaymentStatuses;
 use Sheba\Pos\Order\RefundNatures\Natures;
+use Sheba\Pos\Order\RefundNatures\ReturnNatures;
 
 class PosOrder extends Model
 {
@@ -135,6 +136,11 @@ class PosOrder extends Model
         return $this->hasMany(PosOrderLog::class);
     }
 
+    public function refundLogs()
+    {
+        return $this->logs()->whereIn('type', [ReturnNatures::PARTIAL_RETURN, ReturnNatures::FULL_RETURN]);
+    }
+
     public function scopeByPartner($query, $partner_id)
     {
         return $query->where('partner_id', $partner_id);
@@ -262,9 +268,9 @@ class PosOrder extends Model
         $is_exchanged = $is_full_returned = $is_partial_return = null;
 
         $this->logs->each(function ($log) use (&$is_exchanged, &$is_full_returned, &$is_partial_return) {
-            $is_exchanged = ($log->type == Types::EXCHANGE && !$is_exchanged) ? $log : null;
-            $is_full_returned = ($log->type == Types::FULL_RETURN && !$is_full_returned) ? $log: null;
-            $is_partial_return = ($log->type == Types::PARTIAL_RETURN && !$is_partial_return) ? $log : null;
+            $is_exchanged = ($log->type == Types::EXCHANGE) ? $log : null;
+            $is_full_returned = ($log->type == Types::FULL_RETURN) ? $log: null;
+            $is_partial_return = ($log->type == Types::PARTIAL_RETURN) ? $log : null;
         });
 
         return $is_exchanged ? Natures::EXCHANGED : (($is_full_returned || $is_partial_return) ? Natures::RETURNED : null);

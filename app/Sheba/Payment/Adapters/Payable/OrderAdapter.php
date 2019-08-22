@@ -24,6 +24,15 @@ class OrderAdapter implements PayableAdapter
         $this->emiMonth = null;
         $this->setUser();
     }
+    /**
+     * @param $month |int
+     * @return $this
+     */
+    public function setEmiMonth($month)
+    {
+        $this->emiMonth = (int)$month;
+        return $this;
+    }
 
     public function getPayable(): Payable
     {
@@ -89,16 +98,6 @@ class OrderAdapter implements PayableAdapter
     public function setModelForPayable($model)
     {
         // TODO: Implement setModelForPayable() method.
-    }
-
-    /**
-     * @param $month |int
-     * @return $this
-     */
-    public function setEmiMonth($month)
-    {
-        $this->emiMonth = (int)$month;
-        return $this;
     }
 
 }

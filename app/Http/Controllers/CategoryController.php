@@ -7,6 +7,7 @@ use App\Models\CategoryPartner;
 use App\Models\HyperLocal;
 use App\Models\Location;
 use App\Models\Partner;
+use App\Models\ReviewQuestionAnswer;
 use App\Models\Service;
 use App\Models\ServiceGroupService;
 use App\Repositories\CategoryRepository;
@@ -487,18 +488,21 @@ class CategoryController extends Controller
             list($offset, $limit) = calculatePagination($request);
             $category = Category::find($category);
             if (!$category) return api_response($request, null, 404);
-            $category->load(['reviews' => function ($q) use ($offset, $limit) {
-                $q->select('id', 'category_id', 'customer_id', 'rating', 'review', 'review_title', 'partner_id')->whereIn('rating', [4, 5])->orderBy('created_at', 'desc')->with(['rates', 'customer.profile', 'partner']);
-            }]);
-            $reviews = $category->reviews->each(function ($review) {
-                $review->review = $review->calculated_review;
-                $review['customer_name'] = $review->customer ? $review->customer->profile->name : null;
-                $review['customer_picture'] = $review->customer ? $review->customer->profile->pro_pic : null;
-                $review['partner_name'] = $review->partner->name;
-                removeRelationsAndFields($review);
-            })->filter(function ($review) {
-                return (!empty($review->review) && $review->rating == 5);
-            })->unique('customer_id')->sortByDesc('id')->splice($offset, $limit)->values()->all();
+            $reviews = ReviewQuestionAnswer::where('review_type', 'App\Models\Review')
+                ->select('category_id', 'customer_id', 'partner_id', 'reviews.rating', 'review_title')
+                ->selectRaw("partners.name as partner_name,profiles.name as customer_name,rate_answer_text as review,review_id as id,pro_pic as customer_picture")
+                ->join('reviews', 'reviews.id', '=', 'review_question_answer.review_id')
+                ->join('partners', 'partners.id', '=', 'reviews.partner_id')
+                ->join('customers', 'customers.id', '=', 'reviews.customer_id')
+                ->join('profiles', 'profiles.id', '=', 'customers.profile_id')
+                ->where('review_question_answer.review_type', '=', 'App\\Models\\Review')
+                ->where('review_question_answer.rate_answer_text', '<>', '')
+                ->where('reviews.rating', '=', 5)
+                ->where('reviews.category_id', '=', $category->id)
+                ->skip($offset)->take($limit)
+                ->orderBy('id', 'desc')
+                ->groupBy('customer_id')
+                ->get();
             return count($reviews) > 0 ? api_response($request, $reviews, 200, ['reviews' => $reviews]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
