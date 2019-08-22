@@ -114,8 +114,9 @@ class OrderController extends Controller
     {
         try {
             /** @var PosOrder $order */
-            $order = PosOrder::with('items.service.discounts', 'customer', 'payments', 'logs', 'partner')->find($request->order)->calculate();
+            $order = PosOrder::with('items.service.discounts', 'customer', 'payments', 'logs', 'partner')->find($request->order);
             if (!$order) return api_response($request, null, 404, ['msg' => 'Order Not Found']);
+            $order->calculate();
 
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());

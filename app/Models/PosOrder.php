@@ -6,6 +6,7 @@ use Sheba\Helpers\TimeFrame;
 use Sheba\Pos\Log\Supported\Types;
 use Sheba\Pos\Order\OrderPaymentStatuses;
 use Sheba\Pos\Order\RefundNatures\Natures;
+use Sheba\Pos\Order\RefundNatures\ReturnNatures;
 
 class PosOrder extends Model
 {
@@ -133,6 +134,11 @@ class PosOrder extends Model
     public function logs()
     {
         return $this->hasMany(PosOrderLog::class);
+    }
+
+    public function refundLogs()
+    {
+        return $this->logs()->whereIn('type', [ReturnNatures::PARTIAL_RETURN, ReturnNatures::FULL_RETURN]);
     }
 
     public function scopeByPartner($query, $partner_id)
