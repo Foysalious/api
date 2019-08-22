@@ -12,6 +12,7 @@ class PosCustomerTransformer extends TransformerAbstract
             'name'  => $customer->profile->name,
             'image' => $customer->profile->pro_pic,
             'mobile'=> $customer->profile->mobile,
+            'email' => $customer->profile->email
         ];
     }
 }
