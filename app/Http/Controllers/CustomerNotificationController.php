@@ -3,9 +3,13 @@
 namespace App\Http\Controllers;
 
 
+use App\Models\MovieTicketOrder;
+use App\Models\TopUpOrder;
+use App\Models\Transport\TransportTicketOrder;
 use Illuminate\Http\Request;
 use phpDocumentor\Reflection\DocBlock\Description;
 use Sheba\Logs\Customer\JobLogs;
+use Sheba\MovieTicket\MovieTicket;
 
 class CustomerNotificationController extends Controller
 {
@@ -14,8 +18,110 @@ class CustomerNotificationController extends Controller
     {
         try {
             $customer = $request->customer;
+            $notifications = [];
 
-            /*$orders = $customer->orders()->with(['partnerOrders' => function ($q) {
+            /**
+             * @MovieTicketOrder
+             */
+            $movie_ticket_orders = MovieTicketOrder::where([
+                ['agent_type', "App\\Models\\Customer"],
+                ['agent_id', (int)$customer->id],
+            ])->select('id', 'agent_type', 'agent_id', 'status', 'created_at', 'updated_at')->orderBy('updated_at', 'DESC')->get();
+
+            foreach ($movie_ticket_orders as $movie_ticket_order) {
+                $icon = null;
+                if ($movie_ticket_order->status == 'confirmed') {
+                    $icon = 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/served.png';
+                } elseif ($movie_ticket_order->status == 'initiated') {
+                    $icon = 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/Inprocess.png';
+                } else {
+                    $icon = 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/cancelled.png';
+                }
+
+                $notification = [
+                    'type' => 'movie_ticket',
+                    'type_id' => $movie_ticket_order->id,
+                    'text' => 'Movie Ticket',
+                    'image' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/top_up.png',
+                    'created_at' => $movie_ticket_order->created_at->toDateTimeString(),
+                    'statuses' => [
+                        'text' => "Your top up is $movie_ticket_order->status",
+                        'icon' => $icon,
+                        'date' => $movie_ticket_order->updated_at ? $movie_ticket_order->updated_at->format("d M") . ' at ' . $movie_ticket_order->updated_at->format("h:i A") : $movie_ticket_order->created_at->format("d M") . ' at ' . $movie_ticket_order->created_at->format("h:i A")
+                    ]
+                ];
+                array_push($notifications, $notification);
+            }
+
+            /**
+             * @TransportTicketOrder
+             */
+            $transport_ticket_orders = TransportTicketOrder::where([
+                ['agent_type', "App\\Models\\Customer"],
+                ['agent_id', (int)$customer->id],
+            ])->select('id', 'agent_type', 'agent_id', 'status', 'created_at', 'updated_at')->orderBy('updated_at', 'DESC')->get();
+
+            foreach ($transport_ticket_orders as $transport_ticket_order) {
+                $icon = null;
+                if ($transport_ticket_order->status == 'confirmed') {
+                    $icon = 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/served.png';
+                } elseif ($transport_ticket_order->status == 'initiated') {
+                    $icon = 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/Inprocess.png';
+                } else {
+                    $icon = 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/cancelled.png';
+                }
+
+                $notification = [
+                    'type' => 'transport_ticket',
+                    'type_id' => $transport_ticket_order->id,
+                    'text' => 'Transport Ticket',
+                    'image' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/top_up.png',
+                    'created_at' => $transport_ticket_order->created_at->toDateTimeString(),
+                    'statuses' => [
+                        'text' => "Your top up is $transport_ticket_order->status",
+                        'icon' => $icon,
+                        'date' => $transport_ticket_order->updated_at ? $transport_ticket_order->updated_at->format("d M") . ' at ' . $transport_ticket_order->updated_at->format("h:i A") : $transport_ticket_order->created_at->format("d M") . ' at ' . $transport_ticket_order->created_at->format("h:i A")
+                    ]
+                ];
+                array_push($notifications, $notification);
+            }
+
+            /**
+             * @TopUpOrder
+             */
+            $top_up_orders = TopUpOrder::where([
+                ['agent_type', "App\\Models\\Customer"],
+                ['agent_id', (int)$customer->id],
+            ])->select('id', 'agent_type', 'agent_id', 'status', 'created_at', 'updated_at')->orderBy('updated_at', 'DESC')->get();
+
+            foreach ($top_up_orders as $top_up_order) {
+                $icon = null;
+                if ($top_up_order->status == 'Successful') {
+                    $icon = 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/served.png';
+                } elseif ($top_up_order->status == 'Initiated') {
+                    $icon = 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/Inprocess.png';
+                } else {
+                    $icon = 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/cancelled.png';
+                }
+
+                $notification = [
+                    'type' => 'top_up',
+                    'type_id' => $top_up_order->id,
+                    'text' => 'Top Up',
+                    'image' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/top_up.png',
+                    'created_at' => $top_up_order->created_at->toDateTimeString(),
+                    'statuses' => [
+                        'text' => "Your top up is $top_up_order->status",
+                        'icon' => $icon,
+                        'date' => $top_up_order->updated_at ? $top_up_order->updated_at->format("d M") . ' at ' . $top_up_order->updated_at->format("h:i A") : $top_up_order->created_at->format("d M") . ' at ' . $top_up_order->created_at->format("h:i A")
+                    ]
+                ];
+                array_push($notifications, $notification);
+            }
+            /**
+             * @Order
+             */
+            $orders = $customer->orders()->with(['partnerOrders' => function ($q) {
                 $q->with(['jobs' => function ($q) {
                     $q->with(['statusChangeLogs' => function ($q) {
                         $q->select('id', 'job_id', 'to_status', 'created_at');
@@ -25,7 +131,6 @@ class CustomerNotificationController extends Controller
                 $q->whereNull('cancelled_at');
             })->get();
 
-            $notifications = [];
             foreach ($orders as $order) {
                 foreach ($order->partnerOrders as $partnerOrder) {
                     foreach ($partnerOrder->jobs as $job) {
@@ -59,17 +164,24 @@ class CustomerNotificationController extends Controller
                             'type_id' => $job->id,
                             'text' => $category->name,
                             'image' => $category->thumb,
+                            'created_at' => $job->created_at->toDateTimeString(),
                             'statuses' => $status_logs
                         ];
                         array_push($notifications, $notification);
                     }
                 }
-            }*/
+            }
 
-            $notifications = [];
+            $notifications = collect($notifications)->sortByDesc('created_at')->values();
+            /*$notifications = array_values(array_sort($notifications, function ($value) {
+                return $value['created_at'];
+            }));
+
+            dd($notifications);*/
+            /*$notifications = [];
             $notification_1 = [
                 'type_id' => 154919,
-                'type' => 'Job',
+                'type' => 'job',
                 'text' => 'Pure Milk',
                 'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/categories_images/thumbs/1549878615_dairy_milk_and_ghee.png',
                 'statuses' => [
@@ -92,7 +204,7 @@ class CustomerNotificationController extends Controller
             ];
             $notification_2 = [
                 'type_id' => 154919,
-                'type' => 'Job',
+                'type' => 'job',
                 'text' => 'Pure Milk',
                 'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/categories_images/thumbs/1549878615_dairy_milk_and_ghee.png',
                 'statuses' => [
@@ -129,10 +241,9 @@ class CustomerNotificationController extends Controller
                 'statuses' => []
             ];
 
-            array_push($notifications, $notification_1, $notification_2,$notification_3,$notification_4);
+            array_push($notifications, $notification_1, $notification_2,$notification_3,$notification_4);*/
             return api_response($request, null, 200, ['notifications' => $notifications]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
