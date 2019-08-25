@@ -112,7 +112,7 @@ class HomePageSettingController extends Controller
                         $this->addFlashOfferDataToServiceGroup($section);
                     }
                 }
-                $settings->min_order_amount_for_emi = 12;
+                $settings->min_order_amount_for_emi = 1500;
                 return api_response($request, $settings, 200, ['settings' => $settings]);
             } else {
                 return api_response($request, null, 404);
