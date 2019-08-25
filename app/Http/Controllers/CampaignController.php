@@ -1,12 +1,17 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\OfferShowcase;
+use App\Transformers\CampaignTransformer;
 use Illuminate\Http\Request;
 use App\Models\HyperLocal;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
+use League\Fractal\Serializer\ArraySerializer;
 use Throwable;
 
 class CampaignController extends Controller
 {
+
     public function index(Request $request)
     {
         try {
@@ -20,23 +25,10 @@ class CampaignController extends Controller
                 if (!is_null($hyperLocation)) $location = $hyperLocation->location_id;
             }
 
-            $campaigns = [];
-            foreach ($offers as $offer) {
-                $target_type = null;
-                if ($offer->target_type) {
-                    $target_type = explode('\\', $offer->target_type);
-                    $target_type = snake_case(end($target_type));
-                }
-                $campaign = [
-                    "target_type" => $target_type,
-                    "target_id" => (int)$offer->target_id,
-                    "target_link" => $offer->target_link,
-                    "title" => $offer->title ?: null,
-                    "description" => $offer->detail_description ?: null,
-                    "image" => $offer->app_banner ?: ($offer->app_thumb ?: null),
-                ];
-                array_push($campaigns, $campaign);
-            }
+            $manager = new Manager();
+            $manager->setSerializer(new ArraySerializer());
+            $campaigns = new Collection($offers, new CampaignTransformer());
+            $campaigns = $manager->createData($campaigns)->toArray()['data'];
 
             if (count($campaigns) > 0) {
                 return api_response($request, $campaigns, 200, ['campaigns' => $campaigns]);
@@ -47,7 +39,5 @@ class CampaignController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
-
-
     }
 }
