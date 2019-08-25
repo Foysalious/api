@@ -24,6 +24,11 @@ class OfferShowcase extends Model
         return $q->where('start_date', '<=', $now)->where('end_date', '>=', $now);
     }
 
+    public function scopeCampaign($q)
+    {
+        return $q->where('is_campaign', 1);
+    }
+
     public function scopeValidFlashOffer($q)
     {
         $now = Carbon::now();
