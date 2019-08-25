@@ -42,7 +42,7 @@ class CustomerNotificationController extends Controller
                     'type' => 'movie_ticket',
                     'type_id' => $movie_ticket_order->id,
                     'text' => 'Movie Ticket',
-                    'image' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/top_up.png',
+                    'image' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/movie_ticket.png',
                     'created_at' => $movie_ticket_order->created_at->toDateTimeString(),
                     'statuses' => [
                         [
@@ -77,7 +77,7 @@ class CustomerNotificationController extends Controller
                     'type' => 'transport_ticket',
                     'type_id' => $transport_ticket_order->id,
                     'text' => 'Transport Ticket',
-                    'image' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/top_up.png',
+                    'image' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/bus_ticket.png',
                     'created_at' => $transport_ticket_order->created_at->toDateTimeString(),
                     'statuses' => [
                         [
