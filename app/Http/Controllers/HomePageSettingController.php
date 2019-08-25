@@ -69,7 +69,6 @@ class HomePageSettingController extends Controller
      */
     public function indexNew(Request $request)
     {
-        dd($request->all());
         try {
             /** @var Repository $store */
             $store = Cache::store('redis');
