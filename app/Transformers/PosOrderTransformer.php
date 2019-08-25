@@ -1,14 +1,20 @@
 <?php namespace App\Transformers;
 
 use App\Models\PosOrder;
+use League\Fractal\Resource\Collection;
+use League\Fractal\Resource\Item;
 use League\Fractal\TransformerAbstract;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
 
 class PosOrderTransformer extends TransformerAbstract
 {
-    protected $defaultIncludes = ['items', 'customer', 'payments'];
+    protected $defaultIncludes = ['items', 'customer', 'payments', 'return_orders'];
 
+    /**
+     * @param PosOrder $order
+     * @return array
+     */
     public function transform(PosOrder $order)
     {
         $data = [
@@ -25,7 +31,8 @@ class PosOrderTransformer extends TransformerAbstract
             'due' => $order->getDue(),
             'customer' => null,
             'is_refundable' => $order->isRefundable(),
-            'refund_status' => $order->getRefundStatus()
+            'refund_status' => $order->getRefundStatus(),
+            'return_orders' => null
         ];
         if ($data['due'] > 0) {
             $repo = app(PaymentLinkRepositoryInterface::class);
@@ -65,5 +72,20 @@ class PosOrderTransformer extends TransformerAbstract
     {
         $collection = $this->item($order->customer, new PosCustomerTransformer());
         return $collection->getData() ? $collection : null;
+    }
+
+    /**
+     * @param $order
+     * @return \Illuminate\Support\Collection|Collection|Item
+     */
+    public function includeReturnOrders($order)
+    {
+        if ($order->id <= (int)config('pos.last_returned_order_for_v1')) {
+            return $this->item(null, function () { return []; });
+        }
+        $collection = $this->collection($order->refundLogs()->get(), new PosOrderReturnedTransformer());
+        return $collection->getData() ? $collection : $this->item(null, function () {
+            return [];
+        });
     }
 }

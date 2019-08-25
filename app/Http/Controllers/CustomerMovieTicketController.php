@@ -209,7 +209,8 @@ class CustomerMovieTicketController extends Controller
     {
         try {
             $movie_ticket_order_adapter = new MovieTicketPurchaseAdapter();
-            $payment = (new ShebaPayment($payment_method))->init($movie_ticket_order_adapter->setModelForPayable($movie_ticket_order)->getPayable());
+            $payment = new ShebaPayment();
+            $payment = $payment->setMethod($payment_method)->init($movie_ticket_order_adapter->setModelForPayable($movie_ticket_order)->getPayable());
             return $payment->isInitiated() ? $payment : null;
         } catch (QueryException $e) {
             app('sentry')->captureException($e);

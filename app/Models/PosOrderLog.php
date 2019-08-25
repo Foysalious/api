@@ -15,4 +15,9 @@ class PosOrderLog extends Model
     {
         return $query->where('type', $status);
     }
+
+    public function getDetailsAttribute($details)
+    {
+        return json_decode($details);
+    }
 }

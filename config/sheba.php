@@ -132,5 +132,6 @@ return [
     ],
     'payment_link' => [
         'sms' => env('SEND_PAYMENT_LINK_SMS', 1)
-    ]
+    ],
+    'min_order_amount_for_emi' => 15000
 ];

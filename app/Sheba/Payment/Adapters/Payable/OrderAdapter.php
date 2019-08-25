@@ -14,13 +14,24 @@ class OrderAdapter implements PayableAdapter
     private $userType;
     /** @var Job $job */
     private $job;
+    private $emiMonth;
 
     public function __construct(PartnerOrder $partner_order, $is_advanced_payment = false)
     {
         $this->partnerOrder = $partner_order;
         $this->partnerOrder->calculate(true);
         $this->isAdvancedPayment = $is_advanced_payment;
+        $this->emiMonth = null;
         $this->setUser();
+    }
+    /**
+     * @param $month |int
+     * @return $this
+     */
+    public function setEmiMonth($month)
+    {
+        $this->emiMonth = (int)$month;
+        return $this;
     }
 
     public function getPayable(): Payable
@@ -33,6 +44,7 @@ class OrderAdapter implements PayableAdapter
         $payable->user_type = $this->userType;
         $due = (double)$this->partnerOrder->dueWithLogistic;
         $payable->amount = $this->calculateAmount($due);
+        $payable->emi_month = $this->resolveEmiMonth($payable);
         $payable->completion_type = $this->isAdvancedPayment ? 'advanced_order' : "order";
         $payable->success_url = $this->getSuccessUrl();
         $payable->fail_url = $this->getFailUrl();
@@ -41,20 +53,13 @@ class OrderAdapter implements PayableAdapter
         return $payable;
     }
 
+
     private function calculateAmount($due)
     {
         if ($this->job->isOnlinePaymentDiscountApplicable()) {
             $due -= ($due * (config('sheba.online_payment_discount_percentage') / 100));
         }
         return $due;
-    }
-
-    private function getShebaLogisticsPrice()
-    {
-        if ($this->job->needsLogistic())
-            return $this->job->category->getShebaLogisticsPrice();
-
-        return 0;
     }
 
     private function setUser()
@@ -85,9 +90,14 @@ class OrderAdapter implements PayableAdapter
         else return config('sheba.front_url');
     }
 
+    private function resolveEmiMonth(Payable $payable)
+    {
+        return $payable->amount >= config('sheba.min_order_amount_for_emi') ? $this->emiMonth : null;
+    }
 
     public function setModelForPayable($model)
     {
         // TODO: Implement setModelForPayable() method.
     }
+
 }

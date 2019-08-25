@@ -77,7 +77,8 @@ class OrderController extends Controller
                 'address_id' => 'required_without:address',
                 'resource' => 'sometimes|numeric',
                 'is_on_premise' => 'sometimes|numeric',
-                'partner_id' => 'sometimes|required|numeric'
+                'partner_id' => 'sometimes|required|numeric',
+                'emi_month' => 'numeric'
             ], ['mobile' => 'Invalid mobile number!']);
             $customer = $request->customer;
             $validation = new Validation($request);
@@ -246,7 +247,9 @@ class OrderController extends Controller
     {
         try {
             $order_adapter = new OrderAdapter($order->partnerOrders[0], 1);
-            $payment = (new ShebaPayment($payment_method))->init($order_adapter->getPayable());
+            $order_adapter->setEmiMonth(\request()->emi_month);
+            $payment = new ShebaPayment();
+            $payment = $payment->setMethod($payment_method)->init($order_adapter->getPayable());
             return $payment->isInitiated() ? $payment : null;
         } catch (QueryException $e) {
             app('sentry')->captureException($e);

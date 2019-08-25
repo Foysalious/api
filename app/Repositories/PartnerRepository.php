@@ -8,11 +8,13 @@ use App\Models\HyperLocal;
 use App\Models\Location;
 use App\Models\Partner;
 use App\Models\PartnerWorkingHour;
+use Sheba\FileManagers\CdnFileManager;
+use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
 
 class PartnerRepository
 {
-    use ModificationFields;
+    use ModificationFields, CdnFileManager, FileManager;
 
     private $partner;
     private $serviceRepo;
@@ -159,6 +161,49 @@ class PartnerRepository
                 'end_time' => $default_working_hours->end_time
             ])));
         }
+    }
+
+    /**
+     * Save logo for partner to cdn.
+     *
+     * @param $request
+     * @return string
+     */
+    public function saveLogo($request)
+    {
+        list($logo, $logo_filename) = $this->makeThumb($request->file('logo'), $this->partner->name);
+        return $this->saveImageToCDN($logo, getPartnerLogoFolder(), $logo_filename);
+    }
+
+    /**
+     * Delete old logo of the partner from cdn.
+     *
+     * @param $delete_both
+     */
+    private function _deleteOldLogo($delete_both = true)
+    {
+        if ($this->partner->logo != getPartnerDefaultLogo()) {
+            $old_logo = substr($this->partner->logo, strlen(env('S3_URL')));
+            $this->deleteImageFromCDN($old_logo);
+            if ($delete_both && ($this->partner->logo_original != getPartnerDefaultLogo())) {
+                $old_logo_original = substr($this->partner->logo_original, strlen(env('S3_URL')));
+                $this->deleteImageFromCDN($old_logo_original);
+            }
+        }
+    }
+
+    /**
+     * Update logo for partner.
+     *
+     * @param $request
+     * @return string
+     */
+    public function updateLogo($request)
+    {
+        $this->_deleteOldLogo();
+        $data['logo_original'] = $this->saveLogo($request);
+        $data['logo'] = $data['logo_original'];
+        return $this->partner->update($data);
     }
 }
 

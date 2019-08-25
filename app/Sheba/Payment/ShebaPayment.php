@@ -4,18 +4,23 @@ use App\Models\Payable;
 use App\Models\Payment;
 use ReflectionException;
 use Sheba\Payment\Factory\PaymentProcessor;
+use Sheba\Payment\Methods\PaymentMethod;
 
 class ShebaPayment
 {
+    /** @var PaymentMethod */
     private $method;
+
+
     /**
-     * ShebaPayment constructor.
      * @param $enum
+     * @return $this
      * @throws ReflectionException
      */
-    public function __construct($enum)
+    public function setMethod($enum)
     {
         $this->method = (new PaymentProcessor($enum))->method();
+        return $this;
     }
 
     /**
@@ -27,11 +32,19 @@ class ShebaPayment
         return $this->$name;
     }
 
+    /**
+     * @param Payable $payable
+     * @return mixed
+     */
     public function init(Payable $payable)
     {
         return $this->method->init($payable);
     }
 
+    /**
+     * @param Payment $payment
+     * @return Payment
+     */
     public function complete(Payment $payment)
     {
         $payment = $this->method->validate($payment);

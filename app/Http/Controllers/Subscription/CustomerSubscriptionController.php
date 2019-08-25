@@ -99,7 +99,7 @@ class CustomerSubscriptionController extends Controller
         }
     }
 
-    public function clearPayment(Request $request, $customer, $subscription)
+    public function clearPayment(Request $request, $customer, $subscription, ShebaPayment $sheba_payment)
     {
         try {
             $this->validate($request, [
@@ -114,7 +114,7 @@ class CustomerSubscriptionController extends Controller
             }
             $order_adapter = new SubscriptionOrderAdapter();
             $payable = $order_adapter->setModelForPayable($subscription_order)->getPayable();
-            $payment = (new ShebaPayment($payment_method))->init($payable);
+            $payment = $sheba_payment->setMethod($payment_method)->init($payable);
             return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
