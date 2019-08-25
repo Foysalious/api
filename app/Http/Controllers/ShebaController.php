@@ -341,8 +341,37 @@ class ShebaController extends Controller
                 ]
             ];
 
+            $banks = [
+                [
+                    "name" => "Standard Chartered",
+                    "logo" => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/images/emi_bank_icon/standard_chartered.png",
+                    "asset" => "standard_chartered"
+                ],
+                [
+                    "name" => "Eastern Bank Ltd",
+                    "logo" => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/images/emi_bank_icon/ebl.png",
+                    "asset" => "ebl"
+                ],
+                [
+                    "name" => "United Commercial Bank Ltd",
+                    "logo" => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/images/emi_bank_icon/ucb.png",
+                    "asset" => "ucb"
+                ],
+                [
+                    "name" => "NRB Commercial Bank Ltd",
+                    "logo" => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/images/emi_bank_icon/nrbc.png",
+                    "asset" => "nrbc"
+                ],
+                [
+                    "name" => "BRAC Bank Limited",
+                    "logo" => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/images/emi_bank_icon/brac_bank.png",
+                    "asset" => "brac_bank"
+                ]
+            ];
+
             $emi_data = [
-                "emi" => $emi
+                "emi" => $emi,
+                "banks" => $banks
             ];
 
             return api_response($request, null, 200, ['info' => $emi_data]);
