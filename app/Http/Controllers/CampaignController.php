@@ -2,6 +2,7 @@
 
 use App\Models\OfferShowcase;
 use App\Transformers\CampaignTransformer;
+use App\Transformers\OfferTransformer;
 use Illuminate\Http\Request;
 use App\Models\HyperLocal;
 use League\Fractal\Manager;
@@ -27,7 +28,7 @@ class CampaignController extends Controller
 
             $manager = new Manager();
             $manager->setSerializer(new ArraySerializer());
-            $campaigns = new Collection($offers, new CampaignTransformer());
+            $campaigns = new Collection($offers, new OfferTransformer());
             $campaigns = $manager->createData($campaigns)->toArray()['data'];
 
             if (count($campaigns) > 0) {
