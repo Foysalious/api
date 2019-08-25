@@ -601,7 +601,7 @@ return [
         'dozon' => ['bn' => 'ডজন', 'en' => 'dozon'],
         'inch' => ['bn' => 'ইঞ্চি', 'en' => 'inch'],
         'bosta' => ['bn' => 'বস্তা', 'en' => 'bosta'],
-        'unit' => ['bn' => 'ইউনিট', 'en' => 'unit'],
+        'unit' => ['bn' => 'টি', 'en' => 'unit'],
         'set' => ['bn' => 'সেট', 'en' => 'set']
     ]
 ];
