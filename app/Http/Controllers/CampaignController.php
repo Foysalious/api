@@ -29,7 +29,8 @@ class CampaignController extends Controller
                 }
                 $campaign = [
                     "target_type" => $target_type,
-                    "target_id" => $offer->target_id,
+                    "target_id" => (int)$offer->target_id,
+                    "target_link" => $offer->target_link,
                     "title" => $offer->title ?: null,
                     "description" => $offer->detail_description ?: null,
                     "image" => $offer->app_banner ?: ($offer->app_thumb ?: null),
