@@ -45,9 +45,11 @@ class CustomerNotificationController extends Controller
                     'image' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/top_up.png',
                     'created_at' => $movie_ticket_order->created_at->toDateTimeString(),
                     'statuses' => [
-                        'text' => "Your top up is $movie_ticket_order->status",
-                        'icon' => $icon,
-                        'date' => $movie_ticket_order->updated_at ? $movie_ticket_order->updated_at->format("d M") . ' at ' . $movie_ticket_order->updated_at->format("h:i A") : $movie_ticket_order->created_at->format("d M") . ' at ' . $movie_ticket_order->created_at->format("h:i A")
+                        [
+                            'text' => "Your top up is $movie_ticket_order->status",
+                            'icon' => $icon,
+                            'date' => $movie_ticket_order->updated_at ? $movie_ticket_order->updated_at->format("d M") . ' at ' . $movie_ticket_order->updated_at->format("h:i A") : $movie_ticket_order->created_at->format("d M") . ' at ' . $movie_ticket_order->created_at->format("h:i A")
+                        ]
                     ]
                 ];
                 array_push($notifications, $notification);
@@ -78,9 +80,11 @@ class CustomerNotificationController extends Controller
                     'image' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/top_up.png',
                     'created_at' => $transport_ticket_order->created_at->toDateTimeString(),
                     'statuses' => [
-                        'text' => "Your top up is $transport_ticket_order->status",
-                        'icon' => $icon,
-                        'date' => $transport_ticket_order->updated_at ? $transport_ticket_order->updated_at->format("d M") . ' at ' . $transport_ticket_order->updated_at->format("h:i A") : $transport_ticket_order->created_at->format("d M") . ' at ' . $transport_ticket_order->created_at->format("h:i A")
+                        [
+                            'text' => "Your top up is $transport_ticket_order->status",
+                            'icon' => $icon,
+                            'date' => $transport_ticket_order->updated_at ? $transport_ticket_order->updated_at->format("d M") . ' at ' . $transport_ticket_order->updated_at->format("h:i A") : $transport_ticket_order->created_at->format("d M") . ' at ' . $transport_ticket_order->created_at->format("h:i A")
+                        ]
                     ]
                 ];
                 array_push($notifications, $notification);
@@ -111,9 +115,11 @@ class CustomerNotificationController extends Controller
                     'image' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/top_up.png',
                     'created_at' => $top_up_order->created_at->toDateTimeString(),
                     'statuses' => [
-                        'text' => "Your top up is $top_up_order->status",
-                        'icon' => $icon,
-                        'date' => $top_up_order->updated_at ? $top_up_order->updated_at->format("d M") . ' at ' . $top_up_order->updated_at->format("h:i A") : $top_up_order->created_at->format("d M") . ' at ' . $top_up_order->created_at->format("h:i A")
+                        [
+                            'text' => "Your top up is $top_up_order->status",
+                            'icon' => $icon,
+                            'date' => $top_up_order->updated_at ? $top_up_order->updated_at->format("d M") . ' at ' . $top_up_order->updated_at->format("h:i A") : $top_up_order->created_at->format("d M") . ' at ' . $top_up_order->created_at->format("h:i A")
+                        ]
                     ]
                 ];
                 array_push($notifications, $notification);
@@ -173,7 +179,7 @@ class CustomerNotificationController extends Controller
             }
 
             $notifications = collect($notifications)->sortByDesc('created_at')->values();
-            
+
             /*$notifications = [];
             $notification_1 = [
                 'type_id' => 154919,
