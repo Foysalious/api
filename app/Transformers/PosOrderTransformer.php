@@ -1,6 +1,8 @@
 <?php namespace App\Transformers;
 
 use App\Models\PosOrder;
+use League\Fractal\Resource\Collection;
+use League\Fractal\Resource\Item;
 use League\Fractal\TransformerAbstract;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
@@ -72,8 +74,15 @@ class PosOrderTransformer extends TransformerAbstract
         return $collection->getData() ? $collection : null;
     }
 
+    /**
+     * @param $order
+     * @return \Illuminate\Support\Collection|Collection|Item
+     */
     public function includeReturnOrders($order)
     {
+        if ($order->id <= (int)config('pos.last_returned_order_for_v1')) {
+            return $this->item(null, function () { return []; });
+        }
         $collection = $this->collection($order->refundLogs()->get(), new PosOrderReturnedTransformer());
         return $collection->getData() ? $collection : $this->item(null, function () {
             return [];

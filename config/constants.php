@@ -596,7 +596,7 @@ return [
         'kg' => ['bn' => 'কেজি', 'en' => 'kg'],
         'piece' => ['bn' => 'পিস', 'en' => 'piece'],
         'km' => ['bn' => 'কিমি', 'en' => 'km'],
-        'litre' => ['bn' => 'লিটার', 'en' => 'liter'],
+        'litre' => ['bn' => 'লিটার', 'en' => 'litre'],
         'meter' => ['bn' => 'মিটার', 'en' => 'meter'],
         'dozon' => ['bn' => 'ডজন', 'en' => 'dozon'],
         'inch' => ['bn' => 'ইঞ্চি', 'en' => 'inch'],

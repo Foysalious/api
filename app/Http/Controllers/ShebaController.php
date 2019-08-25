@@ -318,27 +318,31 @@ class ShebaController extends Controller
                 return api_response($request, null, 400, ['message' => 'Amount missing']);
             }
 
-            $monthly_payment = [
+            $emi = [
                 [
                     "number_of_months" => 3,
+                    "interest" => "3%",
                     "amount" => ($amount + ($amount*0.03))/3
                 ],
                 [
                     "number_of_months" => 6,
+                    "interest" => "4.5%",
                     "amount" => ($amount + ($amount*0.045))/6
                 ],
                 [
                     "number_of_months" => 9,
+                    "interest" => "6.5%",
                     "amount" => ($amount + ($amount*0.065))/9
                 ],
                 [
                     "number_of_months" => 12,
+                    "interest" => "8.5%",
                     "amount" => ($amount + ($amount*0.085))/12
                 ]
             ];
 
             $emi_data = [
-                "monthly_payment" => $monthly_payment
+                "emi" => $emi
             ];
 
             return api_response($request, null, 200, ['info' => $emi_data]);
