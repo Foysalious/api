@@ -30,7 +30,7 @@ class GiftCardPurchaseComplete extends PaymentComplete
                     'log' => "$gift_card->credit tk gift card purchase",
                     'status' => 'valid',
                     'valid_till' => Carbon::now()->addMonth(6),
-                    'created_by_name' => $this->setModifier($this->payment->payable->user)
+                    'created_by_name' => $this->payment->payable->getName()
                 ]);
                 $this->completePayment();
             });
