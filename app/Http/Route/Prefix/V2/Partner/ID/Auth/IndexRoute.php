@@ -196,6 +196,9 @@ class IndexRoute
             $api->post('change-leave-status', 'PartnerController@changeLeaveStatus');
             $api->post('change-logo', 'PartnerController@changeLogo');
             $api->group(['prefix' => 'vouchers'], function ($api) {
+                $api->get('/dashboard', 'VoucherController@dashboard');
+                $api->get('/', 'VoucherController@index');
+                $api->get('/{voucher}', 'VoucherController@show');
                 $api->post('/', 'VoucherController@store');
                 $api->group(['prefix' => '{voucher}'], function ($api) {});
             });

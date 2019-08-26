@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Voucher\VoucherUsageCalculator;
 
@@ -96,23 +97,33 @@ class Voucher extends Model
     /**
      * Scope a query to only include voucher.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param Builder $query
+     * @return Builder
      */
     public function scopeBySheba($query)
     {
         return $query->where('is_created_by_sheba', 1);
     }
 
+    public function scopeByPartner($query, Partner $partner)
+    {
+        return $query->where('owner_type', "App\\Models\\Partner")->where('owner_id', $partner->id)->where('is_referral', 0);
+    }
+
     /**
      * Scope a query to only include voucher.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param Builder $query
+     * @return Builder
      */
     public function scopeValid($query)
     {
         return $query->whereRaw('((NOW() BETWEEN start_date AND end_date) OR (NOW() >= start_date AND end_date IS NULL))');
+    }
+
+    public function scopeNotValid($query)
+    {
+        return $query->whereRaw('((NOW() NOT BETWEEN start_date AND end_date) OR (NOW() <= start_date AND end_date IS NULL))');
     }
 
     public function tags()
@@ -128,5 +139,10 @@ class Voucher extends Model
     public function getTagNamesAttribute()
     {
         return $this->tags->pluck('name');
+    }
+
+    public function isValid()
+    {
+        return Carbon::now()->lessThanOrEqualTo($this->end_date);
     }
 }
