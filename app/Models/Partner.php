@@ -9,6 +9,7 @@ use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
 use Sheba\Location\Distance\DistanceStrategy;
 use Sheba\MovieTicket\MovieAgent;
+use Sheba\MovieTicket\MovieTicketTrait;
 use Sheba\MovieTicket\MovieTicketTransaction;
 use Sheba\Partner\BadgeResolver;
 use Sheba\Payment\Wallet;
@@ -26,6 +27,7 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
 {
     use Wallet;
     use TopUpTrait;
+    use MovieTicketTrait,
 
     protected $guarded = ['id',];
     protected $dates = ['last_billed_date', 'billing_start_date'];
