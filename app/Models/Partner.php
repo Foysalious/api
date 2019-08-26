@@ -17,9 +17,10 @@ use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
 use Sheba\Transport\TransportAgent;
 use Sheba\Transport\TransportTicketTransaction;
+use Sheba\Voucher\Contracts\CanApplyVoucher;
 use Sheba\Voucher\VoucherCodeGenerator;
 
-class Partner extends Model implements Rewardable, TopUpAgent, HasWallet,TransportAgent
+class Partner extends Model implements Rewardable, TopUpAgent, HasWallet,TransportAgent,CanApplyVoucher
 {
     use Wallet;
     use TopUpTrait;
