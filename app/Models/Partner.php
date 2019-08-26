@@ -18,6 +18,7 @@ use Sheba\Subscription\Partner\PartnerSubscriber;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
+use Sheba\Transport\Bus\BusTicketCommission;
 use Sheba\Transport\TransportAgent;
 use Sheba\Transport\TransportTicketTransaction;
 use Sheba\Voucher\Contracts\CanApplyVoucher;
@@ -25,11 +26,9 @@ use Sheba\Voucher\VoucherCodeGenerator;
 
 class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent
 {
-    use Wallet;
-    use TopUpTrait;
-    use MovieTicketTrait;
+    use Wallet, TopUpTrait, MovieTicketTrait;
 
-    protected $guarded = ['id',];
+    protected $guarded = ['id'];
     protected $dates = ['last_billed_date', 'billing_start_date'];
     protected $casts = ['wallet' => 'double', 'last_billed_amount' => 'double', 'reward_point' => 'int', 'current_impression' => 'double', 'impression_limit' => 'double', 'uses_sheba_logistic' => 'int'];
     protected $resourcePivotColumns = ['id', 'designation', 'department', 'resource_type', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
@@ -646,6 +645,7 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
     {
         return !($this->withdrawalRequests()->active()->count() > 0);
     }
+
     /**
      * @return BusTicketCommission|\Sheba\Transport\Bus\Commission\Partner
      */
