@@ -44,7 +44,6 @@ use Sheba\Reward\PartnerReward;
 use Throwable;
 use Validator;
 
-
 class PartnerController extends Controller
 {
     use ModificationFields;
@@ -1202,6 +1201,25 @@ class PartnerController extends Controller
         $repo = new PartnerRepository($partner);
         $logo = $repo->updateLogo($request);
         return api_response($request, $logo, 200, ['logo' => $logo]);
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getResourceTypes(Request $request)
+    {
+        try {
+            $resource_types = [];
+            $all_resource_types = constants('RESOURCE_TYPES');
+            foreach ($all_resource_types as $key => $unit) {
+                array_push($resource_types, $unit);
+            }
+            return api_response($request, null, 200, ['resource_types' => $resource_types]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 }
 

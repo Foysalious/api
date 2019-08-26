@@ -10,7 +10,8 @@ use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 
 class PaymentLinkBillController extends Controller
 {
-    public function clearBill(Request $request, PaymentLinkOrderAdapter $paymentLinkOrderAdapter, Creator $customerCreator, PaymentLinkRepositoryInterface $paymentLinkRepository)
+    public function clearBill(Request $request, ShebaPayment $payment,
+                              PaymentLinkOrderAdapter $paymentLinkOrderAdapter, Creator $customerCreator, PaymentLinkRepositoryInterface $paymentLinkRepository)
     {
         try {
             $this->validate($request, [
@@ -27,7 +28,7 @@ class PaymentLinkBillController extends Controller
             $payable = $paymentLinkOrderAdapter->setPayableUser($user)
                 ->setPaymentLink($payment_link)->setAmount($request->amount)->setDescription($request->purpose)->getPayable();
             if ($payment_method == 'wallet' && $user->shebaCredit() < $payable->amount) return api_response($request, null, 403, ['message' => "You don't have sufficient balance"]);
-            $payment = (new ShebaPayment($payment_method))->init($payable);
+            $payment = $payment->setMethod($payment_method)->init($payable);
             return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
