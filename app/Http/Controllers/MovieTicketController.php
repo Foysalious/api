@@ -93,8 +93,9 @@ class MovieTicketController extends Controller
                 'CusEmail' => $request->customer_email,
                 'CusMobile' => $request->customer_mobile
             ]);
-
-            return api_response($request, $bookingResponse, 200, ['status' => $bookingResponse]);
+            $commission = $this->getAgent($request)->getMovieTicketCommission();
+            return api_response($request, $bookingResponse, 200, ['status' => $bookingResponse, 'commissions' =>
+                ['sheba_commission' => $commission->getShebaCommission(), 'agent_commission' => $commission->getVendorAgentCommission()]]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
