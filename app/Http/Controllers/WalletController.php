@@ -17,7 +17,7 @@ class WalletController extends Controller
 {
     use ModificationFields;
 
-    public function validatePayment(Request $request)
+    public function validatePayment(Request $request, ShebaPayment $sheba_payment)
     {
         try {
             /** @var Payment $payment */
@@ -25,8 +25,7 @@ class WalletController extends Controller
             $this->setModifier($payment->payable->user);
             if (!$payment) return api_response($request, null, 404); elseif ($payment->isComplete()) return api_response($request, 1, 200, ['message' => 'Payment completed']);
             elseif (!$payment->canComplete()) return api_response($request, null, 400, ['message' => 'Payment validation failed.']);
-            $sheba_payment = new ShebaPayment('wallet');
-            $payment = $sheba_payment->complete($payment);
+            $payment = $sheba_payment->setMethod('wallet')->complete($payment);
             if ($payment->isComplete()) $message = 'Payment successfully completed'; elseif ($payment->isPassed()) $message = 'Your payment has been received but there was a system error. It will take some time to transaction your order. Call 16516 for support.';
             return api_response($request, null, 200, ['message' => $message]);
         } catch (\Throwable $e) {
