@@ -74,7 +74,10 @@ class Creator
         };
         if (isset($this->data['email']) && !empty($this->data['email'])) {
             $email_profile = $this->profiles->checkExistingEmail($this->data['email']);
-            if ($email_profile && $email_profile->posCustomer) return ['email' => 'Email already exists'];
+            if ($email_profile && $email_profile->posCustomer) {
+                if (PartnerPosCustomer::where('customer_id', $email_profile->posCustomer->id)->where('partner_id', $this->data['partner']->id)->exists())
+                    return ['email' => 'Email already exists'];
+            }
         }
 
         return false;
