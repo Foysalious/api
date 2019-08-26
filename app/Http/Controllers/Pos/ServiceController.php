@@ -200,6 +200,10 @@ class ServiceController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getUnits(Request $request)
     {
         try {
@@ -215,6 +219,31 @@ class ServiceController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getWarrantyUnits(Request $request)
+    {
+        try {
+            $warranty_units = [];
+            $all_warranty_units = config('pos.warranty_unit');
+            foreach ($all_warranty_units as $key => $unit) {
+                array_push($warranty_units, $unit);
+            }
+            return api_response($request, $warranty_units, 200, ['warranty_units' => $warranty_units]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @param $partner
+     * @param $service
+     * @return JsonResponse
+     */
     public function togglePublishForShopStatus(Request $request, $partner, $service)
     {
         $posService = PartnerPosService::query()->where([['id', $service], ['partner_id', $partner]])->first();
