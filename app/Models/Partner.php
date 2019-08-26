@@ -8,6 +8,8 @@ use Sheba\HasWallet;
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
 use Sheba\Location\Distance\DistanceStrategy;
+use Sheba\MovieTicket\MovieAgent;
+use Sheba\MovieTicket\MovieTicketTransaction;
 use Sheba\Partner\BadgeResolver;
 use Sheba\Payment\Wallet;
 use Sheba\Reward\Rewardable;
@@ -20,7 +22,7 @@ use Sheba\Transport\TransportTicketTransaction;
 use Sheba\Voucher\Contracts\CanApplyVoucher;
 use Sheba\Voucher\VoucherCodeGenerator;
 
-class Partner extends Model implements Rewardable, TopUpAgent, HasWallet,TransportAgent,CanApplyVoucher
+class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent
 {
     use Wallet;
     use TopUpTrait;
@@ -655,4 +657,16 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet,Transpo
         $this->debitWallet($transaction->getAmount());
         $this->walletTransaction(['amount' => $transaction->getAmount(), 'event_type' => $transaction->getEventType(), 'event_id' => $transaction->getEventId(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
     }
+
+    public function movieTicketTransaction(MovieTicketTransaction $transaction)
+    {
+        $this->debitWallet($transaction->getAmount());
+        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
+    }
+
+    public function getMovieTicketCommission()
+    {
+        return new \Sheba\MovieTicket\Commission\Partner();
+    }
+
 }
