@@ -5,16 +5,14 @@ use App\Models\MovieTicketOrder;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
-
+use Illuminate\Validation\ValidationException;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\MovieTicket\MovieTicket;
 use Sheba\MovieTicket\MovieTicketManager;
 use Sheba\MovieTicket\MovieTicketRequest;
 use Sheba\MovieTicket\Vendor\VendorFactory;
 use Sheba\Voucher\DTO\Params\CheckParamsForMovie;
-use Sheba\Voucher\DTO\Params\CheckParamsForTransport;
 use Sheba\Voucher\PromotionList;
 use Sheba\Voucher\VoucherSuggester;
 use Throwable;
@@ -289,8 +287,10 @@ class MovieTicketController extends Controller
      */
     private function getAgent(Request $request)
     {
-        if ($request->affiliate) return $request->affiliate; elseif ($request->customer) return $request->customer;
+        if ($request->affiliate) return $request->affiliate;
+        elseif ($request->customer) return $request->customer;
         elseif ($request->partner) return $request->partner;
+        elseif ($request->type) return $request->get($request->type);
         throw new Exception('Invalid Agent');
     }
 

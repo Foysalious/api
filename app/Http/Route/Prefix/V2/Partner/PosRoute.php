@@ -6,6 +6,7 @@ class PosRoute
     {
         $api->group(['prefix' => 'pos'], function ($api) {
             $api->get('units', 'Pos\ServiceController@getUnits');
+            $api->get('warranty-units', 'Pos\ServiceController@getWarrantyUnits');
         });
     }
 }

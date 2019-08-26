@@ -103,7 +103,8 @@ class SettingsController extends Controller
             /** @var Customer $customer */
             $customer = $request->customer;
 
-            $data['has_rated_customer_app'] = (int)$request->has_rated_customer_app;
+            #$data['has_rated_customer_app'] = (int)$request->has_rated_customer_app;
+            $data['has_rated_customer_app'] = 1;
             $customer->update($data);
             return api_response($request,null, 200);
         } catch (\Throwable $e) {

@@ -42,12 +42,14 @@ class CustomerNotificationController extends Controller
                     'type' => 'movie_ticket',
                     'type_id' => $movie_ticket_order->id,
                     'text' => 'Movie Ticket',
-                    'image' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/top_up.png',
+                    'image' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/movie_ticket.png',
                     'created_at' => $movie_ticket_order->created_at->toDateTimeString(),
                     'statuses' => [
-                        'text' => "Your top up is $movie_ticket_order->status",
-                        'icon' => $icon,
-                        'date' => $movie_ticket_order->updated_at ? $movie_ticket_order->updated_at->format("d M") . ' at ' . $movie_ticket_order->updated_at->format("h:i A") : $movie_ticket_order->created_at->format("d M") . ' at ' . $movie_ticket_order->created_at->format("h:i A")
+                        [
+                            'text' => "Your top up is $movie_ticket_order->status",
+                            'icon' => $icon,
+                            'date' => $movie_ticket_order->updated_at ? $movie_ticket_order->updated_at->format("d M") . ' at ' . $movie_ticket_order->updated_at->format("h:i A") : $movie_ticket_order->created_at->format("d M") . ' at ' . $movie_ticket_order->created_at->format("h:i A")
+                        ]
                     ]
                 ];
                 array_push($notifications, $notification);
@@ -75,12 +77,14 @@ class CustomerNotificationController extends Controller
                     'type' => 'transport_ticket',
                     'type_id' => $transport_ticket_order->id,
                     'text' => 'Transport Ticket',
-                    'image' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/top_up.png',
+                    'image' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/bus_ticket.png',
                     'created_at' => $transport_ticket_order->created_at->toDateTimeString(),
                     'statuses' => [
-                        'text' => "Your top up is $transport_ticket_order->status",
-                        'icon' => $icon,
-                        'date' => $transport_ticket_order->updated_at ? $transport_ticket_order->updated_at->format("d M") . ' at ' . $transport_ticket_order->updated_at->format("h:i A") : $transport_ticket_order->created_at->format("d M") . ' at ' . $transport_ticket_order->created_at->format("h:i A")
+                        [
+                            'text' => "Your top up is $transport_ticket_order->status",
+                            'icon' => $icon,
+                            'date' => $transport_ticket_order->updated_at ? $transport_ticket_order->updated_at->format("d M") . ' at ' . $transport_ticket_order->updated_at->format("h:i A") : $transport_ticket_order->created_at->format("d M") . ' at ' . $transport_ticket_order->created_at->format("h:i A")
+                        ]
                     ]
                 ];
                 array_push($notifications, $notification);
@@ -111,9 +115,11 @@ class CustomerNotificationController extends Controller
                     'image' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/top_up.png',
                     'created_at' => $top_up_order->created_at->toDateTimeString(),
                     'statuses' => [
-                        'text' => "Your top up is $top_up_order->status",
-                        'icon' => $icon,
-                        'date' => $top_up_order->updated_at ? $top_up_order->updated_at->format("d M") . ' at ' . $top_up_order->updated_at->format("h:i A") : $top_up_order->created_at->format("d M") . ' at ' . $top_up_order->created_at->format("h:i A")
+                        [
+                            'text' => "Your top up is $top_up_order->status",
+                            'icon' => $icon,
+                            'date' => $top_up_order->updated_at ? $top_up_order->updated_at->format("d M") . ' at ' . $top_up_order->updated_at->format("h:i A") : $top_up_order->created_at->format("d M") . ' at ' . $top_up_order->created_at->format("h:i A")
+                        ]
                     ]
                 ];
                 array_push($notifications, $notification);
@@ -159,85 +165,23 @@ class CustomerNotificationController extends Controller
                             ];
                             array_push($status_logs, $status_log);
                         }
-                        $notification = [
-                            'type' => 'job',
-                            'type_id' => $job->id,
-                            'text' => $category->name,
-                            'image' => $category->thumb,
-                            'created_at' => $job->created_at->toDateTimeString(),
-                            'statuses' => $status_logs
-                        ];
-                        array_push($notifications, $notification);
+                        if (count($status_logs) > 0) {
+                            $notification = [
+                                'type' => 'job',
+                                'type_id' => $job->id,
+                                'text' => $category->name,
+                                'image' => $category->thumb,
+                                'created_at' => $job->created_at->toDateTimeString(),
+                                'statuses' => $status_logs
+                            ];
+                            array_push($notifications, $notification);
+                        }
                     }
                 }
             }
 
-            $notifications = collect($notifications)->sortByDesc('created_at')->values();
-            
-            /*$notifications = [];
-            $notification_1 = [
-                'type_id' => 154919,
-                'type' => 'job',
-                'text' => 'Pure Milk',
-                'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/categories_images/thumbs/1549878615_dairy_milk_and_ghee.png',
-                'statuses' => [
-                    [
-                        'text' => 'Order served successfully',
-                        'icon' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/served.png',
-                        'date' => '30 Jul at 12:47 PM',
-                    ],
-                    [
-                        'text' => 'Your order is in process',
-                        'icon' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/Inprocess.png',
-                        'date' => '30 Jul at 12:47 PM',
-                    ],
-                    [
-                        'text' => 'Your order has been accepted',
-                        'icon' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/accepted.png',
-                        'date' => '30 Jul at 12:47 PM',
-                    ]
-                ]
-            ];
-            $notification_2 = [
-                'type_id' => 154919,
-                'type' => 'job',
-                'text' => 'Pure Milk',
-                'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/categories_images/thumbs/1549878615_dairy_milk_and_ghee.png',
-                'statuses' => [
-                    [
-                        'text' => 'Your order is in cancelled',
-                        'icon' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/cancelled.png',
-                        'date' => '30 Jul at 12:47 PM',
-                    ],
-                    [
-                        'text' => 'Your order is in process',
-                        'icon' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/Inprocess.png',
-                        'date' => '30 Jul at 12:47 PM',
-                    ]
-                ]
-            ];
-            $notification_3 = [
-                'type_id' => 154919,
-                'type' => 'Job',
-                'text' => 'Pure Milk',
-                'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/categories_images/thumbs/1549878615_dairy_milk_and_ghee.png',
-                'statuses' => [
-                    [
-                        'text' => 'Your order is in cancelled',
-                        'icon' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/cancelled.png',
-                        'date' => '30 Jul at 12:47 PM',
-                    ]
-                ]
-            ];
-            $notification_4 = [
-                'type_id' => 154919,
-                'type' => 'Job',
-                'text' => 'Pure Milk',
-                'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/categories_images/thumbs/1549878615_dairy_milk_and_ghee.png',
-                'statuses' => []
-            ];
+            $notifications = collect($notifications)->sortByDesc('created_at')->values()->take(30);
 
-            array_push($notifications, $notification_1, $notification_2,$notification_3,$notification_4);*/
             return api_response($request, null, 200, ['notifications' => $notifications]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
