@@ -4,23 +4,18 @@ use App\Models\Affiliate;
 use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\Transport\TransportTicketOrder;
-use App\Models\Voucher;
 use App\Transformers\BusRouteTransformer;
 use App\Transformers\CustomSerializer;
-
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
-
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\ModificationFields;
 use Sheba\Payment\Adapters\Payable\TransportTicketPurchaseAdapter;
 use Sheba\Payment\ShebaPayment;
-
 use Sheba\Transport\Bus\Exception\InvalidLocationAddressException;
 use Sheba\Transport\Bus\Generators\CompanyList;
 use Sheba\Transport\Bus\Generators\Destinations;
@@ -34,7 +29,6 @@ use Sheba\Transport\Bus\Repositories\BusRouteLocationRepository;
 use Sheba\Transport\Bus\Repositories\TransportTicketOrdersRepository;
 use Sheba\Transport\Bus\Response\BusTicketResponse;
 use Sheba\Transport\Bus\Vendor\VendorFactory;
-
 use Sheba\Transport\Exception\TransportException;
 use Sheba\Voucher\DTO\Params\CheckParamsForTransport;
 use Sheba\Voucher\PromotionList;
@@ -479,6 +473,7 @@ class BusTicketController extends Controller
     {
         if ($request->affiliate) return $request->affiliate;
         elseif ($request->customer) return $request->customer;
+        elseif ($request->type) return $request->get($request->type);
     }
 
     /**
