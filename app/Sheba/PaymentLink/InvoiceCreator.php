@@ -1,6 +1,7 @@
 <?php namespace Sheba\PaymentLink;
 
 use App\Models\Payment;
+use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Reports\PdfHandler;
 
 class InvoiceCreator
@@ -10,12 +11,20 @@ class InvoiceCreator
     /** @var PaymentLinkTransformer */
     private $paymentLinkTransFormer;
 
+    /**
+     * @param Payment $payment
+     * @return $this
+     */
     public function setPayment(Payment $payment)
     {
         $this->payment = $payment;
         return $this;
     }
 
+    /**
+     * @param PaymentLinkTransformer $paymentLinkTransFormer
+     * @return $this
+     */
     public function setPaymentLink(PaymentLinkTransformer $paymentLinkTransFormer)
     {
         $this->paymentLinkTransFormer = $paymentLinkTransFormer;
@@ -24,7 +33,7 @@ class InvoiceCreator
 
     /**
      * @return string
-     * @throws \Sheba\Reports\Exceptions\NotAssociativeArray
+     * @throws NotAssociativeArray
      */
     public function save()
     {
@@ -56,7 +65,7 @@ class InvoiceCreator
                 'status' => $pos_order->getPaymentStatus(),
                 'vat' => $pos_order->getTotalVat()] : null
         ];
+
         return $pdf_handler->setData($info)->setName($this->payment->transaction_id)->setViewFile('transaction_invoice')->save();
     }
-
 }
