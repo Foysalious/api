@@ -27,7 +27,7 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
 {
     use Wallet;
     use TopUpTrait;
-    use MovieTicketTrait,
+    use MovieTicketTrait;
 
     protected $guarded = ['id',];
     protected $dates = ['last_billed_date', 'billing_start_date'];
