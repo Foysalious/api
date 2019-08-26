@@ -105,8 +105,8 @@ class Creator
                 $service['discount_percentage'] = $original_service->discount()->is_amount_percentage ? $original_service->discount()->amount : 0.0;
             }
 
-            $service['vat_percentage'] = PartnerPosService::find($service['id'])->vat_percentage;
-            $service = array_except($service, ['id', 'name']);
+            $service['vat_percentage'] = (isset($service['is_vat_applicable'] ) && $service['is_vat_applicable']) ? PartnerPosService::find($service['id'])->vat_percentage : 0.00;
+            $service = array_except($service, ['id', 'name', 'is_vat_applicable']);
 
             $this->itemRepo->save($service);
             $is_stock_maintainable = $this->stockManager->setPosService($original_service)->isStockMaintainable();

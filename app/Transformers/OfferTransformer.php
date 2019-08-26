@@ -3,17 +3,27 @@
 use App\Models\Category;
 use App\Models\OfferShowcase;
 use League\Fractal\TransformerAbstract;
+use Sheba\AppSettings\HomePageSetting\DS\Builders\ItemBuilder;
 
 class OfferTransformer extends TransformerAbstract
 {
     public function transform(OfferShowcase $offer)
     {
+        $item_builder = $this->link($offer);
+        $target_link = $item_builder ? $item_builder->getLink() : null;
+        $package_name = $item_builder ? $item_builder->getPackageName() : null;
         return [
             'id' => $offer->id,
             'title' => $offer->title,
             'short_description' => $offer->short_description,
+            'thumb' => $offer->thumb,
+            'app_thumb' => $offer->app_thumb,
+            'banner' => $offer->banner,
+            'app_banner' => $offer->app_banner,
             'type' => $offer->type(),
             'type_id' => (int)$offer->target_id,
+            'package_name' => $package_name,
+            'target_link' => $target_link,
             'start_date' => $offer->start_date->toDateTimeString(),
             'end_date' => $offer->end_date->toDateTimeString(),
             'icon' => "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/png/percentage.png",
@@ -21,8 +31,22 @@ class OfferTransformer extends TransformerAbstract
             'structured_title' => $offer->structured_title,
             'is_flash' => $offer->is_flash,
             'is_applied' => $offer->is_applied,
+            'is_campaign' => $offer->is_campaign,
             'promo_code' => $offer->isVoucher() ? $offer->target->code : null
         ];
+    }
+
+
+    private function link(OfferShowcase $offer)
+    {
+        $model = $offer->target_type;
+        if ($model == 'App\\Models\\ExternalProject') {
+            $model = $model::find((int)$offer->target_id);
+            $item_builder = (new ItemBuilder())->buildExternalProject($model);
+            return $item_builder;
+        } else {
+            return null;
+        }
     }
 
     private function icon(OfferShowcase $offer)

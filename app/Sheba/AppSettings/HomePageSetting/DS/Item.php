@@ -196,6 +196,11 @@ class Item
         return $this;
     }
 
+    public function getPackageName()
+    {
+        return $this->packageName;
+    }
+
     /**
      * @param mixed $link
      * @return Item
@@ -204,6 +209,11 @@ class Item
     {
         $this->link = $link;
         return $this;
+    }
+
+    public function getLink()
+    {
+        return $this->link;
     }
 
     public function toArray()
