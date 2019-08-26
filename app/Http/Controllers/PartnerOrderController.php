@@ -7,6 +7,8 @@ use App\Repositories\PartnerJobRepository;
 use App\Repositories\PartnerOrderRepository;
 use App\Repositories\ResourceJobRepository;
 use App\Sheba\Checkout\PartnerList;
+use Illuminate\Http\JsonResponse;
+use Sheba\Logistics\Exceptions\LogisticServerError;
 use Sheba\Logistics\Repository\OrderRepository;
 use Sheba\Logs\OrderLogs;
 use App\Sheba\Logs\PartnerOrderLogs;
@@ -15,6 +17,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
 use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Logs\JobLogs;
+use Throwable;
 use Validator;
 
 class PartnerOrderController extends Controller
@@ -41,7 +44,7 @@ class PartnerOrderController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -60,7 +63,7 @@ class PartnerOrderController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -93,7 +96,7 @@ class PartnerOrderController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -112,7 +115,7 @@ class PartnerOrderController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -153,7 +156,7 @@ class PartnerOrderController extends Controller
                 array_forget($item, 'partner_order');
             });
             return api_response($request, $partner_order, 200, ['order' => $partner_order]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -215,7 +218,7 @@ class PartnerOrderController extends Controller
                 'is_ready_to_pick' => $partner_order->order->isReadyToPick()
             ];
             return api_response($request, $partner_order, 200, ['order' => $partner_order]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -237,7 +240,7 @@ class PartnerOrderController extends Controller
                 return ($item->sortByDesc('timestamp'))->values()->all();
             });
             return api_response($request, $dates, 200, ['logs' => $dates]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -265,7 +268,7 @@ class PartnerOrderController extends Controller
                 return api_response($request, $logs, 200, ['logs' => $logs]);
             }
             return api_response($request, $logs, 404);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -278,7 +281,7 @@ class PartnerOrderController extends Controller
             $manager_resource = $request->manager_resource;
             $comment = (new CommentRepository('Job', $partner_order->jobs->pluck('id')->first(), $manager_resource))->store($request->comment);
             return $comment ? api_response($request, $comment, 200) : api_response($request, $comment, 500);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -334,12 +337,11 @@ class PartnerOrderController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
-
 
     public function collectMoney($partner, Request $request)
     {
@@ -356,16 +358,28 @@ class PartnerOrderController extends Controller
                 }
             }
             return api_response($request, null, 500);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
+    /**
+     * @param $partner
+     * @param $order_id
+     * @param $logistic_order_id
+     * @param Request $request
+     * @param OrderRepository $order_repository
+     * @return JsonResponse
+     */
     public function retryRiderSearch($partner, $order_id, $logistic_order_id, Request $request, OrderRepository $order_repository)
     {
-        $order_repository->retryRiderSearch($logistic_order_id);
-        return api_response($request, null, 200, ['message' => 'Order search restarted']);
+        try {
+            $order_repository->retryRiderSearch($logistic_order_id);
+            return api_response($request, null, 200, ['message' => 'Order search restarted']);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
-
 }
