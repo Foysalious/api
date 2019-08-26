@@ -15,6 +15,11 @@ class GiftCard extends Model
         ]);
     }
 
+    public function giftCardPurchases()
+    {
+        return $this->hasMany(GiftCardPurchase::class);
+    }
+
     public function isValid()
     {
         return $this->start_date <= Carbon::now() && $this->end_date >= Carbon::now();
