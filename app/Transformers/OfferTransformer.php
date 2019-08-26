@@ -9,9 +9,6 @@ class OfferTransformer extends TransformerAbstract
 {
     public function transform(OfferShowcase $offer)
     {
-        $item_builder = $this->link($offer);
-        $target_link = $item_builder ? $item_builder->getLink() : null;
-        $package_name = $item_builder ? $item_builder->getPackageName() : null;
         return [
             'id' => $offer->id,
             'title' => $offer->title,
@@ -22,8 +19,7 @@ class OfferTransformer extends TransformerAbstract
             'app_banner' => $offer->app_banner,
             'type' => $offer->type(),
             'type_id' => (int)$offer->target_id,
-            'package_name' => $package_name,
-            'target_link' => $target_link,
+            'target_link' => $offer->target_link ?: null,
             'start_date' => $offer->start_date->toDateTimeString(),
             'end_date' => $offer->end_date->toDateTimeString(),
             'icon' => "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/png/percentage.png",
