@@ -18,7 +18,6 @@ class GiftCardPurchaseComplete extends PaymentComplete
         try {
             $this->paymentRepository->setPayment($this->payment);
             DB::transaction(function () {
-                $this->setModifier($this->payment->payable->user);
                 $gift_card_purchase = GiftCardPurchase::find($this->payment->payable->type_id);
                 $gift_card = $gift_card_purchase->giftCard;
                 $gift_card_purchase->status = 'successful';
@@ -31,6 +30,7 @@ class GiftCardPurchaseComplete extends PaymentComplete
                     'log' => "$gift_card->credit tk gift card purchase",
                     'status' => 'valid',
                     'valid_till' => Carbon::now()->addMonth(6),
+                    'created_by_name' => $this->setModifier($this->payment->payable->user)
                 ]);
                 $this->completePayment();
             });
