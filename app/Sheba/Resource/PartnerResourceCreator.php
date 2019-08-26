@@ -32,7 +32,7 @@ class PartnerResourceCreator
     public function setData($data)
     {
         $this->data = $data;
-        $resource_data = array_except($this->data, ['resource_types', 'category_ids']);
+        $resource_data = array_except($this->data, ['resource_types','category_ids']);
         $this->resourceCreator->setData($resource_data);
     }
 

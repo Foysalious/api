@@ -63,15 +63,15 @@ class PersonalInformationController extends Controller
                 'mobile' => 'required_without:resource|string|mobile:bd',
                 'additional_mobile' => 'mobile:bd'
             ], ['mobile' => 'Invalid mobile number!', 'unique' => 'Duplicate Nid No!']);
-            $partner = $request->partner;
             $this->setModifier($request->manager_resource);
+
+            $partner = $request->partner;
+            $resource_types = isset($request->resource_types) ? explode(',', $request->resource_types) : ['Handyman'];
+
             if ($request->has('resource')) {
                 $resource = Resource::find((int)$request->resource);
                 $partnerResourceCreator->setPartner($partner);
-                $partnerResourceCreator->setData(array(
-                    'resource_types' => ['Handyman'],
-                    'category_ids' => $partner->categories->pluck('id')->toArray()
-                ));
+                $partnerResourceCreator->setData(['resource_types' => $resource_types, 'category_ids' => $partner->categories->pluck('id')->toArray()]);
                 $partnerResourceCreator->setResource($resource);
                 if ($error = $partnerResourceCreator->hasError()) {
                     return api_response($request, 1, 400, ['message' => $error['msg']]);
@@ -86,7 +86,7 @@ class PersonalInformationController extends Controller
                 return api_response($request, 1, 200);
             } else {
                 $partnerResourceCreator->setPartner($partner);
-                if($request->hasFile('nid_front') && $request->hasFile('nid_back')) {
+                if ($request->hasFile('nid_front') && $request->hasFile('nid_back')) {
                     $nid_image = $this->mergeFrontAndBackNID($request->file('nid_front'), $request->file('nid_back'));
                 } else {
                     $nid_image = null;
@@ -97,7 +97,7 @@ class PersonalInformationController extends Controller
                     'address' => $request->address,
                     'profile_image' => $request->file('picture'),
                     'category_ids' => $partner->categories->pluck('id')->toArray(),
-                    'resource_types' => ['Handyman'],
+                    'resource_types' => $resource_types,
                     'nid_no' => $request->nid_no,
                     'nid_image' => $nid_image,
                     'alternate_contact' => $request->has('additional_mobile') ? $request->additional_mobile : null
