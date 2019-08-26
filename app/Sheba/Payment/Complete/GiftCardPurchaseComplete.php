@@ -4,17 +4,21 @@ namespace Sheba\Payment\Complete;
 
 use Illuminate\Database\QueryException;
 use App\Models\GiftCardPurchase;
+use Sheba\ModificationFields;
 use App\Models\Bonus;
 use Carbon\Carbon;
 use DB;
 
 class GiftCardPurchaseComplete extends PaymentComplete
 {
+    use ModificationFields;
+
     public function complete()
     {
         try {
             $this->paymentRepository->setPayment($this->payment);
             DB::transaction(function () {
+                $this->setModifier($this->payment->payable->user);
                 $gift_card_purchase = GiftCardPurchase::find($this->payment->payable->type_id);
                 $gift_card = $gift_card_purchase->giftCard;
                 $gift_card_purchase->status = 'successful';
