@@ -1,14 +1,10 @@
-<?php
-
-namespace App\Transformers;
+<?php namespace App\Transformers;
 
 use League\Fractal\TransformerAbstract;
 
 class ServiceTransformer extends TransformerAbstract
 {
-    protected $defaultIncludes = [
-        'questions'
-    ];
+    protected $defaultIncludes = ['questions'];
 
     public function transform($service)
     {

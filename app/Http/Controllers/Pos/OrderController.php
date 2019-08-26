@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Controller;
 
+use App\Models\Partner;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
 
@@ -36,6 +37,7 @@ use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Profile\Creator as ProfileCreator;
 use Sheba\Pos\Customer\Creator as PosCustomerCreator;
 use Sheba\PaymentLink\Creator as PaymentLinkCreator;
+use Sheba\Reports\PdfHandler;
 use Sheba\Repositories\PartnerRepository;
 use Throwable;
 
@@ -389,6 +391,47 @@ class OrderController extends Controller
             $order->payment_status = $order->getPaymentStatus();
 
             return api_response($request, null, 200, ['msg' => 'Payment Collect Successfully', 'order' => $order]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function downloadInvoice(Request $request, $partner, PosOrder $order)
+    {
+        try {
+            $pdf_handler = new PdfHandler();
+            $pos_order = $order->calculate();
+            $partner = $pos_order->partner;
+            $customer = $pos_order->customer->profile;
+
+            $info = [
+                'amount' => $pos_order->getNetBill(),
+                'created_at' => $pos_order->created_at->format('jS M, Y, h:i A'),
+                'payment_receiver' => [
+                    'name'      => $partner->name,
+                    'image'     => $partner->logo,
+                    'mobile'    => $partner->getContactNumber(),
+                    'address'   => $partner->address,
+                    'vat_registration_number' => $partner->vat_registration_number
+                ],
+                'user' => [
+                    'name'      => $customer->name,
+                    'mobile'    => $customer->mobile
+                ],
+                'pos_order' => $pos_order ? [
+                    'items'     => $pos_order->items,
+                    'discount'  => $pos_order->getTotalDiscount(),
+                    'total'     => $pos_order->getTotalPrice(),
+                    'grand_total' => $pos_order->getTotalBill(),
+                    'paid'      => $pos_order->getPaid(),
+                    'due'       => $pos_order->getDue(),
+                    'status'    => $pos_order->getPaymentStatus(),
+                    'vat'       => $pos_order->getTotalVat()] : null
+            ];
+
+            $invoice_name = 'pos_order_invoice_' . $pos_order->id;
+            return $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

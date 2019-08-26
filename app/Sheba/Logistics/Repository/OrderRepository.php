@@ -65,4 +65,13 @@ class OrderRepository extends BaseRepository
         ]);
         return !empty($result) ? true : false;
     }
+
+    /**
+     * @param $order_id
+     * @throws LogisticServerError
+     */
+    public function retryRiderSearch($order_id)
+    {
+        $this->client->get("orders/$order_id/retry-search");
+    }
 }
