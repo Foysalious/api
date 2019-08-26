@@ -26,7 +26,7 @@ return [
     ],
     'PARTNER_LEVELS' => ['Starter', 'Intermediate', 'Advanced'],
     'PARTNER_TYPES' => ['USP', 'NSP', 'ESP'],
-    'RESOURCE_TYPES' => ['Admin' => 'Admin', 'Operation' => 'Operation', 'Finance' => 'Finance', 'Handyman' => 'Handyman'],
+    'RESOURCE_TYPES' => ['Admin' => 'Admin', 'Operation' => 'Operation', 'Finance' => 'Finance', 'Handyman' => 'Handyman', 'Salesman' => 'Salesman'],
     'JOB_STATUSES' => [
         'Pending' => 'Pending',
         'Not_Responded' => 'Not Responded',
