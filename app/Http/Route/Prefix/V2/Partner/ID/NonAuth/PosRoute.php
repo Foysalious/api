@@ -1,6 +1,5 @@
 <?php namespace App\Http\Route\Prefix\V2\Partner\ID\NonAuth;
 
-
 use Dingo\Api\Routing\Router;
 
 class PosRoute
