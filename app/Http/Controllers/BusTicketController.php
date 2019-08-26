@@ -471,9 +471,10 @@ class BusTicketController extends Controller
      */
     private function getAgent(Request $request)
     {
+        $type = $request->type;
         if ($request->affiliate) return $request->affiliate;
         elseif ($request->customer) return $request->customer;
-        elseif ($request->type) return $request->get($request->type);
+        elseif ($type) return $request->$type;
     }
 
     /**

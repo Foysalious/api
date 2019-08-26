@@ -86,6 +86,12 @@ class Updater
             $this->updatedData['warranty_unit'] = $this->data['warranty_unit'];
         }
 
+        if ((isset($this->data['is_unit_off']) && $this->data['is_unit_off'] == 'true')) {
+            $this->updatedData['unit'] = null;
+        } else if (isset($this->data['unit']) && $this->data['unit'] != $this->service->unit) {
+            $this->updatedData['unit'] = $this->data['unit'];
+        }
+
         if ((isset($this->data['pos_category_id']) && $this->data['pos_category_id'] != $this->service->pos_category_id)) {
             $this->updatedData['pos_category_id'] = $this->data['pos_category_id'];
         }
