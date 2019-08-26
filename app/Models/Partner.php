@@ -15,9 +15,11 @@ use Sheba\Subscription\Partner\PartnerSubscriber;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
+use Sheba\Transport\TransportAgent;
+use Sheba\Transport\TransportTicketTransaction;
 use Sheba\Voucher\VoucherCodeGenerator;
 
-class Partner extends Model implements Rewardable, TopUpAgent, HasWallet
+class Partner extends Model implements Rewardable, TopUpAgent, HasWallet,TransportAgent
 {
     use Wallet;
     use TopUpTrait;
@@ -638,5 +640,18 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet
     public function isAllowedToSendWithdrawalRequest()
     {
         return !($this->withdrawalRequests()->active()->count() > 0);
+    }
+    /**
+     * @return BusTicketCommission|\Sheba\Transport\Bus\Commission\Partner
+     */
+    public function getBusTicketCommission()
+    {
+        return new \Sheba\Transport\Bus\Commission\Partner();
+    }
+
+    public function transportTicketTransaction(TransportTicketTransaction $transaction)
+    {
+        $this->debitWallet($transaction->getAmount());
+        $this->walletTransaction(['amount' => $transaction->getAmount(), 'event_type' => $transaction->getEventType(), 'event_id' => $transaction->getEventId(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
     }
 }

@@ -64,15 +64,6 @@ class BonusCredit
         $this->logRepo->storeDebitLog($data);
     }
 
-    private function setSpentInfo($bonus)
-    {
-        if ($this->payable_type) {
-            $data = $this->getSpentInfo();
-            $bonus->spent_on_type = $data['spent_on_type'];
-            $bonus->spent_on_id = $data['spent_on_id'];
-        }
-        return $bonus;
-    }
 
     private function getSpentInfo()
     {
@@ -88,6 +79,16 @@ class BonusCredit
         $bonus = $this->setSpentInfo($bonus);
         $this->setModifier($this->user);
         $bonus->update();
+    }
+
+    private function setSpentInfo($bonus)
+    {
+        if ($this->payable_type) {
+            $data = $this->getSpentInfo();
+            $bonus->spent_on_type = $data['spent_on_type'];
+            $bonus->spent_on_id = $data['spent_on_id'];
+        }
+        return $bonus;
     }
 
     private function createNewBonus($amount, $old_bonus)
