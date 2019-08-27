@@ -50,11 +50,13 @@ class ServiceController extends Controller
                         'app_banner' => $service->app_banner,
                         'price' => $service->price,
                         'stock' => $service->stock,
+                        'unit' => $service->unit,
                         'discount_applicable' => $service->discount() ? true : false,
                         'discounted_price' => $service->discount() ? $service->getDiscountedAmount() : 0,
                         'vat_percentage' => $service->vat_percentage,
                         'is_published_for_shop' => (int)$service->is_published_for_shop,
-                        'warranty' => $service->warranty . ' ' . $service->warranty_unit
+                        'warranty' => $service->warranty . ' ' . $service->warranty_unit,
+
                     ];
                 });
             if (!$services) return api_response($request, null, 404);
@@ -272,6 +274,6 @@ class ServiceController extends Controller
 
     private function getSelectColumnsOfService()
     {
-        return ['id', 'name', 'app_thumb', 'app_banner', 'price', 'stock', 'vat_percentage', 'is_published_for_shop', 'warranty', 'warranty_unit'];
+        return ['id', 'name', 'app_thumb', 'app_banner', 'price', 'stock', 'vat_percentage', 'is_published_for_shop', 'warranty', 'warranty_unit','unit'];
     }
 }

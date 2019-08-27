@@ -91,7 +91,12 @@ class VoucherController extends Controller
             $resource = new Item($voucher, new VoucherDetailTransformer());
             $voucher = $manager->createData($resource)->toArray();
 
-            return api_response($request, null, 200, ['voucher' => $voucher['data']]);
+            $data = [
+                'total_used' => 5,
+                'total_sale_with_voucher' => 256865,
+                'total_discount_with_voucher' => 8500
+            ];
+            return api_response($request, null, 200, ['data' => $data, 'voucher' => $voucher['data']]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -154,7 +159,10 @@ class VoucherController extends Controller
         if ($request->has('modules')) $rule->setModules($modules);
         if ($request->has('applicant_types')) $rule->setApplicantTypes($applicant_types);
         if ($request->has('order_amount')) $rule->setOrderAmount($request->order_amount);
-
+        if ($request->has('customers')) {
+            $mobiles = explode(',', $request->customers);
+            $rule->setMobiles($mobiles);
+        }
         return $rule;
     }
 }
