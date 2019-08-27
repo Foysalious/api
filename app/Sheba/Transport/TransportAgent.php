@@ -10,4 +10,6 @@ interface TransportAgent
      * @return BusTicketCommission
      */
     public function getBusTicketCommission();
+
+    public function transportTicketOrders();
 }

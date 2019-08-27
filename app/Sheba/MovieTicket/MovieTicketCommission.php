@@ -138,8 +138,4 @@ abstract class MovieTicketCommission
     abstract public function disburse();
 
     abstract public function refund();
-
-    abstract public function getVendorCommission();
-
-    abstract public function getAgentCommission();
 }

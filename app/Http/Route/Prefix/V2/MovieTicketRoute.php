@@ -17,7 +17,7 @@ class MovieTicketRoute
             $api->get('promotions', 'MovieTicketController@getPromotions');
             $api->post('promotions/add', 'MovieTicketController@applyPromo');
             $api->post('book-tickets', 'MovieTicketController@bookTickets');
-            $api->post('update-status', 'CustomerMovieTicketController@updateTicketStatus');
+            $api->post('update-status', 'MovieTicketController@updateTicketStatusNew');
         });
     }
 }
