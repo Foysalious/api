@@ -115,7 +115,7 @@ abstract class MovieTicketCommission
         return (double)$this->vendorCommission->ambassador_commission;
     }
 
-    private function getShebaCommission()
+    public function getShebaCommission()
     {
         return (double) $this->vendor->sheba_commission;
     }
