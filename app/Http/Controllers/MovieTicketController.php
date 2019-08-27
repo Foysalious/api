@@ -2,6 +2,7 @@
 
 use App\Models\Customer;
 use App\Models\MovieTicketOrder;
+use App\Models\MovieTicketVendor;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\JsonResponse;
@@ -80,7 +81,7 @@ class MovieTicketController extends Controller
         }
     }
 
-    public function bookTickets(MovieTicketManager $movieTicket, Request $request,VendorFactory $vendor)
+    public function bookTickets(MovieTicketManager $movieTicket, Request $request)
     {
         try {
             $this->validate($request, ['dtmsid' => 'required', 'seat_class' => 'required', 'seat' => 'required', 'customer_name' => 'required', 'customer_email' => 'required', 'customer_mobile' => 'required|mobile:bd',]);
@@ -93,7 +94,7 @@ class MovieTicketController extends Controller
                 'CusEmail' => $request->customer_email,
                 'CusMobile' => $request->customer_mobile
             ]);
-            $commission = $this->getAgent($request)->getMovieTicketCommission()->setMovieTicketVendor($vendor->getById(1));
+            $commission = $this->getAgent($request)->getMovieTicketCommission()->setMovieTicketVendor(MovieTicketVendor::find(1));
             return api_response($request, $bookingResponse, 200, ['status' => $bookingResponse, 'commissions' =>
                 ['sheba_commission' => $commission->getShebaCommission(), 'agent_commission' => $commission->getVendorAgentCommission()]]);
         } catch (ValidationException $e) {
