@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use App\Models\Transport\TransportTicketOrder;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Database\Eloquent\Model;
@@ -658,6 +659,11 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
     {
         $this->debitWallet($transaction->getAmount());
         $this->walletTransaction(['amount' => $transaction->getAmount(), 'event_type' => $transaction->getEventType(), 'event_id' => $transaction->getEventId(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
+    }
+
+    public function transportTicketOrders()
+    {
+        return $this->morphMany(TransportTicketOrder::class, 'agent');
     }
 
     public function movieTicketTransaction(MovieTicketTransaction $transaction)

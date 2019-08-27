@@ -189,6 +189,7 @@ class Route
             $api->get('emi-info', 'ShebaController@getEmiInfo');
             $api->group(['prefix' => 'tickets', 'middleware' => 'jwtGlobalAuth'], function ($api) {
                 $api->get('validate-token', 'ProfileController@validateJWT');
+                $api->get('payments', 'ShebaController@getPayments');
                 (new TransportRoute())->set($api);
                 (new MovieTicketRoute())->set($api);
             });
