@@ -102,7 +102,7 @@ abstract class MovieTicketCommission
     /**
      * @return float
      */
-    private function getVendorAgentCommission()
+    public function getVendorAgentCommission()
     {
         return (double)$this->vendorCommission->agent_commission;
     }
@@ -110,7 +110,7 @@ abstract class MovieTicketCommission
     /**
      * @return float
      */
-    private function getVendorAmbassadorCommission()
+    public function getVendorAmbassadorCommission()
     {
         return (double)$this->vendorCommission->ambassador_commission;
     }
