@@ -80,10 +80,6 @@ class MovieTicketManager
             throw $e;
         }
     }
-    public function getVendor(){
-        return $this->vendorManager->getVendor();
-    }
-
     /**
      * @param array $data
      * @return array
