@@ -47,8 +47,8 @@ class CustomerTransactionController extends Controller
                 else $transactions = $this->formatDebitBonusTransaction($bonus_log, $transactions);
             }
             $transactions = $transactions->sortByDesc('created_at')->splice($offset, $limit)->values()->all();
-            $gift_cards_purchased = GiftCardPurchase::where('customer_id', $customer->id)->where('status', 'successful')->pluck('gift_card_id');
-            $warning_message = $this->generateWarningMessage($bonus_logs, $gift_cards_purchased);
+            $gift_cards_purchased = GiftCardPurchase::where('customer_id', $customer->id)->where('status', 'successful')->min('valid_till');
+            $warning_message = $this->generateWarningMessage($gift_cards_purchased);
             return api_response($request, $transactions, 200, [
                 'transactions' => $transactions, 'balance' => $customer->shebaCredit(),
                 'credit' => round($customer->wallet, 2), 'bonus' => round($customer->shebaBonusCredit(), 2),
@@ -60,10 +60,16 @@ class CustomerTransactionController extends Controller
         }
     }
 
-    private function generateWarningMessage($bonus_logs, $gift_cards_purchased)
+    private function generateWarningMessage($gift_cards_purchased)
     {
         $warning_message = null;
-        $valid_bonus_logs = $bonus_logs->where('valid_till', '>=', Carbon::now()->toDateTimeString());
+        if ($gift_cards_purchased) {
+            $warning_message = 'Sheba Credit will expire on ' . Carbon::parse($gift_cards_purchased)->format('M d, Y');
+        } else {
+            $warning_message = 'Sheba Credit will expire soon';
+        }
+        return $warning_message;
+        /*$valid_bonus_logs = $bonus_logs->where('valid_till', '>=', Carbon::now()->toDateTimeString());
 
         $gift_cards = GiftCard::whereIn('id', $gift_cards_purchased)->orderBy('end_date', 'desc')->get();
 
@@ -88,7 +94,7 @@ class CustomerTransactionController extends Controller
                 $warning_message = ( (int) $gift_card_with_min_end_date->first()->credit) . ' Sheba Credit will expire on ' . Carbon::parse($gift_card_with_min_end_date->first()->end_date)->format('M d, Y');
             }
         }
-        return $warning_message;
+        return $warning_message;*/
     }
 
     private function formatDebitBonusTransaction($bonus, $transactions)
