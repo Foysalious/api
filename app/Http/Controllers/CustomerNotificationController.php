@@ -1,23 +1,26 @@
-<?php
+<?php namespace App\Http\Controllers;
 
-namespace App\Http\Controllers;
-
-
-use App\Models\MovieTicketOrder;
-use App\Models\TopUpOrder;
+use App\Sheba\Notification\Customer\NotificationHandler;
 use App\Models\Transport\TransportTicketOrder;
+use App\Models\MovieTicketOrder;
 use Illuminate\Http\Request;
-use phpDocumentor\Reflection\DocBlock\Description;
-use Sheba\Logs\Customer\JobLogs;
-use Sheba\MovieTicket\MovieTicket;
+use App\Models\TopUpOrder;
 
 class CustomerNotificationController extends Controller
 {
-
     public function index($customer, Request $request)
     {
         try {
             $customer = $request->customer;
+
+            $notifications = (new NotificationHandler)
+                ->setCustomer($customer)
+                ->notification('order', 'top_up', 'movie_ticket', 'transport_ticket');
+
+            $notifications = collect($notifications)->sortByDesc('created_at')->values()->take(30);
+
+            return api_response($request, null, 200, ['notifications' => $notifications]);
+
             $notifications = [];
 
             /**
@@ -179,35 +182,15 @@ class CustomerNotificationController extends Controller
                     }
                 }
             }
-
+            dd($notifications);
             $notifications = collect($notifications)->sortByDesc('created_at')->values()->take(30);
 
             return api_response($request, null, 200, ['notifications' => $notifications]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
-    }
-
-    private function getJobOfOrders($orders)
-    {
-        $all_jobs = collect();
-        foreach ($orders as $order) {
-            foreach ($order->partnerOrders as $partnerOrder) {
-                foreach ($partnerOrder->jobs as $job) {
-                    $category = $job->category == null ? $job->service->category : $job->category;
-                    $all_jobs->push(collect(array(
-                        'job_id' => $job->id,
-                        'category_name' => $category->name,
-                        'category_thumb' => $category->thumb,
-                        'status' => $job->status,
-                        'created_at' => $job->created_at->format('Y-m-d'),
-                        'status_change_logs' => $job->statusChangeLogs
-                    )));
-                }
-            }
-        }
-        return $all_jobs;
     }
 
     public function update($customer, Request $request)
