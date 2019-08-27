@@ -49,7 +49,7 @@ abstract class MovieTicketCommission
      * @param MovieTicketVendor $movieTicketVendor
      * @return MovieTicketCommission
      */
-    public function setMovieTicketVendor(MovieTicketVendor $movieTicketVendor)
+    protected function setMovieTicketVendor(MovieTicketVendor $movieTicketVendor)
     {
         $this->vendor = $movieTicketVendor;
         return $this;
@@ -102,7 +102,7 @@ abstract class MovieTicketCommission
     /**
      * @return float
      */
-    public function getVendorAgentCommission()
+    private function getVendorAgentCommission()
     {
         return (double)$this->vendorCommission->agent_commission;
     }
@@ -110,12 +110,12 @@ abstract class MovieTicketCommission
     /**
      * @return float
      */
-    public function getVendorAmbassadorCommission()
+    private function getVendorAmbassadorCommission()
     {
         return (double)$this->vendorCommission->ambassador_commission;
     }
 
-    public function getShebaCommission()
+    private function getShebaCommission()
     {
         return (double) $this->vendor->sheba_commission;
     }
