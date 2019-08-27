@@ -17,7 +17,6 @@ class ResourceController extends Controller
     private $profileRepo;
 
     const REPTO_IP = '52.89.162.43';
-
     #const REPTO_IP = '103.4.146.66';
 
     public function __construct()
