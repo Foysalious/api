@@ -412,7 +412,7 @@ class PartnerController extends Controller
                 $date = $request->date;
                 $preferred_time = $request->time;
             }
-            $resources = $partnerRepo->handymanResources($verified, $category_id, $date, $preferred_time);
+            $resources = $partnerRepo->resources($verified, $category_id, $date, $preferred_time);
             if (count($resources) > 0) {
                 return api_response($request, $resources, 200, ['resources' => $resources->sortBy('name')->values()->all()]);
             } else {
