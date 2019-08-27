@@ -58,7 +58,7 @@ abstract class MovieTicketCommission
     /**
      * @return MovieTicketCommission
      */
-    protected function setVendorCommission()
+    public function setVendorCommission()
     {
         $commissions = $this->vendor->commissions()->where('type', get_class($this->agent));
         $commissions_copy = clone $commissions;
