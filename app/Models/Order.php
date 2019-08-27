@@ -16,6 +16,7 @@ class Order extends Model implements ShebaOrderInterface, CanHaveVoucher
     public $due;
     public $profit;
     private $statuses;
+    private $jobStatuses;
     private $salesChannelDepartments;
     private $salesChannelShortNames;
 
@@ -26,6 +27,7 @@ class Order extends Model implements ShebaOrderInterface, CanHaveVoucher
     {
         parent::__construct($attributes);
         $this->statuses = constants('ORDER_STATUSES');
+        $this->jobStatuses = constants('JOB_STATUSES');
         $this->salesChannelDepartments = getSalesChannels('department');
         $this->salesChannelShortNames = getSalesChannels('short_name');
         $this->codeBuilder = new CodeBuilder();
