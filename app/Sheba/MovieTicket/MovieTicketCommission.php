@@ -49,7 +49,7 @@ abstract class MovieTicketCommission
      * @param MovieTicketVendor $movieTicketVendor
      * @return MovieTicketCommission
      */
-    protected function setMovieTicketVendor(MovieTicketVendor $movieTicketVendor)
+    public function setMovieTicketVendor(MovieTicketVendor $movieTicketVendor)
     {
         $this->vendor = $movieTicketVendor;
         return $this;
