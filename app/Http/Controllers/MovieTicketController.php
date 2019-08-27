@@ -224,7 +224,7 @@ class MovieTicketController extends Controller
         }
     }
 
-    public function historyDetails($affiliate, $order, Request $request)
+    public function historyDetails($order, Request $request)
     {
         try {
             /** @var MovieTicketOrder $order */
