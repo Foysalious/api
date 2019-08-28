@@ -146,6 +146,11 @@ class PosOrder extends Model
         return $query->where('partner_id', $partner_id);
     }
 
+    public function scopeByCustomer($query, $customer_id)
+    {
+        return $query->where('customer_id', $customer_id);
+    }
+
     private function creditPayments()
     {
         return $this->payments()->credit();
