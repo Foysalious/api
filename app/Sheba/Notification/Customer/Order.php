@@ -4,25 +4,31 @@ class Order extends NotificationHandler
 {
     public function getNotification()
     {
-        $orders = $this->customer->orders()->with(['partnerOrders' => function ($q) {
-            $q->with(['jobs' => function ($q) {
-                $q->with(['statusChangeLogs' => function ($q) {
-                    $q->select('id', 'job_id', 'to_status', 'created_at');
-                }])->select('id', 'partner_order_id', 'category_id', 'status', 'service_id', 'created_at');
-            }])->select('id', 'order_id', 'cancelled_at');
-        }])->whereHas('partnerOrders', function ($q) {
-            $q->whereNull('cancelled_at');
-        })->get();
+        $orders = $this->customer->orders()
+            ->with(['partnerOrders' => function ($q) {
+                $q->with(['jobs' => function ($q) {
+                    $q->with([
+                        'statusChangeLogs' => function ($q) {
+                            $q->select('id', 'job_id', 'to_status', 'created_at')
+                                ->whereIn('to_status', ['Served', 'Process', 'Accepted', 'Cancelled'])
+                                ->orderBy('created_at', 'desc');
+                        },
+                        'category' => function ($q) {
+                            $q->select('id', 'name', 'thumb');
+                        }])->select('id', 'partner_order_id', 'category_id', 'status', 'service_id', 'created_at');
+                }])->select('id', 'order_id', 'cancelled_at');
+            }])->select('id', 'customer_id')
+            ->whereHas('partnerOrders', function ($q) {
+                $q->whereNull('cancelled_at');
+            })->orderBy('created_at', 'DESC')
+            ->limit(30)
+            ->get();
 
         foreach ($orders as $order) {
             foreach ($order->partnerOrders as $partnerOrder) {
                 foreach ($partnerOrder->jobs as $job) {
-                    $category = $job->category == null ? $job->service->category : $job->category;
-                    $status_change_logs = $job->statusChangeLogs()
-                        ->select('id', 'job_id', 'to_status', 'created_at')
-                        ->whereIn('to_status', ['Served', 'Process', 'Accepted', 'Cancelled'])
-                        ->orderBy('created_at', 'desc')
-                        ->get();
+                    $category = $job->category;
+                    $status_change_logs = $job->statusChangeLogs;
                     $status_logs = [];
                     foreach ($status_change_logs as $log) {
                         $icon = null;

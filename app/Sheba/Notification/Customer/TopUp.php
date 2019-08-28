@@ -9,7 +9,9 @@ class TopUp extends NotificationHandler
         $top_up_orders = TopUpOrder::where([
             ['agent_type', "App\\Models\\Customer"],
             ['agent_id', (int)$this->customer->id],
-        ])->select('id', 'agent_type', 'agent_id', 'status', 'created_at', 'updated_at')->orderBy('updated_at', 'DESC')->get();
+        ])->select('id', 'agent_type', 'agent_id', 'status', 'created_at', 'updated_at')
+            ->orderBy('updated_at', 'DESC')
+            ->limit(30)->get();
 
         foreach ($top_up_orders as $top_up_order) {
             $icon = null;
