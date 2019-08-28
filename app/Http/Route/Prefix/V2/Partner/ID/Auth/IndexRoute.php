@@ -70,7 +70,7 @@ class IndexRoute
                 $api->group(['prefix' => 'customers'], function ($api) {
                     $api->group(['prefix' => '{customer}'], function ($api) {
                         $api->post('/', 'Pos\CustomerController@update');
-                        $api->post('orders', 'Pos\CustomerController@orders');
+                        $api->get('orders', 'Pos\CustomerController@orders');
                     });
                 });
 
