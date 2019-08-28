@@ -6,6 +6,7 @@ use Carbon\Carbon;
 class MovieTicketPurchaseAdapter implements PayableAdapter
 {
     private $movieTicketOrder;
+    private $emiMonth;
 
     public function setModelForPayable($model)
     {
@@ -24,13 +25,24 @@ class MovieTicketPurchaseAdapter implements PayableAdapter
         $payable->completion_type = "movie_ticket_purchase";
         $payable->success_url = config('sheba.front_url') . '/movie-tickets/' . $this->movieTicketOrder->id;
         $payable->created_at = Carbon::now();
+        $payable->emi_month = $this->resolveEmiMonth($payable);
         $payable->save();
 
         return $payable;
     }
 
+    /**
+     * @param $month |int
+     * @return $this
+     */
     public function setEmiMonth($month)
     {
-        // TODO: Implement setEmiMonth() method.
+        $this->emiMonth = (int)$month;
+        return $this;
+    }
+
+    private function resolveEmiMonth(Payable $payable)
+    {
+        return $payable->amount >= config('sheba.min_order_amount_for_emi') ? $this->emiMonth : null;
     }
 }
