@@ -32,7 +32,7 @@ class TopUp extends NotificationHandler
                 'type_id' => $top_up_order->id,
                 'text' => 'Top Up',
                 'image' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/top_up.png',
-                'created_at' => $top_up_order->created_at->toDateTimeString(),
+                'updated_at' => $top_up_order->updated_at->toDateTimeString(),
                 'statuses' => [
                     [
                         'text' => $text,

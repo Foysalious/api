@@ -33,7 +33,7 @@ class TransportTicket extends NotificationHandler
                 'type_id' => $transport_ticket_order->id,
                 'text' => 'Transport Ticket',
                 'image' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/bus_ticket.png',
-                'created_at' => $transport_ticket_order->created_at->toDateTimeString(),
+                'updated_at' => $transport_ticket_order->updated_at->toDateTimeString(),
                 'statuses' => [
                     [
                         'text' => $text,

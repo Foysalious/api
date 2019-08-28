@@ -15,7 +15,7 @@ class Order extends NotificationHandler
                         },
                         'category' => function ($q) {
                             $q->select('id', 'name', 'thumb');
-                        }])->select('id', 'partner_order_id', 'category_id', 'status', 'service_id', 'created_at');
+                        }])->select('id', 'partner_order_id', 'category_id', 'status', 'service_id', 'created_at', 'updated_at');
                 }])->select('id', 'order_id', 'cancelled_at');
             }])->select('id', 'customer_id')
             ->whereHas('partnerOrders', function ($q) {
@@ -59,7 +59,7 @@ class Order extends NotificationHandler
                             'type_id' => $job->id,
                             'text' => $category->name,
                             'image' => $category->thumb,
-                            'created_at' => $job->created_at->toDateTimeString(),
+                            'updated_at' => $job->updated_at->toDateTimeString(),
                             'statuses' => $status_logs
                         ];
                         array_push($this->notifications, $notification);

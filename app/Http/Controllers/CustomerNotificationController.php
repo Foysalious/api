@@ -15,7 +15,7 @@ class CustomerNotificationController extends Controller
             $notifications = (new NotificationHandler)
                 ->setCustomer($customer)
                 ->notification('order', 'top_up', 'movie_ticket', 'transport_ticket');
-            $notifications = collect($notifications)->sortByDesc('created_at')->values()->take(30);
+            $notifications = collect($notifications)->sortByDesc('updated_at')->values()->take(30);
             return api_response($request, null, 200, ['notifications' => $notifications]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);

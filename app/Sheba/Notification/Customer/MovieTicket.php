@@ -33,7 +33,7 @@ class MovieTicket extends NotificationHandler
                 'type_id' => $movie_ticket_order->id,
                 'text' => 'Movie Ticket',
                 'image' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/movie_ticket.png',
-                'created_at' => $movie_ticket_order->created_at->toDateTimeString(),
+                'updated_at' => $movie_ticket_order->updated_at->toDateTimeString(),
                 'statuses' => [
                     [
                         'text' => $text,
