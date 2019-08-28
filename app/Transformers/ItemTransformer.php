@@ -16,9 +16,11 @@ class ItemTransformer extends TransformerAbstract
             'unit_price'  => (double)$item->unit_price,
             'app_thumb' =>  $item->service ? $item->service->app_thumb : $default_item_service_app_thumb,
             'price'     => (double)$item->getTotal(),
-            'price_without_vat' =>  (double) $item->getTotal() - $item->getVat(),
+            'price_without_vat' => (double) $item->getTotal() - $item->getVat(),
             'discount_amount' => (double)$item->getDiscountAmount(),
-            'vat_percentage' => $item->service ? (double)$item->service->vat_percentage : 0.00
+            'vat_percentage' => $item->service ? (double)$item->service->vat_percentage : 0.00,
+            'warranty' => (double)$item->service->warranty,
+            'warranty_unit' => config('pos.warranty_unit')[$item->service->warranty_unit]
         ];
     }
 }
