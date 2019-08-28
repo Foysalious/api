@@ -29,6 +29,7 @@ class CategoryController extends Controller
             $sub_categories->each(function ($category) use (&$total_items, &$total_buying_price) {
                 $category->services->each(function ($service) use (&$total_items, &$total_buying_price) {
                     $service->unit = $service->unit ? constants('POS_SERVICE_UNITS')[$service->unit] : null;
+                    $service->warranty_unit = $service->warranty_unit ? config('pos.warranty_unit')[$service->warranty_unit] : null;
                     $total_items++;
                     $total_buying_price += $service->cost * $service->stock;
                 });
@@ -71,7 +72,7 @@ class CategoryController extends Controller
     {
         return [
             'id', 'partner_id', 'pos_category_id', 'name', 'publication_status', 'is_published_for_shop',
-            'thumb', 'banner', 'app_thumb', 'app_banner', 'cost', 'price', 'vat_percentage', 'stock', 'unit'
+            'thumb', 'banner', 'app_thumb', 'app_banner', 'cost', 'price', 'vat_percentage', 'stock', 'unit', 'warranty_unit'
         ];
     }
 
