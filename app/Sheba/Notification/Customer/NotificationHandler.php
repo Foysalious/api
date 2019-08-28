@@ -14,10 +14,10 @@ class NotificationHandler
         return $this;
     }
 
-    public function notification(...$agents)
+    public function notification(...$avatar)
     {
         $all_notifications = [];
-        foreach ($agents as $agent) {
+        foreach ($avatar as $agent) {
             $class_name = 'App\Sheba\Notification\Customer\\' . ucfirst(camel_case($agent));
             $class = app($class_name);
             $class->setCustomer($this->customer);
