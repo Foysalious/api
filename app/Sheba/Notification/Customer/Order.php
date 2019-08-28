@@ -32,17 +32,22 @@ class Order extends NotificationHandler
                     $status_logs = [];
                     foreach ($status_change_logs as $log) {
                         $icon = null;
+                        $text = null;
                         if ($log->to_status == 'Served') {
                             $icon = 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/served.png';
+                            $text = 'Order served successfully';
                         } elseif ($log->to_status == 'Process') {
                             $icon = 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/Inprocess.png';
+                            $text = 'Your order is in process';
                         } elseif ($log->to_status == 'Accepted') {
                             $icon = 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/accepted.png';
+                            $text = 'Your order has been accepted';
                         } else {
                             $icon = 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/cancelled.png';
+                            $text = 'Order has been cancelled';
                         }
                         $status_log = [
-                            'text' => "Order $log->to_status successfully",
+                            'text' => $text,
                             'icon' => $icon,
                             'date' => $log->created_at->format("d M") . ' at ' . $log->created_at->format("h:i A"),
                         ];

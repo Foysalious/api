@@ -15,12 +15,16 @@ class TopUp extends NotificationHandler
 
         foreach ($top_up_orders as $top_up_order) {
             $icon = null;
+            $text = null;
             if ($top_up_order->status == 'Successful') {
                 $icon = 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/served.png';
+                $text = 'Your top up is successful';
             } elseif ($top_up_order->status == 'Initiated') {
                 $icon = 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/Inprocess.png';
+                $text = 'Your top up has been Initiated';
             } else {
                 $icon = 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/png/notification/cancelled.png';
+                $text = 'Your top up is failed';
             }
 
             $notification = [
@@ -31,7 +35,7 @@ class TopUp extends NotificationHandler
                 'created_at' => $top_up_order->created_at->toDateTimeString(),
                 'statuses' => [
                     [
-                        'text' => "Your top up is $top_up_order->status",
+                        'text' => $text,
                         'icon' => $icon,
                         'date' => $top_up_order->updated_at ? $top_up_order->updated_at->format("d M") . ' at ' . $top_up_order->updated_at->format("h:i A") : $top_up_order->created_at->format("d M") . ' at ' . $top_up_order->created_at->format("h:i A")
                     ]
