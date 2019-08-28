@@ -56,7 +56,6 @@ class PartnerSubscriber extends ShebaSubscriber
         return (new PeriodicBillingHandler($this->partner));
     }
 
-
     public function canCreateResource($types)
     {
         return in_array(constants('RESOURCE_TYPES')['Handyman'], $types) ? $this->partner->handymanResources()->count() < $this->resourceCap() : true;

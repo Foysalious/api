@@ -66,7 +66,14 @@ class IndexRoute
                         $api->get('/download-invoice', 'Pos\OrderController@downloadInvoice');
                     });
                 });
-                $api->post('customers/{customer}', 'Pos\CustomerController@update');
+
+                $api->group(['prefix' => 'customers'], function ($api) {
+                    $api->group(['prefix' => '{customer}'], function ($api) {
+                        $api->post('/', 'Pos\CustomerController@update');
+                        $api->post('orders', 'Pos\CustomerController@orders');
+                    });
+                });
+
                 $api->resources(['customers' => 'Pos\CustomerController']);
                 $api->get('settings', 'Pos\SettingController@getSettings');
                 $api->post('due-payment-request-sms', 'Pos\SettingController@duePaymentRequestSms');
