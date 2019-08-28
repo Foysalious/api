@@ -55,8 +55,8 @@ class ServiceController extends Controller
                         'discounted_price' => $service->discount() ? $service->getDiscountedAmount() : 0,
                         'vat_percentage' => $service->vat_percentage,
                         'is_published_for_shop' => (int)$service->is_published_for_shop,
-                        'warranty' => $service->warranty . ' ' . $service->warranty_unit,
-
+                        'warranty' => (double)$service->warranty,
+                        'warranty_unit' => config('pos.warranty_unit')[$service->warranty_unit]
                     ];
                 });
             if (!$services) return api_response($request, null, 404);
@@ -91,6 +91,7 @@ class ServiceController extends Controller
                 'logo' => $partner->logo
             ]]);
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
