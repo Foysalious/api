@@ -31,7 +31,7 @@ class LoginController extends Controller
                 'email' => 'required',
                 'password' => 'required'
             ]);
-            $profile = Profile::Where('email', $request->email)->first();
+            $profile = $this->profileRepository->ifExist($request->email, 'email');
             if ($profile) {
                 if (!Hash::check($request->input('password'), $profile->password)) {
                     return api_response($request, null, 401, ["message" => 'Credential mismatch']);
