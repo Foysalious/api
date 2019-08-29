@@ -58,6 +58,7 @@ class Creator
     {
         $this->data['stock'] = (isset($this->data['stock']) && $this->data['stock'] > 0) ? (double)$this->data['stock'] : null;
         $this->data['vat_percentage'] = (isset($this->data['vat_percentage']) && $this->data['vat_percentage'] > 0) ? (double)$this->data['vat_percentage'] : 0.00;
+        $this->data['warranty_unit'] = (isset($this->data['warranty_unit']) && in_array($this->data['warranty_unit'], config('pos.warranty_unit'))) ? $this->data['warranty_unit'] : config('pos.warranty_unit.day.en');
     }
 
     private function hasFile($filename)
