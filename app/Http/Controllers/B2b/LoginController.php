@@ -72,7 +72,7 @@ class LoginController extends Controller
     private function generateToken(Profile $profile)
     {
         $member = $profile->member;
-        $businesses = $member->businesses->first();
+        $businesses = $member->businesses->first() ? $member->businesses->first() : null;
         return JWTAuth::fromUser($profile, [
             'member_id' => $member->id,
             'member_type' => count($member->businessMember) > 0 ? $member->businessMember->first()->type : null,
