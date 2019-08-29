@@ -72,7 +72,7 @@ class CategoryController extends Controller
     {
         return [
             'id', 'partner_id', 'pos_category_id', 'name', 'publication_status', 'is_published_for_shop',
-            'thumb', 'banner', 'app_thumb', 'app_banner', 'cost', 'price', 'vat_percentage', 'stock', 'unit', 'warranty_unit'
+            'thumb', 'banner', 'app_thumb', 'app_banner', 'cost', 'price', 'vat_percentage', 'stock', 'unit', 'warranty', 'warranty_unit'
         ];
     }
 
