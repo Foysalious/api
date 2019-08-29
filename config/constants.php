@@ -604,5 +604,15 @@ return [
         'bosta' => ['bn' => 'বস্তা', 'en' => 'bosta'],
         'unit' => ['bn' => 'টি', 'en' => 'unit'],
         'set' => ['bn' => 'সেট', 'en' => 'set']
+    ],
+    'TICKET_LOG' => [
+        'movie_ticket_purchase' => [
+            'title' => 'Movie Ticket',
+            'log' => '%s TK has been charged as Movie ticket price'
+        ],
+        'transport_ticket_purchase' => [
+            'title' => 'Bus Ticket',
+            'log' => '%s TK has been charged as Bus ticket price'
+        ]
     ]
 ];
