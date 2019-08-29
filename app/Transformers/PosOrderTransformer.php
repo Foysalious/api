@@ -49,6 +49,7 @@ class PosOrderTransformer extends TransformerAbstract
 
             }
         }
+
         return $data;
     }
 
