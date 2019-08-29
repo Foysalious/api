@@ -157,6 +157,7 @@ class CustomerController extends Controller
         ini_set('memory_limit', '2096M');
         try {
             $partner = $request->partner;
+            $status = $request->status;
             list($offset, $limit) = calculatePagination($request);
             /** @var PosOrder $orders */
             $orders = PosOrder::with('items.service.discounts', 'customer', 'payments', 'logs', 'partner')
@@ -177,9 +178,10 @@ class CustomerController extends Controller
                 $resource = new Item($order_data, new PosOrderTransformer());
                 $order_formatted = $manager->createData($resource)->toArray()['data'];
                 $order_create_date = $order->created_at->format('Y-m-d');
-                if (!isset($final_orders[$order_create_date]))
-                    $final_orders[$order_create_date] = [];
-                array_push($final_orders[$order_create_date], $order_formatted);
+                if (!isset($final_orders[$order_create_date])) $final_orders[$order_create_date] = [];
+                if (($status == "null") || !$status || ($status && $order->getPaymentStatus() == $status)) {
+                    array_push($final_orders[$order_create_date], $order_formatted);
+                }
             }
 
             $orders_formatted = [];
