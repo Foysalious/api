@@ -11,14 +11,4 @@ class MemberRepository extends BaseRepository implements MemberRepositoryInterfa
         parent::__construct();
         $this->setModel($member);
     }
-
-    public function makeMember($profile)
-    {
-        $this->setModifier($profile);
-        $member = new Member();
-        $member->profile_id = $profile->id;
-        $member->remember_token = str_random(255);
-        $member->save();
-        return $member;
-    }
 }
