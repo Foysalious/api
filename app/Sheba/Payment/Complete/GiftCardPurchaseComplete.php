@@ -5,6 +5,7 @@ namespace Sheba\Payment\Complete;
 use Illuminate\Database\QueryException;
 use App\Models\GiftCardPurchase;
 use Sheba\ModificationFields;
+use App\Models\BonusLog;
 use App\Models\Bonus;
 use Carbon\Carbon;
 use DB;
@@ -29,8 +30,18 @@ class GiftCardPurchaseComplete extends PaymentComplete
                     'amount' => (double)$gift_card->credit,
                     'log' => "$gift_card->credit tk gift card purchased",
                     'status' => 'valid',
-                    'valid_till' => Carbon::now()->addMonth(6),
+                    'valid_till' => Carbon::now()->addMonth(config('sheba.gift_card_validity_month')),
                     'created_by_name' => $this->payment->payable->getName()
+                ]);
+                BonusLog::create([
+                    'user_type' => get_class($this->payment->payable->user),
+                    'user_id' => $this->payment->payable->user->id,
+                    'type' => 'Credit',
+                    'amount' => (double)$gift_card->credit,
+                    'log' => "$gift_card->credit tk gift card purchased",
+                    'valid_till' => Carbon::now()->addMonth(config('sheba.gift_card_validity_month')),
+                    'created_by_name' => $this->payment->payable->getName(),
+                    'created_at' => Carbon::now()
                 ]);
                 $this->completePayment();
             });

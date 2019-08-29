@@ -382,11 +382,23 @@ class PartnerController extends Controller
         }
     }
 
+    /**
+     * @param $partner
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getResources($partner, Request $request)
     {
         try {
             ini_set('memory_limit', '2048M');
-            $this->validate($request, ['type' => 'sometimes|required|string', 'verified' => 'sometimes|required', 'job_id' => 'sometimes|required|numeric|exists:jobs,id', 'category_id' => 'sometimes|required|numeric', 'date' => 'sometimes|required|date', 'time' => 'sometimes|required',]);
+            $this->validate($request, [
+                'type' => 'sometimes|required|string',
+                'verified' => 'sometimes|required',
+                'job_id' => 'sometimes|required|numeric|exists:jobs,id',
+                'category_id' => 'sometimes|required|numeric',
+                'date' => 'sometimes|required|date',
+                'time' => 'sometimes|required'
+            ]);
             $partnerRepo = new PartnerRepository($request->partner);
             $verified = $request->has('verified') ? (int)$request->verified : null;
             $category_id = $date = $preferred_time = null;
@@ -400,7 +412,7 @@ class PartnerController extends Controller
                 $date = $request->date;
                 $preferred_time = $request->time;
             }
-            $resources = $partnerRepo->handymanResources($verified, $category_id, $date, $preferred_time);
+            $resources = $partnerRepo->resources($verified, $category_id, $date, $preferred_time);
             if (count($resources) > 0) {
                 return api_response($request, $resources, 200, ['resources' => $resources->sortBy('name')->values()->all()]);
             } else {

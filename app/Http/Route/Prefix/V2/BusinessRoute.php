@@ -5,7 +5,8 @@ class BusinessRoute
     public function set($api)
     {
         $api->post('business/login', 'B2b\LoginController@login');
-        $api->post('business/register', 'B2b\RegistrationController@register');
+        #$api->post('business/register', 'B2b\RegistrationController@register');
+        $api->post('business/register', 'B2b\RegistrationController@registerV2');
         $api->group(['prefix' => 'businesses', 'middleware' => ['business.auth']], function ($api) {
             $api->group(['prefix' => '{business}'], function ($api) {
                 $api->get('members', 'B2b\MemberController@index');

@@ -388,6 +388,7 @@ return [
         403 => ['message' => 'Forbidden', 'code' => 403],
         404 => ['message' => 'Not found', 'code' => 404],
         409 => ['message' => 'Conflict', 'code' => 409],
+        420 => ['message' => 'Not Allowed', 'code' => 420],
         421 => ['message' => 'Misdirected.', 'code' => 421],
         422 => ['message' => 'Unprocessable Entity', 'code' => 422],
         500 => ['message' => 'Internal Server Error', 'code' => 500],

@@ -1,13 +1,11 @@
-<?php
-
-namespace App\Repositories;
-
+<?php namespace App\Repositories;
 
 use App\Models\Category;
 use App\Models\HyperLocal;
 use App\Models\Location;
 use App\Models\Partner;
 use App\Models\PartnerWorkingHour;
+use Illuminate\Database\Eloquent\Collection;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
@@ -25,9 +23,16 @@ class PartnerRepository
         $this->serviceRepo = new ServiceRepository();
     }
 
-    public function handymanResources($verify = null, $category_id = null, $date = null, $preferred_time = null)
+    /**
+     * @param null $verify
+     * @param null $category_id
+     * @param null $date
+     * @param null $preferred_time
+     * @return Collection
+     */
+    public function resources($verify = null, $category_id = null, $date = null, $preferred_time = null)
     {
-        $resources = $this->partner->handymanResources()->get()->unique();
+        $resources = $this->partner->resources()->get()->unique();
         $resources->load(['jobs' => function ($q) {
             $q->where('status', '<>', constants('JOB_STATUSES')['Cancelled']);
         }, 'profile' => function ($q) {

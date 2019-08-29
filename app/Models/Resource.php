@@ -4,9 +4,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Resource extends Model
 {
-    protected $guarded = [
-        'id'
-    ];
+    protected $guarded = ['id'];
 
     public function partners()
     {
@@ -103,7 +101,7 @@ class Resource extends Model
 
     public function totalServedJobs()
     {
-        return $this->jobs->filter(function($job) {
+        return $this->jobs->filter(function ($job) {
             return $job->status === 'Served';
         })->count();
     }

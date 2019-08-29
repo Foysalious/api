@@ -1,8 +1,8 @@
 <?php namespace Sheba\Repositories\Business;
 
-use App\Models\Member;
-use Sheba\Repositories\BaseRepository;
 use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
+use Sheba\Repositories\BaseRepository;
+use App\Models\Member;
 
 class MemberRepository extends BaseRepository implements MemberRepositoryInterface
 {

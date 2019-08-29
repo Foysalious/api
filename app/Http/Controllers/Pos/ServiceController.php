@@ -55,8 +55,8 @@ class ServiceController extends Controller
                         'discounted_price' => $service->discount() ? $service->getDiscountedAmount() : 0,
                         'vat_percentage' => $service->vat_percentage,
                         'is_published_for_shop' => (int)$service->is_published_for_shop,
-                        'warranty' => $service->warranty . ' ' . $service->warranty_unit,
-
+                        'warranty' => (double)$service->warranty,
+                        'warranty_unit' => config('pos.warranty_unit')[$service->warranty_unit]
                     ];
                 });
             if (!$services) return api_response($request, null, 404);
@@ -140,9 +140,9 @@ class ServiceController extends Controller
     public function update(Request $request, ProductUpdater $updater, PosServiceDiscountRepository $discount_repo)
     {
         try {
-            $this->validate($request, [
-                'unit' => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS')))
-            ]);
+            $rules = ['unit' => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS')))];
+            if ($request->has('discount_amount') && $request->discount_amount > 0) $rules += ['end_date' => 'required'];
+            $this->validate($request, $rules);
             $this->setModifier($request->partner);
             $partner_pos_service = PartnerPosService::find($request->service);
             if (!$partner_pos_service) return api_response($request, null, 400, ['msg' => 'Service Not Found']);
@@ -171,6 +171,7 @@ class ServiceController extends Controller
                 $this->createServiceDiscount($request, $partner_pos_service);
             }
             $partner_pos_service->unit = $partner_pos_service->unit ? constants('POS_SERVICE_UNITS')[$partner_pos_service->unit] : null;
+            $partner_pos_service->warranty_unit = $partner_pos_service->warranty_unit ? config('pos.warranty_unit')[$partner_pos_service->warranty_unit] : null;
             return api_response($request, null, 200, ['msg' => 'Product Updated Successfully', 'service' => $partner_pos_service]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
