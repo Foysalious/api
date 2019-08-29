@@ -3,6 +3,7 @@
 use App\Models\Profile;
 use App\Repositories\ProfileRepository;
 use Illuminate\Validation\ValidationException;
+use Sheba\Repositories\Business\MemberRepository;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -21,24 +22,21 @@ class LoginController extends Controller
         $this->profileRepository = $profile_repository;
     }
 
-    public function login(Request $request)
+    public function login(Request $request, MemberRepository $member_repository)
     {
         try {
             $this->validate($request, [
                 'email' => 'required',
                 'password' => 'required'
             ]);
-            $profile = $this->profileRepository->ifExist($request->email, 'email');
-
+            $profile = Profile::Where('email', $request->email)->first();
             if ($profile) {
+                if (!Hash::check($request->input('password'), $profile->password)) {
+                    return api_response($request, null, 401, ["message" => 'Credential mismatch']);
+                }
                 $member = $profile->member;
+                $businesses = $member ? $member->businesses->first() : null;
                 if ($member) {
-                    if (!Hash::check($request->input('password'), $profile->password)) {
-                        return api_response($request, null, 401, ["message" => 'Credential mismatch']);
-                    }
-
-                    $member = $profile->member;
-                    $businesses = $member->businesses->first();
                     $info = [
                         'token' => $this->generateToken($profile),
                         'member_id' => $member->id,
@@ -47,7 +45,14 @@ class LoginController extends Controller
                     ];
                     return api_response($request, $info, 200, ['info' => $info]);
                 } else {
-                    return api_response($request, null, 404, ["message" => 'Member not found.']);
+                    $member = $member_repository->makeMember($profile);
+                    $info = [
+                        'token' => $this->generateToken($profile),
+                        'member_id' => $member->id,
+                        'business_id' => $businesses ? $businesses->id : null,
+                        'is_super' => $member->businessMember ? $member->businessMember->is_super : null,
+                    ];
+                    return api_response($request, $info, 200, ['info' => $info]);
                 }
             } else {
                 return api_response($request, null, 404);
