@@ -195,8 +195,12 @@ class CustomerController extends Controller
                 $pos_orders->map(function ($pos_order) {
                     /** @var PosOrder $pos_order */
                     $pos_order->sale = $pos_order->getNetBill();
+                    $pos_order->due  = $pos_order->getDue();
                 });
-                $pos_sales[$date] = ['total_sale' => $pos_orders->sum('sale')];
+                $pos_sales[$date] = [
+                    'total_sale' => $pos_orders->sum('sale'),
+                    'total_due'  => $pos_orders->sum('due')
+                ];
             }
 
             foreach ($final_orders as $key => $value) {
@@ -204,6 +208,7 @@ class CustomerController extends Controller
                     $order_list = [
                         'date' => $key,
                         'total_sale' => $pos_sales[$key]['total_sale'],
+                        'total_due' => $pos_sales[$key]['total_due'],
                         'orders' => $value
                     ];
                     array_push($orders_formatted, $order_list);
