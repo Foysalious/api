@@ -7,6 +7,7 @@ use App\Transformers\PosOrderTransformer;
 use App\Transformers\VoucherDetailTransformer;
 use App\Transformers\VoucherTransformer;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -169,6 +170,11 @@ class VoucherController extends Controller
         return $rule;
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     * @throws Exception
+     */
     public function validateVoucher(Request $request)
     {
         $pos_customer = PosCustomer::find($request->pos_customer);
@@ -185,10 +191,7 @@ class VoucherController extends Controller
                 'title' => $voucher->title
             ];
 
-            /*$promo = (new PromotionList($agent))->add($result['voucher']);
-            if (!$promo[0]) return api_response($request, null, 403, ['message' => $promo[1]]);*/
-
-            return api_response($request, 1, 200, ['voucher' => $voucher]);
+            return api_response($request, null, 200, ['voucher' => $voucher]);
         } else {
             return api_response($request, null, 403, ['message' => 'Invalid Promo']);
         }
