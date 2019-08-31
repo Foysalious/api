@@ -56,7 +56,7 @@ class ServiceController extends Controller
                         'vat_percentage' => $service->vat_percentage,
                         'is_published_for_shop' => (int)$service->is_published_for_shop,
                         'warranty' => (double)$service->warranty,
-                        'warranty_unit' => config('pos.warranty_unit')[$service->warranty_unit]
+                        'warranty_unit' => $service->warranty_unit ? config('pos.warranty_unit')[$service->warranty_unit] : null
                     ];
                 });
             if (!$services) return api_response($request, null, 404);
