@@ -403,8 +403,6 @@ class OrderController extends Controller
             $pdf_handler = new PdfHandler();
             $pos_order = $order->calculate();
             $partner = $pos_order->partner;
-            $customer = $pos_order->customer->profile;
-
             $info = [
                 'amount' => $pos_order->getNetBill(),
                 'created_at' => $pos_order->created_at->format('jS M, Y, h:i A'),
@@ -414,10 +412,6 @@ class OrderController extends Controller
                     'mobile'    => $partner->getContactNumber(),
                     'address'   => $partner->address,
                     'vat_registration_number' => $partner->vat_registration_number
-                ],
-                'user' => [
-                    'name'      => $customer->name,
-                    'mobile'    => $customer->mobile
                 ],
                 'pos_order' => $pos_order ? [
                     'items'     => $pos_order->items,
@@ -429,7 +423,13 @@ class OrderController extends Controller
                     'status'    => $pos_order->getPaymentStatus(),
                     'vat'       => $pos_order->getTotalVat()] : null
             ];
-
+            if ($pos_order->customer) {
+                $customer = $pos_order->customer->profile;
+                $info['user'] = [
+                    'name'      => $customer->name,
+                    'mobile'    => $customer->mobile
+                ];
+            }
             $invoice_name = 'pos_order_invoice_' . $pos_order->id;
             return $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
         } catch (Throwable $e) {
