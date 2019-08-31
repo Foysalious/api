@@ -190,6 +190,7 @@ class OrderController extends Controller
                 $link = ['link' => $transformer->getLink()];
             }
             $order = ['id' => $order->id, 'payment_status' => $order->payment_status, 'net_bill' => $order->net_bill];
+
             return api_response($request, null, 200, ['message' => 'Order Created Successfully', 'order' => $order, 'payment' => $link]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -397,6 +398,12 @@ class OrderController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @param $partner
+     * @param PosOrder $order
+     * @return JsonResponse|string
+     */
     public function downloadInvoice(Request $request, $partner, PosOrder $order)
     {
         try {
@@ -431,7 +438,9 @@ class OrderController extends Controller
                 ];
             }
             $invoice_name = 'pos_order_invoice_' . $pos_order->id;
-            return $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
+            $link = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
+
+            return api_response($request, null, 200, ['message' => 'Successfully Download receipt', 'link' => $link]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
