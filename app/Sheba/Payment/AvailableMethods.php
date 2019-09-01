@@ -156,7 +156,7 @@ class AvailableMethods
         return [
             'name' => 'Other Debit/Credit',
             'is_published' => 1,
-            'description' => '',
+            'description' => '10% Cash back',
             'asset' => 'ssl',
             'method_name' => 'online'
         ];
@@ -184,7 +184,7 @@ class AvailableMethods
         return [
             'name' => 'bKash',
             'is_published' => 1,
-            'description' => '',
+            'description' => '20% Cash back',
             'asset' => 'bkash',
             'method_name' => 'bkash'
         ];
