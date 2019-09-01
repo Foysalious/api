@@ -608,11 +608,11 @@ return [
     'TICKET_LOG' => [
         'movie_ticket_purchase' => [
             'title' => 'Movie Ticket',
-            'log' => '%s TK has been charged as Movie ticket price'
+            'log' => '%s TK has been charged as Movie Ticket price'
         ],
         'transport_ticket_purchase' => [
             'title' => 'Bus Ticket',
-            'log' => '%s TK has been charged as Bus ticket price'
+            'log' => '%s TK has been charged as Transport Ticket price'
         ]
     ]
 ];
