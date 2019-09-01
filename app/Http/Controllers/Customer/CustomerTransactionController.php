@@ -66,11 +66,8 @@ class CustomerTransactionController extends Controller
     private function generateWarningMessage($gift_cards_purchased)
     {
         $warning_message = null;
-        if ($gift_cards_purchased) {
+        if ($gift_cards_purchased)
             $warning_message = 'Sheba Credit will expire on ' . Carbon::parse($gift_cards_purchased)->format('M d, Y');
-        } else {
-            $warning_message = 'Sheba Credit will expire soon';
-        }
         return $warning_message;
         /*$valid_bonus_logs = $bonus_logs->where('valid_till', '>=', Carbon::now()->toDateTimeString());
 
