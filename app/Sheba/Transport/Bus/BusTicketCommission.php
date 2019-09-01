@@ -42,16 +42,17 @@ abstract class BusTicketCommission
 
     protected function storeAgentsCommission()
     {
-        $this->transportTicketOrder->agent_amount = $this->calculateTransportTicketCommission();
+        $this->transportTicketOrder->agent_amount = $this->getVendorAgentCommission();
         $this->transportTicketOrder->save();
 
-        $log = number_format(($this->transportTicketOrder->sheba_amount - $this->transportTicketOrder->agent_amount), 2) . " TK has been collected from Sheba for transport ticket sales commission, of user with mobile number: " . $this->transportTicketOrder->reserver_mobile;
-        $transaction = (new TransportTicketTransaction())
-            ->setAmount($this->transportTicketOrder->agent_amount)
-            ->setLog($log)
-            ->setTransportTicketOrder($this->transportTicketOrder);
-
-        $this->agent->transportTicketTransaction($transaction);
+        if ($this->transportTicketOrder->agent_amount > 0) {
+            $log = number_format(($this->transportTicketOrder->agent_amount), 2) . " TK has been collected from Sheba for transport ticket sales commission, of user with mobile number: " . $this->transportTicketOrder->reserver_mobile;
+            $transaction = (new TransportTicketTransaction())
+                ->setAmount($this->transportTicketOrder->agent_amount)
+                ->setLog($log)
+                ->setTransportTicketOrder($this->transportTicketOrder);
+            $this->agent->transportTicketTransaction($transaction);
+        }
     }
 
     protected function setTransportTicketVendor(TransportTicketVendor $transport_ticket_vendor)
@@ -93,7 +94,7 @@ abstract class BusTicketCommission
     /**
      * @return float|int
      */
-    protected function calculateAmbassadorCommissionForMovieTicket()
+    protected function calculateAmbassadorCommissionForTransportTicket()
     {
         return (double)($this->getShebaCommission() - $this->getVendorAmbassadorCommission());
     }

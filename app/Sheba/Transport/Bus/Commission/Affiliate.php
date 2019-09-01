@@ -18,7 +18,7 @@ class Affiliate extends BusTicketCommission
 
     private function storeAmbassadorCommission()
     {
-        $this->transportTicketOrder->ambassador_amount = $this->calculateAmbassadorCommissionForMovieTicket();
+        $this->transportTicketOrder->ambassador_amount = $this->calculateAmbassadorCommissionForTransportTicket();
         $this->transportTicketOrder->save();
     }
 
