@@ -488,9 +488,9 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
 
     public function notCancelledJobs()
     {
-//        return $this->jobs->reject(function ($job) {
-//            return $job->cancelRequests()->count() > 0;
-//        });
+        /*return $this->jobs->reject(function ($job) {
+            return $job->cancelRequests()->count() > 0;
+        });*/
 
         return $this->jobs()->whereNotExists(function ($q) {
             $q->from('job_cancel_requests')->whereRaw('job_id = jobs.id');
@@ -658,7 +658,15 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
     public function transportTicketTransaction(TransportTicketTransaction $transaction)
     {
         $this->creditWallet($transaction->getAmount());
-        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Credit', 'log' => $transaction->getLog()]);
+        $wallet_transaction = [
+            'amount' => $transaction->getAmount(),
+            'type' => 'Credit',
+            'log' => $transaction->getLog(),
+            'created_by_type' => get_class($this),
+            'created_by' => $this->id,
+            'created_by_name' => $this->name
+        ];
+        $this->walletTransaction($wallet_transaction);
     }
 
     public function transportTicketOrders()
