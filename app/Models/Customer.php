@@ -2,7 +2,7 @@
 
 use App\Models\Transport\TransportTicketOrder;
 use App\Sheba\Payment\Rechargable;
-use Illuminate\Foundation\Auth\User as Authenticatable;
+use Sheba\Dal\Customer\Events\CustomerSaved;
 use Sheba\MovieTicket\MovieAgent;
 use Sheba\MovieTicket\MovieTicketTrait;
 use Sheba\MovieTicket\MovieTicketTransaction;
@@ -26,6 +26,8 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
     protected $hidden = ['password', 'remember_token',];
     protected $casts = ['wallet' => 'double'];
     private $firstOrder;
+
+    protected static $savedEventClass = CustomerSaved::class;
 
     public function mobiles()
     {

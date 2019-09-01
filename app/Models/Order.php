@@ -1,14 +1,16 @@
 <?php namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Sheba\Checkout\ShebaOrderInterface;
+use Sheba\Dal\BaseModel;
+use Sheba\Dal\Order\Events\OrderSaved;
 use Sheba\Order\Code\Builder as CodeBuilder;
 use Sheba\Order\StatusCalculator;
 use Sheba\Portals\Portals;
+use Sheba\Report\Updater\UpdatesReport;
 use Sheba\Voucher\Contracts\CanHaveVoucher;
 use Sheba\Report\Updater\Order as ReportUpdater;
 
-class Order extends Model implements ShebaOrderInterface, CanHaveVoucher
+class Order extends BaseModel implements ShebaOrderInterface, CanHaveVoucher, UpdatesReport
 {
     use ReportUpdater;
     protected $guarded = ['id'];
@@ -22,6 +24,8 @@ class Order extends Model implements ShebaOrderInterface, CanHaveVoucher
 
     /** @var CodeBuilder */
     private $codeBuilder;
+
+    protected static $savedEventClass = OrderSaved::class;
 
     public function __construct($attributes = [])
     {

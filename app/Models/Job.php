@@ -3,7 +3,9 @@
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Query\Builder;
+use Sheba\Dal\BaseModel;
 use Sheba\Dal\Discount\DiscountTypes;
+use Sheba\Dal\Job\Events\JobSaved;
 use Sheba\Dal\JobDiscount\JobDiscount;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Jobs\CiCalculator;
@@ -17,8 +19,9 @@ use Sheba\Logistics\OrderManager;
 use Sheba\Logistics\Repository\ParcelRepository;
 use Sheba\Order\Code\Builder as CodeBuilder;
 use Sheba\Report\Updater\Job as ReportUpdater;
+use Sheba\Report\Updater\UpdatesReport;
 
-class Job extends BaseModel
+class Job extends BaseModel implements UpdatesReport
 {
     use ReportUpdater;
 
@@ -90,6 +93,8 @@ class Job extends BaseModel
     private $codeBuilder;
     /** @var OrderManager */
     private $logisticOrderManager;
+
+    protected static $savedEventClass = JobSaved::class;
 
     public function __construct(array $attributes = [])
     {
