@@ -80,14 +80,12 @@ class PartnerSubscriptionController extends Controller
             ]);
             if (((int)$request->package_id > (int)$partner->package_id) ||
                 ((int)$request->package_id == (int)$partner->package_id && $request->billing_type != $partner->billing_type && $partner->billing_type == 'monthly')) {
-
                 $requested_package = PartnerSubscriptionPackage::find($request->package_id);
                 if (!$partner->last_billed_date) {
                     $partner->subscribe($requested_package, $request->billing_type);
                     return api_response($request, 1, 200, ['message' => "আপনি সফল ভাবে $requested_package->show_name_bn প্যাকেজে সাবস্ক্রাইব করেছেন"]);
                 }
                 if ($partner->canRequestForSubscriptionUpdate() && $partner->last_billed_date) {
-
                     $running_discount = $requested_package->runningDiscount($request->billing_type);
                     $this->setModifier($request->manager_resource);
                     $update_request_data = $this->withCreateModificationField([
@@ -111,6 +109,12 @@ class PartnerSubscriptionController extends Controller
                 $requested_package = PartnerSubscriptionPackage::find($request->package_id);
                 if (!$partner->last_billed_date) {
                     $partner->subscribe($requested_package, $request->billing_type);
+                    $subscription_amount_for_requested_package = json_decode($requested_package->rules)->fee->{$request->billing_type}->value;
+                    (new SmsHandler('new-subscription'))->send($partner->getContactNumber(), [
+                        'package_name' => $requested_package->show_name_bn,
+                        'package_type' => $request->billing_type,
+                        'subscription_amount' => $subscription_amount_for_requested_package
+                    ]);
                     return api_response($request, 1, 200, ['message' => "আপনি সফল ভাবে $requested_package->show_name_bn প্যাকেজে সাবস্ক্রাইব করেছেন"]);
                 }
                 return api_response($request, null, 403, ['message' => "$requested_package->show_name_bn প্যাকেজে যেতে অনুগ্রহ করে সেবার সাথে যোগাযোগ করুন"]);

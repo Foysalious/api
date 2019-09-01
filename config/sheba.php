@@ -133,6 +133,6 @@ return [
     'payment_link' => [
         'sms' => env('SEND_PAYMENT_LINK_SMS', 1)
     ],
-    'min_order_amount_for_emi' => 15000,
+    'min_order_amount_for_emi' => 10000,
     'gift_card_validity_month' => 3,
 ];

@@ -208,7 +208,9 @@ class IndexRoute
                 $api->get('/', 'VoucherController@index');
                 $api->get('/{voucher}', 'VoucherController@show');
                 $api->post('/', 'VoucherController@store');
-                $api->group(['prefix' => '{voucher}'], function ($api) {});
+                $api->post('validity-check', 'VoucherController@validateVoucher');
+                $api->group(['prefix' => '{voucher}'], function ($api) {
+                });
             });
         });
     }

@@ -68,7 +68,7 @@ class GiftCardController extends Controller
                         'amount' => (float)$gift_card->price,
                         'credits_purchased' => (float)$gift_card->credit,
                         'status' => 'initialized',
-                        'valid_till' => Carbon::now()->addMonth(6),
+                        'valid_till' => Carbon::now()->addMonth(config('sheba.gift_card_validity_month')),
                     ]
                 )
             );

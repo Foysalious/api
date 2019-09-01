@@ -302,4 +302,10 @@ class PosOrder extends Model
         if (is_array($partner)) $query->whereIn('partner_id', $partner);
         else $query->where('partner_id', '=', $partner);
     }
+
+    public function scopeOfCustomer($query, $customer)
+    {
+        if (is_array($customer)) $query->whereIn('customer_id', $customer);
+        else $query->where('customer_id', '=', $customer);
+    }
 }

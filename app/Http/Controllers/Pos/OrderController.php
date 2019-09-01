@@ -190,6 +190,7 @@ class OrderController extends Controller
                 $link = ['link' => $transformer->getLink()];
             }
             $order = ['id' => $order->id, 'payment_status' => $order->payment_status, 'net_bill' => $order->net_bill];
+
             return api_response($request, null, 200, ['message' => 'Order Created Successfully', 'order' => $order, 'payment' => $link]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -397,14 +398,18 @@ class OrderController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @param $partner
+     * @param PosOrder $order
+     * @return JsonResponse|string
+     */
     public function downloadInvoice(Request $request, $partner, PosOrder $order)
     {
         try {
             $pdf_handler = new PdfHandler();
             $pos_order = $order->calculate();
             $partner = $pos_order->partner;
-            $customer = $pos_order->customer->profile;
-
             $info = [
                 'amount' => $pos_order->getNetBill(),
                 'created_at' => $pos_order->created_at->format('jS M, Y, h:i A'),
@@ -414,10 +419,6 @@ class OrderController extends Controller
                     'mobile'    => $partner->getContactNumber(),
                     'address'   => $partner->address,
                     'vat_registration_number' => $partner->vat_registration_number
-                ],
-                'user' => [
-                    'name'      => $customer->name,
-                    'mobile'    => $customer->mobile
                 ],
                 'pos_order' => $pos_order ? [
                     'items'     => $pos_order->items,
@@ -429,9 +430,17 @@ class OrderController extends Controller
                     'status'    => $pos_order->getPaymentStatus(),
                     'vat'       => $pos_order->getTotalVat()] : null
             ];
-
+            if ($pos_order->customer) {
+                $customer = $pos_order->customer->profile;
+                $info['user'] = [
+                    'name'      => $customer->name,
+                    'mobile'    => $customer->mobile
+                ];
+            }
             $invoice_name = 'pos_order_invoice_' . $pos_order->id;
-            return $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
+            $link = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
+
+            return api_response($request, null, 200, ['message' => 'Successfully Download receipt', 'link' => $link]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

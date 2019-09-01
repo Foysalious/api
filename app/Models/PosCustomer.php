@@ -1,8 +1,9 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Voucher\Contracts\CanApplyVoucher;
 
-class PosCustomer extends Model
+class PosCustomer extends Model implements CanApplyVoucher
 {
     protected $guarded = ['id'];
 

@@ -1,7 +1,4 @@
-<?php
-
-namespace App\Repositories;
-
+<?php namespace App\Repositories;
 
 use App\Models\Customer;
 use App\Models\Profile;
@@ -47,5 +44,4 @@ class VoucherRepository
         }
         return $customer;
     }
-
 }
