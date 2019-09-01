@@ -75,7 +75,7 @@ abstract class MovieTicketCommission
         $this->movieTicketOrder->agent_commission = $this->calculateMovieTicketCommission($this->movieTicketOrder->amount);
         $this->movieTicketOrder->save();
 
-        $transaction = (new MovieTicketTransaction())->setAmount($this->amount - $this->movieTicketOrder->agent_commission)
+        $transaction = (new MovieTicketTransaction())->setAmount( $this->movieTicketOrder->agent_commission)
             ->setLog(($this->amount - $this->movieTicketOrder->agent_commission) . " has been deducted for a movie ticket, of user with mobile number: " . $this->movieTicketOrder->reserver_mobile)
             ->setMovieTicketOrder($this->movieTicketOrder);
         $this->agent->movieTicketTransaction($transaction);
