@@ -224,7 +224,7 @@ class MovieTicketController extends Controller
         }
     }
 
-    public function historyDetails(Request $request, $customer, $order)
+    public function historyDetails(Request $request, $customer, $order = null)
     {
         if (empty($order)) $order = $customer;
         try {
