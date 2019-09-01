@@ -47,7 +47,10 @@ class CustomerTransactionController extends Controller
                 else $transactions = $this->formatDebitBonusTransaction($bonus_log, $transactions);
             }
             $transactions = $transactions->sortByDesc('created_at')->splice($offset, $limit)->values()->all();
-            $gift_cards_purchased = GiftCardPurchase::where('customer_id', $customer->id)->where('status', 'successful')->min('valid_till');
+            $gift_cards_purchased = GiftCardPurchase::where('customer_id', $customer->id)
+                ->where('status', 'successful')
+                ->where('valid_till', '>=', Carbon::now())
+                ->min('valid_till');
             $warning_message = $this->generateWarningMessage($gift_cards_purchased);
             return api_response($request, $transactions, 200, [
                 'transactions' => $transactions, 'balance' => $customer->shebaCredit(),
