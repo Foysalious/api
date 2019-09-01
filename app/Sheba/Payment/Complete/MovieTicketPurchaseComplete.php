@@ -44,7 +44,7 @@ class MovieTicketPurchaseComplete extends PaymentComplete
 
                 $response = $movie_ticket->buyTicket();
                 if ($response->hasSuccess()) {
-                    $movieOrder = $movie_ticket->disburseCommissions()->getMovieTicketOrder();
+                    $movieOrder = $movie_ticket->disburseCommissionsNew()->getMovieTicketOrder();
                     $movie_ticket->processSuccessfulMovieTicket($movieOrder, $response->getSuccess());
                 } else {
                     $response = (new BlockBusterFailResponse())->setResponse($response);

@@ -669,9 +669,14 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
     public function movieTicketTransaction(MovieTicketTransaction $transaction)
     {
         $this->debitWallet($transaction->getAmount());
-        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Credit', 'log' => $transaction->getLog()]);
+        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
     }
 
+    public function movieTicketTransactionNew(MovieTicketTransaction $transaction)
+    {
+        $this->creditWallet($transaction->getAmount());
+        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Credit', 'log' => $transaction->getLog()]);
+    }
     public function getMovieTicketCommission()
     {
         return new \Sheba\MovieTicket\Commission\Partner();

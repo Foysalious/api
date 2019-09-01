@@ -117,7 +117,14 @@ class MovieTicket
         $this->agent->getMovieTicketCommission()->setMovieTicketOrder($this->movieTicketOrder)->disburse();
         return $this;
     }
-
+    public function disburseCommissionsNew(){
+        if ($this->movieTicketOrder->vendor) {
+            if (get_class($this->movieTicketOrder->vendor) !== MovieTicketVendor::class)
+                $this->movieTicketOrder->vendor = $this->movieTicketOrder->vendor = $this->movieTicketOrder->vendor->getModel();
+        }
+        $this->agent->getMovieTicketCommission()->setMovieTicketOrder($this->movieTicketOrder)->disburseNew();
+        return $this;
+    }
     public function buyTicket()
     {
         $response = $this->vendor->buyTicket($this->movieTicketRequest);

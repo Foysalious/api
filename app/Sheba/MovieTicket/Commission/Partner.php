@@ -13,4 +13,9 @@ class Partner extends MovieTicketCommission
     {
         $this->refundAgentsCommission();
     }
+
+    public function disburseNew()
+    {
+        $this->storeAgentsCommissionNew();
+    }
 }
