@@ -11,7 +11,7 @@ class TransportTicketTransaction
     private $eventType;
     private $eventId;
 
-    public function setMovieTicketOrder(TransportTicketOrder $transport_ticket_order)
+    public function setTransportTicketOrder(TransportTicketOrder $transport_ticket_order)
     {
         $this->transportTicketOrder = $transport_ticket_order;
         return $this;

@@ -33,8 +33,9 @@ abstract class BusTicketCommission
     {
         $this->transportTicketOrder = $transport_ticket_order;
         $this->amount = $this->transportTicketOrder->amount;
-
-        $this->setAgent($transport_ticket_order->agent)->setTransportTicketVendor($transport_ticket_order->vendor)->setVendorCommission();
+        $this->setAgent($transport_ticket_order->agent)
+            ->setTransportTicketVendor($transport_ticket_order->vendor)
+            ->setVendorCommission();
 
         return $this;
     }
@@ -44,11 +45,11 @@ abstract class BusTicketCommission
         $this->transportTicketOrder->agent_amount = $this->calculateTransportTicketCommission();
         $this->transportTicketOrder->save();
 
-        $log = number_format(($this->transportTicketOrder->sheba_amount - $this->transportTicketOrder->agent_amount),2) . "TK  been collected from Sheba for transport ticket sales commission, of user with mobile number: " . $this->transportTicketOrder->reserver_mobile;
+        $log = number_format(($this->transportTicketOrder->sheba_amount - $this->transportTicketOrder->agent_amount), 2) . " TK has been collected from Sheba for transport ticket sales commission, of user with mobile number: " . $this->transportTicketOrder->reserver_mobile;
         $transaction = (new TransportTicketTransaction())
-            ->setAmount($this->transportTicketOrder->sheba_amount - $this->transportTicketOrder->agent_amount)
+            ->setAmount($this->transportTicketOrder->agent_amount)
             ->setLog($log)
-            ->setMovieTicketOrder($this->transportTicketOrder);
+            ->setTransportTicketOrder($this->transportTicketOrder);
 
         $this->agent->transportTicketTransaction($transaction);
     }
@@ -76,6 +77,19 @@ abstract class BusTicketCommission
         return (double)($this->getShebaCommission() - $this->getVendorAgentCommission());
     }
 
+    private function getShebaCommission()
+    {
+        return (double)$this->vendor->sheba_amount;
+    }
+
+    /**
+     * @return float
+     */
+    private function getVendorAgentCommission()
+    {
+        return (double)$this->vendorCommission->agent_amount;
+    }
+
     /**
      * @return float|int
      */
@@ -90,18 +104,5 @@ abstract class BusTicketCommission
     private function getVendorAmbassadorCommission()
     {
         return (double)$this->vendorCommission->ambassador_amount;
-    }
-
-    /**
-     * @return float
-     */
-    private function getVendorAgentCommission()
-    {
-        return (double)$this->vendorCommission->agent_amount;
-    }
-
-    private function getShebaCommission()
-    {
-        return (double)$this->vendor->sheba_amount;
     }
 }
