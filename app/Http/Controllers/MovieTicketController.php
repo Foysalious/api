@@ -224,8 +224,9 @@ class MovieTicketController extends Controller
         }
     }
 
-    public function historyDetails(Request $request, $order)
+    public function historyDetails(Request $request, $customer, $order)
     {
+        if (empty($order)) $order = $customer;
         try {
             /** @var MovieTicketOrder $order */
             $order = MovieTicketOrder::find((int)$order)->calculate();

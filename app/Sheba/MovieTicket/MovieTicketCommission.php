@@ -81,12 +81,10 @@ abstract class MovieTicketCommission
         $this->agent->movieTicketTransaction($transaction);
     }
     protected function storeAgentsCommissionNew(){
-
         $this->movieTicketOrder->agent_commission = $this->calculateMovieTicketCommission($this->amount);
         $this->movieTicketOrder->save();
-
         $transaction = (new MovieTicketTransaction())->setAmount( $this->movieTicketOrder->agent_commission)
-            ->setLog(( $this->movieTicketOrder->agent_commission) . " has been credited for a movie ticket, of user with mobile number: " . $this->movieTicketOrder->reserver_mobile)
+            ->setLog(number_format($this->movieTicketOrder->agent_commission, 2) . "Has been collected from Sheba for bus ticker sales commission.")
             ->setMovieTicketOrder($this->movieTicketOrder);
         $this->agent->movieTicketTransactionNew($transaction);
     }
