@@ -15,7 +15,6 @@ use DB;
 
 trait Wallet
 {
-   
     public function rechargeWallet($amount, $transaction_data)
     {
         /** @var PartnerTransaction $transaction */
@@ -27,7 +26,6 @@ trait Wallet
         });
         return $transaction;
     }
-
 
     public function minusWallet($amount, $transaction_data)
     {
