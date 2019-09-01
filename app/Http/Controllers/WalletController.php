@@ -4,13 +4,13 @@ use App\Models\Customer;
 use App\Models\Payment;
 use App\Repositories\PaymentRepository;
 use Carbon\Carbon;
+use DB;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\ModificationFields;
 use Sheba\Payment\Adapters\Payable\RechargeAdapter;
 use Sheba\Payment\ShebaPayment;
-use DB;
 use Sheba\Reward\BonusCredit;
 
 class WalletController extends Controller
@@ -94,7 +94,12 @@ class WalletController extends Controller
                         }
                         $user->debitWallet($remaining);
                         $this->setModifier($user);
-                        $wallet_transaction_data = ['amount' => $remaining, 'type' => 'Debit', 'log' => "Service Purchase.", 'created_at' => Carbon::now()];
+                        if (in_array($payment->payable->type, ['movie_ticket_purchase', 'transport_ticket_purchase'])) {
+                            $log = sprintf(constants('TICKET_LOG')[$payment->payable->type]['log'], number_format($remaining, 2));
+                        } else {
+                            $log = 'Service Purchase';
+                        }
+                        $wallet_transaction_data = ['amount' => $remaining, 'type' => 'Debit', 'log' => $log, 'created_at' => Carbon::now()];
                         if ($user instanceof Customer) $wallet_transaction_data += ['event_type' => get_class($spent_model), 'event_id' => $spent_model->id];
                         $transaction = $user->walletTransaction($wallet_transaction_data);
                     }

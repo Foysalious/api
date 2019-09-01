@@ -91,7 +91,12 @@
                     <?php $subtotal = 0;?>
                     @foreach($pos_order['items'] as $item)
                         <tr>
-                            <td style="color: #383d46">{{$item->service_name}}</td>
+                            <td style="color: #383d46">
+                                {{ $item->service_name }} <br>
+                                @if($item->warranty)
+                                    <span style="font-size: 10px">* {{ $item->warranty }} {{ $item->warranty_unit }} warranty applied.</span>
+                                @endif
+                            </td>
                             <td style="color: #383d46">{{$item->quantity}}</td>
                             <td style="color: #383d46;">
                                 <span style="width: 11px">

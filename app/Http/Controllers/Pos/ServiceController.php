@@ -56,7 +56,7 @@ class ServiceController extends Controller
                         'vat_percentage' => $service->vat_percentage,
                         'is_published_for_shop' => (int)$service->is_published_for_shop,
                         'warranty' => (double)$service->warranty,
-                        'warranty_unit' => config('pos.warranty_unit')[$service->warranty_unit]
+                        'warranty_unit' => $service->warranty_unit ? config('pos.warranty_unit')[$service->warranty_unit] : null
                     ];
                 });
             if (!$services) return api_response($request, null, 404);
@@ -174,6 +174,7 @@ class ServiceController extends Controller
             }
             $partner_pos_service->unit = $partner_pos_service->unit ? constants('POS_SERVICE_UNITS')[$partner_pos_service->unit] : null;
             $partner_pos_service->warranty_unit = $partner_pos_service->warranty_unit ? config('pos.warranty_unit')[$partner_pos_service->warranty_unit] : null;
+
             return api_response($request, null, 200, ['msg' => 'Product Updated Successfully', 'service' => $partner_pos_service]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());

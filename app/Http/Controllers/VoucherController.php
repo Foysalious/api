@@ -1,11 +1,13 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\PosCustomer;
 use App\Models\Voucher;
 use App\Transformers\CustomSerializer;
 use App\Transformers\PosOrderTransformer;
 use App\Transformers\VoucherDetailTransformer;
 use App\Transformers\VoucherTransformer;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -13,6 +15,8 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use Sheba\ModificationFields;
+use Sheba\Voucher\DTO\Params\CheckParamsForPosOrder;
+use Sheba\Voucher\PromotionList;
 use Sheba\Voucher\VoucherRule;
 use Throwable;
 
@@ -164,5 +168,32 @@ class VoucherController extends Controller
             $rule->setMobiles($mobiles);
         }
         return $rule;
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     * @throws Exception
+     */
+    public function validateVoucher(Request $request)
+    {
+        $pos_customer = PosCustomer::find($request->pos_customer);
+        $pos_order_params = (new CheckParamsForPosOrder());
+        $pos_order_params->setOrderAmount($request->amount)->setApplicant($pos_customer);
+        $result = voucher($request->code)->checkForPosOrder($pos_order_params)->reveal();
+
+        if ($result['is_valid']) {
+            $voucher = $result['voucher'];
+            $voucher = [
+                'amount' => (double)$result['amount'],
+                'code' => $voucher->code,
+                'id' => $voucher->id,
+                'title' => $voucher->title
+            ];
+
+            return api_response($request, null, 200, ['voucher' => $voucher]);
+        } else {
+            return api_response($request, null, 403, ['message' => 'Invalid Promo']);
+        }
     }
 }

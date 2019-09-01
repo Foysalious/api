@@ -98,6 +98,8 @@ class Creator
             $service['service_name'] = $service['name'];
             $service['pos_order_id'] = $order->id;
             $service['unit_price'] = $original_service->price;
+            $service['warranty'] = $original_service->warranty;
+            $service['warranty_unit'] = $original_service->warranty_unit;
 
             if ($is_service_discount_applied) {
                 $service['discount_id'] = $original_service->discount()->id;

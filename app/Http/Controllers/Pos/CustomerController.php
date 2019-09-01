@@ -68,10 +68,10 @@ class CustomerController extends Controller
 
             $total_purchase_amount = 0.00;
             $total_due_amount = 0.00;
-            PosOrder::where('customer_id', $customer->id)->get()->each(function ($order) use (&$total_purchase_amount, &$total_due_amount) {
+            PosOrder::byPartner($partner)->byCustomer($customer->id)->get()->each(function ($order) use (&$total_purchase_amount, &$total_due_amount) {
                 /** @var PosOrder $order */
                 $order = $order->calculate();
-                $total_purchase_amount += $order->getTotalBill();
+                $total_purchase_amount += $order->getNetBill();
                 $total_due_amount += $order->getDue();
             });
 
@@ -191,7 +191,7 @@ class CustomerController extends Controller
             foreach (array_keys($final_orders) as $date) {
                 $timeFrame = new TimeFrame();
                 $timeFrame->forADay(Carbon::parse($date))->getArray();
-                $pos_orders = $pos_orders_repo->getCreatedOrdersBetween($timeFrame, $partner);
+                $pos_orders = $pos_orders_repo->getCreatedOrdersBetweenByPartnerAndCustomer($timeFrame, $partner, $customer);
                 $pos_orders->map(function ($pos_order) {
                     /** @var PosOrder $pos_order */
                     $pos_order->sale = $pos_order->getNetBill();

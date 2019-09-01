@@ -80,8 +80,8 @@ class Updater
             $this->updatedData['warranty'] = $this->data['warranty'];
         }
 
-        if ((isset($this->data['is_warranty_off']) && $this->data['is_warranty_off'] == 'true')) {
-            $this->updatedData['warranty_unit'] = null;
+        if (isset($this->data['warranty_unit']) && $this->data['warranty_unit'] == "null") {
+            $this->updatedData['warranty_unit'] = config('pos.warranty_unit.day.en');
         } else if (isset($this->data['warranty_unit']) && $this->data['warranty_unit'] != $this->service->warranty_unit) {
             $this->updatedData['warranty_unit'] = $this->data['warranty_unit'];
         }
