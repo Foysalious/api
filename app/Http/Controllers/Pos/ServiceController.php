@@ -50,10 +50,13 @@ class ServiceController extends Controller
                         'app_banner' => $service->app_banner,
                         'price' => $service->price,
                         'stock' => $service->stock,
+                        'unit' => $service->unit,
                         'discount_applicable' => $service->discount() ? true : false,
                         'discounted_price' => $service->discount() ? $service->getDiscountedAmount() : 0,
                         'vat_percentage' => $service->vat_percentage,
-                        'is_published_for_shop' => (int)$service->is_published_for_shop
+                        'is_published_for_shop' => (int)$service->is_published_for_shop,
+                        'warranty' => (double)$service->warranty,
+                        'warranty_unit' => $service->warranty_unit ? config('pos.warranty_unit')[$service->warranty_unit] : null
                     ];
                 });
             if (!$services) return api_response($request, null, 404);
@@ -115,6 +118,8 @@ class ServiceController extends Controller
                 $this->createServiceDiscount($request, $partner_pos_service);
             }
             $partner_pos_service->unit = $partner_pos_service->unit ? constants('POS_SERVICE_UNITS')[$partner_pos_service->unit] : null;
+            $partner_pos_service->warranty_unit = $partner_pos_service->warranty_unit ? config('pos.warranty_unit')[$partner_pos_service->warranty_unit] : null;
+
             return api_response($request, null, 200, ['msg' => 'Product Created Successfully', 'service' => $partner_pos_service]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -137,9 +142,9 @@ class ServiceController extends Controller
     public function update(Request $request, ProductUpdater $updater, PosServiceDiscountRepository $discount_repo)
     {
         try {
-            $this->validate($request, [
-                'unit' => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS')))
-            ]);
+            $rules = ['unit' => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS')))];
+            if ($request->has('discount_amount') && $request->discount_amount > 0) $rules += ['end_date' => 'required'];
+            $this->validate($request, $rules);
             $this->setModifier($request->partner);
             $partner_pos_service = PartnerPosService::find($request->service);
             if (!$partner_pos_service) return api_response($request, null, 400, ['msg' => 'Service Not Found']);
@@ -168,6 +173,8 @@ class ServiceController extends Controller
                 $this->createServiceDiscount($request, $partner_pos_service);
             }
             $partner_pos_service->unit = $partner_pos_service->unit ? constants('POS_SERVICE_UNITS')[$partner_pos_service->unit] : null;
+            $partner_pos_service->warranty_unit = $partner_pos_service->warranty_unit ? config('pos.warranty_unit')[$partner_pos_service->warranty_unit] : null;
+
             return api_response($request, null, 200, ['msg' => 'Product Updated Successfully', 'service' => $partner_pos_service]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -199,6 +206,10 @@ class ServiceController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getUnits(Request $request)
     {
         try {
@@ -214,6 +225,31 @@ class ServiceController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getWarrantyUnits(Request $request)
+    {
+        try {
+            $warranty_units = [];
+            $all_warranty_units = config('pos.warranty_unit');
+            foreach ($all_warranty_units as $key => $unit) {
+                array_push($warranty_units, $unit);
+            }
+            return api_response($request, $warranty_units, 200, ['warranty_units' => $warranty_units]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @param $partner
+     * @param $service
+     * @return JsonResponse
+     */
     public function togglePublishForShopStatus(Request $request, $partner, $service)
     {
         $posService = PartnerPosService::query()->where([['id', $service], ['partner_id', $partner]])->first();
@@ -242,6 +278,6 @@ class ServiceController extends Controller
 
     private function getSelectColumnsOfService()
     {
-        return ['id', 'name', 'app_thumb', 'app_banner', 'price', 'stock', 'vat_percentage', 'is_published_for_shop'];
+        return ['id', 'name', 'app_thumb', 'app_banner', 'price', 'stock', 'vat_percentage', 'is_published_for_shop', 'warranty', 'warranty_unit','unit'];
     }
 }

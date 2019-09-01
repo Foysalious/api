@@ -1,15 +1,19 @@
 <?php namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Sheba\CancelRequest\CancelRequestStatuses;
+use Sheba\Dal\BaseModel;
+use Sheba\Dal\JobCancelRequest\Events\JobCancelRequestSaved;
 use Sheba\Report\Updater\JobCancelRequest as ReportUpdater;
+use Sheba\Report\Updater\UpdatesReport;
 
-class JobCancelRequest extends Model
+class JobCancelRequest extends BaseModel implements UpdatesReport
 {
     use ReportUpdater;
 
     protected $guarded = ['id'];
     protected $dates = ['approved_at'];
+
+    protected static $savedEventClass = JobCancelRequestSaved::class;
 
     public function job()
     {

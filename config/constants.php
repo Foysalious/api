@@ -26,7 +26,7 @@ return [
     ],
     'PARTNER_LEVELS' => ['Starter', 'Intermediate', 'Advanced'],
     'PARTNER_TYPES' => ['USP', 'NSP', 'ESP'],
-    'RESOURCE_TYPES' => ['Admin' => 'Admin', 'Operation' => 'Operation', 'Finance' => 'Finance', 'Handyman' => 'Handyman'],
+    'RESOURCE_TYPES' => ['Admin' => 'Admin', 'Operation' => 'Operation', 'Finance' => 'Finance', 'Handyman' => 'Handyman', 'Salesman' => 'Salesman'],
     'JOB_STATUSES' => [
         'Pending' => 'Pending',
         'Not_Responded' => 'Not Responded',
@@ -388,6 +388,7 @@ return [
         403 => ['message' => 'Forbidden', 'code' => 403],
         404 => ['message' => 'Not found', 'code' => 404],
         409 => ['message' => 'Conflict', 'code' => 409],
+        420 => ['message' => 'Not Allowed', 'code' => 420],
         421 => ['message' => 'Misdirected.', 'code' => 421],
         422 => ['message' => 'Unprocessable Entity', 'code' => 422],
         500 => ['message' => 'Internal Server Error', 'code' => 500],
@@ -603,5 +604,15 @@ return [
         'bosta' => ['bn' => 'বস্তা', 'en' => 'bosta'],
         'unit' => ['bn' => 'টি', 'en' => 'unit'],
         'set' => ['bn' => 'সেট', 'en' => 'set']
+    ],
+    'TICKET_LOG' => [
+        'movie_ticket_purchase' => [
+            'title' => 'Movie Ticket',
+            'log' => '%s TK has been charged as Movie Ticket price'
+        ],
+        'transport_ticket_purchase' => [
+            'title' => 'Bus Ticket',
+            'log' => '%s TK has been charged as Transport Ticket price'
+        ]
     ]
 ];

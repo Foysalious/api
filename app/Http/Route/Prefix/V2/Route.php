@@ -18,7 +18,7 @@ class Route
                 $api->post('registration/partner', 'Auth\PartnerRegistrationController@registerByProfile')->middleware('jwtAuth');
             });
             $api->get('validate-location', 'LocationController@validateLocation');
-            $api->get('partners', 'PartnerLocationController@getPartners')->middleware('throttle:20');
+            $api->get('partners', 'PartnerLocationController@getPartners')->middleware('throttle:40');
             $api->get('lite-partners', 'PartnerLocationController@getLitePartners')->middleware('throttle:6');
             $api->post('subscription', 'PushSubscriptionController@store');
             $api->get('car-rental-info', 'ShebaController@sendCarRentalInfo');
@@ -93,6 +93,7 @@ class Route
             $api->get('times', 'ScheduleTimeController@index');
             $api->get('settings', 'HomePageSettingController@index');
             $api->get('settings-new', 'HomePageSettingController@indexNew');
+            $api->get('campaigns', 'CampaignController@index');
             $api->get('settings/top-up', 'TopUpController@getVendor');
             $api->get('settings/car', 'HomePageSettingController@getCar');
             $api->get('home-grids', 'HomeGridController@index');
@@ -181,6 +182,18 @@ class Route
             $api->group(['prefix' => 'proxy'], function ($api) {
                 $api->post('/top-up', 'ProxyController@pretupsTopUp');
             });
+
+            /**
+             * EMI INFO
+             */
+            $api->get('emi-info', 'ShebaController@getEmiInfo');
+            $api->group(['prefix' => 'tickets', 'middleware' => 'jwtGlobalAuth'], function ($api) {
+                $api->get('validate-token', 'ProfileController@validateJWT');
+                $api->get('payments', 'ShebaController@getPayments');
+                (new TransportRoute())->set($api);
+                (new MovieTicketRoute())->set($api);
+            });
+            $api->get('refresh-token', 'ProfileController@refresh');
         });
         return $api;
     }

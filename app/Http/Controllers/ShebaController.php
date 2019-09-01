@@ -307,4 +307,77 @@ class ShebaController extends Controller
         }
     }
 
+    public function getEmiInfo(Request $request)
+    {
+
+
+        try {
+            $amount = $request->amount;
+
+            if (!$amount) {
+                return api_response($request, null, 400, ['message' => 'Amount missing']);
+            }
+
+            $emi = [
+                [
+                    "number_of_months" => 3,
+                    "interest" => "3%",
+                    "amount" => number_format(($amount + ($amount*0.03))/3, 2, '.', '')
+                ],
+                [
+                    "number_of_months" => 6,
+                    "interest" => "4.5%",
+                    "amount" => number_format(($amount + ($amount*0.045))/6, 2, '.', '')
+                ],
+                [
+                    "number_of_months" => 9,
+                    "interest" => "6.5%",
+                    "amount" => number_format(($amount + ($amount*0.065))/9, 2, '.', '')
+                ],
+                [
+                    "number_of_months" => 12,
+                    "interest" => "8.5%",
+                    "amount" => number_format(($amount + ($amount*0.085))/12, 2, '.', '')
+                ]
+            ];
+
+            $banks = [
+                [
+                    "name" => "Standard Chartered",
+                    "logo" => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/images/emi_bank_icon/standard_chartered.png",
+                    "asset" => "standard_chartered"
+                ],
+                [
+                    "name" => "Eastern Bank Ltd",
+                    "logo" => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/images/emi_bank_icon/ebl.png",
+                    "asset" => "ebl"
+                ],
+                [
+                    "name" => "United Commercial Bank Ltd",
+                    "logo" => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/images/emi_bank_icon/ucb.png",
+                    "asset" => "ucb"
+                ],
+                [
+                    "name" => "NRB Commercial Bank Ltd",
+                    "logo" => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/images/emi_bank_icon/nrbc.png",
+                    "asset" => "nrbc"
+                ],
+                [
+                    "name" => "BRAC Bank Limited",
+                    "logo" => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/images/emi_bank_icon/brac_bank.png",
+                    "asset" => "brac_bank"
+                ]
+            ];
+
+            $emi_data = [
+                "emi" => $emi,
+                "banks" => $banks
+            ];
+
+            return api_response($request, null, 200, ['info' => $emi_data]);
+        } catch (\Exception $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
 }

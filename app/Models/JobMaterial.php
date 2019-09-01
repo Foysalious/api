@@ -1,9 +1,11 @@
 <?php namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\BaseModel;
+use Sheba\Dal\JobMaterial\Events\JobMaterialSaved;
 use Sheba\Report\Updater\JobMaterial as ReportUpdater;
+use Sheba\Report\Updater\UpdatesReport;
 
-class JobMaterial extends Model
+class JobMaterial extends BaseModel implements UpdatesReport
 {
     use ReportUpdater;
 
@@ -12,6 +14,8 @@ class JobMaterial extends Model
     protected $fillable = ['job_id', 'material_name', 'material_price'];
 
     protected $casts = ['material_price' => 'double'];
+
+    protected static $savedEventClass = JobMaterialSaved::class;
 
     public function job()
     {

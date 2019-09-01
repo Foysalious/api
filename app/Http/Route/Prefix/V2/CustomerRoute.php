@@ -11,6 +11,7 @@ class CustomerRoute
                 $api->post('purchase-gift-card', 'GiftCardController@purchaseGiftCard');
                 $api->group(['prefix' => 'settings'], function ($api) {
                     $api->get('/', 'Settings\SettingsController@getCustomerSettings');
+                    $api->post('/rating', 'Settings\SettingsController@giveRating');
                     $api->get('review', 'Settings\SettingsController@getCustomerReviewSettings');
                     $api->get('payment', 'Settings\SettingsController@addPayment');
                 });
@@ -19,7 +20,10 @@ class CustomerRoute
                     $api->get('/details/{id}', 'InfoCallController@getDetails');
                     $api->post('/', 'InfoCallController@store');
                 });
-                $api->put('notifications', 'CustomerNotificationController@update');
+                $api->group(['prefix' => 'notifications'], function ($api) {
+                    $api->put('/', 'CustomerNotificationController@update');
+                    $api->get('/', 'CustomerNotificationController@index');
+                });
                 $api->post('top-up', 'TopUpController@topUp');
                 $api->group(['prefix' => 'bkash'], function ($api) {
                     $api->post('create', 'BkashController@create')->middleware('customer_job.auth');

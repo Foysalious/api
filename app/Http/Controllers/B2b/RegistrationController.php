@@ -21,13 +21,54 @@ class RegistrationController extends Controller
         $this->profileRepository = $profile_repository;
     }
 
+    public function registerV2(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'name' => 'required|string',
+                'email' => 'required|email',
+                'password' => 'required|min:6',
+            ]);
+            $email = $request->email;
+            $profile = Profile::where('email', $email)->first();
+            if ($profile) {
+                return api_response($request, null, 420, ['message' => 'This email is already in use']);
+            } else {
+                $data = [
+                    'name' => $request->name,
+                    'email' => $request->email,
+                    'password' => bcrypt($request->password)
+                ];
+                $profile = $this->profileRepository->store($data);
+
+                $member = $this->makeMember($profile);
+                $businesses = $member->businesses->first();
+                $info = [
+                    'token' => $this->generateToken($profile, $member),
+                    'member_id' => $member->id,
+                    'business_id' => $businesses ? $businesses->id : null,
+                ];
+                return api_response($request, $info, 200, ['info' => $info]);
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     public function register(Request $request)
     {
         try {
             $this->validate($request, [
                 'name' => 'required|string',
                 'email' => 'required|email',
-                'password' => 'required|min:4',
+                'password' => 'required|min:6',
                 'mobile' => 'required|string|mobile:bd',
             ]);
             $mobile = formatMobile($request->mobile);

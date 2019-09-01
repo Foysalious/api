@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use App\Models\Transport\TransportTicketOrder;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Database\Eloquent\Model;
@@ -8,6 +9,9 @@ use Sheba\HasWallet;
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
 use Sheba\Location\Distance\DistanceStrategy;
+use Sheba\MovieTicket\MovieAgent;
+use Sheba\MovieTicket\MovieTicketTrait;
+use Sheba\MovieTicket\MovieTicketTransaction;
 use Sheba\Partner\BadgeResolver;
 use Sheba\Payment\Wallet;
 use Sheba\Reward\Rewardable;
@@ -15,14 +19,17 @@ use Sheba\Subscription\Partner\PartnerSubscriber;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
+use Sheba\Transport\Bus\BusTicketCommission;
+use Sheba\Transport\TransportAgent;
+use Sheba\Transport\TransportTicketTransaction;
+use Sheba\Voucher\Contracts\CanApplyVoucher;
 use Sheba\Voucher\VoucherCodeGenerator;
 
-class Partner extends Model implements Rewardable, TopUpAgent, HasWallet
+class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent
 {
-    use Wallet;
-    use TopUpTrait;
+    use Wallet, TopUpTrait, MovieTicketTrait;
 
-    protected $guarded = ['id',];
+    protected $guarded = ['id'];
     protected $dates = ['last_billed_date', 'billing_start_date'];
     protected $casts = ['wallet' => 'double', 'last_billed_amount' => 'double', 'reward_point' => 'int', 'current_impression' => 'double', 'impression_limit' => 'double', 'uses_sheba_logistic' => 'int'];
     protected $resourcePivotColumns = ['id', 'designation', 'department', 'resource_type', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
@@ -481,9 +488,9 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet
 
     public function notCancelledJobs()
     {
-//        return $this->jobs->reject(function ($job) {
-//            return $job->cancelRequests()->count() > 0;
-//        });
+        /*return $this->jobs->reject(function ($job) {
+            return $job->cancelRequests()->count() > 0;
+        });*/
 
         return $this->jobs()->whereNotExists(function ($q) {
             $q->from('job_cancel_requests')->whereRaw('job_id = jobs.id');
@@ -638,5 +645,57 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet
     public function isAllowedToSendWithdrawalRequest()
     {
         return !($this->withdrawalRequests()->active()->count() > 0);
+    }
+
+    /**
+     * @return BusTicketCommission|\Sheba\Transport\Bus\Commission\Partner
+     */
+    public function getBusTicketCommission()
+    {
+        return new \Sheba\Transport\Bus\Commission\Partner();
+    }
+
+    public function transportTicketTransaction(TransportTicketTransaction $transaction)
+    {
+        $this->creditWallet($transaction->getAmount());
+        $wallet_transaction = [
+            'amount' => $transaction->getAmount(),
+            'type' => 'Credit',
+            'log' => $transaction->getLog(),
+            'created_by_type' => get_class($this),
+            'created_by' => $this->id,
+            'created_by_name' => $this->name
+        ];
+        $this->walletTransaction($wallet_transaction);
+    }
+
+    public function transportTicketOrders()
+    {
+        return $this->morphMany(TransportTicketOrder::class, 'agent');
+    }
+
+    public function movieTicketTransaction(MovieTicketTransaction $transaction)
+    {
+        $this->debitWallet($transaction->getAmount());
+        $wallet_transaction = [
+            'amount' => $transaction->getAmount(),
+            'type' => 'Debit',
+            'log' => $transaction->getLog(),
+            'created_by_type' => get_class($this),
+            'created_by' => $this->id,
+            'created_by_name' => $this->name
+        ];
+        $this->walletTransaction($wallet_transaction);
+    }
+
+    public function movieTicketTransactionNew(MovieTicketTransaction $transaction)
+    {
+        $this->creditWallet($transaction->getAmount());
+        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Credit', 'log' => $transaction->getLog()]);
+    }
+
+    public function getMovieTicketCommission()
+    {
+        return new \Sheba\MovieTicket\Commission\Partner();
     }
 }

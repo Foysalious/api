@@ -63,9 +63,17 @@ class IndexRoute
                         $api->post('/collect-payment', 'Pos\OrderController@collectPayment');
                         $api->get('/send-sms', 'Pos\OrderController@sendSms');
                         $api->get('/send-email', 'Pos\OrderController@sendEmail');
+                        $api->get('/download-invoice', 'Pos\OrderController@downloadInvoice');
                     });
                 });
-                $api->post('customers/{customer}', 'Pos\CustomerController@update');
+
+                $api->group(['prefix' => 'customers'], function ($api) {
+                    $api->group(['prefix' => '{customer}'], function ($api) {
+                        $api->post('/', 'Pos\CustomerController@update');
+                        $api->get('orders', 'Pos\CustomerController@orders');
+                    });
+                });
+
                 $api->resources(['customers' => 'Pos\CustomerController']);
                 $api->get('settings', 'Pos\SettingController@getSettings');
                 $api->post('due-payment-request-sms', 'Pos\SettingController@duePaymentRequestSms');
@@ -194,6 +202,16 @@ class IndexRoute
             });
             $api->get('served-customers', 'PartnerController@getServedCustomers');
             $api->post('change-leave-status', 'PartnerController@changeLeaveStatus');
+            $api->post('change-logo', 'PartnerController@changeLogo');
+            $api->group(['prefix' => 'vouchers'], function ($api) {
+                $api->get('/dashboard', 'VoucherController@dashboard');
+                $api->get('/', 'VoucherController@index');
+                $api->get('/{voucher}', 'VoucherController@show');
+                $api->post('/', 'VoucherController@store');
+                $api->post('validity-check', 'VoucherController@validateVoucher');
+                $api->group(['prefix' => '{voucher}'], function ($api) {
+                });
+            });
         });
     }
 }

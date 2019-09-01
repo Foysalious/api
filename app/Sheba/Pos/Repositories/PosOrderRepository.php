@@ -1,6 +1,7 @@
 <?php namespace Sheba\Pos\Repositories;
 
 use App\Models\Partner;
+use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -34,9 +35,25 @@ class PosOrderRepository extends BaseRepository
         return $this->calculate($this->createdQueryBetween($time_frame)->get());
     }
 
+    /**
+     * @param TimeFrame $time_frame
+     * @param Partner|null $partner
+     * @param PosCustomer|null $customer
+     * @return Collection
+     */
+    public function getCreatedOrdersBetweenByPartnerAndCustomer(TimeFrame $time_frame, Partner $partner = null, PosCustomer $customer = null)
+    {
+        return $this->getCreatedOrdersBetweenDateByPartnerAndCustomer($time_frame, $partner, $customer);
+    }
+
     public function getCreatedOrdersBetweenDateByPartner(TimeFrame $time_frame, Partner $partner)
     {
         return $this->calculate($this->createdQueryBetween($time_frame)->of($partner->id)->get());
+    }
+
+    public function getCreatedOrdersBetweenDateByPartnerAndCustomer(TimeFrame $time_frame, Partner $partner, PosCustomer $customer)
+    {
+        return $this->calculate($this->createdQueryBetween($time_frame)->of($partner->id)->OfCustomer($customer->id)->get());
     }
 
     private function createdQueryBetween(TimeFrame $time_frame)

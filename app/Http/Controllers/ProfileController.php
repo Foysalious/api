@@ -6,11 +6,11 @@ use App\Repositories\ProfileRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use JWTAuth;
+use JWTFactory;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\Repositories\ProfileRepository as ShebaProfileRepository;
 use Sheba\Sms\Sms;
-use JWTAuth;
-use JWTFactory;
 use Validator;
 
 class ProfileController extends Controller
@@ -194,6 +194,10 @@ class ProfileController extends Controller
         return api_response($request, $token, 200, ['token' => $token]);
     }
 
+    public function validateJWT(Request $request)
+    {
+        return api_response($request, null, 200, ['user' => $request->user, 'type' => $request->type, $request->type => $request->get($request->type)]);
+    }
     private function generateUtilityToken(Profile $profile)
     {
         $from = \request()->get('from');

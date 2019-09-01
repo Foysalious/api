@@ -35,5 +35,4 @@ class PosServiceRepository extends BaseRepository implements PosServiceRepositor
     {
         return $service->delete();
     }
-
 }

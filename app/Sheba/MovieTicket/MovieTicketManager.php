@@ -80,7 +80,6 @@ class MovieTicketManager
             throw $e;
         }
     }
-
     /**
      * @param array $data
      * @return array

@@ -98,6 +98,8 @@ class Creator
             $service['service_name'] = $service['name'];
             $service['pos_order_id'] = $order->id;
             $service['unit_price'] = $original_service->price;
+            $service['warranty'] = $original_service->warranty;
+            $service['warranty_unit'] = $original_service->warranty_unit;
 
             if ($is_service_discount_applied) {
                 $service['discount_id'] = $original_service->discount()->id;
@@ -105,8 +107,8 @@ class Creator
                 $service['discount_percentage'] = $original_service->discount()->is_amount_percentage ? $original_service->discount()->amount : 0.0;
             }
 
-            $service['vat_percentage'] = PartnerPosService::find($service['id'])->vat_percentage;
-            $service = array_except($service, ['id', 'name']);
+            $service['vat_percentage'] = (!isset($service['is_vat_applicable']) || $service['is_vat_applicable']) ? PartnerPosService::find($service['id'])->vat_percentage : 0.00;
+            $service = array_except($service, ['id', 'name', 'is_vat_applicable']);
 
             $this->itemRepo->save($service);
             $is_stock_maintainable = $this->stockManager->setPosService($original_service)->isStockMaintainable();

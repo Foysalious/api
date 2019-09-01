@@ -1,12 +1,27 @@
-<?php
+<?php namespace App\Http\Controllers;
 
-namespace App\Http\Controllers;
-
-
+use App\Sheba\Notification\Customer\NotificationHandler;
+use App\Models\Transport\TransportTicketOrder;
+use App\Models\MovieTicketOrder;
 use Illuminate\Http\Request;
+use App\Models\TopUpOrder;
 
 class CustomerNotificationController extends Controller
 {
+    public function index($customer, Request $request)
+    {
+        try {
+            $customer = $request->customer;
+            $notifications = (new NotificationHandler)
+                ->setCustomer($customer)
+                ->notification('order', 'top_up', 'movie_ticket', 'transport_ticket');
+            $notifications = collect($notifications)->sortByDesc('updated_at')->values()->take(30);
+            return api_response($request, null, 200, ['notifications' => $notifications]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 
     public function update($customer, Request $request)
     {

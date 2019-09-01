@@ -53,6 +53,11 @@ class Ssl extends PaymentMethod
         $data['cus_name'] = $payable->getName();
         $data['cus_email'] = $payable->getEmail();
         $data['cus_phone'] = $payable->getMobile();
+        if ($payable->amount >= config('sheba.min_order_amount_for_emi')) {
+            $data['emi_option'] = 1;
+            $data['emi_max_inst_option'] = 12;
+            if ($payable->emi_month) $data['emi_selected_inst'] = (int)$payable->emi_month;
+        }
         $payment = new Payment();
         DB::transaction(function () use ($payment, $payable, $invoice, $user) {
             $payment->payable_id = $payable->id;

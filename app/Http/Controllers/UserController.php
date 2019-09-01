@@ -15,6 +15,7 @@ class UserController extends Controller
                 'name' => $sheba_user->getName(),
                 'image' => $sheba_user->getImage(),
                 'balance' => $sheba_user->getWallet(),
+                'mobile' => $sheba_user->getMobile()
             ];
             return api_response($request, $data, 200, ['data' => $data]);
         } catch (\Throwable $e) {

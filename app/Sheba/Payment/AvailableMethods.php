@@ -24,13 +24,11 @@ class AvailableMethods
                     $payments = self::getVoucherPayments($version_code, $platform_name);
                     break;
                 case 'movie_ticket':
-                    $payments = self::getMovieTicketPayments($version_code, $platform_name);
+                case 'transport_ticket':
+                    $payments = self::getTicketsPayments($version_code, $platform_name);
                     break;
                 case 'business':
                     $payments = self::getBusinessPayments($version_code, $platform_name);
-                    break;
-                case 'transport_ticket':
-                    $payments = self::getTransportTicketPayments($version_code, $platform_name);
                     break;
                 case 'utility':
                     $payments = self::getUtilityPayments($version_code, $platform_name);
@@ -85,26 +83,27 @@ class AvailableMethods
         ];
     }
 
-    private static function getMovieTicketPayments($version_code, $platform_name)
-    {
-        return [
-            self::shebaCredit(),
-            self::cbl($version_code, $platform_name),
-            self::bkash(),
-            self::ssl()
-        ];
-    }
 
-    private static function getTransportTicketPayments($version_code, $platform_name)
+    private static function getTicketsPayments($version_code, $platform_name)
     {
-        return [
-            self::shebaCredit(),
-            self::cbl($version_code, $platform_name),
-            self::bkash(),
-            self::ssl()
-        ];
+        if (isset(\request()->type) && \request()->type === 'customer') {
+            return [
+                self::shebaCredit(),
+                self::cbl($version_code, $platform_name),
+                self::bkash(),
+                self::ssl()
+            ];
+        } else if (isset(\request()->type) && \request()->type !== 'customer') {
+            return [self::shebaCredit()];
+        } else {
+            return [
+                self::shebaCredit(),
+                self::cbl($version_code, $platform_name),
+                self::bkash(),
+                self::ssl()
+            ];
+        }
     }
-
     private static function getUtilityPayments($version_code, $platform_name)
     {
         return [
@@ -157,7 +156,7 @@ class AvailableMethods
         return [
             'name' => 'Other Debit/Credit',
             'is_published' => 1,
-            'description' => '',
+            'description' => '10% Cash back',
             'asset' => 'ssl',
             'method_name' => 'online'
         ];
@@ -185,7 +184,7 @@ class AvailableMethods
         return [
             'name' => 'bKash',
             'is_published' => 1,
-            'description' => '',
+            'description' => '20% Cash back',
             'asset' => 'bkash',
             'method_name' => 'bkash'
         ];

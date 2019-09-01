@@ -11,6 +11,7 @@ use Sheba\TopUp\TopUpTransaction;
 class Business extends Model implements TopUpAgent
 {
     use Wallet, ModificationFields, TopUpTrait;
+
     protected $guarded = ['id'];
 
     public function members()

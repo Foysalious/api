@@ -1,17 +1,17 @@
 <?php namespace Sheba\PaymentLink;
 
-
 use Sheba\HasWallet;
+use stdClass;
 
 class PaymentLinkTransformer
 {
     private $response;
 
     /**
-     * @param \stdClass $response
+     * @param stdClass $response
      * @return $this
      */
-    public function setResponse(\stdClass $response)
+    public function setResponse(stdClass $response)
     {
         $this->response = $response;
         return $this;

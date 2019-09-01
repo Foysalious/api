@@ -4,23 +4,18 @@ use App\Models\Affiliate;
 use App\Models\Customer;
 use App\Models\Payment;
 use App\Models\Transport\TransportTicketOrder;
-use App\Models\Voucher;
 use App\Transformers\BusRouteTransformer;
 use App\Transformers\CustomSerializer;
-
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
-
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\ModificationFields;
 use Sheba\Payment\Adapters\Payable\TransportTicketPurchaseAdapter;
 use Sheba\Payment\ShebaPayment;
-
 use Sheba\Transport\Bus\Exception\InvalidLocationAddressException;
 use Sheba\Transport\Bus\Generators\CompanyList;
 use Sheba\Transport\Bus\Generators\Destinations;
@@ -34,7 +29,6 @@ use Sheba\Transport\Bus\Repositories\BusRouteLocationRepository;
 use Sheba\Transport\Bus\Repositories\TransportTicketOrdersRepository;
 use Sheba\Transport\Bus\Response\BusTicketResponse;
 use Sheba\Transport\Bus\Vendor\VendorFactory;
-
 use Sheba\Transport\Exception\TransportException;
 use Sheba\Voucher\DTO\Params\CheckParamsForTransport;
 use Sheba\Voucher\PromotionList;
@@ -411,10 +405,10 @@ class BusTicketController extends Controller
                     'company_name' => $trips_details->company->name,
                     'seats' => count($trips_details->coachSeatList),
                     'price' => (double)$order->getNetBill(),
-                    'start_time' => isset($trips_details->boardingPoint)? $trips_details->boardingPoint->reportingTime : '',
+                    'start_time' => isset($trips_details->boardingPoint) ? $trips_details->boardingPoint->reportingTime : '',
                     'start_point' => isset($trips_details->boardingPoint) ? $trips_details->boardingPoint->counterName : '',
-                    'end_time' => isset($trips_details->droppingPoint)?  $trips_details->droppingPoint->reportingTime : '',
-                    'end_point' =>  isset($trips_details->droppingPoint)? $trips_details->droppingPoint->counterName : ''
+                    'end_time' => isset($trips_details->droppingPoint) ? $trips_details->droppingPoint->reportingTime : '',
+                    'end_point' => isset($trips_details->droppingPoint) ? $trips_details->droppingPoint->counterName : ''
 
                 ];
                 array_push($history, $currentHistory);
@@ -449,10 +443,10 @@ class BusTicketController extends Controller
                 'company_name' => $trips_details->company->name,
                 'seats' => count($trips_details->coachSeatList),
                 'price' => (double)$order->getNetBill(),
-                'start_time' => isset($trips_details->boardingPoint)? $trips_details->boardingPoint->reportingTime : '',
+                'start_time' => isset($trips_details->boardingPoint) ? $trips_details->boardingPoint->reportingTime : '',
                 'start_point' => isset($trips_details->boardingPoint) ? $trips_details->boardingPoint->counterName : '',
-                'end_time' => isset($trips_details->droppingPoint)?  $trips_details->droppingPoint->reportingTime : '',
-                'end_point' =>  isset($trips_details->droppingPoint)? $trips_details->droppingPoint->counterName : '',
+                'end_time' => isset($trips_details->droppingPoint) ? $trips_details->droppingPoint->reportingTime : '',
+                'end_point' => isset($trips_details->droppingPoint) ? $trips_details->droppingPoint->counterName : '',
                 'coach_code' => $trips_details->coachNo,
                 'status' => $order->status,
                 'seat_numbers' => implode(',', collect($trips_details->coachSeatList)->map(function ($seat) {
@@ -461,7 +455,7 @@ class BusTicketController extends Controller
                 'boarding_point' => $trips_details->boardingPoint,
                 'dropping_point' => $trips_details->boardingPoint,
                 'seat_details' => $trips_details->coachSeatList,
-                'discount_amount'=> (double) $order->getAppliedDiscount()
+                'discount_amount' => (double)$order->getAppliedDiscount()
             ];
 
             return api_response($request, $history, 200, ['details' => $history]);
@@ -477,8 +471,10 @@ class BusTicketController extends Controller
      */
     private function getAgent(Request $request)
     {
+        $type = $request->type;
         if ($request->affiliate) return $request->affiliate;
         elseif ($request->customer) return $request->customer;
+        elseif ($type) return $request->$type;
     }
 
     /**
@@ -499,12 +495,10 @@ class BusTicketController extends Controller
                 return api_response($request, null, 404, ['message' => 'Order Not Found.']);
 
             $vendor = $vendor->getById($order->vendor_id);
-            if($vendor->ticketCancellable($order))
-            {
+            if ($vendor->ticketCancellable($order)) {
                 $vendor->cancelTicket($order);;
                 return api_response($request, null, 200, ['message' => 'Ticket cancelled successfully.', 'code' => 200]);
-            }
-            else
+            } else
                 return api_response($request, null, 200, ['message' => 'Ticket cannot be cancelled.', 'code' => 400]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -527,8 +521,8 @@ class BusTicketController extends Controller
     {
         try {
             $transport_ticket_order_adapter = new TransportTicketPurchaseAdapter();
-            $payment = (new ShebaPayment($payment_method))->init($transport_ticket_order_adapter->setModelForPayable($transport_ticket_order)->getPayable());
-
+            $payment = new ShebaPayment();
+            $payment = $payment->setMethod($payment_method)->init($transport_ticket_order_adapter->setModelForPayable($transport_ticket_order)->getPayable());
             return $payment->isInitiated() ? $payment : null;
         } catch (QueryException $e) {
             app('sentry')->captureException($e);

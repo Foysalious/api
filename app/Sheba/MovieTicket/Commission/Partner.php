@@ -1,6 +1,7 @@
 <?php namespace Sheba\MovieTicket\Commission;
 
 use Sheba\MovieTicket\MovieTicketCommission;
+
 class Partner extends MovieTicketCommission
 {
     public function disburse()
@@ -11,5 +12,10 @@ class Partner extends MovieTicketCommission
     public function refund()
     {
         $this->refundAgentsCommission();
+    }
+
+    public function disburseNew()
+    {
+        $this->storeAgentsCommissionNew();
     }
 }

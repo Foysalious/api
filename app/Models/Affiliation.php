@@ -1,14 +1,18 @@
 <?php namespace App\Models;
 
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\Affiliation\Events\AffiliationSaved;
+use Sheba\Dal\BaseModel;
 use Sheba\Report\Updater\Affiliation as ReportUpdater;
+use Sheba\Report\Updater\UpdatesReport;
 
-class Affiliation extends Model
+class Affiliation extends BaseModel implements UpdatesReport
 {
     use ReportUpdater;
 
     protected $guarded = ['id'];
+
+    protected static $savedEventClass = AffiliationSaved::class;
 
     public function affiliate()
     {

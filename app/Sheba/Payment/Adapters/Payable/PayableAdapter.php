@@ -7,4 +7,6 @@ interface PayableAdapter
     public function getPayable(): Payable;
 
     public function setModelForPayable($model);
+
+    public function setEmiMonth($month);
 }

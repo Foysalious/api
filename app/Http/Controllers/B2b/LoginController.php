@@ -3,6 +3,7 @@
 use App\Models\Profile;
 use App\Repositories\ProfileRepository;
 use Illuminate\Validation\ValidationException;
+use Sheba\Repositories\Business\MemberRepository;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -15,10 +16,12 @@ use Hash;
 class LoginController extends Controller
 {
     private $profileRepository;
+    private $memberRepository;
 
-    public function __construct(ProfileRepository $profile_repository)
+    public function __construct(ProfileRepository $profile_repository, MemberRepository $member_repository)
     {
         $this->profileRepository = $profile_repository;
+        $this->memberRepository = $member_repository;
     }
 
     public function login(Request $request)
@@ -29,26 +32,26 @@ class LoginController extends Controller
                 'password' => 'required'
             ]);
             $profile = $this->profileRepository->ifExist($request->email, 'email');
-
             if ($profile) {
-                $member = $profile->member;
-                if ($member) {
-                    if (!Hash::check($request->input('password'), $profile->password)) {
-                        return api_response($request, null, 401, ["message" => 'Credential mismatch']);
-                    }
-
-                    $member = $profile->member;
-                    $businesses = $member->businesses->first();
-                    $info = [
-                        'token' => $this->generateToken($profile),
-                        'member_id' => $member->id,
-                        'business_id' => $businesses ? $businesses->id : null,
-                        'is_super' => $member->businessMember ? $member->businessMember->is_super : null,
-                    ];
-                    return api_response($request, $info, 200, ['info' => $info]);
-                } else {
-                    return api_response($request, null, 404, ["message" => 'Member not found.']);
+                if (!Hash::check($request->input('password'), $profile->password)) {
+                    return api_response($request, null, 401, ["message" => 'Credential mismatch']);
                 }
+                $member = $profile->member;
+                $businesses = $member ? $member->businesses->first() : null;
+
+                if (!$member) {
+                    $member = $this->memberRepository->create([
+                        'profile_id' => $profile->id,
+                        'remember_token' => str_random(255),
+                    ]);
+                }
+                $info = [
+                    'token' => $this->generateToken($profile),
+                    'member_id' => $member->id,
+                    'business_id' => $businesses ? $businesses->id : null,
+                    'is_super' => $member->businessMember ? $member->businessMember->is_super : null,
+                ];
+                return api_response($request, $info, 200, ['info' => $info]);
             } else {
                 return api_response($request, null, 404);
             }
@@ -67,7 +70,7 @@ class LoginController extends Controller
     private function generateToken(Profile $profile)
     {
         $member = $profile->member;
-        $businesses = $member->businesses->first();
+        $businesses = $member->businesses->first() ? $member->businesses->first() : null;
         return JWTAuth::fromUser($profile, [
             'member_id' => $member->id,
             'member_type' => count($member->businessMember) > 0 ? $member->businessMember->first()->type : null,

@@ -7,14 +7,21 @@ use App\Models\PartnerPosCustomer;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
 
+use App\Transformers\CustomSerializer;
+use App\Transformers\PosOrderTransformer;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
+use League\Fractal\Manager;
+use League\Fractal\Resource\Item;
+use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 use Sheba\Pos\Customer\Creator;
 
 use Sheba\Pos\Customer\Updater;
+use Sheba\Pos\Repositories\PosOrderRepository;
 use Throwable;
 
 class CustomerController extends Controller
@@ -61,10 +68,10 @@ class CustomerController extends Controller
 
             $total_purchase_amount = 0.00;
             $total_due_amount = 0.00;
-            PosOrder::where('customer_id', $customer->id)->get()->each(function ($order) use (&$total_purchase_amount, &$total_due_amount) {
+            PosOrder::byPartner($partner)->byCustomer($customer->id)->get()->each(function ($order) use (&$total_purchase_amount, &$total_due_amount) {
                 /** @var PosOrder $order */
                 $order = $order->calculate();
-                $total_purchase_amount += $order->getTotalBill();
+                $total_purchase_amount += $order->getNetBill();
                 $total_due_amount += $order->getDue();
             });
 
@@ -133,6 +140,82 @@ class CustomerController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @param $partner
+     * @param PosCustomer $customer
+     * @return JsonResponse
+     */
+    public function orders(Request $request, $partner, PosCustomer $customer)
+    {
+        ini_set('memory_limit', '2096M');
+        try {
+            $partner = $request->partner;
+            $status = $request->status;
+            list($offset, $limit) = calculatePagination($request);
+            /** @var PosOrder $orders */
+            $orders = PosOrder::with('items.service.discounts', 'customer', 'payments', 'logs', 'partner')
+                ->byPartner($partner->id)
+                ->byCustomer($customer->id)
+                ->orderBy('created_at', 'desc')
+                ->skip($offset)
+                ->take($limit)
+                ->get();
+
+            $final_orders = [];
+
+            foreach ($orders as $index => $order) {
+                $order->isRefundable();
+                $order_data = $order->calculate();
+                $manager = new Manager();
+                $manager->setSerializer(new CustomSerializer());
+                $resource = new Item($order_data, new PosOrderTransformer());
+                $order_formatted = $manager->createData($resource)->toArray()['data'];
+                $order_create_date = $order->created_at->format('Y-m-d');
+                if (!isset($final_orders[$order_create_date])) $final_orders[$order_create_date] = [];
+                if (($status == "null") || !$status || ($status && $order->getPaymentStatus() == $status)) {
+                    array_push($final_orders[$order_create_date], $order_formatted);
+                }
+            }
+
+            $orders_formatted = [];
+
+            $pos_orders_repo = new PosOrderRepository();
+            $pos_sales = [];
+            foreach (array_keys($final_orders) as $date) {
+                $timeFrame = new TimeFrame();
+                $timeFrame->forADay(Carbon::parse($date))->getArray();
+                $pos_orders = $pos_orders_repo->getCreatedOrdersBetweenByPartnerAndCustomer($timeFrame, $partner, $customer);
+                $pos_orders->map(function ($pos_order) {
+                    /** @var PosOrder $pos_order */
+                    $pos_order->sale = $pos_order->getNetBill();
+                    $pos_order->due  = $pos_order->getDue();
+                });
+                $pos_sales[$date] = [
+                    'total_sale' => $pos_orders->sum('sale'),
+                    'total_due'  => $pos_orders->sum('due')
+                ];
+            }
+
+            foreach ($final_orders as $key => $value) {
+                if (count($value) > 0) {
+                    $order_list = [
+                        'date' => $key,
+                        'total_sale' => $pos_sales[$key]['total_sale'],
+                        'total_due' => $pos_sales[$key]['total_due'],
+                        'orders' => $value
+                    ];
+                    array_push($orders_formatted, $order_list);
+                }
+            }
+
+            return api_response($request, $orders_formatted, 200, ['orders' => $orders_formatted]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

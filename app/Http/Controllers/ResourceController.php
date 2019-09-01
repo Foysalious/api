@@ -5,11 +5,13 @@ use App\Models\Profile;
 use App\Models\Resource;
 use App\Repositories\ProfileRepository;
 use App\Repositories\ReviewRepository;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use DB;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Illuminate\Support\Facades\Redis;
+use Throwable;
 
 class ResourceController extends Controller
 {
@@ -17,7 +19,6 @@ class ResourceController extends Controller
     private $profileRepo;
 
     const REPTO_IP = '52.89.162.43';
-
     #const REPTO_IP = '103.4.146.66';
 
     public function __construct()
@@ -26,6 +27,12 @@ class ResourceController extends Controller
         $this->profileRepo = new ProfileRepository();
     }
 
+    /**
+     * @param $partner
+     * @param $resource
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function show($partner, $resource, Request $request)
     {
         try {
@@ -46,9 +53,10 @@ class ResourceController extends Controller
                 return $item->review != '' || $item->review != null;
             })->count();
             $resource['joined_at'] = (PartnerResource::where([['resource_id', $resource->id], ['partner_id', (int)$partner]])->first())->created_at->timestamp;
+            $resource['types'] = $resource->typeIn($partner);
             removeRelationsAndFields($resource);
             return api_response($request, $resource, 200, ['resource' => $resource]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -75,7 +83,7 @@ class ResourceController extends Controller
             }
             $info = array('rating' => $resource['rating'], 'total_reviews' => $reviews->count(), 'reviews' => array_slice($reviews->toArray(), $offset, $limit), 'breakdown' => $breakdown);
             return api_response($request, $info, 200, ['info' => $info]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -90,7 +98,7 @@ class ResourceController extends Controller
                 return api_response($request, null, 200, ['profile' => collect($profile)->only(['id', 'name', 'mobile', 'address', 'pro_pic', 'email'])]);
             }
             return api_response($request, null, 404);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -119,7 +127,7 @@ class ResourceController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return api_response($request, null, 500);
         }
     }

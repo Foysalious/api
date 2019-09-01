@@ -41,7 +41,7 @@ class BusTicket
             ->setEventId($this->transportTicketOrder->id)
             ->setAmount($this->transportTicketOrder->amount)
             ->setLog($log)
-            ->setMovieTicketOrder($this->transportTicketOrder);
+            ->setTransportTicketOrder($this->transportTicketOrder);
 
         $this->agent->transportTicketTransaction($transaction);
     }

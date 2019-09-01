@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Repositories;
+<?php namespace App\Repositories;
 
 use App\Jobs\SendOrderConfirmationEmail;
 use App\Library\PortWallet;
@@ -370,7 +368,6 @@ class CheckoutRepository
             return false;
         }
     }
-
 
     public function sendOrderConfirmationMail($order, $customer)
     {

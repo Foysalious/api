@@ -19,7 +19,6 @@ class InfoCallController extends Controller
             $info_calls = $info_calls->filter(function ($info_call) {
                 return is_null($info_call->order);
             });
-            #dd($info_calls);
             $info_call_lists = collect([]);
             foreach ($info_calls as $info_call) {
                 $info = [
@@ -65,7 +64,8 @@ class InfoCallController extends Controller
             $this->setModifier($request->customer);
             $this->validate($request, [
                 'service_name' => 'required|string',
-                'estimated_budget' => 'required|numeric'
+                'estimated_budget' => 'required|numeric',
+                'location_id' => 'numeric',
             ]);
             $customer = $request->customer;
             $profile = $customer->profile;
@@ -74,6 +74,7 @@ class InfoCallController extends Controller
                 'service_name' => $request->service_name,
                 'estimated_budget' => $request->estimated_budget,
                 'customer_name' => $profile->name,
+                'location_id' => $request->location_id,
                 'customer_mobile' => $profile->mobile,
                 'customer_email' => !empty($profile->email) ? $profile->email : null,
                 'customer_address' => !empty($profile->address) ? $profile->address : '',

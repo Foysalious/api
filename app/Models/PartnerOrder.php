@@ -1,10 +1,11 @@
 <?php namespace App\Models;
 
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
+use Sheba\Dal\BaseModel;
 use Sheba\Dal\Discount\DiscountTypes;
+use Sheba\Dal\PartnerOrder\Events\PartnerOrderSaved;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Order\Code\Builder as CodeBuilder;
 use Sheba\PartnerOrder\PartnerOrderPaymentStatuses;
@@ -12,8 +13,9 @@ use Sheba\PartnerOrder\PartnerOrderStatuses;
 use Sheba\PartnerOrder\StatusCalculator;
 use Sheba\Payment\PayableType;
 use Sheba\Report\Updater\PartnerOrder as ReportUpdater;
+use Sheba\Report\Updater\UpdatesReport;
 
-class PartnerOrder extends Model implements PayableType
+class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
 {
     use ReportUpdater;
 
@@ -76,6 +78,8 @@ class PartnerOrder extends Model implements PayableType
     /** @var CodeBuilder */
     private $codeBuilder;
     private $statusCalculator;
+
+    protected static $savedEventClass = PartnerOrderSaved::class;
 
     public function __construct($attributes = [])
     {

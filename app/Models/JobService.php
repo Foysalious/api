@@ -1,14 +1,18 @@
 <?php namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\BaseModel;
+use Sheba\Dal\JobService\Events\JobServiceSaved;
 use Sheba\Report\Updater\JobService as ReportUpdater;
+use Sheba\Report\Updater\UpdatesReport;
 
-class JobService extends Model
+class JobService extends BaseModel implements UpdatesReport
 {
     use ReportUpdater;
     protected $guarded = ['id'];
     protected $casts = ['unit_price' => 'double', 'quantity' => 'double'];
     protected $table = 'job_service';
+
+    protected static $savedEventClass = JobServiceSaved::class;
 
     public function job()
     {

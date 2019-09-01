@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Controller;
 
+use App\Models\Partner;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
 
@@ -36,6 +37,7 @@ use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Profile\Creator as ProfileCreator;
 use Sheba\Pos\Customer\Creator as PosCustomerCreator;
 use Sheba\PaymentLink\Creator as PaymentLinkCreator;
+use Sheba\Reports\PdfHandler;
 use Sheba\Repositories\PartnerRepository;
 use Throwable;
 
@@ -126,8 +128,9 @@ class OrderController extends Controller
     {
         try {
             /** @var PosOrder $order */
-            $order = PosOrder::with('items.service.discounts', 'customer', 'payments', 'logs', 'partner')->find($request->order)->calculate();
+            $order = PosOrder::with('items.service.discounts', 'customer', 'payments', 'logs', 'partner')->find($request->order);
             if (!$order) return api_response($request, null, 404, ['msg' => 'Order Not Found']);
+            $order->calculate();
 
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
@@ -187,6 +190,7 @@ class OrderController extends Controller
                 $link = ['link' => $transformer->getLink()];
             }
             $order = ['id' => $order->id, 'payment_status' => $order->payment_status, 'net_bill' => $order->net_bill];
+
             return api_response($request, null, 200, ['message' => 'Order Created Successfully', 'order' => $order, 'payment' => $link]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -388,6 +392,55 @@ class OrderController extends Controller
             $order->payment_status = $order->getPaymentStatus();
 
             return api_response($request, null, 200, ['msg' => 'Payment Collect Successfully', 'order' => $order]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @param $partner
+     * @param PosOrder $order
+     * @return JsonResponse|string
+     */
+    public function downloadInvoice(Request $request, $partner, PosOrder $order)
+    {
+        try {
+            $pdf_handler = new PdfHandler();
+            $pos_order = $order->calculate();
+            $partner = $pos_order->partner;
+            $info = [
+                'amount' => $pos_order->getNetBill(),
+                'created_at' => $pos_order->created_at->format('jS M, Y, h:i A'),
+                'payment_receiver' => [
+                    'name'      => $partner->name,
+                    'image'     => $partner->logo,
+                    'mobile'    => $partner->getContactNumber(),
+                    'address'   => $partner->address,
+                    'vat_registration_number' => $partner->vat_registration_number
+                ],
+                'pos_order' => $pos_order ? [
+                    'items'     => $pos_order->items,
+                    'discount'  => $pos_order->getTotalDiscount(),
+                    'total'     => $pos_order->getTotalPrice(),
+                    'grand_total' => $pos_order->getTotalBill(),
+                    'paid'      => $pos_order->getPaid(),
+                    'due'       => $pos_order->getDue(),
+                    'status'    => $pos_order->getPaymentStatus(),
+                    'vat'       => $pos_order->getTotalVat()] : null
+            ];
+            if ($pos_order->customer) {
+                $customer = $pos_order->customer->profile;
+                $info['user'] = [
+                    'name'      => $customer->name,
+                    'mobile'    => $customer->mobile
+                ];
+            }
+            $invoice_name = 'pos_order_invoice_' . $pos_order->id;
+            $link = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
+
+            return api_response($request, null, 200, ['message' => 'Successfully Download receipt', 'link' => $link]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

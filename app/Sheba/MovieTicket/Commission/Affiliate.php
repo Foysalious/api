@@ -13,6 +13,15 @@ class Affiliate extends MovieTicketCommission
         }
     }
 
+    public function disburseNew()
+    {
+        $this->storeAgentsCommissionNew();
+        if ($this->agent->ambassador) {
+            $this->storeAmbassadorCommission();
+            $this->storeAmbassadorWalletTransaction();
+        }
+    }
+
     private function storeAmbassadorCommission()
     {
         $this->movieTicketOrder->ambassador_commission = $this->calculateAmbassadorCommissionForMovieTicket($this->movieTicketOrder->amount);

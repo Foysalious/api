@@ -3,13 +3,16 @@
 use App\Models\Transport\TransportTicketOrder;
 use App\Sheba\Payment\Rechargable;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\Affiliate\Events\AffiliateSaved;
+use Sheba\Dal\BaseModel;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 use Sheba\MovieTicket\MovieAgent;
 use Sheba\MovieTicket\MovieTicketTrait;
 use Sheba\MovieTicket\MovieTicketTransaction;
 use Sheba\Payment\Wallet;
+use Sheba\Report\Updater\Affiliate as ReportUpdater;
+use Sheba\Report\Updater\UpdatesReport;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
@@ -17,9 +20,8 @@ use Sheba\Transport\Bus\BusTicketCommission;
 use Sheba\Transport\TransportAgent;
 use Sheba\Transport\TransportTicketTransaction;
 use Sheba\Voucher\Contracts\CanApplyVoucher;
-use Sheba\Report\Updater\Affiliate as ReportUpdater;
 
-class Affiliate extends Model implements TopUpAgent, MovieAgent, TransportAgent, CanApplyVoucher, Rechargable
+class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAgent, CanApplyVoucher, Rechargable, UpdatesReport
 {
     use ReportUpdater, TopUpTrait, MovieTicketTrait, Wallet, ModificationFields;
 
@@ -27,6 +29,8 @@ class Affiliate extends Model implements TopUpAgent, MovieAgent, TransportAgent,
     protected $dates = ['last_suspended_at'];
     protected $casts = ['wallet' => 'double', 'is_ambassador' => 'int', 'is_suspended' => 'int', 'total_gifted_amount' => 'double'];
     protected $appends = ['joined'];
+
+    protected static $savedEventClass = AffiliateSaved::class;
 
     public function profile()
     {
@@ -235,6 +239,12 @@ class Affiliate extends Model implements TopUpAgent, MovieAgent, TransportAgent,
     {
         $this->debitWallet($transaction->getAmount());
         $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
+    }
+
+    public function movieTicketTransactionNew(MovieTicketTransaction $transaction)
+    {
+        $this->creditWallet($transaction->getAmount());
+        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Credit', 'log' => $transaction->getLog()]);
     }
 
     public function transportTicketOrders()

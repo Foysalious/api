@@ -74,6 +74,24 @@ class Updater
             $this->updatedData['vat_percentage'] = (double)$this->data['vat_percentage'];
         }
 
+        if ((isset($this->data['is_warranty_off']) && $this->data['is_warranty_off'] == 'true')) {
+            $this->updatedData['warranty'] = null;
+        } else if (isset($this->data['warranty']) && $this->data['warranty'] != $this->service->warranty) {
+            $this->updatedData['warranty'] = $this->data['warranty'];
+        }
+
+        if (isset($this->data['warranty_unit']) && $this->data['warranty_unit'] == "null") {
+            $this->updatedData['warranty_unit'] = config('pos.warranty_unit.day.en');
+        } else if (isset($this->data['warranty_unit']) && $this->data['warranty_unit'] != $this->service->warranty_unit) {
+            $this->updatedData['warranty_unit'] = $this->data['warranty_unit'];
+        }
+
+        if ((isset($this->data['is_unit_off']) && $this->data['is_unit_off'] == 'true')) {
+            $this->updatedData['unit'] = null;
+        } else if (isset($this->data['unit']) && $this->data['unit'] != $this->service->unit) {
+            $this->updatedData['unit'] = $this->data['unit'];
+        }
+
         if ((isset($this->data['pos_category_id']) && $this->data['pos_category_id'] != $this->service->pos_category_id)) {
             $this->updatedData['pos_category_id'] = $this->data['pos_category_id'];
         }
