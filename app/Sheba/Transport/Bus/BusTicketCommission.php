@@ -44,7 +44,7 @@ abstract class BusTicketCommission
         $this->transportTicketOrder->agent_amount = $this->calculateTransportTicketCommission();
         $this->transportTicketOrder->save();
 
-        $log = ($this->transportTicketOrder->sheba_amount - $this->transportTicketOrder->agent_amount) . " has been credited for a transport ticket purchase, of user with mobile number: " . $this->transportTicketOrder->reserver_mobile;
+        $log = number_format(($this->transportTicketOrder->sheba_amount - $this->transportTicketOrder->agent_amount),2) . "TK  been collected from Sheba for transport ticker sales commission, of user with mobile number: " . $this->transportTicketOrder->reserver_mobile;
         $transaction = (new TransportTicketTransaction())
             ->setAmount($this->transportTicketOrder->sheba_amount - $this->transportTicketOrder->agent_amount)
             ->setLog($log)
