@@ -657,8 +657,8 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
 
     public function transportTicketTransaction(TransportTicketTransaction $transaction)
     {
-        $this->debitWallet($transaction->getAmount());
-        $this->walletTransaction(['amount' => $transaction->getAmount(), 'event_type' => $transaction->getEventType(), 'event_id' => $transaction->getEventId(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
+        $this->creditWallet($transaction->getAmount());
+        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Credit', 'log' => $transaction->getLog()]);
     }
 
     public function transportTicketOrders()
