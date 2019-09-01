@@ -58,7 +58,7 @@ class Resource extends Model
 
     public function isManager(Partner $partner)
     {
-        return $this->isOfTypesIn($partner, ["Admin", "Operation", "Owner", "Management", "Finance"]);
+        return $this->isOfTypesIn($partner, ["Admin", "Operation", "Owner", "Management", "Finance", "Salesman"]);
     }
 
     public function isAdmin(Partner $partner)

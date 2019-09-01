@@ -1,23 +1,23 @@
-<?php
-
-namespace App\Http\Middleware;
+<?php namespace App\Http\Middleware;
 
 use App\Models\Partner;
 use App\Models\Resource;
 use Closure;
+use Illuminate\Http\Request;
 
 class ManagerAuthMiddleware
 {
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request $request
-     * @param  \Closure $next
+     * @param  Request $request
+     * @param Closure $next
      * @return mixed
      */
     public function handle($request, Closure $next)
     {
         if ($request->has('remember_token')) {
+            /** @var Resource $manager_resource */
             $manager_resource = Resource::where('remember_token', $request->input('remember_token'))->first();
             $partner = Partner::find($request->partner);
             if ($manager_resource && $partner) {
