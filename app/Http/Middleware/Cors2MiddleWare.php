@@ -1,8 +1,7 @@
-<?php
-
-namespace App\Http\Middleware;
+<?php namespace App\Http\Middleware;
 
 use Closure;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 class Cors2MiddleWare
@@ -10,8 +9,8 @@ class Cors2MiddleWare
     /**
      * Handle an incoming request.
      *
-     * @param \Illuminate\Http\Request $request
-     * @param \Closure $next
+     * @param Request $request
+     * @param Closure $next
      * @return mixed
      */
     public function handle($request, Closure $next)
@@ -79,6 +78,8 @@ class Cors2MiddleWare
             "https://pl.dev-sheba.xyz",
             "https://pl.sheba.xyz",
             "https://topup.sheba.xyz",
+            "https://transport.sheba.xyz",
+            "https://movie.sheba.xyz"
         ];
         // ALLOW OPTIONS METHOD
         $headers['Access-Control-Allow-Credentials'] = 'true';
