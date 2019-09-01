@@ -82,7 +82,7 @@ abstract class MovieTicketCommission
     }
     protected function storeAgentsCommissionNew(){
 
-        $this->movieTicketOrder->agent_commission = $this->calculateMovieTicketCommission($this->amount - $this->movieTicketOrder->amount);
+        $this->movieTicketOrder->agent_commission = $this->calculateMovieTicketCommission($this->amount);
         $this->movieTicketOrder->save();
 
         $transaction = (new MovieTicketTransaction())->setAmount( $this->movieTicketOrder->agent_commission)
