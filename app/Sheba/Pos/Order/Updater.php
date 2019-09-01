@@ -51,7 +51,7 @@ class Updater
             foreach ($services as $service) {
                 $item = $this->itemRepo->findByService($this->order, $service['id']);
                 $service_data['quantity'] = $service['quantity'];
-                if ($item->discount ) $service_data['discount'] = ($item->discount / $item->quantity) * $service['quantity'];
+                if ($item->discount && $item->quantity) $service_data['discount'] = ($item->discount / $item->quantity) * $service['quantity'];
                 $this->manageStock($item, $service['id'], $service['quantity']);
                 $this->itemRepo->update($item, $service_data);
             }
