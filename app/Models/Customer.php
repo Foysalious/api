@@ -15,8 +15,8 @@ use Sheba\TopUp\TopUpTransaction;
 use Sheba\Transport\Bus\BusTicketCommission;
 use Sheba\Transport\TransportAgent;
 use Sheba\Transport\TransportTicketTransaction;
-use Sheba\Voucher\VoucherCodeGenerator;
 use Sheba\Voucher\Contracts\CanApplyVoucher;
+use Sheba\Voucher\VoucherCodeGenerator;
 
 class Customer extends Authenticatable implements Rechargable, Rewardable, TopUpAgent, MovieAgent, TransportAgent, CanApplyVoucher
 {
@@ -218,6 +218,12 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
     {
         $this->debitWallet($transaction->getAmount());
         $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
+    }
+
+    public function movieTicketTransactionNew(MovieTicketTransaction $transaction)
+    {
+        $this->creditWallet($transaction->getAmount());
+        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Credit', 'log' => $transaction->getLog()]);
     }
 
     public function transportTicketOrders()

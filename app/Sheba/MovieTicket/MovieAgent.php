@@ -8,6 +8,8 @@ interface MovieAgent
 
     public function movieTicketTransaction(MovieTicketTransaction $transaction);
 
+    public function movieTicketTransactionNew(MovieTicketTransaction $transaction);
+
     public function refund($amount, $log);
 
     public function calculateMovieTicketCommission($amount, MovieTicketVendor $movieTicketVendor);

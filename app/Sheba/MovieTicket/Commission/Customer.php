@@ -12,4 +12,8 @@ class Customer extends MovieTicketCommission
     {
         $this->refundAgentsCommission();
     }
+    public function disburseNew()
+    {
+        // TODO: Implement disburseNew() method.
+    }
 }
