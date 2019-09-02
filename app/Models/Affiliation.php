@@ -2,6 +2,7 @@
 
 use Carbon\Carbon;
 use Sheba\Dal\Affiliation\Events\AffiliationSaved;
+use Sheba\Dal\AffiliationStatusChangeLog\AffiliationStatusChangeLog;
 use Sheba\Dal\BaseModel;
 use Sheba\Report\Updater\Affiliation as ReportUpdater;
 use Sheba\Report\Updater\UpdatesReport;

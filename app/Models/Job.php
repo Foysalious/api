@@ -7,6 +7,8 @@ use Sheba\Dal\BaseModel;
 use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Dal\Job\Events\JobSaved;
 use Sheba\Dal\JobDiscount\JobDiscount;
+use Sheba\Dal\JobCancelLog\JobCancelLog;
+use Sheba\Dal\JobCancelRequest\JobCancelRequest;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Jobs\CiCalculator;
 use Sheba\Dal\Complain\Model as Complain;
