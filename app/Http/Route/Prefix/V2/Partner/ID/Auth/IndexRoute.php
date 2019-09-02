@@ -64,6 +64,7 @@ class IndexRoute
                         $api->get('/send-sms', 'Pos\OrderController@sendSms');
                         $api->get('/send-email', 'Pos\OrderController@sendEmail');
                         $api->get('/download-invoice', 'Pos\OrderController@downloadInvoice');
+                        $api->post('store-note', 'Pos\OrderController@storeNote');
                     });
                 });
 
