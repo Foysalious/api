@@ -446,4 +446,28 @@ class OrderController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    /**
+     * @param Request $request
+     * @param $partner
+     * @param PosOrder $order
+     * @return JsonResponse|string
+     */
+    public function storeNote(Request $request, $partner, PosOrder $order)
+    {
+        try {
+            $this->validate($request, ['note' => 'required']);
+            $this->setModifier($request->manager_resource);
+            $order->note = $request->note;
+            $order->update();
+
+            return api_response($request, null, 200, ['msg' => 'Note created successfully', 'order' => $order]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }

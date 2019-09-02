@@ -35,4 +35,13 @@ class PosServiceRepository extends BaseRepository implements PosServiceRepositor
     {
         return $service->delete();
     }
+
+    /**
+     * @param $id
+     * @return mixed
+     */
+    public function findWithTrashed($id)
+    {
+        return PartnerPosService::withTrashed()->find($id);
+    }
 }

@@ -20,6 +20,7 @@ class PosOrderTransformer extends TransformerAbstract
         $data = [
             'id' => $order->id,
             'previous_order_id' => $order->previous_order_id,
+            'note' => $order->note,
             'created_by_name' => $order->created_by_name,
             'created_at' => $order->created_at->format('Y-m-d h:i A'),
             'partner_name' => $order->partner->name,
