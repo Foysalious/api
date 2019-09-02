@@ -28,9 +28,8 @@ class PartnerRegistrationController extends Controller
 {
     private $fbKit;
     private $profileRepository;
-    private $sms;
-
     /** @var Sms */
+    private $sms;
 
     public function __construct()
     {
