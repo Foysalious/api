@@ -1,6 +1,5 @@
 <?php namespace App\Repositories;
 
-use App\Jobs\SendOrderConfirmationEmail;
 use App\Library\PortWallet;
 use App\Models\Affiliation;
 use App\Models\Customer;
@@ -10,18 +9,15 @@ use App\Models\InfoCall;
 use App\Models\Job;
 use App\Models\Order;
 use App\Models\PartnerOrder;
-use App\Models\PartnerOrderPayment;
+use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use App\Models\PartnerServiceDiscount;
 use App\Models\Service;
-use App\Models\User;
-use App\Sheba\Pap\Pap;
 use Cache;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
-use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use LaravelFCM\Message\OptionsBuilder;
 use LaravelFCM\Message\PayloadDataBuilder;

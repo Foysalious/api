@@ -1,10 +1,10 @@
 <?php namespace Sheba\Checkout\Adapters;
 
 use App\Models\Job;
-use App\Models\JobService;
+use Sheba\Dal\JobService\JobService;
 use App\Models\Order;
 use App\Models\PartnerOrder;
-use App\Models\PartnerOrderPayment;
+use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use App\Models\Payable;
 use App\Models\PaymentDetail;
 use App\Models\Resource;

@@ -1,12 +1,8 @@
-<?php
-
-namespace App\Sheba\Checkout;
-
+<?php namespace App\Sheba\Checkout;
 
 use App\Library\PortWallet;
-use App\Models\Order;
 use App\Models\PartnerOrder;
-use App\Models\PartnerOrderPayment;
+use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use App\Repositories\NotificationRepository;
 use App\Sheba\UserRequestInformation;
 use GuzzleHttp\Client;

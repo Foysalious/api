@@ -1,8 +1,6 @@
-<?php
+<?php namespace App\Http\Controllers;
 
-namespace App\Http\Controllers;
-
-use App\Models\PartnerOrderPayment;
+use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use App\Models\Resource;
 use Carbon\Carbon;
 use Illuminate\Http\Request;

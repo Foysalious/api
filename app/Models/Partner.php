@@ -5,6 +5,7 @@ use Carbon\Carbon;
 use DB;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Dal\Complain\Model as Complain;
+use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use Sheba\HasWallet;
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;

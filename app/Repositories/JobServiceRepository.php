@@ -1,10 +1,7 @@
-<?php
-
-namespace App\Repositories;
+<?php namespace App\Repositories;
 
 use App\Models\Job;
-use App\Models\JobService;
-use App\Models\PartnerService;
+use Sheba\Dal\JobService\JobService;
 use App\Models\Service;
 use App\Sheba\Checkout\Discount;
 use Carbon\Carbon;

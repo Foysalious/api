@@ -1,7 +1,7 @@
 <?php namespace Sheba\JobService;
 
 use App\Models\Job;
-use App\Models\JobService;
+use Sheba\Dal\JobService\JobService;
 use App\Models\JobUpdateLog;
 use Illuminate\Support\Facades\DB;
 use Sheba\Jobs\Discount;

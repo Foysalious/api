@@ -13,7 +13,7 @@ class Affiliation extends BaseModel implements UpdatesReport
 
     protected $guarded = ['id'];
 
-    protected static $savedEventClass = AffiliationSaved::class;
+    public static $savedEventClass = AffiliationSaved::class;
 
     public function affiliate()
     {

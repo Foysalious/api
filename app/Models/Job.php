@@ -8,6 +8,8 @@ use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Dal\Job\Events\JobSaved;
 use Sheba\Dal\JobDiscount\JobDiscount;
 use Sheba\Dal\JobCancelLog\JobCancelLog;
+use Sheba\Dal\JobMaterial\JobMaterial;
+use Sheba\Dal\JobService\JobService;
 use Sheba\Dal\JobCancelRequest\JobCancelRequest;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Jobs\CiCalculator;
@@ -20,13 +22,9 @@ use Sheba\Logistics\Literals\OneWayInitEvents as OneWayLogisticInitEvents;
 use Sheba\Logistics\OrderManager;
 use Sheba\Logistics\Repository\ParcelRepository;
 use Sheba\Order\Code\Builder as CodeBuilder;
-use Sheba\Report\Updater\Job as ReportUpdater;
-use Sheba\Report\Updater\UpdatesReport;
 
-class Job extends BaseModel implements UpdatesReport
+class Job extends BaseModel
 {
-    use ReportUpdater;
-
     protected $guarded = ['id'];
     protected $materialPivotColumns = ['id', 'material_name', 'material_price', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
     protected $casts = ['sheba_contribution' => 'double', 'partner_contribution' => 'double', 'commission_rate' => 'double'];
@@ -96,7 +94,7 @@ class Job extends BaseModel implements UpdatesReport
     /** @var OrderManager */
     private $logisticOrderManager;
 
-    protected static $savedEventClass = JobSaved::class;
+    public static $savedEventClass = JobSaved::class;
 
     public function __construct(array $attributes = [])
     {

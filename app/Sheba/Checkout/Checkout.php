@@ -8,7 +8,7 @@ use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\InfoCall;
 use App\Models\Job;
-use App\Models\JobService;
+use Sheba\Dal\JobService\JobService;
 use App\Models\Location;
 use App\Models\Order;
 use App\Models\Partner;

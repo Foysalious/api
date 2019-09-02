@@ -1,6 +1,6 @@
 <?php namespace Sheba\Reward\Event\Customer\Action\WalletCashback\Parameter;
 
-use App\Models\PartnerOrderPayment;
+use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use Sheba\Reward\Event\ActionEventParameter;
 use Sheba\Reward\Exception\ParameterTypeMismatchException;
 

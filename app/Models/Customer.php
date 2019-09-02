@@ -27,7 +27,7 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
     protected $casts = ['wallet' => 'double'];
     private $firstOrder;
 
-    protected static $savedEventClass = CustomerSaved::class;
+    public static $savedEventClass = CustomerSaved::class;
 
     public function mobiles()
     {
