@@ -1,10 +1,7 @@
-<?php
-
-namespace Sheba\Payment\Complete;
-
+<?php namespace Sheba\Payment\Complete;
 
 use App\Models\PartnerOrder;
-use App\Models\PartnerOrderPayment;
+use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use App\Models\PaymentDetail;
 use Illuminate\Database\QueryException;
 use Sheba\ModificationFields;

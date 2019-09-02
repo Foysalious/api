@@ -1,7 +1,7 @@
 <?php namespace Sheba\Jobs;
 
 use App\Models\Job;
-use App\Models\JobCancelLog;
+use Sheba\Dal\JobCancelLog\JobCancelLog;
 use App\Models\JobCrmChangeLog;
 use App\Models\JobDeclineLog;
 use App\Models\JobNoResponseLog;
@@ -11,7 +11,6 @@ use App\Models\JobUpdateLog;
 
 use App\Models\Voucher;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
 use Sheba\ModificationFields;
 use Sheba\RequestIdentification;
 
@@ -35,7 +34,7 @@ class JobLogsCreator
         $this->job = $job;
         return $this;
     }
-    
+
     public function updateLog($log)
     {
         $logData = [
@@ -179,7 +178,7 @@ class JobLogsCreator
         ];
         JobCrmChangeLog::create($this->withCreateModificationField($data));
     }
-    
+
     public function cmChangeLogForMultiple(Array $jobs, $new_crm_id)
     {
         $data = [];

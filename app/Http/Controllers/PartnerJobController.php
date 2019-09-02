@@ -1,7 +1,7 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\Job;
-use App\Models\JobMaterial;
+use Sheba\Dal\JobMaterial\JobMaterial;
 use App\Models\JobUpdateLog;
 use App\Models\Resource;
 use App\Repositories\PartnerOrderRepository;
