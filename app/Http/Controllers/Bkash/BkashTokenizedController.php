@@ -21,9 +21,6 @@ class BkashTokenizedController extends Controller
         /** @var Payment $payment */
         $payment = Payment::where('gateway_transaction_id', $request->paymentID)->valid()->first();
 
-        $transaction = $payment->getShebaTransaction();
-        $transaction = (new Registrar())->register($payment->payable->user, $transaction->getGateway(), $transaction->getDetails()->trxID);
-
         if (!$payment) return api_response($request, null, 404, ['message' => 'Valid Payment not found.']);
         $redirect_url = $payment->payable->success_url . '?invoice_id=' . $payment->transaction_id;
 
