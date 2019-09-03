@@ -363,12 +363,13 @@ class CategoryController extends Controller
                         removeRelationsAndFields($service);
                     });
                 }
-
                 if ($location) {
+                    $services->load(['activeSubscription', 'locations' => function ($q) {
+                        $q->select('id');
+                    }]);
                     $services = collect($services);
                     $services = $services->filter(function ($service) use ($location) {
                         $locations = $service->locations->pluck('id')->toArray();
-                        removeRelationsAndFields($service);
                         return in_array($location, $locations);
                     });
                 }
@@ -392,10 +393,9 @@ class CategoryController extends Controller
                                 ];
                             }
                         }
-
-                        removeRelationsAndFields($service);
                         $subscriptions->push($subscription);
                     }
+                    removeRelationsAndFields($service);
                 }
 
                 if ($services->count() > 0) {
@@ -419,6 +419,7 @@ class CategoryController extends Controller
                 return api_response($request, null, 404);
             }
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
