@@ -23,6 +23,7 @@ use Sheba\ModificationFields;
 class CategoryController extends Controller
 {
     use Helpers, ModificationFields, CategoryServiceGroup;
+
     private $categoryRepository;
     private $serviceRepository;
 
@@ -36,10 +37,10 @@ class CategoryController extends Controller
     {
         $filter_publication = function ($q) use ($request) {
             $is_business = $request->has('is_business') && (int)$request->is_business;
-            $is_partner = ($request->has('is_partner') && (int)$request->is_partner)
-                || in_array($request->header('portal-name'), ['manager-app', 'bondhu-app']);
+            $is_partner = ($request->has('is_partner') && (int)$request->is_partner) || in_array($request->header('portal-name'), ['manager-app', 'bondhu-app']);
             $is_b2b = $request->has('is_b2b') && (int)$request->is_b2b;
             $is_partner_registration = $request->has('is_partner_registration') && (int)$request->is_partner_registration;
+
             if ($is_business) {
                 $q->publishedForBusiness();
             } elseif ($is_partner) {
@@ -52,7 +53,6 @@ class CategoryController extends Controller
                 $q->published();
             }
         };
-
         try {
             $this->validate($request, ['location' => 'sometimes|numeric', 'lat' => 'sometimes|numeric', 'lng' => 'required_with:lat']);
 
@@ -124,7 +124,6 @@ class CategoryController extends Controller
             foreach ($categories as $category) {
                 array_push($categories_final, $category);
             }
-
             return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $categories_final]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);

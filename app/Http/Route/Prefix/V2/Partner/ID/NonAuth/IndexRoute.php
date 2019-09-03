@@ -1,6 +1,5 @@
 <?php namespace App\Http\Route\Prefix\V2\Partner\ID\NonAuth;
 
-
 class IndexRoute
 {
     public function set($api)
