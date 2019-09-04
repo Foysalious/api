@@ -27,6 +27,7 @@ class PaymentRepository
         $new_payment->created_at = Carbon::now();
         $new_payment->payment_id = $this->payment->id;
         $new_payment->save();
+
         return $new_payment;
     }
 }
