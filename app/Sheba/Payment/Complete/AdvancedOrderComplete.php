@@ -1,14 +1,9 @@
-<?php
-
-namespace Sheba\Payment\Complete;
-
+<?php namespace Sheba\Payment\Complete;
 
 use App\Models\PartnerOrder;
 use App\Models\PartnerOrderPayment;
 use App\Models\PaymentDetail;
 use Illuminate\Database\QueryException;
-use Sheba\Dal\Discount\DiscountTypes;
-use Sheba\JobDiscount\JobDiscountCheckingParams;
 use Sheba\ModificationFields;
 use DB;
 use Sheba\RequestIdentification;
@@ -59,28 +54,6 @@ class AdvancedOrderComplete extends BaseOrderComplete
             throw $e;
         }
         return $this->payment;
-    }
-
-    public function giveOnlineDiscount(PartnerOrder $partner_order, $payment_method)
-    {
-        $partner_order->calculate(true);
-        $job = $partner_order->getActiveJob();
-        if ($job->isOnlinePaymentDiscountApplicable()) {
-
-            $discount_checking_params = (new JobDiscountCheckingParams())
-                ->setDiscountableAmount($partner_order->due)
-                ->setOrderAmount($partner_order->grossAmount)
-                ->setPaymentGateway($payment_method);
-
-            $this->jobDiscountHandler->setType(DiscountTypes::ONLINE_PAYMENT)
-                ->setCheckingParams($discount_checking_params)->calculate();
-
-            if ($this->jobDiscountHandler->hasDiscount()) {
-                $this->jobDiscountHandler->create($job);
-                $job->discount += $this->jobDiscountHandler->getApplicableAmount();
-                $job->update();
-            }
-        }
     }
 
     protected function saveInvoice()

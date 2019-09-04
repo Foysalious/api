@@ -1,16 +1,12 @@
 <?php namespace Sheba\Payment\Complete;
 
 use Sheba\Checkout\Adapters\SubscriptionOrderAdapter;
-use Sheba\JobDiscount\JobDiscountCheckingParams;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
-use Sheba\Dal\Discount\InvalidDiscountType;
-use Sheba\Dal\Discount\DiscountTypes;
 use App\Models\SubscriptionOrder;
 use Sheba\RequestIdentification;
 use App\Models\PaymentDetail;
 use App\Models\PartnerOrder;
-use Sheba\ModificationFields;
 use App\Models\Payment;
 use GuzzleHttp\Client;
 use Carbon\Carbon;
@@ -19,7 +15,6 @@ use Throwable;
 
 class OrderComplete extends BaseOrderComplete
 {
-    use ModificationFields;
 
     CONST ONLINE_PAYMENT_THRESHOLD_MINUTES = 9;
     CONST ONLINE_PAYMENT_DISCOUNT = 10;
@@ -40,7 +35,7 @@ class OrderComplete extends BaseOrderComplete
             $model = $payable->getPayableModel();
             $payable_model = $model::find((int)$payable->type_id);
             if ($payable_model instanceof PartnerOrder) {
-                $this->giveOnlineDiscount($payable_model, $this->payment->paymentDetails[0]->method);
+                $this->giveOnlineDiscount($payable_model);
             }
             foreach ($this->payment->paymentDetails as $payment_detail) {
                 if ($payable_model instanceof PartnerOrder) {
@@ -121,33 +116,6 @@ class OrderComplete extends BaseOrderComplete
             $subscription_order->convertToOrder();
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
-        }
-    }
-
-    /**
-     * @param PartnerOrder $partner_order
-     * @param $payment_method
-     * @throws InvalidDiscountType
-     */
-    public function giveOnlineDiscount(PartnerOrder $partner_order, $payment_method)
-    {
-        $partner_order->calculate(true);
-        $job = $partner_order->getActiveJob();
-        if ($job->isOnlinePaymentDiscountApplicable()) {
-
-            $discount_checking_params = (new JobDiscountCheckingParams())
-                ->setDiscountableAmount($partner_order->due)
-                ->setOrderAmount($partner_order->grossAmount)
-                ->setPaymentGateway($payment_method);
-
-            $this->jobDiscountHandler->setType(DiscountTypes::ONLINE_PAYMENT)
-                ->setCheckingParams($discount_checking_params)->calculate();
-
-            if ($this->jobDiscountHandler->hasDiscount()) {
-                $this->jobDiscountHandler->create($job);
-                $job->discount += $this->jobDiscountHandler->getApplicableAmount();
-                $job->update();
-            }
         }
     }
 
