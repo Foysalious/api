@@ -139,7 +139,7 @@ class OrderComplete extends PaymentComplete
      * @param $payment_method
      * @throws InvalidDiscountType
      */
-    public function giveOnlineDiscount(PartnerOrder $partner_order, $payment_method)
+    private function giveOnlineDiscount(PartnerOrder $partner_order, $payment_method)
     {
         $partner_order->calculate(true);
         $job = $partner_order->getActiveJob();
