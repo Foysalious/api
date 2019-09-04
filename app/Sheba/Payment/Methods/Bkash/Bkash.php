@@ -11,8 +11,12 @@ use Sheba\ModificationFields;
 use Illuminate\Support\Facades\Redis;
 use Sheba\Payment\Methods\Bkash\Response\ExecuteResponse;
 use Sheba\Payment\Methods\PaymentMethod;
+use Sheba\Payment\Methods\Response\PaymentMethodErrorResponse;
+use Sheba\Payment\Statuses;
 use Sheba\RequestIdentification;
 use DB;
+use Sheba\Transactions\InvalidTransaction;
+use Sheba\Transactions\Registrar;
 
 class Bkash extends PaymentMethod
 {
@@ -94,20 +98,33 @@ class Bkash extends PaymentMethod
         }
         $execute_response->setResponse($res);
         $this->paymentRepository->setPayment($payment);
+
         if ($execute_response->hasSuccess()) {
             $success = $execute_response->getSuccess();
-            $this->paymentRepository->changeStatus(['to' => 'validated', 'from' => $payment->status,
-                'transaction_details' => $payment->transaction_details]);
-            $payment->status = 'validated';
-            $payment->transaction_details = json_encode($success->details);
+
+            try {
+                (new Registrar())->register($payment->payable->user, 'bkash', $success->id);
+                $status = Statuses::VALIDATED;
+                $transaction_details = json_encode($success->details);
+            } catch (InvalidTransaction $e) {
+                $status = Statuses::VALIDATION_FAILED;
+                $transaction_details = json_encode($e->getMessage());
+            }
         } else {
             $error = $execute_response->getError();
-            $this->paymentRepository->changeStatus(['to' => 'validation_failed', 'from' => $payment->status,
-                'transaction_details' => json_encode($error->details)]);
-            $payment->status = 'validation_failed';
-            $payment->transaction_details = json_encode($error->details);
+            $status = Statuses::VALIDATION_FAILED;
+            $transaction_details = json_encode($error->details);
         }
+
+        $this->paymentRepository->changeStatus([
+            'to' => $status,
+            'from' => $payment->status,
+            'transaction_details' => $transaction_details
+        ]);
+        $payment->status = $status;
+        $payment->transaction_details = $transaction_details;
         $payment->update();
+
         return $payment;
     }
 

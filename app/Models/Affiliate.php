@@ -30,7 +30,7 @@ class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAg
     protected $casts = ['wallet' => 'double', 'is_ambassador' => 'int', 'is_suspended' => 'int', 'total_gifted_amount' => 'double'];
     protected $appends = ['joined'];
 
-    protected static $savedEventClass = AffiliateSaved::class;
+    public static $savedEventClass = AffiliateSaved::class;
 
     public function profile()
     {

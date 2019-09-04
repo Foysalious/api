@@ -5,6 +5,7 @@ use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\Discount\DiscountTypes;
+use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use Sheba\Dal\PartnerOrder\Events\PartnerOrderSaved;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Order\Code\Builder as CodeBuilder;
@@ -79,7 +80,7 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
     private $codeBuilder;
     private $statusCalculator;
 
-    protected static $savedEventClass = PartnerOrderSaved::class;
+    public static $savedEventClass = PartnerOrderSaved::class;
 
     public function __construct($attributes = [])
     {

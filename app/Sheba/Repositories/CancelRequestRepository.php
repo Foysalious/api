@@ -1,9 +1,7 @@
 <?php namespace Sheba\Repositories;
 
 use App\Models\Job;
-use App\Models\JobCancelRequest;
-
-use App\Sheba\UserRequestInformation;
+use Sheba\Dal\JobCancelRequest\JobCancelRequest;
 
 class CancelRequestRepository extends BaseRepository
 {

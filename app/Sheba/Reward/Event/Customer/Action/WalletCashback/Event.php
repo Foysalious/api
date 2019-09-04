@@ -1,11 +1,8 @@
 <?php namespace Sheba\Reward\Event\Customer\Action\WalletCashback;
 
-use App\Models\Job;
-use App\Models\PartnerOrderPayment;
-
+use App\Models\Category;
 use Sheba\Reward\AmountCalculator;
 use Sheba\Reward\Event\Action;
-use Sheba\Reward\Exception\ParameterTypeMismatchException;
 use Sheba\Reward\Exception\RulesTypeMismatchException;
 use Sheba\Reward\Event\Rule as BaseRule;
 
@@ -43,7 +40,7 @@ class Event extends Action implements AmountCalculator
         foreach ($this->reward->constraints->groupBy('constraint_type') as $key => $type) {
             $ids = $type->pluck('constraint_id')->toArray();
 
-            if ($key == 'App\Models\Category') {
+            if ($key == Category::class) {
                 return in_array($category_id, $ids);
             }
         }

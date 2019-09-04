@@ -19,7 +19,7 @@ class PosOrderReturnedTransformer extends TransformerAbstract
         $orders = [];
         $details = $order_log->details;
         foreach ($details->items->changes as $key => $item) {
-            $service = $this->serviceRepo->find($key);
+            $service = $this->serviceRepo->findWithTrashed($key);
             $orders['item'][] = [
                 'id'            => $service->id,
                 'name'          => $service->name,

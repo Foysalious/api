@@ -149,13 +149,15 @@ class OperationController extends Controller
         try {
             $this->validate($request, ['categories' => "required|string", 'category_name' => 'string']);
             $manager_resource = $request->manager_resource;
+            $partner = $request->partner;
+            $category_name = $request->category_name;
+
             $by = ["created_by" => $manager_resource->id, "created_by_name" => "Resource - " . $manager_resource->profile->name];
             $categories = array_unique(json_decode($request->categories));
             $categories = Category::whereIn('id', $categories)->get();
             $categories->load('services');
-            $partner = $request->partner;
+
             list($services, $category_partners) = $this->makeCategoryPartnerWithServices($partner, $categories, $by);
-            $category_name = $request->category_name;
             DB::transaction(function () use ($partner, $category_partners, $services, $category_name) {
                 $partner->categories()->sync($category_partners);
                 $partner_resources = PartnerResource::whereIn('id', $partner->handymanResources->pluck('pivot.id')->toArray())->get();
@@ -185,6 +187,12 @@ class OperationController extends Controller
         }
     }
 
+    /**
+     * @param Partner $partner
+     * @param $categories
+     * @param $by
+     * @return array
+     */
     private function makeCategoryPartnerWithServices(Partner $partner, $categories, $by)
     {
         $services = [];
@@ -192,46 +200,24 @@ class OperationController extends Controller
         $location = (new PartnerRepository($partner))->getLocations()->pluck('id');
         try {
             foreach ($categories as $category) {
-                $current_category_partner = ['response_time_min' => constants('PARTNER_MINIMUM_RESPONSE_TIME'), 'response_time_max' => constants('PARTNER_MAXIMUM_RESPONSE_TIME'), 'commission' => $partner->commission, 'preparation_time_minutes' => 120, //$category->preparation_time_minutes,
-                    'category_id' => $category->id];
+                if ($category->isParent()) {
+                    foreach ($category->children()->published()->get() as $secondary_category) {
+                        $current_category_partner = $this->makeCategoryPartner($partner, $secondary_category, $location);
+                        array_push($category_partners, array_merge($current_category_partner, $by));
 
-                if ($partner->package_id === config('sheba.partner_lite_packages_id')) $current_category_partner['is_partner_premise_applied'] = true;
-
-                array_push($category_partners, array_merge($current_category_partner, $by));
-                $category->load(['services' => function ($q) use ($location) {
-                    $q->whereExists(function ($query) use ($location) {
-                        $query->from('location_service')->whereIn('location_id', $location)->whereRaw('service_id=services.id');
-                    })->publishedForAll();
-                }]);
-
-                foreach ($category->services as $service) {
-                    if ($service->variable_type == 'Fixed') {
-                        $options = null;
-                        $price = json_decode($service->variables)->price;
-                    } else {
-                        $options = '';
-                        foreach (json_decode($service->variables)->options as $key => $option) {
-                            $input = explode(',', $option->answers);
-                            $output = implode(',', array_map(function ($value, $key) {
-                                return sprintf("%s", $key);
-                            }, $input, array_keys($input)));
-                            $output = '[' . $output . '],';
-                            $options .= $output;
-                        }
-                        $options = '[' . substr($options, 0, -1) . ']';
-                        $price = ($service->variable_type == 'Options') ? json_encode(json_decode($service->variables)->prices) : "Custom";
-                    }
-
-                    $service_data = ['description' => $service->description, 'options' => $options, 'prices' => $price, 'is_published' => 1, 'service_id' => $service->id];
-
-                    if (in_array($category->id, config('sheba.car_rental.secondary_category_ids'))) {
-                        $service_variables = json_decode($service->variables);
-                        if ($service_variables->base_prices && $service_variables->base_quantity) {
-                            $service_data += ['base_quantity' => json_encode($service_variables->base_quantity), 'base_prices' => json_encode($service_variables->base_prices)];
+                        foreach ($secondary_category->services as $service) {
+                            $service_data = $this->makePartnerService($service, $secondary_category);
+                            array_push($services, array_merge($by, $service_data));
                         }
                     }
+                } else {
+                    $current_category_partner = $this->makeCategoryPartner($partner, $category, $location);
+                    array_push($category_partners, array_merge($current_category_partner, $by));
 
-                    array_push($services, array_merge($by, $service_data));
+                    foreach ($category->services as $service) {
+                        $service_data = $this->makePartnerService($service, $category);
+                        array_push($services, array_merge($by, $service_data));
+                    }
                 }
             }
         } catch (\Throwable $exception) {
@@ -250,5 +236,77 @@ class OperationController extends Controller
             app('sentry')->captureException($exception);
             return api_response($request, null, 500);
         }
+    }
+
+    /**
+     * @param Partner $partner
+     * @param $secondary_category
+     * @param $location
+     * @return array
+     */
+    private function makeCategoryPartner(Partner $partner, $secondary_category, $location)
+    {
+        $current_category_partner = [
+            'response_time_min' => constants('PARTNER_MINIMUM_RESPONSE_TIME'),
+            'response_time_max' => constants('PARTNER_MAXIMUM_RESPONSE_TIME'),
+            'commission' => $partner->commission,
+            'preparation_time_minutes' => 120,
+            'category_id' => $secondary_category->id
+        ];
+
+        if ($partner->package_id === (int)config('sheba.partner_lite_packages_id')) $current_category_partner['is_partner_premise_applied'] = true;
+
+        $secondary_category->load(['services' => function ($q) use ($location) {
+            $q->whereExists(function ($query) use ($location) {
+                $query->from('location_service')->whereIn('location_id', $location)->whereRaw('service_id=services.id');
+            })->publishedForAll();
+        }]);
+
+        return $current_category_partner;
+    }
+
+    /**
+     * @param $service
+     * @param $secondary_category
+     * @return array
+     */
+    private function makePartnerService($service, $secondary_category)
+    {
+        if ($service->variable_type == 'Fixed') {
+            $options = null;
+            $price = json_decode($service->variables)->price;
+        } else {
+            $options = '';
+            foreach (json_decode($service->variables)->options as $key => $option) {
+                $input = explode(',', $option->answers);
+                $output = implode(',', array_map(function ($value, $key) {
+                    return sprintf("%s", $key);
+                }, $input, array_keys($input)));
+                $output = '[' . $output . '],';
+                $options .= $output;
+            }
+            $options = '[' . substr($options, 0, -1) . ']';
+            $price = ($service->variable_type == 'Options') ? json_encode(json_decode($service->variables)->prices) : "Custom";
+        }
+
+        $service_data = [
+            'description' => $service->description,
+            'options' => $options,
+            'prices' => $price,
+            'is_published' => 1,
+            'service_id' => $service->id
+        ];
+
+        if (in_array($secondary_category->id, config('sheba.car_rental.secondary_category_ids'))) {
+            $service_variables = json_decode($service->variables);
+            if ($service_variables->base_prices && $service_variables->base_quantity) {
+                $service_data += [
+                    'base_quantity' => json_encode($service_variables->base_quantity),
+                    'base_prices' => json_encode($service_variables->base_prices)
+                ];
+            }
+        }
+
+        return $service_data;
     }
 }
