@@ -1,37 +1,28 @@
 <?php namespace Sheba\Payment\Complete;
 
-use App\Models\PartnerOrder;
-use App\Models\Payment;
-use App\Models\PaymentDetail;
-use App\Models\SubscriptionOrder;
-use Carbon\Carbon;
-use Exception;
-use GuzzleHttp\Client;
+use Sheba\Checkout\Adapters\SubscriptionOrderAdapter;
+use Sheba\JobDiscount\JobDiscountCheckingParams;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
-use Sheba\Checkout\Adapters\SubscriptionOrderAdapter;
-use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Dal\Discount\InvalidDiscountType;
-use Sheba\JobDiscount\JobDiscountCheckingParams;
-use Sheba\JobDiscount\JobDiscountHandler;
-use Sheba\ModificationFields;
+use Sheba\Dal\Discount\DiscountTypes;
+use App\Models\SubscriptionOrder;
 use Sheba\RequestIdentification;
+use App\Models\PaymentDetail;
+use App\Models\PartnerOrder;
+use Sheba\ModificationFields;
+use App\Models\Payment;
+use GuzzleHttp\Client;
+use Carbon\Carbon;
+use Exception;
 use Throwable;
 
-class OrderComplete extends PaymentComplete
+class OrderComplete extends BaseOrderComplete
 {
     use ModificationFields;
 
     CONST ONLINE_PAYMENT_THRESHOLD_MINUTES = 9;
     CONST ONLINE_PAYMENT_DISCOUNT = 10;
-
-    private $jobDiscountHandler;
-
-    public function __construct(JobDiscountHandler $job_discount_handler)
-    {
-        parent::__construct();
-        $this->jobDiscountHandler = $job_discount_handler;
-    }
 
     /**
      * @return Payment
@@ -71,7 +62,6 @@ class OrderComplete extends PaymentComplete
         }
         return $this->payment;
     }
-
 
     /**
      * @param PartnerOrder $partner_order
@@ -139,7 +129,7 @@ class OrderComplete extends PaymentComplete
      * @param $payment_method
      * @throws InvalidDiscountType
      */
-    private function giveOnlineDiscount(PartnerOrder $partner_order, $payment_method)
+    public function giveOnlineDiscount(PartnerOrder $partner_order, $payment_method)
     {
         $partner_order->calculate(true);
         $job = $partner_order->getActiveJob();
