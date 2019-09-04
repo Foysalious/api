@@ -48,7 +48,9 @@ class OrderComplete extends PaymentComplete
             $this->setModifier($customer = $payable->user);
             $model = $payable->getPayableModel();
             $payable_model = $model::find((int)$payable->type_id);
-            if ($payable_model instanceof PartnerOrder) $this->giveOnlineDiscount($payable_model);
+            if ($payable_model instanceof PartnerOrder) {
+                $this->giveOnlineDiscount($payable_model, $this->payment->paymentDetails[0]->method);
+            }
             foreach ($this->payment->paymentDetails as $payment_detail) {
                 if ($payable_model instanceof PartnerOrder) {
                     $has_error = $this->clearPartnerOrderPayment($payable_model, $customer, $payment_detail, $has_error);
@@ -134,21 +136,24 @@ class OrderComplete extends PaymentComplete
 
     /**
      * @param PartnerOrder $partner_order
+     * @param $payment_method
      * @throws InvalidDiscountType
      */
-    private function giveOnlineDiscount(PartnerOrder $partner_order)
+    public function giveOnlineDiscount(PartnerOrder $partner_order, $payment_method)
     {
         $partner_order->calculate(true);
         $job = $partner_order->getActiveJob();
         if ($job->isOnlinePaymentDiscountApplicable()) {
 
             $discount_checking_params = (new JobDiscountCheckingParams())
-                ->setDiscountableAmount($partner_order->due)->setOrderAmount($partner_order->grossAmount);
+                ->setDiscountableAmount($partner_order->due)
+                ->setOrderAmount($partner_order->grossAmount)
+                ->setPaymentGateway($payment_method);
 
             $this->jobDiscountHandler->setType(DiscountTypes::ONLINE_PAYMENT)
                 ->setCheckingParams($discount_checking_params)->calculate();
 
-            if($this->jobDiscountHandler->hasDiscount()) {
+            if ($this->jobDiscountHandler->hasDiscount()) {
                 $this->jobDiscountHandler->create($job);
                 $job->discount += $this->jobDiscountHandler->getApplicableAmount();
                 $job->update();
