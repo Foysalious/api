@@ -73,19 +73,6 @@ class OrderComplete extends BaseOrderComplete
     private function clearPartnerOrderPayment(PartnerOrder $partner_order, $customer, PaymentDetail $payment_detail, $has_error)
     {
         $client = new Client();
-        $Online_fail_namespace_one = 'Topup:Fail_one_' . Carbon::now()->timestamp . str_random(6);
-        $Online_fail_namespace_two = 'Topup:Fail_two_' . Carbon::now()->timestamp . str_random(6);
-        $Online_fail_namespace_three = 'Topup:Fail_three_' . Carbon::now()->timestamp . str_random(6);
-        Redis::set($Online_fail_namespace_one, config('sheba.admin_url') . '/api/partner-order/' . $partner_order->id . '/collect');
-
-        Redis::set($Online_fail_namespace_two,([
-        'customer_id' => $partner_order->order->customer->id,
-        'remember_token' => $partner_order->order->customer->remember_token,
-        'sheba_collection' => (double)$payment_detail->amount,
-        'payment_method' => ucfirst($payment_detail->method),
-        'created_by_type' => 'App\\Models\\Customer',
-        'transaction_detail' => json_encode($payment_detail->formatPaymentDetail()) ]));
-
         $res = $client->request('POST', config('sheba.admin_url') . '/api/partner-order/' . $partner_order->id . '/collect',
             [
                 'form_params' => array_merge([
@@ -98,7 +85,6 @@ class OrderComplete extends BaseOrderComplete
                 ], (new RequestIdentification())->get())
             ]);
         $response = json_decode($res->getBody());
-        Redis::set($Online_fail_namespace_three, $response);
         if ($response->code == 200) {
             if (strtolower($payment_detail->method) == 'wallet') dispatchReward()->run('wallet_cashback', $customer, $payment_detail->amount, $partner_order);
         } else {
