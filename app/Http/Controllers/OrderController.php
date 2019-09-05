@@ -248,6 +248,7 @@ class OrderController extends Controller
         try {
             $order_adapter = new OrderAdapter($order->partnerOrders[0], 1);
             $order_adapter->setEmiMonth(\request()->emi_month);
+            $order_adapter->setPaymentMethod($payment_method);
             $payment = new ShebaPayment();
             $payment = $payment->setMethod($payment_method)->init($order_adapter->getPayable());
             return $payment->isInitiated() ? $payment : null;
