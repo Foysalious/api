@@ -23,6 +23,7 @@ class CustomValidatorProvider extends ServiceProvider
         Validator::extend('after_or_equal_not_if', $this->validatorNamespace . 'CustomDateValidator@afterOrEqualIf');
         Validator::extend('unique_and_valid_app_version', $this->validatorNamespace . 'AppVersionValidator@uniqueAndValidVersion');
         Validator::extend('date_if_not', $this->validatorNamespace . 'CustomDateValidator@dateIfNot');
+        Validator::extend('nid_number', $this->validatorNamespace . 'NidNumberValidator@validate');
     }
 
     /**

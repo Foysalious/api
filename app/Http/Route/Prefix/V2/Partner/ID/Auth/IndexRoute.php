@@ -213,6 +213,7 @@ class IndexRoute
                 $api->group(['prefix' => '{voucher}'], function ($api) {
                 });
             });
+            $api->post('nid-validate', 'ShebaController@nidValidate');
         });
     }
 }

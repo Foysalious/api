@@ -8,7 +8,6 @@ use App\Models\Job;
 use App\Models\OfferShowcase;
 use App\Models\Payable;
 use App\Models\Payment;
-use App\Models\PosOrder;
 use App\Models\Resource;
 use App\Models\Service;
 use App\Models\Slider;
@@ -21,6 +20,7 @@ use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
+use Sheba\Partner\Validations\NidValidation;
 use Sheba\Payment\AvailableMethods;
 use Sheba\Reports\PdfHandler;
 use Sheba\Repositories\PaymentLinkRepository;
@@ -376,6 +376,26 @@ class ShebaController extends Controller
 
             return api_response($request, null, 200, ['info' => $emi_data]);
         } catch (\Exception $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function nidValidate(Request $request)
+    {
+        try {
+            $this->validate($request, NidValidation::$RULES);
+            $check = (new NidValidation())->validate($request->nid, $request->full_name, $request->dob);
+            dd($check);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            dd($message);
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
