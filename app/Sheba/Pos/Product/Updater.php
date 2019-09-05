@@ -103,6 +103,9 @@ class Updater
         if ((isset($this->data['price']) && $this->data['price'] != $this->service->price)) {
             $this->updatedData['price'] = $this->data['price'];
         }
+        if ((isset($this->data['wholesale_price']) && $this->data['wholesale_price'] != $this->service->wholesale_price)) {
+            $this->updatedData['wholesale_price'] = $this->data['wholesale_price'];
+        }
 
         if ((isset($this->data['name']) && $this->data['name'] != $this->service->name)) {
             $this->updatedData['name'] = $this->data['name'];
