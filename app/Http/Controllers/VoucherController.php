@@ -32,20 +32,24 @@ class VoucherController extends Controller
     {
         try {
             $partner = $request->partner;
+
             $partner_voucher_query = Voucher::byPartner($partner);
             $latest_vouchers = [];
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
-            $partner_voucher_query->orderBy('id', 'desc')->take(3)->each(function ($voucher) use (&$latest_vouchers, $manager) {
-                $resource = new Item($voucher, new VoucherTransformer());
-                $voucher = $manager->createData($resource)->toArray();
-                array_push($latest_vouchers, $voucher['data']) ;
-            });
+
             $data = [
                 'total_voucher'     => $partner_voucher_query->count(),
                 'active_voucher'    => $partner_voucher_query->valid()->count(),
                 'total_sale_with_voucher' => 255648
             ];
+
+            $partner_voucher_query->orderBy('id', 'desc')->take(3)->each(function ($voucher) use (&$latest_vouchers, $manager) {
+                $resource = new Item($voucher, new VoucherTransformer());
+                $voucher = $manager->createData($resource)->toArray();
+                array_push($latest_vouchers, $voucher['data']) ;
+            });
+
             return api_response($request, null, 200, ['data' => $data, 'latest_vouchers' => $latest_vouchers]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
