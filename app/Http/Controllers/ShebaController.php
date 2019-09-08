@@ -384,11 +384,20 @@ class ShebaController extends Controller
     {
         try {
             $this->validate($request, NidValidation::$RULES);
-            $check = (new NidValidation())->validate($request->nid, $request->full_name, $request->dob);
-            dd($check);
+            $nidValidation = new NidValidation();
+            if ($request->has('manager_resource')) {
+                if ($request->manager_resource->profile->nid_verified) return api_response($request, null, 400, ['message' => 'NID is already verified']);
+                $nidValidation->setProfile($request->manager_resource->profile);
+            }
+            $check = $nidValidation->validate($request->nid, $request->full_name, $request->dob);
+            if ($check['status'] === 1) {
+                $nidValidation->complete();
+                return api_response($request, true, 200, ['message' => 'NID verification completed']);
+            } else {
+                return api_response($request, null, 400, ['message' => isset($check['message']) ? $check['message'] : 'NID is not verified']);
+            }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            dd($message);
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
