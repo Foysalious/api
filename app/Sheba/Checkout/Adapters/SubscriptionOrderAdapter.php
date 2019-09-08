@@ -109,6 +109,8 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
 
     private function setPaymentDetails()
     {
+        $payable = Payable::where('type_id', $this->subscriptionOrder->id)->where('type', 'subscription_order')->first();
+        if (!$payable) return;
         $this->paymentDetails = Payable::where('type_id', $this->subscriptionOrder->id)->where('type', 'subscription_order')->first()->payment->paymentDetails;
         $this->setBonus();
         $this->setOtherPaymentDetail();
@@ -147,8 +149,8 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
         $partner_order = new PartnerOrder();
         $partner_order->order_id = $order->id;
         $partner_order->partner_id = $this->subscriptionOrder->partner_id;
-        $partner_order->payment_method = strtolower($this->paymentDetails->last()->readable_method);
-        $partner_order->sheba_collection = (int)$this->partnerServiceDetails->discounted_price > 0 ? $this->partnerServiceDetails->discounted_price / count($this->totalSchedules) : 0;
+        $partner_order->payment_method = $this->paymentDetails ? strtolower($this->paymentDetails->last()->readable_method) : null;
+        $partner_order->sheba_collection = $this->paymentDetails && (int)$this->partnerServiceDetails->discounted_price > 0 ? $this->partnerServiceDetails->discounted_price / count($this->totalSchedules) : 0;
         $this->withCreateModificationField($partner_order);
         $partner_order->save();
         $this->createPartnerOrderPayment($partner_order);
