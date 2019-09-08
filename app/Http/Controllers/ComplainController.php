@@ -323,7 +323,9 @@ class ComplainController extends Controller
             }
 
             $complains = $this->complainRepo->partnerComplainList($request->partner->id, $accessor, ($request->has('not_resolved') && $request->not_resolved));
+            $complains = $complains->sortByDesc('id')->take(20);
             $formatted_complains = collect();
+
             foreach ($complains as $complain) {
                 $order_code = 'N/A';
                 $customer_name = 'N/A';
