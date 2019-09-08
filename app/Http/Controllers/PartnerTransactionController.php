@@ -84,10 +84,6 @@ class PartnerTransactionController extends Controller
                 'type' => 'required|in:bkash,rocket,mock',
             ]);
 
-            /*if ($request->ip() != "103.4.146.66") {
-                return api_response($request, null, 500, ['message' => "Temporary Recharge Off"]);
-            }*/
-
             $transaction = (new Registrar())->register($request->partner, $request->type, $request->transaction_id);
             $request->merge(['transaction_amount' => $transaction['amount'], 'transaction_account' => $transaction['from_account']]);
 

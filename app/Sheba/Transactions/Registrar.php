@@ -9,11 +9,12 @@ class Registrar
      * @param $user
      * @param $gateway
      * @param $transaction_id
+     * @param null $to_account
      * @return bool
-     * @throws InvalidTransaction
      * @throws GuzzleException
+     * @throws InvalidTransaction
      */
-    public function register($user, $gateway, $transaction_id)
+    public function register($user, $gateway, $transaction_id, $to_account = null)
     {
         $data = [
             'gateway' => $gateway,
@@ -26,7 +27,8 @@ class Registrar
             'user_agent' => request()->header('User-Agent'),
             'created_by' => $user->id,
             'created_by_type' => class_basename($user),
-            'created_by_name' => $user instanceof Partner ? $user->name : $user->profile->name
+            'created_by_name' => $user instanceof Partner ? $user->name : $user->profile->name,
+            'to_account' => $to_account
         ];
 
         $walletClient = new WalletClient();
