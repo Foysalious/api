@@ -64,7 +64,7 @@ class DashboardController extends Controller
                 'current_subscription_package' => [
                     'name' => $partner->subscription->show_name,
                     'name_bn' => $partner->subscription->show_name_bn,
-                    'status' => $partner->subscription->status
+                    'remaining_day' => $partner->last_billed_date ? $partner->periodicBillingHandler()->remainingDay() : 0
                 ],
                 'badge' => $partner->resolveBadge(),
                 'rating' => $rating,

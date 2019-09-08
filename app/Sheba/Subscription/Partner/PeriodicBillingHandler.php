@@ -55,4 +55,11 @@ class PeriodicBillingHandler
 
         return $new_bill_date;
     }
+
+    public function remainingDay()
+    {
+        $next = $this->nextBillingDate();
+        $today = Carbon::today();
+        return $today->diffInDays($next, false);
+    }
 }
