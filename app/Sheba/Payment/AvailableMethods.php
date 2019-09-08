@@ -36,6 +36,8 @@ class AvailableMethods
                 case 'payment_link':
                     $payments = self::getPaymentLinkPayments($version_code, $platform_name);
                     break;
+                case 'wallet_recharge':
+                    $payments = self::getWalletRechargePayments($version_code, $platform_name);
                 default:
                     throw new \Exception('Invalid Payable Type');
                     break;
@@ -123,6 +125,14 @@ class AvailableMethods
         ];
     }
 
+    private static function getWalletRechargePayments($version_code, $platform_name)
+    {
+        return [
+            self::bkash(),
+            self::cbl($version_code, $platform_name),
+            self::ssl()
+        ];
+    }
     /**
      * @param $version_code
      * @param $platform_name

@@ -1,11 +1,11 @@
 <?php namespace App\Http\Controllers\Partner;
 
+use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Models\PartnerSubscriptionPackage;
 use App\Models\PartnerSubscriptionUpdateRequest;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use App\Http\Controllers\Controller;
 use Sheba\ModificationFields;
 use Sheba\Partner\StatusChanger;
 
@@ -129,6 +129,14 @@ class PartnerSubscriptionController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function toggleAutoBillingActivation(Request $request)
+    {
+        $request->partner->auto_billing_activated = $request->partner->auto_billing_activated == 1 ? 0 : 1;
+        $request->partner->save();
+        $task = $request->partner->auto_billing_activated ? 'activated' : 'deactivated';
+        return api_response($request, null, 200, ['message' => "Billing auto renewal $task", 'auto_billing_activated' => $request->partner->auto_billing_activated]);
     }
 
     private function calculateDiscount($rules, PartnerSubscriptionPackage $package)
