@@ -8,6 +8,7 @@ use App\Models\Job;
 use App\Models\OfferShowcase;
 use App\Models\Payable;
 use App\Models\Payment;
+use App\Models\Profile;
 use App\Models\Resource;
 use App\Models\Service;
 use App\Models\Slider;
@@ -386,6 +387,8 @@ class ShebaController extends Controller
             $this->validate($request, NidValidation::$RULES);
             $nidValidation = new NidValidation();
             if ($request->has('manager_resource')) {
+                $exists = Profile::query()->whereNotIn('id', [$request->manamger_resource->profile_id])->where('nid_no', $request->nid)->first();
+                if (!empty($exists)) return api_response($request, null, 400, ['message' => 'Nid Number is used by another user']);
                 if ($request->manager_resource->profile->nid_verified) return api_response($request, null, 400, ['message' => 'NID is already verified']);
                 $nidValidation->setProfile($request->manager_resource->profile);
             }
