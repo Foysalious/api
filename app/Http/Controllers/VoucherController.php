@@ -66,8 +66,15 @@ class VoucherController extends Controller
         try {
             $partner = $request->partner;
             $partner_voucher_query = Voucher::byPartner($partner);
-            if ($request->has('is_valid') && $request->is_valid) $partner_voucher_query->valid();
-            if ($request->has('is_valid') && !$request->is_valid) $partner_voucher_query->notValid();
+
+            $used_voucher_id = [344467, 344466];
+
+            if ($request->has('filter_type')) {
+                if ($request->filter_type == "used") $partner_voucher_query->whereIn('id', $used_voucher_id);
+                if ($request->filter_type == "valid") $partner_voucher_query->valid();
+                if ($request->filter_type == "invalid") $partner_voucher_query->notValid();
+            }
+
             $vouchers = [];
 
             $manager = new Manager();
