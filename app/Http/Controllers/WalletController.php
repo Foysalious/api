@@ -137,4 +137,9 @@ class WalletController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    private function validatePartner($remember_token, $partner)
+    {
+
+    }
 }

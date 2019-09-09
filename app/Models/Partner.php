@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use App\Models\Transport\TransportTicketOrder;
+use App\Sheba\Payment\Rechargable;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Database\Eloquent\Model;
@@ -26,7 +27,7 @@ use Sheba\Transport\TransportTicketTransaction;
 use Sheba\Voucher\Contracts\CanApplyVoucher;
 use Sheba\Voucher\VoucherCodeGenerator;
 
-class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent
+class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent,Rechargable
 {
     use Wallet, TopUpTrait, MovieTicketTrait;
 
@@ -698,5 +699,26 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
     public function getMovieTicketCommission()
     {
         return new \Sheba\MovieTicket\Commission\Partner();
+    }
+
+    /**
+     * Get the connection of the entity.
+     *
+     * @return string|null
+     */
+    public function getQueueableConnection()
+    {
+        // TODO: Implement getQueueableConnection() method.
+    }
+
+    /**
+     * Retrieve the model for a bound value.
+     *
+     * @param mixed $value
+     * @return \Illuminate\Database\Eloquent\Model|null
+     */
+    public function resolveRouteBinding($value)
+    {
+        // TODO: Implement resolveRouteBinding() method.
     }
 }

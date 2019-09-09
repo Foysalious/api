@@ -387,18 +387,20 @@ class ShebaController extends Controller
             $this->validate($request, NidValidation::$RULES);
             $nidValidation = new NidValidation();
             if ($request->has('manager_resource')) {
-                $exists = Profile::query()->whereNotIn('id', [$request->manamger_resource->profile_id])->where('nid_no', $request->nid)->first();
+                $exists = Profile::query()
+                    ->where('nid_no', $request->nid)
+                    ->whereNotIn('id', [$request->manager_resource->profile->id])
+                    ->first();
                 if (!empty($exists)) return api_response($request, null, 400, ['message' => 'Nid Number is used by another user']);
-                if ($request->manager_resource->profile->nid_verified) return api_response($request, null, 400, ['message' => 'NID is already verified']);
+                if ($request->manager_resource->profile->nid_verified==1) return api_response($request, null, 400, ['message' => 'NID is already verified']);
                 $nidValidation->setProfile($request->manager_resource->profile);
             }
             $check = $nidValidation->validate($request->nid, $request->full_name, $request->dob);
             if ($check['status'] === 1) {
                 $nidValidation->complete();
                 return api_response($request, true, 200, ['message' => 'NID verification completed']);
-            } else {
-                return api_response($request, null, 400, ['message' => isset($check['message']) ? $check['message'] : 'NID is not verified']);
             }
+            return api_response($request, null, 400, ['message' => isset($check['message']) ? $check['message'] : 'NID is not verified']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
@@ -406,7 +408,6 @@ class ShebaController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
