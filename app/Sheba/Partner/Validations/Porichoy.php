@@ -2,7 +2,6 @@
 
 
 use App\Sheba\Partner\Validations\NidValidationResponse;
-use Sheba\Partner\Validations\NidValidator;
 
 class Porichoy extends NidValidator
 {

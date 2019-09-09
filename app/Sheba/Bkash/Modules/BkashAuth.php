@@ -7,6 +7,7 @@ class BkashAuth
     private $username;
     private $password;
     private $url;
+    private $merchantNumber;
 
     public function setKey($key)
     {
@@ -35,6 +36,16 @@ class BkashAuth
     public function setUrl($url)
     {
         $this->url = $url;
+        return $this;
+    }
+
+    /**
+     * @param mixed $merchant_number
+     * @return BkashAuth
+     */
+    public function setMerchantNumber($merchant_number)
+    {
+        $this->merchantNumber = $merchant_number;
         return $this;
     }
 

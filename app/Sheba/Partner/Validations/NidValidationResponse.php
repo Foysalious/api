@@ -6,23 +6,12 @@ namespace App\Sheba\Partner\Validations;
 
 class NidValidationResponse
 {
-    /**
-     * @return mixed
-     */
-    public function getStatus()
-    {
-        return $this->status;
-    }
 
-    /**
-     * @return mixed
-     */
-    public function getError()
-    {
-        return $this->error;
-    }
     protected $status;
     protected $error;
+    protected $message;
+
+
 
     /**
      * @param mixed $status
@@ -67,8 +56,45 @@ class NidValidationResponse
      */
     public function toArray()
     {
-        return ['status' => $this->status, 'error' => $this->error];
+        if ($this->getStatus()) {
+            $this->setMessage('Valid nid number');
+        } else {
+            $this->setMessage('Invalid nid number');
+        }
+        return ['status' => $this->status, 'error' => $this->error, 'message' => $this->message];
     }
 
+    /**
+     * @return mixed
+     */
+    public function getStatus()
+    {
+        return $this->status;
+    }
 
+    /**
+     * @return mixed
+     */
+    public function getError()
+    {
+        return $this->error;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getMessage()
+    {
+        return $this->message;
+    }
+
+    /**
+     * @param mixed $message
+     * @return NidValidationResponse
+     */
+    public function setMessage($message)
+    {
+        $this->message = $message;
+        return $this;
+    }
 }
