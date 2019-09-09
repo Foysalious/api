@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\PosCustomer;
+use App\Models\Promotion;
 use App\Models\Voucher;
 use App\Transformers\CustomSerializer;
 use App\Transformers\PosOrderTransformer;
@@ -161,6 +162,60 @@ class VoucherController extends Controller
         }
     }
 
+
+    /**
+     * @param Request $request
+     * @param $partner
+     * @param Voucher $voucher
+     * @return JsonResponse
+     */
+    public function update(Request $request,$partner,Voucher $voucher)
+    {
+        try {
+            $partner = $request->partner;
+            $this->validate($request, [
+                'start_date' => 'required|date',
+                'end_date' => 'required|date|after_or_equal:start_date',
+                'code' => 'required|unique:vouchers'
+            ]);
+
+            $this->setModifier($partner);
+
+            $data = [
+                'code' => strtoupper($request->code),
+                'rules' => $this->buildRules($request)->toJson(),
+                'amount' => $request->amount,
+                'cap' => $request->cap,
+                'is_amount_percentage' => $request->is_amount_percentage,
+                'start_date' => Carbon::parse($request->start_date . ' 00:00:00'),
+                'end_date' => Carbon::parse($request->end_date . ' 23:59:59'),
+                'max_customer' => ($request->has('max_customer') && !empty($request->max_customer)) ? $request->max_customer : null,
+                'is_created_by_sheba' => 0,
+                'sheba_contribution' => 0.00,
+                'partner_contribution' => 100.00,
+                'owner_type' => get_class($partner),
+                'owner_id' => $partner->id,
+                'created_by_type' => get_class($partner)
+            ];
+
+            $date_validation = $this->validatePeriodForUpdate($data, $voucher);
+
+            if($date_validation['error']) {
+                return api_response($request, null, 400, ['msg' => $date_validation['msg']]);
+            }
+
+            $voucher->update($this->withUpdateModificationField($data));
+
+            return api_response($request, null, 200, ['voucher' => $voucher]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     /**
      * @param Request $request
      * @return VoucherRule
@@ -207,4 +262,48 @@ class VoucherController extends Controller
             return api_response($request, null, 403, ['message' => 'Invalid Promo']);
         }
     }
+
+    public function deactivateVoucher(Request $request,$partner,Voucher $voucher){
+        try {
+            $partner = $request->partner;
+            $this->setModifier($partner);
+            $voucher->end_date = Carbon::now();
+            $voucher->update();
+            return api_response($request, null, 200, ['msg' => 'Promo deactivated successfully']);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
+
+    }
+
+
+    protected function validatePeriodForUpdate($data, $voucher)
+    {
+        $msg = '';
+        $error = false;
+        $promotions = Promotion::where('voucher_id',$voucher->id)->get();
+        $persons_using_this_voucher = count($promotions);
+        if($data['start_date']->ne($voucher->start_date)){
+            if($persons_using_this_voucher > 0) {
+                $msg= "You can not change the start time of this voucher, as $persons_using_this_voucher  person(s) are using it already.";
+                $error = true;
+            }
+        } else if($data['end_date'] < $voucher->end_date) {
+            if($persons_using_this_voucher > 0) {
+                $msg= "You can not shorten the lifetime of this voucher, as $persons_using_this_voucher  person(s) are using it already.";
+                $error = true;
+            }
+        } else if($data['end_date'] > $voucher->end_date) {
+            foreach ($promotions as $promotion) {
+                $promotion->update(['valid_till' => $data['end_date']]);
+            }
+        }
+        return ['msg' => $msg, 'error' => $error];
+    }
+
+
+
+
 }
