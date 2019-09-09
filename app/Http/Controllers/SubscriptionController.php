@@ -22,6 +22,37 @@ class SubscriptionController extends Controller
                 } else $location = 4;
             }
 
+            if ($request->has('for') && $request->for =='business'){
+
+                $subscriptions = ServiceSubscription::with(['service' => function ($q) {
+                    $q->with(['category' => function ($q) {
+                        $q->select('id', 'name');
+                    }])->select('id', 'name', 'category_id', 'thumb', 'banner');
+                }])->active()->business()->get();
+
+                $b2b_subscriptions = [];
+                foreach ($subscriptions as $subscription) {
+                    $service = $subscription->service;
+                    $category = $service->category;
+                    $subscription = [
+                        'subscription_id' => $subscription->id,
+                        'subscription_name' => $subscription->title,
+                        'subscription_thumb' => $service->thumb,
+                        'subscription_banner' => $service->banner,
+                        'service_id' => $service->id,
+                        'service_name' => $service->name,
+                        'category_id' => $category->id,
+                        'category_name' => $category->name,
+                    ];
+                    array_push($b2b_subscriptions, $subscription);
+                }
+
+                if (count($b2b_subscriptions) > 0)
+                    return api_response($request, $b2b_subscriptions, 200, ['subscriptions' => $b2b_subscriptions]);
+                else
+                    return api_response($request, null, 404);
+            }
+
             $categories = Category::whereNotNull('parent_id')->whereHas('services', function ($q) {
                 $q->has('activeSubscription');
             })->with(['services' => function ($q) use ($location) {
