@@ -589,6 +589,11 @@ return [
         env('SHEBA_MANGER_APP') => 'Partner',
         'user' => 'Profile'
     ],
+    'PARTNER_PACKAGE_CHARGE_TYPES' => [
+        'Upgrade' => 'upgrade',
+        'Downgrade' => 'downgrade',
+        'Renewed' => 'renewed'
+    ],
     'DEVELOPMENT_PLATFORMS' => ['android', 'ios', 'web', 'all'],
     'POS_SERVICE_UNITS' => [
         'ft' => ['bn' => 'ফুট', 'en' => 'ft'],

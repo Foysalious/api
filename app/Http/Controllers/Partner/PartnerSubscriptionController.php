@@ -139,6 +139,30 @@ class PartnerSubscriptionController extends Controller
         return api_response($request, null, 200, ['message' => "Billing auto renewal $task", 'auto_billing_activated' => $request->partner->auto_billing_activated]);
     }
 
+    public function purchase(Request $request)
+    {
+        try{
+            $this->validate($request, [
+                'package_id' => 'required|numeric|exists:partner_subscription_packages,id',
+                'billing_cycle' => 'required|string|in:monthly,yearly,half-yearly'
+            ]);
+
+        }catch (ValidationException $e){
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function changeSubscriptionPackage()
+    {
+
+    }
     private function calculateDiscount($rules, PartnerSubscriptionPackage $package)
     {
         $rules['fee']['monthly']['original_price'] = $rules['fee']['monthly']['value'];

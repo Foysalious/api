@@ -60,6 +60,7 @@ class PeriodicBillingHandler
     {
         $next = $this->nextBillingDate();
         $today = Carbon::today();
-        return $today->diffInDays($next, false);
+        $diff = $today->diffInDays($next, false);
+        return $diff > 0 ? $diff : 0;
     }
 }
