@@ -21,7 +21,7 @@ class MovieTicketPurchaseAdapter implements PayableAdapter
         $payable->type_id = $this->movieTicketOrder->id;
         $payable->user_id = $this->movieTicketOrder->agent_id;
         $payable->user_type = get_class($this->movieTicketOrder->agent);
-        $payable->amount = $this->movieTicketOrder->amount;
+        $payable->amount = $this->movieTicketOrder->amount - $this->movieTicketOrder->discount;
         $payable->completion_type = "movie_ticket_purchase";
         $payable->success_url = config('sheba.front_url') . '/movie-tickets/' . $this->movieTicketOrder->id;
         $payable->created_at = Carbon::now();
