@@ -1,5 +1,6 @@
 <?php namespace Sheba\Payment\Methods\Bkash;
 
+use App\Models\Customer;
 use App\Models\Payable;
 use App\Models\Payment;
 use App\Models\PaymentDetail;
@@ -104,13 +105,18 @@ class Bkash extends PaymentMethod
         if ($execute_response->hasSuccess()) {
             $success = $execute_response->getSuccess();
 
-            try {
-                (new Registrar())->register($payment->payable->user, 'bkash', $success->id, $this->merchantNumber);
+            if ($payment->payable->user instanceof Customer) {
                 $status = Statuses::VALIDATED;
                 $transaction_details = json_encode($success->details);
-            } catch (InvalidTransaction $e) {
-                $status = Statuses::VALIDATION_FAILED;
-                $transaction_details = json_encode(['errorMessage' => $e->getMessage()]);
+            } else {
+                try {
+                    (new Registrar())->register($payment->payable->user, 'bkash', $success->id, $this->merchantNumber);
+                    $status = Statuses::VALIDATED;
+                    $transaction_details = json_encode($success->details);
+                } catch (InvalidTransaction $e) {
+                    $status = Statuses::VALIDATION_FAILED;
+                    $transaction_details = json_encode(['errorMessage' => $e->getMessage()]);
+                }
             }
         } else {
             $error = $execute_response->getError();
