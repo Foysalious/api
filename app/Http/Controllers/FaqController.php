@@ -58,4 +58,22 @@ class FaqController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function posFaq(Request $request){
+        try{
+            $faqs = array(array('question_en' => null, 'question_bn' => 'প্রমো কোড কি?', 'answer_en' => null, 'answer_bn' => 'আপনি আপনার কাস্টমার কে ডিস্কাউন্ট সুবিধা সহ একটি কোড দিতে পারবেন। যেটা ব্যবহার করে কাস্টামার আপনার কাছথেকে ডিস্কাউন্ট সুবিধা নিতে পারবে।'),
+                array('question_en' => null, 'question_bn' => 'প্রমো কোড কিভাবে তৈরি করবেন?', 'answer_en' => null, 'answer_bn' => 'এসম্যানেজার অ্যাপ এর প্রোমো ও মার্কেটিং সেকশন থেকে প্রোমো কোড এ ট্যপ করুন। তারপরে আপনার কাস্টমার কে যে সুবিধা দিতে চান সেই অনুযায়ী কনফিগার করে প্রমো কোড তৈরি করিন।'),
+                array('question_en' => null, 'question_bn' => 'প্রমো কোড কিভাবে ব্যবহার করবেন?', 'answer_en' => null, 'answer_bn' => 'আপনি সেলস পয়েন্ট থেকে যখন কোন অর্ডার প্লেস করবেন তখন প্রমো কোড ব্যবহার করার অপশন পাবেন, সেখান থেকে আপনাকে প্রমো কোড ব্যবহার করতে হবে।'),
+                array('question_en' => null, 'question_bn' => 'প্রমো কেড কাস্টমার এর সাথে কিভাবে শেয়ার করবেন?', 'answer_en' => null, 'answer_bn' => 'প্রমো কোড তৈরি করার পরে আপনি কাস্টমারকে সরাসরি বলে দিতে পারেন, তাছাড়া পানি চাইলে এসএমএস অথবা অন্য কোন মাধ্যমে শেয়ার করতে পারেন।'),
+                array('question_en' => null, 'question_bn' => ' প্রমো কোড এর মেয়াদ কত দিন হবে?', 'answer_en' => null, 'answer_bn' => 'আপনি যখন প্রমো কোড তৈরি করবেন তখন প্রমো কোড এর মেয়াদ দেয়ার অপশন পাবেন। আপনি যে মেয়াদ সেট করবেন প্রমো কোড টির মেয়াদ ততদিন থাকবে।'),);
+            return api_response($request, $faqs, 200, ['faqs' => $faqs]);
+
+        } catch(\Throwable $e){
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+
+        }
+    }
+
+
 }
