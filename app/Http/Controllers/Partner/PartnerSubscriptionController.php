@@ -146,6 +146,17 @@ class PartnerSubscriptionController extends Controller
                 'package_id' => 'required|numeric|exists:partner_subscription_packages,id',
                 'billing_cycle' => 'required|string|in:monthly,yearly,half-yearly'
             ]);
+            $currentPackage = $request->partner->subscription;
+            $requestedPackage = PartnerSubscriptionPackage::find($request->package_id);
+            if ($currentPackage->id === $requestedPackage->id) {
+                return api_response($request, null, 403, ['message' => 'You already are in this package please upgrade or renew']);
+            }
+
+            $this->setModifier($request->manager_resource);
+            if (!$request->partner->hasCreditForSubscription($requestedPackage, $request->billing_cycle)) {
+                return api_response($request, null, 403, ['message' => 'You do not have sufficient balance for purchasing this package']);
+            }
+            
 
         }catch (ValidationException $e){
             $message = getValidationErrorMessage($e->validator->errors()->all());

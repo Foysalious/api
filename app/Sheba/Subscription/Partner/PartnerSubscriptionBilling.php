@@ -150,11 +150,11 @@ class PartnerSubscriptionBilling
         $this->partnerBonusHandler->pay($package_price, '%d BDT has been deducted for subscription package', [$this->getSubscriptionTag()->id]);
     }
 
-    private function remainingCredit($old_package, $old_billing_type)
+    public function remainingCredit(PartnerSubscriptionPackage $old_package, $old_billing_type)
     {
         $dayDiff = $this->partner->last_billed_date ? $this->partner->last_billed_date->diffInDays($this->today) + 1 : 0;
         $used_credit = $old_package->originalPricePerDay($old_billing_type) * $dayDiff;
-        $remaining_credit = $this->partner->last_billed_amount - $used_credit;
+        $remaining_credit = ($this->partner->last_billed_amount?:0) - $used_credit;
         return $remaining_credit < 0 ? 0 : $remaining_credit;
     }
 

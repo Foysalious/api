@@ -701,24 +701,13 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
         return new \Sheba\MovieTicket\Commission\Partner();
     }
 
-    /**
-     * Get the connection of the entity.
-     *
-     * @return string|null
-     */
-    public function getQueueableConnection()
+    public function hasCreditForSubscription(PartnerSubscriptionPackage $package, $billingType, $billingCycle = 1)
     {
-        // TODO: Implement getQueueableConnection() method.
+        $price = (double)$package->discountPrice($billingType, $billingCycle);
+        $remaining = (double)$this->subscriber()->getBilling()->remainingCredit($this->subctioption, $this->billing_type);
+        $wallet = (double)$this->wallet;
+        $bonusWallet = (double)$this->bonusWallet();
+        return $bonusWallet + $wallet + $remaining <= $price;
     }
 
-    /**
-     * Retrieve the model for a bound value.
-     *
-     * @param mixed $value
-     * @return \Illuminate\Database\Eloquent\Model|null
-     */
-    public function resolveRouteBinding($value)
-    {
-        // TODO: Implement resolveRouteBinding() method.
-    }
 }
