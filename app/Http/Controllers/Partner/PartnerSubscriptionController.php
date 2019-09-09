@@ -4,21 +4,29 @@ use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Models\PartnerSubscriptionPackage;
 use App\Models\PartnerSubscriptionUpdateRequest;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\ModificationFields;
 use Sheba\Partner\StatusChanger;
+use Throwable;
 
 class PartnerSubscriptionController extends Controller
 {
     use ModificationFields;
 
+    /**
+     * @param $partner
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function index($partner, Request $request)
     {
         try {
+            /** @var Partner $partner */
             $partner = $request->partner;
             $partner_subscription_packages = PartnerSubscriptionPackage::validDiscounts()
-                ->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'rules', 'usps', 'badge')
+                ->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'rules', 'usps', 'badge', 'features')
                 ->get();
 
             foreach ($partner_subscription_packages as $package) {
@@ -27,16 +35,27 @@ class PartnerSubscriptionController extends Controller
                 $package['is_published'] = $package->name == 'LITE' ? 0 : 1;
                 $package['subscription_type'] = ($partner->package_id == $package->id) ? $partner->billing_type : null;
                 $package['usps'] = $package->usps ? json_decode($package->usps) : ['usp' => [], 'usp_bn' => []];
+                $package['features'] = $package->features ? json_decode($package->features) : [];
                 removeRelationsAndFields($package);
             }
+
+            $partner_subscription_package = $partner->subscription;
             $data = [
                 'subscription_package' => $partner_subscription_packages,
                 'monthly_tag' => 'বাৎসরিক প্ল্যানে ২০% সেভ করুন ',
                 'yearly_tag' => 'বাৎসরিক প্ল্যানে ২০% সেভ করুন ',
-                'billing_type' => $partner->billing_type
+                'billing_type' => $partner->billing_type,
+                'current_package' => [
+                    'en' => $partner_subscription_package->show_name,
+                    'bn' => $partner_subscription_package->show_name_bn,
+                ],
+                'last_billing_date' => $partner->last_billed_date ? $partner->last_billed_date->format('Y-m-d') : null,
+                'next_billing_date' => $partner->last_billed_date ? $partner->periodicBillingHandler()->nextBillingDate()->format('Y-m-d') : null,
+                'validity_remaining_in_days' => $partner->last_billed_date ? $partner->periodicBillingHandler()->remainingDay() : null,
+                'is_auto_billing_activated' => ($partner->auto_billing_activated) ? true : false
             ];
             return api_response($request, null, 200, $data);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -63,7 +82,7 @@ class PartnerSubscriptionController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -125,7 +144,7 @@ class PartnerSubscriptionController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -171,6 +190,15 @@ class PartnerSubscriptionController extends Controller
         $rules['fee']['monthly']['discounted_price'] = $monthly_discounted_price > 0 ? $monthly_discounted_price : 0;
         $rules['fee']['monthly']['discount_note'] = $this->discountNote($package, 'monthly');
 
+        $rules['fee']['half_yearly']['original_price'] = $rules['fee']['half_yearly']['value'];
+        $rules['fee']['half_yearly']['discount'] = $this->discountPrice($package, 'half_yearly');
+        $half_yearly_discounted_price = $rules['fee']['half_yearly']['original_price'] - $rules['fee']['half_yearly']['discount'];
+        $rules['fee']['half_yearly']['discounted_price'] = $half_yearly_discounted_price > 0 ? $half_yearly_discounted_price : 0;
+        $rules['fee']['half_yearly']['discount_note'] = $this->discountNote($package, 'half_yearly');
+        $rules['fee']['half_yearly']['original_price_breakdown'] = round($rules['fee']['half_yearly']['original_price'] / 6, 2);
+        $rules['fee']['half_yearly']['discounted_price_breakdown'] = round($rules['fee']['half_yearly']['discounted_price'] / 6, 2);
+        $rules['fee']['half_yearly']['breakdown_type'] = 'monthly';
+
         $rules['fee']['yearly']['original_price'] = $rules['fee']['yearly']['value'];
         $rules['fee']['yearly']['discount'] = $this->discountPrice($package, 'yearly');
         $yearly_discounted_price = $rules['fee']['yearly']['original_price'] - $rules['fee']['yearly']['discount'];
@@ -185,17 +213,21 @@ class PartnerSubscriptionController extends Controller
         return $rules;
     }
 
+    /**
+     * @param PartnerSubscriptionPackage $package
+     * @param $billing_type
+     * @return float|int
+     */
     private function discountPrice(PartnerSubscriptionPackage $package, $billing_type)
     {
         if ($package->discounts->count()) {
-            $partner_subcription_discount = $package->discounts->filter(function ($discount) use ($billing_type) {
+            $partner_subscription_discount = $package->discounts->filter(function ($discount) use ($billing_type) {
                 return $discount->billing_type == $billing_type;
             })->first();
 
-            if ($partner_subcription_discount) {
-                if (!$partner_subcription_discount->is_percentage) return (float)$partner_subcription_discount->amount;
-                else {
-                    return (float)$package->originalPrice($billing_type) * ($partner_subcription_discount->amount / 100);
+            if ($partner_subscription_discount) {
+                if (!$partner_subscription_discount->is_percentage) return (float)$partner_subscription_discount->amount; else {
+                    return (float)$package->originalPrice($billing_type) * ($partner_subscription_discount->amount / 100);
                 }
             }
             return 0;
@@ -203,6 +235,11 @@ class PartnerSubscriptionController extends Controller
         return 0;
     }
 
+    /**
+     * @param PartnerSubscriptionPackage $package
+     * @param $billing_type
+     * @return string
+     */
     private function discountNote(PartnerSubscriptionPackage $package, $billing_type)
     {
         if ($package->discounts->count()) {
@@ -221,6 +258,10 @@ class PartnerSubscriptionController extends Controller
         return '';
     }
 
+    /**
+     * @param $cycles
+     * @return int
+     */
     private function hasSequence($cycles)
     {
         $has_sequence = 1;
@@ -233,6 +274,10 @@ class PartnerSubscriptionController extends Controller
         return $has_sequence ? count($cycles) : $has_sequence; // if doesn't have sequence it will return 0, otherwise number of cycles
     }
 
+    /**
+     * @param $cycles
+     * @return string
+     */
     private function getOrdinalmessage($cycles)
     {
         $message = [];
