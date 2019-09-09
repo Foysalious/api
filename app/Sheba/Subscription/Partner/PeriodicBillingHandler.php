@@ -56,11 +56,17 @@ class PeriodicBillingHandler
         return $new_bill_date;
     }
 
+    /**
+     * * FINDING PARTNER'S REMAINING BILLING DAY IN DAY
+     *
+     * @return int
+     */
     public function remainingDay()
     {
         $next = $this->nextBillingDate();
         $today = Carbon::today();
         $diff = $today->diffInDays($next, false);
+
         return $diff > 0 ? $diff : 0;
     }
 }
