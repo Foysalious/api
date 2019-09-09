@@ -207,11 +207,15 @@ class IndexRoute
             $api->post('change-logo', 'PartnerController@changeLogo');
             $api->group(['prefix' => 'vouchers'], function ($api) {
                 $api->get('/dashboard', 'VoucherController@dashboard');
+                $api->get('/faq', 'FaqController@posFaq');
                 $api->get('/', 'VoucherController@index');
                 $api->get('/{voucher}', 'VoucherController@show');
+                $api->post('/{voucher}', 'VoucherController@update');
                 $api->post('/', 'VoucherController@store');
                 $api->post('validity-check', 'VoucherController@validateVoucher');
                 $api->group(['prefix' => '{voucher}'], function ($api) {
+                    $api->post('/deactivate', 'VoucherController@deactivateVoucher');
+
                 });
             });
             $api->post('nid-validate', 'ShebaController@nidValidate');
