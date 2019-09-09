@@ -23,6 +23,7 @@ class PartnerSubscriptionController extends Controller
     public function index($partner, Request $request)
     {
         try {
+            $featured_package_id = config('partner.subscription_featured_package_id');
             /** @var Partner $partner */
             $partner = $request->partner;
             $partner_subscription_packages = PartnerSubscriptionPackage::validDiscounts()
@@ -36,14 +37,17 @@ class PartnerSubscriptionController extends Controller
                 $package['subscription_type'] = ($partner->package_id == $package->id) ? $partner->billing_type : null;
                 $package['usps'] = $package->usps ? json_decode($package->usps) : ['usp' => [], 'usp_bn' => []];
                 $package['features'] = $package->features ? json_decode($package->features) : [];
+                $package['is_featured'] = in_array($package->id, $featured_package_id);
+
                 removeRelationsAndFields($package);
             }
 
             $partner_subscription_package = $partner->subscription;
             $data = [
                 'subscription_package' => $partner_subscription_packages,
-                'monthly_tag' => 'বাৎসরিক প্ল্যানে ২০% সেভ করুন ',
-                'yearly_tag' => 'বাৎসরিক প্ল্যানে ২০% সেভ করুন ',
+                'monthly_tag' => '২০% ছাড়',
+                'half_yearly_tag' => '২০% ছাড়',
+                'yearly_tag' => null,
                 'billing_type' => $partner->billing_type,
                 'current_package' => [
                     'en' => $partner_subscription_package->show_name,
