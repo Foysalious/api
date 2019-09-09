@@ -1,5 +1,6 @@
 <?php namespace Sheba\Payment\Methods\Bkash;
 
+use App\Models\Customer;
 use App\Models\Payable;
 use App\Models\Payment;
 use App\Models\PaymentDetail;
@@ -26,6 +27,7 @@ class Bkash extends PaymentMethod
     private $username;
     private $password;
     private $url;
+    private $merchantNumber;
     CONST NAME = 'bkash';
 
     public function __construct()
@@ -35,6 +37,7 @@ class Bkash extends PaymentMethod
 
     private function setCredentials($user)
     {
+        /** @var BkashAuthBuilder $bkash_auth */
         $bkash_auth = BkashAuthBuilder::getForUser($user);
 
         $this->appKey = $bkash_auth->appKey;
@@ -42,7 +45,7 @@ class Bkash extends PaymentMethod
         $this->username = $bkash_auth->username;
         $this->password = $bkash_auth->password;
         $this->url = $bkash_auth->url;
-
+        $this->merchantNumber = $bkash_auth->merchantNumber;
     }
 
     public function init(Payable $payable): Payment
@@ -102,13 +105,18 @@ class Bkash extends PaymentMethod
         if ($execute_response->hasSuccess()) {
             $success = $execute_response->getSuccess();
 
-            try {
-                (new Registrar())->register($payment->payable->user, 'bkash', $success->id);
+            if ($payment->payable->user instanceof Customer) {
                 $status = Statuses::VALIDATED;
                 $transaction_details = json_encode($success->details);
-            } catch (InvalidTransaction $e) {
-                $status = Statuses::VALIDATION_FAILED;
-                $transaction_details = json_encode($e->getMessage());
+            } else {
+                try {
+                    (new Registrar())->register($payment->payable->user, 'bkash', $success->id, $this->merchantNumber);
+                    $status = Statuses::VALIDATED;
+                    $transaction_details = json_encode($success->details);
+                } catch (InvalidTransaction $e) {
+                    $status = Statuses::VALIDATION_FAILED;
+                    $transaction_details = json_encode(['errorMessage' => $e->getMessage()]);
+                }
             }
         } else {
             $error = $execute_response->getError();
