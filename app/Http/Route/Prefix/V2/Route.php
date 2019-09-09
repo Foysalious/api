@@ -133,6 +133,7 @@ class Route
             });
             $api->group(['prefix' => 'subscriptions'], function ($api) {
                 $api->get('/', 'SubscriptionController@index');
+                $api->get('/business', 'SubscriptionController@businessSubscription');
                 $api->get('/partners', 'Subscription\CustomerSubscriptionController@getPartners');
                 $api->get('/faq', 'FaqController@getSubscriptionFaq');
                 $api->get('/all', 'SubscriptionController@all');

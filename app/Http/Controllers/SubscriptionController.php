@@ -79,6 +79,50 @@ class SubscriptionController extends Controller
         }
     }
 
+    public function businessSubscription(Request $request)
+    {
+        try {
+            if ($request->has('location')) {
+                $location = $request->location != '' ? $request->location : 4;
+            } else {
+                if ($request->has('lat') && $request->has('lng')) {
+                    $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+                    if (!is_null($hyperLocation)) $location = $hyperLocation->location->id; else return api_response($request, null, 404);
+                } else $location = 4;
+            }
+            $subscriptions = ServiceSubscription::with(['service' => function ($q) {
+                $q->with(['category' => function ($q) {
+                    $q->select('id', 'name');
+                }])->select('id', 'name', 'category_id', 'thumb', 'banner');
+            }])->active()->business()->get();
+
+            $b2b_subscriptions = [];
+            foreach ($subscriptions as $subscription) {
+                $service = $subscription->service;
+                $category = $service->category;
+                $subscription = [
+                    'subscription_id' => $subscription->id,
+                    'subscription_name' => $subscription->title,
+                    'subscription_thumb' => $service->thumb,
+                    'subscription_banner' => $service->banner,
+                    'service_id' => $service->id,
+                    'service_name' => $service->name,
+                    'category_id' => $category->id,
+                    'category_name' => $category->name,
+                ];
+                array_push($b2b_subscriptions, $subscription);
+            }
+
+            if (count($b2b_subscriptions) > 0)
+                return api_response($request, $b2b_subscriptions, 200, ['subscriptions' => $b2b_subscriptions]);
+            else
+                return api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     public function all(Request $request, ApproximatePriceCalculator $approximatePriceCalculator)
     {
         try {
