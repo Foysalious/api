@@ -38,6 +38,7 @@ class AvailableMethods
                     break;
                 case 'wallet_recharge':
                     $payments = self::getWalletRechargePayments($version_code, $platform_name);
+                    break;
                 default:
                     throw new \Exception('Invalid Payable Type');
                     break;
