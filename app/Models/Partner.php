@@ -713,8 +713,9 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
         $remaining = (double)$this->subscriber()->getBilling()->remainingCredit($this->subscription, $this->billing_type);
         $wallet = (double)$this->wallet;
         $bonus_wallet = (double)$this->bonusWallet();
+        $threshold = (double)$this->walletSetting->min_wallet_threshold;
 
-        return $bonus_wallet + $wallet + $remaining >= $price;
+        return ($bonus_wallet + $wallet + $remaining) - $threshold >= $price;
     }
 
     public function isAlreadyCollectedAdvanceSubscriptionFee()
