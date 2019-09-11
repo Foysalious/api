@@ -49,6 +49,11 @@ class PartnerSubscriptionController extends Controller
                 'monthly_tag' => '২০% ছাড়',
                 'half_yearly_tag' => '২০% ছাড়',
                 'yearly_tag' => null,
+                'tags' => [
+                    'monthly' => ['en' => '20% discount', 'bn' => '২০% ছাড়'],
+                    'half_yearly' => ['en' => '20% discount', 'bn' => '২০% ছাড়'],
+                    'yearly' => ['en' => null, 'bn' => null],
+                ],
                 'billing_type' => $partner->billing_type,
                 'current_package' => [
                     'en' => $partner_subscription_package->show_name,
