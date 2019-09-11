@@ -173,13 +173,16 @@ class PartnerSubscriptionController extends Controller
             $requestedPackage = PartnerSubscriptionPackage::find($request->package_id);
             $this->setModifier($request->manager_resource);
             if (!$request->partner->hasCreditForSubscription($requestedPackage, $request->billing_type)) {
-                return api_response($request, null, 403, ['message' => 'আপনার একাউন্টে যথেষ্ট ব্যলেন্স নেই।।']);
+                return api_response($request, null, 420, ['message' => 'আপনার একাউন্টে যথেষ্ট ব্যলেন্স নেই।।']);
             }
             if ($upgradeRequest = $this->createSubscriptionRequest($requestedPackage)) {
                 try {
                     $grade = $request->partner->subscriber()->getBilling()->getGrade($requestedPackage, $currentPackage);
                     if ($grade == 'Downgrade') {
-                        return api_response($request, null, 200, ['message' => " আপনাকে $requestedPackage->show_name_bd  প্যকেজে অবনমনের  অনুরোধ  গ্রহণ  করা  হয়েছে "]);
+                        if ($request->partner->status != constants('PARTNER_STATUSES')['Inactive']) {
+                            return api_response($request, null, 200, ['message' => " আপনাকে $requestedPackage->show_name_bd  প্যকেজে অবনমনের  অনুরোধ  গ্রহণ  করা  হয়েছে "]);
+                        }
+
                     }
                     $request->partner->subscriptionUpgrade($requestedPackage, $upgradeRequest);
                     if ($grade === 'Renewed') {

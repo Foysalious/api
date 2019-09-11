@@ -12,7 +12,8 @@ return [
         'Blacklisted' => 'Blacklisted',
         'Waiting' => 'Waiting',
         'Onboarded' => 'Onboarded',
-        'Rejected' => 'Rejected'
+        'Rejected' => 'Rejected',
+        'Inactive' => 'Inactive'
     ],
     'PARTNER_STATUSES_SHOW' => [
         'Verified' => ['sheba' => 'Verified', 'partner' => 'Active', 'customer' => 'Verified'],
@@ -22,7 +23,8 @@ return [
         'Blacklisted' => ['sheba' => 'Blacklisted', 'partner' => 'Blacklisted', 'customer' => 'Blacklisted'],
         'Waiting' => ['sheba' => 'Ready to verified', 'partner' => 'Inactive', 'customer' => 'Ready to verified'],
         'Onboarded' => ['sheba' => 'Onboarded', 'partner' => 'Inactive', 'customer' => 'Onboarded'],
-        'Rejected' => ['sheba' => 'Rejected', 'partner' => 'Inactive', 'customer' => 'Rejected']
+        'Rejected' => ['sheba' => 'Rejected', 'partner' => 'Inactive', 'customer' => 'Rejected'],
+        'Inactive' => ['sheba' => 'Inactive', 'partner' => 'Inactive', 'customer' => 'Inactive']
     ],
     'PARTNER_LEVELS' => ['Starter', 'Intermediate', 'Advanced'],
     'PARTNER_TYPES' => ['USP', 'NSP', 'ESP'],
