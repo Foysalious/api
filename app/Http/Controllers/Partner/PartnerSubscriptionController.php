@@ -184,7 +184,7 @@ class PartnerSubscriptionController extends Controller
                     $grade = $request->partner->subscriber()->getBilling()->findGrade($requestedPackage, $currentPackage);
                     if ($grade == 'Downgrade') {
                         if ($request->partner->status != constants('PARTNER_STATUSES')['Inactive']) {
-                            return api_response($request, null, 200, ['message' => " আপনাকে $requestedPackage->show_name_bd  প্যকেজে অবনমনের  অনুরোধ  গ্রহণ  করা  হয়েছে "]);
+                            return api_response($request, null, 200, ['message' => " আপনার $requestedPackage->show_name_bd  প্যকেজে অবনমনের  অনুরোধ  গ্রহণ  করা  হয়েছে "]);
                         }
                     }
                     $request->partner->subscriptionUpgrade($requestedPackage, $upgradeRequest);

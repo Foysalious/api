@@ -76,7 +76,6 @@ class PartnerSubscriptionBilling
         $discount = 0;
         $this->packageFrom = $old_package;
         $this->packageTo = $new_package;
-        dd($old_package);
         $remaining_credit = $this->remainingCredit($old_package, $old_billing_type);
         if ($discount_id) $discount = $new_package->discountPriceFor($discount_id);
         $this->packagePrice = ($new_package->originalPrice($new_billing_type) - $discount) - $remaining_credit;
