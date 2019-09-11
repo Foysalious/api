@@ -2,6 +2,8 @@
 
 use Sheba\Checkout\ShebaOrderInterface;
 use Sheba\Dal\BaseModel;
+use Sheba\Dal\LafsOrder\Model as LafsOrder;
+use Sheba\Dal\Order\Events\OrderCreated;
 use Sheba\Dal\Order\Events\OrderSaved;
 use Sheba\Order\Code\Builder as CodeBuilder;
 use Sheba\Order\StatusCalculator;
@@ -26,6 +28,7 @@ class Order extends BaseModel implements ShebaOrderInterface, CanHaveVoucher, Up
     private $codeBuilder;
 
     protected static $savedEventClass = OrderSaved::class;
+    protected static $createdEventClass = OrderCreated::class;
 
     public function __construct($attributes = [])
     {
@@ -37,6 +40,9 @@ class Order extends BaseModel implements ShebaOrderInterface, CanHaveVoucher, Up
         $this->codeBuilder = new CodeBuilder();
     }
 
+    /**
+     ** Model relations
+     **/
     public function jobs()
     {
         return $this->hasManyThrough(Job::class, PartnerOrder::class);
@@ -55,6 +61,11 @@ class Order extends BaseModel implements ShebaOrderInterface, CanHaveVoucher, Up
     public function partner_orders()
     {
         return $this->hasMany(PartnerOrder::class);
+    }
+
+    public function lafsOrder()
+    {
+        return $this->hasOne(LafsOrder::class);
     }
 
     public function subscription()
