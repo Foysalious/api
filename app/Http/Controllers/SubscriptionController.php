@@ -39,6 +39,7 @@ class SubscriptionController extends Controller
                         'subscription_name' => $subscription->title,
                         'subscription_thumb' => $service->thumb,
                         'subscription_banner' => $service->banner,
+                        'subscription_description' => $subscription->description,
                         'service_id' => $service->id,
                         'service_name' => $service->name,
                         'category_id' => $category->id,
