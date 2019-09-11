@@ -701,13 +701,20 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
         return new \Sheba\MovieTicket\Commission\Partner();
     }
 
+    /**
+     * @param PartnerSubscriptionPackage $package
+     * @param $billingType
+     * @param int $billingCycle
+     * @return bool
+     */
     public function hasCreditForSubscription(PartnerSubscriptionPackage $package, $billingType, $billingCycle = 1)
     {
         $price = (double)$package->discountPrice($billingType, $billingCycle);
         $remaining = (double)$this->subscriber()->getBilling()->remainingCredit($this->subscription, $this->billing_type);
         $wallet = (double)$this->wallet;
-        $bonusWallet = (double)$this->bonusWallet();
-        return $bonusWallet + $wallet + $remaining >= $price;
+        $bonus_wallet = (double)$this->bonusWallet();
+
+        return $bonus_wallet + $wallet + $remaining >= $price;
     }
 
     public function isAlreadyCollectedAdvanceSubscriptionFee()
@@ -721,5 +728,4 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
     {
         return $this->hasMany(PartnerSubscriptionPackageCharge::class);
     }
-
 }

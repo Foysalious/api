@@ -72,7 +72,6 @@ class PartnerSubscriptionBilling
      */
     public function runUpgradeBilling(PartnerSubscriptionPackage $old_package, PartnerSubscriptionPackage $new_package, $old_billing_type, $new_billing_type, $discount_id)
     {
-
         $discount = 0;
         $this->packageFrom = $old_package;
         $this->packageTo = $new_package;
@@ -106,12 +105,11 @@ class PartnerSubscriptionBilling
             $diff = $this->today->month - $this->partner->billing_start_date->month;
             $yearDiff = ($this->today->year - $this->partner->billing_start_date->year);
             return $diff + ($yearDiff * 12) + 1;
+        } elseif ($this->partner->billing_type == BillingType::HALF_YEARLY) {
+            $month_diff = $this->today->diffInMonths($this->partner->billing_start_date);
+            return (int)($month_diff / 6) + 1;
         } elseif ($this->partner->billing_type == BillingType::YEARLY) {
             return ($this->today->year - $this->partner->billing_start_date->year) + 1;
-        } elseif ($this->partner->billing_type == BillingType::HALF_YEARLY) {
-            return round((($this->today->year - $this->partner->billing_start_date->year) + 1) / 2, 0);
-        } else {
-            return 1;
         }
     }
 
@@ -157,7 +155,6 @@ class PartnerSubscriptionBilling
 
     public function remainingCredit(PartnerSubscriptionPackage $old_package, $old_billing_type)
     {
-
         $dayDiff = $this->partner->last_billed_date ? $this->partner->last_billed_date->diffInDays($this->today) + 1 : 0;
         $used_credit = $old_package->originalPricePerDay($old_billing_type) * $dayDiff;
         $remaining_credit = ($this->partner->last_billed_amount?:0) - $used_credit;
