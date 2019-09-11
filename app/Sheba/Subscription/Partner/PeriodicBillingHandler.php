@@ -51,6 +51,11 @@ class PeriodicBillingHandler
             /** @var $new_bill_date Carbon */
             if ($last_billed_date->isLeapYear() && $new_bill_date->month == 3 && $new_bill_date->day == 1) $new_bill_date->subDay(1);
             if ($new_bill_date->isLeapYear() && $last_billed_date->month == 2 && $last_billed_date->day == 28) $new_bill_date->addDay(1);
+        } elseif ($this->partner->billing_type == 'half-yearly') {
+            $new_bill_date = $last_billed_date->copy()->addMonths(6);
+            /** @var $new_bill_date Carbon */
+        } else {
+            return $this->today;
         }
 
         return $new_bill_date;

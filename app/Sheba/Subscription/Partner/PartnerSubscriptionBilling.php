@@ -86,7 +86,7 @@ class PartnerSubscriptionBilling
         $this->partner->billing_start_date = $this->today;
         $this->billingDatabaseTransactions($this->packagePrice);
         if (!$this->isCollectAdvanceSubscriptionFee) {
-            (new PartnerSubscriptionCharges($this))->shootLog(constants('PARTNER_PACKAGE_CHARGE_TYPES')['Upgrade']);
+            (new PartnerSubscriptionCharges($this))->shootLog(constants('PARTNER_PACKAGE_CHARGE_TYPES')[$this->findGrade($new_package, $old_package)]);
         }
         $this->sendSmsForSubscriptionUpgrade($old_package, $new_package, $old_billing_type, $new_billing_type);
     }
@@ -101,12 +101,17 @@ class PartnerSubscriptionBilling
     
     private function calculateRunningBillingCycleNumber()
     {
+        if (!$this->partner->billing_start_date) return 1;
         if ($this->partner->billing_type == "monthly") {
             $diff = $this->today->month - $this->partner->billing_start_date->month;
             $yearDiff = ($this->today->year - $this->partner->billing_start_date->year);
             return $diff + ($yearDiff * 12) + 1;
         } elseif ($this->partner->billing_type == "yearly") {
             return ($this->today->year - $this->partner->billing_start_date->year) + 1;
+        } elseif ($this->partner->billing_type == 'half-yearly') {
+            return round((($this->today->year - $this->partner->billing_start_date->year) + 1) / 2, 0);
+        } else {
+            return 1;
         }
     }
 
@@ -212,6 +217,17 @@ class PartnerSubscriptionBilling
                 'old_package_type' => $old_billing_type,
                 'new_package_type' => $new_billing_type
             ]);
+        }
+    }
+
+    private function findGrade($new, $old)
+    {
+        if ($old->id < $new->id) {
+            return 'Upgrade';
+        } else if ($old->id > $new->id) {
+            return 'Downgrade';
+        } else {
+            return 'Renewed';
         }
     }
 }

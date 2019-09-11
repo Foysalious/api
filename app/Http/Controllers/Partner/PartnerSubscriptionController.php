@@ -167,19 +167,33 @@ class PartnerSubscriptionController extends Controller
         try{
             $this->validate($request, [
                 'package_id' => 'required|numeric|exists:partner_subscription_packages,id',
-                'billing_cycle' => 'required|string|in:monthly,yearly,half-yearly'
+                'billing_type' => 'required|string|in:monthly,yearly,half-yearly'
             ]);
             $currentPackage = $request->partner->subscription;
             $requestedPackage = PartnerSubscriptionPackage::find($request->package_id);
-            if ($currentPackage->id === $requestedPackage->id) {
-                return api_response($request, null, 403, ['message' => 'You already are in this package please upgrade or renew']);
-            }
-
             $this->setModifier($request->manager_resource);
-            if (!$request->partner->hasCreditForSubscription($requestedPackage, $request->billing_cycle)) {
-                return api_response($request, null, 403, ['message' => 'You do not have sufficient balance for purchasing this package']);
+            if (!$request->partner->hasCreditForSubscription($requestedPackage, $request->billing_type)) {
+                return api_response($request, null, 403, ['message' => 'আপনার একাউন্টে যথেষ্ট ব্যলেন্স নেই।।']);
             }
-            
+            if ($upgradeRequest = $this->createSubscriptionRequest($requestedPackage)) {
+                try {
+                    $grade = $request->partner->subscriber()->getBilling()->getGrade($requestedPackage, $currentPackage);
+                    if ($grade == 'Downgrade') {
+                        return api_response($request, null, 200, ['message' => " আপনাকে $requestedPackage->show_name_bd  প্যকেজে অবনমনের  অনুরোধ  গ্রহণ  করা  হয়েছে "]);
+                    }
+                    $request->partner->subscriptionUpgrade($requestedPackage, $upgradeRequest);
+                    if ($grade === 'Renewed') {
+                        return api_response($request, null, 200, ['message' => "আপনাকে $requestedPackage->show_name_bn  প্যকেজে পুনর্বহাল করা হয়েছে ।"]);
+                    } else {
+                        return api_response($request, null, 200, ['message' => "আপনাকে $requestedPackage->show_name_bn  প্যকেজে উন্নীত করা হয়েছে ।"]);
+                    }
+                } catch (Throwable $e) {
+                    $upgradeRequest->delete();
+                    throw $e;
+                }
+            } else {
+                return api_response($request, null, 403, ['message' => "$requestedPackage->show_name_bn প্যাকেজে যেতে অনুগ্রহ করে সেবার সাথে যোগাযোগ করুন"]);
+            }
 
         }catch (ValidationException $e){
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -193,6 +207,22 @@ class PartnerSubscriptionController extends Controller
         }
     }
 
+    private function createSubscriptionRequest(PartnerSubscriptionPackage $requested_package)
+    {
+        $request = \request();
+        $partner = $request->partner;
+        $running_discount = $requested_package->runningDiscount($request->billing_type);
+        $this->setModifier($request->manager_resource);
+        $update_request_data = $this->withCreateModificationField([
+            'partner_id' => $partner->id,
+            'old_package_id' => $partner->package_id,
+            'new_package_id' => $request->package_id,
+            'old_billing_type' => $partner->billing_type,
+            'new_billing_type' => $request->billing_type,
+            'discount_id' => $running_discount ? $running_discount->id : null
+        ]);
+        return PartnerSubscriptionUpdateRequest::create($update_request_data);
+    }
     public function changeSubscriptionPackage()
     {
 

@@ -2,6 +2,7 @@
 
 use App\Models\Customer;
 use App\Models\Payment;
+use App\Repositories\PartnerRepository;
 use App\Repositories\PaymentRepository;
 use Carbon\Carbon;
 use DB;
@@ -47,7 +48,7 @@ class WalletController extends Controller
 
             $class_name = "App\\Models\\" . ucwords($request->user_type);
             if ($request->user_type === 'partner') {
-                $user = $this->validatePartner($request->remember_token, $request->user_id);
+                $user = (new PartnerRepository($request->user_id))->validatePartner($request->remember_token);
             } else {
                 $user = $class_name::where([['id', (int)$request->user_id], ['remember_token', $request->remember_token]])->first();
             }
@@ -140,19 +141,6 @@ class WalletController extends Controller
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
-        }
-    }
-
-
-
-    private function validatePartner($remember_token, $id)
-    {
-        $manager_resource = Resource::where('remember_token', $remember_token)->first();
-        $partner = Partner::find($id);
-        if (isset($manager_resource) && isset($partner) && $manager_resource->isManager()) {
-            return $partner;
-        } else {
-            return false;
         }
     }
 }
