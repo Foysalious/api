@@ -157,7 +157,8 @@ class OrderController extends Controller
                 'nPos' => 'numeric',
                 'discount' => 'numeric',
                 'is_percentage' => 'numeric',
-                'previous_order_id' => 'numeric'
+                'previous_order_id' => 'numeric',
+                'is_wholesale_applied' => 'required'
             ]);
             $link = null;
             if ($request->manager_resource) {
