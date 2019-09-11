@@ -18,7 +18,7 @@ class PeriodicBillingHandler
     {
         if ($this->hasBillingCycleEnded()) {
             $this->partner->runSubscriptionBilling();
-        };
+        }
     }
 
     public function hasBillingCycleEnded()
@@ -36,7 +36,7 @@ class PeriodicBillingHandler
         $new_bill_date = '';
         $last_billed_date = $this->partner->last_billed_date;
 
-        if ($this->partner->billing_type == "monthly") {
+        if ($this->partner->billing_type == BillingType::MONTHLY) {
             $next_billed_date_month = (($last_billed_date->month + 1) % 12) ?: 12;
             $next_billed_date_year = $last_billed_date->year + ($last_billed_date->month == 12);
             $new_bill_date = Carbon::createFromDate($next_billed_date_year, $next_billed_date_month, 1);
@@ -46,16 +46,13 @@ class PeriodicBillingHandler
             } else {
                 $new_bill_date->day = $new_bill_date->daysInMonth;
             }
-        } elseif ($this->partner->billing_type == "yearly") {
+        } elseif ($this->partner->billing_type == BillingType::HALF_YEARLY) {
+            $new_bill_date = $last_billed_date->copy()->addMonths(6);
+        } elseif ($this->partner->billing_type == BillingType::YEARLY) {
             $new_bill_date = $last_billed_date->copy()->addYear(1);
             /** @var $new_bill_date Carbon */
             if ($last_billed_date->isLeapYear() && $new_bill_date->month == 3 && $new_bill_date->day == 1) $new_bill_date->subDay(1);
             if ($new_bill_date->isLeapYear() && $last_billed_date->month == 2 && $last_billed_date->day == 28) $new_bill_date->addDay(1);
-        } elseif ($this->partner->billing_type == 'half-yearly') {
-            $new_bill_date = $last_billed_date->copy()->addMonths(6);
-            /** @var $new_bill_date Carbon */
-        } else {
-            return $this->today;
         }
 
         return $new_bill_date;
