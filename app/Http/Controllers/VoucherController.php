@@ -76,10 +76,10 @@ class VoucherController extends Controller
                 if ($request->filter_type == "valid") $partner_voucher_query->valid();
                 if ($request->filter_type == "invalid") $partner_voucher_query->notValid();
             }
-            if(isset($request->q))
-                $partner_voucher_query = $partner_voucher_query->skip($offset)->take($limit)->search($request);
-            else
-                $partner_voucher_query = $partner_voucher_query->skip($offset)->take($limit);
+            if ($request->has('q') && !empty($request->q))
+                $partner_voucher_query = $partner_voucher_query->search($request->q);
+
+            $partner_voucher_query = $partner_voucher_query->skip($offset)->take($limit);
 
             $vouchers = [];
 
@@ -110,14 +110,15 @@ class VoucherController extends Controller
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
             $resource = new Item($voucher, new VoucherDetailTransformer());
-            $voucher = $manager->createData($resource)->toArray();
+            $formatted_voucher = $manager->createData($resource)->toArray();
+            $formatted_voucher['data']['is_used'] = $voucher->usedCount() ? true : false;
 
             $data = [
                 'total_used' => 5,
                 'total_sale_with_voucher' => 256865,
                 'total_discount_with_voucher' => 8500
             ];
-            return api_response($request, null, 200, ['data' => $data, 'voucher' => $voucher['data']]);
+            return api_response($request, null, 200, ['data' => $data, 'voucher' => $formatted_voucher['data']]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

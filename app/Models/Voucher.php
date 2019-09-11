@@ -126,9 +126,9 @@ class Voucher extends Model
         return $query->whereRaw('((NOW() NOT BETWEEN start_date AND end_date) OR (NOW() <= start_date AND end_date IS NULL))');
     }
 
-    public function scopeSearch($query,$request)
+    public function scopeSearch($query, $code)
     {
-        return $query->where('code','like','%'.strtoupper($request->q).'%');
+        return $query->where('code', 'like', '%' . strtoupper($code) . '%');
     }
 
     public function tags()
@@ -149,5 +149,10 @@ class Voucher extends Model
     public function isValid()
     {
         return Carbon::now()->lessThanOrEqualTo($this->end_date);
+    }
+
+    public function usedCount()
+    {
+        return 0;
     }
 }
