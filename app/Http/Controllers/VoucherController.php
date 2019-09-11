@@ -198,12 +198,6 @@ class VoucherController extends Controller
                 'created_by_type' => get_class($partner)
             ];
 
-            $date_validation = $this->validatePeriodForUpdate($data, $voucher);
-
-            if($date_validation['error']) {
-                return api_response($request, null, 400, ['msg' => $date_validation['msg']]);
-            }
-
             $voucher->update($this->withUpdateModificationField($data));
 
             return api_response($request, null, 200, ['voucher' => $voucher]);
@@ -277,33 +271,4 @@ class VoucherController extends Controller
 
 
     }
-
-
-    protected function validatePeriodForUpdate($data, $voucher)
-    {
-        $msg = '';
-        $error = false;
-        $promotions = Promotion::where('voucher_id',$voucher->id)->get();
-        $persons_using_this_voucher = count($promotions);
-        if($data['start_date']->ne($voucher->start_date)){
-            if($persons_using_this_voucher > 0) {
-                $msg= "You can not change the start time of this voucher, as $persons_using_this_voucher  person(s) are using it already.";
-                $error = true;
-            }
-        } else if($data['end_date'] < $voucher->end_date) {
-            if($persons_using_this_voucher > 0) {
-                $msg= "You can not shorten the lifetime of this voucher, as $persons_using_this_voucher  person(s) are using it already.";
-                $error = true;
-            }
-        } else if($data['end_date'] > $voucher->end_date) {
-            foreach ($promotions as $promotion) {
-                $promotion->update(['valid_till' => $data['end_date']]);
-            }
-        }
-        return ['msg' => $msg, 'error' => $error];
-    }
-
-
-
-
 }
