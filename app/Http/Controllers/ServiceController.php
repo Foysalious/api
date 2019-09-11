@@ -139,6 +139,8 @@ class ServiceController extends Controller
             array_add($service, 'master_category_id', $category->parent->id);
             array_add($service, 'master_category_name', $category->parent->name);
             array_add($service, 'service_breakdown', $service_breakdown);
+            array_add($service, 'options', $options);
+
             removeRelationsAndFields($service);
             if (config('sheba.online_payment_discount_percentage') > 0) {
                 $discount_percentage = config('sheba.online_payment_discount_percentage');
