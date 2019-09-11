@@ -193,7 +193,6 @@ class MovieTicketRequest
         if ($this->voucher) {
             $amount = $this->getDiscountAmount();
             $discount_percent = $this->voucher->is_amount_percentage ? $this->voucher->amount : 0.00;
-
             $this->setDiscount($amount);
             $this->setDiscountPercent($discount_percent);
             $this->setShebaContribution($this->voucher->sheba_contribution);
@@ -201,6 +200,11 @@ class MovieTicketRequest
         }
 
         return $this;
+    }
+
+    public function getVoucher()
+    {
+        return $this->voucher;
     }
 
     public function setDiscount($discount)
@@ -211,7 +215,7 @@ class MovieTicketRequest
 
     public function getDiscount()
     {
-        return $this->discount;
+        return $this->discount?:0;
     }
 
     public function setDiscountPercent($discount_percent)
