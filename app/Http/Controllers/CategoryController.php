@@ -372,6 +372,11 @@ class CategoryController extends Controller
                         return in_array($location, $locations);
                     });
                 }
+                if ($request->has('service_id')) {
+                    $services = $services->filter(function ($service) use ($request) {
+                        return $request->service_id == $service->id;
+                    });
+                }
 
                 $subscriptions = collect();
                 foreach ($services as $service) {
@@ -418,7 +423,6 @@ class CategoryController extends Controller
                 return api_response($request, null, 404);
             }
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
