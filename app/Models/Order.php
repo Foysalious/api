@@ -63,9 +63,9 @@ class Order extends BaseModel implements ShebaOrderInterface, CanHaveVoucher, Up
         return $this->hasMany(PartnerOrder::class);
     }
 
-    public function lafsOrders()
+    public function lafsOrder()
     {
-        return $this->hasMany(LafsOrder::class);
+        return $this->hasOne(LafsOrder::class);
     }
 
     public function subscription()
