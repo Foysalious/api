@@ -176,7 +176,6 @@ class PartnerSubscriptionController extends Controller
                 return api_response($request, null, 402, ['message' => ' আপনার  অনুরধক্রিত  প্যকেজটি পাওয়া যায়  নাই']);
             }
             $this->setModifier($request->manager_resource);
-            dd($request->partner->hasCreditForSubscription($requestedPackage, $request->billing_type));
             if (!$request->partner->hasCreditForSubscription($requestedPackage, $request->billing_type)) {
                 return api_response($request, null, 420, ['message' => 'আপনার একাউন্টে যথেষ্ট ব্যলেন্স নেই।।']);
             }
