@@ -12,7 +12,8 @@ return [
         'Blacklisted' => 'Blacklisted',
         'Waiting' => 'Waiting',
         'Onboarded' => 'Onboarded',
-        'Rejected' => 'Rejected'
+        'Rejected' => 'Rejected',
+        'Inactive' => 'Inactive'
     ],
     'PARTNER_STATUSES_SHOW' => [
         'Verified' => ['sheba' => 'Verified', 'partner' => 'Active', 'customer' => 'Verified'],
