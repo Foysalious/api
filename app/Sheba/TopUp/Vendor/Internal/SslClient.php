@@ -81,16 +81,11 @@ class SslClient
             return 1;
         } elseif (preg_match("/^(\+88019)/", $mobile_number) || preg_match("/^(\+88014)/", $mobile_number)) {
             return 2;
-        }
-        /**
-         * TEMPORARY ROBI/AIRTEL MOVE TO SSL
-         *
-         * elseif (preg_match("/^(\+88018)/", $mobile_number)) {
+        } elseif (preg_match("/^(\+88018)/", $mobile_number)) {
             return 3;
         } elseif (preg_match("/^(\+88016)/", $mobile_number)) {
             return 6;
-        }*/
-        elseif (preg_match("/^(\+88015)/", $mobile_number)) {
+        } elseif (preg_match("/^(\+88015)/", $mobile_number)) {
             return 5;
         } else {
             throw new \InvalidArgumentException('Invalid Mobile for ssl topup.');
