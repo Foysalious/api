@@ -66,6 +66,7 @@ class VoucherController extends Controller
     {
         try {
             $partner = $request->partner;
+            list($offset, $limit) = calculatePagination($request);
             $partner_voucher_query = Voucher::byPartner($partner);
 
             $used_voucher_id = [344467, 344466];
@@ -75,12 +76,16 @@ class VoucherController extends Controller
                 if ($request->filter_type == "valid") $partner_voucher_query->valid();
                 if ($request->filter_type == "invalid") $partner_voucher_query->notValid();
             }
+            if(isset($request->q))
+                $partner_voucher_query = $partner_voucher_query->skip($offset)->take($limit)->search($request);
+            else
+                $partner_voucher_query = $partner_voucher_query->skip($offset)->take($limit);
 
             $vouchers = [];
 
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
-            $partner_voucher_query->orderBy('id', 'desc')->each(function ($voucher) use (&$vouchers, $manager) {
+            $partner_voucher_query->orderBy('id', 'desc')->get()->each(function ($voucher) use (&$vouchers, $manager) {
                 $resource = new Item($voucher, new VoucherTransformer());
                 $voucher = $manager->createData($resource)->toArray();
                 array_push($vouchers, $voucher['data']) ;

@@ -126,6 +126,11 @@ class Voucher extends Model
         return $query->whereRaw('((NOW() NOT BETWEEN start_date AND end_date) OR (NOW() <= start_date AND end_date IS NULL))');
     }
 
+    public function scopeSearch($query,$request)
+    {
+        return $query->where('code','like','%'.strtoupper($request->q).'%');
+    }
+
     public function tags()
     {
         return $this->morphToMany(Tag::class, 'taggable');
