@@ -703,7 +703,7 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
 
     public function hasCreditForSubscription(PartnerSubscriptionPackage $package, $billingType, $billingCycle = 1)
     {
-        $price = (double)$package->discountPrice($billingType, $billingCycle);
+        $price = $package->originalPrice($billingType) - (double)$package->discountPrice($billingType, $billingCycle);
         $remaining = (double)$this->subscriber()->getBilling()->remainingCredit($this->subscription, $this->billing_type);
         $wallet = (double)$this->wallet;
         $bonusWallet = (double)$this->bonusWallet();
