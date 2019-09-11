@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\ModificationFields;
 use Sheba\Partner\StatusChanger;
+use Sheba\Subscription\Partner\BillingType;
 use Throwable;
 
 class PartnerSubscriptionController extends Controller
@@ -167,22 +168,24 @@ class PartnerSubscriptionController extends Controller
         try{
             $this->validate($request, [
                 'package_id' => 'required|numeric|exists:partner_subscription_packages,id',
-                'billing_type' => 'required|string|in:monthly,yearly,half-yearly'
+                'billing_type' => 'required|string|in:' . implode(',', [BillingType::MONTHLY, BillingType::YEARLY, BillingType::HALF_YEARLY])
             ]);
             $currentPackage = $request->partner->subscription;
             $requestedPackage = PartnerSubscriptionPackage::find($request->package_id);
+            if (empty($requestedPackage)) {
+                return api_response($request, null, 402, ['message' => ' আপনার  অনুরধক্রিত  প্যকেজটি পাওয়া যায়  নাই']);
+            }
             $this->setModifier($request->manager_resource);
             if (!$request->partner->hasCreditForSubscription($requestedPackage, $request->billing_type)) {
                 return api_response($request, null, 420, ['message' => 'আপনার একাউন্টে যথেষ্ট ব্যলেন্স নেই।।']);
             }
             if ($upgradeRequest = $this->createSubscriptionRequest($requestedPackage)) {
                 try {
-                    $grade = $request->partner->subscriber()->getBilling()->getGrade($requestedPackage, $currentPackage);
+                    $grade = $request->partner->subscriber()->getBilling()->findGrade($requestedPackage, $currentPackage);
                     if ($grade == 'Downgrade') {
                         if ($request->partner->status != constants('PARTNER_STATUSES')['Inactive']) {
                             return api_response($request, null, 200, ['message' => " আপনাকে $requestedPackage->show_name_bd  প্যকেজে অবনমনের  অনুরোধ  গ্রহণ  করা  হয়েছে "]);
                         }
-
                     }
                     $request->partner->subscriptionUpgrade($requestedPackage, $upgradeRequest);
                     if ($grade === 'Renewed') {
@@ -205,6 +208,7 @@ class PartnerSubscriptionController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

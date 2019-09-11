@@ -76,6 +76,7 @@ class PartnerSubscriptionBilling
         $discount = 0;
         $this->packageFrom = $old_package;
         $this->packageTo = $new_package;
+        dd($old_package);
         $remaining_credit = $this->remainingCredit($old_package, $old_billing_type);
         if ($discount_id) $discount = $new_package->discountPriceFor($discount_id);
         $this->packagePrice = ($new_package->originalPrice($new_billing_type) - $discount) - $remaining_credit;
@@ -102,13 +103,13 @@ class PartnerSubscriptionBilling
     private function calculateRunningBillingCycleNumber()
     {
         if (!$this->partner->billing_start_date) return 1;
-        if ($this->partner->billing_type == "monthly") {
+        if ($this->partner->billing_type == BillingType::MONTHLY) {
             $diff = $this->today->month - $this->partner->billing_start_date->month;
             $yearDiff = ($this->today->year - $this->partner->billing_start_date->year);
             return $diff + ($yearDiff * 12) + 1;
-        } elseif ($this->partner->billing_type == "yearly") {
+        } elseif ($this->partner->billing_type == BillingType::YEARLY) {
             return ($this->today->year - $this->partner->billing_start_date->year) + 1;
-        } elseif ($this->partner->billing_type == 'half-yearly') {
+        } elseif ($this->partner->billing_type == BillingType::HALF_YEARLY) {
             return round((($this->today->year - $this->partner->billing_start_date->year) + 1) / 2, 0);
         } else {
             return 1;
@@ -157,6 +158,7 @@ class PartnerSubscriptionBilling
 
     public function remainingCredit(PartnerSubscriptionPackage $old_package, $old_billing_type)
     {
+
         $dayDiff = $this->partner->last_billed_date ? $this->partner->last_billed_date->diffInDays($this->today) + 1 : 0;
         $used_credit = $old_package->originalPricePerDay($old_billing_type) * $dayDiff;
         $remaining_credit = ($this->partner->last_billed_amount?:0) - $used_credit;
@@ -220,7 +222,7 @@ class PartnerSubscriptionBilling
         }
     }
 
-    private function findGrade($new, $old)
+    public function findGrade($new, $old)
     {
         if ($old->id < $new->id) {
             return 'Upgrade';

@@ -432,7 +432,7 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
         $this->subscriber()->getBilling()->runUpfrontBilling();
     }
 
-    private function subscriber()
+    public function subscriber()
     {
         return new PartnerSubscriber($this);
     }
@@ -704,10 +704,22 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
     public function hasCreditForSubscription(PartnerSubscriptionPackage $package, $billingType, $billingCycle = 1)
     {
         $price = (double)$package->discountPrice($billingType, $billingCycle);
-        $remaining = (double)$this->subscriber()->getBilling()->remainingCredit($this->subctioption, $this->billing_type);
+        $remaining = (double)$this->subscriber()->getBilling()->remainingCredit($this->subscription, $this->billing_type);
         $wallet = (double)$this->wallet;
         $bonusWallet = (double)$this->bonusWallet();
-        return $bonusWallet + $wallet + $remaining <= $price;
+        return $bonusWallet + $wallet + $remaining >= $price;
+    }
+
+    public function isAlreadyCollectedAdvanceSubscriptionFee()
+    {
+        $last_subscription_package_charge = $this->subscriptionPackageCharges()->orderBy('id', 'desc')->first();
+        if (!$last_subscription_package_charge) return false;
+        return $last_subscription_package_charge->billing_date->between($this->last_billed_date->addSecond(), $this->periodicBillingHandler()->nextBillingDate());
+    }
+
+    public function subscriptionPackageCharges()
+    {
+        return $this->hasMany(PartnerSubscriptionPackageCharge::class);
     }
 
 }
