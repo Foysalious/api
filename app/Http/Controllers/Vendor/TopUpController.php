@@ -3,9 +3,11 @@
 use App\Http\Controllers\Controller;
 use App\Repositories\VendorRepository;
 use Dingo\Api\Routing\Helpers;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\TopUp\Creator;
+use Throwable;
 use Validator;
 use Sheba\TopUp\Jobs\TopUpJob;
 use Sheba\TopUp\TopUpRequest;
@@ -14,6 +16,12 @@ class TopUpController extends Controller
 {
     use Helpers;
 
+    /**
+     * @param Request $request
+     * @param Creator $creator
+     * @param TopUpRequest $top_up_request
+     * @return JsonResponse
+     */
     public function topUp(Request $request, Creator $creator, TopUpRequest $top_up_request)
     {
         try {
@@ -36,12 +44,16 @@ class TopUpController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function history(Request $request)
     {
         try {
@@ -57,12 +69,17 @@ class TopUpController extends Controller
             $data = (new VendorRepository())->topUpHistory($request);
             $response = ['data' => $data];
             return api_response($request, $response, 200, $response);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
+    /**
+     * @param $topup
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function historyDetails($topup, Request $request)
     {
         try {
@@ -72,7 +89,7 @@ class TopUpController extends Controller
             } else {
                 return api_response($request, $data, 200, ['data' => $data]);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

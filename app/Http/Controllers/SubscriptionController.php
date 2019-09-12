@@ -23,11 +23,12 @@ class SubscriptionController extends Controller
             }
 
             if ($request->has('for') && $request->for == 'business') {
+                list($offset, $limit) = calculatePagination($request);
                 $subscriptions = ServiceSubscription::with(['service' => function ($q) {
                     $q->with(['category' => function ($q) {
                         $q->select('id', 'name');
                     }])->select('id', 'name', 'category_id', 'thumb', 'banner');
-                }])->active()->business()->get();
+                }])->active()->business()->skip($offset)->take($limit)->get();
 
                 $b2b_subscriptions = [];
                 $subscriptions_categories = collect();

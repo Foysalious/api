@@ -5,6 +5,10 @@ use League\Fractal\TransformerAbstract;
 
 class VoucherTransformer extends TransformerAbstract
 {
+    /**
+     * @param Voucher $voucher
+     * @return array
+     */
     public function transform(Voucher $voucher)
     {
         return [
