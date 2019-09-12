@@ -39,6 +39,9 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
     protected $servicePivotColumns = ['id', 'description', 'options', 'prices', 'min_prices', 'base_prices', 'base_quantity', 'is_published', 'discount', 'discount_start_date', 'discount_start_date', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
     private $resourceTypes;
 
+    public $totalCreditForSubscription;
+    public $totalPriceRequiredForSubscription;
+
     public function __construct($attributes = [])
     {
         parent::__construct($attributes);
@@ -410,7 +413,7 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
 
     public function subscribe($package, $billing_type)
     {
-        $package = $package ? (($package) instanceof PartnerSubscriptionPackage ? $package : PartnerSubscriptionPackage::find($package)) : $this->partner->subscription;
+        $package = $package ? (($package) instanceof PartnerSubscriptionPackage ? $package : PartnerSubscriptionPackage::find($package)) : $this->subscription;
         $discount = $package->runningDiscount($billing_type);
         $discount_id = $discount ? $discount->id : null;
         $this->subscriber()->getPackage($package)->subscribe($billing_type, $discount_id);
@@ -418,7 +421,7 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
 
     public function subscriptionUpgrade($package, $upgradeRequest = null)
     {
-        $package = $package ? (($package) instanceof PartnerSubscriptionPackage ? $package : PartnerSubscriptionPackage::find($package)) : $this->partner->subscription;
+        $package = $package ? (($package) instanceof PartnerSubscriptionPackage ? $package : PartnerSubscriptionPackage::find($package)) : $this->subscription;
         $this->subscriber()->upgrade($package, $upgradeRequest);
     }
 
@@ -709,15 +712,26 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
      */
     public function hasCreditForSubscription(PartnerSubscriptionPackage $package, $billingType, $billingCycle = 1)
     {
-        $price = $package->originalPrice($billingType) - (double)$package->discountPrice($billingType, $billingCycle);
+        $this->totalPriceRequiredForSubscription = $package->originalPrice($billingType) - (double)$package->discountPrice($billingType, $billingCycle);
+        $this->totalCreditForSubscription = $this->getTotalCreditExistsForSubscription();
+        return $this->totalCreditForSubscription >= $this->totalPriceRequiredForSubscription;
+    }
+
+    /**
+     * @return float|int
+     */
+    public function getTotalCreditExistsForSubscription()
+    {
         $remaining = (double)$this->subscriber()->getBilling()->remainingCredit($this->subscription, $this->billing_type);
         $wallet = (double)$this->wallet;
         $bonus_wallet = (double)$this->bonusWallet();
-        $threshold = (double)$this->walletSetting->min_wallet_threshold;
-
-        return ($bonus_wallet + $wallet + $remaining) - $threshold >= $price;
+        $threshold = $this->walletSetting ? (double)$this->walletSetting->min_wallet_threshold : 0;
+        return ($bonus_wallet + $wallet + $remaining) - $threshold;
     }
 
+    /**
+     * @return bool
+     */
     public function isAlreadyCollectedAdvanceSubscriptionFee()
     {
         $last_subscription_package_charge = $this->subscriptionPackageCharges()->orderBy('id', 'desc')->first();

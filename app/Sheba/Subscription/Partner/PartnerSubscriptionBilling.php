@@ -218,14 +218,23 @@ class PartnerSubscriptionBilling
         }
     }
 
-    public function findGrade($new, $old)
+    public function findGrade($new, $old, $new_billing_type, $old_billing_type)
     {
         if ($old->id < $new->id) {
             return 'Upgrade';
         } else if ($old->id > $new->id) {
             return 'Downgrade';
         } else {
-            return 'Renewed';
+            $types = [BillingType::MONTHLY, BillingType::HALF_YEARLY, BillingType::YEARLY];
+            $old_type_index = array_search($old_billing_type, $types);
+            $new_type_index = array_search($new_billing_type, $types);
+            if ($old_type_index < $new_type_index) {
+                return 'Upgrade';
+            } elseif ($old_type_index > $new_type_index) {
+                return 'Downgrade';
+            } else {
+                return 'Renewed';
+            }
         }
     }
 }

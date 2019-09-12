@@ -180,17 +180,21 @@ class PartnerSubscriptionController extends Controller
             if (empty($requestedPackage)) {
                 return api_response($request, null, 402, ['message' => ' আপনার  অনুরধক্রিত  প্যকেজটি পাওয়া যায়  নাই']);
             }
+
             $this->setModifier($request->manager_resource);
-            if (!$request->partner->hasCreditForSubscription($requestedPackage, $request->billing_type)) {
-                return api_response($request, null, 420, ['message' => 'আপনার একাউন্টে যথেষ্ট ব্যলেন্স নেই।।']);
-            }
             if ($upgradeRequest = $this->createSubscriptionRequest($requestedPackage)) {
                 try {
-                    $grade = $request->partner->subscriber()->getBilling()->findGrade($requestedPackage, $currentPackage);
+
+                    $grade = $request->partner->subscriber()->getBilling()->findGrade($requestedPackage, $currentPackage, $request->billing_type, $request->partner->billing_type);
+
                     if ($grade == 'Downgrade') {
                         if ($request->partner->status != constants('PARTNER_STATUSES')['Inactive']) {
                             return api_response($request, null, 200, ['message' => " আপনার $requestedPackage->show_name_bd  প্যকেজে অবনমনের  অনুরোধ  গ্রহণ  করা  হয়েছে "]);
                         }
+                    }
+                    if (!$request->partner->hasCreditForSubscription($requestedPackage, $request->billing_type)) {
+                        $upgradeRequest->delete();
+                        return api_response($request, null, 420, ['message' => 'আপনার একাউন্টে যথেষ্ট ব্যলেন্স নেই।।', 'remaining_balance' => round($request->partner->totalCreditForSubscription,2),'required_price'=>$request->partner->totalPriceRequiredForSubscription]);
                     }
                     $request->partner->subscriptionUpgrade($requestedPackage, $upgradeRequest);
                     if ($grade === 'Renewed') {
@@ -235,10 +239,7 @@ class PartnerSubscriptionController extends Controller
         ]);
         return PartnerSubscriptionUpdateRequest::create($update_request_data);
     }
-    public function changeSubscriptionPackage()
-    {
 
-    }
     private function calculateDiscount($rules, PartnerSubscriptionPackage $package)
     {
         $rules['fee']['monthly']['original_price'] = $rules['fee']['monthly']['value'];
@@ -343,4 +344,5 @@ class PartnerSubscriptionController extends Controller
         }
         return implode(',', $message) . " Billing Cycle";
     }
+
 }
