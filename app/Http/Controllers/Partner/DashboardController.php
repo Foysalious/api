@@ -50,7 +50,6 @@ class DashboardController extends Controller
                     if (!$has_pos_paid_order && ($pos_order->getPaymentStatus() == OrderPaymentStatuses::PAID))
                         $has_pos_paid_order = 1;
                 });
-
             #$partner_orders = $partner->orders()->notCompleted()->get();
             /*$total_due_for_sheba_orders = 0;
             foreach ($partner_orders as $order) {
@@ -104,7 +103,7 @@ class DashboardController extends Controller
                     'total_due_for_pos_orders' => $total_due_for_pos_orders,
                     #'total_due_for_sheba_orders' => $total_due_for_sheba_orders,
                 ],
-                'is_nid_verified' => (int)$request->manager_resource->nid_verified ? true : false,
+                'is_nid_verified' => (int)$request->manager_resource->profile->nid_verified ? true : false,
                 'weekly_performance' => [
                     'timeline' => date("jS F", strtotime(Carbon::today()->startOfWeek())) . "-" . date("jS F", strtotime(Carbon::today())),
                     'successfully_completed' => [
