@@ -4,8 +4,11 @@ use App\Models\Job;
 use App\Models\PartnerOrder;
 use App\Models\Payable;
 use Carbon\Carbon;
+use Sheba\Dal\Discount\DiscountTypes;
+use Sheba\JobDiscount\JobDiscountCheckingParams;
+use Sheba\JobDiscount\JobDiscountHandler;
 
-class OrderAdapter implements PayableAdapter
+class OrderAdapter extends BaseAdapter implements PayableAdapter
 {
     /** @var PartnerOrder $partnerOrder */
     private $partnerOrder;
@@ -24,6 +27,7 @@ class OrderAdapter implements PayableAdapter
         $this->emiMonth = null;
         $this->setUser();
     }
+
     /**
      * @param $month |int
      * @return $this
@@ -53,13 +57,29 @@ class OrderAdapter implements PayableAdapter
         return $payable;
     }
 
-
     private function calculateAmount($due)
     {
         if ($this->job->isOnlinePaymentDiscountApplicable()) {
-            $due -= ($due * (config('sheba.online_payment_discount_percentage') / 100));
+            $due -= $this->discountedAmount();
         }
         return $due;
+    }
+
+    private function discountedAmount()
+    {
+        $discount_checking_params = (new JobDiscountCheckingParams())
+            ->setDiscountableAmount($this->partnerOrder->due)
+            ->setOrderAmount($this->partnerOrder->grossAmount)
+            ->setPaymentGateway($this->paymentMethod);
+        $job_discount_handler = app(JobDiscountHandler::class);
+
+        $job_discount_handler->setType(DiscountTypes::ONLINE_PAYMENT)
+            ->setCheckingParams($discount_checking_params)->calculate();
+
+        if ($job_discount_handler->hasDiscount()) {
+            return $job_discount_handler->getApplicableAmount();
+        }
+        return 0;
     }
 
     private function setUser()

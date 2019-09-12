@@ -6,6 +6,8 @@ class JobDiscountCheckingParams
     private $orderAmount;
     /** @var float */
     private $discountableAmount;
+    /** @var string */
+    private $paymentGateway;
 
     /**
      * @param $amount
@@ -14,6 +16,16 @@ class JobDiscountCheckingParams
     public function setOrderAmount($amount)
     {
         $this->orderAmount = $amount;
+        return $this;
+    }
+
+    /**
+     * @param $gateway
+     * @return $this
+     */
+    public function setPaymentGateway($gateway)
+    {
+        $this->paymentGateway = $gateway;
         return $this;
     }
 
@@ -33,6 +45,14 @@ class JobDiscountCheckingParams
     public function getOrderAmount()
     {
         return $this->orderAmount;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPaymentGateway()
+    {
+        return $this->paymentGateway;
     }
 
     /**

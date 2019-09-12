@@ -123,6 +123,7 @@ class JobDiscountHandler
         /** @var DiscountRules $rules */
         $rules = $discount->rules;
         if ($this->params->getOrderAmount() < $rules->getMinOrderAmount()) return false;
+        if (!in_array($this->params->getPaymentGateway(), $rules->getPaymentGateways())) return false;
         return true;
     }
 }

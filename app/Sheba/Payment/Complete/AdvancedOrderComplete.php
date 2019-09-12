@@ -1,7 +1,4 @@
-<?php
-
-namespace Sheba\Payment\Complete;
-
+<?php namespace Sheba\Payment\Complete;
 
 use App\Models\PartnerOrder;
 use App\Models\PartnerOrderPayment;
@@ -11,7 +8,7 @@ use Sheba\ModificationFields;
 use DB;
 use Sheba\RequestIdentification;
 
-class AdvancedOrderComplete extends PaymentComplete
+class AdvancedOrderComplete extends BaseOrderComplete
 {
     use ModificationFields;
 
@@ -57,17 +54,6 @@ class AdvancedOrderComplete extends PaymentComplete
             throw $e;
         }
         return $this->payment;
-    }
-
-    private function giveOnlineDiscount(PartnerOrder $partner_order)
-    {
-        $partner_order->calculate(true);
-        $job = $partner_order->getActiveJob();
-        if ($job->isOnlinePaymentDiscountApplicable()) {
-            $job->online_discount = $partner_order->due * (config('sheba.online_payment_discount_percentage') / 100);
-            $job->discount += $job->online_discount;
-            $job->update();
-        }
     }
 
     protected function saveInvoice()
