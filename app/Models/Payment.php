@@ -43,6 +43,11 @@ class Payment extends Model
         return $query->where([['status', '<>', Statuses::VALIDATION_FAILED], ['status', '<>', Statuses::INITIATION_FAILED]]);
     }
 
+    public function isValid()
+    {
+        return $this->status != Statuses::VALIDATION_FAILED || $this->status != Statuses::INITIATION_FAILED;
+    }
+
     public function scopeNotCompleted($query)
     {
         return $query->where('status', '<>', Statuses::COMPLETED);
