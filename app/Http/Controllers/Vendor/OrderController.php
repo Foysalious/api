@@ -1,7 +1,4 @@
-<?php
-
-namespace App\Http\Controllers\Vendor;
-
+<?php namespace App\Http\Controllers\Vendor;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
@@ -15,16 +12,23 @@ use App\Transformers\CustomSerializer;
 use App\Transformers\JobTransformer;
 use Carbon\Carbon;
 use Dingo\Api\Routing\Helpers;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Voucher\Creator\Referral;
+use Throwable;
 
 class OrderController extends Controller
 {
     use Helpers;
 
+    /**
+     * @param $order
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function show($order, Request $request)
     {
         try {
@@ -38,12 +42,17 @@ class OrderController extends Controller
             $fractal->setSerializer(new CustomSerializer());
             $resource = new Item(json_decode($job->toJson()), new JobTransformer());
             return response()->json($fractal->createData($resource)->toArray());
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return response()->json(['data' => null]);
         }
     }
 
+    /**
+     * @param $order
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getBills($order, Request $request)
     {
         try {
@@ -66,7 +75,7 @@ class OrderController extends Controller
                     'due' => $job->get('due'),
                     'services' => $job->get('services'),
                 ]]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return response()->json(['data' => null]);
         }
@@ -120,7 +129,7 @@ class OrderController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return response()->json(['data' => null, 'message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return response()->json(['data' => null]);
         }
@@ -136,6 +145,10 @@ class OrderController extends Controller
         return $profile;
     }
 
+    /**
+     * @param Profile $profile
+     * @return Customer
+     */
     private function createCustomer(Profile $profile)
     {
         $customer = new Customer();

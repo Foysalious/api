@@ -1,7 +1,4 @@
-<?php
-
-namespace Sheba\TopUp\Vendor\Response;
-
+<?php namespace Sheba\TopUp\Vendor\Response;
 
 use App\Models\TopUpOrder;
 use Illuminate\Http\Request;

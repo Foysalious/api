@@ -1,6 +1,4 @@
-<?php
-
-namespace Sheba\TopUp\Vendor\Response\Ssl;
+<?php namespace Sheba\TopUp\Vendor\Response\Ssl;
 
 use App\Models\TopUpOrder;
 use Sheba\TopUp\Vendor\Response\TopUpFailResponse;
