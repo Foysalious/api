@@ -61,9 +61,13 @@ class DashboardController extends Controller
                 'logo' => $partner->logo,
                 'geo_informations' => json_decode($partner->geo_informations),
                 'current_subscription_package' => [
+                    'id' => $partner->subscription->id,
                     'name' => $partner->subscription->show_name,
                     'name_bn' => $partner->subscription->show_name_bn,
-                    'remaining_day' => $partner->last_billed_date ? $partner->periodicBillingHandler()->remainingDay() : 0
+                    'remaining_day' => $partner->last_billed_date ? $partner->periodicBillingHandler()->remainingDay() : 0,
+                    'billing_type' => $partner->billing_type,
+                    'features' => $partner->subscription->features ? json_decode($partner->subscription->features) : [],
+                    'is_light' => $partner->subscription->id == (int)config('sheba.partner_lite_packages_id')
                 ],
                 'badge' => $partner->resolveBadge(),
                 'rating' => $rating,
