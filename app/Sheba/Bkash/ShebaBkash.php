@@ -1,6 +1,5 @@
 <?php namespace Sheba\Bkash;
 
-
 use Sheba\Bkash\Modules\BkashModule;
 use Sheba\Bkash\Modules\Normal\NormalModule;
 use Sheba\Bkash\Modules\Tokenized\TokenizedModule;
@@ -28,5 +27,4 @@ class ShebaBkash
     {
         return $this->module->getMethod($method_name);
     }
-
 }
