@@ -3,6 +3,7 @@
 use App\Models\TopUpOrder;
 use App\Models\Vendor;
 use Illuminate\Http\Request;
+use Sheba\TopUp\TopUpFailedReason;
 use Sheba\TopUp\Vendor\VendorFactory;
 
 class VendorRepository
@@ -54,6 +55,7 @@ class VendorRepository
     {
         /** @var TopUpOrder $topup */
         if ($topup = $request->vendor->topups()->find($topupID)) {
+            $failed_reason = (new TopUpFailedReason())->setTopup($topup);
             return [
                 'id' => $topup->id,
                 'transaction_id' => $topup->transaction_id,
@@ -62,7 +64,7 @@ class VendorRepository
                 'amount' => (double)$topup->amount,
                 'operator' => $topup->vendor->name,
                 'status' => $topup->status,
-                'failed_reason' => $topup->getFailedReason(),
+                'failed_reason' => $failed_reason->getFailedReason(),
                 'created_at' => $topup->created_at->toDateTimeString()
             ];
         } else {

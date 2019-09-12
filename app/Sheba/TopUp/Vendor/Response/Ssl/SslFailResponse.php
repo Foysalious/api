@@ -5,7 +5,6 @@ use Sheba\TopUp\Vendor\Response\TopUpFailResponse;
 
 class SslFailResponse extends TopUpFailResponse
 {
-
     public function setResponse($response)
     {
         $this->response = $response;

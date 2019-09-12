@@ -188,7 +188,6 @@ class TopUpController extends Controller
         }
     }
 
-
     private function getAgent(Request $request)
     {
         if ($request->affiliate) return $request->affiliate;
