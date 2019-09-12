@@ -100,4 +100,9 @@ class PartnerSubscriptionPackage extends Model implements SubscriptionPackage,Pa
     {
         return (int)$this->rules()->resource_cap->value;
     }
+
+    public function getAccessRules()
+    {
+        return json_decode($this->rules, 1)['access_rules'];
+    }
 }
