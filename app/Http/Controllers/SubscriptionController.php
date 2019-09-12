@@ -41,6 +41,8 @@ class SubscriptionController extends Controller
                         'subscription_thumb' => $service->thumb,
                         'subscription_banner' => $service->banner,
                         'subscription_description' => $subscription->description,
+                        'min_weekly_qty'   => $subscription->min_weekly_qty,
+                        'min_monthly_qty'  => $subscription->min_monthly_qty,
                         'service_id' => $service->id,
                         'service_name' => $service->name,
                         'category_id' => $category->id,
