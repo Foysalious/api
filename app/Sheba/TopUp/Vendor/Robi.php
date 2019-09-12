@@ -5,11 +5,7 @@ use Sheba\TopUp\Vendor\Internal\Ssl;
 
 class Robi extends Vendor
 {
-    /**
-     * TEMPORARY ROBI/AIRTEL MOVE TO SSL
-     *
-     * use Ssl;
-     */
+    // use Ssl;
     use RobiAxiata;
 
     private function getMid()

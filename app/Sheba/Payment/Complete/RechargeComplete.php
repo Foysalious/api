@@ -13,7 +13,8 @@ class RechargeComplete extends PaymentComplete
                 $this->payment->payable->user->rechargeWallet($this->payment->payable->amount, [
                     'amount' => $this->payment->payable->amount,
                     'transaction_details' => $this->payment->getShebaTransaction()->toJson(),
-                    'type' => 'Credit', 'log' => 'Credit Purchase'
+                    'type' => 'Credit',
+                    'log' => 'Credit Purchase'
                 ]);
                 $this->completePayment();
             });

@@ -74,6 +74,7 @@ class Payment extends Model
         $transaction->setTransactionId($this->transaction_id)
             ->setGateway($detail ? $detail->method : null)
             ->setDetails(json_decode($this->transaction_details));
+
         return $transaction;
     }
 }
