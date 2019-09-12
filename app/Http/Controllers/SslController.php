@@ -12,14 +12,14 @@ class SslController extends Controller
     {
         $redirect_url = config('sheba.front_url');
         try {
-            /*if (empty($request->headers->get('referer'))) {
-                return api_response($request, null, 400);
-            };*/
             /** @var Payment $payment */
-            $payment = Payment::where('gateway_transaction_id', $request->tran_id)->valid()->first();
-            if (!$payment) throw new \Exception('Payment not found to validate.');
-            $redirect_url = $payment->payable->success_url . '?invoice_id=' . $payment->transaction_id;
-            if (!$payment->isComplete()) $sheba_payment->setMethod('online')->complete($payment);
+            $payment = Payment::where('gateway_transaction_id', $request->tran_id)->first();
+            if ($payment) {
+                $redirect_url = $payment->payable->success_url . '?invoice_id=' . $payment->transaction_id;
+                if ($payment->isValid() && !$payment->isComplete()) $sheba_payment->setMethod('online')->complete($payment);
+            } else {
+                throw new \Exception('Payment not found to validate.');
+            }
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
         }
