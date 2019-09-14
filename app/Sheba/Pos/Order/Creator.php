@@ -32,6 +32,7 @@ class Creator
     /** @var Partner $partner */
     private $partner;
     private $address;
+    /** @var DiscountHandler $discountHandler */
     private $discountHandler;
 
     public function __construct(PosOrderRepository $order_repo, PosOrderItemRepository $item_repo,
@@ -117,15 +118,16 @@ class Creator
                 $service['discount'] = $original_service->getDiscount() * $service['quantity'];
                 $service['discount_percentage'] = $original_service->discount()->is_amount_percentage ? $original_service->discount()->amount : 0.0;
             }*/
-            $this->discountHandler->setOrder($order)->setPosService($original_service)->setType(DiscountTypes::SERVICE)->setData($service);
-            if ($this->discountHandler->hasDiscount()) $this->discountHandler->create($order);
 
             $service['vat_percentage'] = (!isset($service['is_vat_applicable']) || $service['is_vat_applicable']) ? PartnerPosService::find($service['id'])->vat_percentage : 0.00;
             $service = array_except($service, ['id', 'name', 'is_vat_applicable']);
 
-            $this->itemRepo->save($service);
+            $pos_order_item = $this->itemRepo->save($service);
             $is_stock_maintainable = $this->stockManager->setPosService($original_service)->isStockMaintainable();
             if ($is_stock_maintainable) $this->stockManager->decrease($service['quantity']);
+
+            $this->discountHandler->setOrder($order)->setPosService($original_service)->setType(DiscountTypes::SERVICE)->setData($service);
+            if ($this->discountHandler->hasDiscount()) $this->discountHandler->setPosOrderItem($pos_order_item)->create($order);
         }
 
         if (isset($this->data['paid_amount']) && $this->data['paid_amount'] > 0) {

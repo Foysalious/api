@@ -2,6 +2,8 @@
 
 use App\Models\PartnerPosService;
 use App\Models\PosOrder;
+use App\Models\PosOrderDiscount;
+use App\Models\PosOrderItem;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Pos\Discount\DTO\Params\Order;
 use Sheba\Pos\Discount\DTO\Params\Service;
@@ -18,6 +20,12 @@ class Handler
     private $order;
     /** @var PartnerPosService $partnerPosService */
     private $partnerPosService;
+    /** @var PosOrderItem $orderItem */
+    private $orderItem;
+    /** @var PosOrderDiscount $discount */
+    private $discount;
+    /** @var array $updateData*/
+    private $updateData;
 
     public function __construct(PosDiscountRepositoryInterface $pos_discount_repo)
     {
@@ -41,6 +49,16 @@ class Handler
     public function setPosService(PartnerPosService $partner_pos_service)
     {
         $this->partnerPosService = $partner_pos_service;
+        return $this;
+    }
+
+    /**
+     * @param PosOrderItem $order_item
+     * @return $this
+     */
+    public function setPosOrderItem(PosOrderItem $order_item)
+    {
+        $this->orderItem = $order_item;
         return $this;
     }
 
@@ -93,6 +111,33 @@ class Handler
         $this->posDiscountRepo->create($discount_data);
     }
 
+    /**
+     * @param PosOrderDiscount $discount
+     * @return $this
+     */
+    public function setDiscount(PosOrderDiscount $discount)
+    {
+        $this->discount = $discount;
+        return $this;
+    }
+
+    /**
+     * @param array $update_data
+     * @return $this
+     */
+    public function setServiceDiscountData(array $update_data)
+    {
+        $this->updateData = $update_data;
+        return $this;
+    }
+
+    public function update()
+    {
+        if ($this->discount) {
+            $this->posDiscountRepo->update($this->discount, $this->updateData);
+        }
+    }
+
     public function getData()
     {
         $order_discount = null;
@@ -106,7 +151,8 @@ class Handler
             $order_discount = new Service();
             $order_discount->setType($this->type)
                 ->setDiscount($this->partnerPosService->discount())
-                ->setAmount($this->partnerPosService->getDiscount() * $this->data['quantity']);
+                ->setAmount($this->partnerPosService->getDiscount() * $this->data['quantity'])
+                ->setPosOrderItem($this->orderItem);
         }
 
         return $order_discount->getData();
