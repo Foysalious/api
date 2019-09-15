@@ -2,14 +2,10 @@
 
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\Review\Events\ReviewSaved;
-use Sheba\Report\Updater\Review as ReportUpdater;
-use Sheba\Report\Updater\UpdatesReport;
 
-class Review extends BaseModel implements UpdatesReport
+class Review extends BaseModel
 {
-    use ReportUpdater;
-
-    protected static $savedEventClass = ReviewSaved::class;
+    public static $savedEventClass = ReviewSaved::class;
 
     public function service()
     {

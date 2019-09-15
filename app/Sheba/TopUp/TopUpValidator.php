@@ -10,20 +10,14 @@ class TopUpValidator
 {
     /** @var Vendor */
     private $vendor;
-
     /** @var TopUpAgent */
     private $agent;
-
     /** @var TopUpRequest */
     private $request;
-
-
     /** @var TopUpOrder */
     private $topUpOrder;
-
     /** @var boolean */
     private $hasError;
-
     /** @var TopUpErrorResponse */
     private $error;
 

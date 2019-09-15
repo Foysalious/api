@@ -1,7 +1,4 @@
-<?php
-
-namespace Sheba\TopUp\Vendor\Response\Ipn;
-
+<?php namespace Sheba\TopUp\Vendor\Response\Ipn;
 
 use App\Models\TopUpOrder;
 

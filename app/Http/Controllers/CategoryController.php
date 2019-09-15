@@ -362,13 +362,19 @@ class CategoryController extends Controller
                         removeRelationsAndFields($service);
                     });
                 }
-
                 if ($location) {
+                    $services->load(['activeSubscription', 'locations' => function ($q) {
+                        $q->select('id');
+                    }]);
                     $services = collect($services);
                     $services = $services->filter(function ($service) use ($location) {
                         $locations = $service->locations->pluck('id')->toArray();
-                        removeRelationsAndFields($service);
                         return in_array($location, $locations);
+                    });
+                }
+                if ($request->has('service_id')) {
+                    $services = $services->filter(function ($service) use ($request) {
+                        return $request->service_id == $service->id;
                     });
                 }
 
@@ -391,10 +397,9 @@ class CategoryController extends Controller
                                 ];
                             }
                         }
-
-                        removeRelationsAndFields($service);
                         $subscriptions->push($subscription);
                     }
+                    removeRelationsAndFields($service);
                 }
 
                 if ($services->count() > 0) {

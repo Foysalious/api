@@ -22,6 +22,46 @@ class SubscriptionController extends Controller
                 } else $location = 4;
             }
 
+            if ($request->has('for') && $request->for == 'business') {
+                list($offset, $limit) = calculatePagination($request);
+                $subscriptions = ServiceSubscription::with(['service' => function ($q) {
+                    $q->with(['category' => function ($q) {
+                        $q->select('id', 'name');
+                    }])->select('id', 'name', 'category_id', 'thumb', 'banner');
+                }])->active()->business()->skip($offset)->take($limit)->get();
+
+                $b2b_subscriptions = [];
+                $subscriptions_categories = collect();
+                foreach ($subscriptions as $subscription) {
+                    $service = $subscription->service;
+                    $category = $service->category;
+                    $subscription = [
+                        'subscription_id' => $subscription->id,
+                        'subscription_name' => $subscription->title,
+                        'subscription_thumb' => $service->thumb,
+                        'subscription_banner' => $service->banner,
+                        'subscription_description' => $subscription->description,
+                        'min_weekly_qty' => $subscription->min_weekly_qty,
+                        'min_monthly_qty' => $subscription->min_monthly_qty,
+                        'service_id' => $service->id,
+                        'service_name' => $service->name,
+                        'category_id' => $category->id,
+                        'category_name' => $category->name,
+                    ];
+                    array_push($b2b_subscriptions, $subscription);
+                    $subscriptions_categories->push(['category_id' => $category->id, 'category_name' => $category->name]);
+                }
+
+                if (count($b2b_subscriptions) > 0)
+                    if ($request->has('key') && $request->key == 'category') {
+                        return api_response($request, $subscriptions_categories, 200, ['subscriptions_categories' => $subscriptions_categories->unique('category_id')->values()]);
+                    } else {
+                        return api_response($request, $b2b_subscriptions, 200, ['subscriptions' => $b2b_subscriptions]);
+                    }
+                else
+                    return api_response($request, null, 404);
+            }
+
             $categories = Category::whereNotNull('parent_id')->whereHas('services', function ($q) {
                 $q->has('activeSubscription');
             })->with(['services' => function ($q) use ($location) {
@@ -78,7 +118,7 @@ class SubscriptionController extends Controller
             return api_response($request, null, 500);
         }
     }
-
+    
     public function all(Request $request, ApproximatePriceCalculator $approximatePriceCalculator)
     {
         try {

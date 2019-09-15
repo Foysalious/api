@@ -1,26 +1,20 @@
 <?php namespace App\Http\Controllers\Partner;
 
-use App\Http\Controllers\PartnerOrderController;
-use App\Http\Controllers\Pos\OrderController;
-use App\Models\PosOrder;
-use phpDocumentor\Reflection\Types\This;
-use Sheba\Analysis\PartnerPerformance\PartnerPerformance;
-use App\Http\Controllers\SpLoanInformationCompletion;
-use Sheba\Pos\Order\OrderPaymentStatuses;
-use Sheba\Subscription\Partner\PartnerSubscriber;
-use Sheba\Analysis\Sales\PartnerSalesStatistics;
-use Sheba\Analysis\PartnerSale\PartnerSale;
-use App\Repositories\ReviewRepository;
 use App\Http\Controllers\Controller;
-use Sheba\Reward\PartnerReward;
-use Sheba\Partner\LeaveStatus;
+use App\Http\Controllers\PartnerOrderController;
+use App\Http\Controllers\SpLoanInformationCompletion;
+use App\Models\PosOrder;
 use App\Models\SliderPortal;
+use App\Repositories\ReviewRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Sheba\Analysis\PartnerPerformance\PartnerPerformance;
+use Sheba\Analysis\Sales\PartnerSalesStatistics;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Manager\JobList;
-use GuzzleHttp\Client;
-use App\Models\Slider;
-use Carbon\Carbon;
+use Sheba\Partner\LeaveStatus;
+use Sheba\Pos\Order\OrderPaymentStatuses;
+use Sheba\Reward\PartnerReward;
 
 class DashboardController extends Controller
 {
@@ -68,8 +62,9 @@ class DashboardController extends Controller
                 'logo' => $partner->logo,
                 'geo_informations' => json_decode($partner->geo_informations),
                 'current_subscription_package' => [
-                    'name' => $partner->subscription->name,
-                    'name_bn' => $partner->subscription->name_bn
+                    'name' => $partner->subscription->show_name,
+                    'name_bn' => $partner->subscription->show_name_bn,
+                    'status' => $partner->subscription->status
                 ],
                 'badge' => $partner->resolveBadge(),
                 'rating' => $rating,

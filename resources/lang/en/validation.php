@@ -80,6 +80,7 @@ return [
     'unique' => 'The :attribute has already been taken.',
     'url' => 'The :attribute format is invalid.',
     'mobile' => 'The :attribute is an invalid bangladeshi number .',
+    'nid_number' => ' The :attribute is an invalid NID number. ',
     /*
     |--------------------------------------------------------------------------
     | Custom Validation Language Lines

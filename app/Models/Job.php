@@ -7,6 +7,10 @@ use Sheba\Dal\BaseModel;
 use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Dal\Job\Events\JobSaved;
 use Sheba\Dal\JobDiscount\JobDiscount;
+use Sheba\Dal\JobCancelLog\JobCancelLog;
+use Sheba\Dal\JobMaterial\JobMaterial;
+use Sheba\Dal\JobService\JobService;
+use Sheba\Dal\JobCancelRequest\JobCancelRequest;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Jobs\CiCalculator;
 use Sheba\Dal\Complain\Model as Complain;
@@ -18,17 +22,14 @@ use Sheba\Logistics\Literals\OneWayInitEvents as OneWayLogisticInitEvents;
 use Sheba\Logistics\OrderManager;
 use Sheba\Logistics\Repository\ParcelRepository;
 use Sheba\Order\Code\Builder as CodeBuilder;
-use Sheba\Report\Updater\Job as ReportUpdater;
-use Sheba\Report\Updater\UpdatesReport;
 
-class Job extends BaseModel implements UpdatesReport
+class Job extends BaseModel
 {
-    use ReportUpdater;
-
     protected $guarded = ['id'];
     protected $materialPivotColumns = ['id', 'material_name', 'material_price', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
     protected $casts = ['sheba_contribution' => 'double', 'partner_contribution' => 'double', 'commission_rate' => 'double'];
-    protected $dates = ['delivered_date', /*'schedule_date',*/ 'estimated_delivery_date', 'estimated_visiting_date'];
+    protected $dates = ['delivered_date', /*'schedule_date',*/
+        'estimated_delivery_date', 'estimated_visiting_date'];
 
     public $servicePrice;
     public $serviceCost;
@@ -94,7 +95,7 @@ class Job extends BaseModel implements UpdatesReport
     /** @var OrderManager */
     private $logisticOrderManager;
 
-    protected static $savedEventClass = JobSaved::class;
+    public static $savedEventClass = JobSaved::class;
 
     public function __construct(array $attributes = [])
     {
@@ -802,7 +803,7 @@ class Job extends BaseModel implements UpdatesReport
 
     public function canCallExpert()
     {
-        if(!JobStatuses::isOngoing($this->status)) return false;
+        if (!JobStatuses::isOngoing($this->status)) return false;
 
         return Carbon::today()->gte(Carbon::parse($this->schedule_date));
     }
@@ -956,7 +957,7 @@ class Job extends BaseModel implements UpdatesReport
 
     public function isOverDiscounted()
     {
-        if($this->isFlatPercentageDiscount()) return false;
+        if ($this->isFlatPercentageDiscount()) return false;
 
         return $this->originalDiscount > $this->totalPrice;
     }
@@ -995,9 +996,9 @@ class Job extends BaseModel implements UpdatesReport
      */
     public function getFirstLogisticOrder()
     {
-        if(!$this->first_logistic_order_id) return null;
+        if (!$this->first_logistic_order_id) return null;
 
-        if($this->firstLogisticOrder) return $this->firstLogisticOrder;
+        if ($this->firstLogisticOrder) return $this->firstLogisticOrder;
 
         $this->firstLogisticOrder = $this->logisticOrderManager->get($this->first_logistic_order_id);
         return $this->firstLogisticOrder;
@@ -1009,9 +1010,9 @@ class Job extends BaseModel implements UpdatesReport
      */
     public function getLastLogisticOrder()
     {
-        if(!$this->last_logistic_order_id) return null;
+        if (!$this->last_logistic_order_id) return null;
 
-        if($this->lastLogisticOrder) return $this->lastLogisticOrder;
+        if ($this->lastLogisticOrder) return $this->lastLogisticOrder;
 
         $this->lastLogisticOrder = $this->logisticOrderManager->get($this->last_logistic_order_id);
         return $this->lastLogisticOrder;
@@ -1023,9 +1024,9 @@ class Job extends BaseModel implements UpdatesReport
      */
     public function isReschedulable()
     {
-        if($this->isClosed()) return false;
-        if($this->isCancelRequestPending()) return false;
-        if($this->hasLogisticStarted()) return false;
+        if ($this->isClosed()) return false;
+        if ($this->isCancelRequestPending()) return false;
+        if ($this->hasLogisticStarted()) return false;
         return true;
     }
 
@@ -1035,10 +1036,10 @@ class Job extends BaseModel implements UpdatesReport
      */
     public function isPartnerChangeable()
     {
-        if($this->site == 'partner') return false;
-        if($this->isClosed()) return false;
-        if($this->isCancelRequestPending()) return false;
-        if($this->hasLogisticStarted()) return false;
+        if ($this->site == 'partner') return false;
+        if ($this->isClosed()) return false;
+        if ($this->isCancelRequestPending()) return false;
+        if ($this->hasLogisticStarted()) return false;
         return true;
     }
 
@@ -1048,8 +1049,8 @@ class Job extends BaseModel implements UpdatesReport
      */
     public function isResourceChangeable()
     {
-        if($this->isClosed()) return false;
-        if($this->isCancelRequestPending()) return false;
+        if ($this->isClosed()) return false;
+        if ($this->isCancelRequestPending()) return false;
         return true;
     }
 
@@ -1060,7 +1061,7 @@ class Job extends BaseModel implements UpdatesReport
     public function hasLogisticStarted()
     {
         return $this->last_logistic_order_id ||
-            ( $this->first_logistic_order_id && !$this->getFirstLogisticOrder()->hasStarted() );
+            ($this->first_logistic_order_id && !$this->getFirstLogisticOrder()->hasStarted());
     }
 
     public function isOnCustomerPremise()
@@ -1084,5 +1085,20 @@ class Job extends BaseModel implements UpdatesReport
         $array = get_object_vars($this) + $this->toArray();
         $array = array_except($array, $unnecessary);
         return json_encode($array, $options);
+    }
+
+    /**
+     *
+     * FUNCTIONS
+     *
+     */
+    public function isRated()
+    {
+        return $this->review;
+    }
+
+    public function isNotRated()
+    {
+        return !$this->review;
     }
 }

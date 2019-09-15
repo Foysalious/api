@@ -1,7 +1,4 @@
-<?php
-
-namespace Sheba\TopUp\Vendor\Response;
-
+<?php namespace Sheba\TopUp\Vendor\Response;
 
 class TopUpSystemErrorResponse extends TopUpErrorResponse
 {

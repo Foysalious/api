@@ -1,10 +1,8 @@
-<?php
-
-namespace App\Repositories;
+<?php namespace App\Repositories;
 
 
 use App\Models\Job;
-use App\Models\JobCancelLog;
+use Sheba\Dal\JobCancelLog\JobCancelLog;
 use App\Sheba\UserRequestInformation;
 
 class JobCancelLogRepository
