@@ -2,6 +2,7 @@
 
 use App\Models\PosOrder;
 use App\Models\PosOrderItem;
+use Sheba\Pos\Discount\Handler as DiscountHandler;
 use Sheba\Pos\Product\StockManager;
 use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
 use Sheba\Pos\Repositories\PosOrderItemRepository;
@@ -22,14 +23,18 @@ class Updater
     private $serviceRepo;
     /** @var StockManager $stockManager */
     private $stockManager;
+    /** @var DiscountHandler $discountHandler */
+    private $discountHandler;
 
     public function __construct(PosOrderRepository $order_repo, PosOrderItemRepository $item_repo,
-                                PosServiceRepositoryInterface $service_repo, StockManager $stock_manager)
+                                PosServiceRepositoryInterface $service_repo, StockManager $stock_manager,
+                                DiscountHandler $discount_handler)
     {
         $this->orderRepo = $order_repo;
         $this->itemRepo = $item_repo;
         $this->serviceRepo = $service_repo;
         $this->stockManager = $stock_manager;
+        $this->discountHandler = $discount_handler;
     }
 
     public function setOrder(PosOrder $order)
@@ -51,7 +56,12 @@ class Updater
             foreach ($services as $service) {
                 $item = $this->itemRepo->findByService($this->order, $service['id']);
                 $service_data['quantity'] = $service['quantity'];
-                if ($item->discount && $item->quantity) $service_data['discount'] = ($item->discount / $item->quantity) * $service['quantity'];
+
+                if ($item->discount && $item->quantity) {
+                    $service_discount_data['amount'] = ($item->discount->amount / $item->quantity) * $service['quantity'];
+                    $this->discountHandler->setDiscount($item->discount)->setServiceDiscountData($service_discount_data)->update();
+                }
+
                 $this->manageStock($item, $service['id'], $service['quantity']);
                 $this->itemRepo->update($item, $service_data);
             }
