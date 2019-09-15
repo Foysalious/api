@@ -88,7 +88,7 @@ class PartnerSubscriptionBilling
         if (!$this->isCollectAdvanceSubscriptionFee) {
             (new PartnerSubscriptionCharges($this))->shootLog(constants('PARTNER_PACKAGE_CHARGE_TYPES')[$grade]);
         }
-        $this->sendSmsForSubscriptionUpgrade($old_package, $new_package, $old_billing_type, $new_billing_type);
+        $this->sendSmsForSubscriptionUpgrade($old_package, $new_package, $old_billing_type, $new_billing_type, $grade);
     }
 
     public function runAdvanceSubscriptionBilling()
@@ -204,9 +204,10 @@ class PartnerSubscriptionBilling
      * @param PartnerSubscriptionPackage $new_package
      * @param $old_billing_type
      * @param $new_billing_type
+     * @param string $grade
      * @throws Exception
      */
-    private function sendSmsForSubscriptionUpgrade(PartnerSubscriptionPackage $old_package, PartnerSubscriptionPackage $new_package, $old_billing_type, $new_billing_type, $grade)
+    private function sendSmsForSubscriptionUpgrade(PartnerSubscriptionPackage $old_package, PartnerSubscriptionPackage $new_package, $old_billing_type, $new_billing_type, $grade = 'Upgrade')
     {
         if ((int)env('PARTNER_SUBSCRIPTION_SMS') == 1) {
             if ($grade == 'Upgrade') {
