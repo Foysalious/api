@@ -62,7 +62,7 @@ class DashboardController extends Controller
                 'geo_informations' => json_decode($partner->geo_informations),
                 'current_subscription_package' => [
                     'id' => $partner->subscription->id,
-                    'name' => $partner->subscription->show_name,
+                    'name' => $partner->subscription->name,
                     'name_bn' => $partner->subscription->show_name_bn,
                     'remaining_day' => $partner->last_billed_date ? $partner->periodicBillingHandler()->remainingDay() : 0,
                     'billing_type' => $partner->billing_type,
