@@ -52,7 +52,7 @@ class TransportTicketRequest
      */
     public function setReserverName($reserverName)
     {
-        $this->reserverName = $reserverName;
+        $this->reserverName = trim($reserverName);
         return $this;
     }
 
