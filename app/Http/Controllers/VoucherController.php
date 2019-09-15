@@ -118,6 +118,7 @@ class VoucherController extends Controller
             ];
             return api_response($request, null, 200, ['data' => $data, 'voucher' => $formatted_voucher['data']]);
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
