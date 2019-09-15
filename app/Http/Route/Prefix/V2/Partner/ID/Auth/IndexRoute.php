@@ -210,13 +210,12 @@ class IndexRoute
                 $api->get('/dashboard', 'VoucherController@dashboard');
                 $api->get('/faq', 'FaqController@posFaq');
                 $api->get('/', 'VoucherController@index');
-                $api->get('/{voucher}', 'VoucherController@show');
-                $api->post('/{voucher}', 'VoucherController@update');
                 $api->post('/', 'VoucherController@store');
                 $api->post('validity-check', 'VoucherController@validateVoucher');
                 $api->group(['prefix' => '{voucher}'], function ($api) {
+                    $api->get('/', 'VoucherController@show');
+                    $api->post('/', 'VoucherController@update');
                     $api->post('/deactivate', 'VoucherController@deactivateVoucher');
-
                 });
             });
             $api->post('nid-validate', 'ShebaController@nidValidate');
