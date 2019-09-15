@@ -5,7 +5,7 @@ use Illuminate\Database\Eloquent\Model;
 class PosOrderItem extends Model
 {
     protected $guarded = ['id'];
-    protected $casts = ['discount' => 'double', 'discount_percentage' => 'double', 'vat_percentage' => 'double'];
+    protected $casts = ['vat_percentage' => 'double'];
 
     /** @var number */
     private $vat;
@@ -35,11 +35,11 @@ class PosOrderItem extends Model
     public function calculate()
     {
         $this->price = ($this->unit_price * $this->quantity);
-        $this->discountAmount = ($this->price > $this->discount) ? $this->discount : $this->price;
+        $this->discountAmount = $this->discount ? (($this->price > $this->discount->amount) ? $this->discount->amount : $this->price) : 0.00;
         $this->priceAfterDiscount = $this->price - $this->discountAmount;
         $this->vat = ($this->priceAfterDiscount * $this->vat_percentage) / 100;
         $this->priceWithVat = $this->price + $this->vat;
-        $this->total = $this->priceWithVat - $this->discount;
+        $this->total = $this->priceWithVat - $this->discountAmount;
         $this->isCalculated = true;
         $this->_formatAllToTaka();
 
@@ -93,5 +93,10 @@ class PosOrderItem extends Model
     public function getTotal()
     {
         return $this->total;
+    }
+
+    public function discount()
+    {
+        return $this->hasOne(PosOrderDiscount::class, 'item_id');
     }
 }
