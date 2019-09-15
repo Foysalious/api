@@ -1,44 +1,37 @@
 <?php namespace App\Http\Controllers\Pos;
 
 use App\Http\Controllers\Controller;
-
-use App\Models\Partner;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
-
 use App\Sheba\Payment\Adapters\Payable\PaymentLinkOrderAdapter;
 use App\Transformers\CustomSerializer;
 use App\Transformers\PosOrderTransformer;
-
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
-
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
-
-use Sheba\Payment\ShebaPayment;
+use Sheba\PaymentLink\Creator as PaymentLinkCreator;
 use Sheba\PaymentLink\PaymentLinkTransformer;
+use Sheba\Pos\Customer\Creator as PosCustomerCreator;
 use Sheba\Pos\Jobs\OrderBillEmail;
 use Sheba\Pos\Jobs\OrderBillSms;
 use Sheba\Pos\Order\Creator;
-use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\Pos\Order\QuickCreator;
 use Sheba\Pos\Order\RefundNatures\NatureFactory;
 use Sheba\Pos\Order\RefundNatures\Natures;
 use Sheba\Pos\Order\RefundNatures\RefundNature;
 use Sheba\Pos\Order\RefundNatures\ReturnNatures;
 use Sheba\Pos\Order\Updater;
+use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Profile\Creator as ProfileCreator;
-use Sheba\Pos\Customer\Creator as PosCustomerCreator;
-use Sheba\PaymentLink\Creator as PaymentLinkCreator;
 use Sheba\Reports\PdfHandler;
 use Sheba\Repositories\PartnerRepository;
+use Sheba\Subscription\Partner\Access\AccessManager;
 use Throwable;
 
 class OrderController extends Controller
@@ -408,6 +401,7 @@ class OrderController extends Controller
     public function downloadInvoice(Request $request, $partner, PosOrder $order)
     {
         try {
+            AccessManager::checkAccess(AccessManager::Rules()->POS->INVOICE->DOWNLOAD, $request->partner->subscription->getAccessRules());
             $pdf_handler = new PdfHandler();
             $pos_order = $order->calculate();
             $partner = $pos_order->partner;
