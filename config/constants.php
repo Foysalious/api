@@ -385,6 +385,7 @@ return [
     'AFFILIATION_ACQUISITION_MONEY' => 2,
     'API_RESPONSE_CODES' => [
         200 => ['message' => 'Successful', 'code' => 200],
+        202 => ['message' => 'Successful', 'code' => 202],
         400 => ['message' => 'Bad request', 'code' => 400],
         401 => ['message' => 'Unauthorized', 'code' => 401],
         403 => ['message' => 'Forbidden', 'code' => 403],
