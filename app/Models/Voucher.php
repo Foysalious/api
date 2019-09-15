@@ -153,6 +153,6 @@ class Voucher extends Model
 
     public function usedCount()
     {
-        return 0;
+        return PosOrder::where('voucher_id', $this->id)->count();
     }
 }

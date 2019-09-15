@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\PosCustomer;
+use App\Models\PosOrder;
 use App\Models\Voucher;
 use App\Transformers\CustomSerializer;
 use App\Transformers\VoucherDetailTransformer;
@@ -109,8 +110,9 @@ class VoucherController extends Controller
             $formatted_voucher = $manager->createData($resource)->toArray();
             $formatted_voucher['data']['is_used'] = $voucher->usedCount() ? true : false;
 
+            //dd(PosOrder::find(6870)->calculate()->getTotalBill());
             $data = [
-                'total_used' => 5,
+                'total_used' => $voucher->usedCount(),
                 'total_sale_with_voucher' => 256865,
                 'total_discount_with_voucher' => 8500
             ];
