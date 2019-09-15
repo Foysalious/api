@@ -256,7 +256,7 @@ class ServiceController extends Controller
     {
         $posService = PartnerPosService::query()->where([['id', $service], ['partner_id', $partner]])->first();
         if (empty($posService)) {
-            return api_response($request, null, 404, ['message' => 'Requested service not found']);
+            return api_response($request, null, 404, ['message' => 'Requested service not found .']);
         }
         $posService->is_published_for_shop = !(int)$posService->is_published_for_shop;
         $posService->save();

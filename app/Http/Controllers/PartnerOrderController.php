@@ -8,6 +8,7 @@ use App\Repositories\PartnerOrderRepository;
 use App\Repositories\ResourceJobRepository;
 use App\Sheba\Checkout\PartnerList;
 use Illuminate\Http\JsonResponse;
+use Sheba\Jobs\Discount;
 use Sheba\Logistics\Exceptions\LogisticServerError;
 use Sheba\Logistics\Repository\OrderRepository;
 use Sheba\Logs\OrderLogs;
@@ -17,11 +18,13 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
 use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Logs\JobLogs;
+use Sheba\ModificationFields;
 use Throwable;
 use Validator;
 
 class PartnerOrderController extends Controller
 {
+    use ModificationFields;
     private $partnerOrderRepository;
     private $partnerJobRepository;
 
@@ -327,6 +330,8 @@ class PartnerOrderController extends Controller
             $job_services = $jobService_repo->setJob($job)->createJobService($partner->services, $partnerListRequest->selectedServices, ['created_by' => $manager_resource->id, 'created_by_name' => $manager_resource->profile->name]);
             if (!$jobService_repo->existInJob($job, $job_services)) {
                 $job->jobServices()->saveMany($job_services);
+                $discount = (new Discount())->get($job);
+                $job->update($this->withUpdateModificationField(['discount' => $discount]));
                 return api_response($request, null, 200);
             } else {
                 return api_response($request, null, 403, ['message' => 'You can not add service that is already added!']);

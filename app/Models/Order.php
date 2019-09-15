@@ -8,13 +8,10 @@ use Sheba\Dal\Order\Events\OrderSaved;
 use Sheba\Order\Code\Builder as CodeBuilder;
 use Sheba\Order\StatusCalculator;
 use Sheba\Portals\Portals;
-use Sheba\Report\Updater\UpdatesReport;
 use Sheba\Voucher\Contracts\CanHaveVoucher;
-use Sheba\Report\Updater\Order as ReportUpdater;
 
-class Order extends BaseModel implements ShebaOrderInterface, CanHaveVoucher, UpdatesReport
+class Order extends BaseModel implements ShebaOrderInterface, CanHaveVoucher
 {
-    use ReportUpdater;
     protected $guarded = ['id'];
     public $totalPrice;
     public $due;
@@ -27,8 +24,8 @@ class Order extends BaseModel implements ShebaOrderInterface, CanHaveVoucher, Up
     /** @var CodeBuilder */
     private $codeBuilder;
 
-    protected static $savedEventClass = OrderSaved::class;
-    protected static $createdEventClass = OrderCreated::class;
+    public static $savedEventClass = OrderSaved::class;
+    public static $createdEventClass = OrderCreated::class;
 
     public function __construct($attributes = [])
     {
