@@ -89,7 +89,7 @@ class OrderComplete extends BaseOrderComplete
             if (strtolower($payment_detail->method) == 'wallet') dispatchReward()->run('wallet_cashback', $customer, $payment_detail->amount, $partner_order);
         } else {
             $has_error = true;
-            throw new Exception('OrderComplete collect api failure. code:' . $response->code);
+            throw new Exception('OrderComplete collect api failure. Response: ' . json_encode($response));
         }
 
         return $has_error;
