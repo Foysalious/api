@@ -726,7 +726,7 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
         $wallet = (double)$this->wallet;
         $bonus_wallet = (double)$this->bonusWallet();
         $threshold = $this->walletSetting ? (double)$this->walletSetting->min_wallet_threshold : 0;
-        return ($bonus_wallet + $wallet + $remaining) - $threshold;
+        return round($bonus_wallet + $wallet + $remaining) - $threshold;
     }
 
     /**

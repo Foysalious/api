@@ -194,7 +194,7 @@ class PartnerSubscriptionController extends Controller
                     }
                     if (!$request->partner->hasCreditForSubscription($requestedPackage, $request->billing_type)) {
                         $upgradeRequest->delete();
-                        return api_response($request, null, 420, ['message' => 'আপনার একাউন্টে যথেষ্ট ব্যলেন্স নেই।।', 'remaining_balance' => $request->partner->totalCreditForSubscription, 2, 'price' => $request->partner->totalPriceRequiredForSubscription, 'required' => $request->partner->totalPriceRequiredForSubscription - $request->partner->totalCreditForSubscription]);
+                        return api_response($request, null, 420, ['message' => 'আপনার একাউন্টে যথেষ্ট ব্যলেন্স নেই।।', 'remaining_balance' => $request->partner->totalCreditForSubscription,'price' => $request->partner->totalPriceRequiredForSubscription, 'required' => $request->partner->totalPriceRequiredForSubscription - $request->partner->totalCreditForSubscription]);
                     }
                     $request->partner->subscriptionUpgrade($requestedPackage, $upgradeRequest);
                     if ($grade === 'Renewed') {
