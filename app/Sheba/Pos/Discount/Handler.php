@@ -7,6 +7,7 @@ use App\Models\PosOrderItem;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Pos\Discount\DTO\Params\Order;
 use Sheba\Pos\Discount\DTO\Params\Service;
+use Sheba\Pos\Discount\DTO\Params\Voucher;
 use Sheba\Pos\Repositories\Interfaces\PosDiscountRepositoryInterface;
 
 class Handler
@@ -95,6 +96,8 @@ class Handler
                 ($this->data['is_wholesale_applied'] && !$this->partnerPosService->wholesale_price)
             );
             return $this->partnerPosService->discount() && $additional_rules;
+        } else if ($this->type == DiscountTypes::VOUCHER) {
+            return $this->data['is_valid'];
         }
 
         return false;
@@ -153,6 +156,11 @@ class Handler
                 ->setDiscount($this->partnerPosService->discount())
                 ->setAmount($this->partnerPosService->getDiscount() * $this->data['quantity'])
                 ->setPosOrderItem($this->orderItem);
+        } else if ($this->type == DiscountTypes::VOUCHER) {
+            $order_discount = new Voucher();
+            $order_discount->setType($this->type)
+                ->setVoucher($this->data['voucher'])
+                ->setAmount($this->data['amount']);
         }
 
         return $order_discount->getData();

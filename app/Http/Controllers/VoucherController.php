@@ -1,10 +1,8 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\PosCustomer;
-use App\Models\Promotion;
 use App\Models\Voucher;
 use App\Transformers\CustomSerializer;
-use App\Transformers\PosOrderTransformer;
 use App\Transformers\VoucherDetailTransformer;
 use App\Transformers\VoucherTransformer;
 use Carbon\Carbon;
@@ -13,11 +11,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
-use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use Sheba\ModificationFields;
 use Sheba\Voucher\DTO\Params\CheckParamsForPosOrder;
-use Sheba\Voucher\PromotionList;
 use Sheba\Voucher\VoucherRule;
 use Throwable;
 
@@ -156,6 +152,7 @@ class VoucherController extends Controller
                 'owner_id' => $partner->id,
                 'created_by_type' => get_class($partner)
             ];
+
             $voucher = Voucher::create($this->withCreateModificationField($data));
 
             return api_response($request, null, 200, ['voucher' => $voucher]);
@@ -167,7 +164,6 @@ class VoucherController extends Controller
             return api_response($request, null, 500);
         }
     }
-
 
     /**
      * @param Request $request
@@ -233,6 +229,11 @@ class VoucherController extends Controller
             $mobiles = explode(',', $request->customers);
             $rule->setMobiles($mobiles);
         }
+        if ($request->has('pos_services')) {
+            $pos_services = explode(',', $request->pos_services);
+            $rule->setPartnerPosService($pos_services);
+        }
+
         return $rule;
     }
 
@@ -243,23 +244,28 @@ class VoucherController extends Controller
      */
     public function validateVoucher(Request $request)
     {
-        $pos_customer = PosCustomer::find($request->pos_customer);
-        $pos_order_params = (new CheckParamsForPosOrder());
-        $pos_order_params->setOrderAmount($request->amount)->setApplicant($pos_customer);
-        $result = voucher($request->code)->checkForPosOrder($pos_order_params)->reveal();
+        try {
+            $pos_customer = PosCustomer::find($request->pos_customer);
+            $pos_order_params = (new CheckParamsForPosOrder());
+            $pos_order_params->setOrderAmount($request->amount)->setApplicant($pos_customer)->setPartnerPosService($request->pos_services);
+            $result = voucher($request->code)->checkForPosOrder($pos_order_params)->reveal();
 
-        if ($result['is_valid']) {
-            $voucher = $result['voucher'];
-            $voucher = [
-                'amount' => (double)$result['amount'],
-                'code' => $voucher->code,
-                'id' => $voucher->id,
-                'title' => $voucher->title
-            ];
+            if ($result['is_valid']) {
+                $voucher = $result['voucher'];
+                $voucher = [
+                    'amount' => (double)$result['amount'],
+                    'code' => $voucher->code,
+                    'id' => $voucher->id,
+                    'title' => $voucher->title
+                ];
 
-            return api_response($request, null, 200, ['voucher' => $voucher]);
-        } else {
-            return api_response($request, null, 403, ['message' => 'Invalid Promo']);
+                return api_response($request, null, 200, ['voucher' => $voucher]);
+            } else {
+                return api_response($request, null, 403, ['message' => 'Invalid Promo']);
+            }
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
         }
     }
 

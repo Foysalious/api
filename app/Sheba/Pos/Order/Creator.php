@@ -12,6 +12,7 @@ use Sheba\Pos\Repositories\PosOrderItemRepository;
 use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\Pos\Validators\OrderCreateValidator;
+use Sheba\Voucher\DTO\Params\CheckParamsForPosOrder;
 
 class Creator
 {
@@ -100,7 +101,7 @@ class Creator
         foreach ($services as $service) {
             /** @var PartnerPosService $original_service */
             $original_service = PartnerPosService::find($service['id']);
-            $is_service_discount_applied = $original_service->discount();
+            // $is_service_discount_applied = $original_service->discount();
             $service_wholesale_applicable = $original_service->wholesale_price ? true : false;
 
             $service['service_id'] = $service['id'];
@@ -109,16 +110,6 @@ class Creator
             $service['unit_price'] = $this->isWholesalePriceApplicable($service_wholesale_applicable) ? $original_service->wholesale_price : $original_service->price;
             $service['warranty'] = $original_service->warranty;
             $service['warranty_unit'] = $original_service->warranty_unit;
-
-            /**
-             * OLD DISCOUNT MODULE - REMOVE IMMEDIATE
-             *
-             if ($this->isServiceDiscountApplicable($is_service_discount_applied, $this->data, $service_wholesale_applicable)) {
-                $service['discount_id'] = $original_service->discount()->id;
-                $service['discount'] = $original_service->getDiscount() * $service['quantity'];
-                $service['discount_percentage'] = $original_service->discount()->is_amount_percentage ? $original_service->discount()->amount : 0.0;
-            }*/
-
             $service['vat_percentage'] = (!isset($service['is_vat_applicable']) || $service['is_vat_applicable']) ? PartnerPosService::find($service['id'])->vat_percentage : 0.00;
             $service = array_except($service, ['id', 'name', 'is_vat_applicable']);
 
@@ -138,18 +129,34 @@ class Creator
         }
 
         $order = $order->calculate();
-
-        /**
-         * OLD DISCOUNT MODULE - REMOVE IMMEDIATE
-         *
-        $is_discount_applied = (isset($this->data['discount']) && $this->data['discount'] > 0);
-        $order_discount_data['discount'] = $is_discount_applied ? ($this->data['is_percentage'] ? (($this->data['discount'] / 100) * $order->getTotalBill()) : $this->data['discount']) : 0;
-        $order_discount_data['discount_percentage'] = $is_discount_applied ? ($this->data['is_percentage'] ? $this->data['discount'] : 0) : 0;
-        $this->orderRepo->update($order, $order_discount_data);*/
         $this->discountHandler->setOrder($order)->setType(DiscountTypes::ORDER)->setData($this->data);
         if ($this->discountHandler->hasDiscount()) $this->discountHandler->create($order);
 
+        $this->voucherCalculation($order);
         return $order;
+    }
+
+    /**
+     * @param PosOrder $order
+     * @throws InvalidDiscountType
+     */
+    private function voucherCalculation(PosOrder $order)
+    {
+        if (isset($this->data['voucher_code']) && !empty($this->data['voucher_code'])) {
+            $code = strtoupper($this->data['voucher_code']);
+            $customer_id = $this->resolveCustomerId();
+            $pos_customer = PosCustomer::find($customer_id) ? : new PosCustomer();
+            $pos_order_params = (new CheckParamsForPosOrder());
+            $pos_services = $order->items->pluck('service_id')->toArray();
+            $pos_order_params->setOrderAmount($order->getTotalBill())->setApplicant($pos_customer)->setPartnerPosService($pos_services);
+            $result = voucher($code)->checkForPosOrder($pos_order_params)->reveal();
+
+            $this->discountHandler->setOrder($order)->setType(DiscountTypes::VOUCHER)->setData($result);
+            if ($this->discountHandler->hasDiscount()) {
+                $this->discountHandler->create($order);
+                $this->orderRepo->update($order, ['voucher_id' => $result['id']]);
+            }
+        }
     }
 
     /**
