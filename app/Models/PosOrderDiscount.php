@@ -11,6 +11,11 @@ class PosOrderDiscount extends Model
         return $this->belongsTo(PosOrder::class);
     }
 
+    public function posOrderItem()
+    {
+        return $this->belongsTo(PosOrderItem::class);
+    }
+
     public function discount()
     {
         return $this->belongsTo(PartnerPosServiceDiscount::class);
