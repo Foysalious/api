@@ -62,7 +62,7 @@ class DashboardController extends Controller
                 'logo' => $partner->logo,
                 'geo_informations' => json_decode($partner->geo_informations),
                 'current_subscription_package' => [
-                    'name' => $partner->subscription->show_name,
+                    'name' => $partner->subscription->name,
                     'name_bn' => $partner->subscription->show_name_bn,
                     'status' => $partner->subscription->status
                 ],
