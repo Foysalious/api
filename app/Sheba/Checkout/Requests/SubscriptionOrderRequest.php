@@ -29,31 +29,24 @@ class SubscriptionOrderRequest extends PartnerListRequest
 
     public function prepareObject()
     {
-        $this->setCustomer();
-        $this->setAddress();
-        $this->setSalesChannel();
-        $this->setDeliveryName();
-        $this->setDeliveryMobile();
         $this->setAdditionalInfo();
         $this->setGeo($this->geo->lat, $this->geo->lng);
         parent::prepareObject();
         $this->calculateBillingCycle();
     }
 
-    private function setCustomer()
+    public function setCustomer(Customer $customer)
     {
-        $this->customer = $this->request->has('customer') ? $this->request->customer : Customer::find($this->request->customer_id);
+        $this->customer = $customer;
+        return $this;
     }
 
-    private function setAddress()
+    public function setAddress(CustomerDeliveryAddress $address)
     {
-        $this->address = CustomerDeliveryAddress::withTrashed()
-            ->where('id', $this->request->address_id)
-            ->where('customer_id', $this->customer->id)
-            ->first();
-
+        $this->address = $address;
         $this->decodeGeo();
         $this->calculateLocation();
+        return $this;
     }
 
     private function calculateLocation()
@@ -70,19 +63,22 @@ class SubscriptionOrderRequest extends PartnerListRequest
         $this->geo = json_decode($this->address->geo_informations);
     }
 
-    private function setSalesChannel()
+    public function setSalesChannel($sales_channel)
     {
-        $this->salesChannel = $this->request->sales_channel;
+        $this->salesChannel = $sales_channel;
+        return $this;
     }
 
-    private function setDeliveryName()
+    public function setDeliveryName($delivery_name)
     {
-        $this->deliveryName = $this->request->name;
+        $this->deliveryName = $delivery_name;
+        return $this;
     }
 
-    private function setDeliveryMobile()
+    public function setDeliveryMobile($mobile)
     {
-        $this->deliveryMobile = $this->request->mobile;
+        $this->deliveryMobile = $mobile;
+        return $this;
     }
 
     private function setAdditionalInfo()

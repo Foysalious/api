@@ -16,6 +16,9 @@ class SubscriptionOrderPlace
         return $this;
     }
 
+    /**
+     * @return SubscriptionOrder
+     */
     public function place()
     {
         $partner = $this->getPartner();

@@ -1,6 +1,8 @@
 <?php namespace Sheba\Payment;
 
 
+use Exception;
+
 class AvailableMethods
 {
     /**
@@ -8,7 +10,7 @@ class AvailableMethods
      * @param $version_code
      * @param $platform_name
      * @return array
-     * @throws \Exception
+     * @throws Exception
      */
     public static function get($payable_type, $version_code, $platform_name)
     {
@@ -40,7 +42,7 @@ class AvailableMethods
                     $payments = self::getWalletRechargePayments($version_code, $platform_name);
                     break;
                 default:
-                    throw new \Exception('Invalid Payable Type');
+                    throw new Exception('Invalid Payable Type');
                     break;
             }
         } else {
