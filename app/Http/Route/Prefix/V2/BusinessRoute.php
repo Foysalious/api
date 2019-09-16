@@ -25,6 +25,7 @@ class BusinessRoute
                 $api->get('/vendors/{vendor}/info', 'B2b\BusinessesController@getVendorInfo');
                 $api->get('/vendors/{vendor}/resource-info', 'B2b\BusinessesController@getVendorAdminInfo');
                 $api->post('orders', 'B2b\OrderController@placeOrder');
+                $api->post('subscription-orders', 'B2b\OrderController@placeSubscriptionOrder');
                 $api->get('trips', 'B2b\TripSchedulerController@getList');
                 $api->post('promotions/add', 'B2b\OrderController@applyPromo');
                 $api->get('/transactions', 'B2b\BusinessTransactionController@index');
