@@ -85,7 +85,11 @@ class CustomerSubscriptionController extends Controller
                 'subscription_type' => 'required|string',
                 'sales_channel' => 'required|string',
             ]);
-            $subscriptionOrderRequest->setRequest($request)->prepareObject();
+            $address = CustomerDeliveryAddress::withTrashed()->where('id', $request->address_id)->first();
+            $subscriptionOrderRequest->setRequest($request)->setSalesChannel($request->sales_channel)->setCustomer($request->customer)->setAddress($address)
+                ->setDeliveryMobile($request->mobile)
+                ->setDeliveryName($request->name)
+                ->prepareObject();
             $subscriptionOrder = $subscriptionOrder->setSubscriptionRequest($subscriptionOrderRequest)->place();
             return api_response($request, $subscriptionOrder, 200, ['order' => [
                 'id' => $subscriptionOrder->id
