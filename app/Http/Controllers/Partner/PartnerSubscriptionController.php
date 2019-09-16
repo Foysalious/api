@@ -184,23 +184,21 @@ class PartnerSubscriptionController extends Controller
             $this->setModifier($request->manager_resource);
             if ($upgradeRequest = $this->createSubscriptionRequest($requestedPackage)) {
                 try {
-
                     $grade = $request->partner->subscriber()->getBilling()->findGrade($requestedPackage, $currentPackage, $request->billing_type, $request->partner->billing_type);
-
-                    if ($grade == 'Downgrade') {
-                        if ($request->partner->status != constants('PARTNER_STATUSES')['Inactive']) {
+                    if ($grade == 'Downgrade' && $request->partner->status != constants('PARTNER_STATUSES')['Inactive']) {
                             return api_response($request, null, 202, ['message' => " আপনার $requestedPackage->show_name_bd  প্যকেজে অবনমনের  অনুরোধ  গ্রহণ  করা  হয়েছে "]);
-                        }
                     }
-                    if (!$request->partner->hasCreditForSubscription($requestedPackage, $request->billing_type)) {
+                    $hasCredit = $request->partner->hasCreditForSubscription($requestedPackage, $request->billing_type);
+                    $balance = ['remaining_balance' => $request->partner->totalCreditForSubscription, 'price' => $request->partner->totalPriceRequiredForSubscription];
+                    if (!$hasCredit) {
                         $upgradeRequest->delete();
-                        return api_response($request, null, 420, ['message' => 'আপনার একাউন্টে যথেষ্ট ব্যলেন্স নেই।।', 'remaining_balance' => $request->partner->totalCreditForSubscription,'price' => $request->partner->totalPriceRequiredForSubscription, 'required' => $request->partner->totalPriceRequiredForSubscription - $request->partner->totalCreditForSubscription]);
+                        return api_response($request, null, 420, array_merge(['message' => 'আপনার একাউন্টে যথেষ্ট ব্যলেন্স নেই।।', 'required' => $request->partner->totalPriceRequiredForSubscription - $request->partner->totalCreditForSubscription], $balance));
                     }
                     $request->partner->subscriptionUpgrade($requestedPackage, $upgradeRequest);
                     if ($grade === 'Renewed') {
-                        return api_response($request, null, 200, ['message' => "আপনাকে $requestedPackage->show_name_bn  প্যকেজে পুনর্বহাল করা হয়েছে ।"]);
+                        return api_response($request, null, 200, array_merge(['message' => "আপনাকে $requestedPackage->show_name_bn  প্যকেজে পুনর্বহাল করা হয়েছে ।"], $balance));
                     } else {
-                        return api_response($request, null, 200, ['message' => "আপনাকে $requestedPackage->show_name_bn  প্যকেজে উন্নীত করা হয়েছে ।"]);
+                        return api_response($request, null, 200, array_merge(['message' => "আপনাকে $requestedPackage->show_name_bn  প্যকেজে উন্নীত করা হয়েছে ।"], $balance));
                     }
                 } catch (Throwable $e) {
                     $upgradeRequest->delete();
