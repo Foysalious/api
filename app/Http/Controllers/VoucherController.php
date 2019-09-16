@@ -2,6 +2,7 @@
 
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
+use App\Models\PosOrderDiscount;
 use App\Models\Voucher;
 use App\Transformers\CustomSerializer;
 use App\Transformers\VoucherDetailTransformer;
@@ -32,6 +33,7 @@ class VoucherController extends Controller
             $partner = $request->partner;
 
             $partner_voucher_query = Voucher::byPartner($partner);
+            $total_sale_with_voucher = $this->calculatePartnerwiseSaleByVoucher($partner_voucher_query);
             $latest_vouchers = [];
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
@@ -39,7 +41,7 @@ class VoucherController extends Controller
             $data = [
                 'total_voucher'     => $partner_voucher_query->count(),
                 'active_voucher'    => $partner_voucher_query->valid()->count(),
-                'total_sale_with_voucher' => 255648
+                'total_sale_with_voucher' => $total_sale_with_voucher
             ];
 
             $partner_voucher_query->orderBy('id', 'desc')->take(3)->each(function ($voucher) use (&$latest_vouchers, $manager) {
@@ -109,16 +111,14 @@ class VoucherController extends Controller
             $resource = new Item($voucher, new VoucherDetailTransformer());
             $formatted_voucher = $manager->createData($resource)->toArray();
             $formatted_voucher['data']['is_used'] = $voucher->usedCount() ? true : false;
-
-            //dd(PosOrder::find(6870)->calculate()->getTotalBill());
+            list($total_sale, $total_discount) = $this->calculateTotalSaleAndDiscountByVoucher($voucher);
             $data = [
                 'total_used' => $voucher->usedCount(),
-                'total_sale_with_voucher' => 256865,
-                'total_discount_with_voucher' => 8500
+                'total_sale_with_voucher' => $total_sale,
+                'total_discount_with_voucher' => $total_discount
             ];
             return api_response($request, null, 200, ['data' => $data, 'voucher' => $formatted_voucher['data']]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -228,7 +228,7 @@ class VoucherController extends Controller
         if ($request->has('modules')) $rule->setModules($modules);
         if ($request->has('applicant_types')) $rule->setApplicantTypes($applicant_types);
         if ($request->has('order_amount')) $rule->setOrderAmount($request->order_amount);
-        if ($request->has('customers')) {
+        if ($request->has('customers') && !empty($request->customers)) {
             $mobiles = explode(',', $request->customers);
             $rule->setMobiles($mobiles);
         }
@@ -283,7 +283,38 @@ class VoucherController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
 
+
+    /**
+     * @param Voucher $voucher
+     * @return array
+     */
+    private function calculateTotalSaleAndDiscountByVoucher(Voucher $voucher)
+    {
+        $orders_by_voucher = PosOrder::byVoucher($voucher->id)->get();
+
+        $total_sale = 0;
+        $order_id = $orders_by_voucher->pluck('id')->toArray();
+        $total_discount = PosOrderDiscount::byVoucher($order_id)->sum('amount');
+
+        $orders_by_voucher->each(function ($order) use (&$total_sale) {
+            $total_sale += $order->calculate()->getTotalBill();
+        });
+
+        return [$total_sale, (double)$total_discount];
+    }
+
+    private function calculatePartnerwiseSaleByVoucher($partner_voucher_query){
+
+        $voucher_id = $partner_voucher_query->pluck('id')->toArray();
+
+        $orders_by_voucher = PosOrder::byVoucher($voucher_id)->get();
+
+        $orders_by_voucher->each(function ($order) use (&$total_sale) {
+            $total_sale += $order->calculate()->getTotalBill();
+        });
+        return $total_sale;
 
     }
 }
