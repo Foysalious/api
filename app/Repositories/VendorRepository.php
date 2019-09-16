@@ -1,11 +1,17 @@
 <?php namespace App\Repositories;
 
+use App\Models\TopUpOrder;
 use App\Models\Vendor;
 use Illuminate\Http\Request;
+use Sheba\TopUp\TopUpFailedReason;
 use Sheba\TopUp\Vendor\VendorFactory;
 
 class VendorRepository
 {
+    /**
+     * @param Request $request
+     * @return mixed
+     */
     public function topUpHistory(Request $request)
     {
         list($offset, $limit) = calculatePagination($request);
@@ -40,9 +46,16 @@ class VendorRepository
 
     }
 
+    /**
+     * @param $topupID
+     * @param Request $request
+     * @return array|null
+     */
     public function topUpHistoryDetails($topupID, Request $request)
     {
+        /** @var TopUpOrder $topup */
         if ($topup = $request->vendor->topups()->find($topupID)) {
+            $failed_reason = (new TopUpFailedReason())->setTopup($topup);
             return [
                 'id' => $topup->id,
                 'transaction_id' => $topup->transaction_id,
@@ -51,14 +64,18 @@ class VendorRepository
                 'amount' => (double)$topup->amount,
                 'operator' => $topup->vendor->name,
                 'status' => $topup->status,
+                'failed_reason' => $failed_reason->getFailedReason(),
                 'created_at' => $topup->created_at->toDateTimeString()
             ];
         } else {
             return null;
         }
-
     }
 
+    /**
+     * @param Request $request
+     * @return array
+     */
     public function details(Request $request)
     {
         return ['data' => ['name' => $request->vendor->name, 'balance' => (double)$request->vendor->wallet]];

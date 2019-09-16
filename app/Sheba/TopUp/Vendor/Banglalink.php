@@ -47,8 +47,7 @@ class Banglalink extends Vendor
     private function getSelectors()
     {
         return [
-            'prepaid' => '',
-            'postpaid' => '1'
+            'prepaid' => '', 'postpaid' => '1'
         ];
     }
 

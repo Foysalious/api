@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Review;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Dal\LafsOrder\StatusUpdater as LafsOrderStatusUpdater;
 use Sheba\ModificationFields;
 use Sheba\Reward\ActionRewardDispatcher;
 
@@ -12,7 +13,7 @@ class ReviewController extends Controller
 {
     use ModificationFields;
 
-    public function store($customer, $job, Request $request, ActionRewardDispatcher $dispatcher)
+    public function store($customer, $job, Request $request, ActionRewardDispatcher $dispatcher, LafsOrderStatusUpdater $status_updater)
     {
         try {
             $this->validate($request, ['rating' => 'required']);
@@ -26,18 +27,19 @@ class ReviewController extends Controller
                 $review->rating = $request->rating;
                 $review->job_id = $job->id;
                 $review->resource_id = $job->resource_id;
-                $review->partner_id = $job->partner_order->partner_id;
+                $review->partner_id = $job->partnerOrder->partner_id;
                 $review->category_id = $job->category_id;
                 $review->customer_id = $customer->id;
                 $this->withCreateModificationField($review);
                 $review->save();
-                $dispatcher->run('rating', $job->partner_order->partner, $review);
+                $dispatcher->run('rating', $job->partnerOrder->partner, $review);
             } else {
                 $review->rating = $request->rating;
                 $this->withUpdateModificationField($review);
                 $review->update();
                 $review->rates()->delete();
             }
+            $status_updater->setOrder($job->partnerOrder->order)->update();
             return api_response($request, $review, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());

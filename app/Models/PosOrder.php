@@ -11,7 +11,6 @@ use Sheba\Pos\Order\RefundNatures\ReturnNatures;
 class PosOrder extends Model
 {
     protected $guarded = ['id'];
-    protected $casts = ['discount' => 'double', 'discount_percentage' => 'double'];
 
     /** @var string */
     private $paymentStatus;
@@ -39,8 +38,8 @@ class PosOrder extends Model
     public function calculate()
     {
         $this->_calculateThisItems();
-        $this->totalDiscount = $this->totalItemDiscount + $this->discount;
-        $this->appliedDiscount = ($this->discount > $this->totalBill) ? $this->totalBill : $this->discount;
+        $this->totalDiscount = $this->totalItemDiscount + $this->discountsAmountWithoutService();
+        $this->appliedDiscount = ($this->discountsAmountWithoutService() > $this->totalBill) ? $this->totalBill : $this->discountsAmountWithoutService();
         $this->netBill = $this->totalBill - $this->appliedDiscount;
         $this->_calculatePaidAmount();
         $this->paid = $this->paid ?: 0;
@@ -71,6 +70,21 @@ class PosOrder extends Model
     public function items()
     {
         return $this->hasMany(PosOrderItem::class);
+    }
+
+    public function discounts()
+    {
+        return $this->hasMany(PosOrderDiscount::class);
+    }
+
+    public function discountsWithoutService()
+    {
+        return $this->discounts()->whereNull('item_id');
+    }
+
+    public function discountsAmountWithoutService()
+    {
+        return $this->discountsWithoutService()->sum('amount');
     }
 
     public function payments()

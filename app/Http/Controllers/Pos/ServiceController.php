@@ -49,6 +49,8 @@ class ServiceController extends Controller
                         'app_thumb' => $service->app_thumb,
                         'app_banner' => $service->app_banner,
                         'price' => $service->price,
+                        'wholesale_applicable' => $service->wholesale_price > 0 ? 1 : 0,
+                        'wholesale_price'   => $service->wholesale_price,
                         'stock' => $service->stock,
                         'unit' => $service->unit,
                         'discount_applicable' => $service->discount() ? true : false,
@@ -254,7 +256,7 @@ class ServiceController extends Controller
     {
         $posService = PartnerPosService::query()->where([['id', $service], ['partner_id', $partner]])->first();
         if (empty($posService)) {
-            return api_response($request, null, 404, ['message' => 'Requested service not found']);
+            return api_response($request, null, 404, ['message' => 'Requested service not found .']);
         }
         $posService->is_published_for_shop = !(int)$posService->is_published_for_shop;
         $posService->save();
@@ -278,6 +280,6 @@ class ServiceController extends Controller
 
     private function getSelectColumnsOfService()
     {
-        return ['id', 'name', 'app_thumb', 'app_banner', 'price', 'stock', 'vat_percentage', 'is_published_for_shop', 'warranty', 'warranty_unit','unit'];
+        return ['id', 'name', 'app_thumb', 'app_banner', 'price', 'stock', 'vat_percentage', 'is_published_for_shop', 'warranty', 'warranty_unit','unit','wholesale_price'];
     }
 }

@@ -12,7 +12,11 @@ class NormalPayout extends NormalModule
     public function setBkashAuth()
     {
         $this->bkashAuth = new BkashAuth();
-        $this->bkashAuth->setKey(config('bkash.payout.app_key'))->setSecret(config('bkash.payout.app_secret'))->setUsername(config('bkash.payout.username'))->setPassword(config('bkash.payout.password'))->setUrl(config('bkash.payout.url'));
+        $this->bkashAuth->setKey(config('bkash.payout.app_key'))
+            ->setSecret(config('bkash.payout.app_secret'))
+            ->setUsername(config('bkash.payout.username'))
+            ->setPassword(config('bkash.payout.password'))
+            ->setUrl(config('bkash.payout.url'));
     }
 
     protected function setToken()

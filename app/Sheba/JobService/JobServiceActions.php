@@ -114,7 +114,7 @@ class JobServiceActions
 
             $job_service->delete();
             $this->jobServiceLog($old_job_service, "$job_service->name Deleted");
-            $this->updateJobDiscount($job);
+            $this->updateJobDiscount($job->fresh());
         } catch (\Exception $exception) {
             DB::rollback();
             app('sentry')->captureException($exception);

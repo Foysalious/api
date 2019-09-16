@@ -120,6 +120,7 @@ class OrderController extends Controller
                 return api_response($request, null, 500, ['message' => "Can't send multiple requests within 1 minute."]);
             }
             $order_adapter = new OrderAdapter($request->job->partnerOrder);
+            $order_adapter->setPaymentMethod($payment_method);
             $payment = $payment->setMethod($payment_method)->init($order_adapter->getPayable());
             return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
         } catch (ValidationException $e) {

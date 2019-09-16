@@ -1,5 +1,6 @@
 <?php namespace Sheba\Payment\Complete;
 
+use Illuminate\Support\Facades\Redis;
 use Sheba\Checkout\Adapters\SubscriptionOrderAdapter;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
@@ -34,9 +35,11 @@ class OrderComplete extends BaseOrderComplete
             $this->setModifier($customer = $payable->user);
             $model = $payable->getPayableModel();
             $payable_model = $model::find((int)$payable->type_id);
+
             if ($payable_model instanceof PartnerOrder) {
                 $this->giveOnlineDiscount($payable_model);
             }
+
             foreach ($this->payment->paymentDetails as $payment_detail) {
                 if ($payable_model instanceof PartnerOrder) {
                     $has_error = $this->clearPartnerOrderPayment($payable_model, $customer, $payment_detail, $has_error);
@@ -86,7 +89,7 @@ class OrderComplete extends BaseOrderComplete
             if (strtolower($payment_detail->method) == 'wallet') dispatchReward()->run('wallet_cashback', $customer, $payment_detail->amount, $partner_order);
         } else {
             $has_error = true;
-            throw new Exception('OrderComplete collect api failure. code:' . $response->code);
+            throw new Exception('OrderComplete collect api failure. Response: ' . json_encode($response));
         }
 
         return $has_error;

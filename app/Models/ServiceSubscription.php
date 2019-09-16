@@ -29,6 +29,16 @@ class ServiceSubscription extends Model
         return $query->where('is_active', 1);
     }
 
+    public function scopeBusiness($query)
+    {
+        return $query->where('is_published_for_business', 1);
+    }
+
+    public function attachments()
+    {
+        return $this->morphMany(Attachment::class, 'attachable');
+    }
+
     public function getParentCategoryAttribute()
     {
         return $this->service->category->parent->id;

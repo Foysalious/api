@@ -2,17 +2,16 @@
 
 use Sheba\Checkout\ShebaOrderInterface;
 use Sheba\Dal\BaseModel;
+use Sheba\Dal\LafsOrder\Model as LafsOrder;
+use Sheba\Dal\Order\Events\OrderCreated;
 use Sheba\Dal\Order\Events\OrderSaved;
 use Sheba\Order\Code\Builder as CodeBuilder;
 use Sheba\Order\StatusCalculator;
 use Sheba\Portals\Portals;
-use Sheba\Report\Updater\UpdatesReport;
 use Sheba\Voucher\Contracts\CanHaveVoucher;
-use Sheba\Report\Updater\Order as ReportUpdater;
 
-class Order extends BaseModel implements ShebaOrderInterface, CanHaveVoucher, UpdatesReport
+class Order extends BaseModel implements ShebaOrderInterface, CanHaveVoucher
 {
-    use ReportUpdater;
     protected $guarded = ['id'];
     public $totalPrice;
     public $due;
@@ -25,7 +24,8 @@ class Order extends BaseModel implements ShebaOrderInterface, CanHaveVoucher, Up
     /** @var CodeBuilder */
     private $codeBuilder;
 
-    protected static $savedEventClass = OrderSaved::class;
+    public static $savedEventClass = OrderSaved::class;
+    public static $createdEventClass = OrderCreated::class;
 
     public function __construct($attributes = [])
     {
@@ -37,6 +37,9 @@ class Order extends BaseModel implements ShebaOrderInterface, CanHaveVoucher, Up
         $this->codeBuilder = new CodeBuilder();
     }
 
+    /**
+     ** Model relations
+     **/
     public function jobs()
     {
         return $this->hasManyThrough(Job::class, PartnerOrder::class);
@@ -55,6 +58,11 @@ class Order extends BaseModel implements ShebaOrderInterface, CanHaveVoucher, Up
     public function partner_orders()
     {
         return $this->hasMany(PartnerOrder::class);
+    }
+
+    public function lafsOrder()
+    {
+        return $this->hasOne(LafsOrder::class);
     }
 
     public function subscription()

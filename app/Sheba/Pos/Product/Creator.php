@@ -32,6 +32,7 @@ class Creator
         $this->data['pos_category_id'] = $this->data['category_id'];
         $this->data['cost'] = (double)$this->data['cost'];
         $this->data['price'] = (double)$this->data['price'];
+        $this->data['wholesale_price'] = (double)$this->data['wholesale_price'];
         $this->format();
         $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id']);
 

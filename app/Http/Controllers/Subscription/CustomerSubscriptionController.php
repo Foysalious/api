@@ -207,7 +207,7 @@ class CustomerSubscriptionController extends Controller
         try {
             $customer = $request->customer;
             $subscription_order = SubscriptionOrder::find((int)$subscription);
-
+            $partner = $subscription_order->partner;
             $partner_orders = $subscription_order->orders->map(function ($order) {
                 return $order->lastPartnerOrder();
             });
@@ -217,6 +217,7 @@ class CustomerSubscriptionController extends Controller
                 return [
                     'id' => $partner_order->order->code(),
                     'job_id' => $last_job->id,
+                    'partner_order_id' => $partner_order->id,
                     'schedule_date' => Carbon::parse($last_job->schedule_date),
                     'preferred_time' => Carbon::parse($last_job->schedule_date)->format('M-j') . ', ' . Carbon::parse($last_job->preferred_time_start)->format('h:ia'),
                     'is_completed' => $partner_order->closed_and_paid_at ? $partner_order->closed_and_paid_at->format('M-j, h:ia') : null,
@@ -270,10 +271,11 @@ class CustomerSubscriptionController extends Controller
 
             $service = Service::find((int)$service_details_breakdown->id);
             $service_subscription = $service->subscription;
-
             $schedules = collect(json_decode($subscription_order->schedules));
             $subscription_order_details = [
                 "subscription_code" => $subscription_order->code(),
+                "category_id" => $service->category->id,
+                "category_name" => $service->category->name,
                 'service_id' => $service->id,
                 "service_name" => $service->name,
                 "app_thumb" => $service->app_thumb,
@@ -288,9 +290,11 @@ class CustomerSubscriptionController extends Controller
 
                 "partner_id" => $subscription_order->partner_id,
                 "partner_name" => $service_details->name,
-                "partner_slug" => $subscription_order->partner->sub_domain,
-                "partner_mobile" => $subscription_order->partner->getContactNumber(),
+                "partner_slug" => $partner->sub_domain,
+                "partner_mobile" => $partner->getContactNumber(),
                 "logo" => $service_details->logo,
+                "avg_rating" => (double)$partner->reviews()->avg('rating'),
+                "total_rating" => $partner->reviews->count(),
 
                 'customer_name' => $subscription_order->customer->profile->name,
                 'customer_mobile' => $subscription_order->customer->profile->mobile,
@@ -298,6 +302,8 @@ class CustomerSubscriptionController extends Controller
                 'address' => $subscription_order->deliveryAddress->address,
                 'location_name' => $subscription_order->location ? $subscription_order->location->name : "",
                 'ordered_for' => $subscription_order->deliveryAddress->name,
+                'subscription_status' => $subscription_order->status,
+
 
                 "billing_cycle" => $subscription_order->billing_cycle,
                 "subscription_period" => Carbon::parse($subscription_order->billing_cycle_start)->format('M j') . ' - ' . Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
