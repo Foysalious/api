@@ -271,13 +271,12 @@ class OrderController extends Controller
                 ->prepareObject();
             $subscription_order = $subscriptionOrder->setSubscriptionRequest($subscriptionOrderRequest)->place();
             $subscription_order = new SubscriptionOrderAdapter($subscription_order);
-            $subscription_order->convertToOrder();
-            return api_response($request, $subscriptionOrder, 200, ['order' => ['id' => $subscriptionOrder->id]]);
+            $order = $subscription_order->convertToOrder();
+            return api_response($request, $order, 200, ['order' => ['id' => $order->id]]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

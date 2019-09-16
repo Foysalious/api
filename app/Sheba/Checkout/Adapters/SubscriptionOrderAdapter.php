@@ -54,6 +54,9 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
         // TODO: Implement jobs() method.
     }
 
+    /**
+     * @return SubscriptionOrder|bool|SubscriptionOrderInterface
+     */
     public function convertToOrder()
     {
         if ($this->subscriptionOrder->orders->count() == 0) {
