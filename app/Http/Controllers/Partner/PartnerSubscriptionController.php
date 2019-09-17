@@ -298,15 +298,15 @@ class PartnerSubscriptionController extends Controller
     private function discountNote(PartnerSubscriptionPackage $package, $billing_type)
     {
         if ($package->discounts->count()) {
-            $partner_subcription_discount = $package->discounts->filter(function ($discount) use ($billing_type) {
+            $partner_subscription_discount = $package->discounts->filter(function ($discount) use ($billing_type) {
                 return $discount->billing_type == $billing_type;
             })->first();
-            $partner_subcription_discount_cycle = json_decode($partner_subcription_discount ? $partner_subcription_discount->applicable_billing_cycles : '[]');
-            if (isset($partner_subcription_discount_cycle[0]) && $partner_subcription_discount_cycle[0] == 1) {
-                $max_number = $this->hasSequence($partner_subcription_discount_cycle);
-                return $max_number ? "First $max_number Billing Cycle" : $this->getOrdinalMessage($partner_subcription_discount_cycle);
-            } elseif (count($partner_subcription_discount_cycle)) {
-                return $this->getOrdinalMessage($partner_subcription_discount_cycle);
+            $partner_subscription_discount_cycle = json_decode($partner_subscription_discount ? $partner_subscription_discount->applicable_billing_cycles : '[]');
+            if (isset($partner_subscription_discount_cycle[0]) && $partner_subscription_discount_cycle[0] == 1) {
+                $max_number = $this->hasSequence($partner_subscription_discount_cycle);
+                return $max_number ? "First $max_number Billing Cycle" : $this->getOrdinalMessage($partner_subscription_discount_cycle);
+            } elseif (count($partner_subscription_discount_cycle)) {
+                return $this->getOrdinalMessage($partner_subscription_discount_cycle);
             }
             return '';
         }
