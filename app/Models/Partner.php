@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use App\Models\Transport\TransportTicketOrder;
+use Sheba\Partner\PartnerStatuses;
 use App\Sheba\Payment\Rechargable;
 use Carbon\Carbon;
 use DB;
@@ -742,5 +743,10 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
     public function subscriptionPackageCharges()
     {
         return $this->hasMany(PartnerSubscriptionPackageCharge::class);
+    }
+
+    public function getStatusToCalculateAccess()
+    {
+        return PartnerStatuses::getStatusToCalculateAccess($this->status);
     }
 }
