@@ -213,13 +213,20 @@ class NotificationRepository
         ], $topic, $channel, $sound);
     }
 
-    public function sendInsufficientNotification(Partner $partner, $package, $package_type, $grade)
+    public function sendInsufficientNotification(Partner $partner, $package, $package_type, $grade, $withMessage = true)
     {
         $title = ' অপর্যাপ্ত  ব্যলেন্স';
         $type = BillingType::BN()[$package_type];
         $gradeType = $grade == 'Upgrade' ? " এর" : $grade == 'Renew' ? " নাবায়ন" : " এর";
         $message = "এসম্যানেজার এর $type $package->show_name_bn প্যকেজ এ সাবস্ক্রিপশন $gradeType জন্য আপনার ওয়ালেট এ  পর্যাপ্ত  ব্যলেন্স নেই আনুগ্রহ করে ওয়ালেট রিচার্জ করুন এবং সাবস্ক্রিপশন সক্রিয় করুন।";
         $this->sendSubscriptionNotification($title, $message, $partner);
+        if ($withMessage) {
+            (new SmsHandler('insufficient-balance-subscription'))->send($partner->getContactNumber(), [
+                'package_type_bn' => $type,
+                'package_name' => $package->show_name_bn,
+                'grade_text' => $gradeType
+            ]);
+        }
     }
 
 }

@@ -230,7 +230,7 @@ class PartnerSubscriptionController extends Controller
         $this->setModifier($request->manager_resource);
         $update_request_data = $this->withCreateModificationField([
             'partner_id' => $partner->id,
-            'old_package_id' => $partner->package_id,
+            'old_package_id' => $partner->package_id ?: 1,
             'new_package_id' => $request->package_id,
             'old_billing_type' => $partner->billing_type ?: BillingType::MONTHLY,
             'new_billing_type' => $request->billing_type,
