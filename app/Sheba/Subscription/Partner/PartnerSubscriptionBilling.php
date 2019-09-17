@@ -4,6 +4,7 @@ use App\Jobs\PartnerRenewalSMS;
 use App\Models\Partner;
 use App\Models\PartnerSubscriptionPackage;
 use App\Models\Tag;
+use App\Repositories\NotificationRepository;
 use App\Repositories\SmsHandler;
 use App\Sheba\Subscription\Partner\PartnerSubscriptionCharges;
 use Carbon\Carbon;
@@ -210,31 +211,18 @@ class PartnerSubscriptionBilling
     private function sendSmsForSubscriptionUpgrade(PartnerSubscriptionPackage $old_package, PartnerSubscriptionPackage $new_package, $old_billing_type, $new_billing_type, $grade = 'Upgrade')
     {
         if ((int)env('PARTNER_SUBSCRIPTION_SMS') == 1) {
+            $template = null;
             if ($grade == 'Upgrade') {
-                (new SmsHandler('upgrade-subscription'))->send($this->partner->getContactNumber(), [
-                    'old_package_name' => $old_package->show_name_bn,
-                    'new_package_name' => $new_package->show_name_bn,
-                    'subscription_amount' => $this->packagePrice,
-                    'old_package_type' => $old_billing_type,
-                    'new_package_type' => $new_billing_type
-                ]);
+                $template = 'upgrade-subscription';
             } elseif ($grade == 'Renewed') {
-                (new SmsHandler('renew-subscription'))->send($this->partner->getContactNumber(), [
-                    'package_name' => $new_package->show_name_bn,
-                    'subscription_amount' => $this->packagePrice,
-                    'formatted_package_type' => $new_billing_type == BillingType::MONTHLY ? 'মাসের' : $new_billing_type == BillingType::YEARLY ? 'বছরের' : 'আর্ধবছরের',
-                    'package_type' => $new_billing_type
-                ]);
+                $template = 'renew-subscription';
             } elseif ($grade == 'Downgrade') {
-                (new SmsHandler('downgrade-subscription'))->send($this->partner->getContactNumber(), [
-                    'old_package_name' => $old_package->show_name_bn,
-                    'new_package_name' => $new_package->show_name_bn,
-                    'subscription_amount' => $this->packagePrice,
-                    'old_package_type' => $old_billing_type,
-                    'new_package_type' => $new_billing_type
-                ]);
+                $template = 'downgrade-subscription';
             }
-
+            if ($template) {
+                self::sendSms($this->partner, $old_package, $new_package, $old_billing_type, $new_billing_type, $this->packagePrice, $template);
+                self::sendNotification($this->partner, $old_package, $new_package, $old_billing_type, $new_billing_type, $this->packagePrice, $grade);
+            }
         }
     }
 
@@ -257,4 +245,40 @@ class PartnerSubscriptionBilling
             }
         }
     }
+
+    public static function sendNotification(Partner $partner, $old_package, $new_package, $old_billing_type, $new_billing_type, $price, $grade)
+    {
+        $title = '';
+        $message = '';
+        $type_text = BillingType::BN()[$new_billing_type];
+        $fee = convertNumbersToBangla(floatval($price));
+        switch ($grade) {
+            case 'Upgrade':
+                $title = "সাবস্ক্রিপশন সম্পন্ন";
+                $message = " আপনি এসম্যানেজার এর $type_text $new_package->show_name_bn প্যকেজ এ সফল ভাবে সাবস্ক্রিপশন সম্পন্ন করেছেন। সাবস্ক্রিপশন ফি বাবদ $fee  টাকা চার্জ করা হয়েছে।";
+                break;
+            case 'Renew':
+                $title = "সাবস্ক্রিপশন  নবায়ন";
+                $message = "আপনি এসম্যানেজার এর $type_text $new_package->show_name_bn প্যকেজ এ সফল ভাবে সাবস্ক্রিপশন নবায়ন করেছেন। সাবস্ক্রিপশন ফি বাবদ $fee টাকা চার্জ করা হয়েছে।";
+                break;
+            case 'Downgrade':
+                return;
+        }
+        (new NotificationRepository())->sendSubscriptionNotification($title, $message, $partner);
+    }
+
+    public static function sendSms(Partner $partner, $old_package, $new_package, $old_billing_type, $new_billing_type, $price, $template)
+    {
+        (new SmsHandler($template))->send($partner->getContactNumber(), [
+            'old_package_name' => $old_package->show_name_bn,
+            'new_package_name' => $new_package->show_name_bn,
+            'subscription_amount' => $price,
+            'old_package_type' => $old_billing_type,
+            'new_package_type' => $new_billing_type,
+            'package_name' => $new_package->show_name_bn,
+            'formatted_package_type' => $new_billing_type == BillingType::MONTHLY ? 'মাসের' : $new_billing_type == BillingType::YEARLY ? 'বছরের' : 'আর্ধবছরের',
+            'package_type' => $new_billing_type
+        ]);
+    }
+
 }

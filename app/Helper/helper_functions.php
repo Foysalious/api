@@ -547,3 +547,19 @@ if (!function_exists('isAssoc')) {
         return array_keys($arr) !== range(0, count($arr) - 1);
     }
 }
+if (!function_exists('convertNumbersToBangla')) {
+    function convertNumbersToBangla(float $number, $formatted = true, $decimal = 2)
+    {
+        $format = (array)json_decode('{"0":"০","1":"১","2":"২","3":"৩","4":"৪","5":"৫","6":"৬","7":"৭","8":"৮","9":"৯",".":".",",":","}');
+        $number = str_split($formatted ? number_format($number, $decimal) : "$number");
+        $converted = array_map(function ($item) use ($format) {
+            foreach ($format as $key => $val) {
+                if ($key === $item) {
+                    return $val;
+                }
+            }
+            return '';
+        }, $number);
+        return implode('', $converted);
+    }
+}

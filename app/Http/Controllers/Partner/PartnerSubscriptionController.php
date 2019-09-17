@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Models\PartnerSubscriptionPackage;
 use App\Models\PartnerSubscriptionUpdateRequest;
+use App\Repositories\NotificationRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -192,6 +193,7 @@ class PartnerSubscriptionController extends Controller
                     $balance = ['remaining_balance' => $request->partner->totalCreditForSubscription, 'price' => $request->partner->totalPriceRequiredForSubscription];
                     if (!$hasCredit) {
                         $upgradeRequest->delete();
+                        (new NotificationRepository())->sendInsufficientNotification($request->partner, $requestedPackage, $request->billing_type, $grade);
                         return api_response($request, null, 420, array_merge(['message' => 'আপনার একাউন্টে যথেষ্ট ব্যলেন্স নেই।।', 'required' => $request->partner->totalPriceRequiredForSubscription - $request->partner->totalCreditForSubscription], $balance));
                     }
                     $request->partner->subscriptionUpgrade($requestedPackage, $upgradeRequest);
@@ -230,7 +232,7 @@ class PartnerSubscriptionController extends Controller
             'partner_id' => $partner->id,
             'old_package_id' => $partner->package_id,
             'new_package_id' => $request->package_id,
-            'old_billing_type' => $partner->billing_type,
+            'old_billing_type' => $partner->billing_type ?: BillingType::MONTHLY,
             'new_billing_type' => $request->billing_type,
             'discount_id' => $running_discount ? $running_discount->id : null
         ]);
