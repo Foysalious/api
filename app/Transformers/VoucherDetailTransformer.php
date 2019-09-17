@@ -11,6 +11,7 @@ class VoucherDetailTransformer extends TransformerAbstract
         return [
             'id' => $voucher->id,
             'code' => $voucher->code,
+            'start_date' => $voucher->start_date->format('Y-m-d'),
             'end_date' => $voucher->end_date->format('Y-m-d'),
             'amount' => $voucher->amount,
             'is_amount_percentage' => $voucher->is_amount_percentage,
