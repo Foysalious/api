@@ -1,5 +1,8 @@
 <?php namespace Sheba\Payment;
 
+
+use Exception;
+
 class AvailableMethods
 {
     /**
@@ -7,7 +10,7 @@ class AvailableMethods
      * @param $version_code
      * @param $platform_name
      * @return array
-     * @throws \Exception
+     * @throws Exception
      */
     public static function get($payable_type, $version_code, $platform_name)
     {
@@ -35,8 +38,11 @@ class AvailableMethods
                 case 'payment_link':
                     $payments = self::getPaymentLinkPayments($version_code, $platform_name);
                     break;
+                case 'wallet_recharge':
+                    $payments = self::getWalletRechargePayments($version_code, $platform_name);
+                    break;
                 default:
-                    throw new \Exception('Invalid Payable Type');
+                    throw new Exception('Invalid Payable Type');
                     break;
             }
         } else {
@@ -45,37 +51,91 @@ class AvailableMethods
         return $payments;
     }
 
+    private static function getVoucherPayments($version_code, $platform_name)
+    {
+        return [
+            self::cbl($version_code, $platform_name),
+            self::ssl()
+        ];
+    }
+
     private static function getRegularPayments($version_code, $platform_name)
     {
         return [
-            self::shebaCredit(), self::bkash(), self::cbl($version_code, $platform_name), self::ssl()
+            self::shebaCredit(),
+            self::bkash(),
+            self::cbl($version_code, $platform_name),
+            self::ssl()
         ];
     }
 
-    /**
-     * @return array
-     */
-    private static function shebaCredit()
+    private static function getBusinessPayments($version_code, $platform_name)
     {
         return [
-            'name' => 'Sheba Credit', 'is_published' => 1, 'description' => '', 'asset' => 'sheba_credit', 'method_name' => 'wallet'
+            self::bkash(),
+            self::cbl($version_code, $platform_name),
+            self::ssl()
         ];
     }
 
-    /**
-     * @return array
-     */
-    private static function bkash()
+    private static function getSubscriptionPayments($version_code, $platform_name)
     {
         return [
-            'name' => 'bKash',
-            'is_published' => 1,
-            'description' => 'Pay now and get 10% discount',
-            'asset' => 'bkash',
-            'method_name' => 'bkash'
+            self::shebaCredit(),
+            self::cbl($version_code, $platform_name),
+            self::bkash(),
+            self::ssl()
         ];
     }
 
+
+    private static function getTicketsPayments($version_code, $platform_name)
+    {
+        if (isset(\request()->type) && \request()->type === 'customer') {
+            return [
+                self::shebaCredit(),
+                self::cbl($version_code, $platform_name),
+                self::bkash(),
+                self::ssl()
+            ];
+        } else if (isset(\request()->type) && \request()->type !== 'customer') {
+            return [self::shebaCredit()];
+        } else {
+            return [
+                self::shebaCredit(),
+                self::cbl($version_code, $platform_name),
+                self::bkash(),
+                self::ssl()
+            ];
+        }
+    }
+    private static function getUtilityPayments($version_code, $platform_name)
+    {
+        return [
+            self::shebaCredit(),
+            self::bkash(),
+            self::cbl($version_code, $platform_name),
+            self::ssl()
+        ];
+    }
+
+    private static function getPaymentLinkPayments($version_code, $platform_name)
+    {
+        return [
+            self::bkash(),
+            self::cbl($version_code, $platform_name),
+            self::ssl()
+        ];
+    }
+
+    private static function getWalletRechargePayments($version_code, $platform_name)
+    {
+        return [
+            self::bkash(),
+            self::cbl($version_code, $platform_name),
+            self::ssl()
+        ];
+    }
     /**
      * @param $version_code
      * @param $platform_name
@@ -84,7 +144,11 @@ class AvailableMethods
     private static function cbl($version_code, $platform_name)
     {
         return [
-            'name' => 'City Bank', 'is_published' => self::getCblStatus($version_code, $platform_name), 'description' => '', 'asset' => 'cbl', 'method_name' => 'cbl'
+            'name' => 'City Bank',
+            'is_published' => self::getCblStatus($version_code, $platform_name),
+            'description' => '',
+            'asset' => 'cbl',
+            'method_name' => 'cbl'
         ];
     }
 
@@ -103,57 +167,39 @@ class AvailableMethods
     private static function ssl()
     {
         return [
-            'name' => 'Other Debit/Credit', 'is_published' => 1, 'description' => '', 'asset' => 'ssl', 'method_name' => 'online'
+            'name' => 'Other Debit/Credit',
+            'is_published' => 1,
+            'description' => '',
+            'asset' => 'ssl',
+            'method_name' => 'online'
         ];
     }
 
-    private static function getSubscriptionPayments($version_code, $platform_name)
+    /**
+     * @return array
+     */
+    private static function shebaCredit()
     {
         return [
-            self::shebaCredit(), self::cbl($version_code, $platform_name), self::bkash(), self::ssl()
+            'name' => 'Sheba Credit',
+            'is_published' => 1,
+            'description' => '',
+            'asset' => 'sheba_credit',
+            'method_name' => 'wallet'
         ];
     }
 
-    private static function getVoucherPayments($version_code, $platform_name)
+    /**
+     * @return array
+     */
+    private static function bkash()
     {
         return [
-            self::cbl($version_code, $platform_name), self::ssl()
-        ];
-    }
-
-    private static function getTicketsPayments($version_code, $platform_name)
-    {
-        if (isset(\request()->type) && \request()->type === 'customer') {
-            return [
-                self::shebaCredit(), self::cbl($version_code, $platform_name), self::bkash(), self::ssl()
-            ];
-        } else if (isset(\request()->type) && \request()->type !== 'customer') {
-            return [self::shebaCredit()];
-        } else {
-            return [
-                self::shebaCredit(), self::cbl($version_code, $platform_name), self::bkash(), self::ssl()
-            ];
-        }
-    }
-
-    private static function getBusinessPayments($version_code, $platform_name)
-    {
-        return [
-            self::bkash(), self::cbl($version_code, $platform_name), self::ssl()
-        ];
-    }
-
-    private static function getUtilityPayments($version_code, $platform_name)
-    {
-        return [
-            self::shebaCredit(), self::bkash(), self::cbl($version_code, $platform_name), self::ssl()
-        ];
-    }
-
-    private static function getPaymentLinkPayments($version_code, $platform_name)
-    {
-        return [
-            self::bkash(), self::cbl($version_code, $platform_name), self::ssl()
+            'name' => 'bKash',
+            'is_published' => 1,
+            'description' => '',
+            'asset' => 'bkash',
+            'method_name' => 'bkash'
         ];
     }
 }

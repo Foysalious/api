@@ -3,9 +3,9 @@
 use App\Models\Partner;
 use App\Models\PartnerSubscriptionPackage;
 use App\Models\PartnerSubscriptionUpdateRequest;
+use DB;
 use Sheba\Subscription\ShebaSubscriber;
 use Sheba\Subscription\SubscriptionPackage;
-use DB;
 
 class PartnerSubscriber extends ShebaSubscriber
 {
