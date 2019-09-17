@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Payment\PayableType;
+use Sheba\Subscription\Partner\BillingType;
 use Sheba\Subscription\SubscriptionPackage;
 
 class PartnerSubscriptionPackage extends Model implements SubscriptionPackage,PayableType
@@ -61,7 +62,19 @@ class PartnerSubscriptionPackage extends Model implements SubscriptionPackage,Pa
 
     public function originalPricePerDay($billing_type = 'monthly')
     {
-        $day = $billing_type == 'monthly' ? 30 : 365;
+        switch ($billing_type) {
+            case BillingType::MONTHLY:
+                $day = 30;
+                break;
+            case BillingType::HALF_YEARLY:
+                $day = 365 / 2;
+                break;
+            case BillingType::YEARLY:
+                $day = 365;
+                break;
+            default:
+                $day = 1;
+        }
         return $this->originalPrice($billing_type) / $day;
     }
 
@@ -86,5 +99,10 @@ class PartnerSubscriptionPackage extends Model implements SubscriptionPackage,Pa
     public function getResourceCapAttribute()
     {
         return (int)$this->rules()->resource_cap->value;
+    }
+
+    public function getAccessRules()
+    {
+        return json_decode($this->rules, 1)['access_rules'];
     }
 }

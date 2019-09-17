@@ -12,7 +12,8 @@ return [
         'Blacklisted' => 'Blacklisted',
         'Waiting' => 'Waiting',
         'Onboarded' => 'Onboarded',
-        'Rejected' => 'Rejected'
+        'Rejected' => 'Rejected',
+        'Inactive' => 'Inactive'
     ],
     'PARTNER_STATUSES_SHOW' => [
         'Verified' => ['sheba' => 'Verified', 'partner' => 'Active', 'customer' => 'Verified'],
@@ -22,7 +23,8 @@ return [
         'Blacklisted' => ['sheba' => 'Blacklisted', 'partner' => 'Blacklisted', 'customer' => 'Blacklisted'],
         'Waiting' => ['sheba' => 'Ready to verified', 'partner' => 'Inactive', 'customer' => 'Ready to verified'],
         'Onboarded' => ['sheba' => 'Onboarded', 'partner' => 'Inactive', 'customer' => 'Onboarded'],
-        'Rejected' => ['sheba' => 'Rejected', 'partner' => 'Inactive', 'customer' => 'Rejected']
+        'Rejected' => ['sheba' => 'Rejected', 'partner' => 'Inactive', 'customer' => 'Rejected'],
+        'Inactive' => ['sheba' => 'Inactive', 'partner' => 'Inactive', 'customer' => 'Inactive']
     ],
     'PARTNER_LEVELS' => ['Starter', 'Intermediate', 'Advanced'],
     'PARTNER_TYPES' => ['USP', 'NSP', 'ESP'],
@@ -383,6 +385,7 @@ return [
     'AFFILIATION_ACQUISITION_MONEY' => 2,
     'API_RESPONSE_CODES' => [
         200 => ['message' => 'Successful', 'code' => 200],
+        202 => ['message' => 'Successful', 'code' => 202],
         400 => ['message' => 'Bad request', 'code' => 400],
         401 => ['message' => 'Unauthorized', 'code' => 401],
         403 => ['message' => 'Forbidden', 'code' => 403],
@@ -588,6 +591,11 @@ return [
         env('SHEBA_RESOURCE_APP') => 'Resource',
         env('SHEBA_MANGER_APP') => 'Partner',
         'user' => 'Profile'
+    ],
+    'PARTNER_PACKAGE_CHARGE_TYPES' => [
+        'Upgrade' => 'upgrade',
+        'Downgrade' => 'downgrade',
+        'Renewed' => 'renewed'
     ],
     'DEVELOPMENT_PLATFORMS' => ['android', 'ios', 'web', 'all'],
     'POS_SERVICE_UNITS' => [

@@ -12,7 +12,7 @@ class BonusCredit
     private $payable_type;
 
     private $logRepo;
-
+    private $spent_model;
     public function __construct(BonusLogRepository $log_repo)
     {
         $this->logRepo = $log_repo;
@@ -51,6 +51,12 @@ class BonusCredit
         if ($amount < $original_amount) $this->saveLog($original_amount - $amount, $log);
 
         return $amount;
+    }
+
+    public function setSpentModel($spent_on)
+    {
+        $this->spent_model = $spent_on;
+        return $this;
     }
 
     private function saveLog($amount, $log = '')

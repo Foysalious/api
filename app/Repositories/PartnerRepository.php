@@ -5,6 +5,7 @@ use App\Models\HyperLocal;
 use App\Models\Location;
 use App\Models\Partner;
 use App\Models\PartnerWorkingHour;
+use App\Models\Resource;
 use Illuminate\Database\Eloquent\Collection;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
@@ -209,6 +210,16 @@ class PartnerRepository
         $data['logo_original'] = $this->saveLogo($request);
         $data['logo'] = $data['logo_original'];
         return $this->partner->update($data);
+    }
+
+    public function validatePartner($remember_token)
+    {
+        $manager_resource = Resource::where('remember_token', $remember_token)->first();
+        if (isset($manager_resource) && isset($this->partner) && $manager_resource->isManager($this->partner)) {
+            return $this->partner;
+        } else {
+            return false;
+        }
     }
 }
 
