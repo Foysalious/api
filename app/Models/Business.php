@@ -2,13 +2,14 @@
 
 use Illuminate\Database\Eloquent\Model;
 use Sheba\ModificationFields;
+use Sheba\Payment\PayableUser;
 use Sheba\Payment\Wallet;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpCommission;
 use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
 
-class Business extends Model implements TopUpAgent
+class Business extends Model implements TopUpAgent, PayableUser
 {
     use Wallet, ModificationFields, TopUpTrait;
 

@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Models\PartnerSubscriptionPackage;
 use App\Models\PartnerSubscriptionUpdateRequest;
+use App\Repositories\NotificationRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -192,6 +193,7 @@ class PartnerSubscriptionController extends Controller
                     $balance = ['remaining_balance' => $request->partner->totalCreditForSubscription, 'price' => $request->partner->totalPriceRequiredForSubscription];
                     if (!$hasCredit) {
                         $upgradeRequest->delete();
+                        (new NotificationRepository())->sendInsufficientNotification($request->partner, $requestedPackage, $request->billing_type, $grade);
                         return api_response($request, null, 420, array_merge(['message' => 'আপনার একাউন্টে যথেষ্ট ব্যলেন্স নেই।।', 'required' => $request->partner->totalPriceRequiredForSubscription - $request->partner->totalCreditForSubscription], $balance));
                     }
                     $request->partner->subscriptionUpgrade($requestedPackage, $upgradeRequest);
@@ -228,9 +230,9 @@ class PartnerSubscriptionController extends Controller
         $this->setModifier($request->manager_resource);
         $update_request_data = $this->withCreateModificationField([
             'partner_id' => $partner->id,
-            'old_package_id' => $partner->package_id,
+            'old_package_id' => $partner->package_id ?: 1,
             'new_package_id' => $request->package_id,
-            'old_billing_type' => $partner->billing_type,
+            'old_billing_type' => $partner->billing_type ?: BillingType::MONTHLY,
             'new_billing_type' => $request->billing_type,
             'discount_id' => $running_discount ? $running_discount->id : null
         ]);
@@ -298,15 +300,15 @@ class PartnerSubscriptionController extends Controller
     private function discountNote(PartnerSubscriptionPackage $package, $billing_type)
     {
         if ($package->discounts->count()) {
-            $partner_subcription_discount = $package->discounts->filter(function ($discount) use ($billing_type) {
+            $partner_subscription_discount = $package->discounts->filter(function ($discount) use ($billing_type) {
                 return $discount->billing_type == $billing_type;
             })->first();
-            $partner_subcription_discount_cycle = json_decode($partner_subcription_discount ? $partner_subcription_discount->applicable_billing_cycles : '[]');
-            if (isset($partner_subcription_discount_cycle[0]) && $partner_subcription_discount_cycle[0] == 1) {
-                $max_number = $this->hasSequence($partner_subcription_discount_cycle);
-                return $max_number ? "First $max_number Billing Cycle" : $this->getOrdinalMessage($partner_subcription_discount_cycle);
-            } elseif (count($partner_subcription_discount_cycle)) {
-                return $this->getOrdinalMessage($partner_subcription_discount_cycle);
+            $partner_subscription_discount_cycle = json_decode($partner_subscription_discount ? $partner_subscription_discount->applicable_billing_cycles : '[]');
+            if (isset($partner_subscription_discount_cycle[0]) && $partner_subscription_discount_cycle[0] == 1) {
+                $max_number = $this->hasSequence($partner_subscription_discount_cycle);
+                return $max_number ? "First $max_number Billing Cycle" : $this->getOrdinalMessage($partner_subscription_discount_cycle);
+            } elseif (count($partner_subscription_discount_cycle)) {
+                return $this->getOrdinalMessage($partner_subscription_discount_cycle);
             }
             return '';
         }

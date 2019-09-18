@@ -3,11 +3,14 @@
 use App\Models\Payable;
 use App\Models\SubscriptionOrder;
 use Carbon\Carbon;
+use Sheba\Payment\PayableUser;
 
 class SubscriptionOrderAdapter implements PayableAdapter
 {
     /** @var SubscriptionOrder */
     private $subscriptionOrder;
+    /** @var PayableUser */
+    private $user;
     private $emiMonth;
 
     public function setModelForPayable($model)
@@ -16,13 +19,19 @@ class SubscriptionOrderAdapter implements PayableAdapter
         return $this;
     }
 
+    public function setUser(PayableUser $user)
+    {
+        $this->user = $user;
+        return $this;
+    }
+
     public function getPayable(): Payable
     {
         $payable = new Payable();
         $payable->type = 'subscription_order';
         $payable->type_id = $this->subscriptionOrder->id;
-        $payable->user_id = $this->subscriptionOrder->customer_id;
-        $payable->user_type = "App\\Models\\Customer";
+        $payable->user_id = $this->user->id;
+        $payable->user_type = get_class($this->user);
         $payable->amount = $this->subscriptionOrder->getTotalPrice();
         $payable->completion_type = "subscription_order";
         $payable->success_url = config('sheba.front_url') . '/subscription-orders/' . $this->subscriptionOrder->id;
@@ -31,6 +40,7 @@ class SubscriptionOrderAdapter implements PayableAdapter
         $payable->save();
         return $payable;
     }
+
     /**
      * @param $month |int
      * @return $this

@@ -68,7 +68,8 @@ class VoucherController extends Controller
             list($offset, $limit) = calculatePagination($request);
             $partner_voucher_query = Voucher::byPartner($partner);
 
-            $used_voucher_id = [344467, 344466];
+            $all_voucher_id = $partner_voucher_query->pluck('id')->toArray();
+            $used_voucher_id = PosOrder::byVoucher($all_voucher_id)->pluck('voucher_id')->toArray();
 
             if ($request->has('filter_type')) {
                 if ($request->filter_type == "used") $partner_voucher_query->whereIn('id', $used_voucher_id);
@@ -134,7 +135,10 @@ class VoucherController extends Controller
             $this->validate($request, [
                 'start_date' => 'required|date',
                 'end_date' => 'required|date|after_or_equal:start_date',
-                'code' => 'required|unique:vouchers'
+                'code' => 'required|unique:vouchers',
+                'modules' => 'required',
+                'applicant_types' => 'required',
+
             ]);
 
             $partner = $request->partner;
@@ -174,14 +178,18 @@ class VoucherController extends Controller
      * @param Voucher $voucher
      * @return JsonResponse
      */
-    public function update(Request $request,$partner,Voucher $voucher)
+    public function update(Request $request, $partner, Voucher $voucher)
     {
         try {
             $partner = $request->partner;
             $this->validate($request, [
                 'start_date' => 'required|date',
                 'end_date' => 'required|date|after_or_equal:start_date',
-                'code' => 'required|unique:vouchers'
+                'code' => 'required|unique:vouchers,code,' . $voucher->id,
+                'applicant_types' => 'required',
+                'modules' => 'required'
+
+
             ]);
 
             $this->setModifier($partner);
