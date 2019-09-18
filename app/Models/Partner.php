@@ -1,7 +1,6 @@
 <?php namespace App\Models;
 
 use App\Models\Transport\TransportTicketOrder;
-use Sheba\Partner\PartnerStatuses;
 use App\Sheba\Payment\Rechargable;
 use Carbon\Carbon;
 use DB;
@@ -16,6 +15,7 @@ use Sheba\MovieTicket\MovieAgent;
 use Sheba\MovieTicket\MovieTicketTrait;
 use Sheba\MovieTicket\MovieTicketTransaction;
 use Sheba\Partner\BadgeResolver;
+use Sheba\Partner\PartnerStatuses;
 use Sheba\Payment\Wallet;
 use Sheba\Reward\Rewardable;
 use Sheba\Subscription\Partner\PartnerSubscriber;
@@ -737,7 +737,7 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
     {
         $last_subscription_package_charge = $this->subscriptionPackageCharges()->orderBy('id', 'desc')->first();
         if (!$last_subscription_package_charge) return false;
-        return $last_subscription_package_charge->billing_date->between($this->last_billed_date->addSecond(), $this->periodicBillingHandler()->nextBillingDate());
+        return $this->last_billed_date ? $last_subscription_package_charge->billing_date->between($this->last_billed_date->addSecond(), $this->periodicBillingHandler()->nextBillingDate()) : false;
     }
 
     public function subscriptionPackageCharges()
