@@ -40,7 +40,7 @@ class WalletController extends Controller
         try {
             $this->validate($request, [
                 'payment_method' => 'required|in:online,bkash,cbl',
-                'amount' => 'required|numeric|min:10|max:10000',
+                'amount' => 'required|numeric|min:10|max:100000',
                 'user_id' => 'required',
                 'user_type' => 'required|in:customer,affiliate,partner',
                 'remember_token' => 'required'
