@@ -140,7 +140,11 @@ class PartnerSubscriptionBilling
 
     private function revokeStatus()
     {
-        PartnerStatusChangeLog::query()->where([['partner_id',$this->partner->id],['reason']]);
+        $log = PartnerStatusChangeLog::query()->where([['partner_id', $this->partner->id], ['reason', 'Subscription Expired'], ['to', constant('PARTNER_STATUSES')['Inactive']]])->orderBy('created_at', 'DESC')->first();
+        if ($log) {
+            $this->partner->status = $log->from;
+            $this->partner->statusChangeLogs()->create(['from' => $log->to, 'to' => $log->to, 'reason' => 'Subscription Revoked', 'log' => 'Partner became active due to subscription purchase', 'created_by' => 'automatic', 'created_by_name' => 'automatic', 'created_at' => Carbon::now()]);
+        }
     }
 
     /**
@@ -234,6 +238,13 @@ class PartnerSubscriptionBilling
         }
     }
 
+    /**
+     * @param $new
+     * @param $old
+     * @param $new_billing_type
+     * @param $old_billing_type
+     * @return string
+     */
     public function findGrade($new, $old, $new_billing_type, $old_billing_type)
     {
         if ($old->id < $new->id) {
@@ -254,6 +265,15 @@ class PartnerSubscriptionBilling
         }
     }
 
+    /**
+     * @param Partner $partner
+     * @param $old_package
+     * @param $new_package
+     * @param $old_billing_type
+     * @param $new_billing_type
+     * @param $price
+     * @param $grade
+     */
     public static function sendNotification(Partner $partner, $old_package, $new_package, $old_billing_type, $new_billing_type, $price, $grade)
     {
         $title = '';
@@ -275,6 +295,16 @@ class PartnerSubscriptionBilling
         (new NotificationRepository())->sendSubscriptionNotification($title, $message, $partner);
     }
 
+    /**
+     * @param Partner $partner
+     * @param $old_package
+     * @param $new_package
+     * @param $old_billing_type
+     * @param $new_billing_type
+     * @param $price
+     * @param $template
+     * @throws Exception
+     */
     public static function sendSms(Partner $partner, $old_package, $new_package, $old_billing_type, $new_billing_type, $price, $template)
     {
         (new SmsHandler($template))->send($partner->getContactNumber(), [
