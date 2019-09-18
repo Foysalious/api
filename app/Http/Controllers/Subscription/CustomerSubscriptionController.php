@@ -117,7 +117,7 @@ class CustomerSubscriptionController extends Controller
                 return api_response($request, null, 403, ['message' => 'You don\'t have sufficient credit.']);
             }
             $order_adapter = new SubscriptionOrderAdapter();
-            $payable = $order_adapter->setModelForPayable($subscription_order)->getPayable();
+            $payable = $order_adapter->setModelForPayable($subscription_order)->setUser($customer)->getPayable();
             $payment = $sheba_payment->setMethod($payment_method)->init($payable);
             return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
         } catch (ValidationException $e) {
