@@ -153,11 +153,11 @@ class OperationController extends Controller
             $category_name = $request->category_name;
 
             $by = ["created_by" => $manager_resource->id, "created_by_name" => "Resource - " . $manager_resource->profile->name];
-            $categories = array_unique(explode(",", $request->categories));
+            $categories = array_unique(json_decode($request->categories));
             $categories = Category::whereIn('id', $categories)->get();
             $categories->load('services');
-
             list($services, $category_partners) = $this->makeCategoryPartnerWithServices($partner, $categories, $by);
+            
             DB::transaction(function () use ($partner, $category_partners, $services, $category_name) {
                 $partner->categories()->sync($category_partners);
                 $partner_resources = PartnerResource::whereIn('id', $partner->handymanResources->pluck('pivot.id')->toArray())->get();

@@ -86,9 +86,7 @@ class PartnerSubscriptionBilling
         $this->partner->billing_start_date = $this->today;
         $this->billingDatabaseTransactions($this->packagePrice);
         $grade = $this->findGrade($new_package, $old_package, $new_billing_type, $old_billing_type);
-        if (!$this->isCollectAdvanceSubscriptionFee) {
-            (new PartnerSubscriptionCharges($this))->shootLog(constants('PARTNER_PACKAGE_CHARGE_TYPES')[$grade]);
-        }
+        (new PartnerSubscriptionCharges($this))->shootLog(constants('PARTNER_PACKAGE_CHARGE_TYPES')[$grade]);
         $this->sendSmsForSubscriptionUpgrade($old_package, $new_package, $old_billing_type, $new_billing_type, $grade);
     }
 
