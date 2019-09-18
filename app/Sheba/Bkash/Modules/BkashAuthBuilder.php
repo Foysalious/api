@@ -2,8 +2,8 @@
 
 use App\Models\Affiliate;
 use App\Models\Customer;
+use App\Models\Partner;
 use Exception;
-use Sheba\Transport\Bus\Commission\Partner;
 
 class BkashAuthBuilder
 {

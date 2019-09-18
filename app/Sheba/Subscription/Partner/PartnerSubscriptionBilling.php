@@ -2,6 +2,7 @@
 
 use App\Jobs\PartnerRenewalSMS;
 use App\Models\Partner;
+use App\Models\PartnerStatusChangeLog;
 use App\Models\PartnerSubscriptionPackage;
 use App\Models\Tag;
 use App\Repositories\NotificationRepository;
@@ -139,7 +140,7 @@ class PartnerSubscriptionBilling
 
     private function revokeStatus()
     {
-
+        PartnerStatusChangeLog::query()->where([['partner_id',$this->partner->id],['reason']]);
     }
 
     /**
