@@ -3,6 +3,7 @@
 use App\Models\Affiliate;
 use App\Models\Customer;
 use Exception;
+use Sheba\Transport\Bus\Commission\Partner;
 
 class BkashAuthBuilder
 {
@@ -49,6 +50,8 @@ class BkashAuthBuilder
         if ($user instanceof Customer) {
             return self::set018BkashAuth();
         } elseif ($user instanceof Affiliate) {
+            return self::set017BkashAuth();
+        } elseif ($user instanceof Partner) {
             return self::set017BkashAuth();
         } else {
             throw new Exception('Invalid User Type');

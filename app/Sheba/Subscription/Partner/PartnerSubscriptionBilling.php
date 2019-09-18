@@ -6,6 +6,7 @@ use App\Models\PartnerSubscriptionPackage;
 use App\Models\Tag;
 use App\Repositories\NotificationRepository;
 use App\Repositories\SmsHandler;
+use App\Sheba\Subscription\Partner\PartnerSubscriptionChange;
 use App\Sheba\Subscription\Partner\PartnerSubscriptionCharges;
 use Carbon\Carbon;
 use DB;
@@ -48,7 +49,7 @@ class PartnerSubscriptionBilling
         $this->packagePrice = $this->getSubscribedPackageDiscountedPrice();
         $this->billingDatabaseTransactions($this->packagePrice);
         if (!$this->isCollectAdvanceSubscriptionFee) {
-            (new PartnerSubscriptionCharges($this))->shootLog(constants('PARTNER_PACKAGE_CHARGE_TYPES')['Renewed']);
+            (new PartnerSubscriptionCharges($this))->shootLog(constants('PARTNER_PACKAGE_CHARGE_TYPES')[PartnerSubscriptionChange::RENEWED]);
         }
     }
 
@@ -58,7 +59,7 @@ class PartnerSubscriptionBilling
         $this->packagePrice = $this->getSubscribedPackageDiscountedPrice();
         $this->billingDatabaseTransactions($this->packagePrice);
         if (!$this->isCollectAdvanceSubscriptionFee) {
-            (new PartnerSubscriptionCharges($this))->shootLog(constants('PARTNER_PACKAGE_CHARGE_TYPES')['Renewed']);
+            (new PartnerSubscriptionCharges($this))->shootLog(constants('PARTNER_PACKAGE_CHARGE_TYPES')[PartnerSubscriptionChange::RENEWED]);
         }
         dispatch((new PartnerRenewalSMS($this->partner))->setPackage($this->partner->subscription)->setSubscriptionAmount($this->packagePrice));
     }
@@ -95,7 +96,7 @@ class PartnerSubscriptionBilling
         $this->runningCycleNumber = $this->calculateRunningBillingCycleNumber();
         $this->packagePrice = $this->getSubscribedPackageDiscountedPrice();
         $this->advanceBillingDatabaseTransactions($this->packagePrice);
-        (new PartnerSubscriptionCharges($this))->shootLog(constants('PARTNER_PACKAGE_CHARGE_TYPES')['Renewed']);
+        (new PartnerSubscriptionCharges($this))->shootLog(constants('PARTNER_PACKAGE_CHARGE_TYPES')[PartnerSubscriptionChange::RENEWED]);
     }
     
     private function calculateRunningBillingCycleNumber()
@@ -126,11 +127,19 @@ class PartnerSubscriptionBilling
     private function billingDatabaseTransactions($package_price)
     {
         DB::transaction(function () use ($package_price) {
-            if (!$this->isCollectAdvanceSubscriptionFee) $this->partnerTransactionForSubscriptionBilling($package_price);
+            $this->partnerTransactionForSubscriptionBilling($package_price);
             $this->partner->last_billed_date = $this->today;
             $this->partner->last_billed_amount = $package_price;
+            if ($this->partner->status == constant('PARTNER_STATUSES')['Inactive']) {
+                $this->revokeStatus();
+            }
             $this->partner->update();
         });
+    }
+
+    private function revokeStatus()
+    {
+
     }
 
     /**
@@ -206,15 +215,15 @@ class PartnerSubscriptionBilling
      * @param string $grade
      * @throws Exception
      */
-    private function sendSmsForSubscriptionUpgrade(PartnerSubscriptionPackage $old_package, PartnerSubscriptionPackage $new_package, $old_billing_type, $new_billing_type, $grade = 'Upgrade')
+    private function sendSmsForSubscriptionUpgrade(PartnerSubscriptionPackage $old_package, PartnerSubscriptionPackage $new_package, $old_billing_type, $new_billing_type, $grade = PartnerSubscriptionChange::UPGRADE)
     {
         if ((int)env('PARTNER_SUBSCRIPTION_SMS') == 1) {
             $template = null;
-            if ($grade == 'Upgrade') {
+            if ($grade == PartnerSubscriptionChange::UPGRADE) {
                 $template = 'upgrade-subscription';
-            } elseif ($grade == 'Renewed') {
+            } elseif ($grade == PartnerSubscriptionChange::RENEWED) {
                 $template = 'renew-subscription';
-            } elseif ($grade == 'Downgrade') {
+            } elseif ($grade == PartnerSubscriptionChange::DOWNGRADE) {
                 $template = 'downgrade-subscription';
             }
             if ($template) {
@@ -227,19 +236,19 @@ class PartnerSubscriptionBilling
     public function findGrade($new, $old, $new_billing_type, $old_billing_type)
     {
         if ($old->id < $new->id) {
-            return 'Upgrade';
+            return PartnerSubscriptionChange::UPGRADE;
         } else if ($old->id > $new->id) {
-            return 'Downgrade';
+            return PartnerSubscriptionChange::DOWNGRADE;
         } else {
             $types = [BillingType::MONTHLY, BillingType::HALF_YEARLY, BillingType::YEARLY];
             $old_type_index = array_search($old_billing_type, $types);
             $new_type_index = array_search($new_billing_type, $types);
             if ($old_type_index < $new_type_index) {
-                return 'Upgrade';
+                return PartnerSubscriptionChange::UPGRADE;
             } elseif ($old_type_index > $new_type_index) {
-                return 'Downgrade';
+                return PartnerSubscriptionChange::DOWNGRADE;
             } else {
-                return 'Renewed';
+                return PartnerSubscriptionChange::RENEWED;
             }
         }
     }
@@ -251,15 +260,15 @@ class PartnerSubscriptionBilling
         $type_text = BillingType::BN()[$new_billing_type];
         $fee = convertNumbersToBangla(floatval($price));
         switch ($grade) {
-            case 'Upgrade':
+            case PartnerSubscriptionChange::UPGRADE:
                 $title = "সাবস্ক্রিপশন সম্পন্ন";
                 $message = " আপনি এসম্যানেজার এর $type_text $new_package->show_name_bn প্যকেজ এ সফল ভাবে সাবস্ক্রিপশন সম্পন্ন করেছেন। সাবস্ক্রিপশন ফি বাবদ $fee  টাকা চার্জ করা হয়েছে।";
                 break;
-            case 'Renew':
+            case PartnerSubscriptionChange::RENEWED:
                 $title = "সাবস্ক্রিপশন  নবায়ন";
                 $message = "আপনি এসম্যানেজার এর $type_text $new_package->show_name_bn প্যকেজ এ সফল ভাবে সাবস্ক্রিপশন নবায়ন করেছেন। সাবস্ক্রিপশন ফি বাবদ $fee টাকা চার্জ করা হয়েছে।";
                 break;
-            case 'Downgrade':
+            case PartnerSubscriptionChange::DOWNGRADE:
                 return;
         }
         (new NotificationRepository())->sendSubscriptionNotification($title, $message, $partner);

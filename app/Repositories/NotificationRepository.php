@@ -4,6 +4,7 @@ use App\Models\Job;
 use App\Models\Order;
 use App\Models\Partner;
 use App\Models\PartnerOrder;
+use App\Sheba\Subscription\Partner\PartnerSubscriptionChange;
 use Sheba\PushNotificationHandler;
 use Sheba\Subscription\Partner\BillingType;
 
@@ -218,7 +219,7 @@ class NotificationRepository
     {
         $title = ' অপর্যাপ্ত  ব্যলেন্স';
         $type = BillingType::BN()[$package_type];
-        $gradeType = $grade == 'Upgrade' ? " এর" : $grade == 'Renew' ? " নাবায়ন এর" : " এর";
+        $gradeType = $grade == PartnerSubscriptionChange::UPGRADE ? " এর" : $grade == PartnerSubscriptionChange::RENEWED ? " নাবায়ন এর" : " এর";
         $message = "এসম্যানেজার এর $type $package->show_name_bn প্যকেজ এ সাবস্ক্রিপশন $gradeType  জন্য আপনার ওয়ালেট এ  পর্যাপ্ত  ব্যলেন্স নেই আনুগ্রহ করে ওয়ালেট রিচার্জ করুন এবং সাবস্ক্রিপশন সক্রিয় করুন।";
         $this->sendSubscriptionNotification($title, $message, $partner);
         if ($withMessage) {

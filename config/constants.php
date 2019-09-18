@@ -622,5 +622,5 @@ return [
             'title' => 'Bus Ticket',
             'log' => '%s TK has been charged as Transport Ticket price'
         ]
-    ]
+    ],
 ];

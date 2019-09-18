@@ -14,7 +14,7 @@ class PartnerSubscriptionCharges
     public function __construct(PartnerSubscriptionBilling $partnerSubscriptionBilling)
     {
         $this->partnerSubscriptionBilling = $partnerSubscriptionBilling;
-        $this->actions = constants('PARTNER_PACKAGE_CHARGE_TYPES');
+        $this->actions = PartnerSubscriptionChange::all();
     }
 
     public function shootLog($action)
@@ -28,7 +28,7 @@ class PartnerSubscriptionCharges
 
     private function setPackage()
     {
-        if ($this->action == $this->actions['Renewed']) {
+        if ($this->action == $this->actions[PartnerSubscriptionChange::RENEWED]) {
             $this->data['package_from'] = $this->data['package_to'] = $this->partnerSubscriptionBilling->partner->subscription->name . '-' . $this->partnerSubscriptionBilling->partner->billing_type;
         } else {
             $this->data['package_from'] = $this->partnerSubscriptionBilling->packageFrom->name . '-' . $this->partnerSubscriptionBilling->partner->billing_type;
