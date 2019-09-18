@@ -208,6 +208,7 @@ class NotificationRepository
             'message' => $message,
             'event_type' => 'Subscription',
             'event_id' => $partner->id,
+            'link' => $partner->subscription ? $partner->subscription->name : 'LITE',
             "sound" => "notification_sound",
             "channel_id" => $channel
         ], $topic, $channel, $sound);
@@ -217,8 +218,8 @@ class NotificationRepository
     {
         $title = ' অপর্যাপ্ত  ব্যলেন্স';
         $type = BillingType::BN()[$package_type];
-        $gradeType = $grade == 'Upgrade' ? " এর" : $grade == 'Renew' ? " নাবায়ন" : " এর";
-        $message = "এসম্যানেজার এর $type $package->show_name_bn প্যকেজ এ সাবস্ক্রিপশন $gradeType জন্য আপনার ওয়ালেট এ  পর্যাপ্ত  ব্যলেন্স নেই আনুগ্রহ করে ওয়ালেট রিচার্জ করুন এবং সাবস্ক্রিপশন সক্রিয় করুন।";
+        $gradeType = $grade == 'Upgrade' ? " এর" : $grade == 'Renew' ? " নাবায়ন এর" : " এর";
+        $message = "এসম্যানেজার এর $type $package->show_name_bn প্যকেজ এ সাবস্ক্রিপশন $gradeType  জন্য আপনার ওয়ালেট এ  পর্যাপ্ত  ব্যলেন্স নেই আনুগ্রহ করে ওয়ালেট রিচার্জ করুন এবং সাবস্ক্রিপশন সক্রিয় করুন।";
         $this->sendSubscriptionNotification($title, $message, $partner);
         if ($withMessage) {
             (new SmsHandler('insufficient-balance-subscription'))->send($partner->getContactNumber(), [
