@@ -141,6 +141,10 @@ class BusinessRoute
                 $api->post('update-business-info', 'B2b\MemberController@updateBusinessInfo');
                 $api->post('/attachments', 'B2b\MemberController@storeAttachment');
                 $api->get('/attachments', 'B2b\MemberController@getAttachments');
+                $api->group(['prefix' => 'subscriptions'], function ($api) {
+                    $api->get('/order-lists', 'B2b\SubscriptionsController@index');
+                    $api->post('/{subscription}/details', 'B2b\SubscriptionsController@show');
+                });
                 $api->group(['prefix' => 'vehicles'], function ($api) {
                     $api->post('/', 'B2b\VehiclesController@store');
                     $api->post('/bulk-store', 'B2b\VehiclesController@bulkStore');
