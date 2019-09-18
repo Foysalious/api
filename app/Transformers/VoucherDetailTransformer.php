@@ -20,7 +20,8 @@ class VoucherDetailTransformer extends TransformerAbstract
             'rules' => [
                 'minimum_order_amount' => (double)$rules->order_amount,
                 'maximum_customer' => $voucher->max_customer,
-                'mobiles' => $rules->mobiles
+                'mobiles' => (property_exists($rules, 'mobiles')) ? $rules->mobiles : null,
+                'services' => (property_exists($rules, 'partner_pos_service')) ? $rules->partner_pos_service : null
             ]
         ];
     }
