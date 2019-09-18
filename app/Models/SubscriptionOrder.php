@@ -28,6 +28,11 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface, Pay
         return $this->belongsTo(Customer::class);
     }
 
+    public function attachments()
+    {
+        return $this->morphMany(Attachment::class, 'attachable');
+    }
+
     public function schedules()
     {
         return json_decode($this->schedules);
