@@ -153,7 +153,7 @@ class OperationController extends Controller
             $category_name = $request->category_name;
 
             $by = ["created_by" => $manager_resource->id, "created_by_name" => "Resource - " . $manager_resource->profile->name];
-            $categories = array_unique(json_decode($request->categories));
+            $categories = array_unique(explode(",", $request->categories));
             $categories = Category::whereIn('id', $categories)->get();
             $categories->load('services');
 
