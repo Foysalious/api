@@ -1,10 +1,22 @@
 <?php namespace Sheba\Subscription\Partner\Access;
 
-
 use Sheba\Subscription\Partner\Access\Exceptions\AccessRestrictedExceptionForPackage;
 
 class AccessManager
 {
+    /**
+     * @param $feature
+     * @param $access_rules
+     * @throws AccessRestrictedExceptionForPackage
+     */
+    public static function checkAccess($feature, $access_rules)
+    {
+        $can = self::canAccess($feature, $access_rules);
+        if (!$can) {
+            throw new AccessRestrictedExceptionForPackage();
+        }
+    }
+
     /**
      * @param $feature
      * @param $access_rules
@@ -25,18 +37,6 @@ class AccessManager
     {
         if (count($access_key) > 1) return self::get_value(array_slice($access_key, 1), $access_rules[$access_key[0]]);
         else return $access_rules[$access_key[0]];
-    }
-
-    /**
-     * @param $feature
-     * @param $access_rules
-     * @throws AccessRestrictedExceptionForPackage
-     */
-    public static function checkAccess($feature, $access_rules){
-        $can=self::canAccess($feature, $access_rules);
-        if(!$can){
-            throw new AccessRestrictedExceptionForPackage();
-        }
     }
 
     /**
