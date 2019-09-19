@@ -10,6 +10,6 @@ class PartnerSubscriptionChange
     const DOWNGRADE = 'Downgrade';
     const RENEWED = 'Renewed';
     public static function all(){
-        return [self::UPGRADE,self::DOWNGRADE,self::RENEWED];
+        return [self::UPGRADE => 'upgrade', self::DOWNGRADE => 'downgrade', self::RENEWED => 'renewed'];
     }
 }
