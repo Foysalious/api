@@ -184,6 +184,7 @@ class CustomerSubscriptionController extends Controller
 
                     "subscription_period" => Carbon::parse($subscription_order->billing_cycle_start)->format('M j') . ' - ' . Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
                     "completed_orders" => $served_orders->count() . '/' . $subscription_order->orders->count(),
+                    'status' => $subscription_order->status,
                     "is_active" => Carbon::parse($subscription_order->billing_cycle_end) >= Carbon::today() ? 1 : 0,
                     "partner" =>
                         [
