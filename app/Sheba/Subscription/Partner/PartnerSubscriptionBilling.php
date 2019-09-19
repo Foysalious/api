@@ -12,6 +12,7 @@ use App\Sheba\Subscription\Partner\PartnerSubscriptionCharges;
 use Carbon\Carbon;
 use DB;
 use Exception;
+use Sheba\Partner\PartnerStatuses;
 use Sheba\PartnerWallet\PartnerTransactionHandler;
 use Sheba\PartnerWallet\PaymentByBonusAndWallet;
 
@@ -131,7 +132,7 @@ class PartnerSubscriptionBilling
             $this->partnerTransactionForSubscriptionBilling($package_price);
             $this->partner->last_billed_date = $this->today;
             $this->partner->last_billed_amount = $package_price;
-            if ($this->partner->status == constant('PARTNER_STATUSES')['Inactive']) {
+            if ($this->partner->status == PartnerStatuses::INACTIVE) {
                 $this->revokeStatus();
             }
             $this->partner->update();
@@ -140,10 +141,23 @@ class PartnerSubscriptionBilling
 
     private function revokeStatus()
     {
-        $log = PartnerStatusChangeLog::query()->where([['partner_id', $this->partner->id], ['reason', 'Subscription Expired'], ['to', constant('PARTNER_STATUSES')['Inactive']]])->orderBy('created_at', 'DESC')->first();
+        $log = PartnerStatusChangeLog::query()->where([
+            ['partner_id', $this->partner->id],
+            ['reason', 'Subscription Expired'],
+            ['to', PartnerStatuses::INACTIVE]
+        ])->orderBy('created_at', 'DESC')->first();
+
         if ($log) {
             $this->partner->status = $log->from;
-            $this->partner->statusChangeLogs()->create(['from' => $log->to, 'to' => $log->to, 'reason' => 'Subscription Revoked', 'log' => 'Partner became active due to subscription purchase', 'created_by' => 'automatic', 'created_by_name' => 'automatic', 'created_at' => Carbon::now()]);
+            $this->partner->statusChangeLogs()->create([
+                'from' => $log->to,
+                'to' => $log->from,
+                'reason' => 'Subscription Revoked',
+                'log' => 'Partner became active due to subscription purchase',
+                'created_by' => 'automatic',
+                'created_by_name' => 'automatic',
+                'created_at' => Carbon::now()
+            ]);
         }
     }
 
@@ -318,5 +332,4 @@ class PartnerSubscriptionBilling
             'package_type' => $new_billing_type
         ]);
     }
-
 }
