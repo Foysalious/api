@@ -25,7 +25,7 @@ class RechargeAdapter implements PayableAdapter
         $payable->amount = (double)$this->amount;
         $payable->completion_type = 'wallet_recharge';
         $payable->success_url = ($this->user instanceof Partner)?config('sheba.partners_url').'/wallet-recharge-success':config('sheba.front_url') . '/profile/credit';
-        $payable->success_url = ($this->user instanceof Partner)?config('sheba.partners_url'):'wallet-recharge-failed';
+        $payable->fail_url = ($this->user instanceof Partner) ? config('sheba.partners_url') . '/wallet-recharge-failed' : null;
         $payable->created_at = Carbon::now();
         $payable->save();
         return $payable;
