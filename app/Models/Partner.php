@@ -42,6 +42,7 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
 
     public $totalCreditForSubscription;
     public $totalPriceRequiredForSubscription;
+    public $creditBreakdown;
 
     public function __construct($attributes = [])
     {
@@ -727,6 +728,7 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
         $wallet = (double)$this->wallet;
         $bonus_wallet = (double)$this->bonusWallet();
         $threshold = $this->walletSetting ? (double)$this->walletSetting->min_wallet_threshold : 0;
+        $this->creditBreakdown = ['remaining_subscription_charge' => $remaining, 'wallet' => $wallet, 'threshold' => $threshold, 'bonus_wallet' => $bonus_wallet];
         return round($bonus_wallet + $wallet + $remaining) - $threshold;
     }
 
