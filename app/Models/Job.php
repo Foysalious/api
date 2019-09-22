@@ -324,10 +324,11 @@ class Job extends BaseModel
         if (isset($this->otherDiscountsByType[DiscountTypes::DELIVERY]))
             $this->deliveryDiscount = $this->otherDiscountsByType[DiscountTypes::DELIVERY];
 
-        $this->grossLogisticCharge = ramp($this->logistic_charge - $this->deliveryDiscount);
+        $this->discountWithoutDeliveryDiscount = ramp($this->discount - $this->deliveryDiscount);
+
+        $this->grossLogisticCharge = ramp($this->logistic_charge - $this->logistic_discount);
         $this->logisticDueWithoutDiscount = $this->logistic_charge - $this->logistic_paid;
         $this->logisticDue = ramp($this->grossLogisticCharge - $this->logistic_paid);
-        $this->discountWithoutDeliveryDiscount = ramp($this->discount - $this->deliveryDiscount);
 
         if (!$price_only) {
             $this->calculateComplexityIndex();

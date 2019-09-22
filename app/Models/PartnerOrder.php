@@ -65,6 +65,7 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
     public $revenuePercent = 0;
     public $serviceChargePercent = 0;
     public $totalLogisticCharge = 0;
+    public $grossLogisticCharge = 0;
     public $totalLogisticPaid = 0;
     public $totalLogisticDue = 0;
     public $paidWithLogistic = 0;
@@ -130,11 +131,11 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
         $this->serviceChargePercent = floatValFormat($this->gmv > 0 ? ($this->serviceCharge * 100) / $this->gmv : 0);
         $this->grossAmount = floatValFormat($this->totalPrice - $this->discount - $this->roundingCutOff);
         $this->jobPricesWithLogistic = $this->jobPrices + $this->totalLogisticCharge;
-        $this->grossAmountWithLogistic = $this->grossAmount + $this->totalLogisticCharge;
+        $this->grossAmountWithLogistic = $this->grossAmount + $this->grossLogisticCharge;
         $this->paid = $this->sheba_collection + $this->partner_collection;
         $this->due = floatValFormat($this->grossAmount - $this->paid);
         $this->paidWithLogistic = floatValFormat($this->paid + $this->totalLogisticPaid);
-        $this->dueWithLogistic = floatValFormat($this->due + $this->totalLogisticDueWithoutDiscount);
+        $this->dueWithLogistic = floatValFormat($this->due + $this->totalLogisticDue);
         $this->overPaid = $this->isOverPaid() ? floatValFormat($this->paid - $this->grossAmount) : 0;
         $this->profitBeforeDiscount = floatValFormat($this->jobPrices - $this->totalCost);
         $this->totalDiscountedCost = ($this->totalDiscountedCost < 0) ? 0 : $this->totalDiscountedCost;
@@ -234,6 +235,7 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
         $this->deliveryCharge += $job->delivery_charge;
         $this->deliveryCost += $job->deliveryCost;
         $this->totalLogisticCharge += $job->logistic_charge;
+        $this->grossLogisticCharge += $job->grossLogisticCharge;
         $this->totalLogisticPaid += $job->logistic_paid;
         $this->totalLogisticDue += $job->logisticDue;
         $this->totalLogisticDueWithoutDiscount += $job->logisticDueWithoutDiscount;
