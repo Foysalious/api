@@ -44,7 +44,7 @@ abstract class PosReport
     protected function validateRequest()
     {
         $validator = Validator::make($this->request, [
-            'range' => 'required',
+            'range' => 'required|in:today,week,month,year,yesterday,quarter,last_week,last_month,last_quarter,last_year,custom',
             'to' => 'required_with:name,custom',
             'from' => 'required_with:name,custom'
         ]);
