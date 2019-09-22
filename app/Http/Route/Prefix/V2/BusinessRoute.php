@@ -26,7 +26,7 @@ class BusinessRoute
                     $api->get('/{order}', 'B2b\SubscriptionOrderController@show');
                     $api->get('/{order}/invoice', 'B2b\SubscriptionOrderController@orderInvoice');
                     $api->group(['prefix' => '{subscription_order}'], function ($api) {
-                        $api->get('bills/clear', 'B2b\BusinessesController@getVendorInfo');
+                        $api->get('bills/clear', 'B2b\SubscriptionOrderController@clearPayment');
                     });
                 });
                 $api->get('/vendors', 'B2b\BusinessesController@getVendorsList');

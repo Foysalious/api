@@ -33,7 +33,7 @@ class VoucherController extends Controller
             $partner = $request->partner;
 
             $partner_voucher_query = Voucher::byPartner($partner);
-            $total_sale_with_voucher = $this->calculatePartnerwiseSaleByVoucher($partner_voucher_query);
+            $total_sale_with_voucher = $this->calculatePartnerWiseSaleByVoucher($partner_voucher_query);
             $latest_vouchers = [];
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
@@ -256,7 +256,7 @@ class VoucherController extends Controller
     public function validateVoucher(Request $request)
     {
         try {
-            $pos_customer = PosCustomer::find($request->pos_customer);
+            $pos_customer = $request->pos_customer ? PosCustomer::find($request->pos_customer) : new PosCustomer();
             $pos_order_params = (new CheckParamsForPosOrder());
             $pos_order_params->setOrderAmount($request->amount)->setApplicant($pos_customer)->setPartnerPosService($request->pos_services);
             $result = voucher($request->code)->checkForPosOrder($pos_order_params)->reveal();
@@ -293,7 +293,6 @@ class VoucherController extends Controller
         }
     }
 
-
     /**
      * @param Voucher $voucher
      * @return array
@@ -313,16 +312,20 @@ class VoucherController extends Controller
         return [$total_sale, (double)$total_discount];
     }
 
-    private function calculatePartnerwiseSaleByVoucher($partner_voucher_query){
+    /**
+     * @param $partner_voucher_query
+     * @return mixed
+     */
+    private function calculatePartnerWiseSaleByVoucher($partner_voucher_query)
+    {
 
         $voucher_id = $partner_voucher_query->pluck('id')->toArray();
-
         $orders_by_voucher = PosOrder::byVoucher($voucher_id)->get();
 
         $orders_by_voucher->each(function ($order) use (&$total_sale) {
             $total_sale += $order->calculate()->getTotalBill();
         });
-        return $total_sale;
 
+        return $total_sale;
     }
 }
