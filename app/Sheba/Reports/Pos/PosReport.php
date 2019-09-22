@@ -116,7 +116,7 @@ abstract class PosReport
      */
     public function downloadPdf($name = 'Sales Report', $template = 'generic_template')
     {
-        return $this->pdfHandler->setName($name)->setViewFile($template)->setData(['data' => $this->data->toArray(), 'partner' => $this->partner])->download();
+        return $this->pdfHandler->setName($name)->setViewFile($template)->setData(['data' => $this->data->toArray(), 'partner' => $this->partner, 'from' => $this->from, 'to' => $this->to])->download();
     }
 
     abstract public function prepareData($paginate = true);
