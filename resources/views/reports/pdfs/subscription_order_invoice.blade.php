@@ -9,7 +9,6 @@
     <style>
         .terms {
             font-size: 12px;
-            padding-top: 20px;
             border-top: 1px solid #e1e1e1;
             color: #4a4a4a;
         }
@@ -22,7 +21,7 @@
 
 <body>
 
-<table align="center" style="max-width: 800px;margin: auto;min-width: 600px;font-family: Arial, sans-serif">
+<table align="center" style="max-width: 800px;margin: auto;min-width: 700px;font-family: Arial, sans-serif">
     <tbody>
     <tr>
         <td>
@@ -30,7 +29,8 @@
                 <table class="" style="width: 100%;">
                     @if(isset($partner))
                         <tr>
-                            <td width="120"><img style="max-width: 80px;padding-right: unset" src="{{$partner['image']}}" alt=""></td>
+                            <td width="120"><img style="max-width: 80px;padding-right: unset"
+                                                 src="{{$partner['image']}}" alt=""></td>
                             <td colspan="3">
                                 <div class="d-flex justify-content-between">
                                     <div style="text-align: left;padding: 10px 20px;padding-left: 0%">
@@ -38,12 +38,12 @@
                                     </div>
                                     <div style="text-align: right">
                                         <span style="color: #9b9b9b;">{{$partner['mobile']}}</span>
-                                        <span style="padding-left: 10px"> <i class="fa fa-phone" aria-hidden="true"></i></span><br>
+                                        <span style="padding-left: 10px; color: #C91F66"> <i class="fa fa-phone" aria-hidden="true"></i></span><br>
                                         <span style="color: #9b9b9b;">{{$partner['email']}}</span>
-                                        <span style="padding-left: 10px"><i class="fa fa-envelope"
+                                        <span style="padding-left: 10px ; color: #C91F66"><i class="fa fa-envelope"
                                                                             aria-hidden="true"></i></span><br>
                                         <span style="color: #9b9b9b;">{{$partner['address']}}</span>
-                                        <span style="padding-left: 10px"><i class="fa fa-map-marker"
+                                        <span style="padding-left: 10px; color: #C91F66"><i class="fa fa-map-marker"
                                                                             aria-hidden="true"></i></span>
                                     </div>
                                 </div>
@@ -115,8 +115,8 @@
                         </td>
                     </tr>
                     <tr>
-                        <td colspan="4">Discount</td>
-                        <td align="right" style="color: #383d46"><span
+                        <td style="color: #C91F66" colspan="4">Discount</td>
+                        <td align="right" style="color: #C91F66"><span
                                     style="width: 13px"></span> {{number_format($discount,2)}}</td>
                     </tr>
                     <tr>
@@ -134,13 +134,28 @@
             </td>
         </tr>
     @endif
-    <hr>
+    <tr>
+        <td style="padding-top: 38px">
+            <p class="terms" style="border-top: none">
+                <strong>*</strong>
+                7 days service warranty. "No Tips" policy applicable.
+            </p>
+            <p class="terms" style="border-top: none">
+                <strong>*</strong>
+                This was created on a computer and is valid without the signature and seal.
+            </p>
+        </td>
+    </tr>
     <tr>
         <td>
-            <p class="terms" style="border-top: none">
-                <strong>Terms and Note:</strong>
-                If needed, it can take a maximum of 15 days to get your refund. You will only get return
-                by the way you pay.
+            <hr>
+            <p class="terms" style="border-top: none; padding-left: 100px">
+              In association with: <span style="padding-left: 10px;color: #1E2D3E;font-weight: bold;font-size: large;">sheba.
+               </span> <span style="color: #1E2D3E;font-weight: bold;font-size: large;font-style: oblique">xyz</span>
+                <span style="padding-left: 10px; color: #C91F66"> <i class="fa fa-phone" aria-hidden="true"></i></span>
+                <span style="padding-left: 5px">16516</span>
+                <span style="padding-left: 10px; color: #C91F66"><i class="fa fa-envelope" aria-hidden="true"></i></span>
+                <span style="padding-left: 5px">info@sheba.xyz</span>
             </p>
         </td>
     </tr>
