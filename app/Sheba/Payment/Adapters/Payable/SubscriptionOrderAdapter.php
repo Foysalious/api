@@ -1,5 +1,6 @@
 <?php namespace Sheba\Payment\Adapters\Payable;
 
+use App\Models\Business;
 use App\Models\Payable;
 use App\Models\SubscriptionOrder;
 use Carbon\Carbon;
@@ -34,7 +35,7 @@ class SubscriptionOrderAdapter implements PayableAdapter
         $payable->user_type = get_class($this->user);
         $payable->amount = $this->subscriptionOrder->getTotalPrice();
         $payable->completion_type = "subscription_order";
-        $payable->success_url = config('sheba.front_url') . '/subscription-orders/' . $this->subscriptionOrder->id;
+        $payable->success_url = $this->resolveRedirectUrl();
         $payable->created_at = Carbon::now();
         $payable->emi_month = $this->resolveEmiMonth($payable);
         $payable->save();
@@ -54,5 +55,15 @@ class SubscriptionOrderAdapter implements PayableAdapter
     private function resolveEmiMonth(Payable $payable)
     {
         return $payable->amount >= config('sheba.min_order_amount_for_emi') ? $this->emiMonth : null;
+    }
+
+    private function resolveRedirectUrl()
+    {
+        if ($this->user instanceof Business) {
+            return config('sheba.business_url') . '/dashboard/subscriptions/' . $this->subscriptionOrder->id;
+        } else {
+            return config('sheba.front_url') . '/subscription-orders/' . $this->subscriptionOrder->id;
+        }
+
     }
 }

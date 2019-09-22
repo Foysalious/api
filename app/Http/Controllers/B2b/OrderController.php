@@ -264,6 +264,7 @@ class OrderController extends Controller
                 $coords = new Coords($geo->lat, $geo->lng);
                 $address = (new AddressValidator())->isAddressLocationExists($customer->delivery_addresses, $coords);
                 if (!$address) $address = $this->createAddress($member, $business);
+                if (!$address->mobile) $address->update(['mobile' => formatMobile($member->profile->mobile)]);
             }
             $subscriptionOrderRequest->setRequest($request)->setSalesChannel(constants('SALES_CHANNELS')['B2B']['name'])->setCustomer($customer)->setAddress($address)
                 ->setDeliveryMobile($address->mobile)

@@ -67,7 +67,7 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
         }
     }
 
-    public function createOrders()
+    private function createOrders()
     {
         $this->setModifier($this->subscriptionOrder->customer);
         $this->setCalculatedProperties();
@@ -147,7 +147,7 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
         return $order;
     }
 
-    public function createPartnerOrder(Order $order): PartnerOrder
+    private function createPartnerOrder(Order $order): PartnerOrder
     {
         $partner_order = new PartnerOrder();
         $partner_order->order_id = $order->id;
@@ -160,7 +160,7 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
         return $partner_order;
     }
 
-    public function createJob(PartnerOrder $partnerOrder, $schedule): Job
+    private function createJob(PartnerOrder $partnerOrder, $schedule): Job
     {
         $job = new Job();
         $job->category_id = $this->subscriptionOrder->category_id;
@@ -181,7 +181,7 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
         return $job;
     }
 
-    public function createJobServices(Job $job)
+    private function createJobServices(Job $job)
     {
         $job_services = collect();
         foreach ($this->partnerServiceDetails->breakdown as $service) {
