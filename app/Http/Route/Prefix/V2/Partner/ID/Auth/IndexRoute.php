@@ -78,6 +78,9 @@ class IndexRoute
                 $api->resources(['customers' => 'Pos\CustomerController']);
                 $api->get('settings', 'Pos\SettingController@getSettings');
                 $api->post('due-payment-request-sms', 'Pos\SettingController@duePaymentRequestSms');
+                $api->group(['prefix' => 'reports'], function ($api) {
+                    $api->get('product-wise', 'Pos\ReportsController@product');
+                });
             });
             $api->group(['prefix' => 'categories'], function ($api) {
                 $api->get('/all', 'CategoryController@getPartnerLocationCategory');

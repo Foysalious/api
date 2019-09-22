@@ -107,11 +107,11 @@ class Creator
             $service['service_id'] = $service['id'];
             $service['service_name'] = $service['name'];
             $service['pos_order_id'] = $order->id;
-            $service['unit_price'] = $this->isWholesalePriceApplicable($service_wholesale_applicable) ? $original_service->wholesale_price : $original_service->price;
+            $service['unit_price'] =    (isset($service['updated_price']) && $service['updated_price']) ? $service['updated_price'] : ($this->isWholesalePriceApplicable($service_wholesale_applicable) ? $original_service->wholesale_price : $original_service->price);
             $service['warranty'] = $original_service->warranty;
             $service['warranty_unit'] = $original_service->warranty_unit;
             $service['vat_percentage'] = (!isset($service['is_vat_applicable']) || $service['is_vat_applicable']) ? PartnerPosService::find($service['id'])->vat_percentage : 0.00;
-            $service = array_except($service, ['id', 'name', 'is_vat_applicable']);
+            $service = array_except($service, ['id', 'name', 'is_vat_applicable','updated_price']);
 
             $pos_order_item = $this->itemRepo->save($service);
             $is_stock_maintainable = $this->stockManager->setPosService($original_service)->isStockMaintainable();

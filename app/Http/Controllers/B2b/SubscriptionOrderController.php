@@ -1,5 +1,7 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Models\Service;
+use Carbon\Carbon;
 use Sheba\Payment\Adapters\Payable\SubscriptionOrderAdapter;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
@@ -8,6 +10,7 @@ use Sheba\Payment\ShebaPayment;
 use Illuminate\Http\Request;
 use App\Models\Business;
 use GuzzleHttp\Client;
+use Sheba\Reports\PdfHandler;
 
 class SubscriptionOrderController extends Controller
 {
@@ -88,4 +91,69 @@ class SubscriptionOrderController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function orderInvoice($businesses, $order, Request $request)
+    {
+        try {
+            $business = $request->business;
+            $member = $request->manager_member;
+            $customer = $member->profile->customer;
+
+            $subscription_order = SubscriptionOrder::find((int)$order);
+            $partner = $subscription_order->partner;
+
+            $service_details = json_decode($subscription_order->service_details);
+            $service_details_breakdown = $service_details->breakdown['0'];
+
+            $partner_orders = $subscription_order->orders->map(function ($order) {
+                return $order->lastPartnerOrder();
+            });
+
+            $format_partner_orders = $partner_orders->map(function ($partner_order) use ($service_details_breakdown) {
+                return [
+                    'id' => $partner_order->order->code(),
+                    'service_id' => $service_details_breakdown->id,
+                    'service_name' => $service_details_breakdown->name,
+                    'service_quantity' => $service_details_breakdown->quantity,
+                    'service_unit_price' => $service_details_breakdown->unit_price,
+                    'total' => $service_details_breakdown->quantity * $service_details_breakdown->unit_price,
+                ];
+            });
+            $subscription_order_invoice = [
+                "subscription_code" => $subscription_order->code(),
+                "bill_pay_date" => Carbon::now()->format('d/m/y'),
+                'partner' => [
+                    "id" => $subscription_order->partner_id,
+                    "name" => $partner->name,
+                    "image" => $partner->logo,
+                    "mobile" => $partner->getContactNumber(),
+                    "email" => $partner->email ?: null,
+                    "address" => $partner->address ?: null,
+                ],
+                'customer' => [
+                    'id' => $customer->id,
+                    'name' => $customer->profile->name,
+                    'mobile' => $customer->profile->mobile,
+                ],
+                "orders" => $format_partner_orders,
+                'original_price' => $service_details->original_price,
+                'delivery_charge' => $service_details->original_price,
+                'discount' => $service_details->discount,
+                'total_price' => $service_details->discounted_price,
+                'subtotal' => $service_details->discounted_price,
+
+            ];
+            $handler = new PdfHandler();
+            return $handler->setData($subscription_order_invoice)->setName('Subscription Order Invoice')->setViewFile('subscription_order_invoice')->show();
+
+//            return api_response($request, 1, 200, ['subscription_order' => $subscription_order]);
+
+            #return api_response($request, $subscription_order_invoice, 200, ['subscription_order_invoice' => $subscription_order_invoice]);
+        } catch (\Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
 }

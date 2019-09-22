@@ -25,4 +25,9 @@ class PosOrderItemRepository extends BaseRepository
     {
         return PosOrderItem::create($this->withCreateModificationField($data));
     }
+
+    public function getModel(){
+        return new PosOrderItem();
+    }
+
 }
