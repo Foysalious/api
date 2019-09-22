@@ -144,7 +144,8 @@ class PartnerSubscriptionBilling
         $log = PartnerStatusChangeLog::query()->where([
             ['partner_id', $this->partner->id],
             ['reason', 'Subscription Expired'],
-            ['to', PartnerStatuses::INACTIVE]
+            ['to', PartnerStatuses::INACTIVE],
+            ['from', '!=', PartnerStatuses::INACTIVE]
         ])->orderBy('created_at', 'DESC')->first();
 
         if ($log) {

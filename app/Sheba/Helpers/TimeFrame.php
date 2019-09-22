@@ -40,6 +40,16 @@ class TimeFrame
         return $this;
     }
 
+    public function forLastMonth(Carbon $date)
+    {
+        $month = $date->month - 1;
+        $year = $date->year;
+        if ($month <= 0) {
+            $month = 12;
+            $year -= $year;
+        }
+        return $this->forAMonth($month, $year);
+    }
     public function forADay(Carbon $date)
     {
         $this->start = $date->copy()->startOfDay();
@@ -92,6 +102,28 @@ class TimeFrame
         return $this;
     }
 
+    public function forLastWeek(Carbon $date)
+    {
+        $date = $date->copy()->addDays(-7);
+        return $this->forAWeek($date);
+    }
+
+    public function forAQuarter(Carbon $date, $previous = false)
+    {
+        $year = $date->year;
+        $currentMonth = $date->month;
+        $quarter = (int)(ceil($currentMonth / 3));
+        if ($previous) $quarter -= 1;
+        if ($quarter <= 0) {
+            $year = $year - 1;
+            $quarter = 4;
+        }
+        $startMonth = (($quarter - 1) * 3) + 1;
+        $endMonth = $startMonth + 2;
+        $this->start = $date->copy()->month($startMonth)->year($year)->startOfMonth();
+        $this->end = $date->copy()->month($endMonth)->year($year)->endOfMonth();
+        return $this;
+    }
     public function forSomeWeekFromNow($week = 1, $week_start = null, $week_end = null)
     {
         if ($week == 0) return $this->forCurrentWeek($week_start);
