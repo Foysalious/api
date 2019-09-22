@@ -68,7 +68,7 @@ class SubscriptionOrderController extends Controller
         }
     }
 
-    public function clearPayment($subscription_order, Request $request, ShebaPayment $sheba_payment)
+    public function clearPayment($business, $subscription_order, Request $request, ShebaPayment $sheba_payment)
     {
         try {
             $this->validate($request, ['payment_method' => 'required|string|in:bkash,wallet,cbl,online']);
@@ -80,10 +80,12 @@ class SubscriptionOrderController extends Controller
             $subscription_order = SubscriptionOrder::find((int)$subscription_order);
             if ($payment_method == 'wallet' && $subscription_order->getTotalPrice() > $business->shebaCredit()) return api_response($request, null, 403, ['message' => 'You don\'t have sufficient credit.']);
             $order_adapter = new SubscriptionOrderAdapter();
-            $payable = $order_adapter->setModelForPayable($subscription_order)->getPayable();
+            $payable = $order_adapter->setModelForPayable($subscription_order)->setUser($business)->getPayable();
             $payment = $sheba_payment->setMethod($payment_method)->init($payable);
+            return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
         } catch (\Throwable $e) {
-
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
         }
     }
 }
