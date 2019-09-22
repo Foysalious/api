@@ -135,4 +135,5 @@ return [
     ],
     'min_order_amount_for_emi' => 10000,
     'gift_card_validity_month' => 3,
+    'marketplace_not_accessible_packages_id' => explode(',', env('MARKETPLACE_NOT_ACCESSIBLE_PACKAGES_ID', '1,2'))
 ];

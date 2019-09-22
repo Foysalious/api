@@ -579,6 +579,11 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
         return $this->package_id == (int)config('sheba.partner_lite_packages_id');
     }
 
+    public function isAccessibleForMarketPlace()
+    {
+        return !in_array($this->package_id, config('sheba.marketplace_not_accessible_packages_id'));
+    }
+
     public function scopeLite($q)
     {
         return $q->where('package_id', (int)config('sheba.partner_lite_packages_id'));
