@@ -151,7 +151,6 @@ class SubscriptionOrderController extends Controller
             $handler = new PdfHandler();
             return $handler->setData($subscription_order_invoice)->setName('Subscription Order Invoice')->setViewFile('subscription_order_invoice')->show();
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

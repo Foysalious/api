@@ -20,7 +20,7 @@
 
 <body>
 
-<table align="center" style="max-width: 800px;margin: auto;min-width: 700px;font-family: sans-serif; font-size: smaller">
+<table align="center" style="max-width: 700px;margin: auto;min-width: 600px;font-family: sans-serif; font-size: smaller">
     <tbody>
     <tr>
         <td>
@@ -79,17 +79,14 @@
     @if(isset($orders))
         <tr>
             <td>
-                <table class="table table-striped" style="width: 100%;color: #929292"
-                       cellspacing="5">
+                <table class="table table-striped" style="width: 100%;color: #929292" cellspacing="5">
                     <thead style="background-color: #7B83A5; color: white">
                     <tr>
-                       <div>
-                           <th>Service Name</th>
-                           <th>Order Code</th>
-                           <th>QTY</th>
-                           <th>Unit Price</th>
-                           <th align="right">Price</th>
-                       </div>
+                       <th>Service Name</th>
+                       <th>Order Code</th>
+                       <th>QTY</th>
+                       <th>Unit Price</th>
+                       <th align="right">Price</th>
                     </tr>
                     </thead>
                     <tbody>
