@@ -139,8 +139,9 @@ class CustomerSubscriptionController extends Controller
             $subscription_order_count = $subscription_orders->count();
             $subscription_orders->skip($offset)->limit($limit);
 
-            if ($request->has('status'))
+            if ($request->has('status') && $request->status != 'all') {
                 $subscription_orders = $subscription_orders->status($request->status);
+            }
 
             foreach ($subscription_orders->get() as $subscription_order) {
 
@@ -205,7 +206,7 @@ class CustomerSubscriptionController extends Controller
                 return api_response($request, $subscription_orders_list, 200, [
                     'subscription_orders_list' => $subscription_orders_list,
                     'subscription_order_count' => $subscription_order_count
-                    ]);
+                ]);
             } else {
                 return api_response($request, null, 404);
             }
