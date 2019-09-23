@@ -145,10 +145,11 @@ class PartnerSubscriptionController extends Controller
 
     /**
      * @param Request $request
+     * @param $partner
      * @param bool $inside
      * @return JsonResponse
      */
-    public function purchase(Request $request, $inside = false)
+    public function purchase(Request $request, $partner, $inside = false)
     {
         try {
             $this->validate($request, [
