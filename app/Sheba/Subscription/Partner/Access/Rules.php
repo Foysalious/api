@@ -10,6 +10,7 @@ use Sheba\Subscription\Partner\Access\RulesDescriber\Resource;
  * @property string $DASHBOARD_ANALYTICS
  * @property POS $POS
  * @property ExtraEarning $EXTRA_EARNING
+ * @property Resource $RESOURCE
  */
 class Rules extends BaseRule
 {

@@ -21,11 +21,11 @@
 
 <body>
 
-<table align="center" style="max-width: 800px;margin: auto;min-width: 700px;font-family: Arial, sans-serif">
+<table align="center" style="max-width: 800px;margin: auto;min-width: 700px;font-family: sans-serif; font-size: smaller">
     <tbody>
     <tr>
         <td>
-            <div style="width:100%;background-color:#F2F3F7;padding:14px; padding-top: 42px">
+            <div style="width:100%;background-color:#F2F3F7;padding:37px; padding-top: 42px">
                 <table class="" style="width: 100%;">
                     @if(isset($partner))
                         <tr>
@@ -55,7 +55,7 @@
         </td>
     </tr>
     <tr>
-        <td>
+        <td style="padding: 25px">
             <table class="table table-striped" style="width: 100%">
                 <tr class="table-light">
                     <td style="border-left: 4px; border-top: none">
@@ -106,33 +106,39 @@
                     @endforeach
                     </tbody>
                 </table>
-                <table class="float-right">
-                    <tbody style="font-weight: bold">
-                    <tr>
-                        <td colspan="4">Total Service Price</td>
-                        <td align="right" style="color: #383d46"><span
-                                    style="width: 13px ; padding-left: 60px"></span> {{number_format($original_price,2)}}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="color: #C91F66" colspan="4">Discount</td>
-                        <td align="right" style="color: #C91F66"><span
-                                    style="width: 13px"></span> {{number_format($discount,2)}}</td>
-                    </tr>
-                    <tr>
-                        <td colspan="4">Subtotal</td>
-                        <td align="right" style="color: #383d46"><span
-                                    style="width: 13px"></span> {{number_format($subtotal,2)}}</td>
-                    </tr>
-                    <tr style="background-color: #1b4280;color: white">
-                        <td colspan="4">Grand Total</td>
-                        <td align="right"><span
-                                    style="width: 13px"></span> {{number_format($subtotal,2)}}</td>
-                    </tr>
-                    </tbody>
-                </table>
+                <div class="float-right" style="min-width: 370px">
+                    <div class="d-flex justify-content-between bill-item">
+                        <p>Total Service Price</p>
+                        <p style="color: #383d46">{{number_format($original_price,2)}}</p>
+                    </div>
+                    <div class="d-flex justify-content-between bill-item">
+                        <p>Discount</p>
+                        <p style="color: #C91F66">{{number_format($discount,2)}}</p>
+                    </div>
+                    <div class="d-flex justify-content-between bill-item">
+                        <p>Subtotal</p>
+                        <p style="color: #383d46">{{number_format($subtotal,2)}}</p>
+                    </div>
+                    <div class="d-flex justify-content-between bill-item bill-item__total" style="background-color: #1b4280;color: white">
+                        <p>Grand Total</p>
+                        <p>{{number_format($subtotal,2)}}</p>
+                    </div>
+                </div>
             </td>
         </tr>
+        <style>
+            .bill-item {
+                padding: 0px 16px;
+            }
+            .bill-item P {
+                margin: 0;
+            }
+            .bill-item__total {
+                padding: 16px;
+                border-bottom-left-radius: 30px;
+                border-top-left-radius: 30px;
+            }
+        </style>
     @endif
     <tr>
         <td style="padding-top: 38px">
