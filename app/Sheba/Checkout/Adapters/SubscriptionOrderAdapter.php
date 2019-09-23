@@ -17,6 +17,7 @@ use Sheba\Checkout\SubscriptionOrderInterface;
 use Sheba\Jobs\JobStatuses;
 use Sheba\Jobs\PreferredTime;
 use Sheba\ModificationFields;
+use Sheba\Payment\Statuses;
 use Sheba\RequestIdentification;
 use DB;
 
@@ -113,7 +114,9 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
 
     private function setPaymentDetails()
     {
-        $payable = Payable::where('type_id', $this->subscriptionOrder->id)->where('type', 'subscription_order')->first();
+        $payable = Payable::whereHas('payment', function ($q) {
+            $q->where('status', Statuses::COMPLETED);
+        })->where('type_id', $this->subscriptionOrder->id)->where('type', 'subscription_order')->first();
         if (!$payable) return;
         $this->paymentDetails = Payable::where('type_id', $this->subscriptionOrder->id)->where('type', 'subscription_order')->first()->payment->paymentDetails;
         $this->setBonus();
