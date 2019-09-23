@@ -293,6 +293,7 @@ class CustomerSubscriptionController extends Controller
 
                 "partner_id" => $subscription_order->partner_id,
                 "partner_name" => $service_details->name,
+                "contact_person" => $partner->getContactPerson(),
                 "partner_slug" => $partner->sub_domain,
                 "partner_mobile" => $partner->getContactNumber(),
                 "partner_address" => $partner->address,
