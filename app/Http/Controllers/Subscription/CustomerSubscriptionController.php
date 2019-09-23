@@ -342,7 +342,9 @@ class CustomerSubscriptionController extends Controller
                 "paid_on" => $subscription_order->isPaid() ? $subscription_order->paid_at->format('M-j, Y') : null,
                 'is_paid' => $subscription_order->isPaid(),
                 "orders" => $format_partner_orders,
-                'schedule_dates' => $schedule_dates
+                'schedule_dates' => $schedule_dates,
+                'paid' => $subscription_order->paid,
+                'due' => $subscription_order->due,
             ];
 
             return api_response($request, $subscription_order_details, 200, ['subscription_order_details' => $subscription_order_details]);

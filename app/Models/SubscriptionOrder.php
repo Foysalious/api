@@ -96,13 +96,14 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface, Pay
 
     public function getTotalPrice()
     {
-        $this->calculate();
+        if ($this->totalPrice == null) $this->calculate();
         return $this->totalPrice;
     }
 
     public function isPaid()
     {
-        return $this->paid_at->timestamp < 0 ? 0 : 1;
+        if ($this->due == null) $this->calculate();
+        return $this->due > 0 ? 0 : 1;
     }
 
     public function payments()
