@@ -218,10 +218,11 @@ class CustomerSubscriptionController extends Controller
                 return [
                     'id' => $partner_order->order->code(),
                     'job_id' => $last_job->id,
+                    'job_status' => $last_job->status,
                     'partner_order_id' => $partner_order->id,
                     'schedule_date' => Carbon::parse($last_job->schedule_date),
                     'preferred_time' => Carbon::parse($last_job->schedule_date)->format('M-j') . ', ' . Carbon::parse($last_job->preferred_time_start)->format('h:ia'),
-                    'is_completed' => $partner_order->closed_and_paid_at ? $partner_order->closed_and_paid_at->format('M-j, h:ia') : null,
+                    'is_completed' => $partner_order->closed_and_paid_at ? $partner_order->closed_and_paid_at->format('M-j, h:ia') : 0,
                     'cancelled_at' => $partner_order->cancelled_at ? Carbon::parse($partner_order->cancelled_at)->format('M-j, h:i a') : null
                 ];
             });
@@ -280,6 +281,7 @@ class CustomerSubscriptionController extends Controller
                 'service_id' => $service->id,
                 "service_name" => $service->name,
                 "app_thumb" => $service->app_thumb,
+                'description' => $service->description,
                 "variables" => $variables,
                 "total_quantity" => $service_details->total_quantity,
                 'quantity' => (double)$service_details_breakdown->quantity,
@@ -293,6 +295,7 @@ class CustomerSubscriptionController extends Controller
                 "partner_name" => $service_details->name,
                 "partner_slug" => $partner->sub_domain,
                 "partner_mobile" => $partner->getContactNumber(),
+                "partner_address" => $partner->address,
                 "logo" => $service_details->logo,
                 "avg_rating" => (double)$partner->reviews()->avg('rating'),
                 "total_rating" => $partner->reviews->count(),
