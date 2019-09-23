@@ -100,6 +100,10 @@ class PartnerSubscriptionController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function update(Request $request)
     {
         try {
@@ -109,6 +113,7 @@ class PartnerSubscriptionController extends Controller
                 'package_id' => 'required|numeric|exists:partner_subscription_packages,id',
                 'billing_type' => 'required|string|in:monthly,yearly'
             ]);
+
             if (((int)$request->package_id > (int)$partner->package_id) ||
                 ((int)$request->package_id == (int)$partner->package_id && $request->billing_type != $partner->billing_type && $partner->billing_type == 'monthly')) {
                 $requested_package = PartnerSubscriptionPackage::find($request->package_id);
@@ -170,12 +175,15 @@ class PartnerSubscriptionController extends Controller
         return api_response($request, null, 200, ['message' => "Billing auto renewal $task", 'auto_billing_activated' => $request->partner->auto_billing_activated]);
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function purchase(Request $request)
     {
-        try{
+        try {
             $this->validate($request, [
-                'package_id' => 'required|numeric|exists:partner_subscription_packages,id',
-                'billing_type' => 'required|string|in:' . implode(',', [BillingType::MONTHLY, BillingType::YEARLY, BillingType::HALF_YEARLY])
+                'package_id' => 'required|numeric|exists:partner_subscription_packages,id', 'billing_type' => 'required|string|in:' . implode(',', [BillingType::MONTHLY, BillingType::YEARLY, BillingType::HALF_YEARLY])
             ]);
             $currentPackage = $request->partner->subscription;
             $requestedPackage = PartnerSubscriptionPackage::find($request->package_id);
@@ -188,7 +196,7 @@ class PartnerSubscriptionController extends Controller
                 try {
                     $grade = $request->partner->subscriber()->getBilling()->findGrade($requestedPackage, $currentPackage, $request->billing_type, $request->partner->billing_type);
                     if ($grade == PartnerSubscriptionChange::DOWNGRADE && $request->partner->status != constants('PARTNER_STATUSES')['Inactive']) {
-                            return api_response($request, null, 202, ['message' => " আপনার $requestedPackage->show_name_bd  প্যকেজে অবনমনের  অনুরোধ  গ্রহণ  করা  হয়েছে "]);
+                        return api_response($request, null, 202, ['message' => " আপনার $requestedPackage->show_name_bd  প্যকেজে অবনমনের  অনুরোধ  গ্রহণ  করা  হয়েছে "]);
                     }
                     $hasCredit = $request->partner->hasCreditForSubscription($requestedPackage, $request->billing_type);
                     $balance = ['remaining_balance' => $request->partner->totalCreditForSubscription, 'price' => $request->partner->totalPriceRequiredForSubscription, 'breakdown' => $request->partner->creditBreakdown];
@@ -211,7 +219,7 @@ class PartnerSubscriptionController extends Controller
                 return api_response($request, null, 403, ['message' => "$requestedPackage->show_name_bn প্যাকেজে যেতে অনুগ্রহ করে সেবার সাথে যোগাযোগ করুন"]);
             }
 
-        }catch (ValidationException $e){
+        } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
@@ -344,5 +352,4 @@ class PartnerSubscriptionController extends Controller
         }
         return implode(',', $message) . " Billing Cycle";
     }
-
 }
