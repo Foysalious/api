@@ -9,6 +9,9 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface, Pay
 {
     protected $dates = ['paid_at'];
     protected $guarded = ['id'];
+    public $due;
+    public $paid;
+    public $totalPrice;
 
     public function orders()
     {
@@ -79,9 +82,22 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface, Pay
         return $this->channelCode() . '-' . sprintf('%06d', $this->id);
     }
 
+    public function calculate()
+    {
+        $partner_orders = $this->orders->map(function ($order) {
+            return $order->lastPartnerOrder();
+        })->each(function ($partner_order) {
+            $partner_order->calculate(1);
+        });
+        $partner_orders->totalPrice = (double)$partner_orders->sum('totalPrice');
+        $partner_orders->due = (double)$partner_orders->sum('due');
+        $partner_orders->paid = (double)$partner_orders->sum('paid');
+    }
+
     public function getTotalPrice()
     {
-        return (double)json_decode($this->service_details)->discounted_price;
+        $this->calculate();
+        return $this->totalPrice;
     }
 
     public function isPaid()
