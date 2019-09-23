@@ -4,9 +4,6 @@
 use App\Models\Partner;
 use Illuminate\Http\Request;
 use Sheba\Pos\Repositories\PosOrderItemRepository;
-use Sheba\Reports\ExcelHandler;
-use Sheba\Reports\Exceptions\NotAssociativeArray;
-use Sheba\Reports\PdfHandler;
 use Sheba\Reports\Pos\PosReport;
 
 class ProductWise extends PosReport
@@ -19,15 +16,11 @@ class ProductWise extends PosReport
     /**
      * ProductWise constructor.
      * @param PosOrderItemRepository $posOrderItemRepository
-     * @param ExcelHandler $excelHandler
-     * @param PdfHandler $pdfHandler
      */
-    public function __construct(PosOrderItemRepository $posOrderItemRepository, ExcelHandler $excelHandler, PdfHandler $pdfHandler)
+    public function __construct(PosOrderItemRepository $posOrderItemRepository)
     {
-        parent::__construct();
         $this->itemRepository = $posOrderItemRepository;
-        $this->excelHandler = $excelHandler;
-        $this->pdfHandler = $pdfHandler;
+        parent::__construct();
     }
 
     /**
@@ -36,7 +29,18 @@ class ProductWise extends PosReport
      */
     public function prepareData($paginate = true)
     {
-        $this->data = $paginate ? $this->query->paginate($this->limit) : $this->query->get();
+        $full = $this->query->get();
+        $data = $paginate ? $this->query->paginate($this->limit) : $full->toArray();
+        if ($paginate) {
+            $this->data['data'] = $data->items();
+            $this->data['total_price'] = $full->sum('total_price');
+            $this->data['total_quantity'] = $full->sum('total_quantity');
+            $this->data['total'] = $data->total();
+            $this->data['has_more'] = $data->hasMorePages();
+            $this->data['per_page'] = $data->perPage();
+        } else {
+            $this->data = $data;
+        }
         return $this;
     }
 
@@ -44,12 +48,12 @@ class ProductWise extends PosReport
      * @param Request $request
      * @param Partner $partner
      * @return $this
+     * @throws \Illuminate\Validation\ValidationException
      */
     public function prepareQuery(Request $request, Partner $partner)
     {
-        $this->setDefaultOrderBy('service_name');
+        $this->setDefaultOrderBy('service_name')->setOrderByAccessors('service_name,total_price,total_quantity')->setRequest($request);
         $this->partner = $partner;
-        $this->setRequest($request);
         $orders = $partner->posOrders()->select('id')->get()->pluck('id')->toArray();
         $this->query = $this->itemRepository
             ->getModel()
