@@ -18,6 +18,11 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface, Pay
         return $this->belongsTo(Category::class);
     }
 
+    public function scopeStatus($query, $status)
+    {
+        return $query->where('status', $status);
+    }
+
     public function partner()
     {
         return $this->belongsTo(Partner::class);

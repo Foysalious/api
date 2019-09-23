@@ -22,7 +22,7 @@ class SubscriptionOrderController extends Controller
             $member = $request->manager_member;
             $customer = $member->profile->customer;
             if ($customer) {
-                $url = config('sheba.api_url') . "/v2/customers/$customer->id/subscriptions/order-lists?remember_token=$customer->remember_token";
+                $url = config('sheba.api_url') . "/v2/customers/$customer->id/subscriptions/order-lists?offset=$request->offset&limit=$request->limit&status=$request->status&remember_token=$customer->remember_token";
                 $client = new Client();
                 $res = $client->request('GET', $url);
                 if ($response = json_decode($res->getBody())) {
