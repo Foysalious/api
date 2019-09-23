@@ -5,7 +5,6 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
           integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <style>
         .terms {
             font-size: 12px;
@@ -38,13 +37,11 @@
                                     </div>
                                     <div style="text-align: right">
                                         <span style="color: #9b9b9b;">{{$partner['mobile']}}</span>
-                                        <span style="padding-left: 10px; color: #C91F66"> <i class="fa fa-phone" aria-hidden="true"></i></span><br>
+                                        <span style="padding-left: 10px; color: #C91F66"> <img style="width: 6%" src="https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/image/invoice/icon/call-material@3x.png" alt=""></span><br>
                                         <span style="color: #9b9b9b;">{{$partner['email']}}</span>
-                                        <span style="padding-left: 10px ; color: #C91F66"><i class="fa fa-envelope"
-                                                                            aria-hidden="true"></i></span><br>
+                                        <span style="padding-left: 10px ; color: #C91F66"><img style="width: 6%"  src="https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/image/invoice/icon/email-material@3x.png" alt=""></span><br>
                                         <span style="color: #9b9b9b;">{{$partner['address']}}</span>
-                                        <span style="padding-left: 10px; color: #C91F66"><i class="fa fa-map-marker"
-                                                                            aria-hidden="true"></i></span>
+                                        <span style="padding-left: 10px; color: #C91F66"><img style="width: 6%"  src="https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/image/invoice/icon/location-on-material@3x.png" alt=""></span>
                                     </div>
                                 </div>
                             </td>
@@ -86,27 +83,29 @@
                        cellspacing="5">
                     <thead style="background-color: #7B83A5; color: white">
                     <tr>
-                        <th>Service Name</th>
-                        <th>Order Code</th>
-                        <th>QTY</th>
-                        <th>Unit Price</th>
-                        <th align="right">Price</th>
+                       <div>
+                           <th>Service Name</th>
+                           <th>Order Code</th>
+                           <th>QTY</th>
+                           <th>Unit Price</th>
+                           <th align="right">Price</th>
+                       </div>
                     </tr>
                     </thead>
                     <tbody>
                     @foreach($orders as $order)
                         <tr>
-                            <td style="color: #383d46"> {{ $order['service_name'] }} <br></td>
-                            <td style="color: #383d46">{{$order['id']}}</td>
-                            <td style="color: #383d46">{{$order['service_quantity']}}</td>
-                            <td style="color: #383d46">{{$order['service_unit_price']}}</td>
-                            <td align="right" style="color: #383d46"><span
+                            <td style="color: #383d46; padding: 1rem !important;"> {{ $order['service_name'] }} <br></td>
+                            <td style="color: #383d46; padding: 1rem !important;">{{$order['id']}}</td>
+                            <td style="color: #383d46; padding: 1rem !important;">{{$order['service_quantity']}}</td>
+                            <td style="color: #383d46; padding: 1rem !important;">{{$order['service_unit_price']}}</td>
+                            <td align="center" style="color: #383d46"><span
                                         style="width: 13px"></span> {{number_format(($order['total']), 2)}}</td>
                         </tr>
                     @endforeach
                     </tbody>
                 </table>
-                <div class="float-right" style="min-width: 370px">
+                <div class="float-right" style="min-width: 370px; font-weight: 600; padding-right: 14px">
                     <div class="d-flex justify-content-between bill-item">
                         <p>Total Service Price</p>
                         <p style="color: #383d46">{{number_format($original_price,2)}}</p>
@@ -128,8 +127,9 @@
         </tr>
         <style>
             .bill-item {
-                padding: 0px 16px;
+                padding: 14px 16px;
             }
+
             .bill-item P {
                 margin: 0;
             }
@@ -155,12 +155,12 @@
     <tr>
         <td>
             <hr>
-            <p class="terms" style="border-top: none; padding-left: 100px">
-              In association with: <span style="padding-left: 10px;color: #1E2D3E;font-weight: bold;font-size: large;">sheba.
-               </span> <span style="color: #1E2D3E;font-weight: bold;font-size: large;font-style: oblique">xyz</span>
-                <span style="padding-left: 10px; color: #C91F66"> <i class="fa fa-phone" aria-hidden="true"></i></span>
+            <p class="terms" style="border-top: none; padding-left: 172px">
+              In association with: <span><img style="width: 15%"
+                            src="https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/images/sheba_logo_blue.png" alt=""></span>
+                <span style="padding-left: 10px; color: #C91F66"> <img style="width: 16px" src="https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/image/invoice/icon/call-material%403x.png" alt=""></span>
                 <span style="padding-left: 5px">16516</span>
-                <span style="padding-left: 10px; color: #C91F66"><i class="fa fa-envelope" aria-hidden="true"></i></span>
+                <span style="padding-left: 10px; color: #C91F66"><img style="width: 16px" src="https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/image/invoice/icon/email-material@3x.png" alt=""></span>
                 <span style="padding-left: 5px">info@sheba.xyz</span>
             </p>
         </td>
