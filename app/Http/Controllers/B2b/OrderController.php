@@ -269,6 +269,7 @@ class OrderController extends Controller
             $subscriptionOrderRequest->setRequest($request)->setSalesChannel(constants('SALES_CHANNELS')['B2B']['name'])->setCustomer($customer)->setAddress($address)
                 ->setDeliveryMobile($address->mobile)
                 ->setDeliveryName($address->name)
+                ->setUser($business)
                 ->prepareObject();
             $subscription_order = $subscriptionOrder->setSubscriptionRequest($subscriptionOrderRequest)->place();
             $subscription_order = new SubscriptionOrderAdapter($subscription_order);

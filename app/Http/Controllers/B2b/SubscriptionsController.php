@@ -10,7 +10,6 @@ class SubscriptionsController
     public function index(Request $request)
     {
         try {
-            dd($request->all());
             /*$customer = $request->manager_member->profile->customer;
             if ($customer) {
                 $url = config('sheba.api_url') . "/v2/customers/$customer->id/orders?remember_token=$customer->remember_token&for=business";

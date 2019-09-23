@@ -4,6 +4,7 @@ use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
 
 class SubscriptionOrderRequest extends PartnerListRequest
 {
@@ -15,6 +16,8 @@ class SubscriptionOrderRequest extends PartnerListRequest
     private $customer;
     /** @var $billingCycleStart Carbon */
     private $billingCycleStart;
+    /** @var $user Model */
+    private $user;
     /** @var $billingCycleEnd Carbon */
     private $billingCycleEnd;
     protected $location;
@@ -78,6 +81,12 @@ class SubscriptionOrderRequest extends PartnerListRequest
     public function setDeliveryMobile($mobile)
     {
         $this->deliveryMobile = $mobile;
+        return $this;
+    }
+
+    public function setUser(Model $user)
+    {
+        $this->user = $user;
         return $this;
     }
 

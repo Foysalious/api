@@ -3,9 +3,11 @@
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Checkout\SubscriptionOrderInterface;
 use Sheba\Payment\PayableType;
+use Sheba\Dal\SubscriptionOrderPayment\Model as SubscriptionOrderPayment;
 
 class SubscriptionOrder extends Model implements SubscriptionOrderInterface, PayableType
 {
+    protected $dates = ['paid_at'];
     protected $guarded = ['id'];
 
     public function orders()
@@ -79,6 +81,11 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface, Pay
 
     public function isPaid()
     {
-        return $this->paid_at ? 1 : 0;
+        return $this->paid_at->timestamp < 0 ? 0 : 1;
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(SubscriptionOrderPayment::class);
     }
 }

@@ -1,6 +1,7 @@
 <?php namespace Sheba\Checkout\Adapters;
 
 use App\Models\Job;
+use Illuminate\Database\Eloquent\Model;
 use Sheba\Dal\JobService\JobService;
 use App\Models\Order;
 use App\Models\PartnerOrder;
@@ -138,7 +139,7 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
         $order->delivery_name = $this->subscriptionOrder->delivery_name;
         $order->sales_channel = $this->subscriptionOrder->sales_channel;
         $order->location_id = $this->subscriptionOrder->location_id;
-        $order->customer_id = $this->subscriptionOrder->customer_id;
+        $order->customer_id = $this->subscriptionOrder->customer->id;
         $order->delivery_address_id = $this->subscriptionOrder->delivery_address_id;
         $order->subscription_order_id = $this->subscriptionOrder->id;
         $order->fill((new RequestIdentification())->get());
