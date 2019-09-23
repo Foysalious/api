@@ -153,6 +153,7 @@ class SubscriptionOrderController extends Controller
 
             #return api_response($request, $subscription_order_invoice, 200, ['subscription_order_invoice' => $subscription_order_invoice]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
