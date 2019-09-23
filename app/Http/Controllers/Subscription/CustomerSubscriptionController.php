@@ -134,9 +134,13 @@ class CustomerSubscriptionController extends Controller
         try {
             $customer = $request->customer;
             $subscription_orders_list = collect([]);
-            $subscription_orders = SubscriptionOrder::where('customer_id', (int)$customer->id)->orderBy('created_at', 'desc')->get();
+            list($offset, $limit) = calculatePagination($request);
+            $subscription_orders = SubscriptionOrder::where('customer_id', (int)$customer->id)->orderBy('created_at', 'desc')->skip($offset)->limit($limit);
 
-            foreach ($subscription_orders as $subscription_order) {
+            if ($request->has('status'))
+                $subscription_orders = $subscription_orders->status($request->status);
+
+            foreach ($subscription_orders->get() as $subscription_order) {
 
                 $partner_orders = $subscription_order->orders->map(function ($order) {
                     return $order->lastPartnerOrder();
@@ -158,8 +162,6 @@ class CustomerSubscriptionController extends Controller
                     return $partner_order['is_completed'] != null;
                 });
 
-
-                #$schedules = collect(json_decode($subscription_order->schedules));
                 $service_details = json_decode($subscription_order->service_details);
                 $service_details_breakdown = $service_details->breakdown['0'];
                 $service = Service::find((int)$service_details_breakdown->id);
@@ -196,7 +198,12 @@ class CustomerSubscriptionController extends Controller
                 ];
                 $subscription_orders_list->push($orders_list);
             }
-            return api_response($request, $subscription_orders_list, 200, ['subscription_orders_list' => $subscription_orders_list]);
+
+            if (count($subscription_orders_list) > 0) {
+                return api_response($request, $subscription_orders_list, 200, ['subscription_orders_list' => $subscription_orders_list]);
+            } else {
+                return api_response($request, null, 404);
+            }
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -293,6 +300,7 @@ class CustomerSubscriptionController extends Controller
 
                 "partner_id" => $subscription_order->partner_id,
                 "partner_name" => $service_details->name,
+                "contact_person" => $partner->getContactPerson(),
                 "partner_slug" => $partner->sub_domain,
                 "partner_mobile" => $partner->getContactNumber(),
                 "partner_address" => $partner->address,
@@ -307,6 +315,7 @@ class CustomerSubscriptionController extends Controller
                 'location_name' => $subscription_order->location ? $subscription_order->location->name : "",
                 'ordered_for' => $subscription_order->deliveryAddress->name,
                 'subscription_status' => $subscription_order->status,
+                'subscription_additional_info' => $subscription_order->additional_info,
 
 
                 "billing_cycle" => $subscription_order->billing_cycle,

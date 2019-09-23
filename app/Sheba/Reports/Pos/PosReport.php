@@ -19,7 +19,7 @@ abstract class PosReport
      */
     protected $request, $orderBy, $range, $to, $from, $query, $order, $page, $limit, $data, $partner;
     private $excelHandler, $pdfHandler;
-    private $defaultOrderBy;
+    private $defaultOrderBy, $orderByAccessors;
 
     public function __construct()
     {
@@ -43,11 +43,15 @@ abstract class PosReport
      */
     protected function validateRequest()
     {
-        $validator = Validator::make($this->request, [
+        $rules = [
             'range' => 'required|in:today,week,month,year,yesterday,quarter,last_week,last_month,last_quarter,last_year,custom',
             'to' => 'required_with:name,custom',
-            'from' => 'required_with:name,custom'
-        ]);
+            'from' => 'required_with:name,custom',
+        ];
+        if (isset($this->orderByAccessors)) {
+            $rules['order_by'] = 'sometimes|in:' . $this->orderByAccessors;
+        }
+        $validator = Validator::make($this->request, $rules);
         if ($validator->fails()) {
             throw new ValidationException($validator);
         }
@@ -75,6 +79,11 @@ abstract class PosReport
         }
     }
 
+    /**
+     * @param Request $request
+     * @return $this
+     * @throws ValidationException
+     */
     protected function setRequest(Request $request)
     {
         $this->request = (array)$request->all();
@@ -83,6 +92,16 @@ abstract class PosReport
         return $this;
     }
 
+    public function setOrderByAccessors($accessors)
+    {
+        $this->orderByAccessors = $accessors;
+        return $this;
+    }
+
+    /**
+     * @param $key
+     * @return |null
+     */
     private function hasInRequest($key)
     {
         if (isset($this->request[$key]) && !empty($this->request[$key])) return $this->request[$key];
@@ -92,9 +111,11 @@ abstract class PosReport
     private function setDefaults()
     {
         $this->defaultOrderBy = 'name';
-
     }
 
+    /**
+     * @return mixed
+     */
     public function getData()
     {
         return $this->data;
@@ -106,7 +127,7 @@ abstract class PosReport
      */
     public function downloadExcel($name = 'Sales Report')
     {
-        return $this->excelHandler->setName($name)->createReport($this->data->toArray())->download();
+        return $this->excelHandler->setName($name)->createReport($this->data)->download();
     }
 
     /**
@@ -116,7 +137,7 @@ abstract class PosReport
      */
     public function downloadPdf($name = 'Sales Report', $template = 'generic_template')
     {
-        return $this->pdfHandler->setName($name)->setViewFile($template)->setData(['data' => $this->data->toArray(), 'partner' => $this->partner, 'from' => $this->from, 'to' => $this->to])->download();
+        return $this->pdfHandler->setName($name)->setViewFile($template)->setData(['data' => $this->data, 'partner' => $this->partner, 'from' => $this->from, 'to' => $this->to])->download();
     }
 
     abstract public function prepareData($paginate = true);

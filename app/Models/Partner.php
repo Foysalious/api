@@ -291,6 +291,12 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
         return null;
     }
 
+    public function getContactPerson()
+    {
+        if ($admin_resource = $this->admins()->first()) return $admin_resource->profile->name;
+        return null;
+    }
+
     public function getManagerMobile()
     {
         if ($operation_resource = $this->resources->where('pivot.resource_type', constants('RESOURCE_TYPES')['Operation'])->first()) {
