@@ -26,7 +26,10 @@ class SubscriptionOrderController extends Controller
                 $client = new Client();
                 $res = $client->request('GET', $url);
                 if ($response = json_decode($res->getBody())) {
-                    return ($response->code == 200) ? api_response($request, $response, 200, ['subscription_orders' => $response->subscription_orders_list]) : api_response($request, $response, $response->code);
+                    return ($response->code == 200) ? api_response($request, $response, 200, [
+                        'subscription_orders' => $response->subscription_orders_list,
+                        'subscription_orders_count' => $response->subscription_order_count,
+                    ]) : api_response($request, $response, $response->code);
                 }
             } else {
                 return api_response($request, null, 404);
