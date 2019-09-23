@@ -135,7 +135,9 @@ class CustomerSubscriptionController extends Controller
             $customer = $request->customer;
             $subscription_orders_list = collect([]);
             list($offset, $limit) = calculatePagination($request);
-            $subscription_orders = SubscriptionOrder::where('customer_id', (int)$customer->id)->orderBy('created_at', 'desc')->skip($offset)->limit($limit);
+            $subscription_orders = SubscriptionOrder::where('customer_id', (int)$customer->id)->orderBy('created_at', 'desc');
+            $subscription_order_count = $subscription_orders->count();
+            $subscription_orders->skip($offset)->limit($limit);
 
             if ($request->has('status'))
                 $subscription_orders = $subscription_orders->status($request->status);
@@ -200,7 +202,10 @@ class CustomerSubscriptionController extends Controller
             }
 
             if (count($subscription_orders_list) > 0) {
-                return api_response($request, $subscription_orders_list, 200, ['subscription_orders_list' => $subscription_orders_list]);
+                return api_response($request, $subscription_orders_list, 200, [
+                    'subscription_orders_list' => $subscription_orders_list,
+                    'subscription_order_count' => $subscription_order_count
+                    ]);
             } else {
                 return api_response($request, null, 404);
             }
