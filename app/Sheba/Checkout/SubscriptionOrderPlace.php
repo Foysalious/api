@@ -25,6 +25,8 @@ class SubscriptionOrderPlace
         $subscription_order = new SubscriptionOrder();
         $subscription_order->billing_cycle = $this->subscriptionOrderRequest->subscriptionType;
         $subscription_order->customer_id = $this->subscriptionOrderRequest->customer->id;
+        $subscription_order->user_id = $this->subscriptionOrderRequest->user->id;
+        $subscription_order->user_type = get_class($this->subscriptionOrderRequest->user);
         $subscription_order->location_id = $this->subscriptionOrderRequest->location;
         $subscription_order->delivery_address_id = $this->subscriptionOrderRequest->address->id;
         $subscription_order->sales_channel = $this->subscriptionOrderRequest->salesChannel;

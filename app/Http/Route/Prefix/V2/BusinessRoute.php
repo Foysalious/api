@@ -5,6 +5,7 @@ class BusinessRoute
     public function set($api)
     {
         $api->post('business/login', 'B2b\LoginController@login');
+        $api->get('business/test-login', 'B2b\LoginController@generateDummyToken')->middleware('admin.auth');
         #$api->post('business/register', 'B2b\RegistrationController@register');
         $api->post('business/register', 'B2b\RegistrationController@registerV2');
         $api->group(['prefix' => 'businesses', 'middleware' => ['business.auth']], function ($api) {

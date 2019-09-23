@@ -1,6 +1,7 @@
 <?php namespace Sheba\Checkout\Adapters;
 
 use App\Models\Job;
+use Illuminate\Database\Eloquent\Model;
 use Sheba\Dal\JobService\JobService;
 use App\Models\Order;
 use App\Models\PartnerOrder;
@@ -16,6 +17,7 @@ use Sheba\Checkout\SubscriptionOrderInterface;
 use Sheba\Jobs\JobStatuses;
 use Sheba\Jobs\PreferredTime;
 use Sheba\ModificationFields;
+use Sheba\Payment\Statuses;
 use Sheba\RequestIdentification;
 use DB;
 
@@ -112,7 +114,9 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
 
     private function setPaymentDetails()
     {
-        $payable = Payable::where('type_id', $this->subscriptionOrder->id)->where('type', 'subscription_order')->first();
+        $payable = Payable::whereHas('payment', function ($q) {
+            $q->where('status', Statuses::COMPLETED);
+        })->where('type_id', $this->subscriptionOrder->id)->where('type', 'subscription_order')->first();
         if (!$payable) return;
         $this->paymentDetails = Payable::where('type_id', $this->subscriptionOrder->id)->where('type', 'subscription_order')->first()->payment->paymentDetails;
         $this->setBonus();
@@ -138,7 +142,7 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
         $order->delivery_name = $this->subscriptionOrder->delivery_name;
         $order->sales_channel = $this->subscriptionOrder->sales_channel;
         $order->location_id = $this->subscriptionOrder->location_id;
-        $order->customer_id = $this->subscriptionOrder->customer_id;
+        $order->customer_id = $this->subscriptionOrder->customer->id;
         $order->delivery_address_id = $this->subscriptionOrder->delivery_address_id;
         $order->subscription_order_id = $this->subscriptionOrder->id;
         $order->fill((new RequestIdentification())->get());
