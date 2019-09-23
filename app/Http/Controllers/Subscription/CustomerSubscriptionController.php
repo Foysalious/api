@@ -308,6 +308,7 @@ class CustomerSubscriptionController extends Controller
                 'location_name' => $subscription_order->location ? $subscription_order->location->name : "",
                 'ordered_for' => $subscription_order->deliveryAddress->name,
                 'subscription_status' => $subscription_order->status,
+                'subscription_additional_info' => $subscription_order->additional_info,
 
 
                 "billing_cycle" => $subscription_order->billing_cycle,
