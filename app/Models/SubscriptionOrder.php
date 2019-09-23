@@ -89,9 +89,9 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface, Pay
         })->each(function ($partner_order) {
             $partner_order->calculate(1);
         });
-        $partner_orders->totalPrice = (double)$partner_orders->sum('totalPrice');
-        $partner_orders->due = (double)$partner_orders->sum('due');
-        $partner_orders->paid = (double)$partner_orders->sum('paid');
+        $this->totalPrice = (double)$partner_orders->sum('totalPrice');
+        $this->due = (double)$partner_orders->sum('due');
+        $this->paid = (double)$partner_orders->sum('paid');
     }
 
     public function getTotalPrice()
