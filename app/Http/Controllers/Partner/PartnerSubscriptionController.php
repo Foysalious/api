@@ -145,9 +145,10 @@ class PartnerSubscriptionController extends Controller
 
     /**
      * @param Request $request
+     * @param bool $inside
      * @return JsonResponse
      */
-    public function purchase(Request $request,$inside=false)
+    public function purchase(Request $request, $inside = false)
     {
         try {
             $this->validate($request, [
@@ -164,14 +165,14 @@ class PartnerSubscriptionController extends Controller
                 try {
                     $grade = $request->partner->subscriber()->getBilling()->findGrade($requestedPackage, $currentPackage, $request->billing_type, $request->partner->billing_type);
                     if ($grade == PartnerSubscriptionChange::DOWNGRADE && $request->partner->status != constants('PARTNER_STATUSES')['Inactive']) {
-                        return api_response($request, null, $inside?200:202, ['message' => " আপনার $requestedPackage->show_name_bd  প্যকেজে অবনমনের  অনুরোধ  গ্রহণ  করা  হয়েছে "]);
+                        return api_response($request, null, $inside ? 200 : 202, ['message' => " আপনার $requestedPackage->show_name_bd  প্যকেজে অবনমনের  অনুরোধ  গ্রহণ  করা  হয়েছে "]);
                     }
                     $hasCredit = $request->partner->hasCreditForSubscription($requestedPackage, $request->billing_type);
                     $balance = ['remaining_balance' => $request->partner->totalCreditForSubscription, 'price' => $request->partner->totalPriceRequiredForSubscription, 'breakdown' => $request->partner->creditBreakdown];
                     if (!$hasCredit) {
                         $upgradeRequest->delete();
                         (new NotificationRepository())->sendInsufficientNotification($request->partner, $requestedPackage, $request->billing_type, $grade);
-                        return api_response($request, null, $inside?403:420, array_merge(['message' => 'আপনার একাউন্টে যথেষ্ট ব্যলেন্স নেই।।', 'required' => $request->partner->totalPriceRequiredForSubscription - $request->partner->totalCreditForSubscription], $balance));
+                        return api_response($request, null, $inside ? 403 : 420, array_merge(['message' => 'আপনার একাউন্টে যথেষ্ট ব্যলেন্স নেই।।', 'required' => $request->partner->totalPriceRequiredForSubscription - $request->partner->totalCreditForSubscription], $balance));
                     }
                     $request->partner->subscriptionUpgrade($requestedPackage, $upgradeRequest);
                     if ($grade === PartnerSubscriptionChange::RENEWED) {
@@ -193,7 +194,7 @@ class PartnerSubscriptionController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
