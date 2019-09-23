@@ -116,44 +116,12 @@ class PartnerSubscriptionController extends Controller
 
             if (((int)$request->package_id > (int)$partner->package_id) ||
                 ((int)$request->package_id == (int)$partner->package_id && $request->billing_type != $partner->billing_type && $partner->billing_type == 'monthly')) {
-                $requested_package = PartnerSubscriptionPackage::find($request->package_id);
-                if (!$partner->last_billed_date) {
-                    $partner->subscribe($requested_package, $request->billing_type);
-                    return api_response($request, 1, 200, ['message' => "আপনি সফল ভাবে $requested_package->show_name_bn প্যাকেজে সাবস্ক্রাইব করেছেন"]);
-                }
-                if ($partner->canRequestForSubscriptionUpdate() && $partner->last_billed_date) {
-                    $running_discount = $requested_package->runningDiscount($request->billing_type);
-                    $this->setModifier($request->manager_resource);
-                    $update_request_data = $this->withCreateModificationField([
-                        'partner_id' => $partner->id,
-                        'old_package_id' => $partner->package_id,
-                        'new_package_id' => $request->package_id,
-                        'old_billing_type' => $partner->billing_type,
-                        'new_billing_type' => $request->billing_type,
-                        'discount_id' => $running_discount ? $running_discount->id : null
-                    ]);
-                    PartnerSubscriptionUpdateRequest::create($update_request_data);
-
-                    return api_response($request, 1, 200, ['message' => "আপনার সাবস্ক্রিপশন রিকোয়েস্টটি সফল ভাবে গৃহীত হয়েছে"]);
-                }
-                $last_requested_package = $partner->lastSubscriptionUpdateRequest()->newPackage->show_name_bn;
-                return api_response($request, null, 403, ['message' => "আপনি অলরেডি $last_requested_package প্যাকেজে রিকোয়েস্ট করেছেন, অনুগ্রহ করে ভেরিফাই হওয়ার জন্য অপেক্ষা করুন।"]);
+                return $this->purchase($request,true);
             } elseif (((int)$request->package_id == (int)$partner->package_id) && $request->billing_type == $partner->billing_type) {
                 $partner_package = $partner->subscription;
                 return api_response($request, null, 403, ['message' => "আপনি অলরেডি $partner_package->show_name_bn প্যাকেজে আছেন"]);
             } else {
-                $requested_package = PartnerSubscriptionPackage::find($request->package_id);
-                if (!$partner->last_billed_date) {
-                    $partner->subscribe($requested_package, $request->billing_type);
-                    $subscription_amount_for_requested_package = json_decode($requested_package->rules)->fee->{$request->billing_type}->value;
-                    (new SmsHandler('new-subscription'))->send($partner->getContactNumber(), [
-                        'package_name' => $requested_package->show_name_bn,
-                        'package_type' => $request->billing_type,
-                        'subscription_amount' => $subscription_amount_for_requested_package
-                    ]);
-                    return api_response($request, 1, 200, ['message' => "আপনি সফল ভাবে $requested_package->show_name_bn প্যাকেজে সাবস্ক্রাইব করেছেন"]);
-                }
-                return api_response($request, null, 403, ['message' => "$requested_package->show_name_bn প্যাকেজে যেতে অনুগ্রহ করে সেবার সাথে যোগাযোগ করুন"]);
+                return $this->purchase($request,true);
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -179,7 +147,7 @@ class PartnerSubscriptionController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function purchase(Request $request)
+    public function purchase(Request $request,$inside=false)
     {
         try {
             $this->validate($request, [
@@ -188,7 +156,7 @@ class PartnerSubscriptionController extends Controller
             $currentPackage = $request->partner->subscription;
             $requestedPackage = PartnerSubscriptionPackage::find($request->package_id);
             if (empty($requestedPackage)) {
-                return api_response($request, null, 402, ['message' => ' আপনার  অনুরধক্রিত  প্যকেজটি পাওয়া যায়  নাই']);
+                return api_response($request, null, 403, ['message' => ' আপনার  অনুরধক্রিত  প্যকেজটি পাওয়া যায়  নাই']);
             }
 
             $this->setModifier($request->manager_resource);
@@ -196,14 +164,14 @@ class PartnerSubscriptionController extends Controller
                 try {
                     $grade = $request->partner->subscriber()->getBilling()->findGrade($requestedPackage, $currentPackage, $request->billing_type, $request->partner->billing_type);
                     if ($grade == PartnerSubscriptionChange::DOWNGRADE && $request->partner->status != constants('PARTNER_STATUSES')['Inactive']) {
-                        return api_response($request, null, 202, ['message' => " আপনার $requestedPackage->show_name_bd  প্যকেজে অবনমনের  অনুরোধ  গ্রহণ  করা  হয়েছে "]);
+                        return api_response($request, null, $inside?200:202, ['message' => " আপনার $requestedPackage->show_name_bd  প্যকেজে অবনমনের  অনুরোধ  গ্রহণ  করা  হয়েছে "]);
                     }
                     $hasCredit = $request->partner->hasCreditForSubscription($requestedPackage, $request->billing_type);
                     $balance = ['remaining_balance' => $request->partner->totalCreditForSubscription, 'price' => $request->partner->totalPriceRequiredForSubscription, 'breakdown' => $request->partner->creditBreakdown];
                     if (!$hasCredit) {
                         $upgradeRequest->delete();
                         (new NotificationRepository())->sendInsufficientNotification($request->partner, $requestedPackage, $request->billing_type, $grade);
-                        return api_response($request, null, 420, array_merge(['message' => 'আপনার একাউন্টে যথেষ্ট ব্যলেন্স নেই।।', 'required' => $request->partner->totalPriceRequiredForSubscription - $request->partner->totalCreditForSubscription], $balance));
+                        return api_response($request, null, $inside?403:420, array_merge(['message' => 'আপনার একাউন্টে যথেষ্ট ব্যলেন্স নেই।।', 'required' => $request->partner->totalPriceRequiredForSubscription - $request->partner->totalCreditForSubscription], $balance));
                     }
                     $request->partner->subscriptionUpgrade($requestedPackage, $upgradeRequest);
                     if ($grade === PartnerSubscriptionChange::RENEWED) {

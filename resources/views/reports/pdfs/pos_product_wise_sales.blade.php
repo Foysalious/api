@@ -33,7 +33,7 @@
             page-break-before: auto;
         }
         body {
-            font-family: Siyamrupali, DejaVu Sans, 'Roboto', sans-serif !important;
+            font-family: Siyamrupali, DejaVu Sans, 'Roboto', sans-serif ;
             color: #4a4a4a;
         }
 
