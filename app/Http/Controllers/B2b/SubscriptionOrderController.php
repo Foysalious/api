@@ -84,7 +84,9 @@ class SubscriptionOrderController extends Controller
             $member = $request->manager_member;
             /** @var SubscriptionOrder $subscription_order */
             $subscription_order = SubscriptionOrder::find((int)$subscription_order);
-            if ($payment_method == 'wallet' && $subscription_order->getTotalPrice() > $business->shebaCredit()) return api_response($request, null, 403, ['message' => 'You don\'t have sufficient credit.']);
+            $subscription_order->calculate();
+            if ($subscription_order->due<=0)  return api_response($request, null, 403,['message'=>'Your order is already paid.']);
+            if ($payment_method == 'wallet' && $subscription_order->due > $business->wallet) return api_response($request, null, 403, ['message' => 'You don\'t have sufficient credit.']);
             $order_adapter = new SubscriptionOrderAdapter();
             $payable = $order_adapter->setModelForPayable($subscription_order)->setUser($business)->getPayable();
             $payment = $sheba_payment->setMethod($payment_method)->init($payable);

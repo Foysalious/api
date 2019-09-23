@@ -113,7 +113,8 @@ class CustomerSubscriptionController extends Controller
             $payment_method = $request->payment_method;
             /** @var SubscriptionOrder $subscription_order */
             $subscription_order = SubscriptionOrder::find((int)$subscription);
-            if ($payment_method == 'wallet' && $subscription_order->getTotalPrice() > $customer->shebaCredit()) {
+            $subscription_order->calculate();
+            if ($payment_method == 'wallet' && $subscription_order->due > $customer->shebaCredit()) {
                 return api_response($request, null, 403, ['message' => 'You don\'t have sufficient credit.']);
             }
             $order_adapter = new SubscriptionOrderAdapter();
@@ -221,6 +222,7 @@ class CustomerSubscriptionController extends Controller
         try {
             $customer = $request->customer;
             $subscription_order = SubscriptionOrder::find((int)$subscription);
+            $subscription_order->calculate(1);
             $partner = $subscription_order->partner;
             $partner_orders = $subscription_order->orders->map(function ($order) {
                 return $order->lastPartnerOrder();
@@ -336,11 +338,13 @@ class CustomerSubscriptionController extends Controller
 
                 'original_price' => $service_details->original_price,
                 'discount' => $service_details->discount,
-                'total_price' => $service_details->discounted_price,
-                "paid_on" => !empty($subscription_order->paid_at) ? Carbon::parse($subscription_order->paid_at)->format('M-j, Y') : null,
+                'total_price' => $subscription_order->totalPrice,
+                "paid_on" => $subscription_order->isPaid() ? $subscription_order->paid_at->format('M-j, Y') : null,
                 'is_paid' => $subscription_order->isPaid(),
                 "orders" => $format_partner_orders,
-                'schedule_dates' => $schedule_dates
+                'schedule_dates' => $schedule_dates,
+                'paid' => $subscription_order->paid,
+                'due' => $subscription_order->due,
             ];
 
             return api_response($request, $subscription_order_details, 200, ['subscription_order_details' => $subscription_order_details]);

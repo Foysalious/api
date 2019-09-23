@@ -28,12 +28,13 @@ class SubscriptionOrderAdapter implements PayableAdapter
 
     public function getPayable(): Payable
     {
+        $this->subscriptionOrder->calculate();
         $payable = new Payable();
         $payable->type = 'subscription_order';
         $payable->type_id = $this->subscriptionOrder->id;
         $payable->user_id = $this->user->id;
         $payable->user_type = get_class($this->user);
-        $payable->amount = $this->subscriptionOrder->getTotalPrice();
+        $payable->amount = $this->subscriptionOrder->due;
         $payable->completion_type = "subscription_order";
         $payable->success_url = $this->resolveRedirectUrl();
         $payable->created_at = Carbon::now();
