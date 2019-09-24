@@ -129,15 +129,15 @@
                             <td colspan="3" style="text-align: right">
                                 <div style="width: 100%;text-align: right">
                                     <div style="text-align: right; float: right">
-                                        <span style="color: #9b9b9b;">{{$partner['mobile']}}</span>
+                                        <span style="color: #7c808f;">{{$partner['mobile']}}</span>
                                         <span style="padding-left: 10px; color: #C91F66"> <img style="width: 14px"
                                                                                                src="https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/image/invoice/icon/call-material@3x.png"
                                                                                                alt=""></span><br>
-                                        <span style="color: #9b9b9b;">{{$partner['email']}}</span>
+                                        <span style="color: #7c808f;">{{$partner['email']}}</span>
                                         <span style="padding-left: 10px ; color: #C91F66"><img style="width: 14px"
                                                                                                src="https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/image/invoice/icon/email-material@3x.png"
                                                                                                alt=""></span><br>
-                                        <span style="color: #9b9b9b;">{{$partner['address']}}</span>
+                                        <span style="color: #7c808f;">{{$partner['address']}}</span>
                                         <span style="padding-left: 10px; color: #C91F66"><img style="width: 14px"
                                                                                               src="https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/image/invoice/icon/location-on-material@3x.png"
                                                                                               alt=""></span>
@@ -159,17 +159,17 @@
                         @if(isset($customer))
                             <div style="display: block">
                                 <div style="float: left">
-                                    <span style="color: #B0BEC5;">Bill to:</span>
-                                    <span style="color: #383d46;letter-spacing: -0.05px;font-weight: 700;">{{ucfirst($customer['name'])}}</span><br>
+                                    <span style="color: #7c808f;">Bill to:</span>
+                                    <span style="color: #7c808f;letter-spacing: -0.05px;font-weight: 700;">{{ucfirst($customer['name'])}}</span><br>
                                     <div style="padding-left: 45px">
-                                        <span style="color: #9b9b9b">{{$customer['mobile']}}</span>
+                                        <span style="color: #7c808f">{{$customer['mobile']}}</span>
                                     </div>
                                 </div>
                                 <div style="float: right">
-                                    <span style="color: #B0BEC5;">Bill Number:</span>
+                                    <span style="color: #7c808f;">Bill Number:</span>
                                     <span style="color: #C91F66;letter-spacing: -0.05px;font-weight: 700;">{{$subscription_code}}</span><br>
-                                    <span style="color: #B0BEC5;">Date Of Bill:</span>
-                                    <span style="color: #9b9b9b">{{$bill_pay_date}}</span>
+                                    <span style="color: #7c808f;">Date Of Bill:</span>
+                                    <span style="color: #7c808f">{{$bill_pay_date}}</span>
                                 </div>
                             </div>
                         @endif
