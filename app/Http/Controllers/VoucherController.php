@@ -18,6 +18,7 @@ use Sheba\ModificationFields;
 use Sheba\Voucher\DTO\Params\CheckParamsForPosOrder;
 use Sheba\Voucher\VoucherRule;
 use Throwable;
+use Illuminate\Validation\Rule;
 
 class VoucherController extends Controller
 {
@@ -278,17 +279,32 @@ class VoucherController extends Controller
         }
     }
 
-    public function deactivateVoucher(Request $request,$partner,Voucher $voucher){
+    /**
+     * @param Request $request
+     * @param $partner
+     * @param Voucher $voucher
+     * @return JsonResponse
+     */
+    public function activationStatusChange(Request $request, $partner, Voucher $voucher)
+    {
         try {
+            $this->validate($request, [
+                'status' => 'required|in:' . implode(',', ['active', 'inactive']),
+            ]);
             $partner = $request->partner;
             $this->setModifier($partner);
-            $voucher->end_date = Carbon::now();
-            $voucher->update();
-            return api_response($request, null, 200, ['msg' => 'Promo deactivated successfully']);
+            $data = ['status' => $request->status == 'active' ? 1 : 0];
+            $voucher->update($this->withUpdateModificationField($data));
+
+            return api_response($request, null, 200, ['msg' => "Promo {$request->status} successfully"]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+
     }
 
     /**
