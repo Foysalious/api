@@ -13,6 +13,8 @@ use App\Models\PartnerWorkingHour;
 
 use App\Repositories\PartnerRepository;
 
+use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use DB;
@@ -21,12 +23,14 @@ use Sheba\Dal\PartnerLocation\PartnerLocationRepository;
 use Sheba\ModificationFields;
 use Sheba\Partner\StatusChanger;
 use Sheba\RequestIdentification;
+use Throwable;
 
 class OperationController extends Controller
 {
     use ModificationFields;
 
     private $partnerLocationRepo;
+    private $category_request_data;
 
     public function __construct()
     {
@@ -52,7 +56,7 @@ class OperationController extends Controller
                 removeRelationsAndFields($category);
             }));
             return api_response($request, $final, 200, ['partner' => $final]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -76,7 +80,7 @@ class OperationController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -138,12 +142,17 @@ class OperationController extends Controller
             });
 
             return true;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return null;
         }
     }
 
+    /**
+     * @param $partner
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function saveCategories($partner, Request $request)
     {
         try {
@@ -157,21 +166,34 @@ class OperationController extends Controller
             $categories = Category::whereIn('id', $categories)->get();
             $categories->load('services');
             list($services, $category_partners) = $this->makeCategoryPartnerWithServices($partner, $categories, $by);
-            
+
             DB::transaction(function () use ($partner, $category_partners, $services, $category_name) {
-                $partner->categories()->sync($category_partners);
-                $partner_resources = PartnerResource::whereIn('id', $partner->handymanResources->pluck('pivot.id')->toArray())->get();
-                $category_ids = $partner->categories->pluck('id')->toArray();
-                $partner_resources->each(function ($partner_resource) use ($category_ids) {
-                    $partner_resource->categories()->sync($category_ids);
-                });
-                $partner->services()->sync($services);
+                if (!empty($category_partners)) {
+                    $partner->categories()->sync($category_partners);
+                    $partner_resources = PartnerResource::whereIn('id', $partner->handymanResources->pluck('pivot.id')->toArray())->get();
+                    $category_ids = $partner->categories->pluck('id')->toArray();
+                    $partner_resources->each(function ($partner_resource) use ($category_ids) {
+                        $partner_resource->categories()->sync($category_ids);
+                    });
+                }
+
+                if (!empty($services)) $partner->services()->sync($services);
 
                 if (isPartnerReadyToVerified($partner)) {
                     $status_changer = new StatusChanger($partner, ['status' => constants('PARTNER_STATUSES')['Waiting']]);
                     $status_changer->change();
                 }
-                if ($category_name) CategoryRequest::create(['partner_id' => $partner->id, 'category_name' => $category_name]);
+
+                if ($category_name) {
+                    $this->category_request_data[count($this->category_request_data)] = [
+                        'partner_id' => $partner->id,
+                        'category_name' => $category_name
+                    ];
+                    array_walk($this->category_request_data, function (&$item) {
+                        return $item['created_at'] = Carbon::now();
+                    });
+                    CategoryRequest::insert($this->category_request_data);
+                }
             });
 
             return api_response($request, $partner, 200);
@@ -181,7 +203,8 @@ class OperationController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -201,7 +224,13 @@ class OperationController extends Controller
         try {
             foreach ($categories as $category) {
                 if ($category->isParent()) {
-                    foreach ($category->children()->published()->get() as $secondary_category) {
+                    $published_secondary_category = $category->children()->published()->get();
+                    if ($published_secondary_category->isEmpty()) {
+                        $this->category_request_data[] = ['partner_id' => $partner->id, 'category_name' => $category->name];
+                        return [$services, $category_partners];
+                    }
+
+                    foreach ($published_secondary_category as $secondary_category) {
                         $current_category_partner = $this->makeCategoryPartner($partner, $secondary_category, $location);
                         array_push($category_partners, array_merge($current_category_partner, $by));
 
@@ -220,7 +249,7 @@ class OperationController extends Controller
                     }
                 }
             }
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
         }
 
         return [$services, $category_partners];
@@ -232,7 +261,7 @@ class OperationController extends Controller
             $partner = $request->partner;
             $is_on_premise_applicable = $partner->categories()->where('categories.is_partner_premise_applied', 1)->count() ? 1 : 0;
             return api_response($request, $is_on_premise_applicable, 200, ['is_on_premise_applicable' => $is_on_premise_applicable]);
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             app('sentry')->captureException($exception);
             return api_response($request, null, 500);
         }
