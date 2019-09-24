@@ -1,16 +1,20 @@
-<?php
-
-
-namespace Sheba\Reports\Pos;
-
+<?php namespace Sheba\Reports\Pos;
 
 use Sheba\Reports\Pos\Sales\CustomerWise;
 use Sheba\Reports\Pos\Sales\ProductWise;
 
 class PosReportRepository
 {
-    private $productWise, $customerWise;
+    /** @var ProductWise $productWise */
+    private $productWise;
+    /** @var CustomerWise $customerWise */
+    private $customerWise;
 
+    /**
+     * PosReportRepository constructor.
+     * @param ProductWise $productWise
+     * @param CustomerWise $customerWise
+     */
     public function __construct(ProductWise $productWise, CustomerWise $customerWise)
     {
         $this->productWise = $productWise;
@@ -32,5 +36,4 @@ class PosReportRepository
     {
         return $this->customerWise;
     }
-
 }

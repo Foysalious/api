@@ -32,5 +32,4 @@ class PosOrderItemRepository extends BaseRepository
     public function getModel(){
         return new PosOrderItem();
     }
-
 }
