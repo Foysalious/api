@@ -2,6 +2,7 @@
 
 use App\Models\Partner;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Sheba\Pos\Repositories\PosOrderItemRepository;
 use Sheba\Reports\Pos\PosReport;
 
@@ -49,7 +50,7 @@ class ProductWise extends PosReport
      * @param Request $request
      * @param Partner $partner
      * @return $this
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
     public function prepareQuery(Request $request, Partner $partner)
     {

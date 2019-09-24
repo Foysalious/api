@@ -4,6 +4,7 @@ use App\Models\Partner;
 use App\Models\PosOrder;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Validation\ValidationException;
 use Sheba\Pos\Repositories\PosOrderItemRepository;
 use Sheba\Reports\ExcelHandler;
 use Sheba\Reports\PdfHandler;
@@ -41,6 +42,7 @@ class CustomerWise extends PosReport
             $is_customer_already_exist = (array_key_exists($customer_id, $customer_sales));
             if (!$is_customer_already_exist) {
                 $customer_sales[$customer_id] = [
+                    'customer_id' =>  $customer_id,
                     'customer_name' => $pos_order->customer->profile->name,
                     'order_count'   => 0,
                     'sales_amount'  => 0.00
@@ -49,8 +51,23 @@ class CustomerWise extends PosReport
             $customer_sales[$customer_id]['order_count']    =  $is_customer_already_exist ? $customer_sales[$customer_id]['order_count']++ : 1;
             $customer_sales[$customer_id]['sales_amount']   =  $is_customer_already_exist ? $customer_sales[$customer_id]['sales_amount'] + $pos_order->getNetBill() : $pos_order->getNetBill();
         });
-        $customer_sales = array_values($customer_sales);
-        $this->data = $paginate ? new Paginator($customer_sales, $this->limit) : $customer_sales;
+
+        $customer_sales = collect($customer_sales);
+        $this->setDefaultOrderBy('customer_name')->setOrderByAccessors('customer_name,order_count,sales_amount');
+        $is_desc =  $this->order == 'DESC' ? true : false;
+        $customer_sales = $customer_sales->sortBy($this->orderBy, SORT_REGULAR, $is_desc);
+        $total = $customer_sales->count();
+        $customer_sales = $customer_sales->values();
+        $data = $paginate ? new Paginator($customer_sales, $this->limit) : $customer_sales;
+        if ($paginate) {
+            $this->data['data'] = $data->items();
+            $this->data['total'] = $total;
+            $this->data['has_more'] = $data->hasMorePages();
+            $this->data['per_page'] = $data->perPage();
+        } else {
+            $this->data = $data;
+        }
+
         return $this;
     }
 
@@ -58,12 +75,11 @@ class CustomerWise extends PosReport
      * @param Request $request
      * @param Partner $partner
      * @return $this
+     * @throws ValidationException
      */
     public function prepareQuery(Request $request, Partner $partner)
     {
-        $this->setDefaultOrderBy('pos_order_id');
         $this->setRequest($request);
-
         $this->query = $partner->posOrders()->with('customer.profile')
             ->whereNotNull('customer_id')
             ->whereBetween('created_at', [$this->from, $this->to]);

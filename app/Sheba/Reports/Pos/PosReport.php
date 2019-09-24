@@ -28,12 +28,12 @@ abstract class PosReport
     }
 
     /**
-     * @param mixed $defaultOrderBy
+     * @param $default_order_by
      * @return PosReport
      */
-    protected function setDefaultOrderBy($defaultOrderBy)
+    protected function setDefaultOrderBy($default_order_by)
     {
-        $this->defaultOrderBy = $defaultOrderBy;
+        $this->defaultOrderBy = $default_order_by;
         return $this;
     }
 
@@ -58,13 +58,13 @@ abstract class PosReport
 
     protected function prepareQueryParams()
     {
-        $this->orderBy = $this->hasInRequest('order_by') ?: $this->defaultOrderBy;
-        $this->order = $this->hasInRequest('order') ?: 'ASC';
-        $this->range = $this->hasInRequest('range') ?: null;
-        $this->to = $this->hasInRequest('to') ?: null;
-        $this->from = $this->hasInRequest('from') ?: null;
-        $this->page = $this->hasInRequest('page') ?: 1;
-        $this->limit = $this->hasInRequest('limit') ?: null;
+        $this->orderBy  = $this->hasInRequest('order_by') ?: $this->defaultOrderBy;
+        $this->order    = $this->hasInRequest('order') ?: 'ASC';
+        $this->range    = $this->hasInRequest('range') ?: null;
+        $this->to       = $this->hasInRequest('to') ?: null;
+        $this->from     = $this->hasInRequest('from') ?: null;
+        $this->page     = $this->hasInRequest('page') ?: 1;
+        $this->limit    = $this->hasInRequest('limit') ?: null;
 
         $this->setRange();
     }
