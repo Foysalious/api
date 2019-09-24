@@ -34,13 +34,27 @@ class SubscriptionOrderAdapter implements PayableAdapter
         $payable->type_id = $this->subscriptionOrder->id;
         $payable->user_id = $this->user->id;
         $payable->user_type = get_class($this->user);
-        $payable->amount = $this->subscriptionOrder->due;
+        $payable->amount = $this->resolveAmount();
         $payable->completion_type = "subscription_order";
         $payable->success_url = $this->resolveRedirectUrl();
         $payable->created_at = Carbon::now();
         $payable->emi_month = $this->resolveEmiMonth($payable);
         $payable->save();
         return $payable;
+    }
+
+
+    /**
+     * @return float
+     */
+    private function resolveAmount()
+    {
+        if ($this->subscriptionOrder->hasOrders()) {
+            $this->subscriptionOrder->calculate();
+            return $this->subscriptionOrder->due;
+        } else {
+            return (double)json_decode($this->subscriptionOrder->service_details)->discounted_price;
+        }
     }
 
     /**

@@ -41,8 +41,9 @@ class SubscriptionOrderComplete extends PaymentComplete
             $subscription_order = $model::find($payable->type_id);
             $payment_detail = $this->payment->paymentDetails->last();
             DB::transaction(function () use ($subscription_order, $payment_detail) {
-                $this->createSubscriptionOrderPaymentLog();
                 $this->clearSubscriptionPayment($subscription_order);
+                $this->convertToOrder($subscription_order);
+                $this->createSubscriptionOrderPaymentLog();
                 $this->completePayment();
                 $subscription_order->payment_method = strtolower($payment_detail->readable_method);
                 $subscription_order->update();
@@ -84,7 +85,6 @@ class SubscriptionOrderComplete extends PaymentComplete
         $payable_model->sheba_collection = (double)$this->payment->payable->amount;
         $payable_model->paid_at = Carbon::now();
         $payable_model->update();
-        $this->convertToOrder($payable_model);
     }
 
 

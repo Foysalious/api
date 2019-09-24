@@ -23,14 +23,15 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface, Pay
         return $this->belongsTo(Category::class);
     }
 
-    public function scopeStatus($query, $status)
-    {
-        return $query->where('status', $status);
-    }
 
     public function partner()
     {
         return $this->belongsTo(Partner::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(SubscriptionOrderPayment::class);
     }
 
     public function customer()
@@ -56,6 +57,11 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface, Pay
     public function location()
     {
         return $this->belongsTo(Location::class);
+    }
+
+    public function scopeStatus($query, $status)
+    {
+        return $query->where('status', $status);
     }
 
     public function scopeAccepted($query)
@@ -106,8 +112,12 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface, Pay
         return $this->due > 0 ? 0 : 1;
     }
 
-    public function payments()
+
+    /**
+     * @return bool
+     */
+    public function hasOrders()
     {
-        return $this->hasMany(SubscriptionOrderPayment::class);
+        return $this->orders->count() > 0;
     }
 }
