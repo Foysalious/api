@@ -137,8 +137,7 @@ class VoucherController extends Controller
                 'end_date' => 'required|date|after_or_equal:start_date',
                 'code' => 'required|unique:vouchers',
                 'modules' => 'required',
-                'applicant_types' => 'required',
-
+                'applicant_types' => 'required'
             ]);
 
             $partner = $request->partner;
@@ -152,6 +151,7 @@ class VoucherController extends Controller
                 'start_date' => Carbon::parse($request->start_date . ' 00:00:00'),
                 'end_date' => Carbon::parse($request->end_date . ' 23:59:59'),
                 'max_customer' => ($request->has('max_customer') && !empty($request->max_customer)) ? $request->max_customer : null,
+                'max_order' => 0,
                 'is_created_by_sheba' => 0,
                 'sheba_contribution' => 0.00,
                 'partner_contribution' => 100.00,
@@ -188,8 +188,6 @@ class VoucherController extends Controller
                 'code' => 'required|unique:vouchers,code,' . $voucher->id,
                 'applicant_types' => 'required',
                 'modules' => 'required'
-
-
             ]);
 
             $this->setModifier($partner);
