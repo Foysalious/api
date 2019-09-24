@@ -161,11 +161,13 @@
                                 <div style="float: left">
                                     <span style="color: #B0BEC5;">Bill to:</span>
                                     <span style="color: #383d46;letter-spacing: -0.05px;font-weight: 700;">{{ucfirst($customer['name'])}}</span><br>
-                                    <span style="padding-left:45px;color: #9b9b9b">{{$customer['mobile']}}</span>
+                                    <div style="padding-left: 45px">
+                                        <span style="color: #9b9b9b">{{$customer['mobile']}}</span>
+                                    </div>
                                 </div>
                                 <div style="float: right">
                                     <span style="color: #B0BEC5;">Bill Number:</span>
-                                    <span style="color: #383d46;letter-spacing: -0.05px;font-weight: 700;">{{$subscription_code}}</span><br>
+                                    <span style="color: #C91F66;letter-spacing: -0.05px;font-weight: 700;">{{$subscription_code}}</span><br>
                                     <span style="color: #B0BEC5;">Date Of Bill:</span>
                                     <span style="color: #9b9b9b">{{$bill_pay_date}}</span>
                                 </div>
@@ -246,21 +248,43 @@
             </tr>
             <tr>
                 <td>
-                    <hr style="width: 100%">
-                    <p class="terms"
-                       style="border-top: none; padding-left: 172px;vertical-align: middle;display: inline-block;text-align: center;line-height: 1">
-                        In association with: <span><img style="width: 80px"
-                                                        src="https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/images/sheba_logo_blue.png"
-                                                        alt=""></span>
-                        <span style="padding-left: 10px; color: #C91F66"> <img style="width: 12px"
-                                                                               src="https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/image/invoice/icon/call-material%403x.png"
-                                                                               alt=""></span>
-                        <span style="padding-left: 5px">16516</span>
-                        <span style="padding-left: 10px; color: #C91F66"><img style="width: 12px"
-                                                                              src="https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/image/invoice/icon/email-material@3x.png"
-                                                                              alt=""></span>
-                        <span style="padding-left: 5px">info@sheba.xyz</span>
-                    </p>
+                    <div class="terms" style="padding-left: 150px;">
+                        <table>
+                            <tr>
+                                <td><span> </span>
+                                    <span>In association with:</span>
+                                </td>
+                                <td>
+                                    <span style="padding-left: 20px; color: #C91F66"></span>
+                                    <span>
+                                        <img style="width: 90px; padding-top: 16px"
+                                             src="https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/images/sheba_logo_blue.png"
+                                             alt=""></span>
+                                </td>
+                                <td>
+                                    <span style="padding-left: 20px; color: #C91F66">
+                                        <img
+                                                style="width: 16px; padding-top: 15px"
+                                                src="https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/image/invoice/icon/call-material%403x.png"
+                                                alt=""></span>
+                                    <span style="padding-left: 10px">16516</span>
+                                </td>
+                                <td>
+                                    <span style="padding-left: 20px; color: #C91F66">
+                                        <img style="width: 16px;padding-top: 15px"
+                                             src="https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/image/invoice/icon/email-material@3x.png"
+                                             alt=""></span>
+                                    <span style="padding-left: 10px">info@sheba.xyz</span>
+                                </td>
+
+                                {{--<p class="terms" style="border-top: none; padding-left: 172px;vertical-align: middle;display: inline-block;text-align: center;line-height: 1">
+
+
+
+                                </p>--}}
+                            </tr>
+                        </table>
+                    </div>
                 </td>
             </tr>
             </tbody>
