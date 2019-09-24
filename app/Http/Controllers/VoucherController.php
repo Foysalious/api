@@ -293,7 +293,7 @@ class VoucherController extends Controller
             ]);
             $partner = $request->partner;
             $this->setModifier($partner);
-            $data = ['status' => $request->status == 'active' ? 1 : 0];
+            $data = ['is_active' => $request->status == 'active' ? 1 : 0];
             $voucher->update($this->withUpdateModificationField($data));
 
             return api_response($request, null, 200, ['msg' => "Promo {$request->status} successfully"]);
