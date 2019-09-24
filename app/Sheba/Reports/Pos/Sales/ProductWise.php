@@ -1,6 +1,5 @@
 <?php namespace Sheba\Reports\Pos\Sales;
 
-
 use App\Models\Partner;
 use Illuminate\Http\Request;
 use Sheba\Pos\Repositories\PosOrderItemRepository;
@@ -11,10 +10,12 @@ use Sheba\Reports\Pos\PosReport;
 
 class ProductWise extends PosReport
 {
-    /**
-     * @var $itemRepository PosOrderItemRepository
-     */
-    private $itemRepository, $excelHandler, $pdfHandler;
+    /** @var $itemRepository PosOrderItemRepository */
+    private $itemRepository;
+    /** @var ExcelHandler $excelHandler */
+    private $excelHandler;
+    /** @var PdfHandler $pdfHandler */
+    private $pdfHandler;
 
     /**
      * ProductWise constructor.
@@ -58,8 +59,7 @@ class ProductWise extends PosReport
             ->whereBetween('created_at', [$this->from, $this->to])
             ->groupBy(['service_id', 'service_name'])
             ->orderBy($this->orderBy, $this->order);
+
         return $this;
     }
-
-
 }

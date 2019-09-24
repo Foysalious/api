@@ -50,6 +50,7 @@ class TimeFrame
         }
         return $this->forAMonth($month, $year);
     }
+
     public function forADay(Carbon $date)
     {
         $this->start = $date->copy()->startOfDay();
@@ -87,7 +88,7 @@ class TimeFrame
 
     public function forLifeTime()
     {
-        $this->start = Carbon::parse(constants('STARTING_YEAR').'-01-01');
+        $this->start = Carbon::parse(constants('STARTING_YEAR') . '-01-01');
         $this->end = Carbon::now()->endOfYear();
         return $this;
     }
@@ -124,6 +125,7 @@ class TimeFrame
         $this->end = $date->copy()->month($endMonth)->year($year)->endOfMonth();
         return $this;
     }
+
     public function forSomeWeekFromNow($week = 1, $week_start = null, $week_end = null)
     {
         if ($week == 0) return $this->forCurrentWeek($week_start);

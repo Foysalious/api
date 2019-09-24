@@ -1,6 +1,5 @@
 <?php namespace Sheba\Reports\Pos;
 
-
 use App\Models\Partner;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
@@ -51,7 +50,6 @@ abstract class PosReport
         if ($validator->fails()) {
             throw new ValidationException($validator);
         }
-
     }
 
     protected function prepareQueryParams()
@@ -63,6 +61,7 @@ abstract class PosReport
         $this->from = $this->hasInRequest('from') ?: null;
         $this->page = $this->hasInRequest('page') ?: 1;
         $this->limit = $this->hasInRequest('limit') ?: null;
+
         $this->setRange();
     }
 
@@ -80,6 +79,7 @@ abstract class PosReport
         $this->request = (array)$request->all();
         $this->validateRequest();
         $this->prepareQueryParams();
+
         return $this;
     }
 
@@ -92,7 +92,6 @@ abstract class PosReport
     private function setDefaults()
     {
         $this->defaultOrderBy = 'name';
-
     }
 
     public function getData()
