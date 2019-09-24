@@ -291,6 +291,12 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
         return null;
     }
 
+    public function getContactPerson()
+    {
+        if ($admin_resource = $this->admins()->first()) return $admin_resource->profile->name;
+        return null;
+    }
+
     public function getManagerMobile()
     {
         if ($operation_resource = $this->resources->where('pivot.resource_type', constants('RESOURCE_TYPES')['Operation'])->first()) {
@@ -577,6 +583,11 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
     public function isLite()
     {
         return $this->package_id == (int)config('sheba.partner_lite_packages_id');
+    }
+
+    public function isAccessibleForMarketPlace()
+    {
+        return !in_array($this->package_id, config('sheba.marketplace_not_accessible_packages_id'));
     }
 
     public function scopeLite($q)

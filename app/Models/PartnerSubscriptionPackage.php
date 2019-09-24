@@ -75,6 +75,7 @@ class PartnerSubscriptionPackage extends Model implements SubscriptionPackage,Pa
             default:
                 $day = 1;
         }
+
         return $this->originalPrice($billing_type) / $day;
     }
 

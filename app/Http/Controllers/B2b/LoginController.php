@@ -78,7 +78,7 @@ class LoginController extends Controller
         ]);
     }
 
-    private function generateDummyToken()
+    public function generateDummyToken()
     {
         $profile = Profile::find(7824);
         $member = $profile->member;

@@ -1,6 +1,4 @@
-<?php
-
-namespace Sheba\Subscription\Partner;
+<?php namespace Sheba\Subscription\Partner;
 
 use App\Models\Partner;
 use App\Models\PartnerSubscriptionPackage;

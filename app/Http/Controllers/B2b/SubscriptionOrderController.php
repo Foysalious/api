@@ -22,11 +22,14 @@ class SubscriptionOrderController extends Controller
             $member = $request->manager_member;
             $customer = $member->profile->customer;
             if ($customer) {
-                $url = config('sheba.api_url') . "/v2/customers/$customer->id/subscriptions/order-lists?remember_token=$customer->remember_token";
+                $url = config('sheba.api_url') . "/v2/customers/$customer->id/subscriptions/order-lists?offset=$request->offset&limit=$request->limit&status=$request->status&remember_token=$customer->remember_token";
                 $client = new Client();
                 $res = $client->request('GET', $url);
                 if ($response = json_decode($res->getBody())) {
-                    return ($response->code == 200) ? api_response($request, $response, 200, ['subscription_orders' => $response->subscription_orders_list]) : api_response($request, $response, $response->code);
+                    return ($response->code == 200) ? api_response($request, $response, 200, [
+                        'subscription_orders' => $response->subscription_orders_list,
+                        'subscription_orders_count' => $response->subscription_order_count,
+                    ]) : api_response($request, $response, $response->code);
                 }
             } else {
                 return api_response($request, null, 404);
@@ -81,7 +84,9 @@ class SubscriptionOrderController extends Controller
             $member = $request->manager_member;
             /** @var SubscriptionOrder $subscription_order */
             $subscription_order = SubscriptionOrder::find((int)$subscription_order);
-            if ($payment_method == 'wallet' && $subscription_order->getTotalPrice() > $business->shebaCredit()) return api_response($request, null, 403, ['message' => 'You don\'t have sufficient credit.']);
+            $subscription_order->calculate();
+            if ($subscription_order->due<=0)  return api_response($request, null, 403,['message'=>'Your order is already paid.']);
+            if ($payment_method == 'wallet' && $subscription_order->due > $business->wallet) return api_response($request, null, 403, ['message' => 'You don\'t have sufficient credit.']);
             $order_adapter = new SubscriptionOrderAdapter();
             $payable = $order_adapter->setModelForPayable($subscription_order)->setUser($business)->getPayable();
             $payment = $sheba_payment->setMethod($payment_method)->init($payable);
@@ -145,12 +150,7 @@ class SubscriptionOrderController extends Controller
             ];
             $handler = new PdfHandler();
             return $handler->setData($subscription_order_invoice)->setName('Subscription Order Invoice')->setViewFile('subscription_order_invoice')->show();
-
-//            return api_response($request, 1, 200, ['subscription_order' => $subscription_order]);
-
-            #return api_response($request, $subscription_order_invoice, 200, ['subscription_order_invoice' => $subscription_order_invoice]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

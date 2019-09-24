@@ -113,7 +113,8 @@ class CustomerSubscriptionController extends Controller
             $payment_method = $request->payment_method;
             /** @var SubscriptionOrder $subscription_order */
             $subscription_order = SubscriptionOrder::find((int)$subscription);
-            if ($payment_method == 'wallet' && $subscription_order->getTotalPrice() > $customer->shebaCredit()) {
+            $subscription_order->calculate();
+            if ($payment_method == 'wallet' && $subscription_order->due > $customer->shebaCredit()) {
                 return api_response($request, null, 403, ['message' => 'You don\'t have sufficient credit.']);
             }
             $order_adapter = new SubscriptionOrderAdapter();
@@ -134,9 +135,16 @@ class CustomerSubscriptionController extends Controller
         try {
             $customer = $request->customer;
             $subscription_orders_list = collect([]);
-            $subscription_orders = SubscriptionOrder::where('customer_id', (int)$customer->id)->orderBy('created_at', 'desc')->get();
+            list($offset, $limit) = calculatePagination($request);
+            $subscription_orders = SubscriptionOrder::where('customer_id', (int)$customer->id)->orderBy('created_at', 'desc');
+            $subscription_order_count = $subscription_orders->count();
+            $subscription_orders->skip($offset)->limit($limit);
 
-            foreach ($subscription_orders as $subscription_order) {
+            if ($request->has('status') && $request->status != 'all') {
+                $subscription_orders = $subscription_orders->status($request->status);
+            }
+
+            foreach ($subscription_orders->get() as $subscription_order) {
 
                 $partner_orders = $subscription_order->orders->map(function ($order) {
                     return $order->lastPartnerOrder();
@@ -158,8 +166,6 @@ class CustomerSubscriptionController extends Controller
                     return $partner_order['is_completed'] != null;
                 });
 
-
-                #$schedules = collect(json_decode($subscription_order->schedules));
                 $service_details = json_decode($subscription_order->service_details);
                 $service_details_breakdown = $service_details->breakdown['0'];
                 $service = Service::find((int)$service_details_breakdown->id);
@@ -196,7 +202,15 @@ class CustomerSubscriptionController extends Controller
                 ];
                 $subscription_orders_list->push($orders_list);
             }
-            return api_response($request, $subscription_orders_list, 200, ['subscription_orders_list' => $subscription_orders_list]);
+
+            if (count($subscription_orders_list) > 0) {
+                return api_response($request, $subscription_orders_list, 200, [
+                    'subscription_orders_list' => $subscription_orders_list,
+                    'subscription_order_count' => $subscription_order_count
+                ]);
+            } else {
+                return api_response($request, null, 404);
+            }
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -208,6 +222,7 @@ class CustomerSubscriptionController extends Controller
         try {
             $customer = $request->customer;
             $subscription_order = SubscriptionOrder::find((int)$subscription);
+            $subscription_order->calculate(1);
             $partner = $subscription_order->partner;
             $partner_orders = $subscription_order->orders->map(function ($order) {
                 return $order->lastPartnerOrder();
@@ -218,10 +233,11 @@ class CustomerSubscriptionController extends Controller
                 return [
                     'id' => $partner_order->order->code(),
                     'job_id' => $last_job->id,
+                    'job_status' => $last_job->status,
                     'partner_order_id' => $partner_order->id,
                     'schedule_date' => Carbon::parse($last_job->schedule_date),
                     'preferred_time' => Carbon::parse($last_job->schedule_date)->format('M-j') . ', ' . Carbon::parse($last_job->preferred_time_start)->format('h:ia'),
-                    'is_completed' => $partner_order->closed_and_paid_at ? $partner_order->closed_and_paid_at->format('M-j, h:ia') : null,
+                    'is_completed' => $partner_order->closed_and_paid_at ? $partner_order->closed_and_paid_at->format('M-j, h:ia') : 0,
                     'cancelled_at' => $partner_order->cancelled_at ? Carbon::parse($partner_order->cancelled_at)->format('M-j, h:i a') : null
                 ];
             });
@@ -280,6 +296,7 @@ class CustomerSubscriptionController extends Controller
                 'service_id' => $service->id,
                 "service_name" => $service->name,
                 "app_thumb" => $service->app_thumb,
+                'description' => $service->description,
                 "variables" => $variables,
                 "total_quantity" => $service_details->total_quantity,
                 'quantity' => (double)$service_details_breakdown->quantity,
@@ -291,8 +308,10 @@ class CustomerSubscriptionController extends Controller
 
                 "partner_id" => $subscription_order->partner_id,
                 "partner_name" => $service_details->name,
+                "contact_person" => $partner->getContactPerson(),
                 "partner_slug" => $partner->sub_domain,
                 "partner_mobile" => $partner->getContactNumber(),
+                "partner_address" => $partner->address,
                 "logo" => $service_details->logo,
                 "avg_rating" => (double)$partner->reviews()->avg('rating'),
                 "total_rating" => $partner->reviews->count(),
@@ -304,6 +323,7 @@ class CustomerSubscriptionController extends Controller
                 'location_name' => $subscription_order->location ? $subscription_order->location->name : "",
                 'ordered_for' => $subscription_order->deliveryAddress->name,
                 'subscription_status' => $subscription_order->status,
+                'subscription_additional_info' => $subscription_order->additional_info,
 
 
                 "billing_cycle" => $subscription_order->billing_cycle,
@@ -318,11 +338,13 @@ class CustomerSubscriptionController extends Controller
 
                 'original_price' => $service_details->original_price,
                 'discount' => $service_details->discount,
-                'total_price' => $service_details->discounted_price,
-                "paid_on" => !empty($subscription_order->paid_at) ? Carbon::parse($subscription_order->paid_at)->format('M-j, Y') : null,
+                'total_price' => $subscription_order->totalPrice,
+                "paid_on" => $subscription_order->isPaid() ? $subscription_order->paid_at->format('M-j, Y') : null,
                 'is_paid' => $subscription_order->isPaid(),
                 "orders" => $format_partner_orders,
-                'schedule_dates' => $schedule_dates
+                'schedule_dates' => $schedule_dates,
+                'paid' => $subscription_order->paid,
+                'due' => $subscription_order->due,
             ];
 
             return api_response($request, $subscription_order_details, 200, ['subscription_order_details' => $subscription_order_details]);

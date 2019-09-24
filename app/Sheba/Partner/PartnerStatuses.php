@@ -40,6 +40,14 @@ class PartnerStatuses
     }
 
     /**
+     * @return array
+     */
+    public static function getBillingStatuses()
+    {
+        return [self::VERIFIED, self::UNVERIFIED, self::PAUSED, self::ONBOARDED, self::CLOSED, self::WAITING, self::BLACKLISTED];
+    }
+
+    /**
      * @param $status
      * @return string
      */
