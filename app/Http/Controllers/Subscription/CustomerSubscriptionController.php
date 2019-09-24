@@ -89,6 +89,7 @@ class CustomerSubscriptionController extends Controller
             $subscriptionOrderRequest->setRequest($request)->setSalesChannel($request->sales_channel)->setCustomer($request->customer)->setAddress($address)
                 ->setDeliveryMobile($request->mobile)
                 ->setDeliveryName($request->name)
+                ->setUser($request->customer)
                 ->prepareObject();
             $subscriptionOrder = $subscriptionOrder->setSubscriptionRequest($subscriptionOrderRequest)->place();
             return api_response($request, $subscriptionOrder, 200, ['order' => [
