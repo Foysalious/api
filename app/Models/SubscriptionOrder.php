@@ -85,9 +85,9 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface, Pay
     public function calculate()
     {
         $partner_orders = $this->orders->map(function ($order) {
-            return $order->lastPartnerOrder();
-        })->each(function ($partner_order) {
+            $partner_order = $order->lastPartnerOrder();
             $partner_order->calculate(1);
+            return $partner_order;
         });
         $this->totalPrice = (double)$partner_orders->sum('totalPrice');
         $this->due = (double)$partner_orders->sum('due');

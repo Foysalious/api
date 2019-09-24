@@ -80,6 +80,7 @@ class IndexRoute
                 $api->post('due-payment-request-sms', 'Pos\SettingController@duePaymentRequestSms');
                 $api->group(['prefix' => 'reports'], function ($api) {
                     $api->get('product-wise', 'Pos\ReportsController@product');
+                    $api->get('customer-wise', 'Pos\ReportsController@customer');
                 });
             });
             $api->group(['prefix' => 'categories'], function ($api) {

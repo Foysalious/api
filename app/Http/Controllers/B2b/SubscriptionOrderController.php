@@ -56,6 +56,7 @@ class SubscriptionOrderController extends Controller
                 $url = config('sheba.api_url') . "/v2/customers/$customer->id/subscriptions/$order/details?remember_token=$customer->remember_token";
                 $client = new Client();
                 $res = $client->request('GET', $url);
+
                 if ($response = json_decode($res->getBody())) {
                     return ($response->code == 200) ? api_response($request, $response, 200, ['subscription_order_details' => $response->subscription_order_details]) : api_response($request, $response, $response->code);
                 }
