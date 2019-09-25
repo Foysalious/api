@@ -2,10 +2,12 @@
 
 use App\Models\Partner;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Sheba\Reports\ExcelHandler;
+use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Reports\PdfHandler;
 
 abstract class PosReport
@@ -17,7 +19,10 @@ abstract class PosReport
      *
      */
     protected $request, $orderBy, $range, $to, $from, $query, $order, $page, $limit, $data, $partner;
-    private $excelHandler, $pdfHandler;
+    /** @var ExcelHandler $excelHandler */
+    private $excelHandler;
+    /** @var PdfHandler $pdfHandler */
+    private $pdfHandler;
     private $defaultOrderBy, $orderByAccessors;
 
     public function __construct()
@@ -123,7 +128,8 @@ abstract class PosReport
 
     /**
      * @param string $name
-     * @return
+     * @return void
+     * @throws NotAssociativeArray
      */
     public function downloadExcel($name = 'Sales Report')
     {
@@ -134,10 +140,14 @@ abstract class PosReport
      * @param string $name
      * @param string $template
      * @return
+     * @throws NotAssociativeArray
      */
     public function downloadPdf($name = 'Sales Report', $template = 'generic_template')
-    {   //dd($this->data);
-        return $this->pdfHandler->setName($name)->setViewFile($template)->setData(['data' => $this->data, 'partner' => $this->partner, 'from' => $this->from, 'to' => $this->to])->download();
+    {
+        return $this->pdfHandler->setName($name)
+            ->setViewFile($template)
+            ->setData(['data' => $this->data, 'partner' => $this->partner, 'from' => $this->from, 'to' => $this->to])
+            ->download();
     }
 
     abstract public function prepareData($paginate = true);

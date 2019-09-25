@@ -7,6 +7,7 @@ use Illuminate\Pagination\Paginator;
 use Illuminate\Validation\ValidationException;
 use Sheba\Pos\Repositories\PosOrderItemRepository;
 use Sheba\Reports\ExcelHandler;
+use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Reports\PdfHandler;
 use Sheba\Reports\Pos\PosReport;
 
@@ -42,7 +43,7 @@ class CustomerWise extends PosReport
             $is_customer_already_exist = (array_key_exists($customer_id, $customer_sales));
             if (!$is_customer_already_exist) {
                 $customer_sales[$customer_id] = [
-                    'customer_id' =>  $customer_id,
+                    'customer_id'   => $customer_id,
                     'customer_name' => $pos_order->customer->profile->name,
                     'order_count'   => 0,
                     'sales_amount'  => 0.00
@@ -80,10 +81,37 @@ class CustomerWise extends PosReport
     public function prepareQuery(Request $request, Partner $partner)
     {
         $this->setRequest($request);
+        $this->partner = $partner;
         $this->query = $partner->posOrders()->with('customer.profile')
             ->whereNotNull('customer_id')
             ->whereBetween('created_at', [$this->from, $this->to]);
 
         return $this;
+    }
+
+    /**
+     * @param string $name
+     * @return void
+     * @throws NotAssociativeArray
+     */
+    public function downloadExcel($name = 'Sales Report')
+    {
+        $data = $this->data->toArray();
+        return $this->excelHandler->setName($name)->createReport($data)->download();
+    }
+
+    /**
+     * @param string $name
+     * @param string $template
+     * @return
+     * @throws NotAssociativeArray
+     */
+    public function downloadPdf($name = 'Sales Report', $template = 'generic_template')
+    {
+        $data = $this->data->toArray();
+        return $this->pdfHandler->setName($name)
+            ->setViewFile($template)
+            ->setData(['data' => $data, 'partner' => $this->partner, 'from' => $this->from, 'to' => $this->to])
+            ->download();
     }
 }

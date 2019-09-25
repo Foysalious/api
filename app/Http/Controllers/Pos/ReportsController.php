@@ -41,7 +41,8 @@ class ReportsController extends Controller
             $errorMessage = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, null, 400, ['message' => $errorMessage]);
         } catch (Throwable $e) {
-            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
         }
     }
 
@@ -67,7 +68,6 @@ class ReportsController extends Controller
             $errorMessage = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, null, 400, ['message' => $errorMessage]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
