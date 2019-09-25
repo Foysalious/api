@@ -136,7 +136,7 @@ abstract class PosReport
      * @return
      */
     public function downloadPdf($name = 'Sales Report', $template = 'generic_template')
-    {
+    {   //dd($this->data);
         return $this->pdfHandler->setName($name)->setViewFile($template)->setData(['data' => $this->data, 'partner' => $this->partner, 'from' => $this->from, 'to' => $this->to])->download();
     }
 
