@@ -123,7 +123,7 @@ class Voucher extends Model
 
     public function scopeNotValid($query)
     {
-        return $query->whereRaw('((NOW() NOT BETWEEN start_date AND end_date) OR (NOW() <= start_date AND end_date IS NULL))')->where('is_active', 0);
+        return $query->whereRaw('((NOW() NOT BETWEEN start_date AND end_date) OR (NOW() <= start_date AND end_date IS NULL))')->orWhere('is_active', 0);
     }
 
     public function scopeSearch($query, $code)
