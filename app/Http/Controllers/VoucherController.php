@@ -65,6 +65,9 @@ class VoucherController extends Controller
     public function index(Request $request)
     {
         try {
+            if ($request->has('amount') || $request->has('pos_services') || $request->has('pos_customer'))
+                $this->validate($request, ['amount' => 'required']);
+
             $partner = $request->partner;
             list($offset, $limit) = calculatePagination($request);
             $partner_voucher_query = Voucher::byPartner($partner);
@@ -98,6 +101,9 @@ class VoucherController extends Controller
                 array_push($vouchers, $voucher['data']) ;
             });
             return api_response($request, null, 200, ['vouchers' => $vouchers]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -116,15 +122,14 @@ class VoucherController extends Controller
             $is_check_for_promotion = true;
             $pos_order_params->setOrderAmount($request->amount);
         }
-        if ($request->has('pos_customer') && !empty($request->pos_customer)) {
-            $is_check_for_promotion = true;
-            $pos_customer = $request->pos_customer ? PosCustomer::find($request->pos_customer) : new PosCustomer();
-            $pos_order_params->setApplicant($pos_customer);
-        }
+
         if ($request->has('pos_services') && !empty($request->pos_services)) {
             $is_check_for_promotion = true;
             $pos_order_params->setPartnerPosService($request->pos_services);
         }
+
+        $pos_customer = $request->has('pos_customer') && !empty($request->pos_customer) ? PosCustomer::find($request->pos_customer) : new PosCustomer();
+        $pos_order_params->setApplicant($pos_customer);
 
         return [$is_check_for_promotion, $pos_order_params];
     }
