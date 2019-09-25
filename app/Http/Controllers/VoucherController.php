@@ -86,7 +86,13 @@ class VoucherController extends Controller
 
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
-            $partner_voucher_query->orderBy('id', 'desc')->get()->each(function ($voucher) use (&$vouchers, $manager) {
+            $partner_voucher_query->orderBy('id', 'desc')->get()->each(function ($voucher) use (&$vouchers, $manager, $request) {
+                list($is_check_for_promotion, $pos_order_params) = $this->checkForPromotion($request);
+                if ($is_check_for_promotion) {
+                    $result = voucher($voucher->code)->checkForPosOrder($pos_order_params)->reveal();
+                    if (!$result['is_valid']) return;
+                }
+
                 $resource = new Item($voucher, new VoucherTransformer());
                 $voucher = $manager->createData($resource)->toArray();
                 array_push($vouchers, $voucher['data']) ;
@@ -96,6 +102,31 @@ class VoucherController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    /**
+     * @param Request $request
+     * @return array
+     */
+    private function checkForPromotion(Request $request)
+    {
+        $is_check_for_promotion = false;
+        $pos_order_params = (new CheckParamsForPosOrder());
+        if ($request->has('amount') && !empty($request->amount)) {
+            $is_check_for_promotion = true;
+            $pos_order_params->setOrderAmount($request->amount);
+        }
+        if ($request->has('pos_customer') && !empty($request->pos_customer)) {
+            $is_check_for_promotion = true;
+            $pos_customer = $request->pos_customer ? PosCustomer::find($request->pos_customer) : new PosCustomer();
+            $pos_order_params->setApplicant($pos_customer);
+        }
+        if ($request->has('pos_services') && !empty($request->pos_services)) {
+            $is_check_for_promotion = true;
+            $pos_order_params->setPartnerPosService($request->pos_services);
+        }
+
+        return [$is_check_for_promotion, $pos_order_params];
     }
 
     /**
