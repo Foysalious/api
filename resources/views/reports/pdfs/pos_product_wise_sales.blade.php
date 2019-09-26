@@ -6,24 +6,8 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
           integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <style type="text/css">
-        @font-face {
-            font-family: Shonar-Bangla;
-            src: {{storage_path("fonts/Shonar-Bangla.ttf")}} format("truetype"); /* IE9*/
-            font-weight: bold;
-        }
+        @import url('https://fonts.maateen.me/mukti/font.css');
 
-        @font-face {
-            font-family: Siyamrupali;
-            src: {{storage_path("fonts/Siyamrupali.ttf")}} format("truetype"); /* IE9*/
-            font-weight: bold;
-        }
-
-        @font-face {
-            font-family: kalpurush;
-            src: {{storage_path("fonts/kalpurush.ttf")}} format("truetype");
-            font-weight: normal;
-
-        }
 
         .page-break {
             page-break-after: always;
@@ -33,8 +17,10 @@
             page-break-before: auto;
         }
         body {
-            font-family: Siyamrupali, DejaVu Sans, 'Roboto', sans-serif ;
+            font-family: 'Mukti',  'Roboto',sans-serif;
             color: #4a4a4a;
+            font-style: normal;
+            font-weight: normal;
         }
 
         .heading {
@@ -44,22 +30,23 @@
 
         .heading h2 {
             font-size: 1.5rem;
-            font-weight: bolder;
         }
 
         .heading .sub-heading {
             font-size: 1rem;
-            font-weight: bold;
+            font-family: 'Mukti','Roboto',sans-serif;
         }
 
         .heading .sub-text {
             font-size: .9rem;
+            font-family: 'Mukti','Roboto',sans-serif;
         }
 
         .table {
             border-collapse: collapse;
             width: 100%;
             margin-top: 20px;
+            font-family: 'Mukti','Roboto',sans-serif;
         }
 
         th {
@@ -68,8 +55,13 @@
 
         .table-head {
             background-color: #ededed;
+            font-weight: normal;
         }
 
+        .table-head th {
+            font-family: 'Mukti','Roboto',sans-serif;
+            font-weight: normal;
+        }
         @page {
             margin: 40px;
             padding: 2cm;
@@ -90,7 +82,7 @@
     </style>
 </head>
 <body align="center">
-<table style="max-width: 800px;margin: auto;min-width: 600px;font-family: Arial, sans-serif">
+<table style="max-width: 800px;margin: auto;min-width: 600px">
     <tbody>
     <tr>
         <td>
