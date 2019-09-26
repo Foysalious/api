@@ -22,13 +22,10 @@ class PdfHandler extends Handler
         return $this;
     }
 
-    public function download($options = null)
+    public function download()
     {
-        if ($options) {
-            $this->pdf->setOptions(['defaultFont' => 'kalpurush']);
-        }
         $this->create();
-        return $this->pdf->stream("$this->filename.$this->downloadFormat");
+        return $this->pdf->download("$this->filename.$this->downloadFormat");
     }
 
     public function save()

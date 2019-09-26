@@ -118,9 +118,9 @@
             </tr>
         @endforeach
         <tr style="page-break-after: always" class="table-head">
-            <td><span class="font-weight-bold"> মোট</span></td>
-            <td><span class="font-weight-bold">{{convertNumbersToBangla((float)$totalQuantity)}}</span></td>
-            <td><span class="font-weight-bold">{{convertNumbersToBangla((float)$totalPrice)}}</span></td>
+            <td><span> মোট</span></td>
+            <td><span>{{convertNumbersToBangla((float)$totalQuantity)}}</span></td>
+            <td><span>{{convertNumbersToBangla((float)$totalPrice)}}</span></td>
             <td></td>
         </tr>
         </tbody>
