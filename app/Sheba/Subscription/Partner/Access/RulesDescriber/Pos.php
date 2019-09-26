@@ -4,12 +4,14 @@
  * @property INVOICE $INVOICE
  * @property Due $DUE
  * @property Inventory $INVENTORY
+ * @property string $REPORT
  */
 class Pos extends BaseRule
 {
     protected $INVOICE;
     protected $DUE;
     protected $INVENTORY;
+    protected $REPORT = "report";
 
     public function __construct()
     {
