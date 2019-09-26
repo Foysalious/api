@@ -76,14 +76,14 @@ class Basic extends PartnerSale
             $data['order_stat_breakdown'] = $this->getMonthlyStatFor($orders, 'order_count');
         }
 
-        if ($this->frequency == self::YEAR_BASE) {
-            $lifetime_timeFrame = (new TimeFrame())->forLifeTime();
-            $lifetime_closed_orders = $this->partnerOrders->getClosedOrdersBetween($lifetime_timeFrame, $this->partner);
-
-            $data['timeline'] = 'Year ' . $this->timeFrame->start->year;
-            $data['day'] = $this->timeFrame->start->format('Y-m-d');
-            $data['lifetime_sales'] = $lifetime_closed_orders->sum('totalPrice');
-        }
+//        if ($this->frequency == self::YEAR_BASE) {
+//            $lifetime_timeFrame = (new TimeFrame())->forLifeTime();
+//            $lifetime_closed_orders = $this->partnerOrders->getClosedOrdersBetween($lifetime_timeFrame, $this->partner);
+//
+//            $data['timeline'] = 'Year ' . $this->timeFrame->start->year;
+//            $data['day'] = $this->timeFrame->start->format('Y-m-d');
+//            $data['lifetime_sales'] = $lifetime_closed_orders->sum('totalPrice');
+//        }
 
         if (in_array($this->frequency, [self::DAY_BASE, self::WEEK_BASE, self::MONTH_BASE])) {
             $data['partner_collection'] = $orders->sum('partner_collection');
