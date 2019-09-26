@@ -54,7 +54,9 @@ class ProductWise extends PosReport
      */
     public function prepareQuery(Request $request, Partner $partner)
     {
-        $this->setDefaultOrderBy('service_name')->setOrderByAccessors('service_name,total_price,total_quantity')->setRequest($request);
+        $this->setDefaultOrderBy('service_name')
+            ->setOrderByAccessors('service_name,total_price,total_quantity')
+            ->setRequest($request);
         $this->partner = $partner;
         $orders = $partner->posOrders()->select('id')->get()->pluck('id')->toArray();
         $this->query = $this->itemRepository

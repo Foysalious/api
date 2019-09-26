@@ -1,8 +1,8 @@
 <?php namespace Sheba\Reports\Pos;
 
 use App\Models\Partner;
+use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
-use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -49,8 +49,8 @@ abstract class PosReport
     {
         $rules = [
             'range' => 'required|in:today,week,month,year,yesterday,quarter,last_week,last_month,last_quarter,last_year,custom',
-            'to' => 'required_with:name,custom',
-            'from' => 'required_with:name,custom',
+            'to' => 'required_with:name,custom|date_format:Y-m-d',
+            'from' => 'required_with:name,custom|date_format:Y-m-d',
         ];
         if (isset($this->orderByAccessors)) {
             $rules['order_by'] = 'sometimes|in:' . $this->orderByAccessors;
@@ -80,6 +80,9 @@ abstract class PosReport
             $range = getRangeFormat($this->request, 'range');
             $this->from = $range[0];
             $this->to = $range[1];
+        } else {
+            $this->to = Carbon::parse($this->to);
+            $this->from = Carbon::parse($this->from);
         }
     }
 
