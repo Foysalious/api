@@ -4,6 +4,7 @@ use App\Models\Partner;
 use App\Models\PosOrder;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Sheba\Pos\Repositories\PosOrderItemRepository;
 use Sheba\Reports\ExcelHandler;
@@ -17,6 +18,7 @@ class CustomerWise extends PosReport
      * @var $itemRepository PosOrderItemRepository
      */
     private $excelHandler, $pdfHandler;
+    private  $orderByAccessors;
 
     /**
      * ProductWise constructor.
@@ -58,10 +60,15 @@ class CustomerWise extends PosReport
         $is_desc =  $this->order == 'DESC' ? true : false;
         $customer_sales = $customer_sales->sortBy($this->orderBy, SORT_REGULAR, $is_desc);
         $total = $customer_sales->count();
+        $total_order_count = $customer_sales->sum('order_count');
+        $total_sales_count = $customer_sales->sum('sales_amount');
+
         $customer_sales = $customer_sales->values();
         $data = $paginate ? new Paginator($customer_sales, $this->limit) : $customer_sales;
         if ($paginate) {
             $this->data['data'] = $data->items();
+            $this->data['total_order_count'] = $total_order_count;
+            $this->data['total_sales_count'] = $total_sales_count;
             $this->data['total'] = $total;
             $this->data['has_more'] = $data->hasMorePages();
             $this->data['per_page'] = $data->perPage();
@@ -82,9 +89,7 @@ class CustomerWise extends PosReport
     {
         $this->setRequest($request);
         $this->partner = $partner;
-        $this->query = $partner->posOrders()->with('customer.profile')
-            ->whereNotNull('customer_id')
-            ->whereBetween('created_at', [$this->from, $this->to]);
+        $this->query = $partner->posOrders()->with('customer.profile')->whereNotNull('customer_id');
 
         return $this;
     }
@@ -113,5 +118,17 @@ class CustomerWise extends PosReport
             ->setViewFile($template)
             ->setData(['data' => $data, 'partner' => $this->partner, 'from' => $this->from, 'to' => $this->to])
             ->download();
+    }
+
+    protected function validateRequest()
+    {
+        $rules = [];
+        if (isset($this->orderByAccessors)) {
+            $rules['order_by'] = 'sometimes|in:' . $this->orderByAccessors;
+        }
+        $validator = Validator::make($this->request, $rules);
+        if ($validator->fails()) {
+            throw new ValidationException($validator);
+        }
     }
 }
