@@ -1,6 +1,8 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\Job;
+use Exception;
+use Illuminate\Support\Collection;
 use Sheba\Dal\JobMaterial\JobMaterial;
 use App\Models\JobUpdateLog;
 use App\Models\Resource;
@@ -13,11 +15,16 @@ use DB;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Logistics\DTO\Order;
+use Sheba\Logistics\OrderManager;
 use Sheba\PushNotificationHandler;
+use Throwable;
 
 class PartnerJobController extends Controller
 {
+    /** @var ResourceJobRepository $resourceJobRepository */
     private $resourceJobRepository;
+    /** @var mixed $jobStatuses */
     private $jobStatuses;
 
     public function __construct()
@@ -33,15 +40,23 @@ class PartnerJobController extends Controller
                 'filter' => 'required|string|in:new,ongoing,history'
             ]);
             $filter = $request->filter;
-            $partner = $request->partner->load(['partnerOrders' => function ($q) use ($filter, $request) {
-                $q->$filter()->with(['order' => function ($q) {
-                    $q->with('location', 'customer.profile');
-                }])->with(['jobs' => function ($q) use ($filter, $request) {
-                    $q->info()->whereIn('status', (new PartnerOrderRepository())->getStatusFromRequest($request))->orderBy('id', 'desc')->with(['cancelRequests', 'category', 'usedMaterials' => function ($q) {
-                        $q->select('id', 'job_id', 'material_name', 'material_price');
-                    }, 'resource.profile', 'review']);
-                }]);
-            }]);
+            $partner = $request->partner->load([
+                'partnerOrders' => function ($q) use ($filter, $request) {
+                    $q->$filter()->with([
+                        'order' => function ($q) {
+                            $q->with('location', 'customer.profile');
+                        }
+                    ])->with([
+                        'jobs' => function ($q) use ($filter, $request) {
+                            $q->info()->whereIn('status', (new PartnerOrderRepository())->getStatusFromRequest($request))->orderBy('id', 'desc')->with([
+                                'cancelRequests', 'category', 'usedMaterials' => function ($q) {
+                                    $q->select('id', 'job_id', 'material_name', 'material_price');
+                                }, 'resource.profile', 'review'
+                            ]);
+                        }
+                    ]);
+                }
+            ]);
 
             $jobs = collect();
             $jobs_with_resource = collect();
@@ -49,7 +64,8 @@ class PartnerJobController extends Controller
                 foreach ($partnerOrder->jobs as $job) {
                     /** @var Job $job */
                     if ($job->isLogisticCreated()) {
-                        $job['logistic'] = $job->getCurrentLogisticOrder()->formatForPartner();
+                        $job['logistic_id'] = $job->getCurrentLogisticOrderId();
+                        // $job['logistic'] = $job->getCurrentLogisticOrder()->formatForPartner();
                     }
                     if ($job->cancelRequests->where('status', 'Pending')->count() > 0) continue;
                     $job['location'] = $partnerOrder->order->location->name;
@@ -88,6 +104,10 @@ class PartnerJobController extends Controller
                     }
                 }
             }
+
+            $logistic_ids = array_filter($jobs->pluck('logistic_id')->toArray());
+            if (!empty($logistic_ids)) $this->attachLogisticOrder($logistic_ids, $jobs);
+
             if (count($jobs) > 0 || count($jobs_with_resource) > 0) {
                 if ($filter == 'ongoing') {
                     $group_by_jobs = $jobs->groupBy('schedule_date')->sortBy(function ($item, $key) {
@@ -128,7 +148,8 @@ class PartnerJobController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -163,7 +184,7 @@ class PartnerJobController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -178,7 +199,7 @@ class PartnerJobController extends Controller
                 return api_response($request, $response, $response->code);
             }
             return api_response($request, null, 500);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -243,7 +264,7 @@ class PartnerJobController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -262,7 +283,7 @@ class PartnerJobController extends Controller
                 return api_response($request, $materials, 200, ['materials' => $materials, 'total_material_price' => $materials->sum('material_price')]);
             }
             return api_response($request, $job, 404);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -297,7 +318,7 @@ class PartnerJobController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -336,7 +357,7 @@ class PartnerJobController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -400,7 +421,7 @@ class PartnerJobController extends Controller
                 "sound" => "notification_sound",
                 "channel_id" => $channel
             ], $topic, $channel);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
         }
     }
@@ -433,9 +454,32 @@ class PartnerJobController extends Controller
                 }
             }
             return count($jobs) == 0 ? api_response($request, null, 404) : api_response($request, $jobs, 200, ['jobs' => $jobs]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    /**
+     * @param array $logistic_ids
+     * @param Collection $jobs
+     * @throws Exception
+     */
+    private function attachLogisticOrder(array $logistic_ids, Collection $jobs)
+    {
+        $imploded_logistic_ids = implode(',', $logistic_ids);
+        /** @var OrderManager $logistic_order_manager */
+        $logistic_order_manager = app(OrderManager::class);
+        $orders = $logistic_order_manager->getMinimals($imploded_logistic_ids);
+
+        $logistic_orders = [];
+        foreach ($orders as $data) {
+            $order = new Order();
+            $order->setStatus($data['status'])->setRider($data['rider'])->setId($data['id']);
+            $logistic_orders[$order->id] = $order->formatForPartner();
+        }
+        $jobs->whereIn('logistic_id', $logistic_ids)->each(function ($job) use ($logistic_orders) {
+            $job['logistic'] = $logistic_orders[$job->logistic_id];
+        });
     }
 }
