@@ -150,10 +150,10 @@ class SubscriptionOrderController extends Controller
 
             ];
             $handler = new PdfHandler();
-            return $handler->setData($subscription_order_invoice)->setName('Subscription Order Invoice')->setViewFile('subscription_order_invoice')
-                ->download();
-            #$link = $handler->setData($subscription_order_invoice)->setName('Subscription Order Invoice')->setViewFile('subscription_order_invoice')->save();
-            #return api_response($request, null, 200, ['message' => 'Successfully Download receipt', 'link' => $link]);
+            /*return $handler->setData($subscription_order_invoice)->setName('Subscription Order Invoice')->setViewFile('subscription_order_invoice')
+                ->download();*/
+            $link = $handler->setData($subscription_order_invoice)->setName('Subscription Order Invoice')->setViewFile('subscription_order_invoice')->save();
+            return api_response($request, null, 200, ['message' => 'Successfully Download receipt', 'link' => $link]);
         } catch (\Throwable $e) {
             dd($e);
             app('sentry')->captureException($e);
