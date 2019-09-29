@@ -51,7 +51,7 @@ class CustomerWise extends PosReport
                     'sales_amount'  => 0.00
                 ];
             }
-            $customer_sales[$customer_id]['order_count']    =  $is_customer_already_exist ? $customer_sales[$customer_id]['order_count']++ : 1;
+            $customer_sales[$customer_id]['order_count']    =  $is_customer_already_exist ? $customer_sales[$customer_id]['order_count']+=1 : 1;
             $customer_sales[$customer_id]['sales_amount']   =  $is_customer_already_exist ? $customer_sales[$customer_id]['sales_amount'] + $pos_order->getNetBill() : $pos_order->getNetBill();
         });
 
