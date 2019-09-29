@@ -35,12 +35,12 @@ class CategoryController extends Controller
 
     public function index(Request $request)
     {
-        $filter_publication = function ($q) use ($request) {
-            $is_business = $request->has('is_business') && (int)$request->is_business;
-            $is_partner = ($request->has('is_partner') && (int)$request->is_partner) || in_array($request->header('portal-name'), ['manager-app', 'bondhu-app']);
-            $is_b2b = $request->has('is_b2b') && (int)$request->is_b2b;
-            $is_partner_registration = $request->has('is_partner_registration') && (int)$request->is_partner_registration;
+        $is_business = $request->has('is_business') && (int)$request->is_business;
+        $is_partner = ($request->has('is_partner') && (int)$request->is_partner) || in_array($request->header('portal-name'), ['manager-app', 'bondhu-app']);
+        $is_b2b = $request->has('is_b2b') && (int)$request->is_b2b;
+        $is_partner_registration = $request->has('is_partner_registration') && (int)$request->is_partner_registration;
 
+        $filter_publication = function ($q) use ($request, $is_business, $is_partner, $is_b2b, $is_partner_registration) {
             if ($is_business) {
                 $q->publishedForBusiness();
             } elseif ($is_partner) {
@@ -80,16 +80,22 @@ class CategoryController extends Controller
                 });
             }
             $categories = $categories->select('id', 'name', 'bn_name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id');
-
             if ($request->has('with')) {
                 $with = $request->with;
                 if ($with == 'children') {
-                    $categories->with(['allChildren' => function ($q) use ($location, $filter_publication, $best_deal_category) {
+                    $categories->with(['allChildren' => function ($q) use ($location, $filter_publication, $best_deal_category, $is_business, $is_b2b) {
                         if (!is_null($location)) {
                             $q->whereHas('locations', function ($q) use ($location) {
                                 $q->where('locations.id', $location->id);
                             });
-                            $q->whereHas('services', function ($q) use ($location) {
+                            $q->whereHas('services', function ($q) use ($location, $is_business, $is_b2b) {
+                                if ($is_business) {
+                                    $q->publishedForBusiness();
+                                } elseif ($is_b2b) {
+                                    $q->publishedForB2b();
+                                } else {
+                                    $q->published();
+                                }
                                 $q->published()->whereHas('locations', function ($q) use ($location) {
                                     $q->where('locations.id', $location->id);
                                 });
