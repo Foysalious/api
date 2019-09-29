@@ -71,6 +71,7 @@
 
             .table {
                 page-break-inside: auto !important;
+                page-break-before: avoid !important;
             }
 
             .table tbody tr {
@@ -110,7 +111,7 @@
     </style>
 </head>
 <body align="center">
-<table style="max-width: 800px;margin: auto;min-width: 600px">
+<table style="max-width: 800px;margin: auto;min-width: 600px;page-break-before: avoid">
     <tbody>
     <tr>
         <td>
