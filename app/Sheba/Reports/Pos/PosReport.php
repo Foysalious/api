@@ -1,11 +1,13 @@
 <?php namespace Sheba\Reports\Pos;
 
 use App\Models\Partner;
+use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Sheba\Reports\ExcelHandler;
+use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Reports\PdfHandler;
 
 abstract class PosReport
@@ -17,7 +19,10 @@ abstract class PosReport
      *
      */
     protected $request, $orderBy, $range, $to, $from, $query, $order, $page, $limit, $data, $partner;
-    private $excelHandler, $pdfHandler;
+    /** @var ExcelHandler $excelHandler */
+    private $excelHandler;
+    /** @var PdfHandler $pdfHandler */
+    private $pdfHandler;
     private $defaultOrderBy, $orderByAccessors;
 
     public function __construct()
@@ -28,12 +33,12 @@ abstract class PosReport
     }
 
     /**
-     * @param mixed $defaultOrderBy
+     * @param $default_order_by
      * @return PosReport
      */
-    protected function setDefaultOrderBy($defaultOrderBy)
+    protected function setDefaultOrderBy($default_order_by)
     {
-        $this->defaultOrderBy = $defaultOrderBy;
+        $this->defaultOrderBy = $default_order_by;
         return $this;
     }
 
@@ -44,8 +49,8 @@ abstract class PosReport
     {
         $rules = [
             'range' => 'required|in:today,week,month,year,yesterday,quarter,last_week,last_month,last_quarter,last_year,custom',
-            'to' => 'required_with:name,custom',
-            'from' => 'required_with:name,custom',
+            'to' => 'required_with:name,custom|date_format:Y-m-d',
+            'from' => 'required_with:name,custom|date_format:Y-m-d',
         ];
         if (isset($this->orderByAccessors)) {
             $rules['order_by'] = 'sometimes|in:' . $this->orderByAccessors;
@@ -58,13 +63,13 @@ abstract class PosReport
 
     protected function prepareQueryParams()
     {
-        $this->orderBy = $this->hasInRequest('order_by') ?: $this->defaultOrderBy;
-        $this->order = $this->hasInRequest('order') ?: 'ASC';
-        $this->range = $this->hasInRequest('range') ?: null;
-        $this->to = $this->hasInRequest('to') ?: null;
-        $this->from = $this->hasInRequest('from') ?: null;
-        $this->page = $this->hasInRequest('page') ?: 1;
-        $this->limit = $this->hasInRequest('limit') ?: null;
+        $this->orderBy  = $this->hasInRequest('order_by') ?: $this->defaultOrderBy;
+        $this->order    = $this->hasInRequest('order') ?: 'ASC';
+        $this->range    = $this->hasInRequest('range') ?: null;
+        $this->to       = $this->hasInRequest('to') ?: null;
+        $this->from     = $this->hasInRequest('from') ?: null;
+        $this->page     = $this->hasInRequest('page') ?: 1;
+        $this->limit    = $this->hasInRequest('limit') ?: null;
 
         $this->setRange();
     }
@@ -75,6 +80,9 @@ abstract class PosReport
             $range = getRangeFormat($this->request, 'range');
             $this->from = $range[0];
             $this->to = $range[1];
+        } else {
+            $this->to = Carbon::parse($this->to);
+            $this->from = Carbon::parse($this->from);
         }
     }
 
@@ -123,7 +131,8 @@ abstract class PosReport
 
     /**
      * @param string $name
-     * @return
+     * @return void
+     * @throws NotAssociativeArray
      */
     public function downloadExcel($name = 'Sales Report')
     {
@@ -134,10 +143,14 @@ abstract class PosReport
      * @param string $name
      * @param string $template
      * @return
+     * @throws NotAssociativeArray
      */
     public function downloadPdf($name = 'Sales Report', $template = 'generic_template')
     {
-        return $this->pdfHandler->setName($name)->setViewFile($template)->setData(['data' => $this->data, 'partner' => $this->partner, 'from' => $this->from, 'to' => $this->to])->download();
+        return $this->pdfHandler->setName($name)
+            ->setViewFile($template)
+            ->setData(['data' => $this->data, 'partner' => $this->partner, 'from' => $this->from, 'to' => $this->to])
+            ->download();
     }
 
     abstract public function prepareData($paginate = true);

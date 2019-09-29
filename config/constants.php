@@ -577,7 +577,7 @@ return [
             'interest' => '10.5',
         ],*/
         'BRAC' => [
-            'name' => 'Brac',
+            'name' => 'BRAC',
             'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bank_icon/brac_pink_logo.png',
             'interest' => '25',
         ],

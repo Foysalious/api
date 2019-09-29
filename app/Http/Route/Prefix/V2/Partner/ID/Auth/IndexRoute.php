@@ -219,7 +219,7 @@ class IndexRoute
                 $api->group(['prefix' => '{voucher}'], function ($api) {
                     $api->get('/', 'VoucherController@show');
                     $api->post('/', 'VoucherController@update');
-                    $api->post('/deactivate', 'VoucherController@deactivateVoucher');
+                    $api->post('activation-status-change', 'VoucherController@activationStatusChange');
                 });
             });
             $api->post('nid-validate', 'ShebaController@nidValidate');

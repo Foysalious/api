@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a7cfa2ff0c7c0822ff850dfa9ce9ae39",
+    "content-hash": "0db8380a51ebced3380c1a7e6ac11e34",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -3225,7 +3225,7 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_voucher.git",
-                "reference": "54c7187708d417c2f5db158d40db54ca149fb35f"
+                "reference": "3a20acbb0150455a2a276437420487546a55c698"
             },
             "require": {
                 "php": ">=5.4"
@@ -3249,7 +3249,7 @@
                 }
             ],
             "description": "Voucher for Sheba.",
-            "time": "2019-09-15T11:00:57+00:00"
+            "time": "2019-09-25T04:55:49+00:00"
         },
         {
             "name": "sunra/php-simple-html-dom-parser",
@@ -4654,16 +4654,16 @@
         },
         {
             "name": "itsgoingd/clockwork",
-            "version": "v3.0.1",
+            "version": "v4.0.10",
             "source": {
                 "type": "git",
                 "url": "https://github.com/itsgoingd/clockwork.git",
-                "reference": "6632a54a273e74fa6c7f1ffa5a87925716a83b0e"
+                "reference": "acca3a589a227fd7e8c4826b9a6373d7dccb31d3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/itsgoingd/clockwork/zipball/6632a54a273e74fa6c7f1ffa5a87925716a83b0e",
-                "reference": "6632a54a273e74fa6c7f1ffa5a87925716a83b0e",
+                "url": "https://api.github.com/repos/itsgoingd/clockwork/zipball/acca3a589a227fd7e8c4826b9a6373d7dccb31d3",
+                "reference": "acca3a589a227fd7e8c4826b9a6373d7dccb31d3",
                 "shasum": ""
             },
             "require": {
@@ -4708,7 +4708,7 @@
                 "profiling",
                 "slim"
             ],
-            "time": "2018-08-01T14:38:23+00:00"
+            "time": "2019-09-26T12:37:22+00:00"
         },
         {
             "name": "mockery/mockery",

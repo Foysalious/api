@@ -18,6 +18,7 @@ use Sheba\ModificationFields;
 use Sheba\Voucher\DTO\Params\CheckParamsForPosOrder;
 use Sheba\Voucher\VoucherRule;
 use Throwable;
+use Illuminate\Validation\Rule;
 
 class VoucherController extends Controller
 {
@@ -64,6 +65,9 @@ class VoucherController extends Controller
     public function index(Request $request)
     {
         try {
+            if ($request->has('amount') || $request->has('pos_services') || $request->has('pos_customer'))
+                $this->validate($request, ['amount' => 'required']);
+
             $partner = $request->partner;
             list($offset, $limit) = calculatePagination($request);
             $partner_voucher_query = Voucher::byPartner($partner);
@@ -85,16 +89,49 @@ class VoucherController extends Controller
 
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
-            $partner_voucher_query->orderBy('id', 'desc')->get()->each(function ($voucher) use (&$vouchers, $manager) {
+            $partner_voucher_query->orderBy('id', 'desc')->get()->each(function ($voucher) use (&$vouchers, $manager, $request) {
+                list($is_check_for_promotion, $pos_order_params) = $this->checkForPromotion($request);
+                if ($is_check_for_promotion) {
+                    $result = voucher($voucher->code)->checkForPosOrder($pos_order_params)->reveal();
+                    if (!$result['is_valid']) return;
+                }
+
                 $resource = new Item($voucher, new VoucherTransformer());
                 $voucher = $manager->createData($resource)->toArray();
                 array_push($vouchers, $voucher['data']) ;
             });
             return api_response($request, null, 200, ['vouchers' => $vouchers]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    /**
+     * @param Request $request
+     * @return array
+     */
+    private function checkForPromotion(Request $request)
+    {
+        $is_check_for_promotion = false;
+        $pos_order_params = (new CheckParamsForPosOrder());
+        if ($request->has('amount') && !empty($request->amount)) {
+            $is_check_for_promotion = true;
+            $pos_order_params->setOrderAmount($request->amount);
+        }
+
+        if ($request->has('pos_services') && !empty($request->pos_services)) {
+            $is_check_for_promotion = true;
+            $pos_order_params->setPartnerPosService($request->pos_services);
+        }
+
+        $pos_customer = $request->has('pos_customer') && !empty($request->pos_customer) ? PosCustomer::find($request->pos_customer) : new PosCustomer();
+        $pos_order_params->setApplicant($pos_customer);
+
+        return [$is_check_for_promotion, $pos_order_params];
     }
 
     /**
@@ -278,17 +315,32 @@ class VoucherController extends Controller
         }
     }
 
-    public function deactivateVoucher(Request $request,$partner,Voucher $voucher){
+    /**
+     * @param Request $request
+     * @param $partner
+     * @param Voucher $voucher
+     * @return JsonResponse
+     */
+    public function activationStatusChange(Request $request, $partner, Voucher $voucher)
+    {
         try {
+            $this->validate($request, [
+                'status' => 'required|in:' . implode(',', ['active', 'inactive']),
+            ]);
             $partner = $request->partner;
             $this->setModifier($partner);
-            $voucher->end_date = Carbon::now();
-            $voucher->update();
-            return api_response($request, null, 200, ['msg' => 'Promo deactivated successfully']);
+            $data = ['is_active' => $request->status == 'active' ? 1 : 0];
+            $voucher->update($this->withUpdateModificationField($data));
+
+            return api_response($request, null, 200, ['msg' => "Promo {$request->status} successfully"]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+
     }
 
     /**

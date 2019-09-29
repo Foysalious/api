@@ -42,6 +42,8 @@ class ReportsController extends Controller
             return api_response($request, null, 400, ['message' => $errorMessage]);
         } catch (Throwable $e) {
             dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
         }
     }
 

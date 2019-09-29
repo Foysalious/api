@@ -2,6 +2,7 @@
 
 use App\Models\Partner;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Sheba\Pos\Repositories\PosOrderItemRepository;
 use Sheba\Reports\Pos\PosReport;
 
@@ -49,11 +50,13 @@ class ProductWise extends PosReport
      * @param Request $request
      * @param Partner $partner
      * @return $this
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
     public function prepareQuery(Request $request, Partner $partner)
     {
-        $this->setDefaultOrderBy('service_name')->setOrderByAccessors('service_name,total_price,total_quantity')->setRequest($request);
+        $this->setDefaultOrderBy('service_name')
+            ->setOrderByAccessors('service_name,total_price,total_quantity')
+            ->setRequest($request);
         $this->partner = $partner;
         $orders = $partner->posOrders()->select('id')->get()->pluck('id')->toArray();
         $this->query = $this->itemRepository
