@@ -128,10 +128,10 @@
     <table class="table table-bordered">
         <thead>
         <tr class="table-head">
-            <th>Name</th>
-            <th> Quantity</th>
+            <th>Item Name</th>
+            <th> Quantity Sold</th>
             <th> Price</th>
-            <th>Avg Price</th>
+            <th>Average Price</th>
         </tr>
         </thead>
         <tbody>
