@@ -62,7 +62,7 @@ class ProductWise extends PosReport
         $this->query = $this->itemRepository
             ->getModel()
             ->whereIn('pos_order_id', $orders)
-            ->selectRaw("service_id,service_name,CAST(SUM(quantity) as UNSIGNED) total_quantity ,CAST((SUM((quantity * unit_price))) as DECIMAL(10,2))  total_price,CAST(((SUM(unit_price)/SUM(quantity))) as DECIMAL(10,2)) avg_price,CAST((MAX(unit_price)) as DECIMAL(10,2)) as max_unit_price")
+            ->selectRaw("service_id,service_name,CAST(SUM(quantity) as UNSIGNED) total_quantity ,CAST((SUM((quantity * unit_price))) as DECIMAL(10,2))  total_price,CAST(((SUM((unit_price * quantity))/SUM(quantity))) as DECIMAL(10,2)) avg_price,CAST((MAX(unit_price)) as DECIMAL(10,2)) as max_unit_price")
             ->whereBetween('created_at', [$this->from, $this->to])
             ->groupBy(['service_id', 'service_name'])
             ->orderBy($this->orderBy, $this->order);
