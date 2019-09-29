@@ -209,7 +209,7 @@ class TopUpController extends Controller
     public function restartQueue()
     {
         exec("sudo supervisorctl restart sheba_queues:topup_00");
-        exec("php artisan queue:restart " . TopUpJob::QUEUE_NAME);
+        exec("php artisan queue:restart");
         return ['code' => 200, 'message' => "Done."];
     }
 
