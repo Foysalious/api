@@ -89,7 +89,7 @@ class CustomerWise extends PosReport
     {
         $this->setRequest($request);
         $this->partner = $partner;
-        $this->query = $partner->posOrders()->with('customer.profile')->whereNotNull('customer_id');
+        $this->query = $partner->posOrders()->with('customer.profile')->whereNotNull('customer_id')->whereBetween('created_at', [$this->from, $this->to]);
 
         return $this;
     }
@@ -118,17 +118,5 @@ class CustomerWise extends PosReport
             ->setViewFile($template)
             ->setData(['data' => $data, 'partner' => $this->partner, 'from' => $this->from, 'to' => $this->to])
             ->download();
-    }
-
-    protected function validateRequest()
-    {
-        $rules = [];
-        if (isset($this->orderByAccessors)) {
-            $rules['order_by'] = 'sometimes|in:' . $this->orderByAccessors;
-        }
-        $validator = Validator::make($this->request, $rules);
-        if ($validator->fails()) {
-            throw new ValidationException($validator);
-        }
     }
 }
