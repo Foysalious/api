@@ -16,6 +16,8 @@ class TopUpJob extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
 
+    const QUEUE_NAME = 'topup';
+
     protected $agent;
     protected $vendorId;
     protected $vendor;
@@ -32,7 +34,7 @@ class TopUpJob extends Job implements ShouldQueue
         $this->topUpOrder = $top_up_order;
         $this->vendorId = $vendor;
         $this->connection = 'topup';
-        $this->queue = 'topup';
+        $this->queue = self::QUEUE_NAME;
     }
 
     /**
