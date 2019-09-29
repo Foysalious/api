@@ -53,6 +53,7 @@ class CustomerWise extends PosReport
             }
             $customer_sales[$customer_id]['order_count']    =  $is_customer_already_exist ? $customer_sales[$customer_id]['order_count']+=1 : 1;
             $customer_sales[$customer_id]['sales_amount']   =  $is_customer_already_exist ? $customer_sales[$customer_id]['sales_amount'] + $pos_order->getNetBill() : $pos_order->getNetBill();
+            $customer_sales[$customer_id]['sales_due']      =  $is_customer_already_exist ? $customer_sales[$customer_id]['sales_due'] + $pos_order->getDue() : $pos_order->getDue();
         });
 
         $customer_sales = collect($customer_sales);
