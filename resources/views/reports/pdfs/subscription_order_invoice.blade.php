@@ -230,8 +230,7 @@
     </div>
 
 @endif
-<footer>
-    <div style="width: 100%;display: inline-block;padding: 40px;min-width: 600px;position: relative">
+    <div style="padding: 40px;">
         <table style="width: 100%;">
             <tbody>
             <tr>
@@ -276,12 +275,6 @@
                                              alt=""></span>
                                     <span style="padding-left: 10px">info@sheba.xyz</span>
                                 </td>
-
-                                {{--<p class="terms" style="border-top: none; padding-left: 172px;vertical-align: middle;display: inline-block;text-align: center;line-height: 1">
-
-
-
-                                </p>--}}
                             </tr>
                         </table>
                     </div>
@@ -290,7 +283,6 @@
             </tbody>
         </table>
     </div>
-</footer>
 </body>
 
 </html>
