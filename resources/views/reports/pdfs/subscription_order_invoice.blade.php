@@ -171,7 +171,7 @@
 </table>
 @if(isset($orders))
     <table class="table table-striped data-table"
-           style="width: 100%;color: #929292;min-width: 600px;font-family: sans-serif; font-size: x-small;page-break-after: auto"
+           style="width: 100%;color: #929292;min-width: 600px;font-family: sans-serif; font-size: x-small;page-break-after: auto;clear: both"
            cellspacing="5">
         <thead style="background-color: #7B83A5; color: white;">
         <tr>
@@ -220,8 +220,8 @@
 
 @endif
     <footer>
-        <div style="padding: 40px;width: 100%;min-width: 800px;page-break-before: auto;page-break-inside: avoid">
-            <table style="width: 100%;">
+        <div style="padding: 40px;width: 100%;min-width: 800px;page-break-before: auto;page-break-inside: avoid;clear: both">
+            <table style="width: 100%;page-break-inside: avoid;">
                 <tbody>
                 <tr>
                     <td style="padding-top: 38px">
