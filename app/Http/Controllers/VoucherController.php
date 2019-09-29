@@ -45,7 +45,7 @@ class VoucherController extends Controller
                 'total_sale_with_voucher' => $total_sale_with_voucher
             ];
 
-            $partner_voucher_query->orderBy('id', 'desc')->take(3)->each(function ($voucher) use (&$latest_vouchers, $manager) {
+            $partner_voucher_query->orderBy('created_at', 'desc')->take(3)->each(function ($voucher) use (&$latest_vouchers, $manager) {
                 $resource = new Item($voucher, new VoucherTransformer());
                 $voucher = $manager->createData($resource)->toArray();
                 array_push($latest_vouchers, $voucher['data']) ;
