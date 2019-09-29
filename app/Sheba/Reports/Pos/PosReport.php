@@ -81,8 +81,8 @@ abstract class PosReport
             $this->from = $range[0];
             $this->to = $range[1];
         } else {
-            $this->to = Carbon::parse($this->to)->startOfDay();
-            $this->from = Carbon::parse($this->from)->endOfDay();
+            $this->to = Carbon::parse($this->to)->endOfDay();
+            $this->from = Carbon::parse($this->from)->startOfDay();
         }
     }
 
