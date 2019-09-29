@@ -51,8 +51,9 @@ class CustomerWise extends PosReport
                     'sales_amount'  => 0.00
                 ];
             }
-            $customer_sales[$customer_id]['order_count']    =  $is_customer_already_exist ? $customer_sales[$customer_id]['order_count']++ : 1;
+            $customer_sales[$customer_id]['order_count']    =  $is_customer_already_exist ? $customer_sales[$customer_id]['order_count']+=1 : 1;
             $customer_sales[$customer_id]['sales_amount']   =  $is_customer_already_exist ? $customer_sales[$customer_id]['sales_amount'] + $pos_order->getNetBill() : $pos_order->getNetBill();
+            $customer_sales[$customer_id]['sales_due']      =  $is_customer_already_exist ? $customer_sales[$customer_id]['sales_due'] + $pos_order->getDue() : $pos_order->getDue();
         });
 
         $customer_sales = collect($customer_sales);
@@ -89,7 +90,7 @@ class CustomerWise extends PosReport
     {
         $this->setRequest($request);
         $this->partner = $partner;
-        $this->query = $partner->posOrders()->with('customer.profile')->whereNotNull('customer_id');
+        $this->query = $partner->posOrders()->with('customer.profile')->whereNotNull('customer_id')->whereBetween('created_at', [$this->from, $this->to]);
 
         return $this;
     }
@@ -118,17 +119,5 @@ class CustomerWise extends PosReport
             ->setViewFile($template)
             ->setData(['data' => $data, 'partner' => $this->partner, 'from' => $this->from, 'to' => $this->to])
             ->download();
-    }
-
-    protected function validateRequest()
-    {
-        $rules = [];
-        if (isset($this->orderByAccessors)) {
-            $rules['order_by'] = 'sometimes|in:' . $this->orderByAccessors;
-        }
-        $validator = Validator::make($this->request, $rules);
-        if ($validator->fails()) {
-            throw new ValidationException($validator);
-        }
     }
 }

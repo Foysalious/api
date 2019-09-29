@@ -86,7 +86,7 @@ class SubscriptionOrderController extends Controller
             /** @var SubscriptionOrder $subscription_order */
             $subscription_order = SubscriptionOrder::find((int)$subscription_order);
             $subscription_order->calculate();
-            if ($subscription_order->due<=0)  return api_response($request, null, 403,['message'=>'Your order is already paid.']);
+            if ($subscription_order->due <= 0) return api_response($request, null, 403, ['message' => 'Your order is already paid.']);
             if ($payment_method == 'wallet' && $subscription_order->due > $business->wallet) return api_response($request, null, 403, ['message' => 'You don\'t have sufficient credit.']);
             $order_adapter = new SubscriptionOrderAdapter();
             $payable = $order_adapter->setModelForPayable($subscription_order)->setUser($business)->getPayable();
@@ -150,8 +150,9 @@ class SubscriptionOrderController extends Controller
 
             ];
             $handler = new PdfHandler();
-            return $handler->setData($subscription_order_invoice)->setName('Subscription Order Invoice')->setViewFile('subscription_order_invoice')
-                ->download();
+            $link = $handler->setData($subscription_order_invoice)->setName('Subscription Order Invoice')->setViewFile('subscription_order_invoice')
+                ->save();
+            return api_response($request, null, 200, ['message' => 'Successfully Download receipt', 'link' => $link]);
         } catch (\Throwable $e) {
             dd($e);
             app('sentry')->captureException($e);

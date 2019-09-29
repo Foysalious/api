@@ -39,13 +39,15 @@ class VoucherController extends Controller
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
 
+            $cloned_partner_voucher_query = clone $partner_voucher_query;
+
             $data = [
-                'total_voucher'     => $partner_voucher_query->count(),
-                'active_voucher'    => $partner_voucher_query->valid()->count(),
+                'total_voucher'     => $cloned_partner_voucher_query->count(),
+                'active_voucher'    => $cloned_partner_voucher_query->valid()->count(),
                 'total_sale_with_voucher' => $total_sale_with_voucher
             ];
 
-            $partner_voucher_query->orderBy('id', 'desc')->take(3)->each(function ($voucher) use (&$latest_vouchers, $manager) {
+            $partner_voucher_query->orderBy('created_at', 'desc')->take(3)->each(function ($voucher) use (&$latest_vouchers, $manager) {
                 $resource = new Item($voucher, new VoucherTransformer());
                 $voucher = $manager->createData($resource)->toArray();
                 array_push($latest_vouchers, $voucher['data']) ;
