@@ -181,4 +181,13 @@ class BaseRepository implements BaseRepositoryInterface
         // TODO: Implement getByFieldOn() method.
     }
 
+    /**
+     * @param $column_name
+     * @param $value
+     * @return $this
+     */
+    public function orWhere($column_name, $value)
+    {
+        return $this->model->orWhere($column_name,$value);
+    }
 }

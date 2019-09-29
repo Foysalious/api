@@ -1,15 +1,16 @@
-<?php namespace App\Sheba\Partner;
+<?php namespace Sheba\Partner;
 
 class PartnerStatuses
 {
-    const VERIFIED = "Verified";
-    const UNVERIFIED = "Unverified";
-    const PAUSED = "Paused";
-    const CLOSED = "Closed";
-    const BLACKLISTED = "Blacklisted";
-    const WAITING = "Waiting";
-    const ONBOARDED = "Onboarded";
-    const REJECTED = "Rejected";
+    const VERIFIED      = "Verified";
+    const UNVERIFIED    = "Unverified";
+    const PAUSED        = "Paused";
+    const CLOSED        = "Closed";
+    const BLACKLISTED   = "Blacklisted";
+    const WAITING       = "Waiting";
+    const ONBOARDED     = "Onboarded";
+    const REJECTED      = "Rejected";
+    const INACTIVE      = "Inactive";
 
     /**
      * @param $status
@@ -36,5 +37,22 @@ class PartnerStatuses
             default:
                 return [self::VERIFIED, self::UNVERIFIED, self::BLACKLISTED];
         }
+    }
+
+    /**
+     * @return array
+     */
+    public static function getBillingStatuses()
+    {
+        return [self::VERIFIED, self::UNVERIFIED, self::PAUSED, self::ONBOARDED, self::CLOSED, self::WAITING, self::BLACKLISTED];
+    }
+
+    /**
+     * @param $status
+     * @return string
+     */
+    public static function getStatusToCalculateAccess($status)
+    {
+        return in_array($status, [self::INACTIVE, self::VERIFIED]) ? $status : 'Active';
     }
 }

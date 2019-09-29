@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use App\Models\Transport\TransportTicketOrder;
+use App\Sheba\Payment\Rechargable;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Database\Eloquent\Model;
@@ -14,6 +15,7 @@ use Sheba\MovieTicket\MovieAgent;
 use Sheba\MovieTicket\MovieTicketTrait;
 use Sheba\MovieTicket\MovieTicketTransaction;
 use Sheba\Partner\BadgeResolver;
+use Sheba\Partner\PartnerStatuses;
 use Sheba\Payment\Wallet;
 use Sheba\Reward\Rewardable;
 use Sheba\Subscription\Partner\PartnerSubscriber;
@@ -26,7 +28,7 @@ use Sheba\Transport\TransportTicketTransaction;
 use Sheba\Voucher\Contracts\CanApplyVoucher;
 use Sheba\Voucher\VoucherCodeGenerator;
 
-class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent
+class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent,Rechargable
 {
     use Wallet, TopUpTrait, MovieTicketTrait;
 
@@ -37,6 +39,10 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
     protected $categoryPivotColumns = ['id', 'experience', 'preparation_time_minutes', 'response_time_min', 'response_time_max', 'commission', 'is_verified', 'uses_sheba_logistic', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at', 'is_home_delivery_applied', 'is_partner_premise_applied', 'delivery_charge'];
     protected $servicePivotColumns = ['id', 'description', 'options', 'prices', 'min_prices', 'base_prices', 'base_quantity', 'is_published', 'discount', 'discount_start_date', 'discount_start_date', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
     private $resourceTypes;
+
+    public $totalCreditForSubscription;
+    public $totalPriceRequiredForSubscription;
+    public $creditBreakdown;
 
     public function __construct($attributes = [])
     {
@@ -285,6 +291,12 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
         return null;
     }
 
+    public function getContactPerson()
+    {
+        if ($admin_resource = $this->admins()->first()) return $admin_resource->profile->name;
+        return null;
+    }
+
     public function getManagerMobile()
     {
         if ($operation_resource = $this->resources->where('pivot.resource_type', constants('RESOURCE_TYPES')['Operation'])->first()) {
@@ -409,16 +421,16 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
 
     public function subscribe($package, $billing_type)
     {
-        $package = $package ? (($package) instanceof PartnerSubscriptionPackage ? $package : PartnerSubscriptionPackage::find($package)) : $this->partner->subscription;
+        $package = $package ? (($package) instanceof PartnerSubscriptionPackage ? $package : PartnerSubscriptionPackage::find($package)) : $this->subscription;
         $discount = $package->runningDiscount($billing_type);
         $discount_id = $discount ? $discount->id : null;
         $this->subscriber()->getPackage($package)->subscribe($billing_type, $discount_id);
     }
 
-    public function subscriptionUpgrade($package, $billing_type = null)
+    public function subscriptionUpgrade($package, $upgradeRequest = null)
     {
-        $package = $package ? (($package) instanceof PartnerSubscriptionPackage ? $package : PartnerSubscriptionPackage::find($package)) : $this->partner->subscription;
-        $this->subscriber()->upgrade($package, $billing_type);
+        $package = $package ? (($package) instanceof PartnerSubscriptionPackage ? $package : PartnerSubscriptionPackage::find($package)) : $this->subscription;
+        $this->subscriber()->upgrade($package, $upgradeRequest);
     }
 
     public function runSubscriptionBilling()
@@ -431,7 +443,7 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
         $this->subscriber()->getBilling()->runUpfrontBilling();
     }
 
-    private function subscriber()
+    public function subscriber()
     {
         return new PartnerSubscriber($this);
     }
@@ -573,6 +585,11 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
         return $this->package_id == (int)config('sheba.partner_lite_packages_id');
     }
 
+    public function isAccessibleForMarketPlace()
+    {
+        return !in_array($this->package_id, config('sheba.marketplace_not_accessible_packages_id'));
+    }
+
     public function scopeLite($q)
     {
         return $q->where('package_id', (int)config('sheba.partner_lite_packages_id'));
@@ -698,5 +715,51 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
     public function getMovieTicketCommission()
     {
         return new \Sheba\MovieTicket\Commission\Partner();
+    }
+
+    /**
+     * @param PartnerSubscriptionPackage $package
+     * @param $billingType
+     * @param int $billingCycle
+     * @return bool
+     */
+    public function hasCreditForSubscription(PartnerSubscriptionPackage $package, $billingType, $billingCycle = 1)
+    {
+        $this->totalPriceRequiredForSubscription = $package->originalPrice($billingType) - (double)$package->discountPrice($billingType, $billingCycle);
+        $this->totalCreditForSubscription = $this->getTotalCreditExistsForSubscription();
+        return $this->totalCreditForSubscription >= $this->totalPriceRequiredForSubscription;
+    }
+
+    /**
+     * @return float|int
+     */
+    public function getTotalCreditExistsForSubscription()
+    {
+        $remaining = (double)$this->subscriber()->getBilling()->remainingCredit($this->subscription, $this->billing_type);
+        $wallet = (double)$this->wallet;
+        $bonus_wallet = (double)$this->bonusWallet();
+        $threshold = $this->walletSetting ? (double)$this->walletSetting->min_wallet_threshold : 0;
+        $this->creditBreakdown = ['remaining_subscription_charge' => $remaining, 'wallet' => $wallet, 'threshold' => $threshold, 'bonus_wallet' => $bonus_wallet];
+        return round($bonus_wallet + $wallet + $remaining) - $threshold;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isAlreadyCollectedAdvanceSubscriptionFee()
+    {
+        $last_subscription_package_charge = $this->subscriptionPackageCharges()->orderBy('id', 'desc')->first();
+        if (!$last_subscription_package_charge) return false;
+        return $this->last_billed_date ? $last_subscription_package_charge->billing_date->between($this->last_billed_date->addSecond(), $this->periodicBillingHandler()->nextBillingDate()) : false;
+    }
+
+    public function subscriptionPackageCharges()
+    {
+        return $this->hasMany(PartnerSubscriptionPackageCharge::class);
+    }
+
+    public function getStatusToCalculateAccess()
+    {
+        return PartnerStatuses::getStatusToCalculateAccess($this->status);
     }
 }

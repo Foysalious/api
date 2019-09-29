@@ -27,6 +27,12 @@ class OrderRepository extends BaseRepository
         return !empty($result) ? $result['data'] : $result;
     }
 
+    public function findMinimals($ids)
+    {
+        $result = $this->client->get("orders/minimals?orders=" . $ids);
+        return !empty($result) ? $result['data'] : $result;
+    }
+
     /**
      * @param $data
      * @return mixed

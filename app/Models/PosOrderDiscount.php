@@ -35,4 +35,9 @@ class PosOrderDiscount extends Model
     {
         return ($this->amount * $this->$field) / 100;
     }
+
+    public function scopeByVoucher($query, $order_id)
+    {
+        return $query->where('type', 'voucher')->whereIn('pos_order_id', $order_id);
+    }
 }

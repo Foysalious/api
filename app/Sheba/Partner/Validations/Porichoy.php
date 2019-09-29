@@ -16,7 +16,9 @@ class Porichoy extends NidValidator
         parent::__construct();
         $this->baseUrl = env('PORICHOY_URL', 'https://kyc24nme.portal.azure-api.net');
         $index = in_array(env('APP_ENV'), ['local', 'development']) ? rand(0, 100)%2 : 0;
-        $this->baseUrl .= '/' . explode(',', env('PORICHOY_TEST_URLS', 'testkyc,testkyc-fail'))[$index] . '/';
+        $key = explode(',', env('PORICHOY_TEST_URLS', 'testkyc,testkyc-fail'));
+        $rand = array_rand($key, 1);
+        $this->baseUrl .= '/' . $key[$rand] . '/';
         $this->key = env('PORICHOY_KEY');
     }
 

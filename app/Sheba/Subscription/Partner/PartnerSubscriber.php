@@ -3,9 +3,9 @@
 use App\Models\Partner;
 use App\Models\PartnerSubscriptionPackage;
 use App\Models\PartnerSubscriptionUpdateRequest;
+use DB;
 use Sheba\Subscription\ShebaSubscriber;
 use Sheba\Subscription\SubscriptionPackage;
-use DB;
 
 class PartnerSubscriber extends ShebaSubscriber
 {
@@ -51,6 +51,9 @@ class PartnerSubscriber extends ShebaSubscriber
         return (new PartnerSubscriptionBilling($this->partner));
     }
 
+    /**
+     * @return PeriodicBillingHandler
+     */
     public function periodicBillingHandler()
     {
         return (new PeriodicBillingHandler($this->partner));

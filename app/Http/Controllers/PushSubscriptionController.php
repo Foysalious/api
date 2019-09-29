@@ -1,22 +1,22 @@
-<?php
-
-namespace App\Http\Controllers;
-
+<?php namespace App\Http\Controllers;
 
 use App\Models\PushSubscription;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class PushSubscriptionController extends Controller
 {
-
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function store(Request $request)
     {
         try {
             $this->validate($request, [
-                'subscriber_type' => 'required|string|in:customer',
-                'device' => 'required|string',
-                'subscriber_id' => 'numeric'
+                'subscriber_type' => 'required|string|in:customer', 'device' => 'required|string', 'subscriber_id' => 'numeric'
             ]);
             $model_name = "App\\Models\\" . ucwords($request->subscriber_type);
             $push_sub = null;
@@ -36,7 +36,7 @@ class PushSubscriptionController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

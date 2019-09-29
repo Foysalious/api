@@ -3,6 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\PartnerOrderController;
 use App\Http\Controllers\SpLoanInformationCompletion;
+use App\Models\Partner;
 use App\Models\PosOrder;
 use App\Models\SliderPortal;
 use App\Repositories\ReviewRepository;
@@ -20,9 +21,11 @@ class DashboardController extends Controller
 {
     public function get(Request $request, PartnerPerformance $performance, PartnerReward $partner_reward)
     {
+        ini_set('memory_limit', '6096M');
+        ini_set('max_execution_time', 660);
+
         try {
-            ini_set('memory_limit', '6096M');
-            ini_set('max_execution_time', 660);
+            /** @var Partner $partner */
             $partner = $request->partner;
             $slider_portal = SliderPortal::with('slider.slides')
                 ->where('portal_name', 'manager-app')
@@ -36,7 +39,6 @@ class DashboardController extends Controller
             $rating = (string)(is_null($rating) ? 0 : $rating);
             $successful_jobs = $partner->notCancelledJobs();
             $sales_stats = (new PartnerSalesStatistics($partner))->calculate();
-            // $upgradable_package = (new PartnerSubscriber($partner))->getUpgradablePackage();
             $upgradable_package = null;
             $new_order = $this->newOrdersCount($partner, $request);
 
@@ -51,24 +53,23 @@ class DashboardController extends Controller
                         $has_pos_paid_order = 1;
                 });
 
-            #$partner_orders = $partner->orders()->notCompleted()->get();
-            /*$total_due_for_sheba_orders = 0;
-            foreach ($partner_orders as $order) {
-                $total_due_for_sheba_orders += $order->calculate(true)->due;
-            }*/
-
             $dashboard = [
                 'name' => $partner->name,
                 'logo' => $partner->logo,
                 'geo_informations' => json_decode($partner->geo_informations),
                 'current_subscription_package' => [
+                    'id' => $partner->subscription->id,
                     'name' => $partner->subscription->name,
                     'name_bn' => $partner->subscription->show_name_bn,
-                    'status' => $partner->subscription->status
+                    'remaining_day' => $partner->last_billed_date ? $partner->periodicBillingHandler()->remainingDay() : 0,
+                    'billing_type' => $partner->billing_type,
+                    'rules' => $partner->subscription->getAccessRules(),
+                    'is_light' => $partner->subscription->id == (int)config('sheba.partner_lite_packages_id')
                 ],
                 'badge' => $partner->resolveBadge(),
                 'rating' => $rating,
-                'status' => constants('PARTNER_STATUSES_SHOW')[$partner['status']]['partner'],
+                'status' => $partner->getStatusToCalculateAccess(),
+                'show_status' => constants('PARTNER_STATUSES_SHOW')[$partner['status']]['partner'],
                 'balance' => $partner->totalWalletAmount(),
                 'credit' => $partner->wallet,
                 'bonus' => round($partner->bonusWallet(), 2),
@@ -104,6 +105,7 @@ class DashboardController extends Controller
                     'total_due_for_pos_orders' => $total_due_for_pos_orders,
                     #'total_due_for_sheba_orders' => $total_due_for_sheba_orders,
                 ],
+                'is_nid_verified' => (int)$request->manager_resource->profile->nid_verified ? true : false,
                 'weekly_performance' => [
                     'timeline' => date("jS F", strtotime(Carbon::today()->startOfWeek())) . "-" . date("jS F", strtotime(Carbon::today())),
                     'successfully_completed' => [

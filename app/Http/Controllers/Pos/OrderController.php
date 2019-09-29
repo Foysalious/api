@@ -1,44 +1,37 @@
 <?php namespace App\Http\Controllers\Pos;
 
 use App\Http\Controllers\Controller;
-
-use App\Models\Partner;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
-
 use App\Sheba\Payment\Adapters\Payable\PaymentLinkOrderAdapter;
 use App\Transformers\CustomSerializer;
 use App\Transformers\PosOrderTransformer;
-
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
-
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
-
-use Sheba\Payment\ShebaPayment;
+use Sheba\PaymentLink\Creator as PaymentLinkCreator;
 use Sheba\PaymentLink\PaymentLinkTransformer;
+use Sheba\Pos\Customer\Creator as PosCustomerCreator;
 use Sheba\Pos\Jobs\OrderBillEmail;
 use Sheba\Pos\Jobs\OrderBillSms;
 use Sheba\Pos\Order\Creator;
-use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\Pos\Order\QuickCreator;
 use Sheba\Pos\Order\RefundNatures\NatureFactory;
 use Sheba\Pos\Order\RefundNatures\Natures;
 use Sheba\Pos\Order\RefundNatures\RefundNature;
 use Sheba\Pos\Order\RefundNatures\ReturnNatures;
 use Sheba\Pos\Order\Updater;
+use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Profile\Creator as ProfileCreator;
-use Sheba\Pos\Customer\Creator as PosCustomerCreator;
-use Sheba\PaymentLink\Creator as PaymentLinkCreator;
 use Sheba\Reports\PdfHandler;
 use Sheba\Repositories\PartnerRepository;
+use Sheba\Subscription\Partner\Access\AccessManager;
 use Throwable;
 
 class OrderController extends Controller
@@ -54,9 +47,19 @@ class OrderController extends Controller
             list($offset, $limit) = calculatePagination($request);
 
             /** @var PosOrder $orders */
-            $orders = PosOrder::with('items.service.discounts', 'customer', 'payments', 'logs', 'partner')
-                ->byPartner($partner->id)
-                ->orderBy('created_at', 'desc')
+            $orders_query = PosOrder::with('items.service.discounts', 'customer.profile', 'payments', 'logs', 'partner')
+                ->byPartner($partner->id);
+
+            if ($request->has('q') && $request->q !== "null") {
+                $orders_query = $orders_query->whereHas('customer.profile', function ($query) use ($request) {
+                    $query->orWhere('profiles.name', 'LIKE', '%' . $request->q . '%');
+                    $query->orWhere('profiles.email', 'LIKE', '%' . $request->q . '%');
+                    $query->orWhere('profiles.mobile', 'LIKE', '%' . $request->q . '%');
+                });
+                $orders_query = $orders_query->orWhere('pos_orders.id', 'LIKE', '%' . $request->q . '%');
+            }
+
+            $orders = $orders_query->orderBy('created_at', 'desc')
                 ->skip($offset)
                 ->take($limit)
                 ->get();
@@ -115,6 +118,7 @@ class OrderController extends Controller
 
             return api_response($request, $orders_formatted, 200, ['orders' => $orders_formatted]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -199,7 +203,6 @@ class OrderController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -408,6 +411,7 @@ class OrderController extends Controller
     public function downloadInvoice(Request $request, $partner, PosOrder $order)
     {
         try {
+            AccessManager::checkAccess(AccessManager::Rules()->POS->INVOICE->DOWNLOAD, $request->partner->subscription->getAccessRules());
             $pdf_handler = new PdfHandler();
             $pos_order = $order->calculate();
             $partner = $pos_order->partner;

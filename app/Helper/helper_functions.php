@@ -118,7 +118,7 @@ if (!function_exists('calculateSort')) {
 if (!function_exists('getRangeFormat')) {
     function getRangeFormat($request, $param = 'range')
     {
-        $filter = $request->{$param};
+        $filter = (is_array($request)) ? $request[$param] : $request->{$param};
         $today = Carbon::today();
         $dateFrame = new \Sheba\Helpers\TimeFrame();
         switch ($filter) {
@@ -128,10 +128,20 @@ if (!function_exists('getRangeFormat')) {
                 return $dateFrame->forYesterday()->getArray();
             case 'year':
                 return $dateFrame->forAYear($today->year)->getArray();
+            case 'last_year':
+                return $dateFrame->forAYear($today->year - 1)->getArray();
             case 'month':
                 return $dateFrame->forAMonth($today->month, $today->year)->getArray();
+            case 'last_month':
+                return $dateFrame->forLastMonth($today)->getArray();
             case 'week':
                 return $dateFrame->forAWeek($today)->getArray();
+            case 'last_week':
+                return $dateFrame->forLastWeek($today)->getArray();
+            case 'quarter':
+                return $dateFrame->forAQuarter($today)->getArray();
+            case 'last_quarter':
+                return $dateFrame->forAQuarter($today, true)->getArray();
             case 'lifetime':
                 return $dateFrame->forLifeTime()->getArray();
             default:
@@ -512,7 +522,16 @@ if (!function_exists('normalizeCases')) {
         return ucwords(str_replace(['_', '-'], ' ', $value));
     }
 }
-
+if (!function_exists('isNormalized')) {
+    /**
+     * @param string $value
+     * @return string
+     */
+    function isNormalized($value)
+    {
+        return str_contains($value, ' ');
+    }
+}
 if (!function_exists('ramp')) {
     /**
      * @param $value
@@ -545,5 +564,30 @@ if (!function_exists('isAssoc')) {
         if (!is_array($arr)) return false;
         if ([] === $arr) return false;
         return array_keys($arr) !== range(0, count($arr) - 1);
+    }
+}
+if (!function_exists('convertNumbersToBangla')) {
+    function convertNumbersToBangla(float $number, $formatted = true, $decimal = 2)
+    {
+        $format = (array)json_decode('{"0":"০","1":"১","2":"২","3":"৩","4":"৪","5":"৫","6":"৬","7":"৭","8":"৮","9":"৯",".":".",",":","}');
+        $number = str_split($formatted ? number_format($number, $decimal) : "$number");
+        $converted = array_map(function ($item) use ($format) {
+            foreach ($format as $key => $val) {
+                if ($key === $item) {
+                    return $val;
+                }
+            }
+            return '';
+        }, $number);
+        return implode('', $converted);
+    }
+}
+
+if (!function_exists('banglaMonth')) {
+    function banglaMonth(int $month)
+    {
+        $months = ['জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন', 'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'];
+        if ($month > 0) $month -= 1;
+        return $months[$month];
     }
 }
