@@ -127,9 +127,9 @@
     <table class="table table-bordered">
         <thead>
         <tr class="table-head">
-            <th> Name </th>
-            <th> Quantity</th>
-            <th> Price</th>
+            <th>Customer Name </th>
+            <th> Order Count</th>
+            <th> Sales Amount</th>
         </tr>
         </thead>
         <tbody>
