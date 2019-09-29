@@ -39,9 +39,11 @@ class VoucherController extends Controller
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
 
+            $cloned_partner_voucher_query = clone $partner_voucher_query;
+
             $data = [
-                'total_voucher'     => $partner_voucher_query->count(),
-                'active_voucher'    => $partner_voucher_query->valid()->count(),
+                'total_voucher'     => $cloned_partner_voucher_query->count(),
+                'active_voucher'    => $cloned_partner_voucher_query->valid()->count(),
                 'total_sale_with_voucher' => $total_sale_with_voucher
             ];
 
