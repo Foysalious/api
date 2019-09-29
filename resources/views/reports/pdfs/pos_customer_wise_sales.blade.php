@@ -64,6 +64,7 @@
         @page {
             margin: 40px;
             padding: 2cm;
+            footer:page-footer;
         }
 
         @media print {
@@ -78,17 +79,44 @@
             }
 
         }
+        /** Define the footer rules **/
+        footer {
+            position: fixed;
+            bottom: 0cm;
+            left: 0cm;
+            right: 0cm;
+            height: 2cm;
+            text-align: center;
+            line-height: 1.5cm;
+        }
+
+
+
+        #pageCounter:before {
+            content: "Page " counter(page) ;
+        }
+
+        #counter {
+            position: fixed;
+            bottom: 0cm;
+            left: auto;
+            right: 30px;
+            height: 2cm;
+            text-align: center;
+            line-height: 1.5cm;
+            width: 120px;
+        }
     </style>
 </head>
 <body align="center">
-<table style="max-width: 800px;margin: auto;min-width: 600px;>
+<table style="max-width: 800px;margin: auto;min-width: 600px;>"
     <tbody>
     <tr>
         <td>
             <div class="heading">
                 <h2>{{ ucfirst($partner->name) }}</h2>
-                <h4 class="sub-heading"> কাস্টমার অনুযায়ী বিক্রয় রিপোর্ট </h4>
-                <span class="sub-text">{{convertNumbersToBangla($from->day,false).' '.banglaMonth($from->month).' '.convertNumbersToBangla($from->year,false).' থেকে '.convertNumbersToBangla($to->day,false).' '.banglaMonth($to->month).' '.convertNumbersToBangla($to->year,false)}}</span>
+                <h4 class="sub-heading"> Customer Wise Sales Report </h4>
+                <span class="sub-text">{{'From '.$from->format('jS F Y').' To '.$to->format('jS F Y')}}</span>
             </div>
         </td>
     </tr>
@@ -98,9 +126,9 @@
     <table class="table table-bordered">
         <thead>
         <tr class="table-head">
-            <th> গ্রাহকের  </th>
-            <th> অর্ডার সংখ্যা</th>
-            <th> বিক্রয়মূল্য</th>
+            <th> Name </th>
+            <th> Quantity</th>
+            <th> Price</th>
         </tr>
         </thead>
         <tbody>
@@ -110,18 +138,26 @@
                 <?php $totalPrice += (float)$item['sales_amount'];
                 $totalOrder += (float)$item['order_count']; ?>
                 <td>{{ $item['customer_name'] }}</td>
-                <td>{{ convertNumbersToBangla((float)$item['order_count']) }}</td>
-                <td>{{ convertNumbersToBangla((float)$item['sales_amount']) }}</td>
+                <td>{{ number_format((float)$item['order_count'],2) }}</td>
+                <td>{{ number_format((float)$item['sales_amount'],2) }}</td>
             </tr>
         @endforeach
 
         <tr style="page-break-after: always" class="table-head">
-            <td><span class="font-weight-bold"> মোট</span></td>
-            <td><span class="font-weight-bold">{{ convertNumbersToBangla((float)$totalOrder) }}</span></td>
-            <td><span class="font-weight-bold">{{ convertNumbersToBangla((float)$totalPrice) }}</span></td>
+            <td><span class="font-weight-bold"> Total</span></td>
+            <td><span class="font-weight-bold">{{ number_format((float)$totalOrder,2) }}</span></td>
+            <td><span class="font-weight-bold">{{ number_format((float)$totalPrice,2) }}</span></td>
         </tr>
         </tbody>
     </table>
 </div>
+<footer align="center" class="footer">
+    <div class="text-center pt-1 w-100" id="footer"><span>Powered by <a
+                    href="{{config('sheba.partners_url')}}">sManager</a></span></div>
+    <div id="counter">
+        <div id="pageCounter">
+        </div>
+    </div>
+</footer>
 </body>
 </html>
