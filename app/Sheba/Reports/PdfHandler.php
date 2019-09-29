@@ -1,6 +1,6 @@
 <?php namespace Sheba\Reports;
-
 use Barryvdh\DomPDF\PDF;
+
 use Illuminate\Support\Facades\File;
 use Sheba\FileManagers\CdnFileManager;
 
@@ -24,10 +24,10 @@ class PdfHandler extends Handler
 
     public function download()
     {
+
         $this->create();
         return $this->pdf->download("$this->filename.$this->downloadFormat");
     }
-
     public function save()
     {
         $this->create();

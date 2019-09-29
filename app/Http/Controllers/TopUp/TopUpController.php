@@ -189,23 +189,6 @@ class TopUpController extends Controller
         }
     }
 
-    private function getAgent(Request $request)
-    {
-        $model = "App\\Models\\" . ucfirst(camel_case($request->type));
-        if ($request->type == 'customer') {
-            $model = $model::find((int)$request->type_id);
-        } elseif ($request->type == 'partner') {
-            $model = $model::find((int)$request->type_id);
-        } elseif ($request->type == 'affiliate') {
-            $model = $model::find((int)$request->type_id);
-        } elseif ($request->type == 'vendor') {
-            $model = $model::find((int)$request->type_id);
-        } elseif ($request->type == 'business') {
-            $model = $model::find((int)$request->type_id);
-        }
-        return $model;
-    }
-
     public function restartQueue()
     {
         exec("sudo supervisorctl restart sheba_queues:topup_00");

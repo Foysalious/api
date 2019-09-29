@@ -25,7 +25,7 @@
             width: 400px;
             float: right;
             page-break-inside: auto !important;
-            page-break-after: always;
+            page-break-after: avoid;
             alignment: right;
         }
 
@@ -60,18 +60,7 @@
             color: white;
         }
 
-        .bill-item__total span:first-child:before {
-            position: absolute;
-            left: -25.5px;
-            width: 51px;
-            height: 51px;
-            right: auto;
-            border-radius: 25.5px;
-            content: '';
-            z-index: -1;
-            top: 0;
-            background-color: #1b4280;
-        }
+
 
         @media print {
 
@@ -182,7 +171,7 @@
 </table>
 @if(isset($orders))
     <table class="table table-striped data-table"
-           style="width: 100%;color: #929292;min-width: 600px;font-family: sans-serif; font-size: x-small"
+           style="width: 100%;color: #929292;min-width: 600px;font-family: sans-serif; font-size: x-small;page-break-after: auto;clear: both"
            cellspacing="5">
         <thead style="background-color: #7B83A5; color: white;">
         <tr>
@@ -206,7 +195,7 @@
         @endforeach
         </tbody>
     </table>
-    <div style="width: 100%;display: block;text-align: right;padding: 20px 20px 0;position: relative;">
+    <div style="width: 100%;display: block;text-align: right;padding: 20px 20px 0;position: relative;page-break-after: auto">
         <div class="bill-item-container"
              style="">
             <div class="bill-item">
@@ -230,67 +219,61 @@
     </div>
 
 @endif
-<footer>
-    <div style="width: 100%;display: inline-block;padding: 40px;min-width: 600px;position: relative">
-        <table style="width: 100%;">
-            <tbody>
-            <tr>
-                <td style="padding-top: 38px">
-                    <p class="terms" style="border-top: none">
-                        <strong>*</strong>
-                        7 days service warranty. "No Tips" policy applicable.
-                    </p>
-                    <p class="terms" style="border-top: none">
-                        <strong>*</strong>
-                        This was created on a computer and is valid without the signature and seal.
-                    </p>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <div class="terms" style="padding-left: 150px;">
-                        <table>
-                            <tr>
-                                <td><span> </span>
-                                    <span>In association with:</span>
-                                </td>
-                                <td>
-                                    <span style="padding-left: 20px; color: #C91F66"></span>
-                                    <span>
+    <footer>
+        <div style="padding: 40px;width: 100%;min-width: 800px;page-break-before: auto;page-break-inside: avoid;clear: both">
+            <table style="width: 100%;page-break-inside: avoid;">
+                <tbody>
+                <tr>
+                    <td style="padding-top: 38px">
+                        <p class="terms" style="border-top: none">
+                            <strong>*</strong>
+                            7 days service warranty. "No Tips" policy applicable.
+                        </p>
+                        <p class="terms" style="border-top: none">
+                            <strong>*</strong>
+                            This was created on a computer and is valid without the signature and seal.
+                        </p>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="terms" style="padding-left: 150px;">
+                            <table>
+                                <tr>
+                                    <td><span> </span>
+                                        <span>In association with:</span>
+                                    </td>
+                                    <td>
+                                        <span style="padding-left: 20px; color: #C91F66"></span>
+                                        <span>
                                         <img style="width: 90px; padding-top: 16px"
                                              src="https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/images/sheba_logo_blue.png"
                                              alt=""></span>
-                                </td>
-                                <td>
+                                    </td>
+                                    <td>
                                     <span style="padding-left: 20px; color: #C91F66">
                                         <img
                                                 style="width: 16px; padding-top: 15px"
                                                 src="https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/image/invoice/icon/call-material%403x.png"
                                                 alt=""></span>
-                                    <span style="padding-left: 10px">16516</span>
-                                </td>
-                                <td>
+                                        <span style="padding-left: 10px">16516</span>
+                                    </td>
+                                    <td>
                                     <span style="padding-left: 20px; color: #C91F66">
                                         <img style="width: 16px;padding-top: 15px"
                                              src="https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/image/invoice/icon/email-material@3x.png"
                                              alt=""></span>
-                                    <span style="padding-left: 10px">info@sheba.xyz</span>
-                                </td>
-
-                                {{--<p class="terms" style="border-top: none; padding-left: 172px;vertical-align: middle;display: inline-block;text-align: center;line-height: 1">
-
-
-
-                                </p>--}}
-                            </tr>
-                        </table>
-                    </div>
-                </td>
-            </tr>
-            </tbody>
-        </table>
-    </div>
-</footer>
+                                        <span style="padding-left: 10px">info@sheba.xyz</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </footer>
 </body>
 
 </html>
