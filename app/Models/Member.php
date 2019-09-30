@@ -45,4 +45,9 @@ class Member extends Model
     {
         return $this->isOfTypesIn($business, ["Admin"]);
     }
+
+    public function customer()
+    {
+        return $this->profile->customer();
+    }
 }

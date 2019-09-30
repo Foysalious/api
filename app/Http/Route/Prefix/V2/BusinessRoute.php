@@ -5,6 +5,7 @@ class BusinessRoute
     public function set($api)
     {
         $api->post('business/login', 'B2b\LoginController@login');
+        $api->get('business/test-login', 'B2b\LoginController@generateDummyToken')->middleware('admin.auth');
         #$api->post('business/register', 'B2b\RegistrationController@register');
         $api->post('business/register', 'B2b\RegistrationController@registerV2');
         $api->group(['prefix' => 'businesses', 'middleware' => ['business.auth']], function ($api) {
@@ -20,7 +21,15 @@ class BusinessRoute
                         $api->get('/info', 'B2b\BusinessesController@getVendorInfo');
                     });
                 });
-
+                $api->group(['prefix' => 'subscription-orders'], function ($api) {
+                    $api->post('/', 'B2b\OrderController@placeSubscriptionOrder');
+                    $api->get('/', 'B2b\SubscriptionOrderController@index');
+                    $api->get('/{order}', 'B2b\SubscriptionOrderController@show');
+                    $api->get('/{order}/invoice', 'B2b\SubscriptionOrderController@orderInvoice');
+                    $api->group(['prefix' => '{subscription_order}'], function ($api) {
+                        $api->get('bills/clear', 'B2b\SubscriptionOrderController@clearPayment');
+                    });
+                });
                 $api->get('/vendors', 'B2b\BusinessesController@getVendorsList');
                 $api->get('/vendors/{vendor}/info', 'B2b\BusinessesController@getVendorInfo');
                 $api->get('/vendors/{vendor}/resource-info', 'B2b\BusinessesController@getVendorAdminInfo');

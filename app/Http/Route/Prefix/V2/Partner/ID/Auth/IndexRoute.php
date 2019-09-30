@@ -78,6 +78,10 @@ class IndexRoute
                 $api->resources(['customers' => 'Pos\CustomerController']);
                 $api->get('settings', 'Pos\SettingController@getSettings');
                 $api->post('due-payment-request-sms', 'Pos\SettingController@duePaymentRequestSms');
+                $api->group(['prefix' => 'reports'], function ($api) {
+                    $api->get('product-wise', 'Pos\ReportsController@product');
+                    $api->get('customer-wise', 'Pos\ReportsController@customer');
+                });
             });
             $api->group(['prefix' => 'categories'], function ($api) {
                 $api->get('/all', 'CategoryController@getPartnerLocationCategory');
@@ -111,6 +115,8 @@ class IndexRoute
                 $api->get('/', 'Partner\PartnerSubscriptionController@index');
                 $api->post('/', 'Partner\PartnerSubscriptionController@store');
                 $api->post('/upgrade', 'Partner\PartnerSubscriptionController@update');
+                $api->post('/purchase', 'Partner\PartnerSubscriptionController@purchase');
+                $api->post('/auto-billing-toggle','Partner\PartnerSubscriptionController@toggleAutoBillingActivation');
             });
             $api->group(['prefix' => 'customer-subscriptions'], function ($api) {
                 $api->get('order-lists', 'Partner\CustomerSubscriptionController@index');
@@ -213,7 +219,7 @@ class IndexRoute
                 $api->group(['prefix' => '{voucher}'], function ($api) {
                     $api->get('/', 'VoucherController@show');
                     $api->post('/', 'VoucherController@update');
-                    $api->post('/deactivate', 'VoucherController@deactivateVoucher');
+                    $api->post('activation-status-change', 'VoucherController@activationStatusChange');
                 });
             });
             $api->post('nid-validate', 'ShebaController@nidValidate');

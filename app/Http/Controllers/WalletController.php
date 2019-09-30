@@ -2,6 +2,7 @@
 
 use App\Models\Customer;
 use App\Models\Payment;
+use App\Repositories\PartnerRepository;
 use App\Repositories\PaymentRepository;
 use Carbon\Carbon;
 use DB;
@@ -39,7 +40,7 @@ class WalletController extends Controller
         try {
             $this->validate($request, [
                 'payment_method' => 'required|in:online,bkash,cbl',
-                'amount' => 'required|numeric|min:10|max:10000',
+                'amount' => 'required|numeric|min:10|max:100000',
                 'user_id' => 'required',
                 'user_type' => 'required|in:customer,affiliate,partner',
                 'remember_token' => 'required'
@@ -47,13 +48,14 @@ class WalletController extends Controller
 
             $class_name = "App\\Models\\" . ucwords($request->user_type);
             if ($request->user_type === 'partner') {
-                $user = $this->validatePartner($request->remember_token, $request->user_id);
+                $user = (new PartnerRepository($request->user_id))->validatePartner($request->remember_token);
             } else {
                 $user = $class_name::where([['id', (int)$request->user_id], ['remember_token', $request->remember_token]])->first();
             }
 
             if (!$user) return api_response($request, null, 404, ['message' => 'User Not found.']);
             $recharge_adapter = new RechargeAdapter($user, $request->amount);
+
             $payment = $sheba_payment->setMethod($request->payment_method)->init($recharge_adapter->getPayable());
             return api_response($request, $payment, 200, ['link' => $payment['link'], 'payment' => $payment->getFormattedPayment()]);
         } catch (ValidationException $e) {
@@ -140,18 +142,6 @@ class WalletController extends Controller
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
-        }
-    }
-
-
-    private function validatePartner($remember_token, $id)
-    {
-        $manager_resource = Resource::where('remember_token', $remember_token)->first();
-        $partner = Partner::find($id);
-        if (isset($manager_resource) && isset($partner) && $manager_resource->isManager()) {
-            return $partner;
-        } else {
-            return false;
         }
     }
 }

@@ -16,7 +16,9 @@ class Porichoy extends NidValidator
         parent::__construct();
         $this->baseUrl = env('PORICHOY_URL', 'https://kyc24nme.portal.azure-api.net');
         $index = in_array(env('APP_ENV'), ['local', 'development']) ? rand(0, 100)%2 : 0;
-        $this->baseUrl .= '/' . explode(',', env('PORICHOY_TEST_URLS', 'testkyc,testkyc-fail'))[$index] . '/';
+        $key = explode(',', env('PORICHOY_TEST_URLS', 'testkyc,testkyc-fail'));
+        $rand = array_rand($key, 1);
+        $this->baseUrl .= '/' . $key[$rand] . '/';
         $this->key = env('PORICHOY_KEY');
     }
 
@@ -28,8 +30,10 @@ class Porichoy extends NidValidator
      */
     function check($nid, $fullName = null, $dob = null): NidValidationResponse
     {
-        $response = $this->client->post($this->baseUrl . 'check-person',
-            ['form_params' => ['national_id' => $nid, 'person_fullname' => $fullName, 'person_dob' => $dob], 'headers' => ['Ocp-Apim-Subscription-Key' => $this->key]])
+        $response = $this->client->post($this->baseUrl . 'check-person?national_id=' . $nid . '&person_fullname=' . $fullName . '&person_dob=' . $dob,
+            [
+                'headers' => ['Ocp-Apim-Subscription-Key' => $this->key]
+            ])
             ->getBody()->getContents();
         $responseType = (new NidValidationResponse())->setFromStringResponse($response,'passKyc','errorCode');
         $responseType->setStatus($responseType->getError()?0:1);

@@ -5,28 +5,18 @@ namespace App\Http\Middleware;
 use App\Models\User;
 use Closure;
 
-class AdminAuthMiddleware {
+class AdminAuthMiddleware
+{
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request $request
-     * @param  \Closure $next
+     * @param \Illuminate\Http\Request $request
+     * @param \Closure $next
      * @return mixed
      */
     public function handle($request, Closure $next)
     {
-        If ($request->has('remember_token'))
-        {
-            $user = User::where('remember_token', $request->input('remember_token'))->first();
-            //remember_token is valid for a customer
-            if ($user)
-            {
-                return $next($request);
-            }
-            else
-            {
-                return response()->json(['msg' => 'unauthorized', 'code' => 409]);
-            }
-        }
+        return in_array($request->ip(), ['127.0.0.1']) ? $next($request) : response()->json(
+            ['message' => 'unauthorized', 'code' => 409]);
     }
 }

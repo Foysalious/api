@@ -19,41 +19,36 @@ class PartnerSort
         $this->sortedPartners = collect();
         $this->partners = $partners;
         $this->packagesWithBadgeOrder = config('sheba.partner_package_and_badge_order_on_partner_list');
-      //  $this->filterPartnersByPackage();
+        //$this->filterPartnersByPackage();
         $this->weights = config('sheba.weight_on_partner_list');
-//        $this->goldPartnerCount = config('sheba.partner_packages_on_partner_list')['ESP'];
-//        $this->silverPartnerCount = config('sheba.partner_packages_on_partner_list')['PSP'];
-//        $this->bronzePartnerCount = config('sheba.partner_packages_on_partner_list')['LSP'];
-//        $this->setPartners();
-    }
-
-    private function setPartners()
-    {
-        $remaining = 0;
-        if ($this->goldPartners->count() < $this->goldPartnerCount) {
-            $remaining = $this->goldPartnerCount - $this->goldPartners->count();
-            $this->goldPartnerCount = $this->goldPartners->count();
-            $this->silverPartnerCount += $remaining;
-        }
-        if ($this->silverPartners->count() < $this->silverPartnerCount) {
-            $remaining = $this->silverPartnerCount - $this->silverPartners->count();
-            $this->silverPartnerCount = $this->silverPartners->count();
-            $this->bronzePartnerCount += $remaining;
-        }
-        if ($this->bronzePartners->count() < $this->bronzePartnerCount) {
-            $this->bronzePartnerCount = $this->bronzePartners->count();
-        }
+        //$this->goldPartnerCount = config('sheba.partner_packages_on_partner_list')['ESP'];
+        //$this->silverPartnerCount = config('sheba.partner_packages_on_partner_list')['PSP'];
+        //$this->bronzePartnerCount = config('sheba.partner_packages_on_partner_list')['LSP'];
+        //$this->setPartners();
     }
 
     public function get()
     {
-//        $this->goldPartners = $this->goldPartners->count() > 0 ? $this->calculateTotalWeight($this->goldPartners)->splice(0, $this->goldPartnerCount) : collect();
-//        $this->silverPartners = $this->silverPartners->count() > 0 ? $this->calculateTotalWeight($this->silverPartners)->splice(0, $this->silverPartnerCount) : collect();
-//        $this->bronzePartners = $this->bronzePartners->count() > 0 ? $this->calculateTotalWeight($this->bronzePartners)->splice(0, $this->bronzePartnerCount) : collect();
-//        $this->sortedPartners = $this->sortedPartners->merge($this->goldPartners)->merge($this->silverPartners)->merge($this->bronzePartners);
-       // $this->sortedPartners = $this->calculateTotalWeight($this->partners);
+        //$this->goldPartners = $this->goldPartners->count() > 0 ? $this->calculateTotalWeight($this->goldPartners)->splice(0, $this->goldPartnerCount) : collect();
+        //$this->silverPartners = $this->silverPartners->count() > 0 ? $this->calculateTotalWeight($this->silverPartners)->splice(0, $this->silverPartnerCount) : collect();
+        //$this->bronzePartners = $this->bronzePartners->count() > 0 ? $this->calculateTotalWeight($this->bronzePartners)->splice(0, $this->bronzePartnerCount) : collect();
+        //$this->sortedPartners = $this->sortedPartners->merge($this->goldPartners)->merge($this->silverPartners)->merge($this->bronzePartners);
+        //$this->sortedPartners = $this->calculateTotalWeight($this->partners);
         $this->sortPartnersByPackageAndBadge();
         return $this->sortedPartners->count() > 0 ? $this->sortedPartners : $this->shebaHelpDesk;
+    }
+
+    private function sortPartnersByPackageAndBadge()
+    {
+        foreach ($this->packagesWithBadgeOrder as $order) {
+            $order = (object)$order;
+            $current_sorted_partners = $this->partners->filter(function ($partner) use ($order) {
+                return ($partner->badge === $order->badge) && ($partner->subscription->name === $order->package);
+            });
+            if ($current_sorted_partners->count() > 0) $current_sorted_partners = $this->calculateTotalWeight($current_sorted_partners);
+            $this->sortedPartners = $this->sortedPartners->merge($current_sorted_partners);
+        }
+        $this->shebaHelpDesk = $this->partners->where('id', 1809);
     }
 
     private function calculateTotalWeight($partners)
@@ -88,6 +83,24 @@ class PartnerSort
         return $partners->sortByDesc('score');
     }
 
+    private function setPartners()
+    {
+        $remaining = 0;
+        if ($this->goldPartners->count() < $this->goldPartnerCount) {
+            $remaining = $this->goldPartnerCount - $this->goldPartners->count();
+            $this->goldPartnerCount = $this->goldPartners->count();
+            $this->silverPartnerCount += $remaining;
+        }
+        if ($this->silverPartners->count() < $this->silverPartnerCount) {
+            $remaining = $this->silverPartnerCount - $this->silverPartners->count();
+            $this->silverPartnerCount = $this->silverPartners->count();
+            $this->bronzePartnerCount += $remaining;
+        }
+        if ($this->bronzePartners->count() < $this->bronzePartnerCount) {
+            $this->bronzePartnerCount = $this->bronzePartners->count();
+        }
+    }
+
     private function filterPartnersByPackage()
     {
         $group_by_packages = $this->partners->groupBy('package_id');
@@ -98,19 +111,5 @@ class PartnerSort
         $this->bronzePartners = $this->bronzePartners->reject(function ($partner) {
             return $partner->id == 1809;
         });
-    }
-
-    private function sortPartnersByPackageAndBadge()
-    {
-        foreach ($this->packagesWithBadgeOrder as $order) {
-            $order = (object) $order;
-            $current_sorted_partners = $this->partners->filter(function($partner) use ($order) {
-                return ($partner->badge === $order->badge) && ($partner->subscription->name === $order->package);
-            });
-            if($current_sorted_partners->count()>0)
-                $current_sorted_partners = $this->calculateTotalWeight($current_sorted_partners);
-            $this->sortedPartners = $this->sortedPartners->merge($current_sorted_partners);
-        }
-        $this->shebaHelpDesk = $this->partners->where('id', 1809);
     }
 }

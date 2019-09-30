@@ -64,7 +64,7 @@ class Basic extends PartnerSale
         if ($this->frequency == self::WEEK_BASE) {
             $data['timeline'] = $this->timeFrame->start->format('M d') . ' - ' . $this->timeFrame->end->format('M d');
 
-            $data['sales_stat_breakdown'] = $this->getWeeklyStatFor($orders, 'sales');
+            $data['sales_stat_breakdown'] = $this->getWeeklyStatFor($orders, 'sales', $pos_orders);
             $data['order_stat_breakdown'] = $this->getWeeklyStatFor($orders, 'order_count');
         }
 
@@ -72,18 +72,18 @@ class Basic extends PartnerSale
             $data['timeline'] = $this->timeFrame->start->format('F');
             $data['day'] = $this->timeFrame->start->format('Y-m-d');
 
-            $data['sales_stat_breakdown'] = $this->getMonthlyStatFor($orders, 'sales');
+            $data['sales_stat_breakdown'] = $this->getMonthlyStatFor($orders, 'sales', $pos_orders);
             $data['order_stat_breakdown'] = $this->getMonthlyStatFor($orders, 'order_count');
         }
 
-        if ($this->frequency == self::YEAR_BASE) {
-            $lifetime_timeFrame = (new TimeFrame())->forLifeTime();
-            $lifetime_closed_orders = $this->partnerOrders->getClosedOrdersBetween($lifetime_timeFrame, $this->partner);
-
-            $data['timeline'] = 'Year ' . $this->timeFrame->start->year;
-            $data['day'] = $this->timeFrame->start->format('Y-m-d');
-            $data['lifetime_sales'] = $lifetime_closed_orders->sum('totalPrice');
-        }
+//        if ($this->frequency == self::YEAR_BASE) {
+//            $lifetime_timeFrame = (new TimeFrame())->forLifeTime();
+//            $lifetime_closed_orders = $this->partnerOrders->getClosedOrdersBetween($lifetime_timeFrame, $this->partner);
+//
+//            $data['timeline'] = 'Year ' . $this->timeFrame->start->year;
+//            $data['day'] = $this->timeFrame->start->format('Y-m-d');
+//            $data['lifetime_sales'] = $lifetime_closed_orders->sum('totalPrice');
+//        }
 
         if (in_array($this->frequency, [self::DAY_BASE, self::WEEK_BASE, self::MONTH_BASE])) {
             $data['partner_collection'] = $orders->sum('partner_collection');
@@ -110,14 +110,14 @@ class Basic extends PartnerSale
     /**
      * @param $orders
      * @param string $for
+     * @param null $pos_orders
      * @return array
      */
-    private function getWeeklyStatFor($orders, $for = 'sales')
+    private function getWeeklyStatFor($orders, $for = 'sales', $pos_orders = null)
     {
         $this->initData(self::WEEK_BASE);
-        $orders->each(function ($order) use ($for) {
-            $this->data[$order->closed_at->format('D')]['amount'] += ($for == 'sales') ? $order->totalPrice : 1;
-        });
+        $this->getOrdersBreakdownData($orders, $for, self::WEEK_BASE);
+        if ($pos_orders) $this->getPosOrdersBreakdownData($for, $pos_orders, self::WEEK_BASE);
 
         return collect($this->data)->values()->all();
     }
@@ -125,16 +125,44 @@ class Basic extends PartnerSale
     /**
      * @param $orders
      * @param string $for
+     * @param null $pos_orders
      * @return array
      */
-    private function getMonthlyStatFor($orders, $for = 'sales')
+    private function getMonthlyStatFor($orders, $for = 'sales', $pos_orders = null)
     {
         $this->initData(self::MONTH_BASE, cal_days_in_month(CAL_GREGORIAN, $this->timeFrame->start->month, $this->timeFrame->start->year));
-        $orders->each(function ($order) use ($for) {
-            $this->data[intval($order->closed_at->format('d'))]['amount'] += ($for == 'sales') ? $order->totalPrice : 1;
-        });
+        $this->getOrdersBreakdownData($orders, $for, self::MONTH_BASE);
+        if ($pos_orders) $this->getPosOrdersBreakdownData($for, $pos_orders, self::MONTH_BASE);
 
         return collect($this->data)->values()->all();
+    }
+
+    /**
+     * @param $orders
+     * @param $for
+     * @param $timeline_base
+     */
+    private function getOrdersBreakdownData($orders, $for, $timeline_base)
+    {
+        $is_calculating_for_month = ($timeline_base == self::MONTH_BASE);
+        $orders->each(function ($order) use ($for, $is_calculating_for_month) {
+            $order_created_at_formatter = $is_calculating_for_month ? intval($order->closed_at->format('d')) : $order->closed_at->format('D');
+            $this->data[$order_created_at_formatter]['amount'] += ($for == 'sales') ? $order->totalPrice : 1;
+        });
+    }
+
+    /**
+     * @param $for
+     * @param $pos_orders
+     * @param $timeline_base
+     */
+    private function getPosOrdersBreakdownData($for, $pos_orders, $timeline_base)
+    {
+        $is_calculating_for_month = ($timeline_base == self::MONTH_BASE);
+        $pos_orders->each(function ($pos_order) use ($for, $is_calculating_for_month) {
+            $pos_order_created_at_formatter = $is_calculating_for_month ? intval($pos_order->created_at->format('d')) : $pos_order->created_at->format('D');
+            $this->data[$pos_order_created_at_formatter]['amount'] += ($for == 'sales') ? $pos_order->getNetBill() : 1;
+        });
     }
 
     /**
@@ -154,17 +182,20 @@ class Basic extends PartnerSale
         }
     }
 
+    /**
+     * @param $data
+     */
     private function formatTimeline(&$data)
     {
         if ($this->frequency == self::DAY_BASE) {
             $data['day'] = $this->timeFrame->start->format('Y-m-d');
             $data['timeline'] = $this->timeFrame->start->format('l, M d');
-        } else if ($this->frequency == self::WEEK_BASE) {
+        } elseif ($this->frequency == self::WEEK_BASE) {
             $data['timeline'] = $this->timeFrame->start->format('M d') . ' - ' . $this->timeFrame->end->format('M d');
-        } else if ($this->frequency == self::MONTH_BASE) {
+        } elseif ($this->frequency == self::MONTH_BASE) {
             $data['timeline'] = $this->timeFrame->start->format('F');
             $data['day'] = $this->timeFrame->start->format('Y-m-d');
-        } else if ($this->frequency == self::YEAR_BASE) {
+        } elseif ($this->frequency == self::YEAR_BASE) {
             $data['timeline'] = 'Year ' . $this->timeFrame->start->year;
             $data['day'] = $this->timeFrame->start->format('Y-m-d');
         }

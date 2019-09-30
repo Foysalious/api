@@ -1,6 +1,8 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\PosCustomer;
+use App\Models\PosOrder;
+use App\Models\PosOrderDiscount;
 use App\Models\Voucher;
 use App\Transformers\CustomSerializer;
 use App\Transformers\VoucherDetailTransformer;
@@ -16,6 +18,7 @@ use Sheba\ModificationFields;
 use Sheba\Voucher\DTO\Params\CheckParamsForPosOrder;
 use Sheba\Voucher\VoucherRule;
 use Throwable;
+use Illuminate\Validation\Rule;
 
 class VoucherController extends Controller
 {
@@ -31,17 +34,20 @@ class VoucherController extends Controller
             $partner = $request->partner;
 
             $partner_voucher_query = Voucher::byPartner($partner);
+            $total_sale_with_voucher = $this->calculatePartnerWiseSaleByVoucher($partner_voucher_query);
             $latest_vouchers = [];
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
 
+            $cloned_partner_voucher_query = clone $partner_voucher_query;
+
             $data = [
-                'total_voucher'     => $partner_voucher_query->count(),
-                'active_voucher'    => $partner_voucher_query->valid()->count(),
-                'total_sale_with_voucher' => 255648
+                'total_voucher'     => $cloned_partner_voucher_query->count(),
+                'active_voucher'    => $cloned_partner_voucher_query->valid()->count(),
+                'total_sale_with_voucher' => $total_sale_with_voucher
             ];
 
-            $partner_voucher_query->orderBy('id', 'desc')->take(3)->each(function ($voucher) use (&$latest_vouchers, $manager) {
+            $partner_voucher_query->orderBy('created_at', 'desc')->take(3)->each(function ($voucher) use (&$latest_vouchers, $manager) {
                 $resource = new Item($voucher, new VoucherTransformer());
                 $voucher = $manager->createData($resource)->toArray();
                 array_push($latest_vouchers, $voucher['data']) ;
@@ -61,11 +67,15 @@ class VoucherController extends Controller
     public function index(Request $request)
     {
         try {
+            if ($request->has('amount') || $request->has('pos_services') || $request->has('pos_customer'))
+                $this->validate($request, ['amount' => 'required']);
+
             $partner = $request->partner;
             list($offset, $limit) = calculatePagination($request);
             $partner_voucher_query = Voucher::byPartner($partner);
 
-            $used_voucher_id = [344467, 344466];
+            $all_voucher_id = $partner_voucher_query->pluck('id')->toArray();
+            $used_voucher_id = PosOrder::byVoucher($all_voucher_id)->pluck('voucher_id')->toArray();
 
             if ($request->has('filter_type')) {
                 if ($request->filter_type == "used") $partner_voucher_query->whereIn('id', $used_voucher_id);
@@ -81,16 +91,49 @@ class VoucherController extends Controller
 
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
-            $partner_voucher_query->orderBy('id', 'desc')->get()->each(function ($voucher) use (&$vouchers, $manager) {
+            $partner_voucher_query->orderBy('id', 'desc')->get()->each(function ($voucher) use (&$vouchers, $manager, $request) {
+                list($is_check_for_promotion, $pos_order_params) = $this->checkForPromotion($request);
+                if ($is_check_for_promotion) {
+                    $result = voucher($voucher->code)->checkForPosOrder($pos_order_params)->reveal();
+                    if (!$result['is_valid']) return;
+                }
+
                 $resource = new Item($voucher, new VoucherTransformer());
                 $voucher = $manager->createData($resource)->toArray();
                 array_push($vouchers, $voucher['data']) ;
             });
             return api_response($request, null, 200, ['vouchers' => $vouchers]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    /**
+     * @param Request $request
+     * @return array
+     */
+    private function checkForPromotion(Request $request)
+    {
+        $is_check_for_promotion = false;
+        $pos_order_params = (new CheckParamsForPosOrder());
+        if ($request->has('amount') && !empty($request->amount)) {
+            $is_check_for_promotion = true;
+            $pos_order_params->setOrderAmount($request->amount);
+        }
+
+        if ($request->has('pos_services') && !empty($request->pos_services)) {
+            $is_check_for_promotion = true;
+            $pos_order_params->setPartnerPosService($request->pos_services);
+        }
+
+        $pos_customer = $request->has('pos_customer') && !empty($request->pos_customer) ? PosCustomer::find($request->pos_customer) : new PosCustomer();
+        $pos_order_params->setApplicant($pos_customer);
+
+        return [$is_check_for_promotion, $pos_order_params];
     }
 
     /**
@@ -108,11 +151,11 @@ class VoucherController extends Controller
             $resource = new Item($voucher, new VoucherDetailTransformer());
             $formatted_voucher = $manager->createData($resource)->toArray();
             $formatted_voucher['data']['is_used'] = $voucher->usedCount() ? true : false;
-
+            list($total_sale, $total_discount) = $this->calculateTotalSaleAndDiscountByVoucher($voucher);
             $data = [
-                'total_used' => 5,
-                'total_sale_with_voucher' => 256865,
-                'total_discount_with_voucher' => 8500
+                'total_used' => $voucher->usedCount(),
+                'total_sale_with_voucher' => $total_sale,
+                'total_discount_with_voucher' => $total_discount
             ];
             return api_response($request, null, 200, ['data' => $data, 'voucher' => $formatted_voucher['data']]);
         } catch (Throwable $e) {
@@ -131,7 +174,9 @@ class VoucherController extends Controller
             $this->validate($request, [
                 'start_date' => 'required|date',
                 'end_date' => 'required|date|after_or_equal:start_date',
-                'code' => 'required|unique:vouchers'
+                'code' => 'required|unique:vouchers',
+                'modules' => 'required',
+                'applicant_types' => 'required'
             ]);
 
             $partner = $request->partner;
@@ -145,6 +190,7 @@ class VoucherController extends Controller
                 'start_date' => Carbon::parse($request->start_date . ' 00:00:00'),
                 'end_date' => Carbon::parse($request->end_date . ' 23:59:59'),
                 'max_customer' => ($request->has('max_customer') && !empty($request->max_customer)) ? $request->max_customer : null,
+                'max_order' => 0,
                 'is_created_by_sheba' => 0,
                 'sheba_contribution' => 0.00,
                 'partner_contribution' => 100.00,
@@ -171,14 +217,16 @@ class VoucherController extends Controller
      * @param Voucher $voucher
      * @return JsonResponse
      */
-    public function update(Request $request,$partner,Voucher $voucher)
+    public function update(Request $request, $partner, Voucher $voucher)
     {
         try {
             $partner = $request->partner;
             $this->validate($request, [
                 'start_date' => 'required|date',
                 'end_date' => 'required|date|after_or_equal:start_date',
-                'code' => 'required|unique:vouchers'
+                'code' => 'required|unique:vouchers,code,' . $voucher->id,
+                'applicant_types' => 'required',
+                'modules' => 'required'
             ]);
 
             $this->setModifier($partner);
@@ -225,7 +273,7 @@ class VoucherController extends Controller
         if ($request->has('modules')) $rule->setModules($modules);
         if ($request->has('applicant_types')) $rule->setApplicantTypes($applicant_types);
         if ($request->has('order_amount')) $rule->setOrderAmount($request->order_amount);
-        if ($request->has('customers')) {
+        if ($request->has('customers') && !empty($request->customers)) {
             $mobiles = explode(',', $request->customers);
             $rule->setMobiles($mobiles);
         }
@@ -245,7 +293,7 @@ class VoucherController extends Controller
     public function validateVoucher(Request $request)
     {
         try {
-            $pos_customer = PosCustomer::find($request->pos_customer);
+            $pos_customer = $request->pos_customer ? PosCustomer::find($request->pos_customer) : new PosCustomer();
             $pos_order_params = (new CheckParamsForPosOrder());
             $pos_order_params->setOrderAmount($request->amount)->setApplicant($pos_customer)->setPartnerPosService($request->pos_services);
             $result = voucher($request->code)->checkForPosOrder($pos_order_params)->reveal();
@@ -269,18 +317,67 @@ class VoucherController extends Controller
         }
     }
 
-    public function deactivateVoucher(Request $request,$partner,Voucher $voucher){
+    /**
+     * @param Request $request
+     * @param $partner
+     * @param Voucher $voucher
+     * @return JsonResponse
+     */
+    public function activationStatusChange(Request $request, $partner, Voucher $voucher)
+    {
         try {
+            $this->validate($request, [
+                'status' => 'required|in:' . implode(',', ['active', 'inactive']),
+            ]);
             $partner = $request->partner;
             $this->setModifier($partner);
-            $voucher->end_date = Carbon::now();
-            $voucher->update();
-            return api_response($request, null, 200, ['msg' => 'Promo deactivated successfully']);
+            $data = ['is_active' => $request->status == 'active' ? 1 : 0];
+            $voucher->update($this->withUpdateModificationField($data));
+
+            return api_response($request, null, 200, ['msg' => "Promo {$request->status} successfully"]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
 
+    }
 
+    /**
+     * @param Voucher $voucher
+     * @return array
+     */
+    private function calculateTotalSaleAndDiscountByVoucher(Voucher $voucher)
+    {
+        $orders_by_voucher = PosOrder::byVoucher($voucher->id)->get();
+
+        $total_sale = 0;
+        $order_id = $orders_by_voucher->pluck('id')->toArray();
+        $total_discount = PosOrderDiscount::byVoucher($order_id)->sum('amount');
+
+        $orders_by_voucher->each(function ($order) use (&$total_sale) {
+            $total_sale += $order->calculate()->getTotalBill();
+        });
+
+        return [$total_sale, (double)$total_discount];
+    }
+
+    /**
+     * @param $partner_voucher_query
+     * @return mixed
+     */
+    private function calculatePartnerWiseSaleByVoucher($partner_voucher_query)
+    {
+
+        $voucher_id = $partner_voucher_query->pluck('id')->toArray();
+        $orders_by_voucher = PosOrder::byVoucher($voucher_id)->get();
+
+        $orders_by_voucher->each(function ($order) use (&$total_sale) {
+            $total_sale += $order->calculate()->getTotalBill();
+        });
+
+        return $total_sale;
     }
 }
