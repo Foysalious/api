@@ -71,7 +71,7 @@ class NidValidation
         }
         if (strlen($nid) == 13 && $dob) {
             $year = explode('-', $dob)[0];
-            $nid .= ($year . $nid);
+            $nid = ($year . $nid);
         }
         $dob = Carbon::parse($dob)->format('Y-m-d');
         $this->setData(['nid_no' => $nid, 'name' => $fullName, 'dob' => $dob]);
