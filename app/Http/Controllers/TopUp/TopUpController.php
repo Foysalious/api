@@ -188,12 +188,4 @@ class TopUpController extends Controller
             return api_response($request, null, 500);
         }
     }
-
-    public function restartQueue()
-    {
-        exec("sudo supervisorctl restart sheba_queues:topup_00");
-        exec("php artisan queue:restart");
-        return ['code' => 200, 'message' => "Done."];
-    }
-
 }

@@ -231,4 +231,13 @@ class TopUpController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function restartQueue()
+    {
+        $queue_name = isInProduction() ? "sheba_queues:topup_00" : "sheba_queues:topup";
+        $folder = isInProduction() ? "/var/www/api" : "/var/www/sheba_new_api";
+        exec("sudo supervisorctl restart $queue_name");
+        exec("cd $folder && php artisan queue:restart");
+        return ['code' => 200, 'message' => "Done."];
+    }
 }

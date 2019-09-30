@@ -591,3 +591,13 @@ if (!function_exists('banglaMonth')) {
         return $months[$month];
     }
 }
+
+if (!function_exists('isInProduction')) {
+    /**
+     * @return bool
+     */
+    function isInProduction()
+    {
+        return app()->environment() == "production";
+    }
+}
