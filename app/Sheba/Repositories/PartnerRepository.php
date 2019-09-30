@@ -3,9 +3,9 @@
 use App\Models\Partner;
 use App\Models\PartnerStatusChangeLog;
 
-use App\Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
 use Exception;
 use Sheba\PushNotificationHandler;
+use Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
 
 class PartnerRepository extends BaseRepository implements PartnerRepositoryInterface
 {
