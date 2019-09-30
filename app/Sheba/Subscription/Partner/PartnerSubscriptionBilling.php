@@ -86,9 +86,11 @@ class PartnerSubscriptionBilling
             $this->refundRemainingCredit(abs($this->packagePrice));
             $this->packagePrice = 0;
         }
-        $this->partner->billing_start_date = $this->today;
-        $this->billingDatabaseTransactions($this->packagePrice);
         $grade = $this->findGrade($new_package, $old_package, $new_billing_type, $old_billing_type);
+        if (in_array($grade, [PartnerSubscriptionChange::UPGRADE, PartnerSubscriptionChange::DOWNGRADE])) {
+            $this->partner->billing_start_date = $this->today;
+        }
+        $this->billingDatabaseTransactions($this->packagePrice);
         (new PartnerSubscriptionCharges($this))->shootLog(constants('PARTNER_PACKAGE_CHARGE_TYPES')[$grade]);
         $this->sendSmsForSubscriptionUpgrade($old_package, $new_package, $old_billing_type, $new_billing_type, $grade);
     }
