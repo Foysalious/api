@@ -1,4 +1,4 @@
-<?php namespace App\Sheba\Repositories\Interfaces\Partner;
+<?php namespace Sheba\Repositories\Interfaces\Partner;
 
 
 use Sheba\Repositories\Interfaces\BaseRepositoryInterface;
