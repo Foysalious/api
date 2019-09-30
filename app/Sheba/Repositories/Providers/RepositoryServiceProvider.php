@@ -1,6 +1,5 @@
 <?php namespace Sheba\Repositories\Providers;
 
-use App\Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
 use Illuminate\Support\ServiceProvider;
 use Sheba\Repositories\Business\BusinessMemberRepository;
 use Sheba\Repositories\Business\DriverRepository;
@@ -41,6 +40,7 @@ use Sheba\Repositories\Interfaces\InspectionRepositoryInterface;
 use Sheba\Repositories\Interfaces\InspectionScheduleRepositoryInterface;
 use Sheba\Repositories\Interfaces\IssueRepositoryInterface;
 use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
+use Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementItemFieldRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementItemRepositoryInterface;
