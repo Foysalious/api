@@ -56,7 +56,10 @@ class OrderController extends Controller
                     $query->orWhere('profiles.email', 'LIKE', '%' . $request->q . '%');
                     $query->orWhere('profiles.mobile', 'LIKE', '%' . $request->q . '%');
                 });
-                $orders_query = $orders_query->orWhere('pos_orders.id', 'LIKE', '%' . $request->q . '%');
+                $orders_query = $orders_query->orWhere([
+                    ['pos_orders.id', 'LIKE', '%' . $request->q . '%'],
+                    ['pos_orders.partner_id', $partner->id]
+                ]);
             }
 
             $orders = $orders_query->orderBy('created_at', 'desc')
@@ -148,7 +151,17 @@ class OrderController extends Controller
         }
     }
 
-    public function store($partner, Request $request, Creator $creator, ProfileCreator $profileCreator, PosCustomerCreator $posCustomerCreator, PartnerRepository $partnerRepository, PaymentLinkCreator $paymentLinkCreator, PaymentLinkOrderAdapter $paymentLinkOrderAdapter)
+    /**
+     * @param $partner
+     * @param Request $request
+     * @param Creator $creator
+     * @param ProfileCreator $profileCreator
+     * @param PosCustomerCreator $posCustomerCreator
+     * @param PartnerRepository $partnerRepository
+     * @param PaymentLinkCreator $paymentLinkCreator
+     * @return array|JsonResponse
+     */
+    public function store($partner, Request $request, Creator $creator, ProfileCreator $profileCreator, PosCustomerCreator $posCustomerCreator, PartnerRepository $partnerRepository, PaymentLinkCreator $paymentLinkCreator)
     {
         try {
             $this->validate($request, [
@@ -193,7 +206,12 @@ class OrderController extends Controller
                 $transformer->setResponse($paymentLink);
                 $link = ['link' => $transformer->getLink()];
             }
-            $order = ['id' => $order->id, 'payment_status' => $order->payment_status, 'net_bill' => $order->net_bill];
+            $order = [
+                'id' => $order->id,
+                'payment_status' => $order->payment_status,
+                'net_bill' => $order->net_bill,
+                "client_pos_order_id" => $request->has('client_pos_order_id') ? $request->client_pos_order_id : null
+            ];
 
             return api_response($request, null, 200, ['message' => 'Order Created Successfully', 'order' => $order, 'payment' => $link]);
         } catch (ValidationException $e) {
