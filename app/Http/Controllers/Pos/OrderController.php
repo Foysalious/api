@@ -56,7 +56,10 @@ class OrderController extends Controller
                     $query->orWhere('profiles.email', 'LIKE', '%' . $request->q . '%');
                     $query->orWhere('profiles.mobile', 'LIKE', '%' . $request->q . '%');
                 });
-                $orders_query = $orders_query->orWhere('pos_orders.id', 'LIKE', '%' . $request->q . '%');
+                $orders_query = $orders_query->orWhere([
+                    ['pos_orders.id', 'LIKE', '%' . $request->q . '%'],
+                    ['pos_orders.partner_id', $partner->id]
+                ]);
             }
 
             $orders = $orders_query->orderBy('created_at', 'desc')
