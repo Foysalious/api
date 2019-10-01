@@ -9,6 +9,7 @@ use App\Sheba\Business\BusinessTripSms;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\Scheduler\TripScheduler;
+use DB;
 
 class TripRequestController extends Controller
 {
@@ -263,25 +264,28 @@ class TripRequestController extends Controller
     {
         try {
             $business_member = $request->business_member;
-            $business_trip_request = $this->storeTripRequest($request);
-            $will_auto_assign = (int)$business_member->is_super || $business_member->actions()->where('tag', config('business.actions.trip_request.auto_assign'))->first();
-            if ($will_auto_assign) {
-                $vehicleScheduler->setStartDate($request->start_date)->setEndDate($request->end_date)
-                    ->setBusinessDepartment($business_member->role->businessDepartment)->setBusiness($request->business);
-                $vehicles = $vehicleScheduler->getFreeVehicles();
-                $drivers = $vehicleScheduler->getFreeDrivers();
-                if ($vehicles->count() > 0) $vehicle = $vehicles->random(1);
-                if ($drivers->count() > 0) $driver = $drivers->random(1);
-                if (!(isset($vehicle) && isset($driver))) {
-                    return api_response($request, null, 500, ["message" => "There is no free vehicle or driver"]);
+            $business_trip_request = null;
+            DB::transaction(function () use ($request, $business_member, $vehicleScheduler, $businessTripSms, &$business_trip_request) {
+                $business_trip_request = $this->storeTripRequest($request);
+                $will_auto_assign = (int)$business_member->is_super || $business_member->actions()->where('tag', config('business.actions.trip_request.auto_assign'))->first();
+                if ($will_auto_assign) {
+                    $vehicleScheduler->setStartDate($request->start_date)->setEndDate($request->end_date)
+                        ->setBusinessDepartment($business_member->role->businessDepartment)->setBusiness($request->business);
+                    $vehicles = $vehicleScheduler->getFreeVehicles();
+                    $drivers = $vehicleScheduler->getFreeDrivers();
+                    if ($vehicles->count() > 0) $vehicle = $vehicles->random(1);
+                    if ($drivers->count() > 0) $driver = $drivers->random(1);
+                    if (!(isset($vehicle) && isset($driver))) {
+                        return api_response($request, null, 500, ["message" => "There is no free vehicle or driver"]);
+                    }
+                    $business_trip_request->vehicle_id = $vehicle;
+                    $business_trip_request->driver_id = $driver;
+                    $business_trip_request->status = 'accepted';
+                    $business_trip_request->update();
+                    $business_trip = $this->storeTrip($business_trip_request);
+                    $businessTripSms->setTrip($business_trip)->sendTripRequestAccept();
                 }
-                $business_trip_request->vehicle_id = $vehicle;
-                $business_trip_request->driver_id = $driver;
-                $business_trip_request->status = 'accepted';
-                $business_trip_request->update();
-                $business_trip = $this->storeTrip($business_trip_request);
-                $businessTripSms->setTrip($business_trip)->sendTripRequestAccept();
-            }
+            });
             return api_response($request, $business_trip_request, 200, ['id' => $business_trip_request->id]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
