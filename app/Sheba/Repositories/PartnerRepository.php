@@ -5,8 +5,9 @@ use App\Models\PartnerStatusChangeLog;
 
 use Exception;
 use Sheba\PushNotificationHandler;
+use Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
 
-class PartnerRepository extends BaseRepository
+class PartnerRepository extends BaseRepository implements PartnerRepositoryInterface
 {
     public function __construct(Partner $partner)
     {
@@ -77,15 +78,15 @@ class PartnerRepository extends BaseRepository
             "type" => notificationType('Info'),
         ]);
 
-        $topic   = config('sheba.push_notification_topic_name.manager') . $partner->id;
+        $topic = config('sheba.push_notification_topic_name.manager') . $partner->id;
         $channel = config('sheba.push_notification_channel_name.manager');
-        $sound   = config('sheba.push_notification_sound.manager');
+        $sound = config('sheba.push_notification_sound.manager');
 
         (new PushNotificationHandler())->send([
-            "title"         => 'ওয়ালেট ওয়ার্নিং!',
-            "message"       => $notification,
-            "event_type"    => 'WalletWarning',
-            "sound"         => "notification_sound",
+            "title" => 'ওয়ালেট ওয়ার্নিং!',
+            "message" => $notification,
+            "event_type" => 'WalletWarning',
+            "sound" => "notification_sound",
             "channel_id" => $channel
         ], $topic, $channel, $sound);
     }

@@ -30,8 +30,10 @@ class Porichoy extends NidValidator
      */
     function check($nid, $fullName = null, $dob = null): NidValidationResponse
     {
-        $response = $this->client->post($this->baseUrl . 'check-person',
-            ['form_params' => ['national_id' => $nid, 'person_fullname' => $fullName, 'person_dob' => $dob], 'headers' => ['Ocp-Apim-Subscription-Key' => $this->key]])
+        $response = $this->client->post($this->baseUrl . 'check-person?national_id=' . $nid . '&person_fullname=' . $fullName . '&person_dob=' . $dob,
+            [
+                'headers' => ['Ocp-Apim-Subscription-Key' => $this->key]
+            ])
             ->getBody()->getContents();
         $responseType = (new NidValidationResponse())->setFromStringResponse($response,'passKyc','errorCode');
         $responseType->setStatus($responseType->getError()?0:1);
