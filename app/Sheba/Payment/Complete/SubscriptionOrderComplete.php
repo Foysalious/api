@@ -47,6 +47,7 @@ class SubscriptionOrderComplete extends PaymentComplete
                 $this->completePayment();
                 $subscription_order->payment_method = strtolower($payment_detail->readable_method);
                 $subscription_order->update();
+                $subscription_order = $subscription_order->fresh();
                 $subscription_order->calculate();
                 $this->cleaOrderPayment($subscription_order, $payment_detail);
             });
