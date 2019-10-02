@@ -121,9 +121,19 @@ class Voucher extends Model
         return $query->whereRaw('((NOW() BETWEEN start_date AND end_date) OR (NOW() >= start_date AND end_date IS NULL))')->where('is_active', 1);
     }
 
+    public function scopeDateExpire($query)
+    {
+        return $this->isDateExpireQuery($query);
+    }
+
     public function scopeNotValid($query)
     {
-        return $query->whereRaw('((NOW() NOT BETWEEN start_date AND end_date) OR (NOW() <= start_date AND end_date IS NULL))')->orWhere('is_active', 0);
+        return $this->isDateExpireQuery($query)->orWhere('is_active', 0);
+    }
+
+    public function isDateExpireQuery($query)
+    {
+        return $query->whereRaw('((NOW() NOT BETWEEN start_date AND end_date) OR (NOW() <= start_date AND end_date IS NULL))');
     }
 
     public function scopeSearch($query, $code)
