@@ -90,6 +90,7 @@ class BusinessRoute
                         $api->post('invitations', 'B2b\ProcurementController@sendInvitation');
                     });
                     $api->get('/', 'B2b\ProcurementController@index');
+                    $api->get('/{procurement}', 'B2b\ProcurementController@show');
                 });
                 $api->group(['prefix' => 'purchase-requests'], function ($api) {
                     $api->get('/', 'B2b\PurchaseRequestController@index');

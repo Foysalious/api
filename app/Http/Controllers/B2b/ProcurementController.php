@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
+use App\Models\Procurement;
 use App\Sheba\Business\ACL\AccessControl;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -77,6 +78,10 @@ class ProcurementController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function show(Request $request, $procurement)
+    {
     }
 
     public function sendInvitation($procurement, Request $request, Sms $sms, ErrorLog $errorLog)
