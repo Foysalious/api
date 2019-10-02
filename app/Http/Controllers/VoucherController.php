@@ -80,7 +80,7 @@ class VoucherController extends Controller
             if ($request->has('filter_type')) {
                 if ($request->filter_type == "used") $partner_voucher_query->whereIn('id', $used_voucher_id);
                 if ($request->filter_type == "valid") $partner_voucher_query->valid();
-                if ($request->filter_type == "invalid") $partner_voucher_query->notValid();
+                if ($request->filter_type == "invalid") $partner_voucher_query->dateExpire();
             }
             if ($request->has('q') && !empty($request->q))
                 $partner_voucher_query = $partner_voucher_query->search($request->q);
