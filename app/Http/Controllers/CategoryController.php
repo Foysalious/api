@@ -247,23 +247,25 @@ class CategoryController extends Controller
 
             $best_deal_categories_id = explode(',', config('sheba.best_deal_ids'));
             $best_deal_category = CategoryGroupCategory::whereIn('category_group_id', $best_deal_categories_id)->pluck('category_id')->toArray();
-            if ($location) {
-                $children = $category->load(['children' => function ($q) use ($best_deal_category, $location) {
-                    $q->published()->whereNotIn('id', $best_deal_category)
-                        ->whereHas('locations', function ($q) use ($location) {
-                            $q->where('locations.id', $location->id);
-                        });
-                    $q->whereHas('services', function ($q) use ($location) {
-                        $q->published()->whereHas('locations', function ($q) use ($location) {
-                            $q->where('locations.id', $location->id);
-                        });
+            $category->load(['children' => function ($q) use ($best_deal_category, $location) {
+                $q->published()->whereNotIn('id', $best_deal_category);
+                if ($location) {
+                    $q->whereHas('locations', function ($q) use ($location) {
+                        $q->where('locations.id', $location->id);
                     });
-                }])->children;
-            } else {
-                $children = $category->children->filter(function ($sub_category) use ($best_deal_category) {
-                    return !in_array($sub_category->id, $best_deal_category);
+                }
+                $q->whereHas('services', function ($q) use ($location) {
+                    $q->published();
+                    if ($location) {
+                        $q->whereHas('locations', function ($q) use ($location) {
+                            $q->where('locations.id', $location->id);
+                        });
+                    }
                 });
-            }
+            }]);
+            $children = $category->children->filter(function ($sub_category) use ($best_deal_category) {
+                return !in_array($sub_category->id, $best_deal_category);
+            });
 
             if (count($children) != 0) {
                 $children = $children->each(function (&$child) use ($location) {
