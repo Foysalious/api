@@ -433,6 +433,10 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
         $this->subscriber()->upgrade($package, $upgradeRequest);
     }
 
+    public function getBonusCreditAttribute()
+    {
+        return (double)$this->bonuses()->valid()->sum('amount');
+    }
     public function runSubscriptionBilling()
     {
         $this->subscriber()->getBilling()->runSubscriptionBilling();
