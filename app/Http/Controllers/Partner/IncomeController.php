@@ -23,10 +23,9 @@ class IncomeController extends Controller
     public function show($customer, $income_id, Request $request)
     {
         try {
-            $income_calculation = "";
-            $income_calculation = json_decode($income_calculation);
-            return $income_calculation;
-//          return api_response($request, $income_calculation, 200, ["incomes" => $income_calculation]);
+            $income = "{\"id\":6777,\"expense_head\":\"travel_allowance\",\"expense_head_show_name\":{\"bn\":\"যাতায়াত ভাতা\",\"en\":\"Travel allowance\"},\"amount\":2000,\"note\":\"পাশা ভাইকে দেয়া হয়েছে\",\"created_by_name\":\"Resource-Md. Ashikul Alam Ashik\",\"created_at\":\"2019-09-04 07:01 PM\"}";
+            $income = json_decode($income);
+            return api_response($request, $income, 200, ["income" => $income]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
