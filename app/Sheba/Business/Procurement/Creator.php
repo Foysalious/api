@@ -34,6 +34,7 @@ class Creator
     private $numberOfParticipants;
     private $lastDateOfSubmission;
     private $paymentOptions;
+    private $isPublished;
 
     public function __construct(ProcurementRepositoryInterface $procurement_repository, ProcurementItemRepositoryInterface $procurement_item_repository, ProcurementItemFieldRepositoryInterface $procurement_item_field_repository, ProcurementQuestionRepositoryInterface $procurement_question_repository)
     {
@@ -129,13 +130,21 @@ class Creator
 
     public function setItems($items)
     {
-        $this->items = $items;
+        $this->items = json_decode($items);
+        $this->items = $this->items == null ? [] : $this->items;
         return $this;
     }
 
     public function setQuestions($questions)
     {
-        $this->questions = $questions;
+        $this->questions = json_decode($questions);
+        $this->questions = $this->questions == null ? [] : $this->questions;
+        return $this;
+    }
+
+    public function setIsPublished($is_published)
+    {
+        $this->isPublished = $is_published;
         return $this;
     }
 
@@ -143,22 +152,21 @@ class Creator
     {
         $this->makeProcurementData();
         $procurement = null;
-        $items = json_decode($this->items);
         try {
-            DB::transaction(function () use (&$procurement, $items) {
+            DB::transaction(function () use (&$procurement) {
                 /** @var Procurement $procurement */
                 $procurement = $this->procurementRepository->create($this->procurementData);
-                foreach ($items as $item_fields) {
+                foreach ($this->items as $item_fields) {
                     /** @var ProcurementItem $procurement_item */
                     $procurement_item = $this->procurementItemRepository->create(['procurement_id' => $procurement->id, 'type' => $item_fields->item_type]);
                     $this->makeItemFields($procurement_item, $item_fields->fields);
                     $this->procurementItemFieldRepository->createMany($this->procurementItemFieldData);
                 }
-                /*$this->makeQuestion($procurement);
-                $this->procurementQuestionRepository->createMany($this->procurementQuestionData);*/
+
+                $this->makeQuestion($procurement);
+                $this->procurementQuestionRepository->createMany($this->procurementQuestionData);
             });
         } catch (QueryException $e) {
-            dd($e);
             throw $e;
         }
 
@@ -202,8 +210,7 @@ class Creator
     private function makeQuestion(Procurement $procurement)
     {
         $this->procurementQuestionData = [];
-        $questions = json_decode($this->questions);
-        foreach ($questions as $question) {
+        foreach ($this->questions as $question) {
             array_push($this->procurementQuestionData, [
                 'title' => $question->title,
                 'short_description' => isset($question->short_description) ? $question->short_description : '',
