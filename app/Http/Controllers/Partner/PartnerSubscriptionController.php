@@ -4,6 +4,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Models\PartnerSubscriptionPackage;
 use App\Models\PartnerSubscriptionUpdateRequest;
+use App\Repositories\NotificationRepository;
+use App\Sheba\Subscription\Partner\PartnerSubscriptionChange;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -27,9 +29,7 @@ class PartnerSubscriptionController extends Controller
             $featured_package_id = config('partner.subscription_featured_package_id');
             /** @var Partner $partner */
             $partner = $request->partner;
-            $partner_subscription_packages = PartnerSubscriptionPackage::validDiscounts()
-                ->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'rules', 'usps', 'badge', 'features')
-                ->get();
+            $partner_subscription_packages = PartnerSubscriptionPackage::validDiscounts()->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'rules', 'usps', 'badge', 'features')->get();
 
             foreach ($partner_subscription_packages as $package) {
                 $package['rules'] = $this->calculateDiscount(json_decode($package->rules, 1), $package);
@@ -45,196 +45,17 @@ class PartnerSubscriptionController extends Controller
 
             $partner_subscription_package = $partner->subscription;
             $data = [
-                'subscription_package' => $partner_subscription_packages,
-                'monthly_tag' => '২০% ছাড়',
-                'half_yearly_tag' => '২০% ছাড়',
-                'yearly_tag' => null,
-                'tags' => [
-                    'monthly' => ['en' => '20% discount', 'bn' => '২০% ছাড়'],
-                    'half_yearly' => ['en' => '20% discount', 'bn' => '২০% ছাড়'],
-                    'yearly' => ['en' => null, 'bn' => null],
-                ],
-                'billing_type' => $partner->billing_type,
-                'current_package' => [
-                    'en' => $partner_subscription_package->show_name,
-                    'bn' => $partner_subscription_package->show_name_bn,
-                ],
-                'last_billing_date' => $partner->last_billed_date ? $partner->last_billed_date->format('Y-m-d') : null,
-                'next_billing_date' => $partner->last_billed_date ? $partner->periodicBillingHandler()->nextBillingDate()->format('Y-m-d') : null,
-                'validity_remaining_in_days' => $partner->last_billed_date ? $partner->periodicBillingHandler()->remainingDay() : null,
-                'is_auto_billing_activated' => ($partner->auto_billing_activated) ? true : false
+                'subscription_package' => $partner_subscription_packages, 'monthly_tag' => '২০% ছাড়', 'half_yearly_tag' => '২০% ছাড়', 'yearly_tag' => null, 'tags' => [
+                    'monthly' => ['en' => '20% discount', 'bn' => '২০% ছাড়'], 'half_yearly' => ['en' => '20% discount', 'bn' => '২০% ছাড়'], 'yearly' => ['en' => null, 'bn' => null],
+                ], 'billing_type' => $partner->billing_type, 'current_package' => [
+                    'en' => $partner_subscription_package->show_name, 'bn' => $partner_subscription_package->show_name_bn,
+                ], 'last_billing_date' => $partner->last_billed_date ? $partner->last_billed_date->format('Y-m-d') : null, 'next_billing_date' => $partner->last_billed_date ? $partner->periodicBillingHandler()->nextBillingDate()->format('Y-m-d') : null, 'validity_remaining_in_days' => $partner->last_billed_date ? $partner->periodicBillingHandler()->remainingDay() : null, 'is_auto_billing_activated' => ($partner->auto_billing_activated) ? true : false
             ];
             return api_response($request, null, 200, $data);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
-    }
-
-    public function store($partner, Request $request)
-    {
-        try {
-            $this->validate($request, [
-                'package_id' => 'required|numeric|exists:partner_subscription_packages,id',
-                'billing_cycle' => 'required|string|in:monthly,yearly'
-            ]);
-            $request->partner->subscribe((int)$request->package_id, $request->billing_cycle);
-
-            if (isPartnerReadyToVerified($partner)) {
-                $status_changer = new StatusChanger($request->partner, ['status' => constants('PARTNER_STATUSES')['Waiting']]);
-                $status_changer->change();
-            }
-
-            return api_response($request, null, 200);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
-    public function update(Request $request)
-    {
-        try {
-            /** @var Partner $partner */
-            $partner = $request->partner;
-            $this->validate($request, [
-                'package_id' => 'required|numeric|exists:partner_subscription_packages,id',
-                'billing_type' => 'required|string|in:monthly,yearly'
-            ]);
-            if (((int)$request->package_id > (int)$partner->package_id) ||
-                ((int)$request->package_id == (int)$partner->package_id && $request->billing_type != $partner->billing_type && $partner->billing_type == 'monthly')) {
-                $requested_package = PartnerSubscriptionPackage::find($request->package_id);
-                if (!$partner->last_billed_date) {
-                    $partner->subscribe($requested_package, $request->billing_type);
-                    return api_response($request, 1, 200, ['message' => "আপনি সফল ভাবে $requested_package->show_name_bn প্যাকেজে সাবস্ক্রাইব করেছেন"]);
-                }
-                if ($partner->canRequestForSubscriptionUpdate() && $partner->last_billed_date) {
-                    $running_discount = $requested_package->runningDiscount($request->billing_type);
-                    $this->setModifier($request->manager_resource);
-                    $update_request_data = $this->withCreateModificationField([
-                        'partner_id' => $partner->id,
-                        'old_package_id' => $partner->package_id,
-                        'new_package_id' => $request->package_id,
-                        'old_billing_type' => $partner->billing_type,
-                        'new_billing_type' => $request->billing_type,
-                        'discount_id' => $running_discount ? $running_discount->id : null
-                    ]);
-                    PartnerSubscriptionUpdateRequest::create($update_request_data);
-
-                    return api_response($request, 1, 200, ['message' => "আপনার সাবস্ক্রিপশন রিকোয়েস্টটি সফল ভাবে গৃহীত হয়েছে"]);
-                }
-                $last_requested_package = $partner->lastSubscriptionUpdateRequest()->newPackage->show_name_bn;
-                return api_response($request, null, 403, ['message' => "আপনি অলরেডি $last_requested_package প্যাকেজে রিকোয়েস্ট করেছেন, অনুগ্রহ করে ভেরিফাই হওয়ার জন্য অপেক্ষা করুন।"]);
-            } elseif (((int)$request->package_id == (int)$partner->package_id) && $request->billing_type == $partner->billing_type) {
-                $partner_package = $partner->subscription;
-                return api_response($request, null, 403, ['message' => "আপনি অলরেডি $partner_package->show_name_bn প্যাকেজে আছেন"]);
-            } else {
-                $requested_package = PartnerSubscriptionPackage::find($request->package_id);
-                if (!$partner->last_billed_date) {
-                    $partner->subscribe($requested_package, $request->billing_type);
-                    $subscription_amount_for_requested_package = json_decode($requested_package->rules)->fee->{$request->billing_type}->value;
-                    (new SmsHandler('new-subscription'))->send($partner->getContactNumber(), [
-                        'package_name' => $requested_package->show_name_bn,
-                        'package_type' => $request->billing_type,
-                        'subscription_amount' => $subscription_amount_for_requested_package
-                    ]);
-                    return api_response($request, 1, 200, ['message' => "আপনি সফল ভাবে $requested_package->show_name_bn প্যাকেজে সাবস্ক্রাইব করেছেন"]);
-                }
-                return api_response($request, null, 403, ['message' => "$requested_package->show_name_bn প্যাকেজে যেতে অনুগ্রহ করে সেবার সাথে যোগাযোগ করুন"]);
-            }
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
-    public function toggleAutoBillingActivation(Request $request)
-    {
-        $request->partner->auto_billing_activated = $request->partner->auto_billing_activated == 1 ? 0 : 1;
-        $request->partner->save();
-        $task = $request->partner->auto_billing_activated ? 'activated' : 'deactivated';
-        return api_response($request, null, 200, ['message' => "Billing auto renewal $task", 'auto_billing_activated' => $request->partner->auto_billing_activated]);
-    }
-
-    public function purchase(Request $request)
-    {
-        try{
-            $this->validate($request, [
-                'package_id' => 'required|numeric|exists:partner_subscription_packages,id',
-                'billing_type' => 'required|string|in:' . implode(',', [BillingType::MONTHLY, BillingType::YEARLY, BillingType::HALF_YEARLY])
-            ]);
-            $currentPackage = $request->partner->subscription;
-            $requestedPackage = PartnerSubscriptionPackage::find($request->package_id);
-            if (empty($requestedPackage)) {
-                return api_response($request, null, 402, ['message' => ' আপনার  অনুরধক্রিত  প্যকেজটি পাওয়া যায়  নাই']);
-            }
-
-            $this->setModifier($request->manager_resource);
-            if ($upgradeRequest = $this->createSubscriptionRequest($requestedPackage)) {
-                try {
-                    $grade = $request->partner->subscriber()->getBilling()->findGrade($requestedPackage, $currentPackage, $request->billing_type, $request->partner->billing_type);
-                    if ($grade == 'Downgrade' && $request->partner->status != constants('PARTNER_STATUSES')['Inactive']) {
-                            return api_response($request, null, 202, ['message' => " আপনার $requestedPackage->show_name_bd  প্যকেজে অবনমনের  অনুরোধ  গ্রহণ  করা  হয়েছে "]);
-                    }
-                    $hasCredit = $request->partner->hasCreditForSubscription($requestedPackage, $request->billing_type);
-                    $balance = ['remaining_balance' => $request->partner->totalCreditForSubscription, 'price' => $request->partner->totalPriceRequiredForSubscription];
-                    if (!$hasCredit) {
-                        $upgradeRequest->delete();
-                        return api_response($request, null, 420, array_merge(['message' => 'আপনার একাউন্টে যথেষ্ট ব্যলেন্স নেই।।', 'required' => $request->partner->totalPriceRequiredForSubscription - $request->partner->totalCreditForSubscription], $balance));
-                    }
-                    $request->partner->subscriptionUpgrade($requestedPackage, $upgradeRequest);
-                    if ($grade === 'Renewed') {
-                        return api_response($request, null, 200, array_merge(['message' => "আপনাকে $requestedPackage->show_name_bn  প্যকেজে পুনর্বহাল করা হয়েছে ।"], $balance));
-                    } else {
-                        return api_response($request, null, 200, array_merge(['message' => "আপনাকে $requestedPackage->show_name_bn  প্যকেজে উন্নীত করা হয়েছে ।"], $balance));
-                    }
-                } catch (Throwable $e) {
-                    $upgradeRequest->delete();
-                    throw $e;
-                }
-            } else {
-                return api_response($request, null, 403, ['message' => "$requestedPackage->show_name_bn প্যাকেজে যেতে অনুগ্রহ করে সেবার সাথে যোগাযোগ করুন"]);
-            }
-
-        }catch (ValidationException $e){
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
-    private function createSubscriptionRequest(PartnerSubscriptionPackage $requested_package)
-    {
-        $request = \request();
-        $partner = $request->partner;
-        $running_discount = $requested_package->runningDiscount($request->billing_type);
-        $this->setModifier($request->manager_resource);
-        $update_request_data = $this->withCreateModificationField([
-            'partner_id' => $partner->id,
-            'old_package_id' => $partner->package_id,
-            'new_package_id' => $request->package_id,
-            'old_billing_type' => $partner->billing_type,
-            'new_billing_type' => $request->billing_type,
-            'discount_id' => $running_discount ? $running_discount->id : null
-        ]);
-        return PartnerSubscriptionUpdateRequest::create($update_request_data);
     }
 
     private function calculateDiscount($rules, PartnerSubscriptionPackage $package)
@@ -298,15 +119,15 @@ class PartnerSubscriptionController extends Controller
     private function discountNote(PartnerSubscriptionPackage $package, $billing_type)
     {
         if ($package->discounts->count()) {
-            $partner_subcription_discount = $package->discounts->filter(function ($discount) use ($billing_type) {
+            $partner_subscription_discount = $package->discounts->filter(function ($discount) use ($billing_type) {
                 return $discount->billing_type == $billing_type;
             })->first();
-            $partner_subcription_discount_cycle = json_decode($partner_subcription_discount ? $partner_subcription_discount->applicable_billing_cycles : '[]');
-            if (isset($partner_subcription_discount_cycle[0]) && $partner_subcription_discount_cycle[0] == 1) {
-                $max_number = $this->hasSequence($partner_subcription_discount_cycle);
-                return $max_number ? "First $max_number Billing Cycle" : $this->getOrdinalMessage($partner_subcription_discount_cycle);
-            } elseif (count($partner_subcription_discount_cycle)) {
-                return $this->getOrdinalMessage($partner_subcription_discount_cycle);
+            $partner_subscription_discount_cycle = json_decode($partner_subscription_discount ? $partner_subscription_discount->applicable_billing_cycles : '[]');
+            if (isset($partner_subscription_discount_cycle[0]) && $partner_subscription_discount_cycle[0] == 1) {
+                $max_number = $this->hasSequence($partner_subscription_discount_cycle);
+                return $max_number ? "First $max_number Billing Cycle" : $this->getOrdinalMessage($partner_subscription_discount_cycle);
+            } elseif (count($partner_subscription_discount_cycle)) {
+                return $this->getOrdinalMessage($partner_subscription_discount_cycle);
             }
             return '';
         }
@@ -342,4 +163,140 @@ class PartnerSubscriptionController extends Controller
         return implode(',', $message) . " Billing Cycle";
     }
 
+    public function store($partner, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'package_id' => 'required|numeric|exists:partner_subscription_packages,id', 'billing_cycle' => 'required|string|in:monthly,yearly'
+            ]);
+            $request->partner->subscribe((int)$request->package_id, $request->billing_cycle);
+
+            if (isPartnerReadyToVerified($partner)) {
+                $status_changer = new StatusChanger($request->partner, ['status' => constants('PARTNER_STATUSES')['Waiting']]);
+                $status_changer->change();
+            }
+
+            return api_response($request, null, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function update(Request $request)
+    {
+        try {
+            /** @var Partner $partner */
+            $partner = $request->partner;
+            $this->validate($request, [
+                'package_id' => 'required|numeric|exists:partner_subscription_packages,id', 'billing_type' => 'required|string|in:monthly,yearly'
+            ]);
+
+            if (((int)$request->package_id > (int)$partner->package_id) || ((int)$request->package_id == (int)$partner->package_id && $request->billing_type != $partner->billing_type && $partner->billing_type == 'monthly')) {
+                return $this->purchase($request, true);
+            } elseif (((int)$request->package_id == (int)$partner->package_id) && $request->billing_type == $partner->billing_type) {
+                $partner_package = $partner->subscription;
+                return api_response($request, null, 403, ['message' => "আপনি অলরেডি $partner_package->show_name_bn প্যাকেজে আছেন"]);
+            } else {
+                return $this->purchase($request, $partner, true);
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @param $partner
+     * @param bool $inside
+     * @return JsonResponse
+     */
+    public function purchase(Request $request, $partner, $inside = false)
+    {
+        try {
+            $this->validate($request, [
+                'package_id' => 'required|numeric|exists:partner_subscription_packages,id', 'billing_type' => 'required|string|in:' . implode(',', [BillingType::MONTHLY, BillingType::YEARLY, BillingType::HALF_YEARLY])
+            ]);
+            $currentPackage = $request->partner->subscription;
+            $requestedPackage = PartnerSubscriptionPackage::find($request->package_id);
+            if (empty($requestedPackage)) {
+                return api_response($request, null, 403, ['message' => ' আপনার  অনুরধক্রিত  প্যকেজটি পাওয়া যায়  নাই']);
+            }
+
+            $this->setModifier($request->manager_resource);
+            if ($upgradeRequest = $this->createSubscriptionRequest($requestedPackage)) {
+                try {
+                    $grade = $request->partner->subscriber()->getBilling()->findGrade($requestedPackage, $currentPackage, $request->billing_type, $request->partner->billing_type);
+                    if ($grade == PartnerSubscriptionChange::DOWNGRADE && $request->partner->status != constants('PARTNER_STATUSES')['Inactive']) {
+                        return api_response($request, null, $inside ? 200 : 202, ['message' => " আপনার $requestedPackage->show_name_bd  প্যকেজে অবনমনের  অনুরোধ  গ্রহণ  করা  হয়েছে "]);
+                    }
+                    $hasCredit = $request->partner->hasCreditForSubscription($requestedPackage, $request->billing_type);
+                    $balance = ['remaining_balance' => $request->partner->totalCreditForSubscription, 'price' => $request->partner->totalPriceRequiredForSubscription, 'breakdown' => $request->partner->creditBreakdown];
+                    if (!$hasCredit) {
+                        $upgradeRequest->delete();
+                        (new NotificationRepository())->sendInsufficientNotification($request->partner, $requestedPackage, $request->billing_type, $grade);
+                        return api_response($request, null, $inside ? 403 : 420, array_merge(['message' => 'আপনার একাউন্টে যথেষ্ট ব্যলেন্স নেই।।', 'required' => $request->partner->totalPriceRequiredForSubscription - $request->partner->totalCreditForSubscription], $balance));
+                    }
+                    $request->partner->subscriptionUpgrade($requestedPackage, $upgradeRequest);
+                    if ($grade === PartnerSubscriptionChange::RENEWED) {
+                        return api_response($request, null, 200, array_merge(['message' => "আপনাকে $requestedPackage->show_name_bn  প্যকেজে পুনর্বহাল করা হয়েছে ।"], $balance));
+                    } else {
+                        return api_response($request, null, 200, array_merge(['message' => "আপনাকে $requestedPackage->show_name_bn  প্যকেজে উন্নীত করা হয়েছে ।"], $balance));
+                    }
+                } catch (Throwable $e) {
+                    $upgradeRequest->delete();
+                    throw $e;
+                }
+            } else {
+                return api_response($request, null, 403, ['message' => "$requestedPackage->show_name_bn প্যাকেজে যেতে অনুগ্রহ করে সেবার সাথে যোগাযোগ করুন"]);
+            }
+
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    private function createSubscriptionRequest(PartnerSubscriptionPackage $requested_package)
+    {
+        $request = \request();
+        $partner = $request->partner;
+        $running_discount = $requested_package->runningDiscount($request->billing_type);
+        $this->setModifier($request->manager_resource);
+        $update_request_data = $this->withCreateModificationField([
+            'partner_id' => $partner->id, 'old_package_id' => $partner->package_id ?: 1, 'new_package_id' => $request->package_id, 'old_billing_type' => $partner->billing_type ?: BillingType::MONTHLY, 'new_billing_type' => $request->billing_type, 'discount_id' => $running_discount ? $running_discount->id : null
+        ]);
+        return PartnerSubscriptionUpdateRequest::create($update_request_data);
+    }
+
+    public function toggleAutoBillingActivation(Request $request)
+    {
+        $request->partner->auto_billing_activated = $request->partner->auto_billing_activated == 1 ? 0 : 1;
+        $request->partner->save();
+        $task = $request->partner->auto_billing_activated ? 'activated' : 'deactivated';
+        return api_response($request, null, 200, ['message' => "Billing auto renewal $task", 'auto_billing_activated' => $request->partner->auto_billing_activated]);
+    }
 }

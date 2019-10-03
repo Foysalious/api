@@ -65,8 +65,7 @@ class QuickCreator
         $service['service_name'] = $this->data['name'];
         $service['unit_price'] = $this->data['amount'];
         $service['quantity'] = self::QUICK_CREATE_DEFAULT_QUANTITY;
-        $service['vat_percentage'] = (isset($this->data['vat_percentage']) && $this->data['vat_percentage'] > 0) ?
-            (double)$this->data['vat_percentage'] : ($setting ? (double)$setting->vat_percentage : 0.00);
+        $service['vat_percentage'] = $this->isVatApplicable() ? (double)$this->data['vat_percentage'] : ($setting ? (double)$setting->vat_percentage : 0.00);
 
         $this->itemRepo->save($service);
 
@@ -78,5 +77,14 @@ class QuickCreator
         }
 
         return $order;
+    }
+
+    private function isVatApplicable()
+    {
+        if (isset($this->data['is_vat_applicable'])) {
+            return $this->data['is_vat_applicable'] ? (isset($this->data['vat_percentage']) && $this->data['vat_percentage'] > 0) : false;
+        }
+
+        return (isset($this->data['vat_percentage']) && $this->data['vat_percentage'] > 0);
     }
 }

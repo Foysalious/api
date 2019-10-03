@@ -1,5 +1,7 @@
 <?php namespace App\Http\Route\Prefix\V2\Partner\ID\Auth;
 
+use App\Http\Route\Prefix\V2\IncomeExpenseRoute;
+
 class IndexRoute
 {
     public function set($api)
@@ -78,6 +80,10 @@ class IndexRoute
                 $api->resources(['customers' => 'Pos\CustomerController']);
                 $api->get('settings', 'Pos\SettingController@getSettings');
                 $api->post('due-payment-request-sms', 'Pos\SettingController@duePaymentRequestSms');
+                $api->group(['prefix' => 'reports'], function ($api) {
+                    $api->get('product-wise', 'Pos\ReportsController@product');
+                    $api->get('customer-wise', 'Pos\ReportsController@customer');
+                });
             });
             $api->group(['prefix' => 'categories'], function ($api) {
                 $api->get('/all', 'CategoryController@getPartnerLocationCategory');
@@ -215,10 +221,13 @@ class IndexRoute
                 $api->group(['prefix' => '{voucher}'], function ($api) {
                     $api->get('/', 'VoucherController@show');
                     $api->post('/', 'VoucherController@update');
-                    $api->post('/deactivate', 'VoucherController@deactivateVoucher');
+                    $api->post('activation-status-change', 'VoucherController@activationStatusChange');
                 });
             });
             $api->post('nid-validate', 'ShebaController@nidValidate');
+
+            (new IncomeExpenseRoute())->set($api);
+
         });
     }
 }

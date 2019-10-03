@@ -118,10 +118,20 @@ class Voucher extends Model
      */
     public function scopeValid($query)
     {
-        return $query->whereRaw('((NOW() BETWEEN start_date AND end_date) OR (NOW() >= start_date AND end_date IS NULL))');
+        return $query->whereRaw('((NOW() BETWEEN start_date AND end_date) OR (NOW() >= start_date AND end_date IS NULL))')->where('is_active', 1);
+    }
+
+    public function scopeDateExpire($query)
+    {
+        return $this->isDateExpireQuery($query);
     }
 
     public function scopeNotValid($query)
+    {
+        return $this->isDateExpireQuery($query)->orWhere('is_active', 0);
+    }
+
+    public function isDateExpireQuery($query)
     {
         return $query->whereRaw('((NOW() NOT BETWEEN start_date AND end_date) OR (NOW() <= start_date AND end_date IS NULL))');
     }
@@ -148,7 +158,12 @@ class Voucher extends Model
 
     public function isValid()
     {
-        return Carbon::now()->lessThanOrEqualTo($this->end_date);
+        return Carbon::now()->lessThanOrEqualTo($this->end_date) && $this->isActive();
+    }
+
+    public function isActive()
+    {
+        return $this->is_active;
     }
 
     public function usedCount()

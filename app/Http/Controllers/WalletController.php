@@ -40,7 +40,7 @@ class WalletController extends Controller
         try {
             $this->validate($request, [
                 'payment_method' => 'required|in:online,bkash,cbl',
-                'amount' => 'required|numeric|min:10|max:10000',
+                'amount' => 'required|numeric|min:10|max:100000',
                 'user_id' => 'required',
                 'user_type' => 'required|in:customer,affiliate,partner',
                 'remember_token' => 'required'
@@ -55,6 +55,7 @@ class WalletController extends Controller
 
             if (!$user) return api_response($request, null, 404, ['message' => 'User Not found.']);
             $recharge_adapter = new RechargeAdapter($user, $request->amount);
+
             $payment = $sheba_payment->setMethod($request->payment_method)->init($recharge_adapter->getPayable());
             return api_response($request, $payment, 200, ['link' => $payment['link'], 'payment' => $payment->getFormattedPayment()]);
         } catch (ValidationException $e) {

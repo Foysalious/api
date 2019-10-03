@@ -87,7 +87,7 @@ class OrderManager
     /**
      * @param $order_id
      * @return Order
-     * * @throws Exceptions\LogisticServerError
+     * @throws Exceptions\LogisticServerError
      */
     public function getMinimal($order_id)
     {
@@ -96,6 +96,15 @@ class OrderManager
         $order->setStatus($data['status'])->setRider($data['rider'])->setId($data['id']);
 
         return $order;
+    }
+
+    /**
+     * @param $order_ids
+     * @return mixed
+     */
+    public function getMinimals($order_ids)
+    {
+        return $this->repo->findMinimals($order_ids);
     }
 
     /**

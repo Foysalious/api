@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Exceptions\HyperLocationNotFoundException;
 use App\Models\Category;
@@ -13,6 +11,7 @@ use App\Repositories\ReviewRepository;
 use App\Sheba\Checkout\PartnerList;
 use App\Sheba\Checkout\Validation;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -21,6 +20,7 @@ use Sheba\Checkout\PartnerSort;
 use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Dal\PartnerLocation\PartnerLocation;
 use Sheba\Dal\PartnerLocation\PartnerLocationRepository;
+use Throwable;
 
 class PartnerLocationController extends Controller
 {
@@ -32,6 +32,11 @@ class PartnerLocationController extends Controller
         $this->reviewRepository = new ReviewRepository();
     }
 
+    /**
+     * @param Request $request
+     * @param PartnerListRequest $partnerListRequest
+     * @return JsonResponse
+     */
     public function getPartners(Request $request, PartnerListRequest $partnerListRequest)
     {
         try {
@@ -79,7 +84,7 @@ class PartnerLocationController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -114,7 +119,7 @@ class PartnerLocationController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -123,7 +128,7 @@ class PartnerLocationController extends Controller
     /**
      * @param Request $request
      * @param PartnerLocationRepository $partnerLocationRepository
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function getNearbyPartners(Request $request, PartnerLocationRepository $partnerLocationRepository)
     {
@@ -186,7 +191,7 @@ class PartnerLocationController extends Controller
             $this->formatCollection($liteSps, $nearByPartners, $request, $reviews, $partnerDetails);
 
             return api_response($request, null, 200, ['partners' => $partnerDetails]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -208,7 +213,7 @@ class PartnerLocationController extends Controller
             $partner->lng = $nearByPartners[$partner->id]->location->coordinates[0];
             $partner->distance = round($nearByPartners[$partner->id]->distance, 2);
             $partner->badge = $partner->resolveBadge();
-            $partner->rating = $reviews->has($partner->id) ? round($reviews[$partner->id], 2) : 0.00;;
+            $partner->rating = $reviews->has($partner->id) ? round($reviews[$partner->id], 2) : 0.00;
             $partner->serving_category = $serving_master_categories;
             removeRelationsAndFields($partner);
             $partnerDetails->push($partner);

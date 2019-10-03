@@ -26,7 +26,7 @@ class PaymentByBonusAndWallet
         $this->partner = $partner;
         $this->partnerTransaction = new PartnerTransactionHandler($partner);
         $this->spentOn = $spent_on;
-        $this->bonus = app(BonusCredit::class)->setUser($partner)->setSpentModel($spent_on);
+        $this->bonus = app(BonusCredit::class)->setUser($partner)->setSpentModel($spent_on)->setPayableType($spent_on);
     }
 
     /**

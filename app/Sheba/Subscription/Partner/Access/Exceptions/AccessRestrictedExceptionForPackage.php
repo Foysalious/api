@@ -1,7 +1,6 @@
 <?php namespace Sheba\Subscription\Partner\Access\Exceptions;
 
-
-use Sheba\Exceptions\Exception;
+use Exception;
 use Throwable;
 
 class AccessRestrictedExceptionForPackage extends Exception

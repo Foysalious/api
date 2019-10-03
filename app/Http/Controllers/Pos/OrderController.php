@@ -47,9 +47,22 @@ class OrderController extends Controller
             list($offset, $limit) = calculatePagination($request);
 
             /** @var PosOrder $orders */
-            $orders = PosOrder::with('items.service.discounts', 'customer', 'payments', 'logs', 'partner')
-                ->byPartner($partner->id)
-                ->orderBy('created_at', 'desc')
+            $orders_query = PosOrder::with('items.service.discounts', 'customer.profile', 'payments', 'logs', 'partner')
+                ->byPartner($partner->id);
+
+            if ($request->has('q') && $request->q !== "null") {
+                $orders_query = $orders_query->whereHas('customer.profile', function ($query) use ($request) {
+                    $query->orWhere('profiles.name', 'LIKE', '%' . $request->q . '%');
+                    $query->orWhere('profiles.email', 'LIKE', '%' . $request->q . '%');
+                    $query->orWhere('profiles.mobile', 'LIKE', '%' . $request->q . '%');
+                });
+                $orders_query = $orders_query->orWhere([
+                    ['pos_orders.id', 'LIKE', '%' . $request->q . '%'],
+                    ['pos_orders.partner_id', $partner->id]
+                ]);
+            }
+
+            $orders = $orders_query->orderBy('created_at', 'desc')
                 ->skip($offset)
                 ->take($limit)
                 ->get();
@@ -137,7 +150,17 @@ class OrderController extends Controller
         }
     }
 
-    public function store($partner, Request $request, Creator $creator, ProfileCreator $profileCreator, PosCustomerCreator $posCustomerCreator, PartnerRepository $partnerRepository, PaymentLinkCreator $paymentLinkCreator, PaymentLinkOrderAdapter $paymentLinkOrderAdapter)
+    /**
+     * @param $partner
+     * @param Request $request
+     * @param Creator $creator
+     * @param ProfileCreator $profileCreator
+     * @param PosCustomerCreator $posCustomerCreator
+     * @param PartnerRepository $partnerRepository
+     * @param PaymentLinkCreator $paymentLinkCreator
+     * @return array|JsonResponse
+     */
+    public function store($partner, Request $request, Creator $creator, ProfileCreator $profileCreator, PosCustomerCreator $posCustomerCreator, PartnerRepository $partnerRepository, PaymentLinkCreator $paymentLinkCreator)
     {
         try {
             $this->validate($request, [
@@ -182,7 +205,12 @@ class OrderController extends Controller
                 $transformer->setResponse($paymentLink);
                 $link = ['link' => $transformer->getLink()];
             }
-            $order = ['id' => $order->id, 'payment_status' => $order->payment_status, 'net_bill' => $order->net_bill];
+            $order = [
+                'id' => $order->id,
+                'payment_status' => $order->payment_status,
+                'net_bill' => $order->net_bill,
+                "client_pos_order_id" => $request->has('client_pos_order_id') ? $request->client_pos_order_id : null
+            ];
 
             return api_response($request, null, 200, ['message' => 'Order Created Successfully', 'order' => $order, 'payment' => $link]);
         } catch (ValidationException $e) {
@@ -231,7 +259,11 @@ class OrderController extends Controller
             $this->sendCustomerEmail($order);
             $order->payment_status = $order->getPaymentStatus();
 
-            return api_response($request, null, 200, ['msg' => 'Order Created Successfully', 'order' => $order]);
+            $order["client_pos_order_id"] = $request->has('client_pos_order_id') ? $request->client_pos_order_id : null;
+            return api_response($request, null, 200, [
+                'msg' => 'Order Created Successfully',
+                'order' => $order
+            ]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');

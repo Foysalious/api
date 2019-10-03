@@ -33,8 +33,9 @@ class PartnerSubscriber extends ShebaSubscriber
 
         DB::transaction(function () use ($old_package, $package, $update_request) {
             $this->getPackage($package)->subscribe($update_request->new_billing_type, $update_request->discount_id);
-            $this->upgradeCommission($package->commission);
             $this->getBilling()->runUpgradeBilling($old_package, $package, $update_request->old_billing_type, $update_request->new_billing_type, $update_request->discount_id);
+            $update_request->status = 'Approved';
+            $update_request->update();
         });
     }
 
@@ -51,6 +52,9 @@ class PartnerSubscriber extends ShebaSubscriber
         return (new PartnerSubscriptionBilling($this->partner));
     }
 
+    /**
+     * @return PeriodicBillingHandler
+     */
     public function periodicBillingHandler()
     {
         return (new PeriodicBillingHandler($this->partner));

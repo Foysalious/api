@@ -15,9 +15,9 @@ use DB;
 
 class SpLoanController extends Controller
 {
-    use CdnFileManager, FileManager;
-    use ModificationFields;
+    use CdnFileManager, FileManager, ModificationFields;
 
+    /** @var FileRepository $fileRepository */
     private $fileRepository;
 
     public function __construct(FileRepository $file_repository)
@@ -38,10 +38,10 @@ class SpLoanController extends Controller
                     'status' => !$partner->loan->isEmpty() ? $partner->loan->last()->status : null,
                     'duration' => !$partner->loan->isEmpty() ? $partner->loan->last()->duration : null
                 ],
-                'big_banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/offers_images/banners/loan_banner_1440_628.png',
-                'banner' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/offers_images/banners/loan_banner_720_324.png',
+                'big_banner' => config('sheba.s3_url') . '/images/offers_images/banners/loan_banner_v2_1440_628.jpg',
+                'banner'     => config('sheba.s3_url') . '/images/offers_images/banners/loan_banner_v2_720_324.jpg',
                 'title' => 'হাতের নাগালে ব্যাংক লোন -',
-                'list' => [
+                'list'  => [
                     'সহজ শর্তে লোন নিন',
                     'সেবার মাধ্যমে লোন প্রসেসিং',
                     'প্রয়োজনীয় তথ্য দিয়ে সুবিধা মত লোন গ্রহন করুন'

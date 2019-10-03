@@ -1,7 +1,6 @@
 <?php namespace App\Models;
 
 use App\Models\Transport\TransportTicketOrder;
-use Sheba\Partner\PartnerStatuses;
 use App\Sheba\Payment\Rechargable;
 use Carbon\Carbon;
 use DB;
@@ -16,6 +15,7 @@ use Sheba\MovieTicket\MovieAgent;
 use Sheba\MovieTicket\MovieTicketTrait;
 use Sheba\MovieTicket\MovieTicketTransaction;
 use Sheba\Partner\BadgeResolver;
+use Sheba\Partner\PartnerStatuses;
 use Sheba\Payment\Wallet;
 use Sheba\Reward\Rewardable;
 use Sheba\Subscription\Partner\PartnerSubscriber;
@@ -42,6 +42,7 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
 
     public $totalCreditForSubscription;
     public $totalPriceRequiredForSubscription;
+    public $creditBreakdown;
 
     public function __construct($attributes = [])
     {
@@ -290,6 +291,12 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
         return null;
     }
 
+    public function getContactPerson()
+    {
+        if ($admin_resource = $this->admins()->first()) return $admin_resource->profile->name;
+        return null;
+    }
+
     public function getManagerMobile()
     {
         if ($operation_resource = $this->resources->where('pivot.resource_type', constants('RESOURCE_TYPES')['Operation'])->first()) {
@@ -426,6 +433,11 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
         $this->subscriber()->upgrade($package, $upgradeRequest);
     }
 
+    public function getBonusCreditAttribute()
+    {
+        return (double)$this->bonuses()->valid()->sum('amount');
+    }
+    
     public function runSubscriptionBilling()
     {
         $this->subscriber()->getBilling()->runSubscriptionBilling();
@@ -578,6 +590,11 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
         return $this->package_id == (int)config('sheba.partner_lite_packages_id');
     }
 
+    public function isAccessibleForMarketPlace()
+    {
+        return !in_array($this->package_id, config('sheba.marketplace_not_accessible_packages_id'));
+    }
+
     public function scopeLite($q)
     {
         return $q->where('package_id', (int)config('sheba.partner_lite_packages_id'));
@@ -727,6 +744,7 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
         $wallet = (double)$this->wallet;
         $bonus_wallet = (double)$this->bonusWallet();
         $threshold = $this->walletSetting ? (double)$this->walletSetting->min_wallet_threshold : 0;
+        $this->creditBreakdown = ['remaining_subscription_charge' => $remaining, 'wallet' => $wallet, 'threshold' => $threshold, 'bonus_wallet' => $bonus_wallet];
         return round($bonus_wallet + $wallet + $remaining) - $threshold;
     }
 
@@ -737,7 +755,7 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
     {
         $last_subscription_package_charge = $this->subscriptionPackageCharges()->orderBy('id', 'desc')->first();
         if (!$last_subscription_package_charge) return false;
-        return $last_subscription_package_charge->billing_date->between($this->last_billed_date->addSecond(), $this->periodicBillingHandler()->nextBillingDate());
+        return $this->last_billed_date ? $last_subscription_package_charge->billing_date->between($this->last_billed_date->addSecond(), $this->periodicBillingHandler()->nextBillingDate()) : false;
     }
 
     public function subscriptionPackageCharges()

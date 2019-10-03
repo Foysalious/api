@@ -1,6 +1,8 @@
 <?php namespace Sheba\Subscription\Partner\Access\RulesDescriber;
 
-
+/**
+ * @property ResourceType $TYPE
+ */
 class Resource extends BaseRule
 {
     protected $TYPE;
@@ -12,7 +14,6 @@ class Resource extends BaseRule
 
     protected function register($name, $prefix)
     {
-        // TODO: Implement register() method.
         if ($name == "TYPE") return $this->TYPE->setPrefix($prefix, 'type');
     }
 }
