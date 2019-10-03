@@ -17,4 +17,13 @@ class Procurement extends Model
         return $this->hasMany(ProcurementQuestion::class);
     }
 
+    public function tags()
+    {
+        return $this->morphToMany(Tag::class, 'taggable');
+    }
+
+    public function getTagNamesAttribute()
+    {
+        return $this->tags->pluck('name');
+    }
 }
