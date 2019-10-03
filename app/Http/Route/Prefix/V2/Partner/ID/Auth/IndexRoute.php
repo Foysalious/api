@@ -1,5 +1,7 @@
 <?php namespace App\Http\Route\Prefix\V2\Partner\ID\Auth;
 
+use App\Http\Route\Prefix\V2\IncomeExpenseRoute;
+
 class IndexRoute
 {
     public function set($api)
@@ -223,6 +225,9 @@ class IndexRoute
                 });
             });
             $api->post('nid-validate', 'ShebaController@nidValidate');
+
+            (new IncomeExpenseRoute())->set($api);
+
         });
     }
 }
