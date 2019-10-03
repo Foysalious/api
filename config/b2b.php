@@ -9,7 +9,7 @@ return [
     'PURCHASE_REQUEST_STATUS' => [
         'pending' => 'pending',
         'approved' => 'approved',
-        'rejected'  => 'rejected',
+        'rejected' => 'rejected',
         'need_approval' => 'need_approval'
     ],
     'PURCHASE_REQUEST_TYPE' => [
@@ -22,23 +22,21 @@ return [
         'rejected' => 'rejected',
         'need_approval' => 'need_approval'
     ],
-    /*'PROCUREMENT_TYPE' => [
+    'PROCUREMENT_TYPE' => [
+        'basic' => 'basic',
+        'advance' => 'advance',
         'product' => 'product',
         'service' => 'service'
-    ],*/
-    'PROCUREMENT_TYPE' => [
-        'basic'   => 'basic',
-        'advance' => 'advance'
     ],
     'PROCUREMENT_ITEM_TYPE' => [
-        'price_quotation'   => 'price_quotation',
+        'price_quotation' => 'price_quotation',
         'technical_evaluation' => 'technical_evaluation',
         'company_evaluation' => 'company_evaluation'
     ],
     'PROCUREMENT_STATUS' => [
         'pending' => 'pending',
         'approved' => 'approved',
-        'rejected'  => 'rejected',
+        'rejected' => 'rejected',
         'need_approval' => 'need_approval'
     ]
 ];

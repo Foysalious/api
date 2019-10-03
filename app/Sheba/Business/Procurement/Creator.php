@@ -31,6 +31,9 @@ class Creator
     private $procurementData;
     private $procurementItemFieldData;
     private $procurementQuestionData;
+    private $numberOfParticipants;
+    private $lastDateOfSubmission;
+    private $paymentOptions;
 
     public function __construct(ProcurementRepositoryInterface $procurement_repository, ProcurementItemRepositoryInterface $procurement_item_repository, ProcurementItemFieldRepositoryInterface $procurement_item_field_repository, ProcurementQuestionRepositoryInterface $procurement_question_repository)
     {
@@ -106,6 +109,24 @@ class Creator
         return $this;
     }
 
+    public function setNumberOfParticipants($number_of_participants)
+    {
+        $this->numberOfParticipants = $number_of_participants;
+        return $this;
+    }
+
+    public function setLastDateOfSubmission($last_date_of_submission)
+    {
+        $this->lastDateOfSubmission = $last_date_of_submission;
+        return $this;
+    }
+
+    public function setPaymentOptions($payment_options)
+    {
+        $this->paymentOptions = $payment_options;
+        return $this;
+    }
+
     public function setItems($items)
     {
         $this->items = $items;
@@ -127,16 +148,17 @@ class Creator
             DB::transaction(function () use (&$procurement, $items) {
                 /** @var Procurement $procurement */
                 $procurement = $this->procurementRepository->create($this->procurementData);
-                foreach ($items as $fields) {
+                foreach ($items as $item_fields) {
                     /** @var ProcurementItem $procurement_item */
-                    $procurement_item = $this->procurementItemRepository->create(['procurement_id' => $procurement->id]);
-                    $this->makeItemFields($procurement_item, $fields);
+                    $procurement_item = $this->procurementItemRepository->create(['procurement_id' => $procurement->id, 'type' => $item_fields->item_type]);
+                    $this->makeItemFields($procurement_item, $item_fields->fields);
                     $this->procurementItemFieldRepository->createMany($this->procurementItemFieldData);
                 }
-                $this->makeQuestion($procurement);
-                $this->procurementQuestionRepository->createMany($this->procurementQuestionData);
+                /*$this->makeQuestion($procurement);
+                $this->procurementQuestionRepository->createMany($this->procurementQuestionData);*/
             });
         } catch (QueryException $e) {
+            dd($e);
             throw $e;
         }
 
@@ -158,6 +180,9 @@ class Creator
             'procurement_end_date' => $this->procurementEndDate,
             'owner_type' => get_class($this->owner),
             'owner_id' => $this->owner->id,
+            'number_of_participants' => $this->numberOfParticipants,
+            'last_date_of_submission' => $this->lastDateOfSubmission,
+            'payment_options' => $this->paymentOptions,
         ];
     }
 

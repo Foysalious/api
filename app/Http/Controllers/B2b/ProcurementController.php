@@ -20,25 +20,33 @@ class ProcurementController extends Controller
     {
         try {
             $this->validate($request, [
-                'type' => 'required|string:in:product,service',
-                'purchase_request_id' => 'sometimes|numeric',
                 'title' => 'required|string',
-                'description' => 'required',
-                'estimated_price' => 'required|string',
-                'items' => 'required|string',
-                'questions' => 'required|string',
-                'order_start_date' => 'sometimes|date_format:Y-m-d',
-                'order_end_date' => 'sometimes|date_format:Y-m-d',
-                'interview_date' => 'sometimes|date_format:Y-m-d',
-                'tender_start_date' => 'sometimes|date_format:Y-m-d',
-                'tender_end_date' => 'sometimes|date_format:Y-m-d',
+                'number_of_participants' => 'required|numeric',#
+                'last_date_of_submission' => 'required|date_format:Y-m-d',#
+                'procurement_start_date' => 'required|date_format:Y-m-d',#schedule
+                'payment_options' => 'required|string',#
+                'type' => 'required|string:in:basic,advance,product,service',
+                'items' => 'sometimes|string',
+
+                /*#'description' => 'required',
+                #'estimated_price' => 'required|string',
+                #'purchase_request_id' => 'sometimes|numeric',
+                #'questions' => 'required|string',
+                #'order_start_date' => 'sometimes|date_format:Y-m-d',
+                #'order_end_date' => 'sometimes|date_format:Y-m-d',
+                #'interview_date' => 'sometimes|date_format:Y-m-d',
+                #'tender_start_date' => 'sometimes|date_format:Y-m-d',
+                #'tender_end_date' => 'sometimes|date_format:Y-m-d',*/
             ]);
             if (!$access_control->setBusinessMember($request->business_member)->hasAccess('procurement.rw')) return api_response($request, null, 403);
             $this->setModifier($request->manager_member);
+
             $creator->setType($request->type)->setOwner($request->business)->setTitle($request->title)->setPurchaseRequest($request->purchase_request_id)
                 ->setLongDescription($request->description)->setOrderStartDate($request->order_start_date)->setOrderEndDate($request->order_end_date)
-                ->setInterviewDate($request->interview_date)->setProcurementStartDate($request->tender_start_date)->setProcurementEndDate($request->tender_start_date)
-                ->setItems($request->items)->setQuestions($request->questions);
+                ->setInterviewDate($request->interview_date)->setProcurementStartDate($request->procurement_start_date)->setProcurementEndDate($request->tender_start_date)
+                ->setItems($request->items)->setQuestions($request->questions)->setNumberOfParticipants($request->number_of_participants)
+                ->setLastDateOfSubmission($request->last_date_of_submission)->setPaymentOptions($request->payment_options);
+            #dd($creator);
             $procurement = $creator->create();
             return api_response($request, $procurement, 200, ['id' => $procurement->id]);
         } catch (ValidationException $e) {
@@ -48,6 +56,7 @@ class ProcurementController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
