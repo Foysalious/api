@@ -80,8 +80,40 @@ class ProcurementController extends Controller
         }
     }
 
-    public function show(Request $request, $procurement)
+    public function show(Request $request)
     {
+        try {
+            $procurement = Procurement::find($request->procurement);
+
+            if ($procurement) {
+                $price_quotation = $procurement->items->where('type', 'price_quotation')->first();
+                $technical_evaluation = $procurement->items->where('type', 'technical_evaluation')->first();
+                $company_evaluation = $procurement->items->where('type', 'company_evaluation')->first();
+
+
+                $procurement_details = [
+                    'id' => $procurement->id,
+                    'title' => $procurement->title,
+                    'status' => $procurement->status,
+                    'start_date' => $procurement->procurement_start_date,
+                    'end_date' => $procurement->procurement_end_date,
+                    'number_of_participants' => $procurement->number_of_participants,
+                    'last_date_of_submission' => $procurement->last_date_of_submission,
+                    'payment_options' => $procurement->payment_options,
+                    'created_at' => $procurement->created_at->toDateString(),
+                    'price_quotation' => $price_quotation ? $price_quotation->fields ? $price_quotation->fields->toArray() : null : null,
+                    'technical_evaluation' => $technical_evaluation ? $technical_evaluation->fields ? $technical_evaluation->fields->toArray() : null : null,
+                    'company_evaluation' => $company_evaluation ? $company_evaluation->fields ? $company_evaluation->fields->toArray() : null : null,
+                ];
+                return api_response($request, $procurement_details, 200, ['procurements' => $procurement_details]);
+            } else {
+                return api_response($request, 404, ['message' => 'Not Found']);
+            }
+        } catch (\Throwable $e) {
+            dd($e->getMessage());
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 
     public function sendInvitation($procurement, Request $request, Sms $sms, ErrorLog $errorLog)
