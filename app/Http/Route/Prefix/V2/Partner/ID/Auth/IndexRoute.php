@@ -226,10 +226,8 @@ class IndexRoute
             });
             $api->post('nid-validate', 'ShebaController@nidValidate');
 
-            /**
-             * INCOME EXPENSE
-             */
             (new IncomeExpenseRoute())->set($api);
+
         });
     }
 }
