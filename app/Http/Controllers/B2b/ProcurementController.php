@@ -102,6 +102,7 @@ class ProcurementController extends Controller
                     'id' => $procurement->id,
                     'title' => $procurement->title,
                     'status' => $procurement->status,
+                    'labels' => $procurement->getTagNamesAttribute()->toArray(),
                     'start_date' => $procurement->procurement_start_date,
                     'end_date' => $procurement->procurement_end_date,
                     'number_of_participants' => $procurement->number_of_participants,
