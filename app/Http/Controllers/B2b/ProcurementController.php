@@ -38,6 +38,7 @@ class ProcurementController extends Controller
                  'tender_start_date' => 'sometimes|date_format:Y-m-d',
                  'tender_end_date' => 'sometimes|date_format:Y-m-d',*/
             ]);
+
             if (!$access_control->setBusinessMember($request->business_member)->hasAccess('procurement.rw')) return api_response($request, null, 403);
             $this->setModifier($request->manager_member);
 

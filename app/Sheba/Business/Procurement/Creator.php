@@ -2,6 +2,7 @@
 
 use App\Models\Procurement;
 use App\Models\ProcurementItem;
+use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Sheba\Repositories\Interfaces\ProcurementItemFieldRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementItemRepositoryInterface;
@@ -191,6 +192,8 @@ class Creator
             'number_of_participants' => $this->numberOfParticipants,
             'last_date_of_submission' => $this->lastDateOfSubmission,
             'payment_options' => $this->paymentOptions,
+            'is_published' => $this->isPublished ? (int)$this->isPublished : 0,
+            'published_at' => $this->isPublished ? Carbon::now() : '',
         ];
     }
 
