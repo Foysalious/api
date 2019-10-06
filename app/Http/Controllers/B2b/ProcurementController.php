@@ -39,7 +39,6 @@ class ProcurementController extends Controller
                  'tender_start_date' => 'sometimes|date_format:Y-m-d',
                  'tender_end_date' => 'sometimes|date_format:Y-m-d',*/
             ]);
-
             if (!$access_control->setBusinessMember($request->business_member)->hasAccess('procurement.rw')) return api_response($request, null, 403);
             $this->setModifier($request->manager_member);
 
@@ -47,7 +46,8 @@ class ProcurementController extends Controller
                 ->setLongDescription($request->description)->setOrderStartDate($request->order_start_date)->setOrderEndDate($request->order_end_date)
                 ->setInterviewDate($request->interview_date)->setProcurementStartDate($request->procurement_start_date)->setProcurementEndDate($request->tender_start_date)
                 ->setItems($request->items)->setQuestions($request->questions)->setNumberOfParticipants($request->number_of_participants)
-                ->setLastDateOfSubmission($request->last_date_of_submission)->setPaymentOptions($request->payment_options)->setIsPublished($request->is_published);
+                ->setLastDateOfSubmission($request->last_date_of_submission)->setPaymentOptions($request->payment_options)->setIsPublished($request->is_published)
+                ->setLabels($request->labels);
             $procurement = $creator->create();
             return api_response($request, $procurement, 200, ['id' => $procurement->id]);
         } catch (ValidationException $e) {
@@ -57,6 +57,7 @@ class ProcurementController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -107,7 +108,6 @@ class ProcurementController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

@@ -2,6 +2,7 @@
 
 use App\Models\Procurement;
 use App\Models\ProcurementItem;
+use App\Models\Tag;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Sheba\Repositories\Interfaces\ProcurementItemFieldRepositoryInterface;
@@ -36,6 +37,7 @@ class Creator
     private $lastDateOfSubmission;
     private $paymentOptions;
     private $isPublished;
+    private $labels;
 
     public function __construct(ProcurementRepositoryInterface $procurement_repository, ProcurementItemRepositoryInterface $procurement_item_repository, ProcurementItemFieldRepositoryInterface $procurement_item_field_repository, ProcurementQuestionRepositoryInterface $procurement_question_repository)
     {
@@ -149,6 +151,13 @@ class Creator
         return $this;
     }
 
+    public function setLabels($labels)
+    {
+        $this->labels = $labels;
+        $this->labels = explode(', ', $this->labels);
+        return $this;
+    }
+
     public function create()
     {
         $this->makeProcurementData();
@@ -157,6 +166,7 @@ class Creator
             DB::transaction(function () use (&$procurement) {
                 /** @var Procurement $procurement */
                 $procurement = $this->procurementRepository->create($this->procurementData);
+                $this->createTags($procurement);
                 foreach ($this->items as $item_fields) {
                     /** @var ProcurementItem $procurement_item */
                     $procurement_item = $this->procurementItemRepository->create(['procurement_id' => $procurement->id, 'type' => $item_fields->item_type]);
@@ -223,5 +233,24 @@ class Creator
                 'variables' => isset($question->is_required) ? json_encode(['is_required' => $question->is_required]) : '',
             ]);
         }
+    }
+
+    private function createTags($procurement)
+    {
+        $tag_list = [];
+        foreach ($this->labels as $label) {
+            $exiting_tag = Tag::where(['name' => $label, 'taggable_type' => 'App\Models\Procurement'])->first();
+            if ($exiting_tag) {
+                $tag = $exiting_tag;
+            } else {
+                $new_tag = Tag::create([
+                    'name' => $label,
+                    'taggable_type' => 'App\Models\Procurement'
+                ]);
+                $tag = $new_tag;
+            }
+            array_push($tag_list, $tag->id);
+        }
+        $procurement->tags()->sync($tag_list);
     }
 }
