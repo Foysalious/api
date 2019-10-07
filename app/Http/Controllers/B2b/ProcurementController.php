@@ -77,12 +77,14 @@ class ProcurementController extends Controller
             $total_procurement = $procurements->get()->count();
             $procurements = $procurements->skip($offset)->limit($limit);
 
-            if ($request->has('status')) $procurements->where('status', $request->status);
+            if ($request->has('status') && $request->status != 'all') {
+                $procurements->where('status', $request->status);
+            }
 
             $start_date = $request->has('start_date') ? $request->start_date : null;
             $end_date = $request->has('end_date') ? $request->end_date : null;
             if ($start_date && $end_date) {
-                $procurements->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
+                $procurements->whereBetween('published_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
             }
 
             $procurements_list = [];
