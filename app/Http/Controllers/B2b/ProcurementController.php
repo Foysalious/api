@@ -57,7 +57,6 @@ class ProcurementController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -98,7 +97,7 @@ class ProcurementController extends Controller
             }
             if (count($procurements_list) > 0) return api_response($request, $procurements_list, 200, [
                 'procurements' => $procurements_list,
-                '$total_procurement' => $total_procurement
+                'total_procurement' => $total_procurement
             ]);
             else return api_response($request, null, 404);
         } catch (ValidationException $e) {
