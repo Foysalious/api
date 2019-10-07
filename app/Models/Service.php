@@ -176,6 +176,8 @@ class Service extends Model
             $query->publishedForBusiness();
         })->orWhere(function ($query) {
             $query->publishedForBondhu();
+        })->orWhere(function ($query) {
+            $query->publishedForB2B();
         });
     }
 

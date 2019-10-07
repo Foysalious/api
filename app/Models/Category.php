@@ -134,7 +134,8 @@ class Category extends Model
     public function scopePublishedForAny($query)
     {
         return $query->where(function ($query) {
-            return $query->where('publication_status', 1)->orWhere('is_published_for_business', 1)
+            return $query->where('publication_status', 1)
+                ->orWhere('is_published_for_business', 1)
                 ->orWhere('is_published_for_partner', 1)
                 ->orWhere('is_published_for_partner_onboarding', 1)
                 ->orWhere('is_published_for_b2b', 1);
