@@ -41,4 +41,10 @@ class EntryRepository extends BaseRepository
 
         return $result['data'];
     }
+
+    public function showEntry($for, $id)
+    {
+        $result = $this->client->get('accounts/' . $this->accountId . '/' . $for . '/' . $id);
+        return $result['data'];
+    }
 }
