@@ -45,12 +45,24 @@ class PartnerSubscriptionController extends Controller
 
             $partner_subscription_package = $partner->subscription;
             $data = [
-                'subscription_package' => $partner_subscription_packages, 'monthly_tag' => '২০% ছাড়', 'half_yearly_tag' => '২০% ছাড়', 'yearly_tag' => null, 'tags' => [
-                    'monthly' => ['en' => '20% discount', 'bn' => '২০% ছাড়'], 'half_yearly' => ['en' => '20% discount', 'bn' => '২০% ছাড়'], 'yearly' => ['en' => null, 'bn' => null],
-                ], 'billing_type' => $partner->billing_type, 'current_package' => [
-                    'en' => $partner_subscription_package->show_name, 'bn' => $partner_subscription_package->show_name_bn,
-                ], 'last_billing_date' => $partner->last_billed_date ? $partner->last_billed_date->format('Y-m-d') : null, 'next_billing_date' => $partner->last_billed_date ? $partner->periodicBillingHandler()->nextBillingDate()->format('Y-m-d') : null, 'validity_remaining_in_days' => $partner->last_billed_date ? $partner->periodicBillingHandler()->remainingDay() : null, 'is_auto_billing_activated' => ($partner->auto_billing_activated) ? true : false
+                'subscription_package' => $partner_subscription_packages,
+                'monthly_tag' => null, 'half_yearly_tag' => '১৯% ছাড়', 'yearly_tag' => '৫০% ছাড়',
+                'tags' => [
+                    'monthly'       => ['en' => null, 'bn' => null],
+                    'half_yearly'   => ['en' => '19% discount', 'bn' => '১৯% ছাড়'],
+                    'yearly'        => ['en' => '50% discount', 'bn' => '৫০% ছাড়']
+                ],
+                'billing_type' => $partner->billing_type,
+                'current_package' => [
+                    'en' => $partner_subscription_package->show_name,
+                    'bn' => $partner_subscription_package->show_name_bn
+                ],
+                'last_billing_date' => $partner->last_billed_date ? $partner->last_billed_date->format('Y-m-d') : null,
+                'next_billing_date' => $partner->last_billed_date ? $partner->periodicBillingHandler()->nextBillingDate()->format('Y-m-d') : null,
+                'validity_remaining_in_days' => $partner->last_billed_date ? $partner->periodicBillingHandler()->remainingDay() : null,
+                'is_auto_billing_activated' => ($partner->auto_billing_activated) ? true : false
             ];
+
             return api_response($request, null, 200, $data);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
@@ -58,6 +70,11 @@ class PartnerSubscriptionController extends Controller
         }
     }
 
+    /**
+     * @param $rules
+     * @param PartnerSubscriptionPackage $package
+     * @return mixed
+     */
     private function calculateDiscount($rules, PartnerSubscriptionPackage $package)
     {
         $rules['fee']['monthly']['original_price'] = $rules['fee']['monthly']['value'];
@@ -163,6 +180,11 @@ class PartnerSubscriptionController extends Controller
         return implode(',', $message) . " Billing Cycle";
     }
 
+    /**
+     * @param $partner
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function store($partner, Request $request)
     {
         try {
