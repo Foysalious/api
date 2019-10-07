@@ -77,7 +77,9 @@ class ProcurementController extends Controller
             $total_procurement = $procurements->get()->count();
             $procurements = $procurements->skip($offset)->limit($limit);
 
-            if ($request->has('status')) $procurements->where('status', $request->status);
+            if ($request->has('status') && $request->status != 'all') {
+                $procurements->where('status', $request->status);
+            }
 
             $start_date = $request->has('start_date') ? $request->start_date : null;
             $end_date = $request->has('end_date') ? $request->end_date : null;
