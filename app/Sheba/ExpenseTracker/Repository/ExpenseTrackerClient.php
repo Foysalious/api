@@ -77,9 +77,10 @@ class ExpenseTrackerClient
 
     private function getOptions($data = null)
     {
-        $options['headers'] = [ 'Content-Type' => 'application/json', 'x-api-key' => $this->apiKey ];
+        $options['headers'] = ['Content-Type' => 'application/json', 'x-api-key' => $this->apiKey, 'Accept' => 'application/json'];
         if ($data) {
             $options['form_params'] = $data;
+            $options['json'] = $data;
         }
         return $options;
     }

@@ -7,6 +7,7 @@ class IncomeExpenseRoute
         $api->get('income-expense', 'Partner\IncomeExpenseController@index');
         $api->group(['prefix' => 'incomes'], function ($api) {
             $api->get('/', 'Partner\IncomeController@index');
+            $api->post('/', 'Partner\IncomeController@store');
             $api->group(['prefix' => '{income}'], function ($api) {
                 $api->get('/', 'Partner\IncomeController@show');
             });
