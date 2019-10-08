@@ -3,12 +3,14 @@
 use App\Http\Controllers\Controller;
 use App\Transformers\CustomSerializer;
 use App\Transformers\IncomeTransformer;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\ExpenseTracker\EntryType;
 use Sheba\ExpenseTracker\Repository\EntryRepository;
+use Sheba\Helpers\TimeFrame;
 use Throwable;
 use Illuminate\Validation\ValidationException;
 
@@ -22,36 +24,57 @@ class IncomeController extends Controller
         $this->entryRepo = $entry_repo;
     }
 
-    public function index(Request $request)
+    public function index(Request $request, TimeFrame $time_frame)
     {
         try {
-            /*$total_monthly_income = 1600.00;
-            $total_monthly_due = 1200.00;
-            $income_calculation = "[{\"date\":\"2019-09-04\",\"incomes\":[{\"id\":6777,\"expense_head\":\"travel_allowance\",\"expense_head_show_name\":{\"bn\":\"যাতায়াত ভাতা\",\"en\":\"Travel allowance\"},\"amount\":2000,\"note\":\"পাশা ভাইকে দেয়া হয়েছে\"},{\"id\":6776,\"expense_head\":\"food_allowance\",\"expense_head_show_name\":{\"bn\":\"খাবার ভাতা\",\"en\":\"Food allowance\"},\"amount\":2050,\"note\":null},{\"id\":6775,\"expense_head\":\"product_sale\",\"expense_head_show_name\":{\"bn\":\"পণ্য বিক্রয়\",\"en\":\"Product sales\"},\"amount\":3000,\"note\":\"Given to pasha vai\"}],\"created_by_name\":\"Resource-Md. Ashikul Alam Ashik\",\"created_at\":\"2019-09-04 07:01 PM\"},{\"date\":\"2019-09-05\",\"incomes\":[{\"id\":6780,\"expense_head\":\"travel_allowance\",\"expense_head_show_name\":{\"bn\":\"যাতায়াত ভাতা\",\"en\":\"Travel allowance\"},\"amount\":3000,\"note\":\"পাশা ভাইকে দেয়া হয়েছে\"},{\"id\":6781,\"expense_head\":\"food_allowance\",\"expense_head_show_name\":{\"bn\":\"খাবার ভাতা\",\"en\":\"Food allowance\"},\"amount\":6050,\"note\":null},{\"id\":6782,\"expense_head\":\"product_sale\",\"expense_head_show_name\":{\"bn\":\"পণ্য বিক্রয়\",\"en\":\"Product sales\"},\"amount\":5000,\"note\":\"Given to pasha vai\"}],\"created_by_name\":\"Resource-Md. Ashikul Alam Ashik\",\"created_at\":\"2019-09-05 06:01 PM\"},{\"date\":\"2019-09-06\",\"incomes\":[{\"id\":6797,\"expense_head\":\"travel_allowance\",\"expense_head_show_name\":{\"bn\":\"যাতায়াত ভাতা\",\"en\":\"Travel allowance\"},\"amount\":1000,\"note\":\"পাশা ভাইকে দেয়া হয়েছে\"},{\"id\":6796,\"expense_head\":\"food_allowance\",\"expense_head_show_name\":{\"bn\":\"খাবার ভাতা\",\"en\":\"Food allowance\"},\"amount\":5050,\"note\":null},{\"id\":6795,\"expense_head\":\"product_sale\",\"expense_head_show_name\":{\"bn\":\"পণ্য বিক্রয়\",\"en\":\"Product sales\"},\"amount\":2000,\"note\":\"Given to pasha vai\"}],\"created_by_name\":\"Resource-Md. Ashikul Alam Ashik\",\"created_at\":\"2019-09-06 04:01 PM\"}]";
-            $income_calculation = json_decode($income_calculation);
-            return api_response($request, $income_calculation, 200, [
-                "total_monthly_income" => $total_monthly_income,
-                "total_monthly_due" => $total_monthly_due,
-                "incomes" => $income_calculation
-            ]);*/
+            $this->validate($request, [
+                'frequency' => 'required|string|in:day,week,month,year',
+                'date'      => 'required_if:frequency,day|date',
+                'week'      => 'required_if:frequency,week|numeric',
+                'month'     => 'required_if:frequency,month|numeric',
+                'year'      => 'required_if:frequency,month,year|numeric',
+            ]);
+            list($offset, $limit) = calculatePagination($request);
 
-            $this->validate($request, []);
-            $incomes = [];
-            $incomes_response = $this->entryRepo->setPartner($request->partner)->getAllIncomes();
+            $time_frame = $time_frame->makeTimeFrame($request);
+            $incomes_response = $this->entryRepo->setPartner($request->partner)
+                ->setOffset($offset)
+                ->setLimit($limit)
+                ->setStartDate($time_frame->start)
+                ->setEndDate($time_frame->end)
+                ->getAllIncomesBetween();
+
+            $final_incomes = [];
+            $incomes_formatted = [];
+
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
-            foreach ($incomes_response as $income) {
+            foreach ($incomes_response['incomes'] as $income) {
                 $resource = new Item($income, new IncomeTransformer());
                 $income_formatted = $manager->createData($resource)->toArray()['data'];
-                $incomes[] = $income_formatted;
+                $income_create_date = Carbon::parse($income_formatted['created_at'])->format('Y-m-d');
+                if (!isset($final_incomes[$income_create_date])) $final_incomes[$income_create_date] = [];
+                array_push($final_incomes[$income_create_date], $income_formatted);
+            }
+
+            foreach ($final_incomes as $key => $value) {
+                if (count($value) > 0) {
+                    $income_list = [
+                        'date' => $key, 'incomes' => $value
+                    ];
+                    array_push($incomes_formatted, $income_list);
+                }
             }
 
             return api_response($request, null, 200, [
-                "total_monthly_income" => 0.00,
-                "total_monthly_due" => 0.00,
-                'incomes' => $incomes
+                "total_income" => $incomes_response['total_income'],
+                "total_due" => $incomes_response['total_due'],
+                'incomes' => $incomes_formatted
             ]);
-        } catch (Throwable $e) {
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

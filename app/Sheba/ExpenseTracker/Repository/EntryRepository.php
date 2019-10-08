@@ -6,6 +6,15 @@ use Sheba\RequestIdentification;
 
 class EntryRepository extends BaseRepository
 {
+    /** @var Carbon $start_date */
+    private $start_date;
+    /** @var Carbon $end_date */
+    private $end_date;
+    /** @var int $limit */
+    private $limit;
+    /** @var int $offset */
+    private $offset;
+
     /**
      * @return mixed
      * @throws ExpenseTrackingServerError
@@ -14,6 +23,16 @@ class EntryRepository extends BaseRepository
     {
         $result = $this->client->get('accounts/' . $this->accountId . '/incomes');
         return $result['incomes'];
+    }
+
+    /**
+     * @return mixed
+     * @throws ExpenseTrackingServerError
+     */
+    public function getAllIncomesBetween()
+    {
+        $url = 'accounts/' . $this->accountId . '/incomes?start_date=' . $this->start_date . '&end_date=' . $this->end_date . '&limit=' . $this->limit . '&offset=' . $this->offset;
+        return $this->client->get($url);
     }
 
     /**
@@ -42,9 +61,55 @@ class EntryRepository extends BaseRepository
         return $result['data'];
     }
 
+    /**
+     * @param $for
+     * @param $id
+     * @return mixed
+     * @throws ExpenseTrackingServerError
+     */
     public function showEntry($for, $id)
     {
         $result = $this->client->get('accounts/' . $this->accountId . '/' . $for . '/' . $id);
         return $result['data'];
+    }
+
+    /**
+     * @param Carbon $start_date
+     * @return EntryRepository
+     */
+    public function setStartDate($start_date)
+    {
+        $this->start_date = $start_date->format('Y-m-d H:s:i');
+        return $this;
+    }
+
+    /**
+     * @param Carbon $end_date
+     * @return EntryRepository
+     */
+    public function setEndDate($end_date)
+    {
+        $this->end_date = $end_date->format('Y-m-d H:s:i');
+        return $this;
+    }
+
+    /**
+     * @param $limit
+     * @return $this
+     */
+    public function setLimit($limit)
+    {
+        $this->limit = $limit;
+        return $this;
+    }
+
+    /**
+     * @param $offset
+     * @return $this
+     */
+    public function setOffset($offset)
+    {
+        $this->offset = $offset;
+        return $this;
     }
 }
