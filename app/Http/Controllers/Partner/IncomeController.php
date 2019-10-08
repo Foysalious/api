@@ -87,8 +87,13 @@ class IncomeController extends Controller
     public function store(Request $request)
     {
         try {
-            $this->validate($request, ['amount' => 'required|numeric', 'created_at' => 'required', 'head_id' => 'required']);
+            $this->validate($request, [
+                'amount' => 'required|numeric',
+                'created_at' => 'required',
+                'head_id' => 'required'
+            ]);
             $input = $request->only(['amount', 'created_at', 'head_id', 'note']);
+            $input['amount_cleared'] = $request->input('amount');
             $income = $this->entryRepo->setPartner($request->partner)->storeEntry(EntryType::getRoutable(EntryType::INCOME), $input);
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());

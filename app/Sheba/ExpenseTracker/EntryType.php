@@ -19,7 +19,7 @@ class EntryType
     {
         switch ($status) {
             case self::INCOME: return 'incomes';
-            case self::EXPENSE: return 'expense';
+            case self::EXPENSE: return 'expenses';
             default: throw new Exception('Invalid Type Exception');
         }
     }
