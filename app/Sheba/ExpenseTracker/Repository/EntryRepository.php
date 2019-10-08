@@ -67,7 +67,23 @@ class EntryRepository extends BaseRepository
         $request_identification = (new RequestIdentification())->get();
         $data['created_from'] = json_encode($request_identification);
         $result = $this->client->post('accounts/' . $this->accountId . '/' . $for, $data);
+        return $result['data'];
+    }
 
+
+    /**
+     * @param $for
+     * @param $data
+     * @param $entryId
+     * @return string
+     * @throws ExpenseTrackingServerError
+     */
+    public function updateEntry($for, $data, $entryId)
+    {
+        $data['created_at'] = Carbon::parse($data['created_at'])->format('Y-m-d H:s:i');
+        $request_identification = (new RequestIdentification())->get();
+        $data['created_from'] = json_encode($request_identification);
+        $result = $this->client->post('accounts/' . $this->accountId . '/' . $for . '/' . $entryId, $data);
         return $result['data'];
     }
 

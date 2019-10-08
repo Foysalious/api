@@ -29,10 +29,10 @@ class IncomeController extends Controller
         try {
             $this->validate($request, [
                 'frequency' => 'required|string|in:day,week,month,year',
-                'date'      => 'required_if:frequency,day|date',
-                'week'      => 'required_if:frequency,week|numeric',
-                'month'     => 'required_if:frequency,month|numeric',
-                'year'      => 'required_if:frequency,month,year|numeric',
+                'date' => 'required_if:frequency,day|date',
+                'week' => 'required_if:frequency,week|numeric',
+                'month' => 'required_if:frequency,month|numeric',
+                'year' => 'required_if:frequency,month,year|numeric',
             ]);
             list($offset, $limit) = calculatePagination($request);
 
@@ -110,12 +110,6 @@ class IncomeController extends Controller
         }
     }
 
-    /**
-     * @param $partner
-     * @param $income_id
-     * @param Request $request
-     * @return JsonResponse
-     */
     public function show($partner, $income_id, Request $request)
     {
         try {
@@ -126,6 +120,30 @@ class IncomeController extends Controller
             $income_formatted = $manager->createData($resource)->toArray()['data'];
 
             return api_response($request, $income, 200, ["income" => $income_formatted]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param $partner
+     * @param $income_id
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function update(Request $request,$partner, $income_id)
+    {
+        try {
+            $input = $request->only(['amount', 'created_at', 'head_id', 'note']);
+            $input['amount_cleared'] = $request->input('amount');
+            $income = $this->entryRepo->setPartner($request->partner)->updateEntry(EntryType::getRoutable(EntryType::INCOME), $input, $income_id);
+            $manager = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+            $resource = new Item($income, new IncomeTransformer());
+            $income_formatted = $manager->createData($resource)->toArray()['data'];
+
+            return api_response($request, null, 200, ['income' => $income_formatted]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
