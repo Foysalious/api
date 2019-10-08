@@ -39,6 +39,16 @@ class EntryRepository extends BaseRepository
      * @return mixed
      * @throws ExpenseTrackingServerError
      */
+    public function getAllExpensesBetween()
+    {
+        $url = 'accounts/' . $this->accountId . '/expenses?start_date=' . $this->start_date . '&end_date=' . $this->end_date . '&limit=' . $this->limit . '&offset=' . $this->offset;
+        return $this->client->get($url);
+    }
+
+    /**
+     * @return mixed
+     * @throws ExpenseTrackingServerError
+     */
     public function getAllExpenses()
     {
         $result = $this->client->get('accounts/' . $this->accountId . '/expenses');
