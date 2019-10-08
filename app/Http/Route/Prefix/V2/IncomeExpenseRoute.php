@@ -13,7 +13,7 @@ class IncomeExpenseRoute
             });
         });
 
-        $api->group(['prefix' => 'expense'], function ($api) {
+        $api->group(['prefix' => 'expenses'], function ($api) {
             $api->get('/', 'Partner\ExpenseController@index');
         });
     }
