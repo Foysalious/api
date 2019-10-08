@@ -138,4 +138,13 @@ class EntryRepository extends BaseRepository
         $this->offset = $offset;
         return $this;
     }
+
+    /**
+     * @return mixed
+     * @throws ExpenseTrackingServerError
+     */
+    public function getAllPayables()
+    {
+        return $this->client->get('accounts/' . $this->accountId . '/payables' . '?limit=' . $this->limit . '&offset=' . $this->offset);
+    }
 }

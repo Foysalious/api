@@ -129,7 +129,7 @@ class ExpenseController extends Controller
             $expense = $this->entryRepo->setPartner($request->partner)->showEntry(EntryType::getRoutable(EntryType::EXPENSE), $expense_id);
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($expense, new IncomeTransformer());
+            $resource = new Item($expense, new ExpenseTransformer());
             $expense_formatted = $manager->createData($resource)->toArray()['data'];
 
             return api_response($request, $expense, 200, ["expense" => $expense_formatted]);
