@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Transformers\CustomSerializer;
+use App\Transformers\ExpenseTransformer;
 use App\Transformers\IncomeTransformer;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -96,10 +97,11 @@ class ExpenseController extends Controller
             $input = $request->only(['amount', 'created_at', 'head_id', 'note']);
             $input['amount_cleared'] = $request->input('amount_cleared') ?
                 $request->input('amount_cleared') : $request->input('amount');
+
             $expense = $this->entryRepo->setPartner($request->partner)->storeEntry(EntryType::getRoutable(EntryType::EXPENSE), $input);
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($expense, new IncomeTransformer());
+            $resource = new Item($expense, new ExpenseTransformer());
             $expense_formatted = $manager->createData($resource)->toArray()['data'];
 
             return api_response($request, null, 200, ['expense' => $expense_formatted]);
