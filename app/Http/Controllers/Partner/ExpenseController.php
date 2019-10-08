@@ -3,13 +3,13 @@
 use App\Http\Controllers\Controller;
 use App\Transformers\CustomSerializer;
 use App\Transformers\ExpenseTransformer;
-use App\Transformers\IncomeTransformer;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
+use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\EntryType;
 use Sheba\ExpenseTracker\Repository\EntryRepository;
 use Sheba\Helpers\TimeFrame;
@@ -56,7 +56,7 @@ class ExpenseController extends Controller
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
             foreach ($expenses_response['expenses'] as $expense) {
-                $resource = new Item($expense, new IncomeTransformer());
+                $resource = new Item($expense, new ExpenseTransformer());
                 $expense_formatted = $manager->createData($resource)->toArray()['data'];
                 $expense_create_date = Carbon::parse($expense_formatted['created_at'])->format('Y-m-d');
                 if (!isset($final_incomes[$expense_create_date])) $final_incomes[$expense_create_date] = [];
@@ -66,7 +66,7 @@ class ExpenseController extends Controller
             foreach ($final_incomes as $key => $value) {
                 if (count($value) > 0) {
                     $expense_list = [
-                        'date' => $key, 'incomes' => $value
+                        'date' => $key, 'expenses' => $value
                     ];
                     array_push($expenses_formatted, $expense_list);
                 }
@@ -79,6 +79,9 @@ class ExpenseController extends Controller
             ]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        }  catch (ExpenseTrackingServerError $e) {
+            $message = $e->getMessage();
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
