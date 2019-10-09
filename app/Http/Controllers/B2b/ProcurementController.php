@@ -171,7 +171,7 @@ class ProcurementController extends Controller
                 if ($request->payment_options) $procurement->payment_options = $request->payment_options;
 
                 $procurement->save();
-                return api_response($request, null,200, ["message" => "Successful"]);
+                return api_response($request, null, 200, ["message" => "Successful"]);
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());

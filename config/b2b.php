@@ -38,5 +38,12 @@ return [
         'approved' => 'approved',
         'rejected' => 'rejected',
         'need_approval' => 'need_approval'
+    ],
+    'PROCUREMENT_ITEM_FIELD' => [
+        'text' => 'text',
+        'textarea' => 'textarea',
+        'radio' => 'radio',
+        'number' => 'number',
+        'select' => 'select'
     ]
 ];
