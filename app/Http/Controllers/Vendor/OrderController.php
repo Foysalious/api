@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\Vendor;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\Customer\CreateReferral;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;
@@ -12,6 +13,7 @@ use App\Transformers\CustomSerializer;
 use App\Transformers\JobTransformer;
 use Carbon\Carbon;
 use Dingo\Api\Routing\Helpers;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -22,7 +24,7 @@ use Throwable;
 
 class OrderController extends Controller
 {
-    use Helpers;
+    use Helpers, DispatchesJobs;
 
     /**
      * @param $order
@@ -155,7 +157,7 @@ class OrderController extends Controller
         $customer->profile_id = $profile->id;
         $customer->remember_token = str_random(255);
         $customer->save();
-        new Referral($customer);
+        dispatch(new CreateReferral($customer));
         return $customer;
     }
 }
