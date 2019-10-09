@@ -156,8 +156,8 @@ class ProcurementController extends Controller
             $this->validate($request, [
                 'number_of_participants' => 'required|numeric',
                 'last_date_of_submission' => 'required|date_format:Y-m-d',
-                'procurement_start_date' => 'required|date_format:Y-m-d',
-                'payment_options' => 'required|string'
+                'procurement_start_date' => 'date_format:Y-m-d',
+                'payment_options' => 'string'
             ]);
 
             $procurement = Procurement::find($request->procurement);
@@ -167,8 +167,8 @@ class ProcurementController extends Controller
             } else {
                 $procurement->number_of_participants = $request->number_of_participants;
                 $procurement->last_date_of_submission = $request->last_date_of_submission;
-                $procurement->procurement_start_date = $request->procurement_start_date;
-                $procurement->payment_options = $request->payment_options;
+                if ($request->procurement_start_date) $procurement->procurement_start_date = $request->procurement_start_date;
+                if ($request->payment_options) $procurement->payment_options = $request->payment_options;
 
                 $procurement->save();
                 return api_response($request, null,200, ["message" => "Successful"]);
