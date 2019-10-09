@@ -2,6 +2,8 @@
 
 use App\Models\Procurement;
 use App\Models\ProcurementItem;
+use App\Models\Tag;
+use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Sheba\Repositories\Interfaces\ProcurementItemFieldRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementItemRepositoryInterface;
@@ -34,6 +36,8 @@ class Creator
     private $numberOfParticipants;
     private $lastDateOfSubmission;
     private $paymentOptions;
+    private $isPublished;
+    private $labels;
 
     public function __construct(ProcurementRepositoryInterface $procurement_repository, ProcurementItemRepositoryInterface $procurement_item_repository, ProcurementItemFieldRepositoryInterface $procurement_item_field_repository, ProcurementQuestionRepositoryInterface $procurement_question_repository)
     {
@@ -129,13 +133,28 @@ class Creator
 
     public function setItems($items)
     {
-        $this->items = $items;
+        $this->items = json_decode($items);
+        $this->items = $this->items == null ? [] : $this->items;
         return $this;
     }
 
     public function setQuestions($questions)
     {
-        $this->questions = $questions;
+        $this->questions = json_decode($questions);
+        $this->questions = $this->questions == null ? [] : $this->questions;
+        return $this;
+    }
+
+    public function setIsPublished($is_published)
+    {
+        $this->isPublished = $is_published;
+        return $this;
+    }
+
+    public function setLabels($labels)
+    {
+        $this->labels = $labels;
+        $this->labels = explode(', ', $this->labels);
         return $this;
     }
 
@@ -143,22 +162,22 @@ class Creator
     {
         $this->makeProcurementData();
         $procurement = null;
-        $items = json_decode($this->items);
         try {
-            DB::transaction(function () use (&$procurement, $items) {
+            DB::transaction(function () use (&$procurement) {
                 /** @var Procurement $procurement */
                 $procurement = $this->procurementRepository->create($this->procurementData);
-                foreach ($items as $item_fields) {
+                $this->createTags($procurement);
+                foreach ($this->items as $item_fields) {
                     /** @var ProcurementItem $procurement_item */
                     $procurement_item = $this->procurementItemRepository->create(['procurement_id' => $procurement->id, 'type' => $item_fields->item_type]);
                     $this->makeItemFields($procurement_item, $item_fields->fields);
                     $this->procurementItemFieldRepository->createMany($this->procurementItemFieldData);
                 }
-                /*$this->makeQuestion($procurement);
-                $this->procurementQuestionRepository->createMany($this->procurementQuestionData);*/
+
+                $this->makeQuestion($procurement);
+                $this->procurementQuestionRepository->createMany($this->procurementQuestionData);
             });
         } catch (QueryException $e) {
-            dd($e);
             throw $e;
         }
 
@@ -183,6 +202,8 @@ class Creator
             'number_of_participants' => $this->numberOfParticipants,
             'last_date_of_submission' => $this->lastDateOfSubmission,
             'payment_options' => $this->paymentOptions,
+            'is_published' => $this->isPublished ? (int)$this->isPublished : 0,
+            'published_at' => $this->isPublished ? Carbon::now() : '',
         ];
     }
 
@@ -202,8 +223,7 @@ class Creator
     private function makeQuestion(Procurement $procurement)
     {
         $this->procurementQuestionData = [];
-        $questions = json_decode($this->questions);
-        foreach ($questions as $question) {
+        foreach ($this->questions as $question) {
             array_push($this->procurementQuestionData, [
                 'title' => $question->title,
                 'short_description' => isset($question->short_description) ? $question->short_description : '',
@@ -213,5 +233,24 @@ class Creator
                 'variables' => isset($question->is_required) ? json_encode(['is_required' => $question->is_required]) : '',
             ]);
         }
+    }
+
+    private function createTags($procurement)
+    {
+        $tag_list = [];
+        foreach ($this->labels as $label) {
+            $exiting_tag = Tag::where(['name' => $label, 'taggable_type' => 'App\Models\Procurement'])->first();
+            if ($exiting_tag) {
+                $tag = $exiting_tag;
+            } else {
+                $new_tag = Tag::create([
+                    'name' => $label,
+                    'taggable_type' => 'App\Models\Procurement'
+                ]);
+                $tag = $new_tag;
+            }
+            array_push($tag_list, $tag->id);
+        }
+        $procurement->tags()->sync($tag_list);
     }
 }

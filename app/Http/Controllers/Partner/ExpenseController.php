@@ -1,11 +1,141 @@
 <?php namespace App\Http\Controllers\Partner;
 
 use App\Http\Controllers\Controller;
+use App\Transformers\CustomSerializer;
+use App\Transformers\ExpenseTransformer;
+use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Item;
+use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
+use Sheba\ExpenseTracker\EntryType;
+use Sheba\ExpenseTracker\Repository\EntryRepository;
+use Sheba\Helpers\TimeFrame;
+use Throwable;
 
 class ExpenseController extends Controller
 {
-    public function index()
+    /** @var EntryRepository $entryRepo */
+    private $entryRepo;
+
+    public function __construct(EntryRepository $entry_repo)
     {
-        dd(433);
+        $this->entryRepo = $entry_repo;
+    }
+
+    /**
+     * @param Request $request
+     * @param TimeFrame $time_frame
+     * @return JsonResponse
+     */
+    public function index(Request $request, TimeFrame $time_frame)
+    {
+        try {
+            $this->validate($request, [
+                'frequency' => 'required|string|in:day,week,month,year',
+                'date'      => 'required_if:frequency,day|date',
+                'week'      => 'required_if:frequency,week|numeric',
+                'month'     => 'required_if:frequency,month|numeric',
+                'year'      => 'required_if:frequency,month,year|numeric',
+            ]);
+            list($offset, $limit) = calculatePagination($request);
+
+            $time_frame = $time_frame->makeTimeFrame($request);
+            $expenses_response = $this->entryRepo->setPartner($request->partner)
+                ->setOffset($offset)
+                ->setLimit($limit)
+                ->setStartDate($time_frame->start)
+                ->setEndDate($time_frame->end)
+                ->getAllExpensesBetween();
+
+            $final_incomes = [];
+            $expenses_formatted = [];
+
+            $manager = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+            foreach ($expenses_response['expenses'] as $expense) {
+                $resource = new Item($expense, new ExpenseTransformer());
+                $expense_formatted = $manager->createData($resource)->toArray()['data'];
+                $expense_create_date = Carbon::parse($expense_formatted['created_at'])->format('Y-m-d');
+                if (!isset($final_incomes[$expense_create_date])) $final_incomes[$expense_create_date] = [];
+                array_push($final_incomes[$expense_create_date], $expense_formatted);
+            }
+
+            foreach ($final_incomes as $key => $value) {
+                if (count($value) > 0) {
+                    $expense_list = [
+                        'date' => $key, 'expenses' => $value
+                    ];
+                    array_push($expenses_formatted, $expense_list);
+                }
+            }
+
+            return api_response($request, null, 200, [
+                "total_expense" => $expenses_response['total_expense'],
+                "total_due" => $expenses_response['total_due'],
+                'expenses' => $expenses_formatted
+            ]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        }  catch (ExpenseTrackingServerError $e) {
+            $message = $e->getMessage();
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function store(Request $request)
+    {
+        try {
+            $this->validate($request, ['amount' => 'required|numeric', 'created_at' => 'required', 'head_id' => 'required']);
+            $input = $request->only(['amount', 'created_at', 'head_id', 'note']);
+            $input['amount_cleared'] = $request->input('amount_cleared') ?
+                $request->input('amount_cleared') : $request->input('amount');
+
+            $expense = $this->entryRepo->setPartner($request->partner)->storeEntry(EntryType::getRoutable(EntryType::EXPENSE), $input);
+            $manager = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+            $resource = new Item($expense, new ExpenseTransformer());
+            $expense_formatted = $manager->createData($resource)->toArray()['data'];
+
+            return api_response($request, null, 200, ['expense' => $expense_formatted]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors());
+            return api_response($request, $message, 400, ['message' => $e->getMessage()]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param $partner
+     * @param $expense_id
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function show($partner, $expense_id, Request $request)
+    {
+        try {
+            $expense = $this->entryRepo->setPartner($request->partner)->showEntry(EntryType::getRoutable(EntryType::EXPENSE), $expense_id);
+            $manager = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+            $resource = new Item($expense, new ExpenseTransformer());
+            $expense_formatted = $manager->createData($resource)->toArray()['data'];
+
+            return api_response($request, $expense, 200, ["expense" => $expense_formatted]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 }

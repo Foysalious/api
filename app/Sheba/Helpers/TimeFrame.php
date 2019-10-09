@@ -1,6 +1,7 @@
 <?php namespace Sheba\Helpers;
 
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class TimeFrame
 {
@@ -138,5 +139,33 @@ class TimeFrame
     public function hasDateBetween(Carbon $date)
     {
         return $date->between($this->start, $this->end);
+    }
+
+    /**
+     * @param Request $request
+     * @return TimeFrame
+     */
+    public function makeTimeFrame(Request $request)
+    {
+        $time_frame = null;
+        switch ($request->frequency) {
+            case "day":
+                $date = Carbon::parse($request->date);
+                $time_frame = $this->forADay($date);
+                break;
+            case "week":
+                $time_frame = $this->forSomeWeekFromNow($request->week);
+                break;
+            case "month":
+                $time_frame = $this->forAMonth($request->month, $request->year);
+                break;
+            case "year":
+                $time_frame = $this->forAYear($request->year);
+                break;
+            default:
+                echo "Invalid time frame";
+        }
+
+        return $time_frame;
     }
 }
