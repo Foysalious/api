@@ -5,6 +5,7 @@ use App\Models\Profile;
 use App\Repositories\ProfileRepository;
 use App\Transformers\CustomSerializer;
 use App\Transformers\PayableTransformer;
+use App\Transformers\ReceivableTransformer;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -129,7 +130,7 @@ class IncomeExpenseController extends Controller
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
             foreach ($receivables_response['receivables'] as $receivables) {
-                $resource = new Item($receivables, new PayableTransformer());
+                $resource = new Item($receivables, new ReceivableTransformer());
                 $payable_formatted = $manager->createData($resource)->toArray()['data'];
                 $payable_formatted['name'] = empty($profiles) ? null : $profiles[$payable_formatted['profile_id']];
                 $receivables_create_date = Carbon::parse($payable_formatted['created_at'])->format('Y-m-d');
