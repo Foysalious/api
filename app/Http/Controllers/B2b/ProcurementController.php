@@ -150,6 +150,42 @@ class ProcurementController extends Controller
         }
     }
 
+    public function updateGeneral(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'number_of_participants' => 'required|numeric',
+                'last_date_of_submission' => 'required|date_format:Y-m-d',
+                'procurement_start_date' => 'required|date_format:Y-m-d',
+                'payment_options' => 'required|string'
+            ]);
+
+            $procurement = Procurement::find($request->procurement);
+
+            if (is_null($procurement)) {
+                return api_response($request, null, 404, ["message" => "Not found."]);
+            } else {
+                $procurement->number_of_participants = $request->number_of_participants;
+                $procurement->last_date_of_submission = $request->last_date_of_submission;
+                $procurement->procurement_start_date = $request->procurement_start_date;
+                $procurement->payment_options = $request->payment_options;
+
+                $procurement->save();
+                return api_response($request, null,200, ["message" => "Successful"]);
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            dd($e->getMessage());
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     public function sendInvitation($procurement, Request $request, Sms $sms, ErrorLog $errorLog)
     {
         try {
