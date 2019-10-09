@@ -211,11 +211,15 @@ class Creator
     {
         $this->procurementItemFieldData = [];
         foreach ($fields as $field) {
+            $is_required = isset($field->is_required) ? $field->is_required : 1;
+            $options = isset($field->options) ? $field->options : [];
             array_push($this->procurementItemFieldData, [
                 'title' => $field->title,
+                'short_description' => isset($field->short_description) ? $field->short_description : '',
                 'input_type' => $field->type,
                 'result' => $field->result,
                 'procurement_item_id' => $procurement_item->id,
+                'variables' => json_encode(['is_required' => $is_required, 'options' => $options])
             ]);
         }
     }
