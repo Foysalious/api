@@ -13,6 +13,11 @@ class ExpenseIncome
 {
     private $partner, $timeFrame, $frame, $request;
 
+    public function __construct(TimeFrame $timeFrame)
+    {
+        $this->timeFrame = $timeFrame;
+    }
+
     /**
      * @param mixed $request
      * @return ExpenseIncome
@@ -41,11 +46,6 @@ class ExpenseIncome
     {
         $this->frame = $frame;
         return $this;
-    }
-
-    public function __construct(TimeFrame $timeFrame)
-    {
-        $this->timeFrame = $timeFrame;
     }
 
     public function dashboard()

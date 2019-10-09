@@ -119,7 +119,9 @@ class ProcurementController extends Controller
         try {
             $procurement = Procurement::find($request->procurement);
 
-            if ($procurement) {
+            if (is_null($procurement)) {
+                return api_response($request, null, 404, ["message" => "Not found."]);
+            } else {
                 $price_quotation = $procurement->items->where('type', 'price_quotation')->first();
                 $technical_evaluation = $procurement->items->where('type', 'technical_evaluation')->first();
                 $company_evaluation = $procurement->items->where('type', 'company_evaluation')->first();
@@ -141,10 +143,44 @@ class ProcurementController extends Controller
                     'company_evaluation' => $company_evaluation ? $company_evaluation->fields ? $company_evaluation->fields->toArray() : null : null,
                 ];
                 return api_response($request, $procurement_details, 200, ['procurements' => $procurement_details]);
-            } else {
-                return api_response($request, 404, ['message' => 'Not Found']);
             }
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function updateGeneral(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'number_of_participants' => 'required|numeric',
+                'last_date_of_submission' => 'required|date_format:Y-m-d',
+                'procurement_start_date' => 'date_format:Y-m-d',
+                'payment_options' => 'string'
+            ]);
+
+            $procurement = Procurement::find($request->procurement);
+
+            if (is_null($procurement)) {
+                return api_response($request, null, 404, ["message" => "Not found."]);
+            } else {
+                $procurement->number_of_participants = $request->number_of_participants;
+                $procurement->last_date_of_submission = $request->last_date_of_submission;
+                if ($request->procurement_start_date) $procurement->procurement_start_date = $request->procurement_start_date;
+                if ($request->payment_options) $procurement->payment_options = $request->payment_options;
+
+                $procurement->save();
+                return api_response($request, null,200, ["message" => "Successful"]);
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            dd($e->getMessage());
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

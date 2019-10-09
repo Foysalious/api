@@ -70,7 +70,6 @@ class EntryRepository extends BaseRepository
         return $result['data'];
     }
 
-
     /**
      * @param $for
      * @param $data
@@ -145,5 +144,24 @@ class EntryRepository extends BaseRepository
     public function getAllPayables()
     {
         return $this->client->get('accounts/' . $this->accountId . '/payables' . '?limit=' . $this->limit . '&offset=' . $this->offset);
+    }
+
+    /**
+     * @return mixed
+     * @throws ExpenseTrackingServerError
+     */
+    public function getAllReceivables()
+    {
+        return $this->client->get('accounts/' . $this->accountId . '/receivables' . '?limit=' . $this->limit . '&offset=' . $this->offset);
+    }
+
+    /**
+     * @param int $for
+     * @return mixed
+     * @throws ExpenseTrackingServerError
+     */
+    public function getHeads($for)
+    {
+        return $this->client->get('accounts/' . $this->accountId . '/heads' . '?for=' . $for);
     }
 }
