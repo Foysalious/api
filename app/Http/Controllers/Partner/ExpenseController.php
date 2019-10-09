@@ -1,6 +1,8 @@
 <?php namespace App\Http\Controllers\Partner;
 
 use App\Http\Controllers\Controller;
+use App\Models\PosCustomer;
+use Illuminate\Support\Facades\DB;
 use App\Transformers\CustomSerializer;
 use App\Transformers\ExpenseTransformer;
 use Carbon\Carbon;
@@ -100,7 +102,8 @@ class ExpenseController extends Controller
             $input = $request->only(['amount', 'created_at', 'head_id', 'note']);
             $input['amount_cleared'] = $request->input('amount_cleared') ?
                 $request->input('amount_cleared') : $request->input('amount');
-
+            $customer_id = $request->input('customer_id');
+            if ($customer_id) $input['profile_id'] = PosCustomer::find($customer_id)->profile_id;
             $expense = $this->entryRepo->setPartner($request->partner)->storeEntry(EntryType::getRoutable(EntryType::EXPENSE), $input);
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
@@ -151,6 +154,8 @@ class ExpenseController extends Controller
             $input = $request->only(['amount', 'created_at', 'head_id', 'note']);
             $input['amount_cleared'] = $request->input('amount_cleared') ?
                 $request->input('amount_cleared') : $request->input('amount');
+            $customer_id = $request->input('customer_id');
+            if ($customer_id) $input['profile_id'] = PosCustomer::find($customer_id)->profile_id;
             $expense = $this->entryRepo->setPartner($request->partner)->updateEntry(EntryType::getRoutable(EntryType::EXPENSE), $input, $expense_id);
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
