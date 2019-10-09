@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
+use Sheba\Analysis\ExpenseIncome\ExpenseIncome;
 use Throwable;
 use Illuminate\Http\JsonResponse;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
@@ -29,13 +30,13 @@ class IncomeExpenseController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function index(Request $request)
+    public function index(Request $request,ExpenseIncome $expenseIncome)
     {
         try {
             $this->validate($request, [
                 'frequency' => 'required|in:week,month,year,day'
             ]);
-            $expenses = $this->entryRepo->setPartner($request->partner)->getAllExpenses();
+            $expenses = $expenseIncome->setPartner($request->partner)->setRequest($request)->dashboard();
             return api_response($request, null, 200, ['expenses' => $expenses]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
