@@ -28,9 +28,10 @@ class IncomeExpenseController extends Controller
 
     /**
      * @param Request $request
+     * @param ExpenseIncome $expenseIncome
      * @return JsonResponse
      */
-    public function index(Request $request,ExpenseIncome $expenseIncome)
+    public function index(Request $request, ExpenseIncome $expenseIncome)
     {
         try {
             $this->validate($request, [
@@ -52,7 +53,6 @@ class IncomeExpenseController extends Controller
 
     /**
      * @param Request $request
-     * @param ProfileRepository $profile_repo
      * @return JsonResponse
      */
     public function payable(Request $request)
@@ -60,10 +60,7 @@ class IncomeExpenseController extends Controller
         try {
             $this->validate($request, []);
             list($offset, $limit) = calculatePagination($request);
-            $payables_response = $this->entryRepo->setPartner($request->partner)
-                ->setOffset($offset)
-                ->setLimit($limit)
-                ->getAllPayables();
+            $payables_response = $this->entryRepo->setPartner($request->partner)->setOffset($offset)->setLimit($limit)->getAllPayables();
 
             $profiles_id = array_unique(array_column(array_column($payables_response['payables'], 'party'), 'profile_id'));
             $profiles = Profile::whereIn('id', $profiles_id)->pluck('name', 'id')->toArray();
@@ -92,8 +89,7 @@ class IncomeExpenseController extends Controller
             }
 
             return api_response($request, null, 200, [
-                "total_payable" => $payables_response['total_payables'],
-                'payables' => $payables_formatted
+                "total_payable" => $payables_response['total_payables'], 'payables' => $payables_formatted
             ]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -117,17 +113,51 @@ class IncomeExpenseController extends Controller
     public function receivable(Request $request)
     {
         try {
-            $this->validate($request, [
-                'frequency' => 'required|in:week,month,year,day'
+            $this->validate($request, []);
+            list($offset, $limit) = calculatePagination($request);
+            $receivables_response = $this->entryRepo->setPartner($request->partner)
+                ->setOffset($offset)
+                ->setLimit($limit)
+                ->getAllReceivables();
+
+            $profiles_id = array_unique(array_column(array_column($receivables_response['receivables'], 'party'), 'profile_id'));
+            $profiles = Profile::whereIn('id', $profiles_id)->pluck('name', 'id')->toArray();
+
+            $final_receivables = [];
+            $receivables_formatted = [];
+
+            $manager = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+            foreach ($receivables_response['receivables'] as $receivables) {
+                $resource = new Item($receivables, new PayableTransformer());
+                $payable_formatted = $manager->createData($resource)->toArray()['data'];
+                $payable_formatted['name'] = empty($profiles) ? null : $profiles[$payable_formatted['profile_id']];
+                $receivables_create_date = Carbon::parse($payable_formatted['created_at'])->format('Y-m-d');
+                if (!isset($final_receivables[$receivables_create_date])) $final_receivables[$receivables_create_date] = [];
+                array_push($final_receivables[$receivables_create_date], $payable_formatted);
+            }
+
+            foreach ($final_receivables as $key => $value) {
+                if (count($value) > 0) {
+                    $receivable_list = [
+                        'date' => $key, 'receivables' => $value
+                    ];
+                    array_push($receivables_formatted, $receivable_list);
+                }
+            }
+
+            return api_response($request, null, 200, [
+                "total_receivable" => $receivables_response['total_receivables'], 'receivables' => $receivables_formatted
             ]);
-            $expenses = $this->entryRepo->setPartner($request->partner)->getAllExpenses();
-            return api_response($request, null, 200, ['expenses' => $expenses]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
+        } catch (ExpenseTrackingServerError $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
