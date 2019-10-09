@@ -147,4 +147,13 @@ class EntryRepository extends BaseRepository
     {
         return $this->client->get('accounts/' . $this->accountId . '/payables' . '?limit=' . $this->limit . '&offset=' . $this->offset);
     }
+
+    /**
+     * @return mixed
+     * @throws ExpenseTrackingServerError
+     */
+    public function getAllReceivables()
+    {
+        return $this->client->get('accounts/' . $this->accountId . '/receivables' . '?limit=' . $this->limit . '&offset=' . $this->offset);
+    }
 }
