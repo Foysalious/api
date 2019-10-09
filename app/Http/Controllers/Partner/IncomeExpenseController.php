@@ -12,6 +12,8 @@ use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Analysis\ExpenseIncome\ExpenseIncome;
+use Sheba\ModificationFields;
+use Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
 use Throwable;
 use Illuminate\Http\JsonResponse;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
@@ -19,6 +21,8 @@ use Sheba\ExpenseTracker\Repository\EntryRepository;
 
 class IncomeExpenseController extends Controller
 {
+    use ModificationFields;
+
     /** @var EntryRepository */
     private $entryRepo;
 
@@ -30,15 +34,23 @@ class IncomeExpenseController extends Controller
     /**
      * @param Request $request
      * @param ExpenseIncome $expenseIncome
+     * @param PartnerRepositoryInterface $partner_repo
      * @return JsonResponse
      */
-    public function index(Request $request, ExpenseIncome $expenseIncome)
+    public function index(Request $request, ExpenseIncome $expenseIncome, PartnerRepositoryInterface $partner_repo)
     {
         try {
-            $this->validate($request, [
-                'frequency' => 'required|in:week,month,year,day'
-            ]);
+            if (!$request->partner->expense_account_id) {
+                $account = $this->entryRepo->createExpenseUser($request->partner);
+                $this->setModifier($request->partner);
+                $data = ['expense_account_id' => $account['id']];
+                $partner_repo->update($request->partner, $data);
+            }
+
+
+            $this->validate($request, ['frequency' => 'required|in:week,month,year,day']);
             $expenses = $expenseIncome->setPartner($request->partner)->setRequest($request)->dashboard();
+
             return api_response($request, null, 200, ['expenses' => $expenses]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -162,6 +174,10 @@ class IncomeExpenseController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getHeads(Request $request)
     {
         try {

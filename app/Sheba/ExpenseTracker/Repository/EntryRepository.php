@@ -1,5 +1,6 @@
 <?php namespace Sheba\ExpenseTracker\Repository;
 
+use App\Models\Partner;
 use Carbon\Carbon;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\RequestIdentification;
@@ -163,5 +164,17 @@ class EntryRepository extends BaseRepository
     public function getHeads($for)
     {
         return $this->client->get('accounts/' . $this->accountId . '/heads' . '?for=' . $for);
+    }
+
+    /**
+     * @param Partner $partner
+     * @return mixed
+     * @throws ExpenseTrackingServerError
+     */
+    public function createExpenseUser(Partner $partner)
+    {
+        $data['partner_id'] = $partner->id;
+        $result = $this->client->post('accounts', $data);
+        return $result['account'];
     }
 }
