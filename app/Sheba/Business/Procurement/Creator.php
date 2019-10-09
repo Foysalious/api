@@ -218,7 +218,7 @@ class Creator
                 'title' => $field->title,
                 'short_description' => isset($field->short_description) ? $field->short_description : '',
                 'input_type' => $field->type,
-                'result' => $field->result,
+                'result' => isset($field->result) ? $field->result : null,
                 'procurement_item_id' => $procurement_item->id,
                 'variables' => json_encode(['is_required' => $is_required, 'options' => $options, 'unit' => $unit])
             ]);
