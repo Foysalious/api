@@ -116,10 +116,7 @@ class IncomeExpenseController extends Controller
         try {
             $this->validate($request, []);
             list($offset, $limit) = calculatePagination($request);
-            $receivables_response = $this->entryRepo->setPartner($request->partner)
-                ->setOffset($offset)
-                ->setLimit($limit)
-                ->getAllReceivables();
+            $receivables_response = $this->entryRepo->setPartner($request->partner)->setOffset($offset)->setLimit($limit)->getAllReceivables();
 
             $profiles_id = array_unique(array_column(array_column($receivables_response['receivables'], 'party'), 'profile_id'));
             $profiles = Profile::whereIn('id', $profiles_id)->pluck('name', 'id')->toArray();
@@ -150,6 +147,27 @@ class IncomeExpenseController extends Controller
             return api_response($request, null, 200, [
                 "total_receivable" => $receivables_response['total_receivables'], 'receivables' => $receivables_formatted
             ]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (ExpenseTrackingServerError $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getHeads(Request $request)
+    {
+        try {
+            $this->validate($request, ['for' => 'required|in:income,expense']);
+            $heads_response = $this->entryRepo->setPartner($request->partner)->getHeads($request->for);
+            return api_response($request, null, 200, ["heads" => $heads_response['heads']]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
