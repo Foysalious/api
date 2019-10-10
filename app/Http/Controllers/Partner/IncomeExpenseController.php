@@ -135,7 +135,6 @@ class IncomeExpenseController extends Controller
         }
     }
 
-
     /**
      * @param Request $request
      * @param $partner_id

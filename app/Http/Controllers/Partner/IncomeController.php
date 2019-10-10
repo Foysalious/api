@@ -64,9 +64,7 @@ class IncomeController extends Controller
 
             foreach ($final_incomes as $key => $value) {
                 if (count($value) > 0) {
-                    $income_list = [
-                        'date' => $key, 'incomes' => $value
-                    ];
+                    $income_list = ['date' => $key, 'incomes' => $value];
                     array_push($incomes_formatted, $income_list);
                 }
             }
@@ -74,6 +72,10 @@ class IncomeController extends Controller
             return api_response($request, null, 200, [
                 "total_income" => $incomes_response['total_income'],
                 "total_due" => $incomes_response['total_due'],
+                'time_frame' => [
+                    'start' => $time_frame->start->toDateString(),
+                    'end' => $time_frame->end->toDateString()
+                ],
                 'incomes' => $incomes_formatted
             ]);
         } catch (ValidationException $e) {

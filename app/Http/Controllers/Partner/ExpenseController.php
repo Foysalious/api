@@ -77,6 +77,10 @@ class ExpenseController extends Controller
             return api_response($request, null, 200, [
                 "total_expense" => $expenses_response['total_expense'],
                 "total_due" => $expenses_response['total_due'],
+                'time_frame' => [
+                    'start' => $time_frame->start->toDateString(),
+                    'end' => $time_frame->end->toDateString()
+                ],
                 'expenses' => $expenses_formatted
             ]);
         } catch (ValidationException $e) {
