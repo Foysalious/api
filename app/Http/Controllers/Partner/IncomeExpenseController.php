@@ -14,6 +14,7 @@ use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Analysis\ExpenseIncome\ExpenseIncome;
+use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
 use Throwable;
@@ -35,11 +36,10 @@ class IncomeExpenseController extends Controller
 
     /**
      * @param Request $request
-     * @param ExpenseIncome $expenseIncome
      * @param PartnerRepositoryInterface $partner_repo
      * @return JsonResponse
      */
-    public function index(Request $request, ExpenseIncome $expenseIncome, PartnerRepositoryInterface $partner_repo)
+    public function index(Request $request, PartnerRepositoryInterface $partner_repo)
     {
         try {
             if (!$request->partner->expense_account_id) {
@@ -49,9 +49,10 @@ class IncomeExpenseController extends Controller
                 $partner_repo->update($request->partner, $data);
             }
 
-
             $this->validate($request, ['frequency' => 'required|in:week,month,year,day']);
-            $expenses = $expenseIncome->setPartner($request->partner)->setRequest($request)->dashboard();
+
+            $time_frame = (new TimeFrame())->fromFrequencyRequest($request);
+            $expenses = $this->entryRepo->setPartner($request->partner)->statsBetween($time_frame);
 
             return api_response($request, null, 200, ['expenses' => $expenses]);
         } catch (ValidationException $e) {

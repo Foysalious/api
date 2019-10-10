@@ -3,6 +3,7 @@
 use App\Models\Partner;
 use Carbon\Carbon;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
+use Sheba\Helpers\TimeFrame;
 use Sheba\RequestIdentification;
 
 class EntryRepository extends BaseRepository
@@ -209,5 +210,17 @@ class EntryRepository extends BaseRepository
         $data = ['account_holder_type' => get_class($partner), 'account_holder_id' => $partner->id];
         $result = $this->client->post('accounts', $data);
         return $result['account'];
+    }
+
+    /**
+     * @param TimeFrame $time_frame
+     * @return mixed
+     * @throws ExpenseTrackingServerError
+     */
+    public function statsBetween(TimeFrame $time_frame)
+    {
+        $start = $time_frame->start->toDateString();
+        $end = $time_frame->end->toDateString();
+        return $this->client->get("accounts/$this->accountId/stats?start_date=$start&end_date=$end");
     }
 }

@@ -145,7 +145,7 @@ class TimeFrame
      * @param Request $request
      * @return TimeFrame
      */
-    public function makeTimeFrame(Request $request)
+    public function fromFrequencyRequest(Request $request)
     {
         $time_frame = null;
         switch ($request->frequency) {
