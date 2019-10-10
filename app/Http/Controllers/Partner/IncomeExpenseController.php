@@ -77,7 +77,13 @@ class IncomeExpenseController extends Controller
         try {
             $this->validate($request, []);
             list($offset, $limit) = calculatePagination($request);
-            $payables_response = $this->entryRepo->setPartner($request->partner)->setOffset($offset)->setLimit($limit)->getAllPayables();
+            $payables_generator = $this->entryRepo->setPartner($request->partner)->setOffset($offset)->setLimit($limit);
+            if ($request->has('customer_id') && $request->customer_id) {
+                $profile_id = PosCustomer::find($request->customer_id)->profile_id;
+                $payables_response = $payables_generator->getAllPayablesByCustomer((int)$profile_id);
+            } else {
+                $payables_response = $payables_generator->getAllPayables();
+            }
 
             $profiles_id = array_unique(array_column(array_column($payables_response['payables'], 'party'), 'profile_id'));
             $profiles = Profile::whereIn('id', $profiles_id)->pluck('name', 'id')->toArray();
@@ -88,6 +94,7 @@ class IncomeExpenseController extends Controller
 
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
+
             foreach ($payables_response['payables'] as $payables) {
                 $resource = new Item($payables, new PayableTransformer());
                 $payable_formatted = $manager->createData($resource)->toArray()['data'];
