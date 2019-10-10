@@ -171,6 +171,16 @@ class EntryRepository extends BaseRepository
     }
 
     /**
+     * @param $profile_id
+     * @return mixed
+     * @throws ExpenseTrackingServerError
+     */
+    public function getTotalPayableAmountByCustomer($profile_id)
+    {
+        return $this->client->get('accounts/' . $this->accountId . '/payable-amount?profile_id=' . $profile_id);
+    }
+
+    /**
      * @return mixed
      * @throws ExpenseTrackingServerError
      */
