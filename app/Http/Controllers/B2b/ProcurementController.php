@@ -57,6 +57,7 @@ class ProcurementController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -171,7 +172,7 @@ class ProcurementController extends Controller
                 if ($request->payment_options) $procurement->payment_options = $request->payment_options;
 
                 $procurement->save();
-                return api_response($request, null,200, ["message" => "Successful"]);
+                return api_response($request, null, 200, ["message" => "Successful"]);
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());

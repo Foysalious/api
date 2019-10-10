@@ -1,6 +1,8 @@
 <?php namespace App\Http\Controllers\Partner;
 
 use App\Http\Controllers\Controller;
+use App\Models\PosCustomer;
+use Illuminate\Support\Facades\DB;
 use App\Transformers\CustomSerializer;
 use App\Transformers\ExpenseTransformer;
 use Carbon\Carbon;
@@ -35,10 +37,10 @@ class ExpenseController extends Controller
         try {
             $this->validate($request, [
                 'frequency' => 'required|string|in:day,week,month,year',
-                'date'      => 'required_if:frequency,day|date',
-                'week'      => 'required_if:frequency,week|numeric',
-                'month'     => 'required_if:frequency,month|numeric',
-                'year'      => 'required_if:frequency,month,year|numeric',
+                'date' => 'required_if:frequency,day|date',
+                'week' => 'required_if:frequency,week|numeric',
+                'month' => 'required_if:frequency,month|numeric',
+                'year' => 'required_if:frequency,month,year|numeric',
             ]);
             list($offset, $limit) = calculatePagination($request);
 
@@ -80,7 +82,7 @@ class ExpenseController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        }  catch (ExpenseTrackingServerError $e) {
+        } catch (ExpenseTrackingServerError $e) {
             $message = $e->getMessage();
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
@@ -100,7 +102,8 @@ class ExpenseController extends Controller
             $input = $request->only(['amount', 'created_at', 'head_id', 'note']);
             $input['amount_cleared'] = $request->input('amount_cleared') ?
                 $request->input('amount_cleared') : $request->input('amount');
-
+            $customer_id = $request->input('customer_id');
+            if ($customer_id) $input['profile_id'] = PosCustomer::find($customer_id)->profile_id;
             $expense = $this->entryRepo->setPartner($request->partner)->storeEntry(EntryType::getRoutable(EntryType::EXPENSE), $input);
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
@@ -133,6 +136,33 @@ class ExpenseController extends Controller
             $expense_formatted = $manager->createData($resource)->toArray()['data'];
 
             return api_response($request, $expense, 200, ["expense" => $expense_formatted]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @param $partner
+     * @param $expense_id
+     * @return JsonResponse
+     */
+    public function update(Request $request, $partner, $expense_id)
+    {
+        try {
+            $input = $request->only(['amount', 'created_at', 'head_id', 'note']);
+            $input['amount_cleared'] = $request->input('amount_cleared') ?
+                $request->input('amount_cleared') : $request->input('amount');
+            $customer_id = $request->input('customer_id');
+            if ($customer_id) $input['profile_id'] = PosCustomer::find($customer_id)->profile_id;
+            $expense = $this->entryRepo->setPartner($request->partner)->updateEntry(EntryType::getRoutable(EntryType::EXPENSE), $input, $expense_id);
+            $manager = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+            $resource = new Item($expense, new ExpenseTransformer());
+            $expense_formatted = $manager->createData($resource)->toArray()['data'];
+
+            return api_response($request, null, 200, ['expense' => $expense_formatted]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

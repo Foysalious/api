@@ -1,5 +1,6 @@
 <?php namespace Sheba\ExpenseTracker\Repository;
 
+use App\Models\Partner;
 use Carbon\Carbon;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\RequestIdentification;
@@ -70,7 +71,6 @@ class EntryRepository extends BaseRepository
         return $result['data'];
     }
 
-
     /**
      * @param $for
      * @param $data
@@ -80,7 +80,6 @@ class EntryRepository extends BaseRepository
      */
     public function updateEntry($for, $data, $entryId)
     {
-        $data['created_at'] = Carbon::parse($data['created_at'])->format('Y-m-d H:s:i');
         $request_identification = (new RequestIdentification())->get();
         $data['created_from'] = json_encode($request_identification);
         $result = $this->client->post('accounts/' . $this->accountId . '/' . $for . '/' . $entryId, $data);
@@ -155,5 +154,27 @@ class EntryRepository extends BaseRepository
     public function getAllReceivables()
     {
         return $this->client->get('accounts/' . $this->accountId . '/receivables' . '?limit=' . $this->limit . '&offset=' . $this->offset);
+    }
+
+    /**
+     * @param int $for
+     * @return mixed
+     * @throws ExpenseTrackingServerError
+     */
+    public function getHeads($for)
+    {
+        return $this->client->get('accounts/' . $this->accountId . '/heads' . '?for=' . $for);
+    }
+
+    /**
+     * @param Partner $partner
+     * @return mixed
+     * @throws ExpenseTrackingServerError
+     */
+    public function createExpenseUser(Partner $partner)
+    {
+        $data['partner_id'] = $partner->id;
+        $result = $this->client->post('accounts', $data);
+        return $result['account'];
     }
 }

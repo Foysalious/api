@@ -12,6 +12,8 @@ use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Analysis\ExpenseIncome\ExpenseIncome;
+use Sheba\ModificationFields;
+use Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
 use Throwable;
 use Illuminate\Http\JsonResponse;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
@@ -19,6 +21,8 @@ use Sheba\ExpenseTracker\Repository\EntryRepository;
 
 class IncomeExpenseController extends Controller
 {
+    use ModificationFields;
+
     /** @var EntryRepository */
     private $entryRepo;
 
@@ -30,15 +34,23 @@ class IncomeExpenseController extends Controller
     /**
      * @param Request $request
      * @param ExpenseIncome $expenseIncome
+     * @param PartnerRepositoryInterface $partner_repo
      * @return JsonResponse
      */
-    public function index(Request $request, ExpenseIncome $expenseIncome)
+    public function index(Request $request, ExpenseIncome $expenseIncome, PartnerRepositoryInterface $partner_repo)
     {
         try {
-            $this->validate($request, [
-                'frequency' => 'required|in:week,month,year,day'
-            ]);
+            if (!$request->partner->expense_account_id) {
+                $account = $this->entryRepo->createExpenseUser($request->partner);
+                $this->setModifier($request->partner);
+                $data = ['expense_account_id' => $account['id']];
+                $partner_repo->update($request->partner, $data);
+            }
+
+
+            $this->validate($request, ['frequency' => 'required|in:week,month,year,day']);
             $expenses = $expenseIncome->setPartner($request->partner)->setRequest($request)->dashboard();
+
             return api_response($request, null, 200, ['expenses' => $expenses]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -116,10 +128,7 @@ class IncomeExpenseController extends Controller
         try {
             $this->validate($request, []);
             list($offset, $limit) = calculatePagination($request);
-            $receivables_response = $this->entryRepo->setPartner($request->partner)
-                ->setOffset($offset)
-                ->setLimit($limit)
-                ->getAllReceivables();
+            $receivables_response = $this->entryRepo->setPartner($request->partner)->setOffset($offset)->setLimit($limit)->getAllReceivables();
 
             $profiles_id = array_unique(array_column(array_column($receivables_response['receivables'], 'party'), 'profile_id'));
             $profiles = Profile::whereIn('id', $profiles_id)->pluck('name', 'id')->toArray();
@@ -150,6 +159,31 @@ class IncomeExpenseController extends Controller
             return api_response($request, null, 200, [
                 "total_receivable" => $receivables_response['total_receivables'], 'receivables' => $receivables_formatted
             ]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (ExpenseTrackingServerError $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getHeads(Request $request)
+    {
+        try {
+            $this->validate($request, ['for' => 'required|in:income,expense']);
+            $heads_response = $this->entryRepo->setPartner($request->partner)->getHeads($request->for);
+            return api_response($request, null, 200, ["heads" => $heads_response['heads']]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');

@@ -70,6 +70,10 @@ class ExpenseTrackerClient
         }
     }
 
+    /**
+     * @param $uri
+     * @return string
+     */
     private function makeUrl($uri)
     {
         return $this->baseUrl . "/" . $uri;
