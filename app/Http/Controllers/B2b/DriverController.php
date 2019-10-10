@@ -752,4 +752,19 @@ class DriverController extends Controller
         $old_image = substr($filename, strlen(config('sheba.s3_url')));
         $this->fileRepository->deleteFileFromCDN($old_image);
     }
+
+    public function updatePicture($member, $driver, Request $request, \App\Repositories\ProfileRepository $profileRepository)
+    {
+        try {
+            $driver = Driver::find($driver);
+            $profile = $driver->profile;
+            $filename = Carbon::now()->timestamp . '_profile_image_' . $profile->id . '.jpg';
+            $profile->pro_pic = $this->fileRepository->uploadToCDN($filename, $request->file('image'), 'images/profiles/');
+            $profile->update();
+            return api_response($request, $profile, 200);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }

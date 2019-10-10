@@ -78,6 +78,8 @@ class CustomerController extends Controller
             $data['total_purchase_amount'] = $total_purchase_amount;
             $data['total_due_amount'] = $total_due_amount;
             $data['total_used_promo'] = 0.00;
+            $data['total_receivable'] = 500.00;
+            $data['total_payable'] = 100.00;
             $data['is_customer_editable'] = $customer->isEditable();
             $data['note'] = PartnerPosCustomer::where('customer_id', $customer->id)->where('partner_id', $partner)->first()->note;
 
@@ -102,7 +104,7 @@ class CustomerController extends Controller
             if ($error = $creator->hasError())
                 return api_response($request, null, 400, ['message' => $error['msg']]);
 
-            $customer = $creator->create();
+            $customer = $creator->setPartner($request->partner)->create();
             return api_response($request, $customer, 200, ['customer' => $customer->details()]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
