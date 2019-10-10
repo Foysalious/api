@@ -102,7 +102,7 @@ class CustomerController extends Controller
             if ($error = $creator->hasError())
                 return api_response($request, null, 400, ['message' => $error['msg']]);
 
-            $customer = $creator->create();
+            $customer = $creator->setPartner($request->partner)->create();
             return api_response($request, $customer, 200, ['customer' => $customer->details()]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());

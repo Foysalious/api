@@ -12,6 +12,7 @@ use Sheba\Pos\Repositories\PartnerPosCustomerRepository;
 use Sheba\Pos\Repositories\PosCustomerRepository;
 use Sheba\Repositories\ProfileRepository;
 use Sheba\RequestIdentification;
+use Sheba\Reward\ActionRewardDispatcher;
 
 class Creator
 {
@@ -96,7 +97,11 @@ class Creator
         $this->data['partner_id'] = $this->partner ? $this->partner->id : $this->data['partner']->id;
         $this->data = array_except($this->data, ['mobile', 'name', 'email', 'address', 'profile_image', 'partner', 'manager_resource', 'profile_id']);
         $partner_pos_customer = $this->partnerPosCustomers->where('partner_id', $this->data['partner_id'])->where('customer_id', $customer->id)->first();
-        if (!$partner_pos_customer) $partner_pos_customer = $this->partnerPosCustomers->save($this->data + (new RequestIdentification())->get());
+        if (!$partner_pos_customer) {
+            $partner_pos_customer = $this->partnerPosCustomers->save($this->data + (new RequestIdentification())->get());
+            app()->make(ActionRewardDispatcher::class)->run('pos_customer_create', $this->partner, $this->partner, $partner_pos_customer);
+        }
+
         return $partner_pos_customer;
     }
 

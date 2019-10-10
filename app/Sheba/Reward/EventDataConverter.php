@@ -103,7 +103,46 @@ class EventDataConverter
                                 'class' => 'Sheba\Reward\Event\Partner\Action\PosInventoryCreate\Parameter\CreatedFrom'
                             ]
                         ]
-                    ]
+                    ],
+                    'pos_customer_create' => [
+                        'name' => 'Pos Customer Create',
+                        'event_class' => 'Sheba\Reward\Event\Partner\Action\PosCustomerCreate\Event',
+                        'rule_class' => 'Sheba\Reward\Event\Partner\Action\PosCustomerCreate\Rule',
+                        'parameters' => [
+                            'created_from' => [
+                                'type' => 'select',
+                                'possible_value' => indexedArrayToAssociative(config('sheba.portals'), config('sheba.portals')),
+                                'is_multi_selectable' => 1,
+                                'class' => 'Sheba\Reward\Event\Partner\Action\PosCustomerCreate\Parameter\CreatedFrom'
+                            ]
+                        ]
+                    ],
+                    'daily_usage' => [
+                        'name' => 'Daily Usage',
+                        'event_class' => 'Sheba\Reward\Event\Partner\Action\DailyUsage\Event',
+                        'rule_class' => 'Sheba\Reward\Event\Partner\Action\DailyUsage\Rule',
+                        'parameters' => [
+                            'created_from' => [
+                                'type' => 'select',
+                                'possible_value' => indexedArrayToAssociative(config('sheba.portals'), config('sheba.portals')),
+                                'is_multi_selectable' => 1,
+                                'class' => 'Sheba\Reward\Event\Partner\Action\PosDailyUsage\Parameter\CreatedFrom'
+                            ]
+                        ]
+                    ],
+                    'payment_link_usage' => [
+                        'name' => 'Payment Link Usage',
+                        'event_class' => 'Sheba\Reward\Event\Partner\Action\PaymentLinkUsage\Event',
+                        'rule_class' => 'Sheba\Reward\Event\Partner\Action\PaymentLinkUsage\Rule',
+                        'parameters' => [
+                            'created_from' => [
+                                'type' => 'select',
+                                'possible_value' => indexedArrayToAssociative(config('sheba.portals'), config('sheba.portals')),
+                                'is_multi_selectable' => 1,
+                                'class' => 'Sheba\Reward\Event\Partner\Action\PosDailyUsage\Parameter\CreatedFrom'
+                            ]
+                        ]
+                    ],
                 ],
                 'campaign' => [
                     'order_serve' => [
