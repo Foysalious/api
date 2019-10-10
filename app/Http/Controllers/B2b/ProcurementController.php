@@ -138,7 +138,7 @@ class ProcurementController extends Controller
                     'published_at' => $procurement->is_published ? Carbon::parse($procurement->published_at)->format('d/m/y') : 'n/a',
                     'end_date' => Carbon::parse($procurement->procurement_end_date)->format('d/m/y'),
                     'number_of_participants' => $procurement->number_of_participants,
-                    'last_date_of_submission' => Carbon::parse($procurement->last_date_of_submission)->format('d/m/y'),
+                    'last_date_of_submission' => Carbon::parse($procurement->last_date_of_submission)->format('Y-m-d'),
                     'payment_options' => $procurement->payment_options,
                     'created_at' => Carbon::parse($procurement->created_at)->format('d/m/y'),
                     'price_quotation' => $price_quotation ? $price_quotation->fields ? $price_quotation->fields->toArray() : null : null,
