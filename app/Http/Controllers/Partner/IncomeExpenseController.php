@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\Partner;
 
 use App\Http\Controllers\Controller;
+use App\Models\PosCustomer;
 use App\Models\Profile;
 use App\Repositories\ProfileRepository;
 use App\Transformers\CustomSerializer;
@@ -80,6 +81,7 @@ class IncomeExpenseController extends Controller
 
             $profiles_id = array_unique(array_column(array_column($payables_response['payables'], 'party'), 'profile_id'));
             $profiles = Profile::whereIn('id', $profiles_id)->pluck('name', 'id')->toArray();
+            $pos_customers = PosCustomer::whereIn('profile_id', $profiles_id)->pluck('id', 'profile_id')->toArray();
 
             $final_payables = [];
             $payables_formatted = [];
@@ -89,8 +91,11 @@ class IncomeExpenseController extends Controller
             foreach ($payables_response['payables'] as $payables) {
                 $resource = new Item($payables, new PayableTransformer());
                 $payable_formatted = $manager->createData($resource)->toArray()['data'];
+                $payable_formatted['customer_id'] = $pos_customers[$payable_formatted['profile_id']];
                 $payable_formatted['name'] = $profiles[$payable_formatted['profile_id']];
                 $payables_create_date = Carbon::parse($payable_formatted['created_at'])->format('Y-m-d');
+                unset($payable_formatted['profile_id']);
+
                 if (!isset($final_payables[$payables_create_date])) $final_payables[$payables_create_date] = [];
                 array_push($final_payables[$payables_create_date], $payable_formatted);
             }
