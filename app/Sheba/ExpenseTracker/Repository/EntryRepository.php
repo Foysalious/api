@@ -173,7 +173,7 @@ class EntryRepository extends BaseRepository
      */
     public function createExpenseUser(Partner $partner)
     {
-        $data['partner_id'] = $partner->id;
+        $data = ['account_holder_type' => get_class($partner), 'account_holder_id' => $partner->id];
         $result = $this->client->post('accounts', $data);
         return $result['account'];
     }
