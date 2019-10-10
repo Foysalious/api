@@ -160,9 +160,16 @@ class ExpenseController extends Controller
     public function update(Request $request, $partner, $expense_id)
     {
         try {
+            $this->validate($request, [
+                'amount_cleared' => 'sometimes|required|numeric',
+                'customer_id' => 'required_with:amount_cleared'
+            ]);
+
             $input = $request->only(['amount', 'created_at', 'head_id', 'note']);
             $input['amount_cleared'] = $request->input('amount_cleared') ?
                 $request->input('amount_cleared') : $request->input('amount');
+            $customer_id = $request->input('customer_id');
+            if ($customer_id) $input['profile_id'] = PosCustomer::find($customer_id)->profile_id;
             $customer_id = $request->input('customer_id');
             if ($customer_id) $input['profile_id'] = PosCustomer::find($customer_id)->profile_id;
             $expense = $this->entryRepo->setPartner($request->partner)->updateEntry(EntryType::getRoutable(EntryType::EXPENSE), $input, $expense_id);
@@ -172,6 +179,12 @@ class ExpenseController extends Controller
             $expense_formatted = $manager->createData($resource)->toArray()['data'];
 
             return api_response($request, null, 200, ['expense' => $expense_formatted]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
