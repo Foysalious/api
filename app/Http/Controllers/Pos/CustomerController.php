@@ -78,6 +78,8 @@ class CustomerController extends Controller
             $data['total_purchase_amount'] = $total_purchase_amount;
             $data['total_due_amount'] = $total_due_amount;
             $data['total_used_promo'] = 0.00;
+            $data['total_receivable'] = 500.00;
+            $data['total_payable'] = 100.00;
             $data['is_customer_editable'] = $customer->isEditable();
             $data['note'] = PartnerPosCustomer::where('customer_id', $customer->id)->where('partner_id', $partner)->first()->note;
 
