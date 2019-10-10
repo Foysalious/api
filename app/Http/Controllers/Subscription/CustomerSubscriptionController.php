@@ -40,9 +40,8 @@ class CustomerSubscriptionController extends Controller
             $partner_list = new SubscriptionPartnerList();
             $partner_list->setPartnerListRequest($partnerListRequest)->find($partner);
             $partner_list->filterPartnerByAvailability();
-            $partners = $partner_list->partners->filter(function ($partner) {
-                return $partner->id != config('sheba.sheba_help_desk_id');
-            });
+            $partner_list->removeShebaHelpDesk();
+            $partners = $partner_list->partners;
             if ($partners->count() > 0) {
                 $partner_list->addPricing();
                 $partner_list->addInfo();

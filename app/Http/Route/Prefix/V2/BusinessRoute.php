@@ -185,6 +185,7 @@ class BusinessRoute
                         $api->post('/experience-info', 'B2b\DriverController@updateDriverExperienceInfo');
                         $api->get('/documents', 'B2b\DriverController@getDriverDocuments');
                         $api->post('/documents', 'B2b\DriverController@updateDriverDocuments');
+                        $api->post('update-picture', 'B2b\DriverController@updatePicture');
                         $api->get('/recent-assignment', 'B2b\DriverController@getDriverRecentAssignment');
                     });
                 });

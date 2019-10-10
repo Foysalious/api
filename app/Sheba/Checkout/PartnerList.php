@@ -707,4 +707,12 @@ class PartnerList
         });
         $this->notFoundValues['availability'] = $this->getPartnerIds();
     }
+
+    public function removeShebaHelpDesk()
+    {
+        $this->partners = $this->partners->filter(function ($partner) {
+            return $partner->id != config('sheba.sheba_help_desk_id');
+        });
+    }
+
 }
