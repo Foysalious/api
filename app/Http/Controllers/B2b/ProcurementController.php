@@ -25,10 +25,12 @@ class ProcurementController extends Controller
                 'number_of_participants' => 'required|numeric',
                 'last_date_of_submission' => 'required|date_format:Y-m-d',
                 'procurement_start_date' => 'required|date_format:Y-m-d',
+                'procurement_end_date' => 'required|date_format:Y-m-d',
                 'payment_options' => 'required|string',
                 'type' => 'required|string:in:basic,advanced,product,service',
                 'items' => 'sometimes|string',
                 'is_published' => 'sometimes|integer',
+
                 /*'description' => 'required',
                  'estimated_price' => 'required|string',
                  'purchase_request_id' => 'sometimes|numeric',
@@ -44,7 +46,7 @@ class ProcurementController extends Controller
 
             $creator->setType($request->type)->setOwner($request->business)->setTitle($request->title)->setPurchaseRequest($request->purchase_request_id)
                 ->setLongDescription($request->description)->setOrderStartDate($request->order_start_date)->setOrderEndDate($request->order_end_date)
-                ->setInterviewDate($request->interview_date)->setProcurementStartDate($request->procurement_start_date)->setProcurementEndDate($request->tender_start_date)
+                ->setInterviewDate($request->interview_date)->setProcurementStartDate($request->procurement_start_date)->setProcurementEndDate($request->procurement_end_date)
                 ->setItems($request->items)->setQuestions($request->questions)->setNumberOfParticipants($request->number_of_participants)
                 ->setLastDateOfSubmission($request->last_date_of_submission)->setPaymentOptions($request->payment_options)->setIsPublished($request->is_published)
                 ->setLabels($request->labels);
@@ -57,7 +59,6 @@ class ProcurementController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

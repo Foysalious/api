@@ -43,6 +43,7 @@ return [
         'text' => 'text',
         'textarea' => 'textarea',
         'radio' => 'radio',
+        'checkbox' => 'checkbox',
         'number' => 'number',
         'select' => 'select'
     ]

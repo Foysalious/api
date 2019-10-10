@@ -148,6 +148,16 @@ class EntryRepository extends BaseRepository
     }
 
     /**
+     * @param $profile_id
+     * @return mixed
+     * @throws ExpenseTrackingServerError
+     */
+    public function getAllPayablesByCustomer($profile_id)
+    {
+        return $this->client->get('accounts/' . $this->accountId . '/payables?profile_id=' . $profile_id . '&limit=' . $this->limit . '&offset=' . $this->offset);
+    }
+
+    /**
      * @return mixed
      * @throws ExpenseTrackingServerError
      */
@@ -173,7 +183,7 @@ class EntryRepository extends BaseRepository
      */
     public function createExpenseUser(Partner $partner)
     {
-        $data['partner_id'] = $partner->id;
+        $data = ['account_holder_type' => get_class($partner), 'account_holder_id' => $partner->id];
         $result = $this->client->post('accounts', $data);
         return $result['account'];
     }
