@@ -147,6 +147,19 @@ class EntryRepository extends BaseRepository
         return $this->client->get('accounts/' . $this->accountId . '/payables' . '?limit=' . $this->limit . '&offset=' . $this->offset);
     }
 
+
+    /**
+     * @param $profile_id
+     * @param $payable_id
+     * @return mixed
+     * @throws ExpenseTrackingServerError
+     */
+    public function getPayableById($profile_id, $payable_id)
+    {
+        $result = $this->client->get('accounts/' . $this->accountId . '/payables/' . $payable_id . '?profile_id=' . $profile_id);
+        return $result['payable'];
+    }
+
     /**
      * @param $profile_id
      * @return mixed

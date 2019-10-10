@@ -5,6 +5,7 @@ use App\Models\PosCustomer;
 use App\Models\Profile;
 use App\Repositories\ProfileRepository;
 use App\Transformers\CustomSerializer;
+use App\Transformers\PayableItemTransformer;
 use App\Transformers\PayableTransformer;
 use App\Transformers\ReceivableTransformer;
 use Carbon\Carbon;
@@ -129,6 +130,42 @@ class IncomeExpenseController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+
+    /**
+     * @param Request $request
+     * @param $partner_id
+     * @param $payable_id
+     * @return JsonResponse
+     */
+    public function payable_details(Request $request, $partner_id, $payable_id)
+    {
+        try {
+            $payable_generator = $this->entryRepo->setPartner($request->partner);
+            $profile_id = PosCustomer::find($request->customer_id)->profile_id;
+
+            $payable = $payable_generator->getPayableById((int)$profile_id, $payable_id);
+            $manager = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+            $resource = new Item($payable, new PayableItemTransformer());
+            $payable_formatted = $manager->createData($resource)->toArray()['data'];
+
+            return api_response($request, $payable_formatted, 200, ["payable" => $payable_formatted]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (ExpenseTrackingServerError $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

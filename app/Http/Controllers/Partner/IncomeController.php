@@ -24,6 +24,11 @@ class IncomeController extends Controller
         $this->entryRepo = $entry_repo;
     }
 
+    /**
+     * @param Request $request
+     * @param TimeFrame $time_frame
+     * @return JsonResponse
+     */
     public function index(Request $request, TimeFrame $time_frame)
     {
         try {
@@ -110,6 +115,12 @@ class IncomeController extends Controller
         }
     }
 
+    /**
+     * @param $partner
+     * @param $income_id
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function show($partner, $income_id, Request $request)
     {
         try {
