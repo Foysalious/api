@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\Partner;
 use App\Models\Payment;
 use App\Repositories\PartnerRepository;
 use App\Repositories\PaymentRepository;
@@ -9,6 +10,8 @@ use DB;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\ExpenseTracker\AutomaticExpense;
+use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\ModificationFields;
 use Sheba\Payment\Adapters\Payable\RechargeAdapter;
 use Sheba\Payment\ShebaPayment;
@@ -103,6 +106,9 @@ class WalletController extends Controller
                         $this->setModifier($user);
                         if (in_array($payment->payable->type, ['movie_ticket_purchase', 'transport_ticket_purchase'])) {
                             $log = sprintf(constants('TICKET_LOG')[$payment->payable->type]['log'], number_format($remaining, 2));
+                            if ($user instanceof Partner) {
+                                $this->storeExpense($user, $payment);
+                            }
                         } else {
                             $log = 'Service Purchase';
                         }
@@ -142,6 +148,21 @@ class WalletController extends Controller
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
+        }
+    }
+
+    private function storeExpense($user, $payment)
+    {
+        /** @var AutomaticEntryRepository $entry
+         * @var Payment $payment
+         */
+        $entry = app(AutomaticEntryRepository::class);
+        $amount = (double)$payment->payable->amount;
+        $head = $payment->payable->type == 'movie_ticket_purchase' ? AutomaticExpense::MOVIE_TICKET : AutomaticExpense::BUS_TICKET;
+        try {
+            $entry->setPartner($user)->setAmount($amount)->setHead($head)->store();
+        } catch (\Exception $e) {
+
         }
     }
 }
