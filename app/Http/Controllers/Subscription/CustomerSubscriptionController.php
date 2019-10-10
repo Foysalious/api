@@ -39,8 +39,9 @@ class CustomerSubscriptionController extends Controller
             }
             $partner_list = new SubscriptionPartnerList();
             $partner_list->setPartnerListRequest($partnerListRequest)->find($partner);
+            $partner_list->filterPartnerByAvailability();
             $partners = $partner_list->partners->filter(function ($partner) {
-                return $partner->is_available == 1 || $partner->id == config('sheba.sheba_help_desk_id');
+                return $partner->id != config('sheba.sheba_help_desk_id');
             });
             if ($partners->count() > 0) {
                 $partner_list->addPricing();
@@ -50,16 +51,11 @@ class CustomerSubscriptionController extends Controller
                 } else {
                     $partner_list->sortByShebaSelectedCriteria();
                 }
-                $partners->each(function ($partner, $key) {
-                    $partner['rating'] = round($partner->rating, 2);
-                    array_forget($partner, 'wallet');
-                    array_forget($partner, 'package_id');
-                    array_forget($partner, 'geo_informations');
-                    removeRelationsAndFields($partner);
-                });
-
+                $partner_list->removeKeysFromPartner();
+                $partners = $partner_list->partners;
                 return api_response($request, $partners, 200, ['partners' => $partners->values()->all()]);
             }
+            if ($request->has('show_reason')) return api_response($request, null, 200, ['reason' => $partner_list->getNotShowingReason()]);
             return api_response($request, null, 404, ['message' => 'No partner found.']);
         } catch (HyperLocationNotFoundException $e) {
             app('sentry')->captureException($e);

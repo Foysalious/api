@@ -81,7 +81,8 @@ class PartnerList
             'credit' => [],
             'order_limit' => [],
             'options' => [],
-            'handyman' => []
+            'handyman' => [],
+            'availability' => []
         ];
         $this->discountRepo = app(DiscountRepository::class);
         $this->jobDiscountHandler = app(JobDiscountHandler::class);
@@ -276,7 +277,7 @@ class PartnerList
     {
         $this->partners->load(['workingHours', 'leaves']);
         $this->partners->each(function ($partner) {
-            if(!$this->isWithinPreparationTime($partner)) {
+            if (!$this->isWithinPreparationTime($partner)) {
                 $partner['is_available'] = 0;
                 $partner['unavailability_reason'] = PartnerUnavailabilityReasons::PREPARATION_TIME;
                 return;
@@ -285,7 +286,7 @@ class PartnerList
             $partner_available = new PartnerAvailable($partner);
             $partner_available->check($this->partnerListRequest->scheduleDate, $this->partnerListRequest->scheduleTime, $this->partnerListRequest->selectedCategory);
 
-            if(!$partner_available->getAvailability()) {
+            if (!$partner_available->getAvailability()) {
                 $partner['is_available'] = 0;
                 $partner['unavailability_reason'] = $partner_available->getUnavailabilityReason();
                 return;
@@ -697,5 +698,13 @@ class PartnerList
     public function getNotShowingReason()
     {
         return $this->notFoundValues;
+    }
+
+    public function filterPartnerByAvailability()
+    {
+        $this->partners = $this->partners->filter(function ($partner) {
+            return $partner->is_available == 1;
+        });
+        $this->notFoundValues['availability'] = $this->getPartnerIds();
     }
 }
