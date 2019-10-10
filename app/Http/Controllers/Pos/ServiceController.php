@@ -17,6 +17,7 @@ use Sheba\Pos\Product\Creator as ProductCreator;
 use Sheba\Pos\Product\Deleter;
 use Sheba\Pos\Product\Updater as ProductUpdater;
 use Sheba\Pos\Repositories\PosServiceDiscountRepository;
+use Sheba\Reward\ActionRewardDispatcher;
 use Throwable;
 use Tinify\Exception;
 
@@ -121,6 +122,8 @@ class ServiceController extends Controller
             }
             $partner_pos_service->unit = $partner_pos_service->unit ? constants('POS_SERVICE_UNITS')[$partner_pos_service->unit] : null;
             $partner_pos_service->warranty_unit = $partner_pos_service->warranty_unit ? config('pos.warranty_unit')[$partner_pos_service->warranty_unit] : null;
+
+            app()->make(ActionRewardDispatcher::class)->run('pos_inventory_create', $request->partner, $request->partner, $partner_pos_service);
 
             return api_response($request, null, 200, ['msg' => 'Product Created Successfully', 'service' => $partner_pos_service]);
         } catch (ValidationException $e) {

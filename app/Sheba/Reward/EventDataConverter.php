@@ -90,6 +90,19 @@ class EventDataConverter
                                 'is_multi_selectable' => 1
                             ]
                         ]
+                    ],
+                    'pos_inventory_create' => [
+                        'name' => 'Pos Inventory Create',
+                        'event_class' => 'Sheba\Reward\Event\Partner\Action\PosInventoryCreate\Event',
+                        'rule_class' => 'Sheba\Reward\Event\Partner\Action\PosInventoryCreate\Rule',
+                        'parameters' => [
+                            'created_from' => [
+                                'type' => 'select',
+                                'possible_value' => indexedArrayToAssociative(config('sheba.portals'), config('sheba.portals')),
+                                'is_multi_selectable' => 1,
+                                'class' => 'Sheba\Reward\Event\Partner\Action\PosInventoryCreate\Parameter\CreatedFrom'
+                            ]
+                        ]
                     ]
                 ],
                 'campaign' => [
