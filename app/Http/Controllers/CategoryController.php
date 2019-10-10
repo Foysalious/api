@@ -96,7 +96,7 @@ class CategoryController extends Controller
                                 } else {
                                     $q->published();
                                 }
-                                $q->published()->whereHas('locations', function ($q) use ($location) {
+                                $q->whereHas('locations', function ($q) use ($location) {
                                     $q->where('locations.id', $location->id);
                                 });
                             });
