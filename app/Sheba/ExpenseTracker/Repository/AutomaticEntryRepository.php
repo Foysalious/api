@@ -83,6 +83,7 @@ class AutomaticEntryRepository extends BaseRepository
         $data['created_from'] = json_encode((new RequestIdentification())->get());
         $data['amount'] = $this->amount;
         $data['amount_cleared'] = $this->amount_cleared;
+        $data['head'] = $this->head;
         if (empty($data['amount'])) $data['amount'] = 0;
         if (empty($data['amount_cleared'])) $data['amount_cleared'] = 0;
         $this->result = $this->client->post('accounts/' . $this->accountId . '/' . EntryType::getRoutable($this->for), $data)['data'];
