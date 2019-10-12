@@ -223,4 +223,19 @@ class EntryRepository extends BaseRepository
         $end = $time_frame->end->toDateString();
         return $this->client->get("accounts/$this->accountId/stats?start_date=$start&end_date=$end");
     }
+
+    /**
+     * @param $for
+     * @param $data
+     * @return string
+     * @throws ExpenseTrackingServerError
+     */
+    public function receivePayable($for, $data)
+    {
+        $data['created_at'] = Carbon::parse($data['created_at'])->format('Y-m-d H:s:i');
+        $request_identification = (new RequestIdentification())->get();
+        $data['created_from'] = json_encode($request_identification);
+        $result = $this->client->post('accounts/' . $this->accountId . '/' . $for, $data);
+        return $result['data'];
+    }
 }

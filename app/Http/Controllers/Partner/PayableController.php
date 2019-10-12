@@ -131,6 +131,10 @@ class PayableController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function logs(Request $request)
     {
         try {
@@ -158,10 +162,13 @@ class PayableController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function receive(Request $request)
+    public function pay(Request $request)
     {
         try {
-            $this->validate($request, ['amount' => 'required|numeric']);
+            $this->validate($request, ['amount' => 'required|numeric', 'customer_id'=> 'required|numeric']);
+            $input['profile_id'] = PosCustomer::find($request->customer_id)->profile_id;
+            // $payable = $this->entryRepo->setPartner($request->partner)->storeEntry(EntryType::getRoutable(EntryType::EXPENSE), $input);
+
             $payable = "{
                 \"id\": 2,
                 \"customer_id\": 1,
