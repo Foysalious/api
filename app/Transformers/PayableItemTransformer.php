@@ -12,9 +12,12 @@ class PayableItemTransformer extends TransformerAbstract
      */
     public function transform(array $payable)
     {
+        $profile_id = $payable['party']['profile_id'];
+        $profile = Profile::with('posCustomer')->find($profile_id);
         return [
             'id' => $payable['id'],
-            'name' => Profile::find($payable['party']['profile_id'])->name,
+            'customer_id' => $profile->posCustomer->id,
+            'name' => $profile->name,
             'amount' => (double)$payable['amount'],
             'amount_paid' => (double)$payable['amount_cleared'],
             "note" => $payable['note'],

@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\PosCustomer;
 use App\Models\Profile;
 use App\Transformers\CustomSerializer;
+use App\Transformers\ExpenseTransformer;
 use App\Transformers\PayableItemTransformer;
 use App\Transformers\PayableTransformer;
 use Carbon\Carbon;
@@ -11,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
+use Sheba\ExpenseTracker\EntryType;
 use Sheba\ModificationFields;
 use Throwable;
 use Illuminate\Http\JsonResponse;
@@ -123,6 +125,59 @@ class PayableController extends Controller
         } catch (ExpenseTrackingServerError $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function logs(Request $request)
+    {
+        try {
+            $logs = [
+                ['id' => 1, 'amount' => 200, 'updated_by' => 'Test Name 1', 'updated_date' => '2019-10-15', 'updated_time' => '10:20 AM'],
+                ['id' => 2, 'amount' => 2400, 'updated_by' => 'Test Name 2', 'updated_date' => '2019-10-22', 'updated_time' => '10:30 AM'],
+                ['id' => 3, 'amount' => 2040, 'updated_by' => 'Test Name 3', 'updated_date' => '2019-10-01', 'updated_time' => '10:21 AM'],
+                ['id' => 4, 'amount' => 20450, 'updated_by' => 'Test Name 4', 'updated_date' => '2019-10-11', 'updated_time' => '10:20 AM'],
+            ];
+
+            return api_response($request, null, 200, ['logs' => $logs]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function receive(Request $request)
+    {
+        try {
+            $this->validate($request, ['amount' => 'required|numeric']);
+            $payable = "{
+                \"id\": 2,
+                \"customer_id\": 1,
+                \"name\": \"Hasan Hafiz Pasha\",
+                \"amount\": 1020,
+                \"amount_paid\": 100,
+                \"note\": \"Test Note 1\",
+                \"created_at\": \"2019-10-20 03:30:30 PM\"
+            }";
+            return api_response($request, null, 200, ['payable' => json_decode($payable)]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
