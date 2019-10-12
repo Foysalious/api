@@ -6,8 +6,8 @@ class IncomeExpenseRoute
     {
         $api->group(['prefix' => 'income-expense'], function ($api) {
             $api->get('/', 'Partner\IncomeExpenseController@index');
-            $api->get('/payables', 'Partner\IncomeExpenseController@payable');
-            $api->get('/payables/{payable_id}', 'Partner\IncomeExpenseController@payable_details');
+            $api->get('/payables', 'Partner\PayableController@index');
+            $api->get('/payables/{payable_id}', 'Partner\PayableController@show');
             $api->get('/receivables', 'Partner\IncomeExpenseController@receivable');
             $api->get('/heads', 'Partner\IncomeExpenseController@getHeads');
         });
