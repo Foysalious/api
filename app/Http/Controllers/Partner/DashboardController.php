@@ -16,6 +16,7 @@ use Sheba\Helpers\TimeFrame;
 use Sheba\Manager\JobList;
 use Sheba\Partner\LeaveStatus;
 use Sheba\Pos\Order\OrderPaymentStatuses;
+use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Reward\PartnerReward;
 
 class DashboardController extends Controller
@@ -146,6 +147,7 @@ class DashboardController extends Controller
                 'has_pos_due_order' => $total_due_for_pos_orders > 0 ? 1 : 0,
                 'has_pos_paid_order' => $has_pos_paid_order,
             ];
+            $this->setDailyUsageRecord($partner);
 
             return api_response($request, $dashboard, 200, ['data' => $dashboard]);
         } catch (\Throwable $e) {
@@ -189,8 +191,22 @@ class DashboardController extends Controller
         return $rate;
     }
 
-    public function setDailyUsageRecord(Request $request, Partner $partner){
-        dd(121);
-        Redis::set('partner_daily_usage' . $partner, Carbon::now());
+    /**
+     * @param Partner $partner
+     */
+    private function setDailyUsageRecord(Partner $partner)
+    {
+        $daily_usages_record_namespace = 'PartnerDailyAppUsages:partner_' . $partner->id;
+        $daily_uses_count = Redis::get($daily_usages_record_namespace);
+        $daily_uses_count = !is_null($daily_uses_count) ? (int)$daily_uses_count + 1 : 1;
+
+        $second_left = Carbon::now()->diffInSeconds(Carbon::today()->endOfDay(), false);
+        Redis::set($daily_usages_record_namespace, $daily_uses_count);
+
+        if ($daily_uses_count == 1) {
+            Redis::expire($daily_usages_record_namespace, $second_left);
+        }
+
+        app()->make(ActionRewardDispatcher::class)->run('daily_usage', $partner, $partner);
     }
 }

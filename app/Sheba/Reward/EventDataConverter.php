@@ -122,11 +122,10 @@ class EventDataConverter
                         'event_class' => 'Sheba\Reward\Event\Partner\Action\DailyUsage\Event',
                         'rule_class' => 'Sheba\Reward\Event\Partner\Action\DailyUsage\Rule',
                         'parameters' => [
-                            'created_from' => [
-                                'type' => 'select',
-                                'possible_value' => indexedArrayToAssociative(config('sheba.portals'), config('sheba.portals')),
-                                'is_multi_selectable' => 1,
-                                'class' => 'Sheba\Reward\Event\Partner\Action\PosDailyUsage\Parameter\CreatedFrom'
+                            'count' => [
+                                'type'  => 'number',
+                                'min'   => 0,
+                                'class' => 'Sheba\Reward\Event\Partner\Action\DailyUsage\Parameter\Count'
                             ]
                         ]
                     ],
@@ -139,7 +138,7 @@ class EventDataConverter
                                 'type' => 'select',
                                 'possible_value' => indexedArrayToAssociative(config('sheba.portals'), config('sheba.portals')),
                                 'is_multi_selectable' => 1,
-                                'class' => 'Sheba\Reward\Event\Partner\Action\PosDailyUsage\Parameter\CreatedFrom'
+                                'class' => 'Sheba\Reward\Event\Partner\Action\PaymentLinkUsage\Parameter\CreatedFrom'
                             ]
                         ]
                     ],

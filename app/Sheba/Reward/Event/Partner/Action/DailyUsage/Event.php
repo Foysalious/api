@@ -10,8 +10,6 @@ use Sheba\Reward\Exception\RulesTypeMismatchException;
 
 class Event extends Action implements AmountCalculator
 {
-    /** @var PartnerPosService $partnerPosService */
-    private $partnerPosService;
     /** @var Partner $partner */
     private $partner;
 
@@ -27,7 +25,6 @@ class Event extends Action implements AmountCalculator
     {
         parent::setParams($params);
         $this->partner = $this->params[0];
-        $this->partnerPosService = $this->params[1];
     }
 
     public function isEligible()
