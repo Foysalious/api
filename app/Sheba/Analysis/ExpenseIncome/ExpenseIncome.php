@@ -1,8 +1,4 @@
-<?php
-
-
-namespace Sheba\Analysis\ExpenseIncome;
-
+<?php namespace Sheba\Analysis\ExpenseIncome;
 
 use App\Models\Partner;
 use Carbon\Carbon;

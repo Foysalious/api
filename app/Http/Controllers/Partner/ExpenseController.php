@@ -44,7 +44,7 @@ class ExpenseController extends Controller
             ]);
             list($offset, $limit) = calculatePagination($request);
 
-            $time_frame = $time_frame->fromFreqencyRequest($request);
+            $time_frame = $time_frame->fromFrequencyRequest($request);
             $expenses_response = $this->entryRepo->setPartner($request->partner)
                 ->setOffset($offset)
                 ->setLimit($limit)

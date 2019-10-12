@@ -37,21 +37,20 @@ class IncomeExpenseController extends Controller
     /**
      * @param Request $request
      * @param PartnerRepositoryInterface $partner_repo
+     * @param TimeFrame $time_frame
      * @return JsonResponse
      */
-    public function index(Request $request, PartnerRepositoryInterface $partner_repo)
+    public function index(Request $request, PartnerRepositoryInterface $partner_repo, TimeFrame $time_frame)
     {
         try {
+            $this->validate($request, ['frequency' => 'required|in:week,month,year,day']);
             if (!$request->partner->expense_account_id) {
                 $account = $this->entryRepo->createExpenseUser($request->partner);
                 $this->setModifier($request->partner);
                 $data = ['expense_account_id' => $account['id']];
                 $partner_repo->update($request->partner, $data);
             }
-
-            $this->validate($request, ['frequency' => 'required|in:week,month,year,day']);
-
-            $time_frame = (new TimeFrame())->fromFrequencyRequest($request);
+            $time_frame = $time_frame->fromFrequencyRequest($request);
             $expenses = $this->entryRepo->setPartner($request->partner)->statsBetween($time_frame);
 
             return api_response($request, null, 200, ['expenses' => $expenses]);
