@@ -241,4 +241,15 @@ class EntryRepository extends BaseRepository
 
         return $result['data'];
     }
+
+    /**
+     * @param $payable_id
+     * @return mixed
+     * @throws ExpenseTrackingServerError
+     */
+    public function getAllPayableLogsBy($payable_id)
+    {
+        $result = $this->client->get('accounts/' . $this->accountId . '/payables/' . $payable_id . '/logs');
+        return $result['payable_logs'];
+    }
 }

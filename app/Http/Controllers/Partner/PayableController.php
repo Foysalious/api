@@ -6,6 +6,7 @@ use App\Models\Profile;
 use App\Transformers\CustomSerializer;
 use App\Transformers\ExpenseTransformer;
 use App\Transformers\PayableItemTransformer;
+use App\Transformers\PayableLogTransformer;
 use App\Transformers\PayableTransformer;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -139,17 +140,23 @@ class PayableController extends Controller
 
     /**
      * @param Request $request
+     * @param $partner_id
+     * @param $payable_id
      * @return JsonResponse
      */
-    public function logs(Request $request)
+    public function logs(Request $request, $partner_id, $payable_id)
     {
         try {
-            $logs = [
-                ['id' => 1, 'amount' => 200, 'updated_by' => 'Test Name 1', 'updated_date' => '2019-10-15', 'updated_time' => '10:20 AM'],
-                ['id' => 2, 'amount' => 2400, 'updated_by' => 'Test Name 2', 'updated_date' => '2019-10-22', 'updated_time' => '10:30 AM'],
-                ['id' => 3, 'amount' => 2040, 'updated_by' => 'Test Name 3', 'updated_date' => '2019-10-01', 'updated_time' => '10:21 AM'],
-                ['id' => 4, 'amount' => 20450, 'updated_by' => 'Test Name 4', 'updated_date' => '2019-10-11', 'updated_time' => '10:20 AM'],
-            ];
+            $logs = [];
+            $payable_logs = $this->entryRepo->setPartner($request->partner)->getAllPayableLogsBy($payable_id);
+
+            $manager = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+            foreach ($payable_logs as $payable_log) {
+                $resource = new Item($payable_log, new PayableLogTransformer());
+                $formatted_log = $manager->createData($resource)->toArray()['data'];
+                array_push($logs, $formatted_log);
+            }
 
             return api_response($request, null, 200, ['logs' => $logs]);
         } catch (ValidationException $e) {
