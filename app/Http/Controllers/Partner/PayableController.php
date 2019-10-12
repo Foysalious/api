@@ -183,18 +183,8 @@ class PayableController extends Controller
                 'updated_by_name' => $request->manager_resource->profile->name
             ];
 
-            // $payable = $this->entryRepo->setPartner($request->partner)->payPayable($input, $updater_information, (int)$payable_id);
-
-            $payable = "{
-                \"id\": 2,
-                \"customer_id\": 1,
-                \"name\": \"Hasan Hafiz Pasha\",
-                \"amount\": 1020,
-                \"amount_paid\": 100,
-                \"note\": \"Test Note 1\",
-                \"created_at\": \"2019-10-20 03:30:30 PM\"
-            }";
-            return api_response($request, null, 200, ['payable' => json_decode($payable)]);
+            $payable = $this->entryRepo->setPartner($request->partner)->payPayable($input, $updater_information, (int)$payable_id);
+            return api_response($request, null, 200, ['payable' => $payable]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
@@ -202,6 +192,7 @@ class PayableController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

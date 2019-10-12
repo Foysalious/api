@@ -112,8 +112,10 @@ class ExpenseController extends Controller
 
             $input = $request->only(['amount', 'created_at', 'head_id', 'note']);
             $input['amount_cleared'] = $request->input('amount_cleared') ? $request->input('amount_cleared') : $request->input('amount');
+
             $customer_id = $request->input('customer_id');
             if ($customer_id) $input['profile_id'] = PosCustomer::find($customer_id)->profile_id;
+
             $expense = $this->entryRepo->setPartner($request->partner)->storeEntry(EntryType::getRoutable(EntryType::EXPENSE), $input);
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
@@ -164,18 +166,15 @@ class ExpenseController extends Controller
     public function update(Request $request, $partner, $expense_id)
     {
         try {
-            $this->validate($request, [
-                'amount_cleared' => 'sometimes|required|numeric',
-                'customer_id' => 'required_with:amount_cleared'
-            ]);
-
+            $this->validate($request, ['amount_cleared' => 'sometimes|required|numeric', 'customer_id' => 'required_with:amount_cleared']);
             $input = $request->only(['amount', 'created_at', 'head_id', 'note']);
-            $input['amount_cleared'] = $request->input('amount_cleared') ?
-                $request->input('amount_cleared') : $request->input('amount');
+
+            if ($request->input('amount_cleared'))
+                $input['amount_cleared'] = $request->input('amount_cleared');
+
             $customer_id = $request->input('customer_id');
             if ($customer_id) $input['profile_id'] = PosCustomer::find($customer_id)->profile_id;
-            $customer_id = $request->input('customer_id');
-            if ($customer_id) $input['profile_id'] = PosCustomer::find($customer_id)->profile_id;
+
             $expense = $this->entryRepo->setPartner($request->partner)->updateEntry(EntryType::getRoutable(EntryType::EXPENSE), $input, $expense_id);
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());

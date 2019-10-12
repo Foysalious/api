@@ -84,6 +84,7 @@ class EntryRepository extends BaseRepository
         $request_identification = (new RequestIdentification())->get();
         $data['created_from'] = json_encode($request_identification);
         $result = $this->client->post('accounts/' . $this->accountId . '/' . $for . '/' . $entry_id, $data);
+
         return $result['data'];
     }
 
@@ -237,6 +238,7 @@ class EntryRepository extends BaseRepository
         $request_identification = (new RequestIdentification())->get() + $updater_information;
         $data['created_from'] = json_encode($request_identification);
         $result = $this->client->post('accounts/' . $this->accountId . '/payables/' . $payable_id . '/pay', $data);
+
         return $result['data'];
     }
 }
