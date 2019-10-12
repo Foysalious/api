@@ -75,15 +75,15 @@ class EntryRepository extends BaseRepository
     /**
      * @param $for
      * @param $data
-     * @param $entryId
-     * @return string
+     * @param $entry_id
+     * @return mixed
      * @throws ExpenseTrackingServerError
      */
-    public function updateEntry($for, $data, $entryId)
+    public function updateEntry($for, $data, $entry_id)
     {
         $request_identification = (new RequestIdentification())->get();
         $data['created_from'] = json_encode($request_identification);
-        $result = $this->client->post('accounts/' . $this->accountId . '/' . $for . '/' . $entryId, $data);
+        $result = $this->client->post('accounts/' . $this->accountId . '/' . $for . '/' . $entry_id, $data);
         return $result['data'];
     }
 
@@ -225,17 +225,18 @@ class EntryRepository extends BaseRepository
     }
 
     /**
-     * @param $for
      * @param $data
+     * @param $updater_information
+     * @param $payable_id
      * @return string
      * @throws ExpenseTrackingServerError
      */
-    public function receivePayable($for, $data)
+    public function payPayable($data, $updater_information, $payable_id)
     {
-        $data['created_at'] = Carbon::parse($data['created_at'])->format('Y-m-d H:s:i');
-        $request_identification = (new RequestIdentification())->get();
+        $data['created_at'] = Carbon::now()->format('Y-m-d H:s:i');
+        $request_identification = (new RequestIdentification())->get() + $updater_information;
         $data['created_from'] = json_encode($request_identification);
-        $result = $this->client->post('accounts/' . $this->accountId . '/' . $for, $data);
+        $result = $this->client->post('accounts/' . $this->accountId . '/payables/' . $payable_id . '/pay', $data);
         return $result['data'];
     }
 }

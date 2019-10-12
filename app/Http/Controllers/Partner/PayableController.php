@@ -49,7 +49,7 @@ class PayableController extends Controller
             }
 
             $profiles_id = array_unique(array_column(array_column($payables_response['payables'], 'party'), 'profile_id'));
-            $profiles = Profile::whereIn('id', $profiles_id)->pluck('name', 'id')->toArray();
+            $profiles = Profile::whereIn('id', $profiles_id)->get()->pluckMultiple(['name', 'pro_pic'], 'id')->toArray();
             $pos_customers = PosCustomer::whereIn('profile_id', $profiles_id)->pluck('id', 'profile_id')->toArray();
 
             $final_payables = [];
@@ -61,8 +61,14 @@ class PayableController extends Controller
             foreach ($payables_response['payables'] as $payables) {
                 $resource = new Item($payables, new PayableTransformer());
                 $payable_formatted = $manager->createData($resource)->toArray()['data'];
-                $payable_formatted['customer_id'] = $pos_customers[$payable_formatted['profile_id']];
-                $payable_formatted['name'] = $profiles[$payable_formatted['profile_id']];
+
+                $profile_id = $payable_formatted['profile_id'];
+                $payable_formatted['customer'] = [
+                    'id' => $pos_customers[$profile_id],
+                    'name' => $profiles[$profile_id]['name'],
+                    'image' => $profiles[$profile_id]['pro_pic']
+                ];
+
                 $payables_create_date = Carbon::parse($payable_formatted['created_at'])->format('Y-m-d');
                 unset($payable_formatted['profile_id']);
 
@@ -160,14 +166,24 @@ class PayableController extends Controller
 
     /**
      * @param Request $request
+     * @param $partner_id
+     * @param $payable_id
      * @return JsonResponse
      */
-    public function pay(Request $request)
+    public function pay(Request $request, $partner_id, $payable_id)
     {
         try {
             $this->validate($request, ['amount' => 'required|numeric', 'customer_id'=> 'required|numeric']);
+
+            $input = $request->only(['amount']);
             $input['profile_id'] = PosCustomer::find($request->customer_id)->profile_id;
-            // $payable = $this->entryRepo->setPartner($request->partner)->storeEntry(EntryType::getRoutable(EntryType::EXPENSE), $input);
+            $updater_information = [
+                'updated_by' => $request->manager_resource->id,
+                'updated_by_type' => get_class($request->manager_resource),
+                'updated_by_name' => $request->manager_resource->profile->name
+            ];
+
+            // $payable = $this->entryRepo->setPartner($request->partner)->payPayable($input, $updater_information, (int)$payable_id);
 
             $payable = "{
                 \"id\": 2,

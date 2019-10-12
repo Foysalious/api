@@ -16,8 +16,11 @@ class PayableItemTransformer extends TransformerAbstract
         $profile = Profile::with('posCustomer')->find($profile_id);
         return [
             'id' => $payable['id'],
-            'customer_id' => $profile->posCustomer->id,
-            'name' => $profile->name,
+            'customer' => [
+                'id' => $profile->posCustomer->id,
+                'name' => $profile->name,
+                'image' => $profile->pro_pic
+            ],
             'amount' => (double)$payable['amount'],
             'amount_paid' => (double)$payable['amount_cleared'],
             "note" => $payable['note'],
