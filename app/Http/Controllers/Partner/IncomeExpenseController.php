@@ -53,7 +53,7 @@ class IncomeExpenseController extends Controller
             $time_frame = $time_frame->fromFrequencyRequest($request);
             $expenses = $this->entryRepo->setPartner($request->partner)->statsBetween($time_frame);
 
-            return api_response($request, null, 200, ['expenses' => $expenses]);
+            return api_response($request, null, 200, ['expenses' => $expenses['data']]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
