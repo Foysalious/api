@@ -9,6 +9,7 @@ use App\Models\SliderPortal;
 use App\Repositories\ReviewRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redis;
 use Sheba\Analysis\PartnerPerformance\PartnerPerformance;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
 use Sheba\Helpers\TimeFrame;
@@ -186,5 +187,10 @@ class DashboardController extends Controller
         if ($rate < 0) return 0;
         if ($rate > 100) return 100;
         return $rate;
+    }
+
+    public function setDailyUsageRecord(Request $request, Partner $partner){
+        dd(121);
+        Redis::set('partner_daily_usage' . $partner, Carbon::now());
     }
 }
