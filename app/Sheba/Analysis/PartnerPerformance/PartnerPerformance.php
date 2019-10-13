@@ -74,5 +74,5 @@ abstract class PartnerPerformance
     /**
      * @return Collection
      */
-    protected abstract function get();
+    abstract protected function get();
 }

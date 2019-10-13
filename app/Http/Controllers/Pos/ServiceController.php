@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\Pos;
 
 use App\Http\Controllers\Controller;
+use App\Models\Partner;
 use App\Models\PartnerPosService;
 use App\Models\PartnerPosServiceDiscount;
 use App\Models\PosCategory;

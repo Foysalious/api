@@ -5,11 +5,9 @@ namespace Sheba\ExpenseTracker\Repository;
 
 
 use Carbon\Carbon;
-use Exception;
 use Sheba\ExpenseTracker\AutomaticExpense;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\EntryType;
-use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Exceptions\InvalidHeadException;
 use Sheba\RequestIdentification;
 
@@ -50,16 +48,32 @@ class AutomaticEntryRepository extends BaseRepository
     /**
      * @param $head
      * @return AutomaticEntryRepository
-     * @throws InvalidHeadException
+     *
      */
     public function setHead($head)
+    {
+        try {
+            $this->validateHead($head);
+            $this->head = $head;
+            return $this;
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return $this;
+        }
+
+
+    }
+
+    /**
+     * @param $head
+     * @throws InvalidHeadException
+     */
+    private function validateHead($head)
     {
         if (!in_array($head, AutomaticIncomes::heads()) || !in_array($head, AutomaticExpense::heads()))
             throw new InvalidHeadException();
         if (in_array($head, AutomaticExpense::heads())) $this->for = EntryType::EXPENSE;
         else $this->for = EntryType::INCOME;
-        $this->head = $head;
-        return $this;
     }
 
     /**
@@ -74,20 +88,38 @@ class AutomaticEntryRepository extends BaseRepository
 
     /**
      * @return mixed
-     * @throws ExpenseTrackingServerError
-     * @throws Exception
+     */
+    private function getData()
+    {
+        $data = [
+            'created_at' => Carbon::now()->format('Y-m-d H:s:i'),
+            'created_from' => json_encode((new RequestIdentification())->get()),
+            'amount' => $this->amount,
+            'amount_cleared' => $this->amount_cleared,
+            'head_name' => $this->head,
+            'note' => 'Automatically Placed from Sheba'
+        ];
+        if (empty($data['amount'])) $data['amount'] = 0;
+        if (empty($data['amount_cleared'])) $data['amount_cleared'] = $data['amount'];
+        return $data;
+    }
+
+    /**
+     * @return bool
      */
     public function store()
     {
-        $data['created_at'] = Carbon::now()->format('Y-m-d H:s:i');
-        $data['created_from'] = json_encode((new RequestIdentification())->get());
-        $data['amount'] = $this->amount;
-        $data['amount_cleared'] = $this->amount_cleared;
-        $data['head'] = $this->head;
-        if (empty($data['amount'])) $data['amount'] = 0;
-        if (empty($data['amount_cleared'])) $data['amount_cleared'] = 0;
-        $this->result = $this->client->post('accounts/' . $this->accountId . '/' . EntryType::getRoutable($this->for), $data)['data'];
-        return $this->result;
+        try {
+            if (empty($data['head'])) {
+                throw new \Exception('Head is not set before storing');
+            }
+            $data = $this->getData();
+            $this->result = $this->client->post('accounts/' . $this->accountId . '/' . EntryType::getRoutable($this->for), $data)['data'];
+            return $this->result;
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return false;
+        }
     }
 
 

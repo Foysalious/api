@@ -14,6 +14,7 @@ use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Analysis\ExpenseIncome\ExpenseIncome;
+use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
 use Throwable;
@@ -35,25 +36,24 @@ class IncomeExpenseController extends Controller
 
     /**
      * @param Request $request
-     * @param ExpenseIncome $expenseIncome
      * @param PartnerRepositoryInterface $partner_repo
+     * @param TimeFrame $time_frame
      * @return JsonResponse
      */
-    public function index(Request $request, ExpenseIncome $expenseIncome, PartnerRepositoryInterface $partner_repo)
+    public function index(Request $request, PartnerRepositoryInterface $partner_repo, TimeFrame $time_frame)
     {
         try {
+            $this->validate($request, ['frequency' => 'required|in:week,month,year,day']);
             if (!$request->partner->expense_account_id) {
                 $account = $this->entryRepo->createExpenseUser($request->partner);
                 $this->setModifier($request->partner);
                 $data = ['expense_account_id' => $account['id']];
                 $partner_repo->update($request->partner, $data);
             }
+            $time_frame = $time_frame->fromFrequencyRequest($request);
+            $expenses = $this->entryRepo->setPartner($request->partner)->statsBetween($time_frame);
 
-
-            $this->validate($request, ['frequency' => 'required|in:week,month,year,day']);
-            $expenses = $expenseIncome->setPartner($request->partner)->setRequest($request)->dashboard();
-
-            return api_response($request, null, 200, ['expenses' => $expenses]);
+            return api_response($request, null, 200, ['expenses' => $expenses['data']]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
@@ -64,107 +64,6 @@ class IncomeExpenseController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
-    /**
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function payable(Request $request)
-    {
-        try {
-            $this->validate($request, []);
-            list($offset, $limit) = calculatePagination($request);
-            $payables_generator = $this->entryRepo->setPartner($request->partner)->setOffset($offset)->setLimit($limit);
-            if ($request->has('customer_id') && $request->customer_id) {
-                $profile_id = PosCustomer::find($request->customer_id)->profile_id;
-                $payables_response = $payables_generator->getAllPayablesByCustomer((int)$profile_id);
-            } else {
-                $payables_response = $payables_generator->getAllPayables();
-            }
-
-            $profiles_id = array_unique(array_column(array_column($payables_response['payables'], 'party'), 'profile_id'));
-            $profiles = Profile::whereIn('id', $profiles_id)->pluck('name', 'id')->toArray();
-            $pos_customers = PosCustomer::whereIn('profile_id', $profiles_id)->pluck('id', 'profile_id')->toArray();
-
-            $final_payables = [];
-            $payables_formatted = [];
-
-            $manager = new Manager();
-            $manager->setSerializer(new CustomSerializer());
-
-            foreach ($payables_response['payables'] as $payables) {
-                $resource = new Item($payables, new PayableTransformer());
-                $payable_formatted = $manager->createData($resource)->toArray()['data'];
-                $payable_formatted['customer_id'] = $pos_customers[$payable_formatted['profile_id']];
-                $payable_formatted['name'] = $profiles[$payable_formatted['profile_id']];
-                $payables_create_date = Carbon::parse($payable_formatted['created_at'])->format('Y-m-d');
-                unset($payable_formatted['profile_id']);
-
-                if (!isset($final_payables[$payables_create_date])) $final_payables[$payables_create_date] = [];
-                array_push($final_payables[$payables_create_date], $payable_formatted);
-            }
-
-            foreach ($final_payables as $key => $value) {
-                if (count($value) > 0) {
-                    $payable_list = [
-                        'date' => $key, 'payables' => $value
-                    ];
-                    array_push($payables_formatted, $payable_list);
-                }
-            }
-
-            return api_response($request, null, 200, [
-                "total_payable" => $payables_response['total_payables'], 'payables' => $payables_formatted
-            ]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (ExpenseTrackingServerError $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
-    /**
-     * @param Request $request
-     * @param $partner_id
-     * @param $payable_id
-     * @return JsonResponse
-     */
-    public function payable_details(Request $request, $partner_id, $payable_id)
-    {
-        try {
-            $payable_generator = $this->entryRepo->setPartner($request->partner);
-            $profile_id = PosCustomer::find($request->customer_id)->profile_id;
-
-            $payable = $payable_generator->getPayableById((int)$profile_id, $payable_id);
-            $manager = new Manager();
-            $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($payable, new PayableItemTransformer());
-            $payable_formatted = $manager->createData($resource)->toArray()['data'];
-
-            return api_response($request, $payable_formatted, 200, ["payable" => $payable_formatted]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (ExpenseTrackingServerError $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

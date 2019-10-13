@@ -16,6 +16,7 @@ use Illuminate\Validation\ValidationException;
 
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
+use Sheba\ExpenseTracker\Repository\EntryRepository;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 use Sheba\Pos\Customer\Creator;
@@ -53,9 +54,10 @@ class CustomerController extends Controller
      * @param $partner
      * @param $customer
      * @param Request $request
+     * @param EntryRepository $entry_repo
      * @return JsonResponse
      */
-    public function show($partner, $customer, Request $request)
+    public function show($partner, $customer, Request $request, EntryRepository $entry_repo)
     {
         try {
             /** @var PosCustomer $customer */
@@ -78,8 +80,7 @@ class CustomerController extends Controller
             $data['total_purchase_amount'] = $total_purchase_amount;
             $data['total_due_amount'] = $total_due_amount;
             $data['total_used_promo'] = 0.00;
-            $data['total_receivable'] = 500.00;
-            $data['total_payable'] = 100.00;
+            $data['total_payable_amount'] = $entry_repo->setPartner($request->partner)->getTotalPayableAmountByCustomer($customer->profile_id)['total_payables'];
             $data['is_customer_editable'] = $customer->isEditable();
             $data['note'] = PartnerPosCustomer::where('customer_id', $customer->id)->where('partner_id', $partner)->first()->note;
 

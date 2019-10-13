@@ -3,6 +3,7 @@
 use App\Models\Partner;
 use Carbon\Carbon;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
+use Sheba\Helpers\TimeFrame;
 use Sheba\RequestIdentification;
 
 class EntryRepository extends BaseRepository
@@ -74,15 +75,16 @@ class EntryRepository extends BaseRepository
     /**
      * @param $for
      * @param $data
-     * @param $entryId
-     * @return string
+     * @param $entry_id
+     * @return mixed
      * @throws ExpenseTrackingServerError
      */
-    public function updateEntry($for, $data, $entryId)
+    public function updateEntry($for, $data, $entry_id)
     {
         $request_identification = (new RequestIdentification())->get();
         $data['created_from'] = json_encode($request_identification);
-        $result = $this->client->post('accounts/' . $this->accountId . '/' . $for . '/' . $entryId, $data);
+        $result = $this->client->post('accounts/' . $this->accountId . '/' . $for . '/' . $entry_id, $data);
+
         return $result['data'];
     }
 
@@ -171,6 +173,16 @@ class EntryRepository extends BaseRepository
     }
 
     /**
+     * @param $profile_id
+     * @return mixed
+     * @throws ExpenseTrackingServerError
+     */
+    public function getTotalPayableAmountByCustomer($profile_id)
+    {
+        return $this->client->get('accounts/' . $this->accountId . '/payable-amount?profile_id=' . $profile_id);
+    }
+
+    /**
      * @return mixed
      * @throws ExpenseTrackingServerError
      */
@@ -199,5 +211,45 @@ class EntryRepository extends BaseRepository
         $data = ['account_holder_type' => get_class($partner), 'account_holder_id' => $partner->id];
         $result = $this->client->post('accounts', $data);
         return $result['account'];
+    }
+
+    /**
+     * @param TimeFrame $time_frame
+     * @return mixed
+     * @throws ExpenseTrackingServerError
+     */
+    public function statsBetween(TimeFrame $time_frame)
+    {
+        $start = $time_frame->start->toDateString();
+        $end = $time_frame->end->toDateString();
+        return $this->client->get("accounts/$this->accountId/stats?start_date=$start&end_date=$end");
+    }
+
+    /**
+     * @param $data
+     * @param $updater_information
+     * @param $payable_id
+     * @return string
+     * @throws ExpenseTrackingServerError
+     */
+    public function payPayable($data, $updater_information, $payable_id)
+    {
+        $data['created_at'] = Carbon::now()->format('Y-m-d H:s:i');
+        $request_identification = (new RequestIdentification())->get() + $updater_information;
+        $data['created_from'] = json_encode($request_identification);
+        $result = $this->client->post('accounts/' . $this->accountId . '/payables/' . $payable_id . '/pay', $data);
+
+        return $result['data'];
+    }
+
+    /**
+     * @param $payable_id
+     * @return mixed
+     * @throws ExpenseTrackingServerError
+     */
+    public function getAllPayableLogsBy($payable_id)
+    {
+        $result = $this->client->get('accounts/' . $this->accountId . '/payables/' . $payable_id . '/logs');
+        return $result['payable_logs'];
     }
 }

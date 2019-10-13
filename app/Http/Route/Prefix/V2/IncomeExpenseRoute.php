@@ -6,8 +6,10 @@ class IncomeExpenseRoute
     {
         $api->group(['prefix' => 'income-expense'], function ($api) {
             $api->get('/', 'Partner\IncomeExpenseController@index');
-            $api->get('/payables', 'Partner\IncomeExpenseController@payable');
-            $api->get('/payables/{payable_id}', 'Partner\IncomeExpenseController@payable_details');
+            $api->get('/payables', 'Partner\PayableController@index');
+            $api->get('/payables/{payable}', 'Partner\PayableController@show');
+            $api->post('/payables/{payable}/pay', 'Partner\PayableController@pay');
+            $api->get('/payables/{payable}/logs', 'Partner\PayableController@logs');
             $api->get('/receivables', 'Partner\IncomeExpenseController@receivable');
             $api->get('/heads', 'Partner\IncomeExpenseController@getHeads');
         });
@@ -22,9 +24,9 @@ class IncomeExpenseRoute
         $api->group(['prefix' => 'expenses'], function ($api) {
             $api->get('/', 'Partner\ExpenseController@index');
             $api->post('/', 'Partner\ExpenseController@store');
-            $api->post('/{expenseId}', 'Partner\ExpenseController@update');
             $api->group(['prefix' => '{expense}'], function ($api) {
                 $api->get('/', 'Partner\ExpenseController@show');
+                $api->post('/', 'Partner\ExpenseController@update');
             });
         });
     }

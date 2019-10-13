@@ -151,18 +151,18 @@ class WalletController extends Controller
         }
     }
 
+    /**
+     * @param Partner $user
+     * @param Payment $payment
+     */
     private function storeExpense($user, $payment)
     {
-        /** @var AutomaticEntryRepository $entry
-         * @var Payment $payment
+        /**
+         * @var AutomaticEntryRepository $entry
          */
         $entry = app(AutomaticEntryRepository::class);
         $amount = (double)$payment->payable->amount;
         $head = $payment->payable->type == 'movie_ticket_purchase' ? AutomaticExpense::MOVIE_TICKET : AutomaticExpense::BUS_TICKET;
-        try {
-            $entry->setPartner($user)->setAmount($amount)->setHead($head)->store();
-        } catch (\Exception $e) {
-
-        }
+        $entry->setPartner($user)->setAmount($amount)->setHead($head)->store();
     }
 }
