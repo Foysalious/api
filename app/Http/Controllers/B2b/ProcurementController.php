@@ -77,7 +77,6 @@ class ProcurementController extends Controller
             list($offset, $limit) = calculatePagination($request);
             $procurements = $procurement_repository->ofBusiness($business->id)->select(['id', 'title', 'status', 'last_date_of_submission', 'created_at'])->orderBy('id', 'desc');
             $total_procurement = $procurements->get()->count();
-            $procurements = $procurements->skip($offset)->limit($limit);
 
             if ($request->has('status') && $request->status != 'all') {
                 $procurements->where('status', $request->status);
@@ -88,7 +87,7 @@ class ProcurementController extends Controller
             if ($start_date && $end_date) {
                 $procurements->whereBetween('published_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
             }
-
+            $procurements = $procurements->skip($offset)->limit($limit);
             $procurements_list = [];
             foreach ($procurements->get() as $procurement) {
                 array_push($procurements_list, [
