@@ -77,7 +77,6 @@ class ProcurementController extends Controller
             list($offset, $limit) = calculatePagination($request);
             $procurements = $procurement_repository->ofBusiness($business->id)->select(['id', 'title', 'status', 'last_date_of_submission', 'created_at'])->orderBy('id', 'desc');
             $total_procurement = $procurements->get()->count();
-            $procurements = $procurements->skip($offset)->limit($limit);
 
             if ($request->has('status') && $request->status != 'all') {
                 $procurements->where('status', $request->status);
@@ -88,7 +87,7 @@ class ProcurementController extends Controller
             if ($start_date && $end_date) {
                 $procurements->whereBetween('published_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
             }
-
+            $procurements = $procurements->skip($offset)->limit($limit);
             $procurements_list = [];
             foreach ($procurements->get() as $procurement) {
                 array_push($procurements_list, [
@@ -135,7 +134,7 @@ class ProcurementController extends Controller
                     'status' => $procurement->status,
                     'labels' => $procurement->getTagNamesAttribute()->toArray(),
                     'start_date' => Carbon::parse($procurement->procurement_start_date)->format('d/m/y'),
-                    'published_at' => $procurement->is_published ? Carbon::parse($procurement->published_at)->format('d/m/y') : 'n/a',
+                    'published_at' => $procurement->is_published ? Carbon::parse($procurement->published_at)->format('d/m/y') : null,
                     'end_date' => Carbon::parse($procurement->procurement_end_date)->format('d/m/y'),
                     'number_of_participants' => $procurement->number_of_participants,
                     'last_date_of_submission' => Carbon::parse($procurement->last_date_of_submission)->format('Y-m-d'),

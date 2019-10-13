@@ -1,19 +1,21 @@
-<?php
-
-
-namespace Sheba\ExpenseTracker\Repository;
-
+<?php namespace Sheba\ExpenseTracker\Repository;
 
 use Carbon\Carbon;
+use Exception;
 use Sheba\ExpenseTracker\AutomaticExpense;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\EntryType;
 use Sheba\ExpenseTracker\Exceptions\InvalidHeadException;
 use Sheba\RequestIdentification;
+use Throwable;
 
 class AutomaticEntryRepository extends BaseRepository
 {
-    private $head, $amount, $amount_cleared, $result, $for;
+    private $head;
+    private $amount;
+    private $amount_cleared;
+    private $result;
+    private $for;
 
     /**
      * @param mixed $for
@@ -48,7 +50,6 @@ class AutomaticEntryRepository extends BaseRepository
     /**
      * @param $head
      * @return AutomaticEntryRepository
-     *
      */
     public function setHead($head)
     {
@@ -56,12 +57,10 @@ class AutomaticEntryRepository extends BaseRepository
             $this->validateHead($head);
             $this->head = $head;
             return $this;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return $this;
         }
-
-
     }
 
     /**
@@ -70,8 +69,9 @@ class AutomaticEntryRepository extends BaseRepository
      */
     private function validateHead($head)
     {
-        if (!in_array($head, AutomaticIncomes::heads()) || !in_array($head, AutomaticExpense::heads()))
+        if (!in_array($head, AutomaticIncomes::heads()) && !in_array($head, AutomaticExpense::heads()))
             throw new InvalidHeadException();
+
         if (in_array($head, AutomaticExpense::heads())) $this->for = EntryType::EXPENSE;
         else $this->for = EntryType::INCOME;
     }
@@ -101,6 +101,7 @@ class AutomaticEntryRepository extends BaseRepository
         ];
         if (empty($data['amount'])) $data['amount'] = 0;
         if (empty($data['amount_cleared'])) $data['amount_cleared'] = $data['amount'];
+
         return $data;
     }
 
@@ -110,17 +111,15 @@ class AutomaticEntryRepository extends BaseRepository
     public function store()
     {
         try {
-            if (empty($data['head'])) {
-                throw new \Exception('Head is not set before storing');
-            }
             $data = $this->getData();
+            if (empty($data['head_name'])) {
+                throw new Exception('Head is not set before storing');
+            }
             $this->result = $this->client->post('accounts/' . $this->accountId . '/' . EntryType::getRoutable($this->for), $data)['data'];
             return $this->result;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return false;
         }
     }
-
-
 }

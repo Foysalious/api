@@ -1,10 +1,14 @@
 <?php namespace Sheba\Payment\Complete;
 
 use App\Jobs\Partner\PaymentLink\SendPaymentLinkSms;
+use App\Models\Partner;
 use App\Models\Payment;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
+use Sheba\ExpenseTracker\AutomaticExpense;
+use Sheba\ExpenseTracker\AutomaticIncomes;
+use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\HasWallet;
 use Sheba\ModificationFields;
 use Sheba\PaymentLink\InvoiceCreator;
@@ -14,11 +18,13 @@ use Sheba\PushNotificationHandler;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
 use DB;
+use Sheba\Reward\ActionRewardDispatcher;
 
 class PaymentLinkOrderComplete extends PaymentComplete
 {
     use DispatchesJobs;
     use ModificationFields;
+
     /** @var PaymentLinkRepository */
     private $paymentLinkRepository;
     /** @var PaymentLinkTransformer $paymentLink */
@@ -54,6 +60,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $this->failPayment();
             throw $e;
         }
+
         $this->payment = $this->saveInvoice();
         if ($this->paymentLink->getTarget()) {
             $payment = $this->payment;
@@ -61,6 +68,11 @@ class PaymentLinkOrderComplete extends PaymentComplete
             dispatch(new SendPaymentLinkSms($payment, $payment_link));
             $this->notifyManager($this->payment, $this->paymentLink);
         }
+
+        $payable = $this->payment->payable;
+        app(ActionRewardDispatcher::class)->run('payment_link_usage', $payment_receiver, $payment_receiver, $payable);
+        app(AutomaticEntryRepository::class)->setPartner($payment_receiver)->setAmount($payable->amount)->setHead(AutomaticIncomes::PAYMENT_LINK)->store();
+
         return $this->payment;
     }
 
@@ -91,17 +103,22 @@ class PaymentLinkOrderComplete extends PaymentComplete
         }
     }
 
-
+    /**
+     * @param HasWallet $payment_receiver
+     */
     private function processTransactions(HasWallet $payment_receiver)
     {
         $recharge_wallet_amount = $this->payment->payable->amount;
         $formatted_recharge_amount = number_format($recharge_wallet_amount, 2);
         $recharge_log = "$formatted_recharge_amount TK has been collected from {$this->payment->payable->getName()}, {$this->paymentLink->getReason()}";
+
         $recharge_transaction = $payment_receiver->rechargeWallet($recharge_wallet_amount, ['transaction_details' => $this->payment->getShebaTransaction()->toJson(), 'log' => $recharge_log]);
         $minus_wallet_amount = $this->getPaymentLinkFee($recharge_wallet_amount);
         $formatted_minus_amount = number_format($minus_wallet_amount, 2);
         $minus_log = "$formatted_minus_amount TK has been charged as link service fees against of Transc ID: {$recharge_transaction->id}, and Transc amount: $formatted_recharge_amount";
+
         $payment_receiver->minusWallet($minus_wallet_amount, ['log' => $minus_log]);
+        app(AutomaticEntryRepository::class)->setPartner($payment_receiver)->setAmount($minus_wallet_amount)->setHead(AutomaticExpense::PAYMENT_LINK)->store();
     }
 
     private function getPaymentLinkFee($amount)

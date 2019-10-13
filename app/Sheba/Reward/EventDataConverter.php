@@ -147,7 +147,7 @@ class EventDataConverter
                                 'class' => 'Sheba\Reward\Event\Partner\Action\PaymentLinkUsage\Parameter\Amount'
                             ],
                         ]
-                    ],
+                    ]
                 ],
                 'campaign' => [
                     'order_serve' => [

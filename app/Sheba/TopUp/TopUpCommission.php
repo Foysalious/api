@@ -100,7 +100,7 @@ abstract class TopUpCommission
     {
         return (double)$amount * ($this->getVendorAmbassadorCommission() / 100);
     }
-
+    
     /**
      * @return float
      */
