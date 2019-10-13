@@ -1,10 +1,14 @@
 <?php namespace Sheba\Payment\Complete;
 
 use App\Jobs\Partner\PaymentLink\SendPaymentLinkSms;
+use App\Models\Partner;
 use App\Models\Payment;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
+use Sheba\ExpenseTracker\AutomaticExpense;
+use Sheba\ExpenseTracker\AutomaticIncomes;
+use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\HasWallet;
 use Sheba\ModificationFields;
 use Sheba\PaymentLink\InvoiceCreator;
@@ -66,7 +70,8 @@ class PaymentLinkOrderComplete extends PaymentComplete
         }
 
         $payable = $this->payment->payable;
-        app()->make(ActionRewardDispatcher::class)->run('payment_link_usage', $payment_receiver, $payment_receiver, $payable);
+        app(ActionRewardDispatcher::class)->run('payment_link_usage', $payment_receiver, $payment_receiver, $payable);
+        app(AutomaticEntryRepository::class)->setPartner($payment_receiver)->setAmount($payable->amount)->setHead(AutomaticIncomes::PAYMENT_LINK)->store();
 
         return $this->payment;
     }
@@ -106,11 +111,14 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $recharge_wallet_amount = $this->payment->payable->amount;
         $formatted_recharge_amount = number_format($recharge_wallet_amount, 2);
         $recharge_log = "$formatted_recharge_amount TK has been collected from {$this->payment->payable->getName()}, {$this->paymentLink->getReason()}";
+
         $recharge_transaction = $payment_receiver->rechargeWallet($recharge_wallet_amount, ['transaction_details' => $this->payment->getShebaTransaction()->toJson(), 'log' => $recharge_log]);
         $minus_wallet_amount = $this->getPaymentLinkFee($recharge_wallet_amount);
         $formatted_minus_amount = number_format($minus_wallet_amount, 2);
         $minus_log = "$formatted_minus_amount TK has been charged as link service fees against of Transc ID: {$recharge_transaction->id}, and Transc amount: $formatted_recharge_amount";
+
         $payment_receiver->minusWallet($minus_wallet_amount, ['log' => $minus_log]);
+        app(AutomaticEntryRepository::class)->setPartner($payment_receiver)->setAmount($minus_wallet_amount)->setHead(AutomaticExpense::PAYMENT_LINK)->store();
     }
 
     private function getPaymentLinkFee($amount)

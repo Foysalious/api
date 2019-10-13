@@ -157,9 +157,7 @@ class WalletController extends Controller
      */
     private function storeExpense($user, $payment)
     {
-        /**
-         * @var AutomaticEntryRepository $entry
-         */
+        /** @var AutomaticEntryRepository $entry */
         $entry = app(AutomaticEntryRepository::class);
         $amount = (double)$payment->payable->amount;
         $head = $payment->payable->type == 'movie_ticket_purchase' ? AutomaticExpense::MOVIE_TICKET : AutomaticExpense::BUS_TICKET;
