@@ -211,4 +211,29 @@ class ProcurementController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function updateStatus($business, $procurement, Request $request, Creator $creator)
+    {
+        try {
+            $this->validate($request, [
+                'is_published' => 'required|integer:in:1,0',
+            ]);
+            $procurement = Procurement::find((int)$procurement);
+            if (!$procurement) {
+                return api_response($request, null, 404);
+            } else {
+                $creator->setIsPublished($request->is_published)->changeStatus($procurement);
+                return api_response($request, null, 200);
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }

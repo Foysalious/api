@@ -207,6 +207,15 @@ class Creator
         ];
     }
 
+    public function changeStatus(Procurement $procurement)
+    {
+        $this->procurementData = [
+            'is_published' => $this->isPublished ? (int)$this->isPublished : 0,
+            'published_at' => $this->isPublished ? Carbon::now() : ''
+        ];
+        $this->procurementRepository->update($procurement, $this->procurementData);
+    }
+
     private function makeItemFields(ProcurementItem $procurement_item, $fields)
     {
         $this->procurementItemFieldData = [];
