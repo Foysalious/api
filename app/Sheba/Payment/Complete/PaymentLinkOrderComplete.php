@@ -66,7 +66,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
         }
 
         $payable = $this->payment->payable;
-        app()->make(ActionRewardDispatcher::class)->run('payment_link_usage', $payable->user, $payable->user, $payable);
+        app()->make(ActionRewardDispatcher::class)->run('payment_link_usage', $payment_receiver, $payment_receiver, $payable);
 
         return $this->payment;
     }
@@ -98,7 +98,9 @@ class PaymentLinkOrderComplete extends PaymentComplete
         }
     }
 
-
+    /**
+     * @param HasWallet $payment_receiver
+     */
     private function processTransactions(HasWallet $payment_receiver)
     {
         $recharge_wallet_amount = $this->payment->payable->amount;
