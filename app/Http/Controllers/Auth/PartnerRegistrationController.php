@@ -22,6 +22,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 use Sheba\Logs\ErrorLog;
+use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Sms\Sms;
 use Sheba\Voucher\Creator\Referral;
 use DB;
@@ -159,6 +160,7 @@ class PartnerRegistrationController extends Controller
             $this->sms->shoot($resource->profile->mobile, "You have successfully completed your registration at Sheba.xyz. Please complete your profile to start serving orders.");
         }
 
+        app()->make(ActionRewardDispatcher::class)->run('partner_creation_bonus', $partner, $partner);
         return $partner;
     }
 

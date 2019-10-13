@@ -9,12 +9,14 @@ use App\Models\SliderPortal;
 use App\Repositories\ReviewRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redis;
 use Sheba\Analysis\PartnerPerformance\PartnerPerformance;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Manager\JobList;
 use Sheba\Partner\LeaveStatus;
 use Sheba\Pos\Order\OrderPaymentStatuses;
+use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Reward\PartnerReward;
 
 class DashboardController extends Controller
@@ -146,6 +148,9 @@ class DashboardController extends Controller
                 'has_pos_paid_order' => $has_pos_paid_order,
             ];
 
+            if (request()->hasHeader('Portal-Name'))
+                $this->setDailyUsageRecord($partner, request()->header('Portal-Name'));
+
             return api_response($request, $dashboard, 200, ['data' => $dashboard]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -186,5 +191,25 @@ class DashboardController extends Controller
         if ($rate < 0) return 0;
         if ($rate > 100) return 100;
         return $rate;
+    }
+
+    /**
+     * @param Partner $partner
+     * @param $portal_name
+     */
+    private function setDailyUsageRecord(Partner $partner, $portal_name)
+    {
+        $daily_usages_record_namespace = 'PartnerDailyAppUsages:partner_' . $partner->id;
+        $daily_uses_count = Redis::get($daily_usages_record_namespace);
+        $daily_uses_count = !is_null($daily_uses_count) ? (int)$daily_uses_count + 1 : 1;
+
+        $second_left = Carbon::now()->diffInSeconds(Carbon::today()->endOfDay(), false);
+        Redis::set($daily_usages_record_namespace, $daily_uses_count);
+
+        if ($daily_uses_count == 1) {
+            Redis::expire($daily_usages_record_namespace, $second_left);
+        }
+
+        app()->make(ActionRewardDispatcher::class)->run('daily_usage', $partner, $partner,$portal_name);
     }
 }

@@ -6,6 +6,7 @@ use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
 use Sheba\Pos\Repositories\PosServiceRepository;
+use Sheba\RequestIdentification;
 
 class Creator
 {
@@ -35,7 +36,7 @@ class Creator
         $this->format();
         $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id']);
 
-        return $this->serviceRepo->save($this->data);
+        return $this->serviceRepo->save($this->data + (new RequestIdentification())->get());
     }
 
     private function saveImages()

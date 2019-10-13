@@ -2,6 +2,7 @@
 
 use App\Models\Reward;
 use Carbon\Carbon;
+use Exception;
 use Sheba\Reward\Disburse\DisburseHandler;
 
 class ActionRewardDispatcher
@@ -21,7 +22,7 @@ class ActionRewardDispatcher
      * @param $event
      * @param Rewardable $rewardable
      * @param mixed ...$params
-     * @throws \Exception
+     * @throws Exception
      */
     public function run($event, Rewardable $rewardable, ...$params)
     {

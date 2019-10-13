@@ -82,4 +82,30 @@ class PosOrderRepository extends BaseRepository
             return $order->calculate();
         });
     }
+
+    /**
+     * @param Carbon $date
+     * @param null $partners
+     * @return mixed
+     */
+    public function getCreatedOrdersOfDateGroupedByPartner(Carbon $date, $partners = null)
+    {
+        $orders_by_partner = $this->createdQueryByPartners($date, $partners)->get()->groupBy('partner_id');
+        return $orders_by_partner->map(function($pos_orders) {
+            return $this->calculate($pos_orders);
+        });
+    }
+
+    /**
+     * @param Carbon $date
+     * @param $partners
+     * @return mixed
+     */
+    private function createdQueryByPartners(Carbon $date, $partners)
+    {
+        $orders_by_partner = $this->createdQuery($date);
+        if ($partners instanceof Collection) $partners = $partners->pluck('id')->toArray();
+        if (!empty($partners)) $orders_by_partner = $orders_by_partner->of($partners);
+        return $orders_by_partner;
+    }
 }

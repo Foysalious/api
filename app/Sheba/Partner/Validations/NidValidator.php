@@ -22,5 +22,5 @@ abstract class NidValidator
      * @param null $dob
      * @return NidValidationResponse
      */
-    abstract function check($nid, $fullName = null, $dob = null):NidValidationResponse;
+    abstract public function check($nid, $fullName = null, $dob = null):NidValidationResponse;
 }

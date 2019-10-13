@@ -96,8 +96,11 @@ class BusinessRoute
                     $api->post('/', 'B2b\ProcurementController@store');
                     $api->group(['prefix' => '{procurement}'], function ($api) {
                         $api->post('invitations', 'B2b\ProcurementController@sendInvitation');
+                        $api->post('publish', 'B2b\ProcurementController@updateStatus');
+                        $api->post('general', 'B2b\ProcurementController@updateGeneral');
                     });
                     $api->get('/', 'B2b\ProcurementController@index');
+                    $api->get('/{procurement}', 'B2b\ProcurementController@show');
                 });
                 $api->group(['prefix' => 'purchase-requests'], function ($api) {
                     $api->get('/', 'B2b\PurchaseRequestController@index');
@@ -183,6 +186,7 @@ class BusinessRoute
                         $api->post('/experience-info', 'B2b\DriverController@updateDriverExperienceInfo');
                         $api->get('/documents', 'B2b\DriverController@getDriverDocuments');
                         $api->post('/documents', 'B2b\DriverController@updateDriverDocuments');
+                        $api->post('update-picture', 'B2b\DriverController@updatePicture');
                         $api->get('/recent-assignment', 'B2b\DriverController@getDriverRecentAssignment');
                     });
                 });
