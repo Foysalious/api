@@ -12,6 +12,8 @@ use App\Sheba\Subscription\Partner\PartnerSubscriptionCharges;
 use Carbon\Carbon;
 use DB;
 use Exception;
+use Sheba\ExpenseTracker\AutomaticExpense;
+use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\Partner\PartnerStatuses;
 use Sheba\PartnerWallet\PartnerTransactionHandler;
 use Sheba\PartnerWallet\PaymentByBonusAndWallet;
@@ -93,6 +95,7 @@ class PartnerSubscriptionBilling
         $this->billingDatabaseTransactions($this->packagePrice);
         (new PartnerSubscriptionCharges($this))->shootLog(constants('PARTNER_PACKAGE_CHARGE_TYPES')[$grade]);
         $this->sendSmsForSubscriptionUpgrade($old_package, $new_package, $old_billing_type, $new_billing_type, $grade);
+        $this->storeEntry();
     }
 
     public function runAdvanceSubscriptionBilling()
@@ -334,5 +337,21 @@ class PartnerSubscriptionBilling
             'formatted_package_type' => $new_billing_type == BillingType::MONTHLY ? 'মাসের' : $new_billing_type == BillingType::YEARLY ? 'বছরের' : 'আর্ধবছরের',
             'package_type' => $new_billing_type
         ]);
+    }
+
+    private function storeEntry()
+    {
+        /**
+         * ---------------------------------------------------------------
+         * Expense Entry for subscription
+         * @var AutomaticEntryRepository $entry
+         */
+        $entry = app(AutomaticEntryRepository::class);
+        $entry->setPartner($this->partner)
+            ->setHead(AutomaticExpense::SUBSCRIPTION_FEE)
+            ->setAmount($this->packagePrice)->store();
+        /**
+         * ----------------------------------------------------------------
+         */
     }
 }
