@@ -14,12 +14,15 @@ use DB;
 use Exception;
 use Sheba\ExpenseTracker\AutomaticExpense;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
+use Sheba\ModificationFields;
 use Sheba\Partner\PartnerStatuses;
 use Sheba\PartnerWallet\PartnerTransactionHandler;
 use Sheba\PartnerWallet\PaymentByBonusAndWallet;
 
 class PartnerSubscriptionBilling
 {
+    use ModificationFields;
+
     /** @var Partner $partner */
     public $partner;
     public $runningCycleNumber;
@@ -155,15 +158,14 @@ class PartnerSubscriptionBilling
 
         if ($log) {
             $this->partner->status = $log->from;
-            $this->partner->statusChangeLogs()->create([
+            $status_change_log = [
                 'from' => $log->to,
                 'to' => $log->from,
                 'reason' => 'Subscription Revoked',
-                'log' => 'Partner became active due to subscription purchase',
-                'created_by' => 'automatic',
-                'created_by_name' => 'automatic',
-                'created_at' => Carbon::now()
-            ]);
+                'log' => 'Partner became active due to subscription purchase'
+            ];
+
+            $this->partner->statusChangeLogs()->create($this->withCreateModificationField($status_change_log));
         }
     }
 
