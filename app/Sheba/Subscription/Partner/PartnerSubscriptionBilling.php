@@ -344,16 +344,11 @@ class PartnerSubscriptionBilling
     private function storeEntry()
     {
         /**
-         * ---------------------------------------------------------------
          * Expense Entry for subscription
+         *
          * @var AutomaticEntryRepository $entry
          */
         $entry = app(AutomaticEntryRepository::class);
-        $entry->setPartner($this->partner)
-            ->setHead(AutomaticExpense::SUBSCRIPTION_FEE)
-            ->setAmount($this->packagePrice)->store();
-        /**
-         * ----------------------------------------------------------------
-         */
+        $entry->setPartner($this->partner)->setHead(AutomaticExpense::SUBSCRIPTION_FEE)->setAmount($this->packagePrice)->store();
     }
 }
