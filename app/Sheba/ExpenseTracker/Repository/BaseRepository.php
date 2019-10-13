@@ -1,6 +1,7 @@
 <?php namespace Sheba\ExpenseTracker\Repository;
 
 use App\Models\Partner;
+use Sheba\TopUp\TopUpAgent;
 
 class BaseRepository
 {
@@ -19,7 +20,7 @@ class BaseRepository
     }
 
     /**
-     * @param Partner $partner
+     * @param Partner| TopUpAgent $partner
      * @return $this
      */
     public function setPartner(Partner $partner)

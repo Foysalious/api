@@ -134,14 +134,13 @@ class EventDataConverter
                         'event_class' => 'Sheba\Reward\Event\Partner\Action\PaymentLinkUsage\Event',
                         'rule_class' => 'Sheba\Reward\Event\Partner\Action\PaymentLinkUsage\Rule',
                         'parameters' => [
-                            'created_from' => [
-                                'type' => 'select',
-                                'possible_value' => indexedArrayToAssociative(config('sheba.portals'), config('sheba.portals')),
-                                'is_multi_selectable' => 1,
-                                'class' => 'Sheba\Reward\Event\Partner\Action\PaymentLinkUsage\Parameter\CreatedFrom'
-                            ]
+                            'amount' => [
+                                'type'  => 'number',
+                                'min'   => 0,
+                                'class' => 'Sheba\Reward\Event\Partner\Action\PaymentLinkUsage\Parameter\Amount'
+                            ],
                         ]
-                    ],
+                    ]
                 ],
                 'campaign' => [
                     'order_serve' => [

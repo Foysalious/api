@@ -1,8 +1,4 @@
-<?php
-
-
-namespace Sheba\ExpenseTracker;
-
+<?php namespace Sheba\ExpenseTracker;
 
 class AutomaticExpense
 {
@@ -18,7 +14,14 @@ class AutomaticExpense
     public static function heads()
     {
         return [
-            self::SUBSCRIPTION_FEE, self::MARKETPLACE_ORDER, self::PAYMENT_LINK, self::TOP_UP, self::MOVIE_TICKET, self::BUS_TICKET, self::E_SHOP, self::SMS
+            self::SUBSCRIPTION_FEE,
+            self::MARKETPLACE_ORDER,
+            self::PAYMENT_LINK,
+            self::TOP_UP,
+            self::MOVIE_TICKET,
+            self::BUS_TICKET,
+            self::E_SHOP,
+            self::SMS
         ];
     }
 }
