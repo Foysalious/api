@@ -1,4 +1,4 @@
-<?php namespace Sheba\Reward\Event\Partner\Action\PaymentLinkUsage\Parameter;
+<?php namespace Sheba\Reward\Event\Partner\Action\DailyUsage\Parameter;
 
 use Sheba\Reward\Event\ActionEventParameter;
 use Sheba\Reward\Exception\ParameterTypeMismatchException;
@@ -11,14 +11,14 @@ class CreatedFrom extends ActionEventParameter
     public function validate()
     {
         if (empty($this->value) && !is_null($this->value))
-            throw new ParameterTypeMismatchException("Created from can't be empty");
+            throw new ParameterTypeMismatchException("Requested From can't be empty");
     }
 
     public function check(array $params)
     {
-        $partner_pos_service = $params[1];
+        $requested_from = $params[1];
         if ($this->value != null) {
-            return in_array($partner_pos_service->created_by_name, $this->value);
+            return in_array($requested_from, $this->value);
         }
 
         return true;

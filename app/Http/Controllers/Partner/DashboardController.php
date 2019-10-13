@@ -147,7 +147,9 @@ class DashboardController extends Controller
                 'has_pos_due_order' => $total_due_for_pos_orders > 0 ? 1 : 0,
                 'has_pos_paid_order' => $has_pos_paid_order,
             ];
-            $this->setDailyUsageRecord($partner);
+
+            if (request()->hasHeader('Portal-Name'))
+                $this->setDailyUsageRecord($partner, request()->header('Portal-Name'));
 
             return api_response($request, $dashboard, 200, ['data' => $dashboard]);
         } catch (\Throwable $e) {
@@ -193,8 +195,9 @@ class DashboardController extends Controller
 
     /**
      * @param Partner $partner
+     * @param $portal_name
      */
-    private function setDailyUsageRecord(Partner $partner)
+    private function setDailyUsageRecord(Partner $partner, $portal_name)
     {
         $daily_usages_record_namespace = 'PartnerDailyAppUsages:partner_' . $partner->id;
         $daily_uses_count = Redis::get($daily_usages_record_namespace);
@@ -207,6 +210,6 @@ class DashboardController extends Controller
             Redis::expire($daily_usages_record_namespace, $second_left);
         }
 
-        app()->make(ActionRewardDispatcher::class)->run('daily_usage', $partner, $partner);
+        app()->make(ActionRewardDispatcher::class)->run('daily_usage', $partner, $partner,$portal_name);
     }
 }

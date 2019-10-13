@@ -3,6 +3,7 @@
 use App\Models\Partner;
 use App\Models\PartnerPosService;
 
+use App\Models\Payable;
 use Sheba\Reward\AmountCalculator;
 use Sheba\Reward\Event\Action;
 use Sheba\Reward\Event\Rule as BaseRule;
@@ -12,7 +13,13 @@ class Event extends Action implements AmountCalculator
 {
     /** @var Partner $partner */
     private $partner;
+    private $requestFrom;
 
+    /**
+     * @param BaseRule $rule
+     * @return Action
+     * @throws RulesTypeMismatchException
+     */
     public function setRule(BaseRule $rule)
     {
         if (!($rule instanceof Rule))
@@ -25,6 +32,7 @@ class Event extends Action implements AmountCalculator
     {
         parent::setParams($params);
         $this->partner = $this->params[0];
+        $this->requestFrom = $this->params[1];
     }
 
     public function isEligible()
