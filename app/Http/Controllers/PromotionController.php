@@ -209,8 +209,6 @@ class PromotionController extends Controller
         if ($partner_list->hasPartners) {
             $partner = $partner_list->partners->first();
             $order_amount = 0;
-            $delivery_charge = (new DeliveryCharge())->setCategory($request->selectedCategory)
-                ->setCategoryPartnerPivot($partner->categories->first()->pivot)->get(); //(double)$category_pivot->delivery_charge;
             foreach ($request->selectedServices as $selected_service) {
                 $service = $partner->services->where('id', $selected_service->id)->first();
                 $schedule_date_time = Carbon::parse(request()->get('date') . ' ' . explode('-', request()->get('time'))[0]);
@@ -219,7 +217,7 @@ class PromotionController extends Controller
                 if ($discount->__get('hasDiscount')) return null;
                 $order_amount += $discount->__get('discounted_price');
             }
-            return $order_amount + $delivery_charge;
+            return $order_amount;
         } else {
             return null;
         }
