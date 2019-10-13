@@ -14,11 +14,13 @@ use Sheba\PushNotificationHandler;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
 use DB;
+use Sheba\Reward\ActionRewardDispatcher;
 
 class PaymentLinkOrderComplete extends PaymentComplete
 {
     use DispatchesJobs;
     use ModificationFields;
+
     /** @var PaymentLinkRepository */
     private $paymentLinkRepository;
     /** @var PaymentLinkTransformer $paymentLink */
@@ -54,6 +56,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $this->failPayment();
             throw $e;
         }
+
         $this->payment = $this->saveInvoice();
         if ($this->paymentLink->getTarget()) {
             $payment = $this->payment;
@@ -61,6 +64,10 @@ class PaymentLinkOrderComplete extends PaymentComplete
             dispatch(new SendPaymentLinkSms($payment, $payment_link));
             $this->notifyManager($this->payment, $this->paymentLink);
         }
+
+        $payable = $this->payment->payable;
+        app()->make(ActionRewardDispatcher::class)->run('payment_link_usage', $payable->user, $payable->user, $payable);
+
         return $this->payment;
     }
 
