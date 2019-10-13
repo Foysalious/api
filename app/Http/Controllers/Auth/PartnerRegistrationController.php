@@ -15,6 +15,7 @@ use App\Models\Resource;
 use App\Repositories\PartnerRepository;
 use App\Repositories\ProfileRepository;
 
+use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -122,6 +123,9 @@ class PartnerRegistrationController extends Controller
         if ($request->has('billing_type') && $request->has('package_id')) {
             $data['billing_type'] = $request->billing_type;
             $data['package_id'] = $request->package_id;
+            $data['billing_start_date'] = Carbon::today();
+            $data['last_billed_date'] = Carbon::today();
+            $data['last_billed_amount'] = 0.00;
         }
         if ($request->has('affiliate_id')) {
             $data['affiliate_id'] = $request->affiliate_id;
@@ -223,9 +227,7 @@ class PartnerRegistrationController extends Controller
     public function registerByProfile(Request $request, ErrorLog $error_log)
     {
         try {
-            $this->validate($request, [
-                'company_name' => 'required|string', 'from' => 'string|in:' . implode(',', constants('FROM')), 'geo' => 'string', 'name' => 'string', 'number' => 'string', 'address' => 'string',
-            ]);
+            $this->validate($request, ['company_name' => 'required|string', 'from' => 'string|in:' . implode(',', constants('FROM')), 'geo' => 'string', 'name' => 'string', 'number' => 'string', 'address' => 'string',]);
             $profile = $request->profile;
             if (!$profile->resource) $resource = Resource::create(['profile_id' => $profile->id, 'remember_token' => str_random(60)]); else $resource = $profile->resource;
             $request['package_id'] = config('sheba.partner_lite_packages_id');
