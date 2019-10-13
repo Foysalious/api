@@ -134,7 +134,7 @@ class ProcurementController extends Controller
                     'status' => $procurement->status,
                     'labels' => $procurement->getTagNamesAttribute()->toArray(),
                     'start_date' => Carbon::parse($procurement->procurement_start_date)->format('d/m/y'),
-                    'published_at' => $procurement->is_published ? Carbon::parse($procurement->published_at)->format('d/m/y') : 'n/a',
+                    'published_at' => $procurement->is_published ? Carbon::parse($procurement->published_at)->format('d/m/y') : null,
                     'end_date' => Carbon::parse($procurement->procurement_end_date)->format('d/m/y'),
                     'number_of_participants' => $procurement->number_of_participants,
                     'last_date_of_submission' => Carbon::parse($procurement->last_date_of_submission)->format('Y-m-d'),
