@@ -16,7 +16,29 @@ class AutomaticEntryRepository extends BaseRepository
     private $amount_cleared;
     private $result;
     private $for;
+    private $source_type;
 
+    /**
+     * @param mixed $source_type
+     * @return AutomaticEntryRepository
+     */
+    public function setSourceType($source_type)
+    {
+        $this->source_type = $source_type;
+        return $this;
+    }
+
+    /**
+     * @param mixed $source_id
+     * @return AutomaticEntryRepository
+     */
+    public function setSourceId($source_id)
+    {
+        $this->source_id = $source_id;
+        return $this;
+    }
+
+    private $source_id;
     /**
      * @param mixed $for
      * @return AutomaticEntryRepository
@@ -88,6 +110,7 @@ class AutomaticEntryRepository extends BaseRepository
 
     /**
      * @return mixed
+     * @throws Exception
      */
     private function getData()
     {
@@ -97,11 +120,15 @@ class AutomaticEntryRepository extends BaseRepository
             'amount' => $this->amount,
             'amount_cleared' => $this->amount_cleared,
             'head_name' => $this->head,
-            'note' => 'Automatically Placed from Sheba'
+            'note' => 'Automatically Placed from Sheba',
+            'source_type' => $this->source_type,
+            'source_id' => $this->source_id
         ];
         if (empty($data['amount'])) $data['amount'] = 0;
         if (empty($data['amount_cleared'])) $data['amount_cleared'] = $data['amount'];
-
+        if (empty($data['head_name'])) {
+            throw new Exception('Head is not found');
+        }
         return $data;
     }
 
@@ -110,14 +137,39 @@ class AutomaticEntryRepository extends BaseRepository
      */
     public function store()
     {
-        return true;
         try {
             $data = $this->getData();
-            if (empty($data['head_name'])) {
-                throw new Exception('Head is not set before storing');
-            }
             $this->result = $this->client->post('accounts/' . $this->accountId . '/' . EntryType::getRoutable($this->for), $data)['data'];
             return $this->result;
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return false;
+        }
+    }
+
+    public function update()
+    {
+    }
+
+    public function updateFromSrc()
+    {
+
+        try {
+            $data = $this->getData();
+            if (empty($data['source_type']) || empty($data['source_id'])) throw new Exception('Source Type or Source id is not present');
+            $this->result = $this->client->post('accounts/' . $this->accountId . '/entries/from-type', $data)['data'];
+            return $this->result;
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return false;
+        }
+    }
+
+    public function deduct()
+    {
+        try {
+            $data = $this->getData();
+            return $this->client->post('accounts/' . $this->accountId . '/entries/from-type/deduct', $data)['data'];
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return false;
