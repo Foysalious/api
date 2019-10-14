@@ -1,13 +1,6 @@
 <?php
 
-use App\Models\Payment;
-use Sheba\Payment\Complete\PaymentLinkOrderComplete;
-
 Route::get('/', function () {
-    $Payment = Payment::find(17982);
-    $p=app(PaymentLinkOrderComplete::class);
-    $p->setPayment($Payment);
-    dd($p->complete());
     return ['code' => 200, 'message' => "Success. This project will hold the api's"];
 });
 

@@ -1,5 +1,6 @@
 <?php namespace Sheba\Reward\Event\Partner\Action\WalletRecharge\Parameter;
 
+use App\Models\Payable;
 use Sheba\Reward\Event\ActionEventParameter;
 use Sheba\Reward\Exception\ParameterTypeMismatchException;
 
@@ -7,7 +8,8 @@ class Amount extends ActionEventParameter
 {
     public function validate()
     {
-         if (empty($this->value)) throw new ParameterTypeMismatchException("Amount can't be empty");
+         if (empty($this->value))
+             throw new ParameterTypeMismatchException("Amount can't be empty");
     }
 
     /**
@@ -16,7 +18,12 @@ class Amount extends ActionEventParameter
      */
     public function check(array $params)
     {
-        $amount = $params[0];
-        return $amount >= $this->value;
+        /** @var Payable $payable */
+        $payable = $params[1];
+        if ($this->value != null) {
+            return $payable->amount >= $this->value;
+        }
+
+        return true;
     }
 }
