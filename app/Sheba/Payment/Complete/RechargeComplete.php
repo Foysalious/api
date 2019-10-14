@@ -1,7 +1,9 @@
 <?php namespace Sheba\Payment\Complete;
 
+use App\Models\Partner;
 use Illuminate\Database\QueryException;
 use DB;
+use Sheba\Reward\ActionRewardDispatcher;
 
 class RechargeComplete extends PaymentComplete
 {
@@ -17,6 +19,11 @@ class RechargeComplete extends PaymentComplete
                     'log' => 'Credit Purchase'
                 ]);
                 $this->completePayment();
+                $payable_user = $this->payment->payable->user;
+                $payable_amount = $this->payment->payable->amount;
+                if ($payable_user instanceof Partner) {
+                    app(ActionRewardDispatcher::class)->run('partner_wallet_recharge', $payable_user, $payable_amount, $payable_user);
+                }
             });
         } catch (QueryException $e) {
             $this->failPayment();
