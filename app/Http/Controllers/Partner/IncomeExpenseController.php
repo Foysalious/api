@@ -50,7 +50,7 @@ class IncomeExpenseController extends Controller
                 $partner_repo->update($request->partner, $data);
             }
 
-            $expenses = $this->statsRepo->between($time_frame->fromFrequencyRequest($request));
+            $expenses = $this->statsRepo->setPartner($request->partner)->between($time_frame->fromFrequencyRequest($request));
 
             return api_response($request, null, 200, ['expenses' => $expenses['data']]);
         } catch (ValidationException $e) {
