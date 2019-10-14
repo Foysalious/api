@@ -19,10 +19,10 @@ class RechargeComplete extends PaymentComplete
                     'log' => 'Credit Purchase'
                 ]);
                 $this->completePayment();
-                $payable_user = $this->payment->payable->user;
-                $payable_amount = $this->payment->payable->amount;
+                $payable = $this->payment->payable;
+                $payable_user = $payable->user;
                 if ($payable_user instanceof Partner) {
-                    app(ActionRewardDispatcher::class)->run('partner_wallet_recharge', $payable_user, $payable_amount, $payable_user);
+                    app(ActionRewardDispatcher::class)->run('partner_wallet_recharge', $payable_user, $payable_user, $payable);
                 }
             });
         } catch (QueryException $e) {
