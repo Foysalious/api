@@ -1,12 +1,20 @@
 <?php namespace Sheba\Reward\Event\Partner\Action\WalletRecharge;
 
+use App\Models\Payable;
+use Sheba\Reward\AmountCalculator;
 use Sheba\Reward\Event\Action;
 use Sheba\Reward\Exception\RulesTypeMismatchException;
 use Sheba\Reward\Event\Rule as BaseRule;
 
-class Event extends Action
+class Event extends Action implements AmountCalculator
 {
     private $partner;
+    /**
+     * @var float|int
+     */
+    private $rewardAmount;
+    /** @var Payable $payable */
+    private $payable;
 
     public function setRule(BaseRule $rule)
     {
@@ -19,7 +27,8 @@ class Event extends Action
     public function setParams(array $params)
     {
         parent::setParams($params);
-        $this->partner = $this->params[1];
+        $this->partner = $this->params[0];
+        $this->payable = $this->params[1];
     }
 
     public function isEligible()
@@ -42,7 +51,15 @@ class Event extends Action
 
     public function getLogEvent()
     {
-        $log = $this->reward->amount . ' ' . $this->reward->type . ' credited for ' . $this->reward->name . '(' . $this->reward->id . ') on partner id: ' . $this->partner->id;
-        return $log;
+        $reward_amount = $this->rewardAmount ?: $this->reward->amount;
+        return $reward_amount . ' ' . $this->reward->type . ' credited for ' . $this->reward->name . '(' . $this->reward->id . ') for wallet recharge.';
+    }
+
+    public function calculateAmount()
+    {
+        $amount = ($this->payable->amount * $this->reward->amount) / 100;
+        $this->rewardAmount = ($this->reward->cap && ($amount > $this->reward->cap)) ? $this->reward->cap : $amount;
+
+        return $this->rewardAmount;
     }
 }

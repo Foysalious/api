@@ -29,7 +29,8 @@ class EventDataConverter
                         'parameters' => [
                             'amount' => [
                                 'type'  => 'number',
-                                'min'   => 0
+                                'min'   => 0,
+                                'class' => 'Sheba\Reward\Event\Partner\Action\WalletRecharge\Parameter\Amount'
                             ]
                         ]
                     ],
