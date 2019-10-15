@@ -65,6 +65,7 @@ class JobDiscountHandler
 
     public function calculate()
     {
+        $this->discount = null;
         if(!$this->params->getDiscountableAmount()) return;
 
         $against = [];
