@@ -14,12 +14,22 @@ class CategoryController extends Controller
             $total_buying_price = 0.00;
 
             $sub_categories = PosCategory::child()->published()
-                ->with(['services' => function ($service_query) use ($partner) {
+                ->with(['services' => function ($service_query) use ($partner, $request) {
                     $service_query->partner($partner->id)
-                        ->with(['discounts' => function ($discounts_query) {
-                            $discounts_query->runningDiscounts()->select($this->getSelectColumnsOfServiceDiscount());
+                        ->with(['discounts' => function ($discounts_query) use ($request) {
+                            $discounts_query->runningDiscounts()
+                                ->select($this->getSelectColumnsOfServiceDiscount());
+
+                            if($request->has('updated_after')) {
+                                $discounts_query->where('updated_at', '>=', $request->updated_after);
+                            }
                         }])
                         ->select($this->getSelectColumnsOfService());
+
+                    if($request->has('updated_after')) {
+                        $service_query->where('updated_at', '>=', $request->updated_after);
+                    }
+
                 }])
                 ->select($this->getSelectColumnsOfCategory())
                 ->get();
