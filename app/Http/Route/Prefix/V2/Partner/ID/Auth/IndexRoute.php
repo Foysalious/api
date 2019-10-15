@@ -50,6 +50,7 @@ class IndexRoute
                     $api->post('/', 'Pos\ServiceController@store');
                     $api->group(['prefix' => '{service}'], function ($api) {
                         $api->get('/', 'Pos\ServiceController@show');
+                        $api->get('/logs', 'Pos\ServiceController@getLogs');
                         $api->post('/', 'Pos\ServiceController@update');
                         $api->delete('/', 'Pos\ServiceController@destroy');
                         $api->post('/toggle-publish-for-shop', 'Pos\ServiceController@togglePublishForShopStatus');
