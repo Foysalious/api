@@ -62,7 +62,7 @@ class OrderAdapter extends BaseAdapter implements PayableAdapter
         if ($this->job->isOnlinePaymentDiscountApplicable()) {
             $due -= $this->discountedAmount();
         }
-        return $due;
+        return floor($due);
     }
 
     private function discountedAmount()
