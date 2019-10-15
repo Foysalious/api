@@ -202,6 +202,12 @@ class Creator
         /** @var AutomaticEntryRepository $entry */
         $entry = app(AutomaticEntryRepository::class);
         $amount = (double)$order->calculate()->getNetBill();
-        $entry->setPartner($this->partner)->setAmount($amount)->setAmountCleared($order->getPaid())->setHead(AutomaticIncomes::POS)->store();
+        $entry->setPartner($this->partner)
+            ->setAmount($amount)
+            ->setAmountCleared($order->getPaid())
+            ->setHead(AutomaticIncomes::POS)
+            ->setSourceType(class_basename($order))
+            ->setSourceId($order->id)
+            ->store();
     }
 }
