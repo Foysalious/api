@@ -2,6 +2,9 @@
 
 use App\Models\PosOrder;
 use App\Models\PosOrderItem;
+use Sheba\ExpenseTracker\AutomaticExpense;
+use Sheba\ExpenseTracker\AutomaticIncomes;
+use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\Pos\Discount\Handler as DiscountHandler;
 use Sheba\Pos\Product\StockManager;
 use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
@@ -69,7 +72,27 @@ class Updater
 
         $order_data = [];
         if (isset($this->data['customer_id'])) $order_data['customer_id'] = $this->data['customer_id'];
-        return $this->orderRepo->update($this->order, $order_data);
+        /** @var PosOrder $order */
+        $order = $this->orderRepo->update($this->order, $order_data);
+        $this->updateIncome($order);
+        return $order;
+    }
+
+    /**
+     * @param PosOrder $order
+     */
+    private function updateIncome(PosOrder $order)
+    {
+        /** @var AutomaticEntryRepository $entry */
+        $entry = app(AutomaticEntryRepository::class);
+        $amount = (double)$order->calculate()->getNetBill();
+        $entry->setPartner($order->partner)
+            ->setAmount($amount)
+            ->setAmountCleared($order->getPaid())
+            ->setHead(AutomaticIncomes::POS)
+            ->setSourceType(class_basename($order))
+            ->setSourceId($order->id)
+            ->updateFromSrc();
     }
 
     /**

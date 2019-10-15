@@ -1,5 +1,7 @@
 <?php namespace Sheba\ExpenseTracker;
 
+use ReflectionClass;
+
 class AutomaticIncomes
 {
     const MARKET_PLACE = 'Marketplace sales';
@@ -11,13 +13,6 @@ class AutomaticIncomes
 
     public static function heads()
     {
-        return [
-            self::MARKET_PLACE,
-            self::POS,
-            self::TOP_UP,
-            self::MOVIE_TICKET,
-            self::BUS_TICKET,
-            self::PAYMENT_LINK
-        ];
+        return array_values((new ReflectionClass(__CLASS__))->getConstants());
     }
 }
