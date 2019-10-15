@@ -153,6 +153,7 @@ class ServiceController extends Controller
             $this->validate($request, $rules);
             $this->setModifier($request->partner);
             $partner_pos_service = PartnerPosService::find($request->service);
+            dd($partner_pos_service);
             if (!$partner_pos_service) return api_response($request, null, 400, ['msg' => 'Service Not Found']);
             $updater->setService($partner_pos_service)->setData($request->all())->update();
 
@@ -285,5 +286,25 @@ class ServiceController extends Controller
     private function getSelectColumnsOfService()
     {
         return ['id', 'name', 'app_thumb', 'app_banner', 'price', 'stock', 'vat_percentage', 'is_published_for_shop', 'warranty', 'warranty_unit','unit','wholesale_price'];
+    }
+
+    public function getLogs(Request $request)
+    {
+        $logs = [
+            [
+                'from' => 50,
+                'to' => 100,
+                'created_by' => 'Posh',
+                'created_at' => '2019-10-15 14:00:00'
+            ],
+            [
+                'from' => 10,
+                'to' => 30,
+                'created_by' => 'Raju',
+                'created_at' => '2019-10-15 15:00:00'
+            ]
+        ];
+        return api_response($request, null, 200, ['logs' => $logs]);
+
     }
 }
