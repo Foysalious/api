@@ -1,19 +1,15 @@
 <?php namespace App\Http\Controllers\Partner;
 
 use App\Http\Controllers\Controller;
-use App\Models\PosCustomer;
 use App\Models\Profile;
-use App\Repositories\ProfileRepository;
 use App\Transformers\CustomSerializer;
-use App\Transformers\PayableItemTransformer;
-use App\Transformers\PayableTransformer;
 use App\Transformers\ReceivableTransformer;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
-use Sheba\Analysis\ExpenseIncome\ExpenseIncome;
+use Sheba\ExpenseTracker\Repository\StatsRepository;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
@@ -28,10 +24,13 @@ class IncomeExpenseController extends Controller
 
     /** @var EntryRepository */
     private $entryRepo;
+    /** @var StatsRepository */
+    private $statsRepo;
 
-    public function __construct(EntryRepository $entry_repo)
+    public function __construct(EntryRepository $entry_repo, StatsRepository $stats_repo)
     {
         $this->entryRepo = $entry_repo;
+        $this->statsRepo = $stats_repo;
     }
 
     /**
@@ -50,8 +49,8 @@ class IncomeExpenseController extends Controller
                 $data = ['expense_account_id' => $account['id']];
                 $partner_repo->update($request->partner, $data);
             }
-            $time_frame = $time_frame->fromFrequencyRequest($request);
-            $expenses = $this->entryRepo->setPartner($request->partner)->statsBetween($time_frame);
+
+            $expenses = $this->statsRepo->setPartner($request->partner)->between($time_frame->fromFrequencyRequest($request));
 
             return api_response($request, null, 200, ['expenses' => $expenses['data']]);
         } catch (ValidationException $e) {

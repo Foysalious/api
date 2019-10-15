@@ -85,7 +85,7 @@ class ProcurementController extends Controller
             $start_date = $request->has('start_date') ? $request->start_date : null;
             $end_date = $request->has('end_date') ? $request->end_date : null;
             if ($start_date && $end_date) {
-                $procurements->whereBetween('published_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
+                $procurements->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
             }
             $procurements = $procurements->skip($offset)->limit($limit);
             $procurements_list = [];

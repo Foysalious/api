@@ -110,6 +110,7 @@ class AutomaticEntryRepository extends BaseRepository
      */
     public function store()
     {
+        return true;
         try {
             $data = $this->getData();
             if (empty($data['head_name'])) {

@@ -259,7 +259,7 @@ class PartnerSubscriptionController extends Controller
             $currentPackage = $request->partner->subscription;
             $requestedPackage = PartnerSubscriptionPackage::find($request->package_id);
             if (empty($requestedPackage)) {
-                return api_response($request, null, 403, ['message' => ' আপনার  অনুরধক্রিত  প্যকেজটি পাওয়া যায়  নাই']);
+                return api_response($request, null, 403, ['message' => 'আপনার অনুরধক্রিত প্যকেজটি পাওয়া যায় নাই']);
             }
 
             $this->setModifier($request->manager_resource);
@@ -279,9 +279,9 @@ class PartnerSubscriptionController extends Controller
                     $request->partner->subscriptionUpgrade($requestedPackage, $upgradeRequest);
 
                     if ($grade === PartnerSubscriptionChange::RENEWED) {
-                        return api_response($request, null, 200, array_merge(['message' => "আপনাকে $requestedPackage->show_name_bn  প্যকেজে পুনর্বহাল করা হয়েছে ।"], $balance));
+                        return api_response($request, null, 200, array_merge(['message' => "আপনাকে $requestedPackage->show_name_bn প্যকেজে পুনর্বহাল করা হয়েছে।"], $balance));
                     } else {
-                        return api_response($request, null, 200, array_merge(['message' => "আপনাকে $requestedPackage->show_name_bn  প্যকেজে উন্নীত করা হয়েছে ।"], $balance));
+                        return api_response($request, null, 200, array_merge(['message' => "আপনাকে $requestedPackage->show_name_bn প্যকেজে উন্নীত করা হয়েছে।"], $balance));
                     }
                 } catch (Throwable $e) {
                     $upgradeRequest->delete();

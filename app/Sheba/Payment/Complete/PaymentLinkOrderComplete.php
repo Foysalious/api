@@ -71,6 +71,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
 
         $payable = $this->payment->payable;
         app(ActionRewardDispatcher::class)->run('payment_link_usage', $payment_receiver, $payment_receiver, $payable);
+        /** @var AutomaticEntryRepository */
         app(AutomaticEntryRepository::class)->setPartner($payment_receiver)->setAmount($payable->amount)->setHead(AutomaticIncomes::PAYMENT_LINK)->store();
 
         return $this->payment;
@@ -118,6 +119,8 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $minus_log = "$formatted_minus_amount TK has been charged as link service fees against of Transc ID: {$recharge_transaction->id}, and Transc amount: $formatted_recharge_amount";
 
         $payment_receiver->minusWallet($minus_wallet_amount, ['log' => $minus_log]);
+
+        /** @var AutomaticEntryRepository */
         app(AutomaticEntryRepository::class)->setPartner($payment_receiver)->setAmount($minus_wallet_amount)->setHead(AutomaticExpense::PAYMENT_LINK)->store();
     }
 
@@ -137,6 +140,10 @@ class PaymentLinkOrderComplete extends PaymentComplete
         }
     }
 
+    /**
+     * @param Payment $payment
+     * @param PaymentLinkTransformer $payment_link
+     */
     private function notifyManager(Payment $payment, PaymentLinkTransformer $payment_link)
     {
         $partner = $payment_link->getPaymentReceiver();
@@ -153,5 +160,4 @@ class PaymentLinkOrderComplete extends PaymentComplete
             "channel_id" => $channel
         ], $topic, $channel, $sound);
     }
-
 }
