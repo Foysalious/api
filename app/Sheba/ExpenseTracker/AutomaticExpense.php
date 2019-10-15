@@ -5,7 +5,7 @@ use ReflectionClass;
 class AutomaticExpense
 {
     const SUBSCRIPTION_FEE = 'Subscription fee';
-    const MARKETPLACE_ORDER = 'Commission of market place order';
+    const MARKET_PLACE_ORDER = 'Commission of market place order';
     const PAYMENT_LINK = 'Commission of payment link';
     const TOP_UP = 'Top up purchase amount';
     const MOVIE_TICKET = 'Movie ticker purchase amount';
