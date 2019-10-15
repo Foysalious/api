@@ -122,7 +122,8 @@ class AutomaticEntryRepository extends BaseRepository
             'head_name' => $this->head,
             'note' => 'Automatically Placed from Sheba',
             'source_type' => $this->source_type,
-            'source_id' => $this->source_id
+            'source_id' => $this->source_id,
+            'type' => $this->for
         ];
         if (empty($data['amount'])) $data['amount'] = 0;
         if (empty($data['amount_cleared'])) $data['amount_cleared'] = $data['amount'];
@@ -142,7 +143,7 @@ class AutomaticEntryRepository extends BaseRepository
             $this->result = $this->client->post('accounts/' . $this->accountId . '/' . EntryType::getRoutable($this->for), $data)['data'];
             return $this->result;
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            $this->notifyBug($e);
             return false;
         }
     }
@@ -160,7 +161,7 @@ class AutomaticEntryRepository extends BaseRepository
             $this->result = $this->client->post('accounts/' . $this->accountId . '/entries/from-type', $data)['data'];
             return $this->result;
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            $this->notifyBug($e);
             return false;
         }
     }
@@ -169,10 +170,28 @@ class AutomaticEntryRepository extends BaseRepository
     {
         try {
             $data = $this->getData();
+            if (empty($data['source_type']) || empty($data['source_id'])) throw new Exception('Source Type or Source id is not present');
             return $this->client->post('accounts/' . $this->accountId . '/entries/from-type/deduct', $data)['data'];
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            $this->notifyBug($e);
             return false;
         }
+    }
+
+    public function delete()
+    {
+        try {
+            $data = $this->getData();
+            if (empty($data['source_type']) || empty($data['source_id'])) throw new Exception('Source Type or Source id is not present');
+            return $this->client->post('accounts/' . $this->accountId . '/entries/from-type/delete', $data)['data'];
+        } catch (Throwable $e) {
+            $this->notifyBug($e);
+            return false;
+        }
+    }
+
+    private function notifyBug(Throwable $e)
+    {
+        app('sentry')->captureException($e);
     }
 }

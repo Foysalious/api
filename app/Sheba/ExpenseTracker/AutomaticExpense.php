@@ -1,5 +1,7 @@
 <?php namespace Sheba\ExpenseTracker;
 
+use ReflectionClass;
+
 class AutomaticExpense
 {
     const SUBSCRIPTION_FEE = 'Subscription fee';
@@ -13,15 +15,6 @@ class AutomaticExpense
 
     public static function heads()
     {
-        return [
-            self::SUBSCRIPTION_FEE,
-            self::MARKETPLACE_ORDER,
-            self::PAYMENT_LINK,
-            self::TOP_UP,
-            self::MOVIE_TICKET,
-            self::BUS_TICKET,
-            self::E_SHOP,
-            self::SMS
-        ];
+        return array_values((new ReflectionClass(__CLASS__))->getConstants());
     }
 }
