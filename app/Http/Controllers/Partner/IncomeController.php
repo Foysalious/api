@@ -140,7 +140,7 @@ class IncomeController extends Controller
             $manager->setSerializer(new CustomSerializer());
             $resource = new Item($income, new IncomeTransformer());
             $income_formatted = $manager->createData($resource)->toArray()['data'];
-            $income_formatted['is_editable'] = in_array($income['head']['name'], AutomaticIncomes::heads());
+            $income_formatted['is_editable'] = !in_array($income['head']['name'], AutomaticIncomes::heads());
 
             return api_response($request, $income, 200, ["income" => $income_formatted]);
         } catch (ExpenseTrackingServerError $e) {
