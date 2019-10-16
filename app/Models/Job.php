@@ -943,7 +943,8 @@ class Job extends BaseModel
 
     public function isOnlinePaymentDiscountApplicable()
     {
-        return $this->created_at->copy()->addMinutes(config('sheba.online_payment_discount_threshold_minutes')) >= Carbon::now() && $this->online_discount == 0;
+        $discount_threshold_minutes = config('sheba.online_payment_discount_threshold_minutes');
+        return $discount_threshold_minutes ? $this->created_at->copy()->addMinutes($discount_threshold_minutes) >= Carbon::now() && $this->online_discount == 0 : 1;
     }
 
     public function isCapApplied()
