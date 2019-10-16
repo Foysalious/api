@@ -120,7 +120,7 @@ return [
     'sheba_help_desk_id' => 1809,
     'best_deal_ids' => env('BEST_DEAL_IDS'),
     'service_group_ids' => env('SERVICE_GROUP_IDS'),
-    'online_payment_discount_threshold_minutes' => 30,
+    'online_payment_discount_threshold_minutes' => null,
     'online_payment_discount_percentage' => env('ONLINE_PAYMENT_DISCOUNT_PERCENTAGE', 0),
     'car_rental' => [
         'master_category_id' => env('RENT_A_CAR_CATEGORY_ID'),
