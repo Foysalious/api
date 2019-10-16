@@ -754,8 +754,16 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
     public function isAlreadyCollectedAdvanceSubscriptionFee()
     {
         $last_subscription_package_charge = $this->subscriptionPackageCharges()->orderBy('id', 'desc')->first();
-        if (!$last_subscription_package_charge) return false;
+        if (empty($last_subscription_package_charge)) return false;
         return $this->last_billed_date ? $last_subscription_package_charge->billing_date->between($this->last_billed_date->addSecond(), $this->periodicBillingHandler()->nextBillingDate()) : false;
+    }
+
+    public function alreadyCollectedSubscriptionFee()
+    {
+        if (!$this->isAlreadyCollectedAdvanceSubscriptionFee()) return 0;
+        $last_subscription_package_charge = $this->subscriptionPackageCharges()->orderBy('id', 'desc')->first();
+        if (!empty($last_subscription_package_charge)) return $last_subscription_package_charge->package_price;
+        else return 0;
     }
 
     public function subscriptionPackageCharges()
