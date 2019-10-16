@@ -152,7 +152,7 @@ class ExpenseController extends Controller
             $expense_formatted = $manager->createData($resource)->toArray()['data'];
 
             $expense_formatted['customer'] = null;
-            $expense_formatted['is_editable'] = in_array($expense['head']['name'], AutomaticExpense::heads());
+            $expense_formatted['is_editable'] = !in_array($expense['head']['name'], AutomaticExpense::heads());
             if (isset($expense['party']['profile_id'])) {
                 $pos_customer = PosCustomer::with('profile')->where('profile_id', $expense['party']['profile_id'])->first();
                 $expense_formatted['customer'] = ['id' => $pos_customer->id, 'name' => $pos_customer->profile->name];
