@@ -201,7 +201,8 @@ class Creator
     {
         /** @var AutomaticEntryRepository $entry */
         $entry = app(AutomaticEntryRepository::class);
-        $amount = (double)$order->calculate()->getNetBill();
+        $order = $order->calculate();
+        $amount = (double)$order->getNetBill();
         $entry->setPartner($this->partner)
             ->setAmount($amount)
             ->setAmountCleared($order->getPaid())

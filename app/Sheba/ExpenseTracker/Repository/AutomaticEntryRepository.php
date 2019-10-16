@@ -17,6 +17,7 @@ class AutomaticEntryRepository extends BaseRepository
     private $result;
     private $for;
     private $source_type;
+    private $source_id;
 
     /**
      * @param mixed $source_type
@@ -38,7 +39,6 @@ class AutomaticEntryRepository extends BaseRepository
         return $this;
     }
 
-    private $source_id;
     /**
      * @param mixed $for
      * @return AutomaticEntryRepository
@@ -91,11 +91,9 @@ class AutomaticEntryRepository extends BaseRepository
      */
     private function validateHead($head)
     {
-        if (!in_array($head, AutomaticIncomes::heads()) && !in_array($head, AutomaticExpense::heads()))
-            throw new InvalidHeadException();
+        if (!in_array($head, AutomaticIncomes::heads()) && !in_array($head, AutomaticExpense::heads())) throw new InvalidHeadException();
 
-        if (in_array($head, AutomaticExpense::heads())) $this->for = EntryType::EXPENSE;
-        else $this->for = EntryType::INCOME;
+        if (in_array($head, AutomaticExpense::heads())) $this->for = EntryType::EXPENSE; else $this->for = EntryType::INCOME;
     }
 
     /**
@@ -109,37 +107,15 @@ class AutomaticEntryRepository extends BaseRepository
     }
 
     /**
-     * @return mixed
-     * @throws Exception
-     */
-    private function getData()
-    {
-        $data = [
-            'created_at' => Carbon::now()->format('Y-m-d H:s:i'),
-            'created_from' => json_encode((new RequestIdentification())->get()),
-            'amount' => $this->amount,
-            'amount_cleared' => $this->amount_cleared,
-            'head_name' => $this->head,
-            'note' => 'Automatically Placed from Sheba',
-            'source_type' => $this->source_type,
-            'source_id' => $this->source_id,
-            'type' => $this->for
-        ];
-        if (empty($data['amount'])) $data['amount'] = 0;
-        if (empty($data['amount_cleared'])) $data['amount_cleared'] = $data['amount'];
-        if (empty($data['head_name'])) {
-            throw new Exception('Head is not found');
-        }
-        return $data;
-    }
-
-    /**
      * @return bool
      */
     public function store()
     {
         try {
             $data = $this->getData();
+            if (empty($data['head_name'])) {
+                throw new Exception('Head is not found');
+            }
             $this->result = $this->client->post('accounts/' . $this->accountId . '/' . EntryType::getRoutable($this->for), $data)['data'];
             return $this->result;
         } catch (Throwable $e) {
@@ -148,16 +124,36 @@ class AutomaticEntryRepository extends BaseRepository
         }
     }
 
+    /**
+     * @return mixed
+     * @throws Exception
+     */
+    private function getData()
+    {
+        $data = [
+            'created_at' => Carbon::now()->format('Y-m-d H:s:i'), 'created_from' => json_encode((new RequestIdentification())->get()), 'amount' => $this->amount, 'amount_cleared' => $this->amount_cleared, 'head_name' => $this->head, 'note' => 'Automatically Placed from Sheba', 'source_type' => $this->source_type, 'source_id' => $this->source_id, 'type' => $this->for
+        ];
+        if (empty($data['amount'])) $data['amount'] = 0;
+        if (empty($data['amount_cleared']) && $data['amount_cleared'] != 0) $data['amount_cleared'] = $data['amount'];
+
+        return $data;
+    }
+
+    private function notifyBug(Throwable $e)
+    {
+        app('sentry')->captureException($e);
+    }
+
     public function update()
     {
     }
 
     public function updateFromSrc()
     {
-
         try {
             $data = $this->getData();
             if (empty($data['source_type']) || empty($data['source_id'])) throw new Exception('Source Type or Source id is not present');
+
             $this->result = $this->client->post('accounts/' . $this->accountId . '/entries/from-type', $data)['data'];
             return $this->result;
         } catch (Throwable $e) {
@@ -188,10 +184,5 @@ class AutomaticEntryRepository extends BaseRepository
             $this->notifyBug($e);
             return false;
         }
-    }
-
-    private function notifyBug(Throwable $e)
-    {
-        app('sentry')->captureException($e);
     }
 }
