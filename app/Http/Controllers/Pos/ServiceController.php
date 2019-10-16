@@ -292,20 +292,18 @@ class ServiceController extends Controller
     {
         $logs = [
             [
-                'log_type' => 'inventory',
-                'from' => 50,
-                'to' => 100,
-                'unit' => 'kg',
+                'log_type' => 'stock',
+                'log_type_show_name' => ['bn' => 'Bangla inventory', 'en' => 'English inventory'],
+                'log' => 'log details 01',
                 'created_by' => 'Posh',
                 'created_at' => '2019-10-15 14:00:00'
             ],
             [
-                'log_type' => 'inventory',
-                'from' => 10,
-                'to' => 30,
-                'unit' => 'kg',
-                'created_by' => 'Raju',
-                'created_at' => '2019-10-15 15:00:00'
+                'log_type' => 'stock',
+                'log_type_show_name' => ['bn' => 'Bangla inventory', 'en' => 'English inventory'],
+                'log' => 'log details 02',
+                'created_by' => 'Posh',
+                'created_at' => '2019-10-15 14:00:00'
             ]
         ];
         return api_response($request, null, 200, ['logs' => $logs]);
