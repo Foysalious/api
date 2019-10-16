@@ -623,4 +623,19 @@ return [
             'log' => '%s TK has been charged as Transport Ticket price'
         ]
     ],
+    'BIDDER_TYPE' => [
+        'affiliate' => 'App\Models\Affiliate',
+        'partner' => 'App\Models\Partner',
+        'resource' => 'App\Models\Resource'
+    ],
+    'BID_STATUSES' => [
+        'drafted' => 'drafted',
+        'sent' => 'sent'
+    ],
+    'BID_PROCUREMENT_STATUSES' => [
+        'pending' => 'pending',
+        'rejected' => 'rejected',
+        'accepted' => 'accepted',
+        'drafted' => 'drafted'
+    ]
 ];
