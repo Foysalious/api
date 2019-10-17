@@ -1,6 +1,7 @@
 <?php namespace Sheba\Bkash\Modules;
 
 use App\Models\Affiliate;
+use App\Models\Business;
 use App\Models\Customer;
 use App\Models\Partner;
 use Exception;
@@ -47,7 +48,7 @@ class BkashAuthBuilder
      */
     public static function getForUser($user)
     {
-        if ($user instanceof Customer) {
+        if ($user instanceof Customer || $user instanceof Business) {
             return self::set018BkashAuth();
         } elseif ($user instanceof Affiliate) {
             return self::set017BkashAuth();
