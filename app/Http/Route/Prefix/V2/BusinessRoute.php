@@ -98,6 +98,9 @@ class BusinessRoute
                         $api->post('invitations', 'B2b\ProcurementController@sendInvitation');
                         $api->post('publish', 'B2b\ProcurementController@updateStatus');
                         $api->post('general', 'B2b\ProcurementController@updateGeneral');
+                        $api->group(['prefix' => 'bids'], function ($api) {
+                            $api->get('/', 'B2b\BidController@index');
+                        });
                     });
                     $api->get('/', 'B2b\ProcurementController@index');
                     $api->get('/{procurement}', 'B2b\ProcurementController@show');

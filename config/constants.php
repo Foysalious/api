@@ -637,5 +637,13 @@ return [
         'rejected' => 'rejected',
         'accepted' => 'accepted',
         'drafted' => 'drafted'
+    ],
+    'BID_PROCUREMENT_ITEM_FIELD' => [
+        'text' => 'text',
+        'textarea' => 'textarea',
+        'radio' => 'radio',
+        'checkbox' => 'checkbox',
+        'number' => 'number',
+        'select' => 'select'
     ]
 ];
