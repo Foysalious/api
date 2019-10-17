@@ -8,7 +8,7 @@ class Bid extends Model
 
     public function bidItems()
     {
-        return $this->hasMany(BidItem::class);
+        return $this->hasMany(BidItem::class, 'bid_id');
     }
 
     public function procurement()
