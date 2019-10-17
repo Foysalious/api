@@ -1,11 +1,13 @@
 <?php namespace Sheba\ExpenseTracker\Repository;
 
+use App\Models\Profile;
 use Carbon\Carbon;
 use Exception;
 use Sheba\ExpenseTracker\AutomaticExpense;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\EntryType;
 use Sheba\ExpenseTracker\Exceptions\InvalidHeadException;
+use Sheba\ExpenseTracker\Repository\Profileofile as ProfileofileAlias;
 use Sheba\RequestIdentification;
 use Throwable;
 
@@ -13,11 +15,12 @@ class AutomaticEntryRepository extends BaseRepository
 {
     private $head;
     private $amount;
-    private $amount_cleared;
     private $result;
     private $for;
-    private $source_type;
-    private $source_id;
+    private $profileId;
+    private $amountCleared;
+    private $sourceType;
+    private $sourceId;
 
     /**
      * @param mixed $source_type
@@ -25,7 +28,7 @@ class AutomaticEntryRepository extends BaseRepository
      */
     public function setSourceType($source_type)
     {
-        $this->source_type = $source_type;
+        $this->sourceType = $source_type;
         return $this;
     }
 
@@ -35,7 +38,7 @@ class AutomaticEntryRepository extends BaseRepository
      */
     public function setSourceId($source_id)
     {
-        $this->source_id = $source_id;
+        $this->sourceId = $source_id;
         return $this;
     }
 
@@ -46,6 +49,16 @@ class AutomaticEntryRepository extends BaseRepository
     public function setFor($for)
     {
         $this->for = $for;
+        return $this;
+    }
+
+    /**
+     * @param Profile $profile
+     * @return AutomaticEntryRepository
+     */
+    public function setParty(Profile $profile)
+    {
+        $this->profileId = $profile->id;
         return $this;
     }
 
@@ -91,9 +104,11 @@ class AutomaticEntryRepository extends BaseRepository
      */
     private function validateHead($head)
     {
-        if (!in_array($head, AutomaticIncomes::heads()) && !in_array($head, AutomaticExpense::heads())) throw new InvalidHeadException();
+        if (!in_array($head, AutomaticIncomes::heads()) && !in_array($head, AutomaticExpense::heads()))
+            throw new InvalidHeadException();
 
-        if (in_array($head, AutomaticExpense::heads())) $this->for = EntryType::EXPENSE; else $this->for = EntryType::INCOME;
+        if (in_array($head, AutomaticExpense::heads())) $this->for = EntryType::EXPENSE;
+        else $this->for = EntryType::INCOME;
     }
 
     /**
@@ -102,7 +117,7 @@ class AutomaticEntryRepository extends BaseRepository
      */
     public function setAmountCleared($amount_cleared)
     {
-        $this->amount_cleared = $amount_cleared;
+        $this->amountCleared = $amount_cleared;
         return $this;
     }
 
@@ -113,10 +128,9 @@ class AutomaticEntryRepository extends BaseRepository
     {
         try {
             $data = $this->getData();
-            if (empty($data['head_name'])) {
-                throw new Exception('Head is not found');
-            }
+            if (empty($data['head_name'])) throw new Exception('Head is not found');
             $this->result = $this->client->post('accounts/' . $this->accountId . '/' . EntryType::getRoutable($this->for), $data)['data'];
+
             return $this->result;
         } catch (Throwable $e) {
             $this->notifyBug($e);
@@ -131,10 +145,19 @@ class AutomaticEntryRepository extends BaseRepository
     private function getData()
     {
         $data = [
-            'created_at' => Carbon::now()->format('Y-m-d H:s:i'), 'created_from' => json_encode((new RequestIdentification())->get()), 'amount' => $this->amount, 'amount_cleared' => $this->amount_cleared, 'head_name' => $this->head, 'note' => 'Automatically Placed from Sheba', 'source_type' => $this->source_type, 'source_id' => $this->source_id, 'type' => $this->for
+            'created_at' => Carbon::now()->format('Y-m-d H:s:i'),
+            'created_from' => json_encode((new RequestIdentification())->get()),
+            'amount' => $this->amount,
+            'amount_cleared' => $this->amountCleared,
+            'head_name' => $this->head,
+            'note' => 'Automatically Placed from Sheba',
+            'source_type' => $this->sourceType,
+            'source_id' => $this->sourceId,
+            'type' => $this->for
         ];
         if (empty($data['amount'])) $data['amount'] = 0;
-        if (empty($data['amount_cleared']) || $data['amount_cleared'] == 0) $data['amount_cleared'] = $data['amount'];
+        if (empty($data['amount_cleared']) && $data['amount_cleared'] != 0) $data['amount_cleared'] = $data['amount'];
+        if ($this->profileId) $data['profile_id'] = $this->profileId;
 
         return $data;
     }
