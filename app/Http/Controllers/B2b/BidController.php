@@ -1,7 +1,9 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Models\Bid;
 use App\Models\Procurement;
 use Illuminate\Validation\ValidationException;
+use Sheba\Business\Bid\Creator;
 use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\BidRepositoryInterface;
 use App\Sheba\Business\ACL\AccessControl;
@@ -44,14 +46,42 @@ class BidController extends Controller
                     ]);
                 }
                 array_push($bid_lists, [
-                    'name' => $bidder->name,
-                    'logo' => $bidder->logo,
-                    'avg_rating' => round($reviews->avg('rating'), 2),
-                    'item' => $item_type,
+                    'id' => $bid->id,
+                    'status' => $bid->status,
+                    'bidder_name' => $bidder->name,
+                    'bidder_logo' => $bidder->logo,
+                    'bidder_avg_rating' => round($reviews->avg('rating'), 2),
+                    'item' => $item_type
                 ]);
             }
             if (count($bid_lists) > 0) return api_response($request, $bid_lists, 200, ['bid_lists' => $bid_lists]);
             else return api_response($request, null, 404);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function updateFavourite($business, $bid, Request $request, Creator $creator)
+    {
+
+        try {
+            $this->validate($request, [
+                'is_favourite' => 'required|integer:in:1,0',
+            ]);
+            $bid = Bid::findOrFail((int)$bid);
+            if (!$bid) {
+                return api_response($request, null, 404);
+            } else {
+                $creator->setIsFavourite($request->is_favourite)->updateFavourite($bid);
+                return api_response($request, null, 200);
+            }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
