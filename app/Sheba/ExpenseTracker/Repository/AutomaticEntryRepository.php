@@ -134,7 +134,7 @@ class AutomaticEntryRepository extends BaseRepository
             'created_at' => Carbon::now()->format('Y-m-d H:s:i'), 'created_from' => json_encode((new RequestIdentification())->get()), 'amount' => $this->amount, 'amount_cleared' => $this->amount_cleared, 'head_name' => $this->head, 'note' => 'Automatically Placed from Sheba', 'source_type' => $this->source_type, 'source_id' => $this->source_id, 'type' => $this->for
         ];
         if (empty($data['amount'])) $data['amount'] = 0;
-        if (empty($data['amount_cleared']) && $data['amount_cleared'] != 0) $data['amount_cleared'] = $data['amount'];
+        if (empty($data['amount_cleared']) || $data['amount_cleared'] == 0) $data['amount_cleared'] = $data['amount'];
 
         return $data;
     }
