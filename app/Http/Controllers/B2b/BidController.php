@@ -25,8 +25,8 @@ class BidController extends Controller
             foreach ($bids->get() as $bid) {
                 $model = $bid->bidder_type;
                 $bidder = $model::findOrFail((int)$bid->bidder_id);
-                /* $reviews = $bidder->reviews;*/
-                /*dd($reviews->first());*/
+                $reviews = $bidder->reviews;
+
                 $bid_items = $bid->bidItems;
                 $item_type = [];
                 foreach ($bid_items as $item) {
@@ -46,6 +46,7 @@ class BidController extends Controller
                 array_push($bid_lists, [
                     'name' => $bidder->name,
                     'logo' => $bidder->logo,
+                    'avg_rating' => round($reviews->avg('rating'), 2),
                     'item' => $item_type,
                 ]);
             }
@@ -58,7 +59,6 @@ class BidController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
