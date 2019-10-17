@@ -522,6 +522,7 @@ if (!function_exists('normalizeCases')) {
         return ucwords(str_replace(['_', '-'], ' ', $value));
     }
 }
+
 if (!function_exists('isNormalized')) {
     /**
      * @param string $value
@@ -532,6 +533,7 @@ if (!function_exists('isNormalized')) {
         return str_contains($value, ' ');
     }
 }
+
 if (!function_exists('ramp')) {
     /**
      * @param $value
@@ -566,6 +568,7 @@ if (!function_exists('isAssoc')) {
         return array_keys($arr) !== range(0, count($arr) - 1);
     }
 }
+
 if (!function_exists('convertNumbersToBangla')) {
     function convertNumbersToBangla(float $number, $formatted = true, $decimal = 2)
     {

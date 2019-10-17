@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Models\PartnerPosService;
 use App\Models\PartnerPosServiceDiscount;
+use App\Models\PartnerPosServiceLog;
 use App\Models\PosCategory;
 use App\Transformers\PosServiceTransformer;
 use Carbon\Carbon;
@@ -16,6 +17,7 @@ use League\Fractal\Serializer\ArraySerializer;
 use Sheba\ModificationFields;
 use Sheba\Pos\Product\Creator as ProductCreator;
 use Sheba\Pos\Product\Deleter;
+use Sheba\Pos\Product\Log\FieldType;
 use Sheba\Pos\Product\Updater as ProductUpdater;
 use Sheba\Pos\Repositories\PosServiceDiscountRepository;
 use Sheba\Reward\ActionRewardDispatcher;
@@ -52,7 +54,7 @@ class ServiceController extends Controller
                         'app_banner' => $service->app_banner,
                         'price' => $service->price,
                         'wholesale_applicable' => $service->wholesale_price > 0 ? 1 : 0,
-                        'wholesale_price'   => $service->wholesale_price,
+                        'wholesale_price' => $service->wholesale_price,
                         'stock' => $service->stock,
                         'unit' => $service->unit,
                         'discount_applicable' => $service->discount() ? true : false,
@@ -285,28 +287,71 @@ class ServiceController extends Controller
 
     private function getSelectColumnsOfService()
     {
-        return ['id', 'name', 'app_thumb', 'app_banner', 'price', 'stock', 'vat_percentage', 'is_published_for_shop', 'warranty', 'warranty_unit','unit','wholesale_price'];
+        return ['id', 'name', 'app_thumb', 'app_banner', 'price', 'stock', 'vat_percentage', 'is_published_for_shop', 'warranty', 'warranty_unit', 'unit', 'wholesale_price'];
     }
 
-    public function getLogs(Request $request)
+    /**
+     * @param Request $request
+     * @param $partner
+     * @param PartnerPosService $service
+     * @return JsonResponse
+     */
+    public function getLogs(Request $request, $partner, PartnerPosService $service)
     {
-        $logs = [
-            [
-                'log_type' => 'stock',
-                'log_type_show_name' => ['bn' => 'Bangla inventory', 'en' => 'English inventory'],
-                'log' => 'log details 01',
-                'created_by' => 'Posh',
-                'created_at' => '2019-10-15 14:00:00'
-            ],
-            [
-                'log_type' => 'stock',
-                'log_type_show_name' => ['bn' => 'Bangla inventory', 'en' => 'English inventory'],
-                'log' => 'log details 02',
-                'created_by' => 'Posh',
-                'created_at' => '2019-10-15 14:00:00'
-            ]
-        ];
-        return api_response($request, null, 200, ['logs' => $logs]);
+        try {
+            $logs = [];
+            $identifier = [
+                FieldType::STOCK => $unit_bn = $service->unit ? constants('POS_SERVICE_UNITS')[$service->unit]['bn']: 'একক',
+                FieldType::VAT => '%',
+                FieldType::PRICE => 'টাঁকা',
+            ];
+            $displayable_field_name = FieldType::getFieldsDisplayableNameInBangla();
 
+            $service->logs->each(function ($log) use (&$logs, $displayable_field_name, $unit_bn, $identifier) {
+                $log->field_names->each(function ($field) use (&$logs, $log, $displayable_field_name, $unit_bn, $identifier) {
+                    array_push($logs, [
+                        'log_type' => $field,
+                        'log_type_show_name' => [
+                            'bn' => $displayable_field_name[$field]['bn'],
+                            'en' => $displayable_field_name[$field]['en']
+                        ],
+                        'log' => [
+                            'bn' => $this->generateBanglaLog($field, $log, $identifier)
+                        ],
+                        'created_by' => $log->created_by_name,
+                        'created_at' => $log->created_at->format('Y-m-d h:i a')
+                    ]);
+                });
+            });
+
+            return api_response($request, null, 200, ['logs' => $logs]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param $field
+     * @param $log
+     * @param array $identifier
+     * @return string
+     */
+    public function generateBanglaLog($field, $log, array $identifier)
+    {
+        switch ($field) {
+            case FieldType::STOCK:
+                $log = convertNumbersToBangla($log->old_value->toArray()[$field]) . ' ' . $identifier[$field] . ' থেকে ' . convertNumbersToBangla($log->new_value->toArray()[$field]) . ' ' . $identifier[$field];
+                break;
+            case FieldType::PRICE:
+                $log = $identifier[$field] . convertNumbersToBangla($log->old_value->toArray()[$field]) . ' থেকে ' . $identifier[$field] . convertNumbersToBangla($log->new_value->toArray()[$field]);
+                break;
+            case FieldType::VAT:
+                $log = convertNumbersToBangla($log->old_value->toArray()[$field]) . $identifier[$field] . ' থেকে ' . convertNumbersToBangla($log->new_value->toArray()[$field]) . $identifier[$field];
+                break;
+            default:
+                $log = "Your favorite color is neither red, blue, nor green!";
+        }
+        return $log;
     }
 }
