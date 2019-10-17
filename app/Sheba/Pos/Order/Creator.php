@@ -5,6 +5,7 @@ use App\Models\Payment;
 use App\Models\PosCustomer;
 use App\Models\PartnerPosService;
 use App\Models\PosOrder;
+use App\Models\Profile;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\ExpenseTracker\AutomaticExpense;
 use Sheba\ExpenseTracker\AutomaticIncomes;
@@ -203,7 +204,9 @@ class Creator
         $entry = app(AutomaticEntryRepository::class);
         $order = $order->calculate();
         $amount = (double)$order->getNetBill();
+        $profile = $order->customer ? $order->customer->profile : new Profile();
         $entry->setPartner($this->partner)
+            ->setParty($profile)
             ->setAmount($amount)
             ->setAmountCleared($order->getPaid())
             ->setHead(AutomaticIncomes::POS)
