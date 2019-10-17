@@ -161,6 +161,11 @@ class WalletController extends Controller
         $entry = app(AutomaticEntryRepository::class);
         $amount = (double)$payment->payable->amount;
         $head = $payment->payable->type == 'movie_ticket_purchase' ? AutomaticExpense::MOVIE_TICKET : AutomaticExpense::BUS_TICKET;
-        $entry->setPartner($user)->setAmount($amount)->setHead($head)->store();
+        $entry->setPartner($user)
+            ->setAmount($amount)
+            ->setHead($head)
+            ->setSourceType($payment->payable->type)
+            ->setSourceId($payment->payable->id)
+            ->store();
     }
 }
