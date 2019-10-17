@@ -109,6 +109,7 @@ class AvailableMethods
             ];
         }
     }
+
     private static function getUtilityPayments($version_code, $platform_name)
     {
         return [
@@ -136,6 +137,7 @@ class AvailableMethods
             self::ssl()
         ];
     }
+
     /**
      * @param $version_code
      * @param $platform_name
@@ -197,7 +199,7 @@ class AvailableMethods
         return [
             'name' => 'bKash',
             'is_published' => 1,
-            'description' => 'Pay now get 10% discount',
+            'description' => 'Get 10% discount',
             'asset' => 'bkash',
             'method_name' => 'bkash'
         ];
