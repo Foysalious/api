@@ -767,4 +767,14 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
     {
         return PartnerStatuses::getStatusToCalculateAccess($this->status);
     }
+
+    public function attachments()
+    {
+        return $this->morphMany(Attachment::class, 'attachable');
+    }
+
+    public function comments()
+    {
+        return $this->morphMany(Comment::class, 'commentable');
+    }
 }
