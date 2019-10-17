@@ -156,7 +156,7 @@ class AutomaticEntryRepository extends BaseRepository
             'type' => $this->for
         ];
         if (empty($data['amount'])) $data['amount'] = 0;
-        if (empty($data['amount_cleared']) && $data['amount_cleared'] != 0) $data['amount_cleared'] = $data['amount'];
+        if (is_null($this->amountCleared)) $data['amount_cleared'] = $data['amount'];
         if ($this->profileId) $data['profile_id'] = $this->profileId;
 
         return $data;
