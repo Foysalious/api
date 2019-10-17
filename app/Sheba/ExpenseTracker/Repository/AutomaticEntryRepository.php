@@ -80,7 +80,7 @@ class AutomaticEntryRepository extends BaseRepository
             $this->head = $head;
             return $this;
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            $this->notifyBug($e);
             return $this;
         }
     }
