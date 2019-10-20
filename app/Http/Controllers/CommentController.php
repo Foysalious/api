@@ -12,7 +12,6 @@ class CommentController extends Controller
 
     public function getComments(Request $request, Comments $comments)
     {
-
         try {
             $comments = $comments->setCommentableType($request->commentable_type)->setCommentableId($request->commentable_id);
             $commentable_type = $comments->getCommentableModel();
