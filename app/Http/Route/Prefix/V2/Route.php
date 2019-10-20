@@ -197,7 +197,7 @@ class Route
             $api->get('refresh-token', 'ProfileController@refresh');
             $api->group(['prefix' => 'comments'], function ($api) {
                 $api->post('/', 'CommentController@storeComments');
-                $api->get('/', 'CommentController@getBusinessComments');
+                $api->get('/', 'CommentController@getComments');
             });
             $api->group(['prefix' => 'attachments'], function ($api) {
                 $api->post('/', 'AttachmentController@storeAttachment');

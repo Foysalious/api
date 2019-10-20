@@ -93,4 +93,38 @@ class BidController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function getBidHistory($business, $procurement, Request $request, AccessControl $access_control)
+    {
+        try {
+            $access_control->setBusinessMember($request->business_member);
+            if (!($access_control->hasAccess('procurement.r') || $access_control->hasAccess('procurement.rw'))) return api_response($request, null, 403);
+            $business = $request->business;
+            $procurement = Procurement::findOrFail((int)$procurement);
+            list($offset, $limit) = calculatePagination($request);
+            $bids = $procurement->bids()->orderBy('created_at', 'desc')->skip($offset)->limit($limit);
+            $bid_histories = [];
+            $bids->each(function ($bid) use (&$bid_histories){
+                array_push($bid_histories, [
+                    'id'=>$bid->id,
+                    'service_provider' => $bid->bidder->name,
+                    'status' => $bid->status,
+                    'price' => $bid->price,
+                    'created_at' => $bid->created_at->format('h:i a,d M Y'),
+                ]);
+            });
+            if (count($bid_histories) > 0) return api_response($request, $bid_histories, 200, ['bid_histories' => $bid_histories]);
+            else return api_response($request, null, 404);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            dd($e) ;
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }

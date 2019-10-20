@@ -100,6 +100,7 @@ class BusinessRoute
                         $api->post('general', 'B2b\ProcurementController@updateGeneral');
                         $api->group(['prefix' => 'bids'], function ($api) {
                             $api->get('/', 'B2b\BidController@index');
+                            $api->get('/history', 'B2b\BidController@getBidHistory');
                         });
                     });
                     $api->get('/', 'B2b\ProcurementController@index');

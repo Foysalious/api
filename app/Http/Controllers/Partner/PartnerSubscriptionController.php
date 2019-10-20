@@ -258,10 +258,13 @@ class PartnerSubscriptionController extends Controller
             ]);
             $currentPackage = $request->partner->subscription;
             $requestedPackage = PartnerSubscriptionPackage::find($request->package_id);
+
+            if ($request->partner->isAlreadyCollectedAdvanceSubscriptionFee()) {
+                return api_response($request, null, 400, ['message' => ' আপনার প্যকেজ এর জন্য অগ্রিম ফি নেয়া আছে আপনার বর্তমান প্যকেজ এর মেয়াদ শেষ হলে স্বয়ংক্রিয়  ভাবে নবায়ন হয়ে যাবে ']);
+            }
             if (empty($requestedPackage)) {
                 return api_response($request, null, 403, ['message' => 'আপনার অনুরধক্রিত প্যকেজটি পাওয়া যায় নাই']);
             }
-
             $this->setModifier($request->manager_resource);
             if ($upgradeRequest = $this->createSubscriptionRequest($requestedPackage)) {
                 try {

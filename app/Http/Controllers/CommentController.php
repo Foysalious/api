@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\Comment;
 use App\Sheba\Comment\Comments;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -9,34 +10,41 @@ class CommentController extends Controller
 {
     use ModificationFields;
 
-    /*public function getBusinessComments($business, Request $request)
+    public function getComments(Request $request, Comments $comments)
     {
+
         try {
-            $business = $request->business;
-            $member = $request->manager_member;
-            $fuel_log = FuelLog::find((int)$log);
-            if (!$fuel_log) return api_response($request, null, 404);
+            $comments = $comments->setCommentableType($request->commentable_type)->setCommentableId($request->commentable_id);
+            $commentable_type = $comments->getCommentableModel();
+
+            if (!$commentable_type) return api_response($request, null, 404);
             list($offset, $limit) = calculatePagination($request);
-            $comments = Comment::where('commentable_type', get_class($fuel_log))->where('commentable_id', $fuel_log->id)->orderBy('id', 'DESC')->skip($offset)->limit($limit)->get();
+            $comments = Comment::where('commentable_type', get_class($commentable_type))
+                ->where('commentable_id', $commentable_type->id)
+                ->orderBy('created_at', 'DESC')
+                ->skip($offset)->limit($limit)
+                ->get();
+
             $comment_lists = [];
             foreach ($comments as $comment) {
                 array_push($comment_lists, [
                     'id' => $comment->id,
                     'comment' => $comment->comment,
                     'user' => [
-                        'name' => $comment->commentator->profile->name,
-                        'image' => $comment->commentator->profile->pro_pic
+                        'name' => $comment->commentator->name,
+                        'image' => $comment->commentator->logo
                     ],
-                    'created_at' => $comment->created_at->toDateTimeString()
+                    'created_at' => $comment->created_at->toDateTimeString(),
+                    'commentator_type' => class_basename($comment->commentator)
                 ]);
             }
-            if (count($comment_lists) > 0) return api_response($request, $comment_lists, 200, ['comment_lists' => $comment_lists]);
+            if (count($comment_lists) > 0) return api_response($request, $comment_lists, 200, ['comments' => $comment_lists]);
             else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
-    }*/
+    }
 
     public function storeComments(Request $request, Comments $comments)
     {
