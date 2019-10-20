@@ -27,6 +27,12 @@ class Comments
         return $this;
     }
 
+    public function getCommentableId($commentable_id)
+    {
+        $this->commentableId = (int)$commentable_id;
+        return $this->commentableId;
+    }
+
     public function getCommentableModel()
     {
         $this->commentableModel = app($this->commentableType)::findOrFail($this->commentableId);
@@ -46,6 +52,12 @@ class Comments
         return $this;
     }
 
+    public function getCommentatorId($commentator_id)
+    {
+        $this->commentatorId = (int)$commentator_id;
+        return $this->commentatorId;
+    }
+
     public function getCommentatorModel()
     {
         $this->commentatorModel = app($this->commentatorType)::findOrFail($this->commentatorId);
@@ -63,11 +75,12 @@ class Comments
         $comment = new Comment();
         try {
             DB::transaction(function () use ($comment) {
+                $comment->comment = $this->comment;
                 $comment->commentable_type = $this->commentableType;
                 $comment->commentable_id = $this->commentableId;
                 $comment->commentator_type = $this->commentatorType;
                 $comment->commentator_id = $this->commentatorId;
-                $comment->created_by = $this->getCommentatorId();
+                $comment->created_by = $this->getCommentator()->id;
                 $comment->created_by_name = $this->getCommentatorName();
                 $comment->save();
             });
@@ -93,10 +106,10 @@ class Comments
         }
     }
 
-    private function getCommentatorId()
+    private function getCommentator()
     {
         try {
-            return $this->commentatorModel->getAdmin()->id;
+            return $this->commentatorModel->getAdmin();
         } catch (QueryException $e) {
             app('sentry')->captureException($e);
             return false;
