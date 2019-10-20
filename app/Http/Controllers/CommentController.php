@@ -35,7 +35,7 @@ class CommentController extends Controller
                         'image' => $comment->commentator->logo
                     ],
                     'created_at' => $comment->created_at->toDateTimeString(),
-                    'type' => class_basename($comment->commentator)
+                    'commentator_type' => class_basename($comment->commentator)
                 ]);
             }
             if (count($comment_lists) > 0) return api_response($request, $comment_lists, 200, ['comments' => $comment_lists]);
