@@ -92,11 +92,14 @@ class PartnerSubscriptionBilling
             $this->packagePrice = 0;
         }
         $grade = $this->findGrade($new_package, $old_package, $new_billing_type, $old_billing_type);
-        if (in_array($grade, [PartnerSubscriptionChange::UPGRADE, PartnerSubscriptionChange::DOWNGRADE])) {
+        if (in_array($grade, [PartnerSubscriptionChange::UPGRADE, PartnerSubscriptionChange::DOWNGRADE]) || !$this->partner->billing_start_date) {
             $this->partner->billing_start_date = $this->today;
         }
+
         $this->billingDatabaseTransactions($this->packagePrice);
-        (new PartnerSubscriptionCharges($this))->shootLog(constants('PARTNER_PACKAGE_CHARGE_TYPES')[$grade]);
+        if (!$this->isCollectAdvanceSubscriptionFee) {
+            (new PartnerSubscriptionCharges($this))->shootLog(PartnerSubscriptionChange::all()[$grade]);
+        }
         $this->sendSmsForSubscriptionUpgrade($old_package, $new_package, $old_billing_type, $new_billing_type, $grade);
         $this->storeEntry();
     }
@@ -108,7 +111,7 @@ class PartnerSubscriptionBilling
         $this->advanceBillingDatabaseTransactions($this->packagePrice);
         (new PartnerSubscriptionCharges($this))->shootLog(constants('PARTNER_PACKAGE_CHARGE_TYPES')[PartnerSubscriptionChange::RENEWED]);
     }
-    
+
     private function calculateRunningBillingCycleNumber()
     {
         if (!$this->partner->billing_start_date) return 1;
@@ -137,7 +140,9 @@ class PartnerSubscriptionBilling
     private function billingDatabaseTransactions($package_price)
     {
         DB::transaction(function () use ($package_price) {
-            $this->partnerTransactionForSubscriptionBilling($package_price);
+            if (!$this->isCollectAdvanceSubscriptionFee) {
+                $this->partnerTransactionForSubscriptionBilling($package_price);
+            }
             $this->partner->last_billed_date = $this->today;
             $this->partner->last_billed_amount = $package_price;
             if ($this->partner->status == PartnerStatuses::INACTIVE) {
@@ -189,11 +194,18 @@ class PartnerSubscriptionBilling
         $this->partnerBonusHandler->pay($package_price, '%d BDT has been deducted for subscription package', [$this->getSubscriptionTag()->id]);
     }
 
+    /**
+     * @param PartnerSubscriptionPackage $old_package
+     * @param $old_billing_type
+     * @return string
+     */
     public function remainingCredit(PartnerSubscriptionPackage $old_package, $old_billing_type)
     {
         $dayDiff = $this->partner->last_billed_date ? $this->partner->last_billed_date->diffInDays($this->today) + 1 : 0;
         $used_credit = $old_package->originalPricePerDay($old_billing_type) * $dayDiff;
-        $remaining_credit = ($this->partner->last_billed_amount?:0) - $used_credit;
+        $remaining_credit = ($this->partner->last_billed_amount ?: 0) - $used_credit;
+        $alreadyCollectedSubscriptionFee = $this->partner->alreadyCollectedSubscriptionFee();
+        $remaining_credit += $alreadyCollectedSubscriptionFee;
         return $remaining_credit < 0 ? 0 : $remaining_credit;
     }
 
