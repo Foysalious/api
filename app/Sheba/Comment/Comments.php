@@ -27,9 +27,8 @@ class Comments
         return $this;
     }
 
-    public function getCommentableId($commentable_id)
+    public function getCommentableId()
     {
-        $this->commentableId = (int)$commentable_id;
         return $this->commentableId;
     }
 
@@ -52,9 +51,8 @@ class Comments
         return $this;
     }
 
-    public function getCommentatorId($commentator_id)
+    public function getCommentatorId()
     {
-        $this->commentatorId = (int)$commentator_id;
         return $this->commentatorId;
     }
 

@@ -24,6 +24,8 @@ class CommentController extends Controller
             list($offset, $limit) = calculatePagination($request);
             $comments = Comment::where('commentable_type', get_class($commentable_type))
                 ->where('commentable_id', $commentable_type->id)
+                ->where('commentator_type', get_class($commentator_type))
+                ->where('commentator_id', $comments->getCommentatorId())
                 ->orderBy('id', 'DESC')
                 ->skip($offset)->limit($limit)
                 ->get();
@@ -40,7 +42,7 @@ class CommentController extends Controller
                     'created_at' => $comment->created_at->toDateTimeString()
                 ]);
             }
-            if (count($comment_lists) > 0) return api_response($request, $comment_lists, 200, ['comment_lists' => $comment_lists]);
+            if (count($comment_lists) > 0) return api_response($request, $comment_lists, 200, ['comments' => $comment_lists]);
             else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
