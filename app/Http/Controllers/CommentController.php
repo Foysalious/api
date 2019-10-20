@@ -12,7 +12,6 @@ class CommentController extends Controller
 
     public function getComments(Request $request, Comments $comments)
     {
-
         try {
             $comments = $comments->setCommentableType($request->commentable_type)->setCommentableId($request->commentable_id);
             $commentable_type = $comments->getCommentableModel();
@@ -35,7 +34,7 @@ class CommentController extends Controller
                         'image' => $comment->commentator->logo
                     ],
                     'created_at' => $comment->created_at->toDateTimeString(),
-                    'type' => class_basename($comment->commentator)
+                    'commentator_type' => class_basename($comment->commentator)
                 ]);
             }
             if (count($comment_lists) > 0) return api_response($request, $comment_lists, 200, ['comments' => $comment_lists]);

@@ -1,5 +1,4 @@
-<?php namespace App\Http\Controllers\B2b;
-
+<?php namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Sheba\ModificationFields;

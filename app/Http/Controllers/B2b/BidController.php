@@ -2,6 +2,7 @@
 
 use App\Models\Bid;
 use App\Models\Procurement;
+use App\Sheba\Business\Bid\Updater;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\Bid\Creator;
 use Sheba\ModificationFields;
@@ -68,7 +69,7 @@ class BidController extends Controller
         }
     }
 
-    public function updateFavourite($business, $bid, Request $request, Creator $creator)
+    public function updateFavourite($business, $bid, Request $request, Updater $updater)
     {
 
         try {
@@ -79,7 +80,7 @@ class BidController extends Controller
             if (!$bid) {
                 return api_response($request, null, 404);
             } else {
-                $creator->setIsFavourite($request->is_favourite)->updateFavourite($bid);
+                $updater->setIsFavourite($request->is_favourite)->updateFavourite($bid);
                 return api_response($request, null, 200);
             }
         } catch (ValidationException $e) {
@@ -107,7 +108,7 @@ class BidController extends Controller
             $bids->each(function ($bid) use (&$bid_histories){
                 array_push($bid_histories, [
                     'id'=>$bid->id,
-                    'service_provider' => app($bid->bidder_type)::find($bid->bidder_id)->name,
+                    'service_provider' => $bid->bidder->name,
                     'status' => $bid->status,
                     'price' => $bid->price,
                     'created_at' => $bid->created_at->format('h:i a,d M Y'),
@@ -122,7 +123,6 @@ class BidController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e) ;
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
