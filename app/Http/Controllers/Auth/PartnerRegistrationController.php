@@ -21,7 +21,11 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
+use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
+use Sheba\ExpenseTracker\Repository\EntryRepository;
 use Sheba\Logs\ErrorLog;
+use Sheba\ModificationFields;
+use Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
 use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Sms\Sms;
 use Sheba\Voucher\Creator\Referral;
@@ -30,16 +34,26 @@ use Throwable;
 
 class PartnerRegistrationController extends Controller
 {
+    use ModificationFields;
+
+    /** @var FacebookAccountKit $fbKit */
     private $fbKit;
+    /** @var ProfileRepository $profileRepository */
     private $profileRepository;
     /** @var Sms */
     private $sms;
+    /** @var EntryRepository $entryRepo */
+    private $entryRepo;
+    /** @var PartnerRepositoryInterface $partnerRepo */
+    private $partnerRepo;
 
-    public function __construct()
+    public function __construct(EntryRepository $entry_repo, PartnerRepositoryInterface $partner_repo)
     {
         $this->fbKit = new FacebookAccountKit();
         $this->profileRepository = new ProfileRepository();
         $this->sms = new Sms();
+        $this->entryRepo = $entry_repo;
+        $this->partnerRepo = $partner_repo;
     }
 
     /**
@@ -147,6 +161,7 @@ class PartnerRegistrationController extends Controller
      * @param $resource
      * @param $data
      * @return Partner
+     * @throws ExpenseTrackingServerError
      */
     private function createPartner($resource, $data)
     {
@@ -161,6 +176,8 @@ class PartnerRegistrationController extends Controller
         }
 
         app()->make(ActionRewardDispatcher::class)->run('partner_creation_bonus', $partner, $partner);
+
+        $this->storeExpense($partner);
         return $partner;
     }
 
@@ -229,12 +246,25 @@ class PartnerRegistrationController extends Controller
     public function registerByProfile(Request $request, ErrorLog $error_log)
     {
         try {
-            $this->validate($request, ['company_name' => 'required|string', 'from' => 'string|in:' . implode(',', constants('FROM')), 'geo' => 'string', 'name' => 'string', 'number' => 'string', 'address' => 'string',]);
+            $this->validate($request, [
+                'company_name' => 'required|string',
+                'from' => 'string|in:' . implode(',', constants('FROM')),
+                'geo' => 'string',
+                'name' => 'string',
+                'number' => 'string',
+                'address' => 'string'
+            ]);
             $profile = $request->profile;
-            if (!$profile->resource) $resource = Resource::create(['profile_id' => $profile->id, 'remember_token' => str_random(60)]); else $resource = $profile->resource;
+
+            if (!$profile->resource) $resource = Resource::create(['profile_id' => $profile->id, 'remember_token' => str_random(60)]);
+            else $resource = $profile->resource;
+
+            $this->setModifier($resource);
+
             $request['package_id'] = config('sheba.partner_lite_packages_id');
             $request['billing_type'] = 'monthly';
             if ($request->has('name')) $profile->update(['name' => $request->name]);
+
             if ($resource->partnerResources->count() == 0) {
                 $data = $this->makePartnerCreateData($request);
                 $this->createPartner($resource, $data);
@@ -357,5 +387,16 @@ class PartnerRegistrationController extends Controller
     {
         if (count($resource->partners) === 0) return false;
         if ($profile->name && $profile->mobile && $profile->pro_pic && $resource->partners[0]->name && $resource->partners[0]->geo_informations && count($resource->partners[0]->categories) > 0) return true; else return false;
+    }
+
+    /**
+     * @param $partner
+     * @throws ExpenseTrackingServerError
+     */
+    private function storeExpense($partner)
+    {
+        $this->entryRepo->createExpenseUser($partner);
+        $data = ['expense_account_id' => $partner->id];
+        $this->partnerRepo->update($partner, $data);
     }
 }
