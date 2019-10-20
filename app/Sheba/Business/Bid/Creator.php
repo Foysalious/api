@@ -11,8 +11,6 @@ use Sheba\Repositories\Interfaces\BidItemRepositoryInterface;
 class Creator
 {
     private $bidRepository;
-    private $isFavourite;
-    private $bidData;
     private $procurement;
     private $data;
     private $bidder;
@@ -30,12 +28,6 @@ class Creator
         $this->bidItemRepository = $bid_item_repository;
         $this->bidItemFieldRepository = $bid_item_field_repository;
         $this->data = [];
-    }
-
-    public function setIsFavourite($is_favourite)
-    {
-        $this->isFavourite = $is_favourite;
-        return $this;
     }
 
     public function setProcurement(Procurement $procurement)
@@ -74,13 +66,6 @@ class Creator
         return $this;
     }
 
-    public function updateFavourite(Bid $bid)
-    {
-        $this->bidData = [
-            'is_favourite' => $this->isFavourite ? (int)$this->isFavourite : 0,
-        ];
-        $this->bidRepository->update($bid, $this->bidData);
-    }
 
     public function create()
     {
@@ -94,7 +79,7 @@ class Creator
                     $bid_item = $this->bidItemRepository->create(['bid_id' => $bid->id, 'type' => $item->type]);
                     foreach ($item->fields as $field) {
                         $field_result = $this->fieldResults->where('id', $field->id)->first();
-                        $bid_item_field = $this->bidItemFieldRepository->create([
+                        $this->bidItemFieldRepository->create([
                             'bid_item_id' => $bid_item->id,
                             'title' => $field->title,
                             'short_description' => $field->short_description,
@@ -117,7 +102,5 @@ class Creator
         $this->data['bidder_id'] = $this->bidder->id;
         $this->data['bidder_type'] = get_class($this->bidder);
         $this->data['status'] = $this->status;
-//        $this->data['terms'] = $this->status;
-//        $this->data['policies'] = $this->status;
     }
 }
