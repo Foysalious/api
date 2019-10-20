@@ -107,7 +107,7 @@ class BidController extends Controller
             $bids->each(function ($bid) use (&$bid_histories){
                 array_push($bid_histories, [
                     'id'=>$bid->id,
-                    'service_provider' => app($bid->bidder_type)::find($bid->bidder_id)->name,
+                    'service_provider' => $bid->bidder->name,
                     'status' => $bid->status,
                     'price' => $bid->price,
                     'created_at' => $bid->created_at->format('h:i a,d M Y'),
