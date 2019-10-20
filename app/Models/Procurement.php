@@ -31,4 +31,9 @@ class Procurement extends Model
     {
         return $this->tags->pluck('name');
     }
+
+    public function owner()
+    {
+        return $this->morphTo();
+    }
 }

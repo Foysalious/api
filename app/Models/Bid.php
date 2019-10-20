@@ -16,4 +16,19 @@ class Bid extends Model
         return $this->belongsTo(Procurement::class);
     }
 
+    public function attachments()
+    {
+        return $this->morphMany(Attachment::class, 'attachable');
+    }
+
+    public function comments()
+    {
+        return $this->morphMany(Comment::class, 'commentable');
+    }
+
+    public function bidder()
+    {
+        return $this->morphTo();
+    }
+
 }

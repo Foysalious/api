@@ -83,7 +83,6 @@ class Comments
                 $comment->save();
             });
         } catch (QueryException $e) {
-            app('sentry')->captureException($e);
             return false;
         }
         return $comment;
@@ -99,7 +98,6 @@ class Comments
             }
 
         } catch (QueryException $e) {
-            app('sentry')->captureException($e);
             return false;
         }
     }
@@ -109,7 +107,6 @@ class Comments
         try {
             return $this->commentatorModel->getAdmin();
         } catch (QueryException $e) {
-            app('sentry')->captureException($e);
             return false;
         }
     }

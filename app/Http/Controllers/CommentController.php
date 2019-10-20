@@ -14,19 +14,14 @@ class CommentController extends Controller
     {
 
         try {
-            $comments = $comments->setCommentableType($request->commentable_type)->setCommentableId($request->commentable_id)
-                ->setCommentatorType($request->commentator_type)->setCommentatorId($request->commentator_id);
+            $comments = $comments->setCommentableType($request->commentable_type)->setCommentableId($request->commentable_id);
             $commentable_type = $comments->getCommentableModel();
-
-            $commentator_type = $comments->getCommentatorModel();
 
             if (!$commentable_type) return api_response($request, null, 404);
             list($offset, $limit) = calculatePagination($request);
             $comments = Comment::where('commentable_type', get_class($commentable_type))
                 ->where('commentable_id', $commentable_type->id)
-                ->where('commentator_type', get_class($commentator_type))
-                ->where('commentator_id', $comments->getCommentatorId())
-                ->orderBy('id', 'DESC')
+                ->orderBy('created_at', 'DESC')
                 ->skip($offset)->limit($limit)
                 ->get();
 
@@ -36,10 +31,11 @@ class CommentController extends Controller
                     'id' => $comment->id,
                     'comment' => $comment->comment,
                     'user' => [
-                        'name' => $commentator_type->name,
-                        'image' => $commentator_type->logo
+                        'name' => $comment->commentator->name,
+                        'image' => $comment->commentator->logo
                     ],
-                    'created_at' => $comment->created_at->toDateTimeString()
+                    'created_at' => $comment->created_at->toDateTimeString(),
+                    'type' => class_basename($comment->commentator)
                 ]);
             }
             if (count($comment_lists) > 0) return api_response($request, $comment_lists, 200, ['comments' => $comment_lists]);
