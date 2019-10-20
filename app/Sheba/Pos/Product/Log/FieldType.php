@@ -15,10 +15,10 @@ class FieldType
     public static function getFieldsDisplayableNameInBangla()
     {
         return [
-            self::STOCK => ['en' => 'Inventory', 'bn' => 'ইনভেন্টরইঃ'],
+            self::STOCK => ['en' => 'Inventory', 'bn' => 'ইনভেন্টোরিঃ'],
             self::UNIT => ['en' => 'Unit', 'bn' => 'একক'],
             self::PRICE => ['en' => 'Price', 'bn' => 'ক্রয়মূল্যঃ'],
-            self::VAT => ['en' => 'Vat', 'bn' => 'ভাটঃ']
+            self::VAT => ['en' => 'Vat', 'bn' => 'ভ্যাটঃ']
         ];
     }
 

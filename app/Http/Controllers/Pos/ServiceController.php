@@ -303,10 +303,9 @@ class ServiceController extends Controller
             $identifier = [
                 FieldType::STOCK => $unit_bn = $service->unit ? constants('POS_SERVICE_UNITS')[$service->unit]['bn']: 'একক',
                 FieldType::VAT => '%',
-                FieldType::PRICE => 'টাঁকা',
+                FieldType::PRICE => '৳',
             ];
             $displayable_field_name = FieldType::getFieldsDisplayableNameInBangla();
-
             $service->logs->each(function ($log) use (&$logs, $displayable_field_name, $unit_bn, $identifier) {
                 $log->field_names->each(function ($field) use (&$logs, $log, $displayable_field_name, $unit_bn, $identifier) {
                     array_push($logs, [
@@ -350,7 +349,7 @@ class ServiceController extends Controller
                 $log = convertNumbersToBangla($log->old_value->toArray()[$field]) . $identifier[$field] . ' থেকে ' . convertNumbersToBangla($log->new_value->toArray()[$field]) . $identifier[$field];
                 break;
             default:
-                $log = "Your favorite color is neither red, blue, nor green!";
+                $log = "convertNumbersToBangla($log->old_value->toArray()[$field]) . ' ' . $identifier[$field] . ' থেকে ' . convertNumbersToBangla($log->new_value->toArray()[$field]) . ' ' . $identifier[$field]";
         }
         return $log;
     }
