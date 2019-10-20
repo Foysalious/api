@@ -291,9 +291,15 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
         return null;
     }
 
+    public function getAdmin()
+    {
+        if ($admin_resource = $this->admins()->first()) return $admin_resource;
+        return null;
+    }
+
     public function getContactPerson()
     {
-        if ($admin_resource = $this->admins()->first()) return $admin_resource->profile->name;
+        if ($admin_resource = $this->getAdmin()) return $admin_resource->profile->name;
         return null;
     }
 
@@ -437,7 +443,7 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
     {
         return (double)$this->bonuses()->valid()->sum('amount');
     }
-    
+
     public function runSubscriptionBilling()
     {
         $this->subscriber()->getBilling()->runSubscriptionBilling();

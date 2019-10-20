@@ -17,7 +17,6 @@ class CommentRepository
         $this->morphable = $this->model_name . $morphable;
         $this->morphable_id = $morphable_id;
         $this->created_by = $created_by;
-        #dd( $this->morphable, $this->morphable_id, $this->created_by);
     }
 
     public function store($comment)

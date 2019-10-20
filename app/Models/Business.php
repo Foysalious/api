@@ -136,9 +136,14 @@ class Business extends Model implements TopUpAgent, PayableUser
         return '+8801678242934';
     }
 
+    public function getAdmin()
+    {
+        if ($super_admin = $this->superAdmins()->first()) return $super_admin;
+        return null;
+    }
     public function getContactPerson()
     {
-        if ($super_admin = $this->superAdmins()->first()) return $super_admin->profile->name;
+        if ($super_admin = $this->getAdmin()) return $super_admin->profile->name;
         return null;
     }
 

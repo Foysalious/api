@@ -1,10 +1,6 @@
 <?php namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use App\Models\Comment;
-use App\Models\FuelLog;
-use App\Repositories\CommentRepository;
-
+use App\Sheba\Comment\Comments;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\ModificationFields;
@@ -42,23 +38,16 @@ class CommentController extends Controller
         }
     }*/
 
-    public function storeComments(Request $request)
+    public function storeComments(Request $request, Comments $comments)
     {
         try {
             $this->validate($request, [
                 'comment' => 'required'
             ]);
-            #Under
-            $commentable_model = "App\\Models\\" . ucfirst(camel_case($request->commentable_type));
-            $commentable_type = $commentable_model::find((int)$request->commentable_id);
-
-            #Who
-            $commentator_model = "App\\Models\\" . ucfirst(camel_case($request->commentator_type));
-            $commentator_type = $commentator_model::find((int)$request->commentator_id);
-            dd($commentator_type->members);
-            $this->setModifier($commentator_type);
-
-            $comment = (new CommentRepository(ucfirst(camel_case($request->commentable_type)), $commentable_type->id, $commentator_type))->store($request->comment);
+            $comments = $comments->setCommentableType($request->commentable_type)->setCommentableId($request->commentable_id)
+                ->setCommentatorType($request->commentator_type)->setCommentatorId($request->commentator_id)->setComment($request->comment);
+            $this->setModifier($comments->getCommentatorModel());
+            $comment = $comments->store();
             return $comment ? api_response($request, $comment, 200) : api_response($request, $comment, 500);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -67,7 +56,6 @@ class CommentController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
