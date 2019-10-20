@@ -1,9 +1,10 @@
 <?php namespace App\Http\Middleware;
 
-
 use Closure;
+use Illuminate\Http\Request;
 use Sheba\Auth\Auth;
 use Sheba\Auth\JWTAuth;
+use function request;
 
 class JWTAuthMiddleware
 {
@@ -15,14 +16,14 @@ class JWTAuthMiddleware
     {
         $this->auth = $auth;
         $this->JWTAuth = $jwt_auth;
-        $this->auth->setStrategy($this->JWTAuth)->setRequest(\request());
+        $this->auth->setStrategy($this->JWTAuth)->setRequest(request());
     }
 
     /**
      * Handle an incoming request.
      *
-     * @param \Illuminate\Http\Request $request
-     * @param \Closure $next
+     * @param Request $request
+     * @param Closure $next
      * @return mixed
      */
     public function handle($request, Closure $next)

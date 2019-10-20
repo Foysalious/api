@@ -395,8 +395,8 @@ class PartnerRegistrationController extends Controller
      */
     private function storeExpense($partner)
     {
-        $this->entryRepo->createExpenseUser($partner);
-        $data = ['expense_account_id' => $partner->id];
+        $account = $this->entryRepo->createExpenseUser($partner);
+        $data = ['expense_account_id' => $account['id']];
         $this->partnerRepo->update($partner, $data);
     }
 }
