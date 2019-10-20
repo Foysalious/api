@@ -1,7 +1,5 @@
 <?php namespace App\Http\Route\Prefix\V2\Partner\ID\Auth;
 
-use App\Http\Route\Prefix\V2\IncomeExpenseRoute;
-
 class IndexRoute
 {
     public function set($api)
@@ -119,7 +117,7 @@ class IndexRoute
                 $api->post('/', 'Partner\PartnerSubscriptionController@store');
                 $api->post('/upgrade', 'Partner\PartnerSubscriptionController@update');
                 $api->post('/purchase', 'Partner\PartnerSubscriptionController@purchase');
-                $api->post('/auto-billing-toggle','Partner\PartnerSubscriptionController@toggleAutoBillingActivation');
+                $api->post('/auto-billing-toggle', 'Partner\PartnerSubscriptionController@toggleAutoBillingActivation');
             });
             $api->group(['prefix' => 'customer-subscriptions'], function ($api) {
                 $api->get('order-lists', 'Partner\CustomerSubscriptionController@index');
@@ -228,7 +226,7 @@ class IndexRoute
             $api->post('nid-validate', 'ShebaController@nidValidate');
 
             (new IncomeExpenseRoute())->set($api);
-
+            (new BidRoute())->set($api);
         });
     }
 }
