@@ -173,7 +173,8 @@ class BidController extends Controller
                 'title' => $bid->procurement->title,
                 'vendor' => [
                     'name' => $bid->bidder->name,
-                    'rating' => 4.5
+                    'rating' => 4.5,
+                    'total_rating' => 500
                 ],
                 'terms' => $bid->terms,
                 'policies' => $bid->policies,
