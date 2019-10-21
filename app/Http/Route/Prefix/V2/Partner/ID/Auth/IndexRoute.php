@@ -18,6 +18,9 @@ class IndexRoute
                         $api->post('/', 'CommentController@storeComments');
                         $api->get('/', 'CommentController@getComments');
                     });
+                    $api->group(['prefix' => 'attachments'], function ($api) {
+                        $api->post('/', 'AttachmentController@storeAttachment');
+                    });
                 });
             });
             $api->group(['prefix' => 'loans'], function ($api) {
