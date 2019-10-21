@@ -1,70 +1,50 @@
 <?php namespace App\Sheba\Comment;
 
 use Illuminate\Database\QueryException;
+use Illuminate\Http\Request;
 use App\Models\Comment;
 use DB;
 
 class Comments
 {
-    private $commentableType;
-    private $commentableId;
     private $commentableModel;
-    private $commentatorType;
-    private $commentatorId;
     private $commentatorModel;
     private $comment;
     private $model_name = 'App\Models\\';
+    private $requestedData;
+    private $createdBy;
 
-    public function setCommentableType($commentable_type)
+    public function setRequestData(Request $request)
     {
-        $this->commentableType = $this->model_name . ucfirst(camel_case($commentable_type));
+        $this->requestedData = $request;
         return $this;
     }
 
-    public function setCommentableId($commentable_id)
+    public function setCommentableModel($commentable_model)
     {
-        $this->commentableId = (int)$commentable_id;
+        $this->commentableModel = $commentable_model;
         return $this;
     }
 
-    public function getCommentableId()
+    public function setCommentatorModel($commentator)
     {
-        return $this->commentableId;
-    }
-
-    public function getCommentableModel()
-    {
-        $this->commentableModel = app($this->commentableType)::findOrFail($this->commentableId);
-        return $this->commentableModel;
-    }
-
-
-    public function setCommentatorType($commentator_type)
-    {
-        $this->commentatorType = $this->model_name . ucfirst(camel_case($commentator_type));
+        $this->commentatorModel = $commentator;
         return $this;
-    }
-
-    public function setCommentatorId($commentator_id)
-    {
-        $this->commentatorId = (int)$commentator_id;
-        return $this;
-    }
-
-    public function getCommentatorId()
-    {
-        return $this->commentatorId;
-    }
-
-    public function getCommentatorModel()
-    {
-        $this->commentatorModel = app($this->commentatorType)::findOrFail($this->commentatorId);
-        return $this->commentatorModel;
     }
 
     public function setComment($comment)
     {
         $this->comment = $comment;
+        return $this;
+    }
+
+    public function formatData()
+    {
+        if ($this->requestedData->has('manager_resource')) {
+            $this->createdBy = $this->requestedData->manager_resource;
+        } elseif ($this->requestedData->has('manager_member')) {
+            $this->createdBy = $this->requestedData->manager_member;
+        }
         return $this;
     }
 
@@ -74,11 +54,12 @@ class Comments
         try {
             DB::transaction(function () use ($comment) {
                 $comment->comment = $this->comment;
-                $comment->commentable_type = $this->commentableType;
-                $comment->commentable_id = $this->commentableId;
-                $comment->commentator_type = $this->commentatorType;
-                $comment->commentator_id = $this->commentatorId;
-                $comment->created_by = $this->getCommentator()->id;
+                $comment->commentable_type = $this->model_name . class_basename($this->commentableModel);
+                $comment->commentable_id = $this->commentableModel->id;
+
+                $comment->commentator_type = $this->model_name . class_basename($this->commentatorModel);
+                $comment->commentator_id = $this->commentatorModel->id;
+                $comment->created_by = $this->createdBy->id;
                 $comment->created_by_name = $this->getCommentatorName();
                 $comment->save();
             });
@@ -91,21 +72,12 @@ class Comments
     private function getCommentatorName()
     {
         try {
-            if ($this->commentatorModel->profile) {
-                return $this->commentatorModel->profile->name;
+            if ($this->createdBy->profile) {
+                return $this->createdBy->profile->name;
             } else {
                 return $this->commentatorModel->getContactPerson();
             }
 
-        } catch (QueryException $e) {
-            return false;
-        }
-    }
-
-    private function getCommentator()
-    {
-        try {
-            return $this->commentatorModel->getAdmin();
         } catch (QueryException $e) {
             return false;
         }

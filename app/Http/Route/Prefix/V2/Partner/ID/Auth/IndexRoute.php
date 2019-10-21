@@ -14,7 +14,10 @@ class IndexRoute
             });
             $api->group(['prefix' => 'bids'], function ($api) {
                 $api->group(['prefix' => '{bid}'], function ($api) {
-                    $api->get('comments', 'CommentController@getComments');
+                    $api->group(['prefix' => 'comments'], function ($api) {
+                        $api->post('/', 'CommentController@storeComments');
+                        $api->get('/', 'CommentController@getComments');
+                    });
                 });
             });
             $api->group(['prefix' => 'loans'], function ($api) {
