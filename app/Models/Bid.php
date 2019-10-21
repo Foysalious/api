@@ -6,7 +6,7 @@ class Bid extends Model
 {
     protected $guarded = ['id'];
 
-    public function bidItems()
+    public function items()
     {
         return $this->hasMany(BidItem::class, 'bid_id');
     }

@@ -27,11 +27,13 @@ class BidController extends Controller
             $field_results = [];
             foreach ($procurement->items as $procurement_item) {
                 $item = $items->where('id', $procurement_item->id)->first();
-                $fields = collect($item->fields);
                 foreach ($procurement_item->fields as $item_field) {
-                    $field = $fields->where('id', $item_field->id)->first();
                     $variables = json_decode($item_field->variables);
-                    if ((int)$variables->is_required && !$field) return api_response($request, null, 400, ['message' => $item_field->title . ' missing']);
+                    $required = (int)$variables->is_required;
+                    if ($required && !$item) return api_response($request, null, 400, ['message' => $procurement_item->type . ' missing']);
+                    elseif (!$required && !$item) continue;
+                    $fields = collect($item->fields);
+                    $field = $fields->where('id', $item_field->id)->first();
                     array_push($field_results, $field);
                 }
             }
