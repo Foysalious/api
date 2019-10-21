@@ -12,6 +12,11 @@ class IndexRoute
                     $api->get('/{order}', 'EShopOrderController@show');
                 });
             });
+            $api->group(['prefix' => 'bids'], function ($api) {
+                $api->group(['prefix' => '{bid}'], function ($api) {
+                    $api->get('comments', 'CommentController@getComments');
+                });
+            });
             $api->group(['prefix' => 'loans'], function ($api) {
                 $api->post('/', 'SpLoanController@store');
                 $api->get('/personal-info', 'SpLoanController@getPersonalInformation');

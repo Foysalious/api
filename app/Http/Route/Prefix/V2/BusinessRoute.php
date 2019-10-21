@@ -109,6 +109,7 @@ class BusinessRoute
                 $api->group(['prefix' => 'bids'], function ($api) {
                     $api->group(['prefix' => '{bid}'], function ($api) {
                         $api->post('/', 'B2b\BidController@updateFavourite');
+                        $api->get('/comments', 'CommentController@getComments');
                         $api->post('hire', 'B2b\BidController@sendHireRequest');
                     });
                 });
