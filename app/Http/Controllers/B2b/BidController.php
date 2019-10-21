@@ -153,6 +153,8 @@ class BidController extends Controller
         }
     }
 
+
+
     public function show($business, $bid, Request $request, BidRepositoryInterface $bid_repository, Updater $updater)
     {
         try {
