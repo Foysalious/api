@@ -105,9 +105,9 @@ class BidController extends Controller
             list($offset, $limit) = calculatePagination($request);
             $bids = $procurement->bids()->orderBy('created_at', 'desc')->skip($offset)->limit($limit);
             $bid_histories = [];
-            $bids->each(function ($bid) use (&$bid_histories){
+            $bids->each(function ($bid) use (&$bid_histories) {
                 array_push($bid_histories, [
-                    'id'=>$bid->id,
+                    'id' => $bid->id,
                     'service_provider' => $bid->bidder->name,
                     'status' => $bid->status,
                     'price' => $bid->price,
@@ -116,6 +116,37 @@ class BidController extends Controller
             });
             if (count($bid_histories) > 0) return api_response($request, $bid_histories, 200, ['bid_histories' => $bid_histories]);
             else return api_response($request, null, 404);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function sendHireRequest($bid, Request $request, BidRepositoryInterface $bid_repository, Updater $updater)
+    {
+        try {
+            $this->validate($request, [
+                'terms' => 'required|string',
+                'policies' => 'required|string',
+                'items' => 'required|string'
+            ]);
+            $bid = $bid_repository->find($bid);
+            $bid_price_quotation_item = $bid->items->where('type', 'price_quotation')->first();
+            $items = collect(json_decode($request->items));
+            $price_quotation_item = $items->where('id', $bid_price_quotation_item->id)->first();
+            $fields = collect($price_quotation_item->fields);
+            $updater->setBid($bid)->setTerms($request->terms)->setPolicies($request->policies)->setItems($items)->hire();
+            return api_response($request, $bid, 200);
+            $field_results = [];
+            foreach ($bid_price_quotation_item->fields as $field) {
+                $field = $fields->where('id', $field->id)->first();
+            }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
