@@ -174,6 +174,24 @@ if (!function_exists('getDayName')) {
     }
 }
 
+if (!function_exists('getDayNameAndDateTime')) {
+    /**
+     * @param Carbon $date
+     * @return int|string
+     */
+    function getDayNameAndDateTime(Carbon $date)
+    {
+        switch (1) {
+            case $date->isSameDay(Carbon::now()):
+                return Carbon::now()->format('h:iA');
+            case $date->isYesterday():
+                return 'Yesterday at '.$date->format('h:iA');
+            default:
+                return $date->format('d M').' at '.$date->format('h:iA');
+        }
+    }
+}
+
 if (!function_exists('createAuthorWithType')) {
     function createAuthorWithType($author)
     {

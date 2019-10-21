@@ -29,7 +29,7 @@ class CommentController extends Controller
                         'name' => $comment->commentator->name,
                         'image' => $comment->commentator->logo
                     ],
-                    'created_at' => $comment->created_at->toDateTimeString(),
+                    'created_at' => getDayNameAndDateTime($comment->created_at),
                     'commentator_type' => class_basename($comment->commentator)
                 ]);
             }
