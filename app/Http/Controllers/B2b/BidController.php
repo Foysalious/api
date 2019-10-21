@@ -30,7 +30,7 @@ class BidController extends Controller
                 $bidder = $model::findOrFail((int)$bid->bidder_id);
                 $reviews = $bidder->reviews;
 
-                $bid_items = $bid->bidItems;
+                $bid_items = $bid->items;
                 $item_type = [];
                 foreach ($bid_items as $item) {
                     $item_fields = [];
@@ -128,7 +128,7 @@ class BidController extends Controller
         }
     }
 
-    public function sendHireRequest($bid, Request $request, BidRepositoryInterface $bid_repository, Updater $updater)
+    public function sendHireRequest($business, $bid, Request $request, BidRepositoryInterface $bid_repository, Updater $updater)
     {
         try {
             $this->validate($request, [
@@ -136,7 +136,8 @@ class BidController extends Controller
                 'policies' => 'required|string',
                 'items' => 'required|string'
             ]);
-            $bid = $bid_repository->find($bid);
+            $bid = $bid_repository->find((int)$bid);
+            $this->setModifier($request->manager_member);
             $updater->setBid($bid)->setTerms($request->terms)->setPolicies($request->policies)->setItems(json_decode($request->items))->hire();
             return api_response($request, $bid, 200);
         } catch (ValidationException $e) {
