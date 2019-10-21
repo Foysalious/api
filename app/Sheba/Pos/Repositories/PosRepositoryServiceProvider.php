@@ -3,6 +3,7 @@
 use Illuminate\Support\ServiceProvider;
 use Sheba\Pos\Repositories\Interfaces\PosCategoryRepositoryInterface;
 use Sheba\Pos\Repositories\Interfaces\PosDiscountRepositoryInterface;
+use Sheba\Pos\Repositories\Interfaces\PosServiceLogRepositoryInterface;
 use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
 
 class PosRepositoryServiceProvider extends ServiceProvider
@@ -15,6 +16,7 @@ class PosRepositoryServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->bind(PosServiceRepositoryInterface::class, PosServiceRepository::class);
+        $this->app->bind(PosServiceLogRepositoryInterface::class, PosServiceLogRepository::class);
         $this->app->bind(PosCategoryRepositoryInterface::class, PosCategoryRepository::class);
         $this->app->bind(PosDiscountRepositoryInterface::class, PosDiscountRepository::class);
     }

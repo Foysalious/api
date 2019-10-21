@@ -195,14 +195,6 @@ class Route
                 (new MovieTicketRoute())->set($api);
             });
             $api->get('refresh-token', 'ProfileController@refresh');
-            $api->group(['prefix' => 'comments'], function ($api) {
-                $api->post('/', 'CommentController@storeComments');
-                $api->get('/', 'CommentController@getComments');
-            });
-            $api->group(['prefix' => 'attachments'], function ($api) {
-                $api->post('/', 'AttachmentController@storeAttachment');
-                $api->get('/', 'AttachmentController@getAttachments');
-            });
         });
         return $api;
     }
