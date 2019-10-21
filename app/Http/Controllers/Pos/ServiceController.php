@@ -155,7 +155,6 @@ class ServiceController extends Controller
             $this->validate($request, $rules);
             $this->setModifier($request->partner);
             $partner_pos_service = PartnerPosService::find($request->service);
-
             if (!$partner_pos_service) return api_response($request, null, 400, ['msg' => 'Service Not Found']);
             $updater->setService($partner_pos_service)->setData($request->all())->update();
 
@@ -192,7 +191,6 @@ class ServiceController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

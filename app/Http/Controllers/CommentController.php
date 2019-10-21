@@ -1,8 +1,12 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\Bid;
+use App\Models\Business;
 use App\Models\Comment;
+use App\Models\Partner;
 use App\Sheba\Comment\Comments;
 use Illuminate\Http\Request;
+use Illuminate\Http\Request as HttpRequest;
 use Illuminate\Validation\ValidationException;
 use Sheba\ModificationFields;
 
@@ -10,17 +14,12 @@ class CommentController extends Controller
 {
     use ModificationFields;
 
-    public function getComments(Request $request, Comments $comments)
+    public function getComments($avatar, $bid, Request $request)
     {
         try {
-            $comments = $comments->setCommentableType($request->commentable_type)->setCommentableId($request->commentable_id);
-            $commentable_type = $comments->getCommentableModel();
-
-            if (!$commentable_type) return api_response($request, null, 404);
+            $bid = Bid::findOrFail((int)$bid);
             list($offset, $limit) = calculatePagination($request);
-            $comments = Comment::where('commentable_type', get_class($commentable_type))
-                ->where('commentable_id', $commentable_type->id)
-                ->orderBy('created_at', 'DESC')
+            $comments = $bid->comments()->orderBy('created_at', 'DESC')
                 ->skip($offset)->limit($limit)
                 ->get();
 
@@ -33,7 +32,7 @@ class CommentController extends Controller
                         'name' => $comment->commentator->name,
                         'image' => $comment->commentator->logo
                     ],
-                    'created_at' => $comment->created_at->toDateTimeString(),
+                    'created_at' => getDayNameAndDateTime($comment->created_at),
                     'commentator_type' => class_basename($comment->commentator)
                 ]);
             }
@@ -45,15 +44,25 @@ class CommentController extends Controller
         }
     }
 
-    public function storeComments(Request $request, Comments $comments)
+    public function storeComments($avatar, $bid, Request $request, Comments $comments)
     {
         try {
             $this->validate($request, [
                 'comment' => 'required'
             ]);
-            $comments = $comments->setCommentableType($request->commentable_type)->setCommentableId($request->commentable_id)
-                ->setCommentatorType($request->commentator_type)->setCommentatorId($request->commentator_id)->setComment($request->comment);
-            $this->setModifier($comments->getCommentatorModel());
+            $bid = Bid::findOrFail((int)$bid);
+
+            if ($request->segment(2) == 'businesses') {
+                $avatar = Business::findOrFail((int)$avatar);
+            } elseif ($request->segment(2) == 'partners') {
+                $avatar = Partner::findOrFail((int)$avatar);
+            }
+
+            $comments = $comments->setComment($request->comment)->setRequestData($request)
+                ->setCommentableModel($bid)
+                ->setCommentatorModel($avatar)
+                ->formatData();
+            $this->setModifier($avatar);
             $comment = $comments->store();
             return $comment ? api_response($request, $comment, 200) : api_response($request, $comment, 500);
         } catch (ValidationException $e) {
@@ -63,6 +72,7 @@ class CommentController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
