@@ -79,7 +79,24 @@ class Cors2MiddleWare
             "https://pl.sheba.xyz",
             "https://topup.sheba.xyz",
             "https://transport.sheba.xyz",
-            "https://movie.sheba.xyz"
+            "https://movie.sheba.xyz",
+            "http://stage.dev-sheba.xyz",
+            "http://b2b.stage.dev-sheba.xyz",
+            "http://www.stage.dev-sheba.xyz",
+            "https://www.stage.dev-sheba.xyz",
+            "http://admin.stage.dev-sheba.xyz",
+            "https://admin.stage.dev-sheba.xyz",
+            "http://partners.stage.dev-sheba.xyz",
+            "https://partners.stage.dev-sheba.xyz",
+            "http://accounts.stage.dev-sheba.xyz",
+            "http://transport.stage.dev-sheba.xyz",
+            "http://movie.stage.dev-sheba.xyz",
+            "https://api.stage.dev-sheba.xyz",
+            "http://bondhu.stage.dev-sheba.xyz",
+            "https://bondhu.stage.dev-sheba.xyz",
+            "https://topup.stage.dev-sheba.xyz",
+            "https://b2b.stage.dev-sheba.xyz",
+            "https://pl.stage.dev-sheba.xyz",
         ];
         // ALLOW OPTIONS METHOD
         $headers['Access-Control-Allow-Credentials'] = 'true';
