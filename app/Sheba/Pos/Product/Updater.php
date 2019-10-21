@@ -49,7 +49,7 @@ class Updater
         $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'is_vat_percentage_off', 'is_stock_off']);
         if (!empty($this->updatedData)) {
             $old_service = clone $this->service;
-            // $this->serviceRepo->update($this->service, $this->updatedData);
+            $this->serviceRepo->update($this->service, $this->updatedData);
             $this->storeLogs($old_service, $this->updatedData);
         }
     }
@@ -69,17 +69,14 @@ class Updater
             $old_value[$field_name] = $service[$field_name];
             $new_value[$field_name] = $value;
         }
-        $array = array_map('strval',  array_flip( $field_names));
-//            array_map('strval', array_flip($field_names));
-        dd($array);
+
         $data = [
             'partner_pos_service_id' => $service['id'],
             'field_names' => json_encode($field_names),
             'old_value' => json_encode($old_value),
             'new_value' => json_encode($new_value)
         ];
-        dd($field_names, $data);
-        $this->posServiceLogRepo->save($data);
+        $this->posServiceLogRepo->create($data);
     }
 
     private function saveImages()
