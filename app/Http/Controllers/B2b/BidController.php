@@ -137,16 +137,8 @@ class BidController extends Controller
                 'items' => 'required|string'
             ]);
             $bid = $bid_repository->find($bid);
-            $bid_price_quotation_item = $bid->items->where('type', 'price_quotation')->first();
-            $items = collect(json_decode($request->items));
-            $price_quotation_item = $items->where('id', $bid_price_quotation_item->id)->first();
-            $fields = collect($price_quotation_item->fields);
-            $updater->setBid($bid)->setTerms($request->terms)->setPolicies($request->policies)->setItems($items)->hire();
+            $updater->setBid($bid)->setTerms($request->terms)->setPolicies($request->policies)->setItems(json_decode($request->items))->hire();
             return api_response($request, $bid, 200);
-            $field_results = [];
-            foreach ($bid_price_quotation_item->fields as $field) {
-                $field = $fields->where('id', $field->id)->first();
-            }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');

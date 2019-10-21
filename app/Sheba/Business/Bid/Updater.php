@@ -3,10 +3,12 @@
 
 use App\Models\Bid;
 use App\Sheba\Repositories\Business\BidRepository;
+use Sheba\Repositories\Interfaces\BidItemFieldRepositoryInterface;
 
 class Updater
 {
     private $bidRepository;
+    private $bidItemFieldRepository;
     private $isFavourite;
     private $bidData;
     private $bid;
@@ -14,9 +16,10 @@ class Updater
     private $policies;
     private $items;
 
-    public function __construct(BidRepository $bid_repository)
+    public function __construct(BidRepository $bid_repository, BidItemFieldRepositoryInterface $bid_item_field_repository)
     {
         $this->bidRepository = $bid_repository;
+        $this->bidItemFieldRepository = $bid_item_field_repository;
     }
 
     public function setBid(Bid $bid)
@@ -39,7 +42,7 @@ class Updater
 
     public function setItems($item_fields)
     {
-        $this->items = $item_fields;
+        $this->items = collect($item_fields);
         return $this;
     }
 
@@ -48,6 +51,7 @@ class Updater
         $this->isFavourite = $is_favourite;
         return $this;
     }
+
 
     public function updateFavourite(Bid $bid)
     {
@@ -60,5 +64,23 @@ class Updater
     public function hire()
     {
         $this->bidRepository->update($this->bid, ['status' => 'awarded', 'terms' => $this->terms, 'policies' => $this->policies]);
+        $bid_price_quotation_item = $this->bid->items->where('type', 'price_quotation')->first();
+        $price_quotation_item = $this->items->where('id', $bid_price_quotation_item->id)->first();
+        foreach ($bid_price_quotation_item->fields as $field) {
+            $field_result = $price_quotation_item->fields->where('id', $field->id)->first();
+            if ($field_result) {
+                if ($field_result->unit) {
+                    $variables = json_decode($field->variables);
+                    $variables->unit = $field_result->unit;
+                    $variables = json_encode($variables);
+                } else {
+                    $variables = null;
+                }
+                $this->bidItemFieldRepository->update($field, [
+                    'result' => $field_result->result ? $field_result->result : $field->result,
+                    'variables' => $variables ? $variables : $field->variables
+                ]);
+            }
+        }
     }
 }
