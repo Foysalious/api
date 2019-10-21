@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\Bid;
 use App\Models\Comment;
 use App\Sheba\Comment\Comments;
 use Illuminate\Http\Request;
@@ -10,17 +11,12 @@ class CommentController extends Controller
 {
     use ModificationFields;
 
-    public function getComments(Request $request, Comments $comments)
+    public function getComments($vendor, $bid, Request $request)
     {
         try {
-            $comments = $comments->setCommentableType($request->commentable_type)->setCommentableId($request->commentable_id);
-            $commentable_type = $comments->getCommentableModel();
-
-            if (!$commentable_type) return api_response($request, null, 404);
+            $bid = Bid::findOrFail((int)$bid);
             list($offset, $limit) = calculatePagination($request);
-            $comments = Comment::where('commentable_type', get_class($commentable_type))
-                ->where('commentable_id', $commentable_type->id)
-                ->orderBy('created_at', 'DESC')
+            $comments = $bid->comments()->orderBy('created_at', 'DESC')
                 ->skip($offset)->limit($limit)
                 ->get();
 
