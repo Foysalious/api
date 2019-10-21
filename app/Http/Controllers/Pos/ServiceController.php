@@ -155,7 +155,6 @@ class ServiceController extends Controller
             $this->validate($request, $rules);
             $this->setModifier($request->partner);
             $partner_pos_service = PartnerPosService::find($request->service);
-            dd($partner_pos_service);
             if (!$partner_pos_service) return api_response($request, null, 400, ['msg' => 'Service Not Found']);
             $updater->setService($partner_pos_service)->setData($request->all())->update();
 
