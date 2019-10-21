@@ -154,7 +154,6 @@ class BidController extends Controller
     }
 
 
-
     public function show($business, $bid, Request $request, BidRepositoryInterface $bid_repository, Updater $updater)
     {
         try {
@@ -170,12 +169,20 @@ class BidController extends Controller
             $procurement_details = [
                 'id' => $bid->id,
                 'status' => $bid->status,
+                'price' => 100,
+                'title' => $bid->procurement->title,
+                'vendor' => [
+                    'name' => $bid->bidder->name,
+                    'rating' => 4.5
+                ],
+                'start_date' => Carbon::parse($bid->procurement->procurement_start_date)->format('d/m/y'),
+                'end_date' => Carbon::parse($bid->procurement->procurement_end_date)->format('d/m/y'),
                 'created_at' => Carbon::parse($bid->created_at)->format('d/m/y'),
                 'price_quotation' => $price_quotation ? $price_quotation->fields ? $price_quotation->fields->toArray() : null : null,
                 'technical_evaluation' => $technical_evaluation ? $technical_evaluation->fields ? $technical_evaluation->fields->toArray() : null : null,
                 'company_evaluation' => $company_evaluation ? $company_evaluation->fields ? $company_evaluation->fields->toArray() : null : null,
             ];
-            return api_response($request, $procurement_details, 200, ['procurements' => $procurement_details]);
+            return api_response($request, $procurement_details, 200, ['bid' => $procurement_details]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
