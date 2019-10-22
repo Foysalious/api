@@ -2,11 +2,13 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\Procurement;
+use App\Sheba\Business\Bid\Updater;
 use Dotenv\Exception\ValidationException;
 use Illuminate\Http\Request;
 use Sheba\Business\Bid\Creator;
 use Sheba\ModificationFields;
 use Sheba\Repositories\Business\ProcurementRepository;
+use Sheba\Repositories\Interfaces\BidRepositoryInterface;
 
 class BidController extends Controller
 {
@@ -49,6 +51,28 @@ class BidController extends Controller
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all()]);
             $sentry->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function takeAction($partner, $bid, Request $request, BidRepositoryInterface $bid_repository, Updater $updater)
+    {
+        try {
+            $this->validate($request, [
+                'status' => 'required|string|in:accepted,rejected',
+            ]);
+            $bid = $bid_repository->find((int)$bid);
+            $this->setModifier($request->manager_resource);
+            $updater->setBid($bid)->setStatus($request->status)->updateStatus();
+            return api_response($request, $bid, 200);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }

@@ -1,5 +1,7 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Models\Business;
+use App\Models\BusinessMember;
 use App\Models\Profile;
 use App\Repositories\ProfileRepository;
 use Illuminate\Validation\ValidationException;
@@ -80,13 +82,12 @@ class LoginController extends Controller
 
     public function generateDummyToken()
     {
-        $profile = Profile::find(7824);
-        $member = $profile->member;
-        $businesses = $member->businesses->first();
-        return JWTAuth::fromUser($profile, [
+        $business_member = BusinessMember::where([['business_id', 11], ['is_super', 1]])->first();
+        $member = $business_member->member;
+        return JWTAuth::fromUser($business_member->member->profile, [
             'member_id' => $member->id,
             'member_type' => count($member->businessMember) > 0 ? $member->businessMember->first()->type : null,
-            'business_id' => $businesses ? $businesses->id : null,
+            'business_id' => $business_member->business_id,
         ]);
     }
 

@@ -304,9 +304,11 @@ class ServiceController extends Controller
                 FieldType::VAT => '%',
                 FieldType::PRICE => '৳',
             ];
+            $service = $service->load('logs');
             $displayable_field_name = FieldType::getFieldsDisplayableNameInBangla();
             $service->logs->each(function ($log) use (&$logs, $displayable_field_name, $unit_bn, $identifier) {
                 $log->field_names->each(function ($field) use (&$logs, $log, $displayable_field_name, $unit_bn, $identifier) {
+                    if (!in_array($field, FieldType::fields())) return false;
                     array_push($logs, [
                         'log_type' => $field,
                         'log_type_show_name' => [

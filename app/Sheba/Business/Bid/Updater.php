@@ -14,6 +14,7 @@ class Updater
     private $isFavourite;
     private $bidData;
     private $bid;
+    private $status;
     private $terms;
     private $policies;
     private $items;
@@ -27,6 +28,12 @@ class Updater
     public function setBid(Bid $bid)
     {
         $this->bid = $bid;
+        return $this;
+    }
+
+    public function setStatus($status)
+    {
+        $this->status = $status;
         return $this;
     }
 
@@ -93,5 +100,10 @@ class Updater
         } catch (QueryException $e) {
             throw  $e;
         }
+    }
+
+    public function updateStatus()
+    {
+        $this->bidRepository->update($this->bid, ['status' => $this->status]);
     }
 }

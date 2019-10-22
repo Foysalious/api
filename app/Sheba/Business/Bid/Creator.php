@@ -89,6 +89,10 @@ class Creator
                         ]);
                     }
                 }
+                $price_item = $this->bidItemRepository->where('type', 'price_quotation')->first();
+                if ($price_item) {
+                    $this->bidRepository->update($bid, ['price' => $price_item->fields()->sum('result')]);
+                }
             });
         } catch (QueryException $e) {
             throw  $e;
