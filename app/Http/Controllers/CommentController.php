@@ -19,7 +19,7 @@ class CommentController extends Controller
         try {
             $bid = Bid::findOrFail((int)$bid);
             list($offset, $limit) = calculatePagination($request);
-            $comments = $bid->comments()->orderBy('created_at', 'DESC')
+            $comments = $bid->comments()->orderBy('id', 'ASC')
                 ->skip($offset)->limit($limit)
                 ->get();
 
