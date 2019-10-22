@@ -442,6 +442,7 @@ class OrderController extends Controller
             ->setFor(EntryType::INCOME)
             ->setSourceType(class_basename($order))
             ->setSourceId($order->id)
+            ->setCreatedAt($order->created_at)
             ->updateFromSrc();
     }
 

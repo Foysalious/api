@@ -21,6 +21,7 @@ class AutomaticEntryRepository extends BaseRepository
     private $amountCleared;
     private $sourceType;
     private $sourceId;
+    private $createdAt;
 
     /**
      * @param mixed $source_type
@@ -99,6 +100,21 @@ class AutomaticEntryRepository extends BaseRepository
     }
 
     /**
+     * @param Carbon $created_at
+     * @return $this
+     */
+    public function setCreatedAt(Carbon $created_at)
+    {
+        try {
+            $this->createdAt = $created_at->format('Y-m-d H:s:i');
+            return $this;
+        } catch (Throwable $e) {
+            $this->notifyBug($e);
+            return $this;
+        }
+    }
+
+    /**
      * @param $head
      * @throws InvalidHeadException
      */
@@ -145,7 +161,7 @@ class AutomaticEntryRepository extends BaseRepository
     private function getData()
     {
         $data = [
-            'created_at' => Carbon::now()->format('Y-m-d H:s:i'),
+            'created_at' => $this->createdAt ?: Carbon::now()->format('Y-m-d H:s:i'),
             'created_from' => json_encode((new RequestIdentification())->get()),
             'amount' => $this->amount,
             'amount_cleared' => $this->amountCleared,
