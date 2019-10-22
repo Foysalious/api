@@ -54,7 +54,7 @@ class CustomerTransactionController extends Controller
             $warning_message = $this->generateWarningMessageV2($gift_cards_purchased);
             return api_response($request, $transactions, 200, [
                 'transactions' => $transactions, 'balance' => $customer->shebaCredit(),
-                'credit' => round($customer->wallet, 2), 'bonus' => round($customer->shebaBonusCredit(), 2),
+                'credit' => round($customer->shebaCredit(), 2), 'bonus' => round($customer->shebaBonusCredit(), 2),
                 'warning_message' => $warning_message
             ]);
         } catch (\Throwable $e) {
