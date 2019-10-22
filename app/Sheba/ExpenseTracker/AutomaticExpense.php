@@ -5,13 +5,14 @@ use ReflectionClass;
 class AutomaticExpense
 {
     const SUBSCRIPTION_FEE = 'Subscription fee';
-    const MARKET_PLACE_ORDER = 'Commission of market place order';
-    const PAYMENT_LINK = 'Commission of payment link';
-    const TOP_UP = 'Top up purchase amount';
-    const MOVIE_TICKET = 'Movie ticker purchase amount';
-    const BUS_TICKET = 'Bus ticker purchase amount';
-    const E_SHOP = 'Purchase from e-shop';
-    const SMS = 'SMS marketing purchase';
+    const MARKET_PLACE_ORDER = 'Marketplace Order Commission';
+    const PAYMENT_LINK = 'Payment Link Commission';
+    const TOP_UP = 'Mobile Recharge Purchase';
+    const MOVIE_TICKET = 'Movie ticker purchase';
+    const BUS_TICKET = 'Bus Ticket Purchase';
+    const E_SHOP = 'e-shop Purchase';
+    const SMS = 'SMS Purchase';
+    const OTHER_EXPENSES = 'Other Expenses';
 
     public static function heads()
     {

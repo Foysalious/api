@@ -160,6 +160,7 @@ class Updater
         }
     }
 
+
     private function hasFile($filename)
     {
         return array_key_exists($filename, $this->data) && ($this->data[$filename] instanceof Image || ($this->data[$filename] instanceof UploadedFile && $this->data[$filename]->getPath() != ''));
