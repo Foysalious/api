@@ -102,6 +102,7 @@ class BidController extends Controller
     public function getBidHistory($business, $procurement, Request $request, AccessControl $access_control)
     {
         try {
+
             $access_control->setBusinessMember($request->business_member);
             if (!($access_control->hasAccess('procurement.r') || $access_control->hasAccess('procurement.rw'))) return api_response($request, null, 403);
             $business = $request->business;
@@ -114,6 +115,7 @@ class BidController extends Controller
                     'id' => $bid->id,
                     'service_provider' => $bid->bidder->name,
                     'status' => $bid->status,
+                    'color' => constants('BID_STATUSES_COLOR')[$bid->status],
                     'price' => $bid->price,
                     'created_at' => $bid->created_at->format('h:i a,d M Y'),
                 ]);
@@ -155,7 +157,6 @@ class BidController extends Controller
             return api_response($request, null, 500);
         }
     }
-
 
     public function show($business, $bid, Request $request, BidRepositoryInterface $bid_repository, Updater $updater)
     {

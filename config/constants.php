@@ -74,6 +74,14 @@ return [
         'Cancelled' => ['sheba' => 'Served', 'partner' => 'Served', 'customer' => '#42cb6f'],
         'Declined' => ['sheba' => 'Served', 'partner' => 'Served', 'customer' => '#fcce54']
     ],
+    'BID_STATUSES_COLOR' => [
+        'pending' => '#ff8219',
+        'rejected' => '#fa5252',
+        'accepted' => '#12b886',
+        'drafted' => '#0c99f7',
+        'sent' => '#0c99f7',
+        'awarded' => '#0c99f7'
+    ],
     'PARTNER_ORDER_STATUSES' => [
         'Open' => 'Open',
         'Process' => 'Process',
