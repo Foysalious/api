@@ -181,6 +181,7 @@ class BidController extends Controller
                 'attachments' => $bid->attachments()->select('title', 'file')->get(),
                 'terms' => $bid->terms,
                 'policies' => $bid->policies,
+                'proposal' => $bid->proposal,
                 'start_date' => Carbon::parse($bid->procurement->procurement_start_date)->format('d/m/y'),
                 'end_date' => Carbon::parse($bid->procurement->procurement_end_date)->format('d/m/y'),
                 'created_at' => Carbon::parse($bid->created_at)->format('d/m/y'),
