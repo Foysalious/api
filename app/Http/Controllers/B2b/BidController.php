@@ -54,6 +54,7 @@ class BidController extends Controller
                     'status' => $bid->status,
                     'bidder_name' => $bidder->name,
                     'bidder_logo' => $bidder->logo,
+                    'is_favourite' => $bidder->is_favourite,
                     'bidder_avg_rating' => round($reviews->avg('rating'), 2),
                     'item' => $item_type
                 ]);
