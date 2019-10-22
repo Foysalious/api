@@ -306,11 +306,9 @@ class ServiceController extends Controller
             ];
             $service = $service->load('logs');
             $displayable_field_name = FieldType::getFieldsDisplayableNameInBangla();
-            $service->logs->each(function ($log) use (&$logs, $displayable_field_name, $unit_bn, $identifier) {
+            $service->logs()->orderBy('created_at', 'DESC')->each(function ($log) use (&$logs, $displayable_field_name, $unit_bn, $identifier) {
                 $log->field_names->each(function ($field) use (&$logs, $log, $displayable_field_name, $unit_bn, $identifier) {
-
                     if (!in_array($field, FieldType::fields())) return false;
-
                     array_push($logs, [
                         'log_type' => $field,
                         'log_type_show_name' => [
@@ -341,18 +339,20 @@ class ServiceController extends Controller
      */
     public function generateBanglaLog($field, $log, array $identifier)
     {
+        $old_value = is_numeric($log->old_value->toArray()[$field]) ? convertNumbersToBangla($log->old_value->toArray()[$field]) : 0;
+        $new_value = is_numeric($log->new_value->toArray()[$field]) ? convertNumbersToBangla($log->new_value->toArray()[$field]) : 0;
         switch ($field) {
             case FieldType::STOCK:
-                $log = convertNumbersToBangla($log->old_value->toArray()[$field]) . ' ' . $identifier[$field] . ' থেকে ' . convertNumbersToBangla($log->new_value->toArray()[$field]) . ' ' . $identifier[$field];
+                $log = "$old_value $identifier[$field] থেকে $new_value $identifier[$field]";
                 break;
             case FieldType::PRICE:
-                $log = $identifier[$field] . convertNumbersToBangla($log->old_value->toArray()[$field]) . ' থেকে ' . $identifier[$field] . convertNumbersToBangla($log->new_value->toArray()[$field]);
+                $log = "$identifier[$field] $old_value থেকে $identifier[$field] $new_value";
                 break;
             case FieldType::VAT:
-                $log = convertNumbersToBangla($log->old_value->toArray()[$field]) . $identifier[$field] . ' থেকে ' . convertNumbersToBangla($log->new_value->toArray()[$field]) . $identifier[$field];
+                $log = "$old_value $identifier[$field] থেকে $new_value $identifier[$field]";
                 break;
             default:
-                $log = "convertNumbersToBangla($log->old_value->toArray()[$field]) . ' ' . $identifier[$field] . ' থেকে ' . convertNumbersToBangla($log->new_value->toArray()[$field]) . ' ' . $identifier[$field]";
+               $log = "{$log->old_value->toArray()[$field]} থেকে {$log->new_value->toArray()[$field]}";
         }
         return $log;
     }
