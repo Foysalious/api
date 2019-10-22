@@ -166,16 +166,17 @@ class BidController extends Controller
             $price_quotation = $bid->items->where('type', 'price_quotation')->first();
             $technical_evaluation = $bid->items->where('type', 'technical_evaluation')->first();
             $company_evaluation = $bid->items->where('type', 'company_evaluation')->first();
-            $procurement_details = [
+            $bid_details = [
                 'id' => $bid->id,
                 'status' => $bid->status,
-                'price' => 100,
+                'price' => $bid->price,
                 'title' => $bid->procurement->title,
                 'vendor' => [
                     'name' => $bid->bidder->name,
-                    'rating' => 4.5,
-                    'total_rating' => 500
+                    'rating' => round($bid->bidder->reviews->avg()),
+                    'total_rating' => $bid->bidder->reviews->count()
                 ],
+                'attachments' => $bid->attachments()->select('title', 'file')->get(),
                 'terms' => $bid->terms,
                 'policies' => $bid->policies,
                 'start_date' => Carbon::parse($bid->procurement->procurement_start_date)->format('d/m/y'),
@@ -185,7 +186,7 @@ class BidController extends Controller
                 'technical_evaluation' => $technical_evaluation ? $technical_evaluation->fields ? $technical_evaluation->fields->toArray() : null : null,
                 'company_evaluation' => $company_evaluation ? $company_evaluation->fields ? $company_evaluation->fields->toArray() : null : null,
             ];
-            return api_response($request, $procurement_details, 200, ['bid' => $procurement_details]);
+            return api_response($request, $bid_details, 200, ['bid' => $bid_details]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
