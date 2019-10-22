@@ -18,7 +18,7 @@ class Partner extends BusTicketCommission
         /** @var AutomaticEntryRepository $entry
          * @var \App\Models\Partner $agent
          */
-        list($order, $entry) = $this->initEntry();
+        list($entry,$order) = $this->initEntry();
         $entry->setHead(AutomaticIncomes::BUS_TICKET)->setAmount($order->amount)->store();
         $entry->setHead(AutomaticExpense::BUS_TICKET)->setAmount($order->amount - $order->agent_amount)->store();
     }
@@ -33,7 +33,7 @@ class Partner extends BusTicketCommission
         /** @var AutomaticEntryRepository $entry
          * @var \App\Models\Partner $agent
          */
-        list($order, $entry) = $this->initEntry();
+        list( $entry,$order) = $this->initEntry();
         $entry->setHead(AutomaticIncomes::BUS_TICKET)->delete();
         $entry->setHead(AutomaticExpense::BUS_TICKET)->delete();
     }
