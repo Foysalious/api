@@ -175,7 +175,8 @@ class BidController extends Controller
                 'title' => $bid->procurement->title,
                 'vendor' => [
                     'name' => $bid->bidder->name,
-                    'rating' => round($bid->bidder->reviews->avg()),
+                    'logo' => $bid->bidder->logo,
+                    'rating' => round($bid->bidder->reviews->avg('rating'),2),
                     'total_rating' => $bid->bidder->reviews->count()
                 ],
                 'attachments' => $bid->attachments()->select('title', 'file')->get(),
