@@ -12,8 +12,8 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
-use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\EntryType;
+use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
@@ -123,7 +123,7 @@ class OrderController extends Controller
             }
 
             return api_response($request, $orders_formatted, 200, ['orders' => $orders_formatted]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -430,6 +430,7 @@ class OrderController extends Controller
     /**
      * @param PosOrder $order
      * @param $paid_amount
+     * @throws ExpenseTrackingServerError
      */
     private function updateIncome(PosOrder $order, $paid_amount)
     {
@@ -514,7 +515,7 @@ class OrderController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
