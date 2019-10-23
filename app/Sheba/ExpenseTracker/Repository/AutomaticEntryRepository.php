@@ -159,9 +159,13 @@ class AutomaticEntryRepository extends BaseRepository
      */
     private function getData()
     {
+        $created_from = $this->withBothModificationFields((new RequestIdentification())->get());
+        $created_from['created_at'] = $created_from['created_at']->format('Y-m-d H:s:i');
+        $created_from['updated_at'] = $created_from['updated_at']->format('Y-m-d H:s:i');
+
         $data = [
             'created_at' => $this->createdAt ?: Carbon::now()->format('Y-m-d H:s:i'),
-            'created_from' => json_encode((new RequestIdentification())->get()),
+            'created_from' => json_encode($created_from),
             'amount' => $this->amount,
             'amount_cleared' => $this->amountCleared,
             'head_name' => $this->head,

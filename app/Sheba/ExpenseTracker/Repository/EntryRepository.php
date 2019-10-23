@@ -66,7 +66,7 @@ class EntryRepository extends BaseRepository
     public function storeEntry($for, $data)
     {
         $data['created_at'] = Carbon::parse($data['created_at'])->format('Y-m-d H:s:i');
-        $request_identification = (new RequestIdentification())->get();
+        $request_identification = $this->withBothModificationFields((new RequestIdentification())->get());
         $data['created_from'] = json_encode($request_identification);
         $result = $this->client->post('accounts/' . $this->accountId . '/' . $for, $data);
         return $result['data'];
@@ -81,7 +81,7 @@ class EntryRepository extends BaseRepository
      */
     public function updateEntry($for, $data, $entry_id)
     {
-        $request_identification = (new RequestIdentification())->get();
+        $request_identification = $this->withBothModificationFields((new RequestIdentification())->get());
         $data['created_from'] = json_encode($request_identification);
         $result = $this->client->post('accounts/' . $this->accountId . '/' . $for . '/' . $entry_id, $data);
 
