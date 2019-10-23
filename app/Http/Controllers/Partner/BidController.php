@@ -20,6 +20,7 @@ class BidController extends Controller
             $this->validate($request, [
                 'procurement_id' => 'required|numeric',
                 'items' => 'required|string',
+                'status' => 'required|string|in:sent,pending',
             ]);
             $this->setModifier($request->manager_resource);
             /** @var Procurement $procurement */
@@ -39,7 +40,7 @@ class BidController extends Controller
                     array_push($field_results, $field);
                 }
             }
-            $bid = $creator->setBidder($request->partner)->setProcurement($procurement)->setStatus('pending')->setFieldResults($field_results)->create();
+            $bid = $creator->setBidder($request->partner)->setProcurement($procurement)->setStatus($request->status)->setFieldResults($field_results)->create();
             return api_response($request, null, 200, ['bid' => $bid->id]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -59,7 +60,7 @@ class BidController extends Controller
     {
         try {
             $this->validate($request, [
-                'status' => 'required|string|in:accepted,rejected',
+                'status' => 'required|string|in:accepted,rejected,sent,pending'
             ]);
             $bid = $bid_repository->find((int)$bid);
             $this->setModifier($request->manager_resource);

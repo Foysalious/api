@@ -182,6 +182,7 @@ class BidController extends Controller
                 'vendor' => [
                     'name' => $bid->bidder->name,
                     'logo' => $bid->bidder->logo,
+                    'domain' => $bid->bidder->sub_domain,
                     'rating' => round($bid->bidder->reviews->avg('rating'), 2),
                     'total_rating' => $bid->bidder->reviews->count()
                 ],
