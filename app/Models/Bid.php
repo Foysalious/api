@@ -32,4 +32,9 @@ class Bid extends Model
         return $this->morphTo();
     }
 
+    public function isAdvanced()
+    {
+        return $this->type == 'advanced';
+    }
+
 }

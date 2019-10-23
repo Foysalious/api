@@ -13,6 +13,7 @@ class Updater
     private $bidItemFieldRepository;
     private $isFavourite;
     private $bidData;
+    /** @var Bid */
     private $bid;
     private $status;
     private $terms;
@@ -82,25 +83,27 @@ class Updater
         try {
             DB::transaction(function () {
                 $this->bidRepository->update($this->bid, ['status' => 'awarded', 'terms' => $this->terms, 'policies' => $this->policies]);
-                $bid_price_quotation_item = $this->bid->items()->where('type', 'price_quotation')->first();
-                $price_quotation_item = $this->items->where('id', $bid_price_quotation_item->id)->first();
-                $fields = collect($price_quotation_item->fields);
-                foreach ($bid_price_quotation_item->fields as $field) {
-                    $field_result = $fields->where('id', $field->id)->first();
-                    if ($field_result) {
-                        if ($field_result->unit) {
-                            $variables = json_decode($field->variables);
-                            $variables->unit = $field_result->unit;
-                            $variables = json_encode($variables);
-                        } else {
-                            $variables = null;
+                if ($this->bid->isAdvanced()) {
+                    $bid_price_quotation_item = $this->bid->items()->where('type', 'price_quotation')->first();
+                    $price_quotation_item = $this->items->where('id', $bid_price_quotation_item->id)->first();
+                    $fields = collect($price_quotation_item->fields);
+                    foreach ($bid_price_quotation_item->fields as $field) {
+                        $field_result = $fields->where('id', $field->id)->first();
+                        if ($field_result) {
+                            if ($field_result->unit) {
+                                $variables = json_decode($field->variables);
+                                $variables->unit = $field_result->unit;
+                                $variables = json_encode($variables);
+                            } else {
+                                $variables = null;
+                            }
+                            $this->bidItemFieldRepository->update($field, [
+                                'result' => isset($field_result->result) ? $field_result->result : $field->result,
+                                'variables' => $variables ? $variables : $field->variables,
+                                'title' => isset($field_result->title) ? $field_result->title : $field->title,
+                                'short_description' => isset($field_result->short_description) ? $field_result->short_description : $field->short_description,
+                            ]);
                         }
-                        $this->bidItemFieldRepository->update($field, [
-                            'result' => isset($field_result->result) ? $field_result->result : $field->result,
-                            'variables' => $variables ? $variables : $field->variables,
-                            'title' => isset($field_result->title) ? $field_result->title : $field->title,
-                            'short_description' => isset($field_result->short_description) ? $field_result->short_description : $field->short_description,
-                        ]);
                     }
                 }
                 $this->updateBidPrice();
