@@ -140,11 +140,14 @@ class BidController extends Controller
             $this->validate($request, [
                 'terms' => 'required|string',
                 'policies' => 'required|string',
-                'items' => 'required|string'
+                'items' => 'required|string',
+                'price' => 'required|numeric'
             ]);
             $bid = $bid_repository->find((int)$bid);
             $this->setModifier($request->manager_member);
-            $updater->setBid($bid)->setTerms($request->terms)->setPolicies($request->policies)->setItems(json_decode($request->items))->hire();
+            $updater->setBid($bid)->setTerms($request->terms)->setPolicies($request->policies)->setItems(json_decode($request->items))
+                ->setPrice($request->price)
+                ->hire();
             return api_response($request, $bid, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -175,10 +178,11 @@ class BidController extends Controller
                 'status' => $bid->status,
                 'price' => $bid->price,
                 'title' => $bid->procurement->title,
+                'type' => $bid->procurement->type,
                 'vendor' => [
                     'name' => $bid->bidder->name,
                     'logo' => $bid->bidder->logo,
-                    'rating' => round($bid->bidder->reviews->avg('rating'),2),
+                    'rating' => round($bid->bidder->reviews->avg('rating'), 2),
                     'total_rating' => $bid->bidder->reviews->count()
                 ],
                 'attachments' => $bid->attachments()->select('title', 'file')->get(),

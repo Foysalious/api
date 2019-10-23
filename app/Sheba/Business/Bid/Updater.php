@@ -18,6 +18,7 @@ class Updater
     private $terms;
     private $policies;
     private $items;
+    private $price;
 
     public function __construct(BidRepository $bid_repository, BidItemFieldRepositoryInterface $bid_item_field_repository)
     {
@@ -61,6 +62,12 @@ class Updater
         return $this;
     }
 
+    public function setPrice($price)
+    {
+        $this->price = $price;
+        return $this;
+    }
+
 
     public function updateFavourite(Bid $bid)
     {
@@ -96,6 +103,7 @@ class Updater
                         ]);
                     }
                 }
+                $this->updateBidPrice();
             });
         } catch (QueryException $e) {
             throw  $e;
@@ -105,5 +113,15 @@ class Updater
     public function updateStatus()
     {
         $this->bidRepository->update($this->bid, ['status' => $this->status]);
+    }
+
+    public function updateBidPrice()
+    {
+        if ($this->price) {
+            $this->bidRepository->update($this->bid, ['price' => (double)$this->price]);
+        } else {
+            $bid_price_quotation_item = $this->bid->items()->where('type', 'price_quotation')->first();
+            $this->bidRepository->update($this->bid, ['price' => (double)$bid_price_quotation_item->fields->sum('result')]);
+        }
     }
 }
