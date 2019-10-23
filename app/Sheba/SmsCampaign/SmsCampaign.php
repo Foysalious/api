@@ -7,6 +7,8 @@ use App\Models\SmsCampaignOrderReceiver;
 use App\Models\Tag;
 use App\Sheba\SmsCampaign\SmsHandler;
 
+use Sheba\ExpenseTracker\AutomaticExpense;
+use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\ModificationFields;
 
 class SmsCampaign
@@ -73,6 +75,15 @@ class SmsCampaign
             }
 
             $this->partner->debitWallet($amount_to_be_deducted);
+            /** @var AutomaticEntryRepository $entry */
+            $entry=app(AutomaticEntryRepository::class);
+            $entry->setAmount($amount_to_be_deducted)
+                ->setPartner($this->partner)
+                ->setHead(AutomaticExpense::SMS)
+                ->setSourceType(class_basename($campaign_order))
+                ->setSourceId($campaign_order->id)
+                ->store();
+
             $partner_transactions = $this->partner->walletTransaction(['amount' => $amount_to_be_deducted, 'type' => 'Debit', 'log' => $amount_to_be_deducted . "BDT. has been deducted for creating " . $this->title . ' sms campaign from your wallet.']);
 
             $tag = Tag::where('name', 'credited sms campaign')->pluck('id')->toArray();

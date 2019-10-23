@@ -1,10 +1,15 @@
 <?php namespace Sheba\Pos\Order;
 
 use App\Models\Partner;
+use App\Models\Payment;
 use App\Models\PosCustomer;
 use App\Models\PartnerPosService;
 use App\Models\PosOrder;
+use App\Models\Profile;
 use Sheba\Dal\Discount\InvalidDiscountType;
+use Sheba\ExpenseTracker\AutomaticExpense;
+use Sheba\ExpenseTracker\AutomaticIncomes;
+use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\Pos\Discount\DiscountTypes;
 use Sheba\Pos\Discount\Handler as DiscountHandler;
 use Sheba\Pos\Product\StockManager;
@@ -133,6 +138,8 @@ class Creator
         if ($this->discountHandler->hasDiscount()) $this->discountHandler->create($order);
 
         $this->voucherCalculation($order);
+
+        $this->storeIncome($order);
         return $order;
     }
 
@@ -186,5 +193,25 @@ class Creator
     private function isWholesalePriceApplicable($service_wholesale_applicable)
     {
         return isset($this->data['is_wholesale_applied']) && $this->data['is_wholesale_applied'] && $service_wholesale_applicable;
+    }
+
+    /**
+     * @param PosOrder $order
+     */
+    private function storeIncome(PosOrder $order)
+    {
+        /** @var AutomaticEntryRepository $entry */
+        $entry = app(AutomaticEntryRepository::class);
+        $order = $order->calculate();
+        $amount = (double)$order->getNetBill();
+        $profile = $order->customer ? $order->customer->profile : new Profile();
+        $entry->setPartner($this->partner)
+            ->setParty($profile)
+            ->setAmount($amount)
+            ->setAmountCleared($order->getPaid())
+            ->setHead(AutomaticIncomes::POS)
+            ->setSourceType(class_basename($order))
+            ->setSourceId($order->id)
+            ->store();
     }
 }

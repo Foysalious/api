@@ -3,6 +3,7 @@
 use App\Jobs\Partner\PaymentLink\SendPaymentLinkSms;
 use App\Models\Partner;
 use App\Models\Payment;
+use App\Models\PosOrder;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
@@ -62,7 +63,8 @@ class PaymentLinkOrderComplete extends PaymentComplete
         }
 
         $this->payment = $this->saveInvoice();
-        if ($this->paymentLink->getTarget()) {
+        $target = $this->paymentLink->getTarget();
+        if ($target) {
             $payment = $this->payment;
             $payment_link = $this->paymentLink;
             dispatch(new SendPaymentLinkSms($payment, $payment_link));
@@ -71,9 +73,13 @@ class PaymentLinkOrderComplete extends PaymentComplete
 
         $payable = $this->payment->payable;
         app(ActionRewardDispatcher::class)->run('payment_link_usage', $payment_receiver, $payment_receiver, $payable);
-        /** @var AutomaticEntryRepository */
-        app(AutomaticEntryRepository::class)->setPartner($payment_receiver)->setAmount($payable->amount)->setHead(AutomaticIncomes::PAYMENT_LINK)->store();
 
+        /** @var AutomaticEntryRepository $entry_repo */
+        $entry_repo = app(AutomaticEntryRepository::class)->setPartner($payment_receiver)->setAmount($payable->amount)->setHead(AutomaticIncomes::PAYMENT_LINK);
+        if ($target instanceof PosOrder)
+            $entry_repo->setCreatedAt($target->created_at);
+
+        $entry_repo->store();
         return $this->payment;
     }
 

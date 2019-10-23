@@ -106,9 +106,6 @@ class WalletController extends Controller
                         $this->setModifier($user);
                         if (in_array($payment->payable->type, ['movie_ticket_purchase', 'transport_ticket_purchase'])) {
                             $log = sprintf(constants('TICKET_LOG')[$payment->payable->type]['log'], number_format($remaining, 2));
-                            if ($user instanceof Partner) {
-                                $this->storeExpense($user, $payment);
-                            }
                         } else {
                             $log = 'Service Purchase';
                         }
@@ -151,16 +148,4 @@ class WalletController extends Controller
         }
     }
 
-    /**
-     * @param Partner $user
-     * @param Payment $payment
-     */
-    private function storeExpense($user, $payment)
-    {
-        /** @var AutomaticEntryRepository $entry */
-        $entry = app(AutomaticEntryRepository::class);
-        $amount = (double)$payment->payable->amount;
-        $head = $payment->payable->type == 'movie_ticket_purchase' ? AutomaticExpense::MOVIE_TICKET : AutomaticExpense::BUS_TICKET;
-        $entry->setPartner($user)->setAmount($amount)->setHead($head)->store();
-    }
 }
