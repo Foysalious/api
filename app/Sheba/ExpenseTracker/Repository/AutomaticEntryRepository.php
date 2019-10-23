@@ -7,7 +7,6 @@ use Sheba\ExpenseTracker\AutomaticExpense;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\EntryType;
 use Sheba\ExpenseTracker\Exceptions\InvalidHeadException;
-use Sheba\ExpenseTracker\Repository\Profileofile as ProfileofileAlias;
 use Sheba\RequestIdentification;
 use Throwable;
 
