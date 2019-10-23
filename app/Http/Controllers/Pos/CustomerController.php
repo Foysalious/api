@@ -80,11 +80,7 @@ class CustomerController extends Controller
             $data['total_purchase_amount'] = $total_purchase_amount;
             $data['total_due_amount'] = $total_due_amount;
             $data['total_used_promo'] = 0.00;
-            /**
-             * TEMPORARY OFF
-             * $data['total_payable_amount'] = $entry_repo->setPartner($request->partner)->getTotalPayableAmountByCustomer($customer->profile_id)['total_payables'];
-             */
-            $data['total_payable_amount'] = 0.00;
+            $data['total_payable_amount'] = $entry_repo->setPartner($request->partner)->getTotalPayableAmountByCustomer($customer->profile_id)['total_payables'];
             $data['is_customer_editable'] = $customer->isEditable();
             $data['note'] = PartnerPosCustomer::where('customer_id', $customer->id)->where('partner_id', $partner)->first()->note;
 
