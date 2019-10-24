@@ -90,7 +90,7 @@ class Creator
                 /** @var Bid $bid */
                 $bid = $this->bidRepository->create($this->data);
                 foreach ($this->procurement->items as $item) {
-                    $bid_item = $this->bidItemRepository->create(['bid_id' => $bid->id, 'type' => $item->type, 'proposal' => $this->proposal]);
+                    $bid_item = $this->bidItemRepository->create(['bid_id' => $bid->id, 'type' => $item->type]);
                     foreach ($item->fields as $field) {
                         $field_result = $this->fieldResults->where('id', $field->id)->first();
                         $this->bidItemFieldRepository->create([
@@ -117,6 +117,7 @@ class Creator
         $this->data['bidder_id'] = $this->bidder->id;
         $this->data['bidder_type'] = get_class($this->bidder);
         $this->data['status'] = $this->status;
+        $this->data['proposal'] = $this->proposal;
     }
 
     private function updatePrice(Bid $bid)
@@ -124,7 +125,7 @@ class Creator
         if ($this->price) {
             $this->bidRepository->update($bid, ['price' => $this->price]);
         } else {
-            $price_item = $this->bidItemRepository->where('type', 'price_quotation')->first();
+            $price_item = $bid->items()->where('type', 'price_quotation')->first();
             if ($price_item) {
                 $price = 0;
                 foreach ($price_item->fields as $field) {
