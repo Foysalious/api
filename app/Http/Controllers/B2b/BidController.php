@@ -39,6 +39,7 @@ class BidController extends Controller
                     foreach ($fields as $field) {
                         array_push($item_fields, [
                             'field_id' => $field->id,
+                            'input_type' => $field->input_type,
                             'question' => $field->title,
                             'answer' => $field->result
                         ]);
