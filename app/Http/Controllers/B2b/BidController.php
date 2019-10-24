@@ -65,12 +65,14 @@ class BidController extends Controller
                     $fields = $item->fields;
                     $total_price = 0;
                     foreach ($fields as $field) {
-//                        dd($final_fields, $field);
+                        if ($item->type == 'price_quotation') {
+                            $total_price += $field->result;
+                        }
                         array_push($item_fields, [
                             'field_id' => $field->id,
-                            'input_type' => $field->input_type,
                             'question' => $field->title,
                             'answer' => $field->result,
+                            'input_type' => $field->input_type,
                             'key' => $final_fields->where('id', $field->id)->first()->key
                         ]);
                     }
@@ -78,6 +80,7 @@ class BidController extends Controller
                         'item_id' => $item->id,
                         'item_type' => $item->type,
                         'fields' => $item_fields,
+                        'total_price' => $total_price,
                     ]);
                 }
 
