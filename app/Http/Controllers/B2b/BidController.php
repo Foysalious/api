@@ -23,32 +23,72 @@ class BidController extends Controller
             if (!($access_control->hasAccess('procurement.r') || $access_control->hasAccess('procurement.rw'))) return api_response($request, null, 403);
             $business = $request->business;
             $procurement = Procurement::findOrFail((int)$procurement);
-
-            $bids = $procurement->bids();
+            $final_fields = collect();
+            $procurement->load(['bids' => function ($q) {
+                $q->with('items.fields');
+            }]);
+            $bids = $procurement->bids;
             $bid_lists = [];
-            foreach ($bids->get() as $bid) {
+            $final_item = collect();
+            foreach ($bids as $bid) {
+                foreach ($bid->items as $item) {
+                    $final_item->push($item);
+                }
+            }
+            $group_by_items = $final_item->groupBy('type');
+            foreach ($group_by_items as $key => $group_by_item) {
+                $fields = collect();
+                foreach ($group_by_item as $item) {
+                    foreach ($item->fields as $field) {
+                        $fields->push($field);
+                    }
+                }
+                $i = 0;
+                foreach ($fields->groupBy('title') as $key => $titles) {
+                    foreach ($titles as $key => $title) {
+                        $title['key'] = $i;
+                        $final_fields->push($title);
+                    }
+                    $i++;
+                }
+            }
+            foreach ($bids as $bid) {
                 $model = $bid->bidder_type;
                 $bidder = $model::findOrFail((int)$bid->bidder_id);
                 $reviews = $bidder->reviews;
 
                 $bid_items = $bid->items;
                 $item_type = [];
+
                 foreach ($bid_items as $item) {
                     $item_fields = [];
                     $fields = $item->fields;
+                    $total_price = 0;
                     foreach ($fields as $field) {
+                        $answer = null;
+                        if ($item->type == 'price_quotation') {
+                            $unit = json_decode($field->variables)->unit;
+                            $answer = $unit * $field->result;
+                            $total_price += ($field->result * $unit);
+                        } else {
+                            $answer = $field->result;
+                        }
                         array_push($item_fields, [
                             'field_id' => $field->id,
                             'question' => $field->title,
-                            'answer' => $field->result
+                            'answer' => $answer,
+                            'input_type' => $field->input_type,
+                            'key' => $final_fields->where('id', $field->id)->first()->key
                         ]);
                     }
                     array_push($item_type, [
                         'item_id' => $item->id,
                         'item_type' => $item->type,
-                        'fields' => $item_fields
+                        'fields' => $item_fields,
+                        'total_price' => $total_price,
                     ]);
                 }
+
                 array_push($bid_lists, [
                     'id' => $bid->id,
                     'status' => $bid->status,
@@ -59,6 +99,7 @@ class BidController extends Controller
                     'item' => $item_type
                 ]);
             }
+
             if (count($bid_lists) > 0) return api_response($request, $bid_lists, 200, ['bid_lists' => $bid_lists]);
             else return api_response($request, null, 404);
         } catch (ValidationException $e) {

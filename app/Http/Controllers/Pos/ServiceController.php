@@ -117,7 +117,7 @@ class ServiceController extends Controller
                 'price' => 'required',
                 'unit' => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS')))
             ]);
-            $this->setModifier($request->partner);
+            $this->setModifier($request->manager_resource);
             $partner_pos_service = $creator->setData($request->all())->create();
 
             if ($request->has('discount_amount') && $request->discount_amount > 0) {
@@ -153,7 +153,7 @@ class ServiceController extends Controller
             $rules = ['unit' => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS')))];
             if ($request->has('discount_amount') && $request->discount_amount > 0) $rules += ['end_date' => 'required'];
             $this->validate($request, $rules);
-            $this->setModifier($request->partner);
+            $this->setModifier($request->manager_resource);
             $partner_pos_service = PartnerPosService::find($request->service);
             if (!$partner_pos_service) return api_response($request, null, 400, ['msg' => 'Service Not Found']);
             $updater->setService($partner_pos_service)->setData($request->all())->update();
@@ -204,7 +204,7 @@ class ServiceController extends Controller
     public function destroy(Request $request, Deleter $deleter)
     {
         try {
-            $this->setModifier($request->partner);
+            $this->setModifier($request->manager_resource);
             $deleter->delete($request->service);
 
             return api_response($request, null, 200, ['msg' => 'Product Updated Successfully']);
@@ -295,8 +295,8 @@ class ServiceController extends Controller
      * @param PartnerPosService $service
      * @return JsonResponse
      */
-    public function getLogs(Request $request, $partner, PartnerPosService $service)
-    {
+
+    public function getLogs(Request $request, $partner, PartnerPosService $service){
         try {
             $logs = [];
             $identifier = [
@@ -305,10 +305,12 @@ class ServiceController extends Controller
                 FieldType::PRICE => '৳',
             ];
             $service = $service->load('logs');
+
             $displayable_field_name = FieldType::getFieldsDisplayableNameInBangla();
             $service->logs()->orderBy('created_at', 'DESC')->each(function ($log) use (&$logs, $displayable_field_name, $unit_bn, $identifier) {
                 $log->field_names->each(function ($field) use (&$logs, $log, $displayable_field_name, $unit_bn, $identifier) {
                     if (!in_array($field, FieldType::fields())) return false;
+//                    if (!in_array($field == 'stock', FieldType::fields())) return false;
                     array_push($logs, [
                         'log_type' => $field,
                         'log_type_show_name' => [

@@ -98,9 +98,9 @@ class Updater
 
     private function format()
     {
-        if ((isset($this->data['is_stock_off']) && $this->data['is_stock_off'] == 'true')) {
+        if ((isset($this->data['is_stock_off']) && ($this->data['is_stock_off'] == 'true' && !$this->service->stock == null))) {
             $this->updatedData['stock'] = null;
-        } elseif (isset($this->data['stock']) && $this->data['stock'] != $this->service->stock) {
+        } elseif (isset($this->data['stock']) && ($this->data['stock'] != $this->service->stock && $this->data['stock'] != null)) {
             $this->updatedData['stock'] = (double)$this->data['stock'];
         }
 
@@ -127,34 +127,27 @@ class Updater
         } else if (isset($this->data['unit']) && $this->data['unit'] != $this->service->unit) {
             $this->updatedData['unit'] = $this->data['unit'];
         }
-
         if ((isset($this->data['pos_category_id']) && $this->data['pos_category_id'] != $this->service->pos_category_id)) {
             $this->updatedData['pos_category_id'] = $this->data['pos_category_id'];
         }
-
         if ((isset($this->data['cost']) && $this->data['cost'] != $this->service->cost)) {
             $this->updatedData['cost'] = $this->data['cost'];
         }
-
         if ((isset($this->data['price']) && $this->data['price'] != $this->service->price)) {
             $this->updatedData['price'] = $this->data['price'];
         }
         if ((isset($this->data['wholesale_price']) && $this->data['wholesale_price'] != $this->service->wholesale_price)) {
             $this->updatedData['wholesale_price'] = $this->data['wholesale_price'];
         }
-
         if ((isset($this->data['name']) && $this->data['name'] != $this->service->name)) {
             $this->updatedData['name'] = $this->data['name'];
         }
-
         if ((isset($this->data['category_id']) && $this->data['category_id'] != $this->service->pos_category_id)) {
             $this->updatedData['pos_category_id'] = $this->data['category_id'];
         }
-
         if ((isset($this->data['unit']) && $this->data['unit'] != $this->service->unit)) {
             $this->updatedData['unit'] = $this->data['unit'];
         }
-
         if ((isset($this->data['description']) && $this->data['description'] != $this->service->description)) {
             $this->updatedData['description'] = $this->data['description'];
         }
