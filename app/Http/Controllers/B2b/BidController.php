@@ -36,18 +36,30 @@ class BidController extends Controller
                 foreach ($bid_items as $item) {
                     $item_fields = [];
                     $fields = $item->fields;
+                    $total_price = 0;
                     foreach ($fields as $field) {
+                        if ($item->type == 'price_quotation') {
+                            $total_price += $field->result;
+                        }
                         array_push($item_fields, [
                             'field_id' => $field->id,
                             'input_type' => $field->input_type,
                             'question' => $field->title,
-                            'answer' => $field->result
+                            'answer' => $field->result,
+                        ]);
+                    }
+                    if ($item->type == 'price_quotation') {
+                        array_push($item_fields, [
+                            'field_id' => 0,
+                            'input_type' => 'number',
+                            'question' => 'Total Price',
+                            'total_price' => $total_price
                         ]);
                     }
                     array_push($item_type, [
                         'item_id' => $item->id,
                         'item_type' => $item->type,
-                        'fields' => $item_fields
+                        'fields' => $item_fields,
                     ]);
                 }
                 array_push($bid_lists, [
