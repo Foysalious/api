@@ -310,7 +310,6 @@ class ServiceController extends Controller
             $service->logs()->orderBy('created_at', 'DESC')->each(function ($log) use (&$logs, $displayable_field_name, $unit_bn, $identifier) {
                 $log->field_names->each(function ($field) use (&$logs, $log, $displayable_field_name, $unit_bn, $identifier) {
                     if (!in_array($field, FieldType::fields())) return false;
-//                    if (!in_array($field == 'stock', FieldType::fields())) return false;
                     array_push($logs, [
                         'log_type' => $field,
                         'log_type_show_name' => [
@@ -341,8 +340,8 @@ class ServiceController extends Controller
      */
     public function generateBanglaLog($field, $log, array $identifier)
     {
-        $old_value = is_numeric($log->old_value->toArray()[$field]) ? convertNumbersToBangla($log->old_value->toArray()[$field]) : 0;
-        $new_value = is_numeric($log->new_value->toArray()[$field]) ? convertNumbersToBangla($log->new_value->toArray()[$field]) : 0;
+        $old_value = is_numeric($log->old_value->toArray()[$field]) ? convertNumbersToBangla($log->old_value->toArray()[$field]) : convertNumbersToBangla(0);
+        $new_value = is_numeric($log->new_value->toArray()[$field]) ? convertNumbersToBangla($log->new_value->toArray()[$field]) : convertNumbersToBangla(0);
         switch ($field) {
             case FieldType::STOCK:
                 $log = "$old_value $identifier[$field] থেকে $new_value $identifier[$field]";
