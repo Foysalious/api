@@ -66,7 +66,8 @@ class BidController extends Controller
                     $total_price = 0;
                     foreach ($fields as $field) {
                         if ($item->type == 'price_quotation') {
-                            $total_price += $field->result;
+                            $unit = json_decode($field->variables)->unit;
+                            $total_price += ($field->result*$unit);
                         }
                         array_push($item_fields, [
                             'field_id' => $field->id,
