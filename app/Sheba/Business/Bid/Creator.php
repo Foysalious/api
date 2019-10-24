@@ -17,6 +17,8 @@ class Creator
     private $status;
     private $terms;
     private $policies;
+    private $price;
+    private $proposal;
     private $fieldResults;
     private $bidItemRepository;
     private $bidItemFieldRepository;
@@ -60,9 +62,21 @@ class Creator
         return $this;
     }
 
+    public function setProposal($proposal)
+    {
+        $this->proposal = $proposal;
+        return $this;
+    }
+
     public function setFieldResults($field_results)
     {
         $this->fieldResults = collect($field_results);
+        return $this;
+    }
+
+    public function setPrice($price)
+    {
+        $this->price = (double)$price;
         return $this;
     }
 
@@ -76,7 +90,7 @@ class Creator
                 /** @var Bid $bid */
                 $bid = $this->bidRepository->create($this->data);
                 foreach ($this->procurement->items as $item) {
-                    $bid_item = $this->bidItemRepository->create(['bid_id' => $bid->id, 'type' => $item->type]);
+                    $bid_item = $this->bidItemRepository->create(['bid_id' => $bid->id, 'type' => $item->type, 'proposal' => $this->proposal]);
                     foreach ($item->fields as $field) {
                         $field_result = $this->fieldResults->where('id', $field->id)->first();
                         $this->bidItemFieldRepository->create([
@@ -89,10 +103,7 @@ class Creator
                         ]);
                     }
                 }
-                $price_item = $this->bidItemRepository->where('type', 'price_quotation')->first();
-                if ($price_item) {
-                    $this->bidRepository->update($bid, ['price' => $price_item->fields()->sum('result')]);
-                }
+                $this->updatePrice($bid);
             });
         } catch (QueryException $e) {
             throw  $e;
@@ -106,5 +117,22 @@ class Creator
         $this->data['bidder_id'] = $this->bidder->id;
         $this->data['bidder_type'] = get_class($this->bidder);
         $this->data['status'] = $this->status;
+    }
+
+    private function updatePrice(Bid $bid)
+    {
+        if ($this->price) {
+            $this->bidRepository->update($bid, ['price' => $this->price]);
+        } else {
+            $price_item = $this->bidItemRepository->where('type', 'price_quotation')->first();
+            if ($price_item) {
+                $price = 0;
+                foreach ($price_item->fields as $field) {
+                    $variables = json_decode($field->variables);
+                    $price += ((double)$variables->unit * (double)$field->result);
+                }
+                $this->bidRepository->update($bid, ['price' => $price]);
+            }
+        }
     }
 }
