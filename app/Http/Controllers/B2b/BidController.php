@@ -65,14 +65,18 @@ class BidController extends Controller
                     $fields = $item->fields;
                     $total_price = 0;
                     foreach ($fields as $field) {
+                        $answer = null;
                         if ($item->type == 'price_quotation') {
                             $unit = json_decode($field->variables)->unit;
-                            $total_price += ($field->result*$unit);
+                            $answer = $unit * $field->result;
+                            $total_price += ($field->result * $unit);
+                        } else {
+                            $answer = $field->result;
                         }
                         array_push($item_fields, [
                             'field_id' => $field->id,
                             'question' => $field->title,
-                            'answer' => $field->result,
+                            'answer' => $answer,
                             'input_type' => $field->input_type,
                             'key' => $final_fields->where('id', $field->id)->first()->key
                         ]);
