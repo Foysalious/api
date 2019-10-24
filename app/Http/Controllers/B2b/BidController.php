@@ -95,6 +95,7 @@ class BidController extends Controller
                     'bidder_name' => $bidder->name,
                     'bidder_logo' => $bidder->logo,
                     'is_favourite' => $bid->is_favourite,
+                    'created_at' => $bid->created_at->format('d/m/y'),
                     'bidder_avg_rating' => round($reviews->avg('rating'), 2),
                     'item' => $item_type
                 ]);
