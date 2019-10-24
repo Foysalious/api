@@ -120,11 +120,11 @@ class Updater
 
     public function updateBidPrice()
     {
-        if ($this->price) {
-            $this->bidRepository->update($this->bid, ['price' => (double)$this->price]);
-        } else {
-            $bid_price_quotation_item = $this->bid->items()->where('type', 'price_quotation')->first();
+        $bid_price_quotation_item = $this->bid->items()->where('type', 'price_quotation')->first();
+        if ($bid_price_quotation_item) {
             $this->bidRepository->update($this->bid, ['price' => (double)$bid_price_quotation_item->fields->sum('result')]);
+        } else {
+            $this->bidRepository->update($this->bid, ['price' => (double)$this->price]);
         }
     }
 }
