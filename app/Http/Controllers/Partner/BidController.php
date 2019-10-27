@@ -14,15 +14,20 @@ class BidController extends Controller
 {
     use ModificationFields;
 
-    public function store($partner, Request $request, Creator $creator, ProcurementRepository $procurement_repository)
+    public function store($partner, Request $request, Creator $creator, ProcurementRepository $procurement_repository, BidRepositoryInterface $bid_repository)
     {
         try {
             $this->validate($request, [
                 'procurement_id' => 'required|numeric',
                 'items' => 'required|string',
                 'status' => 'required|string|in:sent,pending',
+                'price' => 'sometimes|numeric',
+                'proposal' => 'required|string',
             ]);
             $this->setModifier($request->manager_resource);
+            $bid = $bid_repository->where('procurement_id', $request->procurement_id)->where('bidder_type', 'like', '%Partner')
+                ->where('bidder_id', $request->partner->id)->first();
+            if ($bid) return api_response($request, null, 403, ['message' => "Bid already created"]);
             /** @var Procurement $procurement */
             $procurement = $procurement_repository->find($request->procurement_id);
             $procurement->load('items.fields');
@@ -40,7 +45,10 @@ class BidController extends Controller
                     array_push($field_results, $field);
                 }
             }
-            $bid = $creator->setBidder($request->partner)->setProcurement($procurement)->setStatus($request->status)->setFieldResults($field_results)->create();
+            $bid = $creator->setBidder($request->partner)->setProcurement($procurement)->setStatus($request->status)
+                ->setProposal($request->proposal)
+                ->setFieldResults($field_results)
+                ->setPrice($request->price)->create();
             return api_response($request, null, 200, ['bid' => $bid->id]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());

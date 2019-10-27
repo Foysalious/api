@@ -95,6 +95,7 @@ class BidController extends Controller
                     'bidder_name' => $bidder->name,
                     'bidder_logo' => $bidder->logo,
                     'is_favourite' => $bid->is_favourite,
+                    'created_at' => $bid->created_at->format('d/m/y'),
                     'bidder_avg_rating' => round($reviews->avg('rating'), 2),
                     'item' => $item_type
                 ]);
@@ -205,6 +206,7 @@ class BidController extends Controller
     public function show($business, $bid, Request $request, BidRepositoryInterface $bid_repository, Updater $updater)
     {
         try {
+            /** @var Bid $bid */
             $bid = $bid_repository->find((int)$bid);
             $bid->load(['items' => function ($q) {
                 $q->with(['fields' => function ($q) {
@@ -220,6 +222,7 @@ class BidController extends Controller
                 'price' => $bid->price,
                 'title' => $bid->procurement->title,
                 'type' => $bid->procurement->type,
+                'is_awarded' => $bid->hasSentHireRequest(),
                 'vendor' => [
                     'name' => $bid->bidder->name,
                     'logo' => $bid->bidder->logo,

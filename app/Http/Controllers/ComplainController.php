@@ -1,9 +1,6 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Models\Comment;
-use App\Models\User;
 use Sheba\Complains\ComplainStatusChanger;
 use Sheba\Complains\Statuses;
 use Sheba\Dal\Complain\Model as Complain;

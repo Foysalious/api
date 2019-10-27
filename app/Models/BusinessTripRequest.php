@@ -1,10 +1,13 @@
 <?php namespace App\Models;
 
-
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Comment\MorphCommentable;
+use Sheba\Comment\MorphComments;
 
-class BusinessTripRequest extends Model
+class BusinessTripRequest extends Model implements MorphCommentable
 {
+    use MorphComments;
+
     protected $guarded = ['id'];
 
     public function vehicle()
@@ -30,5 +33,13 @@ class BusinessTripRequest extends Model
     public function comments()
     {
         return $this->morphMany(Comment::class, 'commentable');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getNotificationHandlerClass()
+    {
+        // TODO: Implement getNotificationHandlerClass() method.
     }
 }

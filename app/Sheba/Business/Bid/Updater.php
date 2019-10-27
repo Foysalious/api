@@ -4,6 +4,7 @@
 use App\Models\Bid;
 use App\Sheba\Repositories\Business\BidRepository;
 use Illuminate\Database\QueryException;
+use Sheba\Business\BidStatusChangeLog\Creator;
 use Sheba\Repositories\Interfaces\BidItemFieldRepositoryInterface;
 use DB;
 
@@ -20,11 +21,13 @@ class Updater
     private $policies;
     private $items;
     private $price;
+    private $statusLogCreator;
 
-    public function __construct(BidRepository $bid_repository, BidItemFieldRepositoryInterface $bid_item_field_repository)
+    public function __construct(BidRepository $bid_repository, BidItemFieldRepositoryInterface $bid_item_field_repository, Creator $creator)
     {
         $this->bidRepository = $bid_repository;
         $this->bidItemFieldRepository = $bid_item_field_repository;
+        $this->statusLogCreator = $creator;
     }
 
     public function setBid(Bid $bid)
@@ -82,6 +85,7 @@ class Updater
     {
         try {
             DB::transaction(function () {
+                $previous_status = $this->bid->status;
                 $this->bidRepository->update($this->bid, ['status' => 'awarded', 'terms' => $this->terms, 'policies' => $this->policies]);
                 if ($this->bid->isAdvanced()) {
                     $bid_price_quotation_item = $this->bid->items()->where('type', 'price_quotation')->first();
@@ -107,6 +111,7 @@ class Updater
                     }
                 }
                 $this->updateBidPrice();
+                $this->statusLogCreator->setBid($this->bid)->setPreviousStatus($previous_status)->setStatus($this->bid->status)->create();
             });
         } catch (QueryException $e) {
             throw  $e;
