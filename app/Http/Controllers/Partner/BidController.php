@@ -28,7 +28,7 @@ class BidController extends Controller
             $bid = $bid_repository->where('procurement_id', $request->procurement_id)->where('bidder_type', 'like', '%Partner')
                 ->where('bidder_id', $request->partner->id)->first();
             if ($bid) {
-                $updater->setStatus($request->status)->updateStatus();
+                $updater->setBid($bid)->setStatus($request->status)->updateStatus();
                 return api_response($request, null, 200, ['bid' => $bid->id]);
             }
             /** @var Procurement $procurement */
