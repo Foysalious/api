@@ -151,10 +151,12 @@ class ServiceController extends Controller
     {
         try {
             $rules = ['unit' => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS')))];
+
             if ($request->has('discount_amount') && $request->discount_amount > 0) $rules += ['end_date' => 'required'];
             $this->validate($request, $rules);
             $this->setModifier($request->manager_resource);
             $partner_pos_service = PartnerPosService::find($request->service);
+
             if (!$partner_pos_service) return api_response($request, null, 400, ['msg' => 'Service Not Found']);
             $updater->setService($partner_pos_service)->setData($request->all())->update();
 
@@ -180,6 +182,8 @@ class ServiceController extends Controller
             if ($request->is_discount_off == 'false' && !$request->discount_id) {
                 $this->createServiceDiscount($request, $partner_pos_service);
             }
+
+//            dd($partner_pos_service);
             $partner_pos_service->unit = $partner_pos_service->unit ? constants('POS_SERVICE_UNITS')[$partner_pos_service->unit] : null;
             $partner_pos_service->warranty_unit = $partner_pos_service->warranty_unit ? config('pos.warranty_unit')[$partner_pos_service->warranty_unit] : null;
 

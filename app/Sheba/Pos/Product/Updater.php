@@ -47,6 +47,7 @@ class Updater
         $this->saveImages();
         $this->format();
         $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'is_vat_percentage_off', 'is_stock_off']);
+
         if (!empty($this->updatedData)) {
             $old_service = clone $this->service;
             $this->serviceRepo->update($this->service, $this->updatedData);
@@ -98,9 +99,11 @@ class Updater
 
     private function format()
     {
-        if ((isset($this->data['is_stock_off']) && ($this->data['is_stock_off'] == 'true' && !$this->service->stock == null))) {
+        if ((isset($this->data['is_stock_off']) && ($this->data['is_stock_off'] == 'true' && $this->service->stock != null))) {
             $this->updatedData['stock'] = null;
-        } elseif (isset($this->data['stock']) && ($this->data['stock'] != $this->service->stock && $this->data['stock'] != null)) {
+        }
+
+        if (isset($this->data['is_stock_off']) && $this->data['is_stock_off'] == 'false') {
             $this->updatedData['stock'] = (double)$this->data['stock'];
         }
 
