@@ -30,6 +30,7 @@ class ProcurementController extends Controller
                 'type' => 'required|string:in:basic,advanced,product,service',
                 'items' => 'sometimes|string',
                 'is_published' => 'sometimes|integer',
+                'description' => 'required'
 
                 /*'description' => 'required',
                  'estimated_price' => 'required|string',
@@ -132,6 +133,7 @@ class ProcurementController extends Controller
                     'id' => $procurement->id,
                     'title' => $procurement->title,
                     'status' => $procurement->status,
+                    'long_description' => $procurement->long_description,
                     'labels' => $procurement->getTagNamesAttribute()->toArray(),
                     'start_date' => Carbon::parse($procurement->procurement_start_date)->format('d/m/y'),
                     'published_at' => $procurement->is_published ? Carbon::parse($procurement->published_at)->format('d/m/y') : null,
