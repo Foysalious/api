@@ -30,7 +30,6 @@ class ProcurementController extends Controller
                 'type' => 'required|string:in:basic,advanced,product,service',
                 'items' => 'sometimes|string',
                 'is_published' => 'sometimes|integer',
-                'description' => 'required'
 
                 /*'description' => 'required',
                  'estimated_price' => 'required|string',
