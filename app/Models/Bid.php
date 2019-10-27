@@ -37,4 +37,9 @@ class Bid extends Model
         return $this->type == 'advanced';
     }
 
+    public function hasSentHireRequest()
+    {
+        return $this->status != 'pending';
+    }
+
 }
