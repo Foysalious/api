@@ -22,6 +22,8 @@ class Updater
     private $items;
     private $price;
     private $statusLogCreator;
+    private $fieldResults;
+    private $proposal;
 
     public function __construct(BidRepository $bid_repository, BidItemFieldRepositoryInterface $bid_item_field_repository, Creator $creator)
     {
@@ -79,6 +81,44 @@ class Updater
             'is_favourite' => $this->isFavourite ? (int)$this->isFavourite : 0,
         ];
         $this->bidRepository->update($bid, $this->bidData);
+    }
+
+    public function setFieldResults($field_results)
+    {
+        $this->fieldResults = collect($field_results);
+        return $this;
+    }
+
+    public function setProposal($proposal)
+    {
+        $this->proposal = $proposal;
+        return $this;
+    }
+
+    public function update()
+    {
+        try {
+            DB::transaction(function () {
+                $previous_status = $this->bid->status;
+                $this->bidRepository->update($this->bid, ['status' => $this->status, 'proposal' => $this->proposal]);
+                foreach ($this->bid->items as $item) {
+                    foreach ($item->fields as $field) {
+                        $field_result = $this->fieldResults->where('id', $field->id)->first();
+                        $this->bidItemFieldRepository->update($field, [
+                            'title' => $field->title,
+                            'short_description' => $field->short_description,
+                            'input_type' => $field->input_type,
+                            'variables' => $field->variables,
+                            'result' => $field_result ? $field_result->result : null
+                        ]);
+                    }
+                }
+                $this->updateBidPrice();
+                $this->statusLogCreator->setBid($this->bid)->setPreviousStatus($previous_status)->setStatus($this->status)->create();
+            });
+        } catch (QueryException $e) {
+            throw  $e;
+        }
     }
 
     public function hire()

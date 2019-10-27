@@ -28,31 +28,46 @@ class BidController extends Controller
             $bid = $bid_repository->where('procurement_id', $request->procurement_id)->where('bidder_type', 'like', '%Partner')
                 ->where('bidder_id', $request->partner->id)->first();
             if ($bid) {
-                $updater->setBid($bid)->setStatus($request->status)->updateStatus();
+                $items = collect(json_decode($request->items));
+                $field_results = [];
+                foreach ($bid->items as $procurement_item) {
+                    $item = $items->where('id', $procurement_item->id)->first();
+                    foreach ($procurement_item->fields as $item_field) {
+                        $variables = json_decode($item_field->variables);
+                        $required = (int)$variables->is_required;
+                        if ($required && !$item) return api_response($request, null, 400, ['message' => $procurement_item->type . ' missing']);
+                        elseif (!$required && !$item) continue;
+                        $fields = collect($item->fields);
+                        $field = $fields->where('id', $item_field->id)->first();
+                        array_push($field_results, $field);
+                    }
+                }
+                $updater->setBid($bid)->setStatus($request->status)->setFieldResults($field_results)->setProposal($request->proposal)->setPrice($request->price)->update();
+                return api_response($request, null, 200, ['bid' => $bid->id]);
+            } else {
+                /** @var Procurement $procurement */
+                $procurement = $procurement_repository->find($request->procurement_id);
+                $procurement->load('items.fields');
+                $items = collect(json_decode($request->items));
+                $field_results = [];
+                foreach ($procurement->items as $procurement_item) {
+                    $item = $items->where('id', $procurement_item->id)->first();
+                    foreach ($procurement_item->fields as $item_field) {
+                        $variables = json_decode($item_field->variables);
+                        $required = (int)$variables->is_required;
+                        if ($required && !$item) return api_response($request, null, 400, ['message' => $procurement_item->type . ' missing']);
+                        elseif (!$required && !$item) continue;
+                        $fields = collect($item->fields);
+                        $field = $fields->where('id', $item_field->id)->first();
+                        array_push($field_results, $field);
+                    }
+                }
+                $bid = $creator->setBidder($request->partner)->setProcurement($procurement)->setStatus($request->status)
+                    ->setProposal($request->proposal)
+                    ->setFieldResults($field_results)
+                    ->setPrice($request->price)->create();
                 return api_response($request, null, 200, ['bid' => $bid->id]);
             }
-            /** @var Procurement $procurement */
-            $procurement = $procurement_repository->find($request->procurement_id);
-            $procurement->load('items.fields');
-            $items = collect(json_decode($request->items));
-            $field_results = [];
-            foreach ($procurement->items as $procurement_item) {
-                $item = $items->where('id', $procurement_item->id)->first();
-                foreach ($procurement_item->fields as $item_field) {
-                    $variables = json_decode($item_field->variables);
-                    $required = (int)$variables->is_required;
-                    if ($required && !$item) return api_response($request, null, 400, ['message' => $procurement_item->type . ' missing']);
-                    elseif (!$required && !$item) continue;
-                    $fields = collect($item->fields);
-                    $field = $fields->where('id', $item_field->id)->first();
-                    array_push($field_results, $field);
-                }
-            }
-            $bid = $creator->setBidder($request->partner)->setProcurement($procurement)->setStatus($request->status)
-                ->setProposal($request->proposal)
-                ->setFieldResults($field_results)
-                ->setPrice($request->price)->create();
-            return api_response($request, null, 200, ['bid' => $bid->id]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
