@@ -105,13 +105,22 @@ class CustomerTransactionController extends Controller
     private function formatDebitBonusTransaction($bonus, $transactions)
     {
         $spent_on = $bonus->spent_on;
+        $category = null;
+        if ($spent_on instanceof PartnerOrder) {
+            $category = $spent_on->jobs->first()->category;
+            $log = $category->name;
+        } else if ($spent_on) {
+            $log = 'Purchased ' . class_basename($spent_on);
+        } else {
+            $log = 'Bonus credit expired';
+        }
         $category = $spent_on ? $bonus->spent_on->jobs->first()->category : null;
         $transactions->push(array(
             'id' => $bonus->id,
             'customer_id' => $bonus->user_id,
             'type' => 'Debit',
             'amount' => $bonus->amount,
-            'log' => $category ? $category->name : 'Bonus credit expired',
+            'log' => $log,
             'created_at' => $bonus->created_at->toDateTimeString(),
             'partner_order_id' => $bonus->spent_on_id,
             'valid_till' => null,

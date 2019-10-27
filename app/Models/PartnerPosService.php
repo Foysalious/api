@@ -97,4 +97,9 @@ class PartnerPosService extends Model
 
         return ($amount < 0) ? 0 : (float)$amount;
     }
+
+    public function logs()
+    {
+        return $this->hasMany(PartnerPosServiceLog::class);
+    }
 }

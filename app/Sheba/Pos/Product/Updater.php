@@ -5,8 +5,8 @@ use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
+use Sheba\Pos\Repositories\Interfaces\PosServiceLogRepositoryInterface;
 use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
-use Sheba\Pos\Repositories\PosServiceRepository;
 
 class Updater
 {
@@ -17,10 +17,17 @@ class Updater
     /** @var PosServiceRepositoryInterface  */
     private $serviceRepo;
     private $service;
+    private $posServiceLogRepo;
 
-    public function __construct(PosServiceRepositoryInterface $service_repo)
+    /**
+     * Updater constructor.
+     * @param PosServiceRepositoryInterface $service_repo
+     * @param PosServiceLogRepositoryInterface $pos_service_log_repo
+     */
+    public function __construct(PosServiceRepositoryInterface $service_repo, PosServiceLogRepositoryInterface $pos_service_log_repo)
     {
         $this->serviceRepo = $service_repo;
+        $this->posServiceLogRepo = $pos_service_log_repo;
     }
 
     public function setService(PartnerPosService $service)
@@ -40,7 +47,37 @@ class Updater
         $this->saveImages();
         $this->format();
         $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'is_vat_percentage_off', 'is_stock_off']);
-        if (!empty($this->updatedData)) $this->serviceRepo->update($this->service, $this->updatedData);
+
+        if (!empty($this->updatedData)) {
+            $old_service = clone $this->service;
+            $this->serviceRepo->update($this->service, $this->updatedData);
+            $this->storeLogs($old_service, $this->updatedData);
+        }
+    }
+
+    /**
+     * @param PartnerPosService $service
+     * @param $updated_data
+     */
+    public function storeLogs(PartnerPosService $service, $updated_data)
+    {
+        $field_names = [];
+        $old_value = [];
+        $new_value = [];
+        $service = $service->toArray();
+        foreach ($updated_data as $field_name => $value) {
+            $field_names[] = $field_name;
+            $old_value[$field_name] = $service[$field_name];
+            $new_value[$field_name] = $value;
+        }
+
+        $data = [
+            'partner_pos_service_id' => $service['id'],
+            'field_names' => json_encode($field_names),
+            'old_value' => json_encode($old_value),
+            'new_value' => json_encode($new_value)
+        ];
+        $this->posServiceLogRepo->create($data);
     }
 
     private function saveImages()
@@ -62,9 +99,11 @@ class Updater
 
     private function format()
     {
-        if ((isset($this->data['is_stock_off']) && $this->data['is_stock_off'] == 'true')) {
+        if ((isset($this->data['is_stock_off']) && ($this->data['is_stock_off'] == 'true' && $this->service->stock != null))) {
             $this->updatedData['stock'] = null;
-        } elseif (isset($this->data['stock']) && $this->data['stock'] != $this->service->stock) {
+        }
+
+        if (isset($this->data['is_stock_off']) && $this->data['is_stock_off'] == 'false') {
             $this->updatedData['stock'] = (double)$this->data['stock'];
         }
 
@@ -91,38 +130,32 @@ class Updater
         } else if (isset($this->data['unit']) && $this->data['unit'] != $this->service->unit) {
             $this->updatedData['unit'] = $this->data['unit'];
         }
-
         if ((isset($this->data['pos_category_id']) && $this->data['pos_category_id'] != $this->service->pos_category_id)) {
             $this->updatedData['pos_category_id'] = $this->data['pos_category_id'];
         }
-
         if ((isset($this->data['cost']) && $this->data['cost'] != $this->service->cost)) {
             $this->updatedData['cost'] = $this->data['cost'];
         }
-
         if ((isset($this->data['price']) && $this->data['price'] != $this->service->price)) {
             $this->updatedData['price'] = $this->data['price'];
         }
         if ((isset($this->data['wholesale_price']) && $this->data['wholesale_price'] != $this->service->wholesale_price)) {
             $this->updatedData['wholesale_price'] = $this->data['wholesale_price'];
         }
-
         if ((isset($this->data['name']) && $this->data['name'] != $this->service->name)) {
             $this->updatedData['name'] = $this->data['name'];
         }
-
         if ((isset($this->data['category_id']) && $this->data['category_id'] != $this->service->pos_category_id)) {
             $this->updatedData['pos_category_id'] = $this->data['category_id'];
         }
-
         if ((isset($this->data['unit']) && $this->data['unit'] != $this->service->unit)) {
             $this->updatedData['unit'] = $this->data['unit'];
         }
-
         if ((isset($this->data['description']) && $this->data['description'] != $this->service->description)) {
             $this->updatedData['description'] = $this->data['description'];
         }
     }
+
 
     private function hasFile($filename)
     {

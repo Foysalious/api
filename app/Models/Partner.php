@@ -5,6 +5,7 @@ use App\Sheba\Payment\Rechargable;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Business\Bid\Bidder;
 use Sheba\Dal\Complain\Model as Complain;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use Sheba\HasWallet;
@@ -28,7 +29,7 @@ use Sheba\Transport\TransportTicketTransaction;
 use Sheba\Voucher\Contracts\CanApplyVoucher;
 use Sheba\Voucher\VoucherCodeGenerator;
 
-class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent, Rechargable
+class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent, Rechargable, Bidder
 {
     use Wallet, TopUpTrait, MovieTicketTrait;
 
@@ -291,9 +292,15 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
         return null;
     }
 
+    public function getAdmin()
+    {
+        if ($admin_resource = $this->admins()->first()) return $admin_resource;
+        return null;
+    }
+
     public function getContactPerson()
     {
-        if ($admin_resource = $this->admins()->first()) return $admin_resource->profile->name;
+        if ($admin_resource = $this->getAdmin()) return $admin_resource->profile->name;
         return null;
     }
 
@@ -437,7 +444,7 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
     {
         return (double)$this->bonuses()->valid()->sum('amount');
     }
-    
+
     public function runSubscriptionBilling()
     {
         $this->subscriber()->getBilling()->runSubscriptionBilling();
@@ -756,8 +763,16 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
     public function isAlreadyCollectedAdvanceSubscriptionFee()
     {
         $last_subscription_package_charge = $this->subscriptionPackageCharges()->orderBy('id', 'desc')->first();
-        if (!$last_subscription_package_charge) return false;
+        if (empty($last_subscription_package_charge)) return false;
         return $this->last_billed_date ? $last_subscription_package_charge->billing_date->between($this->last_billed_date->addSecond(), $this->periodicBillingHandler()->nextBillingDate()) : false;
+    }
+
+    public function alreadyCollectedSubscriptionFee()
+    {
+        if (!$this->isAlreadyCollectedAdvanceSubscriptionFee()) return 0;
+        $last_subscription_package_charge = $this->subscriptionPackageCharges()->orderBy('id', 'desc')->first();
+        if (!empty($last_subscription_package_charge)) return $last_subscription_package_charge->package_price;
+        else return 0;
     }
 
     public function subscriptionPackageCharges()
@@ -768,5 +783,15 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
     public function getStatusToCalculateAccess()
     {
         return PartnerStatuses::getStatusToCalculateAccess($this->status);
+    }
+
+    public function attachments()
+    {
+        return $this->morphMany(Attachment::class, 'attachable');
+    }
+
+    public function comments()
+    {
+        return $this->morphMany(Comment::class, 'commentable');
     }
 }
