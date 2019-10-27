@@ -6,8 +6,9 @@ use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpCommission;
 use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
+use Sheba\Transactions\Wallet\HasWalletTransaction;
 
-class Vendor extends Model implements TopUpAgent
+class Vendor extends Model implements TopUpAgent, HasWalletTransaction
 {
     use Wallet;
     use TopUpTrait;

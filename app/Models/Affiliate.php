@@ -14,12 +14,13 @@ use Sheba\Payment\Wallet;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
+use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Transport\Bus\BusTicketCommission;
 use Sheba\Transport\TransportAgent;
 use Sheba\Transport\TransportTicketTransaction;
 use Sheba\Voucher\Contracts\CanApplyVoucher;
 
-class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAgent, CanApplyVoucher, Rechargable
+class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAgent, CanApplyVoucher, Rechargable, HasWalletTransaction
 {
     use TopUpTrait, MovieTicketTrait, Wallet, ModificationFields;
 

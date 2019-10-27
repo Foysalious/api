@@ -5,11 +5,11 @@ use Sheba\ModificationFields;
 use Sheba\Payment\PayableUser;
 use Sheba\Payment\Wallet;
 use Sheba\TopUp\TopUpAgent;
-use Sheba\TopUp\TopUpCommission;
 use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
+use Sheba\Transactions\Wallet\HasWalletTransaction;
 
-class Business extends Model implements TopUpAgent, PayableUser
+class Business extends Model implements TopUpAgent, PayableUser, HasWalletTransaction
 {
     use Wallet, ModificationFields, TopUpTrait;
 
