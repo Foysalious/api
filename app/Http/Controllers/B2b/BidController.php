@@ -25,7 +25,7 @@ class BidController extends Controller
             $procurement = Procurement::findOrFail((int)$procurement);
             $final_fields = collect();
             $procurement->load(['bids' => function ($q) {
-                $q->with('items.fields');
+                $q->where('status', '<>', 'pending')->with('items.fields');
             }]);
             $bids = $procurement->bids;
             $bid_lists = [];
