@@ -14,7 +14,7 @@ class BidController extends Controller
 {
     use ModificationFields;
 
-    public function store($partner, Request $request, Creator $creator, ProcurementRepository $procurement_repository)
+    public function store($partner, Request $request, Creator $creator, ProcurementRepository $procurement_repository, BidRepositoryInterface $bid_repository)
     {
         try {
             $this->validate($request, [
@@ -25,6 +25,9 @@ class BidController extends Controller
                 'proposal' => 'required|string',
             ]);
             $this->setModifier($request->manager_resource);
+            $bid = $bid_repository->where('procurement_id', $request->procurement_id)->where('bidder_type', 'like', '%Partner')
+                ->where('bidder_id', $request->partner->id)->first();
+            if ($bid) return api_response($request, null, 403, ['message' => "Bid already created"]);
             /** @var Procurement $procurement */
             $procurement = $procurement_repository->find($request->procurement_id);
             $procurement->load('items.fields');
