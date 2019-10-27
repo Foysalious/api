@@ -123,7 +123,7 @@ class Updater
         $this->bidRepository->update($this->bid, ['status' => $this->status]);
     }
 
-    public function updateBidPrice()
+    private function updateBidPrice()
     {
         $bid_price_quotation_item = $this->bid->items()->where('type', 'price_quotation')->first();
         if ($bid_price_quotation_item) {
