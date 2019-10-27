@@ -99,7 +99,7 @@ class Creator
                             'short_description' => $field->short_description,
                             'input_type' => $field->input_type,
                             'variables' => $field->variables,
-                            'result' => $field_result ? $field_result->result : null
+                            'result' => $field_result ? ((double)$field_result->result * (double)$field->unit) : null
                         ]);
                     }
                 }
@@ -129,8 +129,7 @@ class Creator
             if ($price_item) {
                 $price = 0;
                 foreach ($price_item->fields as $field) {
-                    $variables = json_decode($field->variables);
-                    $price += ((double)$variables->unit * (double)$field->result);
+                    $price += (double)$field->result;
                 }
                 $this->bidRepository->update($bid, ['price' => $price]);
             }
