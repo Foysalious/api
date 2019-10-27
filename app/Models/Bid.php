@@ -39,7 +39,7 @@ class Bid extends Model
 
     public function hasSentHireRequest()
     {
-        return $this->status != 'pending';
+        return !in_array($this->status, ['pending', 'sent']);
     }
 
 }
