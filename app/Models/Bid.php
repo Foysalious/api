@@ -34,7 +34,7 @@ class Bid extends Model
 
     public function isAdvanced()
     {
-        return $this->type == 'advanced';
+        return $this->procurement->type == 'advanced';
     }
 
     public function hasSentHireRequest()
