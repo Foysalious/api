@@ -5,6 +5,7 @@ use App\Sheba\Payment\Rechargable;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Business\Bid\Bidder;
 use Sheba\Dal\Complain\Model as Complain;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use Sheba\HasWallet;
@@ -28,7 +29,7 @@ use Sheba\Transport\TransportTicketTransaction;
 use Sheba\Voucher\Contracts\CanApplyVoucher;
 use Sheba\Voucher\VoucherCodeGenerator;
 
-class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent, Rechargable
+class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent, Rechargable, Bidder
 {
     use Wallet, TopUpTrait, MovieTicketTrait;
 
@@ -291,9 +292,15 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
         return null;
     }
 
+    public function getAdmin()
+    {
+        if ($admin_resource = $this->admins()->first()) return $admin_resource;
+        return null;
+    }
+
     public function getContactPerson()
     {
-        if ($admin_resource = $this->admins()->first()) return $admin_resource->profile->name;
+        if ($admin_resource = $this->getAdmin()) return $admin_resource->profile->name;
         return null;
     }
 
@@ -437,7 +444,7 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
     {
         return (double)$this->bonuses()->valid()->sum('amount');
     }
-    
+
     public function runSubscriptionBilling()
     {
         $this->subscriber()->getBilling()->runSubscriptionBilling();
@@ -717,6 +724,8 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
         $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Credit', 'log' => $transaction->getLog()]);
     }
 
+
+
     public function getMovieTicketCommission()
     {
         return new \Sheba\MovieTicket\Commission\Partner();
@@ -774,5 +783,15 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
     public function getStatusToCalculateAccess()
     {
         return PartnerStatuses::getStatusToCalculateAccess($this->status);
+    }
+
+    public function attachments()
+    {
+        return $this->morphMany(Attachment::class, 'attachable');
+    }
+
+    public function comments()
+    {
+        return $this->morphMany(Comment::class, 'commentable');
     }
 }

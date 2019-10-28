@@ -1,12 +1,14 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Comment\MorphCommentable;
+use Sheba\Comment\MorphComments;
 
-class CustomOrder extends Model
+class CustomOrder extends Model implements MorphCommentable
 {
-    protected $guarded = [
-        'id',
-    ];
+    use MorphComments;
+
+    protected $guarded = ['id'];
 
     public function customer()
     {
@@ -53,4 +55,11 @@ class CustomOrder extends Model
         return $this->belongsTo(Location::class);
     }
 
+    /**
+     * @inheritDoc
+     */
+    public function getNotificationHandlerClass()
+    {
+        // TODO: Implement getNotificationHandlerClass() method.
+    }
 }

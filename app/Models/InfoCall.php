@@ -1,9 +1,14 @@
 <?php namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Comment\MorphCommentable;
+use Sheba\Comment\MorphComments;
 
-class InfoCall extends Model
+class InfoCall extends Model implements MorphCommentable
 {
+    use MorphComments;
+
     protected $guarded = ['id'];
 
     protected $dates = ['follow_up_date', 'intended_closing_date'];
@@ -61,9 +66,9 @@ class InfoCall extends Model
     /**
      * Scope a query to only include infocalls of a given status.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param Builder $query
      * @param $status
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return void
      */
     public function scopeStatus($query, $status)
     {
@@ -73,12 +78,20 @@ class InfoCall extends Model
     /**
      * Scope a query to only include infocalls of a given status.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param Builder $query
      * @param $priority
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return void
      */
     public function scopePriority($query, $priority)
     {
         $query->where('priority', $priority);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getNotificationHandlerClass()
+    {
+        // TODO: Implement getNotificationHandlerClass() method.
     }
 }

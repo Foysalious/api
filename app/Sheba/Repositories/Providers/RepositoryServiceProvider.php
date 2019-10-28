@@ -1,6 +1,9 @@
 <?php namespace Sheba\Repositories\Providers;
 
+use App\Sheba\Repositories\Business\BidRepository;
 use Illuminate\Support\ServiceProvider;
+use Sheba\Repositories\Business\BidItemFieldRepository;
+use Sheba\Repositories\Business\BidItemRepository;
 use Sheba\Repositories\Business\BusinessMemberRepository;
 use Sheba\Repositories\Business\DriverRepository;
 use Sheba\Repositories\Business\FormTemplateItemRepository;
@@ -25,6 +28,9 @@ use Sheba\Repositories\Business\PurchaseRequestQuestionRepository;
 use Sheba\Repositories\Business\PurchaseRequestRepository;
 use Sheba\Repositories\Business\VehicleRepository;
 use Sheba\Repositories\CustomerRepository;
+use Sheba\Repositories\Interfaces\BidItemFieldRepositoryInterface;
+use Sheba\Repositories\Interfaces\BidItemRepositoryInterface;
+use Sheba\Repositories\Interfaces\BidRepositoryInterface;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Repositories\Interfaces\CustomerRepositoryInterface;
 use Sheba\Repositories\Interfaces\DriverRepositoryInterface;
@@ -87,5 +93,8 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(ProfileRepositoryInterface::class, ProfileRepository::class);
         $this->app->bind(CustomerRepositoryInterface::class, CustomerRepository::class);
         $this->app->bind(PartnerRepositoryInterface::class, PartnerRepository::class);
+        $this->app->bind(BidItemRepositoryInterface::class, BidItemRepository::class);
+        $this->app->bind(BidItemFieldRepositoryInterface::class, BidItemFieldRepository::class);
+        $this->app->bind(BidRepositoryInterface::class, BidRepository::class);
     }
 }

@@ -85,7 +85,7 @@ class ProcurementController extends Controller
             $start_date = $request->has('start_date') ? $request->start_date : null;
             $end_date = $request->has('end_date') ? $request->end_date : null;
             if ($start_date && $end_date) {
-                $procurements->whereBetween('published_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
+                $procurements->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
             }
             $procurements = $procurements->skip($offset)->limit($limit);
             $procurements_list = [];
@@ -95,7 +95,7 @@ class ProcurementController extends Controller
                     "title" => $procurement->title,
                     "status" => $procurement->status,
                     "last_date_of_submission" => Carbon::parse($procurement->last_date_of_submission)->format('d/m/y'),
-                    "bid_count" => 0
+                    "bid_count" => $procurement->bids->count()
                 ]);
             }
             if (count($procurements_list) > 0) return api_response($request, $procurements_list, 200, [
@@ -132,6 +132,7 @@ class ProcurementController extends Controller
                     'id' => $procurement->id,
                     'title' => $procurement->title,
                     'status' => $procurement->status,
+                    'long_description' => $procurement->long_description,
                     'labels' => $procurement->getTagNamesAttribute()->toArray(),
                     'start_date' => Carbon::parse($procurement->procurement_start_date)->format('d/m/y'),
                     'published_at' => $procurement->is_published ? Carbon::parse($procurement->published_at)->format('d/m/y') : null,
@@ -182,7 +183,6 @@ class ProcurementController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e->getMessage());
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

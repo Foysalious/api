@@ -1,5 +1,6 @@
 <?php namespace Sheba\ExpenseTracker\Repository;
 
+use App\Models\Profile;
 use Carbon\Carbon;
 use Exception;
 use Sheba\ExpenseTracker\AutomaticExpense;
@@ -13,10 +14,13 @@ class AutomaticEntryRepository extends BaseRepository
 {
     private $head;
     private $amount;
-    private $amount_cleared;
     private $result;
     private $for;
-    private $source_type;
+    private $profileId;
+    private $amountCleared;
+    private $sourceType;
+    private $sourceId;
+    private $createdAt;
 
     /**
      * @param mixed $source_type
@@ -24,7 +28,7 @@ class AutomaticEntryRepository extends BaseRepository
      */
     public function setSourceType($source_type)
     {
-        $this->source_type = $source_type;
+        $this->sourceType = $source_type;
         return $this;
     }
 
@@ -34,11 +38,10 @@ class AutomaticEntryRepository extends BaseRepository
      */
     public function setSourceId($source_id)
     {
-        $this->source_id = $source_id;
+        $this->sourceId = $source_id;
         return $this;
     }
 
-    private $source_id;
     /**
      * @param mixed $for
      * @return AutomaticEntryRepository
@@ -46,6 +49,16 @@ class AutomaticEntryRepository extends BaseRepository
     public function setFor($for)
     {
         $this->for = $for;
+        return $this;
+    }
+
+    /**
+     * @param Profile $profile
+     * @return AutomaticEntryRepository
+     */
+    public function setParty(Profile $profile)
+    {
+        $this->profileId = $profile->id;
         return $this;
     }
 
@@ -80,7 +93,22 @@ class AutomaticEntryRepository extends BaseRepository
             $this->head = $head;
             return $this;
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            $this->notifyBug($e);
+            return $this;
+        }
+    }
+
+    /**
+     * @param Carbon $created_at
+     * @return $this
+     */
+    public function setCreatedAt(Carbon $created_at)
+    {
+        try {
+            $this->createdAt = $created_at->format('Y-m-d H:s:i');
+            return $this;
+        } catch (Throwable $e) {
+            $this->notifyBug($e);
             return $this;
         }
     }
@@ -104,33 +132,8 @@ class AutomaticEntryRepository extends BaseRepository
      */
     public function setAmountCleared($amount_cleared)
     {
-        $this->amount_cleared = $amount_cleared;
+        $this->amountCleared = $amount_cleared;
         return $this;
-    }
-
-    /**
-     * @return mixed
-     * @throws Exception
-     */
-    private function getData()
-    {
-        $data = [
-            'created_at' => Carbon::now()->format('Y-m-d H:s:i'),
-            'created_from' => json_encode((new RequestIdentification())->get()),
-            'amount' => $this->amount,
-            'amount_cleared' => $this->amount_cleared,
-            'head_name' => $this->head,
-            'note' => 'Automatically Placed from Sheba',
-            'source_type' => $this->source_type,
-            'source_id' => $this->source_id,
-            'type' => $this->for
-        ];
-        if (empty($data['amount'])) $data['amount'] = 0;
-        if (empty($data['amount_cleared'])) $data['amount_cleared'] = $data['amount'];
-        if (empty($data['head_name'])) {
-            throw new Exception('Head is not found');
-        }
-        return $data;
     }
 
     /**
@@ -140,12 +143,47 @@ class AutomaticEntryRepository extends BaseRepository
     {
         try {
             $data = $this->getData();
+            if (empty($data['head_name'])) throw new Exception('Head is not found');
             $this->result = $this->client->post('accounts/' . $this->accountId . '/' . EntryType::getRoutable($this->for), $data)['data'];
+
             return $this->result;
         } catch (Throwable $e) {
             $this->notifyBug($e);
             return false;
         }
+    }
+
+    /**
+     * @return mixed
+     * @throws Exception
+     */
+    private function getData()
+    {
+        $created_from = $this->withBothModificationFields((new RequestIdentification())->get());
+        $created_from['created_at'] = $created_from['created_at']->format('Y-m-d H:s:i');
+        $created_from['updated_at'] = $created_from['updated_at']->format('Y-m-d H:s:i');
+
+        $data = [
+            'created_at' => $this->createdAt ?: Carbon::now()->format('Y-m-d H:s:i'),
+            'created_from' => json_encode($created_from),
+            'amount' => $this->amount,
+            'amount_cleared' => $this->amountCleared,
+            'head_name' => $this->head,
+            'note' => 'Automatically Placed from Sheba',
+            'source_type' => $this->sourceType,
+            'source_id' => $this->sourceId,
+            'type' => $this->for
+        ];
+        if (empty($data['amount'])) $data['amount'] = 0;
+        if (is_null($this->amountCleared)) $data['amount_cleared'] = $data['amount'];
+        if ($this->profileId) $data['profile_id'] = $this->profileId;
+
+        return $data;
+    }
+
+    private function notifyBug(Throwable $e)
+    {
+        app('sentry')->captureException($e);
     }
 
     public function update()
@@ -154,10 +192,10 @@ class AutomaticEntryRepository extends BaseRepository
 
     public function updateFromSrc()
     {
-
         try {
             $data = $this->getData();
             if (empty($data['source_type']) || empty($data['source_id'])) throw new Exception('Source Type or Source id is not present');
+
             $this->result = $this->client->post('accounts/' . $this->accountId . '/entries/from-type', $data)['data'];
             return $this->result;
         } catch (Throwable $e) {
@@ -188,10 +226,5 @@ class AutomaticEntryRepository extends BaseRepository
             $this->notifyBug($e);
             return false;
         }
-    }
-
-    private function notifyBug(Throwable $e)
-    {
-        app('sentry')->captureException($e);
     }
 }

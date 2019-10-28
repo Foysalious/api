@@ -8,7 +8,10 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
+use Sheba\ExpenseTracker\AutomaticExpense;
+use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\EntryType;
+use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\EntryRepository;
 use Sheba\Helpers\TimeFrame;
 use Throwable;
@@ -81,6 +84,9 @@ class IncomeController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
+        } catch (ExpenseTrackingServerError $e) {
+            $message = $e->getMessage();
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -111,6 +117,9 @@ class IncomeController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors());
             return api_response($request, $message, 400, ['message' => $message]);
+        } catch (ExpenseTrackingServerError $e) {
+            $message = $e->getMessage();
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -131,8 +140,12 @@ class IncomeController extends Controller
             $manager->setSerializer(new CustomSerializer());
             $resource = new Item($income, new IncomeTransformer());
             $income_formatted = $manager->createData($resource)->toArray()['data'];
+            $income_formatted['is_editable'] = !in_array($income['head']['name'], AutomaticIncomes::heads());
 
             return api_response($request, $income, 200, ["income" => $income_formatted]);
+        } catch (ExpenseTrackingServerError $e) {
+            $message = $e->getMessage();
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -157,6 +170,9 @@ class IncomeController extends Controller
             $income_formatted = $manager->createData($resource)->toArray()['data'];
 
             return api_response($request, null, 200, ['income' => $income_formatted]);
+        } catch (ExpenseTrackingServerError $e) {
+            $message = $e->getMessage();
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

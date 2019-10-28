@@ -1,7 +1,5 @@
 <?php namespace App\Http\Route\Prefix\V2\Partner\ID\Auth;
 
-use App\Http\Route\Prefix\V2\IncomeExpenseRoute;
-
 class IndexRoute
 {
     public function set($api)
@@ -12,6 +10,17 @@ class IndexRoute
                 $api->group(['prefix' => 'order'], function ($api) {
                     $api->get('/', 'EShopOrderController@index');
                     $api->get('/{order}', 'EShopOrderController@show');
+                });
+            });
+            $api->group(['prefix' => 'bids'], function ($api) {
+                $api->group(['prefix' => '{bid}'], function ($api) {
+                    $api->group(['prefix' => 'comments'], function ($api) {
+                        $api->post('/', 'CommentController@storeComments');
+                        $api->get('/', 'CommentController@getComments');
+                    });
+                    $api->group(['prefix' => 'attachments'], function ($api) {
+                        $api->post('/', 'AttachmentController@storeAttachment');
+                    });
                 });
             });
             $api->group(['prefix' => 'loans'], function ($api) {
@@ -50,6 +59,7 @@ class IndexRoute
                     $api->post('/', 'Pos\ServiceController@store');
                     $api->group(['prefix' => '{service}'], function ($api) {
                         $api->get('/', 'Pos\ServiceController@show');
+                        $api->get('/logs', 'Pos\ServiceController@getLogs');
                         $api->post('/', 'Pos\ServiceController@update');
                         $api->delete('/', 'Pos\ServiceController@destroy');
                         $api->post('/toggle-publish-for-shop', 'Pos\ServiceController@togglePublishForShopStatus');
@@ -118,7 +128,7 @@ class IndexRoute
                 $api->post('/', 'Partner\PartnerSubscriptionController@store');
                 $api->post('/upgrade', 'Partner\PartnerSubscriptionController@update');
                 $api->post('/purchase', 'Partner\PartnerSubscriptionController@purchase');
-                $api->post('/auto-billing-toggle','Partner\PartnerSubscriptionController@toggleAutoBillingActivation');
+                $api->post('/auto-billing-toggle', 'Partner\PartnerSubscriptionController@toggleAutoBillingActivation');
             });
             $api->group(['prefix' => 'customer-subscriptions'], function ($api) {
                 $api->get('order-lists', 'Partner\CustomerSubscriptionController@index');
@@ -227,7 +237,7 @@ class IndexRoute
             $api->post('nid-validate', 'ShebaController@nidValidate');
 
             (new IncomeExpenseRoute())->set($api);
-
+            (new BidRoute())->set($api);
         });
     }
 }

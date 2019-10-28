@@ -240,9 +240,6 @@ class MemberController extends Controller
         }
     }
 
-    /*$model = "App\\Models\\" . $order['user_type'];
-    return $model::find($order['user_id'])->profile->name;*/
-
     private function tagRole(Business $business)
     {
         $roles = ['Manager', 'VP', 'Executive', 'Intern', 'Senior Executive', 'Driver'];

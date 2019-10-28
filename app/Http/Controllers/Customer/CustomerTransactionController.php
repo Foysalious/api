@@ -54,7 +54,7 @@ class CustomerTransactionController extends Controller
             $warning_message = $this->generateWarningMessageV2($gift_cards_purchased);
             return api_response($request, $transactions, 200, [
                 'transactions' => $transactions, 'balance' => $customer->shebaCredit(),
-                'credit' => round($customer->wallet, 2), 'bonus' => round($customer->shebaBonusCredit(), 2),
+                'credit' => round($customer->shebaCredit(), 2), 'bonus' => round($customer->shebaBonusCredit(), 2),
                 'warning_message' => $warning_message
             ]);
         } catch (\Throwable $e) {
@@ -105,13 +105,22 @@ class CustomerTransactionController extends Controller
     private function formatDebitBonusTransaction($bonus, $transactions)
     {
         $spent_on = $bonus->spent_on;
+        $category = null;
+        if ($spent_on instanceof PartnerOrder) {
+            $category = $spent_on->jobs->first()->category;
+            $log = $category->name;
+        } else if ($spent_on) {
+            $log = 'Purchased ' . class_basename($spent_on);
+        } else {
+            $log = 'Bonus credit expired';
+        }
         $category = $spent_on ? $bonus->spent_on->jobs->first()->category : null;
         $transactions->push(array(
             'id' => $bonus->id,
             'customer_id' => $bonus->user_id,
             'type' => 'Debit',
             'amount' => $bonus->amount,
-            'log' => $category ? $category->name : 'Bonus credit expired',
+            'log' => $log,
             'created_at' => $bonus->created_at->toDateTimeString(),
             'partner_order_id' => $bonus->spent_on_id,
             'valid_till' => null,

@@ -174,6 +174,24 @@ if (!function_exists('getDayName')) {
     }
 }
 
+if (!function_exists('getDayNameAndDateTime')) {
+    /**
+     * @param Carbon $date
+     * @return int|string
+     */
+    function getDayNameAndDateTime(Carbon $date)
+    {
+        switch (1) {
+            case $date->isSameDay(Carbon::now()):
+                return Carbon::now()->format('h:iA');
+            case $date->isYesterday():
+                return 'Yesterday at '.$date->format('h:iA');
+            default:
+                return $date->format('d M').' at '.$date->format('h:iA');
+        }
+    }
+}
+
 if (!function_exists('createAuthorWithType')) {
     function createAuthorWithType($author)
     {
@@ -522,6 +540,7 @@ if (!function_exists('normalizeCases')) {
         return ucwords(str_replace(['_', '-'], ' ', $value));
     }
 }
+
 if (!function_exists('isNormalized')) {
     /**
      * @param string $value
@@ -532,6 +551,7 @@ if (!function_exists('isNormalized')) {
         return str_contains($value, ' ');
     }
 }
+
 if (!function_exists('ramp')) {
     /**
      * @param $value
@@ -566,6 +586,7 @@ if (!function_exists('isAssoc')) {
         return array_keys($arr) !== range(0, count($arr) - 1);
     }
 }
+
 if (!function_exists('convertNumbersToBangla')) {
     function convertNumbersToBangla(float $number, $formatted = true, $decimal = 2)
     {

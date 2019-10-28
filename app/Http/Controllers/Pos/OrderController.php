@@ -12,6 +12,9 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
+use Sheba\ExpenseTracker\EntryType;
+use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
+use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 use Sheba\PaymentLink\Creator as PaymentLinkCreator;
@@ -120,7 +123,7 @@ class OrderController extends Controller
             }
 
             return api_response($request, $orders_formatted, 200, ['orders' => $orders_formatted]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -415,12 +418,33 @@ class OrderController extends Controller
             $payment_creator->credit($payment_data);
             $order = $order->calculate();
             $order->payment_status = $order->getPaymentStatus();
+            $this->updateIncome($order, $request->paid_amount);
 
             return api_response($request, null, 200, ['msg' => 'Payment Collect Successfully', 'order' => $order]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    /**
+     * @param PosOrder $order
+     * @param $paid_amount
+     * @throws ExpenseTrackingServerError
+     */
+    private function updateIncome(PosOrder $order, $paid_amount)
+    {
+        /** @var AutomaticEntryRepository $entry */
+        $entry = app(AutomaticEntryRepository::class);
+        $amount = (double)$order->getNetBill();
+        $entry->setPartner($order->partner)
+            ->setAmount($amount)
+            ->setAmountCleared($paid_amount)
+            ->setFor(EntryType::INCOME)
+            ->setSourceType(class_basename($order))
+            ->setSourceId($order->id)
+            ->setCreatedAt($order->created_at)
+            ->updateFromSrc();
     }
 
     /**
@@ -491,7 +515,7 @@ class OrderController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

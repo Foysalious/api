@@ -98,9 +98,27 @@ class BusinessRoute
                         $api->post('invitations', 'B2b\ProcurementController@sendInvitation');
                         $api->post('publish', 'B2b\ProcurementController@updateStatus');
                         $api->post('general', 'B2b\ProcurementController@updateGeneral');
+                        $api->get('/bid-history', 'B2b\BidController@getBidHistory');
+                        $api->group(['prefix' => 'bids'], function ($api) {
+                            $api->get('/', 'B2b\BidController@index');
+                        });
                     });
                     $api->get('/', 'B2b\ProcurementController@index');
                     $api->get('/{procurement}', 'B2b\ProcurementController@show');
+                });
+                $api->group(['prefix' => 'bids'], function ($api) {
+                    $api->group(['prefix' => '{bid}'], function ($api) {
+                        $api->get('/', 'B2b\BidController@show');
+                        $api->post('/', 'B2b\BidController@updateFavourite');
+                        $api->post('hire', 'B2b\BidController@sendHireRequest');
+                        $api->group(['prefix' => 'comments'], function ($api) {
+                            $api->post('/', 'CommentController@storeComments');
+                            $api->get('/', 'CommentController@getComments');
+                        });
+                        $api->group(['prefix' => 'attachments'], function ($api) {
+                            $api->post('/', 'AttachmentController@storeAttachment');
+                        });
+                    });
                 });
                 $api->group(['prefix' => 'purchase-requests'], function ($api) {
                     $api->get('/', 'B2b\PurchaseRequestController@index');
