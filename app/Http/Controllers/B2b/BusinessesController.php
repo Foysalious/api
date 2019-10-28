@@ -74,7 +74,7 @@ class BusinessesController extends Controller
     {
         try {
             $business = $request->business;
-            $partners = $business->partners()->with('categories')->select('id', 'name', 'mobile', 'logo')->get();
+            $partners = $business->partners()->with('categories')->select('id', 'name', 'mobile', 'logo', 'address')->get();
             $vendors = collect();
             if ($business) {
                 foreach ($partners as $partner) {
@@ -88,6 +88,7 @@ class BusinessesController extends Controller
                         "id" => $partner->id,
                         "name" => $partner->name,
                         "logo" => $partner->logo,
+                        "address" => $partner->address,
                         "mobile" => $partner->getContactNumber(),
                         'type' => $master_categories
                     ];
