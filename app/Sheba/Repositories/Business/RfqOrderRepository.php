@@ -43,7 +43,7 @@ class RfqOrderRepository extends BaseRepository implements RfqOrderRepositoryInt
             'procurement_additional_info' => $this->procurement->long_description,
 
             'bid_id' => $this->bid->id,
-            'bid_price' => $this->bid->price,
+            'bid_price' => $this->bid->price,#Total Proposed Price
             'bid_price_quotations' => $bid_price_quotations
         ];
         return $order_details;
@@ -53,23 +53,17 @@ class RfqOrderRepository extends BaseRepository implements RfqOrderRepositoryInt
     {
         $item_type = $this->bid->items->where('type', 'price_quotation')->first();
         $item_fields = [];
-        $total_proposed_price = 0;
         foreach ($item_type->fields as $field){
             $unit = $field->variables ? json_decode($field->variables)->unit ? json_decode($field->variables)->unit : 0 : 0;
-            $total_price = $field->result * $unit;
-            $total_proposed_price += $total_price;
             array_push( $item_fields,[
                 'id' => $field->id,
                 'title' => $field->title,
                 'short_description' => $field->short_description,
                 'unit' => $unit,
-                'result' => $field->result,
-                'total_price' => $total_price,
+                'unit_price' => number_format($field->result/$unit, 2),
+                'total_price' => $field->result,
             ]);
         }
-        return [
-            'fields' => $item_fields,
-            'total_proposed_price' => $total_proposed_price,
-        ];
+        return $item_fields;
     }
 }

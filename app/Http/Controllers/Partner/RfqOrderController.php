@@ -1,18 +1,18 @@
-<?php namespace App\Http\Controllers\B2b;
+<?php namespace App\Http\Controllers\Partner;
 
-use App\Http\Controllers\Controller;
-use App\Models\Bid;
-use App\Models\Procurement;
-use Illuminate\Http\Request;
-use Sheba\ModificationFields;
-use Sheba\Repositories\Business\RfqOrderRepository;
 use Sheba\Repositories\Interfaces\BidRepositoryInterface;
+use Sheba\Repositories\Business\RfqOrderRepository;
+use App\Http\Controllers\Controller;
+use Sheba\ModificationFields;
+use Illuminate\Http\Request;
+use App\Models\Procurement;
+use App\Models\Bid;
 
 class RfqOrderController extends Controller
 {
     use ModificationFields;
 
-    public function show($business, $procurement, $bid, Request $request, RfqOrderRepository $rfq_order_repository)
+    public function show($partner, $procurement, $bid, Request $request, RfqOrderRepository $rfq_order_repository)
     {
         try {
             $procurement = Procurement::findOrFail((int)$procurement);
