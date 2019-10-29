@@ -26,6 +26,7 @@ use Sheba\Repositories\Business\PurchaseRequestItemFieldRepository;
 use Sheba\Repositories\Business\PurchaseRequestItemRepository;
 use Sheba\Repositories\Business\PurchaseRequestQuestionRepository;
 use Sheba\Repositories\Business\PurchaseRequestRepository;
+use Sheba\Repositories\Business\RfqOrderRepository;
 use Sheba\Repositories\Business\VehicleRepository;
 use Sheba\Repositories\CustomerRepository;
 use Sheba\Repositories\Interfaces\BidItemFieldRepositoryInterface;
@@ -57,6 +58,7 @@ use Sheba\Repositories\Interfaces\PurchaseRequestItemFieldRepositoryInterface;
 use Sheba\Repositories\Interfaces\PurchaseRequestItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\PurchaseRequestQuestionRepositoryInterface;
 use Sheba\Repositories\Interfaces\PurchaseRequestRepositoryInterface;
+use Sheba\Repositories\Interfaces\RfqOrderRepositoryInterface;
 use Sheba\Repositories\Interfaces\VehicleRepositoryInterface;
 use Sheba\Repositories\PartnerRepository;
 use Sheba\Repositories\PaymentLinkRepository;
@@ -96,5 +98,6 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(BidItemRepositoryInterface::class, BidItemRepository::class);
         $this->app->bind(BidItemFieldRepositoryInterface::class, BidItemFieldRepository::class);
         $this->app->bind(BidRepositoryInterface::class, BidRepository::class);
+        $this->app->bind(RfqOrderRepositoryInterface::class, RfqOrderRepository::class);
     }
 }

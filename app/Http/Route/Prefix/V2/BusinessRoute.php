@@ -101,6 +101,9 @@ class BusinessRoute
                         $api->get('/bid-history', 'B2b\BidController@getBidHistory');
                         $api->group(['prefix' => 'bids'], function ($api) {
                             $api->get('/', 'B2b\BidController@index');
+                            $api->group(['prefix' => '{bid}'], function ($api) {
+                                $api->get('/', 'B2b\RfqOrderController@show');
+                            });
                         });
                     });
                     $api->get('/', 'B2b\ProcurementController@index');
