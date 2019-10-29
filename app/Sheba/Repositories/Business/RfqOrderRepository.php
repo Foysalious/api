@@ -19,12 +19,6 @@ class RfqOrderRepository extends BaseRepository implements RfqOrderRepositoryInt
         return $this;
     }
 
-    public function setPartner(Partner $partner)
-    {
-        $this->partner = $partner;
-        return $this;
-    }
-
     public function setBid(Bid $bid)
     {
         $this->bid = $bid;
