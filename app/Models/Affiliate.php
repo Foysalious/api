@@ -5,6 +5,7 @@ use App\Sheba\Payment\Rechargable;
 use Carbon\Carbon;
 use Sheba\Dal\Affiliate\Events\AffiliateSaved;
 use Sheba\Dal\BaseModel;
+use Sheba\FraudDetection\TransactionSources;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 use Sheba\MovieTicket\MovieAgent;
@@ -15,6 +16,7 @@ use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Sheba\Transport\Bus\BusTicketCommission;
 use Sheba\Transport\TransportAgent;
 use Sheba\Transport\TransportTicketTransaction;
@@ -190,8 +192,9 @@ class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAg
 
     public function topUpTransaction(TopUpTransaction $transaction)
     {
-        $this->debitWallet($transaction->getAmount());
-        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
+//        $this->debitWallet($transaction->getAmount());
+//        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
+        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::TOP_UP)->setType('debit')->setLog($transaction->getLog())->dispatch();
     }
 
     public function walletTransaction($data)
@@ -236,14 +239,16 @@ class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAg
 
     public function movieTicketTransaction(MovieTicketTransaction $transaction)
     {
-        $this->debitWallet($transaction->getAmount());
-        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
+//        $this->debitWallet($transaction->getAmount());
+//        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
+        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::MOVIE)->setType('debit')->setLog($transaction->getLog())->dispatch();
     }
 
     public function movieTicketTransactionNew(MovieTicketTransaction $transaction)
     {
-        $this->creditWallet($transaction->getAmount());
-        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Credit', 'log' => $transaction->getLog()]);
+//        $this->creditWallet($transaction->getAmount());
+//        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Credit', 'log' => $transaction->getLog()]);
+        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::MOVIE)->setType('credit')->setLog($transaction->getLog())->dispatch();
     }
 
     public function transportTicketOrders()
@@ -261,8 +266,9 @@ class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAg
 
     public function transportTicketTransaction(TransportTicketTransaction $transaction)
     {
-        $this->creditWallet($transaction->getAmount());
-        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Credit', 'log' => $transaction->getLog()]);
+//        $this->creditWallet($transaction->getAmount());
+//        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Credit', 'log' => $transaction->getLog()]);
+        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::TRANSPORT)->setType('credit')->setLog($transaction->getLog())->dispatch();
     }
 
     public function shebaCredit()

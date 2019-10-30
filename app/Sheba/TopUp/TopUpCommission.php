@@ -4,7 +4,10 @@ use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 
 use App\Models\TopUpVendorCommission;
+use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
+use Sheba\Transactions\Wallet\HasWalletTransaction;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 abstract class TopUpCommission
 {
@@ -128,8 +131,12 @@ abstract class TopUpCommission
 
     private function refundUser($amount, $log)
     {
-        $this->agent->creditWallet($amount);
-        $this->agent->walletTransaction(['amount' => $amount, 'type' => 'Credit', 'log' => $log]);
+//        $this->agent->creditWallet($amount);
+//        $this->agent->walletTransaction(['amount' => $amount, 'type' => 'Credit', 'log' => $log]);
+        /** @var HasWalletTransaction $model */
+        $model=$this->agent;
+        (new WalletTransactionHandler())->setModel($model)->setSource(TransactionSources::TOP_UP)->setType('credit')
+            ->setAmount($amount)->setLog($log)->dispatch();
     }
 
     abstract public function disburse();

@@ -3,6 +3,7 @@
 use App\Models\Transport\TransportTicketOrder;
 use App\Sheba\Payment\Rechargable;
 use Sheba\Dal\Customer\Events\CustomerSaved;
+use Sheba\FraudDetection\TransactionSources;
 use Sheba\MovieTicket\MovieAgent;
 use Sheba\MovieTicket\MovieTicketTrait;
 use Sheba\MovieTicket\MovieTicketTransaction;
@@ -14,6 +15,7 @@ use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Sheba\Transport\Bus\BusTicketCommission;
 use Sheba\Transport\TransportAgent;
 use Sheba\Transport\TransportTicketTransaction;
@@ -186,16 +188,23 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
 
     public function topUpTransaction(TopUpTransaction $transaction)
     {
-        $this->debitWallet($transaction->getAmount());
-        $wallet_transaction_data = [
-            'event_type' => get_class($transaction->getTopUpOrder()),
-            'event_id' => $transaction->getTopUpOrder()->id,
-            'amount' => $transaction->getAmount(),
-            'type' => 'Debit',
-            'log' => $transaction->getLog()
-        ];
-
-        $this->walletTransaction($wallet_transaction_data);
+//        $this->debitWallet($transaction->getAmount());
+//        $wallet_transaction_data = [
+//            'event_type' => get_class($transaction->getTopUpOrder()),
+//            'event_id' => $transaction->getTopUpOrder()->id,
+//            'amount' => $transaction->getAmount(),
+//            'type' => 'Debit',
+//            'log' => $transaction->getLog()
+//        ];
+//
+//        $this->walletTransaction($wallet_transaction_data);
+        (new WalletTransactionHandler())
+            ->setModel($this)
+            ->setAmount($transaction->getAmount())
+            ->setLog($transaction->getLog())
+            ->setType('debit')
+            ->setSource(TransactionSources::TOP_UP)
+            ->dispatch(['event_id' => $transaction->getTopUpOrder()->id, 'event_type' => get_class($transaction->getTopUpOrder())]);
     }
 
     public function getCommission()
@@ -220,14 +229,16 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
 
     public function movieTicketTransaction(MovieTicketTransaction $transaction)
     {
-        $this->debitWallet($transaction->getAmount());
-        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
+//        $this->debitWallet($transaction->getAmount());
+//        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
+        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setType('debit')->setSource(TransactionSources::MOVIE)->setLog($transaction->getLog())->dispatch();
     }
 
     public function movieTicketTransactionNew(MovieTicketTransaction $transaction)
     {
-        $this->creditWallet($transaction->getAmount());
-        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Credit', 'log' => $transaction->getLog()]);
+//        $this->creditWallet($transaction->getAmount());
+//        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Credit', 'log' => $transaction->getLog()]);
+        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setType('credit')->setSource(TransactionSources::MOVIE)->setLog($transaction->getLog())->dispatch();
     }
 
     public function transportTicketOrders()
@@ -245,8 +256,9 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
 
     public function transportTicketTransaction(TransportTicketTransaction $transaction)
     {
-        $this->debitWallet($transaction->getAmount());
-        $this->walletTransaction(['amount' => $transaction->getAmount(), 'event_type' => $transaction->getEventType(), 'event_id' => $transaction->getEventId(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
+//        $this->debitWallet($transaction->getAmount());
+//        $this->walletTransaction(['amount' => $transaction->getAmount(), 'event_type' => $transaction->getEventType(), 'event_id' => $transaction->getEventId(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
+        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setType('debit')->setSource(TransactionSources::TRANSPORT)->setLog($transaction->getLog())->dispatch([ 'event_type' => $transaction->getEventType(), 'event_id' => $transaction->getEventId()]);
     }
 
     public function getMobile()

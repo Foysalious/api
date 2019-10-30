@@ -3,13 +3,13 @@
 use App\Models\Partner;
 use App\Models\SmsCampaignOrder;
 use App\Models\SmsCampaignOrderReceiver;
-
 use App\Models\Tag;
 use App\Sheba\SmsCampaign\SmsHandler;
-
 use Sheba\ExpenseTracker\AutomaticExpense;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
+use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class SmsCampaign
 {
@@ -74,7 +74,7 @@ class SmsCampaign
                 SmsCampaignOrderReceiver::create($this->withBothModificationFields($orderDetails));
             }
 
-            $this->partner->debitWallet($amount_to_be_deducted);
+
             /** @var AutomaticEntryRepository $entry */
             $entry=app(AutomaticEntryRepository::class);
             $entry->setAmount($amount_to_be_deducted)
@@ -83,12 +83,14 @@ class SmsCampaign
                 ->setSourceType(class_basename($campaign_order))
                 ->setSourceId($campaign_order->id)
                 ->store();
-
-            $partner_transactions = $this->partner->walletTransaction(['amount' => $amount_to_be_deducted, 'type' => 'Debit', 'log' => $amount_to_be_deducted . "BDT. has been deducted for creating " . $this->title . ' sms campaign from your wallet.']);
-
+            $log = $amount_to_be_deducted . "BDT. has been deducted for creating " . $this->title . ' sms campaign from your wallet.';
+//            $this->partner->debitWallet($amount_to_be_deducted);
+//            $partner_transactions = $this->partner->walletTransaction(['amount' => $amount_to_be_deducted, 'type' => 'Debit', 'log' => $amount_to_be_deducted . "BDT. has been deducted for creating " . $this->title . ' sms campaign from your wallet.']);
+            $partner_transactions = (new WalletTransactionHandler())->setModel($this->partner)
+                ->setSource(TransactionSources::SMS)->setType('debit')->setLog($log)->setAmount($amount_to_be_deducted)
+                ->store();
             $tag = Tag::where('name', 'credited sms campaign')->pluck('id')->toArray();
             $partner_transactions->tags()->sync($tag);
-
             (new SmsLogs())->processLogs();
 
             return true;

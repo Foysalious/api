@@ -3,7 +3,7 @@
 
 use Sheba\Helpers\ConstGetter;
 
-class PaymentMethod
+class TransactionSources
 {
     use ConstGetter;
 
@@ -16,4 +16,5 @@ class PaymentMethod
     const TRANSPORT = 'transport';
     const WITHDRAW_REQUEST = 'withdraw_request';
     const BANK = 'bank';
+    const SMS = 'sms';
 }

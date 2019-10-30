@@ -1,5 +1,8 @@
 <?php namespace Sheba\Transport\Bus\Commission;
 
+use Sheba\FraudDetection\TransactionSources;
+use Sheba\Transactions\Wallet\HasWalletTransaction;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Sheba\Transport\Bus\BusTicketCommission;
 
 class Affiliate extends BusTicketCommission
@@ -24,9 +27,13 @@ class Affiliate extends BusTicketCommission
 
     private function storeAmbassadorWalletTransaction()
     {
-        $this->agent->ambassador->creditWallet($this->transportTicketOrder->ambassador_amount);
         $log = "{$this->agent->profile->name} gifted {$this->transportTicketOrder->ambassador_amount} Tk. for {$this->transportTicketOrder->amount} Tk. transport ticket purchase";
-        $this->agent->ambassador->walletTransaction(['amount' => $this->transportTicketOrder->ambassador_amount, 'type' => 'Credit', 'log' => $log]);
+//        $this->agent->ambassador->creditWallet($this->transportTicketOrder->ambassador_amount);
+//        $this->agent->ambassador->walletTransaction(['amount' => $this->transportTicketOrder->ambassador_amount, 'type' => 'Credit', 'log' => $log]);
+        /** @var HasWalletTransaction $ambassador */
+        $ambassador = $this->agent->ambassador;
+        (new WalletTransactionHandler())->setModel($ambassador)->setType('credit')->setLog($log)
+            ->setSource(TransactionSources::TRANSPORT)->setAmount($this->transportTicketOrder->ambassador_amount)->dispatch();
     }
 
     public function refund(){}

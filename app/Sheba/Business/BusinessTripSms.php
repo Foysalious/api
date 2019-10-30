@@ -4,6 +4,8 @@ use App\Models\Business;
 use App\Models\BusinessTrip;
 use Carbon\Carbon;
 use Sheba\Business\BusinessSmsHandler;
+use Sheba\FraudDetection\TransactionSources;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 
 class BusinessTripSms
@@ -39,8 +41,10 @@ class BusinessTripSms
                 'vehicle_name' => $this->vehicleName,
                 'arrival_time' => $this->arrivalTime,
             ]);
-            $this->business->debitWallet($this->cost);
-            $this->business->walletTransaction(['amount' => $this->cost, 'type' => 'Debit', 'log' => 'Sms send', 'tag' => 'sms']);
+//            $this->business->debitWallet($this->cost);
+//            $this->business->walletTransaction(['amount' => $this->cost, 'type' => 'Debit', 'log' => 'Sms send', 'tag' => 'sms']);
+            (new WalletTransactionHandler())->setSource($this->business)->setType('debit')->setLog('Sms send')->setAmount($this->cost)
+                ->setSource(TransactionSources::SMS)->dispatch(['tag' => 'sms']);
         }
     }
 

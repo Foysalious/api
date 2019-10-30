@@ -2,7 +2,10 @@
 
 use App\Models\MovieTicketOrder;
 use App\Models\MovieTicketVendor;
+use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
+use Sheba\Transactions\Wallet\HasWalletTransaction;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 abstract class MovieTicketCommission
 {
@@ -138,8 +141,12 @@ abstract class MovieTicketCommission
 
     private function refundUser($amount, $log)
     {
-        $this->agent->creditWallet($amount);
-        $this->agent->walletTransaction(['amount' => $amount, 'type' => 'Credit', 'log' => $log]);
+//        $this->agent->creditWallet($amount);
+//        $this->agent->walletTransaction(['amount' => $amount, 'type' => 'Credit', 'log' => $log]);
+        /** @var HasWalletTransaction $model */
+        $model = $this->agent;
+        (new WalletTransactionHandler())->setModel($model)->setSource(TransactionSources::MOVIE)->setAmount($amount)
+            ->setType('credit')->setLog($log)->dispatch();
     }
 
     abstract public function disburse();
