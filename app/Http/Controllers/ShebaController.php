@@ -349,7 +349,7 @@ class ShebaController extends Controller
                 ],
                 [
                     "name" => "SBAC Bank",
-                    "logo" => $icons_folder."sbac_bank.png",
+                    "logo" => $icons_folder."sbac_bank.jpg",
                     "asset" => "sbac_bank"
                 ],
                 [
