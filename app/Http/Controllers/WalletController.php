@@ -118,11 +118,13 @@ class WalletController extends Controller
                         } else {
                             $transaction = $transactionHandler->store();
                         }
-//                        $wallet_transaction_data = ['amount' => $remaining, 'type' => 'Debit', 'log' => $log, 'created_at' => Carbon::now()];
-//                        if ($user instanceof Customer) $wallet_transaction_data += ['event_type' => get_class($spent_model), 'event_id' => $spent_model->id];
+                       /*
+                        * WALLET TRANSACTION NEED TO REMOVE
+                        *  $wallet_transaction_data = ['amount' => $remaining, 'type' => 'Debit', 'log' => $log, 'created_at' => Carbon::now()];
+                        if ($user instanceof Customer) $wallet_transaction_data += ['event_type' => get_class($spent_model), 'event_id' => $spent_model->id];
 
-//                        $user->debitWallet($remaining);
-//                        $transaction = $user->walletTransaction($wallet_transaction_data);
+                        $user->debitWallet($remaining);
+                        $transaction = $user->walletTransaction($wallet_transaction_data);*/
 
                     }
                 });

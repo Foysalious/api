@@ -34,8 +34,10 @@ class Affiliate extends MovieTicketCommission
     {
 
         $log = "{$this->agent->profile->name} gifted {$this->movieTicketOrder->ambassador_commission} Tk. for {$this->movieTicketOrder->amount} Tk. movie ticket purchase";;
-//        $this->agent->ambassador->creditWallet($this->movieTicketOrder->ambassador_commission);
-//        $this->agent->ambassador->walletTransaction(['amount' => $this->movieTicketOrder->ambassador_commission, 'type' => 'Credit', 'log' => $log]);
+        /*
+         * WALLET TRANSACTION NEED TO REMOVE
+         * $this->agent->ambassador->creditWallet($this->movieTicketOrder->ambassador_commission);
+        $this->agent->ambassador->walletTransaction(['amount' => $this->movieTicketOrder->ambassador_commission, 'type' => 'Credit', 'log' => $log]);*/
         (new WalletTransactionHandler())->setModel($this->agent->ambassador)->setSource(TransactionSources::MOVIE)
             ->setLog($log)->setAmount($this->movieTicketOrder->ambassador_commission)->setType('credit')
             ->dispatch();
@@ -43,8 +45,10 @@ class Affiliate extends MovieTicketCommission
 
     private function deductFromAmbassador($amount, $log)
     {
-//        $this->agent->ambassador->debitWallet($amount);
-//        $this->agent->ambassador->walletTransaction(['amount' => $amount, 'type' => 'Debit', 'log' => $log]);
+        /*
+         * WALLET TRANSACTION NEED TO REMOVE
+         * $this->agent->ambassador->debitWallet($amount);
+        $this->agent->ambassador->walletTransaction(['amount' => $amount, 'type' => 'Debit', 'log' => $log]);*/
         (new WalletTransactionHandler())->setModel($this->agent->ambassador)->setSource(TransactionSources::MOVIE)
             ->setLog($log)->setAmount($amount)->setType('debit')
             ->dispatch();

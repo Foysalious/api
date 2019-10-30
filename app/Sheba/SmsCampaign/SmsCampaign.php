@@ -84,8 +84,10 @@ class SmsCampaign
                 ->setSourceId($campaign_order->id)
                 ->store();
             $log = $amount_to_be_deducted . "BDT. has been deducted for creating " . $this->title . ' sms campaign from your wallet.';
-//            $this->partner->debitWallet($amount_to_be_deducted);
-//            $partner_transactions = $this->partner->walletTransaction(['amount' => $amount_to_be_deducted, 'type' => 'Debit', 'log' => $amount_to_be_deducted . "BDT. has been deducted for creating " . $this->title . ' sms campaign from your wallet.']);
+            /*
+             * WALLET TRANSACTION NEED TO REMOVE
+             * $this->partner->debitWallet($amount_to_be_deducted);
+            $partner_transactions = $this->partner->walletTransaction(['amount' => $amount_to_be_deducted, 'type' => 'Debit', 'log' => $amount_to_be_deducted . "BDT. has been deducted for creating " . $this->title . ' sms campaign from your wallet.']);*/
             $partner_transactions = (new WalletTransactionHandler())->setModel($this->partner)
                 ->setSource(TransactionSources::SMS)->setType('debit')->setLog($log)->setAmount($amount_to_be_deducted)
                 ->store();

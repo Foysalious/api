@@ -26,12 +26,11 @@ class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAg
 {
     use TopUpTrait, MovieTicketTrait, Wallet, ModificationFields;
 
+    public static $savedEventClass = AffiliateSaved::class;
     protected $guarded = ['id'];
     protected $dates = ['last_suspended_at'];
     protected $casts = ['wallet' => 'double', 'is_ambassador' => 'int', 'is_suspended' => 'int', 'total_gifted_amount' => 'double'];
     protected $appends = ['joined'];
-
-    public static $savedEventClass = AffiliateSaved::class;
 
     public function profile()
     {
@@ -66,11 +65,6 @@ class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAg
     public function suspensions()
     {
         return $this->hasMany(AffiliateSuspension::class);
-    }
-
-    public function transactions()
-    {
-        return $this->hasMany(AffiliateTransaction::class);
     }
 
     public function getBankingInfoAttribute($info)
@@ -111,25 +105,6 @@ class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAg
         return $query->select('affiliates.profile_id', 'affiliates.id', 'affiliates.under_ambassador_since', 'affiliates.ambassador_id', 'affiliates.total_gifted_number', 'affiliates.total_gifted_amount', 'profiles.name', 'profiles.pro_pic as picture', 'profiles.mobile')->leftJoin('profiles', 'profiles.id', '=', 'affiliates.profile_id')->orderBy('affiliates.total_gifted_amount', $order)->where('affiliates.ambassador_id', $affiliate->id);
     }
 
-    /*public function scopeAgentsWithFilter($query, $request, $tableName)
-    {
-        $affiliate = $request->affiliate;
-        $rangeQuery = 'affiliate_transactions.is_gifted = 1     ';
-        if (isset($request->range) && !empty($request->range)) {
-            $range = getRangeFormat($request);
-            $rangeQuery = $rangeQuery . ' and `affiliate_transactions`.`created_at` BETWEEN \'' . $range[0]->toDateTimeString() . '\' AND \'' . $range[1]->toDateTimeString() . '\'';
-        }
-        return $query->select('affiliate_transactions' . '.affiliate_id as id', 'affiliates.profile_id', 'affiliates.ambassador_id', 'affiliates.under_ambassador_since', 'profiles.name', 'profiles.pro_pic as picture', 'profiles.mobile', 'affiliates.created_at')
-            ->leftJoin('affiliate_transactions', 'affiliate_transactions.affiliate_id', '=', 'affiliates.id')
-            //->leftJoin($tableName, 'affiliate_transactions.affiliation_id', ' = ', $tableName . '.id')
-            ->leftJoin('affiliates', 'affiliate_transactions' . '.affiliate_id', '=', 'affiliates.id')
-            ->leftJoin('profiles', 'profiles.id', '=', 'affiliates.profile_id')
-            ->selectRaw('sum(affiliate_transactions.amount) as total_gifted_amount, count(distinct(affiliate_transactions.id)) as total_gifted_number')
-            ->where('affiliates.id', $affiliate->id)
-            ->whereRaw($rangeQuery)
-            ->groupBy('affiliate_transactions' . '.affiliate_id');
-    }*/
-
     public function scopeAgentsWithFilter($query, $request, $tableName)
     {
         $affiliate = $request->affiliate;
@@ -149,6 +124,25 @@ class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAg
             ->groupBy($tableName . '.affiliate_id');
     }
 
+    /*public function scopeAgentsWithFilter($query, $request, $tableName)
+    {
+        $affiliate = $request->affiliate;
+        $rangeQuery = 'affiliate_transactions.is_gifted = 1     ';
+        if (isset($request->range) && !empty($request->range)) {
+            $range = getRangeFormat($request);
+            $rangeQuery = $rangeQuery . ' and `affiliate_transactions`.`created_at` BETWEEN \'' . $range[0]->toDateTimeString() . '\' AND \'' . $range[1]->toDateTimeString() . '\'';
+        }
+        return $query->select('affiliate_transactions' . '.affiliate_id as id', 'affiliates.profile_id', 'affiliates.ambassador_id', 'affiliates.under_ambassador_since', 'profiles.name', 'profiles.pro_pic as picture', 'profiles.mobile', 'affiliates.created_at')
+            ->leftJoin('affiliate_transactions', 'affiliate_transactions.affiliate_id', '=', 'affiliates.id')
+            //->leftJoin($tableName, 'affiliate_transactions.affiliation_id', ' = ', $tableName . '.id')
+            ->leftJoin('affiliates', 'affiliate_transactions' . '.affiliate_id', '=', 'affiliates.id')
+            ->leftJoin('profiles', 'profiles.id', '=', 'affiliates.profile_id')
+            ->selectRaw('sum(affiliate_transactions.amount) as total_gifted_amount, count(distinct(affiliate_transactions.id)) as total_gifted_number')
+            ->where('affiliates.id', $affiliate->id)
+            ->whereRaw($rangeQuery)
+            ->groupBy('affiliate_transactions' . '.affiliate_id');
+    }*/
+
     public function totalLead()
     {
         return $this->affiliations->where('status', 'successful')->count();
@@ -158,6 +152,11 @@ class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAg
     {
         $earning = $this->transactions()->earning()->sum('amount');
         return $earning ? (double)$earning : 0;
+    }
+
+    public function transactions()
+    {
+        return $this->hasMany(AffiliateTransaction::class);
     }
 
     public function earningAmountDateBetween(TimeFrame $time_frame)
@@ -192,8 +191,10 @@ class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAg
 
     public function topUpTransaction(TopUpTransaction $transaction)
     {
-//        $this->debitWallet($transaction->getAmount());
-//        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
+        /*
+         * WALLET TRANSACTION NEED TO REMOVE
+         * $this->debitWallet($transaction->getAmount());
+        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);*/
         (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::TOP_UP)->setType('debit')->setLog($transaction->getLog())->dispatch();
     }
 
@@ -205,11 +206,6 @@ class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAg
     public function isAmbassador()
     {
         return $this->is_ambassador == 1;
-    }
-
-    public function bonuses()
-    {
-        return $this->morphMany(Bonus::class, 'user');
     }
 
     public function topups()
@@ -239,15 +235,19 @@ class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAg
 
     public function movieTicketTransaction(MovieTicketTransaction $transaction)
     {
-//        $this->debitWallet($transaction->getAmount());
-//        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
+        /*
+         * WALLET TRANSACTION NEED TO REMOVE
+         * $this->debitWallet($transaction->getAmount());
+        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);*/
         (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::MOVIE)->setType('debit')->setLog($transaction->getLog())->dispatch();
     }
 
     public function movieTicketTransactionNew(MovieTicketTransaction $transaction)
     {
-//        $this->creditWallet($transaction->getAmount());
-//        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Credit', 'log' => $transaction->getLog()]);
+        /*
+         * WALLET TRANSACTION NEED TO REMOVE
+         * $this->creditWallet($transaction->getAmount());
+        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Credit', 'log' => $transaction->getLog()]);*/
         (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::MOVIE)->setType('credit')->setLog($transaction->getLog())->dispatch();
     }
 
@@ -266,8 +266,10 @@ class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAg
 
     public function transportTicketTransaction(TransportTicketTransaction $transaction)
     {
-//        $this->creditWallet($transaction->getAmount());
-//        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Credit', 'log' => $transaction->getLog()]);
+        /*
+         * WALLET TRANSACTION NEED TO REMOVE
+         * $this->creditWallet($transaction->getAmount());
+        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Credit', 'log' => $transaction->getLog()]);*/
         (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::TRANSPORT)->setType('credit')->setLog($transaction->getLog())->dispatch();
     }
 
@@ -279,6 +281,11 @@ class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAg
     public function shebaBonusCredit()
     {
         return (double)$this->bonuses()->where('status', 'valid')->sum('amount');
+    }
+
+    public function bonuses()
+    {
+        return $this->morphMany(Bonus::class, 'user');
     }
 
     public function tags()

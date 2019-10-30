@@ -510,8 +510,10 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
 
     public function topUpTransaction(TopUpTransaction $transaction)
     {
-//        $this->debitWallet($transaction->getAmount());
-//        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
+        /*
+         * WALLET TRANSACTION NEED TO REMOVE
+         * $this->debitWallet($transaction->getAmount());
+        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);*/
         (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::TOP_UP)->setType('debit')->setLog($transaction->getLog())->dispatch();
     }
 
@@ -691,16 +693,18 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
 
     public function transportTicketTransaction(TransportTicketTransaction $transaction)
     {
-//        $this->creditWallet($transaction->getAmount());
-//        $wallet_transaction = [
-//            'amount' => $transaction->getAmount(),
-//            'type' => 'Credit',
-//            'log' => $transaction->getLog(),
-//            'created_by_type' => get_class($this),
-//            'created_by' => $this->id,
-//            'created_by_name' => $this->name
-//        ];
-//        $this->walletTransaction($wallet_transaction);
+       /*
+        * WALLET TRANSACTION NEED TO REMOVE
+        * $this->creditWallet($transaction->getAmount());
+        $wallet_transaction = [
+            'amount' => $transaction->getAmount(),
+            'type' => 'Credit',
+            'log' => $transaction->getLog(),
+            'created_by_type' => get_class($this),
+            'created_by' => $this->id,
+            'created_by_name' => $this->name
+        ];
+        $this->walletTransaction($wallet_transaction);*/
         (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::TRANSPORT)->setType('credit')->setLog($transaction->getLog())->dispatch();
     }
 
@@ -711,23 +715,27 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
 
     public function movieTicketTransaction(MovieTicketTransaction $transaction)
     {
-//        $this->debitWallet($transaction->getAmount());
-//        $wallet_transaction = [
-//            'amount' => $transaction->getAmount(),
-//            'type' => 'Debit',
-//            'log' => $transaction->getLog(),
-//            'created_by_type' => get_class($this),
-//            'created_by' => $this->id,
-//            'created_by_name' => $this->name
-//        ];
-//        $this->walletTransaction($wallet_transaction);
+       /*
+        * WALLET TRANSACTION NEED TO REMOVE
+        * $this->debitWallet($transaction->getAmount());
+        $wallet_transaction = [
+            'amount' => $transaction->getAmount(),
+            'type' => 'Debit',
+            'log' => $transaction->getLog(),
+            'created_by_type' => get_class($this),
+            'created_by' => $this->id,
+            'created_by_name' => $this->name
+        ];
+        $this->walletTransaction($wallet_transaction);*/
         (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::MOVIE)->setType('debit')->setLog($transaction->getLog())->dispatch();
     }
 
     public function movieTicketTransactionNew(MovieTicketTransaction $transaction)
     {
-//        $this->creditWallet($transaction->getAmount());
-//        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Credit', 'log' => $transaction->getLog()]);
+        /*
+         * WALLET TRANSACTION NEED TO REMOVE
+         * $this->creditWallet($transaction->getAmount());
+        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Credit', 'log' => $transaction->getLog()]);*/
         (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::MOVIE)->setType('credit')->setLog($transaction->getLog())->dispatch();
     }
 

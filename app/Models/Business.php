@@ -22,11 +22,6 @@ class Business extends Model implements TopUpAgent, PayableUser, HasWalletTransa
         return $this->belongsToMany(Member::class)->withTimestamps();
     }
 
-    public function superAdmins()
-    {
-        return $this->belongsToMany(Member::class)->where('is_super', 1);
-    }
-
     public function businessSms()
     {
         return $this->hasMany(BusinessSmsTemplate::class);
@@ -57,11 +52,6 @@ class Business extends Model implements TopUpAgent, PayableUser, HasWalletTransa
         return $this->belongsTo(BusinessCategory::class);
     }
 
-    public function bonuses()
-    {
-        return $this->morphMany(Bonus::class, 'user');
-    }
-
     public function businessTrips()
     {
         return $this->hasMany(BusinessTrip::class);
@@ -90,6 +80,11 @@ class Business extends Model implements TopUpAgent, PayableUser, HasWalletTransa
     public function shebaBonusCredit()
     {
         return (double)$this->bonuses()->where('status', 'valid')->sum('amount');
+    }
+
+    public function bonuses()
+    {
+        return $this->morphMany(Bonus::class, 'user');
     }
 
     public function transactions()
@@ -129,8 +124,10 @@ class Business extends Model implements TopUpAgent, PayableUser, HasWalletTransa
 
     public function topUpTransaction(TopUpTransaction $transaction)
     {
-//        $this->debitWallet($transaction->getAmount());
-//        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
+        /*
+         * WALLET TRANSACTION NEED TO REMOVE
+         * $this->debitWallet($transaction->getAmount());
+        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);*/
         (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setType('debit')->setLog($transaction->getLog())
             ->setSource(TransactionSources::TOP_UP)->dispatch();
     }
@@ -140,15 +137,21 @@ class Business extends Model implements TopUpAgent, PayableUser, HasWalletTransa
         return '+8801678242934';
     }
 
+    public function getContactPerson()
+    {
+        if ($super_admin = $this->getAdmin()) return $super_admin->profile->name;
+        return null;
+    }
+
     public function getAdmin()
     {
         if ($super_admin = $this->superAdmins()->first()) return $super_admin;
         return null;
     }
-    public function getContactPerson()
+
+    public function superAdmins()
     {
-        if ($super_admin = $this->getAdmin()) return $super_admin->profile->name;
-        return null;
+        return $this->belongsToMany(Member::class)->where('is_super', 1);
     }
 
     public function attachments()

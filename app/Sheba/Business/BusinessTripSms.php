@@ -41,9 +41,11 @@ class BusinessTripSms
                 'vehicle_name' => $this->vehicleName,
                 'arrival_time' => $this->arrivalTime,
             ]);
-//            $this->business->debitWallet($this->cost);
-//            $this->business->walletTransaction(['amount' => $this->cost, 'type' => 'Debit', 'log' => 'Sms send', 'tag' => 'sms']);
-            (new WalletTransactionHandler())->setSource($this->business)->setType('debit')->setLog('Sms send')->setAmount($this->cost)
+            /*
+             * WALLET TRANSACTION NEED TO REMOVE
+             * $this->business->debitWallet($this->cost);
+            $this->business->walletTransaction(['amount' => $this->cost, 'type' => 'Debit', 'log' => 'Sms send', 'tag' => 'sms']);*/
+            (new WalletTransactionHandler())->setModel($this->business)->setType('debit')->setLog('Sms send')->setAmount($this->cost)
                 ->setSource(TransactionSources::SMS)->dispatch(['tag' => 'sms']);
         }
     }

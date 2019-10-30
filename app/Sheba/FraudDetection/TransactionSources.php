@@ -17,4 +17,5 @@ class TransactionSources
     const WITHDRAW_REQUEST = 'withdraw_request';
     const BANK = 'bank';
     const SMS = 'sms';
+    const SHEBA_WALLET = 'sheba_wallet';
 }

@@ -131,8 +131,10 @@ abstract class TopUpCommission
 
     private function refundUser($amount, $log)
     {
-//        $this->agent->creditWallet($amount);
-//        $this->agent->walletTransaction(['amount' => $amount, 'type' => 'Credit', 'log' => $log]);
+       /*
+        * WALLET TRANSACTION NEED TO REMOVE
+        *  $this->agent->creditWallet($amount);
+        $this->agent->walletTransaction(['amount' => $amount, 'type' => 'Credit', 'log' => $log]);*/
         /** @var HasWalletTransaction $model */
         $model=$this->agent;
         (new WalletTransactionHandler())->setModel($model)->setSource(TransactionSources::TOP_UP)->setType('credit')

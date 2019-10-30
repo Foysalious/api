@@ -26,8 +26,10 @@ class Affiliate extends TopUpCommission
     {
 
         $log = "{$this->agent->profile->name} gifted {$this->topUpOrder->ambassador_commission} Tk. for {$this->topUpOrder->amount} Tk. topup";;
-//        $this->agent->ambassador->creditWallet($this->topUpOrder->ambassador_commission);
-//        $this->agent->ambassador->walletTransaction(['amount' => $this->topUpOrder->ambassador_commission, 'type' => 'Credit', 'log' => $log, 'is_gifted' => 1]);
+       /*
+        * WALLET TRANSACTION NEED TO REMOVE
+        *  $this->agent->ambassador->creditWallet($this->topUpOrder->ambassador_commission);
+        $this->agent->ambassador->walletTransaction(['amount' => $this->topUpOrder->ambassador_commission, 'type' => 'Credit', 'log' => $log, 'is_gifted' => 1]);*/
         $model=$this->agent->ambassador;
         (new WalletTransactionHandler())->setModel($model)->setSource(TransactionSources::TOP_UP)->setType('credit')
             ->setAmount($this->topUpOrder->ambassador_commission)->setLog($log)->dispatch();
@@ -35,8 +37,10 @@ class Affiliate extends TopUpCommission
 
     private function deductFromAmbassador($amount, $log)
     {
-//        $this->agent->ambassador->debitWallet($amount);
-//        $this->agent->ambassador->walletTransaction(['amount' => $amount, 'type' => 'Debit', 'log' => $log]);
+        /*
+         * WALLET TRANSACTION NEED TO REMOVE
+         * $this->agent->ambassador->debitWallet($amount);
+        $this->agent->ambassador->walletTransaction(['amount' => $amount, 'type' => 'Debit', 'log' => $log]);*/
         $model=$this->agent->ambassador;
         (new WalletTransactionHandler())->setModel($model)->setSource(TransactionSources::TOP_UP)->setType('debit')
             ->setAmount($amount)->setLog($log)->dispatch();
