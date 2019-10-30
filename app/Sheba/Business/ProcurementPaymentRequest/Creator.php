@@ -4,6 +4,7 @@ use App\Models\Bid;
 use App\Models\Procurement;
 use Illuminate\Database\QueryException;
 use Sheba\Repositories\Business\ProcurementPaymentRequestRepository;
+use Sheba\Dal\BidStatusChangeLog\BidStatusChangeLogRepositoryInterface;
 
 class Creator
 {

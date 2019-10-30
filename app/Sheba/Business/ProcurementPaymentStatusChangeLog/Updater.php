@@ -1,12 +1,12 @@
 <?php namespace Sheba\Business\ProcurementPaymentStatusChangeLog;
 
-use Sheba\Repositories\Business\ProcurementPaymentStatusChangeLogRepository;
+use Sheba\Repositories\Business\ProcurementPaymentRequestStatusChangeLogRepository;
 
 class Updater
 {
     private $paymentStatusChangeLogRepo;
 
-    public function __construct(ProcurementPaymentStatusChangeLogRepository $payment_status_change_log_repo)
+    public function __construct(ProcurementPaymentRequestStatusChangeLogRepository $payment_status_change_log_repo)
     {
         $this->paymentStatusChangeLogRepo = $payment_status_change_log_repo;
     }
