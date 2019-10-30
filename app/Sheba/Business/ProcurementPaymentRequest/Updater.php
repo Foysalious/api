@@ -3,7 +3,7 @@
 use Illuminate\Database\QueryException;
 use Sheba\Dal\ProcurementPaymentRequest\Model as ProcurementPaymentRequest;
 use Sheba\Dal\ProcurementPaymentRequest\ProcurementPaymentRequestRepositoryInterface;
-use Sheba\Business\ProcurementPaymentStatusChangeLog\Creator;
+use Sheba\Business\ProcurementPaymentRequestStatusChangeLog\Creator;
 use App\Models\Procurement;
 use App\Models\Bid;
 

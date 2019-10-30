@@ -1,4 +1,4 @@
-<?php namespace Sheba\Business\ProcurementPaymentStatusChangeLog;
+<?php namespace Sheba\Business\ProcurementPaymentRequestStatusChangeLog;
 
 use Sheba\Dal\ProcurementPaymentRequest\Model as ProcurementPaymentRequest;
 use Sheba\Dal\ProcurementPaymentRequestStatusChangeLog\ProcurementPaymentRequestStatusChangeLogRepositoryInterface;
