@@ -101,6 +101,10 @@ class BusinessRoute
                         $api->get('/bid-history', 'B2b\BidController@getBidHistory');
                         $api->group(['prefix' => 'bids'], function ($api) {
                             $api->get('/', 'B2b\BidController@index');
+                            $api->group(['prefix' => '{bid}'], function ($api) {
+                                $api->get('/', 'B2b\RfqOrderController@show');
+                                $api->post('/payment-request', 'B2b\RfqOrderController@paymentRequest');
+                            });
                         });
                     });
                     $api->get('/', 'B2b\ProcurementController@index');
@@ -117,6 +121,7 @@ class BusinessRoute
                         });
                         $api->group(['prefix' => 'attachments'], function ($api) {
                             $api->post('/', 'AttachmentController@storeAttachment');
+                            $api->get('/', 'AttachmentController@getAttachments');
                         });
                     });
                 });
