@@ -2,6 +2,8 @@
 
 use App\Sheba\Repositories\Business\BidRepository;
 use Illuminate\Support\ServiceProvider;
+use Sheba\Dal\ProcurementPaymentRequest\ProcurementPaymentRequestRepositoryInterface;
+use Sheba\Dal\ProcurementPaymentRequestStatusChangeLog\ProcurementPaymentRequestStatusChangeLogRepositoryInterface;
 use Sheba\Repositories\Business\BidItemFieldRepository;
 use Sheba\Repositories\Business\BidItemRepository;
 use Sheba\Repositories\Business\BusinessMemberRepository;
@@ -21,6 +23,7 @@ use Sheba\Repositories\Business\MemberRepository;
 use Sheba\Repositories\Business\ProcurementItemFieldRepository;
 use Sheba\Repositories\Business\ProcurementItemRepository;
 use Sheba\Repositories\Business\ProcurementPaymentRequestRepository;
+use Sheba\Repositories\Business\ProcurementPaymentRequestStatusChangeLogRepository;
 use Sheba\Repositories\Business\ProcurementQuestionRepository;
 use Sheba\Repositories\Business\ProcurementRepository;
 use Sheba\Repositories\Business\PurchaseRequestItemFieldRepository;
@@ -52,7 +55,6 @@ use Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementItemFieldRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementItemRepositoryInterface;
-use Sheba\Repositories\Interfaces\ProcurementPaymentRequestRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementQuestionRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
@@ -102,5 +104,6 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(BidRepositoryInterface::class, BidRepository::class);
         $this->app->bind(RfqOrderRepositoryInterface::class, RfqOrderRepository::class);
         $this->app->bind(ProcurementPaymentRequestRepositoryInterface::class, ProcurementPaymentRequestRepository::class);
+        $this->app->bind(ProcurementPaymentRequestStatusChangeLogRepositoryInterface::class, ProcurementPaymentRequestStatusChangeLogRepository::class);
     }
 }

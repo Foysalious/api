@@ -10,7 +10,7 @@ class ProcurementPaymentRequestController extends Controller
 {
     use ModificationFields;
 
-    public function updatePaymentRequest($partner, $procurement, $bid, $payment_request, Request $request, Updater $updater)
+    public function updatePaymentRequest($business, $procurement, $bid, $payment_request, Request $request, Updater $updater)
     {
         try {
             $this->validate($request, [
