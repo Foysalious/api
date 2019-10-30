@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\Attachment;
 use App\Models\Bid;
 use App\Models\Business;
 use App\Models\Partner;
@@ -38,6 +39,31 @@ class AttachmentController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getAttachments($avatar, $bid, Request $request)
+    {
+        try {
+            $bid = Bid::find((int)$bid);
+            if (!$bid) return api_response($request, null, 404);
+            list($offset, $limit) = calculatePagination($request);
+            $attaches = Attachment::where('attachable_type', get_class($bid))->where('attachable_id', $bid->id)
+                ->select('id', 'title', 'file', 'file_type')->orderBy('id', 'DESC')->skip($offset)->limit($limit)->get();
+            $attach_lists = [];
+            foreach ($attaches as $attach) {
+                array_push($attach_lists, [
+                    'id' => $attach->id,
+                    'title' => $attach->title,
+                    'file' => $attach->file,
+                    'file_type' => $attach->file_type,
+                ]);
+            }
+            if (count($attach_lists) > 0) return api_response($request, $attach_lists, 200, ['attach_lists' => $attach_lists]);
+            else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

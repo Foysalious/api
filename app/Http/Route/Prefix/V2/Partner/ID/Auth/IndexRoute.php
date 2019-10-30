@@ -20,6 +20,7 @@ class IndexRoute
                     });
                     $api->group(['prefix' => 'attachments'], function ($api) {
                         $api->post('/', 'AttachmentController@storeAttachment');
+                        $api->get('/', 'AttachmentController@getAttachments');
                     });
                 });
             });
