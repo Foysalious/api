@@ -103,7 +103,7 @@ class BusinessRoute
                             $api->get('/', 'B2b\BidController@index');
                             $api->group(['prefix' => '{bid}'], function ($api) {
                                 $api->get('/', 'B2b\RfqOrderController@show');
-                                $api->post('/payment-request', 'B2b\RfqOrderController@paymentRequest');
+                                $api->post('/payment-requests', 'B2b\ProcurementPaymentRequestController@paymentRequest');
                             });
                         });
                     });
