@@ -1,6 +1,5 @@
 <?php namespace App\Http\Middleware;
 
-
 use App\Models\Profile;
 use Closure;
 use Tymon\JWTAuth\Exceptions\JWTException;

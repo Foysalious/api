@@ -1,14 +1,15 @@
 <?php namespace Sheba\Repositories;
 
-
 use App\Models\Payable;
 use App\Models\Payment;
+use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\Request;
 use Sheba\Payment\Exceptions\PayableNotFound;
 use Sheba\PaymentLink\PaymentLinkClient;
 use Sheba\PaymentLink\PaymentLinkTransformer;
 use Sheba\PaymentLink\UrlTransformer;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
+use stdClass;
 
 class PaymentLinkRepository extends BaseRepository implements PaymentLinkRepositoryInterface
 {
@@ -16,6 +17,11 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
     private $paymentLinkTransformer;
     private $urlTransformer;
 
+    /**
+     * PaymentLinkRepository constructor.
+     * @param PaymentLinkTransformer $paymentLinkTransformer
+     * @param UrlTransformer $urlTransformer
+     */
     public function __construct(PaymentLinkTransformer $paymentLinkTransformer, UrlTransformer $urlTransformer)
     {
         parent::__construct();
@@ -42,11 +48,10 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
         return $this->paymentLinkClient->getPaymentLinkDetails($userId, $userType, $identifier);
     }
 
-
     /**
      * @param array $attributes
-     * @return \stdClass|null
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @return stdClass|null
+     * @throws GuzzleException
      */
     public function create(array $attributes)
     {
@@ -68,24 +73,22 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
         return Payable::whereHas('payment', function ($query) {
             $query->where('status', 'completed');
         })->where([
-            ['type', 'payment_link'],
-            ['type_id', $payment_link_details['linkId']],
-        ])->with(['payment' => function ($q) {
-            $q->select('id', 'payable_id', 'status', 'created_by_type', 'created_by', 'created_by_name', 'created_at');
-        }])->select('id', 'type', 'type_id', 'amount');
+            ['type', 'payment_link'], ['type_id', $payment_link_details['linkId']],
+        ])->with([
+            'payment' => function ($q) {
+                $q->select('id', 'payable_id', 'status', 'created_by_type', 'created_by', 'created_by_name', 'created_at');
+            }
+        ])->select('id', 'type', 'type_id', 'amount');
     }
 
     public function payment($payment)
     {
-        return Payment::where('id', $payment)
-            ->select('id', 'payable_id', 'status', 'created_by_type', 'created_by', 'created_by_name', 'created_at')
-            ->with([
-                'payable' => function ($query) {
-                    $query->select('id', 'type', 'type_id', 'amount', 'user_type', 'user_id');
-                }
-            ], 'paymentDetails')->first();
+        return Payment::where('id', $payment)->select('id', 'payable_id', 'status', 'created_by_type', 'created_by', 'created_by_name', 'created_at')->with([
+            'payable' => function ($query) {
+                $query->select('id', 'type', 'type_id', 'amount', 'user_type', 'user_id');
+            }
+        ], 'paymentDetails')->first();
     }
-
 
     /**
      * @param $linkId

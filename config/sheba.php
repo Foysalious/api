@@ -20,7 +20,7 @@ return [
     'order_code_start' => 8000,
     'job_code_start' => 16000,
     'last_partner_order_id_v1' => env('LAST_PARTNER_ORDER_ID_V1'),
-    'material_commission_rate' => 2.0,
+    'material_commission_rate' => 5.0,
     'portals' => ['admin-portal', 'partner-portal', 'manager-app', 'customer-app', 'customer-portal', 'resource-portal', 'resource-app', 'bondhu-app', 'bondhu-portal', 'automatic'],
     'send_order_create_sms' => env('SEND_ORDER_CREATE_SMS', true),
     'stopped_sms_portal_for_customer' => ['customer-app', 'customer-portal', 'manager-app', 'partner-portal'],
@@ -120,7 +120,7 @@ return [
     'sheba_help_desk_id' => 1809,
     'best_deal_ids' => env('BEST_DEAL_IDS'),
     'service_group_ids' => env('SERVICE_GROUP_IDS'),
-    'online_payment_discount_threshold_minutes' => 30,
+    'online_payment_discount_threshold_minutes' => null,
     'online_payment_discount_percentage' => env('ONLINE_PAYMENT_DISCOUNT_PERCENTAGE', 0),
     'car_rental' => [
         'master_category_id' => env('RENT_A_CAR_CATEGORY_ID'),
@@ -135,4 +135,5 @@ return [
     ],
     'min_order_amount_for_emi' => 10000,
     'gift_card_validity_month' => 3,
+    'marketplace_not_accessible_packages_id' => explode(',', env('MARKETPLACE_NOT_ACCESSIBLE_PACKAGES_ID', '1,2'))
 ];

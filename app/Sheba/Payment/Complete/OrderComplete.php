@@ -41,6 +41,7 @@ class OrderComplete extends BaseOrderComplete
             }
 
             foreach ($this->payment->paymentDetails as $payment_detail) {
+                if ($payment_detail->amount == 0) continue;
                 if ($payable_model instanceof PartnerOrder) {
                     $has_error = $this->clearPartnerOrderPayment($payable_model, $customer, $payment_detail, $has_error);
                 } elseif ($payable_model instanceof SubscriptionOrder) {

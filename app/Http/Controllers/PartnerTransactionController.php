@@ -92,14 +92,15 @@ class PartnerTransactionController extends Controller
             } else {
                 return api_response($request, null, 500);
             }
-
-            app(ActionRewardDispatcher::class)->run(
+            /**
+             * SHUT DOWN THIS EVENT BECAUSE IT USED OLD RECHARGE SYSTEM
+             *
+             * app(ActionRewardDispatcher::class)->run(
                 'partner_wallet_recharge',
                 $request->partner,
                 $transaction['amount'],
                 $request->partner
-            );
-
+            );*/
             return api_response($request, null, 200, ['message' => "Wallet refilled."]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());

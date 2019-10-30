@@ -23,13 +23,18 @@ abstract class PaymentComplete
         $this->paymentRepository->setPayment($payment);
     }
 
-    public abstract function complete();
-
-    protected abstract function saveInvoice();
-
     protected function failPayment()
     {
         $this->changePaymentStatus(Statuses::FAILED);
+    }
+
+    protected function changePaymentStatus($to_status)
+    {
+        $this->paymentRepository->changeStatus([
+            'to' => $to_status, 'from' => $this->payment->status, 'transaction_details' => $this->payment->transaction_details
+        ]);
+        $this->payment->status = $to_status;
+        $this->payment->update();
     }
 
     protected function completePayment()
@@ -37,14 +42,7 @@ abstract class PaymentComplete
         $this->changePaymentStatus(Statuses::COMPLETED);
     }
 
-    protected function changePaymentStatus($to_status)
-    {
-        $this->paymentRepository->changeStatus([
-            'to' => $to_status,
-            'from' => $this->payment->status,
-            'transaction_details' => $this->payment->transaction_details
-        ]);
-        $this->payment->status = $to_status;
-        $this->payment->update();
-    }
+    abstract protected function saveInvoice();
+
+    abstract public function complete();
 }

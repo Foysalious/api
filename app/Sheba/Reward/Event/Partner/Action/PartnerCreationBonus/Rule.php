@@ -2,6 +2,7 @@
 
 use Sheba\Reward\Event\ActionRule;
 use Sheba\Reward\Event\Partner\Action\PartnerCreationBonus\Parameter\RegistrationChannel;
+use Sheba\Reward\Exception\ParameterTypeMismatchException;
 
 class Rule extends ActionRule
 {
@@ -9,7 +10,7 @@ class Rule extends ActionRule
     public $registrationChannel;
 
     /**
-     * @throws \Sheba\Reward\Exception\ParameterTypeMismatchException
+     * @throws ParameterTypeMismatchException
      */
     public function validate()
     {
@@ -29,7 +30,7 @@ class Rule extends ActionRule
     /**
      * @param array $params
      * @return bool
-     * @throws \Sheba\Reward\Exception\ParameterTypeMismatchException
+     * @throws ParameterTypeMismatchException
      */
     public function check(array $params)
     {

@@ -1,10 +1,15 @@
 <?php namespace Sheba\Pos\Order;
 
 use App\Models\Partner;
+use App\Models\Payment;
 use App\Models\PosCustomer;
 use App\Models\PartnerPosService;
 use App\Models\PosOrder;
+use App\Models\Profile;
 use Sheba\Dal\Discount\InvalidDiscountType;
+use Sheba\ExpenseTracker\AutomaticExpense;
+use Sheba\ExpenseTracker\AutomaticIncomes;
+use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\Pos\Discount\DiscountTypes;
 use Sheba\Pos\Discount\Handler as DiscountHandler;
 use Sheba\Pos\Product\StockManager;
@@ -107,11 +112,11 @@ class Creator
             $service['service_id'] = $service['id'];
             $service['service_name'] = $service['name'];
             $service['pos_order_id'] = $order->id;
-            $service['unit_price'] = $this->isWholesalePriceApplicable($service_wholesale_applicable) ? $original_service->wholesale_price : $original_service->price;
+            $service['unit_price'] =    (isset($service['updated_price']) && $service['updated_price']) ? $service['updated_price'] : ($this->isWholesalePriceApplicable($service_wholesale_applicable) ? $original_service->wholesale_price : $original_service->price);
             $service['warranty'] = $original_service->warranty;
             $service['warranty_unit'] = $original_service->warranty_unit;
             $service['vat_percentage'] = (!isset($service['is_vat_applicable']) || $service['is_vat_applicable']) ? PartnerPosService::find($service['id'])->vat_percentage : 0.00;
-            $service = array_except($service, ['id', 'name', 'is_vat_applicable']);
+            $service = array_except($service, ['id', 'name', 'is_vat_applicable','updated_price']);
 
             $pos_order_item = $this->itemRepo->save($service);
             $is_stock_maintainable = $this->stockManager->setPosService($original_service)->isStockMaintainable();
@@ -133,6 +138,8 @@ class Creator
         if ($this->discountHandler->hasDiscount()) $this->discountHandler->create($order);
 
         $this->voucherCalculation($order);
+
+        $this->storeIncome($order);
         return $order;
     }
 
@@ -186,5 +193,25 @@ class Creator
     private function isWholesalePriceApplicable($service_wholesale_applicable)
     {
         return isset($this->data['is_wholesale_applied']) && $this->data['is_wholesale_applied'] && $service_wholesale_applicable;
+    }
+
+    /**
+     * @param PosOrder $order
+     */
+    private function storeIncome(PosOrder $order)
+    {
+        /** @var AutomaticEntryRepository $entry */
+        $entry = app(AutomaticEntryRepository::class);
+        $order = $order->calculate();
+        $amount = (double)$order->getNetBill();
+        $profile = $order->customer ? $order->customer->profile : new Profile();
+        $entry->setPartner($this->partner)
+            ->setParty($profile)
+            ->setAmount($amount)
+            ->setAmountCleared($order->getPaid())
+            ->setHead(AutomaticIncomes::POS)
+            ->setSourceType(class_basename($order))
+            ->setSourceId($order->id)
+            ->store();
     }
 }

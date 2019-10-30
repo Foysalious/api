@@ -4,11 +4,11 @@ use App\Models\PartnerSubscriptionUpdateRequest;
 
 abstract class ShebaSubscriber
 {
-    public abstract function getPackage(SubscriptionPackage $package);
+    abstract public function getPackage(SubscriptionPackage $package);
 
-    public abstract function getPackages();
+    abstract public function getPackages();
 
-    public abstract function upgrade(SubscriptionPackage $package, PartnerSubscriptionUpdateRequest $update_request);
+    abstract public function upgrade(SubscriptionPackage $package, PartnerSubscriptionUpdateRequest $update_request);
 
-    public abstract function getBilling();
+    abstract public function getBilling();
 }

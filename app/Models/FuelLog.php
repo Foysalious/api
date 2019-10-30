@@ -1,9 +1,12 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Comment\MorphCommentable;
+use Sheba\Comment\MorphComments;
 
-class FuelLog extends Model
+class FuelLog extends Model implements MorphCommentable
 {
+    use MorphComments;
 
     protected $guarded = ['id',];
     protected $dates = ['refilled_date'];
@@ -54,5 +57,13 @@ class FuelLog extends Model
                     $q->hiredByBusiness($business->id);
                 });
         });
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getNotificationHandlerClass()
+    {
+        // TODO: Implement getNotificationHandlerClass() method.
     }
 }

@@ -7,7 +7,7 @@ abstract class ActionRule extends Rule
         foreach ($this->params as $key => $param) {
             $param = $param['object'];
             /** @var $param ActionEventParameter */
-            if(!$param->check($params)) return false;
+            if (!$param->check($params)) return false;
         }
 
         return true;

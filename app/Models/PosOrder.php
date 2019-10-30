@@ -165,6 +165,14 @@ class PosOrder extends Model
         return $query->where('customer_id', $customer_id);
     }
 
+    public function scopeByVoucher($query, $voucher_id)
+    {
+        if(is_array($voucher_id))
+            return $query->whereIn('voucher_id', $voucher_id);
+        else
+            return $query->where('voucher_id', $voucher_id);
+    }
+
     private function creditPayments()
     {
         return $this->payments()->credit();

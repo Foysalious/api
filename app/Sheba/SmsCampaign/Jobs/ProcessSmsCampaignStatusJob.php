@@ -1,15 +1,13 @@
 <?php namespace Sheba\SmsCampaign\Jobs;
 
 use App\Jobs\Job;
-
 use App\Models\SmsCampaignOrderReceiver;
-
 use App\Sheba\SmsCampaign\SmsHandler;
-
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
-
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Sheba\ExpenseTracker\AutomaticExpense;
+use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\SmsCampaign\Refund;
 
 class ProcessSmsCampaignStatusJob extends Job implements ShouldQueue
@@ -61,11 +59,22 @@ class ProcessSmsCampaignStatusJob extends Job implements ShouldQueue
                     $refund_receiver = $this->campaignOrderReceiver->smsCampaignOrder->partner;
                     $sms_count = $this->campaignOrderReceiver->sms_count;
                     $this->refund->setRefundReceiver($refund_receiver)->setNumberOfSms($sms_count)->adjustWallet();
+                    $this->deductLog($sms_count * constants('SMS_CAMPAIGN.rate_per_sms'));
                 }
             }
         }
     }
 
+    private function deductLog($amount)
+    {
+        /** @var AutomaticEntryRepository $entry */
+        $entry = app(AutomaticEntryRepository::class);
+        $entry->setAmount($amount)
+            ->setPartner($this->campaignOrderReceiver->smsCampaignOrder->partner)
+            ->setHead(AutomaticExpense::SMS)
+            ->setSourceType(class_basename($this->campaignOrderReceiver->smsCampaignOrder))
+            ->setSourceId($this->campaignOrderReceiver->smsCampaignOrder->id)->deduct();
+    }
     private function getOrderStatus(SmsHandler $sms_handler)
     {
         $response = $sms_handler->getSingleMessage($this->campaignOrderReceiver->message_id);

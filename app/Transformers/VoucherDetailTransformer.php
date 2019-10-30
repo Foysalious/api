@@ -11,15 +11,17 @@ class VoucherDetailTransformer extends TransformerAbstract
         return [
             'id' => $voucher->id,
             'code' => $voucher->code,
+            'start_date' => $voucher->start_date->format('Y-m-d'),
             'end_date' => $voucher->end_date->format('Y-m-d'),
             'amount' => $voucher->amount,
             'is_amount_percentage' => $voucher->is_amount_percentage,
             'cap' => $voucher->cap,
             'is_valid' => $voucher->isValid(),
             'rules' => [
-                'minimum_order_amount' => (double)$rules->order_amount,
-                'maximum_customer' => $voucher->max_customer,
-                'mobiles' => $rules->mobiles
+                'minimum_order_amount'  => (property_exists($rules, 'order_amount')) ? (double)$rules->order_amount : null,
+                'maximum_customer'      => (property_exists($voucher, 'max_customer')) ? $voucher->max_customer : null,
+                'mobiles'               => (property_exists($rules, 'mobiles')) ? $rules->mobiles : null,
+                'services'              => (property_exists($rules, 'partner_pos_service')) ? $rules->partner_pos_service : null
             ]
         ];
     }

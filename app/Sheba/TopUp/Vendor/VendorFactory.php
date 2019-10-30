@@ -43,6 +43,7 @@ class VendorFactory
      */
     public function getByName($name)
     {
+        $name = strtoupper($name);
         if (!in_array($name, array_keys($this->getConstants()))) {
             throw new Exception('Invalid Vendor');
         }
@@ -57,6 +58,7 @@ class VendorFactory
      */
     public function getIdByName($name)
     {
+        $name = strtoupper($name);
         if (!in_array($name, array_keys($this->getConstants()))) {
             throw new Exception('Invalid Vendor');
         }

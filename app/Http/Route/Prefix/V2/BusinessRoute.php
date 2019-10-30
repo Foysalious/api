@@ -5,6 +5,7 @@ class BusinessRoute
     public function set($api)
     {
         $api->post('business/login', 'B2b\LoginController@login');
+        $api->get('business/test-login', 'B2b\LoginController@generateDummyToken')->middleware('admin.auth');
         #$api->post('business/register', 'B2b\RegistrationController@register');
         $api->post('business/register', 'B2b\RegistrationController@registerV2');
         $api->group(['prefix' => 'businesses', 'middleware' => ['business.auth']], function ($api) {
@@ -20,7 +21,15 @@ class BusinessRoute
                         $api->get('/info', 'B2b\BusinessesController@getVendorInfo');
                     });
                 });
-
+                $api->group(['prefix' => 'subscription-orders'], function ($api) {
+                    $api->post('/', 'B2b\OrderController@placeSubscriptionOrder');
+                    $api->get('/', 'B2b\SubscriptionOrderController@index');
+                    $api->get('/{order}', 'B2b\SubscriptionOrderController@show');
+                    $api->get('/{order}/invoice', 'B2b\SubscriptionOrderController@orderInvoice');
+                    $api->group(['prefix' => '{subscription_order}'], function ($api) {
+                        $api->get('bills/clear', 'B2b\SubscriptionOrderController@clearPayment');
+                    });
+                });
                 $api->get('/vendors', 'B2b\BusinessesController@getVendorsList');
                 $api->get('/vendors/{vendor}/info', 'B2b\BusinessesController@getVendorInfo');
                 $api->get('/vendors/{vendor}/resource-info', 'B2b\BusinessesController@getVendorAdminInfo');
@@ -87,8 +96,29 @@ class BusinessRoute
                     $api->post('/', 'B2b\ProcurementController@store');
                     $api->group(['prefix' => '{procurement}'], function ($api) {
                         $api->post('invitations', 'B2b\ProcurementController@sendInvitation');
+                        $api->post('publish', 'B2b\ProcurementController@updateStatus');
+                        $api->post('general', 'B2b\ProcurementController@updateGeneral');
+                        $api->get('/bid-history', 'B2b\BidController@getBidHistory');
+                        $api->group(['prefix' => 'bids'], function ($api) {
+                            $api->get('/', 'B2b\BidController@index');
+                        });
                     });
                     $api->get('/', 'B2b\ProcurementController@index');
+                    $api->get('/{procurement}', 'B2b\ProcurementController@show');
+                });
+                $api->group(['prefix' => 'bids'], function ($api) {
+                    $api->group(['prefix' => '{bid}'], function ($api) {
+                        $api->get('/', 'B2b\BidController@show');
+                        $api->post('/', 'B2b\BidController@updateFavourite');
+                        $api->post('hire', 'B2b\BidController@sendHireRequest');
+                        $api->group(['prefix' => 'comments'], function ($api) {
+                            $api->post('/', 'CommentController@storeComments');
+                            $api->get('/', 'CommentController@getComments');
+                        });
+                        $api->group(['prefix' => 'attachments'], function ($api) {
+                            $api->post('/', 'AttachmentController@storeAttachment');
+                        });
+                    });
                 });
                 $api->group(['prefix' => 'purchase-requests'], function ($api) {
                     $api->get('/', 'B2b\PurchaseRequestController@index');
@@ -174,6 +204,7 @@ class BusinessRoute
                         $api->post('/experience-info', 'B2b\DriverController@updateDriverExperienceInfo');
                         $api->get('/documents', 'B2b\DriverController@getDriverDocuments');
                         $api->post('/documents', 'B2b\DriverController@updateDriverDocuments');
+                        $api->post('update-picture', 'B2b\DriverController@updatePicture');
                         $api->get('/recent-assignment', 'B2b\DriverController@getDriverRecentAssignment');
                     });
                 });

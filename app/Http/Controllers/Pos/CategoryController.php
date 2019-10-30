@@ -13,16 +13,38 @@ class CategoryController extends Controller
             $total_items = 0.00;
             $total_buying_price = 0.00;
 
+            $updated_after_clause = function ($q) use ($request) {
+                if($request->has('updated_after')) {
+                    $q->where('updated_at', '>=', $request->updated_after);
+                }
+            };
+
+            $service_where_query = function($service_query) use ($partner, $updated_after_clause, $request) {
+                $service_query->partner($partner->id);
+
+                if($request->has('updated_after')) {
+                    $service_query->where(function($service_where_group_query) use ($updated_after_clause) {
+                        $service_where_group_query->where($updated_after_clause)
+                            ->orWhereHas('discounts', function ($discounts_query) use ($updated_after_clause) {
+                                $discounts_query->where($updated_after_clause);
+                            });
+                    });
+                }
+            };
+
             $sub_categories = PosCategory::child()->published()
-                ->with(['services' => function ($service_query) use ($partner) {
-                    $service_query->partner($partner->id)
-                        ->with(['discounts' => function ($discounts_query) {
-                            $discounts_query->runningDiscounts()->select($this->getSelectColumnsOfServiceDiscount());
-                        }])
-                        ->select($this->getSelectColumnsOfService());
-                }])
-                ->select($this->getSelectColumnsOfCategory())
-                ->get();
+                ->whereHas('services', $service_where_query)
+                ->with(['services' => function ($service_query) use ($service_where_query, $updated_after_clause) {
+                    $service_query->where($service_where_query);
+
+                    $service_query->with(['discounts' => function ($discounts_query) use ($updated_after_clause) {
+                            $discounts_query->runningDiscounts()
+                                ->select($this->getSelectColumnsOfServiceDiscount());
+
+                            $discounts_query->where($updated_after_clause);
+                        }])->select($this->getSelectColumnsOfService());
+
+                }])->select($this->getSelectColumnsOfCategory())->get();
 
             if (!$sub_categories) return api_response($request, null, 404);
 
@@ -42,6 +64,7 @@ class CategoryController extends Controller
 
             return api_response($request, $sub_categories, 200, $data);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -72,7 +95,7 @@ class CategoryController extends Controller
     {
         return [
             'id', 'partner_id', 'pos_category_id', 'name', 'publication_status', 'is_published_for_shop',
-            'thumb', 'banner', 'app_thumb', 'app_banner', 'cost', 'price', 'vat_percentage', 'stock', 'unit', 'warranty', 'warranty_unit'
+            'thumb', 'banner', 'app_thumb', 'app_banner', 'cost', 'price', 'wholesale_price','vat_percentage', 'stock', 'unit', 'warranty', 'warranty_unit'
         ];
     }
 

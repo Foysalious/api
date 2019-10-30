@@ -61,5 +61,5 @@ abstract class PartnerSale
     /**
      * @return Collection
      */
-    protected abstract function calculate();
+    abstract protected function calculate();
 }

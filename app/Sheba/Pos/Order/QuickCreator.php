@@ -3,6 +3,8 @@
 use App\Models\PartnerPosSetting;
 use App\Models\PosOrder;
 use Sheba\Dal\Discount\InvalidDiscountType;
+use Sheba\ExpenseTracker\AutomaticIncomes;
+use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\Pos\Discount\DiscountTypes;
 use Sheba\Pos\Discount\Handler as DiscountHandler;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
@@ -65,8 +67,7 @@ class QuickCreator
         $service['service_name'] = $this->data['name'];
         $service['unit_price'] = $this->data['amount'];
         $service['quantity'] = self::QUICK_CREATE_DEFAULT_QUANTITY;
-        $service['vat_percentage'] = (isset($this->data['vat_percentage']) && $this->data['vat_percentage'] > 0) ?
-            (double)$this->data['vat_percentage'] : ($setting ? (double)$setting->vat_percentage : 0.00);
+        $service['vat_percentage'] = $this->isVatApplicable() ? (double)$this->data['vat_percentage'] : ($setting ? (double)$setting->vat_percentage : 0.00);
 
         $this->itemRepo->save($service);
 
@@ -77,6 +78,35 @@ class QuickCreator
             $this->paymentCreator->credit($payment_data);
         }
 
+        $this->storeIncome($order);
         return $order;
+    }
+
+    private function isVatApplicable()
+    {
+        if (isset($this->data['is_vat_applicable'])) {
+            return $this->data['is_vat_applicable'] ? (isset($this->data['vat_percentage']) && $this->data['vat_percentage'] > 0) : false;
+        }
+
+        return (isset($this->data['vat_percentage']) && $this->data['vat_percentage'] > 0);
+    }
+
+    /**
+     * @param PosOrder $order
+     */
+    private function storeIncome(PosOrder $order)
+    {
+        /** @var AutomaticEntryRepository $entry */
+        $entry = app(AutomaticEntryRepository::class);
+        $order = $order->calculate();
+        $amount = (double)$this->data['amount'];
+        $amount_cleared = (double)$this->data['paid_amount'];
+        $entry->setPartner($order->partner)
+            ->setAmount($amount)
+            ->setAmountCleared($amount_cleared)
+            ->setHead(AutomaticIncomes::POS)
+            ->setSourceType(class_basename($order))
+            ->setSourceId($order->id)
+            ->store();
     }
 }

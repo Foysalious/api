@@ -3,6 +3,9 @@
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Query\Builder;
+use Sheba\Comment\JobNotificationHandler;
+use Sheba\Comment\MorphCommentable;
+use Sheba\Comment\MorphComments;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Dal\Job\Events\JobSaved;
@@ -23,13 +26,14 @@ use Sheba\Logistics\OrderManager;
 use Sheba\Logistics\Repository\ParcelRepository;
 use Sheba\Order\Code\Builder as CodeBuilder;
 
-class Job extends BaseModel
+class Job extends BaseModel implements MorphCommentable
 {
+    use MorphComments;
+
     protected $guarded = ['id'];
     protected $materialPivotColumns = ['id', 'material_name', 'material_price', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
     protected $casts = ['sheba_contribution' => 'double', 'partner_contribution' => 'double', 'commission_rate' => 'double'];
-    protected $dates = ['delivered_date', /*'schedule_date',*/
-        'estimated_delivery_date', 'estimated_visiting_date'];
+    protected $dates = ['delivered_date', 'estimated_delivery_date', 'estimated_visiting_date'];
 
     public $servicePrice;
     public $serviceCost;
@@ -324,10 +328,11 @@ class Job extends BaseModel
         if (isset($this->otherDiscountsByType[DiscountTypes::DELIVERY]))
             $this->deliveryDiscount = $this->otherDiscountsByType[DiscountTypes::DELIVERY];
 
-        $this->grossLogisticCharge = ramp($this->logistic_charge - $this->deliveryDiscount);
+        $this->discountWithoutDeliveryDiscount = ramp($this->discount - $this->deliveryDiscount);
+
+        $this->grossLogisticCharge = ramp($this->logistic_charge - $this->logistic_discount);
         $this->logisticDueWithoutDiscount = $this->logistic_charge - $this->logistic_paid;
         $this->logisticDue = ramp($this->grossLogisticCharge - $this->logistic_paid);
-        $this->discountWithoutDeliveryDiscount = ramp($this->discount - $this->deliveryDiscount);
 
         if (!$price_only) {
             $this->calculateComplexityIndex();
@@ -942,7 +947,8 @@ class Job extends BaseModel
 
     public function isOnlinePaymentDiscountApplicable()
     {
-        return $this->created_at->copy()->addMinutes(config('sheba.online_payment_discount_threshold_minutes')) >= Carbon::now() && $this->online_discount == 0;
+        $discount_threshold_minutes = config('sheba.online_payment_discount_threshold_minutes');
+        return $discount_threshold_minutes ? $this->created_at->copy()->addMinutes($discount_threshold_minutes) >= Carbon::now() && $this->online_discount == 0 : 1;
     }
 
     public function isCapApplied()
@@ -1100,5 +1106,13 @@ class Job extends BaseModel
     public function isNotRated()
     {
         return !$this->review;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getNotificationHandlerClass()
+    {
+        return JobNotificationHandler::class;
     }
 }

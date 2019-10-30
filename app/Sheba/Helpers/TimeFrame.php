@@ -1,6 +1,7 @@
 <?php namespace Sheba\Helpers;
 
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class TimeFrame
 {
@@ -40,6 +41,17 @@ class TimeFrame
         return $this;
     }
 
+    public function forLastMonth(Carbon $date)
+    {
+        $month = $date->month - 1;
+        $year = $date->year;
+        if ($month <= 0) {
+            $month = 12;
+            $year -= $year;
+        }
+        return $this->forAMonth($month, $year);
+    }
+
     public function forADay(Carbon $date)
     {
         $this->start = $date->copy()->startOfDay();
@@ -77,7 +89,7 @@ class TimeFrame
 
     public function forLifeTime()
     {
-        $this->start = Carbon::parse(constants('STARTING_YEAR').'-01-01');
+        $this->start = Carbon::parse(constants('STARTING_YEAR') . '-01-01');
         $this->end = Carbon::now()->endOfYear();
         return $this;
     }
@@ -89,6 +101,29 @@ class TimeFrame
 
         $this->start = $date->copy()->startOfWeek();
         $this->end = $date->endOfWeek();
+        return $this;
+    }
+
+    public function forLastWeek(Carbon $date)
+    {
+        $date = $date->copy()->addDays(-7);
+        return $this->forAWeek($date);
+    }
+
+    public function forAQuarter(Carbon $date, $previous = false)
+    {
+        $year = $date->year;
+        $currentMonth = $date->month;
+        $quarter = (int)(ceil($currentMonth / 3));
+        if ($previous) $quarter -= 1;
+        if ($quarter <= 0) {
+            $year = $year - 1;
+            $quarter = 4;
+        }
+        $startMonth = (($quarter - 1) * 3) + 1;
+        $endMonth = $startMonth + 2;
+        $this->start = $date->copy()->month($startMonth)->year($year)->startOfMonth();
+        $this->end = $date->copy()->month($endMonth)->year($year)->endOfMonth();
         return $this;
     }
 
@@ -104,5 +139,33 @@ class TimeFrame
     public function hasDateBetween(Carbon $date)
     {
         return $date->between($this->start, $this->end);
+    }
+
+    /**
+     * @param Request $request
+     * @return TimeFrame
+     */
+    public function fromFrequencyRequest(Request $request)
+    {
+        $time_frame = null;
+        switch ($request->frequency) {
+            case "day":
+                $date = Carbon::parse($request->date);
+                $time_frame = $this->forADay($date);
+                break;
+            case "week":
+                $time_frame = $this->forSomeWeekFromNow($request->week);
+                break;
+            case "month":
+                $time_frame = $this->forAMonth($request->month, $request->year);
+                break;
+            case "year":
+                $time_frame = $this->forAYear($request->year);
+                break;
+            default:
+                echo "Invalid time frame";
+        }
+
+        return $time_frame;
     }
 }

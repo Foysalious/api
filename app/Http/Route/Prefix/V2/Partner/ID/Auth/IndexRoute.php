@@ -12,6 +12,17 @@ class IndexRoute
                     $api->get('/{order}', 'EShopOrderController@show');
                 });
             });
+            $api->group(['prefix' => 'bids'], function ($api) {
+                $api->group(['prefix' => '{bid}'], function ($api) {
+                    $api->group(['prefix' => 'comments'], function ($api) {
+                        $api->post('/', 'CommentController@storeComments');
+                        $api->get('/', 'CommentController@getComments');
+                    });
+                    $api->group(['prefix' => 'attachments'], function ($api) {
+                        $api->post('/', 'AttachmentController@storeAttachment');
+                    });
+                });
+            });
             $api->group(['prefix' => 'loans'], function ($api) {
                 $api->post('/', 'SpLoanController@store');
                 $api->get('/personal-info', 'SpLoanController@getPersonalInformation');
@@ -48,6 +59,7 @@ class IndexRoute
                     $api->post('/', 'Pos\ServiceController@store');
                     $api->group(['prefix' => '{service}'], function ($api) {
                         $api->get('/', 'Pos\ServiceController@show');
+                        $api->get('/logs', 'Pos\ServiceController@getLogs');
                         $api->post('/', 'Pos\ServiceController@update');
                         $api->delete('/', 'Pos\ServiceController@destroy');
                         $api->post('/toggle-publish-for-shop', 'Pos\ServiceController@togglePublishForShopStatus');
@@ -78,6 +90,10 @@ class IndexRoute
                 $api->resources(['customers' => 'Pos\CustomerController']);
                 $api->get('settings', 'Pos\SettingController@getSettings');
                 $api->post('due-payment-request-sms', 'Pos\SettingController@duePaymentRequestSms');
+                $api->group(['prefix' => 'reports'], function ($api) {
+                    $api->get('product-wise', 'Pos\ReportsController@product');
+                    $api->get('customer-wise', 'Pos\ReportsController@customer');
+                });
             });
             $api->group(['prefix' => 'categories'], function ($api) {
                 $api->get('/all', 'CategoryController@getPartnerLocationCategory');
@@ -111,6 +127,8 @@ class IndexRoute
                 $api->get('/', 'Partner\PartnerSubscriptionController@index');
                 $api->post('/', 'Partner\PartnerSubscriptionController@store');
                 $api->post('/upgrade', 'Partner\PartnerSubscriptionController@update');
+                $api->post('/purchase', 'Partner\PartnerSubscriptionController@purchase');
+                $api->post('/auto-billing-toggle', 'Partner\PartnerSubscriptionController@toggleAutoBillingActivation');
             });
             $api->group(['prefix' => 'customer-subscriptions'], function ($api) {
                 $api->get('order-lists', 'Partner\CustomerSubscriptionController@index');
@@ -213,10 +231,13 @@ class IndexRoute
                 $api->group(['prefix' => '{voucher}'], function ($api) {
                     $api->get('/', 'VoucherController@show');
                     $api->post('/', 'VoucherController@update');
-                    $api->post('/deactivate', 'VoucherController@deactivateVoucher');
+                    $api->post('activation-status-change', 'VoucherController@activationStatusChange');
                 });
             });
             $api->post('nid-validate', 'ShebaController@nidValidate');
+
+            (new IncomeExpenseRoute())->set($api);
+            (new BidRoute())->set($api);
         });
     }
 }

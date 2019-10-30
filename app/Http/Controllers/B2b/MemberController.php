@@ -127,7 +127,8 @@ class MemberController extends Controller
                 'nid_no' => $profile->nid_no,
                 'address' => $profile->address,
                 'business_id' => $business ? $business->id : null,
-                'remember_token' => $member->remember_token
+                'remember_token' => $member->remember_token,
+                'is_super' => $member->businessMember ? $member->businessMember->is_super : null,
             ];
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
@@ -238,9 +239,6 @@ class MemberController extends Controller
             $dept->save();
         }
     }
-
-    /*$model = "App\\Models\\" . $order['user_type'];
-    return $model::find($order['user_id'])->profile->name;*/
 
     private function tagRole(Business $business)
     {

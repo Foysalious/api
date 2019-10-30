@@ -14,8 +14,11 @@ use Carbon\Carbon;
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Checkout\Adapters\SubscriptionOrderAdapter;
 use Sheba\Checkout\PromotionCalculation;
 use Sheba\Checkout\Requests\PartnerListRequest;
+use Sheba\Checkout\Requests\SubscriptionOrderRequest;
+use Sheba\Checkout\SubscriptionOrderPlace;
 use Sheba\Location\Coords;
 use Sheba\ModificationFields;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
@@ -231,6 +234,50 @@ class OrderController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return response()->json(['data' => null, 'message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function placeSubscriptionOrder(Request $request, SubscriptionOrderRequest $subscriptionOrderRequest, SubscriptionOrderPlace $subscriptionOrder)
+    {
+        try {
+            $this->validate($request, [
+                'date' => 'required|string',
+                'time' => 'sometimes|required|string',
+                'services' => 'required|string',
+                'partner' => 'required|numeric',
+                'subscription_type' => 'required|string',
+                'additional_info' => 'string'
+            ]);
+            $business = $request->business;
+            $member = $request->manager_member;
+            $customer = $member->profile->customer;
+            $this->setModifier($customer);
+            if (!$customer) {
+                $customer = $this->createCustomerFromMember($member);
+                $member = Member::find($member->id);
+                $address = $this->createAddress($member, $business);
+            } else {
+                $geo = json_decode($business->geo_informations);
+                $coords = new Coords($geo->lat, $geo->lng);
+                $address = (new AddressValidator())->isAddressLocationExists($customer->delivery_addresses, $coords);
+                if (!$address) $address = $this->createAddress($member, $business);
+                if (!$address->mobile) $address->update(['mobile' => formatMobile($member->profile->mobile)]);
+            }
+            $subscriptionOrderRequest->setRequest($request)->setSalesChannel(constants('SALES_CHANNELS')['B2B']['name'])->setCustomer($customer)->setAddress($address)
+                ->setDeliveryMobile($address->mobile)
+                ->setDeliveryName($address->name)
+                ->setUser($business)
+                ->prepareObject();
+            $subscription_order = $subscriptionOrder->setSubscriptionRequest($subscriptionOrderRequest)->place();
+            $subscription_order = new SubscriptionOrderAdapter($subscription_order);
+            $order = $subscription_order->convertToOrder();
+            return api_response($request, $order, 200, ['order' => ['id' => $order->id]]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

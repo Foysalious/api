@@ -6,6 +6,7 @@ use Sheba\Dal\Customer\Events\CustomerSaved;
 use Sheba\MovieTicket\MovieAgent;
 use Sheba\MovieTicket\MovieTicketTrait;
 use Sheba\MovieTicket\MovieTicketTransaction;
+use Sheba\Payment\PayableUser;
 use Sheba\Payment\Wallet;
 use Sheba\Report\Updater\Customer as ReportUpdater;
 use Sheba\Reward\Rewardable;
@@ -18,7 +19,7 @@ use Sheba\Transport\TransportTicketTransaction;
 use Sheba\Voucher\Contracts\CanApplyVoucher;
 use Sheba\Voucher\VoucherCodeGenerator;
 
-class Customer extends Authenticatable implements Rechargable, Rewardable, TopUpAgent, MovieAgent, TransportAgent, CanApplyVoucher
+class Customer extends Authenticatable implements Rechargable, Rewardable, TopUpAgent, MovieAgent, TransportAgent, CanApplyVoucher, PayableUser
 {
     use TopUpTrait, MovieTicketTrait, Wallet, ReportUpdater;
 

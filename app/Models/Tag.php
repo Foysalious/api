@@ -21,6 +21,11 @@ class Tag extends Model
         return $this->morphedByMany(PartnerTransaction::class, 'taggable');
     }
 
+    public function procurements()
+    {
+        return $this->morphedByMany(Procurement::class, 'taggable');
+    }
+
     public function scopeOf($query, $taggable)
     {
         return $query->where('taggable_type', get_class($taggable))->get()->pluck('name', 'id');

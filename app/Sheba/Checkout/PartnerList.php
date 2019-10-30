@@ -22,6 +22,7 @@ use Sheba\Checkout\DeliveryCharge;
 use Sheba\Checkout\Partners\PartnerUnavailabilityReasons;
 use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Dal\Discount\DiscountTypes;
+use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\JobDiscount\JobDiscountCheckingParams;
 use Sheba\JobDiscount\JobDiscountHandler;
 use Sheba\Location\Coords;
@@ -31,6 +32,7 @@ use Illuminate\Foundation\Bus\DispatchesJobs;
 use Sheba\Checkout\PartnerSort;
 use Sheba\ModificationFields;
 use Sheba\RequestIdentification;
+use function request;
 
 class PartnerList
 {
@@ -79,7 +81,8 @@ class PartnerList
             'credit' => [],
             'order_limit' => [],
             'options' => [],
-            'handyman' => []
+            'handyman' => [],
+            'availability' => []
         ];
         $this->discountRepo = app(DiscountRepository::class);
         $this->jobDiscountHandler = app(JobDiscountHandler::class);
@@ -180,12 +183,15 @@ class PartnerList
         }])->select('partners.id', 'partners.current_impression', 'partners.geo_informations', 'partners.address', 'partners.name',
             'partners.sub_domain', 'partners.description', 'partners.logo', 'partners.wallet', 'partners.package_id', 'partners.badge',
             'partners.order_limit');
+
         if ($isNotLite) {
-            $query->where('package_id', '<>', config('sheba.partner_lite_packages_id'))->verified();
+            $query->whereNotIn('package_id', config('sheba.marketplace_not_accessible_packages_id'))->verified();
         }
+
         if ($this->partner) {
             $query = $query->where('partners.id', $this->partner->id);
         }
+
         return $query->get();
     }
 
@@ -271,7 +277,7 @@ class PartnerList
     {
         $this->partners->load(['workingHours', 'leaves']);
         $this->partners->each(function ($partner) {
-            if(!$this->isWithinPreparationTime($partner)) {
+            if (!$this->isWithinPreparationTime($partner)) {
                 $partner['is_available'] = 0;
                 $partner['unavailability_reason'] = PartnerUnavailabilityReasons::PREPARATION_TIME;
                 return;
@@ -280,7 +286,7 @@ class PartnerList
             $partner_available = new PartnerAvailable($partner);
             $partner_available->check($this->partnerListRequest->scheduleDate, $this->partnerListRequest->scheduleTime, $this->partnerListRequest->selectedCategory);
 
-            if(!$partner_available->getAvailability()) {
+            if (!$partner_available->getAvailability()) {
                 $partner['is_available'] = 0;
                 $partner['unavailability_reason'] = $partner_available->getUnavailabilityReason();
                 return;
@@ -303,7 +309,7 @@ class PartnerList
     }
 
     /**
-     * @throws \Sheba\Dal\Discount\InvalidDiscountType
+     * @throws InvalidDiscountType
      */
     public function addPricing()
     {
@@ -336,7 +342,7 @@ class PartnerList
     /**
      * @param $partner
      * @return array
-     * @throws \Sheba\Dal\Discount\InvalidDiscountType
+     * @throws InvalidDiscountType
      */
     protected function calculateServicePricingAndBreakdownOfPartner($partner)
     {
@@ -595,7 +601,7 @@ class PartnerList
         $event = new Event();
         $event->tag = 'no_partner_found';
         $event->value = $this->getNotFoundValues($is_out_of_service);
-        $event->fill((new RequestIdentification)->get());
+        $event->fill((new RequestIdentification())->get());
         $user_id = $this->getUserId();
         if ($event->portal_name == 'bondhu-app') {
             $event->created_by_type = "App\\Models\\Affiliate";
@@ -606,7 +612,7 @@ class PartnerList
         } elseif ($event->portal_name == 'customer-app' || $event->portal_name == 'customer-portal') {
             $event->created_by_type = "App\\Models\\Customer";
             if ($user_id) {
-                $event->created_by = \request()->header('User-Id');
+                $event->created_by = request()->header('User-Id');
                 $event->created_by_name = "Customer - " . (Customer::find($user_id))->profile->name;
             }
         }
@@ -693,4 +699,20 @@ class PartnerList
     {
         return $this->notFoundValues;
     }
+
+    public function filterPartnerByAvailability()
+    {
+        $this->partners = $this->partners->filter(function ($partner) {
+            return $partner->is_available == 1;
+        });
+        $this->notFoundValues['availability'] = $this->getPartnerIds();
+    }
+
+    public function removeShebaHelpDesk()
+    {
+        $this->partners = $this->partners->filter(function ($partner) {
+            return $partner->id != config('sheba.sheba_help_desk_id');
+        });
+    }
+
 }
