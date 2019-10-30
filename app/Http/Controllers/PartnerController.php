@@ -1238,17 +1238,15 @@ class PartnerController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function getWalletBalance(Request $request){
-        try{
-            $partner = $request->partner;
-            $wallet_balance = $partner->wallet;
-            return api_response($request, $partner, 200, ['wallet_balance' => $wallet_balance]);
-
-        }catch (\Throwable $e) {
+    public function getWalletBalance(Request $request)
+    {
+        try {
+            $wallet_balance = $request->partner->wallet;
+            return api_response($request, null, 200, ['wallet_balance' => $wallet_balance]);
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
-
     }
 }
 
