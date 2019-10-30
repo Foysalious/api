@@ -103,7 +103,5 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(BidItemFieldRepositoryInterface::class, BidItemFieldRepository::class);
         $this->app->bind(BidRepositoryInterface::class, BidRepository::class);
         $this->app->bind(RfqOrderRepositoryInterface::class, RfqOrderRepository::class);
-        $this->app->bind(ProcurementPaymentRequestRepositoryInterface::class, ProcurementPaymentRequestRepository::class);
-        $this->app->bind(ProcurementPaymentRequestStatusChangeLogRepositoryInterface::class, ProcurementPaymentRequestStatusChangeLogRepository::class);
     }
 }

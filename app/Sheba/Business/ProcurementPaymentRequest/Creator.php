@@ -3,8 +3,7 @@
 use App\Models\Bid;
 use App\Models\Procurement;
 use Illuminate\Database\QueryException;
-use Sheba\Repositories\Business\ProcurementPaymentRequestRepository;
-use Sheba\Dal\BidStatusChangeLog\BidStatusChangeLogRepositoryInterface;
+use Sheba\Dal\ProcurementPaymentRequest\ProcurementPaymentRequestRepositoryInterface;
 
 class Creator
 {
@@ -12,12 +11,11 @@ class Creator
     private $procurement;
     private $bid;
     private $amount;
-    private $note;
     private $shortDescription;
     private $data;
 
 
-    public function __construct(ProcurementPaymentRequestRepository $procurement_payment_request_repository)
+    public function __construct(ProcurementPaymentRequestRepositoryInterface $procurement_payment_request_repository)
     {
         $this->procurementPaymentRequestRepository = $procurement_payment_request_repository;
         $this->data = [];

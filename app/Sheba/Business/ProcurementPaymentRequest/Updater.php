@@ -2,7 +2,7 @@
 
 use Illuminate\Database\QueryException;
 use Sheba\Dal\ProcurementPaymentRequest\Model as ProcurementPaymentRequest;
-use Sheba\Repositories\Business\ProcurementPaymentRequestRepository;
+use Sheba\Dal\ProcurementPaymentRequest\ProcurementPaymentRequestRepositoryInterface;
 use Sheba\Business\ProcurementPaymentStatusChangeLog\Creator;
 use App\Models\Procurement;
 use App\Models\Bid;
@@ -19,7 +19,7 @@ class Updater
     private $data;
 
 
-    public function __construct(ProcurementPaymentRequestRepository $procurement_payment_request_repository, Creator $creator)
+    public function __construct(ProcurementPaymentRequestRepositoryInterface $procurement_payment_request_repository, Creator $creator)
     {
         $this->procurementPaymentRequestRepository = $procurement_payment_request_repository;
         $this->statusLogCreator = $creator;

@@ -1,7 +1,7 @@
 <?php namespace Sheba\Business\ProcurementPaymentStatusChangeLog;
 
 use Sheba\Dal\ProcurementPaymentRequest\Model as ProcurementPaymentRequest;
-use Sheba\Repositories\Business\ProcurementPaymentRequestStatusChangeLogRepository;
+use Sheba\Dal\ProcurementPaymentRequestStatusChangeLog\ProcurementPaymentRequestStatusChangeLogRepositoryInterface;
 
 class Creator
 {
@@ -11,7 +11,7 @@ class Creator
     private $paymentRequest;
     private $status;
 
-    public function __construct(ProcurementPaymentRequestStatusChangeLogRepository $payment_status_change_log_repo)
+    public function __construct(ProcurementPaymentRequestStatusChangeLogRepositoryInterface $payment_status_change_log_repo)
     {
         $this->paymentStatusChangeLogRepo = $payment_status_change_log_repo;
         $this->data = [];

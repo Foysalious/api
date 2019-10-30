@@ -3,6 +3,7 @@
 
 use App\Models\Bid;
 use App\Models\Procurement;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Validation\ValidationException;
@@ -18,29 +19,24 @@ class ProcurementPaymentRequestController extends Controller
         try {
             $this->validate($request, [
                 'amount' => 'required|numeric',
-                #'note' => 'sometimes|string',
-                'short_description' => 'required|string',
-                #'status' => 'sometimes|string',
+                'short_description' => 'required|string'
             ]);
             $this->setModifier($request->manager_member);
             $creator->setProcurement($procurement)->setBid($bid);
             $procurement = $creator->getProcurement();
+            $bid = $creator->getBid();
 
-            if (!$procurement) {
-                return api_response($request, null, 404, ["message" => "Procurement Not found."]);
+            if (!$procurement || !$bid) {
+                return api_response($request, null, 404, ["message" => "Procurement or Bid Not found."]);
             } else {
-                /** @var Bid $bid */
-                $bid = $creator->getBid();
-                if (!$bid) {
-                    return api_response($request, null, 404, ["message" => "Bid Not found."]);
-                } else {
-                    $creator = $creator->setAmount($request->amount)
-                        ->setShortDescription($request->short_description);
-                    $payment_request = $creator->paymentRequestCreate();
-                    return api_response($request, $payment_request, 200, ['id' => $payment_request->id]);
-                }
+                $creator = $creator->setAmount($request->amount)
+                    ->setShortDescription($request->short_description);
+                $payment_request = $creator->paymentRequestCreate();
+                return api_response($request, $payment_request, 200, ['id' => $payment_request->id]);
             }
 
+        } catch (ModelNotFoundException $e) {
+            return api_response($request, null, 404, ["message" => "Procurement or Bid Not found."]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
