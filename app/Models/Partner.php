@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Sheba\Business\Bid\Bidder;
 use Sheba\Dal\Complain\Model as Complain;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
+use Sheba\FraudDetection\TransactionSources;
 use Sheba\HasWallet;
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
@@ -23,13 +24,15 @@ use Sheba\Subscription\Partner\PartnerSubscriber;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
+use Sheba\Transactions\Wallet\HasWalletTransaction;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Sheba\Transport\Bus\BusTicketCommission;
 use Sheba\Transport\TransportAgent;
 use Sheba\Transport\TransportTicketTransaction;
 use Sheba\Voucher\Contracts\CanApplyVoucher;
 use Sheba\Voucher\VoucherCodeGenerator;
 
-class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent, Rechargable, Bidder
+class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent, Rechargable, Bidder, HasWalletTransaction
 {
     use Wallet, TopUpTrait, MovieTicketTrait;
 
@@ -507,8 +510,11 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
 
     public function topUpTransaction(TopUpTransaction $transaction)
     {
-        $this->debitWallet($transaction->getAmount());
-        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
+        /*
+         * WALLET TRANSACTION NEED TO REMOVE
+         * $this->debitWallet($transaction->getAmount());
+        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);*/
+        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::TOP_UP)->setType('debit')->setLog($transaction->getLog())->dispatch();
     }
 
     public function notCancelledJobs()
@@ -687,7 +693,9 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
 
     public function transportTicketTransaction(TransportTicketTransaction $transaction)
     {
-        $this->creditWallet($transaction->getAmount());
+       /*
+        * WALLET TRANSACTION NEED TO REMOVE
+        * $this->creditWallet($transaction->getAmount());
         $wallet_transaction = [
             'amount' => $transaction->getAmount(),
             'type' => 'Credit',
@@ -696,7 +704,8 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
             'created_by' => $this->id,
             'created_by_name' => $this->name
         ];
-        $this->walletTransaction($wallet_transaction);
+        $this->walletTransaction($wallet_transaction);*/
+        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::TRANSPORT)->setType('credit')->setLog($transaction->getLog())->dispatch();
     }
 
     public function transportTicketOrders()
@@ -706,7 +715,9 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
 
     public function movieTicketTransaction(MovieTicketTransaction $transaction)
     {
-        $this->debitWallet($transaction->getAmount());
+       /*
+        * WALLET TRANSACTION NEED TO REMOVE
+        * $this->debitWallet($transaction->getAmount());
         $wallet_transaction = [
             'amount' => $transaction->getAmount(),
             'type' => 'Debit',
@@ -715,13 +726,17 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
             'created_by' => $this->id,
             'created_by_name' => $this->name
         ];
-        $this->walletTransaction($wallet_transaction);
+        $this->walletTransaction($wallet_transaction);*/
+        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::MOVIE)->setType('debit')->setLog($transaction->getLog())->dispatch();
     }
 
     public function movieTicketTransactionNew(MovieTicketTransaction $transaction)
     {
-        $this->creditWallet($transaction->getAmount());
-        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Credit', 'log' => $transaction->getLog()]);
+        /*
+         * WALLET TRANSACTION NEED TO REMOVE
+         * $this->creditWallet($transaction->getAmount());
+        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Credit', 'log' => $transaction->getLog()]);*/
+        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::MOVIE)->setType('credit')->setLog($transaction->getLog())->dispatch();
     }
 
 

@@ -3,16 +3,14 @@
 use App\Models\Partner;
 use App\Models\PartnerOrder;
 use App\Models\Payment;
-
 use App\Repositories\PaymentRepository;
-use Carbon\Carbon;
-
+use DB;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-
+use Sheba\FraudDetection\TransactionSources;
 use Sheba\Payment\ShebaPayment;
-use DB;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class PartnerWalletController extends Controller
 {
@@ -77,14 +75,20 @@ class PartnerWalletController extends Controller
                 $transaction = '';
                 DB::transaction(function () use ($payment, $user, $partner_credit, &$transaction) {
                     $partner_order = PartnerOrder::find($payment->payable->type_id);
-                    $user->debitWallet($payment->payable->amount);
-                    $transaction = $user->walletTransaction([
-                        'amount' => $payment->payable->amount,
-                        'type' => 'Debit',
-                        'log' => "Service Purchase (ORDER ID: {$partner_order->code()})",
-                        'partner_order_id' => $partner_order->id,
-                        'created_at' => Carbon::now()
-                    ]);
+                    /*
+                     * WALLET TRANSACTION NEED TO REMOVE
+                     *  $user->debitWallet($payment->payable->amount);
+                     $transaction = $user->walletTransaction([
+                         'amount' => $payment->payable->amount,
+                         'type' => 'Debit',
+                         'log' => "Service Purchase (ORDER ID: {$partner_order->code()})",
+                         'partner_order_id' => $partner_order->id,
+                         'created_at' => Carbon::now()
+                     ]);*/
+                    $transaction=(new WalletTransactionHandler())->setModel($user)->setLog("Service Purchase (ORDER ID: {$partner_order->code()})")
+                        ->setSource(TransactionSources::SERVICE_PURCHASE)->setType('debit')->setAmount($payment->payable->amount)->store(
+                            ['partner_order_id'=>$partner_order->id]
+                        );
                 });
                 $paymentRepository->changeStatus(['to' => 'validated', 'from' => $payment->status, 'transaction_details' => $payment->transaction_details]);
                 $payment->status = 'validated';
