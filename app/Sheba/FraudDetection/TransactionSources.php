@@ -18,4 +18,5 @@ class TransactionSources
     const BANK = 'bank';
     const SMS = 'sms';
     const SHEBA_WALLET = 'sheba_wallet';
+    const BONUS = 'bonus';
 }
