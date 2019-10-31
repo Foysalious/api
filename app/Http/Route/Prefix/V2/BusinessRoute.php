@@ -94,6 +94,7 @@ class BusinessRoute
                 });
                 $api->group(['prefix' => 'procurements'], function ($api) {
                     $api->post('/', 'B2b\ProcurementController@store');
+                    $api->get('/orders', 'B2b\RfqOrderController@index');
                     $api->group(['prefix' => '{procurement}'], function ($api) {
                         $api->post('invitations', 'B2b\ProcurementController@sendInvitation');
                         $api->post('publish', 'B2b\ProcurementController@updateStatus');
