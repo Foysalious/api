@@ -87,4 +87,16 @@ class Updater
             'status' => $this->status
         ];
     }
+
+    public function updateStatus()
+    {
+        try {
+            $previous_status = $this->paymentRequest->status;
+            $payment_request = $this->procurementPaymentRequestRepository->update($this->paymentRequest, ['status' => $this->status]);
+            $this->statusLogCreator->setPaymentRequest($this->paymentRequest)->setPreviousStatus($previous_status)->setStatus($this->status)->create();
+        } catch (QueryException $e) {
+            throw  $e;
+        }
+        return $payment_request;
+    }
 }

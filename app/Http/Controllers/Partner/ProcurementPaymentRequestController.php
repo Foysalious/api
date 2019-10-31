@@ -4,6 +4,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Sheba\Business\ProcurementPaymentRequest\Creator;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
+use Sheba\Business\ProcurementPaymentRequest\Updater;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 
@@ -52,4 +53,29 @@ class ProcurementPaymentRequestController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function updateStatus($partner, $procurement, $bid, $payment_request, Request $request, Updater $updater)
+    {
+        try {
+            $this->validate($request, [
+                'status' => 'required|string'
+            ]);
+            $this->setModifier($request->manager_resource);
+            $updater->setProcurement($procurement)->setBid($bid)->setPaymentRequest($payment_request)->setStatus($request->status);
+            $updater->updateStatus();
+            return api_response($request, null, 200);
+        } catch (ModelNotFoundException $e) {
+            return api_response($request, null, 404, ["message" => "Model Not found."]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
 }
