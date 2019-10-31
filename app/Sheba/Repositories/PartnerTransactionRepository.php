@@ -3,6 +3,8 @@
 use App\Models\Partner;
 use App\Models\PartnerTransaction;
 use Carbon\Carbon;
+use Sheba\FraudDetection\TransactionSources;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class PartnerTransactionRepository
 {
@@ -24,11 +26,28 @@ class PartnerTransactionRepository
         $transaction = null;
         if ($data['amount'] > 0) {
             $data['created_at'] = Carbon::now();
-            $transaction = $this->partner->transactions()->save(new PartnerTransaction($data));
-            (new PartnerRepository(new Partner()))->updateWallet($this->partner, $data['amount'], $data['type']);
+            /*
+             * WALLET TRANSACTION NEED TO REMOVE
+             *  $transaction = $this->partner->transactions()->save(new PartnerTransaction($data));
+             (new PartnerRepository(new Partner()))->updateWallet($this->partner, $data['amount'], $data['type']);*/
+            $transaction = (new WalletTransactionHandler())->setModel($this->partner)->setSource(TransactionSources::SERVICE_PURCHASE)
+                ->setType(strtolower($data['type']))->setAmount($data['amount'])->setLog($data['log']);
+            if (isset($data['transaction_details'])) {
+                $transaction = $transaction->setTransactionDetails($data['transaction_details']);
+            }
+            $transaction = $transaction->store($this->setExtras($data));
             if (is_array($tags) && !empty($tags[0])) $transaction->tags()->sync($tags);
         }
         return $transaction;
+    }
+
+    private function setExtras($data)
+    {
+        unset($data['amount']);
+        unset($data['log']);
+        unset($data['type']);
+        if (isset($data['transaction_details'])) unset($data['transaction_details']);
+        return $data;
     }
 
     public function hasSameDetails($details)
