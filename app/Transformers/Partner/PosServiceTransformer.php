@@ -1,11 +1,9 @@
 <?php namespace App\Transformers\Partner;
 
-
 use League\Fractal\TransformerAbstract;
 
 class PosServiceTransformer extends TransformerAbstract
 {
-
     public function transform($pos_service)
     {
         return [
@@ -21,5 +19,4 @@ class PosServiceTransformer extends TransformerAbstract
             'category_id' => $pos_service->pos_category_id
         ];
     }
-
 }

@@ -15,16 +15,24 @@ use App\Repositories\LocationRepository;
 use App\Sheba\Bondhu\AffiliateHistory;
 use App\Sheba\Bondhu\AffiliateStatus;
 use App\Sheba\Bondhu\TopUpEarning;
+use App\Transformers\Affiliate\ProfileDetailTransformer;
+use App\Transformers\CustomSerializer;
+use App\Transformers\PosOrderTransformer;
 use Carbon\Carbon;
 use DB;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
+use League\Fractal\Resource\Item;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
 use Sheba\Reports\ExcelHandler;
 use Sheba\Transactions\InvalidTransaction;
 use Sheba\Transactions\Registrar;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
+use Throwable;
 use Validator;
 
 class AffiliateController extends Controller
@@ -74,7 +82,7 @@ class AffiliateController extends Controller
             }
 
             return $affiliate->update() ? response()->json(['code' => 200]) : response()->json(['code' => 404]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -87,7 +95,7 @@ class AffiliateController extends Controller
                 ->select('verification_status', 'is_suspended', 'ambassador_code', 'is_ambassador', 'is_moderator')
                 ->first();
             return $affiliate != null ? response()->json(['code' => 200, 'affiliate' => $affiliate]) : response()->json(['code' => 404, 'msg' => 'Not found!']);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -106,7 +114,7 @@ class AffiliateController extends Controller
                 'last_updated' => Carbon::parse($affiliate->updated_at)->format('dS F,g:i A')
             ];
             return api_response($request, $info, 200, ['info' => $info]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -127,7 +135,7 @@ class AffiliateController extends Controller
             $filename = $profile->id . '_profile_image_' . Carbon::now()->timestamp . '.' . $photo->extension();
             $profile->pro_pic = $this->fileRepository->uploadToCDN($filename, $request->file('photo'), 'images/profiles/');
             return $profile->update() ? response()->json(['code' => 200, 'picture' => $profile->pro_pic]) : response()->json(['code' => 404]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -183,7 +191,7 @@ class AffiliateController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -217,7 +225,7 @@ class AffiliateController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -289,7 +297,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id]));
                 return api_response($request, $agents, 200, $response);
             }
             return api_response($request, null, 404);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -360,7 +368,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id]));
                 array_forget($profile, 'pro_pic');
                 return api_response($request, $profile, 200, ['info' => $profile]);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -394,7 +402,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id]));
                 array_push($final, $info);
             }
             return count($final) != 0 ? api_response($request, $final, 200, ['affiliates' => $final]) : api_response($request, null, 404);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -439,7 +447,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id]));
             $info->put('total_refer', Affiliation::totalRefer($affiliate->id)->count());
             $info->put('sp_count', $partner_affiliation_count + $lite_affiliation_count);
             return api_response($request, $info, 200, ['info' => $info->all()]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -494,7 +502,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             $gift_amount += count($lite_refers) > 0 ? $lite_refers[0]->total_gifted_amount : 0;
             $info->put('life_time_gift', $gift_amount);
             return api_response($request, $info, 200, $info->all());
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -516,7 +524,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -537,7 +545,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -560,7 +568,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         } catch (InvalidTransaction $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 400, ['message' => $e->getMessage()]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -638,7 +646,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
                     ];
                 });
             return api_response($request, $services, 200, ['services' => $services]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -742,7 +750,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             }
 
             return response()->json(['code' => 200, 'data' => $topup_data, 'total_topups' => $total_topups, 'offset' => $offset]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -764,7 +772,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -786,65 +794,27 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
-    public function profileDetails($affiliate, Request $request) {
+    /**
+     * @param $affiliate
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function profileDetails($affiliate, Request $request)
+    {
         try {
-            $affiliate = Affiliate::where('id', $affiliate)->first();
-
-            $profile = $affiliate->profile;
-            $data = [
-                'personal_info' => [
-                    'name' => $profile->name,
-                    'bn_name' => $profile->bn_name,
-                    'profile_image' => $profile->pro_pic,
-                    'remember_token' => $profile->remember_token,
-                    'nid_no' => $profile->nid_no,
-                    'date_of_birth' => $profile->dob,
-                    'father_name' => $profile->father_name,
-                    'mother_name' => $profile->mother_name,
-                    'blood_group' => $profile->blood_group,
-                    'present_address' => $profile->address,
-                    'permanent_address' => $profile->permanent_address,
-                    'post_office' => $profile->post_office,
-                    'post_code' => $profile->post_code,
-                ],
-                'financial_info' => [
-                    'general_bank'=> [
-                        [
-                            'bank_name' => 'bank_name',
-                            'account_no' => 'account_no',
-                            'branch_name' => 'branch_name',
-                        ],
-                        [
-                            'bank_name' => 'bank_name',
-                            'account_no' => 'account_no',
-                            'branch_name' => 'branch_name',
-                        ],
-                    ],
-                    'mobile_bank' => [
-                        [
-                            'mobile_bank' => 'bank_name',
-                            'mobile_no' => 'account_no'
-                        ],
-                        [
-                            'mobile_bank' => 'bank_name',
-                            'mobile_no' => 'account_no'
-                        ],
-                    ],
-                ],
-
-                'voter_id_card' => [
-                    'front_image' => 'pic_1',
-                    'back_image' => 'pic_2'
-                ]
-            ];
-            return $affiliate != null ? response()->json(['code' => 200, 'data' => $data]) : response()->json(['code' => 404, 'msg' => 'Not found!']);
-        } catch (\Throwable $e) {
+            $affiliate = $request->affiliate;
+            $manager = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+            $resource = new Item($affiliate->profile, new ProfileDetailTransformer());
+            $details = $manager->createData($resource)->toArray()['data'];
+            return api_response($request, null, 200, ['data' => $details]);
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -894,7 +864,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

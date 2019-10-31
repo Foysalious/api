@@ -92,4 +92,14 @@ class Profile extends Model
         }
         return $this->email;
     }
+
+    public function banks()
+    {
+        return $this->hasMany(ProfileBankInformation::class);
+    }
+
+    public function mobileBanks()
+    {
+        return $this->hasMany(ProfileMobileBankInformation::class);
+    }
 }
