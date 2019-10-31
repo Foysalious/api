@@ -13,6 +13,7 @@ class Creator
     private $amount;
     private $shortDescription;
     private $paymentRequest;
+    private $allPaymentRequest;
     private $data;
 
 
@@ -62,6 +63,25 @@ class Creator
     {
         $this->paymentRequest = $this->procurementPaymentRequestRepository->find((int)$payment_request);
         return $this;
+    }
+
+    public function getAll()
+    {
+        $this->allPaymentRequest = $this->procurementPaymentRequestRepository->getAll();
+        $payment_request = [];
+        foreach ($this->allPaymentRequest as $payment) {
+            array_push($payment_request, [
+                'id' => $payment->id,
+                'procurement_id' => $payment->procurement_id,
+                'bid_id' => $payment->bid_id,
+                'amount' => $payment->amount,
+                'status' => $payment->status,
+                'color' => constants('PROCUREMENT_PAYMENT_STATUS')[$payment->status],
+                'note' => $payment->note,
+                'created_at' => $payment->created_at->format('d/m/y')
+            ]);
+        }
+        return $payment_request;
     }
 
     public function paymentRequestCreate()

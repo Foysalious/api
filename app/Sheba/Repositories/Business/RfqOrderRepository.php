@@ -31,6 +31,7 @@ class RfqOrderRepository extends BaseRepository implements RfqOrderRepositoryInt
         $order_details = [
             'procurement_id' => $this->procurement->id,
             'procurement_title' => $this->procurement->title,
+            'procurement_status' => $this->procurement->status,
             'procurement_start_date' => Carbon::parse($this->procurement->procurement_start_date)->format('d/m/y'),
             'procurement_end_date' => Carbon::parse($this->procurement->procurement_end_date)->format('d/m/y'),
             'procurement_type' => $this->procurement->type,
@@ -38,7 +39,9 @@ class RfqOrderRepository extends BaseRepository implements RfqOrderRepositoryInt
             'vendor' => [
                 'name' => $this->bid->bidder->name,
                 'logo' => $this->bid->bidder->logo,
+                'contract_person' => $this->bid->bidder->getContactPerson(),
                 'mobile' => $this->bid->bidder->getMobile(),
+                'address' => $this->bid->bidder->address,
                 'rating' => round($this->bid->bidder->reviews->avg('rating'), 2),
                 'total_rating' => $this->bid->bidder->reviews->count()
             ],
