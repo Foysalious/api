@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Sheba\Business\ProcurementPaymentRequest\Updater;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
@@ -19,21 +20,12 @@ class ProcurementPaymentRequestController extends Controller
             ]);
             $this->setModifier($request->manager_member);
             $updater->setProcurement($procurement)->setBid($bid);
-            $procurement = $updater->getProcurement();
-            if (!$procurement) {
-                return api_response($request, null, 404, ["message" => "Procurement Not found."]);
-            } else {
-                $bid = $updater->getBid();
-                if (!$bid) {
-                    return api_response($request, null, 404, ["message" => "Bid Not found."]);
-                } else {
-                    $updater = $updater->setPaymentRequest($payment_request)->setNote($request->note)
-                        ->setStatus($request->status);
-                    $payment_request = $updater->paymentRequestUpdate();
-                    return api_response($request, $payment_request, 200);
-                }
-            }
-
+            $updater = $updater->setPaymentRequest($payment_request)->setNote($request->note)
+                ->setStatus($request->status);
+            $payment_request = $updater->paymentRequestUpdate();
+            return api_response($request, $payment_request, 200);
+        } catch (ModelNotFoundException $e) {
+            return api_response($request, null, 404, ["message" => "Model Not found."]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
@@ -41,7 +33,6 @@ class ProcurementPaymentRequestController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
