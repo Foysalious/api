@@ -35,7 +35,6 @@ class Updater
     public function getProcurement()
     {
         return $this->procurement;
-
     }
 
     public function setBid($bid)
@@ -58,7 +57,7 @@ class Updater
 
     public function setPaymentRequest($payment_request)
     {
-        $this->paymentRequest = ProcurementPaymentRequest::findOrFail((int)$payment_request);;
+        $this->paymentRequest = $this->procurementPaymentRequestRepository->find((int)$payment_request);
         return $this;
     }
 

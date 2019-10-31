@@ -105,6 +105,7 @@ class BusinessRoute
                                 $api->get('/', 'B2b\RfqOrderController@show');
                                 $api->group(['prefix' => 'payment-requests'], function ($api) {
                                     $api->post('/{request}', 'B2b\ProcurementPaymentRequestController@updatePaymentRequest');
+                                    $api->get('/{request}', 'B2b\ProcurementPaymentRequestController@show');
                                 });
                             });
                         });

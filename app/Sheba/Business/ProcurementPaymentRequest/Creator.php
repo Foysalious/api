@@ -12,6 +12,7 @@ class Creator
     private $bid;
     private $amount;
     private $shortDescription;
+    private $paymentRequest;
     private $data;
 
 
@@ -57,6 +58,12 @@ class Creator
         return $this;
     }
 
+    public function setPaymentRequest($payment_request)
+    {
+        $this->paymentRequest = $this->procurementPaymentRequestRepository->find((int)$payment_request);
+        return $this;
+    }
+
     public function paymentRequestCreate()
     {
         $this->makePaymentRequestData();
@@ -71,10 +78,23 @@ class Creator
     public function makePaymentRequestData()
     {
         $this->data = [
-            'procurement_id'=> $this->bid->id,
-            'bid_id'=> $this->procurement->id,
+            'procurement_id' => $this->procurement->id,
+            'bid_id' => $this->bid->id,
             'amount' => (double)$this->amount,
             'short_description' => $this->shortDescription
+        ];
+    }
+
+    public function getPaymentRequestData()
+    {
+        return [
+            'id' => $this->paymentRequest->id,
+            'procurement_id' => $this->paymentRequest->procurement_id,
+            'bid_id' => $this->paymentRequest->bid_id,
+            'amount' => (double)$this->paymentRequest->amount,
+            'short_description' => $this->paymentRequest->short_description,
+            'note' => $this->paymentRequest->note,
+            'created_at' => $this->paymentRequest->created_at->format('d/m/y'),
         ];
     }
 }
