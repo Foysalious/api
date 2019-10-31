@@ -797,7 +797,6 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             $affiliate = Affiliate::where('id', $affiliate)->first();
 
             $profile = $affiliate->profile;
-            dd($profile->);
             $data = [
                 'personal_info' => [
                     'name' => $profile->name,
