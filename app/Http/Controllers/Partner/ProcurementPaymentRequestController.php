@@ -19,7 +19,7 @@ class ProcurementPaymentRequestController extends Controller
                 'amount' => 'required|numeric',
                 'short_description' => 'required|string'
             ]);
-            $this->setModifier($request->manager_member);
+            $this->setModifier($request->manager_resource);
             $creator->setProcurement($procurement)->setBid($bid);
             $creator = $creator->setAmount($request->amount)
                 ->setShortDescription($request->short_description);
