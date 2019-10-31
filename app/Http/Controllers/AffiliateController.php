@@ -277,7 +277,7 @@ WHERE
 GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id]));
 
             $agents->map(function ($agent) {
-                $agent->total_gifted_amount = (double) $agent->total_gifted_amount;
+                $agent->total_gifted_amount = (double)$agent->total_gifted_amount;
             });
 
             $agents = $this->filterAgents($q, $agents);
@@ -429,20 +429,20 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id]));
                     ', [$affiliate->id]
             );
 
-            $lite_total_amount = count($lite_affiliation_total_amount) > 0 ? ( $lite_affiliation_total_amount[0]->total_amount ?: 0 ):0;
+            $lite_total_amount = count($lite_affiliation_total_amount) > 0 ? ($lite_affiliation_total_amount[0]->total_amount ?: 0) : 0;
             $request->filter_type = 'lifetime';
             $topup_earning = $top_up_earning->setType('affiliate')->getFormattedDate($request)->getAgentsData($affiliate)['earning_amount'];
             $total_amount = $partner_affiliation_amount + $lite_total_amount + $topup_earning;
 
             $partner_affiliation_count = PartnerAffiliation::spCount($affiliate->id)->count();
-            $lite_affiliation_count_query = DB::select('select count(*) as count from partners where affiliate_id in (select id from affiliates where ambassador_id = ?)',[$affiliate->id]);
-            $lite_affiliation_count = $lite_affiliation_count_query[0]->count ?:0;
+            $lite_affiliation_count_query = DB::select('select count(*) as count from partners where affiliate_id in (select id from affiliates where ambassador_id = ?)', [$affiliate->id]);
+            $lite_affiliation_count = $lite_affiliation_count_query[0]->count ?: 0;
 
             $info = collect();
             $info->put('agent_count', $affiliate->agents->count());
             $info->put('earning_amount', $affiliate->agents->sum('total_gifted_amount') + (double)$total_amount);
             $info->put('total_refer', Affiliation::totalRefer($affiliate->id)->count());
-            $info->put('sp_count',$partner_affiliation_count + $lite_affiliation_count );
+            $info->put('sp_count', $partner_affiliation_count + $lite_affiliation_count);
             return api_response($request, $info, 200, ['info' => $info->all()]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -491,7 +491,7 @@ WHERE
 GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
 
             $lite_refers->map(function ($agent) {
-                $agent->total_gifted_amount = (double) $agent->total_gifted_amount;
+                $agent->total_gifted_amount = (double)$agent->total_gifted_amount;
             });
 
             $gift_amount = $agent ? $agent->total_gifted_amount : 0;
@@ -788,6 +788,65 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function profileDetails($affiliate, Request $request) {
+        try {
+            $affiliate = Affiliate::where('id', $affiliate)->first();
+
+            $profile = $affiliate->profile;
+            dd($profile->);
+            $data = [
+                'personal_info' => [
+                    'name' => $profile->name,
+                    'bn_name' => $profile->bn_name,
+                    'profile_image' => $profile->pro_pic,
+                    'remember_token' => $profile->remember_token,
+                    'nid_no' => $profile->nid_no,
+                    'date_of_birth' => $profile->dob,
+                    'father_name' => $profile->father_name,
+                    'mother_name' => $profile->mother_name,
+                    'blood_group' => $profile->blood_group,
+                    'present_address' => $profile->address,
+                    'permanent_address' => $profile->permanent_address,
+                    'post_office' => $profile->post_office,
+                    'post_code' => $profile->post_code,
+                ],
+                'financial_info' => [
+                    'general_bank'=> [
+                        [
+                            'bank_name' => 'bank_name',
+                            'account_no' => 'account_no',
+                            'branch_name' => 'branch_name',
+                        ],
+                        [
+                            'bank_name' => 'bank_name',
+                            'account_no' => 'account_no',
+                            'branch_name' => 'branch_name',
+                        ],
+                    ],
+                    'mobile_bank' => [
+                        [
+                            'mobile_bank' => 'bank_name',
+                            'mobile_no' => 'account_no'
+                        ],
+                        [
+                            'mobile_bank' => 'bank_name',
+                            'mobile_no' => 'account_no'
+                        ],
+                    ],
+                ],
+
+                'voter_id_card' => [
+                    'front_image' => 'pic_1',
+                    'back_image' => 'pic_2'
+                ]
+            ];
+            return $affiliate != null ? response()->json(['code' => 200, 'data' => $data]) : response()->json(['code' => 404, 'msg' => 'Not found!']);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
