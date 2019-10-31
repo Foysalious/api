@@ -3,7 +3,7 @@
 use App\Models\Bid;
 use App\Models\Procurement;
 use Illuminate\Database\QueryException;
-use Sheba\Repositories\Business\ProcurementPaymentRequestRepository;
+use Sheba\Dal\ProcurementPaymentRequest\ProcurementPaymentRequestRepositoryInterface;
 
 class Creator
 {
@@ -11,12 +11,12 @@ class Creator
     private $procurement;
     private $bid;
     private $amount;
-    private $note;
     private $shortDescription;
+    private $paymentRequest;
     private $data;
 
 
-    public function __construct(ProcurementPaymentRequestRepository $procurement_payment_request_repository)
+    public function __construct(ProcurementPaymentRequestRepositoryInterface $procurement_payment_request_repository)
     {
         $this->procurementPaymentRequestRepository = $procurement_payment_request_repository;
         $this->data = [];
@@ -58,6 +58,12 @@ class Creator
         return $this;
     }
 
+    public function setPaymentRequest($payment_request)
+    {
+        $this->paymentRequest = $this->procurementPaymentRequestRepository->find((int)$payment_request);
+        return $this;
+    }
+
     public function paymentRequestCreate()
     {
         $this->makePaymentRequestData();
@@ -72,10 +78,23 @@ class Creator
     public function makePaymentRequestData()
     {
         $this->data = [
-            'procurement_id'=> $this->bid->id,
-            'bid_id'=> $this->procurement->id,
+            'procurement_id' => $this->procurement->id,
+            'bid_id' => $this->bid->id,
             'amount' => (double)$this->amount,
             'short_description' => $this->shortDescription
+        ];
+    }
+
+    public function getPaymentRequestData()
+    {
+        return [
+            'id' => $this->paymentRequest->id,
+            'procurement_id' => $this->paymentRequest->procurement_id,
+            'bid_id' => $this->paymentRequest->bid_id,
+            'amount' => (double)$this->paymentRequest->amount,
+            'short_description' => $this->paymentRequest->short_description,
+            'note' => $this->paymentRequest->note,
+            'created_at' => $this->paymentRequest->created_at->format('d/m/y'),
         ];
     }
 }

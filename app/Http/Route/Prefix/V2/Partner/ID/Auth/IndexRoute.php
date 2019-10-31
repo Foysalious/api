@@ -31,7 +31,11 @@ class IndexRoute
                     $api->group(['prefix' => 'bids'], function ($api) {
                         $api->group(['prefix' => '{bid}'], function ($api) {
                             $api->get('/', 'Partner\RfqOrderController@show');
-                            $api->post('/payment-requests', 'Partner\ProcurementPaymentRequestController@paymentRequest');
+                            $api->group(['prefix' => 'payment-requests'], function ($api) {
+                                $api->post('/', 'Partner\ProcurementPaymentRequestController@paymentRequest');
+                                $api->post('/{request}/status', 'Partner\ProcurementPaymentRequestController@updateStatus');
+                                $api->get('/{request}', 'Partner\ProcurementPaymentRequestController@show');
+                            });
                         });
                     });
                 });
