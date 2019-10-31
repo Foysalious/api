@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Middleware;
+<?php namespace App\Http\Middleware;
 
 use App\Models\Affiliate;
 use App\Models\Customer;
@@ -9,6 +7,7 @@ use App\Models\Resource;
 use App\Repositories\ProfileRepository;
 use Closure;
 use ErrorException;
+use Illuminate\Http\Request;
 
 class ProfileAuthMiddleware
 {
@@ -22,8 +21,8 @@ class ProfileAuthMiddleware
     /**
      * Handle an incoming request.
      *
-     * @param \Illuminate\Http\Request $request
-     * @param \Closure $next
+     * @param Request $request
+     * @param Closure $next
      * @return mixed
      */
     public function handle($request, Closure $next)
@@ -41,8 +40,9 @@ class ProfileAuthMiddleware
                 } elseif ($from == 'user') {
                     $avatar = Profile::where('remember_token', $request->input('remember_token'))->first();
                 }
+
                 if ($avatar != null) {
-                    if ($avatar->id == $request->id ||( $from == 'resource' && $avatar->firstPartner()->id == $request->id)) {
+                    if ($avatar->id == $request->id || ($from == 'resource' && $avatar->firstPartner()->id == $request->id)) {
                         $request->merge(['profile' => $from != 'user' ? $avatar->profile : $avatar]);
                         return $next($request);
                     } else {

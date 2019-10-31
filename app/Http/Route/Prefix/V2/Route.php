@@ -174,6 +174,7 @@ class Route
             $api->get('get-profile-info', 'ProfileController@getProfile');
             $api->get('get-profile-info-by-mobile', 'ProfileController@getProfileInfoByMobile');
             $api->post('profile/{id}/update-profile-document', 'ProfileController@updateProfileDocument')->middleware('profile.auth');
+            $api->post('profile-update/by/{id}', 'ProfileController@update')->middleware('profile.auth');
             $api->get('{id}/get-jwt', 'ProfileController@getJWT')->middleware('profile.auth');
             $api->get('{id}/refresh-token', 'ProfileController@refresh');
             $api->post('admin/payout', 'Bkash\\BkashPayoutController@pay');

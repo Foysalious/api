@@ -37,7 +37,11 @@ return [
         'pending' => 'pending',
         'approved' => 'approved',
         'rejected' => 'rejected',
-        'need_approval' => 'need_approval'
+        'need_approval' => 'need_approval',
+        'accepted' => 'accepted',
+        'started' => 'started',
+        'served' => 'served',
+        'cancelled' => 'cancelled'
     ],
     'PROCUREMENT_ITEM_FIELD' => [
         'text' => 'text',

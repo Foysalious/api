@@ -2,7 +2,10 @@
 
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
+use Sheba\FraudDetection\TransactionSources;
 use Sheba\TopUp\Vendor\VendorFactory;
+use Sheba\Transactions\Wallet\HasWalletTransaction;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 trait TopUpTrait
 {
@@ -24,14 +27,31 @@ trait TopUpTrait
 
     public function refund($amount, $log)
     {
-        $this->creditWallet($amount);
-        $this->walletTransaction(['amount' => $amount, 'type' => 'Credit', 'log' => $log]);
+        /*
+         * WALLET TRANSACTION NEED TO REMOVE
+         * $this->creditWallet($amount);
+        $this->walletTransaction(['amount' => $amount, 'type' => 'Credit', 'log' => $log]);*/
+        /** @var HasWalletTransaction $model */
+        $model=$this;
+        (new WalletTransactionHandler())
+            ->setModel($model)
+            ->setAmount($amount)
+            ->setSource(TransactionSources::TOP_UP)
+            ->setType('credit')
+            ->setLog($log)
+            ->dispatch();
     }
 
     public function deductFromAmbassador($amount, $log)
     {
-        $this->debitWallet($amount);
-        $this->walletTransaction(['amount' => $amount, 'type' => 'Debit', 'log' => $log]);
+        /*
+         * WALLET TRANSACTION NEED TO REMOVE
+         * $this->debitWallet($amount);
+        $this->walletTransaction(['amount' => $amount, 'type' => 'Debit', 'log' => $log]);*/
+        /** @var HasWalletTransaction $model */
+        $model=$this;
+        (new WalletTransactionHandler())->setModel($model)->setSource(TransactionSources::TOP_UP)->setType('debit')
+            ->setAmount($amount)->setLog($log)->dispatch();
     }
 
     public function calculateCommission($amount, TopUpVendor $topup_vendor)

@@ -3,15 +3,12 @@
 use App\Models\Affiliate;
 use App\Models\AffiliateTransaction;
 use App\Models\Affiliation;
+use App\Models\Partner;
 use App\Models\PartnerAffiliation;
 use App\Models\PartnerTransaction;
+use App\Models\Profile;
 use App\Models\Resource;
 use App\Models\Service;
-use App\Models\Customer;
-use App\Models\Partner;
-use App\Models\Profile;
-use App\Models\TopUpOrder;
-use App\Models\TopUpVendor;
 use App\Repositories\AffiliateRepository;
 use App\Repositories\FileRepository;
 use App\Repositories\LocationRepository;
@@ -19,18 +16,16 @@ use App\Sheba\Bondhu\AffiliateHistory;
 use App\Sheba\Bondhu\AffiliateStatus;
 use App\Sheba\Bondhu\TopUpEarning;
 use Carbon\Carbon;
+use DB;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Maatwebsite\Excel\Excel;
+use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
-use Sheba\PartnerPayment\PartnerPaymentValidatorFactory;
 use Sheba\Reports\ExcelHandler;
-use Sheba\TopUp\Jobs\TopUpJob;
 use Sheba\Transactions\InvalidTransaction;
 use Sheba\Transactions\Registrar;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Validator;
-use DB;
-use Illuminate\Support\Facades\Redis;
 
 class AffiliateController extends Controller
 {
@@ -581,16 +576,19 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
     {
         $data = $this->makeRechargeData($transaction);
         $amount = $transaction['amount'];
-        DB::transaction(function () use ($amount, $affiliate, $data) {
+        /*
+         * WALLET TRANSACTION NEED TO REMOVE
+         * DB::transaction(function () use ($amount, $affiliate, $data) {
             $affiliate->rechargeWallet($amount, $data);
-        });
+        });*/
+        (new WalletTransactionHandler())->setModel($affiliate)->setSource(TransactionSources::BKASH)->setTransactionDetails($data['transaction_details'])->setType('credit')->setAmount($amount)->setLog($data['log'])->dispatch();
     }
 
     private function makeRechargeData($transaction)
     {
         return [
             'amount' => $transaction['amount'],
-            'transaction_details' => json_encode(
+            'transaction_details' =>
                 [
                     'name' => 'Bkash',
                     'details' => [
@@ -599,7 +597,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
                         'details' => $transaction['details']
                     ]
                 ]
-            ),
+            ,
             'type' => 'Credit',
             'log' => 'Moneybag Refilled'
         ];

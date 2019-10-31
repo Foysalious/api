@@ -35,7 +35,13 @@ class RfqOrderRepository extends BaseRepository implements RfqOrderRepositoryInt
             'procurement_end_date' => Carbon::parse($this->procurement->procurement_end_date)->format('d/m/y'),
             'procurement_type' => $this->procurement->type,
             'procurement_additional_info' => $this->procurement->long_description,
-
+            'vendor' => [
+                'name' => $this->bid->bidder->name,
+                'logo' => $this->bid->bidder->logo,
+                'mobile' => $this->bid->bidder->getMobile(),
+                'rating' => round($this->bid->bidder->reviews->avg('rating'), 2),
+                'total_rating' => $this->bid->bidder->reviews->count()
+            ],
             'bid_id' => $this->bid->id,
             'bid_price' => $this->bid->price,#Total Proposed Price
             'bid_price_quotations' => $bid_price_quotations
@@ -47,14 +53,14 @@ class RfqOrderRepository extends BaseRepository implements RfqOrderRepositoryInt
     {
         $item_type = $this->bid->items->where('type', 'price_quotation')->first();
         $item_fields = [];
-        foreach ($item_type->fields as $field){
+        foreach ($item_type->fields as $field) {
             $unit = $field->variables ? json_decode($field->variables)->unit ? json_decode($field->variables)->unit : 0 : 0;
-            array_push( $item_fields,[
+            array_push($item_fields, [
                 'id' => $field->id,
                 'title' => $field->title,
                 'short_description' => $field->short_description,
                 'unit' => $unit,
-                'unit_price' => number_format($field->result/$unit, 2),
+                'unit_price' => number_format($field->result / $unit, 2),
                 'total_price' => $field->result,
             ]);
         }

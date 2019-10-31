@@ -338,6 +338,24 @@ if (!function_exists('getPartnerPackageFolder')) {
     }
 }
 
+if (!function_exists('getEmiBankIconsFolder')) {
+
+    /**
+     * Get Partner Logo Folder.
+     *
+     * @param bool $with_base_url
+     * @return string
+     */
+    function getEmiBankIconsFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url)
+            $url = env('S3_URL');
+
+        return $url . 'images/emi_bank_icon/';
+    }
+}
+
 if (!function_exists('getPartnerDefaultLogo')) {
 
     /**

@@ -6,6 +6,7 @@ class IndexRoute
     {
         $api->group(['prefix' => '{partner}', 'middleware' => ['manager.auth']], function ($api) {
             $api->get('dashboard', 'Partner\DashboardController@get');
+            $api->get('wallet-balance', 'PartnerController@getWalletBalance');
             $api->group(['prefix' => 'e-shop'], function ($api) {
                 $api->group(['prefix' => 'order'], function ($api) {
                     $api->get('/', 'EShopOrderController@index');
@@ -30,6 +31,11 @@ class IndexRoute
                     $api->group(['prefix' => 'bids'], function ($api) {
                         $api->group(['prefix' => '{bid}'], function ($api) {
                             $api->get('/', 'Partner\RfqOrderController@show');
+                            $api->group(['prefix' => 'payment-requests'], function ($api) {
+                                $api->post('/', 'Partner\ProcurementPaymentRequestController@paymentRequest');
+                                $api->post('/{request}/status', 'Partner\ProcurementPaymentRequestController@updateStatus');
+                                $api->get('/{request}', 'Partner\ProcurementPaymentRequestController@show');
+                            });
                         });
                     });
                 });

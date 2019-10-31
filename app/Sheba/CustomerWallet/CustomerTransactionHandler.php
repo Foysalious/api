@@ -1,7 +1,7 @@
 <?php namespace Sheba\CustomerWallet;
 
 use App\Models\Customer;
-use App\Models\PartnerOrder;
+use Sheba\FraudDetection\TransactionSources;
 use Sheba\Repositories\CustomerTransactionRepository;
 
 class CustomerTransactionHandler
@@ -23,7 +23,16 @@ class CustomerTransactionHandler
     {
         $data = $this->formatData($amount, $log);
         $data['type'] = 'Credit';
+        $data['source'] = TransactionSources::BONUS;
         $this->customerTransactionRepo->save($data, $tags);
+    }
+
+    private function formatData($amount, $log)
+    {
+        return [
+            'amount' => $amount,
+            'log' => $log
+        ];
     }
 
     /**
@@ -37,13 +46,5 @@ class CustomerTransactionHandler
         $data = $this->formatData($amount, $log);
         $data['type'] = 'Debit';
         $this->customerTransactionRepo->save($data, $tags);
-    }
-
-    private function formatData($amount, $log)
-    {
-        return [
-            'amount' => $amount,
-            'log' => $log
-        ];
     }
 }

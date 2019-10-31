@@ -4,6 +4,8 @@ use App\Models\Profile;
 use App\Repositories\FileRepository;
 use App\Repositories\ProfileRepository;
 use Carbon\Carbon;
+use Exception;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use JWTAuth;
@@ -11,6 +13,7 @@ use JWTFactory;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\Repositories\ProfileRepository as ShebaProfileRepository;
 use Sheba\Sms\Sms;
+use Throwable;
 use Validator;
 
 class ProfileController extends Controller
@@ -126,10 +129,36 @@ class ProfileController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->errors());
             return api_response($request, null, 401, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500, ['message' => $e->getMessage(), 'trace' => $e->getTrace()]);
         }
+    }
+
+    /**
+     * @param Request $request
+     * @param ShebaProfileRepository $repository
+     * @return JsonResponse
+     */
+    public function update(Request $request, ShebaProfileRepository $repository)
+    {
+        try {
+            $this->validate($request, [
+                'gender' => 'required|string|in:male,female,other',
+            ]);
+            $data = [
+                'gender' => $request->gender
+            ];
+            $repository->update($request->profile, $data);
+            return api_response($request, null, 200, ['message' => 'Profile Updated']);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->errors());
+            return api_response($request, null, 401, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500, ['message' => $e->getMessage(), 'trace' => $e->getTrace()]);
+        }
+
     }
 
     public function forgetPassword(Request $request, Sms $sms)
@@ -146,7 +175,7 @@ class ProfileController extends Controller
             return api_response($request, true, 200, ['message' => 'Your password is sent to your mobile number. Please use that password to login']);
         } catch (ValidationException $e) {
             return api_response($request, null, 401, ['message' => 'Invalid mobile number']);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -161,7 +190,7 @@ class ProfileController extends Controller
             return api_response($request, true, 200, ['message' => 'Profile found', 'profile' => $profile]);
         } catch (ValidationException $e) {
             return api_response($request, null, 401, ['message' => 'Invalid mobile number']);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -173,7 +202,7 @@ class ProfileController extends Controller
         try {
             $token = $this->generateUtilityToken($request->profile);
             return api_response($request, $token, 200, ['token' => $token]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return api_response($request, null, 500, ['message' => $e->getMessage()]);
         }
     }
@@ -187,7 +216,7 @@ class ProfileController extends Controller
 
         try {
             $token = JWTAuth::refresh($token);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return api_response($request, null, 403, ['message' => $e->getMessage()]);
         }
 

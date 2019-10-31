@@ -36,4 +36,9 @@ class Procurement extends Model
     {
         return $this->morphTo();
     }
+
+    public function scopeOrder($query)
+    {
+        return $query->whereIn('status', ['accepted', 'started', 'served', 'cancelled']);
+    }
 }

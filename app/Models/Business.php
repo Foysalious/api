@@ -1,15 +1,17 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
 use Sheba\Payment\PayableUser;
 use Sheba\Payment\Wallet;
 use Sheba\TopUp\TopUpAgent;
-use Sheba\TopUp\TopUpCommission;
 use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
+use Sheba\Transactions\Wallet\HasWalletTransaction;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
-class Business extends Model implements TopUpAgent, PayableUser
+class Business extends Model implements TopUpAgent, PayableUser, HasWalletTransaction
 {
     use Wallet, ModificationFields, TopUpTrait;
 
@@ -18,11 +20,6 @@ class Business extends Model implements TopUpAgent, PayableUser
     public function members()
     {
         return $this->belongsToMany(Member::class)->withTimestamps();
-    }
-
-    public function superAdmins()
-    {
-        return $this->belongsToMany(Member::class)->where('is_super', 1);
     }
 
     public function businessSms()
@@ -55,11 +52,6 @@ class Business extends Model implements TopUpAgent, PayableUser
         return $this->belongsTo(BusinessCategory::class);
     }
 
-    public function bonuses()
-    {
-        return $this->morphMany(Bonus::class, 'user');
-    }
-
     public function businessTrips()
     {
         return $this->hasMany(BusinessTrip::class);
@@ -88,6 +80,11 @@ class Business extends Model implements TopUpAgent, PayableUser
     public function shebaBonusCredit()
     {
         return (double)$this->bonuses()->where('status', 'valid')->sum('amount');
+    }
+
+    public function bonuses()
+    {
+        return $this->morphMany(Bonus::class, 'user');
     }
 
     public function transactions()
@@ -127,8 +124,12 @@ class Business extends Model implements TopUpAgent, PayableUser
 
     public function topUpTransaction(TopUpTransaction $transaction)
     {
-        $this->debitWallet($transaction->getAmount());
-        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);
+        /*
+         * WALLET TRANSACTION NEED TO REMOVE
+         * $this->debitWallet($transaction->getAmount());
+        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);*/
+        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setType('debit')->setLog($transaction->getLog())
+            ->setSource(TransactionSources::TOP_UP)->dispatch();
     }
 
     public function getMobile()
@@ -136,15 +137,21 @@ class Business extends Model implements TopUpAgent, PayableUser
         return '+8801678242934';
     }
 
+    public function getContactPerson()
+    {
+        if ($super_admin = $this->getAdmin()) return $super_admin->profile->name;
+        return null;
+    }
+
     public function getAdmin()
     {
         if ($super_admin = $this->superAdmins()->first()) return $super_admin;
         return null;
     }
-    public function getContactPerson()
+
+    public function superAdmins()
     {
-        if ($super_admin = $this->getAdmin()) return $super_admin->profile->name;
-        return null;
+        return $this->belongsToMany(Member::class)->where('is_super', 1);
     }
 
     public function attachments()

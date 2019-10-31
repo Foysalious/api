@@ -653,5 +653,11 @@ return [
         'checkbox' => 'checkbox',
         'number' => 'number',
         'select' => 'select'
+    ],
+    'PROCUREMENT_ORDER_STATUSES_COLOR' => [
+        'accepted' => '#FF8219',
+        'started' => '#7950F2',
+        'served' => '#12B886',
+        'cancelled' => '#B3B7CC'
     ]
 ];
