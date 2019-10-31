@@ -33,6 +33,7 @@ class IndexRoute
                             $api->get('/', 'Partner\RfqOrderController@show');
                             $api->group(['prefix' => 'payment-requests'], function ($api) {
                                 $api->post('/', 'Partner\ProcurementPaymentRequestController@paymentRequest');
+                                $api->get('/', 'Partner\ProcurementPaymentRequestController@index');
                                 $api->post('/{request}/status', 'Partner\ProcurementPaymentRequestController@updateStatus');
                                 $api->get('/{request}', 'Partner\ProcurementPaymentRequestController@show');
                             });

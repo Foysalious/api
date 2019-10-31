@@ -12,6 +12,20 @@ class ProcurementPaymentRequestController extends Controller
 {
     use ModificationFields;
 
+    public function index($partner, $procurement, $bid, Request $request, Creator $creator)
+    {
+        try {
+            $creator->setProcurement($procurement)->setBid($bid);
+            $payment_request_list = $creator->getAll();
+            return api_response($request, $payment_request_list, 200, ['payment_request_list' => $payment_request_list]);
+        } catch (ModelNotFoundException $e) {
+            return api_response($request, null, 404, ["message" => "Model Not found."]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     public function paymentRequest($partner, $procurement, $bid, Request $request, Creator $creator)
     {
         try {
