@@ -26,9 +26,11 @@ use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
+use Sheba\Bondhu\Statuses;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
 use Sheba\Reports\ExcelHandler;
+use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Sheba\Transactions\InvalidTransaction;
 use Sheba\Transactions\Registrar;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
@@ -301,6 +303,28 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id]));
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    /**
+     * @param $affiliate
+     * @param Request $request
+     * @return bool
+     */
+    public function checkUpdateParamsOnVerifiedStatus($affiliate, Request $request)
+    {
+        $restricted_keys = ['name', 'bn_name', 'dob', 'nid_no'];
+        $msg = null;
+        $access_denied = $affiliate->verification_status == Statuses::VERIFIED && !empty(array_intersect($restricted_keys, array_keys($request->all())));
+        if ($access_denied) {
+            $denied_field = [];
+            if ($request->has('name')) array_push($denied_field, 'Name');
+            if ($request->has('bn_name')) array_push($denied_field, 'Bangla Name');
+            if ($request->has('dob')) array_push($denied_field, 'Date Of Birth');
+            if ($request->has('nid_no')) array_push($denied_field, 'nid no');
+            $msg = implode(', ', $denied_field) . ' field not changeable on verified status';
+        }
+
+        return [$access_denied, $msg];
     }
 
     private function mapAgents($query)
@@ -809,11 +833,44 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
     {
         try {
             $affiliate = $request->affiliate;
+            $is_verified = $affiliate->verification_status;
+            $manager = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+            $resource = new Item($affiliate->profile, new ProfileDetailTransformer());
+            $details = $manager->createData($resource)->toArray()['data'];
+            $details['is_verified'] = $is_verified;
+            return api_response($request, null, 200, ['data' => $details]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function updatePersonalInformation($affiliate, Request $request, ProfileRepositoryInterface $profile_repo)
+    {
+        try {
+            $affiliate = $request->affiliate;
+            list($is_access_denied, $msg) = $this->checkUpdateParamsOnVerifiedStatus($affiliate, $request);
+            if ($is_access_denied) return api_response($request, null, 403, ['msg' => $msg]);
+
+            $this->validate($request, [
+                'dob' => 'date',
+            ]);
+
+            $this->setModifier($affiliate);
+            $profile_repo->update($affiliate->profile, $request->all());
+
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
             $resource = new Item($affiliate->profile, new ProfileDetailTransformer());
             $details = $manager->createData($resource)->toArray()['data'];
             return api_response($request, null, 200, ['data' => $details]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

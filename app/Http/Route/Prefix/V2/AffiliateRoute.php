@@ -35,6 +35,7 @@ class AffiliateRoute
             $api->post('moderate/{partner_id}/reject', 'Affiliate\\LitePartnerOnBoardingController@rejectRequest');
             $api->post('refer', 'Auth\PartnerRegistrationController@registerReferAffiliate');
             $api->get('profile-details', 'AffiliateController@profileDetails');
+            $api->post('personal-information', 'AffiliateController@updatePersonalInformation');
             $api->group(['prefix' => 'movie-ticket'], function ($api) {
                 $api->get('movie-list', 'MovieTicketController@getAvailableTickets');
                 $api->get('theatre-list', 'MovieTicketController@getAvailableTheatres');

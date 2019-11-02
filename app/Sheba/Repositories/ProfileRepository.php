@@ -141,6 +141,33 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
         if (isset($data['nid_no'])) {
             $profile_data['nid_no'] = $data['nid_no'];
         }
+        if (isset($data['dob'])) {
+            $profile_data['dob'] = $data['dob'];
+        }
+        if (isset($data['bn_name'])) {
+            $profile_data['bn_name'] = $data['bn_name'];
+        }
+        if (isset($data['father_name'])) {
+            $profile_data['father_name'] = $data['father_name'];
+        }
+        if (isset($data['mother_name'])) {
+            $profile_data['mother_name'] = $data['mother_name'];
+        }
+        if (isset($data['post_code'])) {
+            $profile_data['post_code'] = $data['post_code'];
+        }
+        if (isset($data['post_office'])) {
+            $profile_data['post_office'] = $data['post_office'];
+        }
+        if (isset($data['address'])) {
+            $profile_data['address'] = $data['address'];
+        }
+        if (isset($data['permanent_address'])) {
+            $profile_data['permanent_address'] = $data['permanent_address'];
+        }
+        if (isset($data['blood_group'])) {
+            $profile_data['blood_group'] = $data['blood_group'];
+        }
 
         return $profile_data;
     }

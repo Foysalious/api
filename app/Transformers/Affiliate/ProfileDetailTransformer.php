@@ -22,7 +22,8 @@ class ProfileDetailTransformer extends TransformerAbstract
             'present_address' => $profile->address,
             'permanent_address' => $profile->permanent_address,
             'post_office' => $profile->post_office,
-            'post_code' => $profile->post_code
+            'post_code' => $profile->post_code,
+            'gender' => $profile->gender
         ];
         $national_id_card = [
             'front_image' => $profile->nid_image_front,
