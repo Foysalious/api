@@ -199,7 +199,7 @@ class AvailableMethods
         return [
             'name' => 'bKash',
             'is_published' => 1,
-            'description' => 'Get 10% discount',
+            'description' => '',
             'asset' => 'bkash',
             'method_name' => 'bkash'
         ];
