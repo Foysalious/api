@@ -7,6 +7,7 @@ use App\Models\Partner;
 use App\Models\PartnerAffiliation;
 use App\Models\PartnerTransaction;
 use App\Models\Profile;
+use App\Models\ProfileBankInformation;
 use App\Models\Resource;
 use App\Models\Service;
 use App\Repositories\AffiliateRepository;
@@ -17,6 +18,8 @@ use App\Sheba\BankingInfo\MobileBanking;
 use App\Sheba\Bondhu\AffiliateHistory;
 use App\Sheba\Bondhu\AffiliateStatus;
 use App\Sheba\Bondhu\TopUpEarning;
+use App\Transformers\Affiliate\BankDetailTransformer;
+use App\Transformers\Affiliate\ProfileDetailPersonalInfoTransformer;
 use App\Transformers\Affiliate\ProfileDetailTransformer;
 use App\Transformers\CustomSerializer;
 use App\Transformers\PosOrderTransformer;
@@ -864,7 +867,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
 
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($affiliate->profile, new ProfileDetailTransformer());
+            $resource = new Item($affiliate->profile, new ProfileDetailPersonalInfoTransformer());
             $details = $manager->createData($resource)->toArray()['data'];
             return api_response($request, null, 200, ['data' => $details]);
         } catch (ValidationException $e) {
@@ -892,14 +895,40 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             $data = $request->except('affiliate', 'remember_token');
             $data['profile_id'] = $request->affiliate->profile_id;
             $bank_details = $profile_bank_repo->create($data);
+            $manager = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+            $resource = new Item($bank_details, new BankDetailTransformer());
 
-            return api_response($request, null, 200, ['data' => $bank_details]);
+            $details = $manager->createData($resource)->toArray()['data'];
+
+            return api_response($request, null, 200, ['data' => $details]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function updateBankInformation($affiliate, ProfileBankInformation $profile_bank_information, Request $request, ProfileBankingRepositoryInterface $profile_bank_repo)
+    {
+        try {
+            $affiliate = $request->affiliate;
+            $this->setModifier($affiliate);
+            $data = $request->except('affiliate', 'remember_token');
+            $bank_details = $profile_bank_repo->update($profile_bank_information, $data);
+
+            $manager = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+            $resource = new Item($bank_details, new BankDetailTransformer());
+
+            $details = $manager->createData($resource)->toArray()['data'];
+
+            return api_response($request, null, 200, ['data' => $details]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

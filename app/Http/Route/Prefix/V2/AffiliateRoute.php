@@ -37,6 +37,7 @@ class AffiliateRoute
             $api->get('profile-details', 'AffiliateController@profileDetails');
             $api->post('personal-information', 'AffiliateController@updatePersonalInformation');
             $api->post('bank-information', 'AffiliateController@storeBankInformation');
+            $api->post('bank-information/{profile_bank_information}', 'AffiliateController@updateBankInformation');
             $api->group(['prefix' => 'movie-ticket'], function ($api) {
                 $api->get('movie-list', 'MovieTicketController@getAvailableTickets');
                 $api->get('theatre-list', 'MovieTicketController@getAvailableTheatres');
