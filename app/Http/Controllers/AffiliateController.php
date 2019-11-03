@@ -971,13 +971,13 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         }
     }
 
-    public function updateMobileBankInformation($affiliate, ProfileMobileBankInformation $profile_mobile_bank_info, Request $request, ProfileBankingRepositoryInterface $profile_bank_repo)
+    public function updateMobileBankInformation($affiliate, ProfileMobileBankInformation $profile_mobile_bank_info, Request $request, ProfileMobileBankingRepositoryInterface $profile_mobile_bank_repo)
     {
         try {
             $affiliate = $request->affiliate;
             $this->setModifier($affiliate);
             $data = $request->except('affiliate', 'remember_token');
-            $mobile_bank_details = $profile_bank_repo->update($profile_mobile_bank_info, $data);
+            $mobile_bank_details = $profile_mobile_bank_repo->update($profile_mobile_bank_info, $data);
 
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
@@ -986,6 +986,34 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             $details = $manager->createData($resource)->toArray()['data'];
 
             return api_response($request, null, 200, ['data' => $details]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function deleteBankInformation($affiliate, $bank_info_id, Request $request, ProfileBankingRepositoryInterface $profile_bank_repo)
+    {
+        try {
+            $affiliate = $request->affiliate;
+            $this->setModifier($affiliate);
+            $profile_bank_repo->delete($bank_info_id);
+
+            return api_response($request, null, 200, ['msg' => 'deleted bank information']);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function deleteMobileBankInformation($affiliate, $mobile_bank_info_id, Request $request, ProfileMobileBankingRepositoryInterface $profile_mobile_bank_repo)
+    {
+        try {
+            $affiliate = $request->affiliate;
+            $this->setModifier($affiliate);
+            $profile_mobile_bank_repo->delete($mobile_bank_info_id);
+
+            return api_response($request, null, 200, ['msg' => 'deleted bank information']);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

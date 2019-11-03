@@ -39,6 +39,8 @@ class AffiliateRoute
             $api->post('bank-information', 'AffiliateController@storeBankInformation');
             $api->post('mobile-bank-information', 'AffiliateController@storeMobileBankInformation');
             $api->post('bank-information/{profile_bank_information}', 'AffiliateController@updateBankInformation');
+            $api->delete('bank-info/{profile_bank_information}', 'AffiliateController@deleteBankInformation');
+            $api->delete('mobile-bank-info/{profile_bank_information}', 'AffiliateController@deleteMobileBankInformation');
             $api->post('mobile-bank-information/{profile_mobile_bank_info}', 'AffiliateController@updateMobileBankInformation');
             $api->group(['prefix' => 'movie-ticket'], function ($api) {
                 $api->get('movie-list', 'MovieTicketController@getAvailableTickets');
