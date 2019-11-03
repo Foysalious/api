@@ -58,6 +58,7 @@ use Sheba\Repositories\Interfaces\ProcurementItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementQuestionRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProfileBankingRepositoryInterface;
+use Sheba\Repositories\Interfaces\ProfileMobileBankingRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Sheba\Repositories\Interfaces\PurchaseRequestItemFieldRepositoryInterface;
 use Sheba\Repositories\Interfaces\PurchaseRequestItemRepositoryInterface;
@@ -68,6 +69,7 @@ use Sheba\Repositories\Interfaces\VehicleRepositoryInterface;
 use Sheba\Repositories\PartnerRepository;
 use Sheba\Repositories\PaymentLinkRepository;
 use Sheba\Repositories\ProfileBankingRepository;
+use Sheba\Repositories\ProfileMobileBankingRepository;
 use Sheba\Repositories\ProfileRepository;
 
 class RepositoryServiceProvider extends ServiceProvider
@@ -106,5 +108,6 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(BidRepositoryInterface::class, BidRepository::class);
         $this->app->bind(RfqOrderRepositoryInterface::class, RfqOrderRepository::class);
         $this->app->bind(ProfileBankingRepositoryInterface::class, ProfileBankingRepository::class);
+        $this->app->bind(ProfileMobileBankingRepositoryInterface::class, ProfileMobileBankingRepository::class);
     }
 }

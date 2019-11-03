@@ -13,7 +13,6 @@ class MobileBankDetailTransformer extends TransformerAbstract
         $bank_info = [
             'bank_name' => $bank->bank_name,
             'account_no' => $bank->account_no,
-
         ];
 
         return $bank_info;
