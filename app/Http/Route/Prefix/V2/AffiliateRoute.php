@@ -36,6 +36,7 @@ class AffiliateRoute
             $api->post('refer', 'Auth\PartnerRegistrationController@registerReferAffiliate');
             $api->get('profile-details', 'AffiliateController@profileDetails');
             $api->post('personal-information', 'AffiliateController@updatePersonalInformation');
+            $api->post('bank-information', 'AffiliateController@storeBankInformation');
             $api->group(['prefix' => 'movie-ticket'], function ($api) {
                 $api->get('movie-list', 'MovieTicketController@getAvailableTickets');
                 $api->get('theatre-list', 'MovieTicketController@getAvailableTheatres');
@@ -47,6 +48,9 @@ class AffiliateRoute
             });
             (new TransportRoute())->set($api);
         });
+
+        $api->get('bank-list', 'AffiliateController@bankList');
+        $api->get('mobile-bank-list', 'AffiliateController@mobileBankList');
         $api->post('eksheba/save', 'EkshebaController@saveEkshebaData');
         $api->get('affiliates/faq', 'FaqController@getAffiliateFaqs');
     }

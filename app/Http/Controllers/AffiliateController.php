@@ -12,6 +12,8 @@ use App\Models\Service;
 use App\Repositories\AffiliateRepository;
 use App\Repositories\FileRepository;
 use App\Repositories\LocationRepository;
+use App\Sheba\BankingInfo\GeneralBanking;
+use App\Sheba\BankingInfo\MobileBanking;
 use App\Sheba\Bondhu\AffiliateHistory;
 use App\Sheba\Bondhu\AffiliateStatus;
 use App\Sheba\Bondhu\TopUpEarning;
@@ -30,6 +32,7 @@ use Sheba\Bondhu\Statuses;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
 use Sheba\Reports\ExcelHandler;
+use Sheba\Repositories\Interfaces\ProfileBankingRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Sheba\Transactions\InvalidTransaction;
 use Sheba\Transactions\Registrar;
@@ -846,8 +849,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         }
     }
 
-    public function updatePersonalInformation($affiliate, Request $request, ProfileRepositoryInterface $profile_repo)
-    {
+    public function updatePersonalInformation($affiliate, Request $request, ProfileRepositoryInterface $profile_repo){
         try {
             $affiliate = $request->affiliate;
             list($is_access_denied, $msg) = $this->checkUpdateParamsOnVerifiedStatus($affiliate, $request);
@@ -865,6 +867,33 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             $resource = new Item($affiliate->profile, new ProfileDetailTransformer());
             $details = $manager->createData($resource)->toArray()['data'];
             return api_response($request, null, 200, ['data' => $details]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function storeBankInformation($affiliate, Request $request, ProfileBankingRepositoryInterface $profile_bank_repo)
+    {
+        try {
+            $this->validate($request, [
+                'bank_name' => 'required',
+                'account_no' => 'required',
+                'branch_name' => 'required',
+            ]);
+            $affiliate = $request->affiliate;
+            $this->setModifier($affiliate);
+            $data = $request->except('affiliate', 'remember_token');
+            $data['profile_id'] = $request->affiliate->profile_id;
+            $bank_details = $profile_bank_repo->create($data);
+
+            return api_response($request, null, 200, ['data' => $bank_details]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
@@ -922,6 +951,26 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function bankList(Request $request){
+        try {
+            $bank_list =  GeneralBanking::getWithKeys();
+            return api_response($request, null, 200, ['data' => $bank_list]);
+        }  catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function mobileBankList(Request $request){
+        try {
+            $bank_list =  MobileBanking::getWithKeys();
+            return api_response($request, null, 200, ['data' => $bank_list]);
+        }  catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
