@@ -2,9 +2,10 @@
 
 use App\Models\Payable;
 use Carbon\Carbon;
+use Sheba\Payment\Adapters\Payable\PayableAdapter;
 use Sheba\PaymentLink\PaymentLinkTransformer;
 
-class PaymentLinkOrderAdapter
+class PaymentLinkOrderAdapter implements PayableAdapter
 {
     /** @var PaymentLinkTransformer */
     private $paymentLink;
@@ -71,5 +72,15 @@ class PaymentLinkOrderAdapter
     {
         $reason = $this->paymentLink->getReason();
         $this->description = $reason ? $reason : $this->description;
+    }
+
+    public function setModelForPayable($model)
+    {
+        // TODO: Implement setModelForPayable() method.
+    }
+
+    public function setEmiMonth($month)
+    {
+        // TODO: Implement setEmiMonth() method.
     }
 }

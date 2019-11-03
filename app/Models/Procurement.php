@@ -41,4 +41,10 @@ class Procurement extends Model
     {
         return $query->whereIn('status', ['accepted', 'started', 'served', 'cancelled']);
     }
+
+    public function getActiveBid()
+    {
+        return $this->bids()->where('status', config('b2b.BID_STATUSES')['awarded'])->first();
+    }
+
 }

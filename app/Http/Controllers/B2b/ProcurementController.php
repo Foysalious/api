@@ -10,6 +10,10 @@ use Illuminate\Validation\ValidationException;
 use Sheba\Business\Procurement\Creator;
 use Sheba\Logs\ErrorLog;
 use Sheba\ModificationFields;
+use Sheba\Payment\Adapters\Payable\OrderAdapter;
+use Sheba\Payment\Adapters\Payable\ProcurementAdapter;
+use Sheba\Payment\ShebaPayment;
+use Sheba\Payment\ShebaPaymentValidator;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
 use Sheba\Sms\Sms;
 
@@ -223,6 +227,33 @@ class ProcurementController extends Controller
                 $creator->setIsPublished($request->is_published)->changeStatus($procurement);
                 return api_response($request, null, 200);
             }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function clearBills($business, $procurement, Request $request, ShebaPayment $payment, ShebaPaymentValidator $payment_validator, ProcurementRepositoryInterface $procurement_repository)
+    {
+        try {
+            $this->validate($request, [
+                'payment_method' => 'required|in:online,wallet,bkash,cbl',
+                'emi_month' => 'numeric'
+            ]);
+            $payment_method = $request->payment_method;
+            $procurement = $procurement_repository->find($procurement);
+            $payment_validator->setPayableType('procurement')->setPayableTypeId($procurement->id)->setPaymentMethod($payment_method);
+            if ($payment_validator->canInitiatePayment()) return api_response($request, null, 500, ['message' => "Can't send multiple requests within 1 minute."]);
+            $procurement_adapter = new ProcurementAdapter();
+            $procurement_adapter->setModelForPayable($procurement)->setEmiMonth($request->emi_month);
+            $payment = $payment->setMethod($payment_method)->init($procurement_adapter->getPayable());
+            return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');

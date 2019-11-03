@@ -50,5 +50,13 @@ return [
         'checkbox' => 'checkbox',
         'number' => 'number',
         'select' => 'select'
-    ]
+    ],
+    'BID_STATUSES' => [
+        'pending' => 'pending',
+        'rejected' => 'rejected',
+        'accepted' => 'accepted',
+        'drafted' => 'drafted',
+        'sent' => 'sent',
+        'awarded' => 'awarded'
+    ],
 ];
