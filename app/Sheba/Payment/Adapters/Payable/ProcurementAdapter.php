@@ -28,12 +28,12 @@ class ProcurementAdapter implements PayableAdapter
         $bid = $this->procurement->getActiveBid();
         $payable = new Payable();
         $payable->type = 'procurement';
-        $payable->type_id = $this->procurement->is;
+        $payable->type_id = $this->procurement->id;
         $payable->user_id = $this->procurement->owner_id;
-        $payable->user_type = $this->procurement->ownerType;
+        $payable->user_type = $this->procurement->owner_type;
         $payable->amount = (double)$bid->price;
         $payable->emi_month = $this->resolveEmiMonth($payable);
-        $payable->completion_type = "procurement";
+        $payable->completion_type = 'procurement';
         $payable->success_url = $this->getSuccessUrl();
         $payable->fail_url = $this->getFailUrl();
         $payable->created_at = Carbon::now();

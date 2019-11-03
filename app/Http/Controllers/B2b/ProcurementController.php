@@ -239,7 +239,7 @@ class ProcurementController extends Controller
         }
     }
 
-    public function clearBills($business, $procurement, Request $request, ShebaPayment $payment, ShebaPaymentValidator $payment_validator, ProcurementRepositoryInterface $procurement_repository)
+    public function clearBills($business, $procurement, Request $request, ProcurementAdapter $procurement_adapter, ShebaPayment $payment, ShebaPaymentValidator $payment_validator, ProcurementRepositoryInterface $procurement_repository)
     {
         try {
             $this->validate($request, [
@@ -249,10 +249,9 @@ class ProcurementController extends Controller
             $payment_method = $request->payment_method;
             $procurement = $procurement_repository->find($procurement);
             $payment_validator->setPayableType('procurement')->setPayableTypeId($procurement->id)->setPaymentMethod($payment_method);
-            if ($payment_validator->canInitiatePayment()) return api_response($request, null, 500, ['message' => "Can't send multiple requests within 1 minute."]);
-            $procurement_adapter = new ProcurementAdapter();
-            $procurement_adapter->setModelForPayable($procurement)->setEmiMonth($request->emi_month);
-            $payment = $payment->setMethod($payment_method)->init($procurement_adapter->getPayable());
+            if (!$payment_validator->canInitiatePayment()) return api_response($request, null, 403, ['message' => "Can't send multiple requests within 1 minute."]);
+            $payable = $procurement_adapter->setModelForPayable($procurement)->setEmiMonth($request->emi_month)->getPayable();
+            $payment = $payment->setMethod($payment_method)->init($payable);
             return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());

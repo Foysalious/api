@@ -2,8 +2,9 @@
 
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Payment\PayableType;
 
-class Procurement extends Model
+class Procurement extends Model implements PayableType
 {
     protected $guarded = ['id'];
 

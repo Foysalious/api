@@ -34,6 +34,6 @@ class ShebaPaymentValidator
         $payment = Payment::whereHas('payable', function ($q) {
             $q->where([['type', $this->payableType], ['type_id', $this->payableTypeId]]);
         })->where([['transaction_id', 'LIKE', '%' . $this->paymentMethod . '%'], ['created_at', '>=', $time]])->first();
-        return $payment ? 1 : 0;
+        return $payment ? 0 : 1;
     }
 }
