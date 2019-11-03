@@ -7,6 +7,7 @@ class IndexRoute
         $api->group(['prefix' => '{partner}', 'middleware' => ['manager.auth']], function ($api) {
             $api->get('dashboard', 'Partner\DashboardController@get');
             $api->get('home-setting', 'Partner\DashboardController@getHomeSetting');
+            $api->post('home-setting', 'Partner\DashboardController@setHomeSetting');
             $api->get('wallet-balance', 'PartnerController@getWalletBalance');
             $api->group(['prefix' => 'e-shop'], function ($api) {
                 $api->group(['prefix' => 'order'], function ($api) {
