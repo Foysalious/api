@@ -56,4 +56,9 @@ class GeneralBanking
     const SHAHJALAL_ISLAMI_BANK = 'shahjalal_islami_bank';
     const SOCIAL_ISLAMI_BANK = 'social_islami_bank';
     const UNION_BANK = 'union_bank';
+
+    public static function getPublishedBank()
+    {
+        return [self::CITY_BANK, self::BRAC_BANK, self::AB_BANK];
+    }
 }

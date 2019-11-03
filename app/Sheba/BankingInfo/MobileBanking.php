@@ -1,6 +1,5 @@
 <?php namespace App\Sheba\BankingInfo;
 
-
 use Sheba\Helpers\ConstGetter;
 
 class MobileBanking
@@ -13,4 +12,9 @@ class MobileBanking
     const SURECASH = 'SureCash';
     const ROCKET = 'Rocket';
     const MYCASH = 'MyCash';
+
+    public static function getPublishedBank()
+    {
+        return [ self::BKASH, self::EASYCASH ];
+    }
 }

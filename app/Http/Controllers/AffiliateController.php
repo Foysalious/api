@@ -1045,9 +1045,10 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
     public function bankList(Request $request)
     {
         try {
-            $bank_list = GeneralBanking::getWithKeys();
+            $bank_list = GeneralBanking::getPublishedBank();
             return api_response($request, null, 200, ['data' => $bank_list]);
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -1056,7 +1057,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
     public function mobileBankList(Request $request)
     {
         try {
-            $bank_list = MobileBanking::getWithKeys();
+            $bank_list = MobileBanking::getPublishedBank();
             return api_response($request, null, 200, ['data' => $bank_list]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
