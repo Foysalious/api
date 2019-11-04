@@ -42,7 +42,7 @@ class ProcurementController extends Controller
     public function orderTimeline($partner, $procurement, Request $request, Creator $creator)
     {
         try {
-            $procurement = $creator->getProcurement($procurement);
+            $procurement = $creator->getProcurement($procurement)->getBid();
 
             $order_timelines = $creator->formatTimeline();
 

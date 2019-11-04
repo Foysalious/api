@@ -52,7 +52,7 @@ class Creator
     public function getProcurement($procurement)
     {
         $this->procurement = $this->procurementRepository->find((int)$procurement);
-        return $this->procurement;
+        return $this;
     }
 
     public function setType($type)
@@ -195,27 +195,53 @@ class Creator
     public function getBid()
     {
         $this->bid = $this->procurement->getActiveBid();
-        return $this->bid;
+        return $this;
     }
 
     public function formatTimeline()
     {
-        $this->getBid();
+        $payment_requests = $this->procurement->paymentRequests()->with('statusChangeLogs')->get();
+        $requests = [];
+        $request_logs = [];
+        foreach ($payment_requests as $payment_request) {
+            $payment_request_logs = $payment_request->statusChangeLogs->isEmpty() ? null : $payment_request->statusChangeLogs;
+            if ($payment_request_logs) {
+                foreach ($payment_request_logs as $log) {
+                    array_push($request_logs, [
+                        'created_at' => $log->created_at->toDateTimeString(),
+                        'time' => $log->created_at->format('h.i A'),
+                        'date' => $log->created_at->format('Y-m-d'),
+                        'log' => 'Status Updated From ' . $log->from_status . ' To ' . $log->to_status
+                    ]);
+                }
+            }
+            array_push($requests, [
+                'created_at' => $payment_request->created_at->toDateTimeString(),
+                'time' => $payment_request->created_at->format('h.i A'),
+                'date' => $payment_request->created_at->format('Y-m-d'),
+                'log' => 'This Payment Request: #' . $payment_request->id . ' Is ' . $payment_request->status
+            ]);
+        }
+        $bid_status_change_log = $this->bid->statusChangeLogs()->where('to_status', 'awarded')->first();
         $data = [
-            'updated_at' => $this->bid->updated_at->format('d M Y h.i A'),
-            'updated_at_date' => $this->bid->updated_at->format('d M'),
-            'updated_at_year' => $this->bid->updated_at->format('Y'),
-            'logs' => [
-                'bid_status' => $this->bid->status,
-                'updated_at_time' => $this->bid->updated_at->format('h.i A'),
-                'bidder_id' => $this->bid->bidder->id,
-                'bidder_name' => $this->bid->bidder->name,
-            ],
+            'created_at' => $bid_status_change_log->created_at->toDateTimeString(),
+            'time' => $bid_status_change_log->created_at->format('h.i A'),
+            'date' => $bid_status_change_log->created_at->format('Y-m-d'),
+            'log' => 'Hired ' . $this->bid->bidder->name . ' and Status Updated From ' . $bid_status_change_log->from_status . ' To ' . $bid_status_change_log->to_status
         ];
-        dd($data);
-        return $this;
-    }
 
+        $order_time_lines = collect(array_merge([$data], $requests, $request_logs))->groupBy('date');
+        $order_time_line = [];
+        foreach ($order_time_lines as $key => $time_lines) {
+            array_push($order_time_line, [
+                'date' => Carbon::parse($key)->format('d M'),
+                'year' => Carbon::parse($key)->format('y'),
+                'logs' => $time_lines,
+            ]);
+        }
+        return $order_time_line;
+    }
+    
     private function makeProcurementData()
     {
         $this->procurementData = [

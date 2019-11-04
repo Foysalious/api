@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\BidStatusChangeLog\Model as BidStatusChangeLog;
 
 class Bid extends Model
 {
@@ -41,5 +42,11 @@ class Bid extends Model
     {
         return !in_array($this->status, ['pending', 'sent']);
     }
+
+    public function statusChangeLogs()
+    {
+        return $this->hasMany(BidStatusChangeLog::class);
+    }
+
 
 }
