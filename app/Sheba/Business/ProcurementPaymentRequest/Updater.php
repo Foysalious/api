@@ -7,10 +7,12 @@ use Sheba\Dal\ProcurementPaymentRequest\ProcurementPaymentRequestRepositoryInter
 use Sheba\Business\ProcurementPaymentRequestStatusChangeLog\Creator;
 use App\Models\Procurement;
 use App\Models\Bid;
+use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
 
 class Updater
 {
     private $procurementPaymentRequestRepository;
+    private $procurementRepository;
     private $procurement;
     private $bid;
     private $paymentRequest;
@@ -21,9 +23,10 @@ class Updater
     private $data;
 
 
-    public function __construct(ProcurementPaymentRequestRepositoryInterface $procurement_payment_request_repository, Creator $creator, PaymentCreator $payment_creator)
+    public function __construct(ProcurementPaymentRequestRepositoryInterface $procurement_payment_request_repository, Creator $creator, PaymentCreator $payment_creator, ProcurementRepositoryInterface $procurement_repository)
     {
         $this->procurementPaymentRequestRepository = $procurement_payment_request_repository;
+        $this->procurementRepository = $procurement_repository;
         $this->statusLogCreator = $creator;
         $this->paymentCreator = $payment_creator;
         $this->data = [];
@@ -78,10 +81,11 @@ class Updater
             $payment_request = $this->procurementPaymentRequestRepository->update($this->paymentRequest, $this->data);
             $this->statusLogCreator->setPaymentRequest($this->paymentRequest)->setPreviousStatus($previous_status)->setStatus($this->status)->create();
             if ($this->status == config('b2b.PROCUREMENT_PAYMENT_STATUS')['approved']) {
+                $amount = $this->paymentRequest->amount;
                 $this->paymentCreator->setPaymentType('Debit')->setPaymentMethod('cheque')->setProcurement($this->procurement)
-                    ->setAmount($this->paymentRequest->amount)->create();
-                $bid = $this->procurement->getActiveBid();
-                $bid->bidder->minusWallet($bid->price, ['log' => 'Received money for RFQ Order #' . $this->procurement->id]);
+                    ->setAmount($amount)->create();
+                $this->procurement->getActiveBid()->bidder->minusWallet($amount, ['log' => 'Received money for RFQ Order #' . $this->procurement->id]);
+                $this->procurementRepository->update($this->procurement, ['partner_collection' => $this->procurement->partner_collection + $amount]);
             }
         } catch (QueryException $e) {
             throw  $e;
