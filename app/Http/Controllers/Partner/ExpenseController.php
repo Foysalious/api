@@ -112,7 +112,7 @@ class ExpenseController extends Controller
             ]);
 
             $input = $request->only(['amount', 'created_at', 'head_id', 'note']);
-            $input['amount_cleared'] = $request->input('amount_cleared') ? $request->input('amount_cleared') : $request->input('amount');
+            $input['amount_cleared'] = $request->has('amount_cleared') ? $request->input('amount_cleared') : $request->input('amount');
 
             $customer_id = $request->input('customer_id');
             if ($customer_id) $input['profile_id'] = PosCustomer::find($customer_id)->profile_id;
