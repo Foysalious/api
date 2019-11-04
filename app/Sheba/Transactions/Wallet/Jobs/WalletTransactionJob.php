@@ -10,6 +10,18 @@ use Sheba\Transactions\Wallet\WalletTransactionHandler;
 class WalletTransactionJob extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
+    /**
+     * The number of times the job may be attempted.
+     *
+     * @var int
+     */
+    public $tries = 3;
+    /**
+     * The number of seconds the job can run before timing out.
+     *
+     * @var int
+     */
+    public $timeout = 120;
     private $extras;
     /** @var WalletTransactionHandler $handler */
     private $handler;
