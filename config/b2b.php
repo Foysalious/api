@@ -59,4 +59,11 @@ return [
         'sent' => 'sent',
         'awarded' => 'awarded'
     ],
+    'PROCUREMENT_PAYMENT_STATUS' => [
+        'pending' => 'pending',
+        'approved' => 'approved',
+        'acknowledged' => 'acknowledged',
+        'rejected' => 'rejected',
+        'paid' => 'paid'
+    ],
 ];
