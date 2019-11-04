@@ -39,6 +39,7 @@ class Creator
     private $isPublished;
     private $labels;
     private $procurement;
+    private $bid;
 
     public function __construct(ProcurementRepositoryInterface $procurement_repository, ProcurementItemRepositoryInterface $procurement_item_repository, ProcurementItemFieldRepositoryInterface $procurement_item_field_repository, ProcurementQuestionRepositoryInterface $procurement_question_repository)
     {
@@ -191,9 +192,27 @@ class Creator
         return $procurement;
     }
 
+    public function getBid()
+    {
+        $this->bid = $this->procurement->getActiveBid();
+        return $this->bid;
+    }
+
     public function formatTimeline()
     {
-        dd(32132132123);
+        $this->getBid();
+        $data = [
+            'updated_at' => $this->bid->updated_at->format('d M Y h.i A'),
+            'updated_at_date' => $this->bid->updated_at->format('d M'),
+            'updated_at_year' => $this->bid->updated_at->format('Y'),
+            'logs' => [
+                'bid_status' => $this->bid->status,
+                'updated_at_time' => $this->bid->updated_at->format('h.i A'),
+                'bidder_id' => $this->bid->bidder->id,
+                'bidder_name' => $this->bid->bidder->name,
+            ],
+        ];
+        dd($data);
         return $this;
     }
 
