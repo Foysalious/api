@@ -8,6 +8,8 @@ use Sheba\Payment\PayableType;
 class Procurement extends Model implements PayableType
 {
     protected $guarded = ['id'];
+    public $paid;
+    public $due;
 
     public function items()
     {
@@ -51,7 +53,14 @@ class Procurement extends Model implements PayableType
 
     public function getActiveBid()
     {
-        return $this->bids()->where('status', config('b2b.BID_STATUSES')['awarded'])->first();
+        return $this->bids->where('status', config('b2b.BID_STATUSES')['awarded'])->first();
+    }
+
+    public function calculate()
+    {
+        $bid = $this->getActiveBid();
+        $this->paid = $this->sheba_collection + $this->partner_collection;
+        $this->due = $this->paid - $bid ? $bid->price : 0;
     }
 
 }
