@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\Partner;
 
 use App\Http\Controllers\Controller;
+use App\Models\Bid;
 use App\Models\Procurement;
 use App\Sheba\Business\Procurement\Updater;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -47,6 +48,20 @@ class ProcurementController extends Controller
             $order_timelines = $creator->formatTimeline();
 
             return api_response($request, $order_timelines, 200, ['timelines' => $order_timelines]);
+        } catch (ModelNotFoundException $e) {
+            return api_response($request, null, 404, ["message" => "Model Not found."]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function showProcurementOrder($partner, $procurement, $bid, Request $request, Creator $creator)
+    {
+        try {
+            $bid = Bid::findOrFail((int)$bid);
+            $rfq_order_details = $creator->getProcurement($procurement)->setBid($bid)->formatData();
+            return api_response($request, $rfq_order_details, 200, ['order_details' => $rfq_order_details]);
         } catch (ModelNotFoundException $e) {
             return api_response($request, null, 404, ["message" => "Model Not found."]);
         } catch (\Throwable $e) {

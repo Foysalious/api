@@ -22,15 +22,12 @@ use Sheba\Repositories\Business\IssueRepository;
 use Sheba\Repositories\Business\MemberRepository;
 use Sheba\Repositories\Business\ProcurementItemFieldRepository;
 use Sheba\Repositories\Business\ProcurementItemRepository;
-use Sheba\Repositories\Business\ProcurementPaymentRequestRepository;
-use Sheba\Repositories\Business\ProcurementPaymentRequestStatusChangeLogRepository;
 use Sheba\Repositories\Business\ProcurementQuestionRepository;
 use Sheba\Repositories\Business\ProcurementRepository;
 use Sheba\Repositories\Business\PurchaseRequestItemFieldRepository;
 use Sheba\Repositories\Business\PurchaseRequestItemRepository;
 use Sheba\Repositories\Business\PurchaseRequestQuestionRepository;
 use Sheba\Repositories\Business\PurchaseRequestRepository;
-use Sheba\Repositories\Business\RfqOrderRepository;
 use Sheba\Repositories\Business\VehicleRepository;
 use Sheba\Repositories\CustomerRepository;
 use Sheba\Repositories\Interfaces\BidItemFieldRepositoryInterface;
@@ -106,7 +103,6 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(BidItemRepositoryInterface::class, BidItemRepository::class);
         $this->app->bind(BidItemFieldRepositoryInterface::class, BidItemFieldRepository::class);
         $this->app->bind(BidRepositoryInterface::class, BidRepository::class);
-        $this->app->bind(RfqOrderRepositoryInterface::class, RfqOrderRepository::class);
         $this->app->bind(ProfileBankingRepositoryInterface::class, ProfileBankingRepository::class);
         $this->app->bind(ProfileMobileBankingRepositoryInterface::class, ProfileMobileBankingRepository::class);
     }

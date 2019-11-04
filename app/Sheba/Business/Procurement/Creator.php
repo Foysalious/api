@@ -1,5 +1,6 @@
 <?php namespace Sheba\Business\Procurement;
 
+use App\Models\Bid;
 use App\Models\Procurement;
 use App\Models\ProcurementItem;
 use App\Models\Tag;
@@ -52,6 +53,12 @@ class Creator
     public function getProcurement($procurement)
     {
         $this->procurement = $this->procurementRepository->find((int)$procurement);
+        return $this;
+    }
+
+    public function setBid(Bid $bid)
+    {
+        $this->bid = $bid;
         return $this;
     }
 
@@ -324,5 +331,50 @@ class Creator
             array_push($tag_list, $tag->id);
         }
         $procurement->tags()->sync($tag_list);
+    }
+
+    public function formatData()
+    {
+        $bid_price_quotations = $this->generateBidItemData();
+        $order_details = [
+            'procurement_id' => $this->procurement->id,
+            'procurement_title' => $this->procurement->title,
+            'procurement_status' => $this->procurement->status,
+            'procurement_start_date' => Carbon::parse($this->procurement->procurement_start_date)->format('d/m/y'),
+            'procurement_end_date' => Carbon::parse($this->procurement->procurement_end_date)->format('d/m/y'),
+            'procurement_type' => $this->procurement->type,
+            'procurement_additional_info' => $this->procurement->long_description,
+            'vendor' => [
+                'name' => $this->bid->bidder->name,
+                'logo' => $this->bid->bidder->logo,
+                'contact_person' => $this->bid->bidder->getContactPerson(),
+                'mobile' => $this->bid->bidder->getMobile(),
+                'address' => $this->bid->bidder->address,
+                'rating' => round($this->bid->bidder->reviews->avg('rating'), 2),
+                'total_rating' => $this->bid->bidder->reviews->count()
+            ],
+            'bid_id' => $this->bid->id,
+            'bid_price' => $this->bid->price,#Total Proposed Price
+            'bid_price_quotations' => $bid_price_quotations
+        ];
+        return $order_details;
+    }
+
+    private function generateBidItemData()
+    {
+        $item_type = $this->bid->items->where('type', 'price_quotation')->first();
+        $item_fields = [];
+        foreach ($item_type->fields as $field) {
+            $unit = $field->variables ? json_decode($field->variables)->unit ? json_decode($field->variables)->unit : 0 : 0;
+            array_push($item_fields, [
+                'id' => $field->id,
+                'title' => $field->title,
+                'short_description' => $field->short_description,
+                'unit' => $unit,
+                'unit_price' => number_format($field->result / $unit, 2),
+                'total_price' => $field->result,
+            ]);
+        }
+        return $item_fields;
     }
 }

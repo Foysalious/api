@@ -94,7 +94,7 @@ class BusinessRoute
                 });
                 $api->group(['prefix' => 'procurements'], function ($api) {
                     $api->post('/', 'B2b\ProcurementController@store');
-                    $api->get('/orders', 'B2b\RfqOrderController@index');
+                    $api->get('/orders', 'B2b\ProcurementController@procurementOrders');
                     $api->group(['prefix' => '{procurement}'], function ($api) {
                         $api->post('invitations', 'B2b\ProcurementController@sendInvitation');
                         $api->post('publish', 'B2b\ProcurementController@updateStatus');
@@ -105,7 +105,7 @@ class BusinessRoute
                         $api->group(['prefix' => 'bids'], function ($api) {
                             $api->get('/', 'B2b\BidController@index');
                             $api->group(['prefix' => '{bid}'], function ($api) {
-                                $api->get('/', 'B2b\RfqOrderController@show');
+                                $api->get('/', 'B2b\ProcurementController@showProcurementOrder');
                                 $api->group(['prefix' => 'payment-requests'], function ($api) {
                                     $api->get('/', 'B2b\ProcurementPaymentRequestController@index');
                                     $api->post('/{request}', 'B2b\ProcurementPaymentRequestController@updatePaymentRequest');

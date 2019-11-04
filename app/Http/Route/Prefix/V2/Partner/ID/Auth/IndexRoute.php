@@ -33,7 +33,7 @@ class IndexRoute
                     $api->get('/timeline', 'Partner\ProcurementController@orderTimeline');
                     $api->group(['prefix' => 'bids'], function ($api) {
                         $api->group(['prefix' => '{bid}'], function ($api) {
-                            $api->get('/', 'Partner\RfqOrderController@show');
+                            $api->get('/', 'Partner\ProcurementController@showProcurementOrder');
                             $api->group(['prefix' => 'payment-requests'], function ($api) {
                                 $api->post('/', 'Partner\ProcurementPaymentRequestController@paymentRequest');
                                 $api->get('/', 'Partner\ProcurementPaymentRequestController@index');
