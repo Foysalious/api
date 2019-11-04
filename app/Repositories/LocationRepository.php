@@ -1,7 +1,4 @@
-<?php
-
-namespace App\Repositories;
-
+<?php namespace App\Repositories;
 
 use App\Models\Location;
 use GuzzleHttp\Client;
@@ -9,7 +6,6 @@ use GuzzleHttp\Exception\RequestException;
 
 class LocationRepository
 {
-
     public function getLocationFromLatLng($latlng)
     {
         $result_type = array('sublocality', 'political', 'sublocality_level_1');

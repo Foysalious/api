@@ -38,6 +38,7 @@ class Creator
     private $paymentOptions;
     private $isPublished;
     private $labels;
+    private $procurement;
 
     public function __construct(ProcurementRepositoryInterface $procurement_repository, ProcurementItemRepositoryInterface $procurement_item_repository, ProcurementItemFieldRepositoryInterface $procurement_item_field_repository, ProcurementQuestionRepositoryInterface $procurement_question_repository)
     {
@@ -45,6 +46,12 @@ class Creator
         $this->procurementItemRepository = $procurement_item_repository;
         $this->procurementQuestionRepository = $procurement_question_repository;
         $this->procurementItemFieldRepository = $procurement_item_field_repository;
+    }
+
+    public function getProcurement($procurement)
+    {
+        $this->procurement = $this->procurementRepository->find((int)$procurement);
+        return $this->procurement;
     }
 
     public function setType($type)
@@ -182,6 +189,12 @@ class Creator
         }
 
         return $procurement;
+    }
+
+    public function formatTimeline()
+    {
+        dd(32132132123);
+        return $this;
     }
 
     private function makeProcurementData()

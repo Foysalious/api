@@ -12,6 +12,18 @@ use Sheba\Transactions\Wallet\WalletTransaction;
 class FraudTransactionJob extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
+    /**
+     * The number of times the job may be attempted.
+     *
+     * @var int
+     */
+    public $tries = 3;
+    /**
+     * The number of seconds the job can run before timing out.
+     *
+     * @var int
+     */
+    public $timeout = 120;
     /** @var TransactionRepository */
     private $repo;
     private $data;
@@ -24,7 +36,7 @@ class FraudTransactionJob extends Job implements ShouldQueue
     public function handle()
     {
         try {
-            $this->repo=new TransactionRepository();
+            $this->repo = new TransactionRepository();
             $this->repo->store($this->data);
         } catch (Exception $e) {
             WalletTransaction::throwException($e);
