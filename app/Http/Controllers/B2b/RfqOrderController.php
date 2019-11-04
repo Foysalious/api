@@ -37,6 +37,7 @@ class RfqOrderController extends Controller
                 $bid = $procurement->bids ? $procurement->bids->first() : null;
                 array_push($rfq_order_lists, [
                     'procurement_id' => $procurement->id,
+                    'procurement_title' => $procurement->title,
                     'procurement_status' => $procurement->status,
                     'color' => constants('PROCUREMENT_ORDER_STATUSES_COLOR')[$procurement->status],
                     'bid_id' => $bid ? $bid->id : null,
