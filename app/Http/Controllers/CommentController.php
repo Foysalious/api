@@ -4,6 +4,7 @@ use App\Models\Bid;
 use App\Models\Business;
 use App\Models\Comment;
 use App\Models\Partner;
+use App\Models\Procurement;
 use App\Sheba\Comment\Comments;
 use Illuminate\Http\Request;
 use Illuminate\Http\Request as HttpRequest;
@@ -14,12 +15,16 @@ class CommentController extends Controller
 {
     use ModificationFields;
 
-    public function getComments($avatar, $bid, Request $request)
+    public function getComments($avatar, $commentable, Request $request)
     {
         try {
-            $bid = Bid::findOrFail((int)$bid);
+            if ($request->segment(4) == 'bids') {
+                $commentable = Bid::findOrFail((int)$commentable);
+            } elseif ($request->segment(4) == 'procurements') {
+                $commentable = Procurement::findOrFail((int)$commentable);
+            }
             list($offset, $limit) = calculatePagination($request);
-            $comments = $bid->comments()->orderBy('id', 'ASC')
+            $comments = $commentable->comments()->orderBy('id', 'ASC')
                 ->skip($offset)->limit($limit)
                 ->get();
 
@@ -44,13 +49,18 @@ class CommentController extends Controller
         }
     }
 
-    public function storeComments($avatar, $bid, Request $request, Comments $comments)
+    public function storeComments($avatar, $commentable, Request $request, Comments $comments)
     {
         try {
             $this->validate($request, [
                 'comment' => 'required'
             ]);
-            $bid = Bid::findOrFail((int)$bid);
+
+            if ($request->segment(4) == 'bids') {
+                $commentable = Bid::findOrFail((int)$commentable);
+            } elseif ($request->segment(4) == 'procurements') {
+                $commentable = Procurement::findOrFail((int)$commentable);
+            }
 
             if ($request->segment(2) == 'businesses') {
                 $avatar = Business::findOrFail((int)$avatar);
@@ -59,7 +69,7 @@ class CommentController extends Controller
             }
 
             $comments = $comments->setComment($request->comment)->setRequestData($request)
-                ->setCommentableModel($bid)
+                ->setCommentableModel($commentable)
                 ->setCommentatorModel($avatar)
                 ->formatData();
             $this->setModifier($avatar);

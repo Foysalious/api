@@ -63,4 +63,14 @@ class Procurement extends Model implements PayableType
         $this->due = $this->paid - $bid ? $bid->price : 0;
     }
 
+    public function attachments()
+    {
+        return $this->morphMany(Attachment::class, 'attachable');
+    }
+
+    public function comments()
+    {
+        return $this->morphMany(Comment::class, 'commentable');
+    }
+
 }

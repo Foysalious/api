@@ -29,6 +29,14 @@ class IndexRoute
             });
             $api->group(['prefix' => 'procurements'], function ($api) {
                 $api->group(['prefix' => '{procurement}'], function ($api) {
+                    $api->group(['prefix' => 'comments'], function ($api) {
+                        $api->post('/', 'CommentController@storeComments');
+                        $api->get('/', 'CommentController@getComments');
+                    });
+                    $api->group(['prefix' => 'attachments'], function ($api) {
+                        $api->post('/', 'AttachmentController@storeAttachment');
+                        $api->get('/', 'AttachmentController@getAttachments');
+                    });
                     $api->post('/status', 'Partner\ProcurementController@updateStatus');
                     $api->get('/timeline', 'Partner\ProcurementController@orderTimeline');
                     $api->group(['prefix' => 'bids'], function ($api) {

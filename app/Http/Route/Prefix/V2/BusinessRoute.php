@@ -96,6 +96,14 @@ class BusinessRoute
                     $api->post('/', 'B2b\ProcurementController@store');
                     $api->get('/orders', 'B2b\ProcurementController@procurementOrders');
                     $api->group(['prefix' => '{procurement}'], function ($api) {
+                        $api->group(['prefix' => 'comments'], function ($api) {
+                            $api->post('/', 'CommentController@storeComments');
+                            $api->get('/', 'CommentController@getComments');
+                        });
+                        $api->group(['prefix' => 'attachments'], function ($api) {
+                            $api->post('/', 'AttachmentController@storeAttachment');
+                            $api->get('/', 'AttachmentController@getAttachments');
+                        });
                         $api->post('invitations', 'B2b\ProcurementController@sendInvitation');
                         $api->post('publish', 'B2b\ProcurementController@updateStatus');
                         $api->post('general', 'B2b\ProcurementController@updateGeneral');
