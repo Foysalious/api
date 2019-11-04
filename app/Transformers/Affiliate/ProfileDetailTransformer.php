@@ -43,6 +43,7 @@ class ProfileDetailTransformer extends TransformerAbstract
         $mobile_banks = [];
         $profile->banks->each(function ($bank) use (&$general_banks) {
             $general_banks[] = [
+                'id' => $bank->id,
                 'bank_name' => $bank->bank_name,
                 'account_no' => $bank->account_no,
                 'branch_name' => $bank->branch_name,
@@ -51,6 +52,7 @@ class ProfileDetailTransformer extends TransformerAbstract
 
         $profile->mobileBanks->each(function ($mobileBanks) use (&$mobile_banks) {
             $mobile_banks[] = [
+                'id' => $mobileBanks->id,
                 'bank_name' => $mobileBanks->bank_name,
                 'account_no' => $mobileBanks->account_no,
             ];
