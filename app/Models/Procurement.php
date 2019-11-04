@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 
+use Sheba\Dal\ProcurementPaymentRequest\Model as ProcurementPaymentRequest;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Payment\PayableType;
 
@@ -21,6 +22,11 @@ class Procurement extends Model implements PayableType
     public function bids()
     {
         return $this->hasMany(Bid::class);
+    }
+
+    public function paymentRequests()
+    {
+        return $this->hasMany(ProcurementPaymentRequest::class);
     }
 
     public function tags()
