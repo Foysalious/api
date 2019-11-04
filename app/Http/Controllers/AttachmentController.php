@@ -4,6 +4,7 @@ use App\Models\Attachment;
 use App\Models\Bid;
 use App\Models\Business;
 use App\Models\Partner;
+use App\Models\Procurement;
 use App\Sheba\Attachments\Attachments;
 use Illuminate\Validation\ValidationException;
 use Sheba\ModificationFields;
@@ -13,13 +14,17 @@ class AttachmentController extends Controller
 {
     use ModificationFields;
 
-    public function storeAttachment($avatar, $bid, Request $request, Attachments $attachments)
+    public function storeAttachment($avatar, $attachable, Request $request, Attachments $attachments)
     {
         try {
             $this->validate($request, [
                 'file' => 'required'
             ]);
-            $bid = Bid::findOrFail((int)$bid);
+            if ($request->segment(4) == 'bids') {
+                $attachable = Bid::findOrFail((int)$attachable);
+            } elseif ($request->segment(4) == 'procurements') {
+                $attachable = Procurement::findOrFail((int)$attachable);
+            }
 
             if ($request->segment(2) == 'businesses') {
                 $avatar = Business::findOrFail((int)$avatar);
@@ -29,7 +34,10 @@ class AttachmentController extends Controller
             if ($attachments->hasError($request))
                 return redirect()->back();
 
-            $attachments = $attachments->setAttachableModel($bid)->setRequestData($request)->setFile($request->file)->formatData();
+            $attachments = $attachments->setAttachableModel($attachable)
+                ->setRequestData($request)
+                ->setFile($request->file)
+                ->formatData();
             $this->setModifier($avatar);
             $attachment = $attachments->store();
             return api_response($request, $attachment, 200, ['attachment' => $attachment->file]);
@@ -45,13 +53,17 @@ class AttachmentController extends Controller
         }
     }
 
-    public function getAttachments($avatar, $bid, Request $request)
+    public function getAttachments($avatar, $attachable, Request $request)
     {
         try {
-            $bid = Bid::find((int)$bid);
-            if (!$bid) return api_response($request, null, 404);
+            if ($request->segment(4) == 'bids') {
+                $attachable = Bid::findOrFail((int)$attachable);
+            } elseif ($request->segment(4) == 'procurements') {
+                $attachable = Procurement::findOrFail((int)$attachable);
+            }
+            if (!$attachable) return api_response($request, null, 404);
             list($offset, $limit) = calculatePagination($request);
-            $attaches = Attachment::where('attachable_type', get_class($bid))->where('attachable_id', $bid->id)
+            $attaches = Attachment::where('attachable_type', get_class($attachable))->where('attachable_id', $attachable->id)
                 ->select('id', 'title', 'file', 'file_type')->orderBy('id', 'DESC')->skip($offset)->limit($limit)->get();
             $attach_lists = [];
             foreach ($attaches as $attach) {
