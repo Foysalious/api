@@ -1,6 +1,5 @@
 <?php namespace Sheba\Transactions\Wallet;
 
-
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
@@ -15,12 +14,13 @@ use Sheba\Transactions\Wallet\Jobs\WalletTransactionJob;
 class WalletTransactionHandler extends WalletTransaction
 {
     use ModificationFields;
+
     protected $amount;
     protected $log;
     protected $type;
+    private $source;
     /** @var TransactionDetails $transaction_details */
     protected $transaction_details;
-    private $source;
 
     /**
      * @param array $extras
@@ -30,12 +30,9 @@ class WalletTransactionHandler extends WalletTransaction
     public function store($extras = [], $isJob = false)
     {
         try {
-            if (empty($this->type) || empty($this->amount) || empty($this->model)) {
-                throw new InvalidWalletTransaction();
-            }
-            if (!$isJob) {
-                $extras = $this->withCreateModificationField((new RequestIdentification())->set($extras));
-            }
+            if (empty($this->type) || empty($this->amount) || empty($this->model)) throw new InvalidWalletTransaction();
+            if (!$isJob) $extras = $this->withCreateModificationField((new RequestIdentification())->set($extras));
+
             $transaction = $this->storeTransaction($extras);
             $this->storeFraudDetectionTransaction(!$isJob);
             return $transaction;
@@ -43,19 +40,6 @@ class WalletTransactionHandler extends WalletTransaction
             WalletTransaction::throwException($e);
         }
         return null;
-    }
-
-    public function storeFraudOnly()
-    {
-        try{
-
-            if (empty($this->type) || empty($this->amount) || empty($this->model)) {
-                throw new InvalidWalletTransaction();
-            }
-            $this->storeFraudDetectionTransaction(true);
-        }catch (Exception $e){
-            WalletTransaction::throwException($e);
-        }
     }
 
     /**
@@ -112,6 +96,7 @@ class WalletTransactionHandler extends WalletTransaction
             'amount' => $this->amount,
             'created_at' => Carbon::now()->format('Y-m-d H:s:i')
         ];
+
         if ($isJob) {
             dispatch((new FraudTransactionJob())->setData($data));
         } else {
@@ -126,6 +111,19 @@ class WalletTransactionHandler extends WalletTransaction
     private function getName()
     {
         return !is_null($this->model->name) ? $this->model->name : (!is_null($this->model->profile) ? $this->model->profile->name : null);
+    }
+
+    public function storeFraudOnly()
+    {
+        try {
+
+            if (empty($this->type) || empty($this->amount) || empty($this->model)) {
+                throw new InvalidWalletTransaction();
+            }
+            $this->storeFraudDetectionTransaction(true);
+        } catch (Exception $e) {
+            WalletTransaction::throwException($e);
+        }
     }
 
     /**
@@ -208,6 +206,4 @@ class WalletTransactionHandler extends WalletTransaction
         $extras = $this->withCreateModificationField((new RequestIdentification())->set($extras));
         dispatch((new WalletTransactionJob($this))->setExtras($extras));
     }
-
-
 }

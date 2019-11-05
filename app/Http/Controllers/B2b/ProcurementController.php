@@ -300,7 +300,7 @@ class ProcurementController extends Controller
             $procurements = $procurements->skip($offset)->limit($limit)->get();
             $rfq_order_lists = [];
             foreach ($procurements as $procurement) {
-                $bid = $procurement->bids ? $procurement->bids->first() : null;
+                $bid = $procurement->getActiveBid() ? $procurement->getActiveBid() : null;
                 array_push($rfq_order_lists, [
                     'procurement_id' => $procurement->id,
                     'procurement_title' => $procurement->title,
@@ -332,6 +332,7 @@ class ProcurementController extends Controller
         } catch (ModelNotFoundException $e) {
             return api_response($request, null, 404, ["message" => "Model Not found."]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
