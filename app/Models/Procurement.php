@@ -60,7 +60,7 @@ class Procurement extends Model implements PayableType
     {
         $bid = $this->getActiveBid();
         $this->paid = $this->sheba_collection + $this->partner_collection;
-        $this->due = $this->paid - $bid ? $bid->price : 0;
+        $this->due = $this->paid -( $bid ? $bid->price : 0);
     }
 
     public function attachments()

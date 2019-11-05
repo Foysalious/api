@@ -37,6 +37,7 @@ class IndexRoute
                         $api->post('/', 'AttachmentController@storeAttachment');
                         $api->get('/', 'AttachmentController@getAttachments');
                     });
+                    $api->get('/bill', 'Partner\ProcurementController@orderBill');
                     $api->post('/status', 'Partner\ProcurementController@updateStatus');
                     $api->get('/timeline', 'Partner\ProcurementController@orderTimeline');
                     $api->group(['prefix' => 'bids'], function ($api) {

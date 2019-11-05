@@ -104,6 +104,7 @@ class BusinessRoute
                             $api->post('/', 'AttachmentController@storeAttachment');
                             $api->get('/', 'AttachmentController@getAttachments');
                         });
+                        $api->get('/bill', 'B2b\ProcurementController@orderBill');
                         $api->post('invitations', 'B2b\ProcurementController@sendInvitation');
                         $api->post('publish', 'B2b\ProcurementController@updateStatus');
                         $api->post('general', 'B2b\ProcurementController@updateGeneral');

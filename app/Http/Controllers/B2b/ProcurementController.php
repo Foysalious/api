@@ -336,4 +336,20 @@ class ProcurementController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function orderBill($business, $procurement, Request $request, Creator $creator)
+    {
+        try {
+            $procurement = Procurement::findOrFail((int)$procurement);
+            $procurement->calculate();
+            $rfq_order_bill['paid'] = $procurement->paid;
+            $rfq_order_bill['due'] = $procurement->due;
+            return api_response($request, $rfq_order_bill, 200, ['rfq_order_bill' => $rfq_order_bill]);
+        } catch (ModelNotFoundException $e) {
+            return api_response($request, null, 404, ["message" => "Model Not found."]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }
