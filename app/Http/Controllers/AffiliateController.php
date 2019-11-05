@@ -994,26 +994,37 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
 
     public function deleteBankInformation($affiliate, $bank_info_id, Request $request, ProfileBankingRepositoryInterface $profile_bank_repo)
     {
+
         try {
             $affiliate = $request->affiliate;
             $this->setModifier($affiliate);
-            $profile_bank_repo->delete($bank_info_id);
+            $is_exist = $profile_bank_repo->find($bank_info_id);
 
-            return api_response($request, null, 200, ['msg' => 'deleted bank information']);
+            if ($is_exist) {
+                $profile_bank_repo->delete($bank_info_id);
+                return api_response($request, null, 200, ['msg' => 'deleted bank information']);
+            }
+            return api_response($request, null, 200, ['msg' => 'all ready delete']);
+
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
+
     public function deleteMobileBankInformation($affiliate, $mobile_bank_info_id, Request $request, ProfileMobileBankingRepositoryInterface $profile_mobile_bank_repo)
     {
         try {
             $affiliate = $request->affiliate;
             $this->setModifier($affiliate);
-            $profile_mobile_bank_repo->delete($mobile_bank_info_id);
+            $is_exist = $profile_mobile_bank_repo->find($mobile_bank_info_id);
+            if ($is_exist) {
+                $profile_mobile_bank_repo->delete($mobile_bank_info_id);
+                return api_response($request, null, 200, ['msg' => 'deleted bank information']);
+            }
+            return api_response($request, null, 200, ['msg' => 'all ready deleted']);
 
-            return api_response($request, null, 200, ['msg' => 'deleted bank information']);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
