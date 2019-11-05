@@ -1,6 +1,7 @@
 <?php namespace App\Transformers\Affiliate;
 
 use App\Models\Profile;
+use App\Sheba\Gender\Gender;
 use League\Fractal\TransformerAbstract;
 
 class ProfileDetailPersonalInfoTransformer extends TransformerAbstract
@@ -23,7 +24,7 @@ class ProfileDetailPersonalInfoTransformer extends TransformerAbstract
             'permanent_address' => $profile->permanent_address,
             'post_office' => $profile->post_office,
             'post_code' => $profile->post_code,
-            'gender' => $profile->gender
+            'gender' => Gender::getGenderFormation($profile->gender)
         ];
 
         return $personal_info;

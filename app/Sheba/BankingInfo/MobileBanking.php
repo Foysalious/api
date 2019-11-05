@@ -15,6 +15,6 @@ class MobileBanking
 
     public static function getPublishedBank()
     {
-        return [ self::BKASH, self::EASYCASH ];
+        return [ self::BKASH, self::SURECASH, self::ROCKET ];
     }
 }
