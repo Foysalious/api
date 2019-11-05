@@ -110,6 +110,7 @@ class Creator
         return [
             'id' => $this->paymentRequest->id,
             'procurement_id' => $this->paymentRequest->procurement_id,
+            'status' => $this->paymentRequest->status,
             'bid_id' => $this->paymentRequest->bid_id,
             'amount' => (double)$this->paymentRequest->amount,
             'short_description' => $this->paymentRequest->short_description,
