@@ -1135,4 +1135,16 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             return api_response($request, null, 500);
         }
     }
+
+    public function storeNid(Request $request)
+    {
+        try {
+            dd($request->all());
+            return api_response($request, null, 200, ['data' => 231]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
+    }
 }
