@@ -7,6 +7,7 @@ use Illuminate\Database\QueryException;
 use Sheba\Business\BidStatusChangeLog\Creator;
 use Sheba\Repositories\Interfaces\BidItemFieldRepositoryInterface;
 use DB;
+use App\Sheba\Business\Procurement\Updater as ProcurementUpdater;
 
 class Updater
 {
@@ -22,14 +23,16 @@ class Updater
     private $items;
     private $price;
     private $statusLogCreator;
+    private $procurementUpdater;
     private $fieldResults;
     private $proposal;
 
-    public function __construct(BidRepository $bid_repository, BidItemFieldRepositoryInterface $bid_item_field_repository, Creator $creator)
+    public function __construct(BidRepository $bid_repository, BidItemFieldRepositoryInterface $bid_item_field_repository, Creator $creator, ProcurementUpdater $procurement_updater)
     {
         $this->bidRepository = $bid_repository;
         $this->bidItemFieldRepository = $bid_item_field_repository;
         $this->statusLogCreator = $creator;
+        $this->procurementUpdater = $procurement_updater;
     }
 
     public function setBid(Bid $bid)
@@ -160,7 +163,15 @@ class Updater
 
     public function updateStatus()
     {
-        $this->bidRepository->update($this->bid, ['status' => $this->status]);
+        try {
+            DB::transaction(function () {
+                $this->bidRepository->update($this->bid, ['status' => $this->status]);
+                if ($this->status == config('b2b.BID_STATUSES')['awarded']) $this->procurementUpdater->setProcurement($this->bid->procurement)
+                    ->setStatus(config('b2b.PROCUREMENT_STATUS')['accepted'])->updateStatus();
+            });
+        } catch (QueryException $e) {
+            throw  $e;
+        }
     }
 
     private function updateBidPrice()
