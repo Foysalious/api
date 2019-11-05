@@ -23,8 +23,9 @@ class ProfileDetailTransformer extends TransformerAbstract
             'permanent_address' => $profile->permanent_address,
             'post_office' => $profile->post_office,
             'post_code' => $profile->post_code,
-            'gender' => Gender::getGenderFormation($profile->gender)
+            'gender' => Gender::getGenderDisplayableName($profile->gender)
         ];
+
         $national_id_card = [
             'front_image' => $profile->nid_image_front,
             'back_image' => $profile->nid_image_back
