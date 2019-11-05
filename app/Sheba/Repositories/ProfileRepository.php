@@ -169,7 +169,7 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
             $profile_data['blood_group'] = $data['blood_group'];
         }
         if (isset($data['gender'])) {
-            $profile_data['gender'] = json_decode($data['gender'], true)['en'];
+            $profile_data['gender'] = $data['gender'];
         }
 
         return $profile_data;

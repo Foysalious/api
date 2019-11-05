@@ -1139,7 +1139,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
     public function storeNid(Request $request)
     {
         try {
-            dd($request->all());
+            dd($request->nid_image);
             return api_response($request, null, 200, ['data' => 231]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
