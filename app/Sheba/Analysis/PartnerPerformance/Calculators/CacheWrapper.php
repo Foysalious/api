@@ -1,6 +1,7 @@
 <?php namespace Sheba\Analysis\PartnerPerformance\Calculators;
 
 use Cache;
+use Illuminate\Contracts\Cache\Repository;
 use Sheba\Analysis\PartnerPerformance\PartnerPerformance;
 
 class CacheWrapper extends PartnerPerformance
@@ -9,12 +10,11 @@ class CacheWrapper extends PartnerPerformance
 
     protected function get()
     {
-        $store = Cache::store('redis'); /** @var \Illuminate\Contracts\Cache\Repository $store */
+        $store = Cache::store('redis');
+        /** @var Repository $store */
 
         $cache_name = sprintf("%s::%d_%s_%s_data", $this->redisNameSpace, $this->partner->id,
             $this->timeFrame->start->toDateString(), $this->timeFrame->end->toDateString());
-
-//        1_2019-01-01_2019-01-31
 
         if ($store->has($cache_name)) {
             return $store->get($cache_name);

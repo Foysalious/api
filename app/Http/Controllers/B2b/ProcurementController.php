@@ -342,6 +342,7 @@ class ProcurementController extends Controller
         try {
             $procurement = Procurement::findOrFail((int)$procurement);
             $procurement->calculate();
+            $rfq_order_bill['total_price'] = $procurement->getActiveBid()->price;
             $rfq_order_bill['paid'] = $procurement->paid;
             $rfq_order_bill['due'] = $procurement->due;
             return api_response($request, $rfq_order_bill, 200, ['rfq_order_bill' => $rfq_order_bill]);
