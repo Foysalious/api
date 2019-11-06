@@ -1,6 +1,5 @@
 <?php namespace Sheba\Transactions\Wallet;
 
-
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 interface HasWalletTransaction

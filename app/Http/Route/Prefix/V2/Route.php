@@ -16,6 +16,7 @@ class Route
             $api->post('training-status-update', 'ResourceController@trainingStatusUpdate');
             $api->group(['prefix' => 'profile'], function ($api) {
                 $api->post('registration/partner', 'Auth\PartnerRegistrationController@registerByProfile')->middleware('jwtAuth');
+                $api->post('registration/affiliate', 'Auth\AffiliateRegistrationController@registerByProfile')->middleware('jwtAuth');
             });
             $api->get('validate-location', 'LocationController@validateLocation');
             $api->get('partners', 'PartnerLocationController@getPartners')->middleware('throttle:40');

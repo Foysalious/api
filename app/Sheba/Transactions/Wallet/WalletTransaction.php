@@ -1,7 +1,5 @@
 <?php namespace Sheba\Transactions\Wallet;
 
-
-use Bugsnag\BugsnagLaravel\Facades\Bugsnag;
 use Exception;
 
 class WalletTransaction
@@ -24,8 +22,6 @@ class WalletTransaction
      */
     public static function throwException($e)
     {
-        /** @noinspection PhpUndefinedMethodInspection */
-//        Bugsnag::notifyException($e);
         app('sentry')->captureException($e);
     }
 
@@ -50,5 +46,4 @@ class WalletTransaction
         $this->model->wallet += $this->amount;
         $this->model->update();
     }
-
 }

@@ -6,6 +6,11 @@ use App\Sheba\LightOnBoarding\PartnerModerator;
 
 class AffiliateRepository
 {
+    /**
+     * @param $request
+     * @param $agents
+     * @return mixed
+     */
     public function sortAgents($request, $agents)
     {
         $sortBy = 'name';
@@ -22,6 +27,11 @@ class AffiliateRepository
         return $agents;
     }
 
+    /**
+     * @param $request
+     * @param null $status
+     * @return mixed
+     */
     public function moderatedPartner($request, $status = null)
     {
         list($offset, $limit) = calculatePagination($request);
@@ -47,6 +57,12 @@ class AffiliateRepository
         }]);
     }
 
+    /**
+     * @param Partner $partner
+     * @param null $source
+     * @param bool $isDetails
+     * @return array
+     */
     public function mapForModerationApi(Partner $partner, $source = null, $isDetails = false)
     {
         $resource = $partner->getFirstAdminResource();
