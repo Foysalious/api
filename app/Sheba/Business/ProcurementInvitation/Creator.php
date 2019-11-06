@@ -1,9 +1,9 @@
 <?php namespace Sheba\Business\ProcurementInvitation;
 
 
+use App\Models\Partner;
 use App\Models\Procurement;
 use Sheba\Dal\ProcurementInvitation\ProcurementInvitationRepositoryInterface;
-use Sheba\TopUp\Commission\Partner;
 
 class Creator
 {

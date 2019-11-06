@@ -203,6 +203,7 @@ class ProcurementController extends Controller
             $partners = Partner::whereIn('id', json_decode($request->partners))->get();
             $business = $request->business;
             $procurement = $procurementRepository->find($procurement);
+            $this->setModifier($request->member);
             foreach ($partners as $partner) {
                 /** @var Partner $partner */
                 $sms->shoot($partner->getManagerMobile(), "You have been invited to serve" . $business->name);
@@ -214,7 +215,7 @@ class ProcurementController extends Controller
             $errorLog->setException($e)->setRequest($request)->setErrorMessage($message)->send();
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            $errorLog->setException($e)->send();
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
