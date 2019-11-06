@@ -1,7 +1,4 @@
-<?php namespace App\Sheba\Bondhu\Repository;
-
-
-use Sheba\Bondhu\Repository\BaseRepository;
+<?php namespace Sheba\Ocr\Repository;
 
 class OcrRepository extends BaseRepository
 {
@@ -15,5 +12,4 @@ class OcrRepository extends BaseRepository
         $result = $this->client->post('/parse-nid', $data);
         return $result['data'];
     }
-
 }

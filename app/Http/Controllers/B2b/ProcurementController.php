@@ -18,6 +18,7 @@ use Sheba\Payment\ShebaPayment;
 use Sheba\Payment\ShebaPaymentValidator;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
 use Sheba\Sms\Sms;
+use Sheba\Business\ProcurementInvitation\Creator as ProcurementInvitationCreator;
 
 class ProcurementController extends Controller
 {
@@ -193,7 +194,7 @@ class ProcurementController extends Controller
         }
     }
 
-    public function sendInvitation($procurement, Request $request, Sms $sms, ErrorLog $errorLog)
+    public function sendInvitation($procurement, Request $request, Sms $sms, ErrorLog $errorLog, ProcurementInvitationCreator $creator, ProcurementRepositoryInterface $procurementRepository)
     {
         try {
             $this->validate($request, [
@@ -201,9 +202,12 @@ class ProcurementController extends Controller
             ]);
             $partners = Partner::whereIn('id', json_decode($request->partners))->get();
             $business = $request->business;
+            $procurement = $procurementRepository->find($procurement);
+            $this->setModifier($request->member);
             foreach ($partners as $partner) {
                 /** @var Partner $partner */
                 $sms->shoot($partner->getManagerMobile(), "You have been invited to serve" . $business->name);
+                $creator->setProcurement($procurement)->setPartner($partner)->create();
             }
             return api_response($request, null, 200);
         } catch (ValidationException $e) {
@@ -211,7 +215,7 @@ class ProcurementController extends Controller
             $errorLog->setException($e)->setRequest($request)->setErrorMessage($message)->send();
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            $errorLog->setException($e)->send();
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }

@@ -1,9 +1,8 @@
-<?php namespace App\Sheba\Bondhu\Repository;
-
+<?php namespace Sheba\Ocr\Repository;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
-use Sheba\Bondhu\Exeptions\NidOcrServerError;
+use Sheba\Ocr\Exceptions\OcrServerError;
 
 class OcrClient
 {
@@ -22,22 +21,11 @@ class OcrClient
         $this->apiKey = config('ocr.api_key');
     }
 
-
-    /**
-     * @param $uri
-     * @return array
-     */
     public function get($uri)
     {
         return $this->call('get', $uri);
     }
 
-
-    /**
-     * @param $uri
-     * @param $data
-     * @return array
-     */
     public function post($uri, $data)
     {
         return $this->call('post', $uri, $data);
@@ -48,26 +36,24 @@ class OcrClient
         return $this->call('put', $uri, $data);
     }
 
-
     /**
      * @param $method
      * @param $uri
      * @param null $data
      * @return array
+     * @throws OcrServerError
      */
     private function call($method, $uri, $data = null)
     {
         try {
             $res = decodeGuzzleResponse($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data)));
-            dd($res);
-            if ($res['code'] != 200) throw new NidOcrServerError($res['message']);
+            if ($res['code'] != 200) throw new OcrServerError($res['message']);
             unset($res['code'], $res['message']);
             return $res;
         } catch (GuzzleException $e) {
-            dd($e);
             $res = decodeGuzzleResponse($e->getResponse());
-            if ($res['code'] == 400) throw new NidOcrServerError($res['message']);
-            throw new NidOcrServerError($e->getMessage());
+            if ($res['code'] == 400) throw new OcrServerError($res['message']);
+            throw new OcrServerError($e->getMessage());
         }
     }
 
@@ -86,11 +72,28 @@ class OcrClient
      */
     private function getOptions($data = null)
     {
-        $options['headers'] = ['Content-Type' => 'multipart/form-data', 'x-api-key' => $this->apiKey, 'Accept' => 'application/json'];
+        $options['headers'] = [
+            'Content-Type' => ' multipart/form-data',
+            'x-api-key' => $this->apiKey,
+            'Accept' => 'application/json'
+        ];
+
         if ($data) {
-            $options['form_params'] = $data;
+            $request = request();
+            $file = $request->file('nid_image');
+            $options['multipart'] = [
+                [
+                    'name' => 'side',
+                    'contents' => $request->get('side')
+                ],
+                [
+                    'name' => 'nid_image',
+                    'contents' => base64_encode(file_get_contents($file)),
+                    'filename' => $file->getFilename()
+                ]
+            ];
+
         }
         return $options;
     }
-
 }
