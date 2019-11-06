@@ -88,7 +88,7 @@ class Creator
     public function isCapableForPaymentRequest()
     {
         $price = $this->bid->price;
-        $already_requested_amount = (double)$this->procurement->paymentRequests()->sum('amount');
+        $already_requested_amount = (double)$this->procurement->paymentRequests()->where('status', '<>', 'rejected')->sum('amount');
         $new_total_amount_after_request = $already_requested_amount + $this->amount;
 
         if ($new_total_amount_after_request > $price) {
