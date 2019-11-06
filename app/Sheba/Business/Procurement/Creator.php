@@ -248,7 +248,7 @@ class Creator
         }
         return $order_time_line;
     }
-    
+
     private function makeProcurementData()
     {
         $this->procurementData = [
@@ -335,7 +335,9 @@ class Creator
 
     public function formatData()
     {
-        $bid_price_quotations = $this->generateBidItemData();
+        $bid_price_quotations = null;
+        if ($this->procurement->type == 'advanced')
+            $bid_price_quotations = $this->generateBidItemData();
         $order_details = [
             'procurement_id' => $this->procurement->id,
             'procurement_title' => $this->procurement->title,
