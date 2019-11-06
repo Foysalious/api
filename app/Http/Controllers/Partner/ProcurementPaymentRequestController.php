@@ -42,7 +42,7 @@ class ProcurementPaymentRequestController extends Controller
                 $payment_request = $creator->paymentRequestCreate();
                 return api_response($request, $payment_request, 200, ['id' => $payment_request->id]);
             }
-            return api_response($request, null, 420, ["message" => "Your total requested amount exceeded the bid price."]);
+            return api_response($request, null, 420, ["message" => "Your total requested amount exceeded the bidding price."]);
         } catch (ModelNotFoundException $e) {
             return api_response($request, null, 404, ["message" => "Model Not found."]);
         } catch (ValidationException $e) {

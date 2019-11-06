@@ -42,7 +42,6 @@ class AffiliateRoute
             $api->delete('bank-info/{profile_bank_information}', 'AffiliateController@deleteBankInformation');
             $api->delete('mobile-bank-info/{profile_bank_information}', 'AffiliateController@deleteMobileBankInformation');
             $api->post('mobile-bank-information/{profile_mobile_bank_info}', 'AffiliateController@updateMobileBankInformation');
-            $api->post('nid-submit', 'AffiliateController@storeNid');
             $api->group(['prefix' => 'movie-ticket'], function ($api) {
                 $api->get('movie-list', 'MovieTicketController@getAvailableTickets');
                 $api->get('theatre-list', 'MovieTicketController@getAvailableTheatres');
@@ -59,5 +58,6 @@ class AffiliateRoute
         $api->get('mobile-bank-list', 'AffiliateController@mobileBankList');
         $api->post('eksheba/save', 'EkshebaController@saveEkshebaData');
         $api->get('affiliates/faq', 'FaqController@getAffiliateFaqs');
+        $api->post('profile/nid-submit', 'AffiliateController@storeNid')->middleware('jwtAuth');
     }
 }
