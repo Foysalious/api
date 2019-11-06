@@ -307,6 +307,7 @@ class ProcurementController extends Controller
                     'procurement_id' => $procurement->id,
                     'procurement_title' => $procurement->title,
                     'procurement_status' => $procurement->status,
+                    'created_at' => $procurement->created_at->format('d/m/y'),
                     'color' => constants('PROCUREMENT_ORDER_STATUSES_COLOR')[$procurement->status],
                     'bid_id' => $bid ? $bid->id : null,
                     'price' => $bid ? $bid->price : null,
