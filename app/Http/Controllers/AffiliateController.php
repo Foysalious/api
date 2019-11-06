@@ -18,6 +18,8 @@ use App\Sheba\BankingInfo\GeneralBanking;
 use App\Sheba\BankingInfo\MobileBanking;
 use App\Sheba\Bondhu\AffiliateHistory;
 use App\Sheba\Bondhu\AffiliateStatus;
+use App\Sheba\Bondhu\Repository\NidOcrClient;
+use App\Sheba\Bondhu\Repository\NidOcrRepository;
 use App\Sheba\Bondhu\TopUpEarning;
 use App\Transformers\Affiliate\BankDetailTransformer;
 use App\Transformers\Affiliate\MobileBankDetailTransformer;
@@ -53,12 +55,14 @@ class AffiliateController extends Controller
     private $fileRepository;
     private $locationRepository;
     private $affiliateRepository;
+    private $nidOcrRepo;
 
-    public function __construct()
+    public function __construct(NidOcrRepository $nidOcrRepo)
     {
         $this->fileRepository = new FileRepository();
         $this->locationRepository = new LocationRepository();
         $this->affiliateRepository = new AffiliateRepository();
+        $this->nidOcrRepo = $nidOcrRepo;
     }
 
     public function edit($affiliate, Request $request)
@@ -868,21 +872,20 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
 
         $years = ($days / 365);
         $years = floor($years);
-        if($years) {
+        if ($years) {
             $result = "$years" . " years ";
         }
 
         $month = ($days % 365) / 30.5;
         $month = floor($month);
-        if($month) {
+        if ($month) {
             $result .= "$month" . " months ";
         }
 
         $days = ($days % 365) % 30.5;
-        if($days) {
+        if ($days) {
             $result .= "$days" . " days";
         }
-
 
 
         return $result;
@@ -1139,12 +1142,33 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
     public function storeNid(Request $request)
     {
         try {
-            dd($request->nid_image);
-            return api_response($request, null, 200, ['data' => 231]);
+            $input = $request->except('affiliate', 'remember_token');
+            $data = [];
+
+            if ('clear' === $request->mock) {
+                return $data = [
+                    'code' => 200,
+                    'data' => [
+                        'name' => 'English name',
+                        'name_bn' => 'Bangla name',
+                        'gender' => 'নারী'
+                    ]
+                ];
+            } else {
+                return $data = [
+                    'code' => 422,
+                    'data' => null
+                ];
+
+            }
+
+            $this->nidOcrRepo->nidCheck('', $input);
+
+            return api_response($request, null, 200, ['data' => $data]);
         } catch (Throwable $e) {
+
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
-
     }
 }
