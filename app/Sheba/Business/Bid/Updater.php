@@ -166,7 +166,7 @@ class Updater
         try {
             DB::transaction(function () {
                 $this->bidRepository->update($this->bid, ['status' => $this->status]);
-                if ($this->status == config('b2b.BID_STATUSES')['awarded']) $this->procurementUpdater->setProcurement($this->bid->procurement)
+                if ($this->status == config('b2b.BID_STATUSES')['accepted']) $this->procurementUpdater->setProcurement($this->bid->procurement)
                     ->setStatus(config('b2b.PROCUREMENT_STATUS')['accepted'])->updateStatus();
             });
         } catch (QueryException $e) {
