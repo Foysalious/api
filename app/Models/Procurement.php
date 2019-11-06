@@ -53,7 +53,7 @@ class Procurement extends Model implements PayableType
 
     public function getActiveBid()
     {
-        return $this->bids->where('status', config('b2b.BID_STATUSES')['awarded'])->first();
+        return $this->bids->where('status', config('b2b.BID_STATUSES')['accepted'])->first();
     }
 
     public function calculate()

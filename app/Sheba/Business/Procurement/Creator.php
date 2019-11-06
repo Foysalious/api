@@ -354,7 +354,7 @@ class Creator
                 'total_rating' => $this->bid->bidder->reviews->count()
             ],
             'bid_id' => $this->bid->id,
-            'bid_price' => $this->bid->price,#Total Proposed Price
+            'bid_price' => $this->bid->price,
             'bid_price_quotations' => $bid_price_quotations
         ];
         return $order_details;
