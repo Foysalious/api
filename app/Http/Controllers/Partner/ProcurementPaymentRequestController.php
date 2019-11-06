@@ -37,9 +37,12 @@ class ProcurementPaymentRequestController extends Controller
             $creator->setProcurement($procurement)->setBid($bid);
             $creator = $creator->setAmount($request->amount)
                 ->setShortDescription($request->short_description);
-            $payment_request = $creator->paymentRequestCreate();
-            return api_response($request, $payment_request, 200, ['id' => $payment_request->id]);
-
+            $payment_request_validation = $creator->isCapableForPaymentRequest();
+            if ($payment_request_validation) {
+                $payment_request = $creator->paymentRequestCreate();
+                return api_response($request, $payment_request, 200, ['id' => $payment_request->id]);
+            }
+            return api_response($request, null, 420, ["message" => "Your total requested amount exceeded the bid price."]);
         } catch (ModelNotFoundException $e) {
             return api_response($request, null, 404, ["message" => "Model Not found."]);
         } catch (ValidationException $e) {
