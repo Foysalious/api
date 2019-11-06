@@ -18,8 +18,6 @@ use App\Sheba\BankingInfo\GeneralBanking;
 use App\Sheba\BankingInfo\MobileBanking;
 use App\Sheba\Bondhu\AffiliateHistory;
 use App\Sheba\Bondhu\AffiliateStatus;
-use App\Sheba\Bondhu\Repository\OcrClient;
-use App\Sheba\Bondhu\Repository\OcrRepository;
 use App\Sheba\Bondhu\TopUpEarning;
 use App\Transformers\Affiliate\BankDetailTransformer;
 use App\Transformers\Affiliate\MobileBankDetailTransformer;
@@ -38,6 +36,7 @@ use League\Fractal\Resource\Item;
 use Sheba\Bondhu\Statuses;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
+use Sheba\Ocr\Repository\OcrRepository;
 use Sheba\Reports\ExcelHandler;
 use Sheba\Repositories\Interfaces\ProfileBankingRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProfileMobileBankingRepositoryInterface;
@@ -57,12 +56,11 @@ class AffiliateController extends Controller
     private $affiliateRepository;
     private $nidOcrRepo;
 
-    public function __construct(OcrRepository $nidOcrRepo)
+    public function __construct()
     {
         $this->fileRepository = new FileRepository();
         $this->locationRepository = new LocationRepository();
         $this->affiliateRepository = new AffiliateRepository();
-        $this->nidOcrRepo = $nidOcrRepo;
     }
 
     public function edit($affiliate, Request $request)
@@ -1139,15 +1137,15 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         }
     }
 
-    public function storeNid(Request $request)
+    public function storeNid(Request $request, OcrRepository $ocr_repo)
     {
         try {
             $this->validate($request, []);
             $profile = $request->profile;
-            $input = $request->except('affiliate', 'remember_token');
+            $input = $request->except('profile', 'remember_token');
             $data = [];
-
-            if ('clear' === $request->mock) {
+            $ocr_repo->nidCheck($input);
+            /*if ('clear' === $request->mock) {
                 return $data = [
                     'code' => 200,
                     'data' => [
@@ -1162,13 +1160,9 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
                     'data' => null
                 ];
 
-            }
-
-//            $this->nidOcrRepo->nidCheck( $input);
-
+            }*/
             return api_response($request, null, 200, ['data' => $data]);
         } catch (Throwable $e) {
-
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

@@ -1,9 +1,6 @@
-<?php namespace Sheba\Bondhu\Repository;
+<?php namespace Sheba\Ocr\Repository;
 
-
-use App\Sheba\Bondhu\Repository\OcrClient;
 use Sheba\ModificationFields;
-
 
 class BaseRepository
 {
@@ -20,5 +17,4 @@ class BaseRepository
     {
         $this->client = $client;
     }
-
 }

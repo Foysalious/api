@@ -1,10 +1,9 @@
-<?php namespace App\Sheba\Bondhu\Exceptions;
-
+<?php namespace Sheba\Ocr\Exceptions;
 
 use Exception;
 use Throwable;
 
-class NidOcrServerError extends Exception
+class OcrServerError extends Exception
 {
     public function __construct($message = "", $code = 402, Throwable $previous = null)
     {
@@ -13,5 +12,4 @@ class NidOcrServerError extends Exception
         }
         parent::__construct($message, $code, $previous);
     }
-
 }
