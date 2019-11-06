@@ -242,7 +242,7 @@ class Creator
         foreach ($order_time_lines as $key => $time_lines) {
             array_push($order_time_line, [
                 'date' => Carbon::parse($key)->format('d M'),
-                'year' => Carbon::parse($key)->format('y'),
+                'year' => Carbon::parse($key)->format('Y'),
                 'logs' => $time_lines,
             ]);
         }

@@ -286,8 +286,8 @@ class ProcurementController extends Controller
         try {
             list($offset, $limit) = calculatePagination($request);
             $procurements = Procurement::order()->with(['bids' => function ($q) {
-                $q->select('id', 'procurement_id', 'bidder_id', 'bidder_type', 'price');
-            }])->orderBy('id', 'DESC');
+                $q->select('id', 'procurement_id', 'bidder_id', 'bidder_type', 'status', 'price');
+            }])->orderBy('id', 'ASC');
             if ($request->has('status')) {
                 $procurements = $procurements->where('status', $request->status);
             }
@@ -300,7 +300,7 @@ class ProcurementController extends Controller
             $procurements = $procurements->skip($offset)->limit($limit)->get();
             $rfq_order_lists = [];
             foreach ($procurements as $procurement) {
-                $bid = $procurement->bids ? $procurement->bids->first() : null;
+                $bid = $procurement->getActiveBid() ? $procurement->getActiveBid() : null;
                 array_push($rfq_order_lists, [
                     'procurement_id' => $procurement->id,
                     'procurement_title' => $procurement->title,
@@ -332,6 +332,7 @@ class ProcurementController extends Controller
         } catch (ModelNotFoundException $e) {
             return api_response($request, null, 404, ["message" => "Model Not found."]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

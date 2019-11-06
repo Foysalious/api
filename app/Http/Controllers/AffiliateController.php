@@ -843,16 +843,49 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         try {
             $affiliate = $request->affiliate;
             $is_verified = $affiliate->verification_status;
+
+            $member_since = date_format($affiliate->created_at, 'Y-m-d');
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
             $resource = new Item($affiliate->profile, new ProfileDetailTransformer());
             $details = $manager->createData($resource)->toArray()['data'];
             $details['is_verified'] = $is_verified;
+            $details['member_since'] = $member_since;
             return api_response($request, null, 200, ['data' => $details]);
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function dateDiffInDays($date1, $date2)
+    {
+        $diff = strtotime($date2) - strtotime($date1);
+        $result = '';
+
+        $days = abs(round($diff / 86400));
+
+        $years = ($days / 365);
+        $years = floor($years);
+        if($years) {
+            $result = "$years" . " years ";
+        }
+
+        $month = ($days % 365) / 30.5;
+        $month = floor($month);
+        if($month) {
+            $result .= "$month" . " months ";
+        }
+
+        $days = ($days % 365) % 30.5;
+        if($days) {
+            $result .= "$days" . " days";
+        }
+
+
+
+        return $result;
     }
 
     public function updatePersonalInformation($affiliate, Request $request, ProfileRepositoryInterface $profile_repo)
@@ -1012,7 +1045,6 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         }
     }
 
-
     public function deleteMobileBankInformation($affiliate, $mobile_bank_info_id, Request $request, ProfileMobileBankingRepositoryInterface $profile_mobile_bank_repo)
     {
         try {
@@ -1102,5 +1134,17 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function storeNid(Request $request)
+    {
+        try {
+            dd($request->nid_image);
+            return api_response($request, null, 200, ['data' => 231]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
     }
 }

@@ -1,15 +1,14 @@
 <?php namespace App\Transformers\Affiliate;
 
 use App\Models\Profile;
+use App\Sheba\Gender\Gender;
 use League\Fractal\TransformerAbstract;
 
 class ProfileDetailPersonalInfoTransformer extends TransformerAbstract
 {
     public function transform(Profile $profile)
     {
-        $this->profile = $profile;
-
-        $personal_info = [
+        return [
             'name' => $profile->name,
             'bn_name' => $profile->bn_name,
             'profile_image' => $profile->pro_pic,
@@ -23,9 +22,7 @@ class ProfileDetailPersonalInfoTransformer extends TransformerAbstract
             'permanent_address' => $profile->permanent_address,
             'post_office' => $profile->post_office,
             'post_code' => $profile->post_code,
-            'gender' => $profile->gender
+            'gender' => Gender::getGenderDisplayableName($profile->gender)
         ];
-
-        return $personal_info;
     }
 }
