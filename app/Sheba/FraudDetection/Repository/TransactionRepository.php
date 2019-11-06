@@ -1,7 +1,4 @@
-<?php
-
-
-namespace Sheba\FraudDetection\Repository;
+<?php namespace Sheba\FraudDetection\Repository;
 
 
 use Sheba\FraudDetection\Exceptions\FraudDetectionServerError;

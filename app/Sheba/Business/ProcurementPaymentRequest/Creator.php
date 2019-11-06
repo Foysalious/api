@@ -68,7 +68,7 @@ class Creator
 
     public function getAll()
     {
-        $this->allPaymentRequest = $this->procurementPaymentRequestRepository->getAll();
+        $this->allPaymentRequest = $this->procurement->paymentRequests;
         $payment_request = [];
         foreach ($this->allPaymentRequest as $payment) {
             array_push($payment_request, [
