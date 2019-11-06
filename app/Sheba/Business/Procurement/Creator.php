@@ -242,7 +242,7 @@ class Creator
         foreach ($order_time_lines as $key => $time_lines) {
             array_push($order_time_line, [
                 'date' => Carbon::parse($key)->format('d M'),
-                'year' => Carbon::parse($key)->format('y'),
+                'year' => Carbon::parse($key)->format('Y'),
                 'logs' => $time_lines,
             ]);
         }
@@ -354,7 +354,7 @@ class Creator
                 'total_rating' => $this->bid->bidder->reviews->count()
             ],
             'bid_id' => $this->bid->id,
-            'bid_price' => $this->bid->price,#Total Proposed Price
+            'bid_price' => $this->bid->price,
             'bid_price_quotations' => $bid_price_quotations
         ];
         return $order_details;

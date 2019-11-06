@@ -3,6 +3,7 @@
 use App\Models\Bid;
 use App\Models\Procurement;
 use Illuminate\Database\QueryException;
+use phpDocumentor\Reflection\DocBlock\Description;
 use Sheba\Dal\ProcurementPaymentRequest\ProcurementPaymentRequestRepositoryInterface;
 
 class Creator
@@ -82,6 +83,18 @@ class Creator
             ]);
         }
         return $payment_request;
+    }
+
+    public function isCapableForPaymentRequest()
+    {
+        $price = $this->bid->price;
+        $already_requested_amount = (double)$this->procurement->paymentRequests()->sum('amount');
+        $new_total_amount_after_request = $already_requested_amount + $this->amount;
+
+        if ($new_total_amount_after_request > $price) {
+            return false;
+        }
+        return true;
     }
 
     public function paymentRequestCreate()

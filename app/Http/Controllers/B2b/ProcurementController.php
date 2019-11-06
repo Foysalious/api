@@ -286,7 +286,7 @@ class ProcurementController extends Controller
         try {
             list($offset, $limit) = calculatePagination($request);
             $procurements = Procurement::order()->with(['bids' => function ($q) {
-                $q->select('id', 'procurement_id', 'bidder_id', 'bidder_type', 'price');
+                $q->select('id', 'procurement_id', 'bidder_id', 'bidder_type', 'status', 'price');
             }])->orderBy('id', 'DESC');
             if ($request->has('status')) {
                 $procurements = $procurements->where('status', $request->status);
