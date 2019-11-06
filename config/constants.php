@@ -661,8 +661,8 @@ return [
         'cancelled' => '#B3B7CC'
     ],
     'PROCUREMENT_PAYMENT_STATUS' => [
-        'pending' => '#B3B7CC',
-        'approved' => '#FF8219',
+        'pending' => '#FF8219',
+        'approved' => '#12B886',
         'acknowledged' => '#12B886',
         'rejected' => '#B3B7CC',
         'paid' => '#12B886'
