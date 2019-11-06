@@ -290,7 +290,7 @@ class ProcurementController extends Controller
             }])->orderBy('id', 'DESC');
             $total_procurement = $procurements->get()->count();
 
-            if ($request->has('status')) {
+            if ($request->has('status') && $request->status != 'all') {
                 $procurements = $procurements->where('status', $request->status);
             }
 
