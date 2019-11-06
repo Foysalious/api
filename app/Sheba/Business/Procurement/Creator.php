@@ -208,6 +208,7 @@ class Creator
     public function formatTimeline()
     {
         $payment_requests = $this->procurement->paymentRequests()->with('statusChangeLogs')->get();
+
         $requests = [];
         $request_logs = [];
         foreach ($payment_requests as $payment_request) {
@@ -237,7 +238,7 @@ class Creator
             'log' => 'Hired ' . $this->bid->bidder->name . ' and Status Updated From ' . $bid_status_change_log->from_status . ' To ' . $bid_status_change_log->to_status
         ];
 
-        $order_time_lines = collect(array_merge([$data], $requests, $request_logs))->groupBy('date');
+        $order_time_lines = collect(array_merge([$data], $requests, $request_logs))->sortByDesc('created_at')->groupBy('date');
         $order_time_line = [];
         foreach ($order_time_lines as $key => $time_lines) {
             array_push($order_time_line, [
