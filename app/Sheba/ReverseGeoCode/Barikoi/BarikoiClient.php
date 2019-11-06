@@ -36,11 +36,9 @@ class BarikoiClient implements Client
             ]);
             $response = json_decode($response->getBody());
             $address = new Address();
-            $address->setAddress(null);
-            if (!isset($response->Place)) return $address;
+            if (!isset($response->Place)) return $address->setAddress(null);
             $place = $response->Place[0];
-            $address->setAddress($place->Address . ', ' . $place->area . ', ' . $place->city);
-            return $address;
+            return $address->setAddress($place->Address . ', ' . $place->area . ', ' . $place->city);
         } catch (RequestException $e) {
             throw $e;
         }
