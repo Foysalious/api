@@ -5,6 +5,9 @@ class Route
     public function set($api)
     {
         $api->group(['prefix' => 'v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
+            $api->group(['prefix' => 'geo'], function ($api) {
+                $api->get('geocode/reverse', 'GeocodeController@reverseGeocode');
+            });
             $api->group(['prefix' => 'vendors', 'middleware' => ['vendor.auth']], function ($api) {
                 $api->get('times', 'Vendor\ShebaController@getTimes');
                 $api->get('categories', 'Vendor\CategoryController@index');
