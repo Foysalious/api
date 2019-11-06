@@ -24,12 +24,17 @@ class CommentController extends Controller
                 $commentable = Procurement::findOrFail((int)$commentable);
             }
             list($offset, $limit) = calculatePagination($request);
-            $comments = $commentable->comments()->orderBy('id', 'ASC')
-                ->skip($offset)->limit($limit)
-                ->get();
+            $comments = $commentable->comments()
+                ->skip($offset)->limit($limit);
+
+            if ($request->has('sort')) {
+                $comments = $comments->orderBy('id', $request->sort);
+            } else {
+                $comments = $comments->orderBy('id', 'ASC');
+            }
 
             $comment_lists = [];
-            foreach ($comments as $comment) {
+            foreach ($comments->get() as $comment) {
                 array_push($comment_lists, [
                     'id' => $comment->id,
                     'comment' => $comment->comment,
