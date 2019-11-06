@@ -18,8 +18,8 @@ use App\Sheba\BankingInfo\GeneralBanking;
 use App\Sheba\BankingInfo\MobileBanking;
 use App\Sheba\Bondhu\AffiliateHistory;
 use App\Sheba\Bondhu\AffiliateStatus;
-use App\Sheba\Bondhu\Repository\NidOcrClient;
-use App\Sheba\Bondhu\Repository\NidOcrRepository;
+use App\Sheba\Bondhu\Repository\OcrClient;
+use App\Sheba\Bondhu\Repository\OcrRepository;
 use App\Sheba\Bondhu\TopUpEarning;
 use App\Transformers\Affiliate\BankDetailTransformer;
 use App\Transformers\Affiliate\MobileBankDetailTransformer;
@@ -57,7 +57,7 @@ class AffiliateController extends Controller
     private $affiliateRepository;
     private $nidOcrRepo;
 
-    public function __construct(NidOcrRepository $nidOcrRepo)
+    public function __construct(OcrRepository $nidOcrRepo)
     {
         $this->fileRepository = new FileRepository();
         $this->locationRepository = new LocationRepository();
@@ -1142,6 +1142,8 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
     public function storeNid(Request $request)
     {
         try {
+            $this->validate($request, []);
+            $profile = $request->profile;
             $input = $request->except('affiliate', 'remember_token');
             $data = [];
 
@@ -1162,7 +1164,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
 
             }
 
-            $this->nidOcrRepo->nidCheck('', $input);
+//            $this->nidOcrRepo->nidCheck( $input);
 
             return api_response($request, null, 200, ['data' => $data]);
         } catch (Throwable $e) {

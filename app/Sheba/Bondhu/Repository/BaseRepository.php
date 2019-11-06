@@ -1,7 +1,7 @@
 <?php namespace Sheba\Bondhu\Repository;
 
 
-use App\Sheba\Bondhu\Repository\NidOcrClient;
+use App\Sheba\Bondhu\Repository\OcrClient;
 use Sheba\ModificationFields;
 
 
@@ -9,14 +9,14 @@ class BaseRepository
 {
     use ModificationFields;
 
-    /** @var NidOcrClient $client */
+    /** @var OcrClient $client */
     protected $client;
 
     /**
      * BaseRepository constructor.
-     * @param NidOcrClient $client
+     * @param OcrClient $client
      */
-    public function __construct(NidOcrClient $client)
+    public function __construct(OcrClient $client)
     {
         $this->client = $client;
     }

@@ -5,17 +5,21 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Sheba\Bondhu\Exeptions\NidOcrServerError;
 
-class NidOcrClient
+class OcrClient
 {
     protected $client;
     protected $baseUrl;
     protected $apiKey;
 
+    /**
+     * OcrClient constructor.
+     * @param Client $client
+     */
     public function __construct(Client $client)
     {
         $this->client = $client;
-        $this->baseUrl = rtrim(config('nid_ocr.api_url'), '/');
-        $this->apiKey = config('nid_ocr.api_key');
+        $this->baseUrl = rtrim(config('ocr.api_url'), '/');
+        $this->apiKey = config('ocr.api_key');
     }
 
 
@@ -54,12 +58,13 @@ class NidOcrClient
     private function call($method, $uri, $data = null)
     {
         try {
-            dd(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data));
             $res = decodeGuzzleResponse($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data)));
+            dd($res);
             if ($res['code'] != 200) throw new NidOcrServerError($res['message']);
             unset($res['code'], $res['message']);
             return $res;
         } catch (GuzzleException $e) {
+            dd($e);
             $res = decodeGuzzleResponse($e->getResponse());
             if ($res['code'] == 400) throw new NidOcrServerError($res['message']);
             throw new NidOcrServerError($e->getMessage());
