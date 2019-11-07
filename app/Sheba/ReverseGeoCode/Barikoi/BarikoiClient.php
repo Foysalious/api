@@ -1,6 +1,5 @@
 <?php namespace Sheba\ReverseGeoCode\Barikoi;
 
-
 use GuzzleHttp\Exception\RequestException;
 use Sheba\Location\Geo;
 use GuzzleHttp\Client as HTTPClient;
@@ -28,7 +27,7 @@ class BarikoiClient implements Client
     {
         try {
             $client = new HTTPClient();
-            $response = $client->request('GET', "https://barikoi.xyz/v1/api/search/reverse/geocode/" . $this->apiKey . "/place", [
+            $response = $client->request('GET', 'https://barikoi.xyz/v1/api/search/reverse/' . $this->apiKey . '/geocode', [
                 'query' => [
                     'latitude' => $this->geo->getLat(),
                     'longitude' => $this->geo->getLng(),
@@ -36,9 +35,9 @@ class BarikoiClient implements Client
             ]);
             $response = json_decode($response->getBody());
             $address = new Address();
-            if (!isset($response->Place)) return $address->setAddress(null);
-            $place = $response->Place[0];
-            return $address->setAddress($place->Address . ', ' . $place->area . ', ' . $place->city);
+            if (!isset($response->place)) return $address->setAddress(null);
+            $place = $response->place;
+            return $address->setAddress($place->address . ', ' . $place->area . ', ' . $place->city);
         } catch (RequestException $e) {
             throw $e;
         }
