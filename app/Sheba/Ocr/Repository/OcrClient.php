@@ -2,6 +2,8 @@
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\File;
 use Sheba\Ocr\Exceptions\OcrServerError;
 
 class OcrClient
@@ -24,16 +26,6 @@ class OcrClient
     public function get($uri)
     {
         return $this->call('get', $uri);
-    }
-
-    public function post($uri, $data)
-    {
-        return $this->call('post', $uri, $data);
-    }
-
-    public function put($uri, $data)
-    {
-        return $this->call('put', $uri, $data);
     }
 
     /**
@@ -73,14 +65,16 @@ class OcrClient
     private function getOptions($data = null)
     {
         $options['headers'] = [
-            'Content-Type' => ' multipart/form-data',
             'x-api-key' => $this->apiKey,
             'Accept' => 'application/json'
         ];
 
         if ($data) {
+
             $request = request();
+            /** @var UploadedFile $file */
             $file = $request->file('nid_image');
+
             $options['multipart'] = [
                 [
                     'name' => 'side',
@@ -88,12 +82,22 @@ class OcrClient
                 ],
                 [
                     'name' => 'nid_image',
-                    'contents' => base64_encode(file_get_contents($file)),
-                    'filename' => $file->getFilename()
+                    'contents' => File::get($file->getRealPath()),
+                    'filename' => $file->getClientOriginalName()
                 ]
             ];
 
         }
         return $options;
+    }
+
+    public function post($uri, $data)
+    {
+        return $this->call('post', $uri, $data);
+    }
+
+    public function put($uri, $data)
+    {
+        return $this->call('put', $uri, $data);
     }
 }

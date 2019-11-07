@@ -24,14 +24,12 @@ use App\Transformers\Affiliate\MobileBankDetailTransformer;
 use App\Transformers\Affiliate\ProfileDetailPersonalInfoTransformer;
 use App\Transformers\Affiliate\ProfileDetailTransformer;
 use App\Transformers\CustomSerializer;
-use App\Transformers\PosOrderTransformer;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
-use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use Sheba\Bondhu\Statuses;
 use Sheba\FraudDetection\TransactionSources;
@@ -101,6 +99,14 @@ class AffiliateController extends Controller
         }
     }
 
+    private function _validateEdit($request)
+    {
+        $validator = Validator::make($request, [
+            'bkash_no' => 'sometimes|required|string|mobile:bd',
+        ], ['mobile' => 'Invalid bKash number!']);
+        return $validator->fails() ? $validator->errors()->all()[0] : false;
+    }
+
     public function getStatus($affiliate, Request $request)
     {
         try {
@@ -153,6 +159,14 @@ class AffiliateController extends Controller
             return api_response($request, null, 500);
         }
 
+    }
+
+    private function _validateImage($request)
+    {
+        $validator = Validator::make($request->all(), [
+            'photo' => 'required|mimes:jpeg,png|max:500'
+        ]);
+        return $validator->fails() ? $validator->errors()->all()[0] : false;
     }
 
     public function getWallet($affiliate, Request $request)
@@ -316,45 +330,6 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id]));
         }
     }
 
-    /**
-     * @param $affiliate
-     * @param Request $request
-     * @return bool
-     */
-    public function checkUpdateParamsOnVerifiedStatus($affiliate, Request $request)
-    {
-        $restricted_keys = ['name', 'bn_name', 'dob', 'nid_no'];
-        $msg = null;
-        $access_denied = $affiliate->verification_status == Statuses::VERIFIED && !empty(array_intersect($restricted_keys, array_keys($request->all())));
-        if ($access_denied) {
-            $denied_field = [];
-            if ($request->has('name')) array_push($denied_field, 'Name');
-            if ($request->has('bn_name')) array_push($denied_field, 'Bangla Name');
-            if ($request->has('dob')) array_push($denied_field, 'Date Of Birth');
-            if ($request->has('nid_no')) array_push($denied_field, 'nid no');
-            $msg = implode(', ', $denied_field) . ' field not changeable on verified status';
-        }
-
-        return [$access_denied, $msg];
-    }
-
-    private function mapAgents($query)
-    {
-        return collect(array_merge(...$query))->groupBy('id')
-            ->map(function ($data) {
-                $dataSet = $data[0];
-                if (isset($data[1])) {
-                    $dataSet['total_gifted_amount'] += $data[1]['total_gifted_amount'];
-                    $dataSet['total_gifted_number'] += $data[1]['total_gifted_number'];
-                }
-                if (isset($data[2])) {
-                    $dataSet['total_gifted_amount'] += $data[2]['total_gifted_amount'];
-                    $dataSet['total_gifted_number'] += $data[2]['total_gifted_number'];
-                }
-                return $dataSet;
-            })->values();
-    }
-
     private function filterAgents($q, $agents)
     {
         if (isset($q) & !empty($q)) {
@@ -363,24 +338,6 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id]));
             });
         }
         return $agents;
-    }
-
-    private function allAgents($affiliate)
-    {
-        return $affiliate->agents->map(function ($agent) {
-            return [
-                'id' => $agent->id,
-                'profile_id' => $agent->profile_id,
-                'name' => $agent->profile->name,
-                'ambassador_id' => $agent->ambassador_id,
-                'picture' => $agent->profile->pro_pic,
-                'mobile' => $agent->profile->mobile,
-                'created_at' => $agent->created_at->toDateTimeString(),
-                'joined' => $agent->joined,
-                'total_gifted_amount' => 0,
-                'total_gifted_number' => 0
-            ];
-        })->toArray();
     }
 
     private function sortAgents($sort_order, $agents)
@@ -609,12 +566,6 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         }
     }
 
-    private function ifTransactionAlreadyExists($transaction_id)
-    {
-        return (AffiliateTransaction::where('transaction_details', 'like', "%$transaction_id%")->count() > 0) ||
-            (PartnerTransaction::where('transaction_details', 'like', "%$transaction_id%")->count() > 0);
-    }
-
     private function recharge(Affiliate $affiliate, $transaction)
     {
         $data = $this->makeRechargeData($transaction);
@@ -644,22 +595,6 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             'type' => 'Credit',
             'log' => 'Moneybag Refilled'
         ];
-    }
-
-    private function _validateImage($request)
-    {
-        $validator = Validator::make($request->all(), [
-            'photo' => 'required|mimes:jpeg,png|max:500'
-        ]);
-        return $validator->fails() ? $validator->errors()->all()[0] : false;
-    }
-
-    private function _validateEdit($request)
-    {
-        $validator = Validator::make($request, [
-            'bkash_no' => 'sometimes|required|string|mobile:bd',
-        ], ['mobile' => 'Invalid bKash number!']);
-        return $validator->fails() ? $validator->errors()->all()[0] : false;
     }
 
     public function getServicesInfo($affiliate, Request $request)
@@ -861,34 +796,6 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         }
     }
 
-    private function dateDiffInDays($date1, $date2)
-    {
-        $diff = strtotime($date2) - strtotime($date1);
-        $result = '';
-
-        $days = abs(round($diff / 86400));
-
-        $years = ($days / 365);
-        $years = floor($years);
-        if ($years) {
-            $result = "$years" . " years ";
-        }
-
-        $month = ($days % 365) / 30.5;
-        $month = floor($month);
-        if ($month) {
-            $result .= "$month" . " months ";
-        }
-
-        $days = ($days % 365) % 30.5;
-        if ($days) {
-            $result .= "$days" . " days";
-        }
-
-
-        return $result;
-    }
-
     public function updatePersonalInformation($affiliate, Request $request, ProfileRepositoryInterface $profile_repo)
     {
         try {
@@ -918,6 +825,28 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    /**
+     * @param $affiliate
+     * @param Request $request
+     * @return bool
+     */
+    public function checkUpdateParamsOnVerifiedStatus($affiliate, Request $request)
+    {
+        $restricted_keys = ['name', 'bn_name', 'dob', 'nid_no'];
+        $msg = null;
+        $access_denied = $affiliate->verification_status == Statuses::VERIFIED && !empty(array_intersect($restricted_keys, array_keys($request->all())));
+        if ($access_denied) {
+            $denied_field = [];
+            if ($request->has('name')) array_push($denied_field, 'Name');
+            if ($request->has('bn_name')) array_push($denied_field, 'Bangla Name');
+            if ($request->has('dob')) array_push($denied_field, 'Date Of Birth');
+            if ($request->has('nid_no')) array_push($denied_field, 'nid no');
+            $msg = implode(', ', $denied_field) . ' field not changeable on verified status';
+        }
+
+        return [$access_denied, $msg];
     }
 
     public function storeBankInformation($affiliate, Request $request, ProfileBankingRepositoryInterface $profile_bank_repo)
@@ -1163,8 +1092,78 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             }*/
             return api_response($request, null, 200, ['data' => $data]);
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function mapAgents($query)
+    {
+        return collect(array_merge(...$query))->groupBy('id')
+            ->map(function ($data) {
+                $dataSet = $data[0];
+                if (isset($data[1])) {
+                    $dataSet['total_gifted_amount'] += $data[1]['total_gifted_amount'];
+                    $dataSet['total_gifted_number'] += $data[1]['total_gifted_number'];
+                }
+                if (isset($data[2])) {
+                    $dataSet['total_gifted_amount'] += $data[2]['total_gifted_amount'];
+                    $dataSet['total_gifted_number'] += $data[2]['total_gifted_number'];
+                }
+                return $dataSet;
+            })->values();
+    }
+
+    private function allAgents($affiliate)
+    {
+        return $affiliate->agents->map(function ($agent) {
+            return [
+                'id' => $agent->id,
+                'profile_id' => $agent->profile_id,
+                'name' => $agent->profile->name,
+                'ambassador_id' => $agent->ambassador_id,
+                'picture' => $agent->profile->pro_pic,
+                'mobile' => $agent->profile->mobile,
+                'created_at' => $agent->created_at->toDateTimeString(),
+                'joined' => $agent->joined,
+                'total_gifted_amount' => 0,
+                'total_gifted_number' => 0
+            ];
+        })->toArray();
+    }
+
+    private function ifTransactionAlreadyExists($transaction_id)
+    {
+        return (AffiliateTransaction::where('transaction_details', 'like', "%$transaction_id%")->count() > 0) ||
+            (PartnerTransaction::where('transaction_details', 'like', "%$transaction_id%")->count() > 0);
+    }
+
+    private function dateDiffInDays($date1, $date2)
+    {
+        $diff = strtotime($date2) - strtotime($date1);
+        $result = '';
+
+        $days = abs(round($diff / 86400));
+
+        $years = ($days / 365);
+        $years = floor($years);
+        if ($years) {
+            $result = "$years" . " years ";
+        }
+
+        $month = ($days % 365) / 30.5;
+        $month = floor($month);
+        if ($month) {
+            $result .= "$month" . " months ";
+        }
+
+        $days = ($days % 365) % 30.5;
+        if ($days) {
+            $result .= "$days" . " days";
+        }
+
+
+        return $result;
     }
 }

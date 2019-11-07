@@ -58,6 +58,6 @@ class AffiliateRoute
         $api->get('mobile-bank-list', 'AffiliateController@mobileBankList');
         $api->post('eksheba/save', 'EkshebaController@saveEkshebaData');
         $api->get('affiliates/faq', 'FaqController@getAffiliateFaqs');
-        $api->post('profile/nid-submit', 'AffiliateController@storeNid')->middleware('jwtAuth');
+        $api->post('profile/nid-submit', 'AffiliateController@storeNid');
     }
 }
