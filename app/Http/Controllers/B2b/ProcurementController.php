@@ -101,7 +101,7 @@ class ProcurementController extends Controller
                     "title" => $procurement->title,
                     "status" => $procurement->status,
                     "last_date_of_submission" => Carbon::parse($procurement->last_date_of_submission)->format('d/m/y'),
-                    "bid_count" => $procurement->bids->count()
+                    "bid_count" => $procurement->bids()->where('status','<>', 'pending')->get()->count()
                 ]);
             }
             if (count($procurements_list) > 0) return api_response($request, $procurements_list, 200, [
