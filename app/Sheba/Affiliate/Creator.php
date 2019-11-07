@@ -41,6 +41,7 @@ class Creator
             'remember_token' => randomString(255, 0, 1, 0),
             'verification_status' => VerificationStatus::PENDING
         ];
+
         $this->affiliate = $this->affiliateRepo->setModel(new Affiliate())->create($data);
         $this->registrationBonus();
         (new NotificationRepository())->forAffiliateRegistration($this->affiliate);

@@ -50,8 +50,10 @@ class AffiliateRegistrationController extends Controller
         try {
             $this->validate($request, []);
             $profile = $request->profile;
-            $creator->setProfile($profile)->create();
+            if ($profile->affiliate)
+                return api_response($request, null, 409, ['msg' => 'Bondhu already exist']);
 
+            $creator->setProfile($profile)->create();
             return api_response($request, null, 200, ['msg' => 'Bondhu Created Successfully']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());

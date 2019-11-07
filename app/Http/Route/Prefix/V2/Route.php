@@ -197,6 +197,7 @@ class Route
                 (new MovieTicketRoute())->set($api);
             });
             $api->get('refresh-token', 'ProfileController@refresh');
+            $api->get('partner/subscriptions', 'partner\PartnerSubscriptionController@getAllPackages');
         });
         return $api;
     }
