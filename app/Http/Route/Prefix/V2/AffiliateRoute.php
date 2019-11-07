@@ -59,6 +59,6 @@ class AffiliateRoute
         $api->post('eksheba/save', 'EkshebaController@saveEkshebaData');
         $api->get('affiliates/faq', 'FaqController@getAffiliateFaqs');
         $api->post('profile/nid-submit', 'AffiliateController@storeNid')->middleware('jwtAuth');
-        $api->post('profile/information', 'AffiliateController@updateNidInfo')->middleware('jwtAuth');
+        $api->post('profile/information', 'AffiliateController@updateProfileInfo')->middleware('jwtAuth');
     }
 }

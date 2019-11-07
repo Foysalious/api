@@ -1161,15 +1161,15 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         }
     }
 
-    public function updateNidInfo(Request $request, ProfileRepositoryInterface $profile_repo)
+    public function updateProfileInfo(Request $request, ProfileRepositoryInterface $profile_repo)
     {
         try {
             $this->validate($request, []);
             $profile = $request->profile;
+            if(!$profile) return api_response($request, null, 404, ['data' => null]);
+
             $input = $request->except('profile', 'remember_token');
-
             $profile_repo->update($profile, $input);
-
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
             $resource = new Item($profile, new ProfileDetailPersonalInfoTransformer());
