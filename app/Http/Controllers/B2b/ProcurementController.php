@@ -203,7 +203,7 @@ class ProcurementController extends Controller
             $partners = Partner::whereIn('id', json_decode($request->partners))->get();
             $business = $request->business;
             $procurement = $procurementRepository->find($procurement);
-            $this->setModifier($request->member);
+            $this->setModifier($request->business_member);
             foreach ($partners as $partner) {
                 /** @var Partner $partner */
                 $sms->shoot($partner->getManagerMobile(), "You have been invited to serve" . $business->name);

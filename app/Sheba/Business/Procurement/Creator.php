@@ -343,6 +343,7 @@ class Creator
             'procurement_id' => $this->procurement->id,
             'procurement_title' => $this->procurement->title,
             'procurement_status' => $this->procurement->status,
+            'color' => constants('PROCUREMENT_ORDER_STATUSES_COLOR')[$this->procurement->status],
             'procurement_start_date' => Carbon::parse($this->procurement->procurement_start_date)->format('d/m/y'),
             'procurement_end_date' => Carbon::parse($this->procurement->procurement_end_date)->format('d/m/y'),
             'procurement_type' => $this->procurement->type,
