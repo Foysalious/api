@@ -19,6 +19,7 @@ use App\Sheba\BankingInfo\MobileBanking;
 use App\Sheba\Bondhu\AffiliateHistory;
 use App\Sheba\Bondhu\AffiliateStatus;
 use App\Sheba\Bondhu\TopUpEarning;
+use App\Sheba\Gender\Gender;
 use App\Transformers\Affiliate\BankDetailTransformer;
 use App\Transformers\Affiliate\MobileBankDetailTransformer;
 use App\Transformers\Affiliate\ProfileDetailPersonalInfoTransformer;
@@ -1144,23 +1145,15 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             $profile = $request->profile;
             $input = $request->except('profile', 'remember_token');
             $data = [];
-            $ocr_repo->nidCheck($input);
-            /*if ('clear' === $request->mock) {
-                return $data = [
+//          $ocr_repo->nidCheck($input);
+            return $data = [
                     'code' => 200,
                     'data' => [
                         'name' => 'English name',
                         'name_bn' => 'Bangla name',
-                        'gender' => 'নারী'
+                        'gender' => Gender::getGenderDisplayableName('Male')
                     ]
                 ];
-            } else {
-                return $data = [
-                    'code' => 422,
-                    'data' => null
-                ];
-
-            }*/
             return api_response($request, null, 200, ['data' => $data]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
