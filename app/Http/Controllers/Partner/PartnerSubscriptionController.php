@@ -31,6 +31,7 @@ class PartnerSubscriptionController extends Controller
 
             $partner_subscription_packages = $this->generateSubscriptionRelatedData($partner);
             $partner_subscription_package = $partner->subscription;
+            list($remaining, $wallet, $bonus_wallet, $threshold) = $partner->getCreditBreakdown();
             $data = [
                 'subscription_package' => $partner_subscription_packages,
                 'monthly_tag' => null, 'half_yearly_tag' => '১৯% ছাড়', 'yearly_tag' => '৫০% ছাড়',
@@ -47,7 +48,12 @@ class PartnerSubscriptionController extends Controller
                 'last_billing_date' => $partner->last_billed_date ? $partner->last_billed_date->format('Y-m-d') : null,
                 'next_billing_date' => $partner->last_billed_date ? $partner->periodicBillingHandler()->nextBillingDate()->format('Y-m-d') : null,
                 'validity_remaining_in_days' => $partner->last_billed_date ? $partner->periodicBillingHandler()->remainingDay() : null,
-                'is_auto_billing_activated' => ($partner->auto_billing_activated) ? true : false
+                'is_auto_billing_activated' => ($partner->auto_billing_activated) ? true : false,
+                'balance' => [
+                    'wallet' => $wallet + $bonus_wallet,
+                    'refund' => $remaining,
+                    'minimum_wallet_balance' => $threshold
+                ]
             ];
 
             return api_response($request, null, 200, $data);
@@ -284,7 +290,11 @@ class PartnerSubscriptionController extends Controller
                         return api_response($request, null, $inside ? 200 : 202, ['message' => " আপনার $requestedPackage->show_name_bd  প্যকেজে অবনমনের  অনুরোধ  গ্রহণ  করা  হয়েছে "]);
                     }
                     $hasCredit = $request->partner->hasCreditForSubscription($requestedPackage, $request->billing_type);
-                    $balance = ['remaining_balance' => $request->partner->totalCreditForSubscription, 'price' => $request->partner->totalPriceRequiredForSubscription, 'breakdown' => $request->partner->creditBreakdown];
+                    $balance = [
+                        'remaining_balance' => $request->partner->totalCreditForSubscription,
+                        'price' => $request->partner->totalPriceRequiredForSubscription,
+                        'breakdown' => $request->partner->creditBreakdown
+                    ];
                     if (!$hasCredit) {
                         $upgradeRequest->delete();
                         (new NotificationRepository())->sendInsufficientNotification($request->partner, $requestedPackage, $request->billing_type, $grade);

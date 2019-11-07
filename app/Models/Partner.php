@@ -759,16 +759,10 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
         return $this->totalCreditForSubscription >= $this->totalPriceRequiredForSubscription;
     }
 
-    /**
-     * @return float|int
-     */
+    /** @return float|int */
     public function getTotalCreditExistsForSubscription()
     {
-        $remaining = (double)$this->subscriber()->getBilling()->remainingCredit($this->subscription, $this->billing_type);
-        $wallet = (double)$this->wallet;
-        $bonus_wallet = (double)$this->bonusWallet();
-        $threshold = $this->walletSetting ? (double)$this->walletSetting->min_wallet_threshold : 0;
-        $this->creditBreakdown = ['remaining_subscription_charge' => $remaining, 'wallet' => $wallet, 'threshold' => $threshold, 'bonus_wallet' => $bonus_wallet];
+        list($remaining, $wallet, $bonus_wallet, $threshold) = $this->getCreditBreakdown();
         return round($bonus_wallet + $wallet + $remaining) - $threshold;
     }
 
@@ -808,5 +802,23 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
     public function comments()
     {
         return $this->morphMany(Comment::class, 'commentable');
+    }
+
+    /** @return array */
+    public function getCreditBreakdown()
+    {
+        $remaining = (double)$this->subscriber()->getBilling()->remainingCredit($this->subscription, $this->billing_type);
+        $wallet = (double)$this->wallet;
+        $bonus_wallet = (double)$this->bonusWallet();
+        $threshold = $this->walletSetting ? (double)$this->walletSetting->min_wallet_threshold : 0;
+
+        $this->creditBreakdown = [
+            'remaining_subscription_charge' => $remaining,
+            'wallet' => $wallet,
+            'threshold' => $threshold,
+            'bonus_wallet' => $bonus_wallet
+        ];
+
+        return [$remaining, $wallet, $bonus_wallet, $threshold];
     }
 }
