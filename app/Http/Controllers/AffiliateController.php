@@ -1145,16 +1145,37 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             $profile = $request->profile;
             $input = $request->except('profile', 'remember_token');
             $data = [];
-//          $ocr_repo->nidCheck($input);
-            return $data = [
-                    'code' => 200,
-                    'data' => [
-                        'name' => 'English name',
-                        'name_bn' => 'Bangla name',
-                        'gender' => Gender::getGenderDisplayableName('Male')
-                    ]
-                ];
+            $ocr_repo->nidCheck($input);
+//            return $data = [
+//                    'code' => 200,
+//                    'data' => [
+//                        'name' => 'English name',
+//                        'name_bn' => 'Bangla name',
+//                        'gender' => Gender::getGenderDisplayableName('Male')
+//                    ]
+//                ];
             return api_response($request, null, 200, ['data' => $data]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function updateNidInfo(Request $request, ProfileRepositoryInterface $profile_repo)
+    {
+        try {
+            $this->validate($request, []);
+            $profile = $request->profile;
+            $input = $request->except('profile', 'remember_token');
+
+            $profile_repo->update($profile, $input);
+
+            $manager = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+            $resource = new Item($profile, new ProfileDetailPersonalInfoTransformer());
+            $details = $manager->createData($resource)->toArray()['data'];
+
+            return api_response($request, null, 200, ['data' => $details]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
