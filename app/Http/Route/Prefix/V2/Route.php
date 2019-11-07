@@ -169,9 +169,7 @@ class Route
             $api->get('updates', 'UpdateController@getUpdates');
             $api->get('ek-sheba/authenticate', 'EkshebaController@authenticate');
 
-            /**
-             * PROFILE EXISTENCE CHECK. PUBLIC API
-             */
+            /** PROFILE EXISTENCE CHECK. PUBLIC API */
             $api->get('get-profile-info', 'ProfileController@getProfile');
             $api->get('get-profile-info-by-mobile', 'ProfileController@getProfileInfoByMobile');
             $api->post('profile/{id}/update-profile-document', 'ProfileController@updateProfileDocument')->middleware('profile.auth');
@@ -186,9 +184,7 @@ class Route
                 $api->post('/top-up', 'ProxyController@pretupsTopUp');
             });
 
-            /**
-             * EMI INFO
-             */
+            /** EMI INFO */
             $api->get('emi-info', 'ShebaController@getEmiInfo');
             $api->group(['prefix' => 'tickets', 'middleware' => 'jwtGlobalAuth'], function ($api) {
                 $api->get('validate-token', 'ProfileController@validateJWT');
@@ -197,7 +193,6 @@ class Route
                 (new MovieTicketRoute())->set($api);
             });
             $api->get('refresh-token', 'ProfileController@refresh');
-            $api->get('partner/subscriptions', 'partner\PartnerSubscriptionController@getAllPackages');
         });
         return $api;
     }
