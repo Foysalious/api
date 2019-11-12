@@ -27,34 +27,37 @@ class ProfileController extends Controller
         $this->fileRepo = $file_repository;
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function changePicture(Request $request)
     {
-        if ($msg = $this->_validateImage($request)) {
-            return response()->json(['code' => 500, 'msg' => $msg]);
-        }
-        $profile = $request->profile;
-        $photo = $request->file('photo');
-        if (basename($profile->pro_pic) != 'default.jpg') {
-            $filename = substr($profile->pro_pic, strlen(env('S3_URL')));
-            $this->fileRepo->deleteFileFromCDN($filename);
-        }
-        $filename = Carbon::now()->timestamp . '_profile_image_' . $profile->id . '.' . $photo->extension();
-        $picture_link = $this->fileRepo->uploadToCDN($filename, $request->file('photo'), 'images/profiles/');
-        if ($picture_link != false) {
-            $profile->pro_pic = $picture_link;
-            $profile->update();
-            return response()->json(['code' => 200, 'picture' => $profile->pro_pic]);
-        } else {
-            return response()->json(['code' => 404]);
-        }
-    }
+        try {
+            $this->validate($request, ['photo' => 'required|mimes:jpeg,png']);
+            $profile = $request->profile;
+            $photo = $request->file('photo');
+            if (basename($profile->pro_pic) != 'default.jpg') {
+                $filename = substr($profile->pro_pic, strlen(env('S3_URL')));
+                $this->fileRepo->deleteFileFromCDN($filename);
+            }
 
-    private function _validateImage($request)
-    {
-        $validator = Validator::make($request->all(), [
-            'photo' => 'required|mimes:jpeg,png'
-        ]);
-        return $validator->fails() ? $validator->errors()->all()[0] : false;
+            $filename = Carbon::now()->timestamp . '_profile_image_' . $profile->id . '.' . $photo->extension();
+            $picture_link = $this->fileRepo->uploadToCDN($filename, $request->file('photo'), 'images/profiles/');
+            if ($picture_link != false) {
+                $profile->pro_pic = $picture_link;
+                $profile->update();
+                return response()->json(['code' => 200, 'picture' => $profile->pro_pic]);
+            } else {
+                return response()->json(['code' => 404]);
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, null, 500, ['msg' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 
     public function getProfile(Request $request)
@@ -223,20 +226,25 @@ class ProfileController extends Controller
         return api_response($request, $token, 200, ['token' => $token]);
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function validateJWT(Request $request)
     {
         return api_response($request, null, 200, ['user' => $request->user, 'type' => $request->type, $request->type => $request->get($request->type)]);
     }
+
+    /**
+     * @param Profile $profile
+     * @return mixed
+     */
     private function generateUtilityToken(Profile $profile)
     {
         $from = \request()->get('from');
         $id = \request()->id;
         $customClaims = [
-            'profile_id' => $profile->id,
-            'customer_id' => $profile->customer ? $profile->customer->id : null,
-            'affiliate_id' => $profile->affiliate ? $profile->affiliate->id : null,
-            'from' => constants('AVATAR_FROM_CLASS')[$from],
-            'user_id' => $id
+            'profile_id' => $profile->id, 'customer_id' => $profile->customer ? $profile->customer->id : null, 'affiliate_id' => $profile->affiliate ? $profile->affiliate->id : null, 'from' => constants('AVATAR_FROM_CLASS')[$from], 'user_id' => $id
         ];
         return JWTAuth::fromUser($profile, $customClaims);
     }

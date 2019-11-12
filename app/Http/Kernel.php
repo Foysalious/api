@@ -53,12 +53,9 @@ class Kernel extends HttpKernel
         'can' => \Illuminate\Foundation\Http\Middleware\Authorize::class,
         'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
         'throttle' => \App\Http\Middleware\ThrottleRequests::class,
-
         'jwt.auth' => 'Tymon\JWTAuth\Middleware\GetUserFromToken',
         'jwt.refresh' => 'Tymon\JWTAuth\Middleware\RefreshToken',
-
         'cors2' => \App\Http\Middleware\Cors2MiddleWare::class,
-
         'admin.auth' => \App\Http\Middleware\AdminAuthMiddleware::class,
         'customer.auth' => \App\Http\Middleware\CustomerAuthMiddleware::class,
         'customer_job.auth' => \App\Http\Middleware\CustomerJobAuthMiddleware::class,
@@ -72,12 +69,11 @@ class Kernel extends HttpKernel
         'partner_order.auth' => \App\Http\Middleware\PartnerOrderAuthMiddleware::class,
         'partner_resource.auth' => \App\Http\Middleware\PartnerResourceAuthMiddleware::class,
         'resource_job.auth' => \App\Http\Middleware\ResourceJobAuthMiddleware::class,
-        'admin.auth' => \App\Http\Middleware\AdminAuthMiddleware::class,
         'vendor.auth' => \App\Http\Middleware\VendorMiddleware::class,
         'jwtAuth' => \App\Http\Middleware\JWTAuthentication::class,
         'jwtGlobalAuth' => \App\Http\Middleware\JWTAuthMiddleware::class,
         'business_order.auth' => OrderMiddleware::class,
         'topUp.auth' => TopUpAuthMiddleware::class,
-        'paymentLink.auth' => PaymentLinkAuthMiddleware::class,
+        'paymentLink.auth' => PaymentLinkAuthMiddleware::class
     ];
 }

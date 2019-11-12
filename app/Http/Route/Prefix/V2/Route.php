@@ -17,6 +17,7 @@ class Route
             $api->group(['prefix' => 'profile'], function ($api) {
                 $api->post('registration/partner', 'Auth\PartnerRegistrationController@registerByProfile')->middleware('jwtAuth');
                 $api->post('registration/affiliate', 'Auth\AffiliateRegistrationController@registerByProfile')->middleware('jwtAuth');
+                $api->post('change-picture', 'ProfileController@changePicture')->middleware('jwtAuth');
             });
             $api->get('validate-location', 'LocationController@validateLocation');
             $api->get('partners', 'PartnerLocationController@getPartners')->middleware('throttle:40');
@@ -49,7 +50,6 @@ class Route
             $api->group(['prefix' => 'ssl'], function ($api) {
                 $api->post('validate', 'SslController@validatePayment');
             });
-
             $api->group(['prefix' => 'bkash'], function ($api) {
                 $api->post('validate', 'BkashController@validatePayment');
                 $api->group(['prefix' => 'tokenized'], function ($api) {
@@ -105,23 +105,19 @@ class Route
                     $api->get('', 'CategoryGroupController@show');
                 });
             });
-
             $api->group(['prefix' => 'service-groups'], function ($api) {
                 $api->get('/', 'ServiceGroupController@index');
                 $api->group(['prefix' => '{id}'], function ($api) {
                     $api->get('', 'ServiceGroupController@show');
                 });
             });
-
             $api->group(['prefix' => 'offer-groups'], function ($api) {
                 $api->get('/', 'OfferGroupController@index');
                 $api->group(['prefix' => '{id}'], function ($api) {
                     $api->get('', 'OfferGroupController@show');
                 });
             });
-
             (new BusinessRoute())->set($api);
-
             $api->group(['prefix' => 'categories'], function ($api) {
                 $api->group(['prefix' => '{id}'], function ($api) {
                     $api->get('', 'CategoryController@show');
@@ -145,14 +141,12 @@ class Route
                 $api->get('{location}/partners', 'PartnerController@findPartners');
                 $api->get('current', 'LocationController@getCurrent');
             });
-
             $api->group(['prefix' => 'top-up', 'middleware' => ['topUp.auth']], function ($api) {
                 $api->get('/vendor', 'TopUp\TopUpController@getVendor');
                 $api->post('/', 'TopUp\TopUpController@topUp');
                 $api->post('/bulk', 'TopUp\TopUpController@bulkTopUp');
                 $api->get('/history', 'TopUp\TopUpController@topUpHistory');
             });
-
             $api->group(['prefix' => 'resources/{resource}', 'middleware' => ['resource.auth']], function ($api) {
                 $api->group(['prefix' => 'jobs'], function ($api) {
                     $api->group(['prefix' => '{job}', 'middleware' => ['resource_job.auth']], function ($api) {
@@ -168,7 +162,6 @@ class Route
             });
             $api->get('updates', 'UpdateController@getUpdates');
             $api->get('ek-sheba/authenticate', 'EkshebaController@authenticate');
-
             /** PROFILE EXISTENCE CHECK. PUBLIC API */
             $api->get('get-profile-info', 'ProfileController@getProfile');
             $api->get('get-profile-info-by-mobile', 'ProfileController@getProfileInfoByMobile');
@@ -179,11 +172,9 @@ class Route
             $api->post('admin/payout', 'Bkash\\BkashPayoutController@pay');
             $api->post('admin/bkash-balance', 'Bkash\\BkashPayoutController@queryBalance');
             $api->post('forget-password', 'ProfileController@forgetPassword');
-
             $api->group(['prefix' => 'proxy'], function ($api) {
                 $api->post('/top-up', 'ProxyController@pretupsTopUp');
             });
-
             /** EMI INFO */
             $api->get('emi-info', 'ShebaController@getEmiInfo');
             $api->group(['prefix' => 'tickets', 'middleware' => 'jwtGlobalAuth'], function ($api) {
