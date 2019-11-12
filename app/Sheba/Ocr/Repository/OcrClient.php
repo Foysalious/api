@@ -44,7 +44,7 @@ class OcrClient
             return $res;
         } catch (GuzzleException $e) {
             $res = decodeGuzzleResponse($e->getResponse());
-            if ($res['code'] == 400) throw new OcrServerError($res['message']);
+            if ($res['code'] == 404) throw new OcrServerError($res['message']);
             throw new OcrServerError($e->getMessage());
         }
     }
