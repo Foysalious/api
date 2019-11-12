@@ -1166,18 +1166,18 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             }
 
 
-//            if ($input->side == ImageSIde::BACK) {
-//                if (!$data['bn_name']) {
-//                    return api_response($request, null, 422);
-//                }
-//            }
+            if ($input["side"] == ImageSIde::BACK) {
+                if (!$data['address']) {
+                    return api_response($request, null, 422);
+                }
+            }
 
             $profile = $request->profile;
             $profile_repo->update($profile, $nid_details);
 
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($profile, new ProfileDetailPersonalInfoTransformer());
+            $resource = new Item($profile, new NidInfoTransformer());
             $details = $manager->createData($resource)->toArray()['data'];
 
             return api_response($request, null, 200, ['data' => $details]);
