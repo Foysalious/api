@@ -5,6 +5,7 @@ use App\Models\Profile;
 use FontLib\Table\Type\name;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\UploadedFile;
 use Sheba\NidInfo\ImageSide;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 
@@ -174,11 +175,16 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
             $profile_data['gender'] = $data['gender'];
         }
         if (isset($data['nid_image_front'])) {
-            dd(request()->file);
-            $profile_data['nid_image_front'] = $this->_saveNIdImage($data['nid_image_front'], $this->model->id . '_' . ImageSide::FRONT);
+            /** @var UploadedFile $image */
+            $image = $data['nid_image_front'];
+            $name = $image->getClientOriginalName() . '_' . ImageSide::FRONT;
+            $profile_data['nid_image_front'] = $this->_saveNIdImage($image, $name);
         }
         if (isset($data['nid_image_back'])) {
-            $profile_data['nid_image_back'] = $this->_saveNIdImage($data['nid_image_back'], $this->model->id . '_' . ImageSide::BACK);
+            /** @var UploadedFile $image */
+            $image = $data['nid_image_back'];
+            $name = $image->getClientOriginalName() . '_' . ImageSide::BACK;
+            $profile_data['nid_image_back'] = $this->_saveNIdImage($image, $name);
         }
 
         return $profile_data;

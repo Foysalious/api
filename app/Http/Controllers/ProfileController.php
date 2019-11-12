@@ -290,7 +290,6 @@ class ProfileController extends Controller
             $manager->setSerializer(new CustomSerializer());
             $resource = new Item($profile, new NidInfoTransformer());
             $details = $manager->createData($resource)->toArray()['data'];
-
             return api_response($request, null, 200, ['data' => $details]);
         } catch (OcrServerError $e) {
             if ($e->getCode() == 402) return api_response($request, null, 422);
