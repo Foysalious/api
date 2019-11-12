@@ -1182,7 +1182,6 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
 
             return api_response($request, null, 200, ['data' => $details]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             if($e->getCode() == 402) return api_response($request, null, 422);
             return api_response($request, null, 500);
