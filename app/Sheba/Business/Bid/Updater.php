@@ -165,9 +165,11 @@ class Updater
     {
         try {
             DB::transaction(function () {
+                $previous_status = $this->bid->status;
                 $this->bidRepository->update($this->bid, ['status' => $this->status]);
                 if ($this->status == config('b2b.BID_STATUSES')['accepted']) $this->procurementUpdater->setProcurement($this->bid->procurement)
                     ->setStatus(config('b2b.PROCUREMENT_STATUS')['accepted'])->updateStatus();
+                $this->statusLogCreator->setBid($this->bid)->setPreviousStatus($previous_status)->setStatus($this->status)->create();
             });
         } catch (QueryException $e) {
             throw  $e;
