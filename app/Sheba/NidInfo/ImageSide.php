@@ -1,13 +1,11 @@
 <?php namespace Sheba\NidInfo;
 
-
 use Sheba\Helpers\ConstGetter;
 
-class ImageSIde
+class ImageSide
 {
     use ConstGetter;
 
     const FRONT = 'front';
     const BACK= 'back';
-
 }

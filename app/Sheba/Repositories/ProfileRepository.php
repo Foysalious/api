@@ -2,8 +2,10 @@
 
 use App\Helper\BangladeshiMobileValidator;
 use App\Models\Profile;
+use FontLib\Table\Type\name;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Sheba\NidInfo\ImageSide;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 
 class ProfileRepository extends BaseRepository implements ProfileRepositoryInterface
@@ -171,7 +173,25 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
         if (isset($data['gender'])) {
             $profile_data['gender'] = $data['gender'];
         }
+        if (isset($data['nid_image_front'])) {
+            dd(request()->file);
+            $profile_data['nid_image_front'] = $this->_saveNIdImage($data['nid_image_front'], $this->model->id . '_' . ImageSide::FRONT);
+        }
+        if (isset($data['nid_image_back'])) {
+            $profile_data['nid_image_back'] = $this->_saveNIdImage($data['nid_image_back'], $this->model->id . '_' . ImageSide::BACK);
+        }
 
         return $profile_data;
+    }
+
+    /**
+     * @param $nid_image
+     * @param $name
+     * @return string
+     */
+    private function _saveNIdImage($nid_image, $name)
+    {
+        list($nid, $nid_filename) = $this->makeThumb($nid_image, $name);
+        return $this->saveImageToCDN($nid, getNIDFolder(), $nid_filename);
     }
 }

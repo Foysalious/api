@@ -51,14 +51,13 @@ class ResourceRepository extends BaseRepository
      */
     private function resourceDataFormat($data, $resource = null)
     {
-        $resource_data = [
+        return [
             'father_name' => $data['father_name'],
             'spouse_name' => isset($data['spouse_name']) ? $data['spouse_name'] : null,
             'nid_no' => $data['nid_no'],
             'nid_image' => isset($data['nid_image']) ? $data['nid_image'] : ($resource ? $resource->nid_image : null),
             'is_trained' => isset($data['is_trained']) ? $data['is_trained'] : 0
         ];
-        return $resource_data;
     }
 
     /**

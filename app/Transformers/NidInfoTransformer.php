@@ -19,5 +19,4 @@ class NidInfoTransformer extends TransformerAbstract
             'gender' => isset($data["gender"]) ? Gender::getGenderDisplayableName($data["gender"]) : null
         ];
     }
-
 }

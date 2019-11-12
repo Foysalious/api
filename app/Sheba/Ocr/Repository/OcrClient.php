@@ -70,23 +70,13 @@ class OcrClient
         ];
 
         if ($data) {
-
             $request = request();
             /** @var UploadedFile $file */
             $file = $request->file('nid_image');
-
             $options['multipart'] = [
-                [
-                    'name' => 'side',
-                    'contents' => $request->get('side')
-                ],
-                [
-                    'name' => 'nid_image',
-                    'contents' => File::get($file->getRealPath()),
-                    'filename' => $file->getClientOriginalName()
-                ]
+                ['name' => 'side', 'contents' => $request->get('side')],
+                ['name' => 'nid_image', 'contents' => File::get($file->getRealPath()), 'filename' => $file->getClientOriginalName()]
             ];
-
         }
         return $options;
     }
