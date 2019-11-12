@@ -3,7 +3,6 @@
 class OcrRepository extends BaseRepository
 {
     /**
-     * @param $uri
      * @param $data
      * @return mixed
      */

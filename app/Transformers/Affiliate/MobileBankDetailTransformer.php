@@ -1,6 +1,5 @@
 <?php namespace App\Transformers\Affiliate;
 
-use App\Models\ProfileBankInformation;
 use App\Models\ProfileMobileBankInformation;
 use League\Fractal\TransformerAbstract;
 
