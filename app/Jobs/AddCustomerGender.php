@@ -113,6 +113,4 @@ class AddCustomerGender extends Job implements ShouldQueue
         $this->profile->gender = ucfirst($gender);
         $this->profile->update();
     }
-
-
 }

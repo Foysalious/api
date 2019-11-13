@@ -7,6 +7,7 @@ class Profile extends Model
     protected $guarded = ['id'];
     protected $fillable = [
         'name',
+        'bn_name',
         'mobile',
         'email',
         'password',
@@ -17,6 +18,12 @@ class Profile extends Model
         'mobile_verified',
         'email_verified',
         'address',
+        'permanent_address',
+        'blood_group',
+        'post_office',
+        'post_code',
+        'mother_name',
+        'father_name',
         'permanent_address',
         'bkash_agreement_id',
         'occupation',
@@ -91,5 +98,15 @@ class Profile extends Model
             return $this->mobile;
         }
         return $this->email;
+    }
+
+    public function banks()
+    {
+        return $this->hasMany(ProfileBankInformation::class);
+    }
+
+    public function mobileBanks()
+    {
+        return $this->hasMany(ProfileMobileBankInformation::class);
     }
 }

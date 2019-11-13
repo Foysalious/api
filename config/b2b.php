@@ -37,7 +37,11 @@ return [
         'pending' => 'pending',
         'approved' => 'approved',
         'rejected' => 'rejected',
-        'need_approval' => 'need_approval'
+        'need_approval' => 'need_approval',
+        'accepted' => 'accepted',
+        'started' => 'started',
+        'served' => 'served',
+        'cancelled' => 'cancelled'
     ],
     'PROCUREMENT_ITEM_FIELD' => [
         'text' => 'text',
@@ -46,5 +50,20 @@ return [
         'checkbox' => 'checkbox',
         'number' => 'number',
         'select' => 'select'
-    ]
+    ],
+    'BID_STATUSES' => [
+        'pending' => 'pending',
+        'rejected' => 'rejected',
+        'accepted' => 'accepted',
+        'drafted' => 'drafted',
+        'sent' => 'sent',
+        'awarded' => 'awarded'
+    ],
+    'PROCUREMENT_PAYMENT_STATUS' => [
+        'pending' => 'pending',
+        'approved' => 'approved',
+        'acknowledged' => 'acknowledged',
+        'rejected' => 'rejected',
+        'paid' => 'paid'
+    ],
 ];

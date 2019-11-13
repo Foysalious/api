@@ -1,8 +1,7 @@
 <?php namespace Sheba\Repositories;
 
 use App\Models\Customer;
-use App\Models\CustomerTransaction;
-use Carbon\Carbon;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class CustomerTransactionRepository
 {
@@ -23,11 +22,29 @@ class CustomerTransactionRepository
     {
         $transaction = null;
         if ($data['amount'] > 0) {
-            $data['created_at'] = Carbon::now();
-            $transaction = $this->customer->transactions()->save(new CustomerTransaction($data));
-            (new CustomerRepository())->updateWallet($this->customer, $data['amount'], $data['type']);
+            /*
+             * WALLET TRANSACTION NEED TO REMOVE
+             *  $data['created_at'] = Carbon::now();
+             $transaction = $this->customer->transactions()->save(new CustomerTransaction($data));
+             (new CustomerRepository())->updateWallet($this->customer, $data['amount'], $data['type']);*/
             // if (is_array($tags) && !empty($tags[0])) $transaction->tags()->sync($tags);
+            $transaction = (new WalletTransactionHandler())->setModel($this->customer)->setSource($data['source'])
+                ->setType(strtolower($data['type']))->setAmount($data['amount'])->setLog($data['log']);
+            if (isset($data['transaction_details'])) {
+                $transaction = $transaction->setTransactionDetails($data['transaction_details']);
+            }
+            $transaction = $transaction->store($this->setExtras($data));
         }
         return $transaction;
+    }
+
+    private function setExtras($data)
+    {
+        unset($data['amount']);
+        unset($data['log']);
+        unset($data['type']);
+        unset($data['source']);
+        if (isset($data['transaction_details'])) unset($data['transaction_details']);
+        return $data;
     }
 }

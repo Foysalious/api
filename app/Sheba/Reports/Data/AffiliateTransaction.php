@@ -1,11 +1,12 @@
 <?php namespace Sheba\Reports\Data;
 
 use App\Models\AffiliateTransaction as AffiliateTransactionModel;
+use Illuminate\Database\Eloquent\Collection;
 
 class AffiliateTransaction extends Transaction
 {
     /**
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection
      */
     protected function getTransactions()
     {

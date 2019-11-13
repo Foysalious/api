@@ -3,15 +3,27 @@
 use App\Models\Profile;
 use App\Repositories\FileRepository;
 use App\Repositories\ProfileRepository;
+use App\Transformers\Affiliate\ProfileDetailPersonalInfoTransformer;
+use App\Transformers\CustomSerializer;
+use App\Transformers\NidInfoTransformer;
 use Carbon\Carbon;
+use Exception;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use JWTAuth;
 use JWTFactory;
+use Sheba\Ocr\Exceptions\OcrServerError;
+use Validator;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Item;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
+use Sheba\NidInfo\ImageSide;
+use Sheba\Ocr\Repository\OcrRepository;
+use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Sheba\Repositories\ProfileRepository as ShebaProfileRepository;
 use Sheba\Sms\Sms;
-use Validator;
+use Throwable;
 
 class ProfileController extends Controller
 {
@@ -24,34 +36,37 @@ class ProfileController extends Controller
         $this->fileRepo = $file_repository;
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function changePicture(Request $request)
     {
-        if ($msg = $this->_validateImage($request)) {
-            return response()->json(['code' => 500, 'msg' => $msg]);
-        }
-        $profile = $request->profile;
-        $photo = $request->file('photo');
-        if (basename($profile->pro_pic) != 'default.jpg') {
-            $filename = substr($profile->pro_pic, strlen(env('S3_URL')));
-            $this->fileRepo->deleteFileFromCDN($filename);
-        }
-        $filename = Carbon::now()->timestamp . '_profile_image_' . $profile->id . '.' . $photo->extension();
-        $picture_link = $this->fileRepo->uploadToCDN($filename, $request->file('photo'), 'images/profiles/');
-        if ($picture_link != false) {
-            $profile->pro_pic = $picture_link;
-            $profile->update();
-            return response()->json(['code' => 200, 'picture' => $profile->pro_pic]);
-        } else {
-            return response()->json(['code' => 404]);
-        }
-    }
+        try {
+            $this->validate($request, ['photo' => 'required|mimes:jpeg,png']);
+            $profile = $request->profile;
+            $photo = $request->file('photo');
+            if (basename($profile->pro_pic) != 'default.jpg') {
+                $filename = substr($profile->pro_pic, strlen(env('S3_URL')));
+                $this->fileRepo->deleteFileFromCDN($filename);
+            }
 
-    private function _validateImage($request)
-    {
-        $validator = Validator::make($request->all(), [
-            'photo' => 'required|mimes:jpeg,png'
-        ]);
-        return $validator->fails() ? $validator->errors()->all()[0] : false;
+            $filename = Carbon::now()->timestamp . '_profile_image_' . $profile->id . '.' . $photo->extension();
+            $picture_link = $this->fileRepo->uploadToCDN($filename, $request->file('photo'), 'images/profiles/');
+            if ($picture_link != false) {
+                $profile->pro_pic = $picture_link;
+                $profile->update();
+                return response()->json(['code' => 200, 'picture' => $profile->pro_pic]);
+            } else {
+                return response()->json(['code' => 404]);
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, null, 500, ['msg' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 
     public function getProfile(Request $request)
@@ -126,10 +141,36 @@ class ProfileController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->errors());
             return api_response($request, null, 401, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500, ['message' => $e->getMessage(), 'trace' => $e->getTrace()]);
         }
+    }
+
+    /**
+     * @param Request $request
+     * @param ShebaProfileRepository $repository
+     * @return JsonResponse
+     */
+    public function update(Request $request, ShebaProfileRepository $repository)
+    {
+        try {
+            $this->validate($request, [
+                'gender' => 'required|string|in:male,female,other',
+            ]);
+            $data = [
+                'gender' => $request->gender
+            ];
+            $repository->update($request->profile, $data);
+            return api_response($request, null, 200, ['message' => 'Profile Updated']);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->errors());
+            return api_response($request, null, 401, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500, ['message' => $e->getMessage(), 'trace' => $e->getTrace()]);
+        }
+
     }
 
     public function forgetPassword(Request $request, Sms $sms)
@@ -146,7 +187,7 @@ class ProfileController extends Controller
             return api_response($request, true, 200, ['message' => 'Your password is sent to your mobile number. Please use that password to login']);
         } catch (ValidationException $e) {
             return api_response($request, null, 401, ['message' => 'Invalid mobile number']);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -161,7 +202,7 @@ class ProfileController extends Controller
             return api_response($request, true, 200, ['message' => 'Profile found', 'profile' => $profile]);
         } catch (ValidationException $e) {
             return api_response($request, null, 401, ['message' => 'Invalid mobile number']);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -173,7 +214,7 @@ class ProfileController extends Controller
         try {
             $token = $this->generateUtilityToken($request->profile);
             return api_response($request, $token, 200, ['token' => $token]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return api_response($request, null, 500, ['message' => $e->getMessage()]);
         }
     }
@@ -187,28 +228,116 @@ class ProfileController extends Controller
 
         try {
             $token = JWTAuth::refresh($token);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return api_response($request, null, 403, ['message' => $e->getMessage()]);
         }
 
         return api_response($request, $token, 200, ['token' => $token]);
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function validateJWT(Request $request)
     {
         return api_response($request, null, 200, ['user' => $request->user, 'type' => $request->type, $request->type => $request->get($request->type)]);
     }
+
+    /**
+     * @param Profile $profile
+     * @return mixed
+     */
     private function generateUtilityToken(Profile $profile)
     {
         $from = \request()->get('from');
         $id = \request()->id;
         $customClaims = [
-            'profile_id' => $profile->id,
-            'customer_id' => $profile->customer ? $profile->customer->id : null,
-            'affiliate_id' => $profile->affiliate ? $profile->affiliate->id : null,
-            'from' => constants('AVATAR_FROM_CLASS')[$from],
-            'user_id' => $id
+            'profile_id' => $profile->id, 'customer_id' => $profile->customer ? $profile->customer->id : null, 'affiliate_id' => $profile->affiliate ? $profile->affiliate->id : null, 'from' => constants('AVATAR_FROM_CLASS')[$from], 'user_id' => $id
         ];
         return JWTAuth::fromUser($profile, $customClaims);
+    }
+
+    /**
+     * @param Request $request
+     * @param OcrRepository $ocr_repo
+     * @param ProfileRepositoryInterface $profile_repo
+     * @return JsonResponse
+     */
+    public function storeNid(Request $request, OcrRepository $ocr_repo, ProfileRepositoryInterface $profile_repo)
+    {
+        try {
+            $this->validate($request, ['nid_image' => 'required', 'side' => 'required']);
+            $profile = $request->profile;
+            $input = $request->except('profile', 'remember_token');
+            $data = $ocr_repo->nidCheck($input);
+            if (isset($data["dob"])) {
+                $data["dob"] = date_create($data["dob"])->format('Y-m-d');
+            } ;
+
+            if ($this->isWronglyIdentifyFromOcr($input, $data))
+                return api_response($request, null, 422);
+
+            $nid_image_key = "nid_image_" . $input["side"];
+            $data[$nid_image_key] = $input['nid_image'];
+
+            $profile_repo->update($profile, $data);
+
+            $manager = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+            $resource = new Item($profile, new NidInfoTransformer());
+            $details = $manager->createData($resource)->toArray()['data'];
+            return api_response($request, null, 200, ['data' => $details]);
+        } catch (OcrServerError $e) {
+            if ($e->getCode() == 402) return api_response($request, null, 422);
+            return api_response($request, null, 500);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param $input
+     * @param $nid_details
+     * @return bool
+     */
+    private function isWronglyIdentifyFromOcr($input, $nid_details)
+    {
+        if (
+            $input["side"] == ImageSide::FRONT &&
+            (!$nid_details['bn_name'] || !$nid_details['name'] || !$nid_details['dob'] || !$nid_details['nid_no'])
+        ) return true;
+
+        if ($input["side"] == ImageSide::BACK && !$nid_details['address'])
+            return true;
+
+        return false;
+    }
+
+    /**
+     * @param Request $request
+     * @param ProfileRepositoryInterface $profile_repo
+     * @return JsonResponse
+     */
+    public function updateProfileInfo(Request $request, ProfileRepositoryInterface $profile_repo)
+    {
+        try {
+            $this->validate($request, []);
+            $profile = $request->profile;
+            if(!$profile) return api_response($request, null, 404, ['data' => null]);
+
+            $input = $request->except('profile', 'remember_token');
+            $profile_repo->update($profile, $input);
+            $manager = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+            $resource = new Item($profile, new ProfileDetailPersonalInfoTransformer());
+            $details = $manager->createData($resource)->toArray()['data'];
+
+            return api_response($request, null, 200, ['data' => $details]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 }

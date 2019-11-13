@@ -6,6 +6,9 @@ class IndexRoute
     {
         $api->group(['prefix' => '{partner}', 'middleware' => ['manager.auth']], function ($api) {
             $api->get('dashboard', 'Partner\DashboardController@get');
+            $api->get('home-setting', 'Partner\DashboardController@getHomeSetting');
+            $api->post('home-setting', 'Partner\DashboardController@updateHomeSetting');
+            $api->get('wallet-balance', 'PartnerController@getWalletBalance');
             $api->group(['prefix' => 'e-shop'], function ($api) {
                 $api->group(['prefix' => 'order'], function ($api) {
                     $api->get('/', 'EShopOrderController@index');
@@ -20,6 +23,33 @@ class IndexRoute
                     });
                     $api->group(['prefix' => 'attachments'], function ($api) {
                         $api->post('/', 'AttachmentController@storeAttachment');
+                        $api->get('/', 'AttachmentController@getAttachments');
+                    });
+                });
+            });
+            $api->group(['prefix' => 'procurements'], function ($api) {
+                $api->group(['prefix' => '{procurement}'], function ($api) {
+                    $api->group(['prefix' => 'comments'], function ($api) {
+                        $api->post('/', 'CommentController@storeComments');
+                        $api->get('/', 'CommentController@getComments');
+                    });
+                    $api->group(['prefix' => 'attachments'], function ($api) {
+                        $api->post('/', 'AttachmentController@storeAttachment');
+                        $api->get('/', 'AttachmentController@getAttachments');
+                    });
+                    $api->get('/bill', 'Partner\ProcurementController@orderBill');
+                    $api->post('/status', 'Partner\ProcurementController@updateStatus');
+                    $api->get('/timeline', 'Partner\ProcurementController@orderTimeline');
+                    $api->group(['prefix' => 'bids'], function ($api) {
+                        $api->group(['prefix' => '{bid}'], function ($api) {
+                            $api->get('/', 'Partner\ProcurementController@showProcurementOrder');
+                            $api->group(['prefix' => 'payment-requests'], function ($api) {
+                                $api->post('/', 'Partner\ProcurementPaymentRequestController@paymentRequest');
+                                $api->get('/', 'Partner\ProcurementPaymentRequestController@index');
+                                $api->post('/{request}/status', 'Partner\ProcurementPaymentRequestController@updateStatus');
+                                $api->get('/{request}', 'Partner\ProcurementPaymentRequestController@show');
+                            });
+                        });
                     });
                 });
             });

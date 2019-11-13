@@ -30,6 +30,8 @@ class Payable extends Model
             return 'utility_order';
         } else if ($this->type == 'payment_link') {
             return 'payment_link';
+        } else if ($this->type == 'procurement') {
+            return 'procurement';
         }
     }
 
@@ -54,6 +56,8 @@ class Payable extends Model
             $class_name .= 'UtilityOrderComplete';
         } else if ($this->completion_type == 'payment_link') {
             $class_name .= 'PaymentLinkOrderComplete';
+        } else if ($this->completion_type == 'procurement') {
+            $class_name .= 'ProcurementComplete';
         }
 
         return app($class_name);
@@ -109,6 +113,8 @@ class Payable extends Model
             $model .= 'MovieTicketOrder';
         } elseif ($this->type == 'transport_ticket_purchase') {
             $model .= "Transport\\TransportTicketOrder";
+        } elseif ($this->type == 'procurement') {
+            $model .= "Procurement";
         }
 
         return $model;

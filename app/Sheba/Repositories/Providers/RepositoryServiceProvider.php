@@ -2,6 +2,8 @@
 
 use App\Sheba\Repositories\Business\BidRepository;
 use Illuminate\Support\ServiceProvider;
+use Sheba\Dal\ProcurementPaymentRequest\ProcurementPaymentRequestRepositoryInterface;
+use Sheba\Dal\ProcurementPaymentRequestStatusChangeLog\ProcurementPaymentRequestStatusChangeLogRepositoryInterface;
 use Sheba\Repositories\Business\BidItemFieldRepository;
 use Sheba\Repositories\Business\BidItemRepository;
 use Sheba\Repositories\Business\BusinessMemberRepository;
@@ -52,14 +54,19 @@ use Sheba\Repositories\Interfaces\ProcurementItemFieldRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementQuestionRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
+use Sheba\Repositories\Interfaces\ProfileBankingRepositoryInterface;
+use Sheba\Repositories\Interfaces\ProfileMobileBankingRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Sheba\Repositories\Interfaces\PurchaseRequestItemFieldRepositoryInterface;
 use Sheba\Repositories\Interfaces\PurchaseRequestItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\PurchaseRequestQuestionRepositoryInterface;
 use Sheba\Repositories\Interfaces\PurchaseRequestRepositoryInterface;
+use Sheba\Repositories\Interfaces\RfqOrderRepositoryInterface;
 use Sheba\Repositories\Interfaces\VehicleRepositoryInterface;
 use Sheba\Repositories\PartnerRepository;
 use Sheba\Repositories\PaymentLinkRepository;
+use Sheba\Repositories\ProfileBankingRepository;
+use Sheba\Repositories\ProfileMobileBankingRepository;
 use Sheba\Repositories\ProfileRepository;
 
 class RepositoryServiceProvider extends ServiceProvider
@@ -96,5 +103,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(BidItemRepositoryInterface::class, BidItemRepository::class);
         $this->app->bind(BidItemFieldRepositoryInterface::class, BidItemFieldRepository::class);
         $this->app->bind(BidRepositoryInterface::class, BidRepository::class);
+        $this->app->bind(ProfileBankingRepositoryInterface::class, ProfileBankingRepository::class);
+        $this->app->bind(ProfileMobileBankingRepositoryInterface::class, ProfileMobileBankingRepository::class);
     }
 }

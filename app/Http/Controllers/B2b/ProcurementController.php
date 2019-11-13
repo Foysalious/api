@@ -1,17 +1,24 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Http\Controllers\Controller;
+use App\Models\Bid;
 use App\Models\Partner;
 use App\Models\Procurement;
 use App\Sheba\Business\ACL\AccessControl;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\Procurement\Creator;
 use Sheba\Logs\ErrorLog;
 use Sheba\ModificationFields;
+use Sheba\Payment\Adapters\Payable\OrderAdapter;
+use Sheba\Payment\Adapters\Payable\ProcurementAdapter;
+use Sheba\Payment\ShebaPayment;
+use Sheba\Payment\ShebaPaymentValidator;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
 use Sheba\Sms\Sms;
+use Sheba\Business\ProcurementInvitation\Creator as ProcurementInvitationCreator;
 
 class ProcurementController extends Controller
 {
@@ -30,9 +37,8 @@ class ProcurementController extends Controller
                 'type' => 'required|string:in:basic,advanced,product,service',
                 'items' => 'sometimes|string',
                 'is_published' => 'sometimes|integer',
-
-                /*'description' => 'required',
-                 'estimated_price' => 'required|string',
+                #'description' => 'required',
+                /*'estimated_price' => 'required|string',
                  'purchase_request_id' => 'sometimes|numeric',
                  'questions' => 'required|string',
                  'order_start_date' => 'sometimes|date_format:Y-m-d',
@@ -95,7 +101,7 @@ class ProcurementController extends Controller
                     "title" => $procurement->title,
                     "status" => $procurement->status,
                     "last_date_of_submission" => Carbon::parse($procurement->last_date_of_submission)->format('d/m/y'),
-                    "bid_count" => $procurement->bids->count()
+                    "bid_count" => $procurement->bids()->where('status','<>', 'pending')->get()->count()
                 ]);
             }
             if (count($procurements_list) > 0) return api_response($request, $procurements_list, 200, [
@@ -188,7 +194,7 @@ class ProcurementController extends Controller
         }
     }
 
-    public function sendInvitation($procurement, Request $request, Sms $sms, ErrorLog $errorLog)
+    public function sendInvitation($procurement, Request $request, Sms $sms, ErrorLog $errorLog, ProcurementInvitationCreator $creator, ProcurementRepositoryInterface $procurementRepository)
     {
         try {
             $this->validate($request, [
@@ -196,9 +202,12 @@ class ProcurementController extends Controller
             ]);
             $partners = Partner::whereIn('id', json_decode($request->partners))->get();
             $business = $request->business;
+            $procurement = $procurementRepository->find($procurement);
+            $this->setModifier($request->business_member);
             foreach ($partners as $partner) {
                 /** @var Partner $partner */
                 $sms->shoot($partner->getManagerMobile(), "You have been invited to serve" . $business->name);
+                $creator->setProcurement($procurement)->setPartner($partner)->create();
             }
             return api_response($request, null, 200);
         } catch (ValidationException $e) {
@@ -206,7 +215,7 @@ class ProcurementController extends Controller
             $errorLog->setException($e)->setRequest($request)->setErrorMessage($message)->send();
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            $errorLog->setException($e)->send();
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -230,6 +239,126 @@ class ProcurementController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function clearBills($business, $procurement, Request $request, ProcurementAdapter $procurement_adapter, ShebaPayment $payment, ShebaPaymentValidator $payment_validator, ProcurementRepositoryInterface $procurement_repository)
+    {
+        try {
+            $this->validate($request, [
+                'payment_method' => 'required|in:online,wallet,bkash,cbl',
+                'emi_month' => 'numeric'
+            ]);
+            $payment_method = $request->payment_method;
+            $procurement = $procurement_repository->find($procurement);
+            $payment_validator->setPayableType('procurement')->setPayableTypeId($procurement->id)->setPaymentMethod($payment_method);
+            if (!$payment_validator->canInitiatePayment()) return api_response($request, null, 403, ['message' => "Can't send multiple requests within 1 minute."]);
+            $payable = $procurement_adapter->setModelForPayable($procurement)->setEmiMonth($request->emi_month)->getPayable();
+            $payment = $payment->setMethod($payment_method)->init($payable);
+            return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function orderTimeline($business, $procurement, Request $request, Creator $creator)
+    {
+        try {
+            $procurement = $creator->getProcurement($procurement)->getBid();
+            $order_timelines = $creator->formatTimeline();
+            return api_response($request, $order_timelines, 200, ['timelines' => $order_timelines]);
+        } catch (ModelNotFoundException $e) {
+            return api_response($request, null, 404, ["message" => "Model Not found."]);
+        } catch (\Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function procurementOrders($business, Request $request)
+    {
+        try {
+            list($offset, $limit) = calculatePagination($request);
+            $procurements = Procurement::order()->with(['bids' => function ($q) {
+                $q->select('id', 'procurement_id', 'bidder_id', 'bidder_type', 'status', 'price');
+            }])->orderBy('id', 'DESC');
+            $total_procurement = $procurements->get()->count();
+
+            if ($request->has('status') && $request->status != 'all') {
+                $procurements = $procurements->where('status', $request->status);
+            }
+
+            $start_date = $request->has('start_date') ? $request->start_date : null;
+            $end_date = $request->has('end_date') ? $request->end_date : null;
+            if ($start_date && $end_date) {
+                $procurements->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
+            }
+            $procurements = $procurements->skip($offset)->limit($limit)->get();
+            $rfq_order_lists = [];
+            foreach ($procurements as $procurement) {
+                $bid = $procurement->getActiveBid() ? $procurement->getActiveBid() : null;
+                array_push($rfq_order_lists, [
+                    'procurement_id' => $procurement->id,
+                    'procurement_title' => $procurement->title,
+                    'procurement_status' => $procurement->status,
+                    'created_at' => $procurement->created_at->format('d/m/y'),
+                    'color' => constants('PROCUREMENT_ORDER_STATUSES_COLOR')[$procurement->status],
+                    'bid_id' => $bid ? $bid->id : null,
+                    'price' => $bid ? $bid->price : null,
+                    'vendor' => [
+                        'name' => $bid ? $bid->bidder->name : null
+                    ]
+                ]);
+            }
+
+            return api_response($request, $rfq_order_lists, 200, [
+                'rfq_order_lists' => $rfq_order_lists,
+                'total_procurement' => $total_procurement,
+            ]);
+        } catch (ModelNotFoundException $e) {
+            return api_response($request, null, 404, ["message" => "Model Not found."]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function showProcurementOrder($business, $procurement, $bid, Request $request, Creator $creator)
+    {
+        try {
+            $bid = Bid::findOrFail((int)$bid);
+            $rfq_order_details = $creator->getProcurement($procurement)->setBid($bid)->formatData();
+            return api_response($request, $rfq_order_details, 200, ['order_details' => $rfq_order_details]);
+        } catch (ModelNotFoundException $e) {
+            return api_response($request, null, 404, ["message" => "Model Not found."]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function orderBill($business, $procurement, Request $request, Creator $creator)
+    {
+        try {
+            $procurement = Procurement::findOrFail((int)$procurement);
+            $procurement->calculate();
+            $rfq_order_bill['total_price'] = $procurement->getActiveBid()->price;
+            $rfq_order_bill['paid'] = $procurement->paid;
+            $rfq_order_bill['due'] = $procurement->due;
+            return api_response($request, $rfq_order_bill, 200, ['rfq_order_bill' => $rfq_order_bill]);
+        } catch (ModelNotFoundException $e) {
+            return api_response($request, null, 404, ["message" => "Model Not found."]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

@@ -94,18 +94,39 @@ class BusinessRoute
                 });
                 $api->group(['prefix' => 'procurements'], function ($api) {
                     $api->post('/', 'B2b\ProcurementController@store');
+                    $api->get('/orders', 'B2b\ProcurementController@procurementOrders');
                     $api->group(['prefix' => '{procurement}'], function ($api) {
+                        $api->group(['prefix' => 'comments'], function ($api) {
+                            $api->post('/', 'CommentController@storeComments');
+                            $api->get('/', 'CommentController@getComments');
+                        });
+                        $api->group(['prefix' => 'attachments'], function ($api) {
+                            $api->post('/', 'AttachmentController@storeAttachment');
+                            $api->get('/', 'AttachmentController@getAttachments');
+                        });
+                        $api->get('/bill', 'B2b\ProcurementController@orderBill');
                         $api->post('invitations', 'B2b\ProcurementController@sendInvitation');
                         $api->post('publish', 'B2b\ProcurementController@updateStatus');
                         $api->post('general', 'B2b\ProcurementController@updateGeneral');
                         $api->get('/bid-history', 'B2b\BidController@getBidHistory');
+                        $api->get('bills/clear', 'B2b\ProcurementController@clearBills');
+                        $api->get('/timeline', 'B2b\ProcurementController@orderTimeline');
                         $api->group(['prefix' => 'bids'], function ($api) {
                             $api->get('/', 'B2b\BidController@index');
+                            $api->group(['prefix' => '{bid}'], function ($api) {
+                                $api->get('/', 'B2b\ProcurementController@showProcurementOrder');
+                                $api->group(['prefix' => 'payment-requests'], function ($api) {
+                                    $api->get('/', 'B2b\ProcurementPaymentRequestController@index');
+                                    $api->post('/{request}', 'B2b\ProcurementPaymentRequestController@updatePaymentRequest');
+                                    $api->get('/{request}', 'B2b\ProcurementPaymentRequestController@show');
+                                });
+                            });
                         });
                     });
                     $api->get('/', 'B2b\ProcurementController@index');
                     $api->get('/{procurement}', 'B2b\ProcurementController@show');
                 });
+
                 $api->group(['prefix' => 'bids'], function ($api) {
                     $api->group(['prefix' => '{bid}'], function ($api) {
                         $api->get('/', 'B2b\BidController@show');
@@ -117,6 +138,7 @@ class BusinessRoute
                         });
                         $api->group(['prefix' => 'attachments'], function ($api) {
                             $api->post('/', 'AttachmentController@storeAttachment');
+                            $api->get('/', 'AttachmentController@getAttachments');
                         });
                     });
                 });

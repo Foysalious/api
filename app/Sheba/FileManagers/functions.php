@@ -309,6 +309,24 @@ if (!function_exists('getPartnerLogoFolder')) {
     }
 }
 
+if (!function_exists('getEmiBankIconsFolder')) {
+
+    /**
+     * Get Partner Logo Folder.
+     *
+     * @param bool $with_base_url
+     * @return string
+     */
+    function getEmiBankIconsFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url)
+            $url = env('S3_URL');
+
+        return $url . 'images/emi_bank_icon/';
+    }
+}
+
 if (!function_exists('getPartnerPackageFolder')) {
 
     function getPartnerPackageFolder($with_base_url = false)
@@ -433,6 +451,24 @@ if (!function_exists('getResourceNIDFolder')) {
             $url = env('S3_URL');
 
         return $url . 'images/resources/nid/';
+    }
+}
+
+if (!function_exists('getNIDFolder')) {
+
+    /**
+     * Get Profile's NID Folder.
+     *
+     * @param bool $with_base_url
+     * @return string
+     */
+    function getNIDFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url)
+            $url = env('S3_URL');
+
+        return $url . 'images/profiles/nid/';
     }
 }
 

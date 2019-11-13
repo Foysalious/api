@@ -8,19 +8,30 @@ use App\Models\PosOrder;
 use App\Models\SliderPortal;
 use App\Repositories\ReviewRepository;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
 use Sheba\Analysis\PartnerPerformance\PartnerPerformance;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Manager\JobList;
+use Sheba\ModificationFields;
+use Sheba\Partner\HomePageSetting\CacheManager;
+use Sheba\Partner\HomePageSetting\Setting;
 use Sheba\Partner\LeaveStatus;
 use Sheba\Pos\Order\OrderPaymentStatuses;
+use Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
 use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Reward\PartnerReward;
+use Sheba\Repositories\PartnerRepository;
+use Throwable;
 
 class DashboardController extends Controller
 {
+    use ModificationFields;
+
+    private $partnerRepo;
+
     public function get(Request $request, PartnerPerformance $performance, PartnerReward $partner_reward)
     {
         ini_set('memory_limit', '6096M');
@@ -152,7 +163,7 @@ class DashboardController extends Controller
                 $this->setDailyUsageRecord($partner, request()->header('Portal-Name'));
 
             return api_response($request, $dashboard, 200, ['data' => $dashboard]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -165,7 +176,7 @@ class DashboardController extends Controller
             $partner_order = new PartnerOrderController();
             $new_order = $partner_order->newOrders($partner, $request)->getData();
             return $new_order;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return array();
         }
     }
@@ -181,7 +192,7 @@ class DashboardController extends Controller
             $nominee = $sp_information_completion->nominee->completion_percentage;
             $documents = $sp_information_completion->documents->completion_percentage;
             return ($personal == 100 && $business == 100 && $finance == 100 && $nominee == 100 && $documents == 100) ? 1 : 0;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return array();
         }
     }
@@ -211,5 +222,46 @@ class DashboardController extends Controller
         }
 
         app()->make(ActionRewardDispatcher::class)->run('daily_usage', $partner, $partner,$portal_name);
+    }
+
+    /**
+     * @param Request $request
+     * @param Setting $setting
+     * @return JsonResponse
+     */
+    public function getHomeSetting(Request $request, Setting $setting)
+    {
+        try {
+            $this->setModifier($request->partner);
+            $setting = $setting->setPartner($request->partner)->get();
+            return api_response($request, null, 200, ['data' => $setting]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @param PartnerRepositoryInterface $partner_repo
+     * @param CacheManager $cache_manager
+     * @return JsonResponse
+     */
+    public function updateHomeSetting(Request $request, PartnerRepositoryInterface $partner_repo, CacheManager $cache_manager)
+    {
+        try {
+            $home_page_setting = $request->home_page_setting;
+            $data['home_page_setting'] = $home_page_setting;
+            $partner_repo->update($request->partner, $data);
+            $cache_manager->setPartner($request->partner)->store(json_decode($data['home_page_setting'], true));
+
+            return api_response($request, null, 200, [
+                'message' => 'Dashboard Setting updated successfully',
+                'data' => json_decode($home_page_setting)
+            ]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 }

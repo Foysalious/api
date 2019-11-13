@@ -4,6 +4,7 @@ use Illuminate\Support\ServiceProvider;
 
 use Sheba\Dal\Providers\CustomMigrationServiceProvider;
 use Sheba\Dev\DevelopmentEnvironmentChecker;
+use Sheba\Partner\HomePageSetting\Providers\ServiceProvider as PartnerHomeSettingServiceProvider;
 use Sheba\Sms\SmsServiceProvider;
 use Sheba\Voucher\VoucherCodeServiceProvider;
 use Sheba\Voucher\VoucherSuggesterServiceProvider;
@@ -21,7 +22,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        if(!in_array($this->app->environment(), ["production", "development"])) {
+        if (!in_array($this->app->environment(), ["production", "development"])) {
             $this->app->make(DevelopmentEnvironmentChecker::class)->check();
         }
     }
@@ -40,5 +41,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->register(PartnerSaleServiceProvider::class);
         $this->app->register(SmsServiceProvider::class);
         $this->app->register(HomePageSettingGettersProvider::class);
+        $this->app->register(PartnerHomeSettingServiceProvider::class);
     }
 }

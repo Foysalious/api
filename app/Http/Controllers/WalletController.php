@@ -1,21 +1,20 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\Customer;
-use App\Models\Partner;
 use App\Models\Payment;
 use App\Repositories\PartnerRepository;
 use App\Repositories\PaymentRepository;
-use Carbon\Carbon;
 use DB;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Sheba\ExpenseTracker\AutomaticExpense;
-use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
+use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
 use Sheba\Payment\Adapters\Payable\RechargeAdapter;
 use Sheba\Payment\ShebaPayment;
 use Sheba\Reward\BonusCredit;
+use Sheba\Transactions\Wallet\TransactionGateways;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class WalletController extends Controller
 {
@@ -102,16 +101,31 @@ class WalletController extends Controller
                             $payment_detail->amount = $remaining;
                             $payment_detail->update();
                         }
-                        $user->debitWallet($remaining);
                         $this->setModifier($user);
+                        $transactionHandler = (new WalletTransactionHandler())->setModel($user)->setType('debit')->setAmount($remaining);
                         if (in_array($payment->payable->type, ['movie_ticket_purchase', 'transport_ticket_purchase'])) {
                             $log = sprintf(constants('TICKET_LOG')[$payment->payable->type]['log'], number_format($remaining, 2));
+                            $source = ($payment->payable->type == 'movie_ticket_purchase') ? TransactionSources::MOVIE : TransactionSources::TRANSPORT;
+                            $transactionHandler->setSource($source);
                         } else {
                             $log = 'Service Purchase';
+                            $transactionHandler->setSource(TransactionSources::SERVICE_PURCHASE);
                         }
-                        $wallet_transaction_data = ['amount' => $remaining, 'type' => 'Debit', 'log' => $log, 'created_at' => Carbon::now()];
+                        $transactionHandler->setTransactionDetails(['gateway' => TransactionGateways::WALLET]);
+                        $transactionHandler->setLog($log);
+                        if ($user instanceof Customer) {
+                            $transaction = $transactionHandler->store(['event_type' => get_class($spent_model), 'event_id' => $spent_model->id]);
+                        } else {
+                            $transaction = $transactionHandler->store();
+                        }
+                       /*
+                        * WALLET TRANSACTION NEED TO REMOVE
+                        *  $wallet_transaction_data = ['amount' => $remaining, 'type' => 'Debit', 'log' => $log, 'created_at' => Carbon::now()];
                         if ($user instanceof Customer) $wallet_transaction_data += ['event_type' => get_class($spent_model), 'event_id' => $spent_model->id];
-                        $transaction = $user->walletTransaction($wallet_transaction_data);
+
+                        $user->debitWallet($remaining);
+                        $transaction = $user->walletTransaction($wallet_transaction_data);*/
+
                     }
                 });
                 $paymentRepository->changeStatus(['to' => 'validated', 'from' => $payment->status, 'transaction_details' => $payment->transaction_details]);

@@ -1,12 +1,10 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Models\Affiliate;
 use App\Models\Customer;
 use App\Models\Member;
 use App\Models\Resource;
-use function GuzzleHttp\Promise\all;
+// use function GuzzleHttp\Promise\all;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;

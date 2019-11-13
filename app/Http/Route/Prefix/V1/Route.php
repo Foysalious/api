@@ -5,6 +5,9 @@ class Route
     public function set($api)
     {
         $api->group(['prefix' => 'v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
+            $api->group(['prefix' => 'geo'], function ($api) {
+                $api->get('geocode/reverse', 'GeocodeController@reverseGeocode');
+            });
             $api->group(['prefix' => 'vendors', 'middleware' => ['vendor.auth']], function ($api) {
                 $api->get('times', 'Vendor\ShebaController@getTimes');
                 $api->get('categories', 'Vendor\CategoryController@index');
@@ -51,10 +54,8 @@ class Route
             $api->get('job-times', 'JobController@getPreferredTimes');
             $api->get('times', 'JobController@getPreferredTimes');
             $api->get('cancel-job-reasons', 'JobController@cancelJobReasons');
-
             $api->post('voucher-valid', 'CheckoutController@validateVoucher');
             $api->post('vouchers', 'CheckoutController@validateVoucher');
-
             $api->post('rating', 'ReviewController@giveRatingFromEmail');
             $api->post('sms', 'SmsController@send');
             $api->post('faq', 'ShebaController@sendFaq');
@@ -63,7 +64,6 @@ class Route
                 $api->get('{offer}', 'OfferController@show');
             });
             $api->get('offer/{offer}/similar', 'ShebaController@getSimilarOffer');
-
             $api->group(['prefix' => 'navigation'], function ($api) {
                 $api->get('/', 'NavigationController@getNavList');
             });
@@ -288,7 +288,6 @@ class Route
             $api->group(['prefix' => 'profile', 'middleware' => ['profile.auth']], function ($api) {
                 $api->post('change-picture', 'ProfileController@changePicture');
             });
-
         });
         return $api;
     }

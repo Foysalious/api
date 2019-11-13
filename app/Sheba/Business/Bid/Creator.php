@@ -129,8 +129,7 @@ class Creator
             if ($price_item) {
                 $price = 0;
                 foreach ($price_item->fields as $field) {
-                    $variables = json_decode($field->variables);
-                    $price += ((double)$variables->unit * (double)$field->result);
+                    $price += (double)$field->result;
                 }
                 $this->bidRepository->update($bid, ['price' => $price]);
             }

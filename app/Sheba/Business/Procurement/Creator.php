@@ -1,5 +1,6 @@
 <?php namespace Sheba\Business\Procurement;
 
+use App\Models\Bid;
 use App\Models\Procurement;
 use App\Models\ProcurementItem;
 use App\Models\Tag;
@@ -38,6 +39,8 @@ class Creator
     private $paymentOptions;
     private $isPublished;
     private $labels;
+    private $procurement;
+    private $bid;
 
     public function __construct(ProcurementRepositoryInterface $procurement_repository, ProcurementItemRepositoryInterface $procurement_item_repository, ProcurementItemFieldRepositoryInterface $procurement_item_field_repository, ProcurementQuestionRepositoryInterface $procurement_question_repository)
     {
@@ -45,6 +48,18 @@ class Creator
         $this->procurementItemRepository = $procurement_item_repository;
         $this->procurementQuestionRepository = $procurement_question_repository;
         $this->procurementItemFieldRepository = $procurement_item_field_repository;
+    }
+
+    public function getProcurement($procurement)
+    {
+        $this->procurement = $this->procurementRepository->find((int)$procurement);
+        return $this;
+    }
+
+    public function setBid(Bid $bid)
+    {
+        $this->bid = $bid;
+        return $this;
     }
 
     public function setType($type)
@@ -184,6 +199,57 @@ class Creator
         return $procurement;
     }
 
+    public function getBid()
+    {
+        $this->bid = $this->procurement->getActiveBid();
+        return $this;
+    }
+
+    public function formatTimeline()
+    {
+        $payment_requests = $this->procurement->paymentRequests()->with('statusChangeLogs')->get();
+
+        $requests = [];
+        $request_logs = [];
+        foreach ($payment_requests as $payment_request) {
+            $payment_request_logs = $payment_request->statusChangeLogs->isEmpty() ? null : $payment_request->statusChangeLogs;
+            if ($payment_request_logs) {
+                foreach ($payment_request_logs as $log) {
+                    array_push($request_logs, [
+                        'created_at' => $log->created_at->toDateTimeString(),
+                        'time' => $log->created_at->format('h.i A'),
+                        'date' => $log->created_at->format('Y-m-d'),
+                        'log' => 'Status Updated From ' . $log->from_status . ' To ' . $log->to_status
+                    ]);
+                }
+            }
+            array_push($requests, [
+                'created_at' => $payment_request->created_at->toDateTimeString(),
+                'time' => $payment_request->created_at->format('h.i A'),
+                'date' => $payment_request->created_at->format('Y-m-d'),
+                'log' => 'This Payment Request: #' . $payment_request->id . ' Is ' . $payment_request->status
+            ]);
+        }
+        $bid_status_change_log = $this->bid->statusChangeLogs()->where('to_status', 'awarded')->first();
+        $data = [
+            'created_at' => $bid_status_change_log->created_at->toDateTimeString(),
+            'time' => $bid_status_change_log->created_at->format('h.i A'),
+            'date' => $bid_status_change_log->created_at->format('Y-m-d'),
+            'log' => 'Hired ' . $this->bid->bidder->name . ' and Status Updated From ' . $bid_status_change_log->from_status . ' To ' . $bid_status_change_log->to_status
+        ];
+
+        $order_time_lines = collect(array_merge([$data], $requests, $request_logs))->sortByDesc('created_at')->groupBy('date');
+        $order_time_line = [];
+        foreach ($order_time_lines as $key => $time_lines) {
+            array_push($order_time_line, [
+                'date' => Carbon::parse($key)->format('d M'),
+                'year' => Carbon::parse($key)->format('Y'),
+                'logs' => $time_lines,
+            ]);
+        }
+        return $order_time_line;
+    }
+
     private function makeProcurementData()
     {
         $this->procurementData = [
@@ -266,5 +332,53 @@ class Creator
             array_push($tag_list, $tag->id);
         }
         $procurement->tags()->sync($tag_list);
+    }
+
+    public function formatData()
+    {
+        $bid_price_quotations = null;
+        if ($this->procurement->type == 'advanced')
+            $bid_price_quotations = $this->generateBidItemData();
+        $order_details = [
+            'procurement_id' => $this->procurement->id,
+            'procurement_title' => $this->procurement->title,
+            'procurement_status' => $this->procurement->status,
+            'color' => constants('PROCUREMENT_ORDER_STATUSES_COLOR')[$this->procurement->status],
+            'procurement_start_date' => Carbon::parse($this->procurement->procurement_start_date)->format('d/m/y'),
+            'procurement_end_date' => Carbon::parse($this->procurement->procurement_end_date)->format('d/m/y'),
+            'procurement_type' => $this->procurement->type,
+            'procurement_additional_info' => $this->procurement->long_description,
+            'vendor' => [
+                'name' => $this->bid->bidder->name,
+                'logo' => $this->bid->bidder->logo,
+                'contact_person' => $this->bid->bidder->getContactPerson(),
+                'mobile' => $this->bid->bidder->getMobile(),
+                'address' => $this->bid->bidder->address,
+                'rating' => round($this->bid->bidder->reviews->avg('rating'), 2),
+                'total_rating' => $this->bid->bidder->reviews->count()
+            ],
+            'bid_id' => $this->bid->id,
+            'bid_price' => $this->bid->price,
+            'bid_price_quotations' => $bid_price_quotations
+        ];
+        return $order_details;
+    }
+
+    private function generateBidItemData()
+    {
+        $item_type = $this->bid->items->where('type', 'price_quotation')->first();
+        $item_fields = [];
+        foreach ($item_type->fields as $field) {
+            $unit = $field->variables ? json_decode($field->variables)->unit ? json_decode($field->variables)->unit : 0 : 0;
+            array_push($item_fields, [
+                'id' => $field->id,
+                'title' => $field->title,
+                'short_description' => $field->short_description,
+                'unit' => $unit,
+                'unit_price' => number_format($field->result / $unit, 2),
+                'total_price' => $field->result,
+            ]);
+        }
+        return $item_fields;
     }
 }

@@ -3,34 +3,46 @@
 use App\Models\Affiliate;
 use App\Models\AffiliateTransaction;
 use App\Models\Affiliation;
+use App\Models\Partner;
 use App\Models\PartnerAffiliation;
 use App\Models\PartnerTransaction;
+use App\Models\Profile;
+use App\Models\ProfileBankInformation;
+use App\Models\ProfileMobileBankInformation;
 use App\Models\Resource;
 use App\Models\Service;
-use App\Models\Customer;
-use App\Models\Partner;
-use App\Models\Profile;
-use App\Models\TopUpOrder;
-use App\Models\TopUpVendor;
 use App\Repositories\AffiliateRepository;
 use App\Repositories\FileRepository;
 use App\Repositories\LocationRepository;
+use App\Sheba\BankingInfo\GeneralBanking;
+use App\Sheba\BankingInfo\MobileBanking;
 use App\Sheba\Bondhu\AffiliateHistory;
 use App\Sheba\Bondhu\AffiliateStatus;
 use App\Sheba\Bondhu\TopUpEarning;
+use App\Transformers\Affiliate\BankDetailTransformer;
+use App\Transformers\Affiliate\MobileBankDetailTransformer;
+use App\Transformers\Affiliate\ProfileDetailPersonalInfoTransformer;
+use App\Transformers\Affiliate\ProfileDetailTransformer;
+use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
+use DB;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Maatwebsite\Excel\Excel;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Item;
+use Sheba\Bondhu\Statuses;
+use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
-use Sheba\PartnerPayment\PartnerPaymentValidatorFactory;
 use Sheba\Reports\ExcelHandler;
-use Sheba\TopUp\Jobs\TopUpJob;
+use Sheba\Repositories\Interfaces\ProfileBankingRepositoryInterface;
+use Sheba\Repositories\Interfaces\ProfileMobileBankingRepositoryInterface;
+use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Sheba\Transactions\InvalidTransaction;
 use Sheba\Transactions\Registrar;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
+use Throwable;
 use Validator;
-use DB;
-use Illuminate\Support\Facades\Redis;
 
 class AffiliateController extends Controller
 {
@@ -39,6 +51,7 @@ class AffiliateController extends Controller
     private $fileRepository;
     private $locationRepository;
     private $affiliateRepository;
+    private $nidOcrRepo;
 
     public function __construct()
     {
@@ -79,7 +92,7 @@ class AffiliateController extends Controller
             }
 
             return $affiliate->update() ? response()->json(['code' => 200]) : response()->json(['code' => 404]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -92,7 +105,7 @@ class AffiliateController extends Controller
                 ->select('verification_status', 'is_suspended', 'ambassador_code', 'is_ambassador', 'is_moderator')
                 ->first();
             return $affiliate != null ? response()->json(['code' => 200, 'affiliate' => $affiliate]) : response()->json(['code' => 404, 'msg' => 'Not found!']);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -111,7 +124,7 @@ class AffiliateController extends Controller
                 'last_updated' => Carbon::parse($affiliate->updated_at)->format('dS F,g:i A')
             ];
             return api_response($request, $info, 200, ['info' => $info]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -132,7 +145,7 @@ class AffiliateController extends Controller
             $filename = $profile->id . '_profile_image_' . Carbon::now()->timestamp . '.' . $photo->extension();
             $profile->pro_pic = $this->fileRepository->uploadToCDN($filename, $request->file('photo'), 'images/profiles/');
             return $profile->update() ? response()->json(['code' => 200, 'picture' => $profile->pro_pic]) : response()->json(['code' => 404]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -188,7 +201,7 @@ class AffiliateController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -222,7 +235,7 @@ class AffiliateController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -277,7 +290,7 @@ WHERE
 GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id]));
 
             $agents->map(function ($agent) {
-                $agent->total_gifted_amount = (double) $agent->total_gifted_amount;
+                $agent->total_gifted_amount = (double)$agent->total_gifted_amount;
             });
 
             $agents = $this->filterAgents($q, $agents);
@@ -294,10 +307,32 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id]));
                 return api_response($request, $agents, 200, $response);
             }
             return api_response($request, null, 404);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    /**
+     * @param $affiliate
+     * @param Request $request
+     * @return bool
+     */
+    public function checkUpdateParamsOnVerifiedStatus($affiliate, Request $request)
+    {
+        $restricted_keys = ['name', 'bn_name', 'dob', 'nid_no'];
+        $msg = null;
+        $access_denied = $affiliate->verification_status == Statuses::VERIFIED && !empty(array_intersect($restricted_keys, array_keys($request->all())));
+        if ($access_denied) {
+            $denied_field = [];
+            if ($request->has('name')) array_push($denied_field, 'Name');
+            if ($request->has('bn_name')) array_push($denied_field, 'Bangla Name');
+            if ($request->has('dob')) array_push($denied_field, 'Date Of Birth');
+            if ($request->has('nid_no')) array_push($denied_field, 'nid no');
+            $msg = implode(', ', $denied_field) . ' field not changeable on verified status';
+        }
+
+        return [$access_denied, $msg];
     }
 
     private function mapAgents($query)
@@ -365,7 +400,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id]));
                 array_forget($profile, 'pro_pic');
                 return api_response($request, $profile, 200, ['info' => $profile]);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -399,7 +434,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id]));
                 array_push($final, $info);
             }
             return count($final) != 0 ? api_response($request, $final, 200, ['affiliates' => $final]) : api_response($request, null, 404);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -429,22 +464,22 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id]));
                     ', [$affiliate->id]
             );
 
-            $lite_total_amount = count($lite_affiliation_total_amount) > 0 ? ( $lite_affiliation_total_amount[0]->total_amount ?: 0 ):0;
+            $lite_total_amount = count($lite_affiliation_total_amount) > 0 ? ($lite_affiliation_total_amount[0]->total_amount ?: 0) : 0;
             $request->filter_type = 'lifetime';
             $topup_earning = $top_up_earning->setType('affiliate')->getFormattedDate($request)->getAgentsData($affiliate)['earning_amount'];
             $total_amount = $partner_affiliation_amount + $lite_total_amount + $topup_earning;
 
             $partner_affiliation_count = PartnerAffiliation::spCount($affiliate->id)->count();
-            $lite_affiliation_count_query = DB::select('select count(*) as count from partners where affiliate_id in (select id from affiliates where ambassador_id = ?)',[$affiliate->id]);
-            $lite_affiliation_count = $lite_affiliation_count_query[0]->count ?:0;
+            $lite_affiliation_count_query = DB::select('select count(*) as count from partners where affiliate_id in (select id from affiliates where ambassador_id = ?)', [$affiliate->id]);
+            $lite_affiliation_count = $lite_affiliation_count_query[0]->count ?: 0;
 
             $info = collect();
             $info->put('agent_count', $affiliate->agents->count());
             $info->put('earning_amount', $affiliate->agents->sum('total_gifted_amount') + (double)$total_amount);
             $info->put('total_refer', Affiliation::totalRefer($affiliate->id)->count());
-            $info->put('sp_count',$partner_affiliation_count + $lite_affiliation_count );
+            $info->put('sp_count', $partner_affiliation_count + $lite_affiliation_count);
             return api_response($request, $info, 200, ['info' => $info->all()]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -491,7 +526,7 @@ WHERE
 GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
 
             $lite_refers->map(function ($agent) {
-                $agent->total_gifted_amount = (double) $agent->total_gifted_amount;
+                $agent->total_gifted_amount = (double)$agent->total_gifted_amount;
             });
 
             $gift_amount = $agent ? $agent->total_gifted_amount : 0;
@@ -499,7 +534,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             $gift_amount += count($lite_refers) > 0 ? $lite_refers[0]->total_gifted_amount : 0;
             $info->put('life_time_gift', $gift_amount);
             return api_response($request, $info, 200, $info->all());
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -521,7 +556,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -542,7 +577,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -565,7 +600,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         } catch (InvalidTransaction $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 400, ['message' => $e->getMessage()]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -581,16 +616,19 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
     {
         $data = $this->makeRechargeData($transaction);
         $amount = $transaction['amount'];
-        DB::transaction(function () use ($amount, $affiliate, $data) {
+        /*
+         * WALLET TRANSACTION NEED TO REMOVE
+         * DB::transaction(function () use ($amount, $affiliate, $data) {
             $affiliate->rechargeWallet($amount, $data);
-        });
+        });*/
+        (new WalletTransactionHandler())->setModel($affiliate)->setSource(TransactionSources::BKASH)->setTransactionDetails($data['transaction_details'])->setType('credit')->setAmount($amount)->setLog($data['log'])->dispatch();
     }
 
     private function makeRechargeData($transaction)
     {
         return [
             'amount' => $transaction['amount'],
-            'transaction_details' => json_encode(
+            'transaction_details' =>
                 [
                     'name' => 'Bkash',
                     'details' => [
@@ -599,7 +637,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
                         'details' => $transaction['details']
                     ]
                 ]
-            ),
+            ,
             'type' => 'Credit',
             'log' => 'Moneybag Refilled'
         ];
@@ -640,7 +678,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
                     ];
                 });
             return api_response($request, $services, 200, ['services' => $services]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -744,7 +782,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             }
 
             return response()->json(['code' => 200, 'data' => $topup_data, 'total_topups' => $total_topups, 'offset' => $offset]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -766,7 +804,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -788,7 +826,235 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param $affiliate
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function profileDetails($affiliate, Request $request)
+    {
+        try {
+            $affiliate = $request->affiliate;
+            $is_verified = $affiliate->verification_status;
+
+            $member_since = date_format($affiliate->created_at, 'Y-m-d');
+            $manager = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+            $resource = new Item($affiliate->profile, new ProfileDetailTransformer());
+            $details = $manager->createData($resource)->toArray()['data'];
+            $details['is_verified'] = $is_verified;
+            $details['member_since'] = $member_since;
+            return api_response($request, null, 200, ['data' => $details]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    private function dateDiffInDays($date1, $date2)
+    {
+        $diff = strtotime($date2) - strtotime($date1);
+        $result = '';
+
+        $days = abs(round($diff / 86400));
+
+        $years = ($days / 365);
+        $years = floor($years);
+        if ($years) {
+            $result = "$years" . " years ";
+        }
+
+        $month = ($days % 365) / 30.5;
+        $month = floor($month);
+        if ($month) {
+            $result .= "$month" . " months ";
+        }
+
+        $days = ($days % 365) % 30.5;
+        if ($days) {
+            $result .= "$days" . " days";
+        }
+
+
+        return $result;
+    }
+
+    public function updatePersonalInformation($affiliate, Request $request, ProfileRepositoryInterface $profile_repo)
+    {
+        try {
+            $affiliate = $request->affiliate;
+            list($is_access_denied, $msg) = $this->checkUpdateParamsOnVerifiedStatus($affiliate, $request);
+            if ($is_access_denied) return api_response($request, null, 403, ['msg' => $msg]);
+
+            $this->validate($request, [
+                'dob' => 'date',
+            ]);
+
+            $this->setModifier($affiliate);
+            $profile_repo->update($affiliate->profile, $request->all());
+
+            $manager = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+            $resource = new Item($affiliate->profile, new ProfileDetailPersonalInfoTransformer());
+            $details = $manager->createData($resource)->toArray()['data'];
+            return api_response($request, null, 200, ['data' => $details]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function storeBankInformation($affiliate, Request $request, ProfileBankingRepositoryInterface $profile_bank_repo)
+    {
+        try {
+            $this->validate($request, [
+                'bank_name' => 'required',
+                'account_no' => 'required',
+                'branch_name' => 'required',
+            ]);
+            $affiliate = $request->affiliate;
+            $this->setModifier($affiliate);
+            $data = $request->except('affiliate', 'remember_token');
+            $data['profile_id'] = $request->affiliate->profile_id;
+            $bank_details = $profile_bank_repo->create($data);
+            $manager = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+            $resource = new Item($bank_details, new BankDetailTransformer());
+
+            $details = $manager->createData($resource)->toArray()['data'];
+
+            return api_response($request, null, 200, ['data' => $details]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function storeMobileBankInformation($affiliate, Request $request, ProfileMobileBankingRepositoryInterface $profile_mobile_bank_repo)
+    {
+        try {
+            $this->validate($request, [
+                'bank_name' => 'required',
+                'account_no' => 'required'
+            ]);
+            $affiliate = $request->affiliate;
+            $this->setModifier($affiliate);
+            $data = $request->except('affiliate', 'remember_token');
+            $data['profile_id'] = $request->affiliate->profile_id;
+            $bank_details = $profile_mobile_bank_repo->create($data);
+
+            $manager = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+            $resource = new Item($bank_details, new MobileBankDetailTransformer());
+
+            $details = $manager->createData($resource)->toArray()['data'];
+
+            return api_response($request, null, 200, ['data' => $details]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function updateBankInformation($affiliate, ProfileBankInformation $profile_bank_information, Request $request, ProfileBankingRepositoryInterface $profile_bank_repo)
+    {
+        try {
+            $affiliate = $request->affiliate;
+            $this->setModifier($affiliate);
+            $data = $request->except('affiliate', 'remember_token');
+            $bank_details = $profile_bank_repo->update($profile_bank_information, $data);
+
+            $manager = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+            $resource = new Item($bank_details, new BankDetailTransformer());
+
+            $details = $manager->createData($resource)->toArray()['data'];
+
+            return api_response($request, null, 200, ['data' => $details]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function updateMobileBankInformation($affiliate, ProfileMobileBankInformation $profile_mobile_bank_info, Request $request, ProfileMobileBankingRepositoryInterface $profile_mobile_bank_repo)
+    {
+        try {
+            $affiliate = $request->affiliate;
+            $this->setModifier($affiliate);
+            $data = $request->except('affiliate', 'remember_token');
+            $mobile_bank_details = $profile_mobile_bank_repo->update($profile_mobile_bank_info, $data);
+
+            $manager = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+            $resource = new Item($mobile_bank_details, new MobileBankDetailTransformer());
+
+            $details = $manager->createData($resource)->toArray()['data'];
+
+            return api_response($request, null, 200, ['data' => $details]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function deleteBankInformation($affiliate, $bank_info_id, Request $request, ProfileBankingRepositoryInterface $profile_bank_repo)
+    {
+
+        try {
+            $affiliate = $request->affiliate;
+            $this->setModifier($affiliate);
+            $is_exist = $profile_bank_repo->find($bank_info_id);
+
+            if ($is_exist) {
+                $profile_bank_repo->delete($bank_info_id);
+                return api_response($request, null, 200, ['msg' => 'deleted bank information']);
+            }
+            return api_response($request, null, 200, ['msg' => 'all ready delete']);
+
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function deleteMobileBankInformation($affiliate, $mobile_bank_info_id, Request $request, ProfileMobileBankingRepositoryInterface $profile_mobile_bank_repo)
+    {
+        try {
+            $affiliate = $request->affiliate;
+            $this->setModifier($affiliate);
+            $is_exist = $profile_mobile_bank_repo->find($mobile_bank_info_id);
+            if ($is_exist) {
+                $profile_mobile_bank_repo->delete($mobile_bank_info_id);
+                return api_response($request, null, 200, ['msg' => 'deleted bank information']);
+            }
+            return api_response($request, null, 200, ['msg' => 'all ready deleted']);
+
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -838,7 +1104,30 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function bankList(Request $request)
+    {
+        try {
+            $bank_list = GeneralBanking::getPublishedBank();
+            return api_response($request, null, 200, ['data' => $bank_list]);
+        } catch (Throwable $e) {
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function mobileBankList(Request $request)
+    {
+        try {
+            $bank_list = MobileBanking::getPublishedBank();
+            return api_response($request, null, 200, ['data' => $bank_list]);
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

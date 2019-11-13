@@ -1,13 +1,16 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\FraudDetection\TransactionSources;
 use Sheba\Payment\Wallet;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpCommission;
 use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
+use Sheba\Transactions\Wallet\HasWalletTransaction;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
-class Vendor extends Model implements TopUpAgent
+class Vendor extends Model implements TopUpAgent, HasWalletTransaction
 {
     use Wallet;
     use TopUpTrait;
@@ -15,9 +18,18 @@ class Vendor extends Model implements TopUpAgent
 
     public function topUpTransaction(TopUpTransaction $transaction)
     {
-        $this->debitWallet($transaction->getAmount());
+       /*
+        * WALLET TRANSACTION NEED TO REMOVE
+        *  $this->debitWallet($transaction->getAmount());
         $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'initiator_type' => "App\\Models\\TopUpOrder",
-            'initiator_id' => $transaction->getTopUpOrder()->id, 'log' => $transaction->getLog()]);
+            'initiator_id' => $transaction->getTopUpOrder()->id, 'log' => $transaction->getLog()]);*/
+        (new WalletTransactionHandler())
+            ->setModel($this)
+            ->setAmount($transaction->getAmount())
+            ->setSource(TransactionSources::TOP_UP)
+            ->setType('debit')
+            ->setLog($transaction->getLog())
+            ->dispatch(['initiator_type' => "App\\Models\\TopUpOrder", 'initiator_id' => $transaction->getTopUpOrder()->id]);
     }
 
     public function transactions()

@@ -26,31 +26,19 @@ class PartnerSubscriptionController extends Controller
     public function index($partner, Request $request)
     {
         try {
-            $featured_package_id = config('partner.subscription_featured_package_id');
             /** @var Partner $partner */
             $partner = $request->partner;
-            $partner_subscription_packages = PartnerSubscriptionPackage::validDiscounts()->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'rules', 'usps', 'badge', 'features')->get();
 
-            foreach ($partner_subscription_packages as $package) {
-                $package['rules'] = $this->calculateDiscount(json_decode($package->rules, 1), $package);
-                $package['is_subscribed'] = (int)($partner->package_id == $package->id);
-                $package['is_published'] = $package->name == 'LITE' ? 0 : 1;
-                $package['subscription_type'] = ($partner->package_id == $package->id) ? $partner->billing_type : null;
-                $package['usps'] = $package->usps ? json_decode($package->usps) : ['usp' => [], 'usp_bn' => []];
-                $package['features'] = $package->features ? json_decode($package->features) : [];
-                $package['is_featured'] = in_array($package->id, $featured_package_id);
-
-                removeRelationsAndFields($package);
-            }
-
+            $partner_subscription_packages = $this->generateSubscriptionRelatedData($partner);
             $partner_subscription_package = $partner->subscription;
+            list($remaining, $wallet, $bonus_wallet, $threshold) = $partner->getCreditBreakdown();
             $data = [
                 'subscription_package' => $partner_subscription_packages,
                 'monthly_tag' => null, 'half_yearly_tag' => '১৯% ছাড়', 'yearly_tag' => '৫০% ছাড়',
                 'tags' => [
-                    'monthly'       => ['en' => null, 'bn' => null],
-                    'half_yearly'   => ['en' => '19% discount', 'bn' => '১৯% ছাড়'],
-                    'yearly'        => ['en' => '50% discount', 'bn' => '৫০% ছাড়']
+                    'monthly' => ['en' => null, 'bn' => null],
+                    'half_yearly' => ['en' => '19% discount', 'bn' => '১৯% ছাড়'],
+                    'yearly' => ['en' => '50% discount', 'bn' => '৫০% ছাড়']
                 ],
                 'billing_type' => $partner->billing_type,
                 'current_package' => [
@@ -60,7 +48,36 @@ class PartnerSubscriptionController extends Controller
                 'last_billing_date' => $partner->last_billed_date ? $partner->last_billed_date->format('Y-m-d') : null,
                 'next_billing_date' => $partner->last_billed_date ? $partner->periodicBillingHandler()->nextBillingDate()->format('Y-m-d') : null,
                 'validity_remaining_in_days' => $partner->last_billed_date ? $partner->periodicBillingHandler()->remainingDay() : null,
-                'is_auto_billing_activated' => ($partner->auto_billing_activated) ? true : false
+                'is_auto_billing_activated' => ($partner->auto_billing_activated) ? true : false,
+                'balance' => [
+                    'wallet' => $wallet + $bonus_wallet,
+                    'refund' => $remaining,
+                    'minimum_wallet_balance' => $threshold
+                ]
+            ];
+
+            return api_response($request, null, 200, $data);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getAllPackages(Request $request)
+    {
+        try {
+            $data = [
+                'subscription_package' => $this->generateSubscriptionRelatedData(),
+                'monthly_tag' => null, 'half_yearly_tag' => '১৯% ছাড়', 'yearly_tag' => '৫০% ছাড়',
+                'tags' => [
+                    'monthly' => ['en' => null, 'bn' => null],
+                    'half_yearly' => ['en' => '19% discount', 'bn' => '১৯% ছাড়'],
+                    'yearly' => ['en' => '50% discount', 'bn' => '৫০% ছাড়']
+                ]
             ];
 
             return api_response($request, null, 200, $data);
@@ -273,7 +290,11 @@ class PartnerSubscriptionController extends Controller
                         return api_response($request, null, $inside ? 200 : 202, ['message' => " আপনার $requestedPackage->show_name_bd  প্যকেজে অবনমনের  অনুরোধ  গ্রহণ  করা  হয়েছে "]);
                     }
                     $hasCredit = $request->partner->hasCreditForSubscription($requestedPackage, $request->billing_type);
-                    $balance = ['remaining_balance' => $request->partner->totalCreditForSubscription, 'price' => $request->partner->totalPriceRequiredForSubscription, 'breakdown' => $request->partner->creditBreakdown];
+                    $balance = [
+                        'remaining_balance' => $request->partner->totalCreditForSubscription,
+                        'price' => $request->partner->totalPriceRequiredForSubscription,
+                        'breakdown' => $request->partner->creditBreakdown
+                    ];
                     if (!$hasCredit) {
                         $upgradeRequest->delete();
                         (new NotificationRepository())->sendInsufficientNotification($request->partner, $requestedPackage, $request->billing_type, $grade);
@@ -324,5 +345,33 @@ class PartnerSubscriptionController extends Controller
         $request->partner->save();
         $task = $request->partner->auto_billing_activated ? 'activated' : 'deactivated';
         return api_response($request, null, 200, ['message' => "Billing auto renewal $task", 'auto_billing_activated' => $request->partner->auto_billing_activated]);
+    }
+
+    /**
+     * @param Partner $partner | null
+     * @return mixed
+     */
+    private function generateSubscriptionRelatedData(Partner $partner = null)
+    {
+        $featured_package_id = config('partner.subscription_featured_package_id');
+        $partner_subscription_packages = PartnerSubscriptionPackage::validDiscounts()
+            ->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'rules', 'usps', 'badge', 'features')
+            ->get();
+
+        foreach ($partner_subscription_packages as $package) {
+            $package['rules'] = $this->calculateDiscount(json_decode($package->rules, 1), $package);
+            $package['is_published'] = $package->name == 'LITE' ? 0 : 1;
+            $package['usps'] = $package->usps ? json_decode($package->usps) : ['usp' => [], 'usp_bn' => []];
+            $package['features'] = $package->features ? json_decode($package->features) : [];
+            $package['is_featured'] = in_array($package->id, $featured_package_id);
+
+            if ($partner) {
+                $package['is_subscribed'] = (int)($partner->package_id == $package->id);
+                $package['subscription_type'] = ($partner->package_id == $package->id) ? $partner->billing_type : null;
+            }
+            removeRelationsAndFields($package);
+        }
+
+        return $partner_subscription_packages;
     }
 }
