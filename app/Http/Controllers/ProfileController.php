@@ -271,20 +271,17 @@ class ProfileController extends Controller
             $profile = $request->profile;
             $input = $request->except('profile', 'remember_token');
             $data = $ocr_repo->nidCheck($input);
-            $nid_details = null;
+            if (isset($data["dob"])) {
+                $data["dob"] = date_create($data["dob"])->format('Y-m-d');
+            } ;
 
-            $manager = new Manager();
-            $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($data, new NidInfoTransformer());
-            $nid_details = $manager->createData($resource)->toArray()['data'];
-
-            if ($this->isWronglyIdentifyFromOcr($input, $nid_details))
+            if ($this->isWronglyIdentifyFromOcr($input, $data))
                 return api_response($request, null, 422);
 
             $nid_image_key = "nid_image_" . $input["side"];
-            $nid_details[$nid_image_key] = $input['nid_image'];
+            $data[$nid_image_key] = $input['nid_image'];
 
-            $profile_repo->update($profile, $nid_details);
+            $profile_repo->update($profile, $data);
 
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
