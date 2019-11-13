@@ -195,7 +195,13 @@ class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAg
          * WALLET TRANSACTION NEED TO REMOVE
          * $this->debitWallet($transaction->getAmount());
         $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);*/
-        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::TOP_UP)->setType('debit')->setLog($transaction->getLog())->dispatch();
+        (new WalletTransactionHandler())
+            ->setModel($this)
+            ->setAmount($transaction->getAmount())
+            ->setSource(TransactionSources::TOP_UP)
+            ->setType('debit')
+            ->setLog($transaction->getLog())
+            ->dispatch();
     }
 
     public function walletTransaction($data)
