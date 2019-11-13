@@ -454,6 +454,24 @@ if (!function_exists('getResourceNIDFolder')) {
     }
 }
 
+if (!function_exists('getNIDFolder')) {
+
+    /**
+     * Get Profile's NID Folder.
+     *
+     * @param bool $with_base_url
+     * @return string
+     */
+    function getNIDFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url)
+            $url = env('S3_URL');
+
+        return $url . 'images/profiles/nid/';
+    }
+}
+
 if (!function_exists('getPushNotificationFolder')) {
 
     function getPushNotificationFolder($with_base_url = false)

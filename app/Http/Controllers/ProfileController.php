@@ -3,6 +3,9 @@
 use App\Models\Profile;
 use App\Repositories\FileRepository;
 use App\Repositories\ProfileRepository;
+use App\Transformers\Affiliate\ProfileDetailPersonalInfoTransformer;
+use App\Transformers\CustomSerializer;
+use App\Transformers\NidInfoTransformer;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -10,11 +13,17 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use JWTAuth;
 use JWTFactory;
+use Sheba\Ocr\Exceptions\OcrServerError;
+use Validator;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Item;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
+use Sheba\NidInfo\ImageSide;
+use Sheba\Ocr\Repository\OcrRepository;
+use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Sheba\Repositories\ProfileRepository as ShebaProfileRepository;
 use Sheba\Sms\Sms;
 use Throwable;
-use Validator;
 
 class ProfileController extends Controller
 {
@@ -247,5 +256,88 @@ class ProfileController extends Controller
             'profile_id' => $profile->id, 'customer_id' => $profile->customer ? $profile->customer->id : null, 'affiliate_id' => $profile->affiliate ? $profile->affiliate->id : null, 'from' => constants('AVATAR_FROM_CLASS')[$from], 'user_id' => $id
         ];
         return JWTAuth::fromUser($profile, $customClaims);
+    }
+
+    /**
+     * @param Request $request
+     * @param OcrRepository $ocr_repo
+     * @param ProfileRepositoryInterface $profile_repo
+     * @return JsonResponse
+     */
+    public function storeNid(Request $request, OcrRepository $ocr_repo, ProfileRepositoryInterface $profile_repo)
+    {
+        try {
+            $this->validate($request, ['nid_image' => 'required', 'side' => 'required']);
+            $profile = $request->profile;
+            $input = $request->except('profile', 'remember_token');
+            $data = $ocr_repo->nidCheck($input);
+            if (isset($data["dob"])) {
+                $data["dob"] = date_create($data["dob"])->format('Y-m-d');
+            } ;
+
+            if ($this->isWronglyIdentifyFromOcr($input, $data))
+                return api_response($request, null, 422);
+
+            $nid_image_key = "nid_image_" . $input["side"];
+            $data[$nid_image_key] = $input['nid_image'];
+
+            $profile_repo->update($profile, $data);
+
+            $manager = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+            $resource = new Item($profile, new NidInfoTransformer());
+            $details = $manager->createData($resource)->toArray()['data'];
+            return api_response($request, null, 200, ['data' => $details]);
+        } catch (OcrServerError $e) {
+            if ($e->getCode() == 402) return api_response($request, null, 422);
+            return api_response($request, null, 500);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param $input
+     * @param $nid_details
+     * @return bool
+     */
+    private function isWronglyIdentifyFromOcr($input, $nid_details)
+    {
+        if (
+            $input["side"] == ImageSide::FRONT &&
+            (!$nid_details['bn_name'] || !$nid_details['name'] || !$nid_details['dob'] || !$nid_details['nid_no'])
+        ) return true;
+
+        if ($input["side"] == ImageSide::BACK && !$nid_details['address'])
+            return true;
+
+        return false;
+    }
+
+    /**
+     * @param Request $request
+     * @param ProfileRepositoryInterface $profile_repo
+     * @return JsonResponse
+     */
+    public function updateProfileInfo(Request $request, ProfileRepositoryInterface $profile_repo)
+    {
+        try {
+            $this->validate($request, []);
+            $profile = $request->profile;
+            if(!$profile) return api_response($request, null, 404, ['data' => null]);
+
+            $input = $request->except('profile', 'remember_token');
+            $profile_repo->update($profile, $input);
+            $manager = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+            $resource = new Item($profile, new ProfileDetailPersonalInfoTransformer());
+            $details = $manager->createData($resource)->toArray()['data'];
+
+            return api_response($request, null, 200, ['data' => $details]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 }

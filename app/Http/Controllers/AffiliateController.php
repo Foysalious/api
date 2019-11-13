@@ -24,7 +24,6 @@ use App\Transformers\Affiliate\MobileBankDetailTransformer;
 use App\Transformers\Affiliate\ProfileDetailPersonalInfoTransformer;
 use App\Transformers\Affiliate\ProfileDetailTransformer;
 use App\Transformers\CustomSerializer;
-use App\Transformers\NidInfoTransformer;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Http\JsonResponse;
@@ -35,8 +34,6 @@ use League\Fractal\Resource\Item;
 use Sheba\Bondhu\Statuses;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
-use Sheba\NidInfo\ImageSIde;
-use Sheba\Ocr\Repository\OcrRepository;
 use Sheba\Reports\ExcelHandler;
 use Sheba\Repositories\Interfaces\ProfileBankingRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProfileMobileBankingRepositoryInterface;
@@ -1130,79 +1127,6 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         try {
             $bank_list = MobileBanking::getPublishedBank();
             return api_response($request, null, 200, ['data' => $bank_list]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
-    public function storeNid(Request $request, OcrRepository $ocr_repo, ProfileRepositoryInterface $profile_repo)
-    {
-        try {
-            $this->validate($request, [
-                'nid_image' => 'required',
-                'side' => 'required',
-            ]);
-            $input = $request->except('profile', 'remember_token');
-            $data = $ocr_repo->nidCheck($input);
-            $nid_details = null;
-            $manager = new Manager();
-            $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($data, new NidInfoTransformer());
-            $nid_details = $manager->createData($resource)->toArray()['data'];
-
-            if ($input["side"] == ImageSIde::FRONT) {
-//                $nid_details['nid_image_front'] = $input['nid_image'];
-                if (!$nid_details['bn_name'] || !$nid_details['name'] || !$nid_details['dob'] || !$nid_details['nid_no']) {
-                    return api_response($request, null, 422);
-                }
-            }
-
-            if ($input["side"] == ImageSIde::BACK) {
-//                $nid_details['nid_image_back'] = $input['nid_image'];
-                if (!$nid_details['address']) {
-                    return api_response($request, null, 422);
-                }
-            }
-
-
-            if ($input["side"] == ImageSIde::BACK) {
-                if (!$data['address']) {
-                    return api_response($request, null, 422);
-                }
-            }
-
-            $profile = $request->profile;
-            $profile_repo->update($profile, $nid_details);
-
-            $manager = new Manager();
-            $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($profile, new NidInfoTransformer());
-            $details = $manager->createData($resource)->toArray()['data'];
-
-            return api_response($request, null, 200, ['data' => $details]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            if($e->getCode() == 402) return api_response($request, null, 422);
-            return api_response($request, null, 500);
-        }
-    }
-
-    public function updateProfileInfo(Request $request, ProfileRepositoryInterface $profile_repo)
-    {
-        try {
-            $this->validate($request, []);
-            $profile = $request->profile;
-            if(!$profile) return api_response($request, null, 404, ['data' => null]);
-
-            $input = $request->except('profile', 'remember_token');
-            $profile_repo->update($profile, $input);
-            $manager = new Manager();
-            $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($profile, new ProfileDetailPersonalInfoTransformer());
-            $details = $manager->createData($resource)->toArray()['data'];
-
-            return api_response($request, null, 200, ['data' => $details]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
