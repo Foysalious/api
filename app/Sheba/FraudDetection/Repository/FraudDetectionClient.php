@@ -28,22 +28,6 @@ class FraudDetectionClient
     }
 
     /**
-     * @param $uri
-     * @param $data
-     * @return array
-     * @throws FraudDetectionServerError
-     */
-    public function post($uri, $data)
-    {
-        return $this->call('post', $uri, $data);
-    }
-
-    public function put($uri, $data)
-    {
-        return $this->call('put', $uri, $data);
-    }
-
-    /**
      * @param $method
      * @param $uri
      * @param null $data
@@ -52,8 +36,6 @@ class FraudDetectionClient
      */
     private function call($method, $uri, $data = null)
     {
-        return true;
-        
         try {
             $res = decodeGuzzleResponse($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data)));
             if ($res['code'] != 200) throw new FraudDetectionServerError($res['message']);
@@ -87,5 +69,21 @@ class FraudDetectionClient
             $options['json'] = $data;
         }
         return $options;
+    }
+
+    /**
+     * @param $uri
+     * @param $data
+     * @return array
+     * @throws FraudDetectionServerError
+     */
+    public function post($uri, $data)
+    {
+        return $this->call('post', $uri, $data);
+    }
+
+    public function put($uri, $data)
+    {
+        return $this->call('put', $uri, $data);
     }
 }
