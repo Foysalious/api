@@ -48,10 +48,9 @@ class Bid extends Model
         return $this->hasMany(BidStatusChangeLog::class);
     }
 
-
-    public function canSendHireRequest()
+    public function canNotSendHireRequest()
     {
-        return !$this->procurement->hasAccepted() && !in_array($this->status, [config('b2b.BID_STATUSES')['sent'], config('b2b.BID_STATUSES')['rejected']]);
+        return $this->procurement->hasAccepted() || in_array($this->status, [config('b2b.BID_STATUSES')['accepted'], config('b2b.BID_STATUSES')['awarded']]);
     }
 
 

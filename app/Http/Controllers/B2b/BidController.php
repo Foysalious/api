@@ -221,7 +221,7 @@ class BidController extends Controller
                 'price' => $bid->price,
                 'title' => $bid->procurement->title,
                 'type' => $bid->procurement->type,
-                'is_awarded' => $bid->canSendHireRequest(),
+                'is_awarded' => $bid->canNotSendHireRequest(),
                 'vendor' => [
                     'name' => $bid->bidder->name,
                     'logo' => $bid->bidder->logo,
