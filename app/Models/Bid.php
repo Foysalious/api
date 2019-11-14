@@ -49,4 +49,10 @@ class Bid extends Model
     }
 
 
+    public function canSendHireRequest()
+    {
+        return !$this->procurement->hasAccepted() && !in_array($this->status, [config('b2b.BID_STATUSES')['sent'], config('b2b.BID_STATUSES')['rejected']]);
+    }
+
+
 }
