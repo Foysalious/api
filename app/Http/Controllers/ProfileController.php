@@ -270,6 +270,44 @@ class ProfileController extends Controller
             $this->validate($request, ['nid_image' => 'required|mimes:jpeg,png', 'side' => 'required']);
             $profile = $request->profile;
             $input = $request->except('profile', 'remember_token');
+
+            if ($input["side"] == ImageSide::FRONT) {
+                return [
+                    "message" => "Successful",
+                    "code" => 200,
+                    'data' => [
+                        'name' => 'test  name',
+                        'bn_name' => 'test bangla name',
+                        'nid_no' => '13212132321',
+                        'dob' => 'test mother name',
+                        'father_name' => 'test father name',
+                        'mother_name' => 'test mother name',
+                        'blood_group' => null,
+                        'address' => null,
+                        'gender' => null
+                    ]
+                ];
+            }
+
+            if ($input["side"] == ImageSide::BACK) {
+                return [
+                    "message" => "Successful",
+                    "code" => 200,
+                    'data' => [
+                        'name' => 'test  name',
+                        'bn_name' => 'test bangla name',
+                        'nid_no' => '13212132321',
+                        'dob' => 'test mother name',
+                        'father_name' => 'test father name',
+                        'mother_name' => 'test mother name',
+                        'blood_group' => null,
+                        'address' => 'address',
+                        'gender' => null
+                    ]
+                ];
+            }
+
+
             $data = $ocr_repo->nidCheck($input);
             if (isset($data["dob"])) {
                 $data["dob"] = date_create($data["dob"])->format('Y-m-d');
