@@ -146,6 +146,7 @@ class HomePageSettingController extends Controller
         }
         return $platform;
     }
+
     private function getLocationId(Request $request)
     {
         $location = '';
