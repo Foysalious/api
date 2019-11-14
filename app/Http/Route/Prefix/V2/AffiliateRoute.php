@@ -25,7 +25,6 @@ class AffiliateRoute
             $api->get('customer-info', 'AffiliateController@getCustomerInfo');
             $api->get('partner-info', 'AffiliateController@getPartnerInfo');
             $api->get('personal-info', 'AffiliateController@getPersonalInformation');
-            $api->post('top-up-test', 'TopUpController@topUpTest');
             $api->get('onboarded-partners', 'Affiliate\\LitePartnerOnBoardingController@index');
             $api->get('lite-sp-reject-reasons', 'Affiliate\\LitePartnerOnBoardingController@rejectReason');
             $api->get('lite-sp-pending', 'Affiliate\\LitePartnerOnBoardingController@litePartners');

@@ -18,9 +18,9 @@ class WalletTransactionHandler extends WalletTransaction
     protected $amount;
     protected $log;
     protected $type;
-    private $source;
     /** @var TransactionDetails $transaction_details */
     protected $transaction_details;
+    private $source;
 
     /**
      * @param array $extras
@@ -34,11 +34,16 @@ class WalletTransactionHandler extends WalletTransaction
             if (!$isJob) $extras = $this->withCreateModificationField((new RequestIdentification())->set($extras));
 
             $transaction = $this->storeTransaction($extras);
-            $this->storeFraudDetectionTransaction(!$isJob);
+            try {
+                $this->storeFraudDetectionTransaction(!$isJob);
+            } catch (Exception $e) {
+                WalletTransaction::throwException($e);
+            }
             return $transaction;
         } catch (Exception $e) {
             WalletTransaction::throwException($e);
         }
+        
         return null;
     }
 
@@ -55,11 +60,7 @@ class WalletTransactionHandler extends WalletTransaction
             $typeMethod = sprintf("%sWallet", $this->type);
             $this->$typeMethod();
             $data = array_merge($data, [
-                'type' => ucfirst($this->type),
-                'log' => $this->log,
-                'created_at' => Carbon::now(),
-                'transaction_details' => $this->transaction_details ? $this->transaction_details->toString() : null,
-                'amount' => $this->amount
+                'type' => ucfirst($this->type), 'log' => $this->log, 'created_at' => Carbon::now(), 'transaction_details' => $this->transaction_details ? $this->transaction_details->toString() : null, 'amount' => $this->amount
             ]);
             $transaction_data = $this->getTransactionClass()->fill($data);
             $transaction = $this->model->transactions()->save($transaction_data);

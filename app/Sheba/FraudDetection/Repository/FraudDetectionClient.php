@@ -28,22 +28,6 @@ class FraudDetectionClient
     }
 
     /**
-     * @param $uri
-     * @param $data
-     * @return array
-     * @throws FraudDetectionServerError
-     */
-    public function post($uri, $data)
-    {
-        return $this->call('post', $uri, $data);
-    }
-
-    public function put($uri, $data)
-    {
-        return $this->call('put', $uri, $data);
-    }
-
-    /**
      * @param $method
      * @param $uri
      * @param null $data
@@ -85,5 +69,21 @@ class FraudDetectionClient
             $options['json'] = $data;
         }
         return $options;
+    }
+
+    /**
+     * @param $uri
+     * @param $data
+     * @return array
+     * @throws FraudDetectionServerError
+     */
+    public function post($uri, $data)
+    {
+        return $this->call('post', $uri, $data);
+    }
+
+    public function put($uri, $data)
+    {
+        return $this->call('put', $uri, $data);
     }
 }

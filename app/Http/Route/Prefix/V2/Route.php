@@ -148,6 +148,10 @@ class Route
                 $api->post('/', 'TopUp\TopUpController@topUp');
                 $api->post('/bulk', 'TopUp\TopUpController@bulkTopUp');
                 $api->get('/history', 'TopUp\TopUpController@topUpHistory');
+                /**
+                 * FOR TEST
+                 * $api->post('top-up-test', 'TopUp\\TopUpController@topUpTest');
+                 */
             });
             $api->group(['prefix' => 'resources/{resource}', 'middleware' => ['resource.auth']], function ($api) {
                 $api->group(['prefix' => 'jobs'], function ($api) {
