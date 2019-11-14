@@ -267,13 +267,17 @@ class ProfileController extends Controller
     public function storeNid(Request $request, OcrRepository $ocr_repo, ProfileRepositoryInterface $profile_repo)
     {
         try {
-            $this->validate($request, ['nid_image' => 'required', 'side' => 'required']);
+            $this->validate($request, ['nid_image' => 'required|mimes:jpeg,png', 'side' => 'required']);
             $profile = $request->profile;
             $input = $request->except('profile', 'remember_token');
             $data = $ocr_repo->nidCheck($input);
             if (isset($data["dob"])) {
                 $data["dob"] = date_create($data["dob"])->format('Y-m-d');
-            } ;
+            };
+
+            $validation = $profile_repo->validate($data, $profile);
+            if ($validation === 'nid_no')
+                return api_response($request, null, 409, ['message' => 'NID no used by another user']);
 
             if ($this->isWronglyIdentifyFromOcr($input, $data))
                 return api_response($request, null, 422);
@@ -288,6 +292,9 @@ class ProfileController extends Controller
             $resource = new Item($profile, new NidInfoTransformer());
             $details = $manager->createData($resource)->toArray()['data'];
             return api_response($request, null, 200, ['data' => $details]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (OcrServerError $e) {
             if ($e->getCode() == 402) return api_response($request, null, 422);
             return api_response($request, null, 500);
@@ -325,7 +332,7 @@ class ProfileController extends Controller
         try {
             $this->validate($request, []);
             $profile = $request->profile;
-            if(!$profile) return api_response($request, null, 404, ['data' => null]);
+            if (!$profile) return api_response($request, null, 404, ['data' => null]);
 
             $input = $request->except('profile', 'remember_token');
             $profile_repo->update($profile, $input);
