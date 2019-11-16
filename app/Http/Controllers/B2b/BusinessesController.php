@@ -180,7 +180,7 @@ class BusinessesController extends Controller
                     "image" => 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/profiles/vehicles/1562679528_vehicle_image_126.jpeg',
                     "title" => $notification->title,
                     "is_seen" => $notification->is_seen,
-                    "created_at" => 'Mar 15 02:30PM'
+                    "created_at" => $notification->created_at->format('M d h:ia')
                 ]);
             }
             return api_response($request, $notifications, 200, ['notifications' => $notifications]);
