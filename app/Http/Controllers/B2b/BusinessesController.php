@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Models\BusinessJoinRequest;
+use App\Models\Notification;
 use App\Models\Partner;
 use App\Models\Profile;
 use App\Models\Resource;
@@ -165,24 +166,23 @@ class BusinessesController extends Controller
     public function getNotifications($business, Request $request)
     {
         try {
+            $all_notifications = Notification::where('notifiable_type', 'App\Models\Business')
+                ->where('notifiable_id', (int)$business)
+                ->orderBy('id', 'DESC');
+
             $business = $request->business;
             $manager_member = $request->manager_member;
-            $notifications = [
-                [
-                    "id" => 1,
+
+            $notifications = [];
+            foreach ($all_notifications->get() as $notification) {
+                array_push($notifications, [
+                    "id" => $notification->id,
                     "image" => 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/profiles/vehicles/1562679528_vehicle_image_126.jpeg',
-                    "title" => 'Fitness Paper of your vehicle DM-Cho-16-052 is Due Soon. 30 Days from now.',
-                    "is_seen" => '0',
+                    "title" => $notification->title,
+                    "is_seen" => $notification->is_seen,
                     "created_at" => 'Mar 15 02:30PM'
-                ],
-                [
-                    "id" => 2,
-                    "image" => 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/profiles/vehicles/1562679528_vehicle_image_126.jpeg',
-                    "title" => 'Fitness Paper of your vehicle DM-Cho-16-052 is already in Over due.',
-                    "is_seen" => '1',
-                    "created_at" => 'Mar 15 02:30PM'
-                ]
-            ];
+                ]);
+            }
             return api_response($request, $notifications, 200, ['notifications' => $notifications]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -193,13 +193,12 @@ class BusinessesController extends Controller
     public function notificationSeen($business, $notification, Request $request)
     {
         try {
-            $this->validate($request, [
-                'is_seen' => 'required|in:0,1'
-            ]);
-
+            $notification = Notification::find((int)$notification);
+            if ($notification->is_seen == 1)
+                return api_response($request, null, 403, ['message' => 'This notification already seen']);
+            $notification->seen();
             $business = $request->business;
             $this->setModifier($business);
-
             return api_response($request, null, 200);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
