@@ -152,10 +152,36 @@ class BusinessesController extends Controller
                 "name" => $resource->profile->name,
                 "mobile" => $resource->profile->mobile,
                 "nid" => $resource->profile->nid_no,
-                "nid_image_front" => $resource->profile->nid_image_front ? : $resource->nid_image,
+                "nid_image_front" => $resource->profile->nid_image_front ?: $resource->nid_image,
                 "nid_image_back" => $resource->profile->nid_image_back
             ];
             return api_response($request, $resource, 200, ['vendor' => $resource]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getNotifications($business, Request $request)
+    {
+        try {
+            $business = $request->business;
+            $manager_member = $request->manager_member;
+            $notifications = [
+                [
+                    "id" => 1,
+                    "image" => 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/profiles/vehicles/1562679528_vehicle_image_126.jpeg',
+                    "title" => 'Fitness Paper of your vehicle DM-Cho-16-052 is Due Soon. 30 Days from now.',
+                    "created_at" => 'Mar 15 02:30PM'
+                ],
+                [
+                    "id" => 2,
+                    "image" => 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/profiles/vehicles/1562679528_vehicle_image_126.jpeg',
+                    "title" => 'Fitness Paper of your vehicle DM-Cho-16-052 is already in Over due.',
+                    "created_at" => 'Mar 15 02:30PM'
+                ]
+            ];
+            return api_response($request, $notifications, 200, ['notifications' => $notifications]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
