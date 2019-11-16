@@ -172,16 +172,35 @@ class BusinessesController extends Controller
                     "id" => 1,
                     "image" => 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/profiles/vehicles/1562679528_vehicle_image_126.jpeg',
                     "title" => 'Fitness Paper of your vehicle DM-Cho-16-052 is Due Soon. 30 Days from now.',
+                    "is_seen" => '0',
                     "created_at" => 'Mar 15 02:30PM'
                 ],
                 [
                     "id" => 2,
                     "image" => 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/profiles/vehicles/1562679528_vehicle_image_126.jpeg',
                     "title" => 'Fitness Paper of your vehicle DM-Cho-16-052 is already in Over due.',
+                    "is_seen" => '1',
                     "created_at" => 'Mar 15 02:30PM'
                 ]
             ];
             return api_response($request, $notifications, 200, ['notifications' => $notifications]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function notificationSeen($business, $notification, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'is_seen' => 'required|in:0,1'
+            ]);
+
+            $business = $request->business;
+            $this->setModifier($business);
+
+            return api_response($request, null, 200);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
