@@ -89,4 +89,15 @@ class Vehicle extends Model
         return $query->where('owner_type', '<>', "App\\Models\\Business");
     }
 
+    public function fitnessPaperAcceptanceDay($today, $fitness_end_date)
+    {
+        $fitness_paper_expire_date = Carbon::parse($fitness_end_date);
+        return $today->diffInDays($fitness_paper_expire_date, false) + 1;
+    }
+
+    public function insurancePaperAcceptanceDay($today, $insurance_end_date)
+    {
+        $insurance_paper_expire_date = Carbon::parse($insurance_end_date);
+        return $today->diffInDays($insurance_paper_expire_date, false) + 1;
+    }
 }
