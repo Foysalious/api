@@ -42,4 +42,19 @@ class SupportController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function show(Request $request, $support, SupportRepositoryInterface $support_repository)
+    {
+        try {
+            $auth_info = $request->auth_info;
+            $business_member = $auth_info['business_member'];
+            if (!$business_member) return api_response($request, null, 401);
+            $support = $support_repository->where('id', $support)->select('id', 'member_id', 'status', 'long_description')->first();
+            if (!$support) return api_response($request, null, 404);
+            return api_response($request, $support, 200, ['support' => $support]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }
