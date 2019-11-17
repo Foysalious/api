@@ -48,6 +48,7 @@ class DriverController extends Controller
         try {
             $this->validate($request, [
                 'license_number' => 'required',
+                'license_number_end_date' => 'required|date|date_format:Y-m-d|after:' . Carbon::today()->format('Y-m-d'),
                 'license_number_image' => 'sometimes|required|mimes:jpeg,png',
                 'license_class' => 'required',
                 'years_of_experience' => 'integer',
@@ -67,10 +68,12 @@ class DriverController extends Controller
             $driver_data = [
                 'status' => 'active',
                 'license_number' => $request->license_number,
+                'license_number_end_date' => $request->license_number_end_date,
                 'license_number_image' => $request->hasFile('license_number_image') ? $this->updateDriversDocuments('license_number_image', $request->file('license_number_image')) : '',
                 'license_class' => $request->license_class,
                 'years_of_experience' => $request->years_of_experience,
             ];
+
             $profile = $this->profileRepository->checkExistingMobile($request->mobile);
             if (!$profile) {
                 $driver = Driver::create($this->withCreateModificationField($driver_data));
@@ -171,6 +174,7 @@ class DriverController extends Controller
             $total_count = 0;
             $error_count = 0;
             $license_number_field = BulkUploadExcel::LICENSE_NUMBER_COLUMN_TITLE;
+            $license_number_end_date_field = BulkUploadExcel::LICENSE_NUMBER_END_DATE_COLUMN_TITLE;
             $license_class = BulkUploadExcel::LICENSE_CLASS_COLUMN_TITLE;
             $driver_mobile = BulkUploadExcel::PHONE_NUMBER_COLUMN_TITLE;
             $name = BulkUploadExcel::DRIVER_NAME_COLUMN_TITLE;
@@ -184,7 +188,7 @@ class DriverController extends Controller
 
             $data->each(function ($value) use (
                 $create_request, $creator, $admin_member, &$error_count, &$total_count,
-                $license_number_field, $license_class, $driver_mobile, $name, $date_of_birth, $blood_group,
+                $license_number_field, $license_number_end_date_field, $license_class, $driver_mobile, $name, $date_of_birth, $blood_group,
                 $nid_number, $department, $vendor_mobile, $driver_role, $driver_address
             ) {
                 if (is_null($value->$name) && is_null($value->$driver_mobile)) return;
@@ -197,6 +201,7 @@ class DriverController extends Controller
                 /** @var CreateRequest $request */
                 $create_request = $create_request->setMobile($value->$driver_mobile)
                     ->setLicenseNumber($value->$license_number_field)
+                    ->setLicenseNumberEndDate($value->$license_number_end_date_field)
                     ->setLicenseClass($value->$license_class)
                     ->setName($value->$name)
                     ->setDateOfBirth($value->$date_of_birth)
@@ -263,6 +268,7 @@ class DriverController extends Controller
         try {
             $this->validate($request, [
                 'license_number' => 'required',
+                'license_number_end_date' => 'required|date|date_format:Y-m-d|after:' . Carbon::today()->format('Y-m-d'),
                 'license_number_image' => 'required|mimes:jpeg,png',
                 'license_class' => 'required',
                 'years_of_experience' => 'integer',
@@ -274,6 +280,7 @@ class DriverController extends Controller
 
             $driver_data = [
                 'license_number' => $request->license_number,
+                'license_number_end_date' => $request->license_number_end_date,
                 'license_number_image' => $this->updateDriversDocuments('license_number_image', $request->file('license_number_image')),
                 'license_class' => $request->license_class,
                 'years_of_experience' => $request->years_of_experience,
@@ -432,6 +439,7 @@ class DriverController extends Controller
                 #'model_year' => $vehicle ? $vehicle->basicInformations->model_year : null,
                 'department_id' => $profile->member->businessMember->role ? $profile->member->businessMember->role->business_department_id : null,
                 'license_number' => $driver->license_number,
+                'license_number_end_date' => Carbon::parse($driver->license_number_end_date)->format('Y-m-d'),
                 'license_number_image' => $driver->license_number_image,
                 'license_class' => $driver->license_class,
                 'issue_authority' => 'BRTA',
@@ -453,6 +461,7 @@ class DriverController extends Controller
                 #'model_name' => 'required|string',
                 #'model_year' => 'required|date|date_format:Y-m-d',
                 'license_number' => 'required|string',
+                'license_number_end_date' => 'required|date|date_format:Y-m-d|after:' . Carbon::today()->format('Y-m-d'),
                 'license_class' => 'required|string',
                 'department_id' => 'required|integer',
             ]);
@@ -480,6 +489,7 @@ class DriverController extends Controller
 
             $driver_info = [
                 'license_number' => $request->license_number,
+                'license_number_end_date' => $request->license_number_end_date,
                 'license_class' => $request->license_class,
             ];
             $driver->update($this->withUpdateModificationField($driver_info));
