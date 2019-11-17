@@ -4,11 +4,15 @@
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Sheba\Business\Support\Creator;
+use Sheba\Business\Support\Updater;
 use Sheba\Dal\Support\SupportRepositoryInterface;
+use Sheba\ModificationFields;
+use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
 
 class SupportController extends Controller
 {
+    use ModificationFields;
 
     public function store(Request $request, Creator $creator, MemberRepositoryInterface $member_repository)
     {
@@ -20,6 +24,7 @@ class SupportController extends Controller
             $business_member = $auth_info['business_member'];
             if (!$business_member) return api_response($request, null, 401);
             $member = $member_repository->where('id', $business_member['member_id'])->first();
+            $this->setModifier($member);
             $support = $creator->setMember($member)->setDescription($request->description)->create();
             return api_response($request, $support, 200, ['support' => ['id' => $support->id]]);
         } catch (\Throwable $e) {
@@ -34,8 +39,13 @@ class SupportController extends Controller
             $auth_info = $request->auth_info;
             $business_member = $auth_info['business_member'];
             if (!$business_member) return api_response($request, null, 401);
-            $supports = $support_repository->where('member_id', $business_member['member_id'])->select('id', 'member_id', 'status', 'long_description')->get();
+            $supports = $support_repository->where('member_id', $business_member['member_id'])->select('id', 'member_id', 'status', 'long_description', 'created_at')->get();
             if (count($supports) == 0) return api_response($request, null, 404);
+            $supports->map(function (&$support) {
+                $support['date'] = $support->created_at->format('M d');
+                $support['time'] = $support->created_at->format('h:i A');
+                return $support;
+            });
             return api_response($request, $supports, 200, ['supports' => $supports]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -49,9 +59,29 @@ class SupportController extends Controller
             $auth_info = $request->auth_info;
             $business_member = $auth_info['business_member'];
             if (!$business_member) return api_response($request, null, 401);
-            $support = $support_repository->where('id', $support)->select('id', 'member_id', 'status', 'long_description')->first();
+            $support = $support_repository->where('id', $support)->select('id', 'member_id', 'status', 'long_description', 'created_at')->first();
             if (!$support) return api_response($request, null, 404);
+            $support['date'] = $support->created_at->format('M d');
+            $support['time'] = $support->created_at->format('h:i A');
             return api_response($request, $support, 200, ['support' => $support]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function resolve(Request $request, $support, SupportRepositoryInterface $support_repository, BusinessMemberRepositoryInterface $business_member_repository, Updater $updater)
+    {
+        try {
+            $auth_info = $request->auth_info;
+            $business_member = $auth_info['business_member'];
+            if (!$business_member) return api_response($request, null, 401);
+            $support = $support_repository->where('id', $support)->first();
+            if (!$support) return api_response($request, null, 404);
+            $business_member = $business_member_repository->find($business_member['id']);
+            $support = $updater->setSupport($support)->setBusinessMember($business_member)->resolve();
+            if (!$support) return api_response($request, null, 500);
+            return api_response($request, $support, 200);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

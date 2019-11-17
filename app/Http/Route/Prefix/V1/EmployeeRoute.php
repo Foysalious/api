@@ -11,6 +11,7 @@ class EmployeeRoute
                 $api->get('/', 'Employee\SupportController@index');
                 $api->group(['prefix' => '{support}'], function ($api) {
                     $api->get('/', 'Employee\SupportController@show');
+                    $api->post('resolve', 'Employee\SupportController@resolve');
                 });
                 $api->post('/', 'Employee\SupportController@store');
 
