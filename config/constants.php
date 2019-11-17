@@ -667,4 +667,5 @@ return [
         'rejected' => '#B3B7CC',
         'paid' => '#12B886'
     ],
+    'TOPUP_BULK_REQUEST_STATUS' => ['pending', 'completed', 'successful', 'failed'],
 ];
