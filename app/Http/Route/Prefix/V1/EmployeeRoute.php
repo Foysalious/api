@@ -9,7 +9,11 @@ class EmployeeRoute
             $api->get('dashboard', 'Employee\EmployeeController@getDashboard');
             $api->group(['prefix' => 'supports'], function ($api) {
                 $api->get('/', 'Employee\SupportController@index');
+                $api->group(['prefix' => '{support}'], function ($api) {
+                    $api->get('/', 'Employee\SupportController@show');
+                });
                 $api->post('/', 'Employee\SupportController@store');
+
             });
         });
     }
