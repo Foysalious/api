@@ -364,21 +364,13 @@ class VehiclesController extends Controller
                 $insurance_end_date = $vehicle->insurancePaperAcceptanceDay($today, $registration_information->insurance_date);
 
                 $due_status = '';
-                $over_due_status = '';
-                /*if (($fitness_end_date <= VehiclesController::DUE_PERIOD && $fitness_end_date >= VehiclesController::OVER_DUE_PERIOD) ||
-                    ($insurance_end_date <= VehiclesController::DUE_PERIOD && $insurance_end_date >= VehiclesController::OVER_DUE_PERIOD)){
+                if (($fitness_end_date <= VehiclesController::DUE_PERIOD && $fitness_end_date > VehiclesController::OVER_DUE_PERIOD) ||
+                    ($insurance_end_date <= VehiclesController::DUE_PERIOD && $insurance_end_date > VehiclesController::OVER_DUE_PERIOD)) {
                     $due_status = 'Due Soon';
                 }
 
-                if ($fitness_end_date < VehiclesController::OVER_DUE_PERIOD || $insurance_end_date <= VehiclesController::OVER_DUE_PERIOD){
-                    $over_due_status = 'Overdue';
-                }*/
-                if (($fitness_end_date <= VehiclesController::DUE_PERIOD && $fitness_end_date >= VehiclesController::OVER_DUE_PERIOD)) {
-                    $due_status = 'Due Soon';
-                }
-
-                if ($fitness_end_date < VehiclesController::OVER_DUE_PERIOD) {
-                    $over_due_status = 'Overdue';
+                if ($fitness_end_date < VehiclesController::OVER_DUE_PERIOD || $insurance_end_date <= VehiclesController::OVER_DUE_PERIOD) {
+                    $due_status = 'Overdue';
                 }
 
                 $vehicle = [
@@ -387,7 +379,6 @@ class VehiclesController extends Controller
                     'model_year' => Carbon::parse($basic_information->model_year)->format('Y'),
                     'status' => $vehicle->status,
                     'due_status' => $due_status,
-                    'over_due_status' => $over_due_status,
                     'vehicle_type' => $basic_information->type,
                     'assigned_to' => $vehicle->businessDepartment ? $vehicle->businessDepartment->name : null,
                     'current_driver' => $driver ? $vehicle->driver->profile->name : 'N/S',
