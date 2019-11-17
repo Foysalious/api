@@ -387,6 +387,19 @@ class CategoryController extends Controller
                 }
 
                 $subscriptions = collect();
+                $services->each(function (&$service) {
+                    $variables = json_decode($service->variables);
+                    if ($service->variable_type == 'Options') {
+                        $service['option_prices'] = $this->formatOptionWithPrice($variables->prices);
+                    } else {
+                        $service['fixed_price'] = 100;
+                    }
+                    $service['discount'] = [
+                        'value' => 100,
+                        'is_percentage' => rand(0, 1),
+                        'cap' => 20
+                    ];
+                });
                 foreach ($services as $service) {
                     if ($subscription = $service->activeSubscription) {
                         list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);
@@ -431,9 +444,21 @@ class CategoryController extends Controller
                 return api_response($request, null, 404);
             }
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function formatOptionWithPrice($prices)
+    {
+        $options = collect();
+        foreach ($prices as $key => $price) {
+            $options->push(array('option' => collect(explode(',', $key))->map(function ($key) {
+                return (int)$key;
+            }), 'price' => (double)$price));
+        }
+        return $options;
     }
 
     private function getPriceRange(Service $service)
