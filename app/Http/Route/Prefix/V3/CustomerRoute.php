@@ -1,8 +1,5 @@
 <?php namespace App\Http\Route\Prefix\V3;
 
-
-use App\Http\Route\Prefix\V2\TransportRoute;
-
 class CustomerRoute
 {
     public function set($api)
