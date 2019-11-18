@@ -114,7 +114,6 @@ class ServiceController extends Controller
             $this->validate($request, [
                 'name' => 'required',
                 'category_id' => 'required|in:' . implode(',', $secondaries_categories),
-                'price' => 'required',
                 'unit' => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS')))
             ]);
             $this->setModifier($request->manager_resource);
