@@ -13,10 +13,12 @@ class Updater
     private $support;
     /** @var BusinessMember */
     private $businessMember;
+    private $satisfaction;
 
     public function __construct(SupportRepositoryInterface $support_repository)
     {
         $this->supportRepository = $support_repository;
+        $this->satisfaction = null;
     }
 
     public function setSupport(Support $support)
@@ -28,6 +30,12 @@ class Updater
     public function setBusinessMember(BusinessMember $business_member)
     {
         $this->businessMember = $business_member;
+        return $this;
+    }
+
+    public function setSatisfaction($satisfaction)
+    {
+        $this->satisfaction = $satisfaction;
         return $this;
     }
 
@@ -48,5 +56,15 @@ class Updater
             ]);
         });
         return 1;
+    }
+
+    public function giveFeedback()
+    {
+        if ($this->satisfaction != null && $this->support->status == Statuses::CLOSED) {
+            $this->supportRepository->update($this->support, ['is_satisfied' => $this->satisfaction]);
+            return 1;
+        } else {
+            return null;
+        }
     }
 }

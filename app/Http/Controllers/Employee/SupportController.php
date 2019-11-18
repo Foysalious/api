@@ -59,12 +59,29 @@ class SupportController extends Controller
             $auth_info = $request->auth_info;
             $business_member = $auth_info['business_member'];
             if (!$business_member) return api_response($request, null, 401);
-            $support = $support_repository->where('id', $support)->select('id', 'member_id', 'status', 'long_description', 'created_at')->first();
+            $support = $support_repository->where('id', $support)->select('id', 'member_id', 'status', 'long_description', 'created_at', 'is_satisfied')->first();
             if (!$support) return api_response($request, null, 404);
             $support['date'] = $support->created_at->format('M d');
             $support['time'] = $support->created_at->format('h:i A');
-            $support['feedback'] = ['is_like' => 1];
             return api_response($request, $support, 200, ['support' => $support]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function feedback(Request $request, $support, SupportRepositoryInterface $support_repository, BusinessMemberRepositoryInterface $business_member_repository, Updater $updater)
+    {
+        try {
+            $this->validate($request, ['is_satisfied' => 'required|numeric|in:0,1',]);
+            $auth_info = $request->auth_info;
+            $business_member = $auth_info['business_member'];
+            if (!$business_member) return api_response($request, null, 401);
+            $support = $support_repository->where('id', $support)->first();
+            if (!$support) return api_response($request, null, 404);
+            $support = $updater->setSupport($support)->setSatisfaction($request->is_satisfied)->giveFeedback();
+            if (!$support) return api_response($request, null, 500);
+            return api_response($request, $support, 200);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
