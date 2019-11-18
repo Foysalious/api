@@ -166,20 +166,22 @@ class BusinessesController extends Controller
     public function getNotifications($business, Request $request)
     {
         try {
-            $all_notifications = Notification::where('notifiable_type', 'App\Models\Business')
-                ->where('notifiable_id', (int)$business)
-                ->orderBy('id', 'DESC');
-
             $business = $request->business;
             $manager_member = $request->manager_member;
+            $all_notifications = Notification::where('notifiable_type', 'App\Models\Member')
+                ->where('notifiable_id', (int)$manager_member->id)->whereIn('event_type', ['App\Models\Driver', 'App\Models\Vehicle'])
+                ->orderBy('id', 'DESC');
 
             $notifications = [];
             foreach ($all_notifications->get() as $notification) {
+                $image = $this->getImage($notification);
                 array_push($notifications, [
                     "id" => $notification->id,
-                    "image" => 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/profiles/vehicles/1562679528_vehicle_image_126.jpeg',
+                    "image" => $image,
                     "title" => $notification->title,
                     "is_seen" => $notification->is_seen,
+                    "event_type" => $notification->event_type,
+                    "event_id" => $notification->event_id,
                     "created_at" => $notification->created_at->format('M d h:ia')
                 ]);
             }
@@ -188,6 +190,20 @@ class BusinessesController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function getImage($notification)
+    {
+        $event_type = $notification->event_type;
+        $model = $event_type::find((int)$notification->event_id);
+        $image = '';
+        if (class_basename($model) == 'Driver') {
+            $image = $model->profile->pro_pic;
+        }
+        if (class_basename($model) == 'Vehicle') {
+            $image = $model->basicInformation->vehicle_image;
+        }
+        return $image;
     }
 
     public function notificationSeen($business, $notification, Request $request)
