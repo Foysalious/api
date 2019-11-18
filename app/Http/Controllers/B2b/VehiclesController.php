@@ -242,20 +242,19 @@ class VehiclesController extends Controller
                 'model_year' => 'date|date_format:Y-m-d',
                 'seat_capacity' => 'integer',
                 'transmission_type' => 'string|in:auto,manual',
+                'fitness_start_date' => 'required|date|date_format:Y-m-d',
+                'fitness_end_date' => 'required|date|date_format:Y-m-d',
+                'insurance_date' => 'date|date_format:Y-m-d',
+                'department_id' => 'required|integer',
                 #'fuel_type' => 'string',
                 #'fuel_quality' => 'string',
                 #'fuel_tank_capacity_ltr' => 'string',
-
                 #'license_number' => 'required',
                 #'license_number_image' => 'mimes:jpeg,png',
                 #'tax_token_number' => 'required',
                 #'tax_token_image' => 'mimes:jpeg,png',
-                'fitness_start_date' => 'required|date|date_format:Y-m-d',
-                'fitness_end_date' => 'required|date|date_format:Y-m-d',
                 #'fitness_paper_image' => 'mimes:jpeg,png',
-                'insurance_date' => 'date|date_format:Y-m-d',
                 #'insurance_paper_image' => 'mimes:jpeg,png'
-                'department_id' => 'required|integer',
             ]);
 
             $member = Member::find($member);
@@ -307,6 +306,12 @@ class VehiclesController extends Controller
         }
     }
 
+    /**
+     * @param $member
+     * @param Request $request
+     * @param TripScheduler $tripScheduler
+     * @return JsonResponse
+     */
     public function index($member, Request $request, TripScheduler $tripScheduler)
     {
         try {

@@ -25,7 +25,7 @@ class PartnerPosService extends Model
 
     public function scopePublished($query)
     {
-        return $query->where('publication_status',1);
+        return $query->where('publication_status', 1);
     }
 
     /**
@@ -62,6 +62,11 @@ class PartnerPosService extends Model
         return $this->runningDiscounts()->first();
     }
 
+    public function getPriceAttribute($price)
+    {
+        return $price ?: null;
+    }
+
     public function runningDiscounts()
     {
         $now = Carbon::now();
@@ -69,9 +74,9 @@ class PartnerPosService extends Model
          * USING AS A QUERY, THAT INCREASING LOAD TIME ON LIST VIEW
          *
          * return $this->discounts()->where(function ($query) use ($now) {
-            $query->where('start_date', '<=', $now);
-            $query->where('end_date', '>=', $now);
-        })->get();*/
+         * $query->where('start_date', '<=', $now);
+         * $query->where('end_date', '>=', $now);
+         * })->get();*/
         return $this->discounts->filter(function ($discount) use ($now) {
             return $discount->start_date <= $now && $discount->end_date >= $now;
         });

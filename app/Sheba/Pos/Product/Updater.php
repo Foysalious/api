@@ -14,7 +14,7 @@ class Updater
 
     private $data;
     private $updatedData;
-    /** @var PosServiceRepositoryInterface  */
+    /** @var PosServiceRepositoryInterface */
     private $serviceRepo;
     private $service;
     private $posServiceLogRepo;
@@ -137,7 +137,7 @@ class Updater
             $this->updatedData['cost'] = $this->data['cost'];
         }
         if ((isset($this->data['price']) && $this->data['price'] != $this->service->price)) {
-            $this->updatedData['price'] = $this->data['price'];
+            $this->updatedData['price'] = $this->data['price'] ?: null;
         }
         if ((isset($this->data['wholesale_price']) && $this->data['wholesale_price'] != $this->service->wholesale_price)) {
             $this->updatedData['wholesale_price'] = $this->data['wholesale_price'];
