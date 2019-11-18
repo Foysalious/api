@@ -59,8 +59,11 @@ class ServiceController extends Controller
                         'discounted_price'      => $service->discount() ? $service->getDiscountedAmount() : 0,
                         'vat_percentage'        => $service->vat_percentage,
                         'is_published_for_shop' => (int)$service->is_published_for_shop,
-                        'warranty'              => (double)$service->warranty,
-                        'warranty_unit'         => $service->warranty_unit ? config('pos.warranty_unit')[$service->warranty_unit] : null
+                        'warranty' => (double)$service->warranty,
+                        'warranty_unit' => $service->warranty_unit ? config('pos.warranty_unit')[$service->warranty_unit] : null,
+                        'show_image' => $service->show_image,
+                        'shape' => $service->shape,
+                        'color' => $service->color
                     ];
                 });
             if (!$services) return api_response($request, null, 404);
