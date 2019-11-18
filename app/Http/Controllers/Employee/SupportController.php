@@ -63,6 +63,7 @@ class SupportController extends Controller
             if (!$support) return api_response($request, null, 404);
             $support['date'] = $support->created_at->format('M d');
             $support['time'] = $support->created_at->format('h:i A');
+            $support['feedback'] = ['is_like' => 1];
             return api_response($request, $support, 200, ['support' => $support]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -70,21 +71,4 @@ class SupportController extends Controller
         }
     }
 
-    public function resolve(Request $request, $support, SupportRepositoryInterface $support_repository, BusinessMemberRepositoryInterface $business_member_repository, Updater $updater)
-    {
-        try {
-            $auth_info = $request->auth_info;
-            $business_member = $auth_info['business_member'];
-            if (!$business_member) return api_response($request, null, 401);
-            $support = $support_repository->where('id', $support)->first();
-            if (!$support) return api_response($request, null, 404);
-            $business_member = $business_member_repository->find($business_member['id']);
-            $support = $updater->setSupport($support)->setBusinessMember($business_member)->resolve();
-            if (!$support) return api_response($request, null, 500);
-            return api_response($request, $support, 200);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
 }
