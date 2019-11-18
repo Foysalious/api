@@ -45,7 +45,7 @@ class SupportController extends Controller
             $business_member = $auth_info['business_member'];
             list($offset, $limit) = calculatePagination($request);
             if (!$business_member) return api_response($request, null, 401);
-            $supports = $support_repository->where('member_id', $business_member['member_id'])->select('id', 'member_id', 'status', 'long_description', 'created_at');
+            $supports = $support_repository->where('member_id', $business_member['member_id'])->select('id', 'member_id', 'status', 'long_description', 'created_at')->orderBy('id', 'desc');
             if ($request->has('status')) $supports = $supports->where('status', $request->status);
             if ($request->has('limit')) $supports = $supports->skip($offset)->limit($limit);
             $supports = $supports->get();
