@@ -57,6 +57,11 @@ class SupportController extends Controller
             if (!$support) return api_response($request, null, 404);
             $support['date'] = $support->created_at->format('M d');
             $support['time'] = $support->created_at->format('h:i A');
+            $support['requested_by'] = [
+                'name' => $support->member->profile->name,
+                'image' => $support->member->profile->pro_pic,
+            ];
+            removeRelationsAndFields($support);
             return api_response($request, $support, 200, ['support' => $support]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
