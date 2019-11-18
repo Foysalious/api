@@ -1,5 +1,6 @@
 <?php namespace App\Http\Route\Prefix\V1;
 
+use App\Http\Route\Prefix\V1\Partner\PartnerRoute;
 
 class Route
 {
@@ -7,6 +8,7 @@ class Route
     {
         $api->group(['prefix' => 'v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
             (new EmployeeRoute())->set($api);
+            (new PartnerRoute())->set($api);
             $api->group(['prefix' => 'geo'], function ($api) {
                 $api->get('geocode/reverse', 'GeocodeController@reverseGeocode');
             });
