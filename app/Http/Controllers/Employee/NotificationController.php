@@ -24,7 +24,8 @@ class NotificationController extends Controller
                     'message' => $notification->title,
                     'type' => strtolower(str_replace('App\Models\\', '', $notification->event_type)),
                     'type_id' => $notification->event_id,
-                    'is_seen' => $notification->is_seen
+                    'is_seen' => $notification->is_seen,
+                    'created_at' => $notification->created_at->toDateTimeString()
                 ]);
             });
             if (count($final) == 0) return api_response($request, null, 404);
