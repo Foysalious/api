@@ -55,6 +55,12 @@ class TopUpController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @param TopUpRequest $top_up_request
+     * @param Creator $creator
+     * @return JsonResponse
+     */
     public function topUp(Request $request, TopUpRequest $top_up_request, Creator $creator)
     {
         try {
@@ -65,6 +71,9 @@ class TopUpController extends Controller
                 'amount' => 'required|min:10|max:1000|numeric'
             ]);
             $agent = $this->getAgent($request);
+            if (get_class($agent) == "App\Models\Partner")
+                return api_response($request, null, 403, ['message' => "Temporary turned off"]);
+
             $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id);
             if ($top_up_request->hasError()) return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
             $topup_order = $creator->setTopUpRequest($top_up_request)->create();
@@ -84,6 +93,13 @@ class TopUpController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @param VendorFactory $vendor
+     * @param TopUpRequest $top_up_request
+     * @param Creator $creator
+     * @return JsonResponse
+     */
     public function bulkTopUp(Request $request, VendorFactory $vendor, TopUpRequest $top_up_request, Creator $creator)
     {
         try {
@@ -97,6 +113,8 @@ class TopUpController extends Controller
             }
 
             $agent = $this->getAgent($request);
+            if (get_class($agent) == "App\Models\Partner")
+                return api_response($request, null, 403, ['message' => "Temporary turned off"]);
 
             $file = Excel::selectSheets(TopUpExcel::SHEET)->load($request->file)->save();
             $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
