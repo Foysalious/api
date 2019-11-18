@@ -4,3 +4,4 @@
 /storage
 /node_modules
 npm-debug.log
+build/config.gypi
