@@ -7,6 +7,8 @@ class EmployeeRoute
     {
         $api->group(['prefix' => 'employee', 'middleware' => ['jwtAuth']], function ($api) {
             $api->get('dashboard', 'Employee\EmployeeController@getDashboard');
+            $api->get('notifications', 'Employee\NotificationController@index');
+            $api->post('notifications/seen', 'Employee\NotificationController@seen');
             $api->group(['prefix' => 'supports'], function ($api) {
                 $api->get('/', 'Employee\SupportController@index');
                 $api->group(['prefix' => '{support}'], function ($api) {
@@ -14,7 +16,6 @@ class EmployeeRoute
                     $api->post('resolve', 'Employee\SupportController@resolve');
                 });
                 $api->post('/', 'Employee\SupportController@store');
-
             });
         });
     }
