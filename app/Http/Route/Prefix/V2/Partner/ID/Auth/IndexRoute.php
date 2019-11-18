@@ -93,6 +93,7 @@ class IndexRoute
                         $api->post('/', 'Pos\ServiceController@update');
                         $api->delete('/', 'Pos\ServiceController@destroy');
                         $api->post('/toggle-publish-for-shop', 'Pos\ServiceController@togglePublishForShopStatus');
+                        $api->post('/copy', 'Pos\ServiceController@copy');
                     });
                 });
                 $api->group(['prefix' => 'orders'], function ($api) {
