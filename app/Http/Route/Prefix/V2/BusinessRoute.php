@@ -183,6 +183,12 @@ class BusinessRoute
                     $api->post('/{log}/comments', 'B2b\FuelLogController@storeComment');
                     $api->get('/{log}/comments', 'B2b\FuelLogController@getComments');
                 });
+                $api->group(['prefix' => 'supports'], function ($api) {
+                    $api->get('/', 'B2b\SupportController@index');
+                    $api->group(['prefix' => '{support}'], function ($api) {
+                        $api->get('/', 'B2b\SupportController@show');
+                    });
+                });
             });
         });
         $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {
@@ -253,6 +259,7 @@ class BusinessRoute
                     $api->get('/', 'B2b\SupportContoller@index');
                     $api->group(['prefix' => '{support}'], function ($api) {
                         $api->post('resolve', 'B2b\SupportController@resolve');
+                        $api->get('/', 'B2b\SupportController@show');
                     });
                 });
             });
