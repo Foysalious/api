@@ -4,7 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
-use App\Models\TopUpBulkRequestNumber;
+use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
 
 use DB;
 use Excel;
