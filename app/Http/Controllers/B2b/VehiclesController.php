@@ -242,20 +242,19 @@ class VehiclesController extends Controller
                 'model_year' => 'date|date_format:Y-m-d',
                 'seat_capacity' => 'integer',
                 'transmission_type' => 'string|in:auto,manual',
+                'fitness_start_date' => 'required|date|date_format:Y-m-d',
+                'fitness_end_date' => 'required|date|date_format:Y-m-d',
+                'insurance_date' => 'date|date_format:Y-m-d',
+                'department_id' => 'required|integer',
                 #'fuel_type' => 'string',
                 #'fuel_quality' => 'string',
                 #'fuel_tank_capacity_ltr' => 'string',
-
                 #'license_number' => 'required',
                 #'license_number_image' => 'mimes:jpeg,png',
                 #'tax_token_number' => 'required',
                 #'tax_token_image' => 'mimes:jpeg,png',
-                'fitness_start_date' => 'required|date|date_format:Y-m-d',
-                'fitness_end_date' => 'required|date|date_format:Y-m-d',
                 #'fitness_paper_image' => 'mimes:jpeg,png',
-                'insurance_date' => 'date|date_format:Y-m-d',
                 #'insurance_paper_image' => 'mimes:jpeg,png'
-                'department_id' => 'required|integer',
             ]);
 
             $member = Member::find($member);
@@ -307,6 +306,12 @@ class VehiclesController extends Controller
         }
     }
 
+    /**
+     * @param $member
+     * @param Request $request
+     * @param TripScheduler $tripScheduler
+     * @return JsonResponse
+     */
     public function index($member, Request $request, TripScheduler $tripScheduler)
     {
         try {
@@ -363,22 +368,14 @@ class VehiclesController extends Controller
                 $fitness_end_date = $vehicle->fitnessPaperAcceptanceDay($today, $registration_information->fitness_end_date);
                 $insurance_end_date = $vehicle->insurancePaperAcceptanceDay($today, $registration_information->insurance_date);
 
-                $expire_due_status = '';
-                $expire_over_due_status = '';
-                /*if (($fitness_end_date <= VehiclesController::DUE_PERIOD && $fitness_end_date >= VehiclesController::OVER_DUE_PERIOD) ||
-                    ($insurance_end_date <= VehiclesController::DUE_PERIOD && $insurance_end_date >= VehiclesController::OVER_DUE_PERIOD)){
+                $due_status = '';
+                if (($fitness_end_date <= VehiclesController::DUE_PERIOD && $fitness_end_date > VehiclesController::OVER_DUE_PERIOD) ||
+                    ($insurance_end_date <= VehiclesController::DUE_PERIOD && $insurance_end_date > VehiclesController::OVER_DUE_PERIOD)) {
                     $due_status = 'Due Soon';
                 }
 
-                if ($fitness_end_date < VehiclesController::OVER_DUE_PERIOD || $insurance_end_date <= VehiclesController::OVER_DUE_PERIOD){
-                    $over_due_status = 'Overdue';
-                }*/
-                if (($fitness_end_date <= VehiclesController::DUE_PERIOD && $fitness_end_date >= VehiclesController::OVER_DUE_PERIOD)) {
-                    $due_status = 'Due Soon';
-                }
-
-                if ($fitness_end_date < VehiclesController::OVER_DUE_PERIOD) {
-                    $over_due_status = 'Overdue';
+                if ($fitness_end_date < VehiclesController::OVER_DUE_PERIOD || $insurance_end_date <= VehiclesController::OVER_DUE_PERIOD) {
+                    $due_status = 'Overdue';
                 }
 
                 $vehicle = [
@@ -386,8 +383,7 @@ class VehiclesController extends Controller
                     'vehicle_model' => $basic_information->model_name,
                     'model_year' => Carbon::parse($basic_information->model_year)->format('Y'),
                     'status' => $vehicle->status,
-                    'due_status' => $expire_due_status,
-                    'over_due_status' => $expire_over_due_status,
+                    'due_status' => $due_status,
                     'vehicle_type' => $basic_information->type,
                     'assigned_to' => $vehicle->businessDepartment ? $vehicle->businessDepartment->name : null,
                     'current_driver' => $driver ? $vehicle->driver->profile->name : 'N/S',
@@ -528,24 +524,22 @@ class VehiclesController extends Controller
             $insurance_end_date = $vehicle->insurancePaperAcceptanceDay($today, $registration_information->insurance_date);
 
             $fitness_paper_due_status = '';
-            $fitness_paper_over_due_status = '';
             $insurance_paper_due_status = '';
-            $insurance_paper_over_due_status = '';
 
-            if (($fitness_end_date <= VehiclesController::DUE_PERIOD && $fitness_end_date >= VehiclesController::OVER_DUE_PERIOD)) {
+            if (($fitness_end_date <= VehiclesController::DUE_PERIOD && $fitness_end_date > VehiclesController::OVER_DUE_PERIOD)) {
                 $fitness_paper_due_status = 'Due Soon';
             }
 
-            if ($fitness_end_date < VehiclesController::OVER_DUE_PERIOD) {
-                $fitness_paper_over_due_status = 'Overdue';
+            if ($fitness_end_date <= VehiclesController::OVER_DUE_PERIOD) {
+                $fitness_paper_due_status = 'Overdue';
             }
 
-            if (($insurance_end_date <= VehiclesController::DUE_PERIOD && $insurance_end_date >= VehiclesController::OVER_DUE_PERIOD)) {
+            if (($insurance_end_date <= VehiclesController::DUE_PERIOD && $insurance_end_date > VehiclesController::OVER_DUE_PERIOD)) {
                 $insurance_paper_due_status = 'Due Soon';
             }
 
-            if ($insurance_end_date < VehiclesController::OVER_DUE_PERIOD) {
-                $insurance_paper_over_due_status = 'Overdue';
+            if ($insurance_end_date <= VehiclesController::OVER_DUE_PERIOD) {
+                $insurance_paper_due_status = 'Overdue';
             }
 
 
@@ -561,12 +555,10 @@ class VehiclesController extends Controller
                 'fitness_end_date' => Carbon::parse($registration_information->fitness_end_date)->format('Y-m-d'),
 
                 'fitness_paper_due_status' => $fitness_paper_due_status,
-                'fitness_paper_over_due_status' => $fitness_paper_over_due_status,
 
                 'fitness_paper_image' => $registration_information->fitness_paper_image,
                 'insurance_date' => Carbon::parse($registration_information->insurance_date)->format('Y-m-d'),
 
-                'insurance_paper_over_due_status' => $insurance_paper_over_due_status,
                 'insurance_paper_due_status' => $insurance_paper_due_status,
 
                 'insurance_paper_image' => $registration_information->insurance_paper_image,

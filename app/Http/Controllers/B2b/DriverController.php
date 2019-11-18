@@ -34,6 +34,9 @@ class DriverController extends Controller
     use CdnFileManager, FileManager;
     use ModificationFields;
 
+    const DUE_PERIOD = 60;
+    const OVER_DUE_PERIOD = 0;
+
     private $fileRepository;
     private $profileRepository;
 
@@ -48,7 +51,7 @@ class DriverController extends Controller
         try {
             $this->validate($request, [
                 'license_number' => 'required',
-                'license_number_end_date' => 'required|date|date_format:Y-m-d|after:' . Carbon::today()->format('Y-m-d'),
+                'license_number_end_date' => 'required|date|date_format:Y-m-d',
                 'license_number_image' => 'sometimes|required|mimes:jpeg,png',
                 'license_class' => 'required',
                 'years_of_experience' => 'integer',
@@ -268,7 +271,7 @@ class DriverController extends Controller
         try {
             $this->validate($request, [
                 'license_number' => 'required',
-                'license_number_end_date' => 'required|date|date_format:Y-m-d|after:' . Carbon::today()->format('Y-m-d'),
+                'license_number_end_date' => 'required|date|date_format:Y-m-d',
                 'license_number_image' => 'required|mimes:jpeg,png',
                 'license_class' => 'required',
                 'years_of_experience' => 'integer',
@@ -337,12 +340,26 @@ class DriverController extends Controller
                 $profile = $driver->profile;
                 $vehicle = $driver->vehicle;
                 $basic_information = $vehicle ? $vehicle->basicInformations : null;
+
+                $license_number_end_date = $driver->getLicenseAcceptanceDay(Carbon::now(), $driver->license_number_end_date);
+
+                $due_status = '';
+                if (($license_number_end_date <= DriverController::DUE_PERIOD && $license_number_end_date > DriverController::OVER_DUE_PERIOD)) {
+                    $due_status = 'Due Soon';
+                }
+
+                if ($license_number_end_date <= DriverController::OVER_DUE_PERIOD) {
+                    $due_status = 'Overdue';
+                }
+
                 $driver = [
                     'id' => $driver->id,
                     'name' => $profile->name,
                     'picture' => $profile->pro_pic,
                     'mobile' => $profile->mobile,
                     'status' => $driver->status,
+                    'license_number_end_date' => Carbon::parse($driver->license_number_end_date)->format(''),
+                    'due_status' => $due_status,
                     'model_year' => $basic_information ? Carbon::parse($basic_information->model_year)->format('Y') : null,
                     'model_name' => $basic_information ? $basic_information->model_name : null,
                     'vehicle_type' => $basic_information ? $basic_information->type : null,
@@ -429,6 +446,18 @@ class DriverController extends Controller
             $driver = Driver::find((int)$driver);
             $profile = $driver->profile;
             $vehicle = $driver->vehicle;
+
+            $license_number_end_date = $driver->getLicenseAcceptanceDay(Carbon::now(), $driver->license_number_end_date);
+
+            $due_status = '';
+            if (($license_number_end_date <= DriverController::DUE_PERIOD && $license_number_end_date > DriverController::OVER_DUE_PERIOD)) {
+                $due_status = 'Due Soon';
+            }
+
+            if ($license_number_end_date <= DriverController::OVER_DUE_PERIOD) {
+                $due_status = 'Overdue';
+            }
+
             $license_info = [
                 'type' => $vehicle ? $vehicle->basicInformations->type : null,
                 'vehicle_image' => $vehicle ? $vehicle->basicInformations->vehicle_image : null,
@@ -439,6 +468,7 @@ class DriverController extends Controller
                 #'model_year' => $vehicle ? $vehicle->basicInformations->model_year : null,
                 'department_id' => $profile->member->businessMember->role ? $profile->member->businessMember->role->business_department_id : null,
                 'license_number' => $driver->license_number,
+                'due_status' => $due_status,
                 'license_number_end_date' => Carbon::parse($driver->license_number_end_date)->format('Y-m-d'),
                 'license_number_image' => $driver->license_number_image,
                 'license_class' => $driver->license_class,
@@ -461,7 +491,7 @@ class DriverController extends Controller
                 #'model_name' => 'required|string',
                 #'model_year' => 'required|date|date_format:Y-m-d',
                 'license_number' => 'required|string',
-                'license_number_end_date' => 'required|date|date_format:Y-m-d|after:' . Carbon::today()->format('Y-m-d'),
+                'license_number_end_date' => 'required|date|date_format:Y-m-d',
                 'license_class' => 'required|string',
                 'department_id' => 'required|integer',
             ]);
