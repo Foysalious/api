@@ -4,6 +4,8 @@ class IndexRoute
 {
     public function set($api)
     {
-        $api->group(['prefix' => '{partner}', 'middleware' => ['manager.auth']], function ($api) {});
+        $api->group(['prefix' => '{partner}', 'middleware' => ['manager.auth']], function ($api) {
+            $api->get('order_requests', 'Partner\OrderRequestController@lists');
+        });
     }
 }

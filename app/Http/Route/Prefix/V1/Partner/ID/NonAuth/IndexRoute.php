@@ -4,8 +4,6 @@ class IndexRoute
 {
     public function set($api)
     {
-        $api->group(['prefix' => '{partner}'], function ($api) {
-            $api->get('order_requests', 'Partner\OrderRequestController@lists');
-        });
+        $api->group(['prefix' => '{partner}'], function ($api) {});
     }
 }

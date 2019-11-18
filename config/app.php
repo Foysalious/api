@@ -174,7 +174,8 @@ return [
         App\Providers\CollectionServiceProvider::class,
         Sheba\Repositories\Providers\RepositoryServiceProvider::class,
         Sheba\Pos\Repositories\PosRepositoryServiceProvider::class,
-        Sheba\Dal\Providers\DalEventsListenerProvider::class
+        Sheba\Dal\Providers\DalEventsListenerProvider::class,
+        Sheba\OrderRequest\Repositories\OrderRequestServiceProvider::class
     ],
 
     /*
