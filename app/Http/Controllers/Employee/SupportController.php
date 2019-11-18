@@ -68,7 +68,7 @@ class SupportController extends Controller
             $auth_info = $request->auth_info;
             $business_member = $auth_info['business_member'];
             if (!$business_member) return api_response($request, null, 401);
-            $support = $support_repository->where('id', $support)->select('id', 'member_id', 'status', 'long_description', 'created_at', 'is_satisfied')->first();
+            $support = $support_repository->where('id', $support)->select('id', 'member_id', 'status', 'long_description', 'created_at', 'is_satisfied', 'closed_at')->first();
             if (!$support) return api_response($request, null, 404);
             $support['date'] = $support->created_at->format('M d');
             $support['time'] = $support->created_at->format('h:i A');

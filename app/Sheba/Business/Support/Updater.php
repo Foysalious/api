@@ -2,6 +2,7 @@
 
 
 use App\Models\BusinessMember;
+use Carbon\Carbon;
 use Sheba\Dal\Support\Model as Support;
 use Sheba\Dal\Support\Statuses;
 use Sheba\Dal\Support\SupportRepositoryInterface;
@@ -47,7 +48,7 @@ class Updater
     {
         if (!$this->businessMember->isSuperAdmin()) return null;
         DB::transaction(function () {
-            $this->supportRepository->update($this->support, ['status' => Statuses::CLOSED]);
+            $this->supportRepository->update($this->support, ['status' => Statuses::CLOSED, 'closed_at' => Carbon::now()]);
             notify()->member($this->support->member)->send([
                 'title' => 'Admin closed your Support Ticket',
                 'type' => 'warning',
