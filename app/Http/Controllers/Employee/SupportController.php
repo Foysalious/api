@@ -36,10 +36,19 @@ class SupportController extends Controller
     public function index(Request $request, SupportRepositoryInterface $support_repository)
     {
         try {
+            $this->validate($request, [
+                'status' => 'string|in:open,closed',
+                'limit' => 'numeric',
+                'offset' => 'numeric',
+            ]);
             $auth_info = $request->auth_info;
             $business_member = $auth_info['business_member'];
+            list($offset, $limit) = calculatePagination($request);
             if (!$business_member) return api_response($request, null, 401);
-            $supports = $support_repository->where('member_id', $business_member['member_id'])->select('id', 'member_id', 'status', 'long_description', 'created_at')->get();
+            $supports = $support_repository->where('member_id', $business_member['member_id'])->select('id', 'member_id', 'status', 'long_description', 'created_at');
+            if ($request->has('status')) $supports = $supports->where('status', $request->status);
+            if ($request->has('limit')) $supports = $supports->skip($offset)->limit($limit);
+            $supports = $supports->get();
             if (count($supports) == 0) return api_response($request, null, 404);
             $supports->map(function (&$support) {
                 $support['date'] = $support->created_at->format('M d');
