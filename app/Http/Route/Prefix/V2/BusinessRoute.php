@@ -252,6 +252,12 @@ class BusinessRoute
                 $api->group(['prefix' => 'inspections'], function ($api) {
                     $api->get('/', 'B2b\InspectionController@individualInspection');
                 });
+                $api->group(['prefix' => 'supports'], function ($api) {
+                    $api->get('/', 'B2b\SupportContoller@index');
+                    $api->group(['prefix' => '{support}'], function ($api) {
+                        $api->post('resolve', 'B2b\SupportController@resolve');
+                    });
+                });
             });
         });
     }

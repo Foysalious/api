@@ -5,6 +5,7 @@ use App\Models\BusinessMember;
 use Sheba\Dal\Support\Model as Support;
 use Sheba\Dal\Support\Statuses;
 use Sheba\Dal\Support\SupportRepositoryInterface;
+use DB;
 
 class Updater
 {
@@ -30,9 +31,22 @@ class Updater
         return $this;
     }
 
+    /**
+     * @return null
+     * @throws \Exception
+     */
     public function resolve()
     {
         if (!$this->businessMember->isSuperAdmin()) return null;
-        $this->supportRepository->update($this->support, ['status' => Statuses::$CLOSED]);
+        DB::transaction(function () {
+            $this->supportRepository->update($this->support, ['status' => Statuses::CLOSED]);
+            notify()->member($this->support->member)->send([
+                'title' => 'Admin closed your Support Ticket',
+                'type' => 'warning',
+                'event_type' => 'App\Models\Support',
+                'event_id' => $this->support->id
+            ]);
+        });
+        return 1;
     }
 }
