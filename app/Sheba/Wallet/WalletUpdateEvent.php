@@ -31,4 +31,3 @@ class WalletUpdateEvent extends Event implements ShouldBroadcastNow
         return ['wallet-update-channel'];
     }
 }
-
