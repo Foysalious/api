@@ -26,8 +26,6 @@ use Storage;
 use Throwable;
 use Validator;
 
-use Sheba\Wallet\WalletUpdateEvent;
-
 class TopUpController extends Controller
 {
     public function getVendor(Request $request)
