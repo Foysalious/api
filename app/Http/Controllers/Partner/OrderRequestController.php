@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\Partner;
 
 use App\Http\Controllers\Controller;
+use App\Models\PartnerOrder;
 use App\Transformers\CustomSerializer;
 use App\Transformers\Partner\OrderRequestTransformer;
 use Illuminate\Http\JsonResponse;
@@ -9,12 +10,16 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequestRepositoryInterface;
 use Sheba\Helpers\TimeFrame;
+use Sheba\ModificationFields;
+use Sheba\PartnerOrderRequest\Creator;
 use Sheba\PartnerOrderRequest\StatusChanger;
 use Throwable;
 use Illuminate\Validation\ValidationException;
 
 class OrderRequestController extends Controller
 {
+    use ModificationFields;
+
     /** @var PartnerOrderRequestRepositoryInterface $orderRequestRepo */
     private $orderRequestRepo;
     /** @var StatusChanger $statusChanger */
@@ -50,6 +55,34 @@ class OrderRequestController extends Controller
             });
 
             return api_response($request, null, 200, ['orders' => $order_requests_formatted]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param $partner
+     * @param Request $request
+     * @param Creator $creator
+     * @return JsonResponse
+     */
+    public function store($partner, Request $request, Creator $creator)
+    {
+        try {
+            $this->validate($request, ['partners' => 'required', 'partner_order_id' => 'required']);
+            $this->setModifier($request->partner);
+            $partner_order = PartnerOrder::find($request->partner_order_id);
+            $creator = $creator->setPartners($request->partners)->setPartnerOrder($partner_order);
+            $creator->create();
+
+            return api_response($request, null, 200, ['msg' => 'Successfully create partner order request']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
