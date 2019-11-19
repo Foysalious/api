@@ -6,6 +6,9 @@ use App\Models\TopUpVendorCommission;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
 
+use Sheba\TopUp\TopUpCompletedEvent;
+use Sheba\Wallet\WalletUpdateEvent;
+
 use DB;
 use Excel;
 use Illuminate\Http\Request;
@@ -172,6 +175,14 @@ class TopUpController extends Controller
         try {
             $model = "App\\Models\\" . ucfirst(camel_case($request->type));
             $agent_id = $request->user->id;
+
+            event(new WalletUpdateEvent([
+                'amount' => 0
+            ]));
+
+            event(new TopUpCompletedEvent([
+                'id' => 1
+            ]));
 
             $topup_bulk_requests = TopUpBulkRequest::where([
                 ['status', 'pending'],
