@@ -9,7 +9,6 @@ use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequestRepositoryInterface;
-use Sheba\Dal\PartnerOrderRequest\Statuses as PartnerOrderRequestStatuses;
 use Sheba\Helpers\TimeFrame;
 use Sheba\PartnerOrderRequest\StatusChanger;
 use Throwable;

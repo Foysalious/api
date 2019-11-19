@@ -1,6 +1,7 @@
 <?php namespace Sheba\PartnerOrderRequest;
 
 use Illuminate\Http\Request;
+use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequestRepositoryInterface;
 use Sheba\Helpers\HasErrorCodeAndMessage;
 use Sheba\Jobs\StatusChanger as JobStatusChanger;
 
@@ -32,7 +33,9 @@ class StatusChanger
         $this->repo->update($partner_order_request, [
             'status' => 'accepted'
         ]);
-        $partner_order_request->partner_order->update();
+        $partner_order_request->partner_order->update([
+            'partner_id' => $request->partner->id
+        ]);
 
         $this->jobStatusChanger->acceptJobAndAssignResource($request);
         if($this->jobStatusChanger->hasError()) {
