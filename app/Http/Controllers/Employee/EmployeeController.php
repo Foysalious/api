@@ -16,7 +16,7 @@ class EmployeeController extends Controller
             if (!$business_member) return api_response($request, null, 404);
             $member = $member_repository->find($business_member['member_id']);
             if ($business_member) return api_response($request, $business_member, 200, ['info' => [
-                'notification_count' => $member->notifications()->count()
+                'notification_count' => $member->notifications()->unSeen()->count()
             ]]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
