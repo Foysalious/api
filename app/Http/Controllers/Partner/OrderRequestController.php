@@ -11,6 +11,7 @@ use League\Fractal\Resource\Item;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequestRepositoryInterface;
 use Sheba\Dal\PartnerOrderRequest\Statuses as PartnerOrderRequestStatuses;
 use Sheba\Helpers\TimeFrame;
+use Sheba\PartnerOrderRequest\StatusChanger;
 use Throwable;
 use Illuminate\Validation\ValidationException;
 
@@ -18,10 +19,13 @@ class OrderRequestController extends Controller
 {
     /** @var PartnerOrderRequestRepositoryInterface $orderRequestRepo */
     private $orderRequestRepo;
+    /** @var StatusChanger $statusChanger */
+    private $statusChanger;
 
-    public function __construct(PartnerOrderRequestRepositoryInterface $order_request_repo)
+    public function __construct(PartnerOrderRequestRepositoryInterface $order_request_repo, StatusChanger $status_changer)
     {
         $this->orderRequestRepo = $order_request_repo;
+        $this->statusChanger = $status_changer;
     }
 
     /**
@@ -59,5 +63,36 @@ class OrderRequestController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function accept($partner, $partner_order_request, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'resource_id' => 'required|int'
+            ]);
+
+            $this->statusChanger->accept($request);
+            if($this->statusChanger->hasError()) {
+                return api_response($request, null, $this->statusChanger->getErrorCode(), [
+                    'message' => $this->statusChanger->getErrorMessage()
+                ]);
+            }
+            return api_response($request, null, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function decline($partner, $partner_order_request, Request $request)
+    {
+        dd($request->all());
     }
 }

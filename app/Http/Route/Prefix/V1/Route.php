@@ -190,7 +190,6 @@ class Route
                 $api->get('reviews', 'PartnerController@getReviewInfo');
                 $api->get('info', 'PartnerController@getInfo');
                 $api->get('notifications', 'PartnerController@getNotifications');
-
                 $api->group(['prefix' => 'withdrawals'], function ($api) {
                     $api->get('/', 'PartnerWithdrawalRequestController@index');
                     $api->post('/', 'PartnerWithdrawalRequestController@store');
@@ -201,7 +200,6 @@ class Route
                 $api->group(['prefix' => 'transactions'], function ($api) {
                     $api->get('/', 'PartnerTransactionController@index');
                 });
-
                 $api->group(['prefix' => 'graphs'], function ($api) {
                     $api->get('orders', 'GraphController@getOrdersGraph');
                     $api->get('sales', 'GraphController@getSalesGraph');
