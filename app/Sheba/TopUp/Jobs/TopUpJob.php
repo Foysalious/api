@@ -60,6 +60,7 @@ class TopUpJob extends Job implements ShouldQueue
                 'agent_id' => $this->topUpOrder->agent_id,
                 'agent_type' => $this->topUpOrder->agent_type,
                 'status' => $this->topUpOrder->status,
+                'bulk_request_id' => $this->topUpOrder->bulk_request_id,
             ]));
 
             if ($this->topUp->isNotSuccessful()) {
