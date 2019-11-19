@@ -60,6 +60,7 @@ class VehiclesController extends Controller
                 'transmission_type' => 'required|string|in:auto,manual',
                 'vehicle_image' => 'file|mimes:jpeg,png',
                 'license_number' => 'required|unique:vehicle_registration_informations',
+                'license_number_end_date' => 'sometimes|date|date_format:Y-m-d',
                 'license_number_image' => 'mimes:jpeg,png',
                 'tax_token_number' => 'required|unique:vehicle_registration_informations',
                 'tax_token_image' => 'mimes:jpeg,png',
@@ -112,6 +113,7 @@ class VehiclesController extends Controller
 
             $vehicle_registration_information_data = [
                 'license_number' => $request->license_number,
+                'license_number_end_date' => $request->license_number_end_date,
                 'license_number_image' => $request->hasFile('license_number_image') ? $this->updateVehiclesDocuments('license_number_image', $request->file('license_number_image')) : '',
                 'tax_token_number' => $request->tax_token_number,
                 'tax_token_image' => $request->hasFile('tax_token_image') ? $this->updateVehiclesDocuments('tax_token_image', $request->file('tax_token_image')) : '',
@@ -245,6 +247,7 @@ class VehiclesController extends Controller
                 'fitness_start_date' => 'required|date|date_format:Y-m-d',
                 'fitness_end_date' => 'required|date|date_format:Y-m-d',
                 'insurance_date' => 'date|date_format:Y-m-d',
+                'license_number_end_date' => 'sometimes|date|date_format:Y-m-d',
                 'department_id' => 'required|integer',
                 #'fuel_type' => 'string',
                 #'fuel_quality' => 'string',
@@ -285,6 +288,7 @@ class VehiclesController extends Controller
 
             $vehicle_registration_information_data = [
                 'license_number' => $request->license_number,
+                'license_number_end_date' => $request->license_number_end_date,
                 'license_number_image' => $this->updateVehiclesDocuments('license_number_image', $request->file('license_number_image')),
                 'tax_token_number' => $request->tax_token_number,
                 'tax_token_image' => $this->updateVehiclesDocuments('tax_token_image', $request->file('tax_token_image')),
@@ -546,6 +550,7 @@ class VehiclesController extends Controller
             $registration_info = [
                 'vehicle_id' => $vehicle->id,
                 'license_number' => $registration_information->license_number,
+                'license_number_end_date' => Carbon::parse($registration_information->license_number_end_date)->format('Y-m-d'),
                 'license_number_image' => $registration_information->license_number_image,
                 'tax_token_number' => $registration_information->tax_token_number,
                 'tax_token_image' => $registration_information->tax_token_image,
@@ -575,6 +580,7 @@ class VehiclesController extends Controller
         try {
             $this->validate($request, [
                 'license_number' => 'string',
+                'license_number_end_date' => 'sometimes|date|date_format:Y-m-d',
                 'tax_token_number' => 'string',
                 'fitness_start_date' => 'required|date|date_format:Y-m-d',
                 'fitness_end_date' => 'required|date|date_format:Y-m-d',
@@ -592,6 +598,7 @@ class VehiclesController extends Controller
 
             $registration_information_data = [
                 'license_number' => $request->license_number,
+                'license_number_end_date' => $request->license_number_end_date,
                 'tax_token_number' => $request->tax_token_number,
                 'fitness_start_date' => $request->fitness_start_date,
                 'fitness_end_date' => $request->fitness_end_date,
