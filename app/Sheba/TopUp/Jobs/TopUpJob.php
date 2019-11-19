@@ -56,7 +56,10 @@ class TopUpJob extends Job implements ShouldQueue
             $this->topUp->recharge($this->topUpOrder);
 
             event(new TopUpCompletedEvent([
-                'id' => $this->topUpOrder->id
+                'id' => $this->topUpOrder->id,
+                'agent_id' => $this->topUpOrder->agent_id,
+                'agent_type' => $this->topUpOrder->agent_type,
+                'status' => $this->topUpOrder->status,
             ]));
 
             if ($this->topUp->isNotSuccessful()) {
