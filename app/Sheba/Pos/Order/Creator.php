@@ -163,7 +163,7 @@ class Creator
         $new_service                 = new PartnerPosService();
         $new_service->warranty       = isset($service['warrany']) ? $service['warranty'] : 0;
         $new_service->warranty_unit  = isset($service['warranty_unit']) ? $service['warranty_unit'] : "day";
-        $new_service->vat_percentage = 0.0;
+        $new_service->vat_percentage = isset($service['vat_percentage']) ? (double)$service['vat_percentage'] : 0.0;
         $new_service->price          = isset($service['price']) ? $service['price'] : null;
         $new_service->name           = isset($service['name']) ? $service['name'] : "Custom Item";
         return $new_service;
