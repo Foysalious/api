@@ -15,6 +15,7 @@ class TopUpRequest
     private $vendorFactory;
     private $errorMessage;
     private $name;
+    private $bulk_id;
 
     public function __construct(VendorFactory $vendor_factory)
     {
@@ -142,6 +143,24 @@ class TopUpRequest
     public function setName($name)
     {
         $this->name = $name;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getBulkId()
+    {
+        return $this->bulk_id;
+    }
+
+    /**
+     * @param mixed $bulk_id
+     * @return TopUpRequest
+     */
+    public function setBulkId($bulk_id)
+    {
+        $this->bulk_id = $bulk_id;
         return $this;
     }
 }

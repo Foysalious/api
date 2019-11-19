@@ -190,12 +190,13 @@ class PartnerJobController extends Controller
     public function declineJob($partner, $job, Request $request)
     {
         try {
-            $request->merge(['remember_token' => $request->manager_resource->remember_token, 'status' => 'Declined', 'resource' => $request->manager_resource]);
-            $response = $this->resourceJobRepository->changeStatus($request->job->id, $request);
-            if ($response) {
-                return api_response($request, $response, $response->code);
+            $this->jobStatusChanger->decline($request);
+            if($this->jobStatusChanger->hasError()) {
+                return api_response($request, null, $this->jobStatusChanger->getErrorCode(), [
+                    'message' => $this->jobStatusChanger->getErrorMessage()
+                ]);
             }
-            return api_response($request, null, 500);
+            return api_response($request, null, 200);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

@@ -1,7 +1,9 @@
 <?php namespace Sheba\PartnerOrderRequest;
 
 use Illuminate\Http\Request;
+use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequest;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequestRepositoryInterface;
+use Sheba\Dal\PartnerOrderRequest\Statuses;
 use Sheba\Helpers\HasErrorCodeAndMessage;
 use Sheba\Jobs\StatusChanger as JobStatusChanger;
 
@@ -14,35 +16,59 @@ class StatusChanger
     /** @var JobStatusChanger */
     private $jobStatusChanger;
 
+    private $partnerOrderRequest;
+
     public function __construct(JobStatusChanger $job_status_changer, PartnerOrderRequestRepositoryInterface $repo)
     {
         $this->jobStatusChanger = $job_status_changer;
         $this->repo = $repo;
     }
 
+    public function setPartnerOrderRequest(PartnerOrderRequest $partner_order_request)
+    {
+        $this->partnerOrderRequest = $partner_order_request;
+        return $this;
+    }
+
     public function accept(Request $request)
     {
-        $partner_order_request = $request->partner_order_request;
-        if($partner_order_request->isNotAcceptable()) {
-            $this->setError(403, $partner_order_request->status . " is not acceptable.");
+        if($this->partnerOrderRequest->isNotAcceptable()) {
+            $this->setError(403, $this->partnerOrderRequest->status . " is not acceptable.");
             return;
         }
-        if($this->repo->hasAnyAcceptedRequest($partner_order_request)) {
+        if($this->repo->hasAnyAcceptedRequest($this->partnerOrderRequest)) {
             $this->setError(403, "Someone already did it.");
+            return;
         }
-        $this->repo->update($partner_order_request, [
-            'status' => 'accepted'
+        $this->repo->update($this->partnerOrderRequest, [
+            'status' => Statuses::ACCEPTED
         ]);
-        $partner_order_request->partner_order->update([
+        $this->partnerOrderRequest->partner_order->update([
             'partner_id' => $request->partner->id
         ]);
 
         $this->jobStatusChanger->acceptJobAndAssignResource($request);
         if($this->jobStatusChanger->hasError()) {
             $this->setError($this->jobStatusChanger->getErrorCode(), $this->getErrorMessage());
+            return;
         }
-        $this->repo->updatePendingRequestsOfOrder($partner_order_request->partner_order, [
-            'status' => 'missed'
+        $this->repo->updatePendingRequestsOfOrder($this->partnerOrderRequest->partner_order, [
+            'status' => Statuses::MISSED
         ]);
+    }
+
+    public function decline(Request $request)
+    {
+        $this->repo->update($this->partnerOrderRequest, [
+            'status' => Statuses::DECLINED
+        ]);
+
+        if(!$this->repo->isAllRequestDeclinedOrNotResponded($this->partnerOrderRequest->partner_order)) return;
+
+        $this->jobStatusChanger->decline($request);
+        if($this->jobStatusChanger->hasError()) {
+            $this->setError($this->jobStatusChanger->getErrorCode(), $this->getErrorMessage());
+            return;
+        }
     }
 }
