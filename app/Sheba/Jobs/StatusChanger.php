@@ -50,22 +50,7 @@ class StatusChanger
             return;
         }
 
-        $request->merge([
-            'remember_token' => $request->manager_resource->remember_token,
-            'status' => JobStatuses::ACCEPTED,
-            'resource' => $request->manager_resource
-        ]);
-
-        $response = $this->resourceJobRepo->changeStatus($job->id, $request);
-        if (!$response) {
-            $this->setError(500);
-            return;
-        }
-        if ($response->code != 200)  {
-            $this->setError($response->code, $response->msg);
-            return;
-        }
-
+        $this->changeStatus($job, $request, JobStatuses::ACCEPTED);
         $this->changedJob = $this->assignResource($job, $request->resource_id, $request->manager_resource);
     }
 
@@ -130,5 +115,29 @@ class StatusChanger
             'created_by_name' => class_basename($created_by) . "-" . $created_by->profile->name,
             'created_by_type' => 'App\\Models\\' . class_basename($created_by)
         ]));
+    }
+
+    private function changeStatus(Job $job, Request $request, $status)
+    {
+        $request->merge([
+            'remember_token' => $request->manager_resource->remember_token,
+            'status' => $status,
+            'resource' => $request->manager_resource
+        ]);
+
+        $response = $this->resourceJobRepo->changeStatus($job->id, $request);
+        if (!$response) {
+            $this->setError(500);
+            return;
+        }
+        if ($response->code != 200)  {
+            $this->setError($response->code, $response->msg);
+            return;
+        }
+    }
+
+    public function decline(Request $request)
+    {
+        $this->changeStatus($request->job, $request, JobStatuses::DECLINED);
     }
 }
