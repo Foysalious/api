@@ -203,7 +203,8 @@ class TopUpController extends Controller
                     'agent_id' => $topup_bulk_request->agent_id,
                     'agent_type' => strtolower(str_replace('App\Models\\', '', $topup_bulk_request->agent_type)),
                     'status' => $topup_bulk_request->status,
-                    'total_numbers' => $topup_bulk_request->numbers->count()
+                    'total_numbers' => $topup_bulk_request->numbers->count(),
+                    'total_processed' => $topup_bulk_request->numbers->where('status', '<>', 'Initiated')->count(),
                 ]);
             });
             return response()->json(['code' => 200, 'active_bulk_topups' => $final]);
