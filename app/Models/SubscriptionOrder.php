@@ -23,7 +23,6 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface, Pay
         return $this->belongsTo(Category::class);
     }
 
-
     public function partner()
     {
         return $this->belongsTo(Partner::class);
@@ -111,7 +110,6 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface, Pay
         if ($this->due == null) $this->calculate();
         return $this->due > 0 ? 0 : 1;
     }
-
 
     /**
      * @return bool

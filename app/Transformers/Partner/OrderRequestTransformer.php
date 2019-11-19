@@ -21,7 +21,13 @@ class OrderRequestTransformer extends TransformerAbstract
             'created_date' => $request->created_at->format('Y-m-d'),
             'created_time' => $request->created_at->format('h:m:s A'),
             'price' => $request->partnerOrder->calculate()->totalPrice,
-            'status' => $request->status
+            'status' => $request->status,
+            'number_of_order' => $request->partnerOrder->order->subscription ? $this->getNumberOfSubscriptionOrder($request) : 1
         ];
+    }
+
+    private function getNumberOfSubscriptionOrder(PartnerOrderRequest $request)
+    {
+        return $request->partnerOrder->order->subscription->orders->count();
     }
 }

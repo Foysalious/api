@@ -12,20 +12,18 @@ use Sheba\Voucher\Contracts\CanHaveVoucher;
 
 class Order extends BaseModel implements ShebaOrderInterface, CanHaveVoucher
 {
-    protected $guarded = ['id'];
+    public static $savedEventClass = OrderSaved::class;
+    public static $createdEventClass = OrderCreated::class;
     public $totalPrice;
     public $due;
     public $profit;
+    protected $guarded = ['id'];
     private $statuses;
     private $jobStatuses;
     private $salesChannelDepartments;
     private $salesChannelShortNames;
-
     /** @var CodeBuilder */
     private $codeBuilder;
-
-    public static $savedEventClass = OrderSaved::class;
-    public static $createdEventClass = OrderCreated::class;
 
     public function __construct($attributes = [])
     {
@@ -67,7 +65,7 @@ class Order extends BaseModel implements ShebaOrderInterface, CanHaveVoucher
 
     public function subscription()
     {
-        return $this->belongsTo(SubscriptionOrder::class);
+        return $this->belongsTo(SubscriptionOrder::class, 'subscription_order_id');
     }
 
     public function location()
@@ -144,28 +142,17 @@ class Order extends BaseModel implements ShebaOrderInterface, CanHaveVoucher
         return $this->id > (int)env('LAST_ORDER_ID_V1') ? 'v2' : 'v1';
     }
 
-    public function isCancelled()
-    {
-        return $this->getStatus() == $this->statuses['Cancelled'];
-    }
-
-    /**
-     * @return Job
-     */
-    public function lastJob()
-    {
-        if ($this->isCancelled()) return $this->jobs->last();
-        return $this->jobs->filter(function ($job) {
-            return $job->status != $this->jobStatuses['Cancelled'];
-        })->first();
-    }
-
     public function lastPartnerOrder()
     {
         if ($this->isCancelled()) return $this->partnerOrders->last();
         return $this->partnerOrders->filter(function ($partner_order) {
             return is_null($partner_order->cancelled_at);
         })->first();
+    }
+
+    public function isCancelled()
+    {
+        return $this->getStatus() == $this->statuses['Cancelled'];
     }
 
     public function findDeliveryIdFromAddressString()
@@ -193,6 +180,17 @@ class Order extends BaseModel implements ShebaOrderInterface, CanHaveVoucher
     public function isLogisticOrder()
     {
         return $this->lastJob()->needsLogistic();
+    }
+
+    /**
+     * @return Job
+     */
+    public function lastJob()
+    {
+        if ($this->isCancelled()) return $this->jobs->last();
+        return $this->jobs->filter(function ($job) {
+            return $job->status != $this->jobStatuses['Cancelled'];
+        })->first();
     }
 
     public function isReadyToPick()

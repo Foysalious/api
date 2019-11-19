@@ -23,7 +23,7 @@ class OrderRequestRepository extends BaseRepository implements OrderRequestRepos
             'partnerOrder.jobs.complains',
             'partnerOrder.jobs.cancelLog',
             'partnerOrder.jobs.category',
-            'partnerOrder.Order',
+            'partnerOrder.order.subscription',
             'partnerOrder'
         );
     }
