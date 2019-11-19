@@ -138,7 +138,7 @@ class TopUpController extends Controller
             $agent = $request->user;
             if (get_class($agent) == "App\Models\Partner")
                 return api_response($request, null, 403, ['message' => "Temporary turned off"]);
-            
+
             $file = Excel::selectSheets(TopUpExcel::SHEET)->load($request->file)->save();
             $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
 
@@ -193,21 +193,20 @@ class TopUpController extends Controller
 
             $topup_bulk_requests = TopUpBulkRequest::where([
                 ['status', 'pending'],
-                ['agent_id', $agent_id ],
-                ['agent_type', $model ]
-            ])->get()->toArray();
-
-            $topup_bulk_requests = array_map(function ($bulk) {
-                return [
-                    'id' => $bulk['id'],
-                    'agent_id' => $bulk['agent_id'],
-                    'agent_type' => $bulk['agent_type'],
-                    'status' => $bulk['status'],
-                    'numbers' => $this->getBulkTopUpNumbers($bulk['id'])
-                ];
-            }, $topup_bulk_requests);
-
-            return response()->json(['code' => 200, 'active_bulk_topups' => $topup_bulk_requests]);
+                ['agent_id', $agent_id],
+                ['agent_type', $model]
+            ])->with('numbers')->get();
+            $final = [];
+            $topup_bulk_requests->map(function ($topup_bulk_request) use (&$final) {
+                array_push($final, [
+                    'id' => $topup_bulk_request->id,
+                    'agent_id' => $topup_bulk_request->agent_id,
+                    'agent_type' => strtolower(str_replace('App\Models\\', '', $topup_bulk_request->agent_type)),
+                    'status' => $topup_bulk_request->status,
+                    'total_numbers' => $topup_bulk_request->numbers->count()
+                ]);
+            });
+            return response()->json(['code' => 200, 'active_bulk_topups' => $final]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
