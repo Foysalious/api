@@ -1,4 +1,4 @@
-<?php namespace Sheba\OrderRequest;
+<?php namespace Sheba\PartnerOrderRequest;
 
 class Creator
 {

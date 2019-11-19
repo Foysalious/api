@@ -59,6 +59,14 @@ class TimeFrame
         return $this;
     }
 
+    public function forTodayAndYesterday()
+    {
+        $date = Carbon::today();
+        $this->start = $date->copy()->subDay()->startOfDay();
+        $this->end = $date->endOfDay();
+        return $this;
+    }
+
     public function forToday()
     {
         return $this->forADay(Carbon::today());

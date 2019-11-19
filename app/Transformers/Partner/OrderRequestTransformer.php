@@ -1,7 +1,7 @@
 <?php namespace App\Transformers\Partner;
 
-use App\Models\PartnerOrderRequest;
 use League\Fractal\TransformerAbstract;
+use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequest;
 
 class OrderRequestTransformer extends TransformerAbstract
 {
