@@ -10,6 +10,7 @@ use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
+use Sheba\Wallet\WalletUpdateEvent;
 
 class Business extends Model implements TopUpAgent, PayableUser, HasWalletTransaction
 {
@@ -135,6 +136,10 @@ class Business extends Model implements TopUpAgent, PayableUser, HasWalletTransa
             ->setType('debit')
             ->setLog($transaction->getLog())
             ->dispatch();
+
+        event(new WalletUpdateEvent([
+            'amount' => $transaction->getAmount()
+        ]));
     }
 
     public function getMobile()

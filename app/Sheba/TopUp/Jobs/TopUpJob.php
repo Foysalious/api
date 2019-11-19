@@ -11,6 +11,7 @@ use Sheba\TopUp\TopUp;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpRequest;
 use Sheba\TopUp\Vendor\VendorFactory;
+use Sheba\TopUp\TopUpCompletedEvent;
 
 class TopUpJob extends Job implements ShouldQueue
 {
@@ -53,6 +54,11 @@ class TopUpJob extends Job implements ShouldQueue
             $this->topUp->setAgent($this->agent)->setVendor($this->vendor);
 
             $this->topUp->recharge($this->topUpOrder);
+
+            event(new TopUpCompletedEvent([
+                'id' => $this->topUpOrder->id
+            ]));
+
             if ($this->topUp->isNotSuccessful()) {
                 $this->takeUnsuccessfulAction();
             } else {
