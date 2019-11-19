@@ -77,7 +77,7 @@ class ServiceController extends Controller
 
     private function getSelectColumnsOfService()
     {
-        return ['id', 'name', 'app_thumb', 'app_banner', 'price', 'stock', 'vat_percentage', 'is_published_for_shop', 'warranty', 'warranty_unit', 'unit', 'wholesale_price'];
+        return ['id', 'name', 'app_thumb', 'app_banner', 'price', 'stock', 'vat_percentage', 'is_published_for_shop', 'warranty', 'warranty_unit', 'unit', 'wholesale_price','show_image','shape','color'];
     }
 
     /**
