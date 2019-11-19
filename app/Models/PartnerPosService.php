@@ -10,17 +10,17 @@ class PartnerPosService extends Model
     use SoftDeletes;
 
     protected $guarded = ['id'];
-    protected $casts = ['cost' => 'double', 'price' => 'double', 'stock' => 'double', 'vat_percentage' => 'double'];
-    protected $dates = ['deleted_at'];
-
-    public function category()
-    {
-        return $this->belongsTo(PosCategory::class, 'pos_category_id');
-    }
+    protected $casts   = ['cost' => 'double', 'price' => 'double', 'stock' => 'double', 'vat_percentage' => 'double', 'show_image' => 'int'];
+    protected $dates   = ['deleted_at'];
 
     public function subCategory()
     {
         return $this->category()->with('parent');
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(PosCategory::class, 'pos_category_id');
     }
 
     public function scopePublished($query)
@@ -57,29 +57,9 @@ class PartnerPosService extends Model
         return $this->hasMany(PartnerPosServiceDiscount::class);
     }
 
-    public function discount()
-    {
-        return $this->runningDiscounts()->first();
-    }
-
     public function getPriceAttribute($price)
     {
         return $price ?: null;
-    }
-
-    public function runningDiscounts()
-    {
-        $now = Carbon::now();
-        /**
-         * USING AS A QUERY, THAT INCREASING LOAD TIME ON LIST VIEW
-         *
-         * return $this->discounts()->where(function ($query) use ($now) {
-         * $query->where('start_date', '<=', $now);
-         * $query->where('end_date', '>=', $now);
-         * })->get();*/
-        return $this->discounts->filter(function ($discount) use ($now) {
-            return $discount->start_date <= $now && $discount->end_date >= $now;
-        });
     }
 
     public function getDiscountedAmount()
@@ -101,6 +81,26 @@ class PartnerPosService extends Model
         }
 
         return ($amount < 0) ? 0 : (float)$amount;
+    }
+
+    public function discount()
+    {
+        return $this->runningDiscounts()->first();
+    }
+
+    public function runningDiscounts()
+    {
+        $now = Carbon::now();
+        /**
+         * USING AS A QUERY, THAT INCREASING LOAD TIME ON LIST VIEW
+         *
+         * return $this->discounts()->where(function ($query) use ($now) {
+         * $query->where('start_date', '<=', $now);
+         * $query->where('end_date', '>=', $now);
+         * })->get();*/
+        return $this->discounts->filter(function ($discount) use ($now) {
+            return $discount->start_date <= $now && $discount->end_date >= $now;
+        });
     }
 
     public function logs()
