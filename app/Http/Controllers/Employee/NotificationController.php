@@ -12,11 +12,13 @@ class NotificationController extends Controller
     public function index(Request $request, MemberRepositoryInterface $member_repository)
     {
         try {
+            $this->validate($request, ['limit' => 'numeric', 'offset' => 'numeric']);
             $auth_info = $request->auth_info;
             $business_member = $auth_info['business_member'];
             if (!$business_member) return api_response($request, null, 401);
+            list($offset, $limit) = calculatePagination($request);
             $member = $member_repository->find($business_member['member_id']);
-            $notifications = $member->notifications;
+            $notifications = $member->notifications()->orderBy('id', 'desc')->skip($offset)->limit($limit)->get();
             $final = [];
             $notifications->each(function ($notification) use (&$final) {
                 array_push($final, [
