@@ -195,7 +195,7 @@ class TopUpController extends Controller
                 ['status', 'pending'],
                 ['agent_id', $agent_id],
                 ['agent_type', $model]
-            ])->with('numbers')->get();
+            ])->with('numbers')->where('status', 'pending')->orderBy('id', 'desc')->get();
             $final = [];
             $topup_bulk_requests->map(function ($topup_bulk_request) use (&$final) {
                 array_push($final, [
