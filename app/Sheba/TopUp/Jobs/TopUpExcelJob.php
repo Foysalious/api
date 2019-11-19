@@ -11,6 +11,7 @@ use Sheba\FileManagers\FileManager;
 use Sheba\Sms\Sms;
 
 use Sheba\TopUp\TopUpExcel;
+use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 
 class TopUpExcelJob extends TopUpJob
 {
@@ -23,8 +24,9 @@ class TopUpExcelJob extends TopUpJob
     private $sms;
     /** @var LaravelExcelReader */
     private $excel = null;
+    private $bulk_id = null;
 
-    public function __construct($agent, $vendor, TopUpOrder $topup_order, $file, $row, $total_row)
+    public function __construct($agent, $vendor, TopUpOrder $topup_order, $file, $row, $total_row, $bulk_id = null)
     {
         parent::__construct($agent, $vendor, $topup_order);
 
@@ -32,6 +34,7 @@ class TopUpExcelJob extends TopUpJob
         $this->row = $row;
         $this->totalRow = $total_row;
         $this->sms = new Sms(); //app(Sms::class);
+        $this->bulk_id = $bulk_id; //app(Sms::class);
     }
 
     /**
@@ -77,7 +80,18 @@ class TopUpExcelJob extends TopUpJob
             unlink($this->file);
 
             $msg = "Your top up request has been processed. You can find the results here: " . $file_path;
+            $this->updateBulkTopUpStatus('completed');
+
             $this->sms->shoot($this->agent->getMobile(), $msg);
         }
+    }
+
+    public function updateBulkTopUpStatus($status)
+    {
+        $bulk_topup = TopUpBulkRequest::find($this->bulk_id);
+
+        $bulk_topup->status = constants('TOPUP_BULK_REQUEST_STATUS')[$status];
+
+        $bulk_topup->save();
     }
 }
