@@ -12,6 +12,7 @@ use Sheba\Pos\Discount\DiscountTypes;
 use Sheba\Pos\Discount\Handler as DiscountHandler;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\Pos\Product\StockManager;
+use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
 use Sheba\Pos\Repositories\PosOrderItemRepository;
 use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Pos\Validators\OrderCreateValidator;
@@ -38,10 +39,11 @@ class Creator
     private $address;
     /** @var DiscountHandler $discountHandler */
     private $discountHandler;
+    private $posServiceRepo;
 
     public function __construct(PosOrderRepository $order_repo, PosOrderItemRepository $item_repo,
                                 PaymentCreator $payment_creator, StockManager $stock_manager,
-                                OrderCreateValidator $create_validator, DiscountHandler $discount_handler)
+                                OrderCreateValidator $create_validator, DiscountHandler $discount_handler, PosServiceRepositoryInterface $posServiceRepo)
     {
         $this->orderRepo       = $order_repo;
         $this->itemRepo        = $item_repo;
@@ -49,6 +51,7 @@ class Creator
         $this->stockManager    = $stock_manager;
         $this->createValidator = $create_validator;
         $this->discountHandler = $discount_handler;
+        $this->posServiceRepo  = $posServiceRepo;
     }
 
     /**
@@ -104,11 +107,11 @@ class Creator
         $services                            = json_decode($this->data['services'], true);
         foreach ($services as $service) {
             /** @var PartnerPosService $original_service */
-            $original_service = isset($services['id']) ? PartnerPosService::find($service['id']) : $this->getDefaultPosService();
+            $original_service = isset($services['id']) ? $this->posServiceRepo->find($service['id']) : $this->posServiceRepo->defaultInstance($service);
             // $is_service_discount_applied = $original_service->discount();
             $service_wholesale_applicable = $original_service->wholesale_price ? true : false;
 
-            $service['service_id']     = $service['id'];
+            $service['service_id']     = $original_service->id;
             $service['service_name']   = $service['name'];
             $service['pos_order_id']   = $order->id;
             $service['unit_price']     = (isset($service['updated_price']) && $service['updated_price']) ? $service['updated_price'] : ($this->isWholesalePriceApplicable($service_wholesale_applicable) ? $original_service->wholesale_price : $original_service->price);
@@ -154,19 +157,8 @@ class Creator
     private function createPartnerWiseOrderId(Partner $partner)
     {
         $lastOrder    = $partner->posOrders()->orderBy('id', 'desc')->first();
-        $lastOrder_id = $lastOrder ? $lastOrder->partner_wise_pos_order_id : 0;
+        $lastOrder_id = $lastOrder ? $lastOrder->partner_wise_order_id : 0;
         return $lastOrder_id + 1;
-    }
-
-    private function getDefaultPosService($service)
-    {
-        $new_service                 = new PartnerPosService();
-        $new_service->warranty       = isset($service['warrany']) ? $service['warranty'] : 0;
-        $new_service->warranty_unit  = isset($service['warranty_unit']) ? $service['warranty_unit'] : "day";
-        $new_service->vat_percentage = isset($service['vat_percentage']) ? (double)$service['vat_percentage'] : 0.0;
-        $new_service->price          = isset($service['price']) ? $service['price'] : null;
-        $new_service->name           = isset($service['name']) ? $service['name'] : "Custom Item";
-        return $new_service;
     }
 
     /**
