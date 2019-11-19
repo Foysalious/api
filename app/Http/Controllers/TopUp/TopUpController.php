@@ -3,6 +3,9 @@
 use App\Http\Controllers\Controller;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
+use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
+use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
+
 use DB;
 use Excel;
 use Illuminate\Http\Request;
@@ -19,6 +22,8 @@ use Sheba\TopUp\Vendor\VendorFactory;
 use Storage;
 use Throwable;
 use Validator;
+
+use Sheba\Wallet\WalletUpdateEvent;
 
 class TopUpController extends Controller
 {
@@ -138,7 +143,10 @@ class TopUpController extends Controller
 
             $data = Excel::selectSheets(TopUpExcel::SHEET)->load($file_path)->get();
             $total = $data->count();
-            $data->each(function ($value, $key) use ($creator, $vendor, $agent, $file_path, $top_up_request, $total) {
+
+            $bulk_request_id = $this->storeBulkRequest($agent);
+
+            $data->each(function ($value, $key) use ($creator, $vendor, $agent, $file_path, $top_up_request, $total, $bulk_request_id) {
                 $operator_field = TopUpExcel::VENDOR_COLUMN_TITLE;
                 $type_field = TopUpExcel::TYPE_COLUMN_TITLE;
                 $mobile_field = TopUpExcel::MOBILE_COLUMN_TITLE;
@@ -150,7 +158,10 @@ class TopUpController extends Controller
                 $request = $top_up_request->setType($value->$type_field)
                     ->setMobile(BDMobileFormatter::format($value->$mobile_field))->setAmount($value->$amount_field)->setAgent($agent)->setVendorId($vendor_id)->setName($value->$name_field);
                 $topup_order = $creator->setTopUpRequest($request)->create();
-                if (!$top_up_request->hasError()) dispatch(new TopUpExcelJob($agent, $vendor_id, $topup_order, $file_path, $key + 2, $total));
+
+                $this->storeBulkRequestNumbers($bulk_request_id, BDMobileFormatter::format($value->$mobile_field), $topup_order->vendor_id);
+
+                if (!$top_up_request->hasError()) dispatch(new TopUpExcelJob($agent, $vendor_id, $topup_order, $file_path, $key + 2, $total, $bulk_request_id));
             });
 
             $response_msg = "Your top-up request has been received and will be transferred and notified shortly.";
@@ -162,6 +173,60 @@ class TopUpController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function activeBulkTopUps(Request $request)
+    {
+        try {
+            $model = "App\\Models\\" . ucfirst(camel_case($request->type));
+            $agent_id = $request->user->id;
+
+            $topup_bulk_requests = TopUpBulkRequest::where([
+                ['status', 'pending'],
+                ['agent_id', $agent_id ],
+                ['agent_type', $model ]
+            ])->pluck('id')->toArray();
+
+            return response()->json(['code' => 200, 'active_bulk_topups' => $topup_bulk_requests]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function storeBulkRequest($agent)
+    {
+        $topup_bulk_request = new TopUpBulkRequest();
+        $topup_bulk_request->agent_id = $agent->id;
+        $topup_bulk_request->agent_type = $this->getFullAgentType($agent->type);
+        $topup_bulk_request->status = constants('TOPUP_BULK_REQUEST_STATUS')['pending'];
+        $topup_bulk_request->save();
+
+        return $topup_bulk_request->id;
+    }
+
+
+    public function storeBulkRequestNumbers($request_id, $mobile, $vendor_id)
+    {
+        $topup_bulk_request = new TopUpBulkRequestNumber();
+        $topup_bulk_request->topup_bulk_request_id = $request_id;
+        $topup_bulk_request->mobile = $mobile;
+        $topup_bulk_request->vendor_id = $vendor_id;
+        $topup_bulk_request->save();
+
+        return $topup_bulk_request->id;
+    }
+
+    public function getFullAgentType($type)
+    {
+        $agent = '';
+
+        if ($type == 'customer') $agent = "App\\Models\\Customer";
+        elseif ($type == 'partner') $agent = "App\\Models\\Partner";
+        elseif ($type == 'business') $agent = "App\\Models\\Business";
+        elseif ($type == 'Company') $agent = "App\\Models\\Business";
+
+        return $agent;
     }
 
     public function topUpHistory(Request $request)
