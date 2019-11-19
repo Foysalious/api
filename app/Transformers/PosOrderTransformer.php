@@ -33,7 +33,8 @@ class PosOrderTransformer extends TransformerAbstract
             'customer' => null,
             'is_refundable' => $order->isRefundable(),
             'refund_status' => $order->getRefundStatus(),
-            'return_orders' => null
+            'return_orders' => null,
+            'partner_wise_order_id' => $order->partner_wise_order_id
         ];
         if ($data['due'] > 0) {
             $repo = app(PaymentLinkRepositoryInterface::class);
