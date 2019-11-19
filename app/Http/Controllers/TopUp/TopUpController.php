@@ -153,17 +153,34 @@ class TopUpController extends Controller
 
                 $this->storeBulkRequestNumbers($bulk_request_id, BDMobileFormatter::format($value->$mobile_field), $topup_order->vendor_id);
 
-                if (!$top_up_request->hasError()) dispatch(new TopUpExcelJob($agent, $vendor_id, $topup_order, $file_path, $key + 2, $total));
+                if (!$top_up_request->hasError()) dispatch(new TopUpExcelJob($agent, $vendor_id, $topup_order, $file_path, $key + 2, $total, $bulk_request_id));
             });
 
             $response_msg = "Your top-up request has been received and will be transferred and notified shortly.";
             return api_response($request, null, 200, ['message' => $response_msg]);
         } catch (ValidationException $e) {
-            dd($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function activeBulkTopUps(Request $request)
+    {
+        try {
+            $model = "App\\Models\\" . ucfirst(camel_case($request->type));
+            $agent_id = $request->user->id;
+
+            $topup_bulk_requests = TopUpBulkRequest::where([
+                ['status', 'pending'],
+                ['agent_id', $agent_id ],
+                ['agent_type', $model ]
+            ])->pluck('id')->toArray();
+
+            return response()->json(['code' => 200, 'active_bulk_topups' => $topup_bulk_requests]);
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -174,7 +191,7 @@ class TopUpController extends Controller
         $topup_bulk_request = new TopUpBulkRequest();
         $topup_bulk_request->agent_id = $agent->id;
         $topup_bulk_request->agent_type = $this->getFullAgentType($agent->type);
-        $topup_bulk_request->status = constants('TOPUP_BULK_REQUEST_STATUS')[0];
+        $topup_bulk_request->status = constants('TOPUP_BULK_REQUEST_STATUS')['pending'];
         $topup_bulk_request->save();
 
         return $topup_bulk_request->id;
