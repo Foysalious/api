@@ -188,13 +188,28 @@ class TopUpController extends Controller
                 ['status', 'pending'],
                 ['agent_id', $agent_id ],
                 ['agent_type', $model ]
-            ])->pluck('id')->toArray();
+            ])->get()->toArray();
+
+            $topup_bulk_requests = array_map(function ($bulk) {
+                return [
+                    'id' => $bulk['id'],
+                    'agent_id' => $bulk['agent_id'],
+                    'agent_type' => $bulk['agent_type'],
+                    'status' => $bulk['status'],
+                    'numbers' => $this->getBulkTopUpNumbers($bulk['id'])
+                ];
+            }, $topup_bulk_requests);
 
             return response()->json(['code' => 200, 'active_bulk_topups' => $topup_bulk_requests]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function getBulkTopUpNumbers($bulk_id)
+    {
+        return TopUpBulkRequestNumber::where('topup_bulk_request_id', $bulk_id)->pluck('mobile')->toArray();
     }
 
     public function storeBulkRequest($agent)
