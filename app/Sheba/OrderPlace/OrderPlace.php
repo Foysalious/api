@@ -8,9 +8,12 @@ use App\Models\Job;
 use App\Models\Order;
 use App\Models\PartnerOrder;
 use App\Models\Service;
+use App\Sheba\Checkout\Discount;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Sheba\Checkout\Services\RentACarServiceObject;
 use Sheba\Checkout\Services\ServiceObject;
+use Sheba\Dal\JobService\JobService;
 use Sheba\Jobs\JobStatuses;
 use Sheba\Jobs\PreferredTime;
 use Sheba\ModificationFields;
@@ -216,6 +219,16 @@ class OrderPlace
         return $this;
     }
 
+    /**
+     * @param mixed $categoryAnswers
+     * @return OrderPlace
+     */
+    public function setCategoryAnswers($categoryAnswers)
+    {
+        $this->categoryAnswers = $categoryAnswers;
+        return $this;
+    }
+
     private function setDeliveryAddress()
     {
         $this->deliveryAddress = $this->customer->delivery_addresses()->withTrashed()->where('id', $this->deliveryAddressId)->first();
@@ -298,20 +311,38 @@ class OrderPlace
             'crm_id' => $this->crmId,
             'job_additional_info' => $this->additionalInformation,
             'category_answers' => $this->categoryAnswers,
-            'commission_rate' => $this->category->commission($this->partner->id),
             'material_commission_rate' => config('sheba.material_commission_rate'),
-            'discount' => isset($data['discount']) ? $data['discount'] : 0,
-            'sheba_contribution' => isset($data['sheba_contribution']) ? $data['sheba_contribution'] : 0,
-            'partner_contribution' => isset($data['partner_contribution']) ? $data['partner_contribution'] : 0,
-            'discount_percentage' => isset($data['discount_percentage']) ? $data['discount_percentage'] : 0,
-            'resource_id' => isset($data['resource_id']) ? $data['resource_id'] : null,
-            'status' => isset($data['resource_id']) ? JobStatuses::ACCEPTED : JobStatuses::PENDING,
-            'site' => $data['site']
+            'status' => JobStatuses::PENDING
         ];
+        $job_data = $this->withCreateModificationField($job_data);
+        return Job::create($job_data);
+    }
 
-        if (!$data['is_on_premise']) $this->handleDelivery($job_data);
+    private function createJobService()
+    {
+        $job_services = collect();
+        foreach ($this->services as $selected_service) {
+            /** @var ServiceObject $selected_service */
+            $service = $services->where('id', $selected_service->id)->first();
+            $schedule_date_time = Carbon::parse($this->orderData['date'] . ' ' . explode('-', $this->orderData['time'])[0]);
 
-        $job = Job::create($job_data);
-        return $this->getAuthor($job, $data);
+            $discount = new Discount();
+            $discount->setServiceObj($selected_service)->setServicePivot($service->pivot)->setScheduleDateTime($schedule_date_time)->initialize();
+
+            $service_data = array('service_id' => $selected_service->id,
+                'quantity' => $selected_service->quantity, 'created_by' => $data['created_by'],
+                'created_by_name' => $data['created_by_name'], 'unit_price' => $discount->unit_price,
+                'min_price' => $discount->min_price, 'sheba_contribution' => $discount->__get('sheba_contribution'),
+                'partner_contribution' => $discount->__get('partner_contribution'),
+                'discount_id' => $discount->__get('discount_id'),
+                'discount' => $discount->__get('discount'),
+                'discount_percentage' => $discount->__get('discount_percentage'),
+                'name' => $service->name,
+                'variable_type' => $service->variable_type,
+                'surcharge_percentage' => $discount->surchargePercentage);
+            list($service_data['option'], $service_data['variables']) = $this->getVariableOptionOfService($service, $selected_service->option);
+            $job_services->push(new JobService($service_data));
+        }
+        return $job_services;
     }
 }

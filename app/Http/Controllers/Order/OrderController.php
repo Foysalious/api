@@ -37,7 +37,8 @@ class OrderController extends Controller
             $order_place->setDeliveryName($request->name)->setPaymentMethod($request->payment_method)->setDeliveryMobile($request->mobile)->setCustomer($request->customer)
                 ->setSalesChannel($request->sales_channel)->setPartnerId($request->partner_id)->setAdditionalInformation($request->additional_information)
                 ->setAffiliationId($request->affiliation_id)->setInfoCallId($request->info_call_id)->setBusinessId($request->business_id)->setCrmId($request->crm_id)
-                ->setVoucherId($request->voucher)->setServices($request->services)->setScheduleDate($request->date)->setScheduleTime($request->time)->create();
+                ->setVoucherId($request->voucher)->setServices($request->services)->setScheduleDate($request->date)->setScheduleTime($request->time)->setVendorId($request->vendor_id)
+                ->create();
         } catch (\Throwable $e) {
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all()]);

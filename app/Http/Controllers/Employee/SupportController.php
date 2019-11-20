@@ -62,7 +62,7 @@ class SupportController extends Controller
         }
     }
 
-    public function show(Request $request, $business, $support, SupportRepositoryInterface $support_repository)
+    public function show(Request $request, $support, SupportRepositoryInterface $support_repository)
     {
         try {
             $auth_info = $request->auth_info;
@@ -74,6 +74,7 @@ class SupportController extends Controller
             $support['time'] = $support->created_at->format('h:i A');
             return api_response($request, $support, 200, ['support' => $support]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
