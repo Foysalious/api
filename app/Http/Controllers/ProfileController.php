@@ -273,7 +273,11 @@ class ProfileController extends Controller
             $data = $ocr_repo->nidCheck($input);
             if (isset($data["dob"])) {
                 $data["dob"] = date_create($data["dob"])->format('Y-m-d');
-            } ;
+            };
+
+            $validation = $profile_repo->validate($data, $profile);
+            if ($validation === 'nid_no')
+                return api_response($request, null, 409, ['message' => 'NID no used by another user']);
 
             if ($this->isWronglyIdentifyFromOcr($input, $data))
                 return api_response($request, null, 422);
@@ -325,7 +329,7 @@ class ProfileController extends Controller
         try {
             $this->validate($request, []);
             $profile = $request->profile;
-            if(!$profile) return api_response($request, null, 404, ['data' => null]);
+            if (!$profile) return api_response($request, null, 404, ['data' => null]);
 
             $input = $request->except('profile', 'remember_token');
             $profile_repo->update($profile, $input);
