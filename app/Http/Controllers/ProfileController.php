@@ -315,7 +315,7 @@ class ProfileController extends Controller
 
             $validation = $profile_repo->validate($data, $profile);
             if ($validation === 'nid_no')
-                return api_response($request, null, 409, ['message' => 'NID no used by another user']);
+                return api_response($request, null, 409, ['message' => 'NID used by another user']);
 
             if ($this->isWronglyIdentifyFromOcr($input, $data))
                 return api_response($request, null, 422);
