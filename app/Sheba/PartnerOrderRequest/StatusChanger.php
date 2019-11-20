@@ -32,26 +32,22 @@ class StatusChanger
 
     public function accept(Request $request)
     {
-        if($this->partnerOrderRequest->isNotAcceptable()) {
+        if ($this->partnerOrderRequest->isNotAcceptable()) {
             $this->setError(403, $this->partnerOrderRequest->status . " is not acceptable.");
             return;
         }
-        if($this->repo->hasAnyAcceptedRequest($this->partnerOrderRequest)) {
+        if ($this->repo->hasAnyAcceptedRequest($this->partnerOrderRequest->partnerOrder)) {
             $this->setError(403, "Someone already did it.");
             return;
         }
-        $this->repo->update($this->partnerOrderRequest, [
-            'status' => Statuses::ACCEPTED
-        ]);
-        $this->partnerOrderRequest->partner_order->update([
-            'partner_id' => $request->partner->id
-        ]);
-
+        $this->repo->update($this->partnerOrderRequest, ['status' => Statuses::ACCEPTED]);
+        $this->partnerOrderRequest->partner_order->update(['partner_id' => $request->partner->id]);
         $this->jobStatusChanger->acceptJobAndAssignResource($request);
-        if($this->jobStatusChanger->hasError()) {
+        if ($this->jobStatusChanger->hasError()) {
             $this->setError($this->jobStatusChanger->getErrorCode(), $this->getErrorMessage());
             return;
         }
+
         $this->repo->updatePendingRequestsOfOrder($this->partnerOrderRequest->partner_order, [
             'status' => Statuses::MISSED
         ]);
@@ -59,14 +55,12 @@ class StatusChanger
 
     public function decline(Request $request)
     {
-        $this->repo->update($this->partnerOrderRequest, [
-            'status' => Statuses::DECLINED
-        ]);
+        $this->repo->update($this->partnerOrderRequest, ['status' => Statuses::DECLINED]);
 
-        if(!$this->repo->isAllRequestDeclinedOrNotResponded($this->partnerOrderRequest->partner_order)) return;
+        if (!$this->repo->isAllRequestDeclinedOrNotResponded($this->partnerOrderRequest->partnerOrder)) return;
 
         $this->jobStatusChanger->decline($request);
-        if($this->jobStatusChanger->hasError()) {
+        if ($this->jobStatusChanger->hasError()) {
             $this->setError($this->jobStatusChanger->getErrorCode(), $this->getErrorMessage());
             return;
         }

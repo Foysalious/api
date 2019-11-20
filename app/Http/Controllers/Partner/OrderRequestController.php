@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
+use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequest;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequestRepositoryInterface;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
@@ -95,16 +96,18 @@ class OrderRequestController extends Controller
         }
     }
 
-    public function accept($partner, $partner_order_request, Request $request)
+    /**
+     * @param $partner
+     * @param PartnerOrderRequest $partner_order_request
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function accept($partner, PartnerOrderRequest $partner_order_request, Request $request)
     {
         try {
-            $this->validate($request, [
-                'resource_id' => 'required|int'
-            ]);
-
-            $this->statusChanger->setPartnerOrderRequest($request->partner_order_request)
-                ->accept($request);
-            if($this->statusChanger->hasError()) {
+            $this->validate($request, ['resource_id' => 'required|int']);
+            $this->statusChanger->setPartnerOrderRequest($partner_order_request)->accept($request);
+            if ($this->statusChanger->hasError()) {
                 return api_response($request, null, $this->statusChanger->getErrorCode(), [
                     'message' => $this->statusChanger->getErrorMessage()
                 ]);
@@ -122,16 +125,18 @@ class OrderRequestController extends Controller
         }
     }
 
-    public function decline($partner, $partner_order_request, Request $request)
+    /**
+     * @param $partner
+     * @param PartnerOrderRequest $partner_order_request
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function decline($partner, PartnerOrderRequest $partner_order_request, Request $request)
     {
         try {
-            $this->validate($request, [
-                'resource_id' => 'required|int'
-            ]);
-
-            $this->statusChanger->setPartnerOrderRequest($request->partner_order_request)
-                ->decline($request);
-            if($this->statusChanger->hasError()) {
+            $this->validate($request, ['resource_id' => 'required|int']);
+            $this->statusChanger->setPartnerOrderRequest($partner_order_request)->decline($request);
+            if ($this->statusChanger->hasError()) {
                 return api_response($request, null, $this->statusChanger->getErrorCode(), [
                     'message' => $this->statusChanger->getErrorMessage()
                 ]);
