@@ -313,9 +313,9 @@ class ProfileController extends Controller
                 $data["dob"] = date_create($data["dob"])->format('Y-m-d');
             };
 
-//            $validation = $profile_repo->validate($data, $profile);
-//            if ($validation === 'nid_no')
-//                return api_response($request, null, 409, ['message' => 'NID no used by another user']);
+            $validation = $profile_repo->validate($data, $profile);
+            if ($validation === 'nid_no')
+                return api_response($request, null, 409, ['message' => 'NID no used by another user']);
 
             if ($this->isWronglyIdentifyFromOcr($input, $data))
                 return api_response($request, null, 422);
