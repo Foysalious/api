@@ -42,7 +42,7 @@ class SupportController extends Controller
                 $support['time'] = $support->created_at->format('h:i A');
                 return $support;
             });
-            return api_response($request, $supports, 200, ['supports' => $supports]);
+            return api_response($request, $supports, 200, ['supports' => $supports, 'total_supports' => $support_repository->get()->count()]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -60,6 +60,7 @@ class SupportController extends Controller
             $support['requested_by'] = [
                 'name' => $support->member->profile->name,
                 'image' => $support->member->profile->pro_pic,
+                'designation' => $support->member->businessMember->role ? $support->member->businessMember->role->name : ''
             ];
             removeRelationsAndFields($support);
             return api_response($request, $support, 200, ['support' => $support]);
