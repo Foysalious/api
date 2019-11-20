@@ -434,6 +434,7 @@ class CategoryController extends Controller
                     }
                     $category['services'] = $services;
                     $category['subscriptions'] = $subscriptions;
+                    $category['delivery_charge'] = ['original_price' => 60, 'discounted_price' => 30];
                     if ($subscriptions->count()) {
                         $category['subscription_faq'] = $subscription_faq;
                     }
@@ -444,7 +445,6 @@ class CategoryController extends Controller
                 return api_response($request, null, 404);
             }
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
