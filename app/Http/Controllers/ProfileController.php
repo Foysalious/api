@@ -56,13 +56,13 @@ class ProfileController extends Controller
             if ($picture_link != false) {
                 $profile->pro_pic = $picture_link;
                 $profile->update();
-                return response()->json(['code' => 200, 'picture' => $profile->pro_pic]);
+                return response()->json(['code' => 200, 'message' => 'success','picture' => $profile->pro_pic]);
             } else {
-                return response()->json(['code' => 404]);
+                return response()->json(['code' => 404, 'message' => 'fail','picture' => null]);
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, null, 500, ['msg' => $message]);
+            return api_response($request, null, 500, ['message' => $message, 'picture' => null]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
