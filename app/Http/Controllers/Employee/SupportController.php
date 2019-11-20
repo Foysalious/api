@@ -62,7 +62,7 @@ class SupportController extends Controller
         }
     }
 
-    public function show(Request $request, $support, SupportRepositoryInterface $support_repository)
+    public function show(Request $request, $business, $support, SupportRepositoryInterface $support_repository)
     {
         try {
             $auth_info = $request->auth_info;
