@@ -35,7 +35,7 @@ class SupportController extends Controller
                 ->select('id', 'member_id', 'status', 'long_description', 'created_at', 'closed_at', 'is_satisfied');
             if ($request->has('status')) $supports = $supports->where('status', $request->status);
             if ($request->has('limit')) $supports = $supports->skip($offset)->limit($limit);
-            $supports = $supports->get();
+            $supports = $supports->orderBy('id', 'desc')->get();
             if (count($supports) == 0) return api_response($request, null, 404);
             $supports->map(function (&$support) {
                 $support['date'] = $support->created_at->format('M d');
