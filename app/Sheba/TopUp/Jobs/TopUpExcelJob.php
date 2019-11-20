@@ -73,6 +73,8 @@ class TopUpExcelJob extends TopUpJob
     private function takeCompletedAction()
     {
         if ($this->row == $this->totalRow + 1) {
+            $this->updateBulkTopUpStatus('completed');
+
             $name = strtolower(class_basename($this->agent)) . '_' . dechex($this->agent->id);
             $file_name = $this->uniqueFileName($this->file, $name, $this->getExcel()->ext);
             $file_path = $this->saveFileToCDN($this->file, getBulkTopUpFolder(), $file_name);
@@ -80,7 +82,6 @@ class TopUpExcelJob extends TopUpJob
             unlink($this->file);
 
             $msg = "Your top up request has been processed. You can find the results here: " . $file_path;
-            $this->updateBulkTopUpStatus('completed');
 
             $this->sms->shoot($this->agent->getMobile(), $msg);
         }
