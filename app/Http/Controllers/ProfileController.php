@@ -271,7 +271,6 @@ class ProfileController extends Controller
             $profile = $request->profile;
             $input   = $request->except('profile', 'remember_token');
             $data    = [];
-
             $nid_image_key        = "nid_image_" . $input["side"];
             $data[$nid_image_key] = $input['nid_image'];
 
@@ -282,10 +281,7 @@ class ProfileController extends Controller
             $resource = new Item($profile, new NidInfoTransformer());
             $details  = $manager->createData($resource)->toArray()['data'];
             return api_response($request, null, 200, ['data' => $details]);
-        } catch (OcrServerError $e) {
-            if ($e->getCode() == 402) return api_response($request, null, 422);
-            return api_response($request, null, 500);
-        } catch (Throwable $e) {
+        }catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
