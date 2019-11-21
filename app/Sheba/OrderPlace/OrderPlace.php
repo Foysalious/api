@@ -7,6 +7,7 @@ use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;
 use App\Models\Job;
 use App\Models\Location;
+use App\Models\LocationService;
 use App\Models\Order;
 use App\Models\PartnerOrder;
 use App\Models\Service;
@@ -341,6 +342,7 @@ class OrderPlace
         foreach ($this->services as $selected_service) {
             /** @var ServiceObject $selected_service */
             $service = $selected_service->getService();
+            $location_service=LocationService::where([['service_id',$service->id],['location_id',$this->location->id]])->first();
             $service_data = array(
                 'service_id' => $service->id,
                 'quantity' => $selected_service->quantity,
