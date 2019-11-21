@@ -163,8 +163,8 @@ class ProfileController extends Controller
             $repository->update($request->profile, $data);
             return api_response($request, null, 200, ['message' => 'Profile Updated']);
         } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->errors());
-            return api_response($request, null, 401, ['message' => $message]);
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500, ['message' => $e->getMessage(), 'trace' => $e->getTrace()]);
