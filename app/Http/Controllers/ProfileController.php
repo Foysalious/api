@@ -271,22 +271,6 @@ class ProfileController extends Controller
             $profile = $request->profile;
             $input   = $request->except('profile', 'remember_token');
             $data    = [];
-            try {
-                $data = $ocr_repo->nidCheck($input);
-            } catch (Exception $e) {
-            }
-            if (isset($data["dob"])) {
-                $data["dob"] = date_create($data["dob"])->format('Y-m-d');
-            };
-
-           /**
-            * NID PARSE VALIDATION
-            * $validation = $profile_repo->validate($data, $profile);
-            if ($validation === 'nid_no')
-                return api_response($request, null, 409, ['message' => 'NID used by another user']);*/
-
-            /*if ($this->isWronglyIdentifyFromOcr($input, $data))
-                return api_response($request, null, 422);*/
 
             $nid_image_key        = "nid_image_" . $input["side"];
             $data[$nid_image_key] = $input['nid_image'];
