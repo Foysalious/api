@@ -13,17 +13,17 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use JWTAuth;
 use JWTFactory;
-use Sheba\Ocr\Exceptions\OcrServerError;
-use Validator;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\NidInfo\ImageSide;
+use Sheba\Ocr\Exceptions\OcrServerError;
 use Sheba\Ocr\Repository\OcrRepository;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Sheba\Repositories\ProfileRepository as ShebaProfileRepository;
 use Sheba\Sms\Sms;
 use Throwable;
+use Validator;
 
 class ProfileController extends Controller
 {
@@ -33,7 +33,7 @@ class ProfileController extends Controller
     public function __construct(ProfileRepository $profile_repository, FileRepository $file_repository)
     {
         $this->profileRepo = $profile_repository;
-        $this->fileRepo = $file_repository;
+        $this->fileRepo    = $file_repository;
     }
 
     /**
@@ -45,20 +45,20 @@ class ProfileController extends Controller
         try {
             $this->validate($request, ['photo' => 'required|mimes:jpeg,png']);
             $profile = $request->profile;
-            $photo = $request->file('photo');
+            $photo   = $request->file('photo');
             if (basename($profile->pro_pic) != 'default.jpg') {
                 $filename = substr($profile->pro_pic, strlen(env('S3_URL')));
                 $this->fileRepo->deleteFileFromCDN($filename);
             }
 
-            $filename = Carbon::now()->timestamp . '_profile_image_' . $profile->id . '.' . $photo->extension();
+            $filename     = Carbon::now()->timestamp . '_profile_image_' . $profile->id . '.' . $photo->extension();
             $picture_link = $this->fileRepo->uploadToCDN($filename, $request->file('photo'), 'images/profiles/');
             if ($picture_link != false) {
                 $profile->pro_pic = $picture_link;
                 $profile->update();
-                return response()->json(['code' => 200, 'message' => 'success','picture' => $profile->pro_pic]);
+                return response()->json(['code' => 200, 'message' => 'success', 'picture' => $profile->pro_pic]);
             } else {
-                return response()->json(['code' => 404, 'message' => 'fail','picture' => null]);
+                return response()->json(['code' => 404, 'message' => 'fail', 'picture' => null]);
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -72,7 +72,7 @@ class ProfileController extends Controller
     public function getProfile(Request $request)
     {
         if ($request->has('mobile') && $request->has('name')) {
-            $mobile = formatMobile($request->mobile);
+            $mobile  = formatMobile($request->mobile);
             $profile = $this->profileRepo->getIfExist($mobile, 'mobile');
             if ($request->has('email')) {
                 $emailProfile = $this->profileRepo->getByEmail($request->email);
@@ -178,11 +178,11 @@ class ProfileController extends Controller
         $rules = ['mobile' => 'required|mobile:bd'];
         try {
             $this->validate($request, $rules);
-            $mobile = BDMobileFormatter::format($request->mobile);
+            $mobile  = BDMobileFormatter::format($request->mobile);
             $profile = Profile::where('mobile', $mobile)->first();
             if (!$profile) return api_response($request, null, 404, ['message' => 'Profile not found with this number']);
             $password = str_random(6);
-            $smsSent = $sms->shoot($mobile, "Your password is reset to $password . Please use this password to login");
+            $smsSent  = $sms->shoot($mobile, "Your password is reset to $password . Please use this password to login");
             $profile->update(['password' => bcrypt($password)]);
             return api_response($request, true, 200, ['message' => 'Your password is sent to your mobile number. Please use that password to login']);
         } catch (ValidationException $e) {
@@ -196,7 +196,7 @@ class ProfileController extends Controller
     public function getProfileInfoByMobile(Request $request)
     {
         try {
-            $mobile = BDMobileFormatter::format($request->mobile);
+            $mobile  = BDMobileFormatter::format($request->mobile);
             $profile = $this->profileRepo->getIfExist($mobile, 'mobile');;
             if (!$profile) return api_response($request, null, 404, ['message' => 'Profile not found with this number']);
             return api_response($request, true, 200, ['message' => 'Profile found', 'profile' => $profile]);
@@ -217,6 +217,20 @@ class ProfileController extends Controller
         } catch (Throwable $e) {
             return api_response($request, null, 500, ['message' => $e->getMessage()]);
         }
+    }
+
+    /**
+     * @param Profile $profile
+     * @return mixed
+     */
+    private function generateUtilityToken(Profile $profile)
+    {
+        $from         = \request()->get('from');
+        $id           = \request()->id;
+        $customClaims = [
+            'profile_id' => $profile->id, 'customer_id' => $profile->customer ? $profile->customer->id : null, 'affiliate_id' => $profile->affiliate ? $profile->affiliate->id : null, 'from' => constants('AVATAR_FROM_CLASS')[$from], 'user_id' => $id
+        ];
+        return JWTAuth::fromUser($profile, $customClaims);
     }
 
     public function refresh(Request $request)
@@ -245,20 +259,6 @@ class ProfileController extends Controller
     }
 
     /**
-     * @param Profile $profile
-     * @return mixed
-     */
-    private function generateUtilityToken(Profile $profile)
-    {
-        $from = \request()->get('from');
-        $id = \request()->id;
-        $customClaims = [
-            'profile_id' => $profile->id, 'customer_id' => $profile->customer ? $profile->customer->id : null, 'affiliate_id' => $profile->affiliate ? $profile->affiliate->id : null, 'from' => constants('AVATAR_FROM_CLASS')[$from], 'user_id' => $id
-        ];
-        return JWTAuth::fromUser($profile, $customClaims);
-    }
-
-    /**
      * @param Request $request
      * @param OcrRepository $ocr_repo
      * @param ProfileRepositoryInterface $profile_repo
@@ -269,20 +269,26 @@ class ProfileController extends Controller
         try {
             $this->validate($request, ['nid_image' => 'required', 'side' => 'required']);
             $profile = $request->profile;
-            $input = $request->except('profile', 'remember_token');
-            $data = $ocr_repo->nidCheck($input);
+            $input   = $request->except('profile', 'remember_token');
+            $data    = [];
+            try {
+                $data = $ocr_repo->nidCheck($input);
+            } catch (Exception $e) {
+            }
             if (isset($data["dob"])) {
                 $data["dob"] = date_create($data["dob"])->format('Y-m-d');
             };
 
-            $validation = $profile_repo->validate($data, $profile);
+           /**
+            * NID PARSE VALIDATION
+            * $validation = $profile_repo->validate($data, $profile);
             if ($validation === 'nid_no')
-                return api_response($request, null, 409, ['message' => 'NID used by another user']);
+                return api_response($request, null, 409, ['message' => 'NID used by another user']);*/
 
-            if ($this->isWronglyIdentifyFromOcr($input, $data))
-                return api_response($request, null, 422);
+            /*if ($this->isWronglyIdentifyFromOcr($input, $data))
+                return api_response($request, null, 422);*/
 
-            $nid_image_key = "nid_image_" . $input["side"];
+            $nid_image_key        = "nid_image_" . $input["side"];
             $data[$nid_image_key] = $input['nid_image'];
 
             $profile_repo->update($profile, $data);
@@ -290,11 +296,37 @@ class ProfileController extends Controller
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
             $resource = new Item($profile, new NidInfoTransformer());
-            $details = $manager->createData($resource)->toArray()['data'];
+            $details  = $manager->createData($resource)->toArray()['data'];
             return api_response($request, null, 200, ['data' => $details]);
         } catch (OcrServerError $e) {
             if ($e->getCode() == 402) return api_response($request, null, 422);
             return api_response($request, null, 500);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @param ProfileRepositoryInterface $profile_repo
+     * @return JsonResponse
+     */
+    public function updateProfileInfo(Request $request, ProfileRepositoryInterface $profile_repo)
+    {
+        try {
+            $this->validate($request, []);
+            $profile = $request->profile;
+            if (!$profile) return api_response($request, null, 404, ['data' => null]);
+
+            $input = $request->except('profile', 'remember_token');
+            $profile_repo->update($profile, $input);
+            $manager = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+            $resource = new Item($profile, new ProfileDetailPersonalInfoTransformer());
+            $details  = $manager->createData($resource)->toArray()['data'];
+
+            return api_response($request, null, 200, ['data' => $details]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -317,31 +349,5 @@ class ProfileController extends Controller
             return true;
 
         return false;
-    }
-
-    /**
-     * @param Request $request
-     * @param ProfileRepositoryInterface $profile_repo
-     * @return JsonResponse
-     */
-    public function updateProfileInfo(Request $request, ProfileRepositoryInterface $profile_repo)
-    {
-        try {
-            $this->validate($request, []);
-            $profile = $request->profile;
-            if (!$profile) return api_response($request, null, 404, ['data' => null]);
-
-            $input = $request->except('profile', 'remember_token');
-            $profile_repo->update($profile, $input);
-            $manager = new Manager();
-            $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($profile, new ProfileDetailPersonalInfoTransformer());
-            $details = $manager->createData($resource)->toArray()['data'];
-
-            return api_response($request, null, 200, ['data' => $details]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
     }
 }
