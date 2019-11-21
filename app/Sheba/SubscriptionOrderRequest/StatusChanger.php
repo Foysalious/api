@@ -1,6 +1,7 @@
 <?php namespace Sheba\SubscriptionOrderRequest;
 
 use Illuminate\Http\Request;
+use Sheba\Checkout\Adapters\SubscriptionOrderAdapter;
 use Sheba\Dal\SubscriptionOrder\Statuses as SubscriptionOrderStatuses;
 use Sheba\Dal\SubscriptionOrderRequest\Statuses;
 use Sheba\Dal\SubscriptionOrderRequest\SubscriptionOrderRequest;
@@ -42,6 +43,7 @@ class StatusChanger
             return;
         }
         $this->repo->update($this->subscriptionOrderRequest, ['status' => Statuses::ACCEPTED]);
+        (new SubscriptionOrderAdapter($this->subscriptionOrderRequest->subscriptionOrder))->convertToOrder();
         $this->subscriptionOrderRequest->subscriptionOrder->update(['partner_id' => $request->partner->id]);
 
         $this->repo->updatePendingRequestsOfOrder($this->subscriptionOrderRequest->subscriptionOrder, [
