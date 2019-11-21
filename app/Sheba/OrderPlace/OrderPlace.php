@@ -19,6 +19,8 @@ use Sheba\Checkout\Services\ServiceObject;
 use Sheba\Dal\JobService\JobService;
 use Sheba\Jobs\JobStatuses;
 use Sheba\Jobs\PreferredTime;
+use Sheba\LocationService\DiscountCalculation;
+use Sheba\LocationService\PriceCalculation;
 use Sheba\ModificationFields;
 use Sheba\RequestIdentification;
 use DB;
@@ -51,6 +53,16 @@ class OrderPlace
     private $categoryAnswers;
     /** @var Location */
     private $location;
+    /** @var PriceCalculation */
+    private $priceCalculation;
+    /** @var DiscountCalculation */
+    private $discountCalculation;
+
+    public function __construct()
+    {
+        $this->priceCalculation = new PriceCalculation();
+        $this->discountCalculation = new DiscountCalculation();
+    }
 
     /**
      * @param mixed $deliveryAddressId
@@ -342,19 +354,24 @@ class OrderPlace
         foreach ($this->services as $selected_service) {
             /** @var ServiceObject $selected_service */
             $service = $selected_service->getService();
-            $location_service=LocationService::where([['service_id',$service->id],['location_id',$this->location->id]])->first();
+            $location_service = LocationService::where([['service_id', $service->id], ['location_id', $this->location->id]])->first();
+            $this->priceCalculation->setLocationService($location_service)->setService($service)->setOption($selected_service->getOption());
+            $unit_price = $this->priceCalculation->getPrice();
+            $this->discountCalculation->setLocationService($location_service)->setOriginalPrice($unit_price * $selected_service->quantity)->calculate();
             $service_data = array(
                 'service_id' => $service->id,
                 'quantity' => $selected_service->quantity,
-                'unit_price' => $discount->unit_price,
-                'min_price' => $discount->min_price, 'sheba_contribution' => $discount->__get('sheba_contribution'),
-                'partner_contribution' => $discount->__get('partner_contribution'),
-                'discount_id' => $discount->__get('discount_id'),
-                'discount' => $discount->__get('discount'),
-                'discount_percentage' => $discount->__get('discount_percentage'),
+                'unit_price' => $unit_price,
+                'min_price' => $discount->min_price,
+                'sheba_contribution' => $this->discountCalculation->getShebaContribution(),
+                'partner_contribution' => $this->discountCalculation->getPartnerContribution(),
+                'discount_id' => $this->discountCalculation->getDiscountId(),
+                'discount' => $this->discountCalculation->getDiscount(),
+                'discount_percentage' => $this->discountCalculation->getDiscount(),
                 'name' => $service->name,
                 'variable_type' => $service->variable_type,
-                'surcharge_percentage' => $discount->surchargePercentage);
+                'surcharge_percentage' => $discount->surchargePercentage
+            );
             list($service_data['option'], $service_data['variables']) = $this->getVariableOptionOfService($service, $selected_service->option);
             $job_services->push(new JobService($service_data));
         }
