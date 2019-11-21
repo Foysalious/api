@@ -273,7 +273,6 @@ class ProfileController extends Controller
             $data    = [];
             $nid_image_key        = "nid_image_" . $input["side"];
             $data[$nid_image_key] = $input['nid_image'];
-
             $profile_repo->update($profile, $data);
 
             $manager = new Manager();

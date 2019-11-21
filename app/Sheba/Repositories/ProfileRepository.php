@@ -124,6 +124,7 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
         if (isset($data['profile_image'])) {
             $profile_data['pro_pic'] = $data['profile_image'];
         }
+
         if (isset($data['_token'])) {
             $profile_data['remember_token'] = $data['_token'];
 
@@ -132,6 +133,7 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
             if (!$profile_data['name']) unset($profile_data['name']);
             $profile_data['remember_token'] = str_random(255);
         }
+
         if (isset($data['password'])) {
             $profile_data['password'] = bcrypt($data['password']);
         }
@@ -186,7 +188,6 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
             $name = $image->getClientOriginalName() . '_' . ImageSide::BACK;
             $profile_data['nid_image_back'] = $this->_saveNIdImage($image, $name);
         }
-
         return $profile_data;
     }
 
