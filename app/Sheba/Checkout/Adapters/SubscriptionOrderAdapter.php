@@ -14,16 +14,18 @@ use App\Models\ServiceSubscriptionDiscount;
 use App\Models\SubscriptionOrder;
 use Sheba\Checkout\ShebaOrderInterface;
 use Sheba\Checkout\SubscriptionOrderInterface;
+use Sheba\Dal\SubscriptionOrder\Statuses as SubscriptionOrderStatuses;
 use Sheba\Jobs\JobStatuses;
 use Sheba\Jobs\PreferredTime;
 use Sheba\ModificationFields;
-use Sheba\Payment\Statuses;
+use Sheba\Payment\Statuses as PaymentStatuses;
 use Sheba\RequestIdentification;
 use DB;
 
-class SubscriptionOrderAdapter implements ShebaOrderInterface
+class SubscriptionOrderAdapter
 {
     use ModificationFields;
+
     private $partnerServiceDetails;
     private $deliveryCharge;
     private $totalSchedules;
@@ -39,21 +41,6 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
     public function __construct(SubscriptionOrderInterface $subscriptionOrder)
     {
         $this->subscriptionOrder = $subscriptionOrder;
-    }
-
-    public function setPaymentMethod()
-    {
-
-    }
-
-    public function partnerOrders()
-    {
-
-    }
-
-    public function jobs()
-    {
-        // TODO: Implement jobs() method.
     }
 
     /**
@@ -82,7 +69,7 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
                 $jobs->push($job);
                 $this->createJobServices($job);
             }
-            $this->subscriptionOrder->status = 'converted';
+            $this->subscriptionOrder->status = SubscriptionOrderStatuses::CONVERTED;
             $this->subscriptionOrder->update();
             $this->bookResources($jobs);
         });
@@ -115,7 +102,7 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
     private function setPaymentDetails()
     {
         $payable = Payable::whereHas('payment', function ($q) {
-            $q->where('status', Statuses::COMPLETED);
+            $q->where('status', PaymentStatuses::COMPLETED);
         })->where('type_id', $this->subscriptionOrder->id)->where('type', 'subscription_order')->first();
         if (!$payable) return;
         $this->paymentDetails = Payable::where('type_id', $this->subscriptionOrder->id)->where('type', 'subscription_order')->first()->payment->paymentDetails;
