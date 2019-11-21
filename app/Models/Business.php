@@ -125,21 +125,12 @@ class Business extends Model implements TopUpAgent, PayableUser, HasWalletTransa
 
     public function topUpTransaction(TopUpTransaction $transaction)
     {
-        /**
+        /*
          * WALLET TRANSACTION NEED TO REMOVE
          * $this->debitWallet($transaction->getAmount());
-         * $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);*/
-        (new WalletTransactionHandler())
-            ->setModel($this)
-            ->setAmount($transaction->getAmount())
-            ->setSource(TransactionSources::TOP_UP)
-            ->setType('debit')
-            ->setLog($transaction->getLog())
-            ->dispatch();
-
-        event(new WalletUpdateEvent([
-            'amount' => $transaction->getAmount()
-        ]));
+        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);*/
+        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setType('debit')->setLog($transaction->getLog())
+            ->setSource(TransactionSources::TOP_UP)->dispatch();
     }
 
     public function getMobile()
