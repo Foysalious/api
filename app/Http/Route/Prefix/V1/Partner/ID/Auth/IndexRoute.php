@@ -14,6 +14,14 @@ class IndexRoute
                     $api->post('decline', 'Partner\OrderRequestController@decline');
                 });
             });
+
+            $api->group(['prefix' => 'subscription-order-requests'], function ($api) {
+                $api->get('/', 'Partner\SubscriptionOrderRequestController@index');
+                $api->group(['prefix' => '{subscription_order_request}'], function ($api) {
+                    $api->post('accept', 'Partner\SubscriptionOrderRequestController@accept');
+                    $api->post('decline', 'Partner\SubscriptionOrderRequestController@decline');
+                });
+            });
         });
     }
 }
