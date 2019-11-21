@@ -2,6 +2,7 @@
 
 namespace Sheba\Checkout\Services;
 
+use App\Models\Category;
 use App\Models\Service;
 use stdClass;
 
@@ -85,5 +86,13 @@ class ServiceObject
     public function getOption()
     {
         return $this->option;
+    }
+
+    /**
+     * @return Category
+     */
+    public function getCategory()
+    {
+        return $this->serviceModel->category;
     }
 }

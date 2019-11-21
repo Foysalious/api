@@ -30,7 +30,7 @@ class PriceCalculation
         return $this;
     }
 
-    public function getPrice()
+    public function getUnitPrice()
     {
         if ($this->service->isFixed()) return (double)$this->locationService->prices;
         return $this->getOptionPrice();
