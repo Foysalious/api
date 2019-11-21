@@ -6,6 +6,7 @@ use Jenssegers\Mongodb\Eloquent\HybridRelations;
 class Location extends Model
 {
     use HybridRelations;
+
     protected $fillable = [
         'name',
         'city_id',
@@ -51,5 +52,4 @@ class Location extends Model
     {
         return $this->hasMany(CustomerDeliveryAddress::class);
     }
-
 }

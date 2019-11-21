@@ -1,6 +1,5 @@
 <?php namespace Sheba\LocationService;
 
-
 use App\Models\LocationService;
 use Sheba\Dal\LocationServiceDiscount\Model as LocationServiceDiscount;
 
@@ -21,13 +20,6 @@ class DiscountCalculation
     public function setLocationService($location_service)
     {
         $this->locationService = $location_service;
-        return $this;
-    }
-
-    public function setOriginalPrice($original_price)
-    {
-        $this->originalPrice = $original_price;
-        $this->discountedPrice = $original_price;
         return $this;
     }
 
@@ -69,6 +61,13 @@ class DiscountCalculation
     public function getOriginalPrice()
     {
         return $this->originalPrice;
+    }
+
+    public function setOriginalPrice($original_price)
+    {
+        $this->originalPrice = $original_price;
+        $this->discountedPrice = $original_price;
+        return $this;
     }
 
     /**

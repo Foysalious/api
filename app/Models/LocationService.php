@@ -5,12 +5,11 @@ use Sheba\Dal\LocationServiceDiscount\Model as LocationServiceDiscount;
 
 class LocationService extends Model
 {
-    protected $table = 'location_service';
     public $timestamps = false;
+    protected $table = 'location_service';
 
     public function discounts()
     {
         return $this->hasMany(LocationServiceDiscount::class);
     }
-
 }
