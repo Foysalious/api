@@ -12,6 +12,7 @@ use Sheba\Checkout\Services\ServiceObject;
 class PartnerListRequest
 {
     use Helpers;
+
     protected $request;
     /** @var Category */
     protected $selectedCategory;

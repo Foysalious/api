@@ -10,7 +10,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Checkout\Requests\PartnerListRequest;
-use Sheba\Checkout\Requests\SubscriptionOrderRequest;
+use Sheba\Checkout\Requests\SubscriptionOrderPartnerListRequest;
 use Sheba\Checkout\SubscriptionOrderPlace;
 use Sheba\Payment\Adapters\Payable\SubscriptionOrderAdapter;
 use Sheba\Payment\ShebaPayment;
@@ -68,7 +68,7 @@ class CustomerSubscriptionController extends Controller
         }
     }
 
-    public function placeSubscriptionRequest(Request $request, SubscriptionOrderRequest $subscriptionOrderRequest, SubscriptionOrderPlace $subscriptionOrder)
+    public function placeSubscriptionRequest(Request $request, SubscriptionOrderPartnerListRequest $subscriptionOrderRequest, SubscriptionOrderPlace $subscriptionOrder)
     {
         try {
             $this->validate($request, [

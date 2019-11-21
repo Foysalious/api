@@ -1,16 +1,16 @@
 <?php namespace Sheba\Checkout;
 
-
 use App\Http\Controllers\Subscription\SubscriptionPartnerList;
 use App\Models\Partner;
 use App\Models\SubscriptionOrder;
-use Sheba\Checkout\Requests\SubscriptionOrderRequest;
+use Sheba\Checkout\Requests\SubscriptionOrderPartnerListRequest;
 
 class SubscriptionOrderPlace
 {
+    /** @var SubscriptionOrderPartnerListRequest */
     private $subscriptionOrderRequest;
 
-    public function setSubscriptionRequest(SubscriptionOrderRequest $subscriptionOrderRequest)
+    public function setSubscriptionRequest(SubscriptionOrderPartnerListRequest $subscriptionOrderRequest)
     {
         $this->subscriptionOrderRequest = $subscriptionOrderRequest;
         return $this;
