@@ -267,12 +267,11 @@ class ProfileController extends Controller
     {
         try {
             $this->validate($request, ['nid_image' => 'required|mimes:jpeg,png', 'side' => 'required']);
-            $profile              = $request->profile;
-            $input                = $request->except('profile', 'remember_token');
-            $data                 = [];
+            $profile = $request->profile;
+            $input   = $request->except('profile', 'remember_token');
+            $data    = [];
             $nid_image_key        = "nid_image_" . $input["side"];
             $data[$nid_image_key] = $input['nid_image'];
-
             $profile_repo->update($profile, $data);
 
             $manager = new Manager();
@@ -280,10 +279,7 @@ class ProfileController extends Controller
             $resource = new Item($profile, new NidInfoTransformer());
             $details  = $manager->createData($resource)->toArray()['data'];
             return api_response($request, null, 200, ['data' => $details]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
+        }catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

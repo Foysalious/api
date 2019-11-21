@@ -7,7 +7,7 @@ use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
-use Sheba\Subscription\Customer\OrderStatuses;
+use Sheba\Dal\SubscriptionOrder\Statuses as OrderStatuses;
 
 class CustomerSubscriptionController extends Controller
 {
@@ -46,7 +46,7 @@ class CustomerSubscriptionController extends Controller
                 $service_details_breakdown = $service_details->breakdown['0'];
                 $service = Service::find((int)$service_details_breakdown->id);
                 $schedules = collect(json_decode($subscription_order->schedules));
-                
+
                 $orders_list = [
                     'subscription_id' => $subscription_order->id,
                     "subscription_code" => $subscription_order->code(),
