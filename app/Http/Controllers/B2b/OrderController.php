@@ -272,8 +272,7 @@ class OrderController extends Controller
                 ->setUser($business)
                 ->prepareObject();
             $subscription_order = $subscriptionOrder->setSubscriptionRequest($subscriptionOrderRequest)->place();
-            $subscription_order = new SubscriptionOrderAdapter($subscription_order);
-            $order = $subscription_order->convertToOrder();
+            $order = (new SubscriptionOrderAdapter($subscription_order))->convertToOrder();
             return api_response($request, $order, 200, ['order' => ['id' => $order->id]]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());

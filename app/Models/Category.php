@@ -242,4 +242,9 @@ class Category extends Model
 
         return $this->needsTwoWayLogistic() ? $parcel_details['price'] * 2 : $parcel_details['price'];
     }
+
+    public function isRentACarSecondary()
+    {
+        return in_array($this->id, self::getRentACarSecondaries());
+    }
 }

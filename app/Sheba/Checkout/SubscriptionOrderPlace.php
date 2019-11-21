@@ -1,9 +1,12 @@
 <?php namespace Sheba\Checkout;
 
+use App\Exceptions\HyperLocationNotFoundException;
 use App\Http\Controllers\Subscription\SubscriptionPartnerList;
 use App\Models\Partner;
 use App\Models\SubscriptionOrder;
 use Sheba\Checkout\Requests\SubscriptionOrderPartnerListRequest;
+use Sheba\Dal\Discount\InvalidDiscountType;
+use Sheba\Dal\SubscriptionOrder\Statuses;
 
 class SubscriptionOrderPlace
 {
@@ -18,6 +21,8 @@ class SubscriptionOrderPlace
 
     /**
      * @return SubscriptionOrder
+     * @throws HyperLocationNotFoundException
+     * @throws InvalidDiscountType
      */
     public function place()
     {
@@ -41,15 +46,21 @@ class SubscriptionOrderPlace
         $subscription_order->billing_cycle_end = $this->subscriptionOrderRequest->billingCycleEnd;
         $subscription_order->service_details = $this->formatServiceDetails($partner);
         $subscription_order->schedules = $this->formatSchedules();
-        $subscription_order->status = 'requested';
+        $subscription_order->status = Statuses::REQUESTED;
         $subscription_order->save();
         return $subscription_order;
     }
 
+    /**
+     * @return mixed
+     * @throws HyperLocationNotFoundException
+     * @throws InvalidDiscountType
+     */
     private function getPartner()
     {
         $partner_list = new SubscriptionPartnerList();
-        $partner_list->setPartnerListRequest($this->subscriptionOrderRequest)->find($this->subscriptionOrderRequest->selectedPartner->id);
+        $partner_list->setPartnerListRequest($this->subscriptionOrderRequest)
+            ->find($this->subscriptionOrderRequest->selectedPartner->id);
         $partner_list->addPricing();
         return $partner_list->partners->first();
     }

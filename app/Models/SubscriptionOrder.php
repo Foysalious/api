@@ -1,7 +1,10 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Checkout\Services\ServiceWithPrice;
+use Sheba\Checkout\Services\SubscriptionServicePricingAndBreakdown;
 use Sheba\Checkout\SubscriptionOrderInterface;
+use Sheba\Dal\SubscriptionOrder\Statuses;
 use Sheba\Payment\PayableType;
 use Sheba\Dal\SubscriptionOrderPayment\Model as SubscriptionOrderPayment;
 
@@ -65,7 +68,7 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface, Pay
 
     public function scopeAccepted($query)
     {
-        return $query->where('status', 'accepted');
+        return $query->status(Statuses::ACCEPTED);
     }
 
     public function channelCode()
@@ -117,5 +120,23 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface, Pay
     public function hasOrders()
     {
         return $this->orders->count() > 0;
+    }
+
+    /**
+     * @return ServiceWithPrice[]
+     */
+    public function getServicesWithPrice()
+    {
+        return array_map(function($service) {
+            return new ServiceWithPrice($service);
+        }, json_decode($this->services, true));
+    }
+
+    /**
+     * @return SubscriptionServicePricingAndBreakdown
+     */
+    public function getServicesPriceBreakdown()
+    {
+        return new SubscriptionServicePricingAndBreakdown(json_decode($this->service_details, true));
     }
 }
