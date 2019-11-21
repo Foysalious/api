@@ -1,14 +1,23 @@
 <?php namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Sheba\Checkout\Services\ServiceObject;
+use Sheba\PartnerList\Recommended;
 
 class CustomerPartnerController extends Controller
 {
 
-    public function getPreferredPartners($customer, Request $request)
+    public function getPreferredPartners($customer, Request $request, Recommended $recommended,ServiceObject $service_object)
     {
         try {
+            $this->validate($request, [
+                'services' => 'required|string',
+                'lat' => 'numeric',
+                'lng' => 'numeric',
+            ]);
+            $recommended->setCustomer($request->customer)->
             $partners = [
                 [
                     'id' => 233,
