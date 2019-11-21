@@ -165,7 +165,7 @@ class CategoryController extends Controller
                             });
                         })->whereNotIn('id', $best_deal_category_ids);
                 })
-                ->select('id', 'name', 'parent_id')
+                ->select('id', 'name', 'parent_id', 'icon_png', 'app_thumb', 'app_banner')
                 ->parent()->orderBy('order');
 
             if ($with) {
@@ -181,7 +181,9 @@ class CategoryController extends Controller
                         ->published()->orderBy('order');
                 }]);
             }
+
             $categories = $categories->get();
+
             foreach ($categories as &$category) {
                 array_forget($category, 'parent_id');
                 foreach ($category->children as &$child) {
