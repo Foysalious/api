@@ -198,13 +198,12 @@ class ServiceController extends Controller
     }
 
     /**
-     * @param $category
      * @param $service
      * @param Request $request
      * @param PriceCalculation $price_calculation
      * @return JsonResponse
      */
-    public function show($category, $service, Request $request, PriceCalculation $price_calculation)
+    public function show($service, Request $request, PriceCalculation $price_calculation)
     {
         try {
             if ($request->has('lat') && $request->has('lng')) {
