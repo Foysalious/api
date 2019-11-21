@@ -266,7 +266,7 @@ class ProfileController extends Controller
     public function storeNid(Request $request, OcrRepository $ocr_repo, ProfileRepositoryInterface $profile_repo)
     {
         try {
-            $this->validate($request, ['nid_image' => 'required|mimes:jpeg,png', 'side' => 'required']);
+            $this->validate($request, ['nid_image' => 'required|mimes:jpeg,png,jpg', 'side' => 'required']);
             $profile              = $request->profile;
             $input                = $request->except('profile', 'remember_token');
             $data                 = [];
