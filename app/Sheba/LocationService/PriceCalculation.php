@@ -19,7 +19,11 @@ class PriceCalculation
         return $this;
     }
 
-    public function setOption($option)
+    /**
+     * @param array $option
+     * @return $this
+     */
+    public function setOption(array $option)
     {
         $this->option = $option;
         return $this;
@@ -27,7 +31,7 @@ class PriceCalculation
 
     public function getUnitPrice()
     {
-        if ($this->service->isFixed()) return (double)$this->locationService->prices;
+        if ($this->locationService->service->isFixed()) return (double)$this->locationService->prices;
         return $this->getOptionPrice();
     }
 
@@ -45,7 +49,7 @@ class PriceCalculation
 
     public function getMinPrice()
     {
-        if ($this->service->isFixed()) return (double)$this->locationService->prices;
+        if ($this->locationService->service->isFixed()) return (double)$this->locationService->prices;
         return $this->getOptionPrice();
     }
 }

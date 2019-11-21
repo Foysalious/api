@@ -9,6 +9,7 @@ class CategoryRoute
             $api->group(['prefix' => '{id}'], function ($api) {
                 $api->get('/', 'CategoryController@show');
                 $api->get('services', 'CategoryController@getServices');
+                $api->get('services/{service}', 'ServiceController@show');
                 $api->get('reviews', 'CategoryController@getReviews');
                 $api->get('locations/{location}/partners', 'CategoryController@getPartnersOfLocation');
             });
