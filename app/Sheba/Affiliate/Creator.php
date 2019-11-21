@@ -39,7 +39,7 @@ class Creator
         $data = [
             'profile_id' => $this->profile->id,
             'remember_token' => randomString(255, 0, 1, 0),
-            'verification_status' => VerificationStatus::PENDING
+            'verification_status' => VerificationStatus::VERIFIED
         ];
 
         $this->affiliate = $this->affiliateRepo->setModel(new Affiliate())->create($data);
