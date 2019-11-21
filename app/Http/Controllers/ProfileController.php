@@ -17,7 +17,6 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\NidInfo\ImageSide;
-use Sheba\Ocr\Exceptions\OcrServerError;
 use Sheba\Ocr\Repository\OcrRepository;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Sheba\Repositories\ProfileRepository as ShebaProfileRepository;
@@ -164,8 +163,8 @@ class ProfileController extends Controller
             $repository->update($request->profile, $data);
             return api_response($request, null, 200, ['message' => 'Profile Updated']);
         } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->errors());
-            return api_response($request, null, 401, ['message' => $message]);
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500, ['message' => $e->getMessage(), 'trace' => $e->getTrace()]);
@@ -268,19 +267,23 @@ class ProfileController extends Controller
     {
         try {
             $this->validate($request, ['nid_image' => 'required|mimes:jpeg,png', 'side' => 'required']);
-            $profile = $request->profile;
-            $input   = $request->except('profile', 'remember_token');
-            $data    = [];
+            $profile              = $request->profile;
+            $input                = $request->except('profile', 'remember_token');
+            $data                 = [];
             $nid_image_key        = "nid_image_" . $input["side"];
             $data[$nid_image_key] = $input['nid_image'];
             $profile_repo->update($profile, $data);
 
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($profile, new NidInfoTransformer());
-            $details  = $manager->createData($resource)->toArray()['data'];
+            $resource        = new Item($profile, new NidInfoTransformer());
+            $details         = $manager->createData($resource)->toArray()['data'];
+            $details['name'] = "  ";
             return api_response($request, null, 200, ['data' => $details]);
-        }catch (Throwable $e) {
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
