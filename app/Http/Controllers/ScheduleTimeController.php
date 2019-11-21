@@ -24,7 +24,7 @@ class ScheduleTimeController extends Controller
                 'partner' => 'sometimes|required|numeric',
                 'limit' => 'sometimes|required|numeric:min:1'
             ]);
-            if ($request->has('category') && $request->has('partner')) {
+            if ($request->has('category') || $request->has('partner')) {
                 $dates = $partnerSchedule->setPartner($request->partner)->setCategory($request->category);
                 $dates = $request->has('limit') ? $dates->get($request->limit) : $dates->get();
                 return api_response($request, $dates, 200, ['dates' => $dates]);
