@@ -55,7 +55,7 @@ class TopUpJob extends Job implements ShouldQueue
             $this->topUp->setAgent($this->agent)->setVendor($this->vendor);
 
             $this->topUp->recharge($this->topUpOrder);
-            $this->updateBulkTopUpStatus($this->topUpOrder->bulk_request_id);
+//            $this->updateBulkTopUpStatus($this->topUpOrder->bulk_request_id);
 
             event(new TopUpCompletedEvent([
                 'id' => $this->topUpOrder->id,
@@ -64,8 +64,6 @@ class TopUpJob extends Job implements ShouldQueue
                 'status' => $this->topUpOrder->status,
                 'bulk_request_id' => $this->topUpOrder->bulk_request_id,
             ]));
-
-
 
             if ($this->topUp->isNotSuccessful()) {
                 $this->takeUnsuccessfulAction();
@@ -85,7 +83,7 @@ class TopUpJob extends Job implements ShouldQueue
 //        })->count();
 
 //        if($total_numbers === $total_processed)
-            $topup_bulk_request->status = constants('TOPUP_BULK_REQUEST_STATUS')['completed'];
+        $topup_bulk_request->status = constants('TOPUP_BULK_REQUEST_STATUS')['completed'];
 
         $topup_bulk_request->save();
     }
