@@ -82,6 +82,7 @@ class Cors2MiddleWare
             "https://movie.sheba.xyz",
             "http://www.new.dev-sheba.xyz",
             "https://www.new.dev-sheba.xyz",
+            "https://new.dev-sheba.xyz",
         ];
         // ALLOW OPTIONS METHOD
         $headers['Access-Control-Allow-Credentials'] = 'true';
