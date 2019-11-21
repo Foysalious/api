@@ -280,6 +280,9 @@ class ProfileController extends Controller
             $details         = $manager->createData($resource)->toArray()['data'];
             $details['name'] = "  ";
             return api_response($request, null, 200, ['data' => $details]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->errors());
+            return api_response($request, null, 401, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
