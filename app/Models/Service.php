@@ -1,7 +1,9 @@
 <?php namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use stdClass;
 
 class Service extends Model
 {
@@ -119,12 +121,15 @@ class Service extends Model
             }
         }
         return false;
-//        foreach ($this->partnerServices as $partner_service) {
-//            if ($partner_service->is_verified == 1 && $partner_service->is_published == 1 && $partner_service->partner->status == 'Verified' && $partner_service->discount()) {
-//                return true;
-//            }
-//        }
-//        return false;
+        /**
+         * TURNED OF PARTNER DISCOUNT
+         *
+         * foreach ($this->partnerServices as $partner_service) {
+            if ($partner_service->is_verified == 1 && $partner_service->is_published == 1 && $partner_service->partner->status == 'Verified' && $partner_service->discount()) {
+                return true;
+            }
+        }
+        return false;*/
     }
 
     public function discounts()
@@ -143,8 +148,8 @@ class Service extends Model
 
     /** Scope a query to only include published Service.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param Builder $query
+     * @return Builder
      */
     public function scopePublished($query)
     {
@@ -154,8 +159,8 @@ class Service extends Model
     /**
      * Scope a query to only include unpublished Service.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param Builder $query
+     * @return Builder
      */
     public function scopeUnpublished($query)
     {
@@ -165,8 +170,8 @@ class Service extends Model
     /**
      * Scope a query to only include published and backend published service.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param Builder $query
+     * @return Builder
      */
     public function scopePublishedForAll($query)
     {
@@ -184,8 +189,8 @@ class Service extends Model
     /**
      * Scope a query to only include backend published service.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param Builder $query
+     * @return Builder
      */
     public function scopePublishedForBackendOnly($query)
     {
@@ -247,7 +252,7 @@ class Service extends Model
     public function flashPrice()
     {
         $variable = $this->variable();
-        $defaultDiscount = (new \stdClass());
+        $defaultDiscount = (new stdClass());
         $defaultDiscount->value = 0;
         $defaultDiscount->is_percentage = 0;
         return [

@@ -13,12 +13,14 @@ use App\Models\ServiceGroupService;
 use App\Repositories\CategoryRepository;
 use App\Repositories\ServiceRepository;
 use Dingo\Api\Routing\Helpers;
+use Exception;
 use Illuminate\Http\Request;
 use DB;
 use Illuminate\Validation\ValidationException;
 use Sheba\CategoryServiceGroup;
 use Sheba\Location\Coords;
 use Sheba\ModificationFields;
+use Throwable;
 
 class CategoryController extends Controller
 {
@@ -131,7 +133,7 @@ class CategoryController extends Controller
                 array_push($categories_final, $category);
             }
             return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $categories_final]) : api_response($request, null, 404);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -188,13 +190,13 @@ class CategoryController extends Controller
             }
 
             foreach ($categories as &$category) {
-                if (is_null($category->children)) app('sentry')->captureException(new \Exception('Category null on ' . $category->id));
+                if (is_null($category->children)) app('sentry')->captureException(new Exception('Category null on ' . $category->id));
             }
             return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $categories]) : api_response($request, null, 404);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -226,7 +228,7 @@ class CategoryController extends Controller
             }));
             removeRelationsAndFields($category);
             return api_response($request, $category, 200, ['category' => $category]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -276,7 +278,7 @@ class CategoryController extends Controller
                 return api_response($request, $category->all(), 200, ['category' => $category->all()]);
             } else
                 return api_response($request, null, 404);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -302,7 +304,7 @@ class CategoryController extends Controller
             $available_partners = $category->partners;
             $total_available_partners = count($available_partners);
             return api_response($request, $available_partners, 200, ['total_available_partners' => $total_available_partners, 'isAvailable' => $total_available_partners > 0 ? 1 : 0]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -322,6 +324,7 @@ class CategoryController extends Controller
                 } else $location = 4;
             }
 
+            /** @var Category $cat */
             $cat = Category::where('id', $category)->whereHas('locations', function ($q) use ($location) {
                 $q->where('locations.id', $location);
             });
@@ -444,7 +447,7 @@ class CategoryController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -477,7 +480,7 @@ class CategoryController extends Controller
                 array_push($min_price, $min);
             }
             return array((double)max($max_price) * $service->min_quantity, (double)min($min_price) * $service->min_quantity);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return array(0, 0);
         }
     }
@@ -540,7 +543,7 @@ class CategoryController extends Controller
                 ->groupBy('customer_id')
                 ->get();
             return count($reviews) > 0 ? api_response($request, $reviews, 200, ['reviews' => $reviews]) : api_response($request, null, 404);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -576,7 +579,7 @@ class CategoryController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -598,7 +601,7 @@ class CategoryController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return api_response($request, null, 500, ['message' => $e->getMessage()]);
         }
     }
