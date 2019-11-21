@@ -6,7 +6,7 @@ use App\Models\HyperLocal;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
-class SubscriptionOrderRequest extends PartnerListRequest
+class SubscriptionOrderPartnerListRequest extends PartnerListRequest
 {
     private $salesChannel;
     private $geo;
@@ -24,11 +24,6 @@ class SubscriptionOrderRequest extends PartnerListRequest
     private $deliveryName;
     private $deliveryMobile;
     private $additionalInfo;
-
-    public function __get($name)
-    {
-        return $this->$name;
-    }
 
     public function prepareObject()
     {

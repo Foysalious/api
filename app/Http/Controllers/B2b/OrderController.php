@@ -17,7 +17,7 @@ use Illuminate\Validation\ValidationException;
 use Sheba\Checkout\Adapters\SubscriptionOrderAdapter;
 use Sheba\Checkout\PromotionCalculation;
 use Sheba\Checkout\Requests\PartnerListRequest;
-use Sheba\Checkout\Requests\SubscriptionOrderRequest;
+use Sheba\Checkout\Requests\SubscriptionOrderPartnerListRequest;
 use Sheba\Checkout\SubscriptionOrderPlace;
 use Sheba\Location\Coords;
 use Sheba\ModificationFields;
@@ -240,7 +240,7 @@ class OrderController extends Controller
         }
     }
 
-    public function placeSubscriptionOrder(Request $request, SubscriptionOrderRequest $subscriptionOrderRequest, SubscriptionOrderPlace $subscriptionOrder)
+    public function placeSubscriptionOrder(Request $request, SubscriptionOrderPartnerListRequest $subscriptionOrderRequest, SubscriptionOrderPlace $subscriptionOrder)
     {
         try {
             $this->validate($request, [
