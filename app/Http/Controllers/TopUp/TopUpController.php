@@ -143,11 +143,16 @@ class TopUpController extends Controller
             $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
 
             $data = Excel::selectSheets(TopUpExcel::SHEET)->load($file_path)->get();
+
+            $data = $data->filter(function($row) {
+                return ($row->mobile && $row->operator && $row->connection_type && $row->amount);
+            });
+
             $total = $data->count();
 
-            $bulk_request_id = $this->storeBulkRequest($agent);
+            $bulk_request = $this->storeBulkRequest($agent);
 
-            $data->each(function ($value, $key) use ($creator, $vendor, $agent, $file_path, $top_up_request, $total, $bulk_request_id) {
+            $data->each(function ($value, $key) use ($creator, $vendor, $agent, $file_path, $top_up_request, $total, $bulk_request) {
                 $operator_field = TopUpExcel::VENDOR_COLUMN_TITLE;
                 $type_field = TopUpExcel::TYPE_COLUMN_TITLE;
                 $mobile_field = TopUpExcel::MOBILE_COLUMN_TITLE;
@@ -157,13 +162,13 @@ class TopUpController extends Controller
 
                 $vendor_id = $vendor->getIdByName($value->$operator_field);
                 $request = $top_up_request->setType($value->$type_field)
-                    ->setBulkId($bulk_request_id)
+                    ->setBulkId($bulk_request->id)
                     ->setMobile(BDMobileFormatter::format($value->$mobile_field))->setAmount($value->$amount_field)->setAgent($agent)->setVendorId($vendor_id)->setName($value->$name_field);
                 $topup_order = $creator->setTopUpRequest($request)->create();
 
-                $this->storeBulkRequestNumbers($bulk_request_id, BDMobileFormatter::format($value->$mobile_field), $topup_order->vendor_id);
+                $this->storeBulkRequestNumbers($bulk_request->id, BDMobileFormatter::format($value->$mobile_field), $topup_order->vendor_id);
 
-                if (!$top_up_request->hasError()) dispatch(new TopUpExcelJob($agent, $vendor_id, $topup_order, $file_path, $key + 2, $total, $bulk_request_id));
+                if (!$top_up_request->hasError()) dispatch(new TopUpExcelJob($agent, $vendor_id, $topup_order, $file_path, $key + 2, $total, $bulk_request));
             });
 
             $response_msg = "Your top-up request has been received and will be transferred and notified shortly.";
@@ -221,7 +226,7 @@ class TopUpController extends Controller
         $topup_bulk_request->status = constants('TOPUP_BULK_REQUEST_STATUS')['pending'];
         $topup_bulk_request->save();
 
-        return $topup_bulk_request->id;
+        return $topup_bulk_request;
     }
 
     public function storeBulkRequestNumbers($request_id, $mobile, $vendor_id)

@@ -1,24 +1,19 @@
 <?php namespace Sheba\LocationService;
 
-
 use App\Models\LocationService;
 use App\Models\Service;
 
 class PriceCalculation
 {
-    /** @var LocationService */
+    /** @var LocationService $locationService */
     private $locationService;
-    /** @var Service */
-    private $service;
     private $option;
 
-    public function setService($service)
-    {
-        $this->service = $service;
-        return $this;
-    }
-
-    public function setLocationService($location_service)
+    /**
+     * @param LocationService $location_service
+     * @return $this
+     */
+    public function setLocationService(LocationService $location_service)
     {
         $this->locationService = $location_service;
         return $this;
@@ -36,12 +31,6 @@ class PriceCalculation
         return $this->getOptionPrice();
     }
 
-    public function getMinPrice()
-    {
-        if ($this->service->isFixed()) return (double)$this->locationService->prices;
-        return $this->getOptionPrice();
-    }
-
     private function getOptionPrice()
     {
         $option = implode(',', $this->option);
@@ -54,5 +43,9 @@ class PriceCalculation
         return null;
     }
 
-
+    public function getMinPrice()
+    {
+        if ($this->service->isFixed()) return (double)$this->locationService->prices;
+        return $this->getOptionPrice();
+    }
 }
