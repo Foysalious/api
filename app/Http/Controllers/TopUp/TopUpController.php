@@ -183,14 +183,6 @@ class TopUpController extends Controller
             $model = "App\\Models\\" . ucfirst(camel_case($request->type));
             $agent_id = $request->user->id;
 
-            event(new WalletUpdateEvent([
-                'amount' => 0
-            ]));
-
-            event(new TopUpCompletedEvent([
-                'id' => 1
-            ]));
-
             $topup_bulk_requests = TopUpBulkRequest::where([
                 ['status', 'pending'],
                 ['agent_id', $agent_id],
@@ -204,7 +196,9 @@ class TopUpController extends Controller
                     'agent_type' => strtolower(str_replace('App\Models\\', '', $topup_bulk_request->agent_type)),
                     'status' => $topup_bulk_request->status,
                     'total_numbers' => $topup_bulk_request->numbers->count(),
-                    'total_processed' => $topup_bulk_request->numbers->where('status', '<>', 'Initiated')->count(),
+                    'total_processed' => $topup_bulk_request->numbers->filter(function ($number) {
+                        return in_array(strtolower($number->status), ['successful', 'failed']);
+                    })->count(),
                 ]);
             });
             return response()->json(['code' => 200, 'active_bulk_topups' => $final]);
