@@ -82,7 +82,7 @@ class TopUpJob extends Job implements ShouldQueue
 //        $total_processed = $topup_bulk_request->numbers->filter(function ($number) {
 //            return in_array(strtolower($number->status), ['successful', 'failed']);
 //        })->count();
-//
+
 //        if($total_numbers === $total_processed)
             $topup_bulk_request->status = constants('TOPUP_BULK_REQUEST_STATUS')['completed'];
 
