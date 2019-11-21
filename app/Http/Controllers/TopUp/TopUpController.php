@@ -224,7 +224,6 @@ class TopUpController extends Controller
         return $topup_bulk_request->id;
     }
 
-
     public function storeBulkRequestNumbers($request_id, $mobile, $vendor_id)
     {
         $topup_bulk_request = new TopUpBulkRequestNumber();
