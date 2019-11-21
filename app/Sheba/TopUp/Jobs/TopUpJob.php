@@ -65,8 +65,6 @@ class TopUpJob extends Job implements ShouldQueue
                 'bulk_request_id' => $this->topUpOrder->bulk_request_id,
             ]));
 
-
-
             if ($this->topUp->isNotSuccessful()) {
                 $this->takeUnsuccessfulAction();
             } else {
