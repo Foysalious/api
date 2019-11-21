@@ -72,8 +72,8 @@ class TopUpExcelJob extends TopUpJob
 
     private function takeCompletedAction()
     {
+        $this->updateBulkTopUpStatus('completed');
         if ($this->row == $this->totalRow + 1) {
-            $this->updateBulkTopUpStatus('completed');
             $name = strtolower(class_basename($this->agent)) . '_' . dechex($this->agent->id);
             $file_name = $this->uniqueFileName($this->file, $name, $this->getExcel()->ext);
             $file_path = $this->saveFileToCDN($this->file, getBulkTopUpFolder(), $file_name);
