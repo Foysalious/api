@@ -14,9 +14,9 @@ use Sheba\TopUp\TopUpRequest;
 use Sheba\TopUp\Vendor\VendorFactory;
 use Sheba\TopUp\TopUpCompletedEvent;
 
-class TopUpJob extends Job implements ShouldQueue
+class TopUpJob extends Job //implements ShouldQueue
 {
-    use InteractsWithQueue, SerializesModels;
+    use /*InteractsWithQueue,*/ SerializesModels;
 
     const QUEUE_NAME = 'topup';
 
@@ -47,7 +47,7 @@ class TopUpJob extends Job implements ShouldQueue
      */
     public function handle()
     {
-        if ($this->attempts() < 2) {
+//        if ($this->attempts() < 2) {
             $vendor_factory = app(VendorFactory::class);
             $this->vendor = $vendor_factory->getById($this->vendorId);
 
@@ -70,22 +70,7 @@ class TopUpJob extends Job implements ShouldQueue
             } else {
                 $this->takeSuccessfulAction();
             }
-        }
-    }
-
-    public function updateBulkTopUpStatus($bulk_id)
-    {
-        $topup_bulk_request = TopUpBulkRequest::find($bulk_id);
-
-        $total_numbers = $topup_bulk_request->numbers->count();
-        $total_processed = $topup_bulk_request->numbers->filter(function ($number) {
-            return in_array(strtolower($number->status), ['successful', 'failed']);
-        })->count();
-
-        if($total_numbers === $total_processed)
-            $topup_bulk_request->status = constants('TOPUP_BULK_REQUEST_STATUS')['completed'];
-
-        $topup_bulk_request->save();
+//        }
     }
 
     /**
