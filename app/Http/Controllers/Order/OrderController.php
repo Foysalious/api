@@ -4,10 +4,13 @@
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Sheba\ModificationFields;
 use Sheba\OrderPlace\OrderPlace;
 
 class OrderController extends Controller
 {
+    use ModificationFields;
+
     public function store(Request $request, OrderPlace $order_place)
     {
         try {
@@ -34,12 +37,21 @@ class OrderController extends Controller
                 'voucher' => 'sometimes|required|numeric',
                 'emi_month' => 'numeric'
             ], ['mobile' => 'Invalid mobile number!']);
-            $order_place->setDeliveryName($request->name)->setPaymentMethod($request->payment_method)->setDeliveryMobile($request->mobile)->setCustomer($request->customer)
-                ->setSalesChannel($request->sales_channel)->setPartnerId($request->partner_id)->setAdditionalInformation($request->additional_information)
-                ->setAffiliationId($request->affiliation_id)->setInfoCallId($request->info_call_id)->setBusinessId($request->business_id)->setCrmId($request->crm_id)
-                ->setVoucherId($request->voucher)->setServices($request->services)->setScheduleDate($request->date)->setScheduleTime($request->time)->setVendorId($request->vendor_id)
-                ->create();
+            $this->setModifier($request->customer);
+            $order_place->setCustomer($request->customer)
+                ->setDeliveryName($request->name)
+                ->setDeliveryAddressId($request->address_id)
+                ->setPaymentMethod($request->payment_method)
+                ->setDeliveryMobile($request->mobile)
+                ->setCustomer($request->customer)
+                ->setSalesChannel($request->sales_channel)
+                ->setPartnerId($request->partner_id)
+                ->setAdditionalInformation($request->additional_information)->setAffiliationId($request->affiliation_id)
+                ->setInfoCallId($request->info_call_id)->setBusinessId($request->business_id)->setCrmId($request->crm_id)
+                ->setVoucherId($request->voucher)->setServices($request->services)->setScheduleDate($request->date)
+                ->setScheduleTime($request->time)->setVendorId($request->vendor_id)->create();
         } catch (\Throwable $e) {
+            dd($e);
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all()]);
             $sentry->captureException($e);

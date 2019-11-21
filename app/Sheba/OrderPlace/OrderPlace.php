@@ -4,7 +4,9 @@
 use App\Models\Category;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
+use App\Models\HyperLocal;
 use App\Models\Job;
+use App\Models\Location;
 use App\Models\Order;
 use App\Models\PartnerOrder;
 use App\Models\Service;
@@ -18,6 +20,7 @@ use Sheba\Jobs\JobStatuses;
 use Sheba\Jobs\PreferredTime;
 use Sheba\ModificationFields;
 use Sheba\RequestIdentification;
+use DB;
 
 class OrderPlace
 {
@@ -45,6 +48,8 @@ class OrderPlace
     private $businessId;
     private $vendorId;
     private $categoryAnswers;
+    /** @var Location */
+    private $location;
 
     /**
      * @param mixed $deliveryAddressId
@@ -63,7 +68,7 @@ class OrderPlace
      */
     public function setServices($services)
     {
-        $services = json_decode($services->services);
+        $services = json_decode($services);
         $this->category = $this->getCategory($services);
         $this->services = $this->getSelectedServices($services);
         return $this;
@@ -238,11 +243,18 @@ class OrderPlace
             $new_address->name = $this->deliveryName;
             $this->deliveryAddress = $this->customer->delivery_addresses()->save($new_address);
         }
+        $this->setLocation();
     }
 
     private function getCategory($services)
     {
         return (Service::find((int)$services[0]->id))->category;
+    }
+
+    private function setLocation()
+    {
+        $hyper_local = HyperLocal::insidePolygon($this->deliveryAddress->geo->lat, $this->deliveryAddress->geo->lng)->with('location')->first();
+        $this->location = $hyper_local->location;
     }
 
     /**
@@ -261,9 +273,14 @@ class OrderPlace
 
     public function create()
     {
-        $order = $this->createOrder();
-        $partner_order = $this->createPartnerOrder($order);
-        $job = $this->createJob($partner_order);
+        DB::transaction(function () {
+            $order = $this->createOrder();
+            $partner_order = $this->createPartnerOrder($order);
+            $job = $this->createJob($partner_order);
+            $this->createJobService($job);
+            dd($job);
+        });
+        return 1;
     }
 
     private function createOrder()
@@ -318,20 +335,16 @@ class OrderPlace
         return Job::create($job_data);
     }
 
-    private function createJobService()
+    private function createJobService(Job $job)
     {
         $job_services = collect();
         foreach ($this->services as $selected_service) {
             /** @var ServiceObject $selected_service */
-            $service = $services->where('id', $selected_service->id)->first();
-            $schedule_date_time = Carbon::parse($this->orderData['date'] . ' ' . explode('-', $this->orderData['time'])[0]);
-
-            $discount = new Discount();
-            $discount->setServiceObj($selected_service)->setServicePivot($service->pivot)->setScheduleDateTime($schedule_date_time)->initialize();
-
-            $service_data = array('service_id' => $selected_service->id,
-                'quantity' => $selected_service->quantity, 'created_by' => $data['created_by'],
-                'created_by_name' => $data['created_by_name'], 'unit_price' => $discount->unit_price,
+            $service = $selected_service->getService();
+            $service_data = array(
+                'service_id' => $service->id,
+                'quantity' => $selected_service->quantity,
+                'unit_price' => $discount->unit_price,
                 'min_price' => $discount->min_price, 'sheba_contribution' => $discount->__get('sheba_contribution'),
                 'partner_contribution' => $discount->__get('partner_contribution'),
                 'discount_id' => $discount->__get('discount_id'),

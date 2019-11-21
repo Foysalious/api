@@ -6,6 +6,7 @@ class CustomerRoute
     {
         $api->group(['prefix' => 'customers/{customer}', 'middleware' => ['customer.auth']], function ($api) {
             $api->get('preferred-partners', 'Customer\CustomerPartnerController@getPreferredPartners');
+            $api->post('orders', 'Order\OrderController@store');
         });
     }
 }

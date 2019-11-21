@@ -61,7 +61,7 @@ class ServiceObject
 
     public function setService()
     {
-        $this->serviceModel = Service::with('subscription')->where('id', $this->service->id)->publishedForAll()->first();
+        $this->serviceModel = Service::with(['subscription', 'serviceDiscounts'])->where('id', $this->service->id)->publishedForAll()->first();
     }
 
     protected function setQuantity()
@@ -72,5 +72,13 @@ class ServiceObject
             $this->quantity = $quantity >= $min_quantity ? $quantity : $min_quantity;
         } else
             $this->quantity = (double)$this->serviceModel->min_quantity;
+    }
+
+    /**
+     * @return Service
+     */
+    public function getService()
+    {
+        return $this->serviceModel;
     }
 }

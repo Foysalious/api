@@ -20,4 +20,9 @@ class CustomerDeliveryAddress extends Model
     {
         return $this->belongsTo(Location::class);
     }
+
+    public function getGeoAttribute()
+    {
+        return $this->geo_informations ? json_decode($this->geo_informations) : null;
+    }
 }

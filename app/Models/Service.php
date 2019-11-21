@@ -2,6 +2,7 @@
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\ServiceDiscount\Model as ServiceDiscount;
 
 class Service extends Model
 {
@@ -83,6 +84,11 @@ class Service extends Model
     public function partnerServices()
     {
         return $this->hasMany(PartnerService::class);
+    }
+
+    public function serviceDiscounts()
+    {
+        return $this->hasMany(ServiceDiscount::class);
     }
 
     public function runningDiscounts()
