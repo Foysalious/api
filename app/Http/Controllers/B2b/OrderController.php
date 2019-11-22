@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\MemberManager;
 use Sheba\Checkout\Adapters\SubscriptionOrderAdapter;
-use Sheba\Checkout\B2bSubscriptionOrderPlaceFactory;
+use Sheba\Checkout\SubscriptionOrderPlace\B2bSubscriptionOrderPlaceFactory;
 use Sheba\Checkout\PromotionCalculation;
 use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Location\Coords;

@@ -1,8 +1,9 @@
-<?php namespace Sheba\Checkout;
+<?php namespace Sheba\Checkout\PriceBreakdownCalculators;
 
 use Carbon\Carbon;
 use Sheba\Checkout\Services\ServiceWithPrice;
 use Sheba\Checkout\Services\SubscriptionServicePricingAndBreakdown;
+use Sheba\Checkout\SubscriptionPrice;
 use Sheba\Dal\Discount\InvalidDiscountType;
 
 class SubscriptionPartnerPricingBreakdownCalculator extends PartnerPricingBreakdownCalculator

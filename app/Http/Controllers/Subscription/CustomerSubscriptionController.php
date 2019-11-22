@@ -9,7 +9,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Checkout\Requests\PartnerListRequest;
-use Sheba\Checkout\CustomerSubscriptionOrderPlaceFactory;
+use Sheba\Checkout\SubscriptionOrderPlace\CustomerSubscriptionOrderPlaceFactory;
 use Sheba\Payment\Adapters\Payable\SubscriptionOrderAdapter;
 use Sheba\Payment\ShebaPayment;
 use Sheba\Subscription\ApproximatePriceCalculator;

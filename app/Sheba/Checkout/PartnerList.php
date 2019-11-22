@@ -1,17 +1,15 @@
 <?php namespace App\Sheba\Checkout;
 
 use App\Exceptions\HyperLocationNotFoundException;
-use App\Jobs\DeductPartnerImpression;
 use App\Models\Affiliate;
 use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Event;
 use App\Models\HyperLocal;
-use App\Models\ImpressionDeduction;
 use App\Models\Partner;
 use App\Models\PartnerServiceDiscount;
 use App\Models\PartnerServiceSurcharge;
-use Sheba\Checkout\PartnerPricingBreakdownCalculator;
+use Sheba\Checkout\PriceBreakdownCalculators\PartnerPricingBreakdownCalculator;
 use App\Repositories\PartnerServiceRepository;
 use App\Sheba\Partner\PartnerAvailable;
 use Carbon\Carbon;

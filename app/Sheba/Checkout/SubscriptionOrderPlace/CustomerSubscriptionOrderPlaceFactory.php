@@ -1,18 +1,37 @@
-<?php namespace Sheba\Checkout;
+<?php namespace Sheba\Checkout\SubscriptionOrderPlace;
 
 use App\Models\CustomerDeliveryAddress;
 use Illuminate\Http\Request;
+use Sheba\Checkout\PriceBreakdownCalculators\SubscriptionPriceBreakdownCalculator;
+use Sheba\Checkout\Requests\SubscriptionOrderPartnerListRequest;
 use Sheba\Checkout\Services\SubscriptionServicePricingAndBreakdown;
+use Sheba\Dal\Discount\InvalidDiscountType;
 
 class CustomerSubscriptionOrderPlaceFactory extends SubscriptionOrderPlaceAbstractFactory
 {
+    /** @var SubscriptionPriceBreakdownCalculator */
+    private $priceBreakdownCalculator;
+
+    public function __construct(SubscriptionOrderPartnerListRequest $subscription_order_request,
+                                SubscriptionPriceBreakdownCalculator $calculator)
+    {
+        parent::__construct($subscription_order_request);
+        $this->priceBreakdownCalculator = $calculator;
+    }
+
+    /**
+     * @param Request $request
+     * @return SubscriptionOrderPlace|SubscriptionOrderPlaceWithOutPartner|SubscriptionOrderPlaceWithPartner
+     * @throws InvalidDiscountType
+     */
     protected function getCreator(Request $request)
     {
         if($request->has('partner')) {
             $creator = new SubscriptionOrderPlaceWithPartner();
         } else {
             $creator = new SubscriptionOrderPlaceWithOutPartner();
-            $creator->setPriceBreakdown(new SubscriptionServicePricingAndBreakdown());
+            $price = $this->priceBreakdownCalculator->setPartnerListRequest($this->subscriptionOrderRequest)->calculate();
+            $creator->setPriceBreakdown($price);
         }
         return $creator;
     }

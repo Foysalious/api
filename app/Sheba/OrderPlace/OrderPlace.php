@@ -1,6 +1,5 @@
 <?php namespace Sheba\OrderPlace;
 
-
 use App\Models\Category;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
@@ -369,10 +368,10 @@ class OrderPlace
             /** @var ServiceObject $selected_service */
             $service = $selected_service->getService();
             $location_service = LocationService::where([['service_id', $service->id], ['location_id', $this->location->id]])->first();
-            $this->priceCalculation->setLocationService($location_service)->setService($service)->setOption($selected_service->getOption());
+            $this->priceCalculation->setLocationService($location_service)->setOption($selected_service->getOption());
             $unit_price = $this->priceCalculation->getUnitPrice();
             $this->discountCalculation->setLocationService($location_service)->setOriginalPrice($unit_price * $selected_service->quantity)->calculate();
-            $service_data = array(
+            $service_data = [
                 'service_id' => $service->id,
                 'quantity' => $selected_service->quantity,
                 'unit_price' => $unit_price,
@@ -385,31 +384,12 @@ class OrderPlace
                 'name' => $service->name,
                 'variable_type' => $service->variable_type,
                 'surcharge_percentage' => 0
-            );
-            list($service_data['option'], $service_data['variables']) = $this->getVariableOptionOfService($service, $selected_service->getOption());
+            ];
+            list($service_data['option'], $service_data['variables']) = $service->getVariableAndOption($selected_service->getOption());
             $job_services->push(new JobService($service_data));
         }
         return $job_services;
     }
-
-
-    private function getVariableOptionOfService(Service $service, Array $option)
-    {
-        if ($service->variable_type == 'Options') {
-            $variables = [];
-            foreach ((array)(json_decode($service->variables))->options as $key => $service_option) {
-                array_push($variables, ['title' => isset($service_option->title) ? $service_option->title : null, 'question' => $service_option->question, 'answer' => explode(',', $service_option->answers)[$option[$key]]]);
-            }
-            $options = implode(',', $option);
-            $option = '[' . $options . ']';
-            $variables = json_encode($variables);
-        } else {
-            $option = '[]';
-            $variables = '[]';
-        }
-        return array($option, $variables);
-    }
-
 
     private function setVoucherData($job_services)
     {

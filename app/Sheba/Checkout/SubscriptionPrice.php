@@ -27,7 +27,11 @@ class SubscriptionPrice extends Discount
         /** @var  $service_subscription ServiceSubscription */
         $service_subscription = $this->serviceObject->serviceModel->subscription;
         /** @var  $discount ServiceSubscriptionDiscount */
-        $discount = $service_subscription->discounts()->where([['subscription_type', $this->subscriptionType], ['min_discount_qty', '<=', $this->scheduleDateQuantity]])->valid()->first();
+        $discount = $service_subscription->discounts()->where([
+            ['subscription_type', $this->subscriptionType],
+            ['min_discount_qty', '<=', $this->scheduleDateQuantity]
+        ])->valid()->first();
+
         if ($discount) {
             $this->hasDiscount = 1;
             $this->cap = (double)$discount->cap;

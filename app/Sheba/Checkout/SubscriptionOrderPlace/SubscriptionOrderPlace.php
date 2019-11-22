@@ -1,4 +1,4 @@
-<?php namespace Sheba\Checkout;
+<?php namespace Sheba\Checkout\SubscriptionOrderPlace;
 
 use App\Models\SubscriptionOrder;
 use Sheba\Checkout\Requests\SubscriptionOrderPartnerListRequest;

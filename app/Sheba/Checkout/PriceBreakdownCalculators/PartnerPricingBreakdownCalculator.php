@@ -1,43 +1,21 @@
-<?php namespace Sheba\Checkout;
+<?php namespace Sheba\Checkout\PriceBreakdownCalculators;
 
 use App\Models\CategoryPartner;
 use App\Models\Partner;
 use App\Sheba\Checkout\Discount;
 use Carbon\Carbon;
-use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Checkout\Services\ServicePricingAndBreakdown;
 use Sheba\Checkout\Services\ServiceWithPrice;
 use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\JobDiscount\JobDiscountCheckingParams;
-use Sheba\JobDiscount\JobDiscountHandler;
 
-class PartnerPricingBreakdownCalculator
+class PartnerPricingBreakdownCalculator extends PriceBreakdownCalculator
 {
-    /** @var JobDiscountHandler */
-    private $jobDiscountHandler;
-    /** @var DeliveryCharge */
-    protected $deliveryCharge;
-
-    /** @var PartnerListRequest */
-    protected $request;
     /** @var Partner */
     protected $partner;
     /** @var CategoryPartner */
     protected $categoryPartner;
-
-    public function __construct(JobDiscountHandler $job_discount_handler, DeliveryCharge $delivery_charge)
-    {
-        $this->jobDiscountHandler = $job_discount_handler;
-        $this->deliveryCharge = $delivery_charge;
-    }
-
-    public function setPartnerListRequest(PartnerListRequest $request)
-    {
-        $this->request = $request;
-        $this->deliveryCharge->setCategory($this->request->selectedCategory);
-        return $this;
-    }
 
     public function setPartner(Partner $partner)
     {

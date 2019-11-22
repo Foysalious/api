@@ -1,12 +1,10 @@
-<?php namespace Sheba\Checkout;
+<?php namespace Sheba\Checkout\SubscriptionOrderPlace;
 
 use App\Exceptions\HyperLocationNotFoundException;
 use App\Http\Controllers\Subscription\SubscriptionPartnerList;
 use App\Models\Partner;
 use App\Models\SubscriptionOrder;
-use Sheba\Checkout\Requests\SubscriptionOrderPartnerListRequest;
 use Sheba\Dal\Discount\InvalidDiscountType;
-use Sheba\Dal\SubscriptionOrder\Statuses;
 
 class SubscriptionOrderPlaceWithPartner extends SubscriptionOrderPlace
 {

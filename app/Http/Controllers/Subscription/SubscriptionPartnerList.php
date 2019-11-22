@@ -1,7 +1,7 @@
 <?php namespace App\Http\Controllers\Subscription;
 
 use App\Sheba\Checkout\PartnerList;
-use Sheba\Checkout\SubscriptionPartnerPricingBreakdownCalculator;
+use Sheba\Checkout\PriceBreakdownCalculators\SubscriptionPartnerPricingBreakdownCalculator;
 
 class SubscriptionPartnerList extends PartnerList
 {
