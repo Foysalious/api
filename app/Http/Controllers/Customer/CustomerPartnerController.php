@@ -1,49 +1,47 @@
 <?php namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Sheba\Checkout\Services\ServiceObject;
+use Illuminate\Validation\ValidationException;
+use Sheba\Location\Geo;
 use Sheba\PartnerList\Recommended;
+use Sheba\ServiceRequest\ServiceRequest;
+use Sheba\ServiceRequest\Validator as ServiceRequestValidator;
+
+use Validator;
 
 class CustomerPartnerController extends Controller
 {
 
-    public function getPreferredPartners($customer, Request $request, Recommended $recommended,ServiceObject $service_object)
+    public function getPreferredPartners($customer, Request $request, Recommended $recommended, Geo $geo, ServiceRequest $service_request)
     {
         try {
             $this->validate($request, [
                 'services' => 'required|string',
-                'lat' => 'numeric',
-                'lng' => 'numeric',
+                'lat' => 'required|numeric',
+                'lng' => 'required|numeric',
             ]);
-            $recommended->setCustomer($request->customer)->
-            $partners = [
-                [
-                    'id' => 233,
-                    'name' => 'express',
-                    'rating' => 5,
+            $service_request_object = $service_request->setServices(json_decode($request->services, 1))->get();
+            $geo->setLat($request->lat)->setLng($request->lng);
+            $partners = $recommended->setCustomer($request->customer)->setGeo($geo)->setServiceRequestObject($service_request_object)->get();
+            if (!$partners) return api_response($request, null, 404);
+            return api_response($request, $partners, 200, ['partners' => $partners->map(function (&$partner) {
+                return [
+                    'id' => $partner->id,
+                    'name' => $partner->name,
+                    'rating' => round((double)$partner->reviews[0]->avg_rating, 2),
                     'last_order_created_at' => '3/11/19',
-                    'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/partners/logos/1519727255_express_solution.jpg'
-                ],
-                [
-                    'id' => 3,
-                    'rating' => 5,
-                    'last_order_created_at' => '3/11/19',
-                    'name' => 'ETC Service Solution',
-                    'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/partners/logos/1512992702_etc_service_solutions.jpg'
-                ],
-                [
-                    'id' => 60121,
-                    'rating' => 5,
-                    'last_order_created_at' => '3/11/19',
-                    'name' => "Dora's Food & Catering",
-                    'logo' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/partners/logos/1554979096_doras_food_catering.JPG'
-                ],
-            ];
-
-            return api_response($request, $partners, 200, ['partners' => $partners]);
+                    'logo' => $partner->logo
+                ];
+            })]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
