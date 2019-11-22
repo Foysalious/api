@@ -1,7 +1,6 @@
 <?php namespace Sheba\Checkout\Adapters;
 
 use App\Models\Job;
-use Sheba\Checkout\Services\ServiceWithPrice;
 use Sheba\Checkout\Services\SubscriptionServicePricingAndBreakdown;
 use Sheba\Dal\JobService\JobService;
 use App\Models\Order;

@@ -6,6 +6,7 @@ class ServicePricingAndBreakdown
     protected $discountedPrice = 0;
     protected $originalPrice = 0;
     protected $isMinPriceApplied = 0;
+    protected $isDiscountPercentage = 0;
     /** @var ServiceWithPrice[] */
     protected $breakdown = [];
     protected $deliveryCharge = 0;
@@ -36,6 +37,7 @@ class ServicePricingAndBreakdown
 
         $this->isMinPriceApplied = $service->getIsMinPriceApplied();
         $this->discount += $service->getDiscount();
+        $this->isDiscountPercentage += $service->getIsPercentage();
         $this->discountedPrice += $service->getDiscountedPrice();
         $this->originalPrice += $service->getOriginalPrice();
 
@@ -80,6 +82,16 @@ class ServicePricingAndBreakdown
         return $this->breakdown;
     }
 
+    public function getDiscount()
+    {
+        return $this->discount;
+    }
+
+    public function getIsDiscountPercentage()
+    {
+        return $this->isDiscountPercentage;
+    }
+
     /**
      * @return int|mixed
      */
@@ -103,5 +115,10 @@ class ServicePricingAndBreakdown
                 return $service->toArray();
             }, $this->breakdown)
         ];
+    }
+
+    public function toJson()
+    {
+        return json_encode($this->toArray());
     }
 }

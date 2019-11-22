@@ -26,6 +26,7 @@ use Sheba\Location\Distance\DistanceStrategy;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Sheba\Checkout\PartnerSort;
 use Sheba\ModificationFields;
+use Sheba\Partner\ImpressionManager;
 use Sheba\RequestIdentification;
 use function request;
 
@@ -55,6 +56,8 @@ class PartnerList
     protected $partnerListRequest;
     /** @var PartnerPricingBreakdownCalculator */
     protected $priceBreakdownCalculator;
+    /** @var ImpressionManager */
+    protected $impressions;
 
     use ModificationFields;
 
@@ -77,6 +80,7 @@ class PartnerList
     {
         $this->partnerListRequest = $partner_list_request;
         $this->priceBreakdownCalculator->setPartnerListRequest($this->partnerListRequest);
+        $this->impressions->setPartnerListRequest($this->partnerListRequest);
         return $this;
     }
 
@@ -387,36 +391,7 @@ class PartnerList
     public function sortByShebaPartnerPriority()
     {
         $this->partners = (new PartnerSort($this->partners))->get();
-        $this->deductImpression();
-    }
-
-    private function deductImpression()
-    {
-        if (request()->has('screen') && request()->get('screen') == 'partner_list'
-            && in_array(request()->header('Portal-Name'), ['customer-portal', 'customer-app', 'manager-app', 'manager-portal'])) {
-            $partners = $this->getPartnerIds();
-            $impression_deduction = new ImpressionDeduction();
-            $impression_deduction->category_id = $this->partnerListRequest->selectedCategory->id;
-            $impression_deduction->location_id = $this->partnerListRequest->location;
-            $serviceArray = [];
-            foreach ($this->partnerListRequest->selectedServices as $service) {
-                array_push($serviceArray, [
-                    'id' => $service->id,
-                    'quantity' => $service->quantity,
-                    'option' => $service->option
-                ]);
-            }
-            $impression_deduction->order_details = json_encode(['services' => $serviceArray]);
-            $customer = request()->hasHeader('User-Id') && request()->header('User-Id') ? Customer::find((int)request()->header('User-Id')) : null;
-            if ($customer) $impression_deduction->customer_id = $customer->id;
-            $impression_deduction->portal_name = $this->partnerListRequest->portalName;
-            $impression_deduction->ip = request()->ip();
-            $impression_deduction->user_agent = request()->header('User-Agent');
-            $impression_deduction->created_at = Carbon::now();
-            $impression_deduction->save();
-            $impression_deduction->partners()->sync($partners);
-            dispatch(new DeductPartnerImpression($partners));
-        }
+        if($this->impressions->needsToDeduct()) $this->impressions->deduct($this->getPartnerIds());
     }
 
     public function sortByShebaSelectedCriteria()
@@ -595,5 +570,4 @@ class PartnerList
             return $partner->id != config('sheba.sheba_help_desk_id');
         });
     }
-
 }
