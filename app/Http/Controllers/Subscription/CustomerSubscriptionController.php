@@ -4,14 +4,12 @@ use App\Exceptions\HyperLocationNotFoundException;
 use App\Http\Controllers\Controller;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\Service;
-use App\Models\ServiceSubscription;
 use App\Models\SubscriptionOrder;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Checkout\Requests\PartnerListRequest;
-use Sheba\Checkout\Requests\SubscriptionOrderPartnerListRequest;
-use Sheba\Checkout\SubscriptionOrderPlace;
+use Sheba\Checkout\CustomerSubscriptionOrderPlaceFactory;
 use Sheba\Payment\Adapters\Payable\SubscriptionOrderAdapter;
 use Sheba\Payment\ShebaPayment;
 use Sheba\Subscription\ApproximatePriceCalculator;
@@ -68,27 +66,22 @@ class CustomerSubscriptionController extends Controller
         }
     }
 
-    public function placeSubscriptionRequest(Request $request, SubscriptionOrderPartnerListRequest $subscriptionOrderRequest, SubscriptionOrderPlace $subscriptionOrder)
+    public function placeSubscriptionRequest(Request $request, CustomerSubscriptionOrderPlaceFactory $factory)
     {
         try {
             $this->validate($request, [
                 'date' => 'required|string',
                 'time' => 'sometimes|required|string',
                 'services' => 'required|string',
-                'partner' => 'required|numeric',
+                'partner' => 'numeric',
                 'address_id' => 'required|numeric',
                 'subscription_type' => 'required|string',
                 'sales_channel' => 'required|string',
             ]);
-            $address = CustomerDeliveryAddress::withTrashed()->where('id', $request->address_id)->first();
-            $subscriptionOrderRequest->setRequest($request)->setSalesChannel($request->sales_channel)->setCustomer($request->customer)->setAddress($address)
-                ->setDeliveryMobile($request->mobile)
-                ->setDeliveryName($request->name)
-                ->setUser($request->customer)
-                ->prepareObject();
-            $subscriptionOrder = $subscriptionOrder->setSubscriptionRequest($subscriptionOrderRequest)->place();
-            return api_response($request, $subscriptionOrder, 200, ['order' => [
-                'id' => $subscriptionOrder->id
+
+            $subscription_order = $factory->get($request)->place();
+            return api_response($request, $subscription_order, 200, ['order' => [
+                'id' => $subscription_order->id
             ]]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
