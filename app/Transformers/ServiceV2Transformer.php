@@ -28,7 +28,9 @@ class ServiceV2Transformer extends TransformerAbstract
     public function transform(Service $service)
     {
         $prices = json_decode($this->locationService->prices);
+        $discount = $this->locationService->discounts()->running()->first();
         $this->priceCalculation->setLocationService($this->locationService);
+
         $data = [
             'id'            => (int)$service->id,
             'name'          => $service->name,
@@ -36,14 +38,14 @@ class ServiceV2Transformer extends TransformerAbstract
             'min_quantity'  => $service->min_quantity,
             'faqs'          => json_decode($service->faqs),
             'description'   => $service->description,
-            'discount'      => [
-                'value' => 100,
-                'is_percentage' => rand(0, 1),
-                'cap' => 20
-            ]
+            'discount'      => $discount ? [
+                'value' => (double)$discount->amount,
+                'is_percentage' => $discount->isPercentage(),
+                'cap' => (double)$discount->cap
+            ] : null
         ];
         if ($service->variable_type == Type::FIXED)
-            $data['fixed_price'] = $this->priceCalculation->getPrice();
+            $data['fixed_price'] = $this->priceCalculation->getUnitPrice();
         if ($service->variable_type == Type::OPTIONS) {
             $variables = json_decode($service->variables);
             $data['options']       = $this->getOption($variables);
