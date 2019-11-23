@@ -72,6 +72,7 @@ class PartnerList
             'availability' => []
         ];
         $this->priceBreakdownCalculator = app(PartnerPricingBreakdownCalculator::class);
+        $this->impressions=new ImpressionManager();
     }
 
     public function setPartnerListRequest(PartnerListRequest $partner_list_request)
