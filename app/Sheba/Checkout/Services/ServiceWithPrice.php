@@ -76,7 +76,7 @@ class ServiceWithPrice
      */
     public function setCap($cap)
     {
-        $this->cap = $cap;
+        $this->cap = (double)$cap;
         return $this;
     }
 
@@ -106,7 +106,7 @@ class ServiceWithPrice
      */
     public function setAmount($amount)
     {
-        $this->amount = $amount;
+        $this->amount = (double)$amount;
         return $this;
     }
 
@@ -209,7 +209,7 @@ class ServiceWithPrice
      */
     public function setShebaContribution($shebaContribution)
     {
-        $this->shebaContribution = $shebaContribution;
+        $this->shebaContribution = (double)$shebaContribution;
         return $this;
     }
 
@@ -229,7 +229,7 @@ class ServiceWithPrice
      */
     public function setPartnerContribution($partnerContribution)
     {
-        $this->partnerContribution = $partnerContribution;
+        $this->partnerContribution = (double)$partnerContribution;
         return $this;
     }
 

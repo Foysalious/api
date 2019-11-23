@@ -4,7 +4,6 @@ use App\Models\CustomerDeliveryAddress;
 use Illuminate\Http\Request;
 use Sheba\Checkout\PriceBreakdownCalculators\SubscriptionPriceBreakdownCalculator;
 use Sheba\Checkout\Requests\SubscriptionOrderPartnerListRequest;
-use Sheba\Checkout\Services\SubscriptionServicePricingAndBreakdown;
 use Sheba\Dal\Discount\InvalidDiscountType;
 
 class CustomerSubscriptionOrderPlaceFactory extends SubscriptionOrderPlaceAbstractFactory
