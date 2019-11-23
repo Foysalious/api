@@ -13,7 +13,7 @@ interface Builder
 
     public function checkLeave();
 
-    public function checkVerification();
+    public function checkPartnerVerification();
 
     public function checkPartner();
 
@@ -25,9 +25,9 @@ interface Builder
 
     public function checkPartnerCreditLimit();
 
-    public function checkDailyOrderLimit();
+    public function checkPartnerDailyOrderLimit();
 
-    public function checkAvailability();
+    public function checkPartnerAvailability();
 
     public function checkOption();
 
@@ -39,7 +39,9 @@ interface Builder
 
     public function withResource();
 
-    public function WithAvgReview();
+    public function withAvgReview();
+
+    public function withTotalCompletedOrder();
 
     public function runQuery();
 

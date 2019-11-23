@@ -83,8 +83,10 @@ class OrderPlace
     private $serviceRequestObject;
     /** @var Creator */
     private $partnerOrderRequestCreator;
+    private $orderRequestAlgorithm;
 
-    public function __construct(Creator $creator, PriceCalculation $priceCalculation, DiscountCalculation $discountCalculation, OrderVoucherData $orderVoucherData, PartnerListBuilder $partnerListBuilder, Director $director, ServiceRequest $serviceRequest)
+    public function __construct(Creator $creator, PriceCalculation $priceCalculation, DiscountCalculation $discountCalculation, OrderVoucherData $orderVoucherData,
+                                PartnerListBuilder $partnerListBuilder, Director $director, ServiceRequest $serviceRequest, OrderRequestAlgorithm $orderRequestAlgorithm)
     {
         $this->priceCalculation = $priceCalculation;
         $this->discountCalculation = $discountCalculation;
@@ -93,6 +95,7 @@ class OrderPlace
         $this->partnerListDirector = $director;
         $this->serviceRequest = $serviceRequest;
         $this->partnerOrderRequestCreator = $creator;
+        $this->orderRequestAlgorithm = $orderRequestAlgorithm;
     }
 
     /**
@@ -335,8 +338,10 @@ class OrderPlace
                 $job = $this->createJob($partner_order);
                 $this->createCarRentalDetail($job);
                 $job->jobServices()->saveMany($job_services);
-                if ($this->canCreatePartnerOrderRequest()) $this->partnerOrderRequestCreator->setPartnerOrder($partner_order)
-                    ->setPartners($this->partnersFromList->pluck('id')->toArray())->create();
+                if ($this->canCreatePartnerOrderRequest()) {
+                    $partners = $this->orderRequestAlgorithm->setCustomer($this->customer)->setPartners($this->partnersFromList)->getPartners();
+                    $this->partnerOrderRequestCreator->setPartnerOrder($partner_order)->setPartners($partners->pluck('id')->toArray())->create();
+                }
             });
         } catch (QueryException $e) {
             throw $e;
@@ -497,6 +502,7 @@ class OrderPlace
 
     private function canCreatePartnerOrderRequest()
     {
+
         return !$this->selectedPartner || count($this->partnersFromList) > 0;
     }
 }

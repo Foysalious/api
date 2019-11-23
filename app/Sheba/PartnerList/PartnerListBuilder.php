@@ -78,6 +78,23 @@ class PartnerListBuilder implements Builder
         }]);
     }
 
+    public function withTotalCompletedOrder()
+    {
+        $this->partnerQuery = $this->partnerQuery->with(['jobs' => function ($q) {
+            $q->selectRaw("count(case when status in ('Served') and category_id in(" . implode([$this->getCategoryId()], ',') . ") then status end) as total_completed_orders")
+                ->groupBy('partner_id');
+        }]);
+    }
+
+    public function withService()
+    {
+        $this->partnerQuery = $this->partnerQuery->with(['services' => function ($q) {
+            $q->whereIn('service_id', $this->getServiceIds());
+        }, 'categories' => function ($q) {
+            $q->where('categories.id', $this->getCategoryId());
+        }]);
+    }
+
     public function checkPartnerHasResource()
     {
         $this->partners = $this->partners->filter(function ($partner) {
@@ -96,7 +113,7 @@ class PartnerListBuilder implements Builder
         $this->partnerQuery = $this->partnerQuery->whereNotIn('package_id', config('sheba.marketplace_not_accessible_packages_id'));
     }
 
-    public function checkVerification()
+    public function checkPartnerVerification()
     {
         $this->partnerQuery = $this->partnerQuery->verified();
     }
@@ -212,7 +229,7 @@ class PartnerListBuilder implements Builder
     }
 
 
-    public function checkDailyOrderLimit()
+    public function checkPartnerDailyOrderLimit()
     {
         $this->partners->load(['todayOrders' => function ($q) {
             $q->select('id', 'partner_id');
@@ -238,7 +255,7 @@ class PartnerListBuilder implements Builder
         }
     }
 
-    public function checkAvailability()
+    public function checkPartnerAvailability()
     {
         $this->partners->load(['workingHours', 'leaves']);
         $this->partners->each(function ($partner) {
@@ -247,10 +264,8 @@ class PartnerListBuilder implements Builder
                 $partner['unavailability_reason'] = PartnerUnavailabilityReasons::PREPARATION_TIME;
                 return;
             }
-
             $partner_available = new PartnerAvailable($partner);
             $partner_available->check($this->scheduleDate, $this->scheduleTime, $this->getCategory());
-
             if (!$partner_available->getAvailability()) {
                 $partner['is_available'] = 0;
                 $partner['unavailability_reason'] = $partner_available->getUnavailabilityReason();
@@ -293,12 +308,5 @@ class PartnerListBuilder implements Builder
         return false;
     }
 
-    public function withService()
-    {
-        $this->partners->load(['services' => function ($q) {
-            $q->whereIn('service_id', $this->getServiceIds());
-        }, 'categories' => function ($q) {
-            $q->where('categories.id', $this->getCategoryId());
-        }]);
-    }
+
 }
