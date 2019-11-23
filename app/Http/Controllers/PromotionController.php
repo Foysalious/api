@@ -135,13 +135,23 @@ class PromotionController extends Controller
             $customer = $request->customer;
             $location = $request->location;
             $partnerListRequest->setRequest($request)->prepareObject();
+
             if ($request->has('lat') && $request->has('lng')) {
                 $hyper_local = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
                 $location = $hyper_local ? $hyper_local->location->id : $location;
             }
+
             $order_amount = $this->calculateOrderAmount($partnerListRequest, $request->partner);
             if (!$order_amount) return api_response($request, null, 403);
-            $result = voucher($request->code)->check($partnerListRequest->selectedCategory->id, $request->partner, $location, $customer, $order_amount, $request->sales_channel)->reveal();
+            $result = voucher($request->code)->check(
+                $partnerListRequest->selectedCategory->id,
+                $request->partner,
+                $location,
+                $customer,
+                $order_amount,
+                $request->sales_channel
+            )->reveal();
+
             if ($result['is_valid']) {
                 $voucher = $result['voucher'];
                 $promotion = new PromotionList($request->customer);
