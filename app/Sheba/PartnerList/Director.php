@@ -19,7 +19,7 @@ class Director
         $this->builder->checkCategory();
         $this->builder->checkService();
         $this->builder->checkLeave();
-        $this->builder->checkVerification();
+        $this->builder->checkPartnerVerification();
         $this->builder->checkPartner();
         $this->builder->checkCanAccessMarketPlace();
         $this->builder->withResource();
@@ -28,7 +28,7 @@ class Director
         $this->builder->checkOption();
         $this->builder->checkGeoWithinPartnerRadius();
         $this->builder->checkPartnerCreditLimit();
-        $this->builder->checkDailyOrderLimit();
+        $this->builder->checkPartnerDailyOrderLimit();
         $this->builder->checkPartnerHasResource();
         $this->builder->removeShebaHelpDesk();
     }
