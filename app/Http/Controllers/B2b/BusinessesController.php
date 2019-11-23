@@ -192,6 +192,20 @@ class BusinessesController extends Controller
         }
     }
 
+    private function getImage($notification)
+    {
+        $event_type = $notification->event_type;
+        $model = $event_type::find((int)$notification->event_id);
+        $image = '';
+        if (class_basename($model) == 'Driver') {
+            $image = $model->profile->pro_pic;
+        }
+        if (class_basename($model) == 'Vehicle') {
+            $image = $model->basicInformation->vehicle_image;
+        }
+        return $image;
+    }
+
     public function notificationSeen($business, $notification, Request $request)
     {
         try {
