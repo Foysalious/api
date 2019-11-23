@@ -1,9 +1,11 @@
 <?php namespace Sheba\PartnerList;
 
 use App\Models\Partner;
+use App\Sheba\Partner\PartnerAvailable;
 use App\Sheba\PartnerList\Builder;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Sheba\Checkout\Partners\PartnerUnavailabilityReasons;
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
 use Sheba\Location\Distance\DistanceStrategy;
@@ -14,6 +16,8 @@ use DB;
 class PartnerListBuilder implements Builder
 {
     private $partnerQuery;
+    private $scheduleDate;
+    private $scheduleTime;
     /** @var  Collection */
     private $partners;
     /** @var ServiceRequestObject[] */
@@ -126,9 +130,26 @@ class PartnerListBuilder implements Builder
         return $this;
     }
 
+    public function setScheduleDate($date)
+    {
+        $this->scheduleDate = is_array($date) ? $date : (json_decode($date) ? json_decode($date) : [$date]);
+        return $this;
+    }
+
+    public function setScheduleTime($time)
+    {
+        $this->scheduleTime = $time;
+        return $this;
+    }
+
     private function getCategoryId()
     {
         return $this->serviceRequestObject[0]->getCategory()->id;
+    }
+
+    private function getCategory()
+    {
+        return $this->serviceRequestObject[0]->getCategory();
     }
 
     private function getServiceIds()
@@ -163,8 +184,7 @@ class PartnerListBuilder implements Builder
 
     public function runQuery()
     {
-        $this->partners = $this->partnerQuery->get();
-//        dd($this->partners);
+        $this->partners = $this->partnerQuery->get();;
     }
 
     public function get()
@@ -172,10 +192,113 @@ class PartnerListBuilder implements Builder
         return $this->partners;
     }
 
+    public function first()
+    {
+        return $this->partners->first();
+    }
+
     public function removeShebaHelpDesk()
     {
         $this->partners = $this->partners->filter(function ($partner) {
             return $partner->id != config('sheba.sheba_help_desk_id');
         });
+    }
+
+    public function removeUnavailablePartners()
+    {
+        $this->partners = $this->partners->filter(function ($partner) {
+            return $partner['is_available'];
+        });
+    }
+
+
+    public function checkDailyOrderLimit()
+    {
+        $this->partners->load(['todayOrders' => function ($q) {
+            $q->select('id', 'partner_id');
+        }]);
+        $this->partners = $this->partners->filter(function ($partner, $key) {
+            /** @var Partner $partner */
+            if (is_null($partner->order_limit)) return true;
+            return $partner->todayOrders->count() < $partner->order_limit;
+        });
+    }
+
+    public function checkOption()
+    {
+        foreach ($this->serviceRequestObject as $selected_service) {
+            /** @var ServiceRequestObject $selected_service */
+            $service = $selected_service->getService();
+            if ($service->isOptions()) {
+                $this->partners = $this->partners->filter(function ($partner) use ($service, $selected_service) {
+                    $service = $partner->services->where('id', $service->id)->first();
+                    return $this->hasThisOption($service->pivot->prices, implode(',', $selected_service->getOption()));
+                });
+            }
+        }
+    }
+
+    public function checkAvailability()
+    {
+        $this->partners->load(['workingHours', 'leaves']);
+        $this->partners->each(function ($partner) {
+            if (!$this->isWithinPreparationTime($partner)) {
+                $partner['is_available'] = 0;
+                $partner['unavailability_reason'] = PartnerUnavailabilityReasons::PREPARATION_TIME;
+                return;
+            }
+
+            $partner_available = new PartnerAvailable($partner);
+            $partner_available->check($this->scheduleDate, $this->scheduleTime, $this->getCategory());
+
+            if (!$partner_available->getAvailability()) {
+                $partner['is_available'] = 0;
+                $partner['unavailability_reason'] = $partner_available->getUnavailabilityReason();
+                return;
+            }
+            $partner['is_available'] = 1;
+        });
+    }
+
+    private function isWithinPreparationTime($partner)
+    {
+        $category_preparation_time_minutes = $partner->categories->where('id', $this->getCategoryId())->first()->pivot->preparation_time_minutes;
+        if ($category_preparation_time_minutes == 0) return 1;
+        $start_time = Carbon::parse($this->scheduleDate[0] . ' ' . $this->getScheduleStartTime());
+        $end_time = Carbon::parse($this->scheduleDate[0] . ' ' . $this->getScheduleEndTime());
+        $preparation_time = Carbon::createFromTime(Carbon::now()->hour)->addMinute(61)->addMinute($category_preparation_time_minutes);
+        return $preparation_time->lte($start_time) || $preparation_time->between($start_time, $end_time) ? 1 : 0;
+    }
+
+    private function getScheduleStartTime()
+    {
+        $time = explode('-', $this->scheduleTime);
+        return $time[0];
+    }
+
+    private function getScheduleEndTime()
+    {
+        $time = explode('-', $this->scheduleTime);
+        return $time[1];
+    }
+
+    private function hasThisOption($prices, $option)
+    {
+        $prices = json_decode($prices);
+        foreach ($prices as $key => $price) {
+            if ($key == $option) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public function withService()
+    {
+        $this->partners->load(['services' => function ($q) {
+            $q->whereIn('service_id', $this->getServiceIds());
+        }, 'categories' => function ($q) {
+            $q->where('categories.id', $this->getCategoryId());
+        }]);
     }
 }

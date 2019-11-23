@@ -46,6 +46,7 @@ class OrderController extends Controller
                 ->setCustomer($request->customer)
                 ->setSalesChannel($request->sales_channel)
                 ->setPartnerId($request->partner_id)
+                ->setSelectedPartnerId($request->partner)
                 ->setAdditionalInformation($request->additional_information)->setAffiliationId($request->affiliation_id)
                 ->setInfoCallId($request->info_call_id)->setBusinessId($request->business_id)->setCrmId($request->crm_id)
                 ->setVoucherId($request->voucher)->setServices($request->services)->setScheduleDate($request->date)
