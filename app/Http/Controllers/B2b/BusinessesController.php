@@ -180,7 +180,7 @@ class BusinessesController extends Controller
                     "image" => $image,
                     "title" => $notification->title,
                     "is_seen" => $notification->is_seen,
-                    "event_type" => $notification->event_type,
+                    "event_type" => strtolower(class_basename($notification->event_type)),
                     "event_id" => $notification->event_id,
                     "created_at" => $notification->created_at->format('M d h:ia')
                 ]);
