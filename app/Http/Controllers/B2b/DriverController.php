@@ -341,17 +341,13 @@ class DriverController extends Controller
                 $vehicle = $driver->vehicle;
                 $basic_information = $vehicle ? $vehicle->basicInformations : null;
 
-                $license_number_end_date = $driver->getLicenseAcceptanceDay(Carbon::now(), $driver->license_number_end_date);
-
                 $due_status = '';
-                if (($license_number_end_date <= DriverController::DUE_PERIOD && $license_number_end_date > DriverController::OVER_DUE_PERIOD)) {
+                if (($driver->licenseRemainingDays() <= DriverController::DUE_PERIOD && $driver->licenseRemainingDays() > DriverController::OVER_DUE_PERIOD)) {
                     $due_status = 'Due Soon';
                 }
-
-                if ($license_number_end_date <= DriverController::OVER_DUE_PERIOD) {
+                if ($driver->isLicenseDue()) {
                     $due_status = 'Overdue';
                 }
-
                 $driver = [
                     'id' => $driver->id,
                     'name' => $profile->name,
@@ -447,14 +443,12 @@ class DriverController extends Controller
             $profile = $driver->profile;
             $vehicle = $driver->vehicle;
 
-            $license_number_end_date = $driver->getLicenseAcceptanceDay(Carbon::now(), $driver->license_number_end_date);
-
             $due_status = '';
-            if (($license_number_end_date <= DriverController::DUE_PERIOD && $license_number_end_date > DriverController::OVER_DUE_PERIOD)) {
+            if (($driver->licenseRemainingDays() <= DriverController::DUE_PERIOD && $driver->licenseRemainingDays() > DriverController::OVER_DUE_PERIOD)) {
                 $due_status = 'Due Soon';
             }
 
-            if ($license_number_end_date <= DriverController::OVER_DUE_PERIOD) {
+            if ($driver->isLicenseDue()) {
                 $due_status = 'Overdue';
             }
 

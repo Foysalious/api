@@ -57,5 +57,16 @@ class Driver extends Model
         return $today->diffInDays($license_expire_date, false) + 1;
     }
 
+    public function licenseRemainingDays()
+    {
+        $today = Carbon::now();
+        $license_paper_expire_date = Carbon::parse($this->license_number_end_date);
+        return $today->diffInDays($license_paper_expire_date, false) + 1;
+    }
+
+    public function isLicenseDue()
+    {
+        return $this->licenseRemainingDays() <= 0;
+    }
 
 }

@@ -93,6 +93,7 @@ class Creator
         return [
             'status' => 'active',
             'license_number' => $this->driverCreateRequest->getLicenseNumber(),
+            'license_number_end_date' => $this->driverCreateRequest->getLicenseNumberEndDate(),
             'license_class' => $this->driverCreateRequest->getLicenseClass()
         ];
     }
