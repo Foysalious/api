@@ -51,7 +51,6 @@ class OrderController extends Controller
                 ->setVoucherId($request->voucher)->setServices($request->services)->setScheduleDate($request->date)
                 ->setScheduleTime($request->time)->setVendorId($request->vendor_id)->create();
         } catch (\Throwable $e) {
-            dd($e);
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all()]);
             $sentry->captureException($e);
