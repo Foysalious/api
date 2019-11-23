@@ -78,6 +78,14 @@ class CreateRequest
     /**
      * @return mixed
      */
+    public function getLicenseNumberEndDate()
+    {
+        return $this->licenseNumberEndDate;
+    }
+
+    /**
+     * @return mixed
+     */
     public function getMobile()
     {
         return $this->driverMobile;

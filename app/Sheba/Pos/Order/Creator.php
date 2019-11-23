@@ -45,13 +45,13 @@ class Creator
                                 PaymentCreator $payment_creator, StockManager $stock_manager,
                                 OrderCreateValidator $create_validator, DiscountHandler $discount_handler, PosServiceRepositoryInterface $posServiceRepo)
     {
-        $this->orderRepo       = $order_repo;
-        $this->itemRepo        = $item_repo;
-        $this->paymentCreator  = $payment_creator;
-        $this->stockManager    = $stock_manager;
+        $this->orderRepo = $order_repo;
+        $this->itemRepo = $item_repo;
+        $this->paymentCreator = $payment_creator;
+        $this->stockManager = $stock_manager;
         $this->createValidator = $create_validator;
         $this->discountHandler = $discount_handler;
-        $this->posServiceRepo  = $posServiceRepo;
+        $this->posServiceRepo = $posServiceRepo;
     }
 
     /**
@@ -98,29 +98,30 @@ class Creator
      */
     public function create()
     {
-        $order_data['partner_id']            = $this->partner->id;
-        $order_data['customer_id']           = $this->resolveCustomerId();
-        $order_data['address']               = $this->address;
-        $order_data['previous_order_id']     = (isset($this->data['previous_order_id']) && $this->data['previous_order_id']) ? $this->data['previous_order_id'] : null;
+        $order_data['partner_id'] = $this->partner->id;
+        $order_data['customer_id'] = $this->resolveCustomerId();
+        $order_data['address'] = $this->address;
+        $order_data['previous_order_id'] = (isset($this->data['previous_order_id']) && $this->data['previous_order_id']) ? $this->data['previous_order_id'] : null;
         $order_data['partner_wise_order_id'] = $this->createPartnerWiseOrderId($this->partner);
-        $order                               = $this->orderRepo->save($order_data);
-        $services                            = json_decode($this->data['services'], true);
+        $order = $this->orderRepo->save($order_data);
+        $services = json_decode($this->data['services'], true);
         foreach ($services as $service) {
             /** @var PartnerPosService $original_service */
             $original_service = isset($service['id']) ? $this->posServiceRepo->find($service['id']) : $this->posServiceRepo->defaultInstance($service);
+
             // $is_service_discount_applied = $original_service->discount();
             $service_wholesale_applicable = $original_service->wholesale_price ? true : false;
 
-            $service['service_id']     = $original_service->id;
-            $service['service_name']   = $service['name'];
-            $service['pos_order_id']   = $order->id;
-            $service['unit_price']     = (isset($service['updated_price']) && $service['updated_price']) ? $service['updated_price'] : ($this->isWholesalePriceApplicable($service_wholesale_applicable) ? $original_service->wholesale_price : $original_service->price);
-            $service['warranty']       = $original_service->warranty;
-            $service['warranty_unit']  = $original_service->warranty_unit;
+            $service['service_id'] = $original_service->id;
+            $service['service_name'] = isset($service['name']) ? $service['name'] : $original_service->name;
+            $service['pos_order_id'] = $order->id;
+            $service['unit_price'] = (isset($service['updated_price']) && $service['updated_price']) ? $service['updated_price'] : ($this->isWholesalePriceApplicable($service_wholesale_applicable) ? $original_service->wholesale_price : $original_service->price);
+            $service['warranty'] = $original_service->warranty;
+            $service['warranty_unit'] = $original_service->warranty_unit;
             $service['vat_percentage'] = (!isset($service['is_vat_applicable']) || $service['is_vat_applicable']) ? $original_service->vat_percentage : 0.00;
-            $service                   = array_except($service, ['id', 'name', 'is_vat_applicable', 'updated_price']);
+            $service = array_except($service, ['id', 'name', 'is_vat_applicable', 'updated_price']);
 
-            $pos_order_item        = $this->itemRepo->save($service);
+            $pos_order_item = $this->itemRepo->save($service);
             $is_stock_maintainable = $this->stockManager->setPosService($original_service)->isStockMaintainable();
             if ($is_stock_maintainable) $this->stockManager->decrease($service['quantity']);
 
@@ -130,8 +131,8 @@ class Creator
 
         if (isset($this->data['paid_amount']) && $this->data['paid_amount'] > 0) {
             $payment_data['pos_order_id'] = $order->id;
-            $payment_data['amount']       = $this->data['paid_amount'];
-            $payment_data['method']       = $this->data['payment_method'];
+            $payment_data['amount'] = $this->data['paid_amount'];
+            $payment_data['method'] = $this->data['payment_method'];
             $this->paymentCreator->credit($payment_data);
         }
 
@@ -156,7 +157,7 @@ class Creator
 
     private function createPartnerWiseOrderId(Partner $partner)
     {
-        $lastOrder    = $partner->posOrders()->orderBy('id', 'desc')->first();
+        $lastOrder = $partner->posOrders()->orderBy('id', 'desc')->first();
         $lastOrder_id = $lastOrder ? $lastOrder->partner_wise_order_id : 0;
         return $lastOrder_id + 1;
     }
@@ -177,11 +178,11 @@ class Creator
     private function voucherCalculation(PosOrder $order)
     {
         if (isset($this->data['voucher_code']) && !empty($this->data['voucher_code'])) {
-            $code             = strtoupper($this->data['voucher_code']);
-            $customer_id      = $this->resolveCustomerId();
-            $pos_customer     = PosCustomer::find($customer_id) ?: new PosCustomer();
+            $code = strtoupper($this->data['voucher_code']);
+            $customer_id = $this->resolveCustomerId();
+            $pos_customer = PosCustomer::find($customer_id) ?: new PosCustomer();
             $pos_order_params = (new CheckParamsForPosOrder());
-            $pos_services     = $order->items->pluck('service_id')->toArray();
+            $pos_services = $order->items->pluck('service_id')->toArray();
             $pos_order_params->setOrderAmount($order->getTotalBill())->setApplicant($pos_customer)->setPartnerPosService($pos_services);
             $result = voucher($code)->checkForPosOrder($pos_order_params)->reveal();
 
@@ -199,9 +200,9 @@ class Creator
     private function storeIncome(PosOrder $order)
     {
         /** @var AutomaticEntryRepository $entry */
-        $entry   = app(AutomaticEntryRepository::class);
-        $order   = $order->calculate();
-        $amount  = (double)$order->getNetBill();
+        $entry = app(AutomaticEntryRepository::class);
+        $order = $order->calculate();
+        $amount = (double)$order->getNetBill();
         $profile = $order->customer ? $order->customer->profile : new Profile();
         $entry->setPartner($this->partner)
             ->setParty($profile)

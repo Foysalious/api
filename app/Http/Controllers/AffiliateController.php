@@ -234,14 +234,17 @@ class AffiliateController extends Controller
                 return api_response($request, $error, 400, ['msg' => $error]);
             }
             $affiliate = $request->affiliate;
-            if ($affiliate->ambassador_id != null) {
+            if ($affiliate->ambassador_id != null || $affiliate->previous_ambassador_id != null) {
                 return api_response($request, null, 403);
             }
+            $agents_ids = $affiliate->agents->pluck('id')->toArray();
+            array_push($agents_ids, $affiliate->id);
             $ambassador = Affiliate::where([
                 ['ambassador_code', strtoupper(trim($request->code))],
-                ['id', '<>', $affiliate->id],
+                ['ambassador_id', '<>', $affiliate->id],
                 ['is_ambassador', 1]
-            ])->first();
+            ])->whereNotIn('id', $agents_ids)->first();
+
             if ($ambassador) {
                 $affiliate                         = $request->affiliate;
                 $affiliate->ambassador_id          = $ambassador->id;

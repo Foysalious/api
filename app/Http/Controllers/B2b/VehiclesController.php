@@ -60,6 +60,7 @@ class VehiclesController extends Controller
                 'transmission_type' => 'required|string|in:auto,manual',
                 'vehicle_image' => 'file|mimes:jpeg,png',
                 'license_number' => 'required|unique:vehicle_registration_informations',
+                'license_number_end_date' => 'sometimes|date|date_format:Y-m-d',
                 'license_number_image' => 'mimes:jpeg,png',
                 'tax_token_number' => 'required|unique:vehicle_registration_informations',
                 'tax_token_image' => 'mimes:jpeg,png',
@@ -112,6 +113,7 @@ class VehiclesController extends Controller
 
             $vehicle_registration_information_data = [
                 'license_number' => $request->license_number,
+                'license_number_end_date' => $request->license_number_end_date,
                 'license_number_image' => $request->hasFile('license_number_image') ? $this->updateVehiclesDocuments('license_number_image', $request->file('license_number_image')) : '',
                 'tax_token_number' => $request->tax_token_number,
                 'tax_token_image' => $request->hasFile('tax_token_image') ? $this->updateVehiclesDocuments('tax_token_image', $request->file('tax_token_image')) : '',
@@ -177,6 +179,7 @@ class VehiclesController extends Controller
             $seat_capacity = BulkUploadExcel::SEAT_CAPACITY_COLUMN_TITLE;
             $vendor_phone_number = BulkUploadExcel::VENDOR_PHONE_NUMBER_COLUMN_TITLE;
             $license_number = BulkUploadExcel::LICENSE_NUMBER_COLUMN_TITLE;
+            $license_number_end_date = BulkUploadExcel::LICENSE_NUMBER_END_DATE_COLUMN_TITLE;
             $tax_token_number = BulkUploadExcel::TAX_TOKEN_NUMBER_COLUMN_TITLE;
             $fitness_validity_start = BulkUploadExcel::FITNESS_VALIDITY_START_COLUMN_TITLE;
             $fitness_validity_end = BulkUploadExcel::FITNESS_VALIDITY_END_COLUMN_TITLE;
@@ -186,7 +189,7 @@ class VehiclesController extends Controller
             $data->each(function ($value) use (
                 $create_request, $creator, $admin_member, &$error_count, &$total_count,
                 $vehicle_type, $vehicle_brand_name, $model_name, $model_year, $vehicle_department,
-                $seat_capacity, $vendor_phone_number, $license_number, $tax_token_number, $fitness_validity_start,
+                $seat_capacity, $vendor_phone_number, $license_number, $license_number_end_date, $tax_token_number, $fitness_validity_start,
                 $fitness_validity_end, $insurance_valid_till, $transmission_type, $business
             ) {
                 if (is_null($value->$vehicle_type) && is_null($value->$vehicle_brand_name)) return;
@@ -205,6 +208,7 @@ class VehiclesController extends Controller
                     ->setSeatCapacity($value->$seat_capacity)
                     ->setVendorPhoneNumber($value->$vendor_phone_number)
                     ->setLicenseNumber($value->$license_number)
+                    ->setLicenseNumberEndDate($value->$license_number_end_date)
                     ->setTaxTokenNumber($value->$tax_token_number)
                     ->setFitnessValidityStart($value->$fitness_validity_start)
                     ->setFitnessValidityEnd($value->$fitness_validity_end)
@@ -245,6 +249,7 @@ class VehiclesController extends Controller
                 'fitness_start_date' => 'required|date|date_format:Y-m-d',
                 'fitness_end_date' => 'required|date|date_format:Y-m-d',
                 'insurance_date' => 'date|date_format:Y-m-d',
+                'license_number_end_date' => 'sometimes|date|date_format:Y-m-d',
                 'department_id' => 'required|integer',
                 #'fuel_type' => 'string',
                 #'fuel_quality' => 'string',
@@ -285,6 +290,7 @@ class VehiclesController extends Controller
 
             $vehicle_registration_information_data = [
                 'license_number' => $request->license_number,
+                'license_number_end_date' => $request->license_number_end_date,
                 'license_number_image' => $this->updateVehiclesDocuments('license_number_image', $request->file('license_number_image')),
                 'tax_token_number' => $request->tax_token_number,
                 'tax_token_image' => $this->updateVehiclesDocuments('tax_token_image', $request->file('tax_token_image')),
@@ -365,16 +371,14 @@ class VehiclesController extends Controller
                 $registration_information = $vehicle->registrationInformations ? $vehicle->registrationInformations : null;
                 $driver = $vehicle->driver;
 
-                $fitness_end_date = $vehicle->fitnessPaperAcceptanceDay($today, $registration_information->fitness_end_date);
-                $insurance_end_date = $vehicle->insurancePaperAcceptanceDay($today, $registration_information->insurance_date);
-
                 $due_status = '';
-                if (($fitness_end_date <= VehiclesController::DUE_PERIOD && $fitness_end_date > VehiclesController::OVER_DUE_PERIOD) ||
-                    ($insurance_end_date <= VehiclesController::DUE_PERIOD && $insurance_end_date > VehiclesController::OVER_DUE_PERIOD)) {
+                if (($vehicle->fitnessRemainingDays() <= VehiclesController::DUE_PERIOD && $vehicle->fitnessRemainingDays() > VehiclesController::OVER_DUE_PERIOD) ||
+                    ($vehicle->insuranceRemainingDays() <= VehiclesController::DUE_PERIOD && $vehicle->insuranceRemainingDays() > VehiclesController::OVER_DUE_PERIOD) ||
+                    ($vehicle->licenseRemainingDays() <= VehiclesController::DUE_PERIOD && $vehicle->licenseRemainingDays() > VehiclesController::OVER_DUE_PERIOD)) {
                     $due_status = 'Due Soon';
                 }
 
-                if ($fitness_end_date < VehiclesController::OVER_DUE_PERIOD || $insurance_end_date <= VehiclesController::OVER_DUE_PERIOD) {
+                if ($vehicle->isFitnessDue() || $vehicle->isInsuranceDue() || $vehicle->isLicenseDue()) {
                     $due_status = 'Overdue';
                 }
 
@@ -519,33 +523,39 @@ class VehiclesController extends Controller
             $basic_information = $vehicle->basicInformations;
             $registration_information = $vehicle->registrationInformations;
 
-            $today = Carbon::now();
-            $fitness_end_date = $vehicle->fitnessPaperAcceptanceDay($today, $registration_information->fitness_end_date);
-            $insurance_end_date = $vehicle->insurancePaperAcceptanceDay($today, $registration_information->insurance_date);
-
             $fitness_paper_due_status = '';
             $insurance_paper_due_status = '';
+            $license_paper_due_status = '';
 
-            if (($fitness_end_date <= VehiclesController::DUE_PERIOD && $fitness_end_date > VehiclesController::OVER_DUE_PERIOD)) {
+            if (($vehicle->fitnessRemainingDays() <= VehiclesController::DUE_PERIOD && $vehicle->fitnessRemainingDays() > VehiclesController::OVER_DUE_PERIOD)) {
                 $fitness_paper_due_status = 'Due Soon';
             }
 
-            if ($fitness_end_date <= VehiclesController::OVER_DUE_PERIOD) {
+            if ($vehicle->isFitnessDue()) {
                 $fitness_paper_due_status = 'Overdue';
             }
 
-            if (($insurance_end_date <= VehiclesController::DUE_PERIOD && $insurance_end_date > VehiclesController::OVER_DUE_PERIOD)) {
+            if (($vehicle->insuranceRemainingDays() <= VehiclesController::DUE_PERIOD && $vehicle->insuranceRemainingDays() > VehiclesController::OVER_DUE_PERIOD)) {
                 $insurance_paper_due_status = 'Due Soon';
             }
 
-            if ($insurance_end_date <= VehiclesController::OVER_DUE_PERIOD) {
+            if ($vehicle->isInsuranceDue()) {
                 $insurance_paper_due_status = 'Overdue';
+            }
+
+            if (($vehicle->licenseRemainingDays() <= VehiclesController::DUE_PERIOD && $vehicle->licenseRemainingDays() > VehiclesController::OVER_DUE_PERIOD)) {
+                $license_paper_due_status = 'Due Soon';
+            }
+
+            if ($vehicle->isLicenseDue()) {
+                $license_paper_due_status = 'Overdue';
             }
 
 
             $registration_info = [
                 'vehicle_id' => $vehicle->id,
                 'license_number' => $registration_information->license_number,
+                'license_number_end_date' => Carbon::parse($registration_information->license_number_end_date)->format('Y-m-d'),
                 'license_number_image' => $registration_information->license_number_image,
                 'tax_token_number' => $registration_information->tax_token_number,
                 'tax_token_image' => $registration_information->tax_token_image,
@@ -560,8 +570,9 @@ class VehiclesController extends Controller
                 'insurance_date' => Carbon::parse($registration_information->insurance_date)->format('Y-m-d'),
 
                 'insurance_paper_due_status' => $insurance_paper_due_status,
-
                 'insurance_paper_image' => $registration_information->insurance_paper_image,
+
+                'license_paper_due_status' => $license_paper_due_status,
             ];
             return api_response($request, $registration_info, 200, ['registration_info' => $registration_info]);
         } catch (Throwable $e) {
@@ -575,6 +586,7 @@ class VehiclesController extends Controller
         try {
             $this->validate($request, [
                 'license_number' => 'string',
+                'license_number_end_date' => 'sometimes|date|date_format:Y-m-d',
                 'tax_token_number' => 'string',
                 'fitness_start_date' => 'required|date|date_format:Y-m-d',
                 'fitness_end_date' => 'required|date|date_format:Y-m-d',
@@ -592,6 +604,7 @@ class VehiclesController extends Controller
 
             $registration_information_data = [
                 'license_number' => $request->license_number,
+                'license_number_end_date' => $request->license_number_end_date,
                 'tax_token_number' => $request->tax_token_number,
                 'fitness_start_date' => $request->fitness_start_date,
                 'fitness_end_date' => $request->fitness_end_date,
