@@ -191,6 +191,7 @@ class Route
                 (new MovieTicketRoute())->set($api);
             });
             $api->get('refresh-token', 'ProfileController@refresh');
+            $api->get('wallet-dummy-event', 'TopUp\TopUpController@walletDummyEvent');
         });
         return $api;
     }
