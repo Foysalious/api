@@ -38,7 +38,7 @@ class OrderController extends Controller
                 'emi_month' => 'numeric'
             ], ['mobile' => 'Invalid mobile number!']);
             $this->setModifier($request->customer);
-            $order_place->setCustomer($request->customer)
+            $order = $order_place->setCustomer($request->customer)
                 ->setDeliveryName($request->name)
                 ->setDeliveryAddressId($request->address_id)
                 ->setPaymentMethod($request->payment_method)
@@ -50,6 +50,8 @@ class OrderController extends Controller
                 ->setInfoCallId($request->info_call_id)->setBusinessId($request->business_id)->setCrmId($request->crm_id)
                 ->setVoucherId($request->voucher)->setServices($request->services)->setScheduleDate($request->date)
                 ->setScheduleTime($request->time)->setVendorId($request->vendor_id)->create();
+            if (!$order) return api_response($request, null, 500);
+            return api_response($request, null, 200, ['order' => ['id' => $order->id]]);
         } catch (\Throwable $e) {
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all()]);

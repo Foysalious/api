@@ -294,7 +294,8 @@ class OrderPlace
         try {
             $job_services = $this->createJobService();
             $this->setVoucherData($job_services);
-            DB::transaction(function () use ($job_services) {
+            $order = null;
+            DB::transaction(function () use ($job_services, &$order) {
                 $order = $this->createOrder();
                 $partner_order = $this->createPartnerOrder($order);
                 $job = $this->createJob($partner_order);
@@ -304,6 +305,7 @@ class OrderPlace
         } catch (QueryException $e) {
             throw $e;
         }
+        return $order;
     }
 
     private function createJobService()
@@ -378,7 +380,7 @@ class OrderPlace
         $order->delivery_mobile = $this->deliveryMobile;
         $order->delivery_name = $this->deliveryName;
         $order->sales_channel = $this->salesChannel;
-        $order->location_id = $this->deliveryName;
+        $order->location_id = $this->deliveryAddress->location_id;
         $order->customer_id = $this->customer->id;
         $order->voucher_id = $this->orderVoucherData->isValid() ? $this->orderVoucherData->getVoucherId() : null;
         $order->partner_id = $this->partnerId;
