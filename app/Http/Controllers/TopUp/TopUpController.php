@@ -315,4 +315,14 @@ class TopUpController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function walletDummyEvent()
+    {
+        event(new WalletUpdateEvent([
+            'amount' => 100,
+            'user_type' => 'business',
+            'user_id' => 11,
+
+        ]));
+    }
 }
