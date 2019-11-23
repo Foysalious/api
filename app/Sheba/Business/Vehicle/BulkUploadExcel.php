@@ -12,11 +12,12 @@ class BulkUploadExcel
     const SEAT_CAPACITY_COLUMN = "F";
     const VENDOR_PHONE_NUMBER_COLUMN = "G";
     const LICENSE_NUMBER_COLUMN = "H";
-    const TAX_TOKEN_NUMBER_COLUMN = "I";
-    const FITNESS_VALIDITY_START_COLUMN = "J";
-    const FITNESS_VALIDITY_END_COLUMN = "K";
-    const INSURANCE_VALID_TILL_COLUMN = "L";
-    const TRANSMISSION_TYPE_COLUMN = "L";
+    const LICENSE_NUMBER_END_DATE_COLUMN = "I";
+    const TAX_TOKEN_NUMBER_COLUMN = "J";
+    const FITNESS_VALIDITY_START_COLUMN = "K";
+    const FITNESS_VALIDITY_END_COLUMN = "L";
+    const INSURANCE_VALID_TILL_COLUMN = "M";
+    const TRANSMISSION_TYPE_COLUMN = "N";
 
     const VEHICLE_TYPE_COLUMN_TITLE = "vehicle_type";
     const VEHICLE_BRAND_NAME_COLUMN_TITLE = "vehicle_brand_name";
@@ -26,6 +27,7 @@ class BulkUploadExcel
     const SEAT_CAPACITY_COLUMN_TITLE = "seat_capacity";
     const VENDOR_PHONE_NUMBER_COLUMN_TITLE = "vendor_phone_number";
     const LICENSE_NUMBER_COLUMN_TITLE = "license_number";
+    const LICENSE_NUMBER_END_DATE_COLUMN_TITLE = "license_number_end_date";
     const TAX_TOKEN_NUMBER_COLUMN_TITLE = "tax_token_number";
     const FITNESS_VALIDITY_START_COLUMN_TITLE = "fitness_validity_starts";
     const FITNESS_VALIDITY_END_COLUMN_TITLE = "fitness_validity_ends";
