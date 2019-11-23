@@ -1,11 +1,12 @@
 <?php namespace App\Http\Controllers\Order;
 
-
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Sheba\ModificationFields;
 use Sheba\OrderPlace\OrderPlace;
+use Throwable;
 
 class OrderController extends Controller
 {
@@ -37,6 +38,7 @@ class OrderController extends Controller
                 'voucher' => 'sometimes|required|numeric',
                 'emi_month' => 'numeric'
             ], ['mobile' => 'Invalid mobile number!']);
+
             $this->setModifier($request->customer);
             $order = $order_place->setCustomer($request->customer)
                 ->setDeliveryName($request->name)
@@ -50,10 +52,18 @@ class OrderController extends Controller
                 ->setAdditionalInformation($request->additional_information)->setAffiliationId($request->affiliation_id)
                 ->setInfoCallId($request->info_call_id)->setBusinessId($request->business_id)->setCrmId($request->crm_id)
                 ->setVoucherId($request->voucher)->setServices($request->services)->setScheduleDate($request->date)
-                ->setScheduleTime($request->time)->setVendorId($request->vendor_id)->create();
+                ->setScheduleTime($request->time)->setVendorId($request->vendor_id)
+                ->create();
+
             if (!$order) return api_response($request, null, 500);
             return api_response($request, null, 200, ['order' => ['id' => $order->id]]);
-        } catch (\Throwable $e) {
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all()]);
             $sentry->captureException($e);

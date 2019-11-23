@@ -5,9 +5,9 @@ use Sheba\Dal\LocationServiceDiscount\Model as LocationServiceDiscount;
 
 class DiscountCalculation
 {
-    /** @var LocationService */
+    /** @var LocationService $locationService */
     private $locationService;
-    /** @var LocationServiceDiscount */
+    /** @var LocationServiceDiscount $locationServiceDiscount */
     private $locationServiceDiscount;
     private $originalPrice;
     private $discountedPrice;
@@ -16,6 +16,7 @@ class DiscountCalculation
     private $cap;
     private $shebaContribution;
     private $partnerContribution;
+    private $quantity;
 
     public function __construct()
     {
@@ -23,7 +24,11 @@ class DiscountCalculation
         $this->partnerContribution = 0;
     }
 
-    public function setLocationService($location_service)
+    /**
+     * @param LocationService $location_service
+     * @return $this
+     */
+    public function setLocationService(LocationService $location_service)
     {
         $this->locationService = $location_service;
         return $this;
@@ -34,7 +39,7 @@ class DiscountCalculation
      */
     public function getDiscountedPrice()
     {
-        return $this->discountedPrice;
+        return (double)$this->discountedPrice;
     }
 
     /**
@@ -73,6 +78,12 @@ class DiscountCalculation
     {
         $this->originalPrice = $original_price;
         $this->discountedPrice = $original_price;
+        return $this;
+    }
+
+    public function setQuantity($quantity = 1)
+    {
+        $this->quantity = $quantity;
         return $this;
     }
 
@@ -120,8 +131,12 @@ class DiscountCalculation
         $this->isDiscountPercentage = $this->locationServiceDiscount->is_percentage;
         $this->shebaContribution = $this->locationServiceDiscount->sheba_contribution;
         $this->partnerContribution = $this->locationServiceDiscount->partner_contribution;
-        if (!$this->locationServiceDiscount->isPercentage()) return $this->originalPrice - $this->discount;
-        return $this->originalPrice - (($this->originalPrice * $this->discount) / 100);
+        $this->originalPrice = $this->originalPrice * $this->quantity;
+
+        if (!$this->locationServiceDiscount->isPercentage())
+            return $this->originalPrice - $this->discount;
+
+        return $this->originalPrice - (($this->originalPrice * ($this->discount * $this->quantity)) / 100);
     }
 
     private function setDiscountedPriceUptoCap()
