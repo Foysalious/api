@@ -146,7 +146,7 @@ class OrderController extends Controller
             if ($bondhu_auto_order->setServiceCategoryName()) {
                 $payment = $link = null;
                 DB::beginTransaction();
-                $order = $bondhu_auto_order->place($request, $order_place);
+                $order = $bondhu_auto_order->place();
                 if ($order) {
                     if ($order->voucher_id) $this->updateVouchers($order, $bondhu_auto_order->customer);
                     if ($request->payment_method !== 'cod') {

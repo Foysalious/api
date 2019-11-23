@@ -2,7 +2,7 @@
 
 use Carbon\Carbon;
 
-class BondhuOrderRequest extends ApiRequest
+class OrderCreateFromBondhuRequest extends ApiRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -35,7 +35,6 @@ class BondhuOrderRequest extends ApiRequest
             'location' => 'sometimes|numeric',
             'services' => 'required|string',
             'sales_channel' => 'required|string',
-            'partner' => 'required',
             'remember_token' => 'required|string',
             'name' => 'required|string',
             'mobile' => 'required|string|mobile:bd',

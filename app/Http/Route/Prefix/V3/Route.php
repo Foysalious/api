@@ -6,6 +6,7 @@ class Route
     {
         $api->group(['prefix' => 'v3', 'namespace' => 'App\Http\Controllers'], function ($api) {
             (new CustomerRoute())->set($api);
+            (new AffiliateRoute())->set($api);
             $api->get('locations', 'Location\LocationController@index');
         });
     }

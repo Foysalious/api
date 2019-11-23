@@ -1,8 +1,6 @@
 <?php namespace App\Sheba\Bondhu;
 
 use App\Exceptions\HyperLocationNotFoundException;
-use App\Http\Requests\BondhuOrderRequest;
-use App\Http\Requests\BondhuOrderV3Request;
 use App\Http\Requests\OrderCreateFromBondhuRequest;
 use App\Models\Affiliate;
 use App\Models\Affiliation;
@@ -19,14 +17,14 @@ use Sheba\ModificationFields;
 use Sheba\OrderPlace\OrderPlace;
 use Sheba\Portals\Portals;
 
-class BondhuAutoOrder
+class BondhuAutoOrderV3
 {
     use ModificationFields;
 
     private $service_category, $profile, $affiliation, $portal;
     public $order, $customer, $request, $affiliate;
 
-    public function __construct(BondhuOrderRequest $request)
+    public function __construct(OrderCreateFromBondhuRequest $request)
     {
         $this->request = $request;
         if (!isset($this->request->affiliate->id)) {
@@ -40,17 +38,6 @@ class BondhuAutoOrder
         $this->setModifier($modifier);
     }
 
-    /**
-     * @return Order|Checkout|null
-     * @throws HyperLocationNotFoundException
-     */
-    public function place()
-    {
-        $this->setCustomer();
-        $this->setAffiliation();
-        return $this->generateOrder();
-    }
-
     public function setServiceCategoryName()
     {
         $services = json_decode($this->request->services);
@@ -61,6 +48,13 @@ class BondhuAutoOrder
             $this->service_category = 'Unknown Service';
             return false;
         }
+    }
+
+    public function placeV3(OrderCreateFromBondhuRequest $request, OrderPlace $order_place)
+    {
+        $this->setCustomer();
+        $this->setAffiliation();
+        return $this->generateOrderV3($request, $order_place);
     }
 
     public function setCustomer()
@@ -97,16 +91,32 @@ class BondhuAutoOrder
         return $this->portal == Portals::ADMIN;
     }
 
-    /**
-     * @return Order|Checkout|null
-     * @throws HyperLocationNotFoundException
-     */
-    public function generateOrder()
+    public function generateOrderV3(OrderCreateFromBondhuRequest $request, OrderPlace $order_place)
     {
         $this->setAddress();
         $this->setExtras();
-        $order = new Checkout($this->customer);
-        $order = $order->placeOrder($this->request);
+
+        $order = $order_place
+            ->setCustomer($this->customer)
+            ->setDeliveryName($request->name)
+            ->setDeliveryAddressId($request->address_id)
+            ->setPaymentMethod($request->payment_method)
+            ->setDeliveryMobile($request->mobile)
+            ->setSalesChannel($request->sales_channel)
+            ->setPartnerId($request->partner_id)
+            ->setSelectedPartnerId($request->partner)
+            ->setAdditionalInformation($request->additional_information)
+            ->setAffiliationId($this->request->affiliation_id)
+            ->setInfoCallId($request->info_call_id)
+            ->setBusinessId($request->business_id)
+            ->setCrmId($request->crm_id)
+            ->setVoucherId($request->voucher)
+            ->setServices($request->services)
+            ->setScheduleDate($request->date)
+            ->setScheduleTime($request->time)
+            ->setVendorId($request->vendor_id)
+            ->create();
+
         $this->order = $order;
         return $order;
     }
@@ -131,7 +141,7 @@ class BondhuAutoOrder
     private function setExtras()
     {
         $extra = ['affiliation_id' => $this->affiliation->id];
-        if(!$this->isAsOfflineBondhu()) {
+        if (!$this->isAsOfflineBondhu()) {
             $extra['created_by'] = $this->affiliate->id;
             $extra['created_by_name'] = 'Affiliate - ' . $this->affiliate->profile->name;
         }
