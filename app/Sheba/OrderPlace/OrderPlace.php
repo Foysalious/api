@@ -15,6 +15,7 @@ use App\Models\Partner;
 use App\Models\PartnerOrder;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\ValidationException;
 use Sheba\Checkout\Services\RentACarServiceObject;
 use Sheba\Checkout\Services\ServiceObject;
 use Sheba\Dal\JobService\JobService;
@@ -105,11 +106,10 @@ class OrderPlace
         return $this;
     }
 
-
     /**
      * @param $services
      * @return $this
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
     public function setServices($services)
     {
