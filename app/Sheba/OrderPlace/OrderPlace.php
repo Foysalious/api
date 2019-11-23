@@ -11,8 +11,8 @@ use App\Models\Job;
 use App\Models\Location;
 use App\Models\LocationService;
 use App\Models\Order;
+use App\Models\Partner;
 use App\Models\PartnerOrder;
-use App\Models\Service;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 use Sheba\Checkout\Services\RentACarServiceObject;
@@ -20,11 +20,17 @@ use Sheba\Checkout\Services\ServiceObject;
 use Sheba\Dal\JobService\JobService;
 use Sheba\Jobs\JobStatuses;
 use Sheba\Jobs\PreferredTime;
+use Sheba\Location\Geo;
 use Sheba\LocationService\DiscountCalculation;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\ModificationFields;
+use Sheba\PartnerList\Director;
+use Sheba\PartnerList\PartnerListBuilder;
+use Sheba\PartnerOrderRequest\Creator;
 use Sheba\RequestIdentification;
 use DB;
+use Sheba\ServiceRequest\ServiceRequest;
+use Sheba\ServiceRequest\ServiceRequestObject;
 
 class OrderPlace
 {
@@ -50,6 +56,11 @@ class OrderPlace
     private $affiliationId;
     private $voucherId;
     private $partnerId;
+    private $selectedPartnerId;
+    /** @var Partner */
+    private $selectedPartner;
+    /** @var Collection */
+    private $partnersFromList;
     private $businessId;
     private $vendorId;
     private $categoryAnswers;
@@ -61,12 +72,26 @@ class OrderPlace
     private $discountCalculation;
     /** @var OrderVoucherData */
     private $orderVoucherData;
+    /** @var PartnerListBuilder */
+    private $partnerListBuilder;
+    /** @var Director */
+    private $partnerListDirector;
+    /** @var ServiceRequest */
+    private $serviceRequest;
+    /** @var ServiceRequestObject[] */
+    private $serviceRequestObject;
+    /** @var Creator */
+    private $partnerOrderRequestCreator;
 
-    public function __construct()
+    public function __construct(Creator $creator, PriceCalculation $priceCalculation, DiscountCalculation $discountCalculation, OrderVoucherData $orderVoucherData, PartnerListBuilder $partnerListBuilder, Director $director, ServiceRequest $serviceRequest)
     {
-        $this->priceCalculation = new PriceCalculation();
-        $this->discountCalculation = new DiscountCalculation();
-        $this->orderVoucherData = new OrderVoucherData();
+        $this->priceCalculation = $priceCalculation;
+        $this->discountCalculation = $discountCalculation;
+        $this->orderVoucherData = $orderVoucherData;
+        $this->partnerListBuilder = $partnerListBuilder;
+        $this->partnerListDirector = $director;
+        $this->serviceRequest = $serviceRequest;
+        $this->partnerOrderRequestCreator = $creator;
     }
 
     /**
@@ -80,15 +105,16 @@ class OrderPlace
         return $this;
     }
 
+
     /**
-     * @param mixed $services
-     * @return OrderPlace
+     * @param $services
+     * @return $this
+     * @throws \Illuminate\Validation\ValidationException
      */
     public function setServices($services)
     {
-        $services = json_decode($services);
-        $this->category = $this->getCategory($services);
-        $this->services = $this->getSelectedServices($services);
+        $this->serviceRequestObject = $this->serviceRequest->setServices(json_decode($services, 1))->get();
+        $this->category = $this->getCategory();
         return $this;
     }
 
@@ -220,6 +246,13 @@ class OrderPlace
     {
         $this->partnerId = $partnerId;
         return $this;
+
+    }
+
+    public function setSelectedPartnerId($partnerId)
+    {
+        $this->selectedPartnerId = $partnerId;
+        return $this;
     }
 
     /**
@@ -264,9 +297,9 @@ class OrderPlace
         $this->setLocation();
     }
 
-    private function getCategory($services)
+    private function getCategory()
     {
-        return (Service::find((int)$services[0]->id))->category;
+        return $this->serviceRequestObject[0]->getCategory();
     }
 
     private function setLocation()
@@ -292,33 +325,49 @@ class OrderPlace
     public function create()
     {
         try {
+            $this->fetchPartner();
             $job_services = $this->createJobService();
             $this->setVoucherData($job_services);
-            DB::transaction(function () use ($job_services) {
+            $order = null;
+            DB::transaction(function () use ($job_services, &$order) {
                 $order = $this->createOrder();
                 $partner_order = $this->createPartnerOrder($order);
                 $job = $this->createJob($partner_order);
                 $this->createCarRentalDetail($job);
                 $job->jobServices()->saveMany($job_services);
+                if ($this->canCreatePartnerOrderRequest()) $this->partnerOrderRequestCreator->setPartnerOrder($partner_order)
+                    ->setPartners($this->partnersFromList->pluck('id')->toArray())->create();
             });
         } catch (QueryException $e) {
             throw $e;
         }
+        return $order;
+    }
+
+    private function fetchPartner()
+    {
+        $geo = new Geo();
+        $geo->setLng($this->deliveryAddress->geo->lng)->setLat($this->deliveryAddress->geo->lat);
+        $this->partnerListBuilder->setGeo($geo)->setServiceRequestObjectArray($this->serviceRequestObject)->setScheduleTime($this->scheduleTime)->setScheduleDate($this->scheduleDate);
+        if ($this->selectedPartnerId) $this->partnerListBuilder->setPartnerIds([$this->selectedPartnerId]);
+        $this->partnerListDirector->setBuilder($this->partnerListBuilder)->buildPartnerListForOrderPlacement();
+        $this->partnersFromList = $this->partnerListBuilder->get();
+        if ($this->selectedPartnerId) $this->selectedPartner = $this->partnersFromList->first();
     }
 
     private function createJobService()
     {
         $job_services = collect();
-        foreach ($this->services as $selected_service) {
-            /** @var ServiceObject $selected_service */
+        foreach ($this->serviceRequestObject as $selected_service) {
+            /** @var ServiceRequestObject $selected_service */
             $service = $selected_service->getService();
             $location_service = LocationService::where([['service_id', $service->id], ['location_id', $this->location->id]])->first();
             $this->priceCalculation->setLocationService($location_service)->setOption($selected_service->getOption());
             $unit_price = $this->priceCalculation->getUnitPrice();
-            $this->discountCalculation->setLocationService($location_service)->setOriginalPrice($unit_price * $selected_service->quantity)->calculate();
+            $this->discountCalculation->setLocationService($location_service)->setOriginalPrice($unit_price * $selected_service->getQuantity())->calculate();
             $service_data = [
                 'service_id' => $service->id,
-                'quantity' => $selected_service->quantity,
+                'quantity' => $selected_service->getQuantity(),
                 'unit_price' => $unit_price,
                 'min_price' => 0,
                 'sheba_contribution' => $this->discountCalculation->getShebaContribution(),
@@ -342,32 +391,10 @@ class OrderPlace
                 return $job_service->unit_price * $job_service->quantity;
             })->sum() + 0;
         if ($this->voucherId) {
-            $result = voucher($this->voucherId)->check($this->category->id, $this->partnerId, $this->location->id, $this->customer->id, $order_amount, $this->salesChannel)->reveal();
+            $result = voucher($this->voucherId)->check($this->category->id, null, $this->location->id, $this->customer->id, $order_amount, $this->salesChannel)->reveal();
             $this->orderVoucherData->setVoucherRevealData($result);
         }
 
-    }
-
-    private function createCarRentalDetail(Job $job)
-    {
-        if (!$this->category->isRentCar()) return;
-        $service = $this->services->first();
-        $car_rental_detail = new CarRentalJobDetail();
-        $car_rental_detail->pick_up_location_id = $service->pickUpLocationId;
-        $car_rental_detail->pick_up_location_type = $service->pickUpLocationType;
-        $car_rental_detail->pick_up_address_geo = json_encode(array('lat' => $service->pickUpLocationLat, 'lng' => $service->pickUpLocationLng));
-        $car_rental_detail->pick_up_address = $service->pickUpAddress;
-        $car_rental_detail->destination_location_id = $service->destinationLocationId;
-        $car_rental_detail->destination_location_type = $service->destinationLocationType;
-        $car_rental_detail->destination_address_geo = json_encode(array('lat' => $service->destinationLocationLat, 'lng' => $service->destinationLocationLng));
-        $car_rental_detail->destination_address = $service->destinationAddress;
-        $car_rental_detail->drop_off_date = $service->dropOffDate;
-        $car_rental_detail->drop_off_time = $service->dropOffTime;
-        $car_rental_detail->estimated_distance = $service->estimatedDistance;
-        $car_rental_detail->estimated_time = $service->estimatedTime;
-        $car_rental_detail->job_id = $job->id;
-        $this->withCreateModificationField($car_rental_detail);
-        $car_rental_detail->save();
     }
 
     private function createOrder()
@@ -378,7 +405,7 @@ class OrderPlace
         $order->delivery_mobile = $this->deliveryMobile;
         $order->delivery_name = $this->deliveryName;
         $order->sales_channel = $this->salesChannel;
-        $order->location_id = $this->deliveryName;
+        $order->location_id = $this->deliveryAddress->location_id;
         $order->customer_id = $this->customer->id;
         $order->voucher_id = $this->orderVoucherData->isValid() ? $this->orderVoucherData->getVoucherId() : null;
         $order->partner_id = $this->partnerId;
@@ -414,6 +441,7 @@ class OrderPlace
         $partner_order = new PartnerOrder();
         $partner_order->order_id = $order->id;
         $partner_order->payment_method = $this->paymentMethod;
+        $partner_order->partner_id = $this->selectedPartner ? $this->selectedPartner->id : null;
         $this->withCreateModificationField($partner_order);
         $partner_order->save();
         return $partner_order;
@@ -445,4 +473,30 @@ class OrderPlace
         return Job::create($job_data);
     }
 
+    private function createCarRentalDetail(Job $job)
+    {
+        if (!$this->category->isRentCar()) return;
+        $service = $this->services->first();
+        $car_rental_detail = new CarRentalJobDetail();
+        $car_rental_detail->pick_up_location_id = $service->pickUpLocationId;
+        $car_rental_detail->pick_up_location_type = $service->pickUpLocationType;
+        $car_rental_detail->pick_up_address_geo = json_encode(array('lat' => $service->pickUpLocationLat, 'lng' => $service->pickUpLocationLng));
+        $car_rental_detail->pick_up_address = $service->pickUpAddress;
+        $car_rental_detail->destination_location_id = $service->destinationLocationId;
+        $car_rental_detail->destination_location_type = $service->destinationLocationType;
+        $car_rental_detail->destination_address_geo = json_encode(array('lat' => $service->destinationLocationLat, 'lng' => $service->destinationLocationLng));
+        $car_rental_detail->destination_address = $service->destinationAddress;
+        $car_rental_detail->drop_off_date = $service->dropOffDate;
+        $car_rental_detail->drop_off_time = $service->dropOffTime;
+        $car_rental_detail->estimated_distance = $service->estimatedDistance;
+        $car_rental_detail->estimated_time = $service->estimatedTime;
+        $car_rental_detail->job_id = $job->id;
+        $this->withCreateModificationField($car_rental_detail);
+        $car_rental_detail->save();
+    }
+
+    private function canCreatePartnerOrderRequest()
+    {
+        return !$this->selectedPartner || count($this->partnersFromList) > 0;
+    }
 }

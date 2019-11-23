@@ -25,7 +25,17 @@ interface Builder
 
     public function checkPartnerCreditLimit();
 
+    public function checkDailyOrderLimit();
+
+    public function checkAvailability();
+
+    public function checkOption();
+
     public function removeShebaHelpDesk();
+
+    public function removeUnavailablePartners();
+
+    public function withService();
 
     public function withResource();
 
@@ -38,5 +48,9 @@ interface Builder
     public function setServiceRequestObjectArray(array $service_request_object);
 
     public function setGeo(Geo $geo);
+
+    public function setScheduleDate($date);
+
+    public function setScheduleTime($time);
 
 }

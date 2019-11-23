@@ -72,6 +72,7 @@ class PartnerList
             'availability' => []
         ];
         $this->priceBreakdownCalculator = app(PartnerPricingBreakdownCalculator::class);
+        $this->impressions = new ImpressionManager();
     }
 
     public function setPartnerListRequest(PartnerListRequest $partner_list_request)
@@ -389,7 +390,7 @@ class PartnerList
     public function sortByShebaPartnerPriority()
     {
         $this->partners = (new PartnerSort($this->partners))->get();
-        if($this->impressions->needsToDeduct()) $this->impressions->deduct($this->getPartnerIds());
+        if ($this->impressions->needsToDeduct()) $this->impressions->deduct($this->getPartnerIds());
     }
 
     public function sortByShebaSelectedCriteria()
