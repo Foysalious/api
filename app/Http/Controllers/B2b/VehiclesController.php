@@ -179,6 +179,7 @@ class VehiclesController extends Controller
             $seat_capacity = BulkUploadExcel::SEAT_CAPACITY_COLUMN_TITLE;
             $vendor_phone_number = BulkUploadExcel::VENDOR_PHONE_NUMBER_COLUMN_TITLE;
             $license_number = BulkUploadExcel::LICENSE_NUMBER_COLUMN_TITLE;
+            $license_number_end_date = BulkUploadExcel::LICENSE_NUMBER_END_DATE_COLUMN_TITLE;
             $tax_token_number = BulkUploadExcel::TAX_TOKEN_NUMBER_COLUMN_TITLE;
             $fitness_validity_start = BulkUploadExcel::FITNESS_VALIDITY_START_COLUMN_TITLE;
             $fitness_validity_end = BulkUploadExcel::FITNESS_VALIDITY_END_COLUMN_TITLE;
@@ -188,7 +189,7 @@ class VehiclesController extends Controller
             $data->each(function ($value) use (
                 $create_request, $creator, $admin_member, &$error_count, &$total_count,
                 $vehicle_type, $vehicle_brand_name, $model_name, $model_year, $vehicle_department,
-                $seat_capacity, $vendor_phone_number, $license_number, $tax_token_number, $fitness_validity_start,
+                $seat_capacity, $vendor_phone_number, $license_number, $license_number_end_date, $tax_token_number, $fitness_validity_start,
                 $fitness_validity_end, $insurance_valid_till, $transmission_type, $business
             ) {
                 if (is_null($value->$vehicle_type) && is_null($value->$vehicle_brand_name)) return;
@@ -207,6 +208,7 @@ class VehiclesController extends Controller
                     ->setSeatCapacity($value->$seat_capacity)
                     ->setVendorPhoneNumber($value->$vendor_phone_number)
                     ->setLicenseNumber($value->$license_number)
+                    ->setLicenseNumberEndDate($value->$license_number_end_date)
                     ->setTaxTokenNumber($value->$tax_token_number)
                     ->setFitnessValidityStart($value->$fitness_validity_start)
                     ->setFitnessValidityEnd($value->$fitness_validity_end)
@@ -369,16 +371,14 @@ class VehiclesController extends Controller
                 $registration_information = $vehicle->registrationInformations ? $vehicle->registrationInformations : null;
                 $driver = $vehicle->driver;
 
-                $fitness_end_date = $vehicle->fitnessPaperAcceptanceDay($today, $registration_information->fitness_end_date);
-                $insurance_end_date = $vehicle->insurancePaperAcceptanceDay($today, $registration_information->insurance_date);
-
                 $due_status = '';
-                if (($fitness_end_date <= VehiclesController::DUE_PERIOD && $fitness_end_date > VehiclesController::OVER_DUE_PERIOD) ||
-                    ($insurance_end_date <= VehiclesController::DUE_PERIOD && $insurance_end_date > VehiclesController::OVER_DUE_PERIOD)) {
+                if (($vehicle->fitnessRemainingDays() <= VehiclesController::DUE_PERIOD && $vehicle->fitnessRemainingDays() > VehiclesController::OVER_DUE_PERIOD) ||
+                    ($vehicle->insuranceRemainingDays() <= VehiclesController::DUE_PERIOD && $vehicle->insuranceRemainingDays() > VehiclesController::OVER_DUE_PERIOD) ||
+                    ($vehicle->licenseRemainingDays() <= VehiclesController::DUE_PERIOD && $vehicle->licenseRemainingDays() > VehiclesController::OVER_DUE_PERIOD)) {
                     $due_status = 'Due Soon';
                 }
 
-                if ($fitness_end_date < VehiclesController::OVER_DUE_PERIOD || $insurance_end_date <= VehiclesController::OVER_DUE_PERIOD) {
+                if ($vehicle->isFitnessDue() || $vehicle->isInsuranceDue() || $vehicle->isLicenseDue()) {
                     $due_status = 'Overdue';
                 }
 
@@ -523,27 +523,32 @@ class VehiclesController extends Controller
             $basic_information = $vehicle->basicInformations;
             $registration_information = $vehicle->registrationInformations;
 
-            $today = Carbon::now();
-            $fitness_end_date = $vehicle->fitnessPaperAcceptanceDay($today, $registration_information->fitness_end_date);
-            $insurance_end_date = $vehicle->insurancePaperAcceptanceDay($today, $registration_information->insurance_date);
-
             $fitness_paper_due_status = '';
             $insurance_paper_due_status = '';
+            $license_paper_due_status = '';
 
-            if (($fitness_end_date <= VehiclesController::DUE_PERIOD && $fitness_end_date > VehiclesController::OVER_DUE_PERIOD)) {
+            if (($vehicle->fitnessRemainingDays() <= VehiclesController::DUE_PERIOD && $vehicle->fitnessRemainingDays() > VehiclesController::OVER_DUE_PERIOD)) {
                 $fitness_paper_due_status = 'Due Soon';
             }
 
-            if ($fitness_end_date <= VehiclesController::OVER_DUE_PERIOD) {
+            if ($vehicle->isFitnessDue()) {
                 $fitness_paper_due_status = 'Overdue';
             }
 
-            if (($insurance_end_date <= VehiclesController::DUE_PERIOD && $insurance_end_date > VehiclesController::OVER_DUE_PERIOD)) {
+            if (($vehicle->insuranceRemainingDays() <= VehiclesController::DUE_PERIOD && $vehicle->insuranceRemainingDays() > VehiclesController::OVER_DUE_PERIOD)) {
                 $insurance_paper_due_status = 'Due Soon';
             }
 
-            if ($insurance_end_date <= VehiclesController::OVER_DUE_PERIOD) {
+            if ($vehicle->isInsuranceDue()) {
                 $insurance_paper_due_status = 'Overdue';
+            }
+
+            if (($vehicle->licenseRemainingDays() <= VehiclesController::DUE_PERIOD && $vehicle->licenseRemainingDays() > VehiclesController::OVER_DUE_PERIOD)) {
+                $license_paper_due_status = 'Due Soon';
+            }
+
+            if ($vehicle->isLicenseDue()) {
+                $license_paper_due_status = 'Overdue';
             }
 
 
@@ -565,8 +570,9 @@ class VehiclesController extends Controller
                 'insurance_date' => Carbon::parse($registration_information->insurance_date)->format('Y-m-d'),
 
                 'insurance_paper_due_status' => $insurance_paper_due_status,
-
                 'insurance_paper_image' => $registration_information->insurance_paper_image,
+
+                'license_paper_due_status' => $license_paper_due_status,
             ];
             return api_response($request, $registration_info, 200, ['registration_info' => $registration_info]);
         } catch (Throwable $e) {

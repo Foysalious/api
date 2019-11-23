@@ -113,6 +113,7 @@ class Creator
     {
         return [
             'license_number' => $this->vehicleCreateRequest->getLicenseNumber(),
+            'license_number_end_date' => $this->vehicleCreateRequest->getLicenseNumberEndDate(),
             'tax_token_number' => $this->vehicleCreateRequest->getTaxTokenNumber(),
             'fitness_start_date' => $this->vehicleCreateRequest->getFitnessValidityStart(),
             'fitness_end_date' => $this->vehicleCreateRequest->getFitnessValidityEnd()
