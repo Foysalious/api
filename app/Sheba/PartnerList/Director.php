@@ -13,12 +13,8 @@ class Director
         $this->builder = $builder;
         return $this;
     }
-
-    /**
-     * The Director can construct several product variations using the same
-     * building steps.
-     */
-    public function buildPartnerList(): void
+    
+    public function buildPartnerList()
     {
         $this->builder->checkCategory();
         $this->builder->checkService();

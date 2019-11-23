@@ -1,17 +1,18 @@
 <?php namespace Sheba\OrderPlace;
 
+use App\Models\Affiliation;
+use App\Models\CarRentalJobDetail;
 use App\Models\Category;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;
+use App\Models\InfoCall;
 use App\Models\Job;
 use App\Models\Location;
 use App\Models\LocationService;
 use App\Models\Order;
 use App\Models\PartnerOrder;
 use App\Models\Service;
-use App\Sheba\Checkout\Discount;
-use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 use Sheba\Checkout\Services\RentACarServiceObject;
@@ -31,6 +32,7 @@ class OrderPlace
     private $deliveryAddressId;
     /** @var CustomerDeliveryAddress */
     private $deliveryAddress;
+    /** @var Collection */
     private $services;
     /** @var Category */
     private $category;
@@ -296,69 +298,12 @@ class OrderPlace
                 $order = $this->createOrder();
                 $partner_order = $this->createPartnerOrder($order);
                 $job = $this->createJob($partner_order);
+                $this->createCarRentalDetail($job);
                 $job->jobServices()->saveMany($job_services);
             });
         } catch (QueryException $e) {
             throw $e;
         }
-    }
-
-    private function createOrder()
-    {
-        $order = new Order();
-        $order->info_call_id = $this->infoCallId;
-        $order->affiliation_id = $this->affiliationId;
-        $order->delivery_mobile = $this->deliveryMobile;
-        $order->delivery_name = $this->deliveryName;
-        $order->sales_channel = $this->salesChannel;
-        $order->location_id = $this->deliveryName;
-        $order->customer_id = $this->customer->id;
-        $order->voucher_id = $this->orderVoucherData->isValid() ? $this->orderVoucherData->getVoucherId() : null;
-        $order->partner_id = $this->partnerId;
-        $order->business_id = $this->businessId;
-        $order->vendor_id = $this->vendorId;
-        $order->delivery_address_id = $this->deliveryAddress->id;
-        $order->fill((new RequestIdentification())->get());
-        $this->withCreateModificationField($order);
-        $order->save();
-        return $order;
-    }
-
-
-    private function createPartnerOrder(Order $order)
-    {
-        $partner_order = new PartnerOrder();
-        $partner_order->order_id = $order->id;
-        $partner_order->payment_method = $this->paymentMethod;
-        $this->withCreateModificationField($partner_order);
-        $partner_order->save();
-        return $partner_order;
-    }
-
-    private function createJob(PartnerOrder $partner_order)
-    {
-        $preferred_time = new PreferredTime($this->scheduleTime);
-        $job_data = [
-            'category_id' => $this->category->id,
-            'partner_order_id' => $partner_order->id,
-            'schedule_date' => $this->scheduleDate,
-            'preferred_time' => $preferred_time->toString(),
-            'preferred_time_start' => $preferred_time->getStartString(),
-            'preferred_time_end' => $preferred_time->getEndString(),
-            'crm_id' => $this->crmId,
-            'job_additional_info' => $this->additionalInformation,
-            'category_answers' => $this->categoryAnswers,
-            'material_commission_rate' => config('sheba.material_commission_rate'),
-            'status' => JobStatuses::PENDING,
-        ];
-        if ($this->orderVoucherData->isValid()) {
-            $job_data['discount'] = $this->orderVoucherData->getDiscount();
-            $job_data['sheba_contribution'] = $this->orderVoucherData->getShebaContribution();
-            $job_data['partner_contribution'] = $this->orderVoucherData->getPartnerContribution();
-            $job_data['discount_percentage'] = $this->orderVoucherData->getDiscountPercentage();
-        }
-        $job_data = $this->withCreateModificationField($job_data);
-        return Job::create($job_data);
     }
 
     private function createJobService()
@@ -402,4 +347,102 @@ class OrderPlace
         }
 
     }
+
+    private function createCarRentalDetail(Job $job)
+    {
+        if (!$this->category->isRentCar()) return;
+        $service = $this->services->first();
+        $car_rental_detail = new CarRentalJobDetail();
+        $car_rental_detail->pick_up_location_id = $service->pickUpLocationId;
+        $car_rental_detail->pick_up_location_type = $service->pickUpLocationType;
+        $car_rental_detail->pick_up_address_geo = json_encode(array('lat' => $service->pickUpLocationLat, 'lng' => $service->pickUpLocationLng));
+        $car_rental_detail->pick_up_address = $service->pickUpAddress;
+        $car_rental_detail->destination_location_id = $service->destinationLocationId;
+        $car_rental_detail->destination_location_type = $service->destinationLocationType;
+        $car_rental_detail->destination_address_geo = json_encode(array('lat' => $service->destinationLocationLat, 'lng' => $service->destinationLocationLng));
+        $car_rental_detail->destination_address = $service->destinationAddress;
+        $car_rental_detail->drop_off_date = $service->dropOffDate;
+        $car_rental_detail->drop_off_time = $service->dropOffTime;
+        $car_rental_detail->estimated_distance = $service->estimatedDistance;
+        $car_rental_detail->estimated_time = $service->estimatedTime;
+        $car_rental_detail->job_id = $job->id;
+        $this->withCreateModificationField($car_rental_detail);
+        $car_rental_detail->save();
+    }
+
+    private function createOrder()
+    {
+        $order = new Order();
+        $order->info_call_id = $this->_setInfoCallId();
+        $order->affiliation_id = $this->_setAffiliationId();
+        $order->delivery_mobile = $this->deliveryMobile;
+        $order->delivery_name = $this->deliveryName;
+        $order->sales_channel = $this->salesChannel;
+        $order->location_id = $this->deliveryName;
+        $order->customer_id = $this->customer->id;
+        $order->voucher_id = $this->orderVoucherData->isValid() ? $this->orderVoucherData->getVoucherId() : null;
+        $order->partner_id = $this->partnerId;
+        $order->business_id = $this->businessId;
+        $order->vendor_id = $this->vendorId;
+        $order->delivery_address_id = $this->deliveryAddress->id;
+        $order->fill((new RequestIdentification())->get());
+        $this->withCreateModificationField($order);
+        $order->save();
+        return $order;
+    }
+
+    private function _setInfoCallId()
+    {
+        if ($this->infoCallId) {
+            $info_call = InfoCall::whereDoesntHave('order')->where('id', $this->infoCallId)->first();
+            if ($info_call) return $this->infoCallId;
+        }
+        return null;
+    }
+
+    private function _setAffiliationId()
+    {
+        if ($this->affiliationId) {
+            $affiliation = Affiliation::whereDoesntHave('order')->where('id', $this->affiliationId)->first();
+            if ($affiliation) return $this->affiliationId;
+        }
+        return null;
+    }
+
+    private function createPartnerOrder(Order $order)
+    {
+        $partner_order = new PartnerOrder();
+        $partner_order->order_id = $order->id;
+        $partner_order->payment_method = $this->paymentMethod;
+        $this->withCreateModificationField($partner_order);
+        $partner_order->save();
+        return $partner_order;
+    }
+
+    private function createJob(PartnerOrder $partner_order)
+    {
+        $preferred_time = new PreferredTime($this->scheduleTime);
+        $job_data = [
+            'category_id' => $this->category->id,
+            'partner_order_id' => $partner_order->id,
+            'schedule_date' => $this->scheduleDate,
+            'preferred_time' => $preferred_time->toString(),
+            'preferred_time_start' => $preferred_time->getStartString(),
+            'preferred_time_end' => $preferred_time->getEndString(),
+            'crm_id' => $this->crmId,
+            'job_additional_info' => $this->additionalInformation,
+            'category_answers' => $this->categoryAnswers,
+            'material_commission_rate' => config('sheba.material_commission_rate'),
+            'status' => JobStatuses::PENDING,
+        ];
+        if ($this->orderVoucherData->isValid()) {
+            $job_data['discount'] = $this->orderVoucherData->getDiscount();
+            $job_data['sheba_contribution'] = $this->orderVoucherData->getShebaContribution();
+            $job_data['partner_contribution'] = $this->orderVoucherData->getPartnerContribution();
+            $job_data['discount_percentage'] = $this->orderVoucherData->getDiscountPercentage();
+        }
+        $job_data = $this->withCreateModificationField($job_data);
+        return Job::create($job_data);
+    }
+
 }

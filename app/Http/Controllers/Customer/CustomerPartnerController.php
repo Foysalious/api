@@ -6,9 +6,6 @@ use Illuminate\Validation\ValidationException;
 use Sheba\Location\Geo;
 use Sheba\PartnerList\Recommended;
 use Sheba\ServiceRequest\ServiceRequest;
-use Sheba\ServiceRequest\Validator as ServiceRequestValidator;
-
-use Validator;
 
 class CustomerPartnerController extends Controller
 {
@@ -41,7 +38,6 @@ class CustomerPartnerController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
