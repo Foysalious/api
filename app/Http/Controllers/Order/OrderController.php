@@ -52,7 +52,14 @@ class OrderController extends Controller
                 ->setVoucherId($request->voucher)->setServices($request->services)->setScheduleDate($request->date)
                 ->setScheduleTime($request->time)->setVendorId($request->vendor_id)->create();
             if (!$order) return api_response($request, null, 500);
-            return api_response($request, null, 200, ['order' => ['id' => $order->id]]);
+            $job = $order->jobs->first();
+            return api_response($request, null, 200, ['job_id' => $job->id, 'order_code' => $order->code(), 'order' => [
+                'id' => $order->id,
+                'code' => $order->code(),
+                'job' => [
+                    'id' => $job->id
+                ]
+            ]]);
         } catch (\Throwable $e) {
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all()]);
