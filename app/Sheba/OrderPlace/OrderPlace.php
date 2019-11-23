@@ -1,6 +1,5 @@
 <?php namespace Sheba\OrderPlace;
 
-
 use App\Models\Category;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
@@ -13,6 +12,7 @@ use App\Models\PartnerOrder;
 use App\Models\Service;
 use App\Sheba\Checkout\Discount;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 use Sheba\Checkout\Services\RentACarServiceObject;
 use Sheba\Checkout\Services\ServiceObject;
@@ -57,11 +57,14 @@ class OrderPlace
     private $priceCalculation;
     /** @var DiscountCalculation */
     private $discountCalculation;
+    /** @var OrderVoucherData */
+    private $orderVoucherData;
 
     public function __construct()
     {
         $this->priceCalculation = new PriceCalculation();
         $this->discountCalculation = new DiscountCalculation();
+        $this->orderVoucherData = new OrderVoucherData();
     }
 
     /**
@@ -286,14 +289,18 @@ class OrderPlace
 
     public function create()
     {
-        DB::transaction(function () {
-            $order = $this->createOrder();
-            $partner_order = $this->createPartnerOrder($order);
-            $job = $this->createJob($partner_order);
-            $this->createJobService($job);
-            dd($job);
-        });
-        return 1;
+        try {
+            $job_services = $this->createJobService();
+            $this->setVoucherData($job_services);
+            DB::transaction(function () use ($job_services) {
+                $order = $this->createOrder();
+                $partner_order = $this->createPartnerOrder($order);
+                $job = $this->createJob($partner_order);
+                $job->jobServices()->saveMany($job_services);
+            });
+        } catch (QueryException $e) {
+            throw $e;
+        }
     }
 
     private function createOrder()
@@ -306,7 +313,7 @@ class OrderPlace
         $order->sales_channel = $this->salesChannel;
         $order->location_id = $this->deliveryName;
         $order->customer_id = $this->customer->id;
-        $order->voucher_id = $this->voucherId;
+        $order->voucher_id = $this->orderVoucherData->isValid() ? $this->orderVoucherData->getVoucherId() : null;
         $order->partner_id = $this->partnerId;
         $order->business_id = $this->businessId;
         $order->vendor_id = $this->vendorId;
@@ -342,39 +349,57 @@ class OrderPlace
             'job_additional_info' => $this->additionalInformation,
             'category_answers' => $this->categoryAnswers,
             'material_commission_rate' => config('sheba.material_commission_rate'),
-            'status' => JobStatuses::PENDING
+            'status' => JobStatuses::PENDING,
         ];
+        if ($this->orderVoucherData->isValid()) {
+            $job_data['discount'] = $this->orderVoucherData->getDiscount();
+            $job_data['sheba_contribution'] = $this->orderVoucherData->getShebaContribution();
+            $job_data['partner_contribution'] = $this->orderVoucherData->getPartnerContribution();
+            $job_data['discount_percentage'] = $this->orderVoucherData->getDiscountPercentage();
+        }
         $job_data = $this->withCreateModificationField($job_data);
         return Job::create($job_data);
     }
 
-    private function createJobService(Job $job)
+    private function createJobService()
     {
         $job_services = collect();
         foreach ($this->services as $selected_service) {
             /** @var ServiceObject $selected_service */
             $service = $selected_service->getService();
             $location_service = LocationService::where([['service_id', $service->id], ['location_id', $this->location->id]])->first();
-            $this->priceCalculation->setLocationService($location_service)->setService($service)->setOption($selected_service->getOption());
-            $unit_price = $this->priceCalculation->getPrice();
+            $this->priceCalculation->setLocationService($location_service)->setOption($selected_service->getOption());
+            $unit_price = $this->priceCalculation->getUnitPrice();
             $this->discountCalculation->setLocationService($location_service)->setOriginalPrice($unit_price * $selected_service->quantity)->calculate();
-            $service_data = array(
+            $service_data = [
                 'service_id' => $service->id,
                 'quantity' => $selected_service->quantity,
                 'unit_price' => $unit_price,
-                'min_price' => $discount->min_price,
+                'min_price' => 0,
                 'sheba_contribution' => $this->discountCalculation->getShebaContribution(),
                 'partner_contribution' => $this->discountCalculation->getPartnerContribution(),
-                'discount_id' => $this->discountCalculation->getDiscountId(),
-                'discount' => $this->discountCalculation->getDiscount(),
-                'discount_percentage' => $this->discountCalculation->getDiscount(),
+                'location_service_discount_id' => $this->discountCalculation->getDiscountId(),
+                'discount' => $this->discountCalculation->getDiscountedPrice(),
+                'discount_percentage' => $this->discountCalculation->getIsDiscountPercentage() ? $this->discountCalculation->getDiscount() : 0,
                 'name' => $service->name,
                 'variable_type' => $service->variable_type,
-                'surcharge_percentage' => $discount->surchargePercentage
-            );
-            list($service_data['option'], $service_data['variables']) = $this->getVariableOptionOfService($service, $selected_service->option);
+                'surcharge_percentage' => 0
+            ];
+            list($service_data['option'], $service_data['variables']) = $service->getVariableAndOption($selected_service->getOption());
             $job_services->push(new JobService($service_data));
         }
         return $job_services;
+    }
+
+    private function setVoucherData($job_services)
+    {
+        $order_amount = $job_services->map(function ($job_service) {
+                return $job_service->unit_price * $job_service->quantity;
+            })->sum() + 0;
+        if ($this->voucherId) {
+            $result = voucher($this->voucherId)->check($this->category->id, $this->partnerId, $this->location->id, $this->customer->id, $order_amount, $this->salesChannel)->reveal();
+            $this->orderVoucherData->setVoucherRevealData($result);
+        }
+
     }
 }

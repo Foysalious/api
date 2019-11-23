@@ -6,6 +6,7 @@ use App\Models\CategoryGroupCategory;
 use App\Models\CategoryPartner;
 use App\Models\HyperLocal;
 use App\Models\Location;
+use App\Models\LocationService;
 use App\Models\Partner;
 use App\Models\ReviewQuestionAnswer;
 use App\Models\Service;
@@ -14,11 +15,15 @@ use App\Repositories\CategoryRepository;
 use App\Repositories\ServiceRepository;
 use Dingo\Api\Routing\Helpers;
 use Exception;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use DB;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use Sheba\CategoryServiceGroup;
+use Sheba\Dal\LocationServiceDiscount\Model as LocationServiceDiscountModel;
 use Sheba\Location\Coords;
+use Sheba\LocationService\PriceCalculation;
 use Sheba\ModificationFields;
 use Throwable;
 
@@ -312,7 +317,13 @@ class CategoryController extends Controller
         }
     }
 
-    public function getServices($category, Request $request)
+    /**
+     * @param $category
+     * @param Request $request
+     * @param PriceCalculation $price_calculation
+     * @return JsonResponse
+     */
+    public function getServices($category, Request $request, PriceCalculation $price_calculation)
     {
         ini_set('memory_limit', '2048M');
         try {
@@ -338,10 +349,12 @@ class CategoryController extends Controller
             } else {
                 $category = $cat->published()->first();
             }
+
             if ($category != null) {
                 list($offset, $limit) = calculatePagination($request);
                 $scope = [];
                 if ($request->has('scope')) $scope = $this->serviceRepository->getServiceScope($request->scope);
+
                 if ($category->parent_id == null) {
                     if ((int)$request->is_business) {
                         $services = $this->categoryRepository->getServicesOfCategory((Category::where('parent_id', $category->id)->publishedForBusiness()->orderBy('order')->get())->pluck('id')->toArray(), $location, $offset, $limit);
@@ -360,7 +373,12 @@ class CategoryController extends Controller
                                     $query->where('locations.id', $location);
                                 });
                         }
-                        $q->select('id', 'category_id', 'unit', 'name', 'bn_name', 'thumb', 'app_thumb', 'app_banner', 'short_description', 'description', 'banner', 'faqs', 'variables', 'variable_type', 'min_quantity')->orderBy('order')->skip($offset)->take($limit);
+                        $q->select(
+                            'id', 'category_id', 'unit', 'name', 'bn_name', 'thumb',
+                            'app_thumb', 'app_banner', 'short_description', 'description',
+                            'banner', 'faqs', 'variables', 'variable_type', 'min_quantity'
+                        )->orderBy('order')->skip($offset)->take($limit);
+
                         if ((int)\request()->is_business) $q->publishedForBusiness();
                         elseif ((int)\request()->is_for_backend) $q->publishedForAll();
                         elseif ((int)\request()->is_b2b) $q->publishedForB2B();
@@ -375,16 +393,19 @@ class CategoryController extends Controller
                         removeRelationsAndFields($service);
                     });
                 }
+
                 if ($location) {
                     $services->load(['activeSubscription', 'locations' => function ($q) {
-                        $q->select('id');
+                        $q->select('locations.id');
                     }]);
+
                     $services = collect($services);
                     $services = $services->filter(function ($service) use ($location) {
                         $locations = $service->locations->pluck('id')->toArray();
                         return in_array($location, $locations);
                     });
                 }
+
                 if ($request->has('service_id')) {
                     $services = $services->filter(function ($service) use ($request) {
                         return $request->service_id == $service->id;
@@ -392,18 +413,23 @@ class CategoryController extends Controller
                 }
 
                 $subscriptions = collect();
-                $services->each(function (&$service) {
-                    $variables = json_decode($service->variables);
+                $services->each(function (&$service) use ($price_calculation, $location) {
+                    /** @var LocationService $location_service */
+                    $location_service = LocationService::where('location_id', $location)->where('service_id', $service->id)->first();
+                    /** @var LocationServiceDiscountModel $discount */
+                    $discount = $location_service->discounts()->running()->first();
+                    $prices = json_decode($location_service->prices);
+                    $price_calculation->setLocationService($location_service);
                     if ($service->variable_type == 'Options') {
-                        $service['option_prices'] = $this->formatOptionWithPrice($variables->prices);
+                        $service['option_prices'] = $this->formatOptionWithPrice($price_calculation, $prices);
                     } else {
-                        $service['fixed_price'] = 100;
+                        $service['fixed_price'] = $price_calculation->getUnitPrice();
                     }
-                    $service['discount'] = [
-                        'value' => 100,
-                        'is_percentage' => rand(0, 1),
-                        'cap' => 20
-                    ];
+                    $service['discount'] = $discount ? [
+                        'value' => (double)$discount->amount,
+                        'is_percentage' => $discount->isPercentage(),
+                        'cap' => (double)$discount->cap
+                    ] : null;
                 });
                 foreach ($services as $service) {
                     if ($subscription = $service->activeSubscription) {
@@ -455,13 +481,19 @@ class CategoryController extends Controller
         }
     }
 
-    private function formatOptionWithPrice($prices)
+    /**
+     * @param PriceCalculation $price_calculation
+     * @param $prices
+     * @return Collection
+     */
+    private function formatOptionWithPrice(PriceCalculation $price_calculation, $prices)
     {
         $options = collect();
         foreach ($prices as $key => $price) {
-            $options->push(array('option' => collect(explode(',', $key))->map(function ($key) {
+            $option_array = explode(',', $key);
+            $options->push(array('option' => collect($option_array)->map(function ($key) {
                 return (int)$key;
-            }), 'price' => (double)$price));
+            }), 'price' => $price_calculation->setOption($option_array)->getUnitPrice()));
         }
         return $options;
     }

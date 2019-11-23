@@ -1,13 +1,22 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\HyperLocal;
+use App\Models\LocationService;
 use App\Models\Service;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
+use App\Transformers\ServiceV2Transformer;
 use Dingo\Api\Routing\Helpers;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use DB;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Item;
+use League\Fractal\Serializer\ArraySerializer;
+use Sheba\LocationService\PriceCalculation;
 use Sheba\Subscription\ApproximatePriceCalculator;
+use Throwable;
 
 class ServiceController extends Controller
 {
@@ -41,7 +50,7 @@ class ServiceController extends Controller
                 });
             }
             return count($services) != 0 ? api_response($request, $services, 200, ['services' => $services]) : api_response($request, null, 404);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -178,7 +187,38 @@ class ServiceController extends Controller
             }
 
             return api_response($request, $service, 200, ['service' => $service]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param $service
+     * @param Request $request
+     * @param PriceCalculation $price_calculation
+     * @return JsonResponse
+     */
+    public function show($service, Request $request, PriceCalculation $price_calculation)
+    {
+        try {
+            if ($request->has('lat') && $request->has('lng')) {
+                $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+                if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
+                else return api_response($request, null, 404);
+            } else {
+                $location = $request->has('location') ? $request->location : 4;
+            }
+
+            $service = Service::find($service);
+            $location_service = LocationService::where('location_id', $location)->where('service_id', $service->id)->first();
+            $manager = new Manager();
+            $manager->setSerializer(new ArraySerializer());
+            $resource = new Item($service, new ServiceV2Transformer($location_service, $price_calculation));
+            $service  = $manager->createData($resource)->toArray();
+
+            return api_response($request, null, 200, ['service' => $service]);
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

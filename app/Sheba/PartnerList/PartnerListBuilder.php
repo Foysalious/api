@@ -1,0 +1,181 @@
+<?php namespace Sheba\PartnerList;
+
+use App\Models\Partner;
+use App\Sheba\PartnerList\Builder;
+use Carbon\Carbon;
+use Illuminate\Support\Collection;
+use Sheba\Location\Coords;
+use Sheba\Location\Distance\Distance;
+use Sheba\Location\Distance\DistanceStrategy;
+use Sheba\Location\Geo;
+use Sheba\ServiceRequest\ServiceRequestObject;
+use DB;
+
+class PartnerListBuilder implements Builder
+{
+    private $partnerQuery;
+    /** @var  Collection */
+    private $partners;
+    /** @var ServiceRequestObject[] */
+    private $serviceRequestObject;
+    private $partnerIds;
+    /** @var Geo */
+    private $geo;
+
+    public function __construct()
+    {
+        $this->partnerQuery = Partner::query();
+    }
+
+    public function checkCategory()
+    {
+        $this->partnerQuery = $this->partnerQuery->WhereHas('categories', function ($q) {
+            $q->where('categories.id', $this->getCategoryId())->where('category_partner.is_verified', 1);
+        });
+    }
+
+    public function checkService()
+    {
+        $this->partnerQuery = $this->partnerQuery->whereHas('services', function ($query) {
+            $query->whereHas('category', function ($q) {
+                $q->publishedForAny();
+            })->select(DB::raw('count(*) as c'))->whereIn('services.id', $this->getServiceIds())
+                ->where('partner_service.is_published', 1)
+                ->publishedForAll()
+                ->groupBy('partner_id')->havingRaw('c=' . count($this->getServiceIds()));
+            $query->where('partner_service.is_verified', 1);
+        });
+    }
+
+
+    public function checkLeave()
+    {
+        $this->partnerQuery = $this->partnerQuery->whereDoesntHave('leaves', function ($q) {
+            $q->where('end', null)->orWhere([['start', '<=', Carbon::now()], ['end', '>=', Carbon::now()->addDays(7)]]);
+        });
+    }
+
+    public function withResource()
+    {
+        $this->partnerQuery = $this->partnerQuery->with(['handymanResources' => function ($q) {
+            $q->selectRaw('count(distinct resources.id) as total_experts, partner_id')
+                ->join('category_partner_resource', 'category_partner_resource.partner_resource_id', '=', 'partner_resource.id')
+                ->where('category_partner_resource.category_id', $this->getCategoryId())->groupBy('partner_id')->verified();
+        }]);
+    }
+
+    public function WithAvgReview()
+    {
+        $this->partnerQuery = $this->partnerQuery->with(['reviews' => function ($q) {
+            $q->selectRaw("AVG(reviews.rating) as avg_rating")
+                ->selectRaw("reviews.partner_id")
+                ->where('reviews.category_id', $this->getCategoryId())
+                ->groupBy('reviews.partner_id');
+        }]);
+    }
+
+    public function checkPartnerHasResource()
+    {
+        $this->partners = $this->partners->filter(function ($partner) {
+            $handyman_resources = $partner->handymanResources->first();
+            return $handyman_resources && (int)$handyman_resources->total_experts > 0 ? 1 : 0;
+        });
+    }
+
+    public function checkPartner()
+    {
+        if (count($this->partnerIds) > 0) $this->partnerQuery = $this->partnerQuery->whereIn('id', $this->partnerIds);
+    }
+
+    public function checkCanAccessMarketPlace()
+    {
+        $this->partnerQuery = $this->partnerQuery->whereNotIn('package_id', config('sheba.marketplace_not_accessible_packages_id'));
+    }
+
+    public function checkVerification()
+    {
+        $this->partnerQuery = $this->partnerQuery->verified();
+    }
+
+    public function checkPartnerCreditLimit()
+    {
+        $this->partners->load(['walletSetting' => function ($q) {
+            $q->select('id', 'partner_id', 'min_wallet_threshold');
+        }]);
+        $this->partners = $this->partners->filter(function ($partner, $key) {
+            /** @var Partner $partner */
+            return $partner->hasAppropriateCreditLimit();
+        });
+    }
+
+    public function setPartnerIds(array $partner_ids)
+    {
+        $this->partnerIds = $partner_ids;
+        return $this;
+    }
+
+    public function setServiceRequestObjectArray(array $service_request_object)
+    {
+        $this->serviceRequestObject = $service_request_object;
+        return $this;
+    }
+
+    public function setGeo(Geo $geo)
+    {
+        $this->geo = $geo;
+        return $this;
+    }
+
+    private function getCategoryId()
+    {
+        return $this->serviceRequestObject[0]->getCategory()->id;
+    }
+
+    private function getServiceIds()
+    {
+        $service_ids = [];
+        foreach ($this->serviceRequestObject as $serviceRequestObject) {
+            array_push($service_ids, $serviceRequestObject->getServiceId());
+        }
+        return $service_ids;
+    }
+
+
+    public function checkGeoWithinOperationalZone()
+    {
+        // TODO: Implement checkGeoWithinOperationalZone() method.
+    }
+
+    public function checkGeoWithinPartnerRadius()
+    {
+        if (count($this->partners) == 0) return;
+        $current = new Coords($this->geo->getLat(), $this->geo->getLng());
+        $to = $this->partners->map(function ($partner) {
+            $geo = json_decode($partner->geo_informations);
+            return new Coords($geo->lat, $geo->lng, $partner->id);
+        })->toArray();
+        $distance = (new Distance(DistanceStrategy::$VINCENTY))->matrix();
+        $results = $distance->from([$current])->to($to)->sortedDistance()[0];
+        $this->partners = $this->partners->filter(function ($partner) use ($results) {
+            return $results[$partner->id] <= (double)json_decode($partner->geo_informations)->radius * 1000;
+        });
+    }
+
+    public function runQuery()
+    {
+        $this->partners = $this->partnerQuery->get();
+//        dd($this->partners);
+    }
+
+    public function get()
+    {
+        return $this->partners;
+    }
+
+    public function removeShebaHelpDesk()
+    {
+        $this->partners = $this->partners->filter(function ($partner) {
+            return $partner->id != config('sheba.sheba_help_desk_id');
+        });
+    }
+}

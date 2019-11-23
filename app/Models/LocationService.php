@@ -12,4 +12,9 @@ class LocationService extends Model
     {
         return $this->hasMany(LocationServiceDiscount::class);
     }
+
+    public function service()
+    {
+        return $this->belongsTo(Service::class);
+    }
 }

@@ -235,8 +235,9 @@ class Service extends Model
     public function getVariablesOfOptionsService(array $options)
     {
         $variables = [];
-        foreach ((array)(json_decode($this->variables))->options as $key => $service_option) {
+        foreach ($this->getOptions() as $key => $service_option) {
             array_push($variables, [
+                'title' => isset($service_option->title) ? $service_option->title : null,
                 'question' => $service_option->question,
                 'answer' => explode(',', $service_option->answers)[$options[$key]]
             ]);
@@ -247,6 +248,11 @@ class Service extends Model
     public function variable()
     {
         return json_decode($this->variables);
+    }
+
+    public function getOptions()
+    {
+        return (array)$this->variable()->options;
     }
 
     public function flashPrice()
@@ -276,4 +282,17 @@ class Service extends Model
     {
         return $this->belongsToMany(Location::class);
     }
+
+    public function getVariableAndOption(array $options)
+    {
+        if ($this->isOptions()) {
+            $variables = json_encode($this->getVariablesOfOptionsService($options));
+            $options = '[' . implode(',', $options) . ']';
+        } else {
+            $options = '[]';
+            $variables = '[]';
+        }
+        return array($options, $variables);
+    }
+
 }

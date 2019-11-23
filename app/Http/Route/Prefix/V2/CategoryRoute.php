@@ -13,5 +13,8 @@ class CategoryRoute
                 $api->get('locations/{location}/partners', 'CategoryController@getPartnersOfLocation');
             });
         });
+        $api->group(['prefix' => 'services'], function ($api) {
+            $api->get('{service}', 'ServiceController@show');
+        });
     }
 }

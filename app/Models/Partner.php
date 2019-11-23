@@ -19,6 +19,7 @@ use Sheba\MovieTicket\MovieTicketTransaction;
 use Sheba\Partner\BadgeResolver;
 use Sheba\Partner\PartnerStatuses;
 use Sheba\Payment\Wallet;
+use Sheba\Resource\ResourceTypes;
 use Sheba\Reward\Rewardable;
 use Sheba\Subscription\Partner\PartnerSubscriber;
 use Sheba\TopUp\TopUpAgent;
@@ -244,7 +245,7 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
     public function getFirstOperationResource()
     {
         if ($this->resources) {
-            return $this->resources->where('pivot.resource_type', $this->resourceTypes['Operation'])->first();
+            return $this->resources->where('pivot.resource_type', ResourceTypes::OPERATION)->first();
         } else {
             return $this->admins->first();
         }
@@ -253,7 +254,7 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
     public function getFirstAdminResource()
     {
         if ($this->resources) {
-            return $this->resources->where('pivot.resource_type', $this->resourceTypes['Admin'])->first();
+            return $this->resources->where('pivot.resource_type', ResourceTypes::ADMIN)->first();
         } else {
             return $this->admins->first();
         }
@@ -275,24 +276,24 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
 
     public function scopePublished($query)
     {
-        return $query->where('status', 'Verified');
+        return $query->where('status', PartnerStatuses::VERIFIED);
     }
 
     public function scopeVerified($query)
     {
-        return $query->where('status', 'Verified');
+        return $query->where('status', PartnerStatuses::VERIFIED);
     }
 
     public function isVerified()
     {
-        return $this->status === 'Verified';
+        return $this->status === PartnerStatuses::VERIFIED;
     }
 
     public function getContactNumber()
     {
-        if ($operation_resource = $this->operationResources()->first()) return $operation_resource->profile->mobile;
-        if ($admin_resource = $this->admins()->first()) return $admin_resource->profile->mobile;
-        return null;
+        $resource = $this->getContactResource();
+        if(!$resource) return null;
+        return $resource->profile->mobile;
     }
 
     public function getAdmin()

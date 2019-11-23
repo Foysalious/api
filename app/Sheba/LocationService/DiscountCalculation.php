@@ -17,6 +17,12 @@ class DiscountCalculation
     private $shebaContribution;
     private $partnerContribution;
 
+    public function __construct()
+    {
+        $this->shebaContribution = 0;
+        $this->partnerContribution = 0;
+    }
+
     public function setLocationService($location_service)
     {
         $this->locationService = $location_service;

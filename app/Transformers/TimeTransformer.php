@@ -1,15 +1,10 @@
-<?php
-
-namespace App\Transformers;
-
+<?php namespace App\Transformers;
 
 use League\Fractal\TransformerAbstract;
 
 class TimeTransformer extends TransformerAbstract
 {
-    protected $defaultIncludes = [
-        'slots'
-    ];
+    protected $defaultIncludes = ['slots'];
 
     public function transform($time)
     {

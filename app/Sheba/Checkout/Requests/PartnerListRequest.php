@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Sheba\Checkout\Services\RentACarServiceObject;
 use Sheba\Checkout\Services\ServiceObject;
+use Sheba\Portals\Portals;
 
 class PartnerListRequest
 {
@@ -206,5 +207,21 @@ class PartnerListRequest
         if ($this->isWeeklySubscription()) return $this->getSubscriptionQuantity() >= $this->selectedServices->first()->serviceModel->subscription->min_weekly_qty;
         elseif ($this->isMonthlySubscription()) return $this->getSubscriptionQuantity() >= $this->selectedServices->first()->serviceModel->subscription->min_monthly_qty;
         else return true;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isFromAdminPortal()
+    {
+        return strtolower($this->portalName) == Portals::ADMIN;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isFromPartnerPortals()
+    {
+        return in_array($this->portalName, [Portals::PARTNER_WEB, Portals::PARTNER_APP]);
     }
 }
