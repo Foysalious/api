@@ -153,7 +153,7 @@ class BusinessesController extends Controller
                 "name" => $resource->profile->name,
                 "mobile" => $resource->profile->mobile,
                 "nid" => $resource->profile->nid_no,
-                "nid_image_front" => $resource->profile->nid_image_front ?: $resource->nid_image,
+                "nid_image_front" => $resource->profile->nid_image_front ? : $resource->nid_image,
                 "nid_image_back" => $resource->profile->nid_image_back
             ];
             return api_response($request, $resource, 200, ['vendor' => $resource]);
@@ -169,7 +169,7 @@ class BusinessesController extends Controller
             $business = $request->business;
             $manager_member = $request->manager_member;
             $all_notifications = Notification::where('notifiable_type', 'App\Models\Member')
-                ->where('notifiable_id', (int)$manager_member->id)->whereIn('event_type', ['App\Models\Driver', 'App\Models\Vehicle'])
+                ->where('notifiable_id', (int)$manager_member->id)->whereIn('event_type', ['App\Models\Driver', 'App\Models\Vehicle', 'Sheba\Dal\Support\Model'])
                 ->orderBy('id', 'DESC');
 
             $notifications = [];
@@ -180,7 +180,7 @@ class BusinessesController extends Controller
                     "image" => $image,
                     "title" => $notification->title,
                     "is_seen" => $notification->is_seen,
-                    "event_type" => strtolower(class_basename($notification->event_type)),
+                    "event_type" => $notification->getType(),
                     "event_id" => $notification->event_id,
                     "created_at" => $notification->created_at->format('M d h:ia')
                 ]);
@@ -221,4 +221,6 @@ class BusinessesController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+
 }
