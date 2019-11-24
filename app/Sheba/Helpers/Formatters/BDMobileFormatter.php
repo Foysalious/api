@@ -25,8 +25,8 @@ class BDMobileFormatter
 
     public static function reverse($mobile)
     {
-        if(substr( $mobile, 0, 3 ) === "+88") return substr( $mobile, 3, 11 );
-        if(substr( $mobile, 0, 2 ) === "88") return substr( $mobile, 2, 11 );
+        if (substr($mobile, 0, 3) === "+88") return substr($mobile, 3, 11);
+        if (substr($mobile, 0, 2) === "88") return substr($mobile, 2, 11);
         return $mobile;
     }
 

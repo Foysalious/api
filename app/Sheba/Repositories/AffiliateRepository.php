@@ -3,6 +3,7 @@
 use App\Models\Affiliate;
 use App\Models\AffiliateTransaction;
 use Sheba\Voucher\Creator\BroadcastPromo;
+use Sheba\Voucher\VoucherCodeGenerator;
 
 class AffiliateRepository extends BaseRepository
 {
@@ -25,16 +26,7 @@ class AffiliateRepository extends BaseRepository
 
     public function makeAmbassador(Affiliate $affiliate)
     {
-        $voucher = (new BroadcastPromo($affiliate, null, false))
-            ->setVoucherCode($this->getCodeByPhone($affiliate))
-            ->saveVoucher()
-            ->getVoucher();
-
+        $voucher = (new BroadcastPromo($affiliate, null))->getVoucher();
         $affiliate->update(["is_ambassador" => 1, 'ambassador_code' => $voucher->code]);
-    }
-
-    public function getCodeByPhone(Affiliate $affiliate)
-    {
-        return preg_replace("/\+88|\+/", '', $affiliate->profile->mobile);
     }
 }
