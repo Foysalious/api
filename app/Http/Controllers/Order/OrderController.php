@@ -53,19 +53,25 @@ class OrderController extends Controller
                 'emi_month' => 'numeric'
             ], ['mobile' => 'Invalid mobile number!']);
             $this->setModifier($request->customer);
-            $order = $order_place->setCustomer($request->customer)
+            $order = $order_place
+                ->setCustomer($request->customer)
                 ->setDeliveryName($request->name)
                 ->setDeliveryAddressId($request->address_id)
                 ->setPaymentMethod($request->payment_method)
                 ->setDeliveryMobile($request->mobile)
-                ->setCustomer($request->customer)
                 ->setSalesChannel($request->sales_channel)
                 ->setPartnerId($request->partner_id)
                 ->setSelectedPartnerId($request->partner)
-                ->setAdditionalInformation($request->additional_information)->setAffiliationId($request->affiliation_id)
-                ->setInfoCallId($request->info_call_id)->setBusinessId($request->business_id)->setCrmId($request->crm_id)
-                ->setVoucherId($request->voucher)->setServices($request->services)->setScheduleDate($request->date)
-                ->setScheduleTime($request->time)->setVendorId($request->vendor_id)
+                ->setAdditionalInformation($request->additional_information)
+                ->setAffiliationId($request->affiliation_id)
+                ->setInfoCallId($request->info_call_id)
+                ->setBusinessId($request->business_id)
+                ->setCrmId($request->crm_id)
+                ->setVoucherId($request->voucher)
+                ->setServices($request->services)
+                ->setScheduleDate($request->date)
+                ->setScheduleTime($request->time)
+                ->setVendorId($request->vendor_id)
                 ->create();
 
             if (!$order) return api_response($request, null, 500);
@@ -188,18 +194,10 @@ class OrderController extends Controller
     {
         try {
             $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
-            /** @var Partner $partner */
-            $partner = $order->partnerOrders->first()->partner;
             if ((bool)config('sheba.send_order_create_sms')) {
                 if ($this->isSendingServedConfirmationSms($order)) {
                     (new SmsHandler('order-created'))->send($customer->profile->mobile, [
                         'order_code' => $order->code()
-                    ]);
-                }
-
-                if (!$order->jobs->first()->resource_id) {
-                    (new SmsHandler('order-created-to-partner'))->send($partner->getContactNumber(), [
-                        'order_code' => $order->code(), 'partner_name' => $partner->name
                     ]);
                 }
             }
