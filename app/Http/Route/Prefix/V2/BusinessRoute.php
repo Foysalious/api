@@ -13,6 +13,10 @@ class BusinessRoute
                 $api->get('members', 'B2b\MemberController@index');
                 $api->post('/invite', 'B2b\BusinessesController@inviteVendors');
 
+                $api->group(['prefix' => 'notifications'], function ($api) {
+                    $api->get('/', 'B2b\BusinessesController@getNotifications');
+                    $api->post('/{notification}/seen', 'B2b\BusinessesController@notificationSeen');
+                });
                 $api->group(['prefix' => 'vendors'], function ($api) {
                     $api->get('/', 'B2b\BusinessesController@getVendorsList');
                     $api->post('/', 'B2b\VendorController@store');
