@@ -34,14 +34,13 @@ class Creator
     public function create()
     {
         $support = null;
-        DB::transaction(function () {
+        DB::transaction(function () use (&$support) {
             $support = $this->supportRepository->create([
                 'member_id' => $this->member->id,
                 'long_description' => $this->description
             ]);
             $this->notifySuperAdmins($support);
         });
-
         return $support;
     }
 
