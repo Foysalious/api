@@ -374,7 +374,7 @@ class CategoryController extends Controller
                 }
                 if ($location) {
                     $services->load(['activeSubscription', 'locations' => function ($q) {
-                        $q->select('id');
+                        $q->select('locations.id');
                     }]);
                     $services = collect($services);
                     $services = $services->filter(function ($service) use ($location) {
