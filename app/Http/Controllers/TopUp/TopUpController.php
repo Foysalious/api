@@ -166,6 +166,7 @@ class TopUpController extends Controller
                     ->setBulkId($bulk_request->id)
                     ->setMobile(BDMobileFormatter::format($value->$mobile_field))->setAmount($value->$amount_field)->setAgent($agent)->setVendorId($vendor_id)->setName($value->$name_field);
                 $topup_order = $creator->setTopUpRequest($request)->create();
+                if (!$topup_order) return;
 
                 $this->storeBulkRequestNumbers($bulk_request->id, BDMobileFormatter::format($value->$mobile_field), $topup_order->vendor_id);
 
