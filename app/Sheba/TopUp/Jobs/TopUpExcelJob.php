@@ -5,6 +5,7 @@ use Excel;
 use Exception;
 use Maatwebsite\Excel\Readers\LaravelExcelReader;
 
+use Sheba\Dal\TopUpBulkRequest\Statuses;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 
@@ -24,17 +25,18 @@ class TopUpExcelJob extends TopUpJob
     private $sms;
     /** @var LaravelExcelReader */
     private $excel = null;
-    private $bulk_id = null;
+    /** @var TopUpBulkRequest */
+    private $bulk;
 
-    public function __construct($agent, $vendor, TopUpOrder $topup_order, $file, $row, $total_row, $bulk_id = null)
+    public function __construct($agent, $vendor, TopUpOrder $topup_order, $file, $row, $total_row, TopUpBulkRequest $bulk)
     {
         parent::__construct($agent, $vendor, $topup_order);
 
         $this->file = $file;
         $this->row = $row;
         $this->totalRow = $total_row;
-        $this->sms = new Sms(); //app(Sms::class);
-        $this->bulk_id = $bulk_id; //app(Sms::class);
+        $this->sms = new Sms();
+        $this->bulk = $bulk;
     }
 
     /**
@@ -79,8 +81,9 @@ class TopUpExcelJob extends TopUpJob
 
             unlink($this->file);
 
+            $this->updateBulkTopUpStatus(Statuses::COMPLETED);
+
             $msg = "Your top up request has been processed. You can find the results here: " . $file_path;
-            $this->updateBulkTopUpStatus('completed');
 
             $this->sms->shoot($this->agent->getMobile(), $msg);
         }
@@ -88,10 +91,8 @@ class TopUpExcelJob extends TopUpJob
 
     public function updateBulkTopUpStatus($status)
     {
-        $bulk_topup = TopUpBulkRequest::find($this->bulk_id);
+        $this->bulk->status = $status;
 
-        $bulk_topup->status = constants('TOPUP_BULK_REQUEST_STATUS')[$status];
-
-        $bulk_topup->save();
+        $this->bulk->save();
     }
 }
