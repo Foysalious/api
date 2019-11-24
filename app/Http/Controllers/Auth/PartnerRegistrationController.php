@@ -177,7 +177,7 @@ class PartnerRegistrationController extends Controller
 
         app()->make(ActionRewardDispatcher::class)->run('partner_creation_bonus', $partner, $partner);
 
-//        $this->storeExpense($partner);
+        $this->storeExpense($partner);
         return $partner;
     }
 
