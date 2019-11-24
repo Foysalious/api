@@ -224,14 +224,11 @@ class OrderController extends Controller
     {
         $affiliate = Affiliate::find($affiliate);
         $agent_mobile = $affiliate->profile->mobile;
-        $partner = $order->partnerOrders->first()->partner;
         $job = $order->lastJob();
 
         (new SmsHandler('order-created-to-bondhu'))->send($agent_mobile, [
             'service_name' => $job->category->name,
             'order_code' => $order->code(),
-            'partner_name' => $partner->name,
-            'partner_number' => $partner->getContactNumber(),
             'preferred_time' => $job->preferred_time,
             'preferred_date' => $job->schedule_date,
         ]);
