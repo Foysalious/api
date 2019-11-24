@@ -24,7 +24,7 @@ class NotificationController extends Controller
                 array_push($final, [
                     'id' => $notification->id,
                     'message' => $notification->title,
-                    'type' => strtolower(str_replace('App\Models\\', '', $notification->event_type)),
+                    'type' => $notification->getType(),
                     'type_id' => $notification->event_id,
                     'is_seen' => $notification->is_seen,
                     'created_at' => $notification->created_at->toDateTimeString()

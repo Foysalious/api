@@ -3,16 +3,20 @@
 
 use App\Models\Member;
 use Sheba\Dal\Support\SupportRepositoryInterface;
+use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
+use DB;
 
 class Creator
 {
     private $supportRepository;
+    private $businessMemberRepository;
     private $member;
     private $description;
 
-    public function __construct(SupportRepositoryInterface $support_repository)
+    public function __construct(SupportRepositoryInterface $support_repository, BusinessMemberRepositoryInterface $business_member_repository)
     {
         $this->supportRepository = $support_repository;
+        $this->businessMemberRepository = $business_member_repository;
     }
 
     public function setMember(Member $member)
@@ -29,9 +33,30 @@ class Creator
 
     public function create()
     {
-        return $this->supportRepository->create([
-            'member_id' => $this->member->id,
-            'long_description' => $this->description
-        ]);
+        $support = null;
+        DB::transaction(function () {
+            $support = $this->supportRepository->create([
+                'member_id' => $this->member->id,
+                'long_description' => $this->description
+            ]);
+            $this->notifySuperAdmins($support);
+        });
+
+        return $support;
+    }
+
+    private function notifySuperAdmins($support)
+    {
+        $super_admins = $this->businessMemberRepository->where('member_id', $this->member->id)->where('is_super', 1)
+            ->where('business_id', $this->member->businesses()->first()->id)->get();
+        foreach ($super_admins as $super_admin) {
+            notify()->member($super_admin->member)->send([
+                'title' => $this->member->profile->name . ' #' . $this->member->id . ' has created a Support Ticket',
+                'type' => 'warning',
+                'event_type' => 'Sheba\Dal\Support\Model',
+                'event_id' => $support->id
+            ]);
+        }
+
     }
 }
