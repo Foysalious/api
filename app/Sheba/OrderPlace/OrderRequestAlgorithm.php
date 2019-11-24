@@ -52,7 +52,7 @@ class OrderRequestAlgorithm
             $rating = $partner->reviews->first() ? $partner->reviews->first()->avg_rating : 0;
             if ($rating <= 4.6 && $completed_orders > 50) $this->firstUserGroupPartners->push($partner);
         }
-        return $this->firstUserGroupPartners;
+        return $this->firstUserGroupPartners->count() > 0 ? $this->firstUserGroupPartners : $this->partners;
     }
 
 
@@ -63,7 +63,7 @@ class OrderRequestAlgorithm
             $rating = $partner->reviews->first() ? $partner->reviews->first()->avg_rating : 0;
             if ($rating >= 4.20 && $rating <= 4.59 && $completed_orders > 10) $this->secondUserGroupPartners->push($partner);
         }
-        return $this->secondUserGroupPartners;
+        return $this->secondUserGroupPartners->count() > 0 ? $this->secondUserGroupPartners : $this->partners;
     }
 
 }
