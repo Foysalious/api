@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Models\BusinessJoinRequest;
+use App\Models\Notification;
 use App\Models\Partner;
 use App\Models\Profile;
 use App\Models\Resource;
@@ -152,7 +153,7 @@ class BusinessesController extends Controller
                 "name" => $resource->profile->name,
                 "mobile" => $resource->profile->mobile,
                 "nid" => $resource->profile->nid_no,
-                "nid_image_front" => $resource->profile->nid_image_front ? : $resource->nid_image,
+                "nid_image_front" => $resource->profile->nid_image_front ?: $resource->nid_image,
                 "nid_image_back" => $resource->profile->nid_image_back
             ];
             return api_response($request, $resource, 200, ['vendor' => $resource]);
@@ -161,4 +162,65 @@ class BusinessesController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function getNotifications($business, Request $request)
+    {
+        try {
+            $business = $request->business;
+            $manager_member = $request->manager_member;
+            $all_notifications = Notification::where('notifiable_type', 'App\Models\Member')
+                ->where('notifiable_id', (int)$manager_member->id)->whereIn('event_type', ['App\Models\Driver', 'App\Models\Vehicle', 'Sheba\Dal\Support\Model'])
+                ->orderBy('id', 'DESC');
+
+            $notifications = [];
+            foreach ($all_notifications->get() as $notification) {
+                $image = $this->getImage($notification);
+                array_push($notifications, [
+                    "id" => $notification->id,
+                    "image" => $image,
+                    "title" => $notification->title,
+                    "is_seen" => $notification->is_seen,
+                    "event_type" => $notification->getType(),
+                    "event_id" => $notification->event_id,
+                    "created_at" => $notification->created_at->format('M d h:ia')
+                ]);
+            }
+            return api_response($request, $notifications, 200, ['notifications' => $notifications]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    private function getImage($notification)
+    {
+        $event_type = $notification->event_type;
+        $model = $event_type::find((int)$notification->event_id);
+        $image = '';
+        if (class_basename($model) == 'Driver') {
+            $image = $model->profile->pro_pic;
+        }
+        if (class_basename($model) == 'Vehicle') {
+            $image = $model->basicInformation->vehicle_image;
+        }
+        return $image;
+    }
+
+    public function notificationSeen($business, $notification, Request $request)
+    {
+        try {
+            $notification = Notification::find((int)$notification);
+            if ($notification->is_seen == 1)
+                return api_response($request, null, 403, ['message' => 'This notification already seen']);
+            $notification->seen();
+            $business = $request->business;
+            $this->setModifier($business);
+            return api_response($request, null, 200);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+
 }

@@ -12,7 +12,10 @@ class BusinessRoute
             $api->group(['prefix' => '{business}'], function ($api) {
                 $api->get('members', 'B2b\MemberController@index');
                 $api->post('/invite', 'B2b\BusinessesController@inviteVendors');
-
+                $api->group(['prefix' => 'notifications'], function ($api) {
+                    $api->get('/', 'B2b\BusinessesController@getNotifications');
+                    $api->post('/{notification}/seen', 'B2b\BusinessesController@notificationSeen');
+                });
                 $api->group(['prefix' => 'vendors'], function ($api) {
                     $api->get('/', 'B2b\BusinessesController@getVendorsList');
                     $api->post('/', 'B2b\VendorController@store');
@@ -183,6 +186,12 @@ class BusinessRoute
                     $api->post('/{log}/comments', 'B2b\FuelLogController@storeComment');
                     $api->get('/{log}/comments', 'B2b\FuelLogController@getComments');
                 });
+                $api->group(['prefix' => 'supports'], function ($api) {
+                    $api->get('/', 'B2b\SupportController@index');
+                    $api->group(['prefix' => '{support}'], function ($api) {
+                        $api->get('/', 'B2b\SupportController@show');
+                    });
+                });
             });
         });
         $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {
@@ -248,6 +257,13 @@ class BusinessRoute
                 });
                 $api->group(['prefix' => 'inspections'], function ($api) {
                     $api->get('/', 'B2b\InspectionController@individualInspection');
+                });
+                $api->group(['prefix' => 'supports'], function ($api) {
+                    $api->get('/', 'B2b\SupportContoller@index');
+                    $api->group(['prefix' => '{support}'], function ($api) {
+                        $api->post('resolve', 'B2b\SupportController@resolve');
+                        $api->get('/', 'B2b\SupportController@show');
+                    });
                 });
             });
         });

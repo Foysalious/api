@@ -23,8 +23,8 @@ class Creator
 
     public function __construct(AffiliateRepository $affiliate_repo, WalletTransactionHandler $wallet_transaction_handler)
     {
-        $this->affiliateRepo = $affiliate_repo;
-        $this->affiliateBonusAmount = constants('AFFILIATION_REGISTRATION_BONUS');
+        $this->affiliateRepo            = $affiliate_repo;
+        $this->affiliateBonusAmount     = constants('AFFILIATION_REGISTRATION_BONUS');
         $this->walletTransactionHandler = $wallet_transaction_handler;
     }
 
@@ -45,6 +45,7 @@ class Creator
         $this->affiliate = $this->affiliateRepo->setModel(new Affiliate())->create($data);
         $this->registrationBonus();
         (new NotificationRepository())->forAffiliateRegistration($this->affiliate);
+        $this->affiliateRepo->makeAmbassador($this->affiliate);
     }
 
     private function registrationBonus()

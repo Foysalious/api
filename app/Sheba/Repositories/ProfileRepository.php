@@ -78,10 +78,13 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
     {
         $mobile = isset($data['mobile']) ? $data['mobile'] : null;
         $email = isset($data['email']) ? $data['email'] : null;
+        $nid_no = isset($data['nid_no']) ? $data['nid_no'] : null;
         $eProfile = $this->checkExistingEmail($email);
         $mProfile = $this->checkExistingMobile($mobile);
+        $nProfile = $this->checkExistingNid($nid_no);
         if ($eProfile && $eProfile->id != $profile->id) return 'email';
         if ($mProfile && $mProfile->id != $profile->id) return 'phone';
+        if ($nProfile && $nProfile->id != $profile->id) return 'nid_no';
         return true;
     }
 
@@ -110,6 +113,11 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
         $email = filter_var($email, FILTER_VALIDATE_EMAIL) ? $email : null;
         if (!$email) return null;
         return Profile::where('email', $email)->first();
+    }
+
+    public function checkExistingNid($nid_no)
+    {
+        return Profile::where('nid_no', $nid_no)->first();
     }
 
     /**

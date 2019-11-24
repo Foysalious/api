@@ -64,7 +64,6 @@ class CategoryController extends Controller
 
             return api_response($request, $sub_categories, 200, $data);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -95,7 +94,7 @@ class CategoryController extends Controller
     {
         return [
             'id', 'partner_id', 'pos_category_id', 'name', 'publication_status', 'is_published_for_shop',
-            'thumb', 'banner', 'app_thumb', 'app_banner', 'cost', 'price', 'wholesale_price','vat_percentage', 'stock', 'unit', 'warranty', 'warranty_unit'
+            'thumb', 'banner', 'app_thumb', 'app_banner', 'cost', 'price', 'wholesale_price','vat_percentage', 'stock', 'unit', 'warranty', 'warranty_unit','show_image','shape','color'
         ];
     }
 

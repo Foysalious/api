@@ -21,10 +21,12 @@ use Sheba\Transport\Bus\BusTicketCommission;
 use Sheba\Transport\TransportAgent;
 use Sheba\Transport\TransportTicketTransaction;
 use Sheba\Voucher\Contracts\CanApplyVoucher;
+use Sheba\Voucher\VoucherCodeGenerator;
+use Sheba\Voucher\VoucherGeneratorTrait;
 
 class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAgent, CanApplyVoucher, Rechargable, HasWalletTransaction
 {
-    use TopUpTrait, MovieTicketTrait, Wallet, ModificationFields;
+    use TopUpTrait, MovieTicketTrait, Wallet, ModificationFields, VoucherGeneratorTrait;
 
     public static $savedEventClass = AffiliateSaved::class;
     protected $guarded = ['id'];
@@ -317,5 +319,13 @@ class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAg
     public function getMobile()
     {
         return $this->profile->mobile;
+    }
+
+    public function generateReferral()
+    {
+        if ($this->profile->mobile)
+            return formatMobileReverse($this->profile->mobile);
+
+        return VoucherCodeGenerator::byName($this->profile->name);
     }
 }

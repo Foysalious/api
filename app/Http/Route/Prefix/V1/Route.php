@@ -1,10 +1,12 @@
 <?php namespace App\Http\Route\Prefix\V1;
 
+
 class Route
 {
     public function set($api)
     {
         $api->group(['prefix' => 'v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
+            (new EmployeeRoute())->set($api);
             $api->group(['prefix' => 'geo'], function ($api) {
                 $api->get('geocode/reverse', 'GeocodeController@reverseGeocode');
             });
