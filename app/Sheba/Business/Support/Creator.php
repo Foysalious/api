@@ -46,7 +46,7 @@ class Creator
 
     private function notifySuperAdmins($support)
     {
-        $super_admins = $this->businessMemberRepository->where('member_id', $this->member->id)->where('is_super', 1)
+        $super_admins = $this->businessMemberRepository->where('is_super', 1)
             ->where('business_id', $this->member->businesses()->first()->id)->get();
         foreach ($super_admins as $super_admin) {
             notify()->member($super_admin->member)->send([
