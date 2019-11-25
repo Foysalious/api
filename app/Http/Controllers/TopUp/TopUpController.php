@@ -26,6 +26,7 @@ use Storage;
 use Throwable;
 use Validator;
 
+
 class TopUpController extends Controller
 {
     public function getVendor(Request $request)
@@ -163,8 +164,11 @@ class TopUpController extends Controller
                 $vendor_id = $vendor->getIdByName($value->$operator_field);
                 $request = $top_up_request->setType($value->$type_field)
                     ->setBulkId($bulk_request->id)
-                    ->setMobile(BDMobileFormatter::format($value->$mobile_field))->setAmount($value->$amount_field)->setAgent($agent)->setVendorId($vendor_id)->setName($value->$name_field);
+                    ->setMobile(BDMobileFormatter::format($value->$mobile_field))
+                    ->setAmount($value->$amount_field)
+                    ->setAgent($agent)->setVendorId($vendor_id)->setName($value->$name_field);
                 $topup_order = $creator->setTopUpRequest($request)->create();
+                if (!$topup_order) return;
 
                 $this->storeBulkRequestNumbers($bulk_request->id, BDMobileFormatter::format($value->$mobile_field), $topup_order->vendor_id);
 
