@@ -38,11 +38,16 @@ class ServiceV2Transformer extends TransformerAbstract
             'min_quantity'  => $service->min_quantity,
             'faqs'          => json_decode($service->faqs),
             'description'   => $service->description,
-            'discount'      => $discount ? [
+            /*'discount'      => $discount ? [
                 'value' => (double)$discount->amount,
                 'is_percentage' => $discount->isPercentage(),
                 'cap' => (double)$discount->cap
-            ] : null
+            ] : null*/
+            'discount' => [
+                'value' => 100,
+                'is_percentage' => rand(0, 1),
+                'cap' => 20
+            ]
         ];
         if ($service->variable_type == Type::FIXED)
             $data['fixed_price'] = $this->priceCalculation->getUnitPrice();

@@ -425,11 +425,16 @@ class CategoryController extends Controller
                     } else {
                         $service['fixed_price'] = $price_calculation->getUnitPrice();
                     }
-                    $service['discount'] = $discount ? [
+                    /*$service['discount'] = $discount ? [
                         'value' => (double)$discount->amount,
                         'is_percentage' => $discount->isPercentage(),
                         'cap' => (double)$discount->cap
-                    ] : null;
+                    ] : null;*/
+                    $service['discount'] = [
+                        'value' => 100,
+                        'is_percentage' => rand(0, 1),
+                        'cap' => 20
+                    ];
                 });
                 foreach ($services as $service) {
                     if ($subscription = $service->activeSubscription) {
