@@ -619,7 +619,8 @@ return [
         'inch'  => ['bn' => 'ইঞ্চি', 'en' => 'inch'],
         'bosta' => ['bn' => 'বস্তা', 'en' => 'bosta'],
         'unit'  => ['bn' => 'টি', 'en' => 'unit'],
-        'set'   => ['bn' => 'সেট', 'en' => 'set']
+        'set'   => ['bn' => 'সেট', 'en' => 'set'],
+        'carton'   => ['bn' => 'কার্টন', 'en' => 'carton']
     ],
     'TICKET_LOG'                                  => [
         'movie_ticket_purchase'     => [

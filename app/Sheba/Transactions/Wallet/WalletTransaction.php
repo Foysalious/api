@@ -31,6 +31,7 @@ class WalletTransaction
      */
     protected function debitWallet()
     {
+        $this->model->reload();
         /** @noinspection PhpUndefinedFieldInspection */
         $this->model->wallet -= $this->amount;
         $this->model->update();
@@ -42,6 +43,7 @@ class WalletTransaction
      */
     protected function creditWallet()
     {
+        $this->model->reload();
         /** @noinspection PhpUndefinedFieldInspection */
         $this->model->wallet += $this->amount;
         $this->model->update();
