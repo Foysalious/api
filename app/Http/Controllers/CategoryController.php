@@ -168,7 +168,7 @@ class CategoryController extends Controller
 
             if ($with) {
                 $categories->with(['children' => function ($q) use ($location_id, $best_deal_category_ids) {
-                    $q->select('id', 'name', 'thumb', 'parent_id', 'app_thumb')
+                    $q->select('id', 'name', 'thumb', 'parent_id', 'app_thumb', 'icon_png', 'icon')
                         ->whereHas('locations', function ($q) use ($location_id) {
                             $q->select('locations.id')->where('locations.id', $location_id);
                         })->whereHas('services', function ($q) use ($location_id) {
