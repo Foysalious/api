@@ -6,6 +6,12 @@ class Geo
     private $lat;
     private $lng;
 
+    public function __construct($lat = null, $lng = null)
+    {
+        $this->setLat($lat);
+        $this->setLng($lng);
+    }
+
     public function setLat($lat)
     {
         $this->lat = $lat;

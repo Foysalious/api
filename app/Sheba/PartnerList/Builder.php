@@ -1,4 +1,4 @@
-<?php namespace App\Sheba\PartnerList;
+<?php namespace Sheba\PartnerList;
 
 
 use Sheba\Location\Geo;
@@ -54,5 +54,9 @@ interface Builder
     public function setScheduleDate($date);
 
     public function setScheduleTime($time);
+
+    public function get();
+
+    public function first();
 
 }

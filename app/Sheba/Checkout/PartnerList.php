@@ -61,7 +61,7 @@ class PartnerList
 
     public function __construct()
     {
-        $this->partnerServiceRepository = new PartnerServiceRepository();
+        $this->partnerServiceRepository = app(PartnerServiceRepository::class);
         $this->notFoundValues = [
             'service' => [],
             'location' => [],
@@ -72,7 +72,7 @@ class PartnerList
             'availability' => []
         ];
         $this->priceBreakdownCalculator = app(PartnerPricingBreakdownCalculator::class);
-        $this->impressions = new ImpressionManager();
+        $this->impressions = app(ImpressionManager::class);
     }
 
     public function setPartnerListRequest(PartnerListRequest $partner_list_request)

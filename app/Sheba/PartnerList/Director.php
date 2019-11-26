@@ -1,8 +1,6 @@
 <?php namespace Sheba\PartnerList;
 
 
-use App\Sheba\PartnerList\Builder;
-
 class Director
 {
     /** @var Builder */
@@ -16,24 +14,19 @@ class Director
 
     public function buildPartnerList()
     {
-        $this->builder->checkCategory();
-        $this->builder->checkService();
-        $this->builder->checkLeave();
-        $this->builder->checkPartnerVerification();
-        $this->builder->checkPartner();
-        $this->builder->checkCanAccessMarketPlace();
-        $this->builder->withResource();
-        $this->builder->withAvgReview();
+        $this->buildBaseQuery();
         $this->builder->runQuery();
-        $this->builder->checkOption();
-        $this->builder->checkGeoWithinPartnerRadius();
-        $this->builder->checkPartnerCreditLimit();
-        $this->builder->checkPartnerDailyOrderLimit();
-        $this->builder->checkPartnerHasResource();
-        $this->builder->removeShebaHelpDesk();
+        $this->filterBaseConditions();
     }
 
     public function buildPartnerListForOrderPlacement()
+    {
+        $this->buildQueryForOrderPlace();
+        $this->builder->runQuery();
+        $this->filterForOrderPlace();
+    }
+
+    private function buildBaseQuery()
     {
         $this->builder->checkCategory();
         $this->builder->checkService();
@@ -43,18 +36,30 @@ class Director
         $this->builder->checkCanAccessMarketPlace();
         $this->builder->withResource();
         $this->builder->withAvgReview();
-        $this->builder->withService();
-        $this->builder->withTotalCompletedOrder();
-        $this->builder->runQuery();
+    }
+
+    private function filterBaseConditions()
+    {
         $this->builder->checkOption();
         $this->builder->checkGeoWithinPartnerRadius();
         $this->builder->checkPartnerCreditLimit();
         $this->builder->checkPartnerDailyOrderLimit();
         $this->builder->checkPartnerHasResource();
-        $this->builder->checkPartnerAvailability();
         $this->builder->removeShebaHelpDesk();
-        $this->builder->removeUnavailablePartners();
+    }
 
+    private function buildQueryForOrderPlace()
+    {
+        $this->buildBaseQuery();
+        $this->builder->withService();
+        $this->builder->withTotalCompletedOrder();
+    }
+
+    private function filterForOrderPlace()
+    {
+        $this->filterBaseConditions();
+        $this->builder->checkPartnerAvailability();
+        $this->builder->removeUnavailablePartners();
     }
 
 }

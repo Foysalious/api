@@ -4,9 +4,11 @@ use Illuminate\Database\Eloquent\Model;
 use Sheba\Checkout\Services\ServiceWithPrice;
 use Sheba\Checkout\Services\SubscriptionServicePricingAndBreakdown;
 use Sheba\Checkout\SubscriptionOrderInterface;
+use Sheba\Dal\SubscriptionOrder\Cycles;
 use Sheba\Dal\SubscriptionOrder\Statuses;
 use Sheba\Payment\PayableType;
 use Sheba\Dal\SubscriptionOrderPayment\Model as SubscriptionOrderPayment;
+use Sheba\ServiceRequest\ServiceRequestObject;
 
 class SubscriptionOrder extends Model implements SubscriptionOrderInterface, PayableType
 {
@@ -49,6 +51,19 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface, Pay
     public function schedules()
     {
         return json_decode($this->schedules);
+    }
+
+    public function getScheduleDates()
+    {
+        $schedules = $this->schedules();
+        return array_map(function($schedule) {
+            return $schedule['date'];
+        }, $schedules);
+    }
+
+    public function getScheduleTime()
+    {
+        return $this->schedules()[0]['time'];
     }
 
     public function deliveryAddress()
@@ -123,13 +138,14 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface, Pay
     }
 
     /**
-     * @return ServiceWithPrice[]
+     * @return ServiceRequestObject[]
      */
-    public function getServicesWithPrice()
+    public function getServiceRequestObjects()
     {
         return array_map(function($service) {
-            return new ServiceWithPrice($service);
-        }, json_decode($this->services, true));
+            return (new ServiceRequestObject())->setServiceId($service['id'])
+                ->setQuantity($service['quantity'])->setOption($service['option'])->build();
+        }, json_decode($this->service_details, true)['breakdown']);
     }
 
     /**
@@ -138,5 +154,15 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface, Pay
     public function getServicesPriceBreakdown()
     {
         return new SubscriptionServicePricingAndBreakdown(json_decode($this->service_details, true));
+    }
+
+    public function isWeekly()
+    {
+        return $this->billing_cycle == Cycles::WEEKLY;
+    }
+
+    public function isMonthly()
+    {
+        return $this->billing_cycle == Cycles::MONTHLY;
     }
 }
