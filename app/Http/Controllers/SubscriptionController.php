@@ -4,8 +4,10 @@ use App\Models\Category;
 use App\Models\HyperLocal;
 use App\Models\Service;
 use App\Models\ServiceSubscription;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\Subscription\ApproximatePriceCalculator;
+use Throwable;
 
 class SubscriptionController extends Controller
 {
@@ -113,7 +115,7 @@ class SubscriptionController extends Controller
                 return api_response($request, $parents, 200, ['category' => $parents]);
             else
                 return api_response($request, null, 404);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -153,12 +155,18 @@ class SubscriptionController extends Controller
                 return api_response($request, $subscriptions, 200, ['subscriptions' => $subscriptions->values()->all()]);
             else
                 return api_response($request, null, 404);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
+    /**
+     * @param $serviceSubscription
+     * @param Request $request
+     * @param ApproximatePriceCalculator $approximatePriceCalculator
+     * @return JsonResponse
+     */
     public function show($serviceSubscription, Request $request, ApproximatePriceCalculator $approximatePriceCalculator)
     {
         try {
@@ -171,21 +179,25 @@ class SubscriptionController extends Controller
                 } else $location = 4;
             }
 
+            /** @var ServiceSubscription $serviceSubscription */
             $serviceSubscription = ServiceSubscription::find((int)$serviceSubscription);
             if (!in_array($location, $serviceSubscription->service->locations->pluck('id')->toArray()))
                 return api_response($request, null, 404);
             $options = $this->serviceQuestionSet($serviceSubscription->service);
             $serviceSubscription['questions'] = json_encode($options, true);
             $answers = collect();
-            if ($options)
+            if ($options) {
                 foreach ($options as $option) {
                     $answers->push($option["answers"]);
                 }
+            }
 
-            $price_range = $approximatePriceCalculator->setSubscription($serviceSubscription)->getPriceRange();
-            $serviceSubscription['max_price'] = $price_range['max_price'] > 0 ? $price_range['max_price'] : 0;
-            $serviceSubscription['min_price'] = $price_range['min_price'] > 0 ? $price_range['min_price'] : 0;
-            $serviceSubscription['price_applicable_for'] = $price_range['price_applicable_for'];
+            // $price_range = $approximatePriceCalculator->setSubscription($serviceSubscription)->getPriceRange();
+            $approximatePriceCalculator->setSubscription($serviceSubscription);
+            // $serviceSubscription['max_price'] = $price_range['max_price'] > 0 ? $price_range['max_price'] : 0;
+            // $serviceSubscription['min_price'] = $price_range['min_price'] > 0 ? $price_range['min_price'] : 0;
+
+            $serviceSubscription['price_applicable_for'] = $approximatePriceCalculator->getSubscriptionType();
             $serviceSubscription['thumb'] = $serviceSubscription->service['thumb'];
             $serviceSubscription['banner'] = $serviceSubscription->service['banner'];
             $serviceSubscription['unit'] = $serviceSubscription->service['unit'];
@@ -195,18 +207,20 @@ class SubscriptionController extends Controller
                 'They will ensure 100% satisfaction'
             ];
             $serviceSubscription['offers'] = $serviceSubscription->getDiscountOffers();
+
             if ($options) {
                 if (count($answers) > 1)
                     $serviceSubscription['service_breakdown'] = $this->breakdown_service_with_min_max_price($answers, $serviceSubscription['min_price'], $serviceSubscription['max_price']);
                 else {
-                    $total_breakdown = array();
+                    $total_breakdown = [];
                     foreach ($answers[0] as $index => $answer) {
-                        $breakdown = array(
+                        $breakdown = [
                             'name' => $answer,
-                            'indexes' => array($index),
+                            'indexes' => [$index],
                             'min_price' => $serviceSubscription['min_price'],
-                            'max_price' => $serviceSubscription['max_price']
-                        );
+                            'max_price' => $serviceSubscription['max_price'],
+                            'price'     => 100
+                        ];
                         array_push($total_breakdown, $breakdown);
                     }
                     $serviceSubscription['service_breakdown'] = $total_breakdown;
@@ -222,7 +236,7 @@ class SubscriptionController extends Controller
             }
             removeRelationsAndFields($serviceSubscription);
             return api_response($request, $serviceSubscription, 200, ['details' => $serviceSubscription]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -269,7 +283,7 @@ class SubscriptionController extends Controller
                 array_push($min_price, $min);
             }
             return array((double)max($max_price) * $service->min_quantity, (double)min($min_price) * $service->min_quantity);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return array(0, 0);
         }
     }
@@ -293,41 +307,35 @@ class SubscriptionController extends Controller
             $max_min_price = array((double)max($max_price) * $service->min_quantity, (double)min($min_price) * $service->min_quantity);
             $offer = $subscription->getDiscountOffer('asc');
 //            return array((double)max($max_price) * $service->min_quantity, (double)min($min_price) * $service->min_quantity);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return array(0, 0);
         }
     }
 
     private function breakdown_service_with_min_max_price($arrays, $min_price, $max_price, $i = 0)
     {
-        if (!isset($arrays[$i])) {
-            return array();
-        }
-
-        if ($i == count($arrays) - 1) {
-            return $arrays[$i];
-        }
+        if (!isset($arrays[$i])) return [];
+        if ($i == count($arrays) - 1) return $arrays[$i];
 
         $tmp = $this->breakdown_service_with_min_max_price($arrays, $min_price, $max_price, $i + 1);
 
-        $result = array();
+        $result = [];
 
         foreach ($arrays[$i] as $array_index => $v) {
-
             foreach ($tmp as $index => $t) {
-                $result[] = is_array($t) ?
-                    array(
-                        'name' => $v . " - " . $t['name'],
-                        'indexes' => array_merge(array($array_index), $t['indexes']),
-                        'min_price' => $t['min_price'],
-                        'max_price' => $t['max_price'],
-                    ) :
-                    array(
-                        'name' => $v . " - " . $t,
-                        'indexes' => array($array_index, $index),
-                        'min_price' => $min_price,
-                        'max_price' => $max_price
-                    );
+                $result[] = is_array($t) ? [
+                    'name' => $v . " - " . $t['name'],
+                    'indexes' => array_merge([$array_index], $t['indexes']),
+                    'min_price' => $t['min_price'],
+                    'max_price' => $t['max_price'],
+                    'price'     => 100.55
+                ] : [
+                    'name' => $v . " - " . $t,
+                    'indexes' => [$array_index, $index],
+                    'min_price' => $min_price,
+                    'max_price' => $max_price,
+                    'price'     => 500.55
+                ];
             }
         }
 
