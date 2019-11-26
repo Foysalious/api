@@ -21,7 +21,7 @@ use DB;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use Sheba\CategoryServiceGroup;
-use Sheba\Dal\LocationServiceDiscount\Model as LocationServiceDiscountModel;
+use Sheba\Dal\ServiceDiscount\Model as ServiceDiscount;
 use Sheba\Location\Coords;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\ModificationFields;
@@ -416,7 +416,7 @@ class CategoryController extends Controller
                 $services->each(function (&$service) use ($price_calculation, $location) {
                     /** @var LocationService $location_service */
                     $location_service = LocationService::where('location_id', $location)->where('service_id', $service->id)->first();
-                    /** @var LocationServiceDiscountModel $discount */
+                    /** @var ServiceDiscount $discount */
                     $discount = $location_service->discounts()->running()->first();
                     $prices = json_decode($location_service->prices);
                     $price_calculation->setLocationService($location_service);
@@ -425,16 +425,11 @@ class CategoryController extends Controller
                     } else {
                         $service['fixed_price'] = $price_calculation->getUnitPrice();
                     }
-                    /*$service['discount'] = $discount ? [
+                    $service['discount'] = $discount ? [
                         'value' => (double)$discount->amount,
                         'is_percentage' => $discount->isPercentage(),
                         'cap' => (double)$discount->cap
-                    ] : null;*/
-                    $service['discount'] = [
-                        'value' => 100,
-                        'is_percentage' => rand(0, 1),
-                        'cap' => 20
-                    ];
+                    ] : null;
                 });
                 foreach ($services as $service) {
                     if ($subscription = $service->activeSubscription) {
@@ -481,6 +476,7 @@ class CategoryController extends Controller
                 return api_response($request, null, 404);
             }
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
