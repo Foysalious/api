@@ -85,5 +85,6 @@ class ServiceRequestObject
     {
         $this->service = Service::find($this->serviceId);
         $this->category = $this->service->category;
+        return $this;
     }
 }

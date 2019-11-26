@@ -2,8 +2,8 @@
 
 use App\Models\Partner;
 use App\Sheba\Partner\PartnerAvailable;
-use App\Sheba\PartnerList\Builder;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Support\Collection;
 use Sheba\Checkout\Partners\PartnerUnavailabilityReasons;
 use Sheba\Location\Coords;
@@ -15,7 +15,7 @@ use DB;
 
 class PartnerListBuilder implements Builder
 {
-    private $partnerQuery;
+    protected $partnerQuery;
     private $scheduleDate;
     private $scheduleTime;
     /** @var  Collection */
@@ -41,16 +41,20 @@ class PartnerListBuilder implements Builder
     public function checkService()
     {
         $this->partnerQuery = $this->partnerQuery->whereHas('services', function ($query) {
-            $query->whereHas('category', function ($q) {
-                $q->publishedForAny();
-            })->select(DB::raw('count(*) as c'))->whereIn('services.id', $this->getServiceIds())
-                ->where('partner_service.is_published', 1)
-                ->publishedForAll()
-                ->groupBy('partner_id')->havingRaw('c=' . count($this->getServiceIds()));
-            $query->where('partner_service.is_verified', 1);
+            $this->buildServiceQuery($query);
         });
     }
 
+    protected function buildServiceQuery(EloquentBuilder $query)
+    {
+        $query->whereHas('category', function ($q) {
+            $q->publishedForAny();
+        })->select(DB::raw('count(*) as c'))->whereIn('services.id', $this->getServiceIds())
+            ->where('partner_service.is_published', 1)
+            ->publishedForAll()
+            ->groupBy('partner_id')->havingRaw('c=' . count($this->getServiceIds()));
+        $query->where('partner_service.is_verified', 1);
+    }
 
     public function checkLeave()
     {
