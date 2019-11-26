@@ -8,6 +8,9 @@ class Route
             (new CustomerRoute())->set($api);
             (new AffiliateRoute())->set($api);
             $api->get('locations', 'Location\LocationController@index');
+            $api->group(['prefix' => 'rent-a-car'], function ($api) {
+                $api->get('prices', 'RentACar\RentACarController@getPrices');
+            });
         });
     }
 }

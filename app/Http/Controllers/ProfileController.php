@@ -288,6 +288,19 @@ class ProfileController extends Controller
         }
     }
 
+    public function storeNidTest(Request $request)
+    {
+        try {
+            $this->validate($request, ['nid_image' => 'required|file|mimes:jpeg,png,jpg', 'side' => 'required']);
+            return api_response($request, null, 200, ['message' => "we found the image successfully"]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
     /**
      * @param Request $request
      * @param ProfileRepositoryInterface $profile_repo
