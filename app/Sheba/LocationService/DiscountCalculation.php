@@ -1,14 +1,14 @@
 <?php namespace Sheba\LocationService;
 
 use App\Models\LocationService;
-use Sheba\Dal\LocationServiceDiscount\Model as LocationServiceDiscount;
+use Sheba\Dal\ServiceDiscount\Model as ServiceDiscount;
 
 class DiscountCalculation
 {
     /** @var LocationService $locationService */
     private $locationService;
-    /** @var LocationServiceDiscount $locationServiceDiscount */
-    private $locationServiceDiscount;
+    /** @var ServiceDiscount $serviceDiscount */
+    private $serviceDiscount;
     private $originalPrice;
     private $discountedPrice;
     private $discount;
@@ -88,11 +88,11 @@ class DiscountCalculation
     }
 
     /**
-     * @return LocationServiceDiscount
+     * @return ServiceDiscount
      */
     public function getLocationServiceDiscount()
     {
-        return $this->locationServiceDiscount;
+        return $this->serviceDiscount;
     }
 
     /**
@@ -113,13 +113,13 @@ class DiscountCalculation
 
     public function getDiscountId()
     {
-        return $this->locationServiceDiscount ? $this->locationServiceDiscount->id : null;
+        return $this->serviceDiscount ? $this->serviceDiscount->id : null;
     }
 
     public function calculate()
     {
-        $this->locationServiceDiscount = $this->locationService->discounts()->running()->first();
-        if (!$this->locationServiceDiscount) return;
+        $this->serviceDiscount = $this->locationService->discounts()->running()->first();
+        if (!$this->serviceDiscount) return;
         $this->discountedPrice = $this->calculateDiscountedPrice();
         $this->discountedPrice = $this->discountedPrice < 0 ? 0 : $this->discountedPrice;
         $this->setDiscountedPriceUptoCap();
@@ -127,13 +127,13 @@ class DiscountCalculation
 
     private function calculateDiscountedPrice()
     {
-        $this->discount = $this->locationServiceDiscount->amount;
-        $this->isDiscountPercentage = $this->locationServiceDiscount->is_percentage;
-        $this->shebaContribution = $this->locationServiceDiscount->sheba_contribution;
-        $this->partnerContribution = $this->locationServiceDiscount->partner_contribution;
+        $this->discount = $this->serviceDiscount->amount;
+        $this->isDiscountPercentage = $this->serviceDiscount->is_percentage;
+        $this->shebaContribution = $this->serviceDiscount->sheba_contribution;
+        $this->partnerContribution = $this->serviceDiscount->partner_contribution;
         $this->originalPrice = $this->originalPrice * $this->quantity;
 
-        if (!$this->locationServiceDiscount->isPercentage())
+        if (!$this->serviceDiscount->isPercentage())
             return $this->originalPrice - $this->discount;
 
         return $this->originalPrice - (($this->originalPrice * ($this->discount * $this->quantity)) / 100);
@@ -141,7 +141,7 @@ class DiscountCalculation
 
     private function setDiscountedPriceUptoCap()
     {
-        $this->cap = $this->locationServiceDiscount->cap;
+        $this->cap = $this->serviceDiscount->cap;
         $this->discountedPrice = ($this->cap && $this->discountedPrice > $this->cap) ? $this->cap : $this->discountedPrice;
     }
 }
