@@ -223,37 +223,37 @@ class AffiliateController extends Controller
         }
     }
 
+    /**
+     * @param $affiliate
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function joinClan($affiliate, Request $request)
     {
         try {
-            $validator = Validator::make($request->all(), [
-                'code' => 'required|string'
-            ]);
-            if ($validator->fails()) {
-                $error = $validator->errors()->all()[0];
-                return api_response($request, $error, 400, ['msg' => $error]);
-            }
+            $this->validate($request, ['code' => 'required|string']);
             $affiliate = $request->affiliate;
-            if ($affiliate->ambassador_id != null || $affiliate->previous_ambassador_id != null) {
+
+            if ($affiliate->ambassador_id || $affiliate->previous_ambassador_id)
                 return api_response($request, null, 403);
-            }
+
             $agents_ids = $affiliate->agents->pluck('id')->toArray();
             array_push($agents_ids, $affiliate->id);
-            $ambassador = Affiliate::where([
-                ['ambassador_code', strtoupper(trim($request->code))],
-                ['ambassador_id', '<>', $affiliate->id],
-                ['is_ambassador', 1]
-            ])->whereNotIn('id', $agents_ids)->first();
+            $ambassador = Affiliate::where('ambassador_code', strtoupper(trim($request->code)))
+                ->where('is_ambassador', 1)
+                ->whereNotIn('id', $agents_ids)
+                ->first();
 
-            if ($ambassador) {
-                $affiliate                         = $request->affiliate;
-                $affiliate->ambassador_id          = $ambassador->id;
-                $affiliate->under_ambassador_since = Carbon::now();
-                $affiliate->update();
-                return api_response($request, $ambassador, 200);
-            } else {
-                return api_response($request, null, 404);
-            }
+            if (!$ambassador) return api_response($request, null, 404);
+
+            $affiliate->ambassador_id = $ambassador->id;
+            $affiliate->under_ambassador_since = Carbon::now();
+            $affiliate->update();
+            
+            return api_response($request, $ambassador, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['msg' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
