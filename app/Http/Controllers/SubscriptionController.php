@@ -2,10 +2,13 @@
 
 use App\Models\Category;
 use App\Models\HyperLocal;
+use App\Models\LocationService;
 use App\Models\Service;
 use App\Models\ServiceSubscription;
+use App\Models\ServiceSubscriptionDiscount;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Sheba\LocationService\PriceCalculation;
 use Sheba\Subscription\ApproximatePriceCalculator;
 use Throwable;
 
@@ -165,9 +168,10 @@ class SubscriptionController extends Controller
      * @param $serviceSubscription
      * @param Request $request
      * @param ApproximatePriceCalculator $approximatePriceCalculator
+     * @param PriceCalculation $price_calculation
      * @return JsonResponse
      */
-    public function show($serviceSubscription, Request $request, ApproximatePriceCalculator $approximatePriceCalculator)
+    public function show($serviceSubscription, Request $request, ApproximatePriceCalculator $approximatePriceCalculator, PriceCalculation $price_calculation)
     {
         try {
             if ($request->has('location')) {
@@ -192,11 +196,10 @@ class SubscriptionController extends Controller
                 }
             }
 
-            // $price_range = $approximatePriceCalculator->setSubscription($serviceSubscription)->getPriceRange();
+            $price_range = $approximatePriceCalculator->setSubscription($serviceSubscription)->getPriceRange();
             $approximatePriceCalculator->setSubscription($serviceSubscription);
-            // $serviceSubscription['max_price'] = $price_range['max_price'] > 0 ? $price_range['max_price'] : 0;
-            // $serviceSubscription['min_price'] = $price_range['min_price'] > 0 ? $price_range['min_price'] : 0;
-
+            $serviceSubscription['max_price'] = $price_range['max_price'] > 0 ? $price_range['max_price'] : 0;
+            $serviceSubscription['min_price'] = $price_range['min_price'] > 0 ? $price_range['min_price'] : 0;
             $serviceSubscription['price_applicable_for'] = $approximatePriceCalculator->getSubscriptionType();
             $serviceSubscription['thumb'] = $serviceSubscription->service['thumb'];
             $serviceSubscription['banner'] = $serviceSubscription->service['banner'];
@@ -208,9 +211,13 @@ class SubscriptionController extends Controller
             ];
             $serviceSubscription['offers'] = $serviceSubscription->getDiscountOffers();
 
+            $location_service = LocationService::where('location_id', $location)->where('service_id', $serviceSubscription->service_id)->first();
+            /** @var  $discount ServiceSubscriptionDiscount */
+            $discount = $serviceSubscription->discounts()->where('subscription_type', $this->getPreferredSubscriptionType($serviceSubscription))->valid()->first();
+
             if ($options) {
                 if (count($answers) > 1)
-                    $serviceSubscription['service_breakdown'] = $this->breakdown_service_with_min_max_price($answers, $serviceSubscription['min_price'], $serviceSubscription['max_price']);
+                    $serviceSubscription['service_breakdown'] = $this->breakdown_service_with_min_max_price($answers, $serviceSubscription['min_price'], $serviceSubscription['max_price'], 0, $price_calculation, $location_service);
                 else {
                     $total_breakdown = [];
                     foreach ($answers[0] as $index => $answer) {
@@ -219,27 +226,46 @@ class SubscriptionController extends Controller
                             'indexes' => [$index],
                             'min_price' => $serviceSubscription['min_price'],
                             'max_price' => $serviceSubscription['max_price'],
-                            'price'     => 100
+                            'price'     => $price_calculation->setLocationService($location_service)->setOption([$index])->getUnitPrice()
                         ];
                         array_push($total_breakdown, $breakdown);
                     }
                     $serviceSubscription['service_breakdown'] = $total_breakdown;
                 }
-
             } else {
-                $serviceSubscription['service_breakdown'] = array(array(
-                    'name' => $serviceSubscription->service->name,
-                    'indexes' => null,
-                    'min_price' => $serviceSubscription['min_price'],
-                    'max_price' => $serviceSubscription['max_price']
-                ));
+                $serviceSubscription['service_breakdown'] = [
+                    [
+                        'name'      => $serviceSubscription->service->name,
+                        'indexes'   => null,
+                        'min_price' => $serviceSubscription['min_price'],
+                        'max_price' => $serviceSubscription['max_price'],
+                        'price'     => $price_calculation->setLocationService($location_service)->getUnitPrice()
+                    ]
+                ];
             }
+            $serviceSubscription['discount'] = $discount ? [
+                'value' => (double)$discount->discount_amount,
+                'is_percentage' => $discount->isPercentage(),
+                'cap' => (double)$discount->cap
+            ] : null;
             removeRelationsAndFields($serviceSubscription);
             return api_response($request, $serviceSubscription, 200, ['details' => $serviceSubscription]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    /**
+     * @param ServiceSubscription $service_subscription
+     * @return string
+     */
+    private function getPreferredSubscriptionType(ServiceSubscription $service_subscription)
+    {
+        if ($service_subscription->is_weekly)
+            return 'weekly';
+        else
+            return 'monthly';
     }
 
     private function serviceQuestionSet($service)
@@ -312,29 +338,39 @@ class SubscriptionController extends Controller
         }
     }
 
-    private function breakdown_service_with_min_max_price($arrays, $min_price, $max_price, $i = 0)
+    /**
+     * @param $arrays
+     * @param $min_price
+     * @param $max_price
+     * @param int $i
+     * @param $price_calculation
+     * @param LocationService $location_service
+     * @return array
+     */
+    private function breakdown_service_with_min_max_price($arrays, $min_price, $max_price, $i = 0, PriceCalculation $price_calculation, LocationService $location_service)
     {
         if (!isset($arrays[$i])) return [];
         if ($i == count($arrays) - 1) return $arrays[$i];
 
-        $tmp = $this->breakdown_service_with_min_max_price($arrays, $min_price, $max_price, $i + 1);
+        $tmp = $this->breakdown_service_with_min_max_price($arrays, $min_price, $max_price, $i + 1, $price_calculation, $location_service);
 
         $result = [];
 
         foreach ($arrays[$i] as $array_index => $v) {
             foreach ($tmp as $index => $t) {
+
                 $result[] = is_array($t) ? [
-                    'name' => $v . " - " . $t['name'],
-                    'indexes' => array_merge([$array_index], $t['indexes']),
+                    'name'      => $v . " - " . $t['name'],
+                    'indexes'   => array_merge([$array_index], $t['indexes']),
                     'min_price' => $t['min_price'],
                     'max_price' => $t['max_price'],
-                    'price'     => 100.55
+                    'price'     => $price_calculation->setLocationService($location_service)->setOption(array_merge([$array_index], $t['indexes']))->getUnitPrice()
                 ] : [
-                    'name' => $v . " - " . $t,
-                    'indexes' => [$array_index, $index],
+                    'name'      => $v . " - " . $t,
+                    'indexes'   => [$array_index, $index],
                     'min_price' => $min_price,
                     'max_price' => $max_price,
-                    'price'     => 500.55
+                    'price'     => $price_calculation->setLocationService($location_service)->setOption([$array_index, $index])->getUnitPrice()
                 ];
             }
         }
