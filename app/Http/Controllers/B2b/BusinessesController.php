@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Http\Requests\TimeFrameReportRequest;
 use App\Models\BusinessJoinRequest;
 use App\Models\Notification;
 use App\Models\Partner;
@@ -8,12 +9,15 @@ use App\Models\Resource;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessMember;
+use Sheba\Business\TransactionReportData;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use App\Models\Business;
 use App\Models\Member;
 use Carbon\Carbon;
 use DB;
+use Sheba\Reports\ExcelHandler;
+use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Sms\Sms;
 
 class BusinessesController extends Controller
@@ -222,5 +226,20 @@ class BusinessesController extends Controller
         }
     }
 
+    /**
+     * @param $business
+     * @param TimeFrameReportRequest $request
+     * @param ExcelHandler $excel
+     * @param TransactionReportData $data
+     * @throws NotAssociativeArray
+     * @throws \Exception
+     */
+    public function downloadTransactionReport($business, TimeFrameReportRequest $request, ExcelHandler $excel, TransactionReportData $data)
+    {
+        if(!$request->isLifetime()) $data->setTimeFrame($request->getTimeFrame());
 
+        $excel->setName('Transactions')
+            ->createReport($data->get())
+            ->download();
+    }
 }
