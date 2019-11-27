@@ -29,6 +29,8 @@ class TransactionReportData
     {
         $balance = 0;
         return $this->business->transactions->map(function (BusinessTransaction $transaction) use (&$balance) {
+            $balance = $transaction->balance($balance);
+            if (!$this->isInsideTimeFrame($transaction)) return null;
             return [
                 'id' => $transaction->id,
                 'amount' => $transaction->amount,
@@ -36,10 +38,10 @@ class TransactionReportData
                 'log' => $transaction->log,
                 'debit' => $transaction->isDebit() ? $transaction->amount : '',
                 'credit' => $transaction->isCredit() ? $transaction->amount : '',
-                'balance' => $balance = $transaction->balance($balance),
+                'balance' => $balance,
                 'created_at' => $transaction->created_at->toDateTimeString(),
             ];
-        })->toArray();
+        })->filter()->toArray();
     }
 
     private function getEventType(BusinessTransaction $transaction)
@@ -50,5 +52,11 @@ class TransactionReportData
         elseif ($transaction->isDebit()) $event_type = "Purchase";
         else $event_type = "N/F";
         return $event_type;
+    }
+
+    private function isInsideTimeFrame(BusinessTransaction $transaction)
+    {
+        if(!$this->timeFrame) return true;
+        return $transaction->created_at->between($this->timeFrame->start, $this->timeFrame->end);
     }
 }
