@@ -237,7 +237,7 @@ class BusinessesController extends Controller
     public function downloadTransactionReport($business, TimeFrameReportRequest $request, ExcelHandler $excel, TransactionReportData $data)
     {
         if(!$request->isLifetime()) $data->setTimeFrame($request->getTimeFrame());
-
+        $data->setBusiness($request->business);
         $excel->setName('Transactions')
             ->createReport($data->get())
             ->download();

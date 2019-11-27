@@ -191,7 +191,7 @@ class BusinessRoute
                         $api->get('/', 'B2b\SupportController@show');
                     });
                 });
-                // $api->post('/download-transactions', 'B2b\BusinessesController@downloadTransactionReport');
+                $api->post('/download-transactions', 'B2b\BusinessesController@downloadTransactionReport');
             });
         });
         $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {
