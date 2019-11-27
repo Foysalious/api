@@ -13,6 +13,7 @@ use App\Models\Resource;
 use App\Models\Service;
 use App\Models\Slider;
 use App\Models\SliderPortal;
+use App\Models\SluggableType;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
 use Cache;
@@ -466,6 +467,17 @@ class ShebaController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getSluggableType(Request $request, $slug)
+    {
+        try {
+            $type = SluggableType::where('slug', $slug)->first();
+            return api_response($request, true, 200, ['slug' => $type->sluggable_type]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
