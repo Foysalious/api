@@ -103,7 +103,8 @@ class CategoryController extends Controller
                         }
                         $q->whereNotIn('id', $best_deal_category);
                         $filter_publication($q);
-                        $q->orderBy('order');
+                        if($is_business) $q->orderBy('order_for_b2b');
+                        else $q->orderBy('order');
                     }]);
                 }
             }
