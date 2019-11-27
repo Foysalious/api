@@ -18,4 +18,6 @@ interface TopUpAgent
     public function getCommission();
 
     public function getMobile();
+
+    public function reload();
 }

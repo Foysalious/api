@@ -1,14 +1,14 @@
 <?php namespace Sheba\LocationService;
 
 use App\Models\LocationService;
-use Sheba\Dal\LocationServiceDiscount\Model as LocationServiceDiscount;
+use Sheba\Dal\ServiceDiscount\Model as ServiceDiscount;
 
 class DiscountCalculation
 {
-    /** @var LocationService */
+    /** @var LocationService $locationService */
     private $locationService;
-    /** @var LocationServiceDiscount */
-    private $locationServiceDiscount;
+    /** @var ServiceDiscount $serviceDiscount */
+    private $serviceDiscount;
     private $originalPrice;
     private $discountedPrice;
     private $discount;
@@ -16,6 +16,7 @@ class DiscountCalculation
     private $cap;
     private $shebaContribution;
     private $partnerContribution;
+    private $quantity;
 
     public function __construct()
     {
@@ -23,7 +24,11 @@ class DiscountCalculation
         $this->partnerContribution = 0;
     }
 
-    public function setLocationService($location_service)
+    /**
+     * @param LocationService $location_service
+     * @return $this
+     */
+    public function setLocationService(LocationService $location_service)
     {
         $this->locationService = $location_service;
         return $this;
@@ -34,7 +39,7 @@ class DiscountCalculation
      */
     public function getDiscountedPrice()
     {
-        return $this->discountedPrice;
+        return (double)$this->discountedPrice;
     }
 
     /**
@@ -76,12 +81,18 @@ class DiscountCalculation
         return $this;
     }
 
+    public function setQuantity($quantity = 1)
+    {
+        $this->quantity = $quantity;
+        return $this;
+    }
+
     /**
-     * @return LocationServiceDiscount
+     * @return ServiceDiscount
      */
     public function getLocationServiceDiscount()
     {
-        return $this->locationServiceDiscount;
+        return $this->serviceDiscount;
     }
 
     /**
@@ -102,13 +113,13 @@ class DiscountCalculation
 
     public function getDiscountId()
     {
-        return $this->locationServiceDiscount ? $this->locationServiceDiscount->id : null;
+        return $this->serviceDiscount ? $this->serviceDiscount->id : null;
     }
 
     public function calculate()
     {
-        $this->locationServiceDiscount = $this->locationService->discounts()->running()->first();
-        if (!$this->locationServiceDiscount) return;
+        $this->serviceDiscount = $this->locationService->discounts()->running()->first();
+        if (!$this->serviceDiscount) return;
         $this->discountedPrice = $this->calculateDiscountedPrice();
         $this->discountedPrice = $this->discountedPrice < 0 ? 0 : $this->discountedPrice;
         $this->setDiscountedPriceUptoCap();
@@ -116,17 +127,21 @@ class DiscountCalculation
 
     private function calculateDiscountedPrice()
     {
-        $this->discount = $this->locationServiceDiscount->amount;
-        $this->isDiscountPercentage = $this->locationServiceDiscount->is_percentage;
-        $this->shebaContribution = $this->locationServiceDiscount->sheba_contribution;
-        $this->partnerContribution = $this->locationServiceDiscount->partner_contribution;
-        if (!$this->locationServiceDiscount->isPercentage()) return $this->originalPrice - $this->discount;
-        return $this->originalPrice - (($this->originalPrice * $this->discount) / 100);
+        $this->discount = $this->serviceDiscount->amount;
+        $this->isDiscountPercentage = $this->serviceDiscount->is_percentage;
+        $this->shebaContribution = $this->serviceDiscount->sheba_contribution;
+        $this->partnerContribution = $this->serviceDiscount->partner_contribution;
+        $this->originalPrice = $this->originalPrice * $this->quantity;
+
+        if (!$this->serviceDiscount->isPercentage())
+            return $this->originalPrice - $this->discount;
+
+        return $this->originalPrice - (($this->originalPrice * ($this->discount * $this->quantity)) / 100);
     }
 
     private function setDiscountedPriceUptoCap()
     {
-        $this->cap = $this->locationServiceDiscount->cap;
+        $this->cap = $this->serviceDiscount->cap;
         $this->discountedPrice = ($this->cap && $this->discountedPrice > $this->cap) ? $this->cap : $this->discountedPrice;
     }
 }

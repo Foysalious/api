@@ -19,6 +19,7 @@ class Route
                 $api->post('registration/affiliate', 'Auth\AffiliateRegistrationController@registerByProfile')->middleware('jwtAuth');
                 $api->post('change-picture', 'ProfileController@changePicture')->middleware('jwtAuth');
                 $api->post('nid-submit', 'ProfileController@storeNid')->middleware('jwtAuth');
+                $api->post('nid-submit-test', 'ProfileController@storeNidTest')->middleware('jwtAuth');
                 $api->post('information', 'ProfileController@updateProfileInfo')->middleware('jwtAuth');
             });
             $api->get('validate-location', 'LocationController@validateLocation');
@@ -183,7 +184,6 @@ class Route
                 (new MovieTicketRoute())->set($api);
             });
             $api->get('refresh-token', 'ProfileController@refresh');
-            $api->get('wallet-dummy-event', 'TopUp\TopUpController@walletDummyEvent');
         });
         return $api;
     }

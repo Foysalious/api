@@ -52,7 +52,7 @@ class Updater
             notify()->member($this->support->member)->send([
                 'title' => 'Admin closed your Support Ticket',
                 'type' => 'warning',
-                'event_type' => 'App\Models\Support',
+                'event_type' => 'Sheba\Dal\Support\Model',
                 'event_id' => $this->support->id
             ]);
         });

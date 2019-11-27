@@ -1,7 +1,6 @@
 <?php namespace Sheba\PartnerList;
 
 
-use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Review;
 use Sheba\Location\Geo;

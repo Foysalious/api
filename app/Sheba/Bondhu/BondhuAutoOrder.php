@@ -1,16 +1,22 @@
 <?php namespace App\Sheba\Bondhu;
 
+use App\Exceptions\HyperLocationNotFoundException;
 use App\Http\Requests\BondhuOrderRequest;
+use App\Http\Requests\BondhuOrderV3Request;
+use App\Http\Requests\OrderCreateFromBondhuRequest;
 use App\Models\Affiliate;
 use App\Models\Affiliation;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\Location;
+use App\Models\Order;
 use App\Models\Profile;
 use App\Models\Service;
 use App\Models\User;
 use App\Sheba\Checkout\Checkout;
+use Illuminate\Validation\ValidationException;
 use Sheba\ModificationFields;
+use Sheba\OrderPlace\OrderPlace;
 use Sheba\Portals\Portals;
 
 class BondhuAutoOrder
@@ -34,6 +40,10 @@ class BondhuAutoOrder
         $this->setModifier($modifier);
     }
 
+    /**
+     * @return Order|Checkout|null
+     * @throws HyperLocationNotFoundException
+     */
     public function place()
     {
         $this->setCustomer();
@@ -64,17 +74,18 @@ class BondhuAutoOrder
             $this->profile = $this->createProfile();
             $this->customer = $this->createCustomer($this->profile);
         }
+
         return $this;
     }
 
     public function setAffiliation()
     {
         $affiliation = new Affiliation([
-            'affiliate_id' => $this->affiliate->id,
-            'customer_name' => $this->profile->name,
-            'customer_mobile' => $this->profile->mobile,
-            'service' => $this->service_category,
-            'status' => 'converted'
+            'affiliate_id'      => $this->affiliate->id,
+            'customer_name'     => $this->profile->name,
+            'customer_mobile'   => $this->profile->mobile,
+            'service'           => $this->service_category,
+            'status'            => 'converted'
         ]);
         $affiliation->save();
         $this->affiliation = $affiliation;
@@ -86,6 +97,10 @@ class BondhuAutoOrder
         return $this->portal == Portals::ADMIN;
     }
 
+    /**
+     * @return Order|Checkout|null
+     * @throws HyperLocationNotFoundException
+     */
     public function generateOrder()
     {
         $this->setAddress();

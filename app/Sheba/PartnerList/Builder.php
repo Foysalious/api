@@ -1,4 +1,4 @@
-<?php namespace App\Sheba\PartnerList;
+<?php namespace Sheba\PartnerList;
 
 
 use Sheba\Location\Geo;
@@ -13,7 +13,7 @@ interface Builder
 
     public function checkLeave();
 
-    public function checkVerification();
+    public function checkPartnerVerification();
 
     public function checkPartner();
 
@@ -25,11 +25,23 @@ interface Builder
 
     public function checkPartnerCreditLimit();
 
+    public function checkPartnerDailyOrderLimit();
+
+    public function checkPartnerAvailability();
+
+    public function checkOption();
+
     public function removeShebaHelpDesk();
+
+    public function removeUnavailablePartners();
+
+    public function withService();
 
     public function withResource();
 
-    public function WithAvgReview();
+    public function withAvgReview();
+
+    public function withTotalCompletedOrder();
 
     public function runQuery();
 
@@ -38,5 +50,13 @@ interface Builder
     public function setServiceRequestObjectArray(array $service_request_object);
 
     public function setGeo(Geo $geo);
+
+    public function setScheduleDate($date);
+
+    public function setScheduleTime($time);
+
+    public function get();
+
+    public function first();
 
 }

@@ -1,6 +1,7 @@
 <?php namespace Sheba\Checkout\Requests;
 
 use App\Models\Category;
+use App\Models\HyperLocal;
 use App\Models\Partner;
 use App\Models\Service;
 use Dingo\Api\Routing\Helpers;
@@ -149,14 +150,14 @@ class PartnerListRequest
 
     private function setRentACarLocation(ServiceObject $service)
     {
-        if ($this->location) {
-            if ($service instanceof RentACarServiceObject) {
-                $location = $this->api->get('/v2/locations/current?lat=' . $service->pickUpLocationLat . '&lng=' . $service->pickUpLocationLng);
-                return $location ? $location->id : null;
-            } else {
-                return $this->location;
-            }
+        if (!$this->location) return;
+
+        if ($service instanceof RentACarServiceObject) {
+            $location = $this->api->get('/v2/locations/current?lat=' . $service->pickUpLocationLat . '&lng=' . $service->pickUpLocationLng);
+            return $location ? $location->id : null;
         }
+
+        return $this->location;
     }
 
     private function setHomeDelivery()
@@ -223,5 +224,13 @@ class PartnerListRequest
     public function isFromPartnerPortals()
     {
         return in_array($this->portalName, [Portals::PARTNER_WEB, Portals::PARTNER_APP]);
+    }
+
+    public function getLocationId()
+    {
+        if($this->location) return $this->location;
+
+        $hyper_local = HyperLocal::insidePolygon($this->lat, $this->lng)->first();
+        return $hyper_local->location_id;
     }
 }

@@ -21,7 +21,7 @@ use DB;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use Sheba\CategoryServiceGroup;
-use Sheba\Dal\LocationServiceDiscount\Model as LocationServiceDiscountModel;
+use Sheba\Dal\ServiceDiscount\Model as ServiceDiscount;
 use Sheba\Location\Coords;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\ModificationFields;
@@ -175,7 +175,7 @@ class CategoryController extends Controller
 
             if ($with) {
                 $categories->with(['children' => function ($q) use ($location_id, $best_deal_category_ids) {
-                    $q->select('id', 'name', 'thumb', 'parent_id', 'app_thumb')
+                    $q->select('id', 'name', 'thumb', 'parent_id', 'app_thumb', 'icon_png', 'icon')
                         ->whereHas('locations', function ($q) use ($location_id) {
                             $q->select('locations.id')->where('locations.id', $location_id);
                         })->whereHas('services', function ($q) use ($location_id) {
@@ -416,7 +416,7 @@ class CategoryController extends Controller
                 $services->each(function (&$service) use ($price_calculation, $location) {
                     /** @var LocationService $location_service */
                     $location_service = LocationService::where('location_id', $location)->where('service_id', $service->id)->first();
-                    /** @var LocationServiceDiscountModel $discount */
+                    /** @var ServiceDiscount $discount */
                     $discount = $location_service->discounts()->running()->first();
                     $prices = json_decode($location_service->prices);
                     $price_calculation->setLocationService($location_service);

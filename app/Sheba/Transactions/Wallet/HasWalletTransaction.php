@@ -17,4 +17,6 @@ interface HasWalletTransaction
      * @return bool|int
      */
     public function update(array $attributes = [], array $options = []);
+
+    public function reload();
 }

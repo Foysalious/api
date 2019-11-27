@@ -266,14 +266,13 @@ class ProfileController extends Controller
     public function storeNid(Request $request, OcrRepository $ocr_repo, ProfileRepositoryInterface $profile_repo)
     {
         try {
-            $this->validate($request, ['nid_image' => 'required|mimes:jpeg,png,jpg', 'side' => 'required']);
+            $this->validate($request, ['nid_image' => 'required|file|mimes:jpeg,png,jpg', 'side' => 'required']);
             $profile              = $request->profile;
             $input                = $request->except('profile', 'remember_token');
             $data                 = [];
             $nid_image_key        = "nid_image_" . $input["side"];
             $data[$nid_image_key] = $input['nid_image'];
             $profile_repo->update($profile, $data);
-
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
             $resource        = new Item($profile, new NidInfoTransformer());
@@ -285,6 +284,19 @@ class ProfileController extends Controller
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function storeNidTest(Request $request)
+    {
+        try {
+            $this->validate($request, ['nid_image' => 'required|file|mimes:jpeg,png,jpg', 'side' => 'required']);
+            return api_response($request, null, 200, ['message' => "we found the image successfully"]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
             return api_response($request, null, 500);
         }
     }

@@ -4,6 +4,7 @@ use App\Models\LocationService;
 use App\Models\Service;
 use Illuminate\Support\Collection;
 use League\Fractal\TransformerAbstract;
+use Sheba\Dal\ServiceDiscount\Model as ServiceDiscount;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\Services\Type;
 
@@ -28,6 +29,7 @@ class ServiceV2Transformer extends TransformerAbstract
     public function transform(Service $service)
     {
         $prices = json_decode($this->locationService->prices);
+        /** @var ServiceDiscount $discount */
         $discount = $this->locationService->discounts()->running()->first();
         $this->priceCalculation->setLocationService($this->locationService);
 
