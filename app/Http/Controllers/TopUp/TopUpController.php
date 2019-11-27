@@ -5,10 +5,7 @@ use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
-
-use Sheba\TopUp\TopUpCompletedEvent;
 use Sheba\Wallet\WalletUpdateEvent;
-
 use DB;
 use Excel;
 use Illuminate\Http\Request;
