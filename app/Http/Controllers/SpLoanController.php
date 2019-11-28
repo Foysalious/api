@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
+use Sheba\Loan\DS\BusinessInfo;
 use Sheba\Loan\DS\PersonalInfo;
 use Sheba\Loan\Loan;
 use Sheba\ModificationFields;
@@ -132,17 +133,7 @@ class SpLoanController extends Controller
         try {
             $partner                         = $request->partner;
             $manager_resource                = $request->manager_resource;
-            $profile                         = $manager_resource->profile;
-            $basic_informations              = $partner->basicInformations;
-            $bank_informations               = $partner->bankInformations;
-            $business_additional_information = $partner->businessAdditionalInformation();
-            $sales_information               = $partner->salesInformation();
-            $info = array('business_name'                       => $partner->name, 'business_type' => $partner->business_type, 'location' => $partner->address, 'establishment_year' => $basic_informations->establishment_year, 'full_time_employee' => !empty($partner->full_time_employee) ? $partner->full_time_employee : null, #'part_time_employee' => !empty($partner->part_time_employee) ? $partner->part_time_employee : null,
-                          'business_additional_information'     => [#'product_price' => isset($business_additional_information->product_price) ? $business_additional_information->product_price : null,
-                              'employee_salary' => isset($business_additional_information->employee_salary) ? $business_additional_information->employee_salary : null, 'office_rent' => isset($business_additional_information->office_rent) ? $business_additional_information->office_rent : null, #'utility_bills' => isset($business_additional_information->utility_bills) ? $business_additional_information->utility_bills : null,
-                              #'marketing_cost' => isset($business_additional_information->marketing_cost) ? $business_additional_information->marketing_cost : null,
-                              #'other_costs' => isset($business_additional_information->other_costs) ? $business_additional_information->other_costs : null
-                          ], 'last_six_month_sales_information' => ['avg_sell' => isset($sales_information->last_six_month_avg_sell) ? $sales_information->last_six_month_avg_sell : null, 'min_sell' => isset($sales_information->last_six_month_min_sell) ? $sales_information->last_six_month_min_sell : null, 'max_sell' => isset($sales_information->last_six_month_max_sell) ? $sales_information->last_six_month_max_sell : null,]);
+            $info = (new Loan())->setPartner($partner)->setResource($manager_resource)->businessInfo()->toArray();
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -153,17 +144,12 @@ class SpLoanController extends Controller
     public function updateBusinessInformation($partner, Request $request)
     {
         try {
-            $this->validate($request, ['business_type' => 'string', 'location' => 'required|string', 'establishment_year' => 'date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'), 'full_time_employee' => 'numeric', #'part_time_employee' => 'numeric',
-                #'sales_information' => 'required',
-                #'business_additional_information' => 'required'
-            ]);
+            $this->validate($request,BusinessInfo::getValidator());
             $partner            = $request->partner;
-            $basic_informations = $partner->basicInformations;
-            $partner_data       = ['business_type'     => $request->business_type, 'address' => $request->location, 'full_time_employee' => $request->full_time_employee, #'part_time_employee' => $request->part_time_employee,
-                                   'sales_information' => $request->sales_information, 'business_additional_information' => $request->business_additional_information,];
-            $partner_basic_data = ['establishment_year' => $request->establishment_year,];
-            $partner->update($this->withBothModificationFields($partner_data));
-            $basic_informations->update($this->withBothModificationFields($partner_basic_data));
+            $resource=$request->manager_resource;
+
+            (new Loan())->setPartner($partner)->setResource($resource)->businessInfo()->update($request);
+
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
