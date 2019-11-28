@@ -1,6 +1,9 @@
 <?php namespace App\Http\Controllers\RentACar;
 
 
+use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
+use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
+use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
 use App\Http\Controllers\Controller;
 use App\Models\HyperLocal;
 use App\Models\LocationService;
@@ -37,6 +40,12 @@ class RentACarController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
+        } catch (InsideCityPickUpAddressNotFoundException $e) {
+            return api_response($request, null, 400, ['message' => 'Please try with outside city for this location.', 'code' => 700]);
+        } catch (OutsideCityPickUpAddressNotFoundException $e) {
+            return api_response($request, null, 400, ['message' => 'This service isn\'t available at this location.', 'code' => 701]);
+        } catch (DestinationCitySameAsPickupException $e) {
+            return api_response($request, null, 400, ['message' => 'Please try with inside city for this location.', 'code' => 702]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
