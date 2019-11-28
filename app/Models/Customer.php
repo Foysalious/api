@@ -49,6 +49,12 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
         return $this->hasMany(CustomerDeliveryAddress::class);
     }
 
+    public function addresses()
+    {
+        return $this->hasMany(CustomerDeliveryAddress::class);
+    }
+
+
     public function orders()
     {
         return $this->hasMany(Order::class);

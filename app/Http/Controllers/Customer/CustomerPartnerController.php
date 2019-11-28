@@ -27,7 +27,6 @@ class CustomerPartnerController extends Controller
                     'id' => $partner->id,
                     'name' => $partner->name,
                     'rating' => round((double)$partner->reviews[0]->avg_rating, 2),
-                    'last_order_created_at' => '3/11/19',
                     'logo' => $partner->logo
                 ];
             })]);
