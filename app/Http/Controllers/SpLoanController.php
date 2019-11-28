@@ -7,6 +7,7 @@ use App\Repositories\FileRepository;
 use App\Http\Requests\SpLoanRequest;
 use Sheba\FileManagers\FileManager;
 use App\Models\PartnerBankLoan;
+use Sheba\Loan\Loan;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use App\Models\Profile;
@@ -95,8 +96,7 @@ class SpLoanController extends Controller
             } else {
                 $loan->create($this->withCreateModificationField($data));
             }
-
-            return api_response($request, 1, 200);
+            return api_response($request, 1, 200,['data'=>$data]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
