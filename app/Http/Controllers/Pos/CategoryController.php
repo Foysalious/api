@@ -18,9 +18,10 @@ class CategoryController extends Controller
                     $q->where('updated_at', '>=', $request->updated_after);
                 }
             };
-            $deleted_after_clause = function ($q) use ($request) {
+            $deleted_after_clause = function ($q) use ($request, $partner) {
                 if ($request->has('updated_after')) {
-                    $q->where('deleted_at', '>=', $request->updated_after)->select('id');
+                    $q->select('id','partner_id','pos_category_id')->partner($partner->id)
+                        ->where('deleted_at', '>=', $request->updated_after);
                 }
             };
             $service_where_query  = function ($service_query) use ($partner, $updated_after_clause, $request) {
@@ -49,10 +50,10 @@ class CategoryController extends Controller
                     }])->select($this->getSelectColumnsOfService());
 
                 }])->select($this->getSelectColumnsOfCategory());
-            if($request->has('updated_after')){
-                $sub_categories->with(['deletedServices'=>$deleted_after_clause]);
+            if ($request->has('updated_after')) {
+                $sub_categories->with(['deletedServices' => $deleted_after_clause]);
             }
-            $sub_categories=$sub_categories->get();
+            $sub_categories = $sub_categories->get();
             if (!$sub_categories) return api_response($request, null, 404);
 
             $sub_categories->each(function ($category) use (&$total_items, &$total_buying_price) {
