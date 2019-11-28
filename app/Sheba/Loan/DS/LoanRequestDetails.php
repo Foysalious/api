@@ -5,15 +5,59 @@ namespace Sheba\Loan\DS;
 
 
 use Illuminate\Contracts\Support\Arrayable;
+use Sheba\ModificationFields;
 
 class LoanRequestDetails implements Arrayable
 {
-    protected $documents, $finance_info, $business_info, $personal_info, $nominee_granter_info;
-    private                                                              $data;
+    use ModificationFields;
+    protected $documents;
+    protected $finance_info;
+    protected $business_info;
+    protected $personal_info;
+    protected $nominee_granter_info;
+    private   $partner;
+    private   $resource;
+    private $data;
 
     public function __construct($details)
     {
         $this->data = json_decode($details, true);
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getResource()
+    {
+        return $this->resource;
+    }
+
+    /**
+     * @param mixed $resource
+     * @return LoanRequestDetails
+     */
+    public function setResource($resource)
+    {
+        $this->resource = $resource;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getPartner()
+    {
+        return $this->partner;
+    }
+
+    /**
+     * @param mixed $partner
+     * @return LoanRequestDetails
+     */
+    public function setPartner($partner)
+    {
+        $this->partner = $partner;
+        return $this;
     }
 
     public function __get($name)
@@ -58,6 +102,7 @@ class LoanRequestDetails implements Arrayable
 
     private function getPersonalInfo()
     {
+        return (new PersonalInfo($this->resource))->toArray();
     }
 
     private function getNomineeGranterInfo()
