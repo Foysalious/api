@@ -16,11 +16,6 @@ class PosCategory extends Model
         return $this->hasMany(PosCategory::class, 'parent_id');
     }
 
-    public function services()
-    {
-        return $this->hasMany(PartnerPosService::class);
-    }
-
     public function scopeParents($query)
     {
         $query->where('parent_id', null);
@@ -34,5 +29,15 @@ class PosCategory extends Model
     public function scopePublished($query)
     {
         $query->where('publication_status', 1);
+    }
+
+    public function deletedServices()
+    {
+        return $this->services()->onlyTrashed();
+    }
+
+    public function services()
+    {
+        return $this->hasMany(PartnerPosService::class);
     }
 }
