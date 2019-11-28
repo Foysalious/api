@@ -4,7 +4,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Profile extends Model
 {
-    protected $guarded = ['id'];
+    protected $guarded  = ['id'];
     protected $fillable = [
         'name',
         'bn_name',
@@ -48,6 +48,8 @@ class Profile extends Model
         'grantor_id',
         'grantor_relation',
         'created_by',
+        'nid_issue_date',
+        'birth_place',
         'created_by_name',
         'updated_by',
         'updated_by_name',
