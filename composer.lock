@@ -3100,11 +3100,7 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
-<<<<<<< Updated upstream
-                "reference": "cda033e71ed0b517e02821aa9e2669e7de1be25d"
-=======
                 "reference": "eab22b2c5900e07828bd2c2aa652df07bec6df41"
->>>>>>> Stashed changes
             },
             "require": {
                 "php": ">=5.4"
