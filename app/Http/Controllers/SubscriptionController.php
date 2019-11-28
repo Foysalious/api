@@ -212,9 +212,6 @@ class SubscriptionController extends Controller
             $serviceSubscription['offers'] = $serviceSubscription->getDiscountOffers();
 
             $location_service = LocationService::where('location_id', $location)->where('service_id', $serviceSubscription->service_id)->first();
-            /** @var  $discount ServiceSubscriptionDiscount */
-            $discount = $serviceSubscription->discounts()->where('subscription_type', $this->getPreferredSubscriptionType($serviceSubscription))->valid()->first();
-
             if ($options) {
                 if (count($answers) > 1)
                     $serviceSubscription['service_breakdown'] = $this->breakdown_service_with_min_max_price($answers, $serviceSubscription['min_price'], $serviceSubscription['max_price'], 0, $price_calculation, $location_service);
@@ -243,11 +240,22 @@ class SubscriptionController extends Controller
                     ]
                 ];
             }
-            $serviceSubscription['discount'] = $discount ? [
-                'value' => (double)$discount->discount_amount,
-                'is_percentage' => $discount->isPercentage(),
-                'cap' => (double)$discount->cap
-            ] : null;
+
+            /** @var $discount ServiceSubscriptionDiscount */
+            $weekly_discount = $serviceSubscription->discounts()->where('subscription_type', 'weekly')->valid()->first();
+            $monthly_discount = $serviceSubscription->discounts()->where('subscription_type', 'monthly')->valid()->first();
+            $serviceSubscription['discount'] = [
+                'weekly' => $weekly_discount ? [
+                    'value' => (double)$weekly_discount->discount_amount,
+                    'is_percentage' => $weekly_discount->isPercentage(),
+                    'cap' => (double)$weekly_discount->cap
+                ] : null,
+                'monthly' => $monthly_discount ? [
+                    'value' => (double)$monthly_discount->discount_amount,
+                    'is_percentage' => $monthly_discount->isPercentage(),
+                    'cap' => (double)$monthly_discount->cap
+                ] : null
+            ];
             removeRelationsAndFields($serviceSubscription);
             return api_response($request, $serviceSubscription, 200, ['details' => $serviceSubscription]);
         } catch (Throwable $e) {
