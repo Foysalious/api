@@ -20,7 +20,7 @@ class CategoryController extends Controller
             };
             $deleted_after_clause = function ($q) use ($request) {
                 if ($request->has('updated_after')) {
-                    $q->where('deleted_at', '>=', $request->updated_after);
+                    $q->where('deleted_at', '>=', $request->updated_after)->select('id');
                 }
             };
             $service_where_query  = function ($service_query) use ($partner, $updated_after_clause, $request) {
