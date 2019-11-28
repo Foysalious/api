@@ -1,7 +1,7 @@
 <?php
 
 
-namespace App\Sheba\Loan\DS;
+namespace Sheba\Loan\DS;
 
 
 class FinanceInfo

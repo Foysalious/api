@@ -1,10 +1,7 @@
-<?php
+<?php namespace Sheba\Loan\DS;
 
 
-namespace Sheba\Loan\DS;
-
-
-class GrantorInfo
+class GranterInfo
 {
 
 }
