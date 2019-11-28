@@ -16,7 +16,6 @@ class DiscountCalculation
     private $cap;
     private $shebaContribution;
     private $partnerContribution;
-    private $quantity;
 
     public function __construct()
     {
@@ -81,11 +80,6 @@ class DiscountCalculation
         return $this;
     }
 
-    public function setQuantity($quantity = 1)
-    {
-        $this->quantity = $quantity;
-        return $this;
-    }
 
     /**
      * @return ServiceDiscount
@@ -116,6 +110,11 @@ class DiscountCalculation
         return $this->serviceDiscount ? $this->serviceDiscount->id : null;
     }
 
+    public function getTotalDiscountAmount()
+    {
+        return $this->originalPrice - $this->discountedPrice;
+    }
+
     public function calculate()
     {
         $this->serviceDiscount = $this->locationService->discounts()->running()->first();
@@ -131,12 +130,11 @@ class DiscountCalculation
         $this->isDiscountPercentage = $this->serviceDiscount->is_percentage;
         $this->shebaContribution = $this->serviceDiscount->sheba_contribution;
         $this->partnerContribution = $this->serviceDiscount->partner_contribution;
-        $this->originalPrice = $this->originalPrice * $this->quantity;
 
         if (!$this->serviceDiscount->isPercentage())
             return $this->originalPrice - $this->discount;
 
-        return $this->originalPrice - (($this->originalPrice * ($this->discount * $this->quantity)) / 100);
+        return $this->originalPrice - (($this->originalPrice * $this->discount) / 100);
     }
 
     private function setDiscountedPriceUptoCap()

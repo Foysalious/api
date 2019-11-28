@@ -67,9 +67,8 @@ class PromotionV3Controller extends Controller
             $location_service = LocationService::where('service_id', $selected_service->id)->where('location_id', $location_id)->first();
             if ($location_service->service->isOptions()) $price_calculation->setLocationService($location_service);
 
-            $price_calculation->setLocationService($location_service)->setOption($selected_service->option);
-            $service_unit_price = $price_calculation->getUnitPrice();
-            $discount_calculation->setLocationService($location_service)->setQuantity($selected_service->quantity)->setOriginalPrice($service_unit_price)->calculate();
+            $price_calculation->setLocationService($location_service)->setOption($selected_service->option)->setQuantity($selected_service->quantity);
+            $discount_calculation->setLocationService($location_service)->setOriginalPrice($price_calculation->getTotalOriginalPrice())->calculate();
 
             $order_amount += $discount_calculation->getDiscountedPrice();
         }

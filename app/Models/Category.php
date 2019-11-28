@@ -247,4 +247,9 @@ class Category extends Model
     {
         return in_array($this->id, self::getRentACarSecondaries());
     }
+
+    public function isRentACar()
+    {
+        return in_array($this->id, array_map('intval', explode(',', env('RENT_CAR_IDS'))));
+    }
 }

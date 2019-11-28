@@ -2,6 +2,10 @@
 
 
 use Illuminate\Validation\ValidationException;
+use Sheba\Location\Coords;
+use Sheba\Location\Distance\Distance;
+use Sheba\Location\Distance\DistanceStrategy;
+use Sheba\Location\Geo;
 
 class ServiceRequest
 {
@@ -13,7 +17,6 @@ class ServiceRequest
     public function __construct(Validator $validator, ServiceRequestObject $service_request_object)
     {
         $this->validator = $validator;
-        $this->validator = $validator;
         $this->serviceRequestObject = $service_request_object;
     }
 
@@ -23,16 +26,25 @@ class ServiceRequest
         return $this;
     }
 
-    /**
-     * @return ServiceRequestObject[]
-     * @throws ValidationException
-     */
     public function get()
     {
         $this->validate();
         $final = [];
         foreach ($this->services as $service) {
-            $this->serviceRequestObject->setServiceId($service['id'])->setQuantity($service['quantity'])->setOption($service['option'])->build();
+            $this->serviceRequestObject->setServiceId($service['id'])->setQuantity($service['quantity'])->setOption($service['option']);
+            if (isset($service['pick_up_location_geo'])) {
+                $geo = new Geo();
+                $this->serviceRequestObject
+                    ->setPickUpGeo($geo->setLat($service['pick_up_location_geo']['lat'])
+                        ->setLng($service['pick_up_location_geo']['lng']));
+            };
+            if (isset($service['destination_location_geo'])) {
+                $geo = new Geo();
+                $this->serviceRequestObject
+                    ->setDestinationGeo($geo->setLat($service['destination_location_geo']['lat'])
+                        ->setLng($service['destination_location_geo']['lng']));
+            }
+            $this->serviceRequestObject->build();
             array_push($final, $this->serviceRequestObject);
         }
         return $final;
@@ -46,4 +58,5 @@ class ServiceRequest
         $this->validator->setServices($this->services)->validate();
         if ($this->validator->hasError()) throw new ValidationException($this->validator->getErrors());
     }
+
 }
