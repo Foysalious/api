@@ -311,19 +311,6 @@ class OrderPlace
         $this->location = $hyper_local->location;
     }
 
-    /**
-     * @param $services
-     * @return ServiceObject[]|Collection
-     */
-    private function getSelectedServices($services)
-    {
-        $selected_services = collect();
-        foreach ($services as $service) {
-            $service = $this->category->isRentCar() ? new RentACarServiceObject($service) : new ServiceObject($service);
-            $selected_services->push($service);
-        }
-        return $selected_services;
-    }
 
     public function create()
     {
@@ -482,20 +469,25 @@ class OrderPlace
     private function createCarRentalDetail(Job $job)
     {
         if (!$this->category->isRentCar()) return;
-        $service = $this->services->first();
+        /** @var ServiceRequestObject $service */
+        $service = $this->serviceRequestObject[0];
         $car_rental_detail = new CarRentalJobDetail();
-        $car_rental_detail->pick_up_location_id = $service->pickUpLocationId;
-        $car_rental_detail->pick_up_location_type = $service->pickUpLocationType;
-        $car_rental_detail->pick_up_address_geo = json_encode(array('lat' => $service->pickUpLocationLat, 'lng' => $service->pickUpLocationLng));
-        $car_rental_detail->pick_up_address = $service->pickUpAddress;
-        $car_rental_detail->destination_location_id = $service->destinationLocationId;
-        $car_rental_detail->destination_location_type = $service->destinationLocationType;
-        $car_rental_detail->destination_address_geo = json_encode(array('lat' => $service->destinationLocationLat, 'lng' => $service->destinationLocationLng));
-        $car_rental_detail->destination_address = $service->destinationAddress;
-        $car_rental_detail->drop_off_date = $service->dropOffDate;
-        $car_rental_detail->drop_off_time = $service->dropOffTime;
-        $car_rental_detail->estimated_distance = $service->estimatedDistance;
-        $car_rental_detail->estimated_time = $service->estimatedTime;
+        $pickup_thana = $service->getPickupThana();
+        $destination_thana = $service->getDestinationThana();
+        $car_rental_detail->pick_up_location_id = $pickup_thana->id;
+        $car_rental_detail->pick_up_location_type = "App\\Models\\" . class_basename($pickup_thana);
+        $car_rental_detail->pick_up_address_geo = json_encode(array('lat' => $service->getPickUpGeo()->getLat(), 'lng' => $service->getPickUpGeo()->getLng()));
+        $car_rental_detail->pick_up_address = $service->getPickUpAddress();
+        if ($destination_thana) {
+            $car_rental_detail->destination_location_id = $destination_thana;
+            $car_rental_detail->destination_location_type = "App\\Models\\" . class_basename($destination_thana);
+            $car_rental_detail->destination_address_geo = json_encode(array('lat' => $service->getDestinationGeo()->getLat(), 'lng' => $service->getDestinationGeo()->getLng()));
+            $car_rental_detail->destination_address = $service->getDestinationAddress();
+        }
+        $car_rental_detail->drop_off_date = $service->getDropOffDate();
+        $car_rental_detail->drop_off_time = $service->getDropOffTime();
+        $car_rental_detail->estimated_distance = $service->getEstimatedDistance();
+        $car_rental_detail->estimated_time = $service->getEstimatedTime();
         $car_rental_detail->job_id = $job->id;
         $this->withCreateModificationField($car_rental_detail);
         $car_rental_detail->save();

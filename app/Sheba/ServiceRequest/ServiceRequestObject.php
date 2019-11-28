@@ -21,21 +21,30 @@ class ServiceRequestObject
     private $quantity;
     /** @var Geo */
     private $pickUpGeo;
+    private $pickUpAddress;
     /** @var Geo */
     private $destinationGeo;
+    private $destinationAddress;
+    private $dropOffDate;
+    private $dropOffTime;
+    /** @var Thana */
+    private $pickUpThana;
+
+
+    /** @var Thana */
+    private $destinationThana;
+    private $estimatedDistance;
+    private $estimatedTime;
+    private $insideCityCategoryId;
+    private $outsideCityCategoryId;
+    private $googleCalculatedCarService;
+    private $mapClient;
 
     /** @var Service */
     private $service;
     /** @var Category */
     private $category;
-    /** @var Thana */
-    private $pickUpThana;
-    /** @var Thana */
-    private $destinationThana;
-    private $insideCityCategoryId;
-    private $outsideCityCategoryId;
-    private $googleCalculatedCarService;
-    private $mapClient;
+
 
     public function __construct()
     {
@@ -43,6 +52,58 @@ class ServiceRequestObject
         $this->outsideCityCategoryId = config('sheba.rent_a_car')['outside_city']['category'];
         $this->googleCalculatedCarService = array_map('intval', explode(',', env('RENT_CAR_SERVICE_IDS')));
         $this->mapClient = new MapClient();
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getEstimatedDistance()
+    {
+        return $this->estimatedDistance;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getEstimatedTime()
+    {
+        return $this->estimatedTime;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getDropOffDate()
+    {
+        return $this->dropOffDate;
+    }
+
+    /**
+     * @param mixed $dropOffDate
+     * @return ServiceRequestObject
+     */
+    public function setDropOffDate($dropOffDate)
+    {
+        $this->dropOffDate = $dropOffDate;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getDropOffTime()
+    {
+        return $this->dropOffTime;
+    }
+
+    /**
+     * @param mixed $dropOffTime
+     * @return ServiceRequestObject
+     */
+    public function setDropOffTime($dropOffTime)
+    {
+        $this->dropOffTime = $dropOffTime;
+        return $this;
     }
 
     public function getServiceId()
@@ -138,6 +199,74 @@ class ServiceRequestObject
     }
 
     /**
+     * @return Thana
+     */
+    public function getPickupThana()
+    {
+        return $this->pickUpThana;
+    }
+
+    /**
+     * @return Thana
+     */
+    public function getDestinationThana()
+    {
+        return $this->destinationThana;
+    }
+
+    /**
+     * @return Geo
+     */
+    public function getPickUpGeo()
+    {
+        return $this->pickUpGeo;
+    }
+
+    /**
+     * @param mixed $pickUpAddress
+     * @return ServiceRequestObject
+     */
+    public function setPickUpAddress($pickUpAddress)
+    {
+        $this->pickUpAddress = $pickUpAddress;
+        return $this;
+    }
+
+    /**
+     * @param mixed $destinationAddress
+     * @return ServiceRequestObject
+     */
+    public function setDestinationAddress($destinationAddress)
+    {
+        $this->destinationAddress = $destinationAddress;
+        return $this;
+    }
+
+    /**
+     * @return Geo
+     */
+    public function getDestinationGeo()
+    {
+        return $this->destinationGeo;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getPickUpAddress()
+    {
+        return $this->pickUpAddress;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getDestinationAddress()
+    {
+        return $this->destinationAddress;
+    }
+
+    /**
      * @throws InsideCityPickUpAddressNotFoundException
      * @throws OutsideCityPickUpAddressNotFoundException
      */
@@ -180,6 +309,8 @@ class ServiceRequestObject
     private function getDistanceCalculationResult()
     {
         $data = $this->mapClient->getDistanceBetweenTwoPints($this->pickUpGeo, $this->destinationGeo);
+        $this->estimatedTime = (double)($data->rows[0]->elements[0]->duration->value) / 60;
+        $this->estimatedDistance = $this->quantity;
         return (double)($data->rows[0]->elements[0]->distance->value) / 1000;
     }
 }
