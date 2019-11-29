@@ -597,6 +597,6 @@ class OrderPlace
         if (array_key_exists('nth_orders', $rules) && !array_key_exists('ignore_nth_orders_if_used', $rules)) {
             if ($this->customer->orders->count() == max($rules->nth_orders)) $this->customer->promotions()->where('voucher_id', $order->voucher_id)->update(['is_valid' => 0]);
         }
-        if ($order->voucher->usage($this->customer->id) == $order->voucher->max_order) $this->customer->promotions()->where('voucher_id', $order->voucher_id)->update(['is_valid' => 0]);
+        if ($order->voucher->usage($this->customer->profile) == $order->voucher->max_order) $this->customer->promotions()->where('voucher_id', $order->voucher_id)->update(['is_valid' => 0]);
     }
 }
