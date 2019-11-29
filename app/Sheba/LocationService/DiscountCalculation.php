@@ -21,6 +21,7 @@ class DiscountCalculation
     {
         $this->shebaContribution = 0;
         $this->partnerContribution = 0;
+        $this->discount = 0;
     }
 
     /**

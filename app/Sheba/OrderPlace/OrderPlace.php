@@ -86,7 +86,7 @@ class OrderPlace
      */
     private $orderRequestAlgorithm;
 
- 
+
     public function __construct(Creator $creator, PriceCalculation $priceCalculation, DiscountCalculation $discountCalculation, OrderVoucherData $orderVoucherData,
                                 PartnerListBuilder $partnerListBuilder, Director $director, ServiceRequest $serviceRequest, OrderRequestAlgorithm $orderRequestAlgorithm)
     {
@@ -312,6 +312,7 @@ class OrderPlace
         $this->categoryAnswers = $categoryAnswers;
         return $this;
     }
+
     private function setDeliveryAddressFromId()
     {
         if (!$this->deliveryAddressId) return;
@@ -372,6 +373,7 @@ class OrderPlace
         }
         return $order;
     }
+
     private function resolveAddress()
     {
         if ($this->deliveryAddressId) return;
@@ -420,7 +422,7 @@ class OrderPlace
             /** @var ServiceRequestObject $selected_service */
             $service = $selected_service->getService();
             $location_service = LocationService::where([['service_id', $service->id], ['location_id', $this->location->id]])->first();
-            $this->priceCalculation->setLocationService($location_service)->setOption($selected_service->getOption());
+            $this->priceCalculation->setLocationService($location_service)->setOption($selected_service->getOption())->setQuantity($selected_service->getQuantity());
             $unit_price = $this->priceCalculation->getUnitPrice();
             $this->discountCalculation->setLocationService($location_service)->setOriginalPrice($unit_price * $selected_service->getQuantity())->calculate();
             $service_data = [
@@ -431,7 +433,7 @@ class OrderPlace
                 'sheba_contribution' => $this->discountCalculation->getShebaContribution(),
                 'partner_contribution' => $this->discountCalculation->getPartnerContribution(),
                 'location_service_discount_id' => $this->discountCalculation->getDiscountId(),
-                'discount' => $this->discountCalculation->getDiscountedPrice(),
+                'discount' => $this->discountCalculation->getDiscount(),
                 'discount_percentage' => $this->discountCalculation->getIsDiscountPercentage() ? $this->discountCalculation->getDiscount() : 0,
                 'name' => $service->name,
                 'variable_type' => $service->variable_type,
