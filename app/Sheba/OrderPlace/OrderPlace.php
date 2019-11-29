@@ -105,7 +105,17 @@ class OrderPlace
     public function setDeliveryAddressId($deliveryAddressId)
     {
         $this->deliveryAddressId = $deliveryAddressId;
-        $this->setDeliveryAddress();
+        $this->setDeliveryAddressFromId();
+        return $this;
+    }
+
+    /**
+     * @param $delivery_address
+     * @return $this
+     */
+    public function setDeliveryAddress($delivery_address)
+    {
+        $this->deliveryAddress = $delivery_address;
         return $this;
     }
 
@@ -113,6 +123,9 @@ class OrderPlace
      * @param $services
      * @return $this
      * @throws ValidationException
+     * @throws \App\Exceptions\RentACar\DestinationCitySameAsPickupException
+     * @throws \App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException
+     * @throws \App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException
      */
     public function setServices($services)
     {
@@ -131,9 +144,10 @@ class OrderPlace
         return $this;
     }
 
+
     /**
-     * @param mixed $deliveryMobile
-     * @return OrderPlace
+     * @param $deliveryMobile
+     * @return $this
      */
     public function setDeliveryMobile($deliveryMobile)
     {
@@ -151,9 +165,10 @@ class OrderPlace
         return $this;
     }
 
+
     /**
-     * @param mixed $paymentMethod
-     * @return OrderPlace
+     * @param $paymentMethod
+     * @return $this
      */
     public function setPaymentMethod($paymentMethod)
     {
@@ -221,9 +236,10 @@ class OrderPlace
         return $this;
     }
 
+
     /**
-     * @param mixed $affiliationId
-     * @return OrderPlace
+     * @param $affiliationId
+     * @return $this
      */
     public function setAffiliationId($affiliationId)
     {
@@ -288,8 +304,9 @@ class OrderPlace
         return $this;
     }
 
-    private function setDeliveryAddress()
+    private function setDeliveryAddressFromId()
     {
+        if (!$this->deliveryAddressId) return;
         $this->deliveryAddress = $this->customer->delivery_addresses()->withTrashed()->where('id', $this->deliveryAddressId)->first();
         if ($this->deliveryAddress->mobile != $this->deliveryMobile) {
             $new_address = $this->deliveryAddress->replicate();
@@ -297,7 +314,8 @@ class OrderPlace
             $new_address->name = $this->deliveryName;
             $this->deliveryAddress = $this->customer->delivery_addresses()->save($new_address);
         }
-        $this->setLocation();
+        $hyper_local = HyperLocal::insidePolygon($this->deliveryAddress->geo->lat, $this->deliveryAddress->geo->lng)->with('location')->first();
+        $this->setLocation($hyper_local->location);
     }
 
     private function getCategory()
@@ -305,16 +323,15 @@ class OrderPlace
         return $this->serviceRequestObject[0]->getCategory();
     }
 
-    private function setLocation()
+    private function setLocation(Location $location)
     {
-        $hyper_local = HyperLocal::insidePolygon($this->deliveryAddress->geo->lat, $this->deliveryAddress->geo->lng)->with('location')->first();
-        $this->location = $hyper_local->location;
+        $this->location = $location;
     }
-
 
     public function create()
     {
         try {
+            $this->resolveAddress();
             $this->fetchPartner();
             $job_services = $this->createJobService();
             $this->setVoucherData($job_services);
@@ -335,6 +352,32 @@ class OrderPlace
         }
         return $order;
     }
+
+    private function resolveAddress()
+    {
+        if ($this->deliveryAddress) return;
+        $address = new CustomerDeliveryAddress();
+        $address->name = $this->deliveryAddress;
+        $address->mobile = $this->deliveryMobile;
+        $service = $this->serviceRequestObject[0];
+        $lat = $service->getPickUpGeo()->getLat();
+        $lng = $service->getPickUpGeo()->getLng();
+        $hyper_local = HyperLocal::insidePolygon($lat, $lng)->with('location')->first();
+        $address->geo_informations = json_encode(['lat' => $lat, 'lng' => $lng]);
+        $address->location_id = $hyper_local->location->id;
+        $address->customer_id = $this->customer->id;
+        $this->withCreateModificationField($address);
+        $address->save();
+        $this->setCustomerDeliveryAddress($address);
+        $this->setLocation($hyper_local->location);
+    }
+
+    private function setCustomerDeliveryAddress(CustomerDeliveryAddress $address)
+    {
+        $this->deliveryAddress = $address;
+        return $this;
+    }
+
 
     private function fetchPartner()
     {

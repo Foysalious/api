@@ -40,7 +40,8 @@ class OrderController extends Controller
                 'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
                 'time' => 'required|string',
                 'payment_method' => 'required|string|in:cod,online,wallet,bkash,cbl,partner_wallet',
-                'address_id' => 'required',
+                'address' => 'required_without:address_id',
+                'address_id' => 'required_without:address',
                 'partner' => 'sometimes|required',
                 'partner_id' => 'sometimes|required|numeric',
                 'affiliate_id' => 'sometimes|required|numeric',
@@ -57,6 +58,7 @@ class OrderController extends Controller
                 ->setCustomer($request->customer)
                 ->setDeliveryName($request->name)
                 ->setDeliveryAddressId($request->address_id)
+                ->setDeliveryAddress($request->address)
                 ->setPaymentMethod($request->payment_method)
                 ->setDeliveryMobile($request->mobile)
                 ->setSalesChannel($request->sales_channel)
