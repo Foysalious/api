@@ -55,6 +55,7 @@ class OrderPlace
     private $affiliationId;
     private $voucherId;
     private $partnerId;
+    private $address;
     private $selectedPartnerId;
     /** @var Partner */
     private $selectedPartner;
@@ -118,7 +119,7 @@ class OrderPlace
      */
     public function setDeliveryAddress($delivery_address)
     {
-        $this->deliveryAddress = $delivery_address;
+        $this->address = $delivery_address;
         return $this;
     }
 
@@ -321,7 +322,8 @@ class OrderPlace
             $new_address = $this->deliveryAddress->replicate();
             $new_address->mobile = $this->deliveryMobile;
             $new_address->name = $this->deliveryName;
-            $this->deliveryAddress = $this->customer->delivery_addresses()->save($new_address);
+            $new_address = $this->customer->delivery_addresses()->save($new_address);
+            $this->setCustomerDeliveryAddress($new_address);
         }
         $hyper_local = HyperLocal::insidePolygon($this->deliveryAddress->geo->lat, $this->deliveryAddress->geo->lng)->with('location')->first();
         $this->setLocation($hyper_local->location);
@@ -378,7 +380,7 @@ class OrderPlace
     {
         if ($this->deliveryAddressId) return;
         $address = new CustomerDeliveryAddress();
-        $address->name = $this->deliveryAddress;
+        $address->name = $this->address;
         $address->mobile = $this->deliveryMobile;
         $service = $this->serviceRequestObject[0];
         $lat = $service->getPickUpGeo()->getLat();
