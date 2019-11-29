@@ -287,7 +287,7 @@ class ServiceRequestObject
      */
     private function setDestinationThana()
     {
-        if (in_array($this->service->id, [1043, 1044])) return;
+        if (!$this->destinationGeo || in_array($this->service->id, [1043, 1044])) return;
         $this->destinationThana = $this->getThana($this->destinationGeo->getLat(), $this->destinationGeo->getLng(), Thana::all());
         if ($this->pickUpThana->district_id == $this->destinationThana->district_id) {
             throw new DestinationCitySameAsPickupException("Got " . $this->destinationThana->name . '(' . $this->destinationThana->id . ') for destination');
