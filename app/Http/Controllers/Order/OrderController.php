@@ -84,11 +84,11 @@ class OrderController extends Controller
             $job = $order->jobs->first();
             return api_response($request, null, 200, ['job_id' => $job->id,
                 'order_code' => $order->code(),
+                'payment' => $payment,
                 'order' => [
                     'id' => $order->id,
                     'code' => $order->code(),
-                    'job' => ['id' => $job->id],
-                    'payment' => $payment
+                    'job' => ['id' => $job->id]
                 ]]);
         } catch (Throwable $e) {
             $sentry = app('sentry');
