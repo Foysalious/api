@@ -24,8 +24,8 @@ class LocationController extends Controller
                     'name' => 'Chittagong',
                     'image' => "https://cdn-shebadev.s3.ap-south-1.amazonaws.com/sheba_xyz/jpg/chittagong.jpg",
                     'center' => [
-                        'lat' => 23.788994076131,
-                        'lng' => 90.410852011945
+                        'lat' => 22.35585575222634,
+                        'lng' => 91.85625492089844
                     ]
                 ]
             ];
