@@ -355,7 +355,7 @@ class OrderPlace
 
     private function resolveAddress()
     {
-        if ($this->deliveryAddress) return;
+        if ($this->deliveryAddressId) return;
         $address = new CustomerDeliveryAddress();
         $address->name = $this->deliveryAddress;
         $address->mobile = $this->deliveryMobile;
