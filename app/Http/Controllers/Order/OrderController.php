@@ -51,7 +51,7 @@ class OrderController extends Controller
                 'crm_id' => 'sometimes|required|numeric',
                 'business_id' => 'sometimes|required|numeric',
                 'voucher' => 'sometimes|required|numeric',
-                'emi_month' => 'numeric'
+                'emi_month' => 'numeric',
             ], ['mobile' => 'Invalid mobile number!']);
             $this->setModifier($request->customer);
             $order = $order_place
@@ -75,17 +75,21 @@ class OrderController extends Controller
                 ->setScheduleTime($request->time)
                 ->setVendorId($request->vendor_id)
                 ->create();
-
             if (!$order) return api_response($request, null, 500);
+            $order = Order::find($order->id);
+            $payment_method = $request->payment_method;
+            /** @var Payment $payment */
+            $payment = $this->getPayment($payment_method, $order);
+            if ($payment) $payment = $payment->getFormattedPayment();
             $job = $order->jobs->first();
-
-            return api_response($request, null, 200, ['job_id' => $job->id, 'order_code' => $order->code(), 'order' => [
-                'id' => $order->id,
-                'code' => $order->code(),
-                'job' => [
-                    'id' => $job->id
-                ]
-            ]]);
+            return api_response($request, null, 200, ['job_id' => $job->id,
+                'order_code' => $order->code(),
+                'order' => [
+                    'id' => $order->id,
+                    'code' => $order->code(),
+                    'job' => ['id' => $job->id],
+                    'payment' => $payment
+                ]]);
         } catch (Throwable $e) {
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all()]);
@@ -177,6 +181,7 @@ class OrderController extends Controller
     private function getPayment($payment_method, Order $order)
     {
         try {
+            if ($payment_method == 'cod') return null;
             $order_adapter = new OrderAdapter($order->partnerOrders[0], 1);
             $order_adapter->setEmiMonth(\request()->emi_month);
             $order_adapter->setPaymentMethod($payment_method);

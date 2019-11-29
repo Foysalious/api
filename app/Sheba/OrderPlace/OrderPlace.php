@@ -16,8 +16,6 @@ use App\Models\PartnerOrder;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
-use Sheba\Checkout\Services\RentACarServiceObject;
-use Sheba\Checkout\Services\ServiceObject;
 use Sheba\Dal\JobService\JobService;
 use Sheba\Jobs\JobStatuses;
 use Sheba\Jobs\PreferredTime;
@@ -83,8 +81,12 @@ class OrderPlace
     private $serviceRequestObject;
     /** @var Creator */
     private $partnerOrderRequestCreator;
+    /**
+     * @var OrderRequestAlgorithm
+     */
     private $orderRequestAlgorithm;
 
+ 
     public function __construct(Creator $creator, PriceCalculation $priceCalculation, DiscountCalculation $discountCalculation, OrderVoucherData $orderVoucherData,
                                 PartnerListBuilder $partnerListBuilder, Director $director, ServiceRequest $serviceRequest, OrderRequestAlgorithm $orderRequestAlgorithm)
     {
@@ -98,9 +100,10 @@ class OrderPlace
         $this->orderRequestAlgorithm = $orderRequestAlgorithm;
     }
 
+
     /**
-     * @param mixed $deliveryAddressId
-     * @return OrderPlace
+     * @param $deliveryAddressId
+     * @return $this
      */
     public function setDeliveryAddressId($deliveryAddressId)
     {
@@ -155,9 +158,10 @@ class OrderPlace
         return $this;
     }
 
+
     /**
-     * @param mixed $deliveryName
-     * @return OrderPlace
+     * @param $deliveryName
+     * @return $this
      */
     public function setDeliveryName($deliveryName)
     {
@@ -196,9 +200,10 @@ class OrderPlace
         return $this;
     }
 
+
     /**
-     * @param mixed $customer
-     * @return OrderPlace
+     * @param $customer
+     * @return $this
      */
     public function setCustomer($customer)
     {
@@ -268,6 +273,10 @@ class OrderPlace
 
     }
 
+    /**
+     * @param $partnerId
+     * @return $this
+     */
     public function setSelectedPartnerId($partnerId)
     {
         $this->selectedPartnerId = $partnerId;
@@ -303,7 +312,6 @@ class OrderPlace
         $this->categoryAnswers = $categoryAnswers;
         return $this;
     }
-
     private function setDeliveryAddressFromId()
     {
         if (!$this->deliveryAddressId) return;
@@ -318,16 +326,27 @@ class OrderPlace
         $this->setLocation($hyper_local->location);
     }
 
+    /**
+     * @return Category
+     */
     private function getCategory()
     {
         return $this->serviceRequestObject[0]->getCategory();
     }
 
+    /**
+     * @param Location $location
+     */
     private function setLocation(Location $location)
     {
         $this->location = $location;
     }
 
+
+    /**
+     * @return null
+     * @throws \Exception
+     */
     public function create()
     {
         try {
@@ -346,13 +365,13 @@ class OrderPlace
                     $partners = $this->orderRequestAlgorithm->setCustomer($this->customer)->setPartners($this->partnersFromList)->getPartners();
                     $this->partnerOrderRequestCreator->setPartnerOrder($partner_order)->setPartners($partners->pluck('id')->toArray())->create();
                 }
+                $this->updateVoucherInPromoList($order);
             });
         } catch (QueryException $e) {
             throw $e;
         }
         return $order;
     }
-
     private function resolveAddress()
     {
         if ($this->deliveryAddressId) return;
@@ -372,12 +391,15 @@ class OrderPlace
         $this->setLocation($hyper_local->location);
     }
 
+    /**
+     * @param CustomerDeliveryAddress $address
+     * @return $this
+     */
     private function setCustomerDeliveryAddress(CustomerDeliveryAddress $address)
     {
         $this->deliveryAddress = $address;
         return $this;
     }
-
 
     private function fetchPartner()
     {
@@ -421,6 +443,10 @@ class OrderPlace
         return $job_services;
     }
 
+    /**
+     * @param $job_services
+     * @throws \Exception
+     */
     private function setVoucherData($job_services)
     {
         $order_amount = $job_services->map(function ($job_service) {
@@ -430,9 +456,11 @@ class OrderPlace
             $result = voucher($this->voucherId)->check($this->category->id, null, $this->location->id, $this->customer->id, $order_amount, $this->salesChannel)->reveal();
             $this->orderVoucherData->setVoucherRevealData($result);
         }
-
     }
 
+    /**
+     * @return Order
+     */
     private function createOrder()
     {
         $order = new Order();
@@ -463,6 +491,7 @@ class OrderPlace
         return null;
     }
 
+
     private function _setAffiliationId()
     {
         if ($this->affiliationId) {
@@ -472,6 +501,10 @@ class OrderPlace
         return null;
     }
 
+    /**
+     * @param Order $order
+     * @return PartnerOrder
+     */
     private function createPartnerOrder(Order $order)
     {
         $partner_order = new PartnerOrder();
@@ -483,6 +516,10 @@ class OrderPlace
         return $partner_order;
     }
 
+    /**
+     * @param PartnerOrder $partner_order
+     * @return Job
+     */
     private function createJob(PartnerOrder $partner_order)
     {
         $preferred_time = new PreferredTime($this->scheduleTime);
@@ -509,6 +546,9 @@ class OrderPlace
         return Job::create($job_data);
     }
 
+    /**
+     * @param Job $job
+     */
     private function createCarRentalDetail(Job $job)
     {
         if (!$this->category->isRentCar()) return;
@@ -536,9 +576,25 @@ class OrderPlace
         $car_rental_detail->save();
     }
 
+    /**
+     * @return bool
+     */
     private function canCreatePartnerOrderRequest()
     {
 
         return !$this->selectedPartner || count($this->partnersFromList) > 0;
+    }
+
+    /**
+     * @param Order $order
+     */
+    private function updateVoucherInPromoList(Order $order)
+    {
+        if (!$order->voucher_id) return;
+        $rules = json_decode($order->voucher->rules);
+        if (array_key_exists('nth_orders', $rules) && !array_key_exists('ignore_nth_orders_if_used', $rules)) {
+            if ($this->customer->orders->count() == max($rules->nth_orders)) $this->customer->promotions()->where('voucher_id', $order->voucher_id)->update(['is_valid' => 0]);
+        }
+        if ($order->voucher->usage($this->customer->id) == $order->voucher->max_order) $this->customer->promotions()->where('voucher_id', $order->voucher_id)->update(['is_valid' => 0]);
     }
 }
