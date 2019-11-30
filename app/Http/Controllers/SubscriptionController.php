@@ -241,21 +241,23 @@ class SubscriptionController extends Controller
                 ];
             }
 
-            /** @var $discount ServiceSubscriptionDiscount */
+            /** @var $discount ServiceSubscriptionDiscount $weekly_discount */
             $weekly_discount = $serviceSubscription->discounts()->where('subscription_type', 'weekly')->valid()->first();
+            /** @var $discount ServiceSubscriptionDiscount $monthly_discount */
             $monthly_discount = $serviceSubscription->discounts()->where('subscription_type', 'monthly')->valid()->first();
-            $serviceSubscription['discount'] = [
-                'weekly' => $weekly_discount ? [
-                    'value' => (double)$weekly_discount->discount_amount,
-                    'is_percentage' => $weekly_discount->isPercentage(),
-                    'cap' => (double)$weekly_discount->cap
-                ] : null,
-                'monthly' => $monthly_discount ? [
-                    'value' => (double)$monthly_discount->discount_amount,
-                    'is_percentage' => $monthly_discount->isPercentage(),
-                    'cap' => (double)$monthly_discount->cap
-                ] : null
-            ];
+
+            $serviceSubscription['weekly_discount'] = $weekly_discount ? [
+                'value' => (double)$weekly_discount->discount_amount,
+                'is_percentage' => $weekly_discount->isPercentage(),
+                'cap' => (double)$weekly_discount->cap
+            ] : null;
+
+            $serviceSubscription['monthly_discount'] = $monthly_discount ? [
+                'value' => (double)$monthly_discount->discount_amount,
+                'is_percentage' => $monthly_discount->isPercentage(),
+                'cap' => (double)$monthly_discount->cap
+            ] : null;
+
             removeRelationsAndFields($serviceSubscription);
             return api_response($request, $serviceSubscription, 200, ['details' => $serviceSubscription]);
         } catch (Throwable $e) {
