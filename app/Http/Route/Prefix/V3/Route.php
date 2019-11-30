@@ -12,6 +12,9 @@ class Route
             $api->group(['prefix' => 'rent-a-car'], function ($api) {
                 $api->get('prices', 'RentACar\RentACarController@getPrices');
             });
+            $api->group(['prefix' => 'register'], function ($api) {
+                $api->post('accountkit', 'AccountKit\AccountKitController@continueWithKit');
+            });
         });
     }
 }
