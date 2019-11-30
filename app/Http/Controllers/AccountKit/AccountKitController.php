@@ -18,10 +18,7 @@ class AccountKitController extends Controller
             'from' => 'required|string|in:' . implode(',', constants('FROM'))
         ]);
         $access_token_request->setAuthorizationCode($request->code);
-        $token = $sheba_accountKit->getAccessToken($access_token_request);
-        $jws = JWS::load($token);
-        $payload = $jws->getPayload();
-        $mobile = formatMobile($payload['sub']);
+        $mobile = $sheba_accountKit->getMobile($access_token_request);
         $request->merge(['mobile' => $mobile]);
         $from = $profile_repository->getAvatar($request->from);
         $profile = $profile_repository->ifExist($mobile, 'mobile');

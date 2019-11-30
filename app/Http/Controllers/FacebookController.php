@@ -10,6 +10,8 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
+use Sheba\ShebaAccountKit\Requests\AccessTokenRequest;
+use Sheba\ShebaAccountKit\ShebaAccountKit;
 use Validator;
 use DB;
 
@@ -65,7 +67,8 @@ class FacebookController extends Controller
             $from = implode(',', constants('FROM'));
             $this->validate($request, ['access_token' => 'required', 'kit_code' => 'required', 'from' => "required|in:$from"]);
             $fb_profile_info = $this->getFacebookProfileInfo($request->access_token);
-            $kit_data = $this->fbKit->authenticateKit($request->kit_code);
+            $version_code = (int)$request->header('Version-Code');
+            $kit_data = $this->resolveAccountKit($version_code, $request->kit_code);
             if ($fb_profile_info && $kit_data) {
                 $from = $this->profileRepository->getAvatar($request->from);
                 $fb_profile = new FacebookProfile($fb_profile_info);
@@ -106,6 +109,21 @@ class FacebookController extends Controller
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
+        }
+    }
+
+    private function resolveAccountKit($version_code, $code)
+    {
+        if ($version_code) return $this->fbKit->authenticateKit($code);
+        else {
+            $access_token_request = new AccessTokenRequest();
+            $access_token_request->setAuthorizationCode($code);
+            $account_kit = app(ShebaAccountKit::class);
+            $kit = [];
+            $mobile = $account_kit->getMobile($access_token_request);
+            if (!$mobile) return null;
+            $kit['mobile'] = $mobile;
+            return $kit;
         }
     }
 
