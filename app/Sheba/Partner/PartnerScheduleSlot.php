@@ -39,10 +39,13 @@ class PartnerScheduleSlot
 
     private function getShebaSlots()
     {
+        $portal_name = request()->header('portal-name');
+        $end_time = self::SCHEDULE_END;
+        if ($portal_name == 'manager-app') $end_time = '24:00:00';
         return ScheduleSlot::select('start', 'end')
             ->where([
                 ['start', '>=', DB::raw("CAST('" . self::SCHEDULE_START . "' As time)")],
-                ['end', '<=', DB::raw("CAST('" . self::SCHEDULE_END . "' As time)")]
+                ['end', '<=', DB::raw("CAST('" . $end_time . "' As time)")]
             ])->get();
     }
 
