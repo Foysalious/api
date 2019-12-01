@@ -942,6 +942,9 @@ return [
             'interest' => '25',
         ],
     ],
+    'LOAN_CONFIG'=>[
+        'interest'=>10,
+    ],
     'WEEKS'                                       => [
         'Saturday'  => 1,
         'Sunday'    => 2,
