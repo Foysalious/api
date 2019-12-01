@@ -30,27 +30,12 @@ class SpLoanController extends Controller
         $this->fileRepository = $file_repository;
     }
 
-    public function getHomepage($partner, Request $request)
+    public function getHomepage($partner, Request $request, Loan $loan)
     {
         try {
             $partner  = $request->partner;
-            $homepage = [
-                'running_application' => [
-                    'bank_name'   => !$partner->loan->isEmpty() ? $partner->loan->last()->bank_name : null,
-                    'logo'        => !$partner->loan->isEmpty() ? constants('AVAILABLE_BANK_FOR_LOAN')[$partner->loan->last()->bank_name]['logo'] : null,
-                    'loan_amount' => !$partner->loan->isEmpty() ? $partner->loan->last()->loan_amount : null,
-                    'status'      => !$partner->loan->isEmpty() ? $partner->loan->last()->status : null,
-                    'duration'    => !$partner->loan->isEmpty() ? $partner->loan->last()->duration : null
-                ],
-                'big_banner'          => config('sheba.s3_url') . 'images/offers_images/banners/loan_banner_v3_1440_628.jpg',
-                'banner'              => config('sheba.s3_url') . 'images/offers_images/banners/loan_banner_v3_720_324.jpg',
-                'title'               => 'হাতের নাগালে ব্যাংক লোন -',
-                'list'                => [
-                    'সহজ শর্তে লোন নিন',
-                    'সেবার মাধ্যমে লোন প্রসেসিং',
-                    'প্রয়োজনীয় তথ্য দিয়ে সুবিধা মত লোন গ্রহন করুন'
-                ],
-            ];
+            $resource = $request->manager_resource;
+            $homepage = $loan->setPartner($partner)->setResource($resource)->homepage();
             return api_response($request, $homepage, 200, ['homepage' => $homepage]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -61,7 +46,20 @@ class SpLoanController extends Controller
     public function getBankInterest($partner, Request $request)
     {
         try {
-            $bank_lists = array_values(constants('AVAILABLE_BANK_FOR_LOAN'));
+            $interest_rate           = constants('LOAN_CONFIG')['interest'];
+            $amount                  = $request->has('amount') ? (double)$request->amount : 0;
+            $duration                = $request->has('duration') ? (int)$request->duration * 12 : 1;
+            $total_interest          = ($interest_rate / 100) * $amount;
+            $total_instalment_amount = $amount + $total_interest;
+            $interest_per_month      = $total_instalment_amount / $duration;
+            $bank_lists              = [
+                [
+                    'interest'           => $interest_rate,
+                    'total_amount'       => $total_instalment_amount,
+                    'installment_number' => $duration,
+                    'interest_per_month' => $interest_per_month
+                ],
+            ];
             return api_response($request, $bank_lists, 200, ['bank_lists' => $bank_lists]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -339,7 +337,7 @@ class SpLoanController extends Controller
     public function updateProfilePictures($partner, Request $request)
     {
         try {
-            $this->validate($request, ['picture' => 'required|mimes:jpeg,png']);
+            $this->validate($request, ['picture' => 'required|mimes:jpeg,png,jpg']);
             $manager_resource = $request->manager_resource;
             $profile          = $manager_resource->profile;
             $image_for        = $request->image_for;
@@ -360,7 +358,7 @@ class SpLoanController extends Controller
                 }
             }
             $photo = $request->file('picture');
-            if (basename($profile->image_for) != 'default.jpg') {
+            if (basename($profile->{$image_for}) != 'default.jpg') {
                 $filename = substr($profile->{$image_for}, strlen(config('sheba.s3_url')));
                 $this->deleteOldImage($filename);
             }
