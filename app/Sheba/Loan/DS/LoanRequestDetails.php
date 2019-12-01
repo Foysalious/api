@@ -92,17 +92,31 @@ class LoanRequestDetails implements Arrayable
 
     }
 
+    /**
+     * @return array
+     * @throws \ReflectionException
+     */
     private function getFinanceInfo()
     {
+        return (new FinanceInfo($this->partner, $this->resource))->toArray();
     }
 
+    /**
+     * @return array
+     * @throws \ReflectionException
+     */
     private function getBusinessInfo()
     {
+        return (new BusinessInfo($this->partner, $this->resource))->toArray();
     }
 
+    /**
+     * @return array
+     * @throws \ReflectionException
+     */
     private function getPersonalInfo()
     {
-        return (new PersonalInfo($this->resource))->toArray();
+        return (new PersonalInfo($this->partner,$this->resource))->toArray();
     }
 
     private function getNomineeGranterInfo()
