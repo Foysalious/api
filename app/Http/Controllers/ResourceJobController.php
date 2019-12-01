@@ -81,10 +81,10 @@ class ResourceJobController extends Controller
             if ($jobs) {
                 $first_job_from_list = $jobs[0];
                 if ($job->id == $first_job_from_list->id) {
-                    $job = $this->resourceJobRepository->calculateActionsForThisJob($job);
+                    $job->partner_order->calculate(true);
                     $partner_order = $job->partner_order;
+                    $job = $this->resourceJobRepository->calculateActionsForThisJob($job);
                     if ($partner_order->closed_and_paid_at == null) {
-                        $partner_order->calculate(true);
                         $job['collect_money'] = $partner_order->due;
                     }
                 }
