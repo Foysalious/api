@@ -146,8 +146,7 @@ class FacebookController extends Controller
                 'code' => "required",
                 'from' => 'required|string|in:' . implode(',', constants('FROM'))
             ]);
-            $code_data = $this->resolveAccountKit($request->kit_code);
-//            $code_data = $this->fbKit->authenticateKit($request->code);
+            $code_data = $this->resolveAccountKit($request->code);
             if (!$code_data) {
                 return api_response($request, null, 401);
             }
