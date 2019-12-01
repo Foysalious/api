@@ -66,10 +66,13 @@ class BusinessInfo implements Arrayable
             'address'                         => $request->location,
             'full_time_employee'              => $request->full_time_employee,
             'part_time_employee'              => $request->part_time_employee,
-            'sales_information'               => (new SalesInfo($request->sales_information))->toString(),
+            'sales_information'               => (new SalesInfo($request->last_six_month_sales_information))->toString(),
             'business_additional_information' => (new BusinessAdditionalInfo($request->business_additional_information))->toString()
         ];
-        $partner_basic_data = ['establishment_year' => $request->establishment_year];
+        $partner_basic_data = [
+            'establishment_year' => $request->establishment_year,
+            'tin_no'             => $request->tin_no
+        ];
         $this->partner->update($this->withBothModificationFields($partner_data));
         $this->basic_information->update($this->withBothModificationFields($partner_basic_data));
     }
@@ -103,6 +106,8 @@ class BusinessInfo implements Arrayable
             'stock_price'                      => (double)$this->partner->stock_price,
             'location'                         => $this->partner->address,
             'establishment_year'               => $this->basic_information->establishment_year,
+            'tin_no'                           => $this->profile->tin_no,
+            'tin_certificate'                  => $this->profile->tin_certificate,
             'full_time_employee'               => (int)$this->partner->full_time_employee ?: null,
             'part_time_employee'               => (int)$this->partner->part_time_employee ?: null,
             'business_additional_information'  => (new BusinessAdditionalInfo($this->business_additional_information))->toArray(),

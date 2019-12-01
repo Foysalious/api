@@ -78,6 +78,7 @@ class IndexRoute
                 $api->get('/information-completion', 'SpLoanInformationCompletion@getLoanInformationCompletion');
                 $api->get('/homepage', 'SpLoanController@getHomepage');
                 $api->get('/bank-interest', 'SpLoanController@getBankInterest');
+                $api->get('{partner_bank_loan}/logs', 'SpLoanController@getChangeLogs');
             });
             $api->group(['prefix' => 'pos'], function ($api) {
                 $api->group(['prefix' => 'categories'], function ($api) {
