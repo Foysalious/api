@@ -103,7 +103,8 @@ class CategoryController extends Controller
                         }
                         $q->whereNotIn('id', $best_deal_category);
                         $filter_publication($q);
-                        $q->orderBy('order');
+                        if($is_business) $q->orderBy('order_for_b2b');
+                        else $q->orderBy('order');
                     }]);
                 }
             }
@@ -168,7 +169,7 @@ class CategoryController extends Controller
 
             if ($with) {
                 $categories->with(['children' => function ($q) use ($location_id, $best_deal_category_ids) {
-                    $q->select('id', 'name', 'thumb', 'parent_id', 'app_thumb')
+                    $q->select('id', 'name', 'thumb', 'parent_id', 'app_thumb', 'icon_png', 'icon')
                         ->whereHas('locations', function ($q) use ($location_id) {
                             $q->select('locations.id')->where('locations.id', $location_id);
                         })->whereHas('services', function ($q) use ($location_id) {
@@ -374,7 +375,7 @@ class CategoryController extends Controller
                 }
                 if ($location) {
                     $services->load(['activeSubscription', 'locations' => function ($q) {
-                        $q->select('id');
+                        $q->select('locations.id');
                     }]);
                     $services = collect($services);
                     $services = $services->filter(function ($service) use ($location) {

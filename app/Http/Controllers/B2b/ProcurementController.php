@@ -1,10 +1,12 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Http\Controllers\Controller;
+use App\Models\Attachment;
 use App\Models\Bid;
 use App\Models\Partner;
 use App\Models\Procurement;
 use App\Sheba\Business\ACL\AccessControl;
+use App\Transformers\AttachmentTransformer;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
@@ -37,26 +39,21 @@ class ProcurementController extends Controller
                 'type' => 'required|string:in:basic,advanced,product,service',
                 'items' => 'sometimes|string',
                 'is_published' => 'sometimes|integer',
-                #'description' => 'required',
-                /*'estimated_price' => 'required|string',
-                 'purchase_request_id' => 'sometimes|numeric',
-                 'questions' => 'required|string',
-                 'order_start_date' => 'sometimes|date_format:Y-m-d',
-                 'order_end_date' => 'sometimes|date_format:Y-m-d',
-                 'interview_date' => 'sometimes|date_format:Y-m-d',
-                 'tender_start_date' => 'sometimes|date_format:Y-m-d',
-                 'tender_end_date' => 'sometimes|date_format:Y-m-d',*/
+                'attachments.*' => 'file'
             ]);
-            if (!$access_control->setBusinessMember($request->business_member)->hasAccess('procurement.rw')) return api_response($request, null, 403);
+            if (!$access_control->setBusinessMember($request->business_member)->hasAccess('procurement.rw'))
+                return api_response($request, null, 403);
+
             $this->setModifier($request->manager_member);
 
-            $creator->setType($request->type)->setOwner($request->business)->setTitle($request->title)->setPurchaseRequest($request->purchase_request_id)
+            $procurement = $creator->setType($request->type)->setOwner($request->business)->setTitle($request->title)->setPurchaseRequest($request->purchase_request_id)
                 ->setLongDescription($request->description)->setOrderStartDate($request->order_start_date)->setOrderEndDate($request->order_end_date)
                 ->setInterviewDate($request->interview_date)->setProcurementStartDate($request->procurement_start_date)->setProcurementEndDate($request->procurement_end_date)
                 ->setItems($request->items)->setQuestions($request->questions)->setNumberOfParticipants($request->number_of_participants)
                 ->setLastDateOfSubmission($request->last_date_of_submission)->setPaymentOptions($request->payment_options)->setIsPublished($request->is_published)
-                ->setLabels($request->labels);
-            $procurement = $creator->create();
+                ->setLabels($request->labels)->setAttachments($request->attachments)->setCreatedBy($request->manager_member)
+                ->create();
+
             return api_response($request, $procurement, 200, ['id' => $procurement->id]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -133,7 +130,6 @@ class ProcurementController extends Controller
                 $technical_evaluation = $procurement->items->where('type', 'technical_evaluation')->first();
                 $company_evaluation = $procurement->items->where('type', 'company_evaluation')->first();
 
-
                 $procurement_details = [
                     'id' => $procurement->id,
                     'title' => $procurement->title,
@@ -150,6 +146,9 @@ class ProcurementController extends Controller
                     'price_quotation' => $price_quotation ? $price_quotation->fields ? $price_quotation->fields->toArray() : null : null,
                     'technical_evaluation' => $technical_evaluation ? $technical_evaluation->fields ? $technical_evaluation->fields->toArray() : null : null,
                     'company_evaluation' => $company_evaluation ? $company_evaluation->fields ? $company_evaluation->fields->toArray() : null : null,
+                    'attachments' => $procurement->attachments->map(function (Attachment $attachment) {
+                        return (new AttachmentTransformer())->transform($attachment);
+                    })->toArray()
                 ];
                 return api_response($request, $procurement_details, 200, ['procurements' => $procurement_details]);
             }

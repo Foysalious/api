@@ -92,7 +92,6 @@ class TopUpExcelJob extends TopUpJob
     public function updateBulkTopUpStatus($status)
     {
         $this->bulk->status = $status;
-
         $this->bulk->save();
     }
 }
