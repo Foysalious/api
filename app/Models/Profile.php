@@ -39,6 +39,7 @@ class Profile extends Model
         'gender',
         'dob',
         'pro_pic',
+        'birth_place',
         'total_asset_amount',
         'monthly_living_cost',
         'monthly_loan_installment_amount',
@@ -110,5 +111,15 @@ class Profile extends Model
     public function mobileBanks()
     {
         return $this->hasMany(ProfileMobileBankInformation::class);
+    }
+
+    public function nominee()
+    {
+        return $this->hasOne(Profile::class, 'id','nominee_id');
+    }
+
+    public function granter()
+    {
+        return $this->hasOne(Profile::class, 'id','grantor_id');
     }
 }
