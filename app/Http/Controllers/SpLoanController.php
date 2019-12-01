@@ -455,7 +455,8 @@ class SpLoanController extends Controller
     public function getChangeLogs(Request $request, $partner,PartnerBankLoan $partner_bank_loan){
 
         try {
-            $partner_bank_loan_logs = $partner_bank_loan->changeLogs;
+            list($offset, $limit) = calculatePagination($request);
+            $partner_bank_loan_logs = $partner_bank_loan->changeLogs->slice($offset)->take($limit);
             return api_response($request, null, 200, ['logs' => $partner_bank_loan_logs]);
         }catch (\Throwable $e) {
             app('sentry')->captureException($e);
