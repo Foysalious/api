@@ -24,7 +24,7 @@ class FinanceInfo implements Arrayable
         $this->resource         = $resource;
         $this->profile          = $resource->profile;
         $this->loanRequest      = $loanRequest;
-        $this->bank_information = (new BankInformation($partner->bankInformations))->toArray();
+        $this->bank_information = $partner->bankInformations;
     }
 
     public static function getValidators()
@@ -42,6 +42,7 @@ class FinanceInfo implements Arrayable
 
     /**
      * @inheritDoc
+     * @throws \ReflectionException
      */
     public function toArray()
     {
@@ -53,9 +54,13 @@ class FinanceInfo implements Arrayable
         return [];
     }
 
+    /**
+     * @return array
+     * @throws \ReflectionException
+     */
     private function getDataFromProfile()
     {
-        return array_merge($this->bank_information, [
+        return array_merge((new BankInformation($this->bank_information->toArray()))->toArray(), [
             'acc_types' => constants('BANK_ACCOUNT_TYPE'),
             'bkash'     => [
                 'bkash_no'            => $this->partner->bkash_no,
@@ -65,6 +70,10 @@ class FinanceInfo implements Arrayable
         ]);
     }
 
+    /**
+     * @param Request $request
+     * @throws \ReflectionException
+     */
     public function update(Request $request)
     {
         $bank_data    = (new BankInformation($request))->toArray();
@@ -72,13 +81,13 @@ class FinanceInfo implements Arrayable
             'bkash_no'           => !empty($request->bkash_no) ? formatMobile($request->bkash_no) : null,
             'bkash_account_type' => $request->bkash_account_type
         ];
-        if ($this->partner->bankInformations) {
-            $this->partner->bankInformations->update($this->withBothModificationFields($bank_data));
+        if ($this->bank_information) {
+            $this->bank_information->update($this->withBothModificationFields($bank_data));
         } else {
+            $bank_data['partner_id'] = $this->partner->id;
             PartnerBankInformation::create($this->withCreateModificationField($bank_data));
         }
         $this->partner->update($this->withBothModificationFields($partner_data));
-        return api_response($request, 1, 200);
 
     }
 }
