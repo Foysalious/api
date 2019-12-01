@@ -37,7 +37,7 @@ class PersonalInfo implements Arrayable
     {
         return [
             'gender'                          => 'required|string|in:Male,Female,Other',
-            'birthday'                             => 'date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
+            'birthday'                        => 'date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
             'nid_issue_date'                  => 'sometimes|date|date_format:Y-m-d',
             #'father_name' => 'required_without:spouse_name',
             #'spouse_name' => 'required_without:father_name',
@@ -92,7 +92,8 @@ class PersonalInfo implements Arrayable
      */
     private function validateEmail($email)
     {
-        if (empty($email)) return ;
+        if (empty($email))
+            return;
         $exists = Profile::where('email', $email)->where('id', '<>', $this->profile->id)->first();
         if (!empty($exists))
             throw new EmailUsed();
@@ -123,7 +124,9 @@ class PersonalInfo implements Arrayable
      */
     private function dataFromProfile()
     {
-        $profile = $this->profile;
+        $profile           = $this->profile;
+        $permanent_address = (new PermanentAddress($this->basic_information))->toArray();
+        $present_address   = (new PresentAddress($this->basic_information))->toArray();
         return [
             'name'                => $profile->name,
             'mobile'              => $profile->mobile,
@@ -132,8 +135,9 @@ class PersonalInfo implements Arrayable
             'genders'             => constants('GENDER'),
             'picture'             => $profile->pro_pic,
             'birthday'            => $profile->dob,
-            'present_address'     => (new PresentAddress($this->basic_information))->toArray(),
-            'permanent_address'   => (new PermanentAddress($this->basic_information))->toArray(),
+            'present_address'     => $permanent_address,
+            'permanent_address'   => $present_address,
+            'is_same_address'     => self::isSameAddress($present_address, $permanent_address),
             'father_name'         => $this->resource->father_name,
             'spouse_name'         => $this->resource->spouse_name,
             'mother_name'         => $this->resource->mother_name,
@@ -146,5 +150,14 @@ class PersonalInfo implements Arrayable
             'other_id'            => $this->basic_information->other_id,
             'other_id_issue_date' => $this->basic_information->other_id_issue_date
         ];
+    }
+
+    public static function isSameAddress($present, $permanent)
+    {
+        foreach ($present as $key => $value) {
+            if ($value != $permanent[$key])
+                return false;
+        }
+        return true;
     }
 }

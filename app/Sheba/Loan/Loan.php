@@ -4,7 +4,9 @@ namespace Sheba\Loan;
 
 use App\Models\PartnerBankLoan;
 use Sheba\Loan\DS\BusinessInfo;
+use Sheba\Loan\DS\Documents;
 use Sheba\Loan\DS\FinanceInfo;
+use Sheba\Loan\DS\NomineeGranterInfo;
 use Sheba\Loan\DS\PartnerLoanRequest;
 use Sheba\Loan\DS\PersonalInfo;
 
@@ -24,24 +26,26 @@ class Loan
 
     public static function homepageStatics()
     {
-        return [['title'     => 'ব্যাংক লোনের সুবিধা কি কি - ',
-                 'list'      => [
-                     'সহজেই ব্যবসা বার্তা পৌঁছে দিন কাস্টমারের কাছে',
-                     'আপনার সুবিধা মত সময়ে ও বাজেটে স্বল্পমূল্যে কার্যকরী মার্কেটিং ',
-                     'শুধু সফল ভাবে পাঠানো এসএমএস বা ইমেইলের জন্যই মূল্য দিন',
-                     'মার্কেটিং থেকে অর্ডার পাবার রিপোর্ট পাচ্ছেন খুব দ্রুত '
-                 ],
-                 'list_icon' => ''
+        return [
+            [
+                'title'     => 'ব্যাংক লোনের সুবিধা কি কি - ',
+                'list'      => [
+                    'সহজেই ব্যবসা বার্তা পৌঁছে দিন কাস্টমারের কাছে',
+                    'আপনার সুবিধা মত সময়ে ও বাজেটে স্বল্পমূল্যে কার্যকরী মার্কেটিং ',
+                    'শুধু সফল ভাবে পাঠানো এসএমএস বা ইমেইলের জন্যই মূল্য দিন',
+                    'মার্কেটিং থেকে অর্ডার পাবার রিপোর্ট পাচ্ছেন খুব দ্রুত '
                 ],
-                [
-                    'title'     => 'ব্যাংক লোন কিভাবে নেবেন- ',
-                    'list'      => [
-                        '১। সহজেই ব্যবসা বার্তা পৌঁছে দিন কাস্টমারের কাছে ',
-                        '২। আপনার সুবিধা মত সময়ে ও বাজেটে স্বল্পমূল্যে কার্যকরী মার্কেটিং ',
-                        '৩। শুধু সফল ভাবে পাঠানো এসএমএস বা ইমেইলের জন্যই মূল্য দিন'
-                    ],
-                    'list_icon' => ''
-                ]
+                'list_icon' => ''
+            ],
+            [
+                'title'     => 'ব্যাংক লোন কিভাবে নেবেন- ',
+                'list'      => [
+                    '১। সহজেই ব্যবসা বার্তা পৌঁছে দিন কাস্টমারের কাছে ',
+                    '২। আপনার সুবিধা মত সময়ে ও বাজেটে স্বল্পমূল্যে কার্যকরী মার্কেটিং ',
+                    '৩। শুধু সফল ভাবে পাঠানো এসএমএস বা ইমেইলের জন্যই মূল্য দিন'
+                ],
+                'list_icon' => ''
+            ]
         ];
     }
 
@@ -146,7 +150,19 @@ class Loan
     {
         return (new BusinessInfo($this->partner, $this->resource));
     }
-    public function financeInfo(){
+
+    public function financeInfo()
+    {
         return (new FinanceInfo($this->partner, $this->resource));
+    }
+
+    public function nomineeGranter()
+    {
+        return (new NomineeGranterInfo($this->partner, $this->resource));
+    }
+
+    public function documents()
+    {
+        return (new Documents($this->partner, $this->resource));
     }
 }
