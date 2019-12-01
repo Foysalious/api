@@ -64,9 +64,10 @@ class ResourceHandler
      * @param $date
      * @param $time
      * @param Category $category
-     * @return mixed
+     * @param Job|null $job
+     * @return bool
      */
-    public function isAvailableForCategory($date, $time, Category $category)
+    public function isAvailableForCategory($date, $time, Category $category, Job $job = null)
     {
         $start_time = Carbon::parse($date . ' ' . $time);
         $end_time = Carbon::parse($date . ' ' . $time)->addMinutes($category->book_resource_minutes);
@@ -77,6 +78,11 @@ class ResourceHandler
         $schedules_at_start_end = $this->resourceSchedules->filterStartAndEndAt($this->resource, $start_time, $end_time);
         #dump($start_time, $end_time, $schedules_start_between, $schedules_end_between, $schedules_at_start, $schedules_at_end, $schedules_at_start_end);
         $this->bookedSchedules = $schedules_start_between->merge($schedules_end_between)->merge($schedules_at_start)->merge($schedules_at_end)->merge($schedules_at_start_end);
+        if ($job) {
+            $this->bookedSchedules = $this->bookedSchedules->reject(function ($schedule, $job) {
+                return $schedule->job_id == $job->id;
+            });
+        }
         return $this->bookedSchedules->count() == 0;
     }
 
