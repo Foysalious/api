@@ -29,7 +29,7 @@ class CustomerPartnerController extends Controller
                     'rating' => round((double)$partner->reviews[0]->avg_rating, 2),
                     'logo' => $partner->logo
                 ];
-            })]);
+            })->values()->all()]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
