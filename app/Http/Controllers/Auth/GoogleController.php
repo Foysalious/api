@@ -68,8 +68,7 @@ class GoogleController extends Controller
         try {
             $this->validate($request, ['id_token' => 'required', 'kit_code' => 'required', 'from' => "required|in:" . implode(',', constants('FROM'))]);
             $payload = $this->getGooglePayload($request->id_token);
-            $version_code = (int)$request->header('Version-Code');
-            $kit_data = $this->resolveAccountKit($version_code, $request->kit_code);
+            $kit_data = $this->resolveAccountKit($request->kit_code);
             if ($payload && $kit_data) {
                 $social_profile = new SocialProfile(array_merge($payload, ['mobile' => formatMobile($kit_data['mobile'])]));
                 $profile_info = $social_profile->getProfileInfo('google');
@@ -103,19 +102,20 @@ class GoogleController extends Controller
         }
     }
 
-    private function resolveAccountKit($version_code, $code)
+    private function resolveAccountKit($code)
     {
-        if ($version_code) return $this->fbKit->authenticateKit($code);
-        else {
-            $access_token_request = new AccessTokenRequest();
-            $access_token_request->setAuthorizationCode($code);
-            $account_kit = app(ShebaAccountKit::class);
-            $kit = [];
-            $mobile = $account_kit->getMobile($access_token_request);
-            if (!$mobile) return null;
-            $kit['mobile'] = $mobile;
-            return $kit;
-        }
+        $version = (int)\request()->header('Version-Code');
+        $portal_name = \request()->header('portal-name');
+        $platform_name = \request()->header('Platform-Name');
+        if ($platform_name == 'ios' || ($version <= 30211 && $portal_name == 'customer-app')) return $this->fbKit->authenticateKit($code);
+        $access_token_request = new AccessTokenRequest();
+        $access_token_request->setAuthorizationCode($code);
+        $account_kit = app(ShebaAccountKit::class);
+        $kit = [];
+        $mobile = $account_kit->getMobile($access_token_request);
+        if (!$mobile) return null;
+        $kit['mobile'] = $mobile;
+        return $kit;
     }
 
     private function getGooglePayload($id_token)

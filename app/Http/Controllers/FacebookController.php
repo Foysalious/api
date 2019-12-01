@@ -67,8 +67,7 @@ class FacebookController extends Controller
             $from = implode(',', constants('FROM'));
             $this->validate($request, ['access_token' => 'required', 'kit_code' => 'required', 'from' => "required|in:$from"]);
             $fb_profile_info = $this->getFacebookProfileInfo($request->access_token);
-            $version_code = (int)$request->header('Version-Code');
-            $kit_data = $this->resolveAccountKit($version_code, $request->kit_code);
+            $kit_data = $this->resolveAccountKit($request->kit_code);
             if ($fb_profile_info && $kit_data) {
                 $from = $this->profileRepository->getAvatar($request->from);
                 $fb_profile = new FacebookProfile($fb_profile_info);
@@ -112,19 +111,20 @@ class FacebookController extends Controller
         }
     }
 
-    private function resolveAccountKit($version_code, $code)
+    private function resolveAccountKit($code)
     {
-        if ($version_code) return $this->fbKit->authenticateKit($code);
-        else {
-            $access_token_request = new AccessTokenRequest();
-            $access_token_request->setAuthorizationCode($code);
-            $account_kit = app(ShebaAccountKit::class);
-            $kit = [];
-            $mobile = $account_kit->getMobile($access_token_request);
-            if (!$mobile) return null;
-            $kit['mobile'] = $mobile;
-            return $kit;
-        }
+        $version = (int)\request()->header('Version-Code');
+        $portal_name = \request()->header('portal-name');
+        $platform_name = \request()->header('Platform-Name');
+        if ($platform_name == 'ios' || ($version <= 30211 && $portal_name == 'customer-app')) return $this->fbKit->authenticateKit($code);
+        $access_token_request = new AccessTokenRequest();
+        $access_token_request->setAuthorizationCode($code);
+        $account_kit = app(ShebaAccountKit::class);
+        $kit = [];
+        $mobile = $account_kit->getMobile($access_token_request);
+        if (!$mobile) return null;
+        $kit['mobile'] = $mobile;
+        return $kit;
     }
 
     private function getFacebookProfileInfo($token)
@@ -146,8 +146,10 @@ class FacebookController extends Controller
                 'code' => "required",
                 'from' => 'required|string|in:' . implode(',', constants('FROM'))
             ]);
-            $code_data = $this->fbKit->authenticateKit($request->code);
-            if ($code_data == false) {
+            $version_code = (int)$request->header('Version-Code');
+            $code_data = $this->resolveAccountKit($version_code, $request->kit_code);
+//            $code_data = $this->fbKit->authenticateKit($request->code);
+            if (!$code_data) {
                 return api_response($request, null, 401);
             }
             $code_data['mobile'] = formatMobile($code_data['mobile']);
