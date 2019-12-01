@@ -12,6 +12,7 @@ use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\Loan\DS\BusinessInfo;
 use Sheba\Loan\DS\FinanceInfo;
+use Sheba\Loan\DS\NomineeGranterInfo;
 use Sheba\Loan\DS\PersonalInfo;
 use Sheba\Loan\Exceptions\EmailUsed;
 use Sheba\Loan\Loan;
@@ -292,29 +293,12 @@ class SpLoanController extends Controller
         }
     }
 
-    public function getNomineeInformation($partner, Request $request)
+    public function getNomineeInformation($partner, Request $request, Loan $loan)
     {
         try {
-            $manager_resource = $request->manager_resource;
-            $profile          = $manager_resource->profile;
-            #$nominee_profile = Profile::find($profile->nominee_id);
-            $grantor_profile = Profile::find($profile->grantor_id);
-            $info            = array(/*'name' => !empty($nominee_profile) ? $nominee_profile->name : null,
-                'mobile' => !empty($nominee_profile) ? $nominee_profile->mobile : null,
-                'nominee_relation' => !empty($nominee_profile) ? $profile->nominee_relation : null,
-
-                'picture' => !empty($nominee_profile) ? $nominee_profile->pro_pic : null,
-                'nid_front_image' => !empty($nominee_profile) ? $nominee_profile->nid_image_front : null,
-                'nid_back_image' => !empty($nominee_profile) ? $nominee_profile->nid_image_back : null,*/
-                                     'grantor' => [
-                                         'name'             => !empty($grantor_profile) ? $grantor_profile->name : null,
-                                         'mobile'           => !empty($grantor_profile) ? $grantor_profile->mobile : null,
-                                         'grantor_relation' => !empty($grantor_profile) ? $profile->grantor_relation : null,
-                                         'picture'          => !empty($grantor_profile) ? $grantor_profile->pro_pic : null,
-                                         'nid_front_image'  => !empty($grantor_profile) ? $grantor_profile->nid_image_front : null,
-                                         'nid_back_image'   => !empty($grantor_profile) ? $grantor_profile->nid_image_back : null,
-                                     ]
-            );
+            $resource = $request->manager_resource;
+            $partner  = $request->partner;
+            $info     = $loan->setPartner($partner)->setResource($resource)->nomineeGranter()->toArray();
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -322,51 +306,13 @@ class SpLoanController extends Controller
         }
     }
 
-    public function updateNomineeGrantorInformation($partner, Request $request)
+    public function updateNomineeGrantorInformation($partner, Request $request, Loan $loan)
     {
         try {
-            $this->validate($request, [/*'nominee_name' => 'required|string',
-                'nominee_mobile' => 'required|string|mobile:bd',
-                'nominee_relation' => 'required|string',*/
-                                       'grantor_name'     => 'required|string',
-                                       'grantor_mobile'   => 'required|string|mobile:bd',
-                                       'grantor_relation' => 'required|string'
-            ]);
-            $partner                  = $request->partner;
-            $manager_resource         = $request->manager_resource;
-            $manager_resource_profile = $manager_resource->profile;
-            /*$nominee_profile = Profile::where('mobile', formatMobile($request->nominee_mobile))->first();
-            if ($nominee_profile) {
-                $data = [
-                    'nominee_id' => $nominee_profile->id,
-                    'nominee_relation' => $request->nominee_relation
-                ];
-                $manager_resource_profile->update($this->withBothModificationFields($data));
-            } else {
-                $nominee_profile = $this->createNomineeProfile($partner, $request);
-
-                $data = [
-                    'nominee_id' => $nominee_profile->id,
-                    'nominee_relation' => $request->nominee_relation
-                ];
-
-                $manager_resource_profile->update($this->withBothModificationFields($data));
-            }*/
-            $grantor_profile = Profile::where('mobile', formatMobile($request->grantor_mobile))->first();
-            if ($grantor_profile) {
-                $data = [
-                    'grantor_id'       => $grantor_profile->id,
-                    'grantor_relation' => $request->grantor_relation
-                ];
-                $manager_resource_profile->update($this->withBothModificationFields($data));
-            } else {
-                $grantor_profile = $this->createGrantorProfile($partner, $request);
-                $data            = [
-                    'grantor_id'       => $grantor_profile->id,
-                    'grantor_relation' => $request->grantor_relation
-                ];
-                $manager_resource_profile->update($this->withBothModificationFields($data));
-            }
+            $this->validate($request, NomineeGranterInfo::getValidator());
+            $partner  = $request->partner;
+            $resource = $request->manager_resource;
+            $loan->setPartner($partner)->setResource($resource)->nomineeGranter()->update($request);
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -377,50 +323,12 @@ class SpLoanController extends Controller
         }
     }
 
-    private function createGrantorProfile($partner, Request $request)
-    {
-        $this->setModifier($partner);
-        $profile                 = new Profile();
-        $profile->remember_token = str_random(255);
-        $profile->name           = $request->grantor_name;
-        $profile->mobile         = !empty($request->grantor_mobile) ? formatMobile($request->grantor_mobile) : null;
-        $this->withCreateModificationField($profile);
-        $profile->save();
-        return $profile;
-    }
-
-    public function getDocuments($partner, Request $request)
+    public function getDocuments($partner, Request $request, Loan $loan)
     {
         try {
-            $partner            = $request->partner;
-            $manager_resource   = $request->manager_resource;
-            $profile            = $manager_resource->profile;
-            $basic_informations = $partner->basicInformations;
-            $bank_informations  = $partner->bankInformations;
-            #$nominee_profile = Profile::find($profile->nominee_id);
-            $grantor_profile = Profile::find($profile->grantor_id);
-            $info            = array(
-                'picture'           => $profile->pro_pic,
-                'nid_image'         => $manager_resource->nid_image,
-                'is_verified'       => $manager_resource->is_verified,
-                'nid_image_front'   => $profile->nid_image_front,
-                'nid_image_back'    => $profile->nid_image_back,
-                /*'nominee_document' => [
-                                   'picture' => !empty($nominee_profile) ? $nominee_profile->pro_pic : null,
-                                   'nid_front_image' => !empty($nominee_profile) ? $nominee_profile->nid_image_front : null,
-                                   'nid_back_image' => !empty($nominee_profile) ? $nominee_profile->nid_image_back : null,
-                               ],*/
-                'grantor_document'  => [
-                    'picture'         => !empty($grantor_profile) ? $grantor_profile->pro_pic : null,
-                    'nid_front_image' => !empty($grantor_profile) ? $grantor_profile->nid_image_front : null,
-                    'nid_back_image'  => !empty($grantor_profile) ? $grantor_profile->nid_image_back : null,
-                ],
-                'business_document' => [
-                    'tin_certificate'          => $profile->tin_certificate,
-                    'trade_license_attachment' => $basic_informations->trade_license_attachment,
-                    #'statement' => !empty($bank_informations) ? $bank_informations->statement : null
-                ],
-            );
+            $partner  = $request->partner;
+            $resource = $request->manager_resource;
+            $info     = $loan->setPartner($partner)->setResource($resource)->documents()->toArray();
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -564,6 +472,31 @@ class SpLoanController extends Controller
     {
         list($trade_license, $trade_license_filename) = $this->makeTradeLicense($image_file, 'trade_license_attachment');
         return $this->saveImageToCDN($trade_license, getTradeLicenceImagesFolder(), $trade_license_filename);
+    }
+
+    public function getChangeLogs(Request $request, $partner, PartnerBankLoan $partner_bank_loan)
+    {
+
+        try {
+            list($offset, $limit) = calculatePagination($request);
+            $partner_bank_loan_logs = $partner_bank_loan->changeLogs->slice($offset)->take($limit);
+            return api_response($request, null, 200, ['logs' => $partner_bank_loan_logs]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    private function createGrantorProfile($partner, Request $request)
+    {
+        $this->setModifier($partner);
+        $profile                 = new Profile();
+        $profile->remember_token = str_random(255);
+        $profile->name           = $request->grantor_name;
+        $profile->mobile         = !empty($request->grantor_mobile) ? formatMobile($request->grantor_mobile) : null;
+        $this->withCreateModificationField($profile);
+        $profile->save();
+        return $profile;
     }
 
     private function createNomineeProfile($partner, Request $request)
