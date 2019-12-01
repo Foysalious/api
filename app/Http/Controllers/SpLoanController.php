@@ -753,4 +753,15 @@ class SpLoanController extends Controller
         return $filename = Carbon::now()->timestamp . '_' . $image_for . '_image_' . $profile->id . '.' . $photo->extension();
     }
 
+    public function getChangeLogs(Request $request, $partner,PartnerBankLoan $partner_bank_loan){
+
+        try {
+            $partner_bank_loan_logs = $partner_bank_loan->changeLogs;
+            return api_response($request, null, 200, ['logs' => $partner_bank_loan_logs]);
+        }catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
 }
