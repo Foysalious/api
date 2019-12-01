@@ -26,7 +26,6 @@ class BusinessInfo implements Arrayable
      */
     private $partner;
     private $basic_information;
-    private $bank_information;
     private $business_additional_information;
     private $sales_information;
 
@@ -37,7 +36,6 @@ class BusinessInfo implements Arrayable
         $this->partnerLoanRequest              = $request;
         $this->partner                         = $partner;
         $this->basic_information               = $partner->basicInformations;
-        $this->bank_information                = $partner->bankInformations;
         $this->business_additional_information = $partner->business_additional_information;
         $this->sales_information               = $partner->sales_information;
     }

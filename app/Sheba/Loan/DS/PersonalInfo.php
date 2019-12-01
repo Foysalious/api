@@ -37,7 +37,7 @@ class PersonalInfo implements Arrayable
     {
         return [
             'gender'                          => 'required|string|in:Male,Female,Other',
-            'dob'                             => 'date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
+            'birthday'                             => 'date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
             'nid_issue_date'                  => 'sometimes|date|date_format:Y-m-d',
             #'father_name' => 'required_without:spouse_name',
             #'spouse_name' => 'required_without:father_name',
@@ -59,7 +59,7 @@ class PersonalInfo implements Arrayable
             $this->validateEmail($request->email);
         $profile_data  = [
             'gender'                          => $request->gender,
-            'dob'                             => $request->dob,
+            'dob'                             => $request->birthday,
             'birth_place'                     => $request->birth_place,
             'occupation'                      => $request->occupation,
             'email'                           => $request->email,

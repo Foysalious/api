@@ -13,6 +13,7 @@ use Sheba\FileManagers\FileManager;
 use Sheba\Loan\DS\BusinessInfo;
 use Sheba\Loan\DS\FinanceInfo;
 use Sheba\Loan\DS\PersonalInfo;
+use Sheba\Loan\Exceptions\EmailUsed;
 use Sheba\Loan\Loan;
 use Sheba\ModificationFields;
 
@@ -223,6 +224,8 @@ class SpLoanController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
+        } catch (EmailUsed $e) {
+            return api_response($request, $e->getMessage(), 400, ['message' => $e->getMessage()]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
