@@ -39,10 +39,13 @@ class PartnerScheduleSlot
 
     private function getShebaSlots()
     {
+        $portal_name = request()->header('portal-name');
+        $end_time = self::SCHEDULE_END;
+        if ($portal_name == 'manager-app') $end_time = '24:00:00';
         return ScheduleSlot::select('start', 'end')
             ->where([
                 ['start', '>=', DB::raw("CAST('" . self::SCHEDULE_START . "' As time)")],
-                ['end', '<=', DB::raw("CAST('" . self::SCHEDULE_END . "' As time)")]
+                ['end', '<=', DB::raw("CAST('" . $end_time . "' As time)")]
             ])->get();
     }
 
@@ -64,13 +67,15 @@ class PartnerScheduleSlot
         $last_day = $this->today->copy()->addDays($for_days);
         $start = $this->today->toDateString() . ' ' . $this->shebaSlots->first()->start;
         $end = $last_day->format('Y-m-d') . ' ' . $this->shebaSlots->last()->end;
-        $this->resources = $this->getResources();
-        $this->bookedSchedules = $this->getBookedSchedules($start, $end);
-        $this->runningLeaves = $this->getLeavesBetween($start, $end);
-        $this->preparationTime = $this->partner->categories->where('id', $this->category->id)->first()->pivot->preparation_time_minutes;
+        if ($this->partner) {
+            $this->resources = $this->getResources();
+            $this->bookedSchedules = $this->getBookedSchedules($start, $end);
+            $this->runningLeaves = $this->getLeavesBetween($start, $end);
+            $this->preparationTime = $this->partner->categories->where('id', $this->category->id)->first()->pivot->preparation_time_minutes;
+        }
         $day = $this->today->copy();
         while ($day < $last_day) {
-            $this->addAvailabilityToShebaSlots($day);
+            if ($this->partner) $this->addAvailabilityToShebaSlots($day);
             array_push($final, ['value' => $day->toDateString(), 'slots' => $this->formatSlots($day, $this->shebaSlots->toArray())]);
             $day->addDay();
         }
