@@ -8,7 +8,7 @@ class PresentAddress extends Address
 {
     public function __construct($info)
     {
-        parent::__construct($info->permanent_address);
+        parent::__construct($info->present_address);
     }
 
     public function toArray()

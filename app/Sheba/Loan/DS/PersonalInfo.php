@@ -1,6 +1,5 @@
 <?php namespace Sheba\Loan\DS;
 
-
 use App\Models\Partner;
 use App\Models\Profile;
 use App\Models\Resource;
@@ -17,6 +16,7 @@ class PersonalInfo implements Arrayable
     private $profile;
     private $partnerLoanRequest;
     private $partner;
+    private $basic_information;
 
     /**
      * PersonalInfo constructor.
@@ -30,6 +30,7 @@ class PersonalInfo implements Arrayable
         $this->profile            = $resource->profile;
         $this->partnerLoanRequest = $request;
         $this->partner            = $partner;
+        $this->basic_information  = $partner->basicInformations;
     }
 
     public static function getValidators()
@@ -54,7 +55,8 @@ class PersonalInfo implements Arrayable
      */
     public function update(Request $request)
     {
-        if ($request->has('email')) $this->validateEmail($request->email);
+        if ($request->has('email'))
+            $this->validateEmail($request->email);
         $profile_data  = [
             'gender'                          => $request->gender,
             'dob'                             => $request->dob,
@@ -68,8 +70,10 @@ class PersonalInfo implements Arrayable
             'monthly_living_cost'             => $request->monthly_living_cost,
         ];
         $basic_data    = [
-            'present_address'   => (new PresentAddress($request))->toString(),
-            'permanent_address' => (new PermanentAddress($request))->toString(),
+            'present_address'     => (new PresentAddress($request))->toString(),
+            'permanent_address'   => (new PermanentAddress($request))->toString(),
+            'other_id'            => $request->other_id,
+            'other_id_issue_date' => $request->other_id_issue_date
         ];
         $resource_data = [
             'father_name' => $request->father_name,
@@ -78,17 +82,20 @@ class PersonalInfo implements Arrayable
         ];
         $this->profile->update($this->withBothModificationFields($profile_data));
         $this->resource->update($this->withBothModificationFields($resource_data));
-        $this->partner->basicInformations->update($this->withBothModificationFields($basic_data));
+        $this->basic_information->update($this->withBothModificationFields($basic_data));
     }
 
     /**
      * @param $email
+     * @return void
      * @throws EmailUsed
      */
     private function validateEmail($email)
     {
+        if (empty($email)) return ;
         $exists = Profile::where('email', $email)->where('id', '<>', $this->profile->id)->first();
-        if (!empty($exists)) throw new EmailUsed();
+        if (!empty($exists))
+            throw new EmailUsed();
     }
 
     /**
@@ -118,27 +125,26 @@ class PersonalInfo implements Arrayable
     {
         $profile = $this->profile;
         return [
-            'name'              => $profile->name,
-            'mobile'            => $profile->mobile,
-            'gender'            => $profile->gender,
-            'email'             => $profile->email,
-            'genders'           => constants('GENDER'),
-            'picture'           => $profile->pro_pic,
-            'birthday'          => $profile->dob,
-            'present_address'   => (new PresentAddress($this->partner->basicInformations))->toArray(),
-            'permanent_address' => (new PermanentAddress($this->partner->basicInformations))->toArray(),
-            'father_name'       => $this->resource->father_name,
-            'spouse_name'       => $this->resource->spouse_name,
-            'mother_name'       => $this->resource->mother_name,
-            'birth_place'       => $profile->birth_place,
-            'occupation_lists'  => constants('SUGGESTED_OCCUPATION'),
-            'occupation'        => $profile->occupation,
-            'expenses'          => [
-                'monthly_living_cost'             => (int)$profile->monthly_living_cost ?: null,
-                'total_asset_amount'              => (int)$profile->total_asset_amount ?: null,
-                'monthly_loan_installment_amount' => (int)$profile->monthly_loan_installment_amount ?: null,
-                'utility_bill_attachment'         => $profile->utility_bill_attachment ?: null
-            ]
+            'name'                => $profile->name,
+            'mobile'              => $profile->mobile,
+            'gender'              => $profile->gender,
+            'email'               => $profile->email,
+            'genders'             => constants('GENDER'),
+            'picture'             => $profile->pro_pic,
+            'birthday'            => $profile->dob,
+            'present_address'     => (new PresentAddress($this->basic_information))->toArray(),
+            'permanent_address'   => (new PermanentAddress($this->basic_information))->toArray(),
+            'father_name'         => $this->resource->father_name,
+            'spouse_name'         => $this->resource->spouse_name,
+            'mother_name'         => $this->resource->mother_name,
+            'birth_place'         => $profile->birth_place,
+            'occupation_lists'    => constants('SUGGESTED_OCCUPATION'),
+            'occupation'          => $profile->occupation,
+            'expenses'            => (new Expenses($profile))->toArray(),
+            'nid_no'              => $profile->nid_no,
+            'nid_issue_date'      => $profile->nid_issue_date,
+            'other_id'            => $this->basic_information->other_id,
+            'other_id_issue_date' => $this->basic_information->other_id_issue_date
         ];
     }
 }

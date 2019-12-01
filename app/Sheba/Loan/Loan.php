@@ -4,6 +4,7 @@ namespace Sheba\Loan;
 
 use App\Models\PartnerBankLoan;
 use Sheba\Loan\DS\BusinessInfo;
+use Sheba\Loan\DS\FinanceInfo;
 use Sheba\Loan\DS\PartnerLoanRequest;
 use Sheba\Loan\DS\PersonalInfo;
 
@@ -145,5 +146,7 @@ class Loan
     {
         return (new BusinessInfo($this->partner, $this->resource));
     }
-
+    public function financeInfo(){
+        return (new FinanceInfo($this->partner, $this->resource));
+    }
 }
