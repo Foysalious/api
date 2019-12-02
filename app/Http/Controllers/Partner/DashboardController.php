@@ -193,7 +193,7 @@ class DashboardController extends Controller
             $documents = $sp_information_completion->documents->completion_percentage;
             return ($personal == 100 && $business == 100 && $finance == 100 && $nominee == 100 && $documents == 100) ? 1 : 0;
         } catch (Throwable $e) {
-            return array();
+            return 0;
         }
     }
 
