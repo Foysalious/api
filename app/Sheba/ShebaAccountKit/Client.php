@@ -5,28 +5,23 @@ use Sheba\ShebaAccountKit\Requests\AccessTokenRequest;
 use Sheba\ShebaAccountKit\Requests\ApiTokenRequest;
 use Sheba\ShebaAccountKit\Requests\OtpSendRequest;
 use Sheba\ShebaAccountKit\Requests\OtpValidateRequest;
-
 class Client
 {
     private $appSecret;
     private $appId;
     private $endPoint;
     private $httpClient;
-
     public function __construct()
     {
-        $this->appId = 'sheba';
+        $this->appId = config('sheba_accountkit.app_id');
         $this->appSecret = config('sheba_accountkit.app_secret');
         $this->endPoint = config('sheba_accountkit.end_point');
         $this->httpClient = new GuzzleHttpClient();
     }
-
-
     public function getApiToken(ApiTokenRequest $api_token_request)
     {
         return $this->httpClient->request('GET', $this->endPoint . '/api-token', ['query' => ['app_id' => $api_token_request->getAppId(), 'app_secret' => $this->appSecret]]);
     }
-
     public function sendOtp(OtpSendRequest $sms_send_request)
     {
         return $this->httpClient->request('POST', $this->endPoint . '/shoot-otp', [
@@ -40,7 +35,6 @@ class Client
             ]
         ]);
     }
-
     public function validateOtp(OtpValidateRequest $otp_validate_request)
     {
         return $this->httpClient->request('POST', $this->endPoint . '/validate-otp', [
@@ -54,12 +48,12 @@ class Client
             ]
         ]);
     }
-
     public function getAccessToken(AccessTokenRequest $access_token_request)
     {
         return $this->httpClient->request('GET', $this->endPoint . '/access-token', [
             'query' => [
-                'app_id' => $this->appId, 'app_secret' => $this->appSecret,
+                'app_id' => $this->appId,
+                'app_secret' => $this->appSecret,
                 'authorization_code' => $access_token_request->getAuthorizationCode()
             ]]);
     }
