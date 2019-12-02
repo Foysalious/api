@@ -89,7 +89,6 @@ class Documents implements Arrayable
     {
         return [
             'picture'           => $this->profile->pro_pic,
-            'nid_image'         => $this->profile->nid_image,
             'is_verified'       => $this->resource->is_verified,
             'nid_image_front'   => $this->profile->nid_image_front,
             'nid_image_back'    => $this->profile->nid_image_back,

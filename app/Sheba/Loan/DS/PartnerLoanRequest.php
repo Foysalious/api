@@ -66,13 +66,14 @@ class PartnerLoanRequest implements Arrayable
     public function create($data)
     {
         $data['partner_id']          = $this->partner->id;
-        $data['status']              = constants('LOAN_STATUS')['considerable'];
+        $data['status']              = constants('LOAN_STATUS')['applied'];
         $data['interest_rate']       = constants('LOAN_CONFIG')['interest'];
-        $data['monthly_installment'] = ((double)$data['amount'] + ((double)$data['amount'] * ($data['interest_rate'] / 100))) / ((int)$data['duration'] * 12);
+        $data['monthly_installment'] = ((double)$data['loan_amount'] + ((double)$data['loan_amount'] * ($data['interest_rate'] / 100))) / ((int)$data['duration'] * 12);
         $this->setModifier($this->partner);
         $this->partnerBankLoan = new PartnerBankLoan($this->withCreateModificationField($data));
         $this->setDetails();
         $this->partnerBankLoan->save();
+        return $this->partnerBankLoan;
     }
 
     /**
@@ -93,5 +94,14 @@ class PartnerLoanRequest implements Arrayable
             'status'        => $this->status,
             'details'       => $this->details
         ];
+    }
+
+    public function history()
+    {
+        return [
+            'id'      => $this->partnerBankLoan->id,
+            'details' => (new LoanHistory($this->partnerBankLoan))->toArray()
+        ];
+
     }
 }
