@@ -148,7 +148,6 @@ class OrderPlace
         return $this;
     }
 
-
     /**
      * @param $deliveryMobile
      * @return $this
@@ -159,7 +158,6 @@ class OrderPlace
         return $this;
     }
 
-
     /**
      * @param $deliveryName
      * @return $this
@@ -169,7 +167,6 @@ class OrderPlace
         $this->deliveryName = trim($deliveryName);
         return $this;
     }
-
 
     /**
      * @param $paymentMethod
@@ -200,7 +197,6 @@ class OrderPlace
         $this->scheduleTime = $scheduleTime;
         return $this;
     }
-
 
     /**
      * @param $customer
@@ -241,7 +237,6 @@ class OrderPlace
         $this->infoCallId = $infoCallId;
         return $this;
     }
-
 
     /**
      * @param $affiliationId
@@ -344,7 +339,6 @@ class OrderPlace
     {
         $this->location = $location;
     }
-
 
     /**
      * @return null
@@ -494,7 +488,6 @@ class OrderPlace
         }
         return null;
     }
-
 
     private function _setAffiliationId()
     {

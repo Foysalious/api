@@ -14,6 +14,8 @@ use DB;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use League\Fractal\Serializer\ArraySerializer;
+use Sheba\Checkout\DeliveryCharge;
+use Sheba\JobDiscount\JobDiscountHandler;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\Subscription\ApproximatePriceCalculator;
 use Throwable;
@@ -197,9 +199,11 @@ class ServiceController extends Controller
      * @param $service
      * @param Request $request
      * @param PriceCalculation $price_calculation
+     * @param DeliveryCharge $delivery_charge
+     * @param JobDiscountHandler $job_discount_handler
      * @return JsonResponse
      */
-    public function show($service, Request $request, PriceCalculation $price_calculation)
+    public function show($service, Request $request, PriceCalculation $price_calculation, DeliveryCharge $delivery_charge, JobDiscountHandler $job_discount_handler)
     {
         try {
             if ($request->has('lat') && $request->has('lng')) {
@@ -214,7 +218,7 @@ class ServiceController extends Controller
             $location_service = LocationService::where('location_id', $location)->where('service_id', $service->id)->first();
             $manager = new Manager();
             $manager->setSerializer(new ArraySerializer());
-            $resource = new Item($service, new ServiceV2Transformer($location_service, $price_calculation));
+            $resource = new Item($service, new ServiceV2Transformer($location_service, $price_calculation, $delivery_charge, $job_discount_handler));
             $service  = $manager->createData($resource)->toArray();
 
             return api_response($request, null, 200, ['service' => $service]);

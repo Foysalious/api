@@ -4,7 +4,12 @@ use App\Models\LocationService;
 use App\Models\Service;
 use Illuminate\Support\Collection;
 use League\Fractal\TransformerAbstract;
+use Sheba\Checkout\DeliveryCharge;
+use Sheba\Dal\Discount\DiscountTypes;
+use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Dal\ServiceDiscount\Model as ServiceDiscount;
+use Sheba\JobDiscount\JobDiscountCheckingParams;
+use Sheba\JobDiscount\JobDiscountHandler;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\Services\Type;
 
@@ -14,24 +19,42 @@ class ServiceV2Transformer extends TransformerAbstract
     private $locationService;
     /** @var PriceCalculation $priceCalculation */
     private $priceCalculation;
+    /** @var DeliveryCharge $deliveryCharge */
+    private $deliveryCharge;
+    /** @var JobDiscountHandler $jobDiscountHandler */
+    private $jobDiscountHandler;
 
     /**
      * ServiceV2Transformer constructor.
      * @param LocationService $location_service
      * @param PriceCalculation $price_calculation
+     * @param DeliveryCharge $delivery_charge
+     * @param JobDiscountHandler $job_discount_handler
      */
-    public function __construct(LocationService $location_service, PriceCalculation $price_calculation)
+    public function __construct(LocationService $location_service, PriceCalculation $price_calculation, DeliveryCharge $delivery_charge, JobDiscountHandler $job_discount_handler)
     {
         $this->locationService = $location_service;
         $this->priceCalculation = $price_calculation;
+        $this->deliveryCharge = $delivery_charge;
+        $this->jobDiscountHandler = $job_discount_handler;
     }
 
+    /**
+     * @param Service $service
+     * @return array
+     * @throws InvalidDiscountType
+     */
     public function transform(Service $service)
     {
         $prices = json_decode($this->locationService->prices);
         /** @var ServiceDiscount $discount */
         $discount = $this->locationService->discounts()->running()->first();
         $this->priceCalculation->setLocationService($this->locationService);
+
+        $original_delivery_charge = $this->deliveryCharge->setCategory($service->category)->get();
+        $discount_checking_params = (new JobDiscountCheckingParams())->setDiscountableAmount($original_delivery_charge);
+        $this->jobDiscountHandler->setType(DiscountTypes::DELIVERY)->setCategory($service->category)->setCheckingParams($discount_checking_params)->calculate();
+        $delivery_discount = $this->jobDiscountHandler->getDiscount();
 
         $data = [
             'id'            => (int)$service->id,
@@ -44,7 +67,13 @@ class ServiceV2Transformer extends TransformerAbstract
                 'value' => (double)$discount->amount,
                 'is_percentage' => $discount->isPercentage(),
                 'cap' => (double)$discount->cap
-            ] : null
+            ] : null,
+            'delivery_charge' => $original_delivery_charge,
+            'delivery_discount' => $delivery_discount ? [
+                'value' => (double)$delivery_discount->amount,
+                'is_percentage' => $delivery_discount->is_percentage,
+                'cap' => (double)$delivery_discount->cap
+            ] : (double)0.00
         ];
         if ($service->variable_type == Type::FIXED)
             $data['fixed_price'] = $this->priceCalculation->getUnitPrice();
@@ -53,6 +82,7 @@ class ServiceV2Transformer extends TransformerAbstract
             $data['options']       = $this->getOption($variables);
             $data['option_prices'] = $this->formatOptionWithPrice($prices);
         }
+
         return $data;
     }
 

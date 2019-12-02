@@ -66,7 +66,7 @@ class JobDiscountHandler
     public function calculate()
     {
         $this->discount = null;
-        if(!$this->params->getDiscountableAmount()) return;
+        if (!$this->params->getDiscountableAmount()) return;
 
         $against = [];
         if ($this->category) $against[] = $this->category;
@@ -85,28 +85,27 @@ class JobDiscountHandler
         }
     }
 
+    /**
+     * @param Discount $discount
+     * @return bool
+     */
+    private function check(Discount $discount)
+    {
+        /** @var DiscountRules $rules */
+        $rules = $discount->rules;
+        if ($rules->getMinOrderAmount() && $this->params->getOrderAmount() && $this->params->getOrderAmount() < $rules->getMinOrderAmount()) return false;
+        if (count($rules->getPaymentGateways()) > 0 && !in_array($this->params->getPaymentGateway(), $rules->getPaymentGateways())) return false;
+        return true;
+    }
+
+    public function getDiscount()
+    {
+        return $this->discount;
+    }
+
     public function hasDiscount()
     {
         return !is_null($this->discount);
-    }
-
-    public function getApplicableAmount()
-    {
-        return $this->discount->getApplicableAmount($this->params->getDiscountableAmount());
-    }
-
-    public function getData()
-    {
-        return [
-            'discount_id' => $this->discount->id,
-            'type' => $this->discount->type,
-            'amount' => $this->getApplicableAmount(),
-            'original_amount' => $this->discount->amount,
-            'is_percentage' => $this->discount->is_percentage,
-            'cap' => $this->discount->cap,
-            'sheba_contribution' => $this->discount->sheba_contribution,
-            'partner_contribution' => $this->discount->partner_contribution
-        ];
     }
 
     public function create(Job $job)
@@ -117,16 +116,15 @@ class JobDiscountHandler
         $this->jobDiscountRepo->create($discount_data);
     }
 
-    /**
-     * @param Discount $discount
-     * @return bool
-     */
-    private function check(Discount $discount)
+    public function getData()
     {
-        /** @var DiscountRules $rules */
-        $rules = $discount->rules;
-        if ($rules->getMinOrderAmount() && $this->params->getOrderAmount() < $rules->getMinOrderAmount()) return false;
-        if (count($rules->getPaymentGateways()) > 0 && !in_array($this->params->getPaymentGateway(), $rules->getPaymentGateways())) return false;
-        return true;
+        return [
+            'discount_id' => $this->discount->id, 'type' => $this->discount->type, 'amount' => $this->getApplicableAmount(), 'original_amount' => $this->discount->amount, 'is_percentage' => $this->discount->is_percentage, 'cap' => $this->discount->cap, 'sheba_contribution' => $this->discount->sheba_contribution, 'partner_contribution' => $this->discount->partner_contribution
+        ];
+    }
+
+    public function getApplicableAmount()
+    {
+        return $this->discount->getApplicableAmount($this->params->getDiscountableAmount());
     }
 }

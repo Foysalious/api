@@ -21,10 +21,15 @@ use DB;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use Sheba\CategoryServiceGroup;
+use Sheba\Checkout\DeliveryCharge;
+use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Dal\ServiceDiscount\Model as ServiceDiscount;
+use Sheba\JobDiscount\JobDiscountCheckingParams;
+use Sheba\JobDiscount\JobDiscountHandler;
 use Sheba\Location\Coords;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\ModificationFields;
+use Sheba\OrderPlace\DeliveryChargeCalculator;
 use Throwable;
 
 class CategoryController extends Controller
@@ -322,9 +327,11 @@ class CategoryController extends Controller
      * @param $category
      * @param Request $request
      * @param PriceCalculation $price_calculation
+     * @param DeliveryCharge $delivery_charge
+     * @param JobDiscountHandler $job_discount_handler
      * @return JsonResponse
      */
-    public function getServices($category, Request $request, PriceCalculation $price_calculation)
+    public function getServices($category, Request $request, PriceCalculation $price_calculation, DeliveryCharge $delivery_charge, JobDiscountHandler $job_discount_handler)
     {
         ini_set('memory_limit', '2048M');
         try {
@@ -466,7 +473,17 @@ class CategoryController extends Controller
                     }
                     $category['services'] = $services;
                     $category['subscriptions'] = $subscriptions;
-                    $category['delivery_charge'] = ['original_price' => 60, 'discounted_price' => 30];
+
+                    $category['delivery_charge'] = $delivery_charge->setCategory($service->category)->get();
+                    $discount_checking_params = (new JobDiscountCheckingParams())->setDiscountableAmount($category['delivery_charge']);
+                    $job_discount_handler->setType(DiscountTypes::DELIVERY)->setCategory($service->category)->setCheckingParams($discount_checking_params)->calculate();
+                    $delivery_discount = $job_discount_handler->getDiscount();
+                    $category['delivery_discount'] = $delivery_discount ? [
+                        'value' => (double)$delivery_discount->amount,
+                        'is_percentage' => $delivery_discount->is_percentage,
+                        'cap' => (double)$delivery_discount->cap
+                    ] : (double)0.00;
+
                     if ($subscriptions->count()) {
                         $category['subscription_faq'] = $subscription_faq;
                     }
