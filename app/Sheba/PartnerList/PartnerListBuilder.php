@@ -23,6 +23,7 @@ class PartnerListBuilder implements Builder
     /** @var ServiceRequestObject[] */
     private $serviceRequestObject;
     private $partnerIds;
+    private $partnerIdsToIgnore;
     /** @var Geo */
     private $geo;
 
@@ -109,7 +110,12 @@ class PartnerListBuilder implements Builder
 
     public function checkPartner()
     {
-        if (count($this->partnerIds) > 0) $this->partnerQuery = $this->partnerQuery->whereIn('id', $this->partnerIds);
+        if (count($this->partnerIds) > 0) $this->partnerQuery = $this->partnerQuery->whereIn('partners.id', $this->partnerIds);
+    }
+
+    public function checkPartnersToIgnore()
+    {
+        if (count($this->partnerIdsToIgnore) > 0) $this->partnerQuery = $this->partnerQuery->whereNotIn('partners.id', $this->partnerIdsToIgnore);
     }
 
     public function checkCanAccessMarketPlace()
@@ -136,6 +142,12 @@ class PartnerListBuilder implements Builder
     public function setPartnerIds(array $partner_ids)
     {
         $this->partnerIds = $partner_ids;
+        return $this;
+    }
+
+    public function setPartnerIdsToIgnore(array $partner_ids)
+    {
+        $this->partnerIdsToIgnore = $partner_ids;
         return $this;
     }
 

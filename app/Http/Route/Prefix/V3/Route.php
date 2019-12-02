@@ -9,6 +9,7 @@ class Route
             (new AffiliateRoute())->set($api);
             $api->get('locations', 'Location\LocationController@index');
             $api->get('sluggable-type/{slug}', 'ShebaController@getSluggableType');
+            $api->get('partners', 'Partner\PartnerListController@getPartners');
             $api->group(['prefix' => 'rent-a-car'], function ($api) {
                 $api->get('prices', 'RentACar\RentACarController@getPrices');
             });

@@ -15,6 +15,7 @@ use Sheba\PartnerOrder\StatusCalculator;
 use Sheba\Payment\PayableType;
 use Sheba\Report\Updater\PartnerOrder as ReportUpdater;
 use Sheba\Report\Updater\UpdatesReport;
+use  Sheba\Dal\PartnerOrderRequest\PartnerOrderRequest;
 
 class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
 {
@@ -113,6 +114,11 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
     public function transactions()
     {
         return $this->hasMany(PartnerTransaction::class);
+    }
+
+    public function partnerOrderRequests()
+    {
+        return $this->hasMany(PartnerOrderRequest::class);
     }
 
     public function code()
