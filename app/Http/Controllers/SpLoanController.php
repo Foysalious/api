@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\Partner;
 use App\Models\PartnerBankInformation;
 use App\Models\PartnerBankLoan;
 use App\Models\Profile;
@@ -13,10 +14,12 @@ use Sheba\FileManagers\FileManager;
 use Sheba\Loan\DS\BusinessInfo;
 use Sheba\Loan\DS\FinanceInfo;
 use Sheba\Loan\DS\NomineeGranterInfo;
+use Sheba\Loan\DS\PartnerLoanRequest;
 use Sheba\Loan\DS\PersonalInfo;
 use Sheba\Loan\Exceptions\EmailUsed;
 use Sheba\Loan\Loan;
 use Sheba\ModificationFields;
+use Sheba\Sms\Sms;
 
 class SpLoanController extends Controller
 {
@@ -509,4 +512,23 @@ class SpLoanController extends Controller
         return $profile;
     }
 
+    public function sendSMS(Partner $partner,Request $request){
+        try {
+            $this->validate($request, [
+                'message' => 'required|string',
+            ]);
+            $mobile = $partner->getContactNumber();
+            $message= $request->message;
+            (new Sms())->msg($message)->to($mobile)->shoot();
+            return api_response($request, null, 200, ['msg' => 'SMS has been sent successfully']);
+        }
+        catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        }catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
+    }
 }
