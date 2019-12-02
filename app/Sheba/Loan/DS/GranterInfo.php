@@ -22,6 +22,7 @@ class GranterInfo
     {
         $this->setModifier($partner);
         $data                    = $this->noNullableArray();
+        $data['mobile']          = formatMobile($data['mobile']);
         $profile                 = new Profile($data);
         $profile->remember_token = str_random(255);
         $this->withCreateModificationField($profile);
