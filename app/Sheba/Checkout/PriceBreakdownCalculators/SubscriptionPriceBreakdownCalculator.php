@@ -35,7 +35,7 @@ class SubscriptionPriceBreakdownCalculator extends PriceBreakdownCalculator
             $original_price = $unit_price * $selected_service->quantity;
             /** @var ServiceSubscriptionDiscount $discount */
             $discount = $selected_service->serviceModel->subscription->getDiscount($this->request->subscriptionType, $date_count);
-            $discounted_amount = $discount->getApplicableAmount($original_price, $selected_service->quantity);
+            $discounted_amount = !$discount ? 0 : $discount->getApplicableAmount($original_price, $selected_service->quantity);
             $discounted_price = $original_price - $discounted_amount;
 
             $service = (new ServiceWithPrice($selected_service->serviceModel));
