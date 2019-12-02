@@ -36,6 +36,7 @@ class ShebaAccountKit
     {
         $response = $this->client->getAccessToken($access_token_request);
         $data = json_decode($response->getBody());
+        dd($data);
         if (!$data || !isset($data->access_token)) return null;
         $jws = JWS::load($data->access_token);
         $payload = $jws->getPayload();
