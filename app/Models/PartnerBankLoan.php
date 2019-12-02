@@ -15,4 +15,8 @@ class PartnerBankLoan extends Model
     {
         return $this->hasMany(PartnerBankLoanChangeLog::class,'loan_id');
     }
+    public function comments()
+    {
+        return $this->morphMany(Comment::class, 'commentable');
+    }
 }

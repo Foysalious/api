@@ -1,9 +1,12 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\BankUser;
+use App\Models\Comment;
 use App\Models\Partner;
 use App\Models\PartnerBankInformation;
 use App\Models\PartnerBankLoan;
 use App\Models\Profile;
+use App\Repositories\CommentRepository;
 use App\Repositories\FileRepository;
 use Carbon\Carbon;
 use DB;
