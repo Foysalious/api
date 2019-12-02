@@ -4,6 +4,7 @@
 namespace Sheba\Loan\DS;
 
 
+use App\Models\PartnerBankLoan;
 use Illuminate\Contracts\Support\Arrayable;
 use Sheba\ModificationFields;
 
@@ -19,9 +20,9 @@ class LoanRequestDetails implements Arrayable
     private   $resource;
     private $data;
 
-    public function __construct($details)
+    public function __construct(PartnerBankLoan $request)
     {
-        $this->data = json_decode($details, true);
+        $this->data = json_decode($request->final_information_for_loan, true);
     }
 
     /**

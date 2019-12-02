@@ -10,6 +10,8 @@ use Sheba\Loan\DS\NomineeGranterInfo;
 use Sheba\Loan\DS\PartnerLoanRequest;
 use Sheba\Loan\DS\PersonalInfo;
 use Sheba\Loan\DS\RunningApplication;
+use Sheba\Loan\Exceptions\AlreadyRequestedForLoan;
+use Sheba\Loan\Exceptions\NotApplicableForLoan;
 
 class Loan
 {
@@ -19,6 +21,11 @@ class Loan
     private $profile;
     private $partnerLoanRequest;
     private $resource;
+    private $personal;
+    private $finance;
+    private $business;
+    private $nominee_granter;
+    private $document;
 
     public function __construct()
     {
@@ -105,15 +112,7 @@ class Loan
         return $request->toArray();
     }
 
-    public function create()
-    {
-    }
-
     public function update()
-    {
-    }
-
-    public function validate()
     {
     }
 
@@ -159,6 +158,54 @@ class Loan
     }
 
     /**
+     * @throws NotApplicableForLoan
+     * @throws \ReflectionException
+     * @throws AlreadyRequestedForLoan
+     */
+    public function apply()
+    {
+        $this->validate();
+        $data       = $this->data;
+        $fields     = [
+            'personal',
+            'business',
+            'finance',
+            'nominee_granter',
+            'document'
+        ];
+        $final_info = [];
+        foreach ($fields as $val) {
+            $final_info[$val] = $this->$val->toArray();
+        }
+        $data['final_information_for_loan'] = json_encode($final_info);
+        (new PartnerLoanRequest())->setPartner($this->partner)->create($data);
+    }
+
+    /**
+     * @throws AlreadyRequestedForLoan
+     * @throws NotApplicableForLoan
+     * @throws \ReflectionException
+     */
+    public function validate()
+    {
+        $requests = $this->repo->where('partner_id', $this->partner->id)->get();
+        if (!$requests->isEmpty()) {
+            $last_request = $requests->last();
+            $statuses     = constants('LOAN_STATUS');
+            if (in_array($last_request->status, [
+                $statuses['approved'],
+                $statuses['considerable']
+            ])) {
+                throw new AlreadyRequestedForLoan();
+            }
+        }
+        $applicable = $this->getCompletion()['is_applicable_for_loan'];
+        if (!$applicable)
+            throw new NotApplicableForLoan();
+
+    }
+
+    /**
      * @return array
      * @throws \ReflectionException
      */
@@ -177,27 +224,32 @@ class Loan
 
     public function personalInfo()
     {
-        return (new PersonalInfo($this->partner, $this->resource, $this->partnerLoanRequest));
+        $this->personal = (new PersonalInfo($this->partner, $this->resource, $this->partnerLoanRequest));
+        return $this->personal;
     }
 
     public function businessInfo()
     {
-        return (new BusinessInfo($this->partner, $this->resource));
+        $this->business = (new BusinessInfo($this->partner, $this->resource));
+        return $this->business;
     }
 
     public function financeInfo()
     {
-        return (new FinanceInfo($this->partner, $this->resource));
+        $this->finance = (new FinanceInfo($this->partner, $this->resource));
+        return $this->finance;
     }
 
     public function nomineeGranter()
     {
-        return (new NomineeGranterInfo($this->partner, $this->resource));
+        $this->nominee_granter = (new NomineeGranterInfo($this->partner, $this->resource));
+        return $this->nominee_granter;
     }
 
     public function documents()
     {
-        return (new Documents($this->partner, $this->resource));
+        $this->document = (new Documents($this->partner, $this->resource));
+        return $this->document;
     }
 
     private function isApplicableForLoan($data)

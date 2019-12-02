@@ -14,7 +14,9 @@ use Sheba\Loan\DS\BusinessInfo;
 use Sheba\Loan\DS\FinanceInfo;
 use Sheba\Loan\DS\NomineeGranterInfo;
 use Sheba\Loan\DS\PersonalInfo;
+use Sheba\Loan\Exceptions\AlreadyRequestedForLoan;
 use Sheba\Loan\Exceptions\EmailUsed;
+use Sheba\Loan\Exceptions\NotApplicableForLoan;
 use Sheba\Loan\Loan;
 use Sheba\ModificationFields;
 
@@ -67,40 +69,29 @@ class SpLoanController extends Controller
         }
     }
 
-    public function store($partner, Request $request, PartnerBankLoan $loan)
+    public function store($partner, Request $request, Loan $loan)
     {
         try {
             $this->validate($request, [
-                'bank_name'           => 'required|string',
                 'loan_amount'         => 'required|numeric',
                 'duration'            => 'required|integer',
-                'monthly_installment' => 'required|numeric',
-                'status'              => 'required|string',
             ]);
             $partner      = $request->partner;
+            $resource=$request->manager_resource;
             $data         = [
-                'partner_id'                 => $partner->id,
-                'bank_name'                  => $request->bank_name,
                 'loan_amount'                => $request->loan_amount,
-                'status'                     => $request->status,
                 'duration'                   => $request->duration,
-                'monthly_installment'        => $request->monthly_installment,
-                'final_information_for_loan' => json_encode([$this->finalInformationForLoan($partner, $request)])
             ];
-            $partner_loan = PartnerBankLoan::where('partner_id', $partner->id)->get()->last();
-            if ($partner_loan && in_array($partner_loan->status, [
-                    'approved',
-                    'considerable'
-                ])) {
-                return api_response($request, null, 403, ['message' => "You already applied for loan"]);
-            } else {
-                $loan->create($this->withCreateModificationField($data));
-            }
+            $loan->setPartner($partner)->setResource($resource)->setData($data)->apply();
             return api_response($request, 1, 200, ['data' => $data]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        }catch (AlreadyRequestedForLoan $e){
+            return api_response($request, $e->getMessage(), 400,['message'=>$e->getMessage()]);
+        }catch (NotApplicableForLoan $e){
+            return api_response($request, $e->getMessage(), 400,['message'=>$e->getMessage()]);
+        }catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
