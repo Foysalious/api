@@ -526,7 +526,7 @@ class SpLoanController extends Controller
             $mobile = $partner->getContactNumber();
             $message= $request->message;
             (new Sms())->msg($message)->to($mobile)->shoot();
-            return api_response($request, null, 200, ['msg' => 'SMS has been sent successfully']);
+            return api_response($request, null, 200, ['message' => 'SMS has been sent successfully']);
         }
         catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
