@@ -8,22 +8,22 @@ use Illuminate\Database\Eloquent\Model;
 
 class SubscriptionOrderPartnerListRequest extends PartnerListRequest
 {
-    private $salesChannel;
-    private $geo;
+    protected $salesChannel;
+    protected $geo;
     /** @var $address CustomerDeliveryAddress */
-    private $address;
+    protected $address;
     /** @var $customer Customer */
-    private $customer;
+    protected $customer;
     /** @var $billingCycleStart Carbon */
-    private $billingCycleStart;
+    protected $billingCycleStart;
     /** @var $user Model */
-    private $user;
+    protected $user;
     /** @var $billingCycleEnd Carbon */
-    private $billingCycleEnd;
+    protected $billingCycleEnd;
     protected $location;
-    private $deliveryName;
-    private $deliveryMobile;
-    private $additionalInfo;
+    protected $deliveryName;
+    protected $deliveryMobile;
+    protected $additionalInfo;
 
     public function prepareObject()
     {

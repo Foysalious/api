@@ -122,4 +122,9 @@ class Profile extends Model
     {
         return $this->hasOne(Profile::class, 'id','grantor_id');
     }
+
+    public function bankUser()
+    {
+        return $this->hasOne(BankUser::class);
+    }
 }

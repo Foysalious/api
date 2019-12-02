@@ -7,6 +7,7 @@ use App\Models\Resource;
 use Carbon\Carbon;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Http\Request;
+use Sheba\Loan\Completion;
 use Sheba\ModificationFields;
 
 class BusinessInfo implements Arrayable
@@ -73,6 +74,20 @@ class BusinessInfo implements Arrayable
         ];
         $this->partner->update($this->withBothModificationFields($partner_data));
         $this->basic_information->update($this->withBothModificationFields($partner_basic_data));
+    }
+
+    /**
+     * @return array
+     * @throws \ReflectionException
+     */
+    public function completion()
+    {
+        $data = $this->toArray();
+        return (new Completion($data, [
+            $this->profile->updated_at,
+            $this->partner->updated_at,
+            $this->basic_information->updated_at
+        ]))->get();
     }
 
     /**
