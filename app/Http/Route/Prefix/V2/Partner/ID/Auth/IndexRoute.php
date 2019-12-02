@@ -66,7 +66,7 @@ class IndexRoute
 
                 $api->get('/nominee-info', 'SpLoanController@getNomineeInformation');
 
-                $api->post('/nominee-grantor-info', 'SpLoanController@updateNomineeGrantorInformation');
+                $api->post('/nominee-grantor-info', 'SpLoanController@updateNomineeGranterInformation');
 
                 $api->get('/documents', 'SpLoanController@getDocuments');
                 $api->post('/documents', 'SpLoanController@updateDocuments');

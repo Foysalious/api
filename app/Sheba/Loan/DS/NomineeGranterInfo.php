@@ -7,6 +7,7 @@ use App\Models\Profile;
 use App\Models\Resource;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Http\Request;
+use Sheba\Loan\Completion;
 use Sheba\ModificationFields;
 
 class NomineeGranterInfo implements Arrayable
@@ -94,13 +95,38 @@ class NomineeGranterInfo implements Arrayable
     {
         $nominee = Profile::where('mobile', formatMobile($request->nominee_mobile))->first();
         $granter = Profile::where('mobile', formatMobile($request->grantor_mobile))->first();
-        if(empty($nominee)){
-          $nominee=(new NomineeInfo(['name'=>$request->nominee_name,'mobile'=>$request->nominee_mobile]))->create($this->partner);
+        if (empty($nominee)) {
+            $nominee = (new NomineeInfo([
+                'name'   => $request->nominee_name,
+                'mobile' => $request->nominee_mobile
+            ]))->create($this->partner);
         }
-        if (empty($granter)){
-            $granter=(new GranterInfo(['name'=>$request->grantor_name,'mobile'=>$request->grantor_mobile]))->create($this->partner);
+        if (empty($granter)) {
+            $granter = (new GranterInfo([
+                'name'   => $request->grantor_name,
+                'mobile' => $request->grantor_mobile
+            ]))->create($this->partner);
         }
-        $this->profile->update($this->withBothModificationFields(['nominee_id'=>$nominee->id,'nominee_relation'=>$request->nominee_relation,'grantor_id'=>$granter->id,'grantor_relation'=>$request->grantor_relation]));
+        $this->profile->update($this->withBothModificationFields([
+            'nominee_id'       => $nominee->id,
+            'nominee_relation' => $request->nominee_relation,
+            'grantor_id'       => $granter->id,
+            'grantor_relation' => $request->grantor_relation
+        ]));
+    }
+
+    /**
+     * @return array
+     * @throws \ReflectionException
+     */
+    public function completion()
+    {
+        $data = $this->toArray();
+        return (new Completion($data, [
+            $this->profile->updated_at,
+            $this->granter ? $this->granter->updated_at : null,
+            $this->nominee ? $this->nominee->updated_at : null
+        ]))->get();
     }
 
     /**
@@ -125,5 +151,4 @@ class NomineeGranterInfo implements Arrayable
             'nominee' => array_merge((new NomineeInfo($this->nominee ? $this->nominee->toArray() : []))->toArray(), ['nominee_relation' => $this->profile->nominee_relation])
         ];
     }
-
 }

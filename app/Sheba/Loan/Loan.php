@@ -10,6 +10,8 @@ use Sheba\Loan\DS\NomineeGranterInfo;
 use Sheba\Loan\DS\PartnerLoanRequest;
 use Sheba\Loan\DS\PersonalInfo;
 use Sheba\Loan\DS\RunningApplication;
+use Sheba\Loan\Exceptions\AlreadyRequestedForLoan;
+use Sheba\Loan\Exceptions\NotApplicableForLoan;
 
 class Loan
 {
@@ -19,6 +21,11 @@ class Loan
     private $profile;
     private $partnerLoanRequest;
     private $resource;
+    private $personal;
+    private $finance;
+    private $business;
+    private $nominee_granter;
+    private $document;
 
     public function __construct()
     {
@@ -105,41 +112,8 @@ class Loan
         return $request->toArray();
     }
 
-    public function create()
-    {
-    }
-
     public function update()
     {
-    }
-
-    public function validate()
-    {
-    }
-
-    public function personalInfo()
-    {
-        return (new PersonalInfo($this->partner, $this->resource, $this->partnerLoanRequest));
-    }
-
-    public function businessInfo()
-    {
-        return (new BusinessInfo($this->partner, $this->resource));
-    }
-
-    public function financeInfo()
-    {
-        return (new FinanceInfo($this->partner, $this->resource));
-    }
-
-    public function nomineeGranter()
-    {
-        return (new NomineeGranterInfo($this->partner, $this->resource));
-    }
-
-    public function documents()
-    {
-        return (new Documents($this->partner, $this->resource));
     }
 
     /**
@@ -181,5 +155,105 @@ class Loan
                 'list_icon' => 'number'
             ]
         ];
+    }
+
+    /**
+     * @throws NotApplicableForLoan
+     * @throws \ReflectionException
+     * @throws AlreadyRequestedForLoan
+     */
+    public function apply()
+    {
+        $this->validate();
+        $data       = $this->data;
+        $fields     = [
+            'personal',
+            'business',
+            'finance',
+            'nominee_granter',
+            'document'
+        ];
+        $final_info = [];
+        foreach ($fields as $val) {
+            $final_info[$val] = $this->$val->toArray();
+        }
+        $data['final_information_for_loan'] = json_encode($final_info);
+        (new PartnerLoanRequest())->setPartner($this->partner)->create($data);
+    }
+
+    /**
+     * @throws AlreadyRequestedForLoan
+     * @throws NotApplicableForLoan
+     * @throws \ReflectionException
+     */
+    public function validate()
+    {
+        $requests = $this->repo->where('partner_id', $this->partner->id)->get();
+        if (!$requests->isEmpty()) {
+            $last_request = $requests->last();
+            $statuses     = constants('LOAN_STATUS');
+            if (in_array($last_request->status, [
+                $statuses['approved'],
+                $statuses['considerable']
+            ])) {
+                throw new AlreadyRequestedForLoan();
+            }
+        }
+        $applicable = $this->getCompletion()['is_applicable_for_loan'];
+        if (!$applicable)
+            throw new NotApplicableForLoan();
+
+    }
+
+    /**
+     * @return array
+     * @throws \ReflectionException
+     */
+    public function getCompletion()
+    {
+        $data                           = [
+            'personal'  => $this->personalInfo()->completion(),
+            'business'  => $this->businessInfo()->completion(),
+            'finance'   => $this->financeInfo()->completion(),
+            'nominee'   => $this->nomineeGranter()->completion(),
+            'documents' => $this->documents()->completion()
+        ];
+        $data['is_applicable_for_loan'] = $this->isApplicableForLoan($data);
+        return $data;
+    }
+
+    public function personalInfo()
+    {
+        $this->personal = (new PersonalInfo($this->partner, $this->resource, $this->partnerLoanRequest));
+        return $this->personal;
+    }
+
+    public function businessInfo()
+    {
+        $this->business = (new BusinessInfo($this->partner, $this->resource));
+        return $this->business;
+    }
+
+    public function financeInfo()
+    {
+        $this->finance = (new FinanceInfo($this->partner, $this->resource));
+        return $this->finance;
+    }
+
+    public function nomineeGranter()
+    {
+        $this->nominee_granter = (new NomineeGranterInfo($this->partner, $this->resource));
+        return $this->nominee_granter;
+    }
+
+    public function documents()
+    {
+        $this->document = (new Documents($this->partner, $this->resource));
+        return $this->document;
+    }
+
+    private function isApplicableForLoan($data)
+    {
+        return Completion::isApplicableForLoan($data);
     }
 }

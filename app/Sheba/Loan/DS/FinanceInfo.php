@@ -7,6 +7,7 @@ use App\Models\PartnerBankInformation;
 use App\Models\Resource;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Http\Request;
+use Sheba\Loan\Completion;
 use Sheba\ModificationFields;
 
 class FinanceInfo implements Arrayable
@@ -89,5 +90,19 @@ class FinanceInfo implements Arrayable
         }
         $this->partner->update($this->withBothModificationFields($partner_data));
 
+    }
+
+    /**
+     * @return array
+     * @throws \ReflectionException
+     */
+    public function completion()
+    {
+        $data = $this->toArray();
+        return (new Completion($data, [
+            $this->profile->updated_at,
+            $this->partner->updated_at,
+            $this->bank_information->updated_at
+        ]))->get();
     }
 }
