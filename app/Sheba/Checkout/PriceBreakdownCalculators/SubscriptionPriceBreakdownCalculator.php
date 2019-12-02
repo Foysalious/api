@@ -40,10 +40,18 @@ class SubscriptionPriceBreakdownCalculator extends PriceBreakdownCalculator
 
             $service = (new ServiceWithPrice($selected_service->serviceModel));
             $service->setOption($selected_service->option)->setQuantity($selected_service->quantity)
-                ->setDiscount($discounted_amount)->setCap($discount->cap)->setAmount($discount->discount_amount)
-                ->setIsPercentage($discount->isPercentage() ? 1 : 0)
-                ->setShebaContribution($discount->sheba_contribution)->setPartnerContribution($discount->partner_contribution)
-                ->setDiscountedPrice($discounted_price)->setOriginalPrice($original_price)->setUnitPrice($unit_price)
+                ->setDiscount($discounted_amount);
+
+            if($discount) {
+                $service->setCap($discount->cap)->setAmount($discount->discount_amount)
+                    ->setIsPercentage($discount->isPercentage() ? 1 : 0)
+                    ->setShebaContribution($discount->sheba_contribution)->setPartnerContribution($discount->partner_contribution);
+            } else {
+                $service->setCap(0)->setAmount(0)->setIsPercentage(0)
+                    ->setShebaContribution(0)->setPartnerContribution(0);
+            }
+
+            $service->setDiscountedPrice($discounted_price)->setOriginalPrice($original_price)->setUnitPrice($unit_price)
                 ->setMinPrice(0)->setIsMinPriceApplied(0);
 
             $price->addService($service);
