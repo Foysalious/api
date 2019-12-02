@@ -178,7 +178,7 @@ class Loan
             $final_info[$val] = $this->$val->toArray();
         }
         $data['final_information_for_loan'] = json_encode($final_info);
-        (new PartnerLoanRequest())->setPartner($this->partner)->create($data);
+        return (new PartnerLoanRequest())->setPartner($this->partner)->create($data);
     }
 
     /**
@@ -255,5 +255,17 @@ class Loan
     private function isApplicableForLoan($data)
     {
         return Completion::isApplicableForLoan($data);
+    }
+
+    public function history()
+    {
+        $loans=$this->partner->loan;
+        if ($loans->isEmpty()) return [];
+        $history=[];
+        foreach ($loans as $loan){
+            $loanRequest=new PartnerLoanRequest($loan);
+            $history[]=$loanRequest->setPartner($this->partner)->history();
+        }
+        return $history;
     }
 }
