@@ -1,13 +1,14 @@
 <?php
 
 namespace Sheba\Loan\DS;
+
 use App\Models\Partner;
 use App\Models\Profile;
 use Sheba\ModificationFields;
 
 class NomineeInfo
 {
-    use ReflectionArray,ModificationFields;
+    use ReflectionArray, ModificationFields;
     protected $name;
     protected $mobile;
     protected $pro_pic;
@@ -15,13 +16,16 @@ class NomineeInfo
     protected $nid_image_back;
 
     /**
+     * @param Partner $partner
+     * @return Profile
      * @throws \ReflectionException
      */
-    public function create(Partner $partner) {
+    public function create(Partner $partner)
+    {
         $this->setModifier($partner);
-        $data=$this->noNullableArray();
-        $profile=new Profile($data);
-        $profile->remember_token=str_random(255);
+        $data                    = $this->noNullableArray();
+        $profile                 = new Profile($data);
+        $profile->remember_token = str_random(255);
         $this->withCreateModificationField($profile);
         $profile->save();
         return $profile;

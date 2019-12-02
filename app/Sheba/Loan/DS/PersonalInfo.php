@@ -39,6 +39,7 @@ class PersonalInfo implements Arrayable
         return [
             'gender'                          => 'required|string|in:Male,Female,Other',
             'birthday'                        => 'date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
+            'email'                           => 'required|email',
             'nid_issue_date'                  => 'sometimes|date|date_format:Y-m-d',
             #'father_name' => 'required_without:spouse_name',
             #'spouse_name' => 'required_without:father_name',
@@ -58,18 +59,15 @@ class PersonalInfo implements Arrayable
     {
         if ($request->has('email'))
             $this->validateEmail($request->email);
-        $profile_data  = [
-            'gender'                          => $request->gender,
-            'dob'                             => $request->birthday,
-            'birth_place'                     => $request->birth_place,
-            'occupation'                      => $request->occupation,
-            'email'                           => $request->email,
-            'nid_no'                          => $request->nid_no,
-            'nid_issue_date'                  => $request->nid_issue_date,
-            'total_asset_amount'              => $request->total_asset_amount,
-            'monthly_loan_installment_amount' => $request->monthly_loan_installment_amount,
-            'monthly_living_cost'             => $request->monthly_living_cost,
-        ];
+        $profile_data  = array_merge([
+            'gender'         => $request->gender,
+            'dob'            => $request->birthday,
+            'birth_place'    => $request->birth_place,
+            'occupation'     => $request->occupation,
+            'email'          => $request->email,
+            'nid_no'         => $request->nid_no,
+            'nid_issue_date' => $request->nid_issue_date,
+        ], (new Expenses($request->get('expenses')))->toArray());
         $basic_data    = [
             'present_address'     => (new PresentAddress($request))->toString(),
             'permanent_address'   => (new PermanentAddress($request))->toString(),
@@ -159,7 +157,7 @@ class PersonalInfo implements Arrayable
             'birth_place'             => $profile->birth_place,
             'occupation_lists'        => constants('SUGGESTED_OCCUPATION'),
             'occupation'              => $profile->occupation,
-            'expenses'                => (new Expenses($profile))->toArray(),
+            'expenses'                => (new Expenses($profile->toArray()))->toArray(),
             'nid_no'                  => $profile->nid_no,
             'nid_issue_date'          => $profile->nid_issue_date,
             'other_id'                => $this->basic_information->other_id,
