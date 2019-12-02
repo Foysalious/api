@@ -117,31 +117,6 @@ class Loan
     {
     }
 
-    public function personalInfo()
-    {
-        return (new PersonalInfo($this->partner, $this->resource, $this->partnerLoanRequest));
-    }
-
-    public function businessInfo()
-    {
-        return (new BusinessInfo($this->partner, $this->resource));
-    }
-
-    public function financeInfo()
-    {
-        return (new FinanceInfo($this->partner, $this->resource));
-    }
-
-    public function nomineeGranter()
-    {
-        return (new NomineeGranterInfo($this->partner, $this->resource));
-    }
-
-    public function documents()
-    {
-        return (new Documents($this->partner, $this->resource));
-    }
-
     /**
      * @return array
      * @throws \ReflectionException
@@ -181,5 +156,52 @@ class Loan
                 'list_icon' => 'number'
             ]
         ];
+    }
+
+    /**
+     * @return array
+     * @throws \ReflectionException
+     */
+    public function getCompletion()
+    {
+        $data                           = [
+            'personal'  => $this->personalInfo()->completion(),
+            'business'  => $this->businessInfo()->completion(),
+            'finance'   => $this->financeInfo()->completion(),
+            'nominee'   => $this->nomineeGranter()->completion(),
+            'documents' => $this->documents()->completion()
+        ];
+        $data['is_applicable_for_loan'] = $this->isApplicableForLoan($data);
+        return $data;
+    }
+
+    public function personalInfo()
+    {
+        return (new PersonalInfo($this->partner, $this->resource, $this->partnerLoanRequest));
+    }
+
+    public function businessInfo()
+    {
+        return (new BusinessInfo($this->partner, $this->resource));
+    }
+
+    public function financeInfo()
+    {
+        return (new FinanceInfo($this->partner, $this->resource));
+    }
+
+    public function nomineeGranter()
+    {
+        return (new NomineeGranterInfo($this->partner, $this->resource));
+    }
+
+    public function documents()
+    {
+        return (new Documents($this->partner, $this->resource));
+    }
+
+    private function isApplicableForLoan($data)
+    {
+        return Completion::isApplicableForLoan($data);
     }
 }

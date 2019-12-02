@@ -5,6 +5,7 @@ namespace Sheba\Loan\DS;
 use App\Models\Partner;
 use App\Models\Resource;
 use Illuminate\Contracts\Support\Arrayable;
+use Sheba\Loan\Completion;
 use Sheba\ModificationFields;
 
 class Documents implements Arrayable
@@ -92,5 +93,18 @@ class Documents implements Arrayable
                 'statement'                => !empty($this->bank_informations) ? $this->bank_informations->statement : null
             ],
         ];
+    }
+
+    /**
+     * @return array
+     */
+    public function completion()
+    {
+        $data = $this->toArray();
+        return (new Completion($data, [
+            $this->profile->updated_at,
+            $this->partner->updated_at,
+            $this->basic_information->updated_at
+        ]))->get();
     }
 }

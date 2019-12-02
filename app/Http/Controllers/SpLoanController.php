@@ -204,8 +204,11 @@ class SpLoanController extends Controller
         try {
             $partner          = $request->partner;
             $manager_resource = $request->manager_resource;
-            $info             = (new Loan())->setPartner($partner)->setResource($manager_resource)->personalInfo()->toArray();
-            return api_response($request, $info, 200, ['info' => $info]);
+            $info             = (new Loan())->setPartner($partner)->setResource($manager_resource)->personalInfo();
+            return api_response($request, $info, 200, [
+                'info'       => $info->toArray(),
+                'completion' => $info->completion()
+            ]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -236,8 +239,11 @@ class SpLoanController extends Controller
         try {
             $partner          = $request->partner;
             $manager_resource = $request->manager_resource;
-            $info             = (new Loan())->setPartner($partner)->setResource($manager_resource)->businessInfo()->toArray();
-            return api_response($request, $info, 200, ['info' => $info]);
+            $info             = (new Loan())->setPartner($partner)->setResource($manager_resource)->businessInfo();
+            return api_response($request, $info, 200, [
+                'info'       => $info->toArray(),
+                'completion' => $info->completion()
+            ]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -266,8 +272,11 @@ class SpLoanController extends Controller
         try {
             $partner          = $request->partner;
             $manager_resource = $request->manager_resource;
-            $info             = (new Loan())->setPartner($partner)->setResource($manager_resource)->financeInfo()->toArray();
-            return api_response($request, $info, 200, ['info' => $info]);
+            $info             = (new Loan())->setPartner($partner)->setResource($manager_resource)->financeInfo();
+            return api_response($request, $info, 200, [
+                'info'       => $info->toArray(),
+                'completion' => $info->completion()
+            ]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -296,15 +305,18 @@ class SpLoanController extends Controller
         try {
             $resource = $request->manager_resource;
             $partner  = $request->partner;
-            $info     = $loan->setPartner($partner)->setResource($resource)->nomineeGranter()->toArray();
-            return api_response($request, $info, 200, ['info' => $info]);
+            $info     = $loan->setPartner($partner)->setResource($resource)->nomineeGranter();
+            return api_response($request, $info, 200, [
+                'info'       => $info->toArray(),
+                'completion' => $info->completion()
+            ]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
-    public function updateNomineeGrantorInformation($partner, Request $request, Loan $loan)
+    public function updateNomineeGranterInformation($partner, Request $request, Loan $loan)
     {
         try {
             $this->validate($request, NomineeGranterInfo::getValidator());
@@ -326,8 +338,11 @@ class SpLoanController extends Controller
         try {
             $partner  = $request->partner;
             $resource = $request->manager_resource;
-            $info     = $loan->setPartner($partner)->setResource($resource)->documents()->toArray();
-            return api_response($request, $info, 200, ['info' => $info]);
+            $info     = $loan->setPartner($partner)->setResource($resource)->documents();
+            return api_response($request, $info, 200, [
+                'info'       => $info->toArray(),
+                'completion' => $info->completion()
+            ]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

@@ -6,6 +6,7 @@ use App\Models\Resource;
 use Carbon\Carbon;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Http\Request;
+use Sheba\Loan\Completion;
 use Sheba\Loan\Exceptions\EmailUsed;
 use Sheba\ModificationFields;
 
@@ -97,6 +98,20 @@ class PersonalInfo implements Arrayable
         $exists = Profile::where('email', $email)->where('id', '<>', $this->profile->id)->first();
         if (!empty($exists))
             throw new EmailUsed();
+    }
+
+    /**
+     * @return array
+     * @throws \ReflectionException
+     */
+    public function completion()
+    {
+        $data = $this->toArray();
+        return (new Completion($data, [
+            $this->profile->updated_at,
+            $this->partner->updated_at,
+            $this->basic_information->updated_at
+        ]))->get();
     }
 
     /**
