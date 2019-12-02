@@ -36,6 +36,8 @@ trait ReflectionArray
         $reflection_class = new \ReflectionClass($this);
         $data             = [];
         foreach ($reflection_class->getProperties() as $item) {
+            if (!$item->isProtected())
+                continue;
             $data[$item->name] = $this->{$item->name};
         }
         return $data;

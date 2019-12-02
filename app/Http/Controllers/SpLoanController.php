@@ -14,7 +14,6 @@ use Sheba\FileManagers\FileManager;
 use Sheba\Loan\DS\BusinessInfo;
 use Sheba\Loan\DS\FinanceInfo;
 use Sheba\Loan\DS\NomineeGranterInfo;
-use Sheba\Loan\DS\PartnerLoanRequest;
 use Sheba\Loan\DS\PersonalInfo;
 use Sheba\Loan\Exceptions\AlreadyRequestedForLoan;
 use Sheba\Loan\Exceptions\EmailUsed;
@@ -76,121 +75,28 @@ class SpLoanController extends Controller
     {
         try {
             $this->validate($request, [
-                'loan_amount'         => 'required|numeric',
-                'duration'            => 'required|integer',
+                'loan_amount' => 'required|numeric',
+                'duration'    => 'required|integer',
             ]);
-            $partner      = $request->partner;
-            $resource=$request->manager_resource;
-            $data         = [
-                'loan_amount'                => $request->loan_amount,
-                'duration'                   => $request->duration,
+            $partner  = $request->partner;
+            $resource = $request->manager_resource;
+            $data     = [
+                'loan_amount' => $request->loan_amount,
+                'duration'    => $request->duration,
             ];
-            $loan->setPartner($partner)->setResource($resource)->setData($data)->apply();
-            return api_response($request, 1, 200, ['data' => $data]);
+            $info     = $loan->setPartner($partner)->setResource($resource)->setData($data)->apply();
+            return api_response($request, 1, 200, ['data' => $info]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        }catch (AlreadyRequestedForLoan $e){
-            return api_response($request, $e->getMessage(), 400,['message'=>$e->getMessage()]);
-        }catch (NotApplicableForLoan $e){
-            return api_response($request, $e->getMessage(), 400,['message'=>$e->getMessage()]);
-        }catch (\Throwable $e) {
+        } catch (AlreadyRequestedForLoan $e) {
+            return api_response($request, $e->getMessage(), 400, ['message' => $e->getMessage()]);
+        } catch (NotApplicableForLoan $e) {
+            return api_response($request, $e->getMessage(), 400, ['message' => $e->getMessage()]);
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
-    }
-
-    private function finalInformationForLoan($partner, Request $request)
-    {
-        $manager_resource                = $request->manager_resource;
-        $profile                         = $manager_resource->profile;
-        $basic_informations              = $partner->basicInformations;
-        $bank_informations               = $partner->bankInformations;
-        $business_additional_information = $partner->businessAdditionalInformation();
-        $sales_information               = $partner->salesInformation();
-        #$nominee_profile = Profile::find($profile->nominee_id);
-        $grantor_profile = Profile::find($profile->grantor_id);
-        return [
-            'personal_info'        => [
-                'name'              => $profile->name,
-                'mobile'            => $profile->mobile,
-                'gender'            => $profile->gender,
-                'picture'           => $profile->pro_pic,
-                'birthday'          => $profile->dob,
-                'present_address'   => $profile->address,
-                'permanent_address' => $profile->permanent_address,
-                'father_name'       => $manager_resource->father_name,
-                'spouse_name'       => $manager_resource->spouse_name,
-                'occupation'        => $profile->occupation,
-                'expenses'          => [
-                    'monthly_living_cost'     => $profile->monthly_living_cost,
-                    'total_asset_amount'      => $profile->total_asset_amount,
-                    #'monthly_loan_installment_amount' => $profile->monthly_loan_installment_amount,
-                    'utility_bill_attachment' => $profile->utility_bill_attachment
-                ]
-            ],
-            'business_info'        => [
-                'business_name'                    => $partner->name,
-                'business_type'                    => $partner->business_type,
-                'location'                         => $partner->address,
-                'establishment_year'               => $basic_informations->establishment_year,
-                'full_time_employee'               => $partner->full_time_employee,
-                #'part_time_employee' => $partner->part_time_employee,
-                'business_additional_information'  => [#'product_price' => isset($business_additional_information->product_price) ? $business_additional_information->product_price : null,
-                                                       'employee_salary' => isset($business_additional_information->employee_salary) ? $business_additional_information->employee_salary : null,
-                                                       'office_rent'     => isset($business_additional_information->office_rent) ? $business_additional_information->office_rent : null,
-                                                       #'utility_bills' => isset($business_additional_information->utility_bills) ? $business_additional_information->utility_bills : null,
-                                                       #'marketing_cost' => isset($business_additional_information->marketing_cost) ? $business_additional_information->marketing_cost : null,
-                                                       #'other_costs' => isset($business_additional_information->other_costs) ? $business_additional_information->other_costs : null
-                ],
-                'last_six_month_sales_information' => [
-                    'avg_sell' => isset($sales_information->last_six_month_avg_sell) ? $sales_information->last_six_month_avg_sell : null,
-                    'min_sell' => isset($sales_information->last_six_month_min_sell) ? $sales_information->last_six_month_min_sell : null,
-                    'max_sell' => isset($sales_information->last_six_month_max_sell) ? $sales_information->last_six_month_max_sell : null,
-                ]
-            ],
-            'finance_info'         => [
-                'account_holder_name' => !empty($bank_informations) ? $bank_informations->acc_name : null,
-                'account_no'          => !empty($bank_informations) ? $bank_informations->acc_no : null,
-                'bank_name'           => !empty($bank_informations) ? $bank_informations->bank_name : null,
-                'brunch'              => !empty($bank_informations) ? $bank_informations->branch_name : null,
-                'acc_type'            => !empty($bank_informations) ? $bank_informations->acc_type : null,
-                'bkash'               => [
-                    'bkash_no'           => $partner->bkash_no,
-                    'bkash_account_type' => $partner->bkash_account_type,
-                ]
-            ],
-            'nominee_grantor_info' => [/*'name' => !empty($nominee_profile) ? $nominee_profile->name : null,
-                'mobile' => !empty($nominee_profile) ? $nominee_profile->mobile : null,
-                'nominee_relation' => !empty($nominee_profile) ? $profile->nominee_relation : null,*/
-                                       'grantor' => [
-                                           'name'             => !empty($grantor_profile) ? $grantor_profile->name : null,
-                                           'mobile'           => !empty($grantor_profile) ? $grantor_profile->mobile : null,
-                                           'grantor_relation' => !empty($grantor_profile) ? $profile->grantor_relation : null,
-                                       ]
-            ],
-            'documents'            => [
-                'picture'           => $profile->pro_pic,
-                'nid_image'         => $manager_resource->nid_image,
-                'nid_image_front'   => $profile->nid_image_front,
-                'nid_image_back'    => $profile->nid_image_back,
-                /*'nominee_document' => [
-                                   'picture' => !empty($nominee_profile) ? $nominee_profile->pro_pic : null,
-                                   'nid_image_front' => !empty($nominee_profile) ? $nominee_profile->nid_image_front : null,
-                                   'nid_image_back' => !empty($nominee_profile) ? $nominee_profile->nid_image_back : null,
-                               ],*/
-                'grantor_document'  => [
-                    'picture'         => !empty($grantor_profile) ? $grantor_profile->pro_pic : null,
-                    'nid_image_front' => !empty($grantor_profile) ? $grantor_profile->nid_image_front : null,
-                    'nid_image_back'  => !empty($grantor_profile) ? $grantor_profile->nid_image_back : null,
-                ],
-                'business_document' => [
-                    'tin_certificate'          => $profile->tin_certificate,
-                    'trade_license_attachment' => $basic_informations->trade_license_attachment,
-                    #'statement' => !empty($bank_informations) ? $bank_informations->statement : null
-                ],
-            ]
-        ];
     }
 
     public function getPersonalInformation($partner, Request $request)
@@ -494,47 +400,39 @@ class SpLoanController extends Controller
         }
     }
 
-    private function createGrantorProfile($partner, Request $request)
+    public function sendSMS(Partner $partner, Request $request)
     {
-        $this->setModifier($partner);
-        $profile                 = new Profile();
-        $profile->remember_token = str_random(255);
-        $profile->name           = $request->grantor_name;
-        $profile->mobile         = !empty($request->grantor_mobile) ? formatMobile($request->grantor_mobile) : null;
-        $this->withCreateModificationField($profile);
-        $profile->save();
-        return $profile;
-    }
-
-    private function createNomineeProfile($partner, Request $request)
-    {
-        $this->setModifier($partner);
-        $profile                 = new Profile();
-        $profile->remember_token = str_random(255);
-        $profile->name           = $request->nominee_name;
-        $profile->mobile         = !empty($request->nominee_mobile) ? formatMobile($request->nominee_mobile) : null;
-        $this->withCreateModificationField($profile);
-        $profile->save();
-        return $profile;
-    }
-
-    public function sendSMS(Partner $partner,Request $request){
         try {
             $this->validate($request, [
                 'message' => 'required|string',
             ]);
-            $mobile = $partner->getContactNumber();
-            $message= $request->message;
+            $mobile  = $partner->getContactNumber();
+            $message = $request->message;
             (new Sms())->msg($message)->to($mobile)->shoot();
             return api_response($request, null, 200, ['message' => 'SMS has been sent successfully']);
-        }
-        catch (ValidationException $e) {
+        } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        }catch (\Throwable $e) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
 
+    }
+
+    public function history(Request $request, Loan $loan)
+    {
+        try {
+            $partner  = $request->partner;
+            $resource = $request->manager_resource;
+            $data     = $loan->setPartner($partner)->setResource($resource)->history();
+            return api_response($request, $data, 200, ['data' => $data]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 }
