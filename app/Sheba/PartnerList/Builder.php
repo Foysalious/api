@@ -31,6 +31,8 @@ interface Builder
 
     public function checkOption();
 
+    public function checkPartnersToIgnore();
+
     public function removeShebaHelpDesk();
 
     public function removeUnavailablePartners();
@@ -46,6 +48,8 @@ interface Builder
     public function runQuery();
 
     public function setPartnerIds(array $partner_ids);
+
+    public function setPartnerIdsToIgnore(array $partner_ids);
 
     public function setServiceRequestObjectArray(array $service_request_object);
 
