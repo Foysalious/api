@@ -67,13 +67,13 @@ class BusinessInfo implements Arrayable
             'part_time_employee'              => $request->part_time_employee,
             'sales_information'               => (new SalesInfo($request->last_six_month_sales_information))->toString(),
             'business_additional_information' => (new BusinessAdditionalInfo($request->business_additional_information))->toString(),
-            'tin_no'                          => $request->tin_no,
             'yearly_income'                   => $request->yearly_income
         ];
         $partner_basic_data = [
             'establishment_year' => $request->establishment_year,
             'tin_no'             => $request->tin_no
         ];
+        $this->profile->update($this->withUpdateModificationField(['tin_no'=>$request->tin_no]));
         $this->partner->update($this->withBothModificationFields($partner_data));
         $this->basic_information->update($this->withBothModificationFields($partner_basic_data));
     }

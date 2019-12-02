@@ -275,6 +275,8 @@ class IndexRoute
             $api->group(['prefix' => 'loans'], function ($api) {
                 $api->get('{partner_bank_loan}/logs', 'SpLoanController@getChangeLogs');
                 $api->post('send-sms', 'SpLoanController@sendSMS');
+                $api->post('/{partner_bank_loan}/comments', 'SpLoanController@storeComment');
+                $api->get('/{partner_bank_loan}/comments', 'SpLoanController@getComments');
             });
         });
 
