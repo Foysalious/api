@@ -1,14 +1,14 @@
 <?php
 
-
 namespace Sheba\Loan\DS;
-
 
 use App\Models\PartnerBankLoan;
 use Illuminate\Contracts\Support\Arrayable;
+use Sheba\ModificationFields;
 
 class PartnerLoanRequest implements Arrayable
 {
+    use ModificationFields;
     public $partnerBankLoan;
     public $partner;
     public $bank;
@@ -26,12 +26,31 @@ class PartnerLoanRequest implements Arrayable
     public function __construct(PartnerBankLoan $partnerBankLoan = null)
     {
         $this->partnerBankLoan = $partnerBankLoan;
-        if ($this->partnerBankLoan) $this->setDetails();
+        if ($this->partnerBankLoan)
+            $this->setDetails();
     }
 
     public function setDetails()
     {
-        $this->details=new LoanRequestDetails($this->partnerBankLoan->final_information_for_loan);
+        $this->details = new LoanRequestDetails($this->partnerBankLoan);
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getPartner()
+    {
+        return $this->partner;
+    }
+
+    /**
+     * @param mixed $partner
+     * @return PartnerLoanRequest
+     */
+    public function setPartner($partner)
+    {
+        $this->partner = $partner;
+        return $this;
     }
 
     /**
@@ -44,6 +63,17 @@ class PartnerLoanRequest implements Arrayable
         return $this;
     }
 
+    public function create($data)
+    {
+        $data['partner_id']          = $this->partner->id;
+        $data['status']              = constants('LOAN_STATUS')['considerable'];
+        $data['interest_rate']       = constants('LOAN_CONFIG')['interest'];
+        $data['monthly_installment'] = ((double)$data['amount'] + ((double)$data['amount'] * ($data['interest_rate'] / 100))) / ((int)$data['duration'] * 12);
+        $this->setModifier($this->partner);
+        $this->partnerBankLoan = new PartnerBankLoan($this->withCreateModificationField($data));
+        $this->setDetails();
+        $this->partnerBankLoan->save();
+    }
 
     /**
      * Get the instance as an array.

@@ -5,6 +5,7 @@ namespace Sheba\Loan\DS;
 use App\Models\Partner;
 use App\Models\Resource;
 use Illuminate\Contracts\Support\Arrayable;
+use Sheba\Loan\Completion;
 use Sheba\ModificationFields;
 
 class Documents implements Arrayable
@@ -29,6 +30,7 @@ class Documents implements Arrayable
      */
     private $partnerLoanRequest;
     private $granter;
+    private $bank_information;
 
     public function __construct(Partner $partner, Resource $resource, PartnerLoanRequest $request = null)
     {
@@ -36,6 +38,7 @@ class Documents implements Arrayable
         $this->resource           = $resource;
         $this->profile            = $resource->profile;
         $this->basic_information  = $this->partner->basicInformations;
+        $this->bank_information   = $this->partner->bankInformations;
         $this->partnerLoanRequest = $request;
         $this->setNominee();
         $this->setGranter();
@@ -57,6 +60,20 @@ class Documents implements Arrayable
     }
 
     public function update() { }
+
+    /**
+     * @return array
+     */
+    public function completion()
+    {
+        $data = $this->toArray();
+        return (new Completion($data, [
+            $this->profile->updated_at,
+            $this->partner->updated_at,
+            $this->basic_information->updated_at,
+            $this->bank_information->updated_at
+        ]))->get();
+    }
 
     /**
      * @inheritDoc
@@ -88,8 +105,8 @@ class Documents implements Arrayable
             ],
             'business_document' => [
                 'tin_certificate'          => $this->profile->tin_certificate,
-                'trade_license_attachment' => !empty($this->bank_informations) ? $this->basic_information->trade_license_attachment : null,
-                'statement'                => !empty($this->bank_informations) ? $this->bank_informations->statement : null
+                'trade_license_attachment' => !empty($this->basic_information) ? $this->basic_information->trade_license_attachment : null,
+                'statement'                => !empty($this->bank_information) ? $this->bank_information->statement : null
             ],
         ];
     }
