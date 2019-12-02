@@ -19,8 +19,8 @@ abstract class SubscriptionOrderPlaceAbstractFactory
      */
     public function get(Request $request)
     {
-        $creator = $this->getCreator($request);
         $this->buildRequest($request);
+        $creator = $this->getCreator($request);
         return $creator->setSubscriptionRequest($this->subscriptionOrderRequest);
     }
 
