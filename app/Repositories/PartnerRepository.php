@@ -2,6 +2,7 @@
 
 use App\Models\Category;
 use App\Models\HyperLocal;
+use App\Models\Job;
 use App\Models\Location;
 use App\Models\Partner;
 use App\Models\PartnerWorkingHour;
@@ -24,14 +25,8 @@ class PartnerRepository
         $this->serviceRepo = new ServiceRepository();
     }
 
-    /**
-     * @param null $verify
-     * @param null $category_id
-     * @param null $date
-     * @param null $preferred_time
-     * @return Collection
-     */
-    public function resources($verify = null, $category_id = null, $date = null, $preferred_time = null)
+
+    public function resources($verify = null, $category_id = null, $date = null, $preferred_time = null, Job $job = null)
     {
         $resources = $this->partner->resources()->get()->unique();
         $resources->load(['jobs' => function ($q) {
@@ -57,7 +52,7 @@ class PartnerRepository
             });
         }
 
-        return $resources->map(function ($resource) use ($category_id, $date, $preferred_time) {
+        return $resources->map(function ($resource) use ($category_id, $date, $preferred_time, $job) {
             $data = [];
             $data['id'] = $resource->id;
             $data['profile_id'] = $resource->profile_id;
@@ -88,7 +83,7 @@ class PartnerRepository
                     }
                 } else {
                     $resource_scheduler = scheduler($resource);
-                    if (!$resource_scheduler->isAvailableForCategory($date, explode('-', $preferred_time)[0], $category)) {
+                    if (!$resource_scheduler->isAvailableForCategory($date, explode('-', $preferred_time)[0], $category, $job)) {
                         $data['is_available'] = 0;
                         foreach ($resource_scheduler->getBookedJobs() as $job) {
                             array_push($data['booked_jobs'], array(

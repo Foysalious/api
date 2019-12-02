@@ -138,7 +138,7 @@ class PartnerJobController extends Controller
                 }
                 $subscription_orders = $partner->subscriptionOrders->where('status', 'accepted')->count();
 
-                return api_response($request, $jobs, 200, ['jobs' => $jobs, 'resources' => $resources, 'subscription_orders'=> $subscription_orders]);
+                return api_response($request, $jobs, 200, ['jobs' => $jobs, 'resources' => $resources, 'subscription_orders' => $subscription_orders]);
             } else {
                 return api_response($request, null, 404);
             }
@@ -224,7 +224,7 @@ class PartnerJobController extends Controller
                 if (!$job_time->isValid) {
                     return api_response($request, null, 400, ['message' => $job_time->error_message]);
                 }
-                if (!scheduler(Resource::find((int)$job->resource_id))->isAvailableForCategory($request->schedule_date, explode('-', $request->preferred_time)[0], $job->category)) {
+                if (!scheduler(Resource::find((int)$job->resource_id))->isAvailableForCategory($request->schedule_date, explode('-', $request->preferred_time)[0], $job->category, $job)) {
                     return api_response($request, null, 403, ['message' => 'Resource is not available at this time. Please select different date time or change the resource']);
                 }
                 $request->merge(['resource' => $request->manager_resource]);
@@ -233,7 +233,7 @@ class PartnerJobController extends Controller
             }
             if ($request->has('resource_id')) {
                 if ((int)$job->resource_id == (int)$request->resource_id) return api_response($request, null, 403, ['message' => 'অর্ডারটিতে এই রিসোর্স এসাইন করা রয়েছে']);
-                if (!scheduler(Resource::find((int)$request->resource_id))->isAvailableForCategory($job->schedule_date, explode('-', $job->preferred_time)[0], $job->category)) {
+                if (!scheduler(Resource::find((int)$request->resource_id))->isAvailableForCategory($job->schedule_date, explode('-', $job->preferred_time)[0], $job->category, $job)) {
                     return api_response($request, null, 403, ['message' => 'Resource is not available at this time. Please select different date time or change the resource']);
                 }
                 if ($request->partner->hasThisResource((int)$request->resource_id, 'Handyman') && $job->hasStatus(['Accepted', 'Schedule_Due', 'Process', 'Serve_Due'])) {
@@ -248,10 +248,10 @@ class PartnerJobController extends Controller
                 elseif ($new_status === 'end') $new_status = $this->jobStatuses['Served'];
                 /**
                  * $due = (double)$job->partnerOrder->calculate(true)->due;
-                if ($new_status == "Served" && ($due > 0 || $due < 0)) {
-                    $action = $due > 0 ? "collect" : "refund";
-                    return api_response($request, null, 403, ['message' => "Please " . $action . " money to end this job."]);
-                }*/
+                 * if ($new_status == "Served" && ($due > 0 || $due < 0)) {
+                 * $action = $due > 0 ? "collect" : "refund";
+                 * return api_response($request, null, 403, ['message' => "Please " . $action . " money to end this job."]);
+                 * }*/
                 if ($response = (new \Sheba\Repositories\ResourceJobRepository($request->manager_resource))->changeJobStatus($job, $new_status)) {
                     return api_response($request, $response, $response->code, ['message' => $response->msg]);
                 }
@@ -399,7 +399,7 @@ class PartnerJobController extends Controller
     private function sendAssignResourcePushNotifications(Job $job)
     {
         try {
-            $topic   = config('sheba.push_notification_topic_name.customer') . $job->partner_order->order->customer->id;
+            $topic = config('sheba.push_notification_topic_name.customer') . $job->partner_order->order->customer->id;
             $channel = config('sheba.push_notification_channel_name.customer');
             (new PushNotificationHandler())->send([
                 "title" => 'Resource has been assigned',
@@ -410,7 +410,7 @@ class PartnerJobController extends Controller
                 "channel_id" => $channel
             ], $topic, $channel);
 
-            $topic   = config('sheba.push_notification_topic_name.resource') . $job->resource_id;
+            $topic = config('sheba.push_notification_topic_name.resource') . $job->resource_id;
             $channel = config('sheba.push_notification_channel_name.resource');
             (new PushNotificationHandler())->send([
                 "title" => 'Assigned to a new job',
@@ -440,7 +440,7 @@ class PartnerJobController extends Controller
             $jobs = collect();
             foreach ($partner->partnerOrders as $partnerOrder) {
                 foreach ($partnerOrder->jobs as $job) {
-                    $job['is_on_premise'] = (int) $job->isOnPremise();
+                    $job['is_on_premise'] = (int)$job->isOnPremise();
                     $job['location'] = $partnerOrder->order->location->name;
                     $job['code'] = $partnerOrder->order->code();
                     $job['category_name'] = $job->category ? $job->category->name : null;
