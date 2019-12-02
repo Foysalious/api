@@ -26,9 +26,11 @@ class CustomerSubscriptionOrderPlaceFactory extends SubscriptionOrderPlaceAbstra
     protected function getCreator(Request $request)
     {
         if($request->has('partner')) {
-            $creator = new SubscriptionOrderPlaceWithPartner();
+            /** @var SubscriptionOrderPlaceWithPartner $creator */
+            $creator = app(SubscriptionOrderPlaceWithPartner::class);
         } else {
-            $creator = new SubscriptionOrderPlaceWithOutPartner();
+            /** @var SubscriptionOrderPlaceWithoutPartner $creator */
+            $creator = app(SubscriptionOrderPlaceWithoutPartner::class);
             $price = $this->priceBreakdownCalculator->setPartnerListRequest($this->subscriptionOrderRequest)->calculate();
             $creator->setPriceBreakdown($price);
         }
