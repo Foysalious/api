@@ -116,15 +116,18 @@ class FacebookController extends Controller
         $version = (int)\request()->header('Version-Code');
         $portal_name = \request()->header('portal-name');
         $platform_name = \request()->header('Platform-Name');
-        if ($platform_name == 'ios' || ($version <= 30211 && $portal_name == 'customer-app') || ($version <= 12003 && $portal_name == 'bondhu-app')) return $this->fbKit->authenticateKit($code);
-        $access_token_request = new AccessTokenRequest();
-        $access_token_request->setAuthorizationCode($code);
-        $account_kit = app(ShebaAccountKit::class);
-        $kit = [];
-        $mobile = $account_kit->getMobile($access_token_request);
-        if (!$mobile) return null;
-        $kit['mobile'] = $mobile;
-        return $kit;
+        $user_agent = \request()->header('User-Agent');
+        if (($version > 30211 && $portal_name == 'customer-app') || ($version > 12003 && $portal_name == 'bondhu-app')) {
+            $access_token_request = new AccessTokenRequest();
+            $access_token_request->setAuthorizationCode($code);
+            $account_kit = app(ShebaAccountKit::class);
+            $kit = [];
+            $mobile = $account_kit->getMobile($access_token_request);
+            if (!$mobile) return null;
+            $kit['mobile'] = $mobile;
+            return $kit;
+        }
+        return $this->fbKit->authenticateKit($code);
     }
 
     private function getFacebookProfileInfo($token)
