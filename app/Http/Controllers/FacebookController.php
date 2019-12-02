@@ -116,7 +116,8 @@ class FacebookController extends Controller
         $version = (int)\request()->header('Version-Code');
         $portal_name = \request()->header('portal-name');
         $platform_name = \request()->header('Platform-Name');
-        if ($platform_name == 'ios' || ($version <= 30211 && $portal_name == 'customer-app') || ($version <= 12003 && $portal_name == 'bondhu-app')) return $this->fbKit->authenticateKit($code);
+        $user_agent = \request()->header('User-Agent');
+        if ($platform_name == 'ios' || strpos($user_agent, 'ShebaXYZ') || ($version <= 30211 && $portal_name == 'customer-app') || ($version <= 12003 && $portal_name == 'bondhu-app')) return $this->fbKit->authenticateKit($code);
         $access_token_request = new AccessTokenRequest();
         $access_token_request->setAuthorizationCode($code);
         $account_kit = app(ShebaAccountKit::class);
