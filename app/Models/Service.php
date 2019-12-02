@@ -286,7 +286,7 @@ class Service extends Model
     public function getVariableAndOption(array $options)
     {
         if ($this->isOptions()) {
-            $variables = json_encode($this->getVariablesOfOptionsService($options));
+            $variables = $this->getVariablesOfOptionsService($options);
             $options = '[' . implode(',', $options) . ']';
         } else {
             $options = '[]';
