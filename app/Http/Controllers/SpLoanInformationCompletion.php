@@ -3,6 +3,7 @@
 use App\Models\Profile;
 use Illuminate\Validation\ValidationException;
 use App\Repositories\FileRepository;
+use Sheba\Loan\Loan;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -10,14 +11,15 @@ use DB;
 
 class SpLoanInformationCompletion extends Controller
 {
-    public function getLoanInformationCompletion($partner, Request $request)
+    public function getLoanInformationCompletion($partner, Request $request,Loan $loan)
     {
         try {
             $complete_count = 0;
 
             $partner = $request->partner;
-            $manager_resource = $request->manager_resource;
-            $profile = $manager_resource->profile;
+            $resource = $request->manager_resource;
+            $completion=$loan->setPartner($partner)->setResource($resource)->getCompletion();
+            /*$profile = $manager_resource->profile;
             $basic_informations = $partner->basicInformations;
             $bank_informations = $partner->bankInformations;
 
@@ -51,7 +53,7 @@ class SpLoanInformationCompletion extends Controller
                     'last_update' => $documents['last_update']
                 ],
                 'is_applicable_for_loan' => $is_all_completed
-            ];
+            ];*/
 
             return api_response($request, $completion, 200, ['completion' => $completion]);
         } catch (\Throwable $e) {
