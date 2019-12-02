@@ -66,12 +66,14 @@ class BusinessInfo implements Arrayable
             'full_time_employee'              => $request->full_time_employee,
             'part_time_employee'              => $request->part_time_employee,
             'sales_information'               => (new SalesInfo($request->last_six_month_sales_information))->toString(),
-            'business_additional_information' => (new BusinessAdditionalInfo($request->business_additional_information))->toString()
+            'business_additional_information' => (new BusinessAdditionalInfo($request->business_additional_information))->toString(),
+            'yearly_income'                   => $request->yearly_income
         ];
         $partner_basic_data = [
             'establishment_year' => $request->establishment_year,
             'tin_no'             => $request->tin_no
         ];
+        $this->profile->update($this->withUpdateModificationField(['tin_no'=>$request->tin_no]));
         $this->partner->update($this->withBothModificationFields($partner_data));
         $this->basic_information->update($this->withBothModificationFields($partner_basic_data));
     }
@@ -120,6 +122,7 @@ class BusinessInfo implements Arrayable
             'location'                         => $this->partner->address,
             'establishment_year'               => $this->basic_information->establishment_year,
             'tin_no'                           => $this->profile->tin_no,
+            'yearly_income'                    => $this->partner->yearly_income,
             'tin_certificate'                  => $this->profile->tin_certificate,
             'full_time_employee'               => (int)$this->partner->full_time_employee ?: null,
             'part_time_employee'               => (int)$this->partner->part_time_employee ?: null,

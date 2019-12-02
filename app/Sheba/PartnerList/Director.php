@@ -53,6 +53,7 @@ class Director
         $this->buildBaseQuery();
         $this->builder->withService();
         $this->builder->withTotalCompletedOrder();
+        $this->builder->checkPartnersToIgnore();
     }
 
     private function filterForOrderPlace()

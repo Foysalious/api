@@ -13,5 +13,4 @@ class BusinessAdditionalInfo implements Arrayable
     protected $utility_bills;
     protected $marketing_cost;
     protected $other_cost;
-    protected $owner_type;
 }

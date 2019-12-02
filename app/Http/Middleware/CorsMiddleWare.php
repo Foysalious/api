@@ -17,6 +17,7 @@ class CorsMiddleWare {
         $headers = [];
         $domains = [
             "http://localhost:8080",
+            "http://localhost:8081",
             "http://dev-sheba.xyz",
             "http://admin.dev-sheba.xyz",
             "http://admin.sheba.test"

@@ -23,6 +23,7 @@ class Cors2MiddleWare
             "http://localhost:8082",
             "http://localhost:8083",
             "http://localhost:8084",
+            "http://localhost:7891",
             "http://localhost:3333",
             "http://localhost:3334",
             "http://localhost:3335",

@@ -35,15 +35,23 @@ class SubscriptionPriceBreakdownCalculator extends PriceBreakdownCalculator
             $original_price = $unit_price * $selected_service->quantity;
             /** @var ServiceSubscriptionDiscount $discount */
             $discount = $selected_service->serviceModel->subscription->getDiscount($this->request->subscriptionType, $date_count);
-            $discounted_amount = $discount->getApplicableAmount($original_price, $selected_service->quantity);
+            $discounted_amount = !$discount ? 0 : $discount->getApplicableAmount($original_price, $selected_service->quantity);
             $discounted_price = $original_price - $discounted_amount;
 
             $service = (new ServiceWithPrice($selected_service->serviceModel));
             $service->setOption($selected_service->option)->setQuantity($selected_service->quantity)
-                ->setDiscount($discounted_amount)->setCap($discount->cap)->setAmount($discount->discount_amount)
-                ->setIsPercentage($discount->isPercentage() ? 1 : 0)
-                ->setShebaContribution($discount->sheba_contribution)->setPartnerContribution($discount->partner_contribution)
-                ->setDiscountedPrice($discounted_price)->setOriginalPrice($original_price)->setUnitPrice($unit_price)
+                ->setDiscount($discounted_amount);
+
+            if($discount) {
+                $service->setCap($discount->cap)->setAmount($discount->discount_amount)
+                    ->setIsPercentage($discount->isPercentage() ? 1 : 0)
+                    ->setShebaContribution($discount->sheba_contribution)->setPartnerContribution($discount->partner_contribution);
+            } else {
+                $service->setCap(0)->setAmount(0)->setIsPercentage(0)
+                    ->setShebaContribution(0)->setPartnerContribution(0);
+            }
+
+            $service->setDiscountedPrice($discounted_price)->setOriginalPrice($original_price)->setUnitPrice($unit_price)
                 ->setMinPrice(0)->setIsMinPriceApplied(0);
 
             $price->addService($service);
