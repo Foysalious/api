@@ -11,8 +11,8 @@ class NomineeInfo
     protected $name;
     protected $mobile;
     protected $pro_pic;
-    protected $nid_front_image;
-    protected $nid_back_image;
+    protected $nid_image_front;
+    protected $nid_image_back;
 
     /**
      * @throws \ReflectionException
