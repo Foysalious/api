@@ -58,9 +58,6 @@ class ServiceV2Transformer extends TransformerAbstract
         $this->jobDiscountHandler->setType(DiscountTypes::DELIVERY)->setCategory($service->category)->setCheckingParams($discount_checking_params)->calculate();
         /** @var Discount $delivery_discount */
         $delivery_discount = $this->jobDiscountHandler->getDiscount();
-        /** @var DiscountRules $rules */
-        $rules = $delivery_discount->rules;
-        $min_order_amount = $rules->getMinOrderAmount();
 
         $data = [
             'id'            => (int)$service->id,
@@ -79,7 +76,7 @@ class ServiceV2Transformer extends TransformerAbstract
                 'value' => (double)$delivery_discount->amount,
                 'is_percentage' => $delivery_discount->is_percentage,
                 'cap' => (double)$delivery_discount->cap,
-                'min_order_amount' => (double)$min_order_amount
+                'min_order_amount' => (double)$delivery_discount->rules->getMinOrderAmount()
             ] : (double)0.00
         ];
         if ($service->variable_type == Type::FIXED)

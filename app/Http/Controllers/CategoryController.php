@@ -481,14 +481,11 @@ class CategoryController extends Controller
                     $job_discount_handler->setType(DiscountTypes::DELIVERY)->setCategory($service->category)->setCheckingParams($discount_checking_params)->calculate();
                     /** @var Discount $delivery_discount */
                     $delivery_discount = $job_discount_handler->getDiscount();
-                    /** @var DiscountRules $rules */
-                    $rules = $delivery_discount->rules;
-                    $min_order_amount = $rules->getMinOrderAmount();
                     $category['delivery_discount'] = $delivery_discount ? [
                         'value' => (double)$delivery_discount->amount,
                         'is_percentage' => $delivery_discount->is_percentage,
                         'cap' => (double)$delivery_discount->cap,
-                        'min_order_amount' => (double)$min_order_amount
+                        'min_order_amount' => (double)$delivery_discount->rules->getMinOrderAmount()
                     ] : (double)0.00;
 
                     if ($subscriptions->count()) {
