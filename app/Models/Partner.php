@@ -431,6 +431,11 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->hasMany(SubscriptionOrder::class);
     }
 
+    public function getSubscriptionRulesAttribute($rules)
+    {
+        return json_decode($rules);
+    }
+
     public function subscribe($package, $billing_type)
     {
         $package = $package ? (($package) instanceof PartnerSubscriptionPackage ? $package : PartnerSubscriptionPackage::find($package)) : $this->subscription;
@@ -472,7 +477,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function getCommissionAttribute()
     {
-        return $this->subscriber()->commission();
+        return (double)$this->subscription_rules->commission->value;
     }
 
     public function canCreateResource(Array $types)
@@ -497,7 +502,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function isFirstTimeVerified()
     {
-        return $this->statusChangeLogs()->where('to', constants('PARTNER_STATUSES')['Verified'])->count() == 0;
+        return $this->statusChangeLogs()->where('to', PartnerStatuses::VERIFIED)->count() == 0;
     }
 
     public function statusChangeLogs()
