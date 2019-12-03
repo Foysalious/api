@@ -1,6 +1,5 @@
 <?php namespace App\Http\Controllers;
 
-use App\Models\BankUser;
 use App\Models\Comment;
 use App\Models\Partner;
 use App\Models\PartnerBankInformation;
@@ -18,6 +17,7 @@ use Sheba\Loan\DS\BusinessInfo;
 use Sheba\Loan\DS\FinanceInfo;
 use Sheba\Loan\DS\NomineeGranterInfo;
 use Sheba\Loan\DS\PersonalInfo;
+use Sheba\Loan\Exceptions\AlreadyAssignToBank;
 use Sheba\Loan\Exceptions\AlreadyRequestedForLoan;
 use Sheba\Loan\Exceptions\EmailUsed;
 use Sheba\Loan\Exceptions\NotApplicableForLoan;
@@ -37,6 +37,31 @@ class SpLoanController extends Controller
         $this->fileRepository = $file_repository;
     }
 
+    public function index(Request $request, Loan $loan)
+    {
+        try {
+            $output = $loan->all($request);
+            return api_response($request, $output, 200, ['data' => $output]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
+    }
+    public function show(Request $request,$loan_id,Loan $loan){
+        try{
+            $data=$loan->show($loan_id);
+            return api_response($request,$data,200,['data'=>$data]);
+        }catch (\Throwable $e){
+            app('sentry')->captureException($e);
+            return api_response($request,null,500);
+        }
+
+    }
+    public function update(Request $request,$loan_id){}
+    public function statusChange(Request $request,$loan_id){
+
+    }
     public function getHomepage($partner, Request $request, Loan $loan)
     {
         try {
@@ -459,8 +484,11 @@ class SpLoanController extends Controller
             return $comment ? api_response($request, $comment, 200,['comment' =>$formatted_comment]) : api_response($request, $comment, 500);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry  = app('sentry');
+            $sentry->user_context([
+                'request' => $request->all(),
+                'message' => $message
+            ]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
@@ -473,24 +501,38 @@ class SpLoanController extends Controller
     {
         try {
             list($offset, $limit) = calculatePagination($request);
-            $comments = Comment::where('commentable_type', get_class($partner_bank_loan))->where('commentable_id', $partner_bank_loan->id)->orderBy('id', 'DESC')->skip($offset)->limit($limit)->get();
+            $comments      = Comment::where('commentable_type', get_class($partner_bank_loan))->where('commentable_id', $partner_bank_loan->id)->orderBy('id', 'DESC')->skip($offset)->limit($limit)->get();
             $comment_lists = [];
             foreach ($comments as $comment) {
                 array_push($comment_lists, [
-                    'id' => $comment->id,
-                    'comment' => $comment->comment,
-                    'user' => [
-                        'name' => $comment->commentator->profile->name,
+                    'id'         => $comment->id,
+                    'comment'    => $comment->comment,
+                    'user'       => [
+                        'name'  => $comment->commentator->profile->name,
                         'image' => $comment->commentator->profile->pro_pic
                     ],
                     'created_at' => (Carbon::parse($comment->created_at))->format('j F, Y h:i A')
                 ]);
             }
-            if (count($comment_lists) > 0) return api_response($request, $comment_lists, 200, ['comment_lists' => $comment_lists]);
-            else  return api_response($request, null, 404);
+            if (count($comment_lists) > 0)
+                return api_response($request, $comment_lists, 200, ['comment_lists' => $comment_lists]); else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function assignBank(Request $request, $loan_id, $bank_id, Loan $loan)
+    {
+        try {
+            $loan->assignBank($loan_id, $bank_id);
+            return api_response($request, true, 200);
+        } catch (AlreadyAssignToBank $e) {
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
     }
 }

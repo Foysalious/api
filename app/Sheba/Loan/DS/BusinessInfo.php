@@ -3,6 +3,7 @@
 namespace Sheba\Loan\DS;
 
 use App\Models\Partner;
+use App\Models\PartnerBasicInformation;
 use App\Models\Resource;
 use Carbon\Carbon;
 use Illuminate\Contracts\Support\Arrayable;
@@ -18,10 +19,8 @@ class BusinessInfo implements Arrayable
      */
     private $resource;
     private $profile;
-    /**
-     * @var PartnerLoanRequest
-     */
-    private $partnerLoanRequest;
+    /** @var LoanRequestDetails */
+    private $loanDetails;
     /**
      * @var Partner
      */
@@ -30,15 +29,20 @@ class BusinessInfo implements Arrayable
     private $business_additional_information;
     private $sales_information;
 
-    public function __construct(Partner $partner, Resource $resource, PartnerLoanRequest $request = null)
+    public function __construct(Partner $partner = null, Resource $resource = null, LoanRequestDetails $request = null)
     {
-        $this->resource                        = $resource;
-        $this->profile                         = $resource->profile;
-        $this->partnerLoanRequest              = $request;
-        $this->partner                         = $partner;
-        $this->basic_information               = $partner->basicInformations;
-        $this->business_additional_information = $partner->business_additional_information;
-        $this->sales_information               = $partner->sales_information;
+
+        $this->loanDetails = $request;
+        if ($partner) {
+            $this->partner                         = $partner;
+            $this->basic_information               = $partner->basicInformations;
+            $this->business_additional_information = $partner->business_additional_information;
+            $this->sales_information               = $partner->sales_information;
+        }
+        if ($resource) {
+            $this->resource = $resource;
+            $this->profile  = $resource->profile;
+        }
     }
 
     public static function getValidator()
@@ -73,9 +77,15 @@ class BusinessInfo implements Arrayable
             'establishment_year' => $request->establishment_year,
             'tin_no'             => $request->tin_no
         ];
-        $this->profile->update($this->withUpdateModificationField(['tin_no'=>$request->tin_no]));
+        $this->profile->update($this->withUpdateModificationField(['tin_no' => $request->tin_no]));
         $this->partner->update($this->withBothModificationFields($partner_data));
-        $this->basic_information->update($this->withBothModificationFields($partner_basic_data));
+        if ($this->basic_information){
+            $this->basic_information->update($this->withBothModificationFields($partner_basic_data));
+        }else{
+            $partner_basic_data['partner_id']=$this->partner->id;
+            $this->basic_information=new PartnerBasicInformation($partner_basic_data);
+            $this->basic_information->save();
+        }
     }
 
     /**
@@ -88,7 +98,7 @@ class BusinessInfo implements Arrayable
         return (new Completion($data, [
             $this->profile->updated_at,
             $this->partner->updated_at,
-            $this->basic_information->updated_at
+            $this->basic_information?$this->basic_information->updated_at:null
         ]))->get();
     }
 
@@ -98,12 +108,61 @@ class BusinessInfo implements Arrayable
      */
     public function toArray()
     {
-        return $this->partnerLoanRequest ? $this->dataFromLoanRequest() : $this->dataFromProfile();
+        return $this->loanDetails ? $this->dataFromLoanRequest() : $this->dataFromProfile();
     }
 
+    /**
+     * @throws \ReflectionException
+     */
     private function dataFromLoanRequest()
     {
-        return [];
+        $data = $this->loanDetails->getData();
+
+        if (isset($data['business'])) {
+
+            $data = $data['business'];
+        } elseif (($data = $data[0]) && isset($data['business_info'])) {
+            $data = $data['business_info'];
+        } else {
+            $data = [];
+        }
+        $keys   = self::getKeys();
+        $output = [];
+        foreach ($keys as $key) {
+            if ($key == 'business_additional_information') {
+                $set          = array_key_exists($key, $data) ? $data[$key] : null;
+                $output[$key] = (new BusinessAdditionalInfo($set))->toArray();
+            } elseif ($key == 'last_six_month_sales_information') {
+                $set          = array_key_exists($key, $data) ? $data[$key] : null;
+                $output[$key] = (new SalesInfo($this->sales_information))->toArray();
+            } else {
+                $output[$key] = array_key_exists($key, $data) ? $data[$key] : null;
+            }
+        }
+        return $output;
+    }
+
+    public static function getKeys()
+    {
+        return [
+            'business_name',
+            'business_type',
+            'smanager_business_type',
+            'ownership_type',
+            'stock_price',
+            'location',
+            'establishment_year',
+            'tin_no',
+            'yearly_income',
+            'tin_certificate',
+            'full_time_employee',
+            'part_time_employee',
+            'business_additional_information',
+            'last_six_month_sales_information',
+            'business_types',
+            'smanager_business_types',
+            'ownership_types',
+        ];
     }
 
     /**

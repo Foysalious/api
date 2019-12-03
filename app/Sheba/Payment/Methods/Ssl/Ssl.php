@@ -56,7 +56,10 @@ class Ssl extends PaymentMethod
         if ($payable->amount >= config('sheba.min_order_amount_for_emi')) {
             $data['emi_option'] = 1;
             $data['emi_max_inst_option'] = 12;
-            if ($payable->emi_month) $data['emi_selected_inst'] = (int)$payable->emi_month;
+            if ($payable->emi_month) {
+                $data['emi_selected_inst'] = (int)$payable->emi_month;
+                $data['emi_allow_only'] = 1;
+            }
         }
         $payment = new Payment();
         DB::transaction(function () use ($payment, $payable, $invoice, $user) {

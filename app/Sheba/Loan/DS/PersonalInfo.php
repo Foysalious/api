@@ -15,7 +15,8 @@ class PersonalInfo implements Arrayable
     use ModificationFields;
     private $resource;
     private $profile;
-    private $partnerLoanRequest;
+    /** @var LoanRequestDetails|PartnerLoanRequest|null */
+    private $loanDetails;
     private $partner;
     private $basic_information;
 
@@ -25,13 +26,17 @@ class PersonalInfo implements Arrayable
      * @param Resource $resource
      * @param PartnerLoanRequest|null $request
      */
-    public function __construct(Partner $partner, Resource $resource, PartnerLoanRequest $request = null)
+    public function __construct(Partner $partner = null, Resource $resource = null, LoanRequestDetails $request = null)
     {
-        $this->resource           = $resource;
-        $this->profile            = $resource->profile;
-        $this->partnerLoanRequest = $request;
-        $this->partner            = $partner;
-        $this->basic_information  = $partner->basicInformations;
+        $this->loanDetails = $request;
+        if ($partner) {
+            $this->partner           = $partner;
+            $this->basic_information = $partner->basicInformations;
+        }
+        if ($resource) {
+            $this->resource = $resource;
+            $this->profile  = $resource->profile;
+        }
     }
 
     public static function getValidators()
@@ -120,7 +125,7 @@ class PersonalInfo implements Arrayable
      */
     public function toArray()
     {
-        return $this->partnerLoanRequest ? $this->dataFromLoanRequest() : $this->dataFromProfile();
+        return $this->loanDetails ? $this->dataFromLoanRequest() : $this->dataFromProfile();
     }
 
     /**
@@ -128,7 +133,60 @@ class PersonalInfo implements Arrayable
      */
     private function dataFromLoanRequest()
     {
-        return [];
+        $data = $this->loanDetails->getData();
+        if (isset($data['personal'])) {
+
+            $data = $data['personal'];
+        } elseif (($data = $data[0]) && isset($data['personal_info'])) {
+            $data = $data['personal_info'];
+        } else {
+            $data = [];
+        }
+        $output = [];
+        foreach (self::getKeys() as $key) {
+            if ($key == 'permanent_address') {
+                $output[$key] = (new PermanentAddress($data))->toArray();
+            } elseif ($key == 'present_address') {
+                $output[$key] = (new PresentAddress($data))->toArray();
+            } elseif ($key == 'expenses') {
+                $output[$key] = (new Expenses((array_key_exists($key, $data) ? $data['expenses'] : null)));
+            } elseif ($key == 'genders') {
+                $output[$key] = constants('GENDER');
+            } elseif ($key == 'occupation_lists') {
+                $output[$key] = constants('SUGGESTED_OCCUPATION');
+            } else {
+                $output[$key] = array_key_exists($key, $data) ? $data[$key] : null;
+            }
+        }
+        return $output;
+    }
+
+    public static function getKeys()
+    {
+        return [
+            'name',
+            'mobile',
+            'gender',
+            'email',
+            'genders',
+            'picture',
+            'birthday',
+            'present_address',
+            'permanent_address',
+            'is_same_address',
+            'father_name',
+            'spouse_name',
+            'mother_name',
+            'birth_place',
+            'occupation_lists',
+            'occupation',
+            'expenses',
+            'nid_no',
+            'nid_issue_date',
+            'other_id',
+            'other_id_issue_date',
+            'utility_bill_attachment',
+        ];
     }
 
     /**
@@ -148,8 +206,8 @@ class PersonalInfo implements Arrayable
             'genders'                 => constants('GENDER'),
             'picture'                 => $profile->pro_pic,
             'birthday'                => $profile->dob,
-            'present_address'         => $permanent_address,
-            'permanent_address'       => $present_address,
+            'present_address'         => $present_address,
+            'permanent_address'       => $permanent_address,
             'is_same_address'         => self::isSameAddress($present_address, $permanent_address),
             'father_name'             => $this->resource->father_name,
             'spouse_name'             => $this->resource->spouse_name,
