@@ -8,7 +8,11 @@ class PermanentAddress extends Address
 {
     public function __construct($info)
     {
-        parent::__construct($info->permanent_address);
+
+        $address=[];
+        if (is_array($info))$address=array_key_exists('permanent_address', $info)?$info['permanent_address']:[];
+        if(is_object($info))$address=isset($info->permanent_address)?$info->permanent_address:[];
+        parent::__construct($address);
     }
     public function toArray()
     {

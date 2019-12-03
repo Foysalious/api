@@ -25,23 +25,27 @@ class Documents implements Arrayable
     private $profile;
     private $basic_information;
     private $nominee;
-    /**
-     * @var PartnerLoanRequest
-     */
-    private $partnerLoanRequest;
+    /** @var LoanRequestDetails */
+    private $loanDetails;
     private $granter;
     private $bank_information;
 
-    public function __construct(Partner $partner, Resource $resource, PartnerLoanRequest $request = null)
+    public function __construct(Partner $partner = null, Resource $resource = null, LoanRequestDetails $request = null)
     {
-        $this->partner            = $partner;
-        $this->resource           = $resource;
-        $this->profile            = $resource->profile;
-        $this->basic_information  = $this->partner->basicInformations;
-        $this->bank_information   = $this->partner->bankInformations;
-        $this->partnerLoanRequest = $request;
-        $this->setNominee();
-        $this->setGranter();
+        $this->loanDetails = $request;
+        $this->partner     = $partner;
+        $this->resource    = $resource;
+        if ($this->partner) {
+            $this->basic_information = $this->partner->basicInformations;
+            $this->bank_information  = $this->partner->bankInformations;
+        }
+        if ($this->resource) {
+            $this->profile = $resource->profile;
+        }
+        if ($this->profile) {
+            $this->setNominee();
+            $this->setGranter();
+        }
     }
 
     /**
@@ -80,10 +84,67 @@ class Documents implements Arrayable
      */
     public function toArray()
     {
-        return $this->partnerLoanRequest ? $this->getDataFromLoanRequest() : $this->getDataFromProfile();
+        return $this->loanDetails ? $this->getDataFromLoanRequest() : $this->getDataFromProfile();
     }
 
-    private function getDataFromLoanRequest() { }
+    private function getDataFromLoanRequest()
+    {
+        $data = $this->loanDetails->getData();
+        if (isset($data['document'])) {
+            $data = $data['document'];
+        } else {
+            $data = $data[0];
+            $data = isset($data['documents']) ? $data['documents'] : [];
+        }
+        $output = [];
+        foreach (self::getKeys() as $key) {
+            if ($key == 'nominee_document' || $key == 'grantor_document') {
+                if (array_key_exists($key, $data)) {
+                    $output[$key] = [
+                        'picture'         => array_key_exists('picture', $data[$key]) ? $data[$key]['picture'] : null,
+                        'nid_front_image' => array_key_exists('nid_front_image', $data[$key]) ? $data[$key]['nid_front_image'] : null,
+                        'nid_back_image'  => array_key_exists('nid_back_image', $data[$key]) ? $data[$key]['nid_back_image'] : null,
+                    ];
+                } else {
+                    $output[$key] = [
+                        'picture'         => null,
+                        'nid_front_image' => null,
+                        'nid_back_image'  => null
+                    ];
+                }
+            } elseif ($key == 'business_document') {
+                if (array_key_exists($key, $data)) {
+                    $output[$key] = [
+                        'tin_certificate'          => array_key_exists('picture', $data[$key]) ? $data[$key]['picture'] : null,
+                        'trade_license_attachment' => array_key_exists('picture', $data[$key]) ? $data[$key]['picture'] : null,
+                        'statement'                => array_key_exists('picture', $data[$key]) ? $data[$key]['picture'] : null,
+                    ];
+                } else {
+                    $output[$key] = [
+                        'tin_certificate'          => null,
+                        'trade_license_attachment' => null,
+                        'statement'                => null,
+                    ];
+                }
+            } else {
+                $output[$key] = array_key_exists($key, $data) ? $data[$key] : null;
+            }
+        }
+        return $output;
+    }
+
+    public static function getKeys()
+    {
+        return [
+            'picture',
+            'is_verified',
+            'nid_image_front',
+            'nid_image_back',
+            'nominee_document',
+            'grantor_document',
+            'business_document'
+        ];
+    }
 
     private function getDataFromProfile()
     {

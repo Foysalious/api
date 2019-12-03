@@ -324,4 +324,16 @@ class Loan
             throw new AlreadyAssignToBank();
         $this->repo->update($model, ['bank_id' => $bank_id]);
     }
+
+    /**
+     * @param $loan_id
+     * @return array
+     * @throws \ReflectionException
+     */
+    public function show($loan_id)
+    {
+        /** @var PartnerBankLoan $request */
+        $request=$this->repo->find($loan_id);
+       return (new PartnerLoanRequest($request))->details();
+    }
 }

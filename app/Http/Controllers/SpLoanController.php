@@ -48,7 +48,21 @@ class SpLoanController extends Controller
         }
 
     }
+    public function show(Request $request,$loan_id,Loan $loan){
+        try{
+            $data=$loan->show($loan_id);
+            return api_response($request,$data,200,['data'=>$data]);
+        }catch (\Throwable $e){
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request,null,500);
+        }
 
+    }
+    public function update(Request $request,$loan_id){}
+    public function statusChange(Request $request,$loan_id){
+
+    }
     public function getHomepage($partner, Request $request, Loan $loan)
     {
         try {
