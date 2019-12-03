@@ -114,6 +114,7 @@ class PartnerLoanRequest implements Arrayable
      */
     public function toArray()
     {
+        $bank = $this->partnerBankLoan->bank()->select('name', 'id', 'logo')->first();
         return [
             'id'                         => $this->partnerBankLoan->id,
             'partner'                    => [
@@ -125,7 +126,7 @@ class PartnerLoanRequest implements Arrayable
                     'mobile' => $this->partner->getContactNumber()
                 ]
             ],
-            'bank'                       => $this->partnerBankLoan->bank()->select('name', 'id', 'logo')->first()->toArray(),
+            'bank'                       => $bank ? $bank->toArray() : null,
             'duration'                   => $this->partnerBankLoan->duration,
             'interest_rate'              => $this->partnerBankLoan->interest_rate,
             'status'                     => $this->partnerBankLoan->status,
@@ -137,6 +138,7 @@ class PartnerLoanRequest implements Arrayable
 
     public function listItem()
     {
+        $bank = $this->partnerBankLoan->bank()->select('name', 'id', 'logo')->first();
         return [
             'id'              => $this->partnerBankLoan->id,
             'created_at'      => $this->partnerBankLoan->created_at->format('Y-m-d H:s:i'),
@@ -150,7 +152,7 @@ class PartnerLoanRequest implements Arrayable
             'created_by_name' => $this->partnerBankLoan->created_by_name,
             'updated_by_name' => $this->partnerBankLoan->updated_by_name,
             'updated'         => $this->partnerBankLoan->updated_at->format('Y-m-d H:s:i'),
-            'bank'            => $this->partnerBankLoan->bank()->select('name', 'id', 'logo')->first()->toArray()
+            'bank'            => $bank ? $bank->toArray() : null
         ];
     }
 }
