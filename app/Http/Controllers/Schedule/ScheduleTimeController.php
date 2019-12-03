@@ -25,5 +25,5 @@ class ScheduleTimeController extends Controller
         $dates = $slot->get();
         return api_response($request, $dates, 200, ['dates' => $dates]);
     }
-    
+
 }

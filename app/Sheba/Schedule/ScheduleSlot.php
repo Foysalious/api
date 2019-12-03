@@ -217,7 +217,7 @@ class ScheduleSlot
     private function formatSlots(Carbon $day, $slots)
     {
         $current_time = $this->today->copy();
-        if (!$this->partner) $current_time = $this->today->copy()->addMinutes($this->category->preparation_time_minutes);
+        if (!$this->partner && $this->category) $current_time = $this->today->copy()->addMinutes($this->category->preparation_time_minutes);
         foreach ($slots as &$slot) {
             $slot['key'] = $slot['start'] . '-' . $slot['end'];
             $start = Carbon::parse($day->toDateString() . ' ' . $slot['start']);
