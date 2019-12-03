@@ -2,6 +2,7 @@
 
 use App\Models\PartnerOrder;
 use Sheba\Dal\Discount\DiscountTypes;
+use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\JobDiscount\JobDiscountCheckingParams;
 use Sheba\JobDiscount\JobDiscountHandler;
 use Sheba\ModificationFields;
@@ -21,7 +22,7 @@ abstract class BaseOrderComplete extends PaymentComplete
 
     /**
      * @param PartnerOrder $partner_order
-     * @throws \Sheba\Dal\Discount\InvalidDiscountType
+     * @throws InvalidDiscountType
      */
     public function giveOnlineDiscount(PartnerOrder $partner_order)
     {
