@@ -126,6 +126,8 @@ class Documents implements Arrayable
                         'statement'                => null,
                     ];
                 }
+            } elseif ($key == 'extras') {
+                $output[$key] = array_key_exists($key, $data) ? $data[$key] : null;
             } else {
                 $output[$key] = array_key_exists($key, $data) ? $data[$key] : null;
             }
@@ -142,7 +144,8 @@ class Documents implements Arrayable
             'nid_image_back',
             'nominee_document',
             'grantor_document',
-            'business_document'
+            'business_document',
+            'extras'
         ];
     }
 

@@ -48,20 +48,27 @@ class SpLoanController extends Controller
         }
 
     }
-    public function show(Request $request,$loan_id,Loan $loan){
-        try{
-            $data=$loan->show($loan_id);
-            return api_response($request,$data,200,['data'=>$data]);
-        }catch (\Throwable $e){
+
+    public function show(Request $request, $loan_id, Loan $loan)
+    {
+        try {
+            $data = $loan->show($loan_id);
+            return api_response($request, $data, 200, ['data' => $data]);
+        } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
-            return api_response($request,null,500);
+            return api_response($request, null, 500);
         }
 
     }
-    public function update(Request $request,$loan_id){}
-    public function statusChange(Request $request,$loan_id){
+
+    public function update(Request $request, $loan_id) { }
+
+    public function statusChange(Request $request, $loan_id)
+    {
 
     }
+
     public function getHomepage($partner, Request $request, Loan $loan)
     {
         try {
@@ -455,10 +462,7 @@ class SpLoanController extends Controller
             $resource = $request->manager_resource;
             $data     = $loan->setPartner($partner)->setResource($resource)->history();
             return api_response($request, $data, 200, ['data' => $data]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        }catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -525,5 +529,21 @@ class SpLoanController extends Controller
             return api_response($request, null, 500);
         }
 
+    }
+
+    public function uploadDocuments(Request $request, $loan_id, Loan $loan)
+    {
+        try {
+            $this->validate($request,['picture'=>'required|mimes:jpg,jpeg,png','name'=>'required']);
+            $loan->uploadDocument($loan_id, $request,$request->user);
+            return api_response($request, true, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        }  catch (\Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 }
