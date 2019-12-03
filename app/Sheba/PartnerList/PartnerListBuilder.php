@@ -204,10 +204,12 @@ class PartnerListBuilder implements Builder
     {
         if (count($this->partners) == 0) return;
         $current = new Coords($this->geo->getLat(), $this->geo->getLng());
-        $to = $this->partners->map(function ($partner) {
+        $to = $this->partners->reject(function ($partner) {
+            return $partner->geo_informations == null;
+        })->map(function ($partner) {
             $geo = json_decode($partner->geo_informations);
             return new Coords($geo->lat, $geo->lng, $partner->id);
-        })->toArray();
+        })->values()->all();
         $distance = (new Distance(DistanceStrategy::$VINCENTY))->matrix();
         $results = $distance->from([$current])->to($to)->sortedDistance()[0];
         $this->partners = $this->partners->filter(function ($partner) use ($results) {
