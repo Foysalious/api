@@ -24,6 +24,7 @@ class PartnerRoute
             $api->get('/', 'SpLoanController@index');
             $api->get('/{loan_id}/details','SpLoanController@show');
             $api->post('/{loan_id}','SpLoanController@update');
+            $api->post('/{loan_id}/upload-documents','SpLoanController@uploadDocuments');
             $api->post('/{loan_id}/status','SpLoanController@statusChange');
             $api->get('/{loan_id}/banks/{bank_id}', 'SpLoanController@assignBank');
         });
