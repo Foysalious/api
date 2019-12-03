@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\BankUser;
 use App\Models\Partner;
 use App\Models\PartnerBankInformation;
 use App\Models\PartnerBankLoan;
@@ -33,7 +34,15 @@ class SpLoanController extends Controller
     {
         $this->fileRepository = $file_repository;
     }
+    public function index(Request $request,Loan $loan){
+        try{
+            $output=$loan->all($request);
+            return api_response($request, $output,200,['data'=>$output]);
+        }catch (\Throwable $e){
+            dd($e);
+        }
 
+    }
     public function getHomepage($partner, Request $request, Loan $loan)
     {
         try {
