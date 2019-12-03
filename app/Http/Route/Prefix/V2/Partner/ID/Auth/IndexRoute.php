@@ -273,6 +273,7 @@ class IndexRoute
         });
         $api->group(['prefix' => '{partner}', 'middleware' => 'jwtGlobalAuth'], function ($api){
             $api->group(['prefix' => 'loans'], function ($api) {
+                $api->get('/','SpLoanController@index');
                 $api->get('{partner_bank_loan}/logs', 'SpLoanController@getChangeLogs');
                 $api->post('send-sms', 'SpLoanController@sendSMS');
                 $api->post('/{partner_bank_loan}/comments', 'SpLoanController@storeComment');

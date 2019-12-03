@@ -11,9 +11,15 @@ class PartnerBankLoan extends Model
     {
         return $this->belongsTo(Partner::class);
     }
+
     public function changeLogs()
     {
-        return $this->hasMany(PartnerBankLoanChangeLog::class,'loan_id');
+        return $this->hasMany(PartnerBankLoanChangeLog::class, 'loan_id');
+    }
+
+    public function bank()
+    {
+        return $this->belongsTo(Bank::class);
     }
     public function comments()
     {
