@@ -126,6 +126,8 @@ class PartnerLoanRequest implements Arrayable
                     'mobile' => $this->partner->getContactNumber()
                 ]
             ],
+            'credit_score'               => $this->partnerBankLoan->credit_score,
+            'purpose'                    => $this->partnerBankLoan->purpose,
             'bank'                       => $bank ? $bank->toArray() : null,
             'duration'                   => $this->partnerBankLoan->duration,
             'interest_rate'              => $this->partnerBankLoan->interest_rate,
