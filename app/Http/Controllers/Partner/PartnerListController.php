@@ -5,7 +5,6 @@ use App\Http\Controllers\Controller;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\PartnerOrder;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 use Sheba\Location\Geo;
 use Sheba\PartnerList\Director;
 use Sheba\PartnerList\PartnerListBuilder;
