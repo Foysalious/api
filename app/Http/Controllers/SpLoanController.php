@@ -445,9 +445,18 @@ class SpLoanController extends Controller
             $this->validate($request, [
                 'comment' => 'required'
             ]);
-            //$bank_user = $request->bank_user;
+            $bank_user = $request->user;
             $comment = (new CommentRepository('PartnerBankLoan', $partner_bank_loan->id,$bank_user))->store($request->comment);
-            return $comment ? api_response($request, $comment, 200) : api_response($request, $comment, 500);
+            $formatted_comment = [
+                'id' => $comment->id,
+                'comment' => $comment->comment,
+                'user' => [
+                    'name' => $comment->commentator->profile->name,
+                    'image' => $comment->commentator->profile->pro_pic
+                ],
+                'created_at' => (Carbon::parse($comment->created_at))->format('j F, Y h:i A')
+            ];
+            return $comment ? api_response($request, $comment, 200,['comment' =>$formatted_comment]) : api_response($request, $comment, 500);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
@@ -455,7 +464,6 @@ class SpLoanController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -475,7 +483,7 @@ class SpLoanController extends Controller
                         'name' => $comment->commentator->profile->name,
                         'image' => $comment->commentator->profile->pro_pic
                     ],
-                    'created_at' => $comment->created_at->toDateTimeString()
+                    'created_at' => (Carbon::parse($comment->created_at))->format('j F, Y h:i A')
                 ]);
             }
             if (count($comment_lists) > 0) return api_response($request, $comment_lists, 200, ['comment_lists' => $comment_lists]);
