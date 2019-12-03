@@ -5,6 +5,8 @@ use App\Models\Service;
 use Illuminate\Support\Collection;
 use League\Fractal\TransformerAbstract;
 use Sheba\Checkout\DeliveryCharge;
+use Sheba\Dal\Discount\Discount;
+use Sheba\Dal\Discount\DiscountRules;
 use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Dal\ServiceDiscount\Model as ServiceDiscount;
@@ -54,6 +56,7 @@ class ServiceV2Transformer extends TransformerAbstract
         $original_delivery_charge = $this->deliveryCharge->setCategory($service->category)->get();
         $discount_checking_params = (new JobDiscountCheckingParams())->setDiscountableAmount($original_delivery_charge);
         $this->jobDiscountHandler->setType(DiscountTypes::DELIVERY)->setCategory($service->category)->setCheckingParams($discount_checking_params)->calculate();
+        /** @var Discount $delivery_discount */
         $delivery_discount = $this->jobDiscountHandler->getDiscount();
 
         $data = [
@@ -72,7 +75,8 @@ class ServiceV2Transformer extends TransformerAbstract
             'delivery_discount' => $delivery_discount ? [
                 'value' => (double)$delivery_discount->amount,
                 'is_percentage' => $delivery_discount->is_percentage,
-                'cap' => (double)$delivery_discount->cap
+                'cap' => (double)$delivery_discount->cap,
+                'min_order_amount' => (double)$delivery_discount->rules->getMinOrderAmount()
             ] : (double)0.00
         ];
         if ($service->variable_type == Type::FIXED)
