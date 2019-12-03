@@ -200,7 +200,7 @@ class PartnerOrderController extends Controller
                 'paid' => (double)$partner_order->paidWithLogistic,
                 'due' => (double)$partner_order->dueWithLogistic,
                 'invoice' => $partner_order->invoice,
-                'sheba_commission' => (double)$partner_order->profit,
+                'sheba_commission' => ramp((double)$partner_order->profit),
                 'partner_commission' => (double)$partner_order->totalCost,
                 'service' => $services,
                 'is_paid' => (double)$partner_order->due == 0,
