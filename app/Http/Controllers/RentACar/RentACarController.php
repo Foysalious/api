@@ -1,21 +1,29 @@
 <?php namespace App\Http\Controllers\RentACar;
 
-
 use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
 use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
 use App\Http\Controllers\Controller;
 use App\Models\HyperLocal;
 use App\Models\LocationService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\LocationService\DiscountCalculation;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\ServiceRequest\ServiceRequest;
 use Sheba\ServiceRequest\ServiceRequestObject;
+use Throwable;
 
 class RentACarController extends Controller
 {
+    /**
+     * @param Request $request
+     * @param ServiceRequest $service_request
+     * @param PriceCalculation $price_calculation
+     * @param DiscountCalculation $discount_calculation
+     * @return JsonResponse
+     */
     public function getPrices(Request $request, ServiceRequest $service_request, PriceCalculation $price_calculation, DiscountCalculation $discount_calculation)
     {
         try {
@@ -46,7 +54,7 @@ class RentACarController extends Controller
             return api_response($request, null, 400, ['message' => 'This service isn\'t available at this location.', 'code' => 701]);
         } catch (DestinationCitySameAsPickupException $e) {
             return api_response($request, null, 400, ['message' => 'Please try with inside city for this location.', 'code' => 702]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

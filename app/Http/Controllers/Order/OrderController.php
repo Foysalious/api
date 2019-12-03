@@ -16,6 +16,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Sheba\ModificationFields;
 use Sheba\OrderPlace\OrderPlace;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
@@ -26,6 +27,11 @@ class OrderController extends Controller
 {
     use ModificationFields;
 
+    /**
+     * @param Request $request
+     * @param OrderPlace $order_place
+     * @return JsonResponse
+     */
     public function store(Request $request, OrderPlace $order_place)
     {
         try {
@@ -90,8 +96,10 @@ class OrderController extends Controller
                     'code' => $order->code(),
                     'job' => ['id' => $job->id]
                 ]]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            dd($e);
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all()]);
             $sentry->captureException($e);
