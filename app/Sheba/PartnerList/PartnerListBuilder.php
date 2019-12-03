@@ -204,9 +204,10 @@ class PartnerListBuilder implements Builder
     {
         if (count($this->partners) == 0) return;
         $current = new Coords($this->geo->getLat(), $this->geo->getLng());
-        $to = $this->partners->reject(function ($partner) {
+        $this->partners = $this->partners->reject(function ($partner) {
             return $partner->geo_informations == null;
-        })->map(function ($partner) {
+        });
+        $to = $this->partners->map(function ($partner) {
             $geo = json_decode($partner->geo_informations);
             return new Coords($geo->lat, $geo->lng, $partner->id);
         })->values()->all();
