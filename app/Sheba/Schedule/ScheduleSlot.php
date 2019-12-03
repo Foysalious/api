@@ -38,6 +38,7 @@ class ScheduleSlot
         $this->scheduleStart = '09:00:00';
         $this->scheduleEnd = '21:00:00';
         $this->shebaSlots = $this->getShebaSlots();
+        $this->preparationTime = 0;
         $this->today = Carbon::now()->addMinutes(15);
     }
 
@@ -77,7 +78,7 @@ class ScheduleSlot
             $this->resources = $this->getResources();
             $this->bookedSchedules = $this->getBookedSchedules($start, $end);
             $this->runningLeaves = $this->getLeavesBetween($start, $end);
-            $this->preparationTime = $this->partner->categories->where('id', $this->category->id)->first()->pivot->preparation_time_minutes;
+            if ($this->category) $this->preparationTime = $this->partner->categories->where('id', $this->category->id)->first()->pivot->preparation_time_minutes;
         }
         $day = $this->today->copy();
         while ($day < $last_day) {
