@@ -119,7 +119,14 @@ class JobDiscountHandler
     public function getData()
     {
         return [
-            'discount_id' => $this->discount->id, 'type' => $this->discount->type, 'amount' => $this->getApplicableAmount(), 'original_amount' => $this->discount->amount, 'is_percentage' => $this->discount->is_percentage, 'cap' => $this->discount->cap, 'sheba_contribution' => $this->discount->sheba_contribution, 'partner_contribution' => $this->discount->partner_contribution
+            'discount_id' => $this->discount->id,
+            'type' => $this->discount->type,
+            'amount' => $this->getApplicableAmount(),
+            'original_amount' => $this->discount->amount,
+            'is_percentage' => $this->discount->is_percentage,
+            'cap' => $this->discount->cap,
+            'sheba_contribution' => $this->discount->sheba_contribution,
+            'partner_contribution' => $this->discount->partner_contribution
         ];
     }
 

@@ -91,6 +91,7 @@ class OrderController extends Controller
                     'job' => ['id' => $job->id]
                 ]]);
         } catch (Throwable $e) {
+            dd($e);
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all()]);
             $sentry->captureException($e);
