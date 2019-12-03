@@ -1,28 +1,39 @@
 <?php
 
-
 namespace Sheba\Loan\DS;
 
-
-use App\Models\PartnerBankLoan;
 use Illuminate\Contracts\Support\Arrayable;
 use Sheba\ModificationFields;
 
 class LoanRequestDetails implements Arrayable
 {
     use ModificationFields;
+    public    $partnerLoanRequest;
     protected $documents;
-    protected $finance_info;
-    protected $business_info;
-    protected $personal_info;
-    protected $nominee_granter_info;
+    protected $finance;
+    protected $business;
+    protected $personal;
+    protected $nominee_granter;
     private   $partner;
     private   $resource;
-    private $data;
+    private   $data;
 
-    public function __construct(PartnerBankLoan $request)
+    public function __construct(PartnerLoanRequest $request)
     {
-        $this->data = json_decode($request->final_information_for_loan, true);
+        $this->partnerLoanRequest = $request;
+        $this->setPartner($this->partnerLoanRequest->getPartner());
+        $this->setData();
+    }
+
+    public function getData()
+    {
+        return $this->data;
+    }
+
+    public function setData()
+    {
+        $this->data = json_decode($this->partnerLoanRequest->partnerBankLoan->final_information_for_loan,true);
+
     }
 
     /**
@@ -61,36 +72,29 @@ class LoanRequestDetails implements Arrayable
         return $this;
     }
 
-    public function __get($name)
-    {
-        if (isset($this->$name)) return $this->$name;
-        else return null;
-    }
-
-    public function __set($name, $value)
-    {
-        // TODO: Implement __set() method.
-    }
-
     /**
      * Get the instance as an array.
      *
      * @return array
+     * @throws \ReflectionException
      */
     public function toArray()
     {
         return [
-            'documents'            => $this->getDocuments(),
-            'finance_info'         => $this->getFinanceInfo(),
-            'business_info'        => $this->getBusinessInfo(),
-            'personal_info'        => $this->getPersonalInfo(),
-            'nominee_granter_info' => $this->getNomineeGranterInfo()
+            'document'       => $this->getDocuments(),
+            'finance'         => $this->getFinanceInfo(),
+            'business'        => $this->getBusinessInfo(),
+            'personal'        => $this->getPersonalInfo(),
+            'nominee_granter' => $this->getNomineeGranterInfo()
         ];
     }
 
+    /**
+     * @return array|void
+     */
     private function getDocuments()
     {
-
+        return (new Documents($this->partner, $this->resource, $this))->toArray();
     }
 
     /**
@@ -99,7 +103,7 @@ class LoanRequestDetails implements Arrayable
      */
     private function getFinanceInfo()
     {
-        return (new FinanceInfo($this->partner, $this->resource))->toArray();
+        return (new FinanceInfo($this->partner, $this->resource, $this))->toArray();
     }
 
     /**
@@ -108,7 +112,7 @@ class LoanRequestDetails implements Arrayable
      */
     private function getBusinessInfo()
     {
-        return (new BusinessInfo($this->partner, $this->resource))->toArray();
+        return (new BusinessInfo($this->partner, $this->resource, $this))->toArray();
     }
 
     /**
@@ -117,10 +121,15 @@ class LoanRequestDetails implements Arrayable
      */
     private function getPersonalInfo()
     {
-        return (new PersonalInfo($this->partner,$this->resource))->toArray();
+        return (new PersonalInfo($this->partner, $this->resource, $this))->toArray();
     }
 
+    /**
+     * @return array|void
+     * @throws \ReflectionException
+     */
     private function getNomineeGranterInfo()
     {
+        return (new NomineeGranterInfo($this->partner, $this->resource, $this))->toArray();
     }
 }

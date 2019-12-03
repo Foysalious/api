@@ -17,22 +17,25 @@ class PartnerLoanRequest implements Arrayable
     public $duration;
     public $monthly_installment;
     public $interest_rate;
-    public $details;
+    /** @var LoanRequestDetails $final_details */
+    public $final_details;
     public $created_by;
     public $updated_by;
     public $created;
     public $updated;
 
-    public function __construct(PartnerBankLoan $partnerBankLoan = null)
+    public function __construct(PartnerBankLoan $request)
     {
-        $this->partnerBankLoan = $partnerBankLoan;
-        if ($this->partnerBankLoan)
+        $this->partnerBankLoan = $request;
+        if ($this->partnerBankLoan) {
+            $this->setPartner($this->partnerBankLoan->partner);
             $this->setDetails();
+        }
     }
 
     public function setDetails()
     {
-        $this->details = new LoanRequestDetails($this->partnerBankLoan);
+        $this->final_details = new LoanRequestDetails($this);
     }
 
     /**
@@ -76,24 +79,13 @@ class PartnerLoanRequest implements Arrayable
         return $this->partnerBankLoan;
     }
 
-    /**
-     * Get the instance as an array.
-     *
-     * @return array
-     */
-    public function toArray()
+    public function __get($name)
     {
-        return [
-            'id'            => $this->partnerBankLoan->id,
-            'partner'       => $this->partner,
-            'bank'          => $this->bank,
-            'bank_name'     => $this->bank ? $this->bank->name : null,
-            'logo'          => $this->bank ? $this->bank->logo : null,
-            'duration'      => $this->duration,
-            'interest_rate' => $this->interest_rate,
-            'status'        => $this->status,
-            'details'       => $this->details
-        ];
+        if ($this->partnerBankLoan) {
+            return $this->partnerBankLoan->{$name};
+        } else {
+            return $this->{$name};
+        }
     }
 
     public function history()
@@ -105,9 +97,42 @@ class PartnerLoanRequest implements Arrayable
 
     }
 
+    /**
+     * @return array
+     * @throws \ReflectionException
+     */
     public function details()
     {
+        return $this->toArray();
+    }
 
+    /**
+     * Get the instance as an array.
+     *
+     * @return array
+     * @throws \ReflectionException
+     */
+    public function toArray()
+    {
+        return [
+            'id'                         => $this->partnerBankLoan->id,
+            'partner'                    => [
+                'id'      => $this->partner->id,
+                'name'    => $this->partner->name,
+                'logo'    => $this->partner->logo,
+                'profile' => [
+                    'name'   => $this->partner->getContactPerson(),
+                    'mobile' => $this->partner->getContactNumber()
+                ]
+            ],
+            'bank'                       => $this->partnerBankLoan->bank()->select('name', 'id', 'logo')->first()->toArray(),
+            'duration'                   => $this->partnerBankLoan->duration,
+            'interest_rate'              => $this->partnerBankLoan->interest_rate,
+            'status'                     => $this->partnerBankLoan->status,
+            'monthly_installment'        => $this->partnerBankLoan->monthly_installment,
+            'status_'                    => constants('LOAN_STATUS_BN')[$this->partnerBankLoan->status],
+            'final_information_for_loan' => $this->final_details->toArray()
+        ];
     }
 
     public function listItem()
@@ -125,7 +150,7 @@ class PartnerLoanRequest implements Arrayable
             'created_by_name' => $this->partnerBankLoan->created_by_name,
             'updated_by_name' => $this->partnerBankLoan->updated_by_name,
             'updated'         => $this->partnerBankLoan->updated_at->format('Y-m-d H:s:i'),
-            'bank'            => $this->partnerBankLoan->bank()->select('name','id','logo')->first()->toArray()
+            'bank'            => $this->partnerBankLoan->bank()->select('name', 'id', 'logo')->first()->toArray()
         ];
     }
 }

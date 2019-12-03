@@ -29,16 +29,18 @@ class NomineeGranterInfo implements Arrayable
     /**
      * @var PartnerLoanRequest
      */
-    private $partnerLoanRequest;
+    private $loanDetails;
 
-    public function __construct(Partner $partner, Resource $resource, PartnerLoanRequest $request = null)
+    public function __construct(Partner $partner = null, Resource $resource = null, LoanRequestDetails $request = null)
     {
         $this->partner            = $partner;
         $this->resource           = $resource;
-        $this->profile            = $resource->profile;
-        $this->partnerLoanRequest = $request;
-        $this->setGranter();
-        $this->setNominee();
+        $this->loanDetails = $request;
+        if ($this->resource) {
+            $this->profile = $resource->profile;
+            $this->setGranter();
+            $this->setNominee();
+        }
     }
 
     /**
@@ -135,10 +137,25 @@ class NomineeGranterInfo implements Arrayable
      */
     public function toArray()
     {
-        return $this->partnerLoanRequest ? $this->getDataFromLoanRequest() : $this->getDataFromProfile();
+        return $this->loanDetails ? $this->getDataFromLoanRequest() : $this->getDataFromProfile();
     }
 
-    private function getDataFromLoanRequest() { }
+    private function getDataFromLoanRequest() {
+        $data = $this->loanDetails->getData();
+
+        if (isset($data['nominee_granter'])) {
+
+            $data = $data['nominee_granter'];
+        } elseif (($data = $data[0]) && isset($data['nominee_grantor_info'])) {
+            $data = $data['nominee_grantor_info'];
+        } else {
+            $data = [];
+        }
+        return [
+            'grantor'=> array_merge((new GranterInfo((array_key_exists('grantor', $data)?$data['grantor']:null)))->toArray(),['grantor_relation'=>(array_key_exists('grantor', $data)?$data['grantor']['grantor_relation']:null)]),
+            'nominee'=> array_merge((new GranterInfo((array_key_exists('nominee', $data)?$data['nominee']:null)))->toArray(),['nominee_relation'=>(array_key_exists('nominee', $data)?$data['nominee']['nominee_relation']:null)])
+        ];
+    }
 
     /**
      * @return array
