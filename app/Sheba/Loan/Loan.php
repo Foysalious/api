@@ -7,6 +7,9 @@ use App\Models\PartnerBankLoan;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Sheba\FileManagers\CdnFileManager;
+use Sheba\FileManagers\FileManager;
 use Sheba\Loan\DS\BusinessInfo;
 use Sheba\Loan\DS\Documents;
 use Sheba\Loan\DS\FinanceInfo;
@@ -17,9 +20,11 @@ use Sheba\Loan\DS\RunningApplication;
 use Sheba\Loan\Exceptions\AlreadyAssignToBank;
 use Sheba\Loan\Exceptions\AlreadyRequestedForLoan;
 use Sheba\Loan\Exceptions\NotApplicableForLoan;
+use Sheba\ModificationFields;
 
 class Loan
 {
+    use CdnFileManager, FileManager, ModificationFields;
     private $repo;
     private $partner;
     private $data;
@@ -333,7 +338,35 @@ class Loan
     public function show($loan_id)
     {
         /** @var PartnerBankLoan $request */
-        $request=$this->repo->find($loan_id);
-       return (new PartnerLoanRequest($request))->details();
+        $request = $this->repo->find($loan_id);
+        return (new PartnerLoanRequest($request))->details();
+    }
+
+    public function uploadDocument($loan_id, Request $request, $user)
+    {
+        /** @var PartnerBankLoan $loan */
+        $loan           = $this->repo->find($loan_id);
+        $picture        = $request->file('picture');
+        $name           = $request->name;
+        $formatted_name = strtolower(preg_replace("/ /", "_", $name));
+        list($extra_file, $extra_file_name) = $this->makeExtraLoanFile($picture, $formatted_name);
+        $url                                                                         = $this->saveImageToCDN($extra_file, getTradeLicenceImagesFolder(), $extra_file_name);
+        $detail                                                                      = (new PartnerLoanRequest($loan))->details();
+        $detail['final_information_for_loan']['document']['extras'][$formatted_name] = $url;
+        $this->setModifier($user);
+        DB::transaction(function () use ($loan, $detail, $formatted_name, $user) {
+            $loan->update($this->withBothModificationFields([
+                'final_information_for_loan' => json_encode($detail['final_information_for_loan'])
+            ]));
+            $loan->changeLogs()->create([
+                'title'           => 'extra_image',
+                'from'            => 'none',
+                'to'              => $formatted_name,
+                'description'     => 'Extra image added',
+                'created_by_name' => class_basename($user).' -' . $user->profile ? $user->profile->name : $user->name,
+                'created_by'      => $user->id
+            ]);
+        });
+
     }
 }

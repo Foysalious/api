@@ -133,6 +133,8 @@ class PartnerLoanRequest implements Arrayable
             'interest_rate'              => $this->partnerBankLoan->interest_rate,
             'status'                     => $this->partnerBankLoan->status,
             'monthly_installment'        => $this->partnerBankLoan->monthly_installment,
+            'loan_amount'                => $this->partnerBankLoan->loan_amount,
+            'total_installment'          => (int)$this->partnerBankLoan->duration * 12,
             'status_'                    => constants('LOAN_STATUS_BN')[$this->partnerBankLoan->status],
             'final_information_for_loan' => $this->final_details->toArray()
         ];
