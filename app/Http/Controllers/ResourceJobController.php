@@ -81,10 +81,10 @@ class ResourceJobController extends Controller
             if ($jobs) {
                 $first_job_from_list = $jobs[0];
                 if ($job->id == $first_job_from_list->id) {
-                    $job = $this->resourceJobRepository->calculateActionsForThisJob($job);
+                    $job->partner_order->calculate(true);
                     $partner_order = $job->partner_order;
+                    $job = $this->resourceJobRepository->calculateActionsForThisJob($job);
                     if ($partner_order->closed_and_paid_at == null) {
-                        $partner_order->calculate(true);
                         $job['collect_money'] = $partner_order->due;
                     }
                 }
@@ -172,7 +172,7 @@ class ResourceJobController extends Controller
                 $job_time->validate();
                 if ($job_time->isValid) {
                     $preferred_time = new PreferredTime($request->preferred_time);
-                    if (!scheduler($job->resource)->isAvailableForCategory($request->schedule_date, $preferred_time->getStartString(), $job->category)) {
+                    if (!scheduler($job->resource)->isAvailableForCategory($request->schedule_date, $preferred_time->getStartString(), $job->category, $job)) {
                         return api_response($request, null, 403, ['message' => 'Resource is not available at this time. Please select different date time or change the resource']);
                     }
                     $response = $this->resourceJobRepository->reschedule($job->id, $request);
