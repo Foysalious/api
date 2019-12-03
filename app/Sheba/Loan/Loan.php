@@ -2,7 +2,11 @@
 
 namespace Sheba\Loan;
 
+use App\Models\BankUser;
 use App\Models\PartnerBankLoan;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Sheba\Loan\DS\BusinessInfo;
 use Sheba\Loan\DS\Documents;
 use Sheba\Loan\DS\FinanceInfo;
@@ -10,6 +14,7 @@ use Sheba\Loan\DS\NomineeGranterInfo;
 use Sheba\Loan\DS\PartnerLoanRequest;
 use Sheba\Loan\DS\PersonalInfo;
 use Sheba\Loan\DS\RunningApplication;
+use Sheba\Loan\Exceptions\AlreadyAssignToBank;
 use Sheba\Loan\Exceptions\AlreadyRequestedForLoan;
 use Sheba\Loan\Exceptions\NotApplicableForLoan;
 
@@ -259,13 +264,64 @@ class Loan
 
     public function history()
     {
-        $loans=$this->partner->loan;
-        if ($loans->isEmpty()) return [];
-        $history=[];
-        foreach ($loans as $loan){
-            $loanRequest=new PartnerLoanRequest($loan);
-            $history[]=$loanRequest->setPartner($this->partner)->history();
+        $loans = $this->partner->loan;
+        if ($loans->isEmpty())
+            return [];
+        $history = [];
+        foreach ($loans as $loan) {
+            $loanRequest = new PartnerLoanRequest($loan);
+            $history[]   = $loanRequest->setPartner($this->partner)->history();
         }
         return $history;
+    }
+
+    public function all(Request $request)
+    {
+
+        $user    = $request->user;
+        $bank_id = null;
+        if ($user instanceof BankUser)
+            $bank_id = $user->bank->id;
+        $query = $this->repo;
+        if ($bank_id) {
+            $query = $query->where('partner_bank_loans.bank_id', $bank_id);
+        }
+        $data   = $query->with(['bank'])->get();
+        $output = collect();
+        foreach ($data as $loan) {
+            $output->push((new PartnerLoanRequest($loan))->listItem());
+        }
+        return $this->filterList($request, $output);
+    }
+
+    private function filterList(Request $request, Collection $output)
+    {
+        if ($request->has('q')) {
+            $output = $output->filter(function ($item) use ($request) {
+                $query = strtolower($request->q);
+                return str_contains(strtolower($item['name']), $query) || str_contains($item['phone'], $query) || str_contains(strtolower($item['partner']), $query) || str_contains(strtolower($item['bank']['name']), $query);
+            })->values();
+        }
+        if ($request->has('date')) {
+            $output = $output->filter(function ($item) use ($request) {
+                $date      = Carbon::parse($request->date)->format('Y-m-d');
+                $item_date = Carbon::parse($item->created_at)->format('Y-m-d');
+                return $date == $item_date;
+            })->values();
+        }
+        return $output;
+    }
+
+    /**
+     * @param $loan_id
+     * @param $bank_id
+     * @throws AlreadyAssignToBank
+     */
+    public function assignBank($loan_id, $bank_id)
+    {
+        $model = $this->repo->find($loan_id);
+        if ($model->bank_id)
+            throw new AlreadyAssignToBank();
+        $this->repo->update($model, ['bank_id' => $bank_id]);
     }
 }

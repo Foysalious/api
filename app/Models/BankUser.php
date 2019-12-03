@@ -4,7 +4,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class BankUser extends Model
 {
-    protected $guarded  = ['id'];
+    protected $guarded = ['id'];
 
     public function profile()
     {
@@ -14,6 +14,4 @@ class BankUser extends Model
     {
         return $this->belongsTo(Bank::class);
     }
-
-
 }
