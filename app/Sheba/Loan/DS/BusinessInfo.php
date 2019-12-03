@@ -3,6 +3,7 @@
 namespace Sheba\Loan\DS;
 
 use App\Models\Partner;
+use App\Models\PartnerBasicInformation;
 use App\Models\Resource;
 use Carbon\Carbon;
 use Illuminate\Contracts\Support\Arrayable;
@@ -78,7 +79,13 @@ class BusinessInfo implements Arrayable
         ];
         $this->profile->update($this->withUpdateModificationField(['tin_no' => $request->tin_no]));
         $this->partner->update($this->withBothModificationFields($partner_data));
-        $this->basic_information->update($this->withBothModificationFields($partner_basic_data));
+        if ($this->basic_information){
+            $this->basic_information->update($this->withBothModificationFields($partner_basic_data));
+        }else{
+            $partner_basic_data['partner_id']=$this->partner->id;
+            $this->basic_information=new PartnerBasicInformation($partner_basic_data);
+            $this->basic_information->save();
+        }
     }
 
     /**
@@ -91,7 +98,7 @@ class BusinessInfo implements Arrayable
         return (new Completion($data, [
             $this->profile->updated_at,
             $this->partner->updated_at,
-            $this->basic_information->updated_at
+            $this->basic_information?$this->basic_information->updated_at:null
         ]))->get();
     }
 

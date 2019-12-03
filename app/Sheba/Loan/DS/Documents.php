@@ -74,8 +74,8 @@ class Documents implements Arrayable
         return (new Completion($data, [
             $this->profile->updated_at,
             $this->partner->updated_at,
-            $this->basic_information->updated_at,
-            $this->bank_information->updated_at
+            $this->basic_information ? $this->basic_information->updated_at : null,
+            $this->bank_information ? $this->bank_information->updated_at : null
         ]))->get();
     }
 
