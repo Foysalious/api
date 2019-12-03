@@ -14,10 +14,4 @@ class BankUser extends Model
     {
         return $this->belongsTo(Bank::class);
     }
-
-
-    public function bank()
-    {
-        return $this->belongsTo(Bank::class);
-    }
 }

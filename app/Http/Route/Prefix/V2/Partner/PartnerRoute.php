@@ -18,5 +18,11 @@ class PartnerRoute
             (new IDAuthRoute())->set($api);
             (new PosRoute())->set($api);
         });
+        $api->group(['prefix'     => 'loans',
+                     'middleware' => 'jwtGlobalAuth'
+        ], function ($api) {
+            $api->get('/', 'SpLoanController@index');
+            $api->get('/{loan_id}/banks/{bank_id}', 'SpLoanController@assignBank');
+        });
     }
 }
