@@ -104,4 +104,28 @@ class PartnerLoanRequest implements Arrayable
         ];
 
     }
+
+    public function details()
+    {
+
+    }
+
+    public function listItem()
+    {
+        return [
+            'id'              => $this->partnerBankLoan->id,
+            'created_at'      => $this->partnerBankLoan->created_at->format('Y-m-d H:s:i'),
+            'name'            => $this->partnerBankLoan->partner->getContactPerson(),
+            'phone'           => $this->partnerBankLoan->partner->getContactNumber(),
+            'partner'         => $this->partnerBankLoan->partner->name,
+            'status'          => $this->partnerBankLoan->status,
+            'status_'         => constants('LOAN_STATUS_BN')[$this->partnerBankLoan->status],
+            'created_by'      => $this->partnerBankLoan->created_by,
+            'updated_by'      => $this->partnerBankLoan->updated_by,
+            'created_by_name' => $this->partnerBankLoan->created_by_name,
+            'updated_by_name' => $this->partnerBankLoan->updated_by_name,
+            'updated'         => $this->partnerBankLoan->updated_at->format('Y-m-d H:s:i'),
+            'bank'            => $this->partnerBankLoan->bank()->select('name','id','logo')->first()->toArray()
+        ];
+    }
 }

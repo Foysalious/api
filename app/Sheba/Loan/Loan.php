@@ -2,7 +2,9 @@
 
 namespace Sheba\Loan;
 
+use App\Models\BankUser;
 use App\Models\PartnerBankLoan;
+use Illuminate\Http\Request;
 use Sheba\Loan\DS\BusinessInfo;
 use Sheba\Loan\DS\Documents;
 use Sheba\Loan\DS\FinanceInfo;
@@ -259,13 +261,39 @@ class Loan
 
     public function history()
     {
-        $loans=$this->partner->loan;
-        if ($loans->isEmpty()) return [];
-        $history=[];
-        foreach ($loans as $loan){
-            $loanRequest=new PartnerLoanRequest($loan);
-            $history[]=$loanRequest->setPartner($this->partner)->history();
+        $loans = $this->partner->loan;
+        if ($loans->isEmpty())
+            return [];
+        $history = [];
+        foreach ($loans as $loan) {
+            $loanRequest = new PartnerLoanRequest($loan);
+            $history[]   = $loanRequest->setPartner($this->partner)->history();
         }
         return $history;
+    }
+
+    public function all(Request $request)
+    {
+
+        $user    = $request->user;
+        $bank_id = null;
+        if ($user instanceof BankUser)
+            $bank_id = $user->bank->id;
+        $query = $this->repo;
+        if ($bank_id) {
+            $query = $query->where('partner_bank_loans.bank_id', $bank_id);
+        }
+        $data   = $query->with(['bank'])->get();
+        $output = collect();
+        foreach ($data as $loan) {
+            $output->push((new PartnerLoanRequest($loan))->listItem());
+        }
+        if ($request->has('q')) {
+            $output = $output->filter(function ($item) use ($request) {
+                $query = strtolower($request->q);
+                return str_contains(strtolower($item['name']), $query) || str_contains($item['phone'], $query) || str_contains(strtolower($item['partner']), $query) || str_contains(strtolower($item['bank']['name']), $query);
+            })->values();
+        }
+        return $output;
     }
 }

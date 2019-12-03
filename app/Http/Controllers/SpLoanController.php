@@ -36,7 +36,16 @@ class SpLoanController extends Controller
     {
         $this->fileRepository = $file_repository;
     }
+    public function index(Request $request,Loan $loan){
+        try{
+            $output=$loan->all($request);
+            return api_response($request, $output,200,['data'=>$output]);
+        }catch (\Throwable $e){
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
 
+    }
     public function getHomepage($partner, Request $request, Loan $loan)
     {
         try {
@@ -445,7 +454,7 @@ class SpLoanController extends Controller
             $this->validate($request, [
                 'comment' => 'required'
             ]);
-            //$bank_user = $request->bank_user;
+            $bank_user = $request->user;
             $comment = (new CommentRepository('PartnerBankLoan', $partner_bank_loan->id,$bank_user))->store($request->comment);
             return $comment ? api_response($request, $comment, 200) : api_response($request, $comment, 500);
         } catch (ValidationException $e) {
@@ -455,7 +464,6 @@ class SpLoanController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

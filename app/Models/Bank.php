@@ -4,6 +4,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Bank extends Model
 {
-    protected $guarded  = ['id'];
 
+    protected $guarded = ['id'];
+
+    public function users()
+    {
+        return $this->hasMany(BankUser::class);
+    }
 }
