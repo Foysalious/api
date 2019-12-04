@@ -45,7 +45,7 @@ class Creator
     private $isPublished;
     private $labels;
     /** @var UploadedFile[] */
-    private $attachments;
+    private $attachments = [];
     private $procurement;
     private $bid;
     private $createdBy;
