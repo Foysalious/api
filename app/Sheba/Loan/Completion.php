@@ -35,9 +35,12 @@ class Completion
         $count  = 0;
         $filled = 0;
         foreach ($this->flatten as $key => $value) {
-            if (is_array($value)) continue;
-            if ($value != null)
+            if (is_array($value) || $value === true || $value === false || $key == 'extra_images') {
+                continue;
+            }
+            if ($value !== null) {
                 $filled++;
+            }
             $count++;
         }
         return ($filled / $count) * 100;

@@ -1,7 +1,7 @@
 <?php namespace App\Http\Route\Prefix\V2\Partner;
 
-use App\Http\Route\Prefix\V2\Partner\ID\NonAuth\IndexRoute as IDNonAuthRoute;
 use App\Http\Route\Prefix\V2\Partner\ID\Auth\IndexRoute as IDAuthRoute;
+use App\Http\Route\Prefix\V2\Partner\ID\NonAuth\IndexRoute as IDNonAuthRoute;
 use App\Http\Route\Prefix\V2\Partner\PosRoute as PosRoute;
 
 class PartnerRoute
@@ -17,6 +17,9 @@ class PartnerRoute
             (new IDNonAuthRoute())->set($api);
             (new IDAuthRoute())->set($api);
             (new PosRoute())->set($api);
+        });
+        $api->group(['prefix'=>'bank','middleware'=>'jwtGlobalAuth'],function($api){
+            $api->post('/password/reset','Auth\PasswordController@resetPasswordForBank');
         });
         $api->group(['prefix'     => 'loans',
                      'middleware' => 'jwtGlobalAuth'
