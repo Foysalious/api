@@ -925,7 +925,7 @@ class PartnerController extends Controller
             }
 
             $service_base_query = $request->partner->services()->whereHas('locations', function ($query) use ($location) {
-                $query->where('id', $location->id);
+                $query->where('locations.id', $location->id);
             })->where('category_id', $category);
 
             if ($request->has('publication_status')) {
