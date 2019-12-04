@@ -193,7 +193,7 @@ class PartnerLoanRequest implements Arrayable
             'name'            => $this->partnerBankLoan->partner->getContactPerson(),
             'phone'           => $this->partnerBankLoan->partner->getContactNumber(),
             'partner'         => $this->partnerBankLoan->partner->name,
-            'status'          => $this->partnerBankLoan->status,
+            'status'          => ucfirst(preg_replace('/_/', ' ', $this->partnerBankLoan->status)),
             'status_'         => constants('LOAN_STATUS_BN')[$this->partnerBankLoan->status],
             'created_by'      => $this->partnerBankLoan->created_by,
             'updated_by'      => $this->partnerBankLoan->updated_by,
