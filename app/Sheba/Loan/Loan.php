@@ -123,8 +123,19 @@ class Loan
         return $request->toArray();
     }
 
-    public function update()
+    public function update($loan_id, Request $request)
     {
+        /** @var PartnerBankLoan $loan */
+        $loan        = $this->repo->find($loan_id);
+        $loanRequest = (new PartnerLoanRequest($loan));
+        $details     = $loanRequest->details();
+        $new_data    = json_decode($request->get('data'), true);
+        $updater     = (new Updater($details, $new_data));
+        $updater->update($loanRequest,$request);
+        $difference = $updater->findDifference()->getDifference();
+        if (!empty($difference)) {
+            $loanRequest->storeChangeLog($request->user, json_encode(array_column($difference, 'title')), json_encode(array_column($difference, 'from')), json_encode(array_column($difference, 'to')), 'Loan Request Updated');
+        }
     }
 
     /**
@@ -361,11 +372,11 @@ class Loan
         $detail                                                                      = (new PartnerLoanRequest($loan))->details();
         $detail['final_information_for_loan']['document']['extras'][$formatted_name] = $url;
         $this->setModifier($user);
-        DB::transaction(function () use ($loan, $detail, $formatted_name, $user,$name) {
+        DB::transaction(function () use ($loan, $detail, $formatted_name, $user, $name) {
             $loan->update($this->withUpdateModificationField([
                 'final_information_for_loan' => json_encode($detail['final_information_for_loan'])
             ]));
-            (new PartnerLoanRequest($loan))->storeChangeLog($user,'extra_image','none',$formatted_name,$name);
+            (new PartnerLoanRequest($loan))->storeChangeLog($user, 'extra_image', 'none', $formatted_name, $name);
         });
 
     }
@@ -375,23 +386,40 @@ class Loan
      * @param Request $request
      * @throws InvalidStatusTransaction
      */
-    public function statusChange($loan_id, Request $request){
+    public function statusChange($loan_id, Request $request)
+    {
 
-        $partner_bank_loan=$this->repo->find($loan_id);
-        $old_status = $partner_bank_loan->status;
-        $new_status = $request->new_status;
-        $description=$request->has('description')?$request->description:'Status Changed';
-        $status = ['applied','submitted','verified','approved','sanction_issued','disbursed','closed'];
-        $old_index = array_search($old_status, $status);
-        $new_index = array_search($new_status, $status);
-
-        if(!(($old_status == 'hold') || $new_index-$old_index == 1 || (in_array($new_status,['declined','hold','withdrawal']) && (!in_array($old_status,['disbursed','closed','declined','withdrawal']))))){
-           throw new InvalidStatusTransaction();
+        $partner_bank_loan = $this->repo->find($loan_id);
+        $old_status        = $partner_bank_loan->status;
+        $new_status        = $request->new_status;
+        $description       = $request->has('description') ? $request->description : 'Status Changed';
+        $status            = [
+            'applied',
+            'submitted',
+            'verified',
+            'approved',
+            'sanction_issued',
+            'disbursed',
+            'closed'
+        ];
+        $old_index         = array_search($old_status, $status);
+        $new_index         = array_search($new_status, $status);
+        if (!(($old_status == 'hold') || $new_index - $old_index == 1 || (in_array($new_status, [
+                    'declined',
+                    'hold',
+                    'withdrawal'
+                ]) && (!in_array($old_status, [
+                    'disbursed',
+                    'closed',
+                    'declined',
+                    'withdrawal'
+                ]))))) {
+            throw new InvalidStatusTransaction();
         }
         $partner_bank_loan->status = $new_status;
-        DB::transaction(function() use ($partner_bank_loan,$request,$old_status,$new_status,$description){
+        DB::transaction(function () use ($partner_bank_loan, $request, $old_status, $new_status, $description) {
             $partner_bank_loan->update();
-            (new PartnerLoanRequest($partner_bank_loan))->storeChangeLog($request->user,'status',$old_status,$new_status,$description);
+            (new PartnerLoanRequest($partner_bank_loan))->storeChangeLog($request->user, 'status', $old_status, $new_status, $description);
         });
 
     }
