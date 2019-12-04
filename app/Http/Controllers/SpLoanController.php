@@ -20,6 +20,7 @@ use Sheba\Loan\DS\PersonalInfo;
 use Sheba\Loan\Exceptions\AlreadyAssignToBank;
 use Sheba\Loan\Exceptions\AlreadyRequestedForLoan;
 use Sheba\Loan\Exceptions\EmailUsed;
+use Sheba\Loan\Exceptions\InvalidStatusTransaction;
 use Sheba\Loan\Exceptions\NotApplicableForLoan;
 use Sheba\Loan\Loan;
 use Sheba\ModificationFields;
@@ -55,24 +56,40 @@ class SpLoanController extends Controller
             $data = $loan->show($loan_id);
             return api_response($request, $data, 200, ['data' => $data]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
 
     }
 
-    public function update(Request $request, $loan_id) { }
-
-    public function statusChange(Request $request, $loan_id)
+    public function update(Request $request, $loan_id)
     {
+    }
 
+    public function statusChange(Request $request, $loan_id, Loan $loan)
+    {
+        try {
+            $this->validate($request, [
+                'new_status' => 'required',
+                'description' => 'required_if:new_status,declined'
+            ]);
+            $loan->statusChange($loan_id, $request);
+            return api_response($request, true, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (InvalidStatusTransaction $e) {
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 
     public function getHomepage($partner, Request $request, Loan $loan)
     {
         try {
-            $partner  = $request->partner;
+            $partner = $request->partner;
             $resource = $request->manager_resource;
             $homepage = $loan->setPartner($partner)->setResource($resource)->homepage();
             return api_response($request, $homepage, 200, ['homepage' => $homepage]);
@@ -85,16 +102,16 @@ class SpLoanController extends Controller
     public function getBankInterest($partner, Request $request)
     {
         try {
-            $interest_rate           = constants('LOAN_CONFIG')['interest'];
-            $amount                  = $request->has('amount') ? (double)$request->amount : 0;
-            $duration                = $request->has('duration') ? (int)$request->duration * 12 : 1;
-            $total_interest          = ($interest_rate / 100) * $amount;
+            $interest_rate = constants('LOAN_CONFIG')['interest'];
+            $amount = $request->has('amount') ? (double)$request->amount : 0;
+            $duration = $request->has('duration') ? (int)$request->duration * 12 : 1;
+            $total_interest = ($interest_rate / 100) * $amount;
             $total_instalment_amount = $amount + $total_interest;
-            $interest_per_month      = $total_instalment_amount / $duration;
-            $bank_lists              = [
+            $interest_per_month = $total_instalment_amount / $duration;
+            $bank_lists = [
                 [
-                    'interest'           => $interest_rate,
-                    'total_amount'       => $total_instalment_amount,
+                    'interest' => $interest_rate,
+                    'total_amount' => $total_instalment_amount,
                     'installment_number' => $duration,
                     'interest_per_month' => $interest_per_month
                 ],
@@ -111,15 +128,15 @@ class SpLoanController extends Controller
         try {
             $this->validate($request, [
                 'loan_amount' => 'required|numeric',
-                'duration'    => 'required|integer',
+                'duration' => 'required|integer',
             ]);
-            $partner  = $request->partner;
+            $partner = $request->partner;
             $resource = $request->manager_resource;
-            $data     = [
+            $data = [
                 'loan_amount' => $request->loan_amount,
-                'duration'    => $request->duration,
+                'duration' => $request->duration,
             ];
-            $info     = $loan->setPartner($partner)->setResource($resource)->setData($data)->apply();
+            $info = $loan->setPartner($partner)->setResource($resource)->setData($data)->apply();
             return api_response($request, 1, 200, ['data' => $info]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -137,11 +154,11 @@ class SpLoanController extends Controller
     public function getPersonalInformation($partner, Request $request)
     {
         try {
-            $partner          = $request->partner;
+            $partner = $request->partner;
             $manager_resource = $request->manager_resource;
-            $info             = (new Loan())->setPartner($partner)->setResource($manager_resource)->personalInfo();
+            $info = (new Loan())->setPartner($partner)->setResource($manager_resource)->personalInfo();
             return api_response($request, $info, 200, [
-                'info'       => $info->toArray(),
+                'info' => $info->toArray(),
                 'completion' => $info->completion()
             ]);
         } catch (\Throwable $e) {
@@ -154,7 +171,7 @@ class SpLoanController extends Controller
     {
         try {
             $this->validate($request, PersonalInfo::getValidators());
-            $partner          = $request->partner;
+            $partner = $request->partner;
             $manager_resource = $request->manager_resource;
             (new Loan())->setPartner($partner)->setResource($manager_resource)->personalInfo()->update($request);
             return api_response($request, 1, 200);
@@ -172,11 +189,11 @@ class SpLoanController extends Controller
     public function getBusinessInformation($partner, Request $request)
     {
         try {
-            $partner          = $request->partner;
+            $partner = $request->partner;
             $manager_resource = $request->manager_resource;
-            $info             = (new Loan())->setPartner($partner)->setResource($manager_resource)->businessInfo();
+            $info = (new Loan())->setPartner($partner)->setResource($manager_resource)->businessInfo();
             return api_response($request, $info, 200, [
-                'info'       => $info->toArray(),
+                'info' => $info->toArray(),
                 'completion' => $info->completion()
             ]);
         } catch (\Throwable $e) {
@@ -189,7 +206,7 @@ class SpLoanController extends Controller
     {
         try {
             $this->validate($request, BusinessInfo::getValidator());
-            $partner  = $request->partner;
+            $partner = $request->partner;
             $resource = $request->manager_resource;
             (new Loan())->setPartner($partner)->setResource($resource)->businessInfo()->update($request);
             return api_response($request, 1, 200);
@@ -205,11 +222,11 @@ class SpLoanController extends Controller
     public function getFinanceInformation($partner, Request $request)
     {
         try {
-            $partner          = $request->partner;
+            $partner = $request->partner;
             $manager_resource = $request->manager_resource;
-            $info             = (new Loan())->setPartner($partner)->setResource($manager_resource)->financeInfo();
+            $info = (new Loan())->setPartner($partner)->setResource($manager_resource)->financeInfo();
             return api_response($request, $info, 200, [
-                'info'       => $info->toArray(),
+                'info' => $info->toArray(),
                 'completion' => $info->completion()
             ]);
         } catch (\Throwable $e) {
@@ -222,7 +239,7 @@ class SpLoanController extends Controller
     {
         try {
             $this->validate($request, FinanceInfo::getValidators());
-            $partner  = $request->partner;
+            $partner = $request->partner;
             $resource = $request->manager_resource;
             (new Loan())->setPartner($partner)->setResource($resource)->financeInfo()->update($request);
             return api_response($request, 1, 200);
@@ -239,10 +256,10 @@ class SpLoanController extends Controller
     {
         try {
             $resource = $request->manager_resource;
-            $partner  = $request->partner;
-            $info     = $loan->setPartner($partner)->setResource($resource)->nomineeGranter();
+            $partner = $request->partner;
+            $info = $loan->setPartner($partner)->setResource($resource)->nomineeGranter();
             return api_response($request, $info, 200, [
-                'info'       => $info->toArray(),
+                'info' => $info->toArray(),
                 'completion' => $info->completion()
             ]);
         } catch (\Throwable $e) {
@@ -255,7 +272,7 @@ class SpLoanController extends Controller
     {
         try {
             $this->validate($request, NomineeGranterInfo::getValidator());
-            $partner  = $request->partner;
+            $partner = $request->partner;
             $resource = $request->manager_resource;
             $loan->setPartner($partner)->setResource($resource)->nomineeGranter()->update($request);
             return api_response($request, 1, 200);
@@ -271,11 +288,11 @@ class SpLoanController extends Controller
     public function getDocuments($partner, Request $request, Loan $loan)
     {
         try {
-            $partner  = $request->partner;
+            $partner = $request->partner;
             $resource = $request->manager_resource;
-            $info     = $loan->setPartner($partner)->setResource($resource)->documents();
+            $info = $loan->setPartner($partner)->setResource($resource)->documents();
             return api_response($request, $info, 200, [
-                'info'       => $info->toArray(),
+                'info' => $info->toArray(),
                 'completion' => $info->completion()
             ]);
         } catch (\Throwable $e) {
@@ -289,10 +306,10 @@ class SpLoanController extends Controller
         try {
             $this->validate($request, ['picture' => 'required|mimes:jpeg,png,jpg']);
             $manager_resource = $request->manager_resource;
-            $profile          = $manager_resource->profile;
-            $image_for        = $request->image_for;
-            $nominee          = (bool)$request->nominee;
-            $grantor          = (bool)$request->grantor;
+            $profile = $manager_resource->profile;
+            $image_for = $request->image_for;
+            $nominee = (bool)$request->nominee;
+            $grantor = (bool)$request->grantor;
             if ($nominee) {
                 if (!$profile->nominee_id) {
                     return api_response($request, null, 401, ['message' => 'Create Nominee First']);
@@ -344,7 +361,7 @@ class SpLoanController extends Controller
     {
         try {
             $this->validate($request, ['picture' => 'required|mimes:jpeg,png']);
-            $partner           = $request->partner;
+            $partner = $request->partner;
             $bank_informations = $partner->bankInformations;
             if (!$bank_informations)
                 $bank_informations = $this->createBankInformation($partner);
@@ -373,8 +390,8 @@ class SpLoanController extends Controller
     private function createBankInformation($partner)
     {
         $this->setModifier($partner);
-        $bank_information              = new PartnerBankInformation();
-        $bank_information->partner_id  = $partner->id;
+        $bank_information = new PartnerBankInformation();
+        $bank_information->partner_id = $partner->id;
         $bank_information->is_verified = $partner->status == 'Verified' ? 1 : 0;
         $this->withCreateModificationField($bank_information);
         $bank_information->save();
@@ -391,9 +408,9 @@ class SpLoanController extends Controller
     {
         try {
             $this->validate($request, ['picture' => 'required|mimes:jpeg,png']);
-            $partner            = $request->partner;
+            $partner = $request->partner;
             $basic_informations = $partner->basicInformations;
-            $file_name          = $request->picture;
+            $file_name = $request->picture;
             if ($basic_informations->trade_license_attachment != getTradeLicenseDefaultImage()) {
                 $old_statement = substr($basic_informations->trade_license_attachment, strlen(config('s3.url')));
                 $this->deleteImageFromCDN($old_statement);
@@ -422,7 +439,7 @@ class SpLoanController extends Controller
         return $this->saveImageToCDN($trade_license, getTradeLicenceImagesFolder(), $trade_license_filename);
     }
 
-    public function getChangeLogs(Request $request, $partner, PartnerBankLoan $partner_bank_loan)
+    public function getChangeLogs(Request $request, PartnerBankLoan $partner_bank_loan)
     {
 
         try {
@@ -435,13 +452,13 @@ class SpLoanController extends Controller
         }
     }
 
-    public function sendSMS(Partner $partner, Request $request)
+    public function sendSMS(PartnerBankLoan $partner_bank_loan,Request $request)
     {
         try {
             $this->validate($request, [
                 'message' => 'required|string',
             ]);
-            $mobile  = $partner->getContactNumber();
+            $mobile = $partner_bank_loan->partner->getContactNumber();
             $message = $request->message;
             (new Sms())->msg($message)->to($mobile)->shoot();
             return api_response($request, null, 200, ['message' => 'SMS has been sent successfully']);
@@ -458,11 +475,11 @@ class SpLoanController extends Controller
     public function history(Request $request, Loan $loan)
     {
         try {
-            $partner  = $request->partner;
+            $partner = $request->partner;
             $resource = $request->manager_resource;
-            $data     = $loan->setPartner($partner)->setResource($resource)->history();
+            $data = $loan->setPartner($partner)->setResource($resource)->history();
             return api_response($request, $data, 200, ['data' => $data]);
-        }catch (\Throwable $e) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -475,7 +492,7 @@ class SpLoanController extends Controller
                 'comment' => 'required'
             ]);
             $bank_user = $request->user;
-            $comment = (new CommentRepository('PartnerBankLoan', $partner_bank_loan->id,$bank_user))->store($request->comment);
+            $comment = (new CommentRepository('PartnerBankLoan', $partner_bank_loan->id, $bank_user))->store($request->comment);
             $formatted_comment = [
                 'id' => $comment->id,
                 'comment' => $comment->comment,
@@ -485,10 +502,10 @@ class SpLoanController extends Controller
                 ],
                 'created_at' => (Carbon::parse($comment->created_at))->format('j F, Y h:i A')
             ];
-            return $comment ? api_response($request, $comment, 200,['comment' =>$formatted_comment]) : api_response($request, $comment, 500);
+            return $comment ? api_response($request, $comment, 200, ['comment' => $formatted_comment]) : api_response($request, $comment, 500);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry  = app('sentry');
+            $sentry = app('sentry');
             $sentry->user_context([
                 'request' => $request->all(),
                 'message' => $message
@@ -505,14 +522,14 @@ class SpLoanController extends Controller
     {
         try {
             list($offset, $limit) = calculatePagination($request);
-            $comments      = Comment::where('commentable_type', get_class($partner_bank_loan))->where('commentable_id', $partner_bank_loan->id)->orderBy('id', 'DESC')->skip($offset)->limit($limit)->get();
+            $comments = Comment::where('commentable_type', get_class($partner_bank_loan))->where('commentable_id', $partner_bank_loan->id)->orderBy('id', 'DESC')->skip($offset)->limit($limit)->get();
             $comment_lists = [];
             foreach ($comments as $comment) {
                 array_push($comment_lists, [
-                    'id'         => $comment->id,
-                    'comment'    => $comment->comment,
-                    'user'       => [
-                        'name'  => $comment->commentator->profile->name,
+                    'id' => $comment->id,
+                    'comment' => $comment->comment,
+                    'user' => [
+                        'name' => $comment->commentator->profile->name,
                         'image' => $comment->commentator->profile->pro_pic
                     ],
                     'created_at' => (Carbon::parse($comment->created_at))->format('j F, Y h:i A')
@@ -543,14 +560,13 @@ class SpLoanController extends Controller
     public function uploadDocuments(Request $request, $loan_id, Loan $loan)
     {
         try {
-            $this->validate($request,['picture'=>'required|mimes:jpg,jpeg,png','name'=>'required']);
-            $loan->uploadDocument($loan_id, $request,$request->user);
+            $this->validate($request, ['picture' => 'required|mimes:jpg,jpeg,png,pdf', 'name' => 'required']);
+            $loan->uploadDocument($loan_id, $request, $request->user);
             return api_response($request, true, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        }  catch (\Throwable $e) {
-            dd($e);
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
