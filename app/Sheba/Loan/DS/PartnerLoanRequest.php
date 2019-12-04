@@ -151,7 +151,8 @@ class PartnerLoanRequest implements Arrayable
             'sanction_issued' => 'disbursed',
             'disbursed'       => 'closed',
             'considerable'    => 'verified',
-            'rejected'        => 'closed'
+            'rejected'        => 'closed',
+            'closed'          => 'closed'
         ];
         $all        = [
             'declined',
