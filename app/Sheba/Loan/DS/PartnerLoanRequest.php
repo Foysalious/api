@@ -132,7 +132,10 @@ class PartnerLoanRequest implements Arrayable
             'bank'                       => $bank ? $bank->toArray() : null,
             'duration'                   => $this->partnerBankLoan->duration,
             'interest_rate'              => $this->partnerBankLoan->interest_rate,
-            'status'                     => $this->partnerBankLoan->status,
+            'status'                     => [
+                                                'name' => ucfirst(preg_replace('/_/', ' ', $this->partnerBankLoan->status)),
+                                                'status' => $this->partnerBankLoan->status
+                                            ],
             'monthly_installment'        => $this->partnerBankLoan->monthly_installment,
             'loan_amount'                => $this->partnerBankLoan->loan_amount,
             'total_installment'          => (int)$this->partnerBankLoan->duration * 12,
