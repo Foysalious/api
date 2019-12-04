@@ -71,7 +71,7 @@ class SpLoanController extends Controller
         try {
             $this->validate($request, [
                 'new_status' => 'required',
-                'description' => 'required_if:new_status=declined'
+                'description' => 'required_if:new_status,declined'
             ]);
             $loan->statusChange($loan_id, $request);
             return api_response($request, true, 200);
@@ -439,7 +439,7 @@ class SpLoanController extends Controller
         return $this->saveImageToCDN($trade_license, getTradeLicenceImagesFolder(), $trade_license_filename);
     }
 
-    public function getChangeLogs(Request $request, $partner, PartnerBankLoan $partner_bank_loan)
+    public function getChangeLogs(Request $request, PartnerBankLoan $partner_bank_loan)
     {
 
         try {
@@ -452,13 +452,13 @@ class SpLoanController extends Controller
         }
     }
 
-    public function sendSMS(Partner $partner, Request $request)
+    public function sendSMS(PartnerBankLoan $partner_bank_loan,Request $request)
     {
         try {
             $this->validate($request, [
                 'message' => 'required|string',
             ]);
-            $mobile = $partner->getContactNumber();
+            $mobile = $partner_bank_loan->partner->getContactNumber();
             $message = $request->message;
             (new Sms())->msg($message)->to($mobile)->shoot();
             return api_response($request, null, 200, ['message' => 'SMS has been sent successfully']);

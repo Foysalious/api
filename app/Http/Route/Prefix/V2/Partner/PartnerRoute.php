@@ -27,6 +27,11 @@ class PartnerRoute
             $api->post('/{loan_id}/upload-documents','SpLoanController@uploadDocuments');
             $api->post('/{loan_id}/status','SpLoanController@statusChange');
             $api->get('/{loan_id}/banks/{bank_id}', 'SpLoanController@assignBank');
+            $api->get('{partner_bank_loan}/logs', 'SpLoanController@getChangeLogs');
+            $api->post('{partner_bank_loan}/send-sms', 'SpLoanController@sendSMS');
+            $api->post('/{partner_bank_loan}/comments', 'SpLoanController@storeComment');
+            $api->get('/{partner_bank_loan}/comments', 'SpLoanController@getComments');
+            $api->post('/{partner_bank_loan}/status-change', 'SpLoanController@statusChange');
         });
     }
 }

@@ -381,14 +381,11 @@ class Loan
         $old_status = $partner_bank_loan->status;
         $new_status = $request->new_status;
         $description=$request->has('description')?$request->description:'Status Changed';
-        $old_status = 'applied';
-        $new_status = 'submitted';
-
         $status = ['applied','submitted','verified','approved','sanction_issued','disbursed','closed'];
         $old_index = array_search($old_status, $status);
         $new_index = array_search($new_status, $status);
 
-        if(!($new_index-$old_index == 1 || (in_array($new_status,['declined','hold','withdrawal']) && (!in_array($old_status,['disbursed','closed']))))){
+        if(!(($old_status == 'hold') || $new_index-$old_index == 1 || (in_array($new_status,['declined','hold','withdrawal']) && (!in_array($old_status,['disbursed','closed','declined','withdrawal']))))){
            throw new InvalidStatusTransaction();
         }
         $partner_bank_loan->status = $new_status;
