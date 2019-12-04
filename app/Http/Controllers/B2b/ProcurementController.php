@@ -14,7 +14,6 @@ use Illuminate\Validation\ValidationException;
 use Sheba\Business\Procurement\Creator;
 use Sheba\Logs\ErrorLog;
 use Sheba\ModificationFields;
-use Sheba\Payment\Adapters\Payable\OrderAdapter;
 use Sheba\Payment\Adapters\Payable\ProcurementAdapter;
 use Sheba\Payment\ShebaPayment;
 use Sheba\Payment\ShebaPaymentValidator;
@@ -52,7 +51,9 @@ class ProcurementController extends Controller
                 ->setItems($request->items)->setQuestions($request->questions)->setNumberOfParticipants($request->number_of_participants)
                 ->setLastDateOfSubmission($request->last_date_of_submission)->setPaymentOptions($request->payment_options)->setIsPublished($request->is_published)
                 ->setLabels($request->labels)->setCreatedBy($request->manager_member);
+
             if($request->attachments && is_array($request->attachments)) $creator->setAttachments($request->attachments);
+
             $procurement = $creator->create();
 
             return api_response($request, $procurement, 200, ['id' => $procurement->id]);
