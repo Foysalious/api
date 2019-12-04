@@ -24,7 +24,7 @@ class PartnerLoanRequest implements Arrayable
     public $created;
     public $updated;
 
-    public function __construct(PartnerBankLoan $request=null)
+    public function __construct(PartnerBankLoan $request = null)
     {
         $this->partnerBankLoan = $request;
         if ($this->partnerBankLoan) {
@@ -159,8 +159,15 @@ class PartnerLoanRequest implements Arrayable
             'bank'            => $bank ? $bank->toArray() : null
         ];
     }
-    public function storeChangeLog($user,$title,$from,$to,$description){
+
+    public function storeChangeLog($user, $title, $from, $to, $description)
+    {
         $this->setModifier($user);
-        return $this->partnerBankLoan->changeLogs()->create($this->withCreateModificationField(['title'=>$title,'from'=>$from,'to'=>$to,'description'=>$description]));
+        return $this->partnerBankLoan->changeLogs()->create($this->withCreateModificationField([
+            'title'       => $title,
+            'from'        => $from,
+            'to'          => $to,
+            'description' => $description
+        ]));
     }
 }
