@@ -79,11 +79,11 @@ class BusinessInfo implements Arrayable
         ];
         $this->profile->update($this->withUpdateModificationField(['tin_no' => $request->tin_no]));
         $this->partner->update($this->withBothModificationFields($partner_data));
-        if ($this->basic_information){
+        if ($this->basic_information) {
             $this->basic_information->update($this->withBothModificationFields($partner_basic_data));
-        }else{
-            $partner_basic_data['partner_id']=$this->partner->id;
-            $this->basic_information=new PartnerBasicInformation($partner_basic_data);
+        } else {
+            $partner_basic_data['partner_id'] = $this->partner->id;
+            $this->basic_information          = new PartnerBasicInformation($partner_basic_data);
             $this->basic_information->save();
         }
     }
@@ -98,7 +98,7 @@ class BusinessInfo implements Arrayable
         return (new Completion($data, [
             $this->profile->updated_at,
             $this->partner->updated_at,
-            $this->basic_information?$this->basic_information->updated_at:null
+            $this->basic_information ? $this->basic_information->updated_at : null
         ]))->get();
     }
 
@@ -117,7 +117,6 @@ class BusinessInfo implements Arrayable
     private function dataFromLoanRequest()
     {
         $data = $this->loanDetails->getData();
-
         if (isset($data['business'])) {
 
             $data = $data['business'];
@@ -139,6 +138,7 @@ class BusinessInfo implements Arrayable
                 $output[$key] = array_key_exists($key, $data) ? $data[$key] : null;
             }
         }
+        $output['online_order'] = $this->getTotalOnlineOrderServed();
         return $output;
     }
 
@@ -162,7 +162,14 @@ class BusinessInfo implements Arrayable
             'business_types',
             'smanager_business_types',
             'ownership_types',
+            'annual_cost',
+            'fixed_asset',
         ];
+    }
+
+    private function getTotalOnlineOrderServed()
+    {
+        return $this->partner->jobs()->where('status', 'Served')->count();
     }
 
     /**
