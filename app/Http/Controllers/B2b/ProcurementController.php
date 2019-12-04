@@ -46,13 +46,14 @@ class ProcurementController extends Controller
 
             $this->setModifier($request->manager_member);
 
-            $procurement = $creator->setType($request->type)->setOwner($request->business)->setTitle($request->title)->setPurchaseRequest($request->purchase_request_id)
+            $creator->setType($request->type)->setOwner($request->business)->setTitle($request->title)->setPurchaseRequest($request->purchase_request_id)
                 ->setLongDescription($request->description)->setOrderStartDate($request->order_start_date)->setOrderEndDate($request->order_end_date)
                 ->setInterviewDate($request->interview_date)->setProcurementStartDate($request->procurement_start_date)->setProcurementEndDate($request->procurement_end_date)
                 ->setItems($request->items)->setQuestions($request->questions)->setNumberOfParticipants($request->number_of_participants)
                 ->setLastDateOfSubmission($request->last_date_of_submission)->setPaymentOptions($request->payment_options)->setIsPublished($request->is_published)
-                ->setLabels($request->labels)->setAttachments($request->attachments)->setCreatedBy($request->manager_member)
-                ->create();
+                ->setLabels($request->labels)->setCreatedBy($request->manager_member);
+            if($request->attachments && is_array($request->attachments)) $creator->setAttachments($request->attachments);
+            $procurement = $creator->create();
 
             return api_response($request, $procurement, 200, ['id' => $procurement->id]);
         } catch (ValidationException $e) {
