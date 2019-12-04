@@ -114,7 +114,8 @@ class PartnerLoanRequest implements Arrayable
      */
     public function toArray()
     {
-        $bank = $this->partnerBankLoan->bank()->select('name', 'id', 'logo')->first();
+        $bank   = $this->partnerBankLoan->bank()->select('name', 'id', 'logo')->first();
+        $output = $this->getNextStatus();
         return [
             'id'                         => $this->partnerBankLoan->id,
             'partner'                    => [
@@ -136,8 +137,37 @@ class PartnerLoanRequest implements Arrayable
             'loan_amount'                => $this->partnerBankLoan->loan_amount,
             'total_installment'          => (int)$this->partnerBankLoan->duration * 12,
             'status_'                    => constants('LOAN_STATUS_BN')[$this->partnerBankLoan->status],
-            'final_information_for_loan' => $this->final_details->toArray()
+            'final_information_for_loan' => $this->final_details->toArray(),
+            'next_status'                => $output
         ];
+    }
+
+    private function getNextStatus()
+    {
+        $status_res = [
+            'applied'         => 'submitted',
+            'submitted'       => 'verified',
+            'approved'        => 'sanction_issued',
+            'sanction_issued' => 'disbursed',
+            'disbursed'       => 'closed',
+            'considerable'    => 'verified',
+            'rejected'        => 'closed'
+        ];
+        $all        = [
+            'declined',
+            'hold',
+            'withdrawal'
+        ];
+        $new_status = array_merge([$status_res[$this->partnerBankLoan->status]], $all);
+        $output     = [];
+        foreach ($new_status as $status) {
+            $output[] = [
+                'name'   => ucfirst(preg_replace('/_/', ' ', $status)),
+                'status' => $status,
+                'extras' => constants('LOAN_STATUS_BN')[$status]
+            ];
+        }
+        return $output;
     }
 
     public function listItem()
