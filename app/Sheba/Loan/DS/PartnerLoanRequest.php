@@ -24,7 +24,7 @@ class PartnerLoanRequest implements Arrayable
     public $created;
     public $updated;
 
-    public function __construct(PartnerBankLoan $request)
+    public function __construct(PartnerBankLoan $request=null)
     {
         $this->partnerBankLoan = $request;
         if ($this->partnerBankLoan) {

@@ -57,6 +57,7 @@ class Cors2MiddleWare
             "file://",
             "http://admin.sheba.test",
             "http://partners.sheba.test",
+            "http://loan.sheba.test",
             "http://partners.sheba.new",
             "https://www.sheba.xyz",
             "https://admin.sheba.xyz",
