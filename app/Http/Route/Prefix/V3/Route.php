@@ -17,6 +17,9 @@ class Route
             $api->group(['prefix' => 'register'], function ($api) {
                 $api->post('accountkit', 'AccountKit\AccountKitController@continueWithKit');
             });
+            $api->group(['prefix' => 'categories'], function ($api) {
+                $api->get('{category}', 'Category\CategoryController@show');
+            });
         });
     }
 }
