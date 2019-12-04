@@ -485,7 +485,7 @@ class SpLoanController extends Controller
         }
     }
 
-    public function storeComment(Partner $partner, PartnerBankLoan $partner_bank_loan, Request $request)
+    public function storeComment(PartnerBankLoan $partner_bank_loan, Request $request)
     {
         try {
             $this->validate($request, [
@@ -518,7 +518,7 @@ class SpLoanController extends Controller
         }
     }
 
-    public function getComments(Partner $partner, PartnerBankLoan $partner_bank_loan, Request $request)
+    public function getComments(PartnerBankLoan $partner_bank_loan, Request $request)
     {
         try {
             list($offset, $limit) = calculatePagination($request);
