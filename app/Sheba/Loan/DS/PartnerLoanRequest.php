@@ -159,16 +159,25 @@ class PartnerLoanRequest implements Arrayable
             'hold',
             'withdrawal'
         ];
-        $new_status = array_merge([$status_res[$this->partnerBankLoan->status]], $all);
-        $output     = [];
-        foreach ($new_status as $status) {
-            $output[] = [
-                'name'   => ucfirst(preg_replace('/_/', ' ', $status)),
-                'status' => $status,
-                'extras' => constants('LOAN_STATUS_BN')[$status]
+
+        if ($this->partnerBankLoan->status == 'disbursed') {
+            return [
+                'name' => 'Closed',
+                'status' => 'closed',
+                'extras' => constants('LOAN_STATUS_BN')['closed']
             ];
+        } else {
+            $new_status = array_merge([$status_res[$this->partnerBankLoan->status]], $all);
+            $output = [];
+            foreach ($new_status as $status) {
+                $output[] = [
+                    'name' => ucfirst(preg_replace('/_/', ' ', $status)),
+                    'status' => $status,
+                    'extras' => constants('LOAN_STATUS_BN')[$status]
+                ];
+            }
+            return $output;
         }
-        return $output;
     }
 
     public function listItem()
