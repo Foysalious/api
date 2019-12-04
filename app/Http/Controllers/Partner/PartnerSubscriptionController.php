@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\ModificationFields;
+use Sheba\Partner\PartnerStatuses;
 use Sheba\Partner\StatusChanger;
 use Sheba\Subscription\Partner\BillingType;
 use Throwable;
@@ -206,12 +207,15 @@ class PartnerSubscriptionController extends Controller
     {
         try {
             $this->validate($request, [
-                'package_id' => 'required|numeric|exists:partner_subscription_packages,id', 'billing_cycle' => 'required|string|in:monthly,yearly'
+                'package_id' => 'required|numeric|exists:partner_subscription_packages,id',
+                'billing_cycle' => 'required|string|in:monthly,yearly'
             ]);
-            $request->partner->subscribe((int)$request->package_id, $request->billing_cycle);
+            /** @var Partner $partner */
+            $partner = $request->partner;
+            $partner->subscribe((int)$request->package_id, $request->billing_cycle);
 
             if (isPartnerReadyToVerified($partner)) {
-                $status_changer = new StatusChanger($request->partner, ['status' => constants('PARTNER_STATUSES')['Waiting']]);
+                $status_changer = new StatusChanger($request->partner, ['status' => PartnerStatuses::WAITING]);
                 $status_changer->change();
             }
 
@@ -286,7 +290,7 @@ class PartnerSubscriptionController extends Controller
             if ($upgradeRequest = $this->createSubscriptionRequest($requestedPackage)) {
                 try {
                     $grade = $request->partner->subscriber()->getBilling()->findGrade($requestedPackage, $currentPackage, $request->billing_type, $request->partner->billing_type);
-                    if ($grade == PartnerSubscriptionChange::DOWNGRADE && $request->partner->status != constants('PARTNER_STATUSES')['Inactive']) {
+                    if ($grade == PartnerSubscriptionChange::DOWNGRADE && $request->partner->status != PartnerStatuses::INACTIVE) {
                         return api_response($request, null, $inside ? 200 : 202, ['message' => " আপনার $requestedPackage->show_name_bd  প্যকেজে অবনমনের  অনুরোধ  গ্রহণ  করা  হয়েছে "]);
                     }
                     $hasCredit = $request->partner->hasCreditForSubscription($requestedPackage, $request->billing_type);
