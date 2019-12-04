@@ -62,8 +62,15 @@ class SpLoanController extends Controller
 
     }
 
-    public function update(Request $request, $loan_id)
+    public function update(Request $request, $loan_id,Loan $loan)
     {
+        try{
+            $loan->update($loan_id, $request);
+            return api_response($request,true, 200);
+        }catch (\Throwable $e){
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 
     public function statusChange(Request $request, $loan_id, Loan $loan)
