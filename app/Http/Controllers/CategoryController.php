@@ -486,7 +486,7 @@ class CategoryController extends Controller
                         'is_percentage' => $delivery_discount->is_percentage,
                         'cap' => (double)$delivery_discount->cap,
                         'min_order_amount' => (double)$delivery_discount->rules->getMinOrderAmount()
-                    ] : (double)0.00;
+                    ] : null;
 
                     if ($subscriptions->count()) {
                         $category['subscription_faq'] = $subscription_faq;
