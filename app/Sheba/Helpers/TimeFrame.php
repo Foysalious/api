@@ -85,6 +85,13 @@ class TimeFrame
         return $this;
     }
 
+    public function forSixMonth(Carbon $date)
+    {
+        $this->start = $date->copy()->subMonths(6)->startOfMonth();
+        $this->end = $date->copy()->endOfMonth();
+        return $this;
+    }
+
     public function forCurrentWeek($week_start = null)
     {
         Carbon::setWeekStartsAt($week_start ?: Carbon::SUNDAY);

@@ -103,7 +103,7 @@ class Route
             $api->get('settings/car', 'HomePageSettingController@getCar');
             $api->get('home-grids', 'HomeGridController@index');
             $api->group(['prefix' => 'category-groups'], function ($api) {
-                $api->get('', 'CategoryGroupController@index');
+                $api->get('/', 'CategoryGroupController@index');
                 $api->group(['prefix' => '{id}'], function ($api) {
                     $api->get('', 'CategoryGroupController@show');
                 });
