@@ -360,16 +360,11 @@ class Loan
         $detail                                                                      = (new PartnerLoanRequest($loan))->details();
         $detail['final_information_for_loan']['document']['extras'][$formatted_name] = $url;
         $this->setModifier($user);
-        DB::transaction(function () use ($loan, $detail, $formatted_name, $user) {
+        DB::transaction(function () use ($loan, $detail, $formatted_name, $user,$name) {
             $loan->update($this->withUpdateModificationField([
                 'final_information_for_loan' => json_encode($detail['final_information_for_loan'])
             ]));
-            $loan->changeLogs()->create($this->withCreateModificationField([
-                'title'       => 'extra_image',
-                'from'        => 'none',
-                'to'          => $formatted_name,
-                'description' => 'Extra image added'
-            ]));
+            (new PartnerLoanRequest($loan))->storeChangeLog($user,'extra_image','none',$formatted_name,$name);
         });
 
     }

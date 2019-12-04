@@ -159,4 +159,8 @@ class PartnerLoanRequest implements Arrayable
             'bank'            => $bank ? $bank->toArray() : null
         ];
     }
+    public function storeChangeLog($user,$title,$from,$to,$description){
+        $this->setModifier($user);
+        return $this->partnerBankLoan->changeLogs()->create($this->withCreateModificationField(['title'=>$title,'from'=>$from,'to'=>$to,'description'=>$description]));
+    }
 }
