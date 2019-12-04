@@ -161,11 +161,12 @@ class PartnerLoanRequest implements Arrayable
         ];
 
         if ($this->partnerBankLoan->status == 'disbursed') {
-            return [
+             $output[] = [
                 'name' => 'Closed',
                 'status' => 'closed',
                 'extras' => constants('LOAN_STATUS_BN')['closed']
             ];
+             return $output;
         } else {
             $new_status = array_merge([$status_res[$this->partnerBankLoan->status]], $all);
             $output = [];
