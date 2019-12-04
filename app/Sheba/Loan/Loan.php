@@ -19,6 +19,7 @@ use Sheba\Loan\DS\PersonalInfo;
 use Sheba\Loan\DS\RunningApplication;
 use Sheba\Loan\Exceptions\AlreadyAssignToBank;
 use Sheba\Loan\Exceptions\AlreadyRequestedForLoan;
+use Sheba\Loan\Exceptions\InvalidStatusTransaction;
 use Sheba\Loan\Exceptions\NotApplicableForLoan;
 use Sheba\ModificationFields;
 
@@ -365,6 +366,35 @@ class Loan
                 'final_information_for_loan' => json_encode($detail['final_information_for_loan'])
             ]));
             (new PartnerLoanRequest($loan))->storeChangeLog($user,'extra_image','none',$formatted_name,$name);
+        });
+
+    }
+
+    /**
+     * @param $loan_id
+     * @param Request $request
+     * @throws InvalidStatusTransaction
+     */
+    public function statusChange($loan_id, Request $request){
+
+        $partner_bank_loan=$this->repo->find($loan_id);
+        $old_status = $partner_bank_loan->status;
+        $new_status = $request->new_status;
+        $description=$request->has('description')?$request->description:'Status Changed';
+        $old_status = 'applied';
+        $new_status = 'submitted';
+
+        $status = ['applied','submitted','verified','approved','sanction_issued','disbursed','closed'];
+        $old_index = array_search($old_status, $status);
+        $new_index = array_search($new_status, $status);
+
+        if(!($new_index-$old_index == 1 || (in_array($new_status,['declined','hold','withdrawal']) && (!in_array($old_status,['disbursed','closed']))))){
+           throw new InvalidStatusTransaction();
+        }
+        $partner_bank_loan->status = $new_status;
+        DB::transaction(function() use ($partner_bank_loan,$request,$old_status,$new_status,$description){
+            $partner_bank_loan->update();
+            (new PartnerLoanRequest($partner_bank_loan))->storeChangeLog($request->user,'status',$old_status,$new_status,$description);
         });
 
     }
