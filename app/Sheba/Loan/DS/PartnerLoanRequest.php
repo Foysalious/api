@@ -175,7 +175,7 @@ class PartnerLoanRequest implements Arrayable
         $bank = $this->partnerBankLoan->bank()->select('name', 'id', 'logo')->first();
         return [
             'id'              => $this->partnerBankLoan->id,
-            'created_at'      => $this->partnerBankLoan->created_at->format('Y-m-d H:s:i'),
+            'created_at'      => $this->partnerBankLoan->created_at->format('d M, Y'),
             'name'            => $this->partnerBankLoan->partner->getContactPerson(),
             'phone'           => $this->partnerBankLoan->partner->getContactNumber(),
             'partner'         => $this->partnerBankLoan->partner->name,
@@ -185,7 +185,7 @@ class PartnerLoanRequest implements Arrayable
             'updated_by'      => $this->partnerBankLoan->updated_by,
             'created_by_name' => $this->partnerBankLoan->created_by_name,
             'updated_by_name' => $this->partnerBankLoan->updated_by_name,
-            'updated'         => $this->partnerBankLoan->updated_at->format('Y-m-d H:s:i'),
+            'updated'         => $this->partnerBankLoan->updated_at->format('d M, Y'),
             'bank'            => $bank ? $bank->toArray() : null
         ];
     }
