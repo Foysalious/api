@@ -342,6 +342,12 @@ class Loan
         return (new PartnerLoanRequest($request))->details();
     }
 
+    /**
+     * @param $loan_id
+     * @param Request $request
+     * @param $user
+     * @throws \ReflectionException
+     */
     public function uploadDocument($loan_id, Request $request, $user)
     {
         /** @var PartnerBankLoan $loan */
@@ -355,17 +361,15 @@ class Loan
         $detail['final_information_for_loan']['document']['extras'][$formatted_name] = $url;
         $this->setModifier($user);
         DB::transaction(function () use ($loan, $detail, $formatted_name, $user) {
-            $loan->update($this->withBothModificationFields([
+            $loan->update($this->withUpdateModificationField([
                 'final_information_for_loan' => json_encode($detail['final_information_for_loan'])
             ]));
-            $loan->changeLogs()->create([
-                'title'           => 'extra_image',
-                'from'            => 'none',
-                'to'              => $formatted_name,
-                'description'     => 'Extra image added',
-                'created_by_name' => class_basename($user).' -' . $user->profile ? $user->profile->name : $user->name,
-                'created_by'      => $user->id
-            ]);
+            $loan->changeLogs()->create($this->withCreateModificationField([
+                'title'       => 'extra_image',
+                'from'        => 'none',
+                'to'          => $formatted_name,
+                'description' => 'Extra image added'
+            ]));
         });
 
     }
