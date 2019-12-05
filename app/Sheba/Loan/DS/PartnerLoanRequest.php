@@ -132,7 +132,10 @@ class PartnerLoanRequest implements Arrayable
             'bank'                       => $bank ? $bank->toArray() : null,
             'duration'                   => $this->partnerBankLoan->duration,
             'interest_rate'              => $this->partnerBankLoan->interest_rate,
-            'status'                     => $this->partnerBankLoan->status,
+            'status'                     => [
+                                                'name' => ucfirst(preg_replace('/_/', ' ', $this->partnerBankLoan->status)),
+                                                'status' => $this->partnerBankLoan->status
+                                            ],
             'monthly_installment'        => $this->partnerBankLoan->monthly_installment,
             'loan_amount'                => $this->partnerBankLoan->loan_amount,
             'total_installment'          => (int)$this->partnerBankLoan->duration * 12,
@@ -151,23 +154,34 @@ class PartnerLoanRequest implements Arrayable
             'sanction_issued' => 'disbursed',
             'disbursed'       => 'closed',
             'considerable'    => 'verified',
-            'rejected'        => 'closed'
+            'rejected'        => 'closed',
+            'closed'          => 'closed'
         ];
         $all        = [
             'declined',
             'hold',
             'withdrawal'
         ];
-        $new_status = array_merge([$status_res[$this->partnerBankLoan->status]], $all);
-        $output     = [];
-        foreach ($new_status as $status) {
-            $output[] = [
-                'name'   => ucfirst(preg_replace('/_/', ' ', $status)),
-                'status' => $status,
-                'extras' => constants('LOAN_STATUS_BN')[$status]
+
+        if ($this->partnerBankLoan->status == 'disbursed') {
+             $output[] = [
+                'name' => 'Closed',
+                'status' => 'closed',
+                'extras' => constants('LOAN_STATUS_BN')['closed']
             ];
+             return $output;
+        } else {
+            $new_status = array_merge([$status_res[$this->partnerBankLoan->status]], $all);
+            $output = [];
+            foreach ($new_status as $status) {
+                $output[] = [
+                    'name' => ucfirst(preg_replace('/_/', ' ', $status)),
+                    'status' => $status,
+                    'extras' => constants('LOAN_STATUS_BN')[$status]
+                ];
+            }
+            return $output;
         }
-        return $output;
     }
 
     public function listItem()
@@ -175,17 +189,17 @@ class PartnerLoanRequest implements Arrayable
         $bank = $this->partnerBankLoan->bank()->select('name', 'id', 'logo')->first();
         return [
             'id'              => $this->partnerBankLoan->id,
-            'created_at'      => $this->partnerBankLoan->created_at->format('Y-m-d H:s:i'),
+            'created_at'      => $this->partnerBankLoan->created_at->format('d M, Y'),
             'name'            => $this->partnerBankLoan->partner->getContactPerson(),
             'phone'           => $this->partnerBankLoan->partner->getContactNumber(),
             'partner'         => $this->partnerBankLoan->partner->name,
-            'status'          => $this->partnerBankLoan->status,
+            'status'          => ucfirst(preg_replace('/_/', ' ', $this->partnerBankLoan->status)),
             'status_'         => constants('LOAN_STATUS_BN')[$this->partnerBankLoan->status],
             'created_by'      => $this->partnerBankLoan->created_by,
             'updated_by'      => $this->partnerBankLoan->updated_by,
             'created_by_name' => $this->partnerBankLoan->created_by_name,
             'updated_by_name' => $this->partnerBankLoan->updated_by_name,
-            'updated'         => $this->partnerBankLoan->updated_at->format('Y-m-d H:s:i'),
+            'updated'         => $this->partnerBankLoan->updated_at->format('d M, Y'),
             'bank'            => $bank ? $bank->toArray() : null
         ];
     }
