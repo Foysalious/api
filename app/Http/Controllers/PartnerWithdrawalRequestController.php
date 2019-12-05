@@ -6,6 +6,7 @@ use App\Sheba\UserRequestInformation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\ShebaAccountKit\Requests\AccessTokenRequest;
 use Sheba\ShebaAccountKit\ShebaAccountKit;
 use Throwable;
 use Validator;
@@ -37,9 +38,10 @@ class PartnerWithdrawalRequestController extends Controller
      * @param $partner
      * @param Request $request
      * @param ShebaAccountKit $sheba_account_kit
+     * @param AccessTokenRequest $access_token_request
      * @return JsonResponse
      */
-    public function store($partner, Request $request, ShebaAccountKit $sheba_account_kit)
+    public function store($partner, Request $request, ShebaAccountKit $sheba_account_kit, AccessTokenRequest $access_token_request)
     {
         try {
             $this->validate($request, [
@@ -52,8 +54,9 @@ class PartnerWithdrawalRequestController extends Controller
             /** @var Partner $partner */
             $partner = $request->partner;
 
-            if ($request->has('version_code') && $request->version_code > 21104) {
-                $authenticate_data['mobile'] = $sheba_account_kit->getMobile($request->code);
+            if ($request->header('version-code') && $request->header('version-code') > 21104) {
+                $access_token_request->setAuthorizationCode($request->code);
+                $authenticate_data['mobile'] = $sheba_account_kit->getMobile($access_token_request);
             } else {
                 /**
                  * NUMBER MATCH VALIDATIONS BY FACEBOOK ACCOUNT KIT

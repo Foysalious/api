@@ -176,7 +176,7 @@ class PartnerLoanRequest implements Arrayable
         else if ($this->partnerBankLoan->status == 'closed')
             $new_status = ['closed'];
         else if ($this->partnerBankLoan->status == 'hold'){
-            $change_log = PartnerBankLoanChangeLog::where('loan_id',$loan_id)->orderby('id','desc')->first();
+            $change_log = PartnerBankLoanChangeLog::where('loan_id',$loan_id)->where('title','status')->orderby('id','desc')->first();
             $status_before_hold = $change_log['from'];
             $new_status = array_merge([$status_res[$status_before_hold]], ['declined','withdrawal']);
         }
