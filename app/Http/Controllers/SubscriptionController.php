@@ -8,24 +8,24 @@ use App\Models\ServiceSubscription;
 use App\Models\ServiceSubscriptionDiscount;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Sheba\Location\LocationSetter;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\Subscription\ApproximatePriceCalculator;
 use Throwable;
 
 class SubscriptionController extends Controller
 {
+    use LocationSetter;
+
+    /**
+     * @param Request $request
+     * @param ApproximatePriceCalculator $approximate_price_calculator
+     * @return JsonResponse
+     */
     public function index(Request $request, ApproximatePriceCalculator $approximate_price_calculator)
     {
         try {
             ini_set('memory_limit', '2048M');
-            if ($request->has('location')) {
-                $location = $request->location != '' ? $request->location : 4;
-            } else {
-                if ($request->has('lat') && $request->has('lng')) {
-                    $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
-                    if (!is_null($hyperLocation)) $location = $hyperLocation->location->id; else return api_response($request, null, 404);
-                } else $location = 4;
-            }
 
             if ($request->has('for') && $request->for == 'business') {
                 list($offset, $limit) = calculatePagination($request);
@@ -69,14 +69,14 @@ class SubscriptionController extends Controller
 
             $categories = Category::whereNotNull('parent_id')->whereHas('services', function ($q) {
                 $q->has('activeSubscription');
-            })->with(['services' => function ($q) use ($location) {
+            })->with(['services' => function ($q) {
                 $q->has('activeSubscription');
-                $q->whereHas('locations', function ($q) use ($location) {
-                    $q->where('locations.id', $location);
+                $q->whereHas('locations', function ($q) {
+                    $q->where('locations.id', $this->location);
                 });
                 $q->with('activeSubscription');
-            }])->whereHas('locations', function ($q) use ($location) {
-                $q->where('locations.id', $location);
+            }])->whereHas('locations', function ($q) {
+                $q->where('locations.id', $this->location);
             })->get();
 
             $parents = collect();
@@ -123,22 +123,18 @@ class SubscriptionController extends Controller
             return api_response($request, null, 500);
         }
     }
-    
+
+    /**
+     * @param Request $request
+     * @param ApproximatePriceCalculator $approximatePriceCalculator
+     * @return JsonResponse
+     */
     public function all(Request $request, ApproximatePriceCalculator $approximatePriceCalculator)
     {
         try {
-            if ($request->has('location')) {
-                $location = $request->location != '' ? $request->location : 4;
-            } else {
-                if ($request->has('lat') && $request->has('lng')) {
-                    $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
-                    if (!is_null($hyperLocation)) $location = $hyperLocation->location->id; else return api_response($request, null, 404);
-                } else $location = 4;
-            }
-
             $subscriptions = ServiceSubscription::active()->get();
             foreach ($subscriptions as $index => $subscription) {
-                if (!in_array($location, $subscription->service->locations->pluck('id')->toArray())) {
+                if (!in_array($this->location, $subscription->service->locations->pluck('id')->toArray())) {
                     array_forget($subscriptions, $index);
                     continue;
                 }
@@ -174,19 +170,11 @@ class SubscriptionController extends Controller
     public function show($serviceSubscription, Request $request, ApproximatePriceCalculator $approximatePriceCalculator, PriceCalculation $price_calculation)
     {
         try {
-            if ($request->has('location')) {
-                $location = $request->location != '' ? $request->location : 4;
-            } else {
-                if ($request->has('lat') && $request->has('lng')) {
-                    $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
-                    if (!is_null($hyperLocation)) $location = $hyperLocation->location->id; else return api_response($request, null, 404);
-                } else $location = 4;
-            }
-
             /** @var ServiceSubscription $serviceSubscription */
             $serviceSubscription = ServiceSubscription::find((int)$serviceSubscription);
-            if (!in_array($location, $serviceSubscription->service->locations->pluck('id')->toArray()))
+            if (!in_array($this->location, $serviceSubscription->service->locations->pluck('id')->toArray()))
                 return api_response($request, null, 404);
+
             $options = $this->serviceQuestionSet($serviceSubscription->service);
             $serviceSubscription['questions'] = json_encode($options, true);
             $answers = collect();
@@ -210,8 +198,9 @@ class SubscriptionController extends Controller
                 'They will ensure 100% satisfaction'
             ];
             $serviceSubscription['offers'] = $serviceSubscription->getDiscountOffers();
+            $serviceSubscription['category_id'] = $serviceSubscription->service->category->id;
 
-            $location_service = LocationService::where('location_id', $location)->where('service_id', $serviceSubscription->service_id)->first();
+            $location_service = LocationService::where('location_id', $this->location)->where('service_id', $serviceSubscription->service_id)->first();
             if ($options) {
                 if (count($answers) > 1)
                     $serviceSubscription['service_breakdown'] = $this->breakdown_service_with_min_max_price($answers, $serviceSubscription['min_price'], $serviceSubscription['max_price'], 0, $price_calculation, $location_service);
