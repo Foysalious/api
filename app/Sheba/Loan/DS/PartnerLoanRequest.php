@@ -117,7 +117,7 @@ class PartnerLoanRequest implements Arrayable
         $bank   = $this->partnerBankLoan->bank()->select('name', 'id', 'logo')->first();
         $output = $this->getNextStatus();
         $generated_id = $bank->id.'-'.str_pad($this->partnerBankLoan->id,8-strlen($this->partnerBankLoan->id),'0',STR_PAD_LEFT);
-
+        //dd($this->partner->isNIDVerified());
         return [
             'id'                         => $this->partnerBankLoan->id,
             'generated_id'               => $generated_id,
@@ -127,7 +127,8 @@ class PartnerLoanRequest implements Arrayable
                 'logo'    => $this->partner->logo,
                 'profile' => [
                     'name'   => $this->partner->getContactPerson(),
-                    'mobile' => $this->partner->getContactNumber()
+                    'mobile' => $this->partner->getContactNumber(),
+                    'is_nid_verified' => $this->partner->isNIDVerified(),
                 ]
             ],
             'credit_score'               => $this->partnerBankLoan->credit_score,
@@ -153,6 +154,7 @@ class PartnerLoanRequest implements Arrayable
         $status_res = [
             'applied'         => 'submitted',
             'submitted'       => 'verified',
+            'verified'        => 'approved',
             'approved'        => 'sanction_issued',
             'sanction_issued' => 'disbursed',
             'disbursed'       => 'closed',
