@@ -116,8 +116,11 @@ class PartnerLoanRequest implements Arrayable
     {
         $bank   = $this->partnerBankLoan->bank()->select('name', 'id', 'logo')->first();
         $output = $this->getNextStatus();
+        $generated_id = $bank->id.'-'.str_pad($this->partnerBankLoan->id,8-strlen($this->partnerBankLoan->id),'0',STR_PAD_LEFT);
+
         return [
             'id'                         => $this->partnerBankLoan->id,
+            'generated_id'               => $generated_id,
             'partner'                    => [
                 'id'      => $this->partner->id,
                 'name'    => $this->partner->name,
@@ -189,6 +192,7 @@ class PartnerLoanRequest implements Arrayable
         $bank = $this->partnerBankLoan->bank()->select('name', 'id', 'logo')->first();
         return [
             'id'              => $this->partnerBankLoan->id,
+            'generated_id'    => $bank->id.'-'.str_pad($this->partnerBankLoan->id,8-strlen($this->partnerBankLoan->id),'0',STR_PAD_LEFT),
             'created_at'      => $this->partnerBankLoan->created_at->format('d M, Y'),
             'name'            => $this->partnerBankLoan->partner->getContactPerson(),
             'phone'           => $this->partnerBankLoan->partner->getContactNumber(),
