@@ -6,6 +6,7 @@ use App\Sheba\UserRequestInformation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\ShebaAccountKit\ShebaAccountKit;
 use Throwable;
 use Validator;
 
@@ -35,9 +36,10 @@ class PartnerWithdrawalRequestController extends Controller
     /**
      * @param $partner
      * @param Request $request
+     * @param ShebaAccountKit $sheba_account_kit
      * @return JsonResponse
      */
-    public function store($partner, Request $request)
+    public function store($partner, Request $request, ShebaAccountKit $sheba_account_kit)
     {
         try {
             $this->validate($request, [
@@ -49,10 +51,16 @@ class PartnerWithdrawalRequestController extends Controller
 
             /** @var Partner $partner */
             $partner = $request->partner;
-            /**
-             * Number Match validations
-             */
-            $authenticate_data = (new FacebookAccountKit())->authenticateKit($request->code);
+
+            if ($request->has('version_code') && $request->version_code > 21104) {
+                $authenticate_data['mobile'] = $sheba_account_kit->getMobile($request->code);
+            } else {
+                /**
+                 * NUMBER MATCH VALIDATIONS BY FACEBOOK ACCOUNT KIT
+                 */
+                $authenticate_data = (new FacebookAccountKit())->authenticateKit($request->code);
+            }
+
             if (trim_phone_number($request->bkash_number) != trim_phone_number($authenticate_data['mobile'])) {
                 return api_response($request, null, 400, ['message' => 'Your provided bkash number and verification number did not match,please verify using your bkash number']);
             }
@@ -142,7 +150,7 @@ class PartnerWithdrawalRequestController extends Controller
     public function cancel($partner, $withdrawals, Request $request)
     {
         try {
-//            $this->validate($request, ['status' => 'required|in:cancelled']);
+            // $this->validate($request, ['status' => 'required|in:cancelled']);
             $partner = $request->partner;
             $partnerWithdrawalRequest = PartnerWithdrawalRequest::find($withdrawals);
             if ($partner->id == $partnerWithdrawalRequest->partner_id && $partnerWithdrawalRequest->status == 'pending') {
