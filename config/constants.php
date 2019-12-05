@@ -1002,8 +1002,8 @@ return [
             'interest' => '25',
         ],
     ],
-    'LOAN_CONFIG'                                 => [
-        'interest' => 10,
+    'LOAN_CONFIG' => [
+        'interest' => 15,
     ],
     'WEEKS' => [
         'Saturday' => 1,
