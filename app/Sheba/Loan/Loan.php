@@ -127,16 +127,19 @@ class Loan
     public function update($loan_id, Request $request)
     {
         /** @var PartnerBankLoan $loan */
-        $loan        = $this->repo->find($loan_id);
-        $loanRequest = (new PartnerLoanRequest($loan));
-        $details     = $loanRequest->details();
-        $new_data    = $request->get('data');
-        $updater     = (new Updater($details, $new_data));
-        $updater->update($loanRequest,$request);
-        $difference = $updater->findDifference()->getDifference();
-        if (!empty($difference)) {
-            $loanRequest->storeChangeLog($request->user, json_encode(array_column($difference, 'title')), json_encode(array_column($difference, 'from')), json_encode(array_column($difference, 'to')), 'Loan Request Updated');
-        }
+
+            $loan = $this->repo->find($loan_id);
+            $loanRequest = (new PartnerLoanRequest($loan));
+            $details = $loanRequest->details();
+           // $new_data = json_decode($request->get('data'),true);
+            $new_data = $request->get('data');
+            $updater = (new Updater($details, $new_data));
+            $updater->update($loanRequest, $request);
+            $difference = $updater->findDifference()->getDifference();
+            if (!empty($difference)) {
+                $loanRequest->storeChangeLog($request->user, json_encode(array_column($difference, 'title')), json_encode(array_column($difference, 'old')), json_encode(array_column($difference, 'new')), 'Loan Request Updated');
+            }
+
     }
 
     /**

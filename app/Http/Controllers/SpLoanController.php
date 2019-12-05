@@ -66,8 +66,19 @@ class SpLoanController extends Controller
 
     public function update(Request $request, $loan_id, Loan $loan)
     {
-        $loan->update($loan_id, $request);
-        return api_response($request, true, 200);
+        try {
+            $loan->update($loan_id, $request);
+            return api_response($request, true, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (InvalidStatusTransaction $e) {
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
+        } catch (Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 
     public function statusChange(Request $request, $loan_id, Loan $loan)
