@@ -52,7 +52,7 @@ class PartnerWithdrawalRequestController extends Controller
             /** @var Partner $partner */
             $partner = $request->partner;
 
-            if ($request->has('version_code') && $request->version_code > 21104) {
+            if ($request->header('version-code') && $request->header('version-code') > 21104) {
                 $authenticate_data['mobile'] = $sheba_account_kit->getMobile($request->code);
             } else {
                 /**
