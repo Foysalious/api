@@ -154,6 +154,7 @@ class PartnerLoanRequest implements Arrayable
         $status_res = [
             'applied'         => 'submitted',
             'submitted'       => 'verified',
+            'verified'        => 'approved',
             'approved'        => 'sanction_issued',
             'sanction_issued' => 'disbursed',
             'disbursed'       => 'closed',
