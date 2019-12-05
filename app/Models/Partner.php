@@ -295,6 +295,12 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         if ($admin_resource = $this->admins()->first()) return $admin_resource->profile->mobile;
         return null;
     }
+    public function isNIDVerified()
+    {
+        if ($operation_resource = $this->operationResources()->first()) return $operation_resource->profile->nid_verified;
+        if ($admin_resource = $this->admins()->first()) return $admin_resource->profile->nid_verified;
+        return null;
+    }
 
     public function getAdmin()
     {

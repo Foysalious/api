@@ -3,6 +3,7 @@
 namespace Sheba\Loan\DS;
 
 use App\Models\PartnerBankLoan;
+use App\Models\PartnerBankLoanChangeLog;
 use Illuminate\Contracts\Support\Arrayable;
 use Sheba\ModificationFields;
 
@@ -115,9 +116,8 @@ class PartnerLoanRequest implements Arrayable
     public function toArray()
     {
         $bank   = $this->partnerBankLoan->bank()->select('name', 'id', 'logo')->first();
-        $output = $this->getNextStatus();
+        $output = $this->getNextStatus($this->partnerBankLoan->id);
         $generated_id = $bank->id.'-'.str_pad($this->partnerBankLoan->id,8-strlen($this->partnerBankLoan->id),'0',STR_PAD_LEFT);
-
         return [
             'id'                         => $this->partnerBankLoan->id,
             'generated_id'               => $generated_id,
@@ -127,7 +127,8 @@ class PartnerLoanRequest implements Arrayable
                 'logo'    => $this->partner->logo,
                 'profile' => [
                     'name'   => $this->partner->getContactPerson(),
-                    'mobile' => $this->partner->getContactNumber()
+                    'mobile' => $this->partner->getContactNumber(),
+                    'is_nid_verified' => $this->partner->isNIDVerified(),
                 ]
             ],
             'credit_score'               => $this->partnerBankLoan->credit_score,
@@ -148,17 +149,17 @@ class PartnerLoanRequest implements Arrayable
         ];
     }
 
-    private function getNextStatus()
+    private function getNextStatus($loan_id)
     {
         $status_res = [
             'applied'         => 'submitted',
             'submitted'       => 'verified',
+            'verified'        => 'approved',
             'approved'        => 'sanction_issued',
             'sanction_issued' => 'disbursed',
             'disbursed'       => 'closed',
             'considerable'    => 'verified',
             'rejected'        => 'closed',
-            'closed'          => 'closed'
         ];
         $all        = [
             'declined',
@@ -166,25 +167,31 @@ class PartnerLoanRequest implements Arrayable
             'withdrawal'
         ];
 
-        if ($this->partnerBankLoan->status == 'disbursed') {
-             $output[] = [
-                'name' => 'Closed',
-                'status' => 'closed',
-                'extras' => constants('LOAN_STATUS_BN')['closed']
-            ];
-             return $output;
-        } else {
-            $new_status = array_merge([$status_res[$this->partnerBankLoan->status]], $all);
-            $output = [];
-            foreach ($new_status as $status) {
-                $output[] = [
-                    'name' => ucfirst(preg_replace('/_/', ' ', $status)),
-                    'status' => $status,
-                    'extras' => constants('LOAN_STATUS_BN')[$status]
-                ];
-            }
-            return $output;
+        if ($this->partnerBankLoan->status == 'declined')
+            $new_status = ['declined'];
+        else if ($this->partnerBankLoan->status == 'withdrawal')
+            $new_status = ['withdrawal'];
+        else if ($this->partnerBankLoan->status == 'disbursed')
+            $new_status = ['closed'];
+        else if ($this->partnerBankLoan->status == 'closed')
+            $new_status = ['closed'];
+        else if ($this->partnerBankLoan->status == 'hold'){
+            $change_log = PartnerBankLoanChangeLog::where('loan_id',$loan_id)->orderby('id','desc')->first();
+            $status_before_hold = $change_log['from'];
+            $new_status = array_merge([$status_res[$status_before_hold]], ['declined','withdrawal']);
         }
+        else
+            $new_status = array_merge([$status_res[$this->partnerBankLoan->status]], $all);
+        $output = [];
+        foreach ($new_status as $status) {
+            $output[] = [
+                'name' => ucfirst(preg_replace('/_/', ' ', $status)),
+                'status' => $status,
+                'extras' => constants('LOAN_STATUS_BN')[$status]
+            ];
+        }
+        return $output;
+
     }
 
     public function listItem()
