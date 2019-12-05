@@ -56,7 +56,7 @@ class PartnerWithdrawalRequestController extends Controller
 
             if ($request->header('version-code') && $request->header('version-code') > 21104) {
                 $access_token_request->setAuthorizationCode($request->code);
-                $authenticate_data['mobile'] = $sheba_account_kit->getMobile($access_token_request->getAuthorizationCode());
+                $authenticate_data['mobile'] = $sheba_account_kit->getMobile($access_token_request);
             } else {
                 /**
                  * NUMBER MATCH VALIDATIONS BY FACEBOOK ACCOUNT KIT
