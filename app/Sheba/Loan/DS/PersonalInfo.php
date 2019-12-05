@@ -226,6 +226,8 @@ class PersonalInfo implements Arrayable
 
     public static function isSameAddress($present, $permanent)
     {
+        if(empty($present) || empty($permanent)) return false;
+
         foreach ($present as $key => $value) {
             if ($value != $permanent[$key])
                 return false;
