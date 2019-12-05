@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use ReflectionException;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\Loan\DS\BusinessInfo;
@@ -129,7 +130,7 @@ class Loan
         $loan        = $this->repo->find($loan_id);
         $loanRequest = (new PartnerLoanRequest($loan));
         $details     = $loanRequest->details();
-        $new_data    = json_decode($request->get('data'), true);
+        $new_data    = $request->get('data');
         $updater     = (new Updater($details, $new_data));
         $updater->update($loanRequest,$request);
         $difference = $updater->findDifference()->getDifference();
@@ -140,7 +141,7 @@ class Loan
 
     /**
      * @return array
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function homepage()
     {
@@ -181,7 +182,7 @@ class Loan
 
     /**
      * @throws NotApplicableForLoan
-     * @throws \ReflectionException
+     * @throws ReflectionException
      * @throws AlreadyRequestedForLoan
      */
     public function apply()
@@ -206,7 +207,7 @@ class Loan
     /**
      * @throws AlreadyRequestedForLoan
      * @throws NotApplicableForLoan
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function validate()
     {
@@ -229,7 +230,7 @@ class Loan
 
     /**
      * @return array
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function getCompletion()
     {
@@ -345,7 +346,7 @@ class Loan
     /**
      * @param $loan_id
      * @return array
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function show($loan_id)
     {
@@ -358,7 +359,7 @@ class Loan
      * @param $loan_id
      * @param Request $request
      * @param $user
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function uploadDocument($loan_id, Request $request, $user)
     {
