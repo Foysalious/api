@@ -150,8 +150,8 @@ class Loan
     {
         $running = !$this->partner->loan->isEmpty() ? $this->partner->loan->last()->toArray() : [];
         $data    = [
-            'big_banner' => config('sheba.s3_url') . 'images/offers_images/banners/loan_banner_v3_1440_628.jpg',
-            'banner'     => config('sheba.s3_url') . 'images/offers_images/banners/loan_banner_v3_720_324.jpg',
+            'big_banner' => config('sheba.s3_url') . 'images/offers_images/banners/loan_banner_v5_1440_628.jpg',
+            'banner'     => config('sheba.s3_url') . 'images/offers_images/banners/loan_banner_v5_720_324.jpg',
         ];
         $data    = array_merge($data, (new RunningApplication($running))->toArray());
         $data    = array_merge($data, ['details' => self::homepageStatics()]);
