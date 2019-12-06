@@ -16,6 +16,6 @@ class ThrowableHandler extends Handler
         if ($this->exception instanceof MethodNotAllowedHttpException) return 'Method is not allowed';
         if ($this->exception instanceof NotFoundHttpException) return 'Requested path not found';
         if ($this->exception instanceof RouteNotFoundException) return 'Route Not Found';
-        return $this->wantsTrace() ? $this->exception->getMessage() : "Internal Server Error";
+        return "Internal Server Error";
     }
 }

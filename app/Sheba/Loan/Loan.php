@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use ReflectionException;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\Loan\DS\BusinessInfo;
@@ -126,21 +127,24 @@ class Loan
     public function update($loan_id, Request $request)
     {
         /** @var PartnerBankLoan $loan */
-        $loan        = $this->repo->find($loan_id);
-        $loanRequest = (new PartnerLoanRequest($loan));
-        $details     = $loanRequest->details();
-        $new_data    = json_decode($request->get('data'), true);
-        $updater     = (new Updater($details, $new_data));
-        $updater->update($loanRequest,$request);
-        $difference = $updater->findDifference()->getDifference();
-        if (!empty($difference)) {
-            $loanRequest->storeChangeLog($request->user, json_encode(array_column($difference, 'title')), json_encode(array_column($difference, 'from')), json_encode(array_column($difference, 'to')), 'Loan Request Updated');
-        }
+
+            $loan = $this->repo->find($loan_id);
+            $loanRequest = (new PartnerLoanRequest($loan));
+            $details = $loanRequest->details();
+           // $new_data = json_decode($request->get('data'),true);
+            $new_data = $request->get('data');
+            $updater = (new Updater($details, $new_data));
+            $updater->update($loanRequest, $request);
+            $difference = $updater->findDifference()->getDifference();
+            if (!empty($difference)) {
+                $loanRequest->storeChangeLog($request->user, json_encode(array_column($difference, 'title')), json_encode(array_column($difference, 'old')), json_encode(array_column($difference, 'new')), 'Loan Request Updated');
+            }
+
     }
 
     /**
      * @return array
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function homepage()
     {
@@ -158,21 +162,22 @@ class Loan
     {
         return [
             [
-                'title'     => 'ব্যাংক লোনের সুবিধা কি কি - ',
-                'list'      => [
-                    'সহজেই ব্যবসা বার্তা পৌঁছে দিন কাস্টমারের কাছে',
-                    'আপনার সুবিধা মত সময়ে ও বাজেটে স্বল্পমূল্যে কার্যকরী মার্কেটিং ',
-                    'শুধু সফল ভাবে পাঠানো এসএমএস বা ইমেইলের জন্যই মূল্য দিন',
-                    'মার্কেটিং থেকে অর্ডার পাবার রিপোর্ট পাচ্ছেন খুব দ্রুত '
+                'title' => 'ব্যাংক লোনের সুবিধা কি কি - ',
+                'list' => [
+                    'সহজ শর্তে লোন নিন',
+                    'জামানত বিহীন লোন নিন',
+                    'ঘরে বসেই লোনের আবেদন করুন',
+                    'ঘরে বসেই লোন পরিশোধ করুন'
                 ],
                 'list_icon' => 'icon'
             ],
             [
-                'title'     => 'ব্যাংক লোন কিভাবে নেবেন- ',
-                'list'      => [
-                    'সহজেই ব্যবসা বার্তা পৌঁছে দিন কাস্টমারের কাছে ',
-                    'আপনার সুবিধা মত সময়ে ও বাজেটে স্বল্পমূল্যে কার্যকরী মার্কেটিং ',
-                    'শুধু সফল ভাবে পাঠানো এসএমএস বা ইমেইলের জন্যই মূল্য দিন'
+                'title' => 'ব্যাংক লোন কিভাবে নেবেন- ',
+                'list' => [
+                    'sManager অ্যাপ থেকে প্রয়োজনীয় সকল তথ্য পুরন করুন',
+                    'লোন ক্যলকুলেটর দিয়ে হিসাব করে কিস্তির ধারনা নিন',
+                    'লোনের আবেদন নিশিত করুন',
+                    'সেবা ও ব্যঙ্ক থেকে জাচাই করার পরে খুব দ্রুত আপনার কাছে লোন পৌঁছে যাবে'
                 ],
                 'list_icon' => 'number'
             ]
@@ -181,7 +186,7 @@ class Loan
 
     /**
      * @throws NotApplicableForLoan
-     * @throws \ReflectionException
+     * @throws ReflectionException
      * @throws AlreadyRequestedForLoan
      */
     public function apply()
@@ -206,7 +211,7 @@ class Loan
     /**
      * @throws AlreadyRequestedForLoan
      * @throws NotApplicableForLoan
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function validate()
     {
@@ -229,7 +234,7 @@ class Loan
 
     /**
      * @return array
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function getCompletion()
     {
@@ -345,7 +350,7 @@ class Loan
     /**
      * @param $loan_id
      * @return array
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function show($loan_id)
     {
@@ -358,7 +363,7 @@ class Loan
      * @param $loan_id
      * @param Request $request
      * @param $user
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function uploadDocument($loan_id, Request $request, $user)
     {

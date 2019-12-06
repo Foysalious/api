@@ -1,6 +1,4 @@
-<?php
-
-namespace Sheba\Loan;
+<?php namespace Sheba\Loan;
 
 use App\Models\PartnerBankLoan;
 use Illuminate\Http\Request;
@@ -11,8 +9,8 @@ use Sheba\ModificationFields;
 
 class Updater
 {
-    private $old, $new, $difference;
     use ModificationFields;
+    private $old, $new, $difference;
 
     public function __construct($old, $new)
     {
@@ -72,7 +70,7 @@ class Updater
     public function update(PartnerLoanRequest $loan, Request $request)
     {
         foreach (self::updateFields() as $key) {
-            $loan->partnerBankLoan->{$$key} = array_key_exists($key, $this->new) ? $this->new[$key] : $loan->partnerBankLoan->{$key};
+            $loan->partnerBankLoan->{$key} = array_key_exists($key, $this->new) ? $this->new[$key] : $loan->partnerBankLoan->{$key};
         }
         $loan->partnerBankLoan->final_information_for_loan = json_encode($this->new['final_information_for_loan']);
         $loan->partnerBankLoan->save();

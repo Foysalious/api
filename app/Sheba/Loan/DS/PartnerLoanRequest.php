@@ -4,6 +4,7 @@ namespace Sheba\Loan\DS;
 
 use App\Models\PartnerBankLoan;
 use App\Models\PartnerBankLoanChangeLog;
+use Carbon\Carbon;
 use Illuminate\Contracts\Support\Arrayable;
 use Sheba\ModificationFields;
 
@@ -125,10 +126,12 @@ class PartnerLoanRequest implements Arrayable
                 'id'      => $this->partner->id,
                 'name'    => $this->partner->name,
                 'logo'    => $this->partner->logo,
+                'updated_at' => (Carbon::parse($this->partner->updated_at))->format('j F, Y h:i A'),
                 'profile' => [
                     'name'   => $this->partner->getContactPerson(),
                     'mobile' => $this->partner->getContactNumber(),
                     'is_nid_verified' => $this->partner->isNIDVerified(),
+                    'updated_at' => (Carbon::parse($this->partner->updatedAt()))->format('j F, Y h:i A'),
                 ]
             ],
             'credit_score'               => $this->partnerBankLoan->credit_score,
@@ -176,7 +179,7 @@ class PartnerLoanRequest implements Arrayable
         else if ($this->partnerBankLoan->status == 'closed')
             $new_status = ['closed'];
         else if ($this->partnerBankLoan->status == 'hold'){
-            $change_log = PartnerBankLoanChangeLog::where('loan_id',$loan_id)->orderby('id','desc')->first();
+            $change_log = PartnerBankLoanChangeLog::where('loan_id',$loan_id)->where('title','status')->orderby('id','desc')->first();
             $status_before_hold = $change_log['from'];
             $new_status = array_merge([$status_res[$status_before_hold]], ['declined','withdrawal']);
         }
