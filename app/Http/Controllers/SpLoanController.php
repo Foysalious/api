@@ -459,7 +459,7 @@ class SpLoanController extends Controller
         try {
             list($offset, $limit) = calculatePagination($request);
             $partner_bank_loan_logs = $partner_bank_loan->changeLogs->slice($offset)->take($limit);
-            $output = $partner_bank_loan_logs->sortByDesc('id');
+            $output = $partner_bank_loan_logs->sortByDesc('id')->values();
             return api_response($request, null, 200, ['logs' => $output]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);

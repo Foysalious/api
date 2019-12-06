@@ -324,16 +324,16 @@ class Loan
             $output = $output->filter(function ($item) use ($request) {
                 $query = strtolower($request->q);
                 return str_contains(strtolower($item['name']), $query) || str_contains($item['phone'], $query) || str_contains(strtolower($item['partner']), $query) || str_contains(strtolower($item['bank']['name']), $query);
-            })->values();
+            });
         }
         if ($request->has('date')) {
             $output = $output->filter(function ($item) use ($request) {
                 $date      = Carbon::parse($request->date)->format('Y-m-d');
                 $item_date = Carbon::parse($item->created_at)->format('Y-m-d');
                 return $date == $item_date;
-            })->values();
+            });
         }
-        return $output;
+        return $output->values();
     }
 
     /**
