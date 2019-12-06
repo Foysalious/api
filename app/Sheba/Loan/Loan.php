@@ -309,9 +309,11 @@ class Loan
         }
         $data   = $query->with(['bank'])->get();
         $output = collect();
+
         foreach ($data as $loan) {
             $output->push((new PartnerLoanRequest($loan))->listItem());
         }
+        $output = $output->sortByDesc('id');
         return $this->filterList($request, $output);
     }
 

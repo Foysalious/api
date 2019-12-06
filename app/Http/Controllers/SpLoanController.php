@@ -45,6 +45,7 @@ class SpLoanController extends Controller
             $output = $loan->all($request);
             return api_response($request, $output, 200, ['data' => $output]);
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
