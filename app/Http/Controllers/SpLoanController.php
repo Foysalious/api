@@ -9,6 +9,7 @@ use App\Repositories\CommentRepository;
 use App\Repositories\FileRepository;
 use Carbon\Carbon;
 use DB;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\FileManagers\CdnFileManager;
@@ -51,6 +52,12 @@ class SpLoanController extends Controller
 
     }
 
+    /**
+     * @param Request $request
+     * @param $loan_id
+     * @param Loan $loan
+     * @return JsonResponse
+     */
     public function show(Request $request, $loan_id, Loan $loan)
     {
         try {
@@ -74,7 +81,6 @@ class SpLoanController extends Controller
         } catch (InvalidStatusTransaction $e) {
             return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
