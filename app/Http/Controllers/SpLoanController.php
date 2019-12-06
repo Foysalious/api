@@ -45,7 +45,6 @@ class SpLoanController extends Controller
             $output = $loan->all($request);
             return api_response($request, $output, 200, ['data' => $output]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -58,7 +57,6 @@ class SpLoanController extends Controller
             $data = $loan->show($loan_id);
             return api_response($request, $data, 200, ['data' => $data]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -461,7 +459,8 @@ class SpLoanController extends Controller
         try {
             list($offset, $limit) = calculatePagination($request);
             $partner_bank_loan_logs = $partner_bank_loan->changeLogs->slice($offset)->take($limit);
-            return api_response($request, null, 200, ['logs' => $partner_bank_loan_logs]);
+            $output = $partner_bank_loan_logs->sortByDesc('id');
+            return api_response($request, null, 200, ['logs' => $output]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
