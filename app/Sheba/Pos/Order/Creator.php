@@ -119,6 +119,7 @@ class Creator
             $service['warranty'] = $original_service->warranty;
             $service['warranty_unit'] = $original_service->warranty_unit;
             $service['vat_percentage'] = (!isset($service['is_vat_applicable']) || $service['is_vat_applicable']) ? $original_service->vat_percentage : 0.00;
+            $service['note'] = isset($service['note']) ? $service['note'] : null;
             $service = array_except($service, ['id', 'name', 'is_vat_applicable', 'updated_price']);
 
             $pos_order_item = $this->itemRepo->save($service);

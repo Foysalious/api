@@ -55,6 +55,26 @@ class IndexRoute
                 });
             });
             $api->group(['prefix' => 'loans'], function ($api) {
+                $api->group(['prefix'=>'v2'],function($api){
+                    $api->post('/', 'LoanController@store');
+                    $api->get('/personal-info', 'LoanController@getPersonalInformation');
+                    $api->post('/personal-info', 'LoanController@updatePersonalInformation');
+                    $api->get('/business-info', 'LoanController@getBusinessInformation');
+                    $api->post('/business-info', 'LoanController@updateBusinessInformation');
+                    $api->get('/finance-info', 'LoanController@getFinanceInformation');
+                    $api->post('/finance-info', 'LoanController@updateFinanceInformation');
+                    $api->get('/nominee-info', 'LoanController@getNomineeInformation');
+                    $api->post('/nominee-grantor-info', 'LoanController@updateNomineeGranterInformation');
+                    $api->get('/documents', 'LoanController@getDocuments');
+                    $api->post('/documents', 'LoanController@updateDocuments');
+                    $api->post('pictures', 'LoanController@updateProfilePictures');
+                    $api->post('bank-statement', 'LoanController@updateBankStatement');
+                    $api->post('trade-license', 'LoanController@updateTradeLicense');
+                    $api->get('/information-completion', 'LoanCompletionController@getLoanInformationCompletion');
+                    $api->get('/homepage', 'LoanController@getHomepage');
+                    $api->get('/bank-interest', 'LoanController@getBankInterest');
+                    $api->get('/history', 'LoanController@history');
+                });
                 $api->post('/', 'SpLoanController@store');
                 $api->get('/personal-info', 'SpLoanController@getPersonalInformation');
                 $api->post('/personal-info', 'SpLoanController@updatePersonalInformation');
