@@ -7,6 +7,6 @@ class Types
 {
     use ConstGetter;
 
-    const DEBIT = "debit";
-    const CREDIT = "credit";
+    const DEBIT = "Debit";
+    const CREDIT = "Credit";
 }

@@ -121,15 +121,6 @@ class Service extends Model
             }
         }
         return false;
-        /**
-         * TURNED OF PARTNER DISCOUNT
-         *
-         * foreach ($this->partnerServices as $partner_service) {
-            if ($partner_service->is_verified == 1 && $partner_service->is_published == 1 && $partner_service->partner->status == 'Verified' && $partner_service->discount()) {
-                return true;
-            }
-        }
-        return false;*/
     }
 
     public function discounts()
