@@ -30,7 +30,10 @@ class CategoryGroupController extends Controller
             $for = $this->getPublishedFor($request->for);
             if ($request->has('name') && $request->name == Identifier::HIGH_DEMAND) {
                 return api_response($request, null, 200, [
-                    'categories' => $recommender->setParams(Carbon::now())->get()
+                    'category' => [
+                        'name' => 'Current High Demand Services',
+                        'secondaries' => $recommender->setParams(Carbon::now())->get()
+                    ]
                 ]);
             }
 
