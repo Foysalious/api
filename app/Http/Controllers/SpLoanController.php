@@ -27,11 +27,16 @@ class SpLoanController extends Controller
     public function getHomepage($partner, Request $request)
     {
         try {
-            $partner  = $request->partner;
+            $partner   = $request->partner;
+            $bank_name = null;
+            if (!$partner->loan->isEmpty()) {
+                $last      = $partner->loan->last();
+                $bank_name = $last->bank_name ?: $last->bank ? $last->bank->name : null;
+            }
             $homepage = [
                 'running_application' => [
                     'bank_name'   => !$partner->loan->isEmpty() ? $partner->loan->last()->bank_name : null,
-                    'logo'        => !$partner->loan->isEmpty() ? constants('AVAILABLE_BANK_FOR_LOAN')[($partner->loan->last()->bank_name ?: $partner->loan->last()->bank->name)]['logo'] : null,
+                    'logo'        => !$partner->loan->isEmpty() ? $bank_name ? constants('AVAILABLE_BANK_FOR_LOAN')[$bank_name]['logo'] : null : null,
                     'loan_amount' => !$partner->loan->isEmpty() ? $partner->loan->last()->loan_amount : null,
                     'status'      => !$partner->loan->isEmpty() ? $partner->loan->last()->status : null,
                     'duration'    => !$partner->loan->isEmpty() ? $partner->loan->last()->duration : null
@@ -73,8 +78,8 @@ class SpLoanController extends Controller
                 'monthly_installment' => 'required|numeric',
                 'status'              => 'required|string',
             ]);
-            $partner = $request->partner;
-            $data = [
+            $partner      = $request->partner;
+            $data         = [
                 'partner_id'                 => $partner->id,
                 'bank_name'                  => $request->bank_name,
                 'loan_amount'                => $request->loan_amount,
@@ -203,7 +208,7 @@ class SpLoanController extends Controller
             $partner          = $request->partner;
             $manager_resource = $request->manager_resource;
             $profile          = $manager_resource->profile;
-            $info = array(
+            $info             = array(
                 'name'              => $profile->name,
                 'mobile'            => $profile->mobile,
                 'gender'            => $profile->gender,
@@ -247,7 +252,7 @@ class SpLoanController extends Controller
             ]);
             $manager_resource = $request->manager_resource;
             $profile          = $manager_resource->profile;
-            $profile_data = array(
+            $profile_data     = array(
                 'gender'              => $request->gender,
                 'dob'                 => $request->dob,
                 'address'             => $request->address,
@@ -257,7 +262,7 @@ class SpLoanController extends Controller
                 'total_asset_amount'  => $request->total_asset_amount,
                 #'monthly_loan_installment_amount' => $request->monthly_loan_installment_amount,
             );
-            $resource_data = [
+            $resource_data    = [
                 'father_name' => $request->father_name,
                 'spouse_name' => $request->spouse_name,
             ];
@@ -283,7 +288,7 @@ class SpLoanController extends Controller
             $bank_informations               = $partner->bankInformations;
             $business_additional_information = $partner->businessAdditionalInformation();
             $sales_information               = $partner->salesInformation();
-            $info = array(
+            $info                            = array(
                 'business_name'                    => $partner->name,
                 'business_type'                    => $partner->business_type,
                 'location'                         => $partner->address,
@@ -356,7 +361,7 @@ class SpLoanController extends Controller
             $profile            = $manager_resource->profile;
             $basic_informations = $partner->basicInformations;
             $bank_informations  = $partner->bankInformations;
-            $info = [
+            $info               = [
                 'account_holder_name' => !empty($bank_informations) ? $bank_informations->acc_name : null,
                 'account_no'          => !empty($bank_informations) ? $bank_informations->acc_no : null,
                 'bank_name'           => !empty($bank_informations) ? $bank_informations->bank_name : null,
@@ -390,7 +395,7 @@ class SpLoanController extends Controller
             ]);
             $partner           = $request->partner;
             $bank_informations = $partner->bankInformations;
-            $bank_data    = [
+            $bank_data         = [
                 'partner_id'  => $partner->id,
                 'acc_name'    => $request->acc_name,
                 'acc_no'      => $request->acc_no,
@@ -398,7 +403,7 @@ class SpLoanController extends Controller
                 'branch_name' => $request->branch_name,
                 'acc_type'    => $request->acc_type
             ];
-            $partner_data = [
+            $partner_data      = [
                 'bkash_no'           => !empty($request->bkash_no) ? formatMobile($request->bkash_no) : null,
                 'bkash_account_type' => $request->bkash_account_type
             ];
@@ -425,7 +430,7 @@ class SpLoanController extends Controller
             $profile          = $manager_resource->profile;
             #$nominee_profile = Profile::find($profile->nominee_id);
             $grantor_profile = Profile::find($profile->grantor_id);
-            $info = array(
+            $info            = array(
                 /*'name' => !empty($nominee_profile) ? $nominee_profile->name : null,
                 'mobile' => !empty($nominee_profile) ? $nominee_profile->mobile : null,
                 'nominee_relation' => !empty($nominee_profile) ? $profile->nominee_relation : null,
@@ -437,9 +442,9 @@ class SpLoanController extends Controller
                     'name'             => !empty($grantor_profile) ? $grantor_profile->name : null,
                     'mobile'           => !empty($grantor_profile) ? $grantor_profile->mobile : null,
                     'grantor_relation' => !empty($grantor_profile) ? $profile->grantor_relation : null,
-                    'picture'         => !empty($grantor_profile) ? $grantor_profile->pro_pic : null,
-                    'nid_front_image' => !empty($grantor_profile) ? $grantor_profile->nid_image_front : null,
-                    'nid_back_image'  => !empty($grantor_profile) ? $grantor_profile->nid_image_back : null,
+                    'picture'          => !empty($grantor_profile) ? $grantor_profile->pro_pic : null,
+                    'nid_front_image'  => !empty($grantor_profile) ? $grantor_profile->nid_image_front : null,
+                    'nid_back_image'   => !empty($grantor_profile) ? $grantor_profile->nid_image_back : null,
                 ]
             );
             return api_response($request, $info, 200, ['info' => $info]);
@@ -527,10 +532,10 @@ class SpLoanController extends Controller
             $bank_informations  = $partner->bankInformations;
             #$nominee_profile = Profile::find($profile->nominee_id);
             $grantor_profile = Profile::find($profile->grantor_id);
-            $info = array(
-                'picture'     => $profile->pro_pic,
-                'nid_image'   => $manager_resource->nid_image,
-                'is_verified' => $manager_resource->is_verified,
+            $info            = array(
+                'picture'           => $profile->pro_pic,
+                'nid_image'         => $manager_resource->nid_image,
+                'is_verified'       => $manager_resource->is_verified,
                 'nid_image_front'   => $profile->nid_image_front,
                 'nid_image_back'    => $profile->nid_image_back,
                 /*'nominee_document' => [
@@ -671,7 +676,7 @@ class SpLoanController extends Controller
             ]);
             $partner            = $request->partner;
             $basic_informations = $partner->basicInformations;
-            $file_name = $request->picture;
+            $file_name          = $request->picture;
             if ($basic_informations->trade_license_attachment != getTradeLicenseDefaultImage()) {
                 $old_statement = substr($basic_informations->trade_license_attachment, strlen(config('s3.url')));
                 $this->deleteImageFromCDN($old_statement);
