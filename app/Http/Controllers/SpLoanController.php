@@ -67,7 +67,6 @@ class SpLoanController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
-
     }
 
     public function update(Request $request, $loan_id, Loan $loan)
@@ -595,5 +594,4 @@ class SpLoanController extends Controller
             return api_response($request, null, 500);
         }
     }
-
 }
