@@ -23,6 +23,7 @@ abstract class BkashToken
         if (curl_errno($curl) > 0) throw new \InvalidArgumentException('Bkash grant token API error.');
         curl_close($curl);
         $data = json_decode($result_data, true);
+        if($data['status'] == "fail") throw new \Exception('Bkash Error: ' . $data['msg']);
         $token = $data['id_token'];
         $this->setTokenInRedis($data['id_token'], $data['expires_in']);
         return $token;

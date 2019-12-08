@@ -4,7 +4,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Profile extends Model
 {
-    protected $guarded = ['id'];
+    protected $guarded  = ['id'];
     protected $fillable = [
         'name',
         'bn_name',
@@ -39,6 +39,7 @@ class Profile extends Model
         'gender',
         'dob',
         'pro_pic',
+        'birth_place',
         'total_asset_amount',
         'monthly_living_cost',
         'monthly_loan_installment_amount',
@@ -48,6 +49,8 @@ class Profile extends Model
         'grantor_id',
         'grantor_relation',
         'created_by',
+        'nid_issue_date',
+        'birth_place',
         'created_by_name',
         'updated_by',
         'updated_by_name',
@@ -108,5 +111,20 @@ class Profile extends Model
     public function mobileBanks()
     {
         return $this->hasMany(ProfileMobileBankInformation::class);
+    }
+
+    public function nominee()
+    {
+        return $this->hasOne(Profile::class, 'id','nominee_id');
+    }
+
+    public function granter()
+    {
+        return $this->hasOne(Profile::class, 'id','grantor_id');
+    }
+
+    public function bankUser()
+    {
+        return $this->hasOne(BankUser::class);
     }
 }

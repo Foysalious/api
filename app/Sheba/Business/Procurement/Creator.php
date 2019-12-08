@@ -4,8 +4,10 @@ use App\Models\Bid;
 use App\Models\Procurement;
 use App\Models\ProcurementItem;
 use App\Models\Tag;
+use App\Sheba\Attachments\Attachments;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
+use Illuminate\Http\UploadedFile;
 use Sheba\Repositories\Interfaces\ProcurementItemFieldRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementQuestionRepositoryInterface;
@@ -18,6 +20,9 @@ class Creator
     private $procurementItemRepository;
     private $procurementQuestionRepository;
     private $procurementItemFieldRepository;
+    /** @var Attachments */
+    private $attachmentManager;
+
     private $purchaseRequestId;
     private $type;
     private $title;
@@ -39,15 +44,23 @@ class Creator
     private $paymentOptions;
     private $isPublished;
     private $labels;
+    /** @var UploadedFile[] */
+    private $attachments = [];
     private $procurement;
     private $bid;
+    private $createdBy;
 
-    public function __construct(ProcurementRepositoryInterface $procurement_repository, ProcurementItemRepositoryInterface $procurement_item_repository, ProcurementItemFieldRepositoryInterface $procurement_item_field_repository, ProcurementQuestionRepositoryInterface $procurement_question_repository)
+    public function __construct(ProcurementRepositoryInterface $procurement_repository,
+                                ProcurementItemRepositoryInterface $procurement_item_repository,
+                                ProcurementItemFieldRepositoryInterface $procurement_item_field_repository,
+                                ProcurementQuestionRepositoryInterface $procurement_question_repository,
+                                Attachments $attachment_manager)
     {
         $this->procurementRepository = $procurement_repository;
         $this->procurementItemRepository = $procurement_item_repository;
         $this->procurementQuestionRepository = $procurement_question_repository;
         $this->procurementItemFieldRepository = $procurement_item_field_repository;
+        $this->attachmentManager = $attachment_manager;
     }
 
     public function getProcurement($procurement)
@@ -173,6 +186,22 @@ class Creator
         return $this;
     }
 
+    /**
+     * @param $attachments UploadedFile[]
+     * @return $this
+     */
+    public function setAttachments($attachments)
+    {
+        $this->attachments = $attachments;
+        return $this;
+    }
+
+    public function setCreatedBy($created_by)
+    {
+        $this->createdBy = $created_by;
+        return $this;
+    }
+
     public function create()
     {
         $this->makeProcurementData();
@@ -182,6 +211,7 @@ class Creator
                 /** @var Procurement $procurement */
                 $procurement = $this->procurementRepository->create($this->procurementData);
                 $this->createTags($procurement);
+                $this->createAttachments($procurement);
                 foreach ($this->items as $item_fields) {
                     /** @var ProcurementItem $procurement_item */
                     $procurement_item = $this->procurementItemRepository->create(['procurement_id' => $procurement->id, 'type' => $item_fields->item_type]);
@@ -312,6 +342,16 @@ class Creator
                 'procurement_id' => $procurement->id,
                 'variables' => isset($question->is_required) ? json_encode(['is_required' => $question->is_required]) : '',
             ]);
+        }
+    }
+
+    private function createAttachments(Procurement $procurement)
+    {
+        foreach ($this->attachments as $attachment) {
+            $this->attachmentManager->setAttachableModel($procurement)
+                ->setCreatedBy($this->createdBy)
+                ->setFile($attachment)
+                ->store();
         }
     }
 

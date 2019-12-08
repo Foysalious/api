@@ -1,6 +1,5 @@
 <?php namespace Sheba\ShebaAccountKit\Requests;
 
-
 class AccessTokenRequest
 {
     private $authorizationCode;

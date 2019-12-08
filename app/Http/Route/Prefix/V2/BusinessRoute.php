@@ -6,7 +6,6 @@ class BusinessRoute
     {
         $api->post('business/login', 'B2b\LoginController@login');
         $api->get('business/test-login', 'B2b\LoginController@generateDummyToken')->middleware('admin.auth');
-        #$api->post('business/register', 'B2b\RegistrationController@register');
         $api->post('business/register', 'B2b\RegistrationController@registerV2');
         $api->group(['prefix' => 'businesses', 'middleware' => ['business.auth']], function ($api) {
             $api->group(['prefix' => '{business}'], function ($api) {
@@ -129,7 +128,6 @@ class BusinessRoute
                     $api->get('/', 'B2b\ProcurementController@index');
                     $api->get('/{procurement}', 'B2b\ProcurementController@show');
                 });
-
                 $api->group(['prefix' => 'bids'], function ($api) {
                     $api->group(['prefix' => '{bid}'], function ($api) {
                         $api->get('/', 'B2b\BidController@show');
@@ -192,6 +190,7 @@ class BusinessRoute
                         $api->get('/', 'B2b\SupportController@show');
                     });
                 });
+                $api->post('/download-transactions', 'B2b\BusinessesController@downloadTransactionReport');
             });
         });
         $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {
