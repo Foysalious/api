@@ -119,7 +119,7 @@ class Loan
     public function get($id)
     {
         /** @var PartnerBankLoan $loan */
-        $loan    = $this->repo->find($id);
+        $loan = $this->repo->find($id);
         $request = new PartnerLoanRequest($loan);
         return $request->toArray();
     }
@@ -128,17 +128,27 @@ class Loan
     {
         /** @var PartnerBankLoan $loan */
 
-            $loan = $this->repo->find($loan_id);
-            $loanRequest = (new PartnerLoanRequest($loan));
-            $details = $loanRequest->details();
-           // $new_data = json_decode($request->get('data'),true);
-            $new_data = $request->get('data');
-            $updater = (new Updater($details, $new_data));
-            $updater->update($loanRequest, $request);
+        $loan = $this->repo->find($loan_id);
+        $loanRequest = (new PartnerLoanRequest($loan));
+        $details = $loanRequest->details();
+        // $new_data = json_decode($request->get('data'),true);
+        $new_data = $request->get('data');
+
+        $updater = (new Updater($details, $new_data));
+
+        DB::transaction(function () use ($updater, $loanRequest, $request,$details,$new_data) {
             $difference = $updater->findDifference()->getDifference();
+            $updater->update($loanRequest, $request);
             if (!empty($difference)) {
-                $loanRequest->storeChangeLog($request->user, json_encode(array_column($difference, 'title')), json_encode(array_column($difference, 'old')), json_encode(array_column($difference, 'new')), 'Loan Request Updated');
+                $loanRequest->storeChangeLog(
+                    $request->user,
+                    json_encode(array_column($difference, 'title')),
+                    json_encode(array_column($difference, 'old')),
+                    json_encode(array_column($difference, 'new')),
+                    'Loan Request Updated'
+                );
             }
+        });
 
     }
 
@@ -149,12 +159,12 @@ class Loan
     public function homepage()
     {
         $running = !$this->partner->loan->isEmpty() ? $this->partner->loan->last()->toArray() : [];
-        $data    = [
+        $data = [
             'big_banner' => config('sheba.s3_url') . 'images/offers_images/banners/loan_banner_v3_1440_628.jpg',
-            'banner'     => config('sheba.s3_url') . 'images/offers_images/banners/loan_banner_v3_720_324.jpg',
+            'banner' => config('sheba.s3_url') . 'images/offers_images/banners/loan_banner_v3_720_324.jpg',
         ];
-        $data    = array_merge($data, (new RunningApplication($running))->toArray());
-        $data    = array_merge($data, ['details' => self::homepageStatics()]);
+        $data = array_merge($data, (new RunningApplication($running))->toArray());
+        $data = array_merge($data, ['details' => self::homepageStatics()]);
         return $data;
     }
 
@@ -192,8 +202,8 @@ class Loan
     public function apply()
     {
         $this->validate();
-        $data       = $this->data;
-        $fields     = [
+        $data = $this->data;
+        $fields = [
             'personal',
             'business',
             'finance',
@@ -218,7 +228,7 @@ class Loan
         $requests = $this->repo->where('partner_id', $this->partner->id)->get();
         if (!$requests->isEmpty()) {
             $last_request = $requests->last();
-            $statuses     = constants('LOAN_STATUS');
+            $statuses = constants('LOAN_STATUS');
             if (in_array($last_request->status, [
                 $statuses['approved'],
                 $statuses['considerable']
@@ -238,11 +248,11 @@ class Loan
      */
     public function getCompletion()
     {
-        $data                           = [
-            'personal'  => $this->personalInfo()->completion(),
-            'business'  => $this->businessInfo()->completion(),
-            'finance'   => $this->financeInfo()->completion(),
-            'nominee'   => $this->nomineeGranter()->completion(),
+        $data = [
+            'personal' => $this->personalInfo()->completion(),
+            'business' => $this->businessInfo()->completion(),
+            'finance' => $this->financeInfo()->completion(),
+            'nominee' => $this->nomineeGranter()->completion(),
             'documents' => $this->documents()->completion()
         ];
         $data['is_applicable_for_loan'] = $this->isApplicableForLoan($data);
@@ -292,7 +302,7 @@ class Loan
         $history = [];
         foreach ($loans as $loan) {
             $loanRequest = new PartnerLoanRequest($loan);
-            $history[]   = $loanRequest->setPartner($this->partner)->history();
+            $history[] = $loanRequest->setPartner($this->partner)->history();
         }
         return $history;
     }
@@ -300,7 +310,7 @@ class Loan
     public function all(Request $request)
     {
 
-        $user    = $request->user;
+        $user = $request->user;
         $bank_id = null;
         if ($user instanceof BankUser)
             $bank_id = $user->bank->id;
@@ -308,7 +318,7 @@ class Loan
         if ($bank_id) {
             $query = $query->where('partner_bank_loans.bank_id', $bank_id);
         }
-        $data   = $query->with(['bank'])->get();
+        $data = $query->with(['bank'])->get();
         $output = collect();
 
         foreach ($data as $loan) {
@@ -328,7 +338,7 @@ class Loan
         }
         if ($request->has('date')) {
             $output = $output->filter(function ($item) use ($request) {
-                $date      = Carbon::parse($request->date)->format('Y-m-d');
+                $date = Carbon::parse($request->date)->format('Y-m-d');
                 $item_date = Carbon::parse($item->created_at)->format('Y-m-d');
                 return $date == $item_date;
             });
@@ -358,7 +368,10 @@ class Loan
     {
         /** @var PartnerBankLoan $request */
         $request = $this->repo->find($loan_id);
-        return (new PartnerLoanRequest($request))->details();
+        $loan=(new PartnerLoanRequest($request));
+        $details=$loan->details();
+        $details['next_status']=$loan->getNextStatus($loan_id);
+        return $details;
     }
 
     /**
@@ -370,13 +383,13 @@ class Loan
     public function uploadDocument($loan_id, Request $request, $user)
     {
         /** @var PartnerBankLoan $loan */
-        $loan           = $this->repo->find($loan_id);
-        $picture        = $request->file('picture');
-        $name           = $request->name;
+        $loan = $this->repo->find($loan_id);
+        $picture = $request->file('picture');
+        $name = $request->name;
         $formatted_name = strtolower(preg_replace("/ /", "_", $name));
         list($extra_file, $extra_file_name) = $this->makeExtraLoanFile($picture, $formatted_name);
-        $url                                                                         = $this->saveImageToCDN($extra_file, getTradeLicenceImagesFolder(), $extra_file_name);
-        $detail                                                                      = (new PartnerLoanRequest($loan))->details();
+        $url = $this->saveImageToCDN($extra_file, getTradeLicenceImagesFolder(), $extra_file_name);
+        $detail = (new PartnerLoanRequest($loan))->details();
         $detail['final_information_for_loan']['document']['extras'][$formatted_name] = $url;
         $this->setModifier($user);
         DB::transaction(function () use ($loan, $detail, $formatted_name, $user, $name) {
@@ -397,10 +410,10 @@ class Loan
     {
 
         $partner_bank_loan = $this->repo->find($loan_id);
-        $old_status        = $partner_bank_loan->status;
-        $new_status        = $request->new_status;
-        $description       = $request->has('description') ? $request->description : 'Status Changed';
-        $status            = [
+        $old_status = $partner_bank_loan->status;
+        $new_status = $request->new_status;
+        $description = $request->has('description') ? $request->description : 'Status Changed';
+        $status = [
             'applied',
             'submitted',
             'verified',
@@ -409,8 +422,8 @@ class Loan
             'disbursed',
             'closed'
         ];
-        $old_index         = array_search($old_status, $status);
-        $new_index         = array_search($new_status, $status);
+        $old_index = array_search($old_status, $status);
+        $new_index = array_search($new_status, $status);
         if (!(($old_status == 'hold') || $new_index - $old_index == 1 || (in_array($new_status, [
                     'declined',
                     'hold',
