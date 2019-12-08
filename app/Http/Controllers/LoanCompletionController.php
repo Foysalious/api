@@ -1,23 +1,21 @@
-<?php namespace App\Http\Controllers;
+<?php
 
+namespace App\Http\Controllers;
 use App\Models\Profile;
-use Illuminate\Validation\ValidationException;
-use App\Repositories\FileRepository;
-use Sheba\ModificationFields;
 use Illuminate\Http\Request;
-use Carbon\Carbon;
-use DB;
+use Sheba\Loan\Loan;
 
-class SpLoanInformationCompletion extends Controller
+class LoanCompletionController extends Controller
 {
-    public function getLoanInformationCompletion($partner, Request $request)
+    public function getLoanInformationCompletion($partner, Request $request,Loan $loan)
     {
         try {
             $complete_count = 0;
 
             $partner = $request->partner;
-            $manager_resource = $request->manager_resource;
-            $profile = $manager_resource->profile;
+            $resource = $request->manager_resource;
+            $completion=$loan->setPartner($partner)->setResource($resource)->getCompletion();
+            /*$profile = $manager_resource->profile;
             $basic_informations = $partner->basicInformations;
             $bank_informations = $partner->bankInformations;
 
@@ -51,7 +49,7 @@ class SpLoanInformationCompletion extends Controller
                     'last_update' => $documents['last_update']
                 ],
                 'is_applicable_for_loan' => $is_all_completed
-            ];
+            ];*/
 
             return api_response($request, $completion, 200, ['completion' => $completion]);
         } catch (\Throwable $e) {
@@ -217,5 +215,4 @@ class SpLoanInformationCompletion extends Controller
 
         return ['documents' => $documents, 'last_update' => $last_update];
     }
-
 }
