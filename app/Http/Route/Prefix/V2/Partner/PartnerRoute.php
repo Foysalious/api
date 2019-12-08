@@ -24,17 +24,17 @@ class PartnerRoute
         $api->group(['prefix'     => 'loans',
                      'middleware' => 'jwtGlobalAuth'
         ], function ($api) {
-            $api->get('/', 'SpLoanController@index');
-            $api->get('/{loan_id}/details','SpLoanController@show');
-            $api->post('/{loan_id}','SpLoanController@update');
-            $api->post('/{loan_id}/upload-documents','SpLoanController@uploadDocuments');
-            $api->post('/{loan_id}/status','SpLoanController@statusChange');
-            $api->get('/{loan_id}/banks/{bank_id}', 'SpLoanController@assignBank');
-            $api->get('{partner_bank_loan}/logs', 'SpLoanController@getChangeLogs');
-            $api->post('{partner_bank_loan}/send-sms', 'SpLoanController@sendSMS');
-            $api->post('/{partner_bank_loan}/comments', 'SpLoanController@storeComment');
-            $api->get('/{partner_bank_loan}/comments', 'SpLoanController@getComments');
-            $api->post('/{partner_bank_loan}/status-change', 'SpLoanController@statusChange');
+            $api->get('/', 'LoanController@index');
+            $api->get('/{loan_id}/details','LoanController@show');
+            $api->post('/{loan_id}','LoanController@update');
+            $api->post('/{loan_id}/upload-documents','LoanController@uploadDocuments');
+            $api->post('/{loan_id}/status','LoanController@statusChange');
+            $api->get('/{loan_id}/banks/{bank_id}', 'LoanController@assignBank');
+            $api->get('{partner_bank_loan}/logs', 'LoanController@getChangeLogs');
+            $api->post('{partner_bank_loan}/send-sms', 'LoanController@sendSMS');
+            $api->post('/{partner_bank_loan}/comments', 'LoanController@storeComment');
+            $api->get('/{partner_bank_loan}/comments', 'LoanController@getComments');
+            $api->post('/{partner_bank_loan}/status-change', 'LoanController@statusChange');
         });
     }
 }
