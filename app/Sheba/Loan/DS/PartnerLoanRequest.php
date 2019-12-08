@@ -130,7 +130,7 @@ class PartnerLoanRequest implements Arrayable
                 'profile' => [
                     'name' => $this->partner->getContactPerson(),
                     'mobile' => $this->partner->getContactNumber(),
-                    'is_nid_verified' => $this->partner->isNIDVerified(),
+                    'is_nid_verified' => $this->partner->isNIDVerified() ? true : false,
                     'updated_at' => (Carbon::parse($this->partner->updatedAt()))->format('j F, Y h:i A'),
                 ]
             ],
