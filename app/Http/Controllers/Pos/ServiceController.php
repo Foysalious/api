@@ -132,6 +132,20 @@ class ServiceController extends Controller
             $partner_pos_service->unit          = $partner_pos_service->unit ? constants('POS_SERVICE_UNITS')[$partner_pos_service->unit] : null;
             $partner_pos_service->warranty_unit = $partner_pos_service->warranty_unit ? config('pos.warranty_unit')[$partner_pos_service->warranty_unit] : null;
 
+            $partner_pos_service_model = PartnerPosService::with([
+                    'discounts' => function ($discounts_query) {
+                        $discounts_query->runningDiscounts()->select(['id', 'partner_pos_service_id', 'amount', 'is_amount_percentage', 'cap', 'start_date', 'end_date']);
+                    }
+                ])->find($partner_pos_service->id);
+
+            $partner_pos_service->thumb = $partner_pos_service_model->thumb;
+            $partner_pos_service->banner = $partner_pos_service_model->banner;
+            $partner_pos_service->app_thumb = $partner_pos_service_model->app_thumb;
+            $partner_pos_service->app_banner = $partner_pos_service_model->app_banner;
+            $partner_pos_service->publication_status = $partner_pos_service_model->publication_status;
+            $partner_pos_service->is_published_for_shop = $partner_pos_service_model->is_published_for_shop;
+            $partner_pos_service->discounts = $partner_pos_service_model->discounts;
+
             app()->make(ActionRewardDispatcher::class)->run('pos_inventory_create', $request->partner, $request->partner, $partner_pos_service);
 
             return api_response($request, null, 200, ['msg' => 'Product Created Successfully', 'service' => $partner_pos_service]);
