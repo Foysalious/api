@@ -31,7 +31,7 @@ class SpLoanController extends Controller
             $bank_name = null;
             if (!$partner->loan->isEmpty()) {
                 $last      = $partner->loan->last();
-                $bank_name = $last->bank_name ?: $last->bank ? $last->bank->name : null;
+                $bank_name = $last->bank_name ?: (($last->bank) ? $last->bank->name : constants('AVAILABLE_BANK_FOR_LOAN')[0]['name']);
             }
             $homepage = [
                 'running_application' => [
