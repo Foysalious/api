@@ -1,6 +1,5 @@
 <?php namespace Sheba\InfoCall;
 
-
 use App\Models\Customer;
 use Carbon\Carbon;
 use Sheba\ModificationFields;
@@ -91,6 +90,7 @@ class Creator
             'intended_closing_date' => Carbon::now()->addMinutes(30)
         ];
         $this->setModifier($this->customer);
+        
         return $this->customer->infoCalls()->create($this->withCreateModificationField($data));
     }
 }
