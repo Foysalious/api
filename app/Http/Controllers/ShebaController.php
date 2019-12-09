@@ -18,6 +18,7 @@ use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
 use Cache;
 use DB;
+use Exception;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
@@ -26,6 +27,7 @@ use Sheba\Partner\Validations\NidValidation;
 use Sheba\Payment\AvailableMethods;
 use Sheba\Reports\PdfHandler;
 use Sheba\Repositories\PaymentLinkRepository;
+use Throwable;
 use Validator;
 
 class ShebaController extends Controller
@@ -66,7 +68,7 @@ class ShebaController extends Controller
             }
             $this->dispatch(new SendFaqEmail($request->all()));
             return api_response($request, null, 200);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return api_response($request, null, 500);
         }
     }
@@ -112,7 +114,7 @@ class ShebaController extends Controller
              * $images = $images->show();
              * }
              * return count($images) > 0 ? api_response($request, $images, 200, ['images' => $images]) : api_response($request, null, 404);*/
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return api_response($request, null, 500);
         }
     }
@@ -157,24 +159,34 @@ class ShebaController extends Controller
             if ($request->has('version') && $request->has('app')) {
                 $version = (int)$request->version;
                 $app = $request->app;
-                $versions = AppVersion::where('tag', $app)->where('version_code', '>', $version)->get();
-                $data = array(
-                    'title' => !$versions->isEmpty() ? $versions->last()->title : null,
-                    'body' => !$versions->isEmpty() ? $versions->last()->body : null,
-                    'image_link' => !$versions->isEmpty() ? $versions->last()->image_link : null,
-                    'height' => !$versions->isEmpty() ? $versions->last()->height : null,
-                    'width' => !$versions->isEmpty() ? $versions->last()->width : null,
-                    'has_update' => count($versions) > 0 ? 1 : 0,
-                    'is_critical' => count($versions->where('is_critical', 1)) > 0 ? 1 : 0
-                );
+                $versions = AppVersion::where('tag', $app)
+                    ->where('version_code', '>', $version)
+                    ->where(function ($query) use ($version) {
+                        $query->where('lowest_upgradable_version_code', '<', $version)
+                            ->orWhereNull('lowest_upgradable_version_code');
+                    })
+                    ->get();
+
+                $data = [
+                    'title'     => !$versions->isEmpty() ? $versions->last()->title : null,
+                    'body'      => !$versions->isEmpty() ? $versions->last()->body : null,
+                    'height'    => !$versions->isEmpty() ? $versions->last()->height : null,
+                    'width'     => !$versions->isEmpty() ? $versions->last()->width : null,
+                    'image_link'    => !$versions->isEmpty() ? $versions->last()->image_link : null,
+                    'has_update'    => count($versions) > 0 ? 1 : 0,
+                    'is_critical'   => count($versions->where('is_critical', 1)) > 0 ? 1 : 0
+                ];
+
                 return api_response($request, $data, 200, ['data' => $data]);
             }
+
             $apps = json_decode(Redis::get('app_versions'));
             if ($apps == null) {
                 $apps = $this->scrapeAppVersionsAndStoreInRedis();
             }
+
             return api_response($request, $apps, 200, ['apps' => $apps]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -207,7 +219,7 @@ class ShebaController extends Controller
             $ids = array_map('intval', explode(',', env('RENT_CAR_IDS')));
             $categories = Category::whereIn('id', $ids)->select('id', 'name', 'parent_id')->get();
             return api_response($request, $categories, 200, ['info' => $categories]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -231,7 +243,7 @@ class ShebaController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -264,7 +276,7 @@ class ShebaController extends Controller
                 $message = 'Successful';
             }
             return api_response($request, null, 200, ['info' => $info, 'message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -303,7 +315,7 @@ class ShebaController extends Controller
                 'payments' => $payments,
                 'discount_message' => 'Pay online and stay relaxed!!!'
             ]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -436,7 +448,7 @@ class ShebaController extends Controller
             ];
 
             return api_response($request, null, 200, ['info' => $emi_data]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return api_response($request, null, 500);
         }
     }
@@ -467,7 +479,7 @@ class ShebaController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

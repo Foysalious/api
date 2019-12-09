@@ -107,7 +107,6 @@ class GoogleController extends Controller
         $version = (int)\request()->header('Version-Code');
         $portal_name = \request()->header('portal-name');
         $platform_name = \request()->header('Platform-Name');
-        $user_agent = \request()->header('User-Agent');
         if (($version > 30211 && $portal_name == 'customer-app') || ($version > 12003 && $portal_name == 'bondhu-app') || ($version > 126 && $portal_name == 'customer-app' && $platform_name == 'ios')) {
             $access_token_request = new AccessTokenRequest();
             $access_token_request->setAuthorizationCode($code);
