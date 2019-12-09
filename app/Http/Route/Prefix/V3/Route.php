@@ -20,6 +20,10 @@ class Route
             $api->group(['prefix' => 'categories'], function ($api) {
                 $api->get('{category}', 'Category\CategoryController@show');
             });
+            $api->group(['prefix' => 'service-requests'], function ($api) {
+                $api->post('/', 'ServiceRequest\ServiceRequestController@store');
+            });
         });
+
     }
 }
