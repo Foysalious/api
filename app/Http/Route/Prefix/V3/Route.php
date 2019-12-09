@@ -1,6 +1,5 @@
 <?php namespace App\Http\Route\Prefix\V3;
 
-
 class Route
 {
     public function set($api)
