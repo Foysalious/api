@@ -54,16 +54,18 @@ class JobLogs
         $this->job->rider = $rider;
 
         if (constants('JOB_STATUS_SEQUENCE')[$job_status] > 0) {
-            array_push($logs, array(
-                'status' => 'order_placed',
-                'log' => 'Order has been placed to ' . $partner->name . '.',
-                'user' => array(
-                    'name' => $partner->name,
-                    'picture' => $partner->logo,
-                    'mobile' => $partner->getManagerMobile(),
-                    'type' => 'partner',
-                ),
-            ));
+            if($partner){
+                array_push($logs, array(
+                    'status' => 'order_placed',
+                    'log' => 'Order has been placed to ' . $partner->name . '.',
+                    'user' => array(
+                        'name' => $partner->name,
+                        'picture' => $partner->logo,
+                        'mobile' => $partner->getManagerMobile(),
+                        'type' => 'partner',
+                    ),
+                ));
+            }
         }
         if (constants('JOB_STATUS_SEQUENCE')[$job_status] > 1) {
             array_push($logs, [
