@@ -59,9 +59,15 @@ class BkashPayoutController extends Controller
             $this->validate($request, ['app_key' => 'required', 'app_secret' => 'required', 'username' => 'required', 'password' => 'required',]);
             /** @var SupportingOperation $support */
             $support = $sheba_bkash->setModule('normal')->getModuleMethod('support');
-            $support->setAppKey($request->app_key)->setAppSecret($request->app_secret)->setUsername($request->username)->setPassword($request->password)->setUrl("https://checkout.pay.bka.sh/v1.2.0-beta");
+            $support->setAppKey($request->app_key)
+                ->setAppSecret($request->app_secret)
+                ->setUsername($request->username)
+                ->setPassword($request->password)
+                ->setUrl("https://checkout.pay.bka.sh/v1.2.0-beta");
+
             $result = $support->queryBalance();
-            if (!isset($result->errorCode)) return api_response($request, $result, 200, ['data' => $result->organizationBalance]);
+            if (!isset($result->errorCode))
+                return api_response($request, $result, 200, ['data' => $result->organizationBalance]);
 
             return api_response($request, null, 500);
         } catch (ValidationException $e) {
