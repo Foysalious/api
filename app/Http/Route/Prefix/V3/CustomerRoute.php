@@ -12,6 +12,7 @@ class CustomerRoute
                 $api->post('promotions/add', 'PromotionV3Controller@add');
             });
             $api->group(['prefix' => 'addresses'], function ($api) {
+                $api->post('/', 'Customer\CustomerAddressController@store');
                 $api->group(['prefix' => '{address}'], function ($api) {
                     $api->get('available', 'Customer\CustomerAddressController@isAvailable');
                 });

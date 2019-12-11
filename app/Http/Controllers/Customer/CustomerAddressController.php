@@ -6,6 +6,8 @@ use App\Models\CustomerDeliveryAddress;
 use App\Models\Partner;
 use Illuminate\Http\Request;
 use Sheba\CustomerDeliveryAddress\AvailabilityChecker;
+use Sheba\Map\Address;
+use Sheba\Map\GeoCode;
 
 class CustomerAddressController extends Controller
 {
@@ -17,5 +19,15 @@ class CustomerAddressController extends Controller
         return api_response($request, $available, 200, ['address' => [
             'is_available' => $available ? 1 : 0
         ]]);
+    }
+
+    public function store(Request $request, GeoCode $geo_code, Address $address)
+    {
+        try {
+            $geo = $geo_code->setAddress($address->setAddress($request->address))->getGeo();
+            dd($geo);
+        } catch (\Throwable $e) {
+            dd($e);
+        }
     }
 }

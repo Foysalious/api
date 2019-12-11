@@ -457,7 +457,7 @@ class JobController extends Controller
             $job = $request->job;
             try {
                 DB::transaction(function () use ($customer, $job) {
-                    $favorite = new CustomerFavorite(['category_id' => $job->category, 'name' => $job->category->name, 'additional_info' => $job->additional_info]);
+                    $favorite = new CustomerFavorite(['category_id' => $job->category_id, 'name' => $job->category->name, 'additional_info' => $job->additional_info]);
                     $customer->favorites()->save($favorite);
                     foreach ($job->jobServices as $jobService) {
                         $favorite->services()->attach($jobService->service_id, [
