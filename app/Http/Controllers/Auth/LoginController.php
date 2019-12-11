@@ -2,22 +2,17 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Http\Controllers\Controller;
 use App\Http\Controllers\FacebookAccountKit;
-use App\Models\Profile;
-use App\Models\Resource;
 use App\Repositories\CustomerRepository;
 use App\Repositories\ProfileRepository;
+use Hash;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Tymon\JWTAuth\Exceptions\JWTException;
-use Validator;
-use App\Http\Controllers\Controller;
 use JWTAuth;
 use JWTFactory;
-use App\Models\Customer;
 use Session;
-use Illuminate\Support\Facades\Redis;
-use Hash;
+use Validator;
 
 class LoginController extends Controller
 {
@@ -27,8 +22,8 @@ class LoginController extends Controller
 
     public function __construct()
     {
-        $this->fbKit = new FacebookAccountKit();
-        $this->customer = new CustomerRepository();
+        $this->fbKit             = new FacebookAccountKit();
+        $this->customer          = new CustomerRepository();
         $this->profileRepository = new ProfileRepository();
     }
 
@@ -36,9 +31,9 @@ class LoginController extends Controller
     {
         try {
             $this->validate($request, [
-                'email' => 'required',
+                'email'    => 'required',
                 'password' => 'required',
-                'from' => 'required|string|in:' . implode(',', constants('FROM'))
+                'from'     => 'required|string|in:' . implode(',', constants('FROM'))
             ]);
             $profile = $this->profileRepository->ifExist($request->email, 'email');
             if ($profile == false) {
@@ -50,13 +45,18 @@ class LoginController extends Controller
                     if ($info != null) {
                         return api_response($request, $info, 200, ['info' => $info]);
                     }
+                    return api_response($request, null, 400, ['message' => 'Profile info not found']);
                 }
+                return api_response($request, null, 400, ['message' => 'Password does\'t match']);
             }
             return api_response($request, null, 404);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry  = app('sentry');
+            $sentry->user_context([
+                'request' => $request->all(),
+                'message' => $message
+            ]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
@@ -81,10 +81,8 @@ class LoginController extends Controller
 
     private function _validateLoginRequest($request)
     {
-        $from = implode(',', constants('FROM'));
-        $validator = Validator::make($request->all(), [
-
-        ], ['in' => 'from value is invalid!']);
+        $from      = implode(',', constants('FROM'));
+        $validator = Validator::make($request->all(), [], ['in' => 'from value is invalid!']);
         return $validator->fails() ? $validator->errors()->all()[0] : false;
     }
 

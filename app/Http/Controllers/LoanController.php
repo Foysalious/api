@@ -26,6 +26,7 @@ use Sheba\Loan\Exceptions\NotApplicableForLoan;
 use Sheba\Loan\Loan;
 use Sheba\ModificationFields;
 use Sheba\Sms\Sms;
+use Throwable;
 
 class LoanController extends Controller
 {
@@ -591,6 +592,19 @@ class LoanController extends Controller
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
+        }
+    }
+
+    public function downloadDocuments(Request $request, $loan_id, Loan $loan)
+    {
+        try {
+            $doc     = $loan->downloadDocuments($loan_id);
+            if (!$doc) return api_response($request,null,500);
+            return api_response($request, $doc,200,['link'=>$doc]);
+        } catch (Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request,null,500);
         }
     }
 }
