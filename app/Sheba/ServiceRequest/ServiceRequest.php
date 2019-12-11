@@ -31,7 +31,7 @@ class ServiceRequest
         $this->validate();
         $final = [];
         foreach ($this->services as $service) {
-            $this->serviceRequestObject->setServiceId($service['id'])->setQuantity($service['quantity'])->setOption($service['option']);
+            $this->serviceRequestObject->setServiceId($service['id'])->setQuantity($service['quantity'])->setOption(array_map('intval',$service['option']));
             if (isset($service['pick_up_location_geo'])) {
                 $geo = new Geo();
                 $this->serviceRequestObject->setPickUpGeo($geo->setLat($service['pick_up_location_geo']['lat'])->setLng($service['pick_up_location_geo']['lng']));

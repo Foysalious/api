@@ -25,11 +25,10 @@ class GeoCode
 
 
     /**
-     * @return Geo
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function getGeo()
     {
-        $geo = $this->client->getGeoFromAddress($this->address);
+       return $this->client->getGeoFromAddress($this->address);
     }
 }

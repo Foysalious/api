@@ -34,6 +34,7 @@ class BarikoiClient implements Client
         }
     }
 
+
     /**
      * @param Address $address
      * @return Geo
@@ -41,19 +42,15 @@ class BarikoiClient implements Client
      */
     public function getGeoFromAddress(Address $address): Geo
     {
-        try {
-            $client = new HTTPClient();
-            $response = $client->request('POST', 'https://barikoi.xyz/v1/api/search/' . $this->apiKey . '/rupantor/geocode', [
-                'form_params' => [
-                    'q' => $address->getAddress()
-                ]
-            ]);
-            $response = json_decode($response->getBody());
-            if (!isset($response->geocoded_address->latitude)) return null;
-            $geo = new Geo();
-            return $geo->setLat($response->geocoded_address->latitude)->setLng($response->geocoded_address->longitude);
-        } catch (RequestException $e) {
-            throw $e;
-        }
+        $client = new HTTPClient();
+        $response = $client->request('POST', 'https://barikoi.xyz/v1/api/search/' . $this->apiKey . '/rupantor/geocode', [
+            'form_params' => [
+                'q' => $address->getAddress()
+            ]
+        ]);
+        $response = json_decode($response->getBody());
+        if (!isset($response->geocoded_address->latitude)) return null;
+        $geo = new Geo();
+        return $geo->setLat($response->geocoded_address->latitude)->setLng($response->geocoded_address->longitude);
     }
 }
