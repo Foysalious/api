@@ -2,7 +2,6 @@
 
 use Sheba\Map\Client\BarikoiClient;
 use Sheba\Map\Client\Client;
-use Sheba\Location\Geo;
 
 class GeoCode
 {

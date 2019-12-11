@@ -27,6 +27,7 @@ class CustomerAddressController extends Controller
         ]]);
     }
 
+
     public function store($customer, Request $request, GeoCode $geo_code, Address $address, Creator $creator, Geo $geo_class)
     {
         $this->validate($request, [
@@ -44,7 +45,7 @@ class CustomerAddressController extends Controller
         $address_text .= ',' . $request->city;
         $address->setAddress($address_text);
         $geo = $this->getGeo($geo_code, $address);
-        if (!$geo) $geo = $geo_class->setLng($request->lat)->setLng($request->lng);
+        if (!$geo) $geo = $geo_class->setLat($request->lat)->setLng($request->lng);
         $this->setModifier($request->customer);
         $address = $creator->setCustomer($request->customer)->setAddressText($address_text)->setHouseNo($request->house_no)->setRoadNo($request->road_no)->setBlockNo($request->block_no)
             ->setSectorNo($request->sector_no)->setCity($request->city)->setGeo($geo)->create();
