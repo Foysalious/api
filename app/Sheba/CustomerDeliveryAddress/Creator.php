@@ -2,6 +2,7 @@
 
 
 use App\Models\Customer;
+use App\Models\HyperLocal;
 use Sheba\Location\Geo;
 use Sheba\Repositories\Interfaces\Customer\CustomerDeliveryAddressInterface;
 
@@ -76,11 +77,13 @@ class Creator
     public function create()
     {
         $this->makeData();
-        $this->customerDeliveryAddressRepository->create($this->data);
+        return $this->customerDeliveryAddressRepository->create($this->data);
     }
 
     private function makeData()
     {
+        $hyper_local = HyperLocal::insidePolygon($this->geo->getLat(), $this->geo->getLng())->first();
+        if (!$hyper_local) return null;
         $this->data = [
             'customer_id' => $this->customer->id,
             'address' => $this->addressText,
@@ -89,7 +92,10 @@ class Creator
             'block_no' => $this->blockNo,
             'sector_no' => $this->sectorNo,
             'city' => $this->city,
-            'geo_informations' => json_encode(['lat' => $this->geo->getLat(), 'lng' => $this->geo->getLng()])
+            'name' => $this->customer->profile->name,
+            'mobile' => $this->customer->profile->mobile,
+            'geo_informations' => json_encode(['lat' => $this->geo->getLat(), 'lng' => $this->geo->getLng()]),
+            'location_id' => $hyper_local->location_id
         ];
     }
 }
