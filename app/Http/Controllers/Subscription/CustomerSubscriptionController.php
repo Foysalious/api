@@ -310,14 +310,17 @@ class CustomerSubscriptionController extends Controller
                 'min_weekly_qty'    => $service_subscription->min_weekly_qty,
                 'min_monthly_qty'   => $service_subscription->min_monthly_qty,
                 "partner_id"        => $subscription_order->partner_id,
-                "partner_name"      => $service_details->name,
-                "contact_person"    => $partner->getContactPerson(),
-                "partner_slug"      => $partner->sub_domain,
-                "partner_mobile"    => $partner->getContactNumber(),
-                "partner_address"   => $partner->address,
-                "logo"              => $service_details->logo,
-                "avg_rating"        => (double)$partner->reviews()->avg('rating'),
-                "total_rating"      => $partner->reviews->count(),
+
+                "partner_name"      => property_exists($service_details, 'name') ? $service_details->name : null,
+                "logo"              => property_exists($service_details, 'logo') ? $service_details->logo : null,
+
+                "contact_person"    => $partner ? $partner->getContactPerson() : null,
+                "partner_slug"      => $partner ? $partner->sub_domain : null,
+                "partner_mobile"    => $partner ? $partner->getContactNumber() : null,
+                "partner_address"   => $partner ? $partner->address : null,
+                "avg_rating"        => $partner ? (double)$partner->reviews()->avg('rating') : 0.00,
+                "total_rating"      => $partner ? $partner->reviews->count() : null,
+
                 'customer_name'     => $subscription_order->customer->profile->name,
                 'customer_mobile'   => $subscription_order->customer->profile->mobile,
                 'address_id'        => $delivery_address->id,
@@ -355,6 +358,7 @@ class CustomerSubscriptionController extends Controller
 
             return api_response($request, $subscription_order_details, 200, ['subscription_order_details' => $subscription_order_details]);
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
