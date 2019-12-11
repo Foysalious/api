@@ -2,6 +2,7 @@
 
 use Sheba\Map\Client\BarikoiClient;
 use Sheba\Map\Client\Client;
+use Sheba\Location\Geo;
 
 class GeoCode
 {
@@ -21,12 +22,14 @@ class GeoCode
         $this->address = $address;
         return $this;
     }
-    
+
+
     /**
-     * @return \Sheba\Location\Geo
+     * @return Geo
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function getGeo()
     {
-        return $this->client->getGeoFromAddress($this->address);
+        $geo = $this->client->getGeoFromAddress($this->address);
     }
 }

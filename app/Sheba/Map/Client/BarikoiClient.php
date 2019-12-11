@@ -34,6 +34,11 @@ class BarikoiClient implements Client
         }
     }
 
+    /**
+     * @param Address $address
+     * @return Geo
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
     public function getGeoFromAddress(Address $address): Geo
     {
         try {

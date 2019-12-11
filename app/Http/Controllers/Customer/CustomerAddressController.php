@@ -24,8 +24,19 @@ class CustomerAddressController extends Controller
     public function store(Request $request, GeoCode $geo_code, Address $address)
     {
         try {
-            $geo = $geo_code->setAddress($address->setAddress($request->address))->getGeo();
-            dd($geo);
+            $this->validate($request, [
+                'house_no' => 'required|string',
+                'road_no' => 'required|string',
+                'block_no' => 'string',
+                'sector_no' => 'string',
+                'city' => 'required|string',
+                'city_id' => 'reqior'
+            ]);
+            $address_text = $request->house_no . ',' . $request->road_no;
+            if ($request->has('block_no')) $address_text .= ',' . $request->block_no;
+            if ($request->has('sector_no')) $address_text .= ',' . $request->sector_no;
+            $address_text .= ',' . $request->city;
+            $geo = $geo_code->setAddress($address->setAddress($address_text))->getGeo();
         } catch (\Throwable $e) {
             dd($e);
         }
