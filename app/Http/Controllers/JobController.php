@@ -7,6 +7,8 @@ use App\Models\LocationService;
 use App\Models\Payable;
 use App\Models\Payment;
 use App\Sheba\UserRequestInformation;
+use App\Transformers\ServiceV2DeliveryChargeTransformer;
+use App\Transformers\ServiceV2MinimalTransformer;
 use App\Transformers\ServiceV2Transformer;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -173,7 +175,11 @@ class JobController extends Controller
                     $variables = json_decode($jobService->variables);
 
                     $location_service = LocationService::where('location_id', $job->partnerOrder->order->location_id)->where('service_id', $jobService->service->id)->first();
-                    $resource = new Item($jobService->service, new ServiceV2Transformer($location_service, $price_calculation, $delivery_charge, $job_discount_handler, false));
+                    $selected_service = [
+                        "option" => json_decode($jobService->option, true),
+                        "variable_type" => $jobService->variable_type
+                    ];
+                    $resource = new Item($selected_service, new ServiceV2MinimalTransformer($location_service, $price_calculation, $delivery_charge, $job_discount_handler));
                     $price_data  = $manager->createData($resource)->toArray();
 
                     $service_data = [
@@ -190,7 +196,14 @@ class JobController extends Controller
                     $services->push($service_data);
                 }
             }
+
             $job_collection->put('services', $services);
+
+            $resource = new Item($job->category, new ServiceV2DeliveryChargeTransformer($delivery_charge, $job_discount_handler));
+            $delivery_charge_discount_data = $manager->createData($resource)->toArray();
+            $job_collection->put('delivery_charge', $delivery_charge_discount_data['delivery_charge']);
+            $job_collection->put('delivery_discount', $delivery_charge_discount_data['delivery_discount']);
+
             return api_response($request, $job_collection, 200, ['job' => $job_collection]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);

@@ -6,6 +6,7 @@ use App\Models\CustomerDeliveryAddress;
 use App\Models\LocationService;
 use App\Models\Service;
 use App\Models\SubscriptionOrder;
+use App\Transformers\ServiceV2MinimalTransformer;
 use App\Transformers\ServiceV2Transformer;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -352,7 +353,7 @@ class CustomerSubscriptionController extends Controller
             /** @var Manager $manager */
             $manager = new Manager();
             $manager->setSerializer(new ArraySerializer());
-            $resource = new Item($service, new ServiceV2Transformer($location_service, $price_calculation, $delivery_charge, $job_discount_handler, false));
+            $resource = new Item($service, new ServiceV2MinimalTransformer($location_service, $price_calculation, $delivery_charge, $job_discount_handler));
             $price_discount_data  = $manager->createData($resource)->toArray();
             $subscription_order_details += $price_discount_data;
 

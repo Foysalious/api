@@ -6,6 +6,7 @@ use App\Models\Job;
 use App\Models\Location;
 use App\Models\LocationService;
 use App\Models\Service;
+use App\Transformers\ServiceV2MinimalTransformer;
 use App\Transformers\ServiceV2Transformer;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -81,7 +82,7 @@ class CustomerFavoriteController extends Controller
             $favorite->services->each(function ($service) use ($favorite, &$services, $manager, $price_calculation, $delivery_charge, $job_discount_handler) {
 
                 $location_service = LocationService::where('location_id', $this->location)->where('service_id', $service->id)->first();
-                $resource = new Item($service, new ServiceV2Transformer($location_service, $price_calculation, $delivery_charge, $job_discount_handler, false));
+                $resource = new Item($service, new ServiceV2MinimalTransformer($location_service, $price_calculation, $delivery_charge, $job_discount_handler));
                 $price_discount_data  = $manager->createData($resource)->toArray();
 
                 $pivot = $service->pivot;

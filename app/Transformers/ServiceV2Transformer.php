@@ -25,8 +25,6 @@ class ServiceV2Transformer extends TransformerAbstract
     private $deliveryCharge;
     /** @var JobDiscountHandler $jobDiscountHandler */
     private $jobDiscountHandler;
-    /** @var bool $withGeneralData */
-    private $withGeneralData;
 
     /**
      * ServiceV2Transformer constructor.
@@ -34,16 +32,13 @@ class ServiceV2Transformer extends TransformerAbstract
      * @param PriceCalculation $price_calculation
      * @param DeliveryCharge $delivery_charge
      * @param JobDiscountHandler $job_discount_handler
-     * @param bool $with_general_data
      */
-    public function __construct(LocationService $location_service, PriceCalculation $price_calculation,
-                                DeliveryCharge $delivery_charge, JobDiscountHandler $job_discount_handler, $with_general_data = true)
+    public function __construct(LocationService $location_service, PriceCalculation $price_calculation, DeliveryCharge $delivery_charge, JobDiscountHandler $job_discount_handler)
     {
         $this->locationService = $location_service;
         $this->priceCalculation = $price_calculation;
         $this->deliveryCharge = $delivery_charge;
         $this->jobDiscountHandler = $job_discount_handler;
-        $this->withGeneralData = $with_general_data;
     }
 
     /**
@@ -64,15 +59,13 @@ class ServiceV2Transformer extends TransformerAbstract
         /** @var Discount $delivery_discount */
         $delivery_discount = $this->jobDiscountHandler->getDiscount();
 
-        $general_data = [
+        $data = [
             'id'            => (int)$service->id,
             'name'          => $service->name,
             'type'          => $service->variable_type,
             'min_quantity'  => $service->min_quantity,
             'faqs'          => json_decode($service->faqs),
-            'description'   => $service->description
-        ];
-        $data = [
+            'description'   => $service->description,
             'discount'      => $discount ? [
                 'value' => (double)$discount->amount,
                 'is_percentage' => $discount->isPercentage(),
@@ -93,7 +86,6 @@ class ServiceV2Transformer extends TransformerAbstract
             $data['options']       = $this->getOption($variables);
             $data['option_prices'] = $this->formatOptionWithPrice($prices);
         }
-        if ($this->withGeneralData) $data = $general_data + $data;
 
         return $data;
     }
