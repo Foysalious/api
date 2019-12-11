@@ -6,6 +6,7 @@ use App\Models\Job;
 use App\Models\Location;
 use App\Models\LocationService;
 use App\Models\Service;
+use App\Transformers\ServiceV2DeliveryChargeTransformer;
 use App\Transformers\ServiceV2MinimalTransformer;
 use App\Transformers\ServiceV2Transformer;
 use Illuminate\Database\QueryException;
@@ -82,10 +83,14 @@ class CustomerFavoriteController extends Controller
             $favorite->services->each(function ($service) use ($favorite, &$services, $manager, $price_calculation, $delivery_charge, $job_discount_handler) {
 
                 $location_service = LocationService::where('location_id', $this->location)->where('service_id', $service->id)->first();
-                $resource = new Item($service, new ServiceV2MinimalTransformer($location_service, $price_calculation, $delivery_charge, $job_discount_handler));
-                $price_discount_data  = $manager->createData($resource)->toArray();
-
                 $pivot = $service->pivot;
+                $selected_service = [
+                    "option" => json_decode($pivot->option, true),
+                    "variable_type" => $pivot->variable_type
+                ];
+                $resource = new Item($selected_service, new ServiceV2MinimalTransformer($location_service, $price_calculation));
+                $price_data  = $manager->createData($resource)->toArray();
+
                 $pivot['variables'] = json_decode($pivot['variables']);
                 $pivot['picture'] = $service->thumb;
                 $pivot['unit'] = $service->unit;
@@ -93,9 +98,13 @@ class CustomerFavoriteController extends Controller
                 $pivot['app_thumb'] = $service->app_thumb;
                 $pivot['publication_status'] = $service->publication_status;
 
-                $service_data_with_price_and_discount = $pivot->toArray() + $price_discount_data;
+                $resource = new Item($service->category, new ServiceV2DeliveryChargeTransformer($delivery_charge, $job_discount_handler));
+                $delivery_charge_discount_data = $manager->createData($resource)->toArray();
+                $service_data_with_price_and_discount = $pivot->toArray() + $price_data + $delivery_charge_discount_data;
+
                 array_push($services, $service_data_with_price_and_discount);
             });
+
             $partner = $favorite->partner;
             $favorite['total_price'] = $favorite->total_price;
             $favorite['partner_id'] = $partner ? $partner->id : null;

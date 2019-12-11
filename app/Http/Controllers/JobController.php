@@ -179,7 +179,7 @@ class JobController extends Controller
                         "option" => json_decode($jobService->option, true),
                         "variable_type" => $jobService->variable_type
                     ];
-                    $resource = new Item($selected_service, new ServiceV2MinimalTransformer($location_service, $price_calculation, $delivery_charge, $job_discount_handler));
+                    $resource = new Item($selected_service, new ServiceV2MinimalTransformer($location_service, $price_calculation));
                     $price_data  = $manager->createData($resource)->toArray();
 
                     $service_data = [

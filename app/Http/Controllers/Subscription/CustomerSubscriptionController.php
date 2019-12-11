@@ -6,6 +6,7 @@ use App\Models\CustomerDeliveryAddress;
 use App\Models\LocationService;
 use App\Models\Service;
 use App\Models\SubscriptionOrder;
+use App\Transformers\ServiceV2DeliveryChargeTransformer;
 use App\Transformers\ServiceV2MinimalTransformer;
 use App\Transformers\ServiceV2Transformer;
 use Carbon\Carbon;
@@ -353,9 +354,20 @@ class CustomerSubscriptionController extends Controller
             /** @var Manager $manager */
             $manager = new Manager();
             $manager->setSerializer(new ArraySerializer());
-            $resource = new Item($service, new ServiceV2MinimalTransformer($location_service, $price_calculation, $delivery_charge, $job_discount_handler));
+
+            $selected_service = [
+                "option" => $service_details_breakdown->option,
+                "variable_type" => $service->variable_type
+            ];
+            $resource = new Item($selected_service, new ServiceV2MinimalTransformer($location_service, $price_calculation));
             $price_discount_data  = $manager->createData($resource)->toArray();
-            $subscription_order_details += $price_discount_data;
+
+            $resource = new Item($service->category, new ServiceV2DeliveryChargeTransformer($delivery_charge, $job_discount_handler));
+            $delivery_charge_discount_data = $manager->createData($resource)->toArray();
+
+            $subscription_order_details += [
+                    'unit_price' => $price_discount_data['unit_price'], 'service_discount' => $price_discount_data['discount'],
+                ] + $delivery_charge_discount_data;
 
             return api_response($request, $subscription_order_details, 200, ['subscription_order_details' => $subscription_order_details]);
         } catch (Throwable $e) {
