@@ -457,6 +457,11 @@ class Loan
             return false;
         }
     }
+    public function downloadFromUrl($url){
+        $file=public_path('temp');
+        $f=HZip::downLoadFile($url,$file);
+        return $f?$file.'/'.basename($url):false;
+    }
 
     private function zipDir()
     {
