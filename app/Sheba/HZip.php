@@ -16,9 +16,9 @@ class HZip
      */
     public static function zipDir($sourcePath, $outZipPath)
     {
-        $pathInfo   = pathInfo($sourcePath);
+        $pathInfo = pathInfo($sourcePath);
         $parentPath = $pathInfo['dirname'];
-        $dirName    = $pathInfo['basename'];
+        $dirName = $pathInfo['basename'];
         $z = new ZipArchive();
         $z->open($outZipPath, ZIPARCHIVE::CREATE);
         $z->addEmptyDir($dirName);
@@ -62,16 +62,23 @@ class HZip
         foreach ($files as $key => $value) {
             if (!empty($value) && is_string($value)) {
                 try {
-                    $file = file_get_contents($value);
-                    if ($file) {
-                        $f = file_put_contents($downloadDir . '/' . basename($value), $file);
-                        if ($f)
-                            $downloaded_files[] = $f;
-                    }
+                    $f = self::downLoadFile($value, $downloadDir);
+                    if ($f) $downloaded_files[] = $f;
                 } catch (\Throwable $e) {
                 }
             }
         }
         return $downloaded_files;
+    }
+
+    public static function downLoadFile($url, $downloadDir)
+    {
+        $file = file_get_contents($url);
+        if ($file) {
+            $f = file_put_contents($downloadDir . '/' . basename($url), $file);
+            return $f;
+        } else {
+            return null;
+        }
     }
 }
