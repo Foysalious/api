@@ -30,7 +30,7 @@ class CustomerAddressController extends Controller
                 'block_no' => 'string',
                 'sector_no' => 'string',
                 'city' => 'required|string',
-                'city_id' => 'reqior'
+                'city_id' => 'required'
             ]);
             $address_text = $request->house_no . ',' . $request->road_no;
             if ($request->has('block_no')) $address_text .= ',' . $request->block_no;
