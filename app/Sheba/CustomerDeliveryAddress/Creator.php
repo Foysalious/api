@@ -1,6 +1,5 @@
 <?php namespace Sheba\CustomerDeliveryAddress;
 
-
 use App\Models\Customer;
 use App\Models\HyperLocal;
 use Sheba\Location\Geo;
