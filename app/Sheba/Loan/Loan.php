@@ -8,9 +8,12 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use RecursiveArrayIterator;
+use RecursiveIteratorIterator;
 use ReflectionException;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
+use Sheba\HZip;
 use Sheba\Loan\DS\BusinessInfo;
 use Sheba\Loan\DS\Documents;
 use Sheba\Loan\DS\FinanceInfo;
@@ -38,10 +41,14 @@ class Loan
     private $business;
     private $nominee_granter;
     private $document;
+    private $downloadDir;
+    private $zipDir;
 
     public function __construct()
     {
-        $this->repo = new LoanRepository();
+        $this->repo        = new LoanRepository();
+        $this->downloadDir = storage_path('downloads');
+        $this->zipDir      = public_path('temp/documents.zip');
     }
 
     /**
@@ -119,7 +126,7 @@ class Loan
     public function get($id)
     {
         /** @var PartnerBankLoan $loan */
-        $loan = $this->repo->find($id);
+        $loan    = $this->repo->find($id);
         $request = new PartnerLoanRequest($loan);
         return $request->toArray();
     }
@@ -127,26 +134,17 @@ class Loan
     public function update($loan_id, Request $request)
     {
         /** @var PartnerBankLoan $loan */
-
-        $loan = $this->repo->find($loan_id);
+        $loan        = $this->repo->find($loan_id);
         $loanRequest = (new PartnerLoanRequest($loan));
-        $details = $loanRequest->details();
+        $details     = $loanRequest->details();
         // $new_data = json_decode($request->get('data'),true);
         $new_data = $request->get('data');
-
-        $updater = (new Updater($details, $new_data));
-
-        DB::transaction(function () use ($updater, $loanRequest, $request,$details,$new_data) {
+        $updater  = (new Updater($details, $new_data));
+        DB::transaction(function () use ($updater, $loanRequest, $request, $details, $new_data) {
             $difference = $updater->findDifference()->getDifference();
             $updater->update($loanRequest, $request);
             if (!empty($difference)) {
-                $loanRequest->storeChangeLog(
-                    $request->user,
-                    json_encode(array_column($difference, 'title')),
-                    json_encode(array_column($difference, 'old')),
-                    json_encode(array_column($difference, 'new')),
-                    'Loan Request Updated'
-                );
+                $loanRequest->storeChangeLog($request->user, json_encode(array_column($difference, 'title')), json_encode(array_column($difference, 'old')), json_encode(array_column($difference, 'new')), 'Loan Request Updated');
             }
         });
 
@@ -163,8 +161,8 @@ class Loan
             'big_banner' => config('sheba.s3_url') . 'images/offers_images/banners/loan_banner_v5_1440_628.jpg',
             'banner'     => config('sheba.s3_url') . 'images/offers_images/banners/loan_banner_v5_720_324.jpg',
         ];
-        $data = array_merge($data, (new RunningApplication($running))->toArray());
-        $data = array_merge($data, ['details' => self::homepageStatics()]);
+        $data    = array_merge($data, (new RunningApplication($running))->toArray());
+        $data    = array_merge($data, ['details' => self::homepageStatics()]);
         return $data;
     }
 
@@ -172,8 +170,8 @@ class Loan
     {
         return [
             [
-                'title' => 'ব্যাংক লোনের সুবিধা কি কি - ',
-                'list' => [
+                'title'     => 'ব্যাংক লোনের সুবিধা কি কি - ',
+                'list'      => [
                     'সহজ শর্তে লোন নিন',
                     'জামানত বিহীন লোন নিন',
                     'ঘরে বসেই লোনের আবেদন করুন',
@@ -182,8 +180,8 @@ class Loan
                 'list_icon' => 'icon'
             ],
             [
-                'title' => 'ব্যাংক লোন কিভাবে নেবেন- ',
-                'list' => [
+                'title'     => 'ব্যাংক লোন কিভাবে নেবেন- ',
+                'list'      => [
                     'sManager অ্যাপ থেকে প্রয়োজনীয় সকল তথ্য পুরন করুন',
                     'লোন ক্যলকুলেটর দিয়ে হিসাব করে কিস্তির ধারনা নিন',
                     'লোনের আবেদন নিশ্চিত করুন',
@@ -202,8 +200,8 @@ class Loan
     public function apply()
     {
         $this->validate();
-        $data = $this->data;
-        $fields = [
+        $data       = $this->data;
+        $fields     = [
             'personal',
             'business',
             'finance',
@@ -228,7 +226,7 @@ class Loan
         $requests = $this->repo->where('partner_id', $this->partner->id)->get();
         if (!$requests->isEmpty()) {
             $last_request = $requests->last();
-            $statuses = constants('LOAN_STATUS');
+            $statuses     = constants('LOAN_STATUS');
             if (in_array($last_request->status, [
                 $statuses['approved'],
                 $statuses['considerable']
@@ -248,11 +246,11 @@ class Loan
      */
     public function getCompletion()
     {
-        $data = [
-            'personal' => $this->personalInfo()->completion(),
-            'business' => $this->businessInfo()->completion(),
-            'finance' => $this->financeInfo()->completion(),
-            'nominee' => $this->nomineeGranter()->completion(),
+        $data                           = [
+            'personal'  => $this->personalInfo()->completion(),
+            'business'  => $this->businessInfo()->completion(),
+            'finance'   => $this->financeInfo()->completion(),
+            'nominee'   => $this->nomineeGranter()->completion(),
             'documents' => $this->documents()->completion()
         ];
         $data['is_applicable_for_loan'] = $this->isApplicableForLoan($data);
@@ -302,7 +300,7 @@ class Loan
         $history = [];
         foreach ($loans as $loan) {
             $loanRequest = new PartnerLoanRequest($loan);
-            $history[] = $loanRequest->setPartner($this->partner)->history();
+            $history[]   = $loanRequest->setPartner($this->partner)->history();
         }
         return $history;
     }
@@ -310,7 +308,7 @@ class Loan
     public function all(Request $request)
     {
 
-        $user = $request->user;
+        $user    = $request->user;
         $bank_id = null;
         if ($user instanceof BankUser)
             $bank_id = $user->bank->id;
@@ -318,9 +316,8 @@ class Loan
         if ($bank_id) {
             $query = $query->where('partner_bank_loans.bank_id', $bank_id);
         }
-        $data = $query->with(['bank'])->get();
+        $data   = $query->with(['bank'])->get();
         $output = collect();
-
         foreach ($data as $loan) {
             $output->push((new PartnerLoanRequest($loan))->listItem());
         }
@@ -338,7 +335,7 @@ class Loan
         }
         if ($request->has('date')) {
             $output = $output->filter(function ($item) use ($request) {
-                $date = Carbon::parse($request->date)->format('Y-m-d');
+                $date      = Carbon::parse($request->date)->format('Y-m-d');
                 $item_date = Carbon::parse($item->created_at)->format('Y-m-d');
                 return $date == $item_date;
             });
@@ -367,10 +364,10 @@ class Loan
     public function show($loan_id)
     {
         /** @var PartnerBankLoan $request */
-        $request = $this->repo->find($loan_id);
-        $loan=(new PartnerLoanRequest($request));
-        $details=$loan->details();
-        $details['next_status']=$loan->getNextStatus($loan_id);
+        $request                = $this->repo->find($loan_id);
+        $loan                   = (new PartnerLoanRequest($request));
+        $details                = $loan->details();
+        $details['next_status'] = $loan->getNextStatus($loan_id);
         return $details;
     }
 
@@ -383,13 +380,13 @@ class Loan
     public function uploadDocument($loan_id, Request $request, $user)
     {
         /** @var PartnerBankLoan $loan */
-        $loan = $this->repo->find($loan_id);
-        $picture = $request->file('picture');
-        $name = $request->name;
+        $loan           = $this->repo->find($loan_id);
+        $picture        = $request->file('picture');
+        $name           = $request->name;
         $formatted_name = strtolower(preg_replace("/ /", "_", $name));
         list($extra_file, $extra_file_name) = $this->makeExtraLoanFile($picture, $formatted_name);
-        $url = $this->saveImageToCDN($extra_file, getTradeLicenceImagesFolder(), $extra_file_name);
-        $detail = (new PartnerLoanRequest($loan))->details();
+        $url                                                                         = $this->saveImageToCDN($extra_file, getTradeLicenceImagesFolder(), $extra_file_name);
+        $detail                                                                      = (new PartnerLoanRequest($loan))->details();
         $detail['final_information_for_loan']['document']['extras'][$formatted_name] = $url;
         $this->setModifier($user);
         DB::transaction(function () use ($loan, $detail, $formatted_name, $user, $name) {
@@ -410,10 +407,10 @@ class Loan
     {
 
         $partner_bank_loan = $this->repo->find($loan_id);
-        $old_status = $partner_bank_loan->status;
-        $new_status = $request->new_status;
-        $description = $request->has('description') ? $request->description : 'Status Changed';
-        $status = [
+        $old_status        = $partner_bank_loan->status;
+        $new_status        = $request->new_status;
+        $description       = $request->has('description') ? $request->description : 'Status Changed';
+        $status            = [
             'applied',
             'submitted',
             'verified',
@@ -422,8 +419,8 @@ class Loan
             'disbursed',
             'closed'
         ];
-        $old_index = array_search($old_status, $status);
-        $new_index = array_search($new_status, $status);
+        $old_index         = array_search($old_status, $status);
+        $new_index         = array_search($new_status, $status);
         if (!(($old_status == 'hold') || $new_index - $old_index == 1 || (in_array($new_status, [
                     'declined',
                     'hold',
@@ -442,5 +439,29 @@ class Loan
             (new PartnerLoanRequest($partner_bank_loan))->storeChangeLog($request->user, 'status', $old_status, $new_status, $description);
         });
 
+    }
+
+    public function downloadDocuments($loan_id)
+    {
+        /** @var PartnerBankLoan $loan */
+        $loan      = $this->repo->find($loan_id);
+        $documents = (new PartnerLoanRequest($loan))->getDocuments();
+        $flat      = new RecursiveIteratorIterator(new RecursiveArrayIterator($documents));
+        $files     = HZip::downloadFiles($flat, $this->downloadDir);
+        if (!empty($files)) {
+            $dir  = $this->zipDir();
+            $link = $this->saveFileToCDN($dir, getLoanDocumentsFolder() . '/' . $loan_id, $this->uniqueFileName($dir, 'documents.zip'));
+            unlink($dir);
+            return $link;
+        } else {
+            return false;
+        }
+    }
+
+    private function zipDir()
+    {
+
+        HZip::zipDir($this->downloadDir, $this->zipDir);
+        return $this->zipDir;
     }
 }
