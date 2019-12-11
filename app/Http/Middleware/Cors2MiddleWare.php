@@ -3,6 +3,7 @@
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class Cors2MiddleWare
 {
@@ -102,7 +103,8 @@ class Cors2MiddleWare
         $headers['Access-Control-Allow-Headers'] = 'Content-Type, X-Auth-Token, Origin, Authorization, X-Requested-With, Portal-Name, User-Id';
         $response = $next($request);
         foreach ($headers as $key => $value) {
-            $response->header($key, $value);
+            if ($response instanceof BinaryFileResponse){}
+            else $response->header($key, $value);
         }
         return $response;
     }
