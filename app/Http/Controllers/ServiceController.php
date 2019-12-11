@@ -23,15 +23,28 @@ use Throwable;
 class ServiceController extends Controller
 {
     use Helpers;
+
+    /** @var ServiceRepository $serviceRepository */
     private $serviceRepository;
+    /** @var ReviewRepository $reviewRepository */
     private $reviewRepository;
 
+    /**
+     * ServiceController constructor.
+     *
+     * @param ServiceRepository $srp
+     * @param ReviewRepository $reviewRepository
+     */
     public function __construct(ServiceRepository $srp, ReviewRepository $reviewRepository)
     {
         $this->serviceRepository = $srp;
         $this->reviewRepository = $reviewRepository;
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function index(Request $request)
     {
         try {
@@ -58,6 +71,12 @@ class ServiceController extends Controller
         }
     }
 
+    /**
+     * @param $service
+     * @param Request $request
+     * @param ApproximatePriceCalculator $approximatePriceCalculator
+     * @return JsonResponse
+     */
     public function get($service, Request $request, ApproximatePriceCalculator $approximatePriceCalculator)
     {
         try {

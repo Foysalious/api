@@ -3,16 +3,26 @@
 use App\Exceptions\HyperLocationNotFoundException;
 use App\Http\Controllers\Controller;
 use App\Models\CustomerDeliveryAddress;
+use App\Models\LocationService;
 use App\Models\Service;
 use App\Models\SubscriptionOrder;
+use App\Transformers\ServiceV2Transformer;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Item;
+use League\Fractal\Serializer\ArraySerializer;
+use Sheba\Checkout\DeliveryCharge;
 use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Checkout\SubscriptionOrderPlace\CustomerSubscriptionOrderPlaceFactory;
+use Sheba\JobDiscount\JobDiscountHandler;
+use Sheba\LocationService\PriceCalculation;
 use Sheba\Payment\Adapters\Payable\SubscriptionOrderAdapter;
 use Sheba\Payment\ShebaPayment;
 use Sheba\Subscription\ApproximatePriceCalculator;
+use Throwable;
 
 class CustomerSubscriptionController extends Controller
 {
@@ -60,7 +70,7 @@ class CustomerSubscriptionController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -86,7 +96,7 @@ class CustomerSubscriptionController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -113,7 +123,7 @@ class CustomerSubscriptionController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -200,13 +210,26 @@ class CustomerSubscriptionController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
-    public function show(Request $request, $customer, $subscription, ApproximatePriceCalculator $approximatePriceCalculator)
+    /**
+     * @param Request $request
+     * @param $customer
+     * @param $subscription
+     * @param ApproximatePriceCalculator $approximatePriceCalculator
+     * @param PriceCalculation $price_calculation
+     * @param DeliveryCharge $delivery_charge
+     * @param JobDiscountHandler $job_discount_handler
+     * @return JsonResponse
+     */
+    public function show(Request $request, $customer, $subscription,
+                         ApproximatePriceCalculator $approximatePriceCalculator,
+                         PriceCalculation $price_calculation, DeliveryCharge $delivery_charge,
+                         JobDiscountHandler $job_discount_handler)
     {
         try {
             $customer = $request->customer;
@@ -216,7 +239,6 @@ class CustomerSubscriptionController extends Controller
             $partner_orders = $subscription_order->orders->map(function ($order) {
                 return $order->lastPartnerOrder();
             });
-
             $format_partner_orders = $partner_orders->map(function ($partner_order) {
                 $last_job = $partner_order->order->lastJob();
                 return [
@@ -230,17 +252,14 @@ class CustomerSubscriptionController extends Controller
                     'cancelled_at' => $partner_order->cancelled_at ? Carbon::parse($partner_order->cancelled_at)->format('M-j, h:i a') : null
                 ];
             });
-
             $schedule_dates = $partner_orders->map(function ($partner_order) {
                 $last_job = $partner_order->order->lastJob();
                 $day_name = Carbon::parse($last_job->schedule_date)->format('l');
                 return Carbon::parse(new Carbon('next ' . lcfirst($day_name)))->toDateString();
             })->toArray();
-
             usort($schedule_dates, function ($a, $b) {
                 return strtotime($a) - strtotime($b);
             });
-
             $next_order = [];
             foreach ($format_partner_orders->toArray() as $partner_order) {
                 if (empty($partner_order['is_completed'])) {
@@ -248,13 +267,10 @@ class CustomerSubscriptionController extends Controller
                     break;
                 }
             }
-
             $served_orders = $format_partner_orders->filter(function ($partner_order) {
                 return $partner_order['is_completed'] != null;
             });
-
             $service_details = json_decode($subscription_order->service_details);
-
             $variables = collect();
             foreach ($service_details->breakdown as $breakdown) {
                 if (empty($breakdown->questions)) {
@@ -272,72 +288,77 @@ class CustomerSubscriptionController extends Controller
                 }
                 $variables->push($data);
             }
-
             $service_details_breakdown = $service_details->breakdown['0'];
-
             $service = Service::find((int)$service_details_breakdown->id);
             $service_subscription = $service->subscription;
             $schedules = collect(json_decode($subscription_order->schedules));
+            $delivery_address = $subscription_order->deliveryAddress()->withTrashed()->first();
+
             $subscription_order_details = [
                 "subscription_code" => $subscription_order->code(),
-                "category_id" => $service->category->id,
-                "category_name" => $service->category->name,
-                'service_id' => $service->id,
-                "service_name" => $service->name,
-                "app_thumb" => $service->app_thumb,
-                'description' => $service->description,
-                "variables" => $variables,
-                "total_quantity" => $service_details->total_quantity,
-                'quantity' => (double)$service_details_breakdown->quantity,
+                "category_id"       => $service->category->id,
+                "category_name"     => $service->category->name,
+                'service_id'        => $service->id,
+                "service_name"      => $service->name,
+                "app_thumb"         => $service->app_thumb,
+                'description'       => $service->description,
+                "variables"         => $variables,
+                "total_quantity"    => $service_details->total_quantity,
+                'quantity'          => (double)$service_details_breakdown->quantity,
+                'is_weekly'         => $service_subscription->is_weekly,
+                'is_monthly'        => $service_subscription->is_monthly,
+                'min_weekly_qty'    => $service_subscription->min_weekly_qty,
+                'min_monthly_qty'   => $service_subscription->min_monthly_qty,
+                "partner_id"        => $subscription_order->partner_id,
 
-                'is_weekly' => $service_subscription->is_weekly,
-                'is_monthly' => $service_subscription->is_monthly,
-                'min_weekly_qty' => $service_subscription->min_weekly_qty,
-                'min_monthly_qty' => $service_subscription->min_monthly_qty,
+                "partner_name"      => property_exists($service_details, 'name') ? $service_details->name : null,
+                "logo"              => property_exists($service_details, 'logo') ? $service_details->logo : null,
 
-                "partner_id" => $subscription_order->partner_id,
-                "partner_name" => $service_details->name,
-                "contact_person" => $partner->getContactPerson(),
-                "partner_slug" => $partner->sub_domain,
-                "partner_mobile" => $partner->getContactNumber(),
-                "partner_address" => $partner->address,
-                "logo" => $service_details->logo,
-                "avg_rating" => (double)$partner->reviews()->avg('rating'),
-                "total_rating" => $partner->reviews->count(),
+                "contact_person"    => $partner ? $partner->getContactPerson() : null,
+                "partner_slug"      => $partner ? $partner->sub_domain : null,
+                "partner_mobile"    => $partner ? $partner->getContactNumber() : null,
+                "partner_address"   => $partner ? $partner->address : null,
+                "avg_rating"        => $partner ? (double)$partner->reviews()->avg('rating') : 0.00,
+                "total_rating"      => $partner ? $partner->reviews->count() : null,
 
-                'customer_name' => $subscription_order->customer->profile->name,
-                'customer_mobile' => $subscription_order->customer->profile->mobile,
-                'address_id' => $subscription_order->deliveryAddress->id,
-                'address' => $subscription_order->deliveryAddress->address,
-                'location_name' => $subscription_order->location ? $subscription_order->location->name : "",
-                'ordered_for' => $subscription_order->deliveryAddress->name,
-                'subscription_status' => $subscription_order->status,
-                'subscription_additional_info' => $subscription_order->additional_info,
-
-
-                "billing_cycle" => $subscription_order->billing_cycle,
-                "subscription_period" => Carbon::parse($subscription_order->billing_cycle_start)->format('M j') . ' - ' . Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
-                "total_orders" => $subscription_order->orders->count(),
-                "completed_orders" => $served_orders->count(),
-
-                "orders_left" => $subscription_order->orders->count() - $served_orders->count(),
-                "preferred_time" => $schedules->first()->time,
-                "next_order" => empty($next_order) ? null : $next_order,
-                "days_left" => Carbon::today()->diffInDays(Carbon::parse($subscription_order->billing_cycle_end)),
-
-                'original_price' => $service_details->original_price,
-                'discount' => $service_details->discount,
-                'total_price' => $subscription_order->totalPrice,
-                "paid_on" => $subscription_order->isPaid() ? $subscription_order->paid_at->format('M-j, Y') : null,
-                'is_paid' => $subscription_order->isPaid(),
-                "orders" => $format_partner_orders,
-                'schedule_dates' => $schedule_dates,
-                'paid' => $subscription_order->paid,
-                'due' => $subscription_order->due,
+                'customer_name'     => $subscription_order->customer->profile->name,
+                'customer_mobile'   => $subscription_order->customer->profile->mobile,
+                'address_id'        => $delivery_address->id,
+                'address'           => $delivery_address->address,
+                'location_name'     => $subscription_order->location ? $subscription_order->location->name : "",
+                'ordered_for'       => $delivery_address->name,
+                "billing_cycle"     => $subscription_order->billing_cycle,
+                "total_orders"      => $subscription_order->orders->count(),
+                "completed_orders"  => $served_orders->count(),
+                "orders_left"       => $subscription_order->orders->count() - $served_orders->count(),
+                "preferred_time"    => $schedules->first()->time,
+                "next_order"        => empty($next_order) ? null : $next_order,
+                "days_left"         => Carbon::today()->diffInDays(Carbon::parse($subscription_order->billing_cycle_end)),
+                'original_price'    => $service_details->original_price,
+                'discount'          => $service_details->discount,
+                'total_price'       => $subscription_order->totalPrice,
+                "paid_on"           => $subscription_order->isPaid() ? $subscription_order->paid_at->format('M-j, Y') : null,
+                'is_paid'           => $subscription_order->isPaid(),
+                "orders"            => $format_partner_orders,
+                'schedule_dates'    => $schedule_dates,
+                'paid'              => $subscription_order->paid,
+                'due'               => $subscription_order->due,
+                "subscription_additional_info"  => $subscription_order->additional_info,
+                "subscription_status"           => $subscription_order->status,
+                "subscription_period"           => Carbon::parse($subscription_order->billing_cycle_start)->format('M j') . ' - ' . Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
             ];
 
+            $location_service = LocationService::where('location_id', $subscription_order->location_id)->where('service_id', $service->id)->first();
+            /** @var Manager $manager */
+            $manager = new Manager();
+            $manager->setSerializer(new ArraySerializer());
+            $resource = new Item($service, new ServiceV2Transformer($location_service, $price_calculation, $delivery_charge, $job_discount_handler, false));
+            $price_discount_data  = $manager->createData($resource)->toArray();
+            $subscription_order_details += $price_discount_data;
+
             return api_response($request, $subscription_order_details, 200, ['subscription_order_details' => $subscription_order_details]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -405,7 +426,7 @@ class CustomerSubscriptionController extends Controller
                 else
                     return api_response($request, $partners, 200, ['status' => 'no_partners_available_on_time']);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
