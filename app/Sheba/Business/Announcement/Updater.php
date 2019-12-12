@@ -12,6 +12,7 @@ class Updater
     private $title;
     private $shortDescription;
     private $data;
+    private $type;
     /** @var Carbon */
     private $endDate;
     /** @var Announcement */
@@ -53,6 +54,11 @@ class Updater
         return $this;
     }
 
+    public function setType($type)
+    {
+        $this->type = $type;
+        return $this;
+    }
 
     public function update()
     {
@@ -63,6 +69,7 @@ class Updater
     public function makeData()
     {
         if ($this->title) $this->data['title'] = $this->title;
+        if ($this->type) $this->data['type'] = $this->type;
         if ($this->shortDescription) $this->data['short_description'] = $this->shortDescription;
         if ($this->endDate) $this->data['end_date'] = $this->endDate->toDateTimeString();
     }

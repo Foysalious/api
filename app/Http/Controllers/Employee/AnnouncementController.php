@@ -8,7 +8,9 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use League\Fractal\Serializer\ArraySerializer;
+use Sheba\Business\Announcement\AnnouncementList;
 use Sheba\Dal\Announcement\AnnouncementRepositoryInterface;
+use Sheba\Dal\Announcement\AnnouncementTypes;
 
 class AnnouncementController extends Controller
 {
@@ -24,17 +26,16 @@ class AnnouncementController extends Controller
         return api_response($request, $announcement, 200, ['announcement' => $fractal->createData($resource)->toArray()['data']]);
     }
 
-    public function index(Request $request, AnnouncementRepositoryInterface $announcement_repository)
+    public function index(Request $request, AnnouncementList $announcement_list)
     {
-        $this->validate($request, ['limit' => 'numeric', 'offset' => 'numeric']);
+        $this->validate($request, ['limit' => 'numeric', 'offset' => 'numeric', 'type' => 'string|in:' . implode(',', AnnouncementTypes::get())]);
         $auth_info = $request->auth_info;
         $business_member = $auth_info['business_member'];
         if (!$business_member) return api_response($request, null, 401);
         list($offset, $limit) = calculatePagination($request);
-        $announcements = $announcement_repository->where('business_id', $business_member['business_id'])
-            ->select('id', 'title', 'short_description', 'end_date', 'created_at')->orderBy('id', 'desc');
-        if ($request->has('limit')) $announcements = $announcements->skip($offset)->limit($limit);
-        $announcements = $announcements->get();
+        $announcement_list->setBusinessId($business_member['business_id'])->setOffset($offset)->setLimit($limit);
+        if ($request->type) $announcement_list->setType($request->type);
+        $announcements = $announcement_list->get();
         if (count($announcements) == 0) return api_response($request, null, 404);
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());

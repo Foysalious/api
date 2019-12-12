@@ -13,6 +13,8 @@ class Creator
     private $announcementRepository;
     private $title;
     private $shortDescription;
+    private $type;
+    private $data;
     /** @var Carbon */
     private $endDate;
     /** @var Business */
@@ -66,18 +68,32 @@ class Creator
         return $this;
     }
 
+    public function setType($type)
+    {
+        $this->type = $type;
+        return $this;
+    }
+
     public function create()
     {
-        $announcement = $this->announcementRepository->create([
-            'business_id' => $this->business->id,
-            'title' => $this->title,
-            'short_description' => $this->shortDescription,
-            'end_date' => $this->endDate->toDateTimeString()
-        ]);
+        $this->makeData();
+        /** @var Announcement $announcement */
+        $announcement = $this->announcementRepository->create($this->data);
         $this->business->load(['members' => function ($q) {
             $q->select('members.id', 'profile_id');
         }]);
         dispatch((new SendAnnouncementNotificationToEmployee($this->business->members, $announcement)));
         return $announcement;
+    }
+
+    private function makeData()
+    {
+        $this->data = [
+            'business_id' => $this->business->id,
+            'title' => $this->title,
+            'short_description' => $this->shortDescription,
+            'end_date' => $this->endDate->toDateTimeString()
+        ];
+        if ($this->type) $this->data['type'] = $this->type;
     }
 }
