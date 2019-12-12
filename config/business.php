@@ -22,6 +22,10 @@ return [
             'rw' => 'procurement_rw',
             'r' => 'procurement_r',
         ],
+        'announcement' => [
+            'rw' => 'announcement_rw',
+            'r' => 'announcement_r',
+        ],
     ],
     'DRIVER_CONTRACT_TYPES' => ['permanent', 'temporary'],
     'VEHICLE_TYPES' => ['hatchback', 'sedan', 'suv', 'passenger_van', 'others'],

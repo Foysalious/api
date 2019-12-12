@@ -233,4 +233,9 @@ class PartnerLoanRequest implements Arrayable
             'description' => $description
         ]));
     }
+
+    public function getDocuments()
+    {
+        return $this->final_details->getDocuments();
+    }
 }

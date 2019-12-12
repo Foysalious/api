@@ -17,6 +17,12 @@ class EmployeeRoute
                 });
                 $api->post('/', 'Employee\SupportController@store');
             });
+            $api->group(['prefix' => 'announcements'], function ($api) {
+                $api->get('/', 'Employee\AnnouncementController@index');
+                $api->group(['prefix' => '{announcement}'], function ($api) {
+                    $api->get('/', 'Employee\AnnouncementController@show');
+                });
+            });
         });
     }
 }

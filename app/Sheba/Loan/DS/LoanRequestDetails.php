@@ -92,7 +92,7 @@ class LoanRequestDetails implements Arrayable
     /**
      * @return array|void
      */
-    private function getDocuments()
+    public function getDocuments()
     {
         return (new Documents($this->partner, $this->resource, $this))->toArray();
     }
