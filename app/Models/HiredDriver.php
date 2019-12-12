@@ -8,8 +8,8 @@ class HiredDriver extends Model
 
     public function scopeWhichIsHiredByBusiness($query, $business_id = null)
     {
-        $query = $query->where('hired_by_type', "App\\Models\\Business");
-        if (!$business_id) $query = $query->where('hired_by_id', (int)$business_id);
+        $query = $query->where('hired_by_type', 'like', '%' . "business" . '%');
+        if ($business_id) $query = $query->where('hired_by_id', (int)$business_id);
         return $query;
     }
 
