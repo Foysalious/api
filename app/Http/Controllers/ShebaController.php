@@ -13,7 +13,7 @@ use App\Models\Resource;
 use App\Models\Service;
 use App\Models\Slider;
 use App\Models\SliderPortal;
-use App\Models\SluggableType;
+use Sheba\Dal\UniversalSlug\Model as SluggableType;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
 use Cache;
@@ -489,7 +489,11 @@ class ShebaController extends Controller
     {
         try {
             $type = SluggableType::where('slug', $slug)->first();
-            return api_response($request, true, 200, ['slug' => $type->sluggable_type]);
+            $sluggable_type = [
+                'type' => $type->sluggable_type,
+                'id' => $type->sluggable_id,
+            ];
+            return api_response($request, true, 200, ['sluggable_type' => $sluggable_type]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

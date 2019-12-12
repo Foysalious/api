@@ -47,4 +47,9 @@ class NavigationController extends Controller
         }
         return response()->json(['msg' => 'not found', 'code' => 404]);
     }
+
+    public function getRedirectUrl(Request $request)
+    {
+        dd(123);
+    }
 }
