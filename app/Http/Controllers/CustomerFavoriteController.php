@@ -108,13 +108,14 @@ class CustomerFavoriteController extends Controller
             $favorite['partner_id']     = $partner ? $partner->id : null;
             $favorite['partner_name']   = $partner ? $partner->name : null;
             $favorite['partner_logo']   = $partner ? $partner->logo : null;
-            removeRelationsAndFields($favorite);
-            $favorite['services'] = $services;
 
             $resource = new Item($favorite->category, new ServiceV2DeliveryChargeTransformer($delivery_charge, $job_discount_handler));
             $delivery_charge_discount_data = $manager->createData($resource)->toArray();
             $favorite['delivery_charge'] = $delivery_charge_discount_data['delivery_charge'];
             $favorite['delivery_discount'] = $delivery_charge_discount_data['delivery_discount'];
+
+            removeRelationsAndFields($favorite);
+            $favorite['services'] = $services;
         });
 
         if (count($customer->favorites) > 0) {
@@ -123,7 +124,7 @@ class CustomerFavoriteController extends Controller
             return api_response($request, null, 404);
         }
     }
-
+    
     public function store($customer, Request $request)
     {
         try {
