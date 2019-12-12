@@ -11,13 +11,10 @@ class ServiceRequest
 {
     private $services;
     private $validator;
-    /** @var ServiceRequestObject */
-    private $serviceRequestObject;
 
-    public function __construct(Validator $validator, ServiceRequestObject $service_request_object)
+    public function __construct(Validator $validator)
     {
         $this->validator = $validator;
-        $this->serviceRequestObject = $service_request_object;
     }
 
     public function setServices(array $services)
@@ -31,21 +28,22 @@ class ServiceRequest
         $this->validate();
         $final = [];
         foreach ($this->services as $service) {
-            $this->serviceRequestObject->setServiceId($service['id'])->setQuantity($service['quantity'])->setOption($service['option']);
+            $serviceRequestObject = new ServiceRequestObject();
+            $serviceRequestObject->setServiceId($service['id'])->setQuantity($service['quantity'])->setOption(array_map('intval', $service['option']));
             if (isset($service['pick_up_location_geo'])) {
                 $geo = new Geo();
-                $this->serviceRequestObject->setPickUpGeo($geo->setLat($service['pick_up_location_geo']['lat'])->setLng($service['pick_up_location_geo']['lng']));
+                $serviceRequestObject->setPickUpGeo($geo->setLat($service['pick_up_location_geo']['lat'])->setLng($service['pick_up_location_geo']['lng']));
             };
             if (isset($service['destination_location_geo'])) {
                 $geo = new Geo();
-                $this->serviceRequestObject->setDestinationGeo($geo->setLat($service['destination_location_geo']['lat'])->setLng($service['destination_location_geo']['lng']));
+                $serviceRequestObject->setDestinationGeo($geo->setLat($service['destination_location_geo']['lat'])->setLng($service['destination_location_geo']['lng']));
             }
-            if (isset($service['pick_up_address'])) $this->serviceRequestObject->setPickUpAddress($service['pick_up_address']);
-            if (isset($service['destination_address'])) $this->serviceRequestObject->setDestinationAddress($service['destination_address']);
-            if (isset($service['drop_off_date'])) $this->serviceRequestObject->setDropOffDate($service['drop_off_date']);
-            if (isset($service['drop_off_time'])) $this->serviceRequestObject->setDropOffTime($service['drop_off_time']);
-            $this->serviceRequestObject->build();
-            array_push($final, $this->serviceRequestObject);
+            if (isset($service['pick_up_address'])) $serviceRequestObject->setPickUpAddress($service['pick_up_address']);
+            if (isset($service['destination_address'])) $serviceRequestObject->setDestinationAddress($service['destination_address']);
+            if (isset($service['drop_off_date'])) $serviceRequestObject->setDropOffDate($service['drop_off_date']);
+            if (isset($service['drop_off_time'])) $serviceRequestObject->setDropOffTime($service['drop_off_time']);
+            $serviceRequestObject->build();
+            array_push($final, $serviceRequestObject);
         }
         return $final;
     }

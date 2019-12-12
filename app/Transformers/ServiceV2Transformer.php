@@ -77,7 +77,7 @@ class ServiceV2Transformer extends TransformerAbstract
                 'is_percentage' => $delivery_discount->is_percentage,
                 'cap' => (double)$delivery_discount->cap,
                 'min_order_amount' => (double)$delivery_discount->rules->getMinOrderAmount()
-            ] : (double)0.00
+            ] : null
         ];
         if ($service->variable_type == Type::FIXED)
             $data['fixed_price'] = $this->priceCalculation->getUnitPrice();

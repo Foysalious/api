@@ -21,12 +21,13 @@ class GeoCode
         $this->address = $address;
         return $this;
     }
-    
+
+
     /**
-     * @return \Sheba\Location\Geo
+     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function getGeo()
     {
-        return $this->client->getGeoFromAddress($this->address);
+       return $this->client->getGeoFromAddress($this->address);
     }
 }

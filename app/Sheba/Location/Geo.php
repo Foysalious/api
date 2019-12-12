@@ -26,11 +26,11 @@ class Geo
 
     public function getLat()
     {
-        return $this->lat;
+        return $this->lat ? (double)$this->lat : null;
     }
 
     public function getLng()
     {
-        return $this->lng;
+        return $this->lng ? (double)$this->lng : null;
     }
 }
