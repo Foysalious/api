@@ -13,6 +13,7 @@ use App\Models\Resource;
 use App\Models\Service;
 use App\Models\Slider;
 use App\Models\SliderPortal;
+use Sheba\Dal\RedirectUrl\RedirectUrl;
 use Sheba\Dal\UniversalSlug\Model as SluggableType;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
@@ -505,9 +506,9 @@ class ShebaController extends Controller
         try {
             $this->validate($request, ['url' => 'required']);
 
-            $url = $request->url;
+            $new_url = RedirectUrl::where('old_url', 'LIKE', $request->url)->first()->new_url;
 
-            dd($url);
+            return api_response($request, true, 200, ['new_url' => $new_url]);
         } catch (ValidationException $e) {
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all()]);
@@ -515,6 +516,7 @@ class ShebaController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
