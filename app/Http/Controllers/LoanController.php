@@ -602,7 +602,7 @@ class LoanController extends Controller
             $data = $loan->show($loan_id);
             $pdf_handler = new PdfHandler();
             $loan_application_name = 'loan_application_' . $loan_id;
-            return $pdf_handler->setData($data)->setName($loan_application_name)->setViewFile('partner_loan_application_form')->show();
+            return $pdf_handler->setData($data)->setName($loan_application_name)->setViewFile('partner_loan_application_form')->download();
         }catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
