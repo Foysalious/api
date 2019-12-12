@@ -11,6 +11,7 @@ class Route
             $api->get('times', 'Schedule\ScheduleTimeController@index');
             $api->get('sluggable-type/{slug}', 'ShebaController@getSluggableType');
             $api->post('redirect-url', 'ShebaController@redirectUrl');
+            $api->post('breadcrumb', 'ShebaController@getBreadcrumb');
             $api->get('partners/send-order-requests', 'Partner\PartnerListController@getPartners');
             $api->group(['prefix' => 'rent-a-car'], function ($api) {
                 $api->get('prices', 'RentACar\RentACarController@getPrices');
