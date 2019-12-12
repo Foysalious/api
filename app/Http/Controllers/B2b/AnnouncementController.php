@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Sheba\Business\Announcement\Creator;
 use Sheba\Business\Announcement\Updater;
 use Sheba\Dal\Announcement\AnnouncementRepositoryInterface;
+use Sheba\Dal\Announcement\AnnouncementTypes;
 use Sheba\ModificationFields;
 
 class AnnouncementController extends Controller
@@ -19,7 +20,8 @@ class AnnouncementController extends Controller
         $this->validate($request, [
             'title' => 'required|string',
             'description' => 'required|string',
-            'end_date' => 'required|date|after:' . Carbon::yesterday()->format('Y-m-d')
+            'end_date' => 'required|date|after:' . Carbon::yesterday()->format('Y-m-d'),
+            'type' => 'required|string|in:' . implode(',', AnnouncementTypes::get())
         ]);
         $this->setModifier($request->business_member);
         if (!$access_control->setBusinessMember($request->business_member)->hasAccess('announcement.rw')) return api_response($request, null, 403);
