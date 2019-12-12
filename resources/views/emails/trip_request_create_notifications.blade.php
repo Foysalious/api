@@ -7,10 +7,10 @@
 <body>
 <p> Dear Sir,</p>
 <p>{{$title}}</p>
-<p>{{$trip_requester}}</p>
-<p>{{$trip_pickup_address}}</p>
-<p>{{$trip_dropoff_address}}</p>
-<p>{{$trip_request_created_at}}</p>
+Name:<p>{{$trip_requester}}</p>
+Pick Up Address:<p>{{$trip_pickup_address}}</p>
+Drop Off Address:<p>{{$trip_dropoff_address}}</p>
+Created At: <p>{{$trip_request_created_at}}</p>
 <p>Please follow this <a href="{{$link}}">this link</a> to take further actions.</p>
 <p>Thanks for being with <a href="https://sbusiness.xyz">sBusiness.xyz</a></p>
 </body>
