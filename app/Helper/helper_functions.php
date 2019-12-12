@@ -639,3 +639,18 @@ if (!function_exists('strContainsAll')) {
         return true;
     }
 }
+
+if (!function_exists('getBloodGroupsList')) {
+
+    /**
+     * Get list of blood groups.
+     *
+     * @param bool $associate
+     * @return array
+     */
+    function getBloodGroupsList($associate = true)
+    {
+        $groups = ['A+', 'B+', 'AB+', 'O+', 'A-', 'B-', 'AB-', 'O-'];
+        return $associate ? array_combine($groups, $groups) : $groups;
+    }
+}
