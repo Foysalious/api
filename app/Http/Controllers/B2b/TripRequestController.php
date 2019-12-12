@@ -7,16 +7,17 @@ use App\Models\BusinessTripRequest;
 use App\Repositories\CommentRepository;
 use App\Sheba\Business\BusinessTripSms;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\Scheduler\TripScheduler;
 use DB;
+use Sheba\Notification\B2b\TripRequests;
+use Illuminate\Support\Facades\DB as DBTransaction;
 
 class TripRequestController extends Controller
 {
-
     public function getTripRequests(Request $request)
     {
-
         try {
             $business_member = $request->business_member;
             $type = implode(',', config('business.VEHICLE_TYPES'));
@@ -127,7 +128,6 @@ class TripRequestController extends Controller
 
     public function tripRequestInfo($member, $trip_request, Request $request)
     {
-
         try {
             $trip_request = BusinessTripRequest::find((int)$trip_request);
             if (!$trip_request) return api_response($request, null, 404);
@@ -222,7 +222,6 @@ class TripRequestController extends Controller
         }
     }
 
-
     public function createTrip(Request $request, BusinessTripSms $businessTripSms)
     {
         try {
@@ -267,6 +266,14 @@ class TripRequestController extends Controller
             $business_trip_request = null;
             DB::transaction(function () use ($request, $business_member, $vehicleScheduler, $businessTripSms, &$business_trip_request) {
                 $business_trip_request = $this->storeTripRequest($request);
+
+                $trip_request = new TripRequests();
+                $trip_request->setMember($request->member)
+                    ->setBusinessMember($business_member)
+                    ->setBusinessTripRequest($business_trip_request)
+                    ->setNotificationTitle($trip_request->getRequesterIdentity() . ' has created a new trip request.')
+                    ->notify();
+
                 $will_auto_assign = (int)$business_member->is_super || $business_member->actions()->where('tag', config('business.actions.trip_request.auto_assign'))->first();
                 if ($will_auto_assign) {
                     $vehicleScheduler->setStartDate($request->start_date)->setEndDate($request->end_date)
@@ -296,9 +303,24 @@ class TripRequestController extends Controller
     public function commentOnTripRequest($member, $trip_request, Request $request)
     {
         try {
+            $this->validate($request, [
+                'comment' => 'required'
+            ]);
+            DBTransaction::beginTransaction();
+            $business_member = $request->business_member;
+            $business_trip_request = BusinessTripRequest::findOrFail((int)$trip_request);
+            $trip_requests = new TripRequests();
+            $trip_requests->setMember($request->member)
+                ->setBusinessMember($business_member)
+                ->setBusinessTripRequest($business_trip_request)
+                ->setNotificationTitle($trip_requests->getRequesterIdentity() . ' commented on trip request.')
+                ->notify(false);
+
             $comment = (new CommentRepository('BusinessTripRequest', $trip_request, $request->member))->store($request->comment);
+            DBTransaction::commit();
             return $comment ? api_response($request, $comment, 200) : api_response($request, $comment, 500);
         } catch (\Throwable $e) {
+            DBTransaction::rollback();
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

@@ -146,11 +146,9 @@ class CustomerSubscriptionController extends Controller
             }
 
             foreach ($subscription_orders->get() as $subscription_order) {
-
                 $partner_orders = $subscription_order->orders->map(function ($order) {
                     return $order->lastPartnerOrder();
                 });
-
                 $format_partner_orders = $partner_orders->map(function ($partner_order) {
                     $last_job = $partner_order->order->lastJob();
                     return [
@@ -162,11 +160,9 @@ class CustomerSubscriptionController extends Controller
                         'cancelled_at' => $partner_order->cancelled_at ? Carbon::parse($partner_order->cancelled_at)->format('M-j, h:i a') : null
                     ];
                 });
-
                 $served_orders = $format_partner_orders->filter(function ($partner_order) {
                     return $partner_order['is_completed'] != null;
                 });
-
                 $service_details = json_decode($subscription_order->service_details);
                 $service_details_breakdown = $service_details->breakdown['0'];
                 $service = Service::find((int)$service_details_breakdown->id);
@@ -178,29 +174,28 @@ class CustomerSubscriptionController extends Controller
                     "service_name" => $service->name,
                     "app_thumb" => $service->app_thumb,
                     "billing_cycle" => $subscription_order->billing_cycle,
-
                     'customer_name' => $subscription_order->customer->profile->name,
                     'customer_mobile' => $subscription_order->customer->profile->mobile,
                     'address' => $subscription_order->deliveryAddress ? $subscription_order->deliveryAddress->address : "",
                     'location_name' => $subscription_order->location ? $subscription_order->location->name : "",
                     'ordered_for' => $subscription_order->deliveryAddress ? $subscription_order->deliveryAddress->name : "",
                     'is_paid' => $subscription_order->isPaid(),
-
                     "total_orders" => $served_orders->count(),
                     "preferred_time" => $schedules->first()->time,
-
                     "subscription_period" => Carbon::parse($subscription_order->billing_cycle_start)->format('M j') . ' - ' . Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
                     "completed_orders" => $served_orders->count() . '/' . $subscription_order->orders->count(),
                     'status' => $subscription_order->status,
                     "is_active" => Carbon::parse($subscription_order->billing_cycle_end) >= Carbon::today() ? 1 : 0,
-                    "partner" =>
-                        [
-                            "id" => $subscription_order->partner_id,
-                            "name" => $service_details->name,
-                            "mobile" => $subscription_order->partner->mobile,
-                            "logo" => $service_details->logo
-                        ]
                 ];
+
+                if ($subscription_order->partner) {
+                    $orders_list["partner"] = [
+                        "id"        => $subscription_order->partner_id,
+                        "name"      => $service_details->name,
+                        "mobile"    => $subscription_order->partner->mobile,
+                        "logo"      => $service_details->logo
+                    ];
+                }
                 $subscription_orders_list->push($orders_list);
             }
 

@@ -3,11 +3,17 @@
 
 use App\Http\Controllers\Controller;
 use App\Sheba\Business\ACL\AccessControl;
+use App\Transformers\Business\AnnouncementTransformer;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
+use League\Fractal\Serializer\ArraySerializer;
+use Sheba\Business\Announcement\AnnouncementList;
 use Sheba\Business\Announcement\Creator;
 use Sheba\Business\Announcement\Updater;
 use Sheba\Dal\Announcement\AnnouncementRepositoryInterface;
+use Sheba\Dal\Announcement\AnnouncementTypes;
 use Sheba\ModificationFields;
 
 class AnnouncementController extends Controller
@@ -19,7 +25,8 @@ class AnnouncementController extends Controller
         $this->validate($request, [
             'title' => 'required|string',
             'description' => 'required|string',
-            'end_date' => 'required|date|after:' . Carbon::yesterday()->format('Y-m-d')
+            'end_date' => 'required|date|after:' . Carbon::yesterday()->format('Y-m-d'),
+            'type' => 'required|string|in:' . implode(',', AnnouncementTypes::get())
         ]);
         $this->setModifier($request->business_member);
         if (!$access_control->setBusinessMember($request->business_member)->hasAccess('announcement.rw')) return api_response($request, null, 403);
@@ -57,5 +64,23 @@ class AnnouncementController extends Controller
         if ($request->has('end_date')) $updater->setEndDate(Carbon::parse($request->end_date));
         $updater->update();
         return api_response($request, $announcement, 200);
+    }
+
+    public function index($business, $announcement, Request $request, AnnouncementList $announcement_list)
+    {
+        $this->validate($request, ['limit' => 'numeric', 'offset' => 'numeric', 'type' => 'string|in:' . implode(',', AnnouncementTypes::get())]);
+        $business_member = $request->business_member;
+        $this->setModifier($business_member);
+        if (!$business_member) return api_response($request, null, 401);
+        list($offset, $limit) = calculatePagination($request);
+        $announcement_list->setBusinessId($business_member->business_id)->setOffset($offset)->setLimit($limit);
+        if ($request->type) $announcement_list->setType($request->type);
+        $announcements = $announcement_list->get();
+        if (count($announcements) == 0) return api_response($request, null, 404);
+        $manager = new Manager();
+        $manager->setSerializer(new ArraySerializer());
+        $announcements = new Collection($announcements, new AnnouncementTransformer());
+        $announcements = $manager->createData($announcements)->toArray()['data'];
+        return api_response($request, $announcements, 200, ['announcements' => $announcements]);
     }
 }

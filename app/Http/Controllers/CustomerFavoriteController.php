@@ -80,8 +80,8 @@ class CustomerFavoriteController extends Controller
             $favorite['category_slug'] = $favorite->category->slug;
             $favorite['category_icon'] = $favorite->category->icon_png;
             $favorite['icon_color'] = isset(config('sheba.category_colors')[$favorite->category->parent->id]) ? config('sheba.category_colors')[$favorite->category->parent->id] : null;
-            $favorite->services->each(function ($service) use ($favorite, &$services, $manager, $price_calculation, $delivery_charge, $job_discount_handler) {
 
+            $favorite->services->each(function ($service) use ($favorite, &$services, $manager, $price_calculation, $delivery_charge, $job_discount_handler) {
                 $location_service = LocationService::where('location_id', $this->location)->where('service_id', $service->id)->first();
                 $pivot = $service->pivot;
                 $selected_service = [
@@ -98,18 +98,22 @@ class CustomerFavoriteController extends Controller
                 $pivot['app_thumb'] = $service->app_thumb;
                 $pivot['publication_status'] = $service->publication_status;
 
-                $resource = new Item($service->category, new ServiceV2DeliveryChargeTransformer($delivery_charge, $job_discount_handler));
-                $delivery_charge_discount_data = $manager->createData($resource)->toArray();
-                $service_data_with_price_and_discount = $pivot->toArray() + $price_data + $delivery_charge_discount_data;
+                $service_data_with_price_and_discount = $pivot->toArray() + $price_data;
 
                 array_push($services, $service_data_with_price_and_discount);
             });
 
             $partner = $favorite->partner;
-            $favorite['total_price'] = $favorite->total_price;
-            $favorite['partner_id'] = $partner ? $partner->id : null;
-            $favorite['partner_name'] = $partner ? $partner->name : null;
-            $favorite['partner_logo'] = $partner ? $partner->logo : null;
+            $favorite['total_price']    = $favorite->total_price;
+            $favorite['partner_id']     = $partner ? $partner->id : null;
+            $favorite['partner_name']   = $partner ? $partner->name : null;
+            $favorite['partner_logo']   = $partner ? $partner->logo : null;
+
+            $resource = new Item($favorite->category, new ServiceV2DeliveryChargeTransformer($delivery_charge, $job_discount_handler));
+            $delivery_charge_discount_data = $manager->createData($resource)->toArray();
+            $favorite['delivery_charge'] = $delivery_charge_discount_data['delivery_charge'];
+            $favorite['delivery_discount'] = $delivery_charge_discount_data['delivery_discount'];
+
             removeRelationsAndFields($favorite);
             $favorite['services'] = $services;
         });
@@ -120,7 +124,7 @@ class CustomerFavoriteController extends Controller
             return api_response($request, null, 404);
         }
     }
-
+    
     public function store($customer, Request $request)
     {
         try {
