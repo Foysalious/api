@@ -489,9 +489,12 @@ class ShebaController extends Controller
     {
         try {
             $type = SluggableType::where('slug', $slug)->first();
-            return api_response($request, true, 200, ['slug' => $type->sluggable_type]);
+            $sluggable_type = [
+                'type' => $type->sluggable_type,
+                'id' => $type->sluggable_id,
+            ];
+            return api_response($request, true, 200, ['sluggable_type' => $sluggable_type]);
         } catch (\Throwable $e) {
-            dd( $e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
