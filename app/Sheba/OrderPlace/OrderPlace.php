@@ -633,7 +633,6 @@ class OrderPlace
      */
     private function canCreatePartnerOrderRequest()
     {
-
         return !$this->selectedPartner || count($this->partnersFromList) > 0;
     }
 
