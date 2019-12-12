@@ -27,12 +27,14 @@ return [
     'push_notification_topic_name' => [
         'customer' => env('CUSTOMER_TOPIC_NAME', 'customer_'),
         'resource' => env('RESOURCE_TOPIC_NAME', 'resource_'),
-        'manager' => env('MANAGER_TOPIC_NAME', 'manager_')
+        'manager' => env('MANAGER_TOPIC_NAME', 'manager_'),
+        'employee' => env('EMPLOYEE_TOPIC_NAME', 'employee_'),
     ],
     'push_notification_channel_name' => [
         'customer' => 'customer_channel',
         'manager' => 'manager_channel',
-        'resource' => 'resource_channel'
+        'resource' => 'resource_channel',
+        'employee' => 'employee_channel'
     ],
     'push_notification_sound' => [
         'customer' => 'default',
