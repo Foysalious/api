@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\PartnerOrder;
+use App\Repositories\PartnerOrderRepository;
 use App\Transformers\CustomSerializer;
 use App\Transformers\Partner\OrderRequestTransformer;
 use Illuminate\Http\JsonResponse;
@@ -11,6 +12,7 @@ use League\Fractal\Resource\Item;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequest;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequestRepositoryInterface;
 use Sheba\Helpers\TimeFrame;
+use Sheba\Jobs\JobStatuses;
 use Sheba\ModificationFields;
 use Sheba\PartnerOrderRequest\Creator;
 use Sheba\PartnerOrderRequest\StatusChanger;
@@ -25,11 +27,14 @@ class OrderRequestController extends Controller
     private $orderRequestRepo;
     /** @var StatusChanger $statusChanger */
     private $statusChanger;
+    /** @var PartnerOrderRepository $partnerOrderRepository */
+    private $partnerOrderRepository;
 
     public function __construct(PartnerOrderRequestRepositoryInterface $order_request_repo, StatusChanger $status_changer)
     {
         $this->orderRequestRepo = $order_request_repo;
         $this->statusChanger = $status_changer;
+        $this->partnerOrderRepository = new PartnerOrderRepository();
     }
 
     /**
@@ -41,7 +46,15 @@ class OrderRequestController extends Controller
     public function lists($partner, Request $request, TimeFrame $time_frame)
     {
         try {
-            $this->validate($request, ['filter' => 'required|string|in:all,new,missed']);
+            $this->validate($request, [
+                'filter'    => 'required|string|in:all,active,missed',
+                'sort'      => 'sometimes|required|string|in:created_at,created_at:asc,created_at:desc,schedule_date,schedule_date:asc,schedule_date:desc',
+                'getCount'  => 'sometimes|required|numeric|in:1'
+            ]);
+            /**
+             * PARTNER ORDER REQUEST
+             *
+             */
             $partner = $request->partner;
             $start_end_date = $time_frame->forTodayAndYesterday();
             $order_requests_formatted = [];
@@ -55,7 +68,40 @@ class OrderRequestController extends Controller
                 $order_requests_formatted[] = $manager->createData($resource)->toArray()['data'];
             });
 
-            return api_response($request, null, 200, ['orders' => $order_requests_formatted]);
+            /**
+             * OLD ORDER LISTS
+             *
+             */
+            if ($request->has('getCount')) {
+                $partner = $request->partner->load(['jobs' => function ($q) {
+                    $q->status([JobStatuses::PENDING, JobStatuses::NOT_RESPONDED])->select('jobs.id', 'jobs.partner_order_id')
+                        ->whereDoesntHave('cancelRequests', function ($q) {
+                            $q->select('id', 'job_id', 'status')->where('status', 'Pending');
+                        })->with(['partnerOrder' => function ($q) {
+                            $q->select('id', 'order_id')->with(['order' => function ($q) {
+                                $q->select('id', 'subscription_order_id');
+                            }]);
+                        }]);
+                }]);
+                $total_new_orders = $partner->jobs->pluck('partnerOrder')->unique()->pluck('order')
+                    ->groupBy('subscription_order_id')
+                    ->map(function ($order, $key) {
+                        return !empty($key) ? 1 : $order->count();
+                    })->sum();
+                return api_response($request, $total_new_orders, 200, ['total_new_orders' => $total_new_orders]);
+            }
+            $orders = $this->partnerOrderRepository->getNewOrdersWithJobs($request);
+
+            $sorted_order_with_order_request = [];
+            array_map(function ($order) use (&$sorted_order_with_order_request) {
+                $sorted_order_with_order_request[$order['created_at']] = $order;
+            }, $orders);
+
+            foreach ($order_requests_formatted as $order_request) {
+                array_splice($sorted_order_with_order_request, $order_request['created_at'], 0, [$order_request]);
+            }
+
+            return api_response($request, null, 200, ['orders' => $sorted_order_with_order_request]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');

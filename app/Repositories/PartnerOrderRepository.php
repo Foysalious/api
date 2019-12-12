@@ -99,6 +99,10 @@ class PartnerOrderRepository
         return $partner_order;
     }
 
+    /**
+     * @param $request
+     * @return array
+     */
     public function getNewOrdersWithJobs($request)
     {
         list($offset, $limit) = calculatePagination($request);
@@ -135,7 +139,6 @@ class PartnerOrderRepository
         }
 
         foreach ($jobs->groupBy('partner_order_id') as $jobs) {
-
             if ($jobs[0]->partner_order->order->subscription_order_id == null){
                 $jobs[0]->partner_order->calculate(true);
                 if ($jobs[0]->cancelRequests->where('status', 'Pending')->count() > 0) continue;
@@ -150,7 +153,8 @@ class PartnerOrderRepository
                         $services->push(array('name' => $jobService->service->name, 'variables' => $variables, 'quantity' => (double)$jobService->quantity));
                     }
                 }
-                if(!$jobs[0]->partner_order->order->deliveryAddress) {
+
+                if (!$jobs[0]->partner_order->order->deliveryAddress) {
                     $jobs[0]->partner_order->order->deliveryAddress = $jobs[0]->partner_order->order->getTempAddress();
                 }
 
@@ -170,14 +174,18 @@ class PartnerOrderRepository
                     'schedule_date' => $jobs[0]->schedule_date,
                     'preferred_time' => $jobs[0]->readable_preferred_time,
                     'services' => $services,
-                    'status' => $jobs[0]->status
+                    'status' => $jobs[0]->status,
+                    'is_order_request' => false,
+                    'is_subscription_order' => $jobs[0]->partner_order->order->subscription ? true : false
                 ]);
                 $all_partner_orders->push($order);
             }
         }
         list($field, $orderBy) = $this->getSortByFieldAdOrderFromRequest($request);
+
         $orderBy = $orderBy == 'asc' ? 'sortBy' : 'sortByDesc';
         list($offset, $limit) = calculatePagination($request);
+
         return array_slice($this->partnerOrdersSortBy($field, $orderBy, $all_partner_orders, $all_jobs)->toArray(), $offset, $limit);
     }
 
