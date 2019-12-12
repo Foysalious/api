@@ -25,7 +25,9 @@ use Sheba\Loan\Exceptions\InvalidStatusTransaction;
 use Sheba\Loan\Exceptions\NotApplicableForLoan;
 use Sheba\Loan\Loan;
 use Sheba\ModificationFields;
+use Sheba\Reports\PdfHandler;
 use Sheba\Sms\Sms;
+use Throwable;
 
 class LoanController extends Controller
 {
@@ -592,5 +594,22 @@ class LoanController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function generateApplication(Request $request, $loan_id , Loan $loan){
+        try{
+            $data = $loan->show($loan_id);
+            $pdf_handler = new PdfHandler();
+            $loan_application_name = 'loan_application_' . $loan_id;
+            return $pdf_handler->setData($data)->setName($loan_application_name)->setViewFile('partner_loan_application_form')->show();
+        }catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
+
     }
 }
