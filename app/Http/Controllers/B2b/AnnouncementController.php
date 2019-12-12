@@ -1,6 +1,5 @@
 <?php namespace App\Http\Controllers\B2b;
 
-
 use App\Http\Controllers\Controller;
 use App\Sheba\Business\ACL\AccessControl;
 use App\Transformers\Business\AnnouncementTransformer;
@@ -30,7 +29,8 @@ class AnnouncementController extends Controller
         ]);
         $this->setModifier($request->business_member);
         if (!$access_control->setBusinessMember($request->business_member)->hasAccess('announcement.rw')) return api_response($request, null, 403);
-        $announcement = $creator->setBusiness($request->business)->setTitle($request->title)->setEndDate(Carbon::parse($request->end_date))->setShortDescription($request->description)
+        $announcement = $creator->setBusiness($request->business)->setTitle($request->title)->setEndDate(Carbon::parse($request->end_date))
+            ->setShortDescription($request->description)->setType($request->type)
             ->create();
         return api_response($request, $announcement, 200, ['id' => $announcement->id]);
     }
