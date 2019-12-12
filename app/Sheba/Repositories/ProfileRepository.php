@@ -47,6 +47,16 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
     }
 
     /**
+     * @param Model $profile
+     * @param array $data
+     * @return bool|Model|int
+     */
+    public function updateRaw(Model $profile, array $data)
+    {
+        return $profile->update($this->withUpdateModificationField($data));
+    }
+
+    /**
      * @param $mobile
      * @param $email
      * @return array|Builder|Model|null
@@ -197,6 +207,17 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
             $profile_data['nid_image_back'] = $this->_saveNIdImage($image, $name);
         }
         return $profile_data;
+    }
+
+    /**
+     * @param $file
+     * @param $name
+     * @return string
+     */
+    public function saveProPic($file, $name)
+    {
+        list($file, $filename) = $this->makeProPic($file, $name);
+        return $this->saveImageToCDN($file, getProfileAvatarFolder(), $filename);
     }
 
     /**
