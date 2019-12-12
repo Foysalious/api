@@ -500,4 +500,9 @@ class ShebaController extends Controller
         }
     }
 
+    public function redirectUrl(Request $requset)
+    {
+        dd($requset->all());
+    }
+
 }
