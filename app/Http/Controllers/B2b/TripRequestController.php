@@ -7,6 +7,7 @@ use App\Models\BusinessTripRequest;
 use App\Repositories\CommentRepository;
 use App\Sheba\Business\BusinessTripSms;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\Scheduler\TripScheduler;
 use DB;
@@ -267,6 +268,7 @@ class TripRequestController extends Controller
             $business_trip_request = null;
             DB::transaction(function () use ($request, $business_member, $vehicleScheduler, $businessTripSms, &$business_trip_request) {
                 $business_trip_request = $this->storeTripRequest($request);
+                $this->notify($request->member, $business_trip_request, $business_member);
                 $will_auto_assign = (int)$business_member->is_super || $business_member->actions()->where('tag', config('business.actions.trip_request.auto_assign'))->first();
                 if ($will_auto_assign) {
                     $vehicleScheduler->setStartDate($request->start_date)->setEndDate($request->end_date)
@@ -291,6 +293,52 @@ class TripRequestController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function notify($member, $business_trip_request, $business_member)
+    {
+        $identity = $this->getRequesterIdentity($member);
+        notify($business_member->member)->send([
+            'title' => "$identity has created a new trip request.",
+            'event_type' => get_class($business_trip_request),
+            'event_id' => $business_trip_request->id
+        ]);
+        $this->sendEmail($member, $business_trip_request, $business_member);
+    }
+
+    private function sendEmail($member, $business_trip_request, $business_member)
+    {
+        $identity = $this->getRequesterIdentity($member);
+        $template = 'emails.trip_request_create_notifications';
+        $subject = 'New Trip Request';
+        $title = "$identity has created a new trip request.";
+        $trip_requester = $identity;
+        $trip_pickup_address = $business_trip_request->pickup_address;
+        $trip_dropoff_address = $business_trip_request->dropoff_address;
+        $trip_request_created_at = $business_trip_request->created_at->format('jS F, Y g:i A');
+        #$email = $business_member->member->profile->email;
+        $email = 'saiful.sheba@gmail.com';
+        $link = config('sheba.b2b_url') . "/dashboard/fleet-management/requests/" . $business_trip_request->id . "/details";
+        Mail::send($template, [
+            'title' => $title,
+            'trip_requester' => $trip_requester,
+            'trip_pickup_address' => $trip_pickup_address,
+            'trip_dropoff_address' => $trip_dropoff_address,
+            'trip_request_created_at' => $trip_request_created_at,
+            'link' => $link
+        ], function ($m) use ($subject, $email) {
+            $m->from('b2b@sheba.xyz', 'sBusiness.xyz');
+            $m->to($email)->subject($subject);
+        });
+    }
+
+    private function getRequesterIdentity($member)
+    {
+        $identity = $member->profile->name;
+        if (!$identity) $identity = $member->profile->mobile;
+        if (!$identity) $identity = $member->profile->email;
+        if (!$identity) $identity = 'ID: ' . $member->profile->id;
+        return $identity;
     }
 
     public function commentOnTripRequest($member, $trip_request, Request $request)
