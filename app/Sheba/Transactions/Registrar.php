@@ -22,7 +22,7 @@ class Registrar
             'type' => 'credit',
             'used_on_type' => class_basename($user),
             'used_on_id' => $user->id,
-            'portal' => $user instanceof Partner ? "manager-app" : "bondhu-app",
+            'portal' => request()->hasHeader('Portal-Name') ? request()->header('Portal-Name') : (!is_null(request('portal_name')) ? request('portal_name') : config('sheba.portal')),
             'ip' => request()->ip(),
             'user_agent' => request()->header('User-Agent'),
             'created_by' => $user->id,
