@@ -1,9 +1,12 @@
 <?php namespace Sheba\Business\Announcement;
 
 
+use App\Jobs\Business\SendAnnouncementNotificationToEmployee;
 use App\Models\Business;
 use Carbon\Carbon;
+use Sheba\Dal\Announcement\Announcement;
 use Sheba\Dal\Announcement\AnnouncementRepositoryInterface;
+use Sheba\PushNotificationHandler;
 
 class Creator
 {
@@ -14,10 +17,13 @@ class Creator
     private $endDate;
     /** @var Business */
     private $business;
+    /** @var PushNotificationHandler */
+    private $pushNotification;
 
-    public function __construct(AnnouncementRepositoryInterface $announcement_repository)
+    public function __construct(AnnouncementRepositoryInterface $announcement_repository, PushNotificationHandler $push_notification)
     {
         $this->announcementRepository = $announcement_repository;
+        $this->pushNotification = $push_notification;
     }
 
     /**
@@ -62,11 +68,16 @@ class Creator
 
     public function create()
     {
-        return $this->announcementRepository->create([
+        $announcement = $this->announcementRepository->create([
             'business_id' => $this->business->id,
             'title' => $this->title,
             'short_description' => $this->shortDescription,
             'end_date' => $this->endDate->toDateTimeString()
         ]);
+        $this->business->load(['members' => function ($q) {
+            $q->select('members.id', 'profile_id');
+        }]);
+        dispatch((new SendAnnouncementNotificationToEmployee($this->business->members, $announcement)));
+        return $announcement;
     }
 }
