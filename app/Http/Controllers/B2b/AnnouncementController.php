@@ -42,6 +42,7 @@ class AnnouncementController extends Controller
         return api_response($request, $announcement, 200, ['announcement' => [
             'id' => $announcement->id,
             'title' => $announcement->title,
+            'type' => $announcement->type,
             'description' => $announcement->short_description,
             'end_date' => $announcement->end_date->toDateTimeString()
         ]]);

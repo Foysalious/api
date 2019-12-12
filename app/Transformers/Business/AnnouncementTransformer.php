@@ -11,6 +11,7 @@ class AnnouncementTransformer extends TransformerAbstract
         return [
             'id' => $announcement->id,
             'title' => $announcement->title,
+            'type' => $announcement->type,
             'description' => $announcement->short_description,
             'end_date' => $announcement->end_date->toDateTimeString(),
             'created_at' => $announcement->created_at->toDateTimeString(),
