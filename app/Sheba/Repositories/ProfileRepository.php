@@ -56,6 +56,11 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
         return $profile->update($this->withUpdateModificationField($data));
     }
 
+    public function updatePassword(Model $profile, $password)
+    {
+        return $this->updateRaw($profile, ['password' => bcrypt($password)]);
+    }
+
     /**
      * @param $mobile
      * @param $email

@@ -56,6 +56,25 @@ class EmployeeController extends Controller
         return api_response($request, null, 200);
     }
 
+    public function updateMyPassword(Request $request, ProfileRepository $profile_repo)
+    {
+        $this->validate($request, [
+            'old_password' => 'required',
+            'password' => 'required|confirmed'
+        ]);
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $member = $this->repo->find($business_member['member_id']);
+        $profile = $member->profile;
+        if(!password_verify($request->old_password, $profile->password)) {
+            return api_response($request, null, 403, [
+                'message' => "Old password does not match"
+            ]);
+        }
+        $profile_repo->updatePassword($member->profile, $request->password);
+        return api_response($request, null, 200);
+    }
+
     public function getDashboard(Request $request)
     {
         try {
