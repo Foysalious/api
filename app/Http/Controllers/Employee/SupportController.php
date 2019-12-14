@@ -7,12 +7,20 @@ use Sheba\Business\Support\Creator;
 use Sheba\Business\Support\Updater;
 use Sheba\Dal\Support\SupportRepositoryInterface;
 use Sheba\ModificationFields;
-use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
+use Sheba\Dal\Support\Model as Support;
 use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
 
 class SupportController extends Controller
 {
     use ModificationFields;
+
+    /** @var SupportRepositoryInterface */
+    private $repo;
+
+    public function __construct(SupportRepositoryInterface $repo)
+    {
+        $this->repo = $repo;
+    }
 
     public function store(Request $request, Creator $creator, MemberRepositoryInterface $member_repository)
     {
@@ -33,7 +41,7 @@ class SupportController extends Controller
         }
     }
 
-    public function index(Request $request, SupportRepositoryInterface $support_repository)
+    public function index(Request $request)
     {
         try {
             $this->validate($request, [
@@ -45,7 +53,9 @@ class SupportController extends Controller
             $business_member = $auth_info['business_member'];
             list($offset, $limit) = calculatePagination($request);
             if (!$business_member) return api_response($request, null, 401);
-            $supports = $support_repository->where('member_id', $business_member['member_id'])->select('id', 'member_id', 'status', 'long_description', 'created_at')->orderBy('id', 'desc');
+            $supports = Support::where('member_id', $business_member['member_id'])
+                ->select('id', 'member_id', 'status', 'long_description', 'created_at')
+                ->orderBy('id', 'desc');
             if ($request->has('status')) $supports = $supports->where('status', $request->status);
             if ($request->has('limit')) $supports = $supports->skip($offset)->limit($limit);
             $supports = $supports->get();
@@ -62,13 +72,13 @@ class SupportController extends Controller
         }
     }
 
-    public function show(Request $request, $support, SupportRepositoryInterface $support_repository)
+    public function show(Request $request, $support)
     {
         try {
             $auth_info = $request->auth_info;
             $business_member = $auth_info['business_member'];
             if (!$business_member) return api_response($request, null, 401);
-            $support = $support_repository->where('id', $support)->select('id', 'member_id', 'status', 'long_description', 'created_at', 'is_satisfied', 'closed_at')->first();
+            $support = $this->repo->find($support);
             if (!$support) return api_response($request, null, 404);
             $support['date'] = $support->created_at->format('M d');
             $support['time'] = $support->created_at->format('h:i A');
@@ -79,14 +89,14 @@ class SupportController extends Controller
         }
     }
 
-    public function feedback(Request $request, $support, SupportRepositoryInterface $support_repository, BusinessMemberRepositoryInterface $business_member_repository, Updater $updater)
+    public function feedback(Request $request, $support, Updater $updater)
     {
         try {
             $this->validate($request, ['is_satisfied' => 'required|numeric|in:0,1',]);
             $auth_info = $request->auth_info;
             $business_member = $auth_info['business_member'];
             if (!$business_member) return api_response($request, null, 401);
-            $support = $support_repository->where('id', $support)->first();
+            $support = $this->repo->find($support);
             if (!$support) return api_response($request, null, 404);
             $support = $updater->setSupport($support)->setSatisfaction($request->is_satisfied)->giveFeedback();
             if (!$support) return api_response($request, null, 500);
