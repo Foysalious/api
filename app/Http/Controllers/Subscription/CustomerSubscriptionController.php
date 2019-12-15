@@ -54,6 +54,7 @@ class CustomerSubscriptionController extends Controller
             $partner_list->filterPartnerByAvailability();
             $partner_list->removeShebaHelpDesk();
             $partners = $partner_list->partners;
+            if ($request->has('show_reason')) return api_response($request, null, 200, ['reason' => $partner_list->getNotShowingReason()]);
             if ($partners->count() > 0) {
                 $partner_list->addPricing();
                 $partner_list->addInfo();
@@ -66,7 +67,6 @@ class CustomerSubscriptionController extends Controller
                 $partners = $partner_list->partners;
                 return api_response($request, $partners, 200, ['partners' => $partners->values()->all()]);
             }
-            if ($request->has('show_reason')) return api_response($request, null, 200, ['reason' => $partner_list->getNotShowingReason()]);
             return api_response($request, null, 404, ['message' => 'No partner found.']);
         } catch (HyperLocationNotFoundException $e) {
             app('sentry')->captureException($e);
