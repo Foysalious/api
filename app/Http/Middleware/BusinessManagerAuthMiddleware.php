@@ -21,7 +21,8 @@ class BusinessManagerAuthMiddleware
             return api_response($request, null, 401);
         }
 
-        $member = Member::find($payload['member_id']);
+        $member_id = array_key_exists('member_id', $payload) ? $payload['member_id'] : $payload['member']['id'];
+        $member = Member::find($member_id);
         if (!$member) return response()->json(['message' => 'Member not found.', 'code' => 404]);
         $business = Business::find((int)$request->business);
 
