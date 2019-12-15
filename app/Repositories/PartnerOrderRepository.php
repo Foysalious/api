@@ -119,6 +119,7 @@ class PartnerOrderRepository
             $service_details_breakdown = $service_details->breakdown['0'];
             $services = collect();
             $services->push(array('name' => $service_details_breakdown->name, 'quantity' => (double)$service_details_breakdown->quantity));
+
             $subscription = collect([
                 'id'                    => $subscription_order->id,
                 'customer_name'         => $subscription_order->customer->profile->name,
@@ -130,6 +131,8 @@ class PartnerOrderRepository
                 'discount'              => $service_details->discount,
                 'total_price'           => $service_details->discounted_price,
                 'created_at'            => $subscription_order->created_at->format('M-j, Y'),
+                'created_date_start'    => $schedules->first()->date,
+                'created_date_end'      => $schedules->last()->date,
                 "subscription_period"   => Carbon::parse($subscription_order->billing_cycle_start)->format('M j') . ' - ' . Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
                 "preferred_time"        => $schedules->first()->time,
                 'category_name'         => $subscription_order->category->name,
