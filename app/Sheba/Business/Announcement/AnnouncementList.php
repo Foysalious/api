@@ -1,9 +1,8 @@
 <?php namespace Sheba\Business\Announcement;
 
-
 use App\Models\Business;
+use Sheba\Dal\Announcement\Announcement;
 use Sheba\Dal\Announcement\AnnouncementRepositoryInterface;
-use Sheba\Dal\Announcement\AnnouncementTypes;
 
 class AnnouncementList
 {
@@ -17,8 +16,8 @@ class AnnouncementList
 
     public function __construct(AnnouncementRepositoryInterface $announcement_repository)
     {
-        $this->limit = 0;
-        $this->offset = 100;
+        $this->limit = 100;
+        $this->offset = 0;
         $this->announcementRepository = $announcement_repository;
     }
 
@@ -66,12 +65,14 @@ class AnnouncementList
 
     public function get()
     {
-        $this->announcementRepository = $this->announcementRepository->where('business_id', $this->businessId);
-        if ($this->type) $this->announcementRepository = $this->announcementRepository->where('type', $this->type);
-        return $this->announcementRepository->select('id', 'title', 'short_description', 'end_date', 'created_at')->orderBy('id', 'desc')
+        $announcements = Announcement::where('business_id', $this->businessId);
+        if ($this->type) $announcements = $announcements->where('type', $this->type);
+        $announcements = $announcements->select('id', 'title', 'type', 'short_description', 'end_date', 'created_at')
+            ->orderBy('id', 'desc')
             ->skip($this->offset)
             ->limit($this->limit)
             ->get();
+        return $announcements;
     }
 
 }
