@@ -73,7 +73,7 @@ class Updater
             $loan->partnerBankLoan->{$key} = array_key_exists($key, $this->new) ? $this->new[$key] : $loan->partnerBankLoan->{$key};
         }
         $loan_interest                                     = (double)$loan->partnerBankLoan->loan_amount * ((double)$loan->partnerBankLoan->interest_rate / 100);
-        $loan->partnerBankLoan->monthly_installment        = ((double)$loan->partnerBankLoan->loan_amount + $loan_interest) / ((int)$this->partnerBankLoan->duration * 12);
+        $loan->partnerBankLoan->monthly_installment        = ((double)$loan->partnerBankLoan->loan_amount + $loan_interest) / ((int)$loan->partnerBankLoan->duration * 12);
         $loan->partnerBankLoan->final_information_for_loan = json_encode($this->new['final_information_for_loan']);
         $loan->partnerBankLoan->save();
         $this->setModifier($request->user);
