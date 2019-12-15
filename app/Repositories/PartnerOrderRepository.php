@@ -120,6 +120,7 @@ class PartnerOrderRepository
             $services = collect();
             $services->push(array('name' => $service_details_breakdown->name, 'quantity' => (double)$service_details_breakdown->quantity));
 
+            $schedule_time = explode('-', $schedules->first()->time);
             $subscription = collect([
                 'id'                    => $subscription_order->id,
                 'customer_name'         => $subscription_order->customer->profile->name,
@@ -142,7 +143,9 @@ class PartnerOrderRepository
                 ],
                 'services'              => $services,
                 'is_order_request'      => false,
-                'is_subscription_order' => true
+                'is_subscription_order' => true,
+                'schedule_time_start'   => Carbon::parse($schedule_time[0])->format('H:i:s'),
+                'schedule_time_end'     => Carbon::parse($schedule_time[1])->format('H:i:s')
             ]);
             $all_partner_orders->push($subscription);
         }
@@ -190,7 +193,9 @@ class PartnerOrderRepository
                     'services'      => $services,
                     'status'        => $jobs[0]->status,
                     'is_order_request'      => false,
-                    'is_subscription_order' => $jobs[0]->partner_order->order->subscription ? true : false
+                    'is_subscription_order' => $jobs[0]->partner_order->order->subscription ? true : false,
+                    'schedule_time_start'   => $jobs[0]->preferred_time_start,
+                    'schedule_time_end'     => $jobs[0]->preferred_time_end
                 ]);
                 $all_partner_orders->push($order);
             }
