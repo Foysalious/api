@@ -105,7 +105,7 @@ class Creator
                     }
                 }
                 $this->updatePrice($bid);
-                $this->sendVendorCreatedNotification($bid);
+                $this->sendVendorParticipatedNotification($bid);
             });
         } catch (QueryException $e) {
             throw  $e;
@@ -138,8 +138,9 @@ class Creator
         }
     }
 
-    private function sendVendorCreatedNotification(Bid $bid)
+    private function sendVendorParticipatedNotification(Bid $bid)
     {
+        if ($this->status != 'sent') return;
         $message = $bid->bidder->name . ' participated on your procurement #' . $bid->procurement->id;
         foreach ($bid->procurement->owner->superAdmins as $member) {
             notify()->member($member)->send([
