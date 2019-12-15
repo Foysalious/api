@@ -268,28 +268,36 @@ class CustomerSubscriptionController extends Controller
                 return $partner_order['is_completed'] != null;
             });
             $service_details = json_decode($subscription_order->service_details);
-            $variables = collect();
-            foreach ($service_details->breakdown as $breakdown) {
-                if (empty($breakdown->questions)) {
-                    $data = [
-                        'quantity' => $breakdown->quantity,
-                        'questions' => null,
-                        'options' => $breakdown->option
-                    ];
-                } else {
-                    $data = [
-                        'quantity' => $breakdown->quantity,
-                        'questions' => $breakdown->questions,
-                        'options' => $breakdown->option
-                    ];
-                }
-                $variables->push($data);
-            }
+
             $service_details_breakdown = $service_details->breakdown['0'];
             $service = Service::find((int)$service_details_breakdown->id);
             $service_subscription = $service->subscription;
             $schedules = collect(json_decode($subscription_order->schedules));
             $delivery_address = $subscription_order->deliveryAddress()->withTrashed()->first();
+
+            /** @var Manager $manager */
+            $manager = new Manager();
+            $manager->setSerializer(new ArraySerializer());
+            $location_service = LocationService::where('location_id', $subscription_order->location_id)->where('service_id', $service->id)->first();
+
+            $variables = collect();
+            foreach ($service_details->breakdown as $breakdown) {
+                $selected_service = [
+                    "option"        => $breakdown->option,
+                    "variable_type" => $service->variable_type
+                ];
+                $resource = new Item($selected_service, new ServiceV2MinimalTransformer($location_service, $price_calculation));
+                $price_discount_data  = $manager->createData($resource)->toArray();
+
+                $data = [
+                    'quantity'  => $breakdown->quantity,
+                    'questions' => empty($breakdown->questions) ? null : $breakdown->questions,
+                    'options'   => $breakdown->option,
+                    'unit_price'=> $price_discount_data['unit_price'],
+                    'discount'  => $price_discount_data['discount']
+                ];
+                $variables->push($data);
+            }
 
             $subscription_order_details = [
                 "subscription_code" => $subscription_order->code(),
@@ -345,24 +353,13 @@ class CustomerSubscriptionController extends Controller
                 "subscription_period"           => Carbon::parse($subscription_order->billing_cycle_start)->format('M j') . ' - ' . Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
             ];
 
-            $location_service = LocationService::where('location_id', $subscription_order->location_id)->where('service_id', $service->id)->first();
-            /** @var Manager $manager */
-            $manager = new Manager();
-            $manager->setSerializer(new ArraySerializer());
-
-            $selected_service = [
-                "option" => $service_details_breakdown->option,
-                "variable_type" => $service->variable_type
-            ];
-            $resource = new Item($selected_service, new ServiceV2MinimalTransformer($location_service, $price_calculation));
-            $price_discount_data  = $manager->createData($resource)->toArray();
-
             $resource = new Item($service->category, new ServiceV2DeliveryChargeTransformer($delivery_charge, $job_discount_handler));
             $delivery_charge_discount_data = $manager->createData($resource)->toArray();
 
-            $subscription_order_details += [
-                    'unit_price' => $price_discount_data['unit_price'], 'service_discount' => $price_discount_data['discount'],
-                ] + $delivery_charge_discount_data;
+            $subscription_order_details += /*[
+                    'unit_price' => $price_discount_data['unit_price'],
+                    'service_discount' => $price_discount_data['discount'],
+                ] + */$delivery_charge_discount_data;
 
             return api_response($request, $subscription_order_details, 200, ['subscription_order_details' => $subscription_order_details]);
         } catch (Throwable $e) {
