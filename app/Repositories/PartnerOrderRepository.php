@@ -120,20 +120,22 @@ class PartnerOrderRepository
             $services = collect();
             $services->push(array('name' => $service_details_breakdown->name, 'quantity' => (double)$service_details_breakdown->quantity));
             $subscription = collect([
-                'id' => $subscription_order->id,
-                'customer_name' => $subscription_order->customer->profile->name,
-                'address' => $subscription_order->deliveryAddress->address,
-                'location_name' => $subscription_order->location->name,
-                'billing_cycle' => $subscription_order->billing_cycle,
-                'total_orders' => $subscription_order->orders->count(),
-                'original_price' => $service_details->original_price,
-                'discount' => $service_details->discount,
-                'total_price' => $service_details->discounted_price,
-                'created_at' => $subscription_order->created_at->format('M-j, Y'),
-                "subscription_period" => Carbon::parse($subscription_order->billing_cycle_start)->format('M j') . ' - ' . Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
-                "preferred_time" => $schedules->first()->time,
-                'category_name' => $subscription_order->category->name,
-                'services' => $services
+                'id'                    => $subscription_order->id,
+                'customer_name'         => $subscription_order->customer->profile->name,
+                'address'               => $subscription_order->deliveryAddress->address,
+                'location_name'         => $subscription_order->location->name,
+                'billing_cycle'         => $subscription_order->billing_cycle,
+                'total_orders'          => $subscription_order->orders->count(),
+                'original_price'        => $service_details->original_price,
+                'discount'              => $service_details->discount,
+                'total_price'           => $service_details->discounted_price,
+                'created_at'            => $subscription_order->created_at->format('M-j, Y'),
+                "subscription_period"   => Carbon::parse($subscription_order->billing_cycle_start)->format('M j') . ' - ' . Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
+                "preferred_time"        => $schedules->first()->time,
+                'category_name'         => $subscription_order->category->name,
+                'services'              => $services,
+                'is_order_request'      => false,
+                'is_subscription_order' => true
             ]);
             $all_partner_orders->push($subscription);
         }
