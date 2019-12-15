@@ -70,7 +70,7 @@ class CategoryController extends Controller
             $categories = Category::where('parent_id', null);
             if ($is_b2b) $categories = $categories->orderBy('order_for_b2b');
             else $categories = $categories->orderBy('order');
-            
+
             if ($location) {
                 $categories = $categories->whereHas('locations', function ($q) use ($location) {
                     $q->where('locations.id', $location->id);
