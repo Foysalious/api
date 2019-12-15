@@ -189,6 +189,10 @@ class PartnerOrderRepository
         return array_slice($this->partnerOrdersSortBy($field, $orderBy, $all_partner_orders, $all_jobs)->toArray(), $offset, $limit);
     }
 
+    /**
+     * @param $request
+     * @return array
+     */
     public function getOrders($request)
     {
         list($field, $orderBy) = $this->getSortByFieldAdOrderFromRequest($request);
@@ -219,6 +223,11 @@ class PartnerOrderRepository
         })->values()->all(), $offset, $limit);
     }
 
+    /**
+     * @param $partner_orders
+     * @param $for
+     * @return mixed
+     */
     private function filterEshopOrders($partner_orders, $for)
     {
         return $partner_orders->filter(function ($partner_order) use ($for) {
@@ -227,6 +236,12 @@ class PartnerOrderRepository
         });
     }
 
+    /**
+     * @param $partner
+     * @param $start_time
+     * @param $end_time
+     * @return mixed
+     */
     public function getOrdersByClosedAt($partner, $start_time, $end_time)
     {
         return PartnerOrder::with('order.location', 'jobs.usedMaterials')
@@ -245,6 +260,10 @@ class PartnerOrderRepository
             });
     }
 
+    /**
+     * @param $request
+     * @return array
+     */
     private function getSortByFieldAdOrderFromRequest($request)
     {
         $orderBy = 'desc';
@@ -256,9 +275,13 @@ class PartnerOrderRepository
                 $orderBy = 'asc';
             }
         }
-        return array($field, $orderBy);
+        return [$field, $orderBy];
     }
 
+    /**
+     * @param $partner_order
+     * @return mixed
+     */
     private function loadAllRelatedRelations($partner_order)
     {
         return $partner_order->load(['order.location', 'jobs' => function ($q) {
