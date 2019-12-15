@@ -587,6 +587,45 @@ if (!function_exists('isAssoc')) {
     }
 }
 
+if (!function_exists('asset_from')) {
+    /**
+     * Generate an asset path for the application.
+     * Might be a missing laravel helper.
+     *
+     * @param  string $root
+     * @param  string $path
+     * @param  bool $secure
+     * @return string
+     */
+    function asset_from($root, $path, $secure = null)
+    {
+        return app('url')->assetFrom($root, $path, $secure);
+    }
+}
+
+if (!function_exists('getCDNAssetsFolder')) {
+    /**
+     * @return string
+     */
+    function getCDNAssetsFolder()
+    {
+        return config('s3.url') . 'partner_assets';
+    }
+}
+
+if (!function_exists('assetLink')) {
+    /**
+     * @param  $file
+     * @return string
+     */
+    function assetLink($file)
+    {
+        return config('sheba.use_cdn_for_asset') ?
+            asset_from(getCDNAssetsFolder(), $file) :
+            asset($file);
+    }
+}
+
 if (!function_exists('convertNumbersToBangla')) {
     function convertNumbersToBangla(float $number, $formatted = true, $decimal = 2)
     {
