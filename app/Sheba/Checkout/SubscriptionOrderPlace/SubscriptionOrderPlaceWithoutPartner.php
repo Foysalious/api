@@ -1,6 +1,7 @@
 <?php namespace Sheba\Checkout\SubscriptionOrderPlace;
 
 use App\Models\SubscriptionOrder;
+use Illuminate\Support\Facades\DB;
 use Sheba\Checkout\Services\SubscriptionServicePricingAndBreakdown;
 use Sheba\Location\Geo;
 use Sheba\SubscriptionOrderRequest\Generator;
@@ -29,8 +30,13 @@ class SubscriptionOrderPlaceWithoutPartner extends SubscriptionOrderPlace
      */
     public function place()
     {
-        $subscription_order = parent::place();
-        $this->requestGenerator->setSubscriptionOrder($subscription_order)->generate();
+        $subscription_order = null;
+
+        DB::transaction(function () use (&$subscription_order) {
+            $subscription_order = parent::place();
+            $this->requestGenerator->setSubscriptionOrder($subscription_order)->generate();
+        });
+
         return $subscription_order;
     }
 

@@ -183,4 +183,9 @@ class TimeFrame
 
         return $time_frame;
     }
+
+    public function forTwoDates($start, $end)
+    {
+        return $this->set(Carbon::parse($start . " 00:00:00"), Carbon::parse($end . " 23:59:59"));
+    }
 }

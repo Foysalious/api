@@ -379,7 +379,7 @@ class CustomerSubscriptionController extends Controller
             $partner_orders = $subscription_order->orders->map(function ($order) {
                 return $order->lastPartnerOrder();
             });
-            $delivery_address = CustomerDeliveryAddress::find($partner_orders[0]->order->delivery_address_id);
+            $delivery_address = CustomerDeliveryAddress::withTrashed()->find($partner_orders[0]->order->delivery_address_id);
             $geo = json_decode($delivery_address->geo_informations);
 
             $format_partner_orders = $partner_orders->map(function ($partner_order) {
@@ -434,6 +434,7 @@ class CustomerSubscriptionController extends Controller
                     return api_response($request, $partners, 200, ['status' => 'no_partners_available_on_time']);
             }
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

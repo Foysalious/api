@@ -75,7 +75,10 @@ class PartnerOrderController extends Controller
     public function newOrders($partner, Request $request)
     {
         try {
-            $this->validate($request, ['sort' => 'sometimes|required|string|in:created_at,created_at:asc,created_at:desc,schedule_date,schedule_date:asc,schedule_date:desc', 'getCount' => 'sometimes|required|numeric|in:1']);
+            $this->validate($request, [
+                'sort' => 'sometimes|required|string|in:created_at,created_at:asc,created_at:desc,schedule_date,schedule_date:asc,schedule_date:desc',
+                'getCount' => 'sometimes|required|numeric|in:1'
+            ]);
             if ($request->has('getCount')) {
                 $partner = $request->partner->load(['jobs' => function ($q) {
                     $q->status(array(constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']))->select('jobs.id', 'jobs.partner_order_id')

@@ -171,13 +171,13 @@ class PartnerLoanRequest implements Arrayable
         ];
 
         if ($this->partnerBankLoan->status == 'declined')
-            $new_status = ['declined'];
+            $new_status = [];
         else if ($this->partnerBankLoan->status == 'withdrawal')
-            $new_status = ['withdrawal'];
+            $new_status = [];
         else if ($this->partnerBankLoan->status == 'disbursed')
             $new_status = ['closed'];
         else if ($this->partnerBankLoan->status == 'closed')
-            $new_status = ['closed'];
+            $new_status = [];
         else if ($this->partnerBankLoan->status == 'hold') {
             $change_log = $this->partnerBankLoan->changeLogs()->where(function ($q) {
                 return $q->where('to', 'hold')->orWhere('to', '["hold"]');

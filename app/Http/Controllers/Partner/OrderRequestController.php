@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\PartnerOrder;
+use App\Repositories\PartnerOrderRepository;
 use App\Transformers\CustomSerializer;
 use App\Transformers\Partner\OrderRequestTransformer;
 use Illuminate\Http\JsonResponse;
@@ -11,6 +12,7 @@ use League\Fractal\Resource\Item;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequest;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequestRepositoryInterface;
 use Sheba\Helpers\TimeFrame;
+use Sheba\Jobs\JobStatuses;
 use Sheba\ModificationFields;
 use Sheba\PartnerOrderRequest\Creator;
 use Sheba\PartnerOrderRequest\StatusChanger;
@@ -25,11 +27,14 @@ class OrderRequestController extends Controller
     private $orderRequestRepo;
     /** @var StatusChanger $statusChanger */
     private $statusChanger;
+    /** @var PartnerOrderRepository $partnerOrderRepository */
+    private $partnerOrderRepository;
 
     public function __construct(PartnerOrderRequestRepositoryInterface $order_request_repo, StatusChanger $status_changer)
     {
         $this->orderRequestRepo = $order_request_repo;
         $this->statusChanger = $status_changer;
+        $this->partnerOrderRepository = new PartnerOrderRepository();
     }
 
     /**
@@ -41,13 +46,23 @@ class OrderRequestController extends Controller
     public function lists($partner, Request $request, TimeFrame $time_frame)
     {
         try {
-            $this->validate($request, ['filter' => 'required|string|in:all,new,missed']);
+            $this->validate($request, [
+                'filter'    => 'required|string|in:all,active,missed',
+                'sort'      => 'sometimes|required|string|in:created_at,created_at:asc,created_at:desc,schedule_date,schedule_date:asc,schedule_date:desc'
+            ]);
+
+            /**
+             * PARTNER ORDER REQUEST
+             *
+             */
             $partner = $request->partner;
             $start_end_date = $time_frame->forTodayAndYesterday();
             $order_requests_formatted = [];
 
             list($offset, $limit) = calculatePagination($request);
-            $order_requests = $this->orderRequestRepo->getAllByPartnerWithFilter($partner, $start_end_date, $request->filter, $offset, $limit);
+            list($order_by_field, $order_by_type) = $this->getSortByFieldFromOrderRequest($request);
+            $order_requests = $this->orderRequestRepo->getAllByPartnerWithFilter($partner, $start_end_date, $request->filter, $order_by_field, $order_by_type, $offset, $limit);
+
             $order_requests->each(function ($order_requests) use (&$order_requests_formatted) {
                 $manager = new Manager();
                 $manager->setSerializer(new CustomSerializer());
@@ -55,7 +70,17 @@ class OrderRequestController extends Controller
                 $order_requests_formatted[] = $manager->createData($resource)->toArray()['data'];
             });
 
-            return api_response($request, null, 200, ['orders' => $order_requests_formatted]);
+            /**
+             * OLD ORDER LISTS
+             *
+             */
+            $orders = $this->partnerOrderRepository->getNewOrdersWithJobs($request);
+            $orders_with_order_requests = array_merge($orders, $order_requests_formatted);
+
+            $sort_by = $order_by_type == 'asc' ? 'sortBy' : 'sortByDesc';
+            $sorted_orders_with_order_requests = collect($orders_with_order_requests)->$sort_by($order_by_field);
+
+            return api_response($request, null, 200, ['orders' => $sorted_orders_with_order_requests->values()]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
@@ -66,6 +91,24 @@ class OrderRequestController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    /**
+     * @param $request
+     * @return array
+     */
+    private function getSortByFieldFromOrderRequest($request)
+    {
+        $order_by = 'desc';
+        $field = 'created_at';
+        if ($request->has('sort')) {
+            $explode = explode(':', $request->get('sort'));
+            $field = $explode[0] == 'created_at' ? $explode[0] : 'jobs.schedule_date';
+            if (isset($explode[1]) && $explode[1] == 'asc') {
+                $order_by = 'asc';
+            }
+        }
+        return [$field, $order_by];
     }
 
     /**
