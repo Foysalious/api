@@ -48,7 +48,7 @@ class Creator
      */
     public function create()
     {
-        return $this->repo->insert([
+        return $this->repo->create([
             'subscription_order_id' => $this->subscriptionOrder->id,
             'partner_id' => $this->partner->id
         ]);
