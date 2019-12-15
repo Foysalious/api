@@ -506,9 +506,15 @@ class ShebaController extends Controller
         try {
             $this->validate($request, ['url' => 'required']);
 
-            $new_url = RedirectUrl::where('old_url', 'LIKE', $request->url)->first()->new_url;
+            $new_url = RedirectUrl::where('old_url', 'LIKE', $request->url)->first();
 
-            return api_response($request, true, 200, ['new_url' => $new_url]);
+            if ($new_url) {
+                return api_response($request, true, 200, ['new_url' => $new_url->new_url]);
+            } else {
+                return api_response($request, true , 404, ['message' => 'Not Found']);
+            }
+
+
         } catch (ValidationException $e) {
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all()]);
@@ -528,50 +534,7 @@ class ShebaController extends Controller
             $param = $request->param;
             $type = $request->type;
 
-            $marketplace_url = env('SHEBA_MARKETPLACE_URL');
-
-            $items = [
-                [
-                    'name' => 'Sheba',
-                    'url' => $marketplace_url
-                ]
-            ];
-            if ($type === 'service') {
-                $service = Service::where('slug', $param)->first();
-                $category = Category::find($service->category_id);
-                $master = Category::find($category->parent_id);
-
-                array_push($items,[
-                    'name' => $master->name,
-                    'url' => $marketplace_url.'/'.$master->slug,
-                ],[
-                    'name' => $category->name,
-                    'url' => $marketplace_url.'/'.$category->slug,
-                ],[
-                    'name' => $service->name,
-                    'url' => $marketplace_url.'/'.$service->slug,
-                ]);
-            }
-
-            if ($type === 'secondary_category') {
-                $category = Category::where('slug', $param)->first();
-                $master = Category::find($category->parent_id);
-                array_push($items,[
-                    'name' => $master->name,
-                    'url' => $marketplace_url.'/'.$master->slug,
-                ],[
-                    'name' => $category->name,
-                    'url' => $marketplace_url.'/'.$category->slug,
-                ]);
-            }
-            
-            if ($type === 'master_category') {
-                $master = Category::where('slug', $param)->first();
-                array_push($items,  [
-                    'name' => $master->name,
-                    'url' => $marketplace_url.'/'.$master->slug,
-                ]);
-            }
+            $items = $this->generateBreadcrumbItems($param, $type);
 
 
             return api_response($request, true, 200, ['breadcrumb' => $this->generateBreadcrumb($items)]);
@@ -586,6 +549,59 @@ class ShebaController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function generateBreadcrumbItems($param, $type)
+    {
+        $marketplace_url = env('SHEBA_MARKETPLACE_URL');
+        $items = [
+            [
+                'name' => 'Sheba',
+                'url' => $marketplace_url
+            ]
+        ];
+        if ($type === 'service') {
+            $service = Service::where('slug', $param)->first();
+            $category = Category::find($service->category_id);
+            $master = Category::find($category->parent_id);
+
+            array_push($items,[
+                'name' => $master->name,
+                'url' => $marketplace_url.'/'.$master->slug,
+            ],[
+                'name' => $category->name,
+                'url' => $marketplace_url.'/'.$category->slug,
+            ],[
+                'name' => $service->name,
+                'url' => $marketplace_url.'/'.$service->slug,
+            ]);
+        }
+        if ($type === 'secondary_category') {
+            $category = Category::where('slug', $param)->first();
+            $master = Category::find($category->parent_id);
+            array_push($items,[
+                'name' => $master->name,
+                'url' => $marketplace_url.'/'.$master->slug,
+            ],[
+                'name' => $category->name,
+                'url' => $marketplace_url.'/'.$category->slug,
+            ]);
+        }
+        if ($type === 'master_category') {
+            $master = Category::where('slug', $param)->first();
+            array_push($items,  [
+                'name' => $master->name,
+                'url' => $marketplace_url.'/'.$master->slug,
+            ]);
+        }
+        if ($type === 'static') {
+            array_push($items,  [
+                'name' => $param,
+                'url' => $marketplace_url.'/'.$param,
+            ]);
+        }
+
+        return $items;
     }
 
     public function generateBreadcrumb($items) {

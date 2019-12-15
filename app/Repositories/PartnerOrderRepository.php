@@ -119,21 +119,26 @@ class PartnerOrderRepository
             $service_details_breakdown = $service_details->breakdown['0'];
             $services = collect();
             $services->push(array('name' => $service_details_breakdown->name, 'quantity' => (double)$service_details_breakdown->quantity));
+
             $subscription = collect([
-                'id' => $subscription_order->id,
-                'customer_name' => $subscription_order->customer->profile->name,
-                'address' => $subscription_order->deliveryAddress->address,
-                'location_name' => $subscription_order->location->name,
-                'billing_cycle' => $subscription_order->billing_cycle,
-                'total_orders' => $subscription_order->orders->count(),
-                'original_price' => $service_details->original_price,
-                'discount' => $service_details->discount,
-                'total_price' => $service_details->discounted_price,
-                'created_at' => $subscription_order->created_at->format('M-j, Y'),
-                "subscription_period" => Carbon::parse($subscription_order->billing_cycle_start)->format('M j') . ' - ' . Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
-                "preferred_time" => $schedules->first()->time,
-                'category_name' => $subscription_order->category->name,
-                'services' => $services
+                'id'                    => $subscription_order->id,
+                'customer_name'         => $subscription_order->customer->profile->name,
+                'address'               => $subscription_order->deliveryAddress->address,
+                'location_name'         => $subscription_order->location->name,
+                'billing_cycle'         => $subscription_order->billing_cycle,
+                'total_orders'          => $subscription_order->orders->count(),
+                'original_price'        => $service_details->original_price,
+                'discount'              => $service_details->discount,
+                'total_price'           => $service_details->discounted_price,
+                'created_at'            => $subscription_order->created_at->format('M-j, Y'),
+                'created_date_start'    => $schedules->first()->date,
+                'created_date_end'      => $schedules->last()->date,
+                "subscription_period"   => Carbon::parse($subscription_order->billing_cycle_start)->format('M j') . ' - ' . Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
+                "preferred_time"        => $schedules->first()->time,
+                'category_name'         => $subscription_order->category->name,
+                'services'              => $services,
+                'is_order_request'      => false,
+                'is_subscription_order' => true
             ]);
             $all_partner_orders->push($subscription);
         }
@@ -160,22 +165,23 @@ class PartnerOrderRepository
 
                 $order = collect([
                     'customer_name' => $jobs[0]->partner_order->order->deliveryAddress->name,
-                    'address' => $jobs[0]->partner_order->order->deliveryAddress->address,
+                    'address'       => $jobs[0]->partner_order->order->deliveryAddress->address,
                     'location_name' => $jobs[0]->partner_order->order->location->name,
-                    'created_at' => $jobs[0]->partner_order->created_at->timestamp,
+                    'created_at'    => $jobs[0]->partner_order->created_at->timestamp,
                     'created_at_readable' => $jobs[0]->partner_order->created_at->diffForHumans(),
-                    'code' => $jobs[0]->partner_order->code(),
+                    'created_date'  => $jobs[0]->partner_order->created_at->format('Y-m-d'),
+                    'code'          => $jobs[0]->partner_order->code(),
                     'is_on_premise' => $jobs[0]->site == 'partner' ? 1 : 0,
-                    'id' => $jobs[0]->partner_order->id,
-                    'total_price' => (double)$jobs[0]->partner_order->totalPrice,
-                    'discount' => (double)$jobs[0]->partner_order->totalDiscount,
+                    'id'            => $jobs[0]->partner_order->id,
+                    'total_price'   => (double)$jobs[0]->partner_order->totalPrice,
+                    'discount'      => (double)$jobs[0]->partner_order->totalDiscount,
                     'category_name' => $jobs[0]->category ? $jobs[0]->category->name : null,
-                    'job_id' => $jobs[0]->id,
+                    'job_id'        => $jobs[0]->id,
                     'schedule_date' => $jobs[0]->schedule_date,
-                    'preferred_time' => $jobs[0]->readable_preferred_time,
-                    'services' => $services,
-                    'status' => $jobs[0]->status,
-                    'is_order_request' => false,
+                    'preferred_time'=> $jobs[0]->readable_preferred_time,
+                    'services'      => $services,
+                    'status'        => $jobs[0]->status,
+                    'is_order_request'      => false,
                     'is_subscription_order' => $jobs[0]->partner_order->order->subscription ? true : false
                 ]);
                 $all_partner_orders->push($order);
