@@ -178,7 +178,7 @@ class CategoryController extends Controller
                             });
                         })->whereNotIn('id', $best_deal_category_ids);
                 })
-                ->select('id', 'name', 'parent_id', 'icon_png', 'app_thumb', 'app_banner')
+                ->select('id', 'name', 'parent_id', 'icon_png', 'app_thumb', 'app_banner', 'slug')
                 ->parent()->orderBy('order');
 
             if ($with) {
