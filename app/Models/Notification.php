@@ -40,5 +40,6 @@ class Notification extends Model
         if (stripos($type, 'announcement')) return 'announcement';
         elseif (stripos($type, 'vehicle')) return 'vehicle';
         elseif (stripos($type, 'driver')) return 'driver';
+        elseif (stripos($type, 'businesstriprequest')) return 'businesstriprequest';
     }
 }

@@ -31,7 +31,7 @@ class AnnouncementController extends Controller
         $this->validate($request, ['limit' => 'numeric', 'offset' => 'numeric', 'type' => 'string|in:' . implode(',', AnnouncementTypes::get())]);
         $auth_info = $request->auth_info;
         $business_member = $auth_info['business_member'];
-        if (!$business_member) return api_response($request, null, 401);
+        if (!$business_member) return api_response($request, null, 403);
         list($offset, $limit) = calculatePagination($request);
         $announcement_list->setBusinessId($business_member['business_id'])->setOffset($offset)->setLimit($limit);
         if ($request->type) $announcement_list->setType($request->type);
