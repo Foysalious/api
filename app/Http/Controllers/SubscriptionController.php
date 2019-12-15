@@ -240,7 +240,6 @@ class SubscriptionController extends Controller
                 'is_percentage' => $weekly_discount->isPercentage(),
                 'cap' => (double)$weekly_discount->cap
             ] : null;
-
             $serviceSubscription['monthly_discount'] = $monthly_discount ? [
                 'value' => (double)$monthly_discount->discount_amount,
                 'is_percentage' => $monthly_discount->isPercentage(),
