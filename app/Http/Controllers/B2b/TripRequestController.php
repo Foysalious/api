@@ -288,8 +288,8 @@ class TripRequestController extends Controller
                 $trip_requests = new TripRequests();
                 $trip_requests->setMember($request->member)
                     ->setBusinessMember($business_member)
-                    ->setSuperAdmins($super_admins)
                     ->setBusinessTripRequest($business_trip_request)
+                    ->setSuperAdmins($super_admins)
                     ->setNotificationTitle($trip_requests->getRequesterIdentity() . ' has created a new trip request.')
                     ->setEmailSubject('New Trip Request')
                     ->setEmailTemplate('emails.trip_request_create_notifications')
