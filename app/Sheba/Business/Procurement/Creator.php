@@ -8,6 +8,7 @@ use App\Sheba\Attachments\Attachments;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\UploadedFile;
+use Sheba\Notification\NotificationCreated;
 use Sheba\Repositories\Interfaces\ProcurementItemFieldRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementQuestionRepositoryInterface;
@@ -221,6 +222,7 @@ class Creator
 
                 $this->makeQuestion($procurement);
                 $this->procurementQuestionRepository->createMany($this->procurementQuestionData);
+                if ($procurement->is_published) $this->sendNotification($procurement);
             });
         } catch (QueryException $e) {
             throw $e;
@@ -420,5 +422,18 @@ class Creator
             ]);
         }
         return $item_fields;
+    }
+
+    private function sendNotification(Procurement $procurement)
+    {
+        return;
+        event(new NotificationCreated([
+            'notifiable_id' => 17,
+            'notifiable_type' => "member",
+            'event_id' => $procurement->id,
+            'event_type' => "procurement",
+            "title" => "afa",
+            "message" => "ada"
+        ], 44, "App\Models\Partner"));
     }
 }
