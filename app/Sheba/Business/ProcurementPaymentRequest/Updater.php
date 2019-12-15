@@ -16,6 +16,7 @@ class Updater
     private $procurementRepository;
     private $procurement;
     private $bid;
+    /** @var ProcurementPaymentRequest */
     private $paymentRequest;
     private $note;
     private $status;
@@ -117,7 +118,7 @@ class Updater
 
     private function sendStatusChangeNotification()
     {
-        $message = $this->paymentRequest->procurement->owner->name . 'has ' . $this->status . ' your payment request #' . $this->paymentRequest->id;
+        $message = $this->paymentRequest->procurement->owner->name . ' has ' . $this->status . ' your payment request #' . $this->paymentRequest->id;
         $link = config('sheba.partners_url') . '/' . $this->paymentRequest->bid->bidder->sub_domain . '/rfq-orders/' . $this->paymentRequest->procurement->id;
         notify()->partner($this->paymentRequest->bid->bidder)->send([
             'title' => $message,
