@@ -74,8 +74,15 @@ class TripRequests
         return $this;
     }
 
+    public function setSuperAdmins($super_admins)
+    {
+        $this->superAdmins = $super_admins;
+        return $this;
+    }
+
     public function getRequesterIdentity()
     {
+        $this->member = Member::find((int)$this->businessTripRequest->member_id);
         $identity = $this->member->profile->name;
         if (!$identity) $identity = $this->member->profile->mobile;
         if (!$identity) $identity = $this->member->profile->email;
@@ -99,13 +106,6 @@ class TripRequests
         return $this->getDriverProfile()->name ? $this->getDriverProfile()->name : '';
     }
 
-
-    public function setSuperAdmins($super_admins)
-    {
-        $this->superAdmins = $super_admins;
-        return $this;
-    }
-
     public function notifications($mail = false, $for = null, $comment = false, $co_worker = false)
     {
         if ($comment) {
@@ -123,7 +123,6 @@ class TripRequests
 
     public function notify($mail, $for)
     {
-        $this->member = Member::find((int)$this->businessTripRequest->member_id);
         notify($this->member)->send([
             'title' => $this->notificationTitle,
             'event_type' => get_class($this->businessTripRequest),
@@ -131,6 +130,13 @@ class TripRequests
         ]);
         if ($mail && $for === 'TripAccepted') {
             $this->mailForTripCreateAccepted();
+            event(new NotificationCreated([
+                'notifiable_id' => $this->member->id,
+                'notifiable_type' => "member",
+                'event_id' => $this->businessTripRequest->id,
+                'event_type' => get_class($this->businessTripRequest),
+                "title" => $this->notificationTitle,
+            ], $this->member->id, get_class($this->member)));
         }
     }
 
@@ -145,13 +151,13 @@ class TripRequests
 
             if ($mail && $for === 'TripCreate') {
                 $this->mailForTripCreate($admin);
-                /*event(new NotificationCreated([
-                    'notifiable_id' => $this->member->id,
+                event(new NotificationCreated([
+                    'notifiable_id' => $admin->id,
                     'notifiable_type' => "member",
                     'event_id' => $this->businessTripRequest->id,
                     'event_type' => get_class($this->businessTripRequest),
                     "title" => $this->notificationTitle,
-                ], $this->member->id, get_class($this->member)));*/
+                ], $admin->id, get_class($admin)));
             }
         }
     }
