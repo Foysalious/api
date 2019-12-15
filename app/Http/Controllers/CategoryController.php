@@ -117,7 +117,7 @@ class CategoryController extends Controller
                         }
                         $q->whereNotIn('id', $best_deal_category);
                         $filter_publication($q);
-                        if($is_business) $q->orderBy('order_for_b2b');
+                        if ($is_business) $q->orderBy('order_for_b2b');
                         else $q->orderBy('order');
                     }]);
                 }
@@ -598,7 +598,28 @@ class CategoryController extends Controller
                 ->orderBy('id', 'desc')
                 ->groupBy('customer_id')
                 ->get();
-            return count($reviews) > 0 ? api_response($request, $reviews, 200, ['reviews' => $reviews]) : api_response($request, null, 404);
+            $group_rating = [
+                [
+                    "value" => 1,
+                    "count" => 10
+                ],
+                [
+                    "value" => 2,
+                    "count" => 2
+                ],
+                [
+                    "value" => 3,
+                    "count" => 15
+                ],
+                [
+                    "value" => 4,
+                    "count" => 150
+                ],
+                [
+                    "value" => 5,
+                    "count" => 500
+                ]];
+            return count($reviews) > 0 ? api_response($request, $reviews, 200, ['reviews' => $reviews, 'group_rating' => $group_rating]) : api_response($request, null, 404);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
