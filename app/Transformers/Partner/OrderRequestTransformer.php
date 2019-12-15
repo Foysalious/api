@@ -29,7 +29,7 @@ class OrderRequestTransformer extends TransformerAbstract
             'created_date'  => $request->created_at->format('Y-m-d'),
             'schedule_date' => $order->lastJob()->schedule_date,
             'created_time'  => $request->created_at->format('h:m:s A'),
-            'price'         => (double)$request->partnerOrder->calculate()->totalPrice,
+            'total_price'   => (double)$request->partnerOrder->calculate()->totalPrice,
             'status'        => $request->status,
             'number_of_order' => $request->partnerOrder->order->subscription ? $this->getNumberOfSubscriptionOrder($request) : 1,
             'is_order_request'=> true,
