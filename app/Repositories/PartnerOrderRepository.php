@@ -131,7 +131,7 @@ class PartnerOrderRepository
                 'original_price'        => $service_details->original_price,
                 'discount'              => $service_details->discount,
                 'total_price'           => $service_details->discounted_price,
-                'created_at'            => $subscription_order->created_at->format('M-j, Y'),
+                'created_at'            => $subscription_order->created_at->timestamp,
                 'created_date_start'    => $schedules->first()->date,
                 'created_date_end'      => $schedules->last()->date,
                 "subscription_period"   => Carbon::parse($subscription_order->billing_cycle_start)->format('M j') . ' - ' . Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
@@ -158,11 +158,21 @@ class PartnerOrderRepository
                 $services = collect();
                 if (count($job->jobServices) == 0) {
                     $variables = json_decode($job->service_variables);
-                    $services->push(array('name' => $job->service_name, 'variables' => $variables, 'quantity' => (double)$job->quantity));
+                    $services->push(
+                        [
+                            'name' => $job->service_name,
+                            'variables' => $variables,
+                            'quantity' => (double)$job->quantity
+                        ]
+                    );
                 } else {
                     foreach ($job->jobServices as $jobService) {
                         $variables = json_decode($jobService->variables);
-                        $services->push(array('name' => $jobService->service->name, 'variables' => $variables, 'quantity' => (double)$jobService->quantity));
+                        $services->push([
+                            'name' => $jobService->service->name,
+                            'variables' => $variables,
+                            'quantity' => (double)$jobService->quantity
+                        ]);
                     }
                 }
 
@@ -170,6 +180,7 @@ class PartnerOrderRepository
                     $jobs[0]->partner_order->order->deliveryAddress = $jobs[0]->partner_order->order->getTempAddress();
                 }
 
+                $job_preferred_time = explode('-', $jobs[0]->preferred_time);
                 $order = collect([
                     'customer_name' => $jobs[0]->partner_order->order->deliveryAddress->name,
                     'address'       => $jobs[0]->partner_order->order->deliveryAddress->address,
@@ -194,9 +205,10 @@ class PartnerOrderRepository
                     'status'        => $jobs[0]->status,
                     'is_order_request'      => false,
                     'is_subscription_order' => $jobs[0]->partner_order->order->subscription ? true : false,
-                    'schedule_time_start'   => $jobs[0]->preferred_time_start,
-                    'schedule_time_end'     => $jobs[0]->preferred_time_end
+                    'schedule_time_start'   => $job_preferred_time[0],
+                    'schedule_time_end'     => $job_preferred_time[1]
                 ]);
+
                 $all_partner_orders->push($order);
             }
         }
