@@ -1,6 +1,7 @@
 <?php namespace Sheba\SubscriptionOrderRequest;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Sheba\Checkout\Adapters\SubscriptionOrderAdapter;
 use Sheba\Dal\SubscriptionOrder\Statuses as SubscriptionOrderStatuses;
 use Sheba\Dal\SubscriptionOrderRequest\Statuses;
@@ -42,13 +43,16 @@ class StatusChanger
             $this->setError(403, "Someone already did it.");
             return;
         }
-        $this->repo->update($this->subscriptionOrderRequest, ['status' => Statuses::ACCEPTED]);
-        (new SubscriptionOrderAdapter($this->subscriptionOrderRequest->subscriptionOrder))->convertToOrder();
-        $this->subscriptionOrderRequest->subscriptionOrder->update(['partner_id' => $request->partner->id]);
 
-        $this->repo->updatePendingRequestsOfOrder($this->subscriptionOrderRequest->subscriptionOrder, [
-            'status' => Statuses::MISSED
-        ]);
+        DB::transaction(function () use ($request) {
+            $this->repo->update($this->subscriptionOrderRequest, ['status' => Statuses::ACCEPTED]);
+            (new SubscriptionOrderAdapter($this->subscriptionOrderRequest->subscriptionOrder))->convertToOrder();
+            $this->subscriptionOrderRequest->subscriptionOrder->update(['partner_id' => $request->partner->id]);
+
+            $this->repo->updatePendingRequestsOfOrder($this->subscriptionOrderRequest->subscriptionOrder, [
+                'status' => Statuses::MISSED
+            ]);
+        });
     }
 
     public function decline(Request $request)
