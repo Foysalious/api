@@ -68,7 +68,7 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface, Pay
 
     public function deliveryAddress()
     {
-        return $this->hasOne(CustomerDeliveryAddress::class, 'id', 'delivery_address_id');
+        return $this->hasOne(CustomerDeliveryAddress::class, 'id', 'delivery_address_id')->withTrashed();
     }
 
     public function location()
