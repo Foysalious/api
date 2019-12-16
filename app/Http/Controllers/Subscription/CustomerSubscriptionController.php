@@ -319,10 +319,8 @@ class CustomerSubscriptionController extends Controller
                 'min_weekly_qty'    => $service_subscription->min_weekly_qty,
                 'min_monthly_qty'   => $service_subscription->min_monthly_qty,
                 "partner_id"        => $subscription_order->partner_id,
-
-                "partner_name"      => property_exists($service_details, 'name') ? $service_details->name : null,
-                "logo"              => property_exists($service_details, 'logo') ? $service_details->logo : null,
-
+                "partner_name"      => $partner ? $partner->name : null,
+                "logo"              => $partner ? $partner->logo : null,
                 "contact_person"    => $partner ? $partner->getContactPerson() : null,
                 "partner_slug"      => $partner ? $partner->sub_domain : null,
                 "partner_mobile"    => $partner ? $partner->getContactNumber() : null,
