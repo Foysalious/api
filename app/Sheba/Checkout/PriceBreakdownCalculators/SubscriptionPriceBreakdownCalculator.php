@@ -24,15 +24,13 @@ class SubscriptionPriceBreakdownCalculator extends PriceBreakdownCalculator
 
     /**
      * @return SubscriptionServicePricingAndBreakdown
-     * @throws InvalidDiscountType
      */
     public function calculate()
     {
         $price = new SubscriptionServicePricingAndBreakdown();
         $date_count = count($this->request->scheduleDate);
         foreach ($this->request->selectedServices as $selected_service) {
-            $unit_price = $this->getUnitPrice($selected_service);
-            $original_price = $unit_price * $selected_service->quantity;
+            $original_price = $this->getUnitPrice($selected_service) * $selected_service->quantity * $date_count;
             /** @var ServiceSubscriptionDiscount $discount */
             $discount = $selected_service->serviceModel->subscription->getDiscount($this->request->subscriptionType, $date_count);
             $discounted_amount = !$discount ? 0 : $discount->getApplicableAmount($original_price, $selected_service->quantity);
