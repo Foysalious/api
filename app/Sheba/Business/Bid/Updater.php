@@ -119,33 +119,33 @@ class Updater
                 }
                 $this->updateBidPrice();
                 $this->statusLogCreator->setBid($this->bid)->setPreviousStatus($previous_status)->setStatus($this->status)->create();
+                if ($this->status != 'sent') $this->sendVendorParticipatedNotification();
+                elseif ($this->status != 'rejected') $this->sendBidRejectedNotification();
+                elseif ($this->status != 'accepted') $this->sendBidAcceptedNotification();
             });
         } catch (QueryException $e) {
             throw  $e;
         }
     }
-    private function sendVendorCreatedNotification(Bid $bid)
-    {
-        if ($this->status != 'sent') return;
-        $message = $bid->bidder->name . ' participated on your procurement #' . $bid->procurement->id;
-        foreach ($bid->procurement->owner->superAdmins as $member) {
-            notify()->member($member)->send([
-                'title' => $message,
-                'type' => 'warning',
-                'event_type' => get_class($bid),
-                'event_id' => $bid->id
-            ]);
-            event(new NotificationCreated([
-                'notifiable_id' => $member->id,
-                'notifiable_type' => "member",
-                'event_id' => $bid->id,
-                'event_type' => "bid",
-                "title" => $message,
-                'message' => $message,
-            ], $bid->bidder->id, get_class($bid->bidder)));
-        }
 
+    private function sendVendorParticipatedNotification()
+    {
+        $message = $this->bid->bidder->name . ' participated on your procurement #' . $this->bid->procurement->id;
+        $this->notify($message);
     }
+
+    private function sendBidRejectedNotification()
+    {
+        $message = $this->bid->bidder->name . ' rejected your hiring request #' . $this->bid->id;
+        $this->notify($message);
+    }
+
+    private function sendBidAcceptedNotification()
+    {
+        $message = $this->bid->bidder->name . ' accepted your hiring request #' . $this->bid->id;
+        $this->notify($message);
+    }
+
     public function hire()
     {
         try {
@@ -229,5 +229,25 @@ class Updater
             "message" => $message,
             'link' => $link
         ], $this->bid->procurement->owner->id, get_class($this->bid->procurement->owner)));
+    }
+
+    private function notify($message)
+    {
+        foreach ($this->bid->procurement->owner->superAdmins as $member) {
+            notify()->member($member)->send([
+                'title' => $message,
+                'type' => 'warning',
+                'event_type' => get_class($this->bid),
+                'event_id' => $this->bid->id
+            ]);
+            event(new NotificationCreated([
+                'notifiable_id' => $member->id,
+                'notifiable_type' => "member",
+                'event_id' => $this->bid->id,
+                'event_type' => "bid",
+                "title" => $message,
+                'message' => $message,
+            ], $this->bid->bidder->id, get_class($this->bid->bidder)));
+        }
     }
 }
