@@ -6,7 +6,7 @@ use App\Models\SubscriptionOrder;
 use Carbon\Carbon;
 use Exception;
 use GuzzleHttp\Client;
-use Illuminate\Database\QueryException;
+use GuzzleHttp\Exception\GuzzleException;
 use Sheba\Checkout\Adapters\SubscriptionOrderAdapter;
 use Sheba\Dal\SubscriptionOrderPayment\SubscriptionOrderPaymentRepositoryInterface;
 use Sheba\ModificationFields;
@@ -28,6 +28,7 @@ class SubscriptionOrderComplete extends PaymentComplete
     /**
      * @return Payment
      * @throws Throwable
+     * @throws GuzzleException
      */
     public function complete()
     {
@@ -42,7 +43,7 @@ class SubscriptionOrderComplete extends PaymentComplete
             $payment_detail = $this->payment->paymentDetails->last();
             DB::transaction(function () use ($subscription_order, $payment_detail) {
                 $this->clearSubscriptionPayment($subscription_order);
-                $this->convertToOrder($subscription_order);
+                if($subscription_order->partner_id) $this->convertToOrder($subscription_order);
                 $this->createSubscriptionOrderPaymentLog();
                 $this->completePayment();
                 $subscription_order->payment_method = strtolower($payment_detail->readable_method);
@@ -51,7 +52,7 @@ class SubscriptionOrderComplete extends PaymentComplete
             $subscription_order = $subscription_order->fresh();
             $subscription_order->calculate();
             $this->cleaOrderPayment($subscription_order, $payment_detail);
-        } catch (QueryException $e) {
+        } catch (Exception $e) {
             $this->failPayment();
             throw $e;
         }
@@ -88,7 +89,6 @@ class SubscriptionOrderComplete extends PaymentComplete
         $payable_model->update();
     }
 
-
     private function convertToOrder(SubscriptionOrder $payable_model)
     {
         $subscription_order = new SubscriptionOrderAdapter($payable_model);
@@ -100,28 +100,41 @@ class SubscriptionOrderComplete extends PaymentComplete
         // TODO: Implement saveInvoice() method.
     }
 
+    /**
+     * @param SubscriptionOrder $subscription_order
+     * @param PaymentDetail $payment_detail
+     * @throws Exception
+     */
     private function cleaOrderPayment(SubscriptionOrder $subscription_order, PaymentDetail $payment_detail)
     {
         $client = new Client();
         foreach ($subscription_order->orders as $order) {
             foreach ($order->partnerOrders as $partner_order) {
                 if ($partner_order->due <= 0) continue;
-                $res = $client->request('POST', config('sheba.admin_url') . '/api/partner-order/' . $partner_order->id . '/collect',
-                    [
-                        'form_params' => array_merge([
-                            'customer_id' => $subscription_order->customer->id,
-                            'remember_token' => $subscription_order->customer->remember_token,
-                            'sheba_collection' => (double)$partner_order->due,
-                            'payment_method' => ucfirst($payment_detail->method),
-                            'created_by_type' => 'App\\Models\\Customer',
-                            'transaction_detail' => json_encode($payment_detail->formatPaymentDetail())
-                        ], (new RequestIdentification())->get())
-                    ]);
+                $collection_url = config('sheba.admin_url') . '/api/partner-order/' . $partner_order->id . '/collect';
+                $data = array_merge([
+                    'customer_id' => $subscription_order->customer->id,
+                    'remember_token' => $subscription_order->customer->remember_token,
+                    'sheba_collection' => (double)$partner_order->due,
+                    'payment_method' => ucfirst($payment_detail->method),
+                    'created_by_type' => 'App\\Models\\Customer',
+                    'transaction_detail' => json_encode($payment_detail->formatPaymentDetail())
+                ], (new RequestIdentification())->get());
+
+                try {
+                    $res = $client->request('POST', $collection_url, ['form_params' => $data]);
+                } catch (GuzzleException $e) {
+                    throw new Exception('OrderComplete collect api call failure: ' . $e->getMessage());
+                }
+
                 $response = json_decode($res->getBody());
-                if ($response->code == 200) {
-                    if (strtolower($payment_detail->method) == 'wallet') dispatchReward()->run('wallet_cashback', $subscription_order->customer, $payment_detail->amount, $partner_order);
-                } else {
+
+                if ($response->code != 200) {
                     throw new Exception('OrderComplete collect api failure. Response: ' . json_encode($response));
+                }
+
+                if (strtolower($payment_detail->method) == 'wallet') {
+                    dispatchReward()->run('wallet_cashback', $subscription_order->customer, $payment_detail->amount, $partner_order);
                 }
 
             }
