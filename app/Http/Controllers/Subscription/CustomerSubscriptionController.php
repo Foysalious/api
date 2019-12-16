@@ -190,12 +190,12 @@ class CustomerSubscriptionController extends Controller
                     "is_active" => Carbon::parse($subscription_order->billing_cycle_end) >= Carbon::today() ? 1 : 0,
                 ];
 
-                if ($subscription_order->partner) {
+                if ($partner = $subscription_order->partner) {
                     $orders_list["partner"] = [
-                        "id"        => $subscription_order->partner_id,
-                        "name"      => $service_details->name,
-                        "mobile"    => $subscription_order->partner->mobile,
-                        "logo"      => $service_details->logo
+                        "id"        => $partner->id,
+                        "name"      => $partner->name,
+                        "mobile"    => $partner->mobile,
+                        "logo"      => $partner->logo
                     ];
                 }
                 $subscription_orders_list->push($orders_list);
