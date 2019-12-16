@@ -28,7 +28,7 @@ class SubscriptionOrderComplete extends PaymentComplete
     /**
      * @return Payment
      * @throws Throwable
-     * @throws GuzzleException
+     * @throws Exception
      */
     public function complete()
     {
