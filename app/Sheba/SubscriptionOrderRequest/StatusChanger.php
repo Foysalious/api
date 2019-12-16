@@ -46,7 +46,7 @@ class StatusChanger
 
         DB::transaction(function () use ($request) {
             $subscription_order = $this->subscriptionOrderRequest->subscriptionOrder;
-            $subscription_order = $subscription_order->update(['partner_id' => $request->partner->id]);
+            $subscription_order->update(['partner_id' => $request->partner->id]);
             (new SubscriptionOrderAdapter($subscription_order))->convertToOrder();
             $this->repo->update($this->subscriptionOrderRequest, ['status' => Statuses::ACCEPTED]);
             $this->repo->updatePendingRequestsOfOrder($subscription_order, [
