@@ -190,12 +190,12 @@ class CustomerSubscriptionController extends Controller
                     "is_active" => Carbon::parse($subscription_order->billing_cycle_end) >= Carbon::today() ? 1 : 0,
                 ];
 
-                if ($subscription_order->partner) {
+                if ($partner = $subscription_order->partner) {
                     $orders_list["partner"] = [
-                        "id"        => $subscription_order->partner_id,
-                        "name"      => $service_details->name,
-                        "mobile"    => $subscription_order->partner->mobile,
-                        "logo"      => $service_details->logo
+                        "id"        => $partner->id,
+                        "name"      => $partner->name,
+                        "mobile"    => $partner->mobile,
+                        "logo"      => $partner->logo
                     ];
                 }
                 $subscription_orders_list->push($orders_list);
@@ -319,10 +319,8 @@ class CustomerSubscriptionController extends Controller
                 'min_weekly_qty'    => $service_subscription->min_weekly_qty,
                 'min_monthly_qty'   => $service_subscription->min_monthly_qty,
                 "partner_id"        => $subscription_order->partner_id,
-
-                "partner_name"      => property_exists($service_details, 'name') ? $service_details->name : null,
-                "logo"              => property_exists($service_details, 'logo') ? $service_details->logo : null,
-
+                "partner_name"      => $partner ? $partner->name : null,
+                "logo"              => $partner ? $partner->logo : null,
                 "contact_person"    => $partner ? $partner->getContactPerson() : null,
                 "partner_slug"      => $partner ? $partner->sub_domain : null,
                 "partner_mobile"    => $partner ? $partner->getContactNumber() : null,
@@ -447,7 +445,6 @@ class CustomerSubscriptionController extends Controller
                     return api_response($request, $partners, 200, ['status' => 'no_partners_available_on_time']);
             }
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

@@ -19,6 +19,36 @@ class AnnouncementController extends Controller
 {
     use ModificationFields;
 
+    /** @var AnnouncementRepositoryInterface */
+    private $repo;
+
+    public function __construct(AnnouncementRepositoryInterface $announcement_repository)
+    {
+        $this->repo = $announcement_repository;
+    }
+
+    public function index($business, Request $request, AnnouncementList $announcement_list)
+    {
+        $this->validate($request, [
+            'limit' => 'numeric',
+            'offset' => 'numeric',
+            'type' => 'string|in:' . implode(',', AnnouncementTypes::get())
+        ]);
+        $business_member = $request->business_member;
+        $this->setModifier($business_member);
+        if (!$business_member) return api_response($request, null, 401);
+        list($offset, $limit) = calculatePagination($request);
+        $announcement_list->setBusinessId($business_member->business_id)->setOffset($offset)->setLimit($limit);
+        if ($request->type) $announcement_list->setType($request->type);
+        $announcements = $announcement_list->get();
+        if (count($announcements) == 0) return api_response($request, null, 404);
+        $manager = new Manager();
+        $manager->setSerializer(new ArraySerializer());
+        $announcements = new Collection($announcements, new AnnouncementTransformer());
+        $announcements = $manager->createData($announcements)->toArray()['data'];
+        return api_response($request, $announcements, 200, ['announcements' => $announcements]);
+    }
+
     public function store($business, Request $request, Creator $creator, AccessControl $access_control)
     {
         $this->validate($request, [
@@ -35,9 +65,9 @@ class AnnouncementController extends Controller
         return api_response($request, $announcement, 200, ['id' => $announcement->id]);
     }
 
-    public function show($business, $announcement, Request $request, AnnouncementRepositoryInterface $announcement_repository)
+    public function show($business, $announcement, Request $request)
     {
-        $announcement = $announcement_repository->find($announcement);
+        $announcement = $this->repo->find($announcement);
         if (!$announcement || $announcement->business_id != $business) return api_response($request, null, 403);
         return api_response($request, $announcement, 200, ['announcement' => [
             'id' => $announcement->id,
@@ -48,7 +78,7 @@ class AnnouncementController extends Controller
         ]]);
     }
 
-    public function update($business, $announcement, Request $request, Updater $updater, AccessControl $access_control, AnnouncementRepositoryInterface $announcement_repository)
+    public function update($business, $announcement, Request $request, Updater $updater, AccessControl $access_control)
     {
         $this->validate($request, [
             'title' => 'string',
@@ -57,7 +87,7 @@ class AnnouncementController extends Controller
         ]);
         $business_member = $request->business_member;
         $this->setModifier($business_member);
-        $announcement = $announcement_repository->find($announcement);
+        $announcement = $this->repo->find($announcement);
         if (!$announcement || $announcement->business_id != $business || !$access_control->setBusinessMember($business_member)->hasAccess('announcement.rw')) return api_response($request, null, 403);
         $updater->setAnnouncement($announcement);
         if ($request->has('title')) $updater->setTitle($request->title);
@@ -65,23 +95,5 @@ class AnnouncementController extends Controller
         if ($request->has('end_date')) $updater->setEndDate(Carbon::parse($request->end_date));
         $updater->update();
         return api_response($request, $announcement, 200);
-    }
-
-    public function index($business, $announcement, Request $request, AnnouncementList $announcement_list)
-    {
-        $this->validate($request, ['limit' => 'numeric', 'offset' => 'numeric', 'type' => 'string|in:' . implode(',', AnnouncementTypes::get())]);
-        $business_member = $request->business_member;
-        $this->setModifier($business_member);
-        if (!$business_member) return api_response($request, null, 401);
-        list($offset, $limit) = calculatePagination($request);
-        $announcement_list->setBusinessId($business_member->business_id)->setOffset($offset)->setLimit($limit);
-        if ($request->type) $announcement_list->setType($request->type);
-        $announcements = $announcement_list->get();
-        if (count($announcements) == 0) return api_response($request, null, 404);
-        $manager = new Manager();
-        $manager->setSerializer(new ArraySerializer());
-        $announcements = new Collection($announcements, new AnnouncementTransformer());
-        $announcements = $manager->createData($announcements)->toArray()['data'];
-        return api_response($request, $announcements, 200, ['announcements' => $announcements]);
     }
 }

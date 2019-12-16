@@ -50,20 +50,20 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface, Pay
 
     public function schedules()
     {
-        return json_decode($this->schedules, true);
+        return json_decode($this->schedules);
     }
 
     public function getScheduleDates()
     {
         $schedules = $this->schedules();
         return array_map(function($schedule) {
-            return $schedule['date'];
+            return $schedule->date;
         }, $schedules);
     }
 
     public function getScheduleTime()
     {
-        return $this->schedules()[0]['time'];
+        return $this->schedules()[0]->time;
     }
 
     public function deliveryAddress()

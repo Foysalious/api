@@ -81,7 +81,10 @@ class CategoryController extends Controller
             $best_deal_categories_id = explode(',', config('sheba.best_deal_ids'));
             $best_deal_category = CategoryGroupCategory::whereIn('category_group_id', $best_deal_categories_id)->pluck('category_id')->toArray();
 
-            $categories = Category::where('parent_id', null)->orderBy('order');
+            $categories = Category::where('parent_id', null);
+            if ($is_b2b) $categories = $categories->orderBy('order_for_b2b');
+            else $categories = $categories->orderBy('order');
+
             if ($location) {
                 $categories = $categories->whereHas('locations', function ($q) use ($location) {
                     $q->where('locations.id', $location->id);
@@ -553,7 +556,24 @@ class CategoryController extends Controller
                     $question->put('input_type', $this->resolveInputTypeField($question->get('answers')));
                     $question->put('screen', count($questions) > 3 ? 'slide' : 'normal');
                     $explode_answers = explode(',', $question->get('answers'));
+                    $contents = [];
+                    foreach ($explode_answers as $answer) {
+                        array_push($contents, [
+                            'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/74/600.jpg',
+                            'description' => [
+                                "We have more than 300 services",
+                                "Verified experts all arround the country"
+                            ],
+                            'images' => [
+                                'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/74/600.jpg',
+                                'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/74/600.jpg',
+                                'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/74/600.jpg',
+                                'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/74/600.jpg'
+                            ]
+                        ]);
+                    }
                     $question->put('answers', $explode_answers);
+                    $question->put('contents', $contents);
                 }
                 if (count($questions) == 1) {
                     $questions[0]->put('input_type', 'selectbox');
