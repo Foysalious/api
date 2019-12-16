@@ -447,7 +447,6 @@ class CustomerSubscriptionController extends Controller
                     return api_response($request, $partners, 200, ['status' => 'no_partners_available_on_time']);
             }
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
