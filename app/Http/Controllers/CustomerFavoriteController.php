@@ -61,7 +61,7 @@ class CustomerFavoriteController extends Controller
                     });
                 }
                 $q->with([
-                    'services', 'partner' => function ($q) {
+                    'job', 'services', 'partner' => function ($q) {
                         $q->select('id', 'name', 'logo');
                     }, 'category' => function ($q) {
                         if ($this->location) $q->select('id', 'parent_id', 'name', 'slug', 'icon_png', 'icon_color')->with('parent');
@@ -76,10 +76,11 @@ class CustomerFavoriteController extends Controller
 
         $favorites = $customer->favorites->each(function (&$favorite, $key) use ($manager, $price_calculation, $delivery_charge, $job_discount_handler) {
             $services = [];
-            $favorite['category_name'] = $favorite->category->name;
-            $favorite['category_slug'] = $favorite->category->slug;
-            $favorite['category_icon'] = $favorite->category->icon_png;
-            $favorite['icon_color'] = isset(config('sheba.category_colors')[$favorite->category->parent->id]) ? config('sheba.category_colors')[$favorite->category->parent->id] : null;
+            $favorite['category_name']  = $favorite->category->name;
+            $favorite['category_slug']  = $favorite->category->slug;
+            $favorite['category_icon']  = $favorite->category->icon_png;
+            $favorite['icon_color']     = isset(config('sheba.category_colors')[$favorite->category->parent->id]) ? config('sheba.category_colors')[$favorite->category->parent->id] : null;
+            $favorite['rating']         = $favorite->job->review->rating;
 
             $favorite->services->each(function ($service) use ($favorite, &$services, $manager, $price_calculation, $delivery_charge, $job_discount_handler) {
                 $location_service = LocationService::where('location_id', $this->location)->where('service_id', $service->id)->first();
