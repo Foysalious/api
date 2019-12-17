@@ -31,7 +31,7 @@ class LoanHistory
             $data[] = $this->installment_count();
         }
         $data[] = $this->created_at();
-        if ($this->partnerBankLoan->status == constants('LOAN_STATUSES')['rejected']) {
+        if ($this->partnerBankLoan->status == constants('LOAN_STATUSES')['declined']) {
             $data[] = $this->rejectReason();
         }
         return $data;
@@ -163,7 +163,7 @@ class LoanHistory
             ],
             [
                 'to',
-                constants('LOAN_STATUSES')['rejected']
+                constants('LOAN_STATUSES')['declined']
             ]
         ])->get()->last();
         $reason = $log ? $log->description : "";
