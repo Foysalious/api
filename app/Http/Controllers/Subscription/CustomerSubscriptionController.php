@@ -8,6 +8,7 @@ use App\Models\Service;
 use App\Models\ServiceSubscription;
 use App\Models\ServiceSubscriptionDiscount;
 use App\Models\SubscriptionOrder;
+use App\Transformers\PreferredTimeTransformer;
 use App\Transformers\ServiceV2DeliveryChargeTransformer;
 use App\Transformers\ServiceV2MinimalTransformer;
 use App\Transformers\ServiceV2Transformer;
@@ -22,6 +23,7 @@ use Sheba\Checkout\DeliveryCharge;
 use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Checkout\SubscriptionOrderPlace\CustomerSubscriptionOrderPlaceFactory;
 use Sheba\JobDiscount\JobDiscountHandler;
+use Sheba\Jobs\PreferredTime;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\Payment\Adapters\Payable\SubscriptionOrderAdapter;
 use Sheba\Payment\ShebaPayment;
@@ -303,6 +305,8 @@ class CustomerSubscriptionController extends Controller
                 $variables->push($data);
             }
 
+            $time = new PreferredTime($schedules->first()->time);
+
             $subscription_order_details = [
                 "subscription_code" => $subscription_order->code(),
                 "category_id"       => $service->category->id,
@@ -327,7 +331,6 @@ class CustomerSubscriptionController extends Controller
                 "partner_address"   => $partner ? $partner->address : null,
                 "avg_rating"        => $partner ? (double)$partner->reviews()->avg('rating') : 0.00,
                 "total_rating"      => $partner ? $partner->reviews->count() : null,
-
                 'customer_name'     => $subscription_order->customer->profile->name,
                 'customer_mobile'   => $subscription_order->customer->profile->mobile,
                 'address_id'        => $delivery_address->id,
@@ -338,7 +341,8 @@ class CustomerSubscriptionController extends Controller
                 "total_orders"      => $subscription_order->orders->count(),
                 "completed_orders"  => $served_orders->count(),
                 "orders_left"       => $subscription_order->orders->count() - $served_orders->count(),
-                "preferred_time"    => $schedules->first()->time,
+                "preferred_time"    => $time->toReadableString(),
+                "preferred_time_structured" => (new PreferredTimeTransformer())->transform($time),
                 "next_order"        => empty($next_order) ? null : $next_order,
                 "days_left"         => Carbon::today()->diffInDays(Carbon::parse($subscription_order->billing_cycle_end)),
                 'original_price'    => $service_details->original_price,
