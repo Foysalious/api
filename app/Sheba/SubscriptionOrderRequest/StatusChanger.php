@@ -1,6 +1,7 @@
 <?php namespace Sheba\SubscriptionOrderRequest;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Sheba\Checkout\Adapters\SubscriptionOrderAdapter;
 use Sheba\Dal\SubscriptionOrder\Statuses as SubscriptionOrderStatuses;
 use Sheba\Dal\SubscriptionOrderRequest\Statuses;
@@ -42,21 +43,25 @@ class StatusChanger
             $this->setError(403, "Someone already did it.");
             return;
         }
-        $this->repo->update($this->subscriptionOrderRequest, ['status' => Statuses::ACCEPTED]);
-        (new SubscriptionOrderAdapter($this->subscriptionOrderRequest->subscriptionOrder))->convertToOrder();
-        $this->subscriptionOrderRequest->subscriptionOrder->update(['partner_id' => $request->partner->id]);
 
-        $this->repo->updatePendingRequestsOfOrder($this->subscriptionOrderRequest->subscriptionOrder, [
-            'status' => Statuses::MISSED
-        ]);
+        DB::transaction(function () use ($request) {
+            $subscription_order = $this->subscriptionOrderRequest->subscriptionOrder;
+            $subscription_order->update(['partner_id' => $request->partner->id]);
+            (new SubscriptionOrderAdapter($subscription_order))->convertToOrder();
+            $this->repo->update($this->subscriptionOrderRequest, ['status' => Statuses::ACCEPTED]);
+            $this->repo->updatePendingRequestsOfOrder($subscription_order, [
+                'status' => Statuses::MISSED
+            ]);
+        });
     }
 
     public function decline(Request $request)
     {
-        $this->repo->update($this->subscriptionOrderRequest, ['status' => Statuses::DECLINED]);
-
-        if ($this->repo->isAllRequestDeclinedOrNotResponded($this->subscriptionOrderRequest->subscriptionOrder)) {
-            $this->subscriptionOrderStatusChanger->updateStatus(SubscriptionOrderStatuses::DECLINED);
-        }
+        DB::transaction(function () {
+            $this->repo->update($this->subscriptionOrderRequest, ['status' => Statuses::DECLINED]);
+            if ($this->repo->isAllRequestDeclinedOrNotResponded($this->subscriptionOrderRequest->subscriptionOrder)) {
+                $this->subscriptionOrderStatusChanger->updateStatus(SubscriptionOrderStatuses::DECLINED);
+            }
+        });
     }
 }

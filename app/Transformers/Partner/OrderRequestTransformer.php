@@ -19,7 +19,7 @@ class OrderRequestTransformer extends TransformerAbstract
         /** @var Job $job */
         $job = $order->lastJob();
 
-        $data = [
+        return [
             'id'                    => $request->id,
             'service_name'          => [
                 'bn' => $category->bn_name ?: null,
@@ -36,21 +36,9 @@ class OrderRequestTransformer extends TransformerAbstract
             'created_time'          => $request->created_at->format('h:m:s A'),
             'total_price'           => (double)$request->partnerOrder->calculate()->totalPrice,
             'status'                => $request->status,
-            'number_of_order'       => $request->partnerOrder->order->subscription ? $this->getNumberOfSubscriptionOrder($request) : 1,
+            'number_of_order'       => 1,
             'is_order_request'      => true,
-            'is_subscription_order' => $request->partnerOrder->order->subscription ? true : false
+            'is_subscription_order' => false
         ];
-
-        if ($request->partnerOrder->order->subscription) {
-            $schedules = json_decode($request->partnerOrder->order->subscription->schedules, true);
-            $data['created_date_start'] = $schedules[0]['date'];
-            $data['created_date_end']   = end($schedules)['date'];
-        }
-        return $data;
-    }
-
-    private function getNumberOfSubscriptionOrder(PartnerOrderRequest $request)
-    {
-        return $request->partnerOrder->order->subscription->orders->count();
     }
 }

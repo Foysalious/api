@@ -556,7 +556,24 @@ class CategoryController extends Controller
                     $question->put('input_type', $this->resolveInputTypeField($question->get('answers')));
                     $question->put('screen', count($questions) > 3 ? 'slide' : 'normal');
                     $explode_answers = explode(',', $question->get('answers'));
+                    $contents = [];
+                    foreach ($explode_answers as $answer) {
+                        array_push($contents, [
+                            'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/74/600.jpg',
+                            'description' => [
+                                "We have more than 300 services",
+                                "Verified experts all arround the country"
+                            ],
+                            'images' => [
+                                'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/74/600.jpg',
+                                'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/74/600.jpg',
+                                'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/74/600.jpg',
+                                'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/74/600.jpg'
+                            ]
+                        ]);
+                    }
                     $question->put('answers', $explode_answers);
+                    $question->put('contents', $contents);
                 }
                 if (count($questions) == 1) {
                     $questions[0]->put('input_type', 'selectbox');

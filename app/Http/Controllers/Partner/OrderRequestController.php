@@ -5,12 +5,14 @@ use App\Models\PartnerOrder;
 use App\Repositories\PartnerOrderRepository;
 use App\Transformers\CustomSerializer;
 use App\Transformers\Partner\OrderRequestTransformer;
+use App\Transformers\Partner\SubscriptionOrderRequestTransformer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequest;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequestRepositoryInterface;
+use Sheba\Dal\SubscriptionOrderRequest\SubscriptionOrderRequestRepositoryInterface;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Jobs\JobStatuses;
 use Sheba\ModificationFields;
@@ -29,10 +31,14 @@ class OrderRequestController extends Controller
     private $statusChanger;
     /** @var PartnerOrderRepository $partnerOrderRepository */
     private $partnerOrderRepository;
+    /** @var SubscriptionOrderRequestRepositoryInterface */
+    private $subscriptionOrderRequestRepo;
 
-    public function __construct(PartnerOrderRequestRepositoryInterface $order_request_repo, StatusChanger $status_changer)
+    public function __construct(PartnerOrderRequestRepositoryInterface $order_request_repo, StatusChanger $status_changer,
+                                SubscriptionOrderRequestRepositoryInterface $subscription_order_request_repo)
     {
         $this->orderRequestRepo = $order_request_repo;
+        $this->subscriptionOrderRequestRepo = $subscription_order_request_repo;
         $this->statusChanger = $status_changer;
         $this->partnerOrderRepository = new PartnerOrderRepository();
     }
@@ -51,22 +57,30 @@ class OrderRequestController extends Controller
                 'sort'      => 'sometimes|required|string|in:created_at,created_at:asc,created_at:desc,schedule_date,schedule_date:asc,schedule_date:desc'
             ]);
 
-            /**
-             * PARTNER ORDER REQUEST
-             *
-             */
             $partner = $request->partner;
             $start_end_date = $time_frame->forTodayAndYesterday();
-            $order_requests_formatted = [];
-
             list($offset, $limit) = calculatePagination($request);
             list($order_by_field, $order_by_type) = $this->getSortByFieldFromOrderRequest($request);
-            $order_requests = $this->orderRequestRepo->getAllByPartnerWithFilter($partner, $start_end_date, $request->filter, $order_by_field, $order_by_type, $offset, $limit);
+            $order_requests_formatted = [];
 
-            $order_requests->each(function ($order_requests) use (&$order_requests_formatted) {
-                $manager = new Manager();
-                $manager->setSerializer(new CustomSerializer());
-                $resource = new Item($order_requests, new OrderRequestTransformer());
+            $manager = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+
+            /**
+             * PARTNER ORDER REQUEST
+             */
+            $order_requests = $this->orderRequestRepo->getAllByPartnerWithFilter($partner, $start_end_date, $request->filter, $order_by_field, $order_by_type, $offset, $limit);
+            $order_requests->each(function ($order_request) use ($manager, &$order_requests_formatted) {
+                $resource = new Item($order_request, new OrderRequestTransformer());
+                $order_requests_formatted[] = $manager->createData($resource)->toArray()['data'];
+            });
+
+            /**
+             * SUBSCRIPTION ORDER REQUEST
+             */
+            $subscription_order_requests = $this->subscriptionOrderRequestRepo->getAllByPartnerWithFilter($partner, $start_end_date, $request->filter, $order_by_field, $order_by_type, $offset, $limit);
+            $subscription_order_requests->each(function ($subscription_order_request) use ($manager, &$order_requests_formatted) {
+                $resource = new Item($subscription_order_request, new SubscriptionOrderRequestTransformer());
                 $order_requests_formatted[] = $manager->createData($resource)->toArray()['data'];
             });
 
