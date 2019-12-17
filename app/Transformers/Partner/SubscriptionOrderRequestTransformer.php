@@ -1,11 +1,8 @@
 <?php namespace App\Transformers\Partner;
 
-use App\Jobs\Job;
 use App\Models\Category;
-use App\Models\Order;
 use App\Models\SubscriptionOrder;
 use League\Fractal\TransformerAbstract;
-use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequest;
 use Sheba\Dal\SubscriptionOrderRequest\SubscriptionOrderRequest;
 
 class SubscriptionOrderRequestTransformer extends TransformerAbstract
@@ -39,6 +36,7 @@ class SubscriptionOrderRequestTransformer extends TransformerAbstract
             'schedule_date'         => $schedules[0]->date,
             'schedule_time_start'   => $schedule_time[0],
             'schedule_time_end'     => $schedule_time[1],
+            'schedules'             => $subscription_order->getScheduleDates(),
             'created_time'          => $request->created_at->format('h:m:s A'),
             'total_price'           => (double)$subscription_order->getTotalPrice(),
             'status'                => $request->status,

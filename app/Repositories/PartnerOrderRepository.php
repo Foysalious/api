@@ -118,7 +118,10 @@ class PartnerOrderRepository
             $service_details = json_decode($subscription_order->service_details);
             $service_details_breakdown = $service_details->breakdown['0'];
             $services = collect();
-            $services->push(array('name' => $service_details_breakdown->name, 'quantity' => (double)$service_details_breakdown->quantity));
+            $services->push([
+                'name' => $service_details_breakdown->name,
+                'quantity' => (double)$service_details_breakdown->quantity
+            ]);
 
             $schedule_time = explode('-', $schedules->first()->time);
             $subscription = collect([
@@ -145,7 +148,8 @@ class PartnerOrderRepository
                 'is_order_request'      => false,
                 'is_subscription_order' => true,
                 'schedule_time_start'   => Carbon::parse($schedule_time[0])->format('H:i:s'),
-                'schedule_time_end'     => Carbon::parse($schedule_time[1])->format('H:i:s')
+                'schedule_time_end'     => Carbon::parse($schedule_time[1])->format('H:i:s'),
+                'schedules'             => $subscription_order->getScheduleDates()
             ]);
             $all_partner_orders->push($subscription);
         }
@@ -216,7 +220,6 @@ class PartnerOrderRepository
 
         $orderBy = $orderBy == 'asc' ? 'sortBy' : 'sortByDesc';
         list($offset, $limit) = calculatePagination($request);
-
         return array_slice($this->partnerOrdersSortBy($field, $orderBy, $all_partner_orders, $all_jobs)->toArray(), $offset, $limit);
     }
 

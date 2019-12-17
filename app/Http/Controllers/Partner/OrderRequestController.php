@@ -12,6 +12,7 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequest;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequestRepositoryInterface;
+use Sheba\Dal\PartnerOrderRequest\Statuses;
 use Sheba\Dal\SubscriptionOrderRequest\SubscriptionOrderRequestRepositoryInterface;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Jobs\JobStatuses;
@@ -57,6 +58,8 @@ class OrderRequestController extends Controller
                 'sort'      => 'sometimes|required|string|in:created_at,created_at:asc,created_at:desc,schedule_date,schedule_date:asc,schedule_date:desc'
             ]);
 
+            $original_offset = $request->offset;
+            $request->offset = 0;
             $partner = $request->partner;
             $start_end_date = $time_frame->forTodayAndYesterday();
             list($offset, $limit) = calculatePagination($request);
@@ -88,11 +91,16 @@ class OrderRequestController extends Controller
              * OLD ORDER LISTS
              *
              */
-            $orders = $this->partnerOrderRepository->getNewOrdersWithJobs($request);
+            if ($request->filter == Statuses::MISSED) $orders = [];
+            else $orders = $this->partnerOrderRepository->getNewOrdersWithJobs($request);
+
             $orders_with_order_requests = array_merge($orders, $order_requests_formatted);
 
             $sort_by = $order_by_type == 'asc' ? 'sortBy' : 'sortByDesc';
-            $sorted_orders_with_order_requests = collect($orders_with_order_requests)->$sort_by($order_by_field);
+            $sorted_orders_with_order_requests = collect($orders_with_order_requests)
+                ->$sort_by($order_by_field)
+                ->slice($original_offset)
+                ->take($request->limit);
 
             return api_response($request, null, 200, ['orders' => $sorted_orders_with_order_requests->values()]);
         } catch (ValidationException $e) {

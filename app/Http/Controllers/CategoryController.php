@@ -444,6 +444,7 @@ class CategoryController extends Controller
                         'cap' => (double)$discount->cap
                     ] : null;
                 });
+
                 foreach ($services as $service) {
                     if ($subscription = $service->activeSubscription) {
                         list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);
