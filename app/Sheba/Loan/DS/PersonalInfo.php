@@ -149,7 +149,7 @@ class PersonalInfo implements Arrayable
             } elseif ($key == 'present_address') {
                 $output[$key] = (new PresentAddress($data))->toArray();
             } elseif ($key == 'expenses') {
-                $output[$key] = (new Expenses((array_key_exists($key, $data) ? $data['expenses'] : null)));
+                $output[$key] = (new Expenses(array_key_exists($key, $data) ? (array)$data[$key] : []))->toArray();
             } elseif ($key == 'genders') {
                 $output[$key] = constants('GENDER');
             } elseif ($key == 'occupation_lists') {
@@ -226,8 +226,8 @@ class PersonalInfo implements Arrayable
 
     public static function isSameAddress($present, $permanent)
     {
-        if(empty($present) || empty($permanent)) return false;
-
+        if (empty($present) || empty($permanent))
+            return false;
         foreach ($present as $key => $value) {
             if ($value != $permanent[$key])
                 return false;
