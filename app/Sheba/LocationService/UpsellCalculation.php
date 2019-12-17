@@ -51,6 +51,8 @@ class UpsellCalculation
     private function getFixedServiceUpsell()
     {
         $upsell_prices = $this->locationService->upsell_price;
+        if (!$upsell_prices) return null;
+
         foreach ($upsell_prices as $key => $prices_with_min_max_quantity) {
             return array_map(function ($item) {
                 return [
@@ -60,14 +62,14 @@ class UpsellCalculation
                 ];
             }, $prices_with_min_max_quantity);
         }
-
-        return null;
     }
 
     private function getOptionServiceUpsell()
     {
         $option = implode(',', $this->option);
         $upsell_prices = $this->locationService->upsell_price;
+        if (!$upsell_prices) return null;
+
         foreach ($upsell_prices as $key => $prices_with_min_max_quantity) {
             if ($key == $option) {
                 return array_map(function ($item) {
@@ -79,7 +81,5 @@ class UpsellCalculation
                 }, $prices_with_min_max_quantity);
             }
         }
-
-        return null;
     }
 }
