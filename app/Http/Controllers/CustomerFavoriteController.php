@@ -80,7 +80,7 @@ class CustomerFavoriteController extends Controller
             $favorite['category_slug']  = $favorite->category->slug;
             $favorite['category_icon']  = $favorite->category->icon_png;
             $favorite['icon_color']     = isset(config('sheba.category_colors')[$favorite->category->parent->id]) ? config('sheba.category_colors')[$favorite->category->parent->id] : null;
-            $favorite['rating']         = $favorite->job->review->rating;
+            $favorite['rating']         = $favorite->job->review ? $favorite->job->review->rating : 0.00;
 
             $favorite->services->each(function ($service) use ($favorite, &$services, $manager, $price_calculation, $delivery_charge, $job_discount_handler) {
                 $location_service = LocationService::where('location_id', $this->location)->where('service_id', $service->id)->first();
