@@ -13,7 +13,8 @@ class OrderRequestTransformer extends TransformerAbstract
      */
     public function transform(PartnerOrderRequest $request)
     {
-        $category = $request->partnerOrder->lastJob()->category;
+        $job = $request->partnerOrder->lastJob();
+        $category = $job->category;
         /** @var Order $order */
         $order = $request->partnerOrder->order;
         /** @var Job $job */
@@ -21,6 +22,7 @@ class OrderRequestTransformer extends TransformerAbstract
 
         return [
             'id'                    => $request->id,
+            'job_id'                => $job->id,
             'service_name'          => [
                 'bn' => $category->bn_name ?: null,
                 'en' => $category->name
