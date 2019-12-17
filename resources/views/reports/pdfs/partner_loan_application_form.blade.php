@@ -8,8 +8,10 @@
 
     <style >
 
-        .background {
-            background-color: #ffffff;
+        @font-face {
+            font-family: "Shonar Bangla";
+            src: {{storage_path("Shonar Bangla.ttf")}} format("truetype"); /* IE9*/
+            font-weight: bold;
         }
 
         .loan-summery p {
@@ -18,7 +20,7 @@
         }
 
         .loan-summery span {
-            font-family: OpenSans;
+            font-family: OpenSans,sans-serif;
             font-size: 14px;
             font-weight: 600;
             color: #121212;
@@ -40,6 +42,7 @@
         .form-control {
             background-color: rgba(243, 247, 250, 0.7) !important;
             line-height: 1.5;
+            font-family: 'Shonar Bangla',DejaVu Sans,  'Roboto', sans-serif!important;
             height: 20px;
          }
 
@@ -259,7 +262,7 @@
                         <table>
                             <tr>
                                 <th style="width: 35%;padding-top: 5px;;">Issue Date</th>
-                                <th style="width: 60%"><div class="form-control" > </div></th>
+                                <th style="width: 60%"><div class="form-control" ></div></th>
                             </tr>
                         </table>
                         <table>
