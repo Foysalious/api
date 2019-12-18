@@ -23,7 +23,7 @@ class TripRequests
     public function setMember($member)
     {
         $this->member = $member;
-        $this->notificationSender = $this->member;
+        $this->notificationSender = $member;
         return $this;
     }
 
