@@ -98,8 +98,8 @@ class OrderController extends Controller
                     'job' => ['id' => $job->id]
                 ]
             ];
-            if ($request->has('partner_id') && $request->partner_id)
-                $order_with_response_data['provider_mobile'] = $order->lastJob()->partnerOrder()->partner->getContactNumber();
+            if ($request->has('partner') && $request->partner)
+                $order_with_response_data['provider_mobile'] = $order->lastJob()->partnerOrder->partner->getContactNumber();
 
             return api_response($request, null, 200, $order_with_response_data);
         } catch (ValidationException $e) {
