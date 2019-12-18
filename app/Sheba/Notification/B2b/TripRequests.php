@@ -130,12 +130,14 @@ class TripRequests
             'event_id' => $this->businessTripRequest->id
         ]);
         #For Push Notifications
+        $trip_request_id = $this->businessTripRequest->id;
         event(new NotificationCreated([
             'notifiable_id' => $this->member->id,
             'notifiable_type' => "member",
             'event_id' => $this->businessTripRequest->id,
             'event_type' => get_class($this->businessTripRequest),
             "title" => $this->notificationTitle,
+            'link' => "dashboard/fleet-management/requests/$trip_request_id/details"
         ], $this->notificationSender->id, get_class($this->notificationSender)));
 
         if ($mail && $for === 'TripAccepted') {
@@ -152,12 +154,14 @@ class TripRequests
                 'event_id' => $this->businessTripRequest->id
             ]);
             #For Push Notifications
+            $trip_request_id = $this->businessTripRequest->id;
             event(new NotificationCreated([
                 'notifiable_id' => $admin->id,
                 'notifiable_type' => "member",
                 'event_id' => $this->businessTripRequest->id,
                 'event_type' => get_class($this->businessTripRequest),
                 "title" => $this->notificationTitle,
+                'link' => "dashboard/fleet-management/requests/$trip_request_id/details"
             ], $this->notificationSender->id, get_class($this->notificationSender)));
 
             if ($mail && $for === 'TripCreate') {
