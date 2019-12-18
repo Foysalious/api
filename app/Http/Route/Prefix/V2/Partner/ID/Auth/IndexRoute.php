@@ -1,11 +1,10 @@
 <?php namespace App\Http\Route\Prefix\V2\Partner\ID\Auth;
+
 class IndexRoute
 {
     public function set($api)
     {
-        $api->group(['prefix'     => '{partner}',
-                     'middleware' => ['manager.auth']
-        ], function ($api) {
+        $api->group(['prefix' => '{partner}', 'middleware' => ['manager.auth']], function ($api) {
             $api->get('dashboard', 'Partner\DashboardController@get');
             $api->get('home-setting', 'Partner\DashboardController@getHomeSetting');
             $api->post('home-setting', 'Partner\DashboardController@updateHomeSetting');
@@ -200,9 +199,7 @@ class IndexRoute
             $api->get('training', 'PartnerTrainingController@redirect');
             $api->post('pay-sheba', 'PartnerTransactionController@payToSheba');
             $api->group(['prefix' => 'orders'], function ($api) {
-                $api->group(['prefix'     => '{order}',
-                             'middleware' => ['partner_order.auth']
-                ], function ($api) {
+                $api->group(['prefix' => '{order}', 'middleware' => ['partner_order.auth']], function ($api) {
                     $api->get('/', 'PartnerOrderController@showV2');
                     $api->get('bills', 'PartnerOrderController@getBillsV2');
                     $api->post('services', 'PartnerOrderController@addService');

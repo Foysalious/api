@@ -64,7 +64,7 @@ class SubscriptionOrderRequestController extends Controller
     public function decline($partner, SubscriptionOrderRequest $subscription_order_request, Request $request)
     {
         try {
-            $this->validate($request, ['resource_id' => 'required|int']);
+            // $this->validate($request, ['resource_id' => 'required|int']);
             $this->statusChanger->setSubscriptionOrderRequest($subscription_order_request)->decline($request);
             if ($this->statusChanger->hasError()) {
                 return api_response($request, null, $this->statusChanger->getErrorCode(), [
