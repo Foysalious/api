@@ -640,26 +640,12 @@ class CategoryController extends Controller
                 ->groupBy('customer_id')
                 ->get();
             $group_rating = [
-                [
-                    "value" => 1,
-                    "count" => 10
-                ],
-                [
-                    "value" => 2,
-                    "count" => 5
-                ],
-                [
-                    "value" => 3,
-                    "count" => 15
-                ],
-                [
-                    "value" => 4,
-                    "count" => 150
-                ],
-                [
-                    "value" => 5,
-                    "count" => 500
-                ]];
+                "1" => 10,
+                "2" => 5,
+                "3" => 15,
+                "4" => 150,
+                "5" => 500,
+            ];
             $info = [
                 'avg_rating' => 4.5,
                 'total_review_count' => 500,
