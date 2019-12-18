@@ -4,12 +4,14 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Psy\Util\Str;
 use Sheba\FraudDetection\Exceptions\FraudDetectionServerError;
 use Sheba\FraudDetection\Repository\TransactionRepository;
 use Sheba\ModificationFields;
 use Sheba\RequestIdentification;
 use Sheba\Transactions\Wallet\Jobs\FraudTransactionJob;
 use Sheba\Transactions\Wallet\Jobs\WalletTransactionJob;
+use Sheba\Wallet\WalletUpdateEvent;
 
 class WalletTransactionHandler extends WalletTransaction
 {
@@ -64,6 +66,13 @@ class WalletTransactionHandler extends WalletTransaction
             ]);
             $transaction_data = $this->getTransactionClass()->fill($data);
             $transaction = $this->model->transactions()->save($transaction_data);
+
+            event(new WalletUpdateEvent([
+                'amount' => $this->model->fresh()->wallet,
+                'user_type' => strtolower(class_basename($this->model)),
+                'user_id' => $this->model->id,
+
+            ]));
         });
         return $transaction;
     }

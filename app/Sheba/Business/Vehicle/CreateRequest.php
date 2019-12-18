@@ -13,6 +13,7 @@ class CreateRequest
     private $seatCapacity;
     private $vendorPhoneNumber;
     private $licenseNumber;
+    private $licenseNumberEndDate;
     private $taxTokenNumber;
     private $fitnessValidityStart;
     private $fitnessValidityEnd;
@@ -163,6 +164,24 @@ class CreateRequest
     {
         $this->licenseNumber = $license_number;
         return $this;
+    }
+
+    /**
+     * @param $license_number_end_date
+     * @return CreateRequest
+     */
+    public function setLicenseNumberEndDate($license_number_end_date)
+    {
+        $this->licenseNumberEndDate = $license_number_end_date;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getLicenseNumberEndDate()
+    {
+        return $this->licenseNumberEndDate;
     }
 
     /**

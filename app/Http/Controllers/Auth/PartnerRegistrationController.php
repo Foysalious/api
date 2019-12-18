@@ -264,6 +264,7 @@ class PartnerRegistrationController extends Controller
             $request['package_id'] = config('sheba.partner_lite_packages_id');
             $request['billing_type'] = 'monthly';
             if ($request->has('name')) $profile->update(['name' => $request->name]);
+            if ($request->has('gender')) $profile->update(['gender' => $request->gender]);
 
             if ($resource->partnerResources->count() == 0) {
                 $data = $this->makePartnerCreateData($request);

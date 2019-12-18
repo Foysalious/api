@@ -10,6 +10,8 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
+use Sheba\ShebaAccountKit\Requests\AccessTokenRequest;
+use Sheba\ShebaAccountKit\ShebaAccountKit;
 use Validator;
 use DB;
 
@@ -65,7 +67,7 @@ class FacebookController extends Controller
             $from = implode(',', constants('FROM'));
             $this->validate($request, ['access_token' => 'required', 'kit_code' => 'required', 'from' => "required|in:$from"]);
             $fb_profile_info = $this->getFacebookProfileInfo($request->access_token);
-            $kit_data = $this->fbKit->authenticateKit($request->kit_code);
+            $kit_data = $this->resolveAccountKit($request->kit_code);
             if ($fb_profile_info && $kit_data) {
                 $from = $this->profileRepository->getAvatar($request->from);
                 $fb_profile = new FacebookProfile($fb_profile_info);
@@ -109,6 +111,24 @@ class FacebookController extends Controller
         }
     }
 
+    private function resolveAccountKit($code)
+    {
+        $version = (int)\request()->header('Version-Code');
+        $portal_name = \request()->header('portal-name');
+        $platform_name = \request()->header('Platform-Name');
+        if (($version > 30211 && $portal_name == 'customer-app') || ($version > 12003 && $portal_name == 'bondhu-app') || ($version > 126 && $portal_name == 'customer-app' && $platform_name == 'ios')) {
+            $access_token_request = new AccessTokenRequest();
+            $access_token_request->setAuthorizationCode($code);
+            $account_kit = app(ShebaAccountKit::class);
+            $kit = [];
+            $mobile = $account_kit->getMobile($access_token_request);
+            if (!$mobile) return null;
+            $kit['mobile'] = $mobile;
+            return $kit;
+        }
+        return $this->fbKit->authenticateKit($code);
+    }
+
     private function getFacebookProfileInfo($token)
     {
         try {
@@ -128,8 +148,8 @@ class FacebookController extends Controller
                 'code' => "required",
                 'from' => 'required|string|in:' . implode(',', constants('FROM'))
             ]);
-            $code_data = $this->fbKit->authenticateKit($request->code);
-            if ($code_data == false) {
+            $code_data = $this->resolveAccountKit($request->code);
+            if (!$code_data) {
                 return api_response($request, null, 401);
             }
             $code_data['mobile'] = formatMobile($code_data['mobile']);

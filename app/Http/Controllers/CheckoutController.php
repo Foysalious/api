@@ -269,7 +269,7 @@ class CheckoutController extends Controller
                 return;
             }
         }
-        if ($voucher->usage($customer->id) == $voucher->max_order) {
+        if ($voucher->usage($customer->profile) == $voucher->max_order) {
             $customer->promotions()->where('voucher_id', $order->voucher_id)->update(['is_valid' => 0]);
             return;
         }

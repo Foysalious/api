@@ -7,10 +7,12 @@ use Exception;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\TopUp\TopUp;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpRequest;
 use Sheba\TopUp\Vendor\VendorFactory;
+use Sheba\TopUp\TopUpCompletedEvent;
 
 class TopUpJob extends Job implements ShouldQueue
 {
@@ -53,6 +55,15 @@ class TopUpJob extends Job implements ShouldQueue
             $this->topUp->setAgent($this->agent)->setVendor($this->vendor);
 
             $this->topUp->recharge($this->topUpOrder);
+
+            event(new TopUpCompletedEvent([
+                'id' => $this->topUpOrder->id,
+                'agent_id' => $this->topUpOrder->agent_id,
+                'agent_type' => $this->topUpOrder->agent_type,
+                'status' => $this->topUpOrder->status,
+                'bulk_request_id' => $this->topUpOrder->bulk_request_id,
+            ]));
+
             if ($this->topUp->isNotSuccessful()) {
                 $this->takeUnsuccessfulAction();
             } else {

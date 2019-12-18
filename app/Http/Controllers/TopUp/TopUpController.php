@@ -3,6 +3,9 @@
 use App\Http\Controllers\Controller;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
+use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
+use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
+use Sheba\Wallet\WalletUpdateEvent;
 use DB;
 use Excel;
 use Illuminate\Http\Request;
@@ -19,6 +22,7 @@ use Sheba\TopUp\Vendor\VendorFactory;
 use Storage;
 use Throwable;
 use Validator;
+
 
 class TopUpController extends Controller
 {
@@ -62,6 +66,9 @@ class TopUpController extends Controller
                 'amount' => 'required|min:10|max:1000|numeric'
             ]);
             $agent = $request->user;
+            if (get_class($agent) == "App\Models\Partner")
+                return api_response($request, null, 403, ['message' => "Temporary turned off"]);
+
             $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id);
             if ($top_up_request->hasError()) return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
             $topup_order = $creator->setTopUpRequest($top_up_request)->create();
@@ -97,6 +104,7 @@ class TopUpController extends Controller
             if ($topup_order) {
                 $vendor_factory = app(VendorFactory::class);
                 $vendor = $vendor_factory->getById($request->vendor_id);
+                /** @var TopUp $topUp */
                 $topUp = app(TopUp::class);
                 $topUp->setAgent($agent)->setVendor($vendor)->recharge($topup_order);
                 return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $topup_order->id]);
@@ -126,13 +134,23 @@ class TopUpController extends Controller
             }
 
             $agent = $request->user;
+            if (get_class($agent) == "App\Models\Partner")
+                return api_response($request, null, 403, ['message' => "Temporary turned off"]);
 
             $file = Excel::selectSheets(TopUpExcel::SHEET)->load($request->file)->save();
             $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
 
             $data = Excel::selectSheets(TopUpExcel::SHEET)->load($file_path)->get();
+
+            $data = $data->filter(function($row) {
+                return ($row->mobile && $row->operator && $row->connection_type && $row->amount);
+            });
+
             $total = $data->count();
-            $data->each(function ($value, $key) use ($creator, $vendor, $agent, $file_path, $top_up_request, $total) {
+
+            $bulk_request = $this->storeBulkRequest($agent);
+
+            $data->each(function ($value, $key) use ($creator, $vendor, $agent, $file_path, $top_up_request, $total, $bulk_request) {
                 $operator_field = TopUpExcel::VENDOR_COLUMN_TITLE;
                 $type_field = TopUpExcel::TYPE_COLUMN_TITLE;
                 $mobile_field = TopUpExcel::MOBILE_COLUMN_TITLE;
@@ -142,9 +160,16 @@ class TopUpController extends Controller
 
                 $vendor_id = $vendor->getIdByName($value->$operator_field);
                 $request = $top_up_request->setType($value->$type_field)
-                    ->setMobile(BDMobileFormatter::format($value->$mobile_field))->setAmount($value->$amount_field)->setAgent($agent)->setVendorId($vendor_id)->setName($value->$name_field);
+                    ->setBulkId($bulk_request->id)
+                    ->setMobile(BDMobileFormatter::format($value->$mobile_field))
+                    ->setAmount($value->$amount_field)
+                    ->setAgent($agent)->setVendorId($vendor_id)->setName($value->$name_field);
                 $topup_order = $creator->setTopUpRequest($request)->create();
-                if (!$top_up_request->hasError()) dispatch(new TopUpExcelJob($agent, $vendor_id, $topup_order, $file_path, $key + 2, $total));
+                if (!$topup_order) return;
+
+                $this->storeBulkRequestNumbers($bulk_request->id, BDMobileFormatter::format($value->$mobile_field), $topup_order->vendor_id);
+
+                if (!$top_up_request->hasError()) dispatch(new TopUpExcelJob($agent, $vendor_id, $topup_order, $file_path, $key + 2, $total, $bulk_request));
             });
 
             $response_msg = "Your top-up request has been received and will be transferred and notified shortly.";
@@ -156,6 +181,76 @@ class TopUpController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function activeBulkTopUps(Request $request)
+    {
+        try {
+            $model = "App\\Models\\" . ucfirst(camel_case($request->type));
+            $agent_id = $request->user->id;
+
+            $topup_bulk_requests = TopUpBulkRequest::where([
+                ['status', 'pending'],
+                ['agent_id', $agent_id],
+                ['agent_type', $model]
+            ])->with('numbers')->where('status', 'pending')->orderBy('id', 'desc')->get();
+            $final = [];
+            $topup_bulk_requests->map(function ($topup_bulk_request) use (&$final) {
+                array_push($final, [
+                    'id' => $topup_bulk_request->id,
+                    'agent_id' => $topup_bulk_request->agent_id,
+                    'agent_type' => strtolower(str_replace('App\Models\\', '', $topup_bulk_request->agent_type)),
+                    'status' => $topup_bulk_request->status,
+                    'total_numbers' => $topup_bulk_request->numbers->count(),
+                    'total_processed' => $topup_bulk_request->numbers->filter(function ($number) {
+                        return in_array(strtolower($number->status), ['successful', 'failed']);
+                    })->count(),
+                ]);
+            });
+            return response()->json(['code' => 200, 'active_bulk_topups' => $final]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getBulkTopUpNumbers($bulk_id)
+    {
+        return TopUpBulkRequestNumber::where('topup_bulk_request_id', $bulk_id)->pluck('mobile')->toArray();
+    }
+
+    public function storeBulkRequest($agent)
+    {
+        $topup_bulk_request = new TopUpBulkRequest();
+        $topup_bulk_request->agent_id = $agent->id;
+        $topup_bulk_request->agent_type = $this->getFullAgentType($agent->type);
+        $topup_bulk_request->status = constants('TOPUP_BULK_REQUEST_STATUS')['pending'];
+        $topup_bulk_request->save();
+
+        return $topup_bulk_request;
+    }
+
+    public function storeBulkRequestNumbers($request_id, $mobile, $vendor_id)
+    {
+        $topup_bulk_request = new TopUpBulkRequestNumber();
+        $topup_bulk_request->topup_bulk_request_id = $request_id;
+        $topup_bulk_request->mobile = $mobile;
+        $topup_bulk_request->vendor_id = $vendor_id;
+        $topup_bulk_request->save();
+
+        return $topup_bulk_request->id;
+    }
+
+    public function getFullAgentType($type)
+    {
+        $agent = '';
+
+        if ($type == 'customer') $agent = "App\\Models\\Customer";
+        elseif ($type == 'partner') $agent = "App\\Models\\Partner";
+        elseif ($type == 'business') $agent = "App\\Models\\Business";
+        elseif ($type == 'Company') $agent = "App\\Models\\Business";
+
+        return $agent;
     }
 
     public function topUpHistory(Request $request)
@@ -220,5 +315,15 @@ class TopUpController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function walletDummyEvent()
+    {
+        event(new WalletUpdateEvent([
+            'amount' => 100,
+            'user_type' => 'business',
+            'user_id' => 11,
+
+        ]));
     }
 }

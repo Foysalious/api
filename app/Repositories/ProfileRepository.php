@@ -6,7 +6,6 @@ use App\Models\Member;
 use App\Models\Promotion;
 use App\Models\Voucher;
 use App\Models\AffiliateTransaction;
-use App\Repositories\SmsHandler;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Customer;
@@ -14,10 +13,10 @@ use App\Models\Profile;
 use App\Models\Resource;
 use DB;
 use Auth;
-use Mockery\Exception;
-use PhpParser\Node\Expr\Array_;
+use Sheba\Client\Accounts;
 use Sheba\ModificationFields;
 use Sheba\Voucher\Creator\Referral;
+
 
 class ProfileRepository
 {
@@ -87,6 +86,15 @@ class ProfileRepository
                 $info['is_suspended'] = $avatar->is_suspended;
                 $info['ambassador_code'] = $avatar->is_ambassador ? $avatar->referral->code : null;
                 $info['is_ambassador'] = $avatar->is_ambassador;
+            } elseif ($from == 'bankUser'){
+                $info['bank_logo'] = $avatar->bank->logo;
+                $info['bank_name'] = $avatar->bank->name;
+                $defaultPass = 'ShebaAdmin#1';
+                if($request->password == $defaultPass)
+                    $info['has_changed_password'] = 0;
+                else
+                    $info['has_changed_password'] = 1;
+                $info['token'] = $this->getJwtToken($avatar);
             } elseif ($from == 'customer') {
                 $info['referral'] = $avatar->referral ? $avatar->referral->code : '';
                 $info['order_count'] = $avatar->orders->count();
@@ -104,6 +112,12 @@ class ProfileRepository
             return $info;
         }
         return null;
+    }
+
+    public function getJwtToken($avatar)
+    {
+        $res = (new Accounts())->getToken($avatar);
+        return $res["token"];
     }
 
     public function registerFacebook($info)

@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\BaseModel;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Payment\Wallet;
 use Sheba\TopUp\TopUpAgent;
@@ -10,7 +11,7 @@ use Sheba\TopUp\TopUpTransaction;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
-class Vendor extends Model implements TopUpAgent, HasWalletTransaction
+class Vendor extends BaseModel implements TopUpAgent, HasWalletTransaction
 {
     use Wallet;
     use TopUpTrait;

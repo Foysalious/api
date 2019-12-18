@@ -14,7 +14,7 @@ class Updater
 
     private $data;
     private $updatedData;
-    /** @var PosServiceRepositoryInterface  */
+    /** @var PosServiceRepositoryInterface */
     private $serviceRepo;
     private $service;
     private $posServiceLogRepo;
@@ -26,7 +26,7 @@ class Updater
      */
     public function __construct(PosServiceRepositoryInterface $service_repo, PosServiceLogRepositoryInterface $pos_service_log_repo)
     {
-        $this->serviceRepo = $service_repo;
+        $this->serviceRepo       = $service_repo;
         $this->posServiceLogRepo = $pos_service_log_repo;
     }
 
@@ -55,34 +55,14 @@ class Updater
         }
     }
 
-    /**
-     * @param PartnerPosService $service
-     * @param $updated_data
-     */
-    public function storeLogs(PartnerPosService $service, $updated_data)
-    {
-        $field_names = [];
-        $old_value = [];
-        $new_value = [];
-        $service = $service->toArray();
-        foreach ($updated_data as $field_name => $value) {
-            $field_names[] = $field_name;
-            $old_value[$field_name] = $service[$field_name];
-            $new_value[$field_name] = $value;
-        }
-
-        $data = [
-            'partner_pos_service_id' => $service['id'],
-            'field_names' => json_encode($field_names),
-            'old_value' => json_encode($old_value),
-            'new_value' => json_encode($new_value)
-        ];
-        $this->posServiceLogRepo->create($data);
-    }
-
     private function saveImages()
     {
         if ($this->hasFile('app_thumb')) $this->updatedData['app_thumb'] = $this->saveAppThumbImage();
+    }
+
+    private function hasFile($filename)
+    {
+        return array_key_exists($filename, $this->data) && ($this->data[$filename] instanceof Image || ($this->data[$filename] instanceof UploadedFile && $this->data[$filename]->getPath() != ''));
     }
 
     /**
@@ -137,7 +117,7 @@ class Updater
             $this->updatedData['cost'] = $this->data['cost'];
         }
         if ((isset($this->data['price']) && $this->data['price'] != $this->service->price)) {
-            $this->updatedData['price'] = $this->data['price'];
+            $this->updatedData['price'] = $this->data['price'] ?: null;
         }
         if ((isset($this->data['wholesale_price']) && $this->data['wholesale_price'] != $this->service->wholesale_price)) {
             $this->updatedData['wholesale_price'] = $this->data['wholesale_price'];
@@ -154,11 +134,35 @@ class Updater
         if ((isset($this->data['description']) && $this->data['description'] != $this->service->description)) {
             $this->updatedData['description'] = $this->data['description'];
         }
+        if ((isset($this->data['show_image']) && $this->data['show_image'] != $this->service->show_image)) {
+            $this->updatedData['show_image'] = $this->data['show_image'];
+        }
+
+
     }
 
-
-    private function hasFile($filename)
+    /**
+     * @param PartnerPosService $service
+     * @param $updated_data
+     */
+    public function storeLogs(PartnerPosService $service, $updated_data)
     {
-        return array_key_exists($filename, $this->data) && ($this->data[$filename] instanceof Image || ($this->data[$filename] instanceof UploadedFile && $this->data[$filename]->getPath() != ''));
+        $field_names = [];
+        $old_value   = [];
+        $new_value   = [];
+        $service     = $service->toArray();
+        foreach ($updated_data as $field_name => $value) {
+            $field_names[]          = $field_name;
+            $old_value[$field_name] = $service[$field_name];
+            $new_value[$field_name] = $value;
+        }
+
+        $data = [
+            'partner_pos_service_id' => $service['id'],
+            'field_names'            => json_encode($field_names),
+            'old_value'              => json_encode($old_value),
+            'new_value'              => json_encode($new_value)
+        ];
+        $this->posServiceLogRepo->create($data);
     }
 }

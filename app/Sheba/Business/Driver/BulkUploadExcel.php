@@ -12,9 +12,10 @@ class BulkUploadExcel
     const VENDOR_PHONE_NUMBER_COLUMN = "F";
     const DRIVER_ROLE_COLUMN = "G";
     const LICENSE_NUMBER_COLUMN = "H";
-    const LICENSE_CLASS_COLUMN = "I";
-    const PHONE_NUMBER_COLUMN = "J";
-    const ADDRESS_COLUMN = "K";
+    const LICENSE_NUMBER_END_DATE_COLUMN = "I";
+    const LICENSE_CLASS_COLUMN = "J";
+    const PHONE_NUMBER_COLUMN = "K";
+    const ADDRESS_COLUMN = "L";
 
     const DRIVER_NAME_COLUMN_TITLE = "driver_name";
     const DATE_OF_BIRTH_COLUMN_TITLE = "date_of_birth";
@@ -24,6 +25,7 @@ class BulkUploadExcel
     const VENDOR_PHONE_NUMBER_COLUMN_TITLE = "vendor_phone_number";
     const DRIVER_ROLE_COLUMN_TITLE = "driver_role";
     const LICENSE_NUMBER_COLUMN_TITLE = "license_number";
+    const LICENSE_NUMBER_END_DATE_COLUMN_TITLE = "license_number_end_date";
     const LICENSE_CLASS_COLUMN_TITLE = "license_class";
     const PHONE_NUMBER_COLUMN_TITLE = "phone_number";
     const ADDRESS_COLUMN_TITLE = "address";

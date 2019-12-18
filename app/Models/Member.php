@@ -26,6 +26,11 @@ class Member extends Model
         return $this->hasOne(BusinessMember::class);
     }
 
+    public function notifications()
+    {
+        return $this->morphMany(Notification::class, 'notifiable');
+    }
+
     public function typeIn($business)
     {
         $business = $business instanceof Business ? $business->id : $business;

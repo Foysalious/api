@@ -78,10 +78,13 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
     {
         $mobile = isset($data['mobile']) ? $data['mobile'] : null;
         $email = isset($data['email']) ? $data['email'] : null;
+        $nid_no = isset($data['nid_no']) ? $data['nid_no'] : null;
         $eProfile = $this->checkExistingEmail($email);
         $mProfile = $this->checkExistingMobile($mobile);
+        $nProfile = $this->checkExistingNid($nid_no);
         if ($eProfile && $eProfile->id != $profile->id) return 'email';
         if ($mProfile && $mProfile->id != $profile->id) return 'phone';
+        if ($nProfile && $nProfile->id != $profile->id) return 'nid_no';
         return true;
     }
 
@@ -112,6 +115,11 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
         return Profile::where('email', $email)->first();
     }
 
+    public function checkExistingNid($nid_no)
+    {
+        return Profile::where('nid_no', $nid_no)->first();
+    }
+
     /**
      * Formatting Data for profile table.
      *
@@ -124,6 +132,7 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
         if (isset($data['profile_image'])) {
             $profile_data['pro_pic'] = $data['profile_image'];
         }
+
         if (isset($data['_token'])) {
             $profile_data['remember_token'] = $data['_token'];
 
@@ -132,6 +141,7 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
             if (!$profile_data['name']) unset($profile_data['name']);
             $profile_data['remember_token'] = str_random(255);
         }
+
         if (isset($data['password'])) {
             $profile_data['password'] = bcrypt($data['password']);
         }
@@ -186,7 +196,6 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
             $name = $image->getClientOriginalName() . '_' . ImageSide::BACK;
             $profile_data['nid_image_back'] = $this->_saveNIdImage($image, $name);
         }
-
         return $profile_data;
     }
 

@@ -622,3 +622,20 @@ if (!function_exists('isInProduction')) {
         return app()->environment() == "production";
     }
 }
+
+
+if (!function_exists('strContainsAll')) {
+    /**
+     * @param $haystack
+     * @param array $needles
+     * @return bool
+     */
+    function strContainsAll($haystack, array $needles)
+    {
+        foreach ($needles as $needle) {
+            if (!str_contains($haystack, $needle)) return false;
+        }
+
+        return true;
+    }
+}

@@ -59,6 +59,7 @@ class TopUpValidator
 
     public function validate()
     {
+        $this->agent->reload();
         if (!$this->vendor->isPublished()) {
             $this->error = new TopUpErrorResponse();
             $this->error->errorCode = 421;

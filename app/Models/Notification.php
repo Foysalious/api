@@ -32,4 +32,11 @@ class Notification extends Model
         $this->timestamps = false;
         $this->save();
     }
+
+    public function getType()
+    {
+        if (stripos($this->event_type, 'support')) return 'support';
+        elseif (stripos($this->event_type, 'vehicle')) return 'vehicle';
+        elseif (stripos($this->event_type, 'driver')) return 'driver';
+    }
 }

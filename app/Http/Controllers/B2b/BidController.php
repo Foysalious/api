@@ -67,7 +67,7 @@ class BidController extends Controller
                     foreach ($fields as $field) {
                         $answer = null;
                         if ($item->type == 'price_quotation') {
-                            $answer =$field->result;
+                            $answer = $field->result;
                             $total_price += ($field->result);
                         } else {
                             $answer = $field->result;
@@ -221,7 +221,7 @@ class BidController extends Controller
                 'price' => $bid->price,
                 'title' => $bid->procurement->title,
                 'type' => $bid->procurement->type,
-                'is_awarded' => $bid->hasSentHireRequest(),
+                'is_awarded' => $bid->canNotSendHireRequest(),
                 'vendor' => [
                     'name' => $bid->bidder->name,
                     'logo' => $bid->bidder->logo,

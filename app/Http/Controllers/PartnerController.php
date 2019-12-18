@@ -401,7 +401,7 @@ class PartnerController extends Controller
             ]);
             $partnerRepo = new PartnerRepository($request->partner);
             $verified = $request->has('verified') ? (int)$request->verified : null;
-            $category_id = $date = $preferred_time = null;
+            $category_id = $date = $preferred_time = $job = null;
             if ($request->has('job_id')) {
                 $job = Job::find((int)$request->job_id);
                 $category_id = $job->category_id;
@@ -412,7 +412,7 @@ class PartnerController extends Controller
                 $date = $request->date;
                 $preferred_time = $request->time;
             }
-            $resources = $partnerRepo->resources($verified, $category_id, $date, $preferred_time);
+            $resources = $partnerRepo->resources($verified, $category_id, $date, $preferred_time, $job);
             if (count($resources) > 0) {
                 return api_response($request, $resources, 200, ['resources' => $resources->sortBy('name')->values()->all()]);
             } else {
@@ -925,7 +925,7 @@ class PartnerController extends Controller
             }
 
             $service_base_query = $request->partner->services()->whereHas('locations', function ($query) use ($location) {
-                $query->where('id', $location->id);
+                $query->where('locations.id', $location->id);
             })->where('category_id', $category);
 
             if ($request->has('publication_status')) {

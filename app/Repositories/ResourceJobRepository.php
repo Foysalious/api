@@ -92,7 +92,7 @@ class ResourceJobRepository
     public function addJobInformationForAPI($jobs)
     {
         foreach ($jobs as $job) {
-            if(!$job->partner_order->order->deliveryAddress) {
+            if (!$job->partner_order->order->deliveryAddress) {
                 $job->partner_order->order->deliveryAddress = $job->partner_order->order->getTempAddress();
             }
             $job['delivery_name'] = $job->partner_order->order->deliveryAddress->name;
@@ -204,10 +204,13 @@ class ResourceJobRepository
 
     public function calculateActionsForThisJob($job)
     {
-        if ($job->status == 'Served') {
-            $job['can_collect'] = $job->partner_order->payment_method != 'bad-debt';
-        } elseif ($job->status == 'Process' || $job->status == 'Serve Due') {
+        $partner_order = $job->partner_order;
+        if (($job->status == 'Process' || $job->status == 'Serve Due') && $partner_order->due > 0) {
+            $job['can_collect'] = $partner_order->payment_method != 'bad-debt';
+        } elseif (($job->status == 'Process' || $job->status == 'Serve Due') && $partner_order->due == 0) {
             $job['can_serve'] = true;
+        } elseif ($job->status == 'Served' && $partner_order->due > 0) {
+            $job['can_collect'] = $partner_order->payment_method != 'bad-debt';
         } else {
             $job['can_process'] = true;
         }

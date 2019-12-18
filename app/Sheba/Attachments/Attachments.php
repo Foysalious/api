@@ -28,6 +28,13 @@ class Attachments
     public function setRequestData(Request $request)
     {
         $this->requestedData = $request;
+
+        if ($this->requestedData->has('manager_resource')) {
+            $this->setCreatedBy($this->requestedData->manager_resource);
+        } elseif ($this->requestedData->has('manager_member')) {
+            $this->setCreatedBy($this->requestedData->manager_member);
+        }
+
         return $this;
     }
 
@@ -37,13 +44,9 @@ class Attachments
         return $this;
     }
 
-    public function formatData()
+    public function setCreatedBy($created_by)
     {
-        if ($this->requestedData->has('manager_resource')) {
-            $this->createdBy = $this->requestedData->manager_resource;
-        } elseif ($this->requestedData->has('manager_member')) {
-            $this->createdBy = $this->requestedData->manager_member;
-        }
+        $this->createdBy = $created_by;
         return $this;
     }
 

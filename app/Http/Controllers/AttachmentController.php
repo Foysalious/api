@@ -6,6 +6,7 @@ use App\Models\Business;
 use App\Models\Partner;
 use App\Models\Procurement;
 use App\Sheba\Attachments\Attachments;
+use App\Transformers\AttachmentTransformer;
 use Illuminate\Validation\ValidationException;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
@@ -34,12 +35,12 @@ class AttachmentController extends Controller
             if ($attachments->hasError($request))
                 return redirect()->back();
 
-            $attachments = $attachments->setAttachableModel($attachable)
+
+            $this->setModifier($avatar);
+            $attachment = $attachments->setAttachableModel($attachable)
                 ->setRequestData($request)
                 ->setFile($request->file)
-                ->formatData();
-            $this->setModifier($avatar);
-            $attachment = $attachments->store();
+                ->store();
             return api_response($request, $attachment, 200, ['attachment' => $attachment->file]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -67,12 +68,7 @@ class AttachmentController extends Controller
                 ->select('id', 'title', 'file', 'file_type')->orderBy('id', 'DESC')->skip($offset)->limit($limit)->get();
             $attach_lists = [];
             foreach ($attaches as $attach) {
-                array_push($attach_lists, [
-                    'id' => $attach->id,
-                    'title' => $attach->title,
-                    'file' => $attach->file,
-                    'file_type' => $attach->file_type,
-                ]);
+                array_push($attach_lists, (new AttachmentTransformer())->transform($attach));
             }
             if (count($attach_lists) > 0) return api_response($request, $attach_lists, 200, ['attach_lists' => $attach_lists]);
             else  return api_response($request, null, 404);

@@ -7,8 +7,6 @@ abstract class BkashToken
     /** @var $bkashAuth BkashAuth */
     protected $bkashAuth;
 
-    abstract public function getRedisKeyName();
-
     public function setBkashAuth(BkashAuth $bkashAuth)
     {
         $this->bkashAuth = $bkashAuth;
@@ -23,10 +21,19 @@ abstract class BkashToken
         if (curl_errno($curl) > 0) throw new \InvalidArgumentException('Bkash grant token API error.');
         curl_close($curl);
         $data = json_decode($result_data, true);
+        if (isset($data['status']) && $data['status'] == "fail") throw new \Exception('Bkash Error: ' . $data['msg']);
+
         $token = $data['id_token'];
         $this->setTokenInRedis($data['id_token'], $data['expires_in']);
         return $token;
     }
+
+    public function getTokenFromRedis()
+    {
+        return Redis::get($this->getRedisKeyName());
+    }
+
+    abstract public function getRedisKeyName();
 
     /**
      * @return false|resource
@@ -47,27 +54,19 @@ abstract class BkashToken
      */
     private function setHeader()
     {
-        return array(
-            'Content-Type:application/json',
-            'password:' . $this->bkashAuth->password,
-            'username:' . $this->bkashAuth->username);
+        return [
+            'Content-Type:application/json', 'password:' . $this->bkashAuth->password, 'username:' . $this->bkashAuth->username
+        ];
     }
-
 
     /**
      * @return false|string
      */
     private function setPostFields()
     {
-        return json_encode(array(
-            'app_key' => $this->bkashAuth->appKey,
-            'app_secret' => $this->bkashAuth->appSecret
-        ));
-    }
-
-    public function getTokenFromRedis()
-    {
-        return Redis::get($this->getRedisKeyName());
+        return json_encode([
+            'app_key' => $this->bkashAuth->appKey, 'app_secret' => $this->bkashAuth->appSecret
+        ]);
     }
 
     public function setTokenInRedis($token, $expire_time_in_seconds)

@@ -32,6 +32,9 @@ class VehiclesController extends Controller
     use CdnFileManager, FileManager;
     use ModificationFields;
 
+    const DUE_PERIOD = 60;
+    const OVER_DUE_PERIOD = 0;
+
     private $fileRepository;
 
     public function __construct(FileRepository $file_repository)
@@ -57,6 +60,7 @@ class VehiclesController extends Controller
                 'transmission_type' => 'required|string|in:auto,manual',
                 'vehicle_image' => 'file|mimes:jpeg,png',
                 'license_number' => 'required|unique:vehicle_registration_informations',
+                'license_number_end_date' => 'sometimes|date|date_format:Y-m-d',
                 'license_number_image' => 'mimes:jpeg,png',
                 'tax_token_number' => 'required|unique:vehicle_registration_informations',
                 'tax_token_image' => 'mimes:jpeg,png',
@@ -109,6 +113,7 @@ class VehiclesController extends Controller
 
             $vehicle_registration_information_data = [
                 'license_number' => $request->license_number,
+                'license_number_end_date' => $request->license_number_end_date,
                 'license_number_image' => $request->hasFile('license_number_image') ? $this->updateVehiclesDocuments('license_number_image', $request->file('license_number_image')) : '',
                 'tax_token_number' => $request->tax_token_number,
                 'tax_token_image' => $request->hasFile('tax_token_image') ? $this->updateVehiclesDocuments('tax_token_image', $request->file('tax_token_image')) : '',
@@ -174,6 +179,7 @@ class VehiclesController extends Controller
             $seat_capacity = BulkUploadExcel::SEAT_CAPACITY_COLUMN_TITLE;
             $vendor_phone_number = BulkUploadExcel::VENDOR_PHONE_NUMBER_COLUMN_TITLE;
             $license_number = BulkUploadExcel::LICENSE_NUMBER_COLUMN_TITLE;
+            $license_number_end_date = BulkUploadExcel::LICENSE_NUMBER_END_DATE_COLUMN_TITLE;
             $tax_token_number = BulkUploadExcel::TAX_TOKEN_NUMBER_COLUMN_TITLE;
             $fitness_validity_start = BulkUploadExcel::FITNESS_VALIDITY_START_COLUMN_TITLE;
             $fitness_validity_end = BulkUploadExcel::FITNESS_VALIDITY_END_COLUMN_TITLE;
@@ -183,7 +189,7 @@ class VehiclesController extends Controller
             $data->each(function ($value) use (
                 $create_request, $creator, $admin_member, &$error_count, &$total_count,
                 $vehicle_type, $vehicle_brand_name, $model_name, $model_year, $vehicle_department,
-                $seat_capacity, $vendor_phone_number, $license_number, $tax_token_number, $fitness_validity_start,
+                $seat_capacity, $vendor_phone_number, $license_number, $license_number_end_date, $tax_token_number, $fitness_validity_start,
                 $fitness_validity_end, $insurance_valid_till, $transmission_type, $business
             ) {
                 if (is_null($value->$vehicle_type) && is_null($value->$vehicle_brand_name)) return;
@@ -202,6 +208,7 @@ class VehiclesController extends Controller
                     ->setSeatCapacity($value->$seat_capacity)
                     ->setVendorPhoneNumber($value->$vendor_phone_number)
                     ->setLicenseNumber($value->$license_number)
+                    ->setLicenseNumberEndDate($value->$license_number_end_date)
                     ->setTaxTokenNumber($value->$tax_token_number)
                     ->setFitnessValidityStart($value->$fitness_validity_start)
                     ->setFitnessValidityEnd($value->$fitness_validity_end)
@@ -239,20 +246,20 @@ class VehiclesController extends Controller
                 'model_year' => 'date|date_format:Y-m-d',
                 'seat_capacity' => 'integer',
                 'transmission_type' => 'string|in:auto,manual',
+                'fitness_start_date' => 'required|date|date_format:Y-m-d',
+                'fitness_end_date' => 'required|date|date_format:Y-m-d',
+                'insurance_date' => 'date|date_format:Y-m-d',
+                'license_number_end_date' => 'sometimes|date|date_format:Y-m-d',
+                'department_id' => 'required|integer',
                 #'fuel_type' => 'string',
                 #'fuel_quality' => 'string',
                 #'fuel_tank_capacity_ltr' => 'string',
-
                 #'license_number' => 'required',
                 #'license_number_image' => 'mimes:jpeg,png',
                 #'tax_token_number' => 'required',
                 #'tax_token_image' => 'mimes:jpeg,png',
-                'fitness_start_date' => 'required|date|date_format:Y-m-d',
-                'fitness_end_date' => 'required|date|date_format:Y-m-d',
                 #'fitness_paper_image' => 'mimes:jpeg,png',
-                'insurance_date' => 'date|date_format:Y-m-d',
                 #'insurance_paper_image' => 'mimes:jpeg,png'
-                'department_id' => 'required|integer',
             ]);
 
             $member = Member::find($member);
@@ -283,6 +290,7 @@ class VehiclesController extends Controller
 
             $vehicle_registration_information_data = [
                 'license_number' => $request->license_number,
+                'license_number_end_date' => $request->license_number_end_date,
                 'license_number_image' => $this->updateVehiclesDocuments('license_number_image', $request->file('license_number_image')),
                 'tax_token_number' => $request->tax_token_number,
                 'tax_token_image' => $this->updateVehiclesDocuments('tax_token_image', $request->file('tax_token_image')),
@@ -304,6 +312,12 @@ class VehiclesController extends Controller
         }
     }
 
+    /**
+     * @param $member
+     * @param Request $request
+     * @param TripScheduler $tripScheduler
+     * @return JsonResponse
+     */
     public function index($member, Request $request, TripScheduler $tripScheduler)
     {
         try {
@@ -322,7 +336,7 @@ class VehiclesController extends Controller
                     ->where(function ($q) use ($business) {
                         $hired_vehicles = $business->hiredVehicles()->with('vehicle')->active()->get()->pluck('vehicle.id');
                         $q->where('owner_id', $business->id)->orWhereIn('id', $hired_vehicles->toArray());
-                    })->select('id', 'status', 'current_driver_id', 'business_department_id', 'owner_type','owner_id')
+                    })->select('id', 'status', 'current_driver_id', 'business_department_id', 'owner_type', 'owner_id')
                     ->orderBy('id', 'desc')->skip($offset)->limit($limit);
 
                 if ($request->has('status'))
@@ -350,16 +364,30 @@ class VehiclesController extends Controller
 
                 $vehicles = $vehicles->get();
             }
+            $today = Carbon::now();
             $vehicle_lists = [];
             foreach ($vehicles as $vehicle) {
                 $basic_information = $vehicle->basicInformations;
                 $registration_information = $vehicle->registrationInformations ? $vehicle->registrationInformations : null;
                 $driver = $vehicle->driver;
+
+                $due_status = '';
+                if (($vehicle->fitnessRemainingDays() <= VehiclesController::DUE_PERIOD && $vehicle->fitnessRemainingDays() > VehiclesController::OVER_DUE_PERIOD) ||
+                    ($vehicle->insuranceRemainingDays() <= VehiclesController::DUE_PERIOD && $vehicle->insuranceRemainingDays() > VehiclesController::OVER_DUE_PERIOD) ||
+                    ($vehicle->licenseRemainingDays() <= VehiclesController::DUE_PERIOD && $vehicle->licenseRemainingDays() > VehiclesController::OVER_DUE_PERIOD)) {
+                    $due_status = 'Due Soon';
+                }
+
+                if ($vehicle->isFitnessDue() || $vehicle->isInsuranceDue() || $vehicle->isLicenseDue()) {
+                    $due_status = 'Overdue';
+                }
+
                 $vehicle = [
                     'id' => $vehicle->id,
                     'vehicle_model' => $basic_information->model_name,
                     'model_year' => Carbon::parse($basic_information->model_year)->format('Y'),
                     'status' => $vehicle->status,
+                    'due_status' => $due_status,
                     'vehicle_type' => $basic_information->type,
                     'assigned_to' => $vehicle->businessDepartment ? $vehicle->businessDepartment->name : null,
                     'current_driver' => $driver ? $vehicle->driver->profile->name : 'N/S',
@@ -495,9 +523,39 @@ class VehiclesController extends Controller
             $basic_information = $vehicle->basicInformations;
             $registration_information = $vehicle->registrationInformations;
 
+            $fitness_paper_due_status = '';
+            $insurance_paper_due_status = '';
+            $license_paper_due_status = '';
+
+            if (($vehicle->fitnessRemainingDays() <= VehiclesController::DUE_PERIOD && $vehicle->fitnessRemainingDays() > VehiclesController::OVER_DUE_PERIOD)) {
+                $fitness_paper_due_status = 'Due Soon';
+            }
+
+            if ($vehicle->isFitnessDue()) {
+                $fitness_paper_due_status = 'Overdue';
+            }
+
+            if (($vehicle->insuranceRemainingDays() <= VehiclesController::DUE_PERIOD && $vehicle->insuranceRemainingDays() > VehiclesController::OVER_DUE_PERIOD)) {
+                $insurance_paper_due_status = 'Due Soon';
+            }
+
+            if ($vehicle->isInsuranceDue()) {
+                $insurance_paper_due_status = 'Overdue';
+            }
+
+            if (($vehicle->licenseRemainingDays() <= VehiclesController::DUE_PERIOD && $vehicle->licenseRemainingDays() > VehiclesController::OVER_DUE_PERIOD)) {
+                $license_paper_due_status = 'Due Soon';
+            }
+
+            if ($vehicle->isLicenseDue()) {
+                $license_paper_due_status = 'Overdue';
+            }
+
+
             $registration_info = [
                 'vehicle_id' => $vehicle->id,
                 'license_number' => $registration_information->license_number,
+                'license_number_end_date' => Carbon::parse($registration_information->license_number_end_date)->format('Y-m-d'),
                 'license_number_image' => $registration_information->license_number_image,
                 'tax_token_number' => $registration_information->tax_token_number,
                 'tax_token_image' => $registration_information->tax_token_image,
@@ -505,9 +563,16 @@ class VehiclesController extends Controller
                 'registration_number_image' => $basic_information->license_number_image,
                 'fitness_start_date' => Carbon::parse($registration_information->fitness_start_date)->format('Y-m-d'),
                 'fitness_end_date' => Carbon::parse($registration_information->fitness_end_date)->format('Y-m-d'),
+
+                'fitness_paper_due_status' => $fitness_paper_due_status,
+
                 'fitness_paper_image' => $registration_information->fitness_paper_image,
                 'insurance_date' => Carbon::parse($registration_information->insurance_date)->format('Y-m-d'),
+
+                'insurance_paper_due_status' => $insurance_paper_due_status,
                 'insurance_paper_image' => $registration_information->insurance_paper_image,
+
+                'license_paper_due_status' => $license_paper_due_status,
             ];
             return api_response($request, $registration_info, 200, ['registration_info' => $registration_info]);
         } catch (Throwable $e) {
@@ -521,6 +586,7 @@ class VehiclesController extends Controller
         try {
             $this->validate($request, [
                 'license_number' => 'string',
+                'license_number_end_date' => 'sometimes|date|date_format:Y-m-d',
                 'tax_token_number' => 'string',
                 'fitness_start_date' => 'required|date|date_format:Y-m-d',
                 'fitness_end_date' => 'required|date|date_format:Y-m-d',
@@ -538,6 +604,7 @@ class VehiclesController extends Controller
 
             $registration_information_data = [
                 'license_number' => $request->license_number,
+                'license_number_end_date' => $request->license_number_end_date,
                 'tax_token_number' => $request->tax_token_number,
                 'fitness_start_date' => $request->fitness_start_date,
                 'fitness_end_date' => $request->fitness_end_date,
@@ -701,14 +768,13 @@ class VehiclesController extends Controller
         try {
             $vehicle = Vehicle::find((int)$vehicle);
 
-            if(!$vehicle) return api_response($request, 1, 404);
+            if (!$vehicle) return api_response($request, 1, 404);
 
-            if(!$request->driver_id) {
+            if (!$request->driver_id) {
                 $vehicle->update(['current_driver_id' => null]);
             } else {
                 $vehicle->update(['current_driver_id' => $request->driver_id]);
             }
-
 
 
             return api_response($request, 1, 200);

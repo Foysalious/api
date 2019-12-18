@@ -190,4 +190,5 @@ class BaseRepository implements BaseRepositoryInterface
     {
         return $this->model->orWhere($column_name,$value);
     }
+
 }

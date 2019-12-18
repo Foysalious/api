@@ -3,7 +3,6 @@
 use App\Http\Controllers\Controller;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
-use App\Sheba\Payment\Adapters\Payable\PaymentLinkOrderAdapter;
 use App\Transformers\CustomSerializer;
 use App\Transformers\PosOrderTransformer;
 use Carbon\Carbon;
@@ -45,7 +44,7 @@ class OrderController extends Controller
     {
         ini_set('memory_limit', '2096M');
         try {
-            $status = $request->status;
+            $status  = $request->status;
             $partner = $request->partner;
             list($offset, $limit) = calculatePagination($request);
 
@@ -75,9 +74,9 @@ class OrderController extends Controller
             foreach ($orders as $index => $order) {
                 $order->isRefundable();
                 $order_data = $order->calculate();
-                $manager = new Manager();
+                $manager    = new Manager();
                 $manager->setSerializer(new CustomSerializer());
-                $resource = new Item($order_data, new PosOrderTransformer());
+                $resource        = new Item($order_data, new PosOrderTransformer());
                 $order_formatted = $manager->createData($resource)->toArray()['data'];
 
                 $order_create_date = $order->created_at->format('Y-m-d');
@@ -91,7 +90,7 @@ class OrderController extends Controller
             $orders_formatted = [];
 
             $pos_orders_repo = new PosOrderRepository();
-            $pos_sales = [];
+            $pos_sales       = [];
             foreach (array_keys($final_orders) as $date) {
                 $timeFrame = new TimeFrame();
                 $timeFrame->forADay(Carbon::parse($date))->getArray();
@@ -112,11 +111,11 @@ class OrderController extends Controller
             foreach ($final_orders as $key => $value) {
                 if (count($value) > 0) {
                     $order_list = [
-                        'date' => $key,
+                        'date'       => $key,
                         'total_sale' => $pos_sales[$key]['total_sale'],
                         'total_paid' => $pos_sales[$key]['total_paid'],
-                        'total_due' => $pos_sales[$key]['total_due'],
-                        'orders' => $value
+                        'total_due'  => $pos_sales[$key]['total_due'],
+                        'orders'     => $value
                     ];
                     array_push($orders_formatted, $order_list);
                 }
@@ -144,7 +143,7 @@ class OrderController extends Controller
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
             $resource = new Item($order, new PosOrderTransformer());
-            $order = $manager->createData($resource)->toArray();
+            $order    = $manager->createData($resource)->toArray();
 
             return api_response($request, null, 200, ['order' => $order]);
         } catch (Throwable $e) {
@@ -167,15 +166,15 @@ class OrderController extends Controller
     {
         try {
             $this->validate($request, [
-                'services' => 'required|string',
-                'paid_amount' => 'sometimes|required|numeric',
-                'payment_method' => 'sometimes|required|string|in:' . implode(',', config('pos.payment_method')),
-                'customer_name' => 'string',
-                'customer_mobile' => 'string',
-                'customer_address' => 'string',
-                'nPos' => 'numeric',
-                'discount' => 'numeric',
-                'is_percentage' => 'numeric',
+                'services'          => 'required|string',
+                'paid_amount'       => 'sometimes|required|numeric',
+                'payment_method'    => 'sometimes|required|string|in:' . implode(',', config('pos.payment_method')),
+                'customer_name'     => 'string',
+                'customer_mobile'   => 'string',
+                'customer_address'  => 'string',
+                'nPos'              => 'numeric',
+                'discount'          => 'numeric',
+                'is_percentage'     => 'numeric',
                 'previous_order_id' => 'numeric'
             ]);
             $link = null;
@@ -183,10 +182,10 @@ class OrderController extends Controller
                 $partner = $request->partner;
                 $this->setModifier($request->manager_resource);
             } else {
-                $partner = $partnerRepository->find((int)$partner);
-                $profile = $profileCreator->setMobile($request->customer_mobile)->setName($request->customer_name)->create();
+                $partner              = $partnerRepository->find((int)$partner);
+                $profile              = $profileCreator->setMobile($request->customer_mobile)->setName($request->customer_name)->create();
                 $partner_pos_customer = $posCustomerCreator->setProfile($profile)->setPartner($partner)->create();
-                $pos_customer = $partner_pos_customer->customer;
+                $pos_customer         = $partner_pos_customer->customer;
                 $this->setModifier($profile->customer);
                 $creator->setCustomer($pos_customer);
             }
@@ -196,9 +195,9 @@ class OrderController extends Controller
             $order = $order->calculate();
             if ($partner->wallet >= 1) $this->sendCustomerSms($order);
             $this->sendCustomerEmail($order);
-            $order->payment_status = $order->getPaymentStatus();
+            $order->payment_status      = $order->getPaymentStatus();
             $order->client_pos_order_id = $request->client_pos_order_id;
-            $order->net_bill = $order->getNetBill();
+            $order->net_bill            = $order->getNetBill();
             if ($request->payment_method == 'payment_link') {
                 $paymentLink = $paymentLinkCreator->setAmount($order->net_bill)->setReason("PosOrder ID: $order->id Due payment")->setUserName($partner->name)->setUserId($partner->id)
                     ->setUserType('partner')
@@ -209,16 +208,17 @@ class OrderController extends Controller
                 $link = ['link' => $transformer->getLink()];
             }
             $order = [
-                'id' => $order->id,
-                'payment_status' => $order->payment_status,
-                'net_bill' => $order->net_bill,
-                "client_pos_order_id" => $request->has('client_pos_order_id') ? $request->client_pos_order_id : null
+                'id'                    => $order->id,
+                'payment_status'        => $order->payment_status,
+                'net_bill'              => $order->net_bill,
+                "client_pos_order_id"   => $request->has('client_pos_order_id') ? $request->client_pos_order_id : null,
+                'partner_wise_order_id' => $order->partner_wise_order_id
             ];
 
             return api_response($request, null, 200, ['message' => 'Order Created Successfully', 'order' => $order, 'payment' => $link]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
+            $sentry  = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
@@ -264,12 +264,12 @@ class OrderController extends Controller
 
             $order["client_pos_order_id"] = $request->has('client_pos_order_id') ? $request->client_pos_order_id : null;
             return api_response($request, null, 200, [
-                'msg' => 'Order Created Successfully',
+                'msg'   => 'Order Created Successfully',
                 'order' => $order
             ]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
+            $sentry  = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
@@ -290,8 +290,8 @@ class OrderController extends Controller
 
         try {
             /** @var PosOrder $order */
-            $order = PosOrder::with('items')->find($request->order);
-            $is_returned = ($this->isReturned($order, $request));
+            $order         = PosOrder::with('items')->find($request->order);
+            $is_returned   = ($this->isReturned($order, $request));
             $refund_nature = $is_returned ? Natures::RETURNED : Natures::EXCHANGED;
             $return_nature = $is_returned ? $this->getReturnType($request, $order) : null;
 
@@ -314,7 +314,7 @@ class OrderController extends Controller
      */
     private function isReturned(PosOrder $order, Request $request)
     {
-        $services = $order->items->pluck('service_id')->toArray();
+        $services         = $order->items->pluck('service_id')->toArray();
         $request_services = collect(json_decode($request->services, true))->pluck('id')->toArray();
 
         return $services === $request_services;
@@ -325,7 +325,7 @@ class OrderController extends Controller
         $request_services_quantity = collect(json_decode($request->services, true))->pluck('quantity')->toArray();
 
         $is_full_order_returned = (empty(array_filter($request_services_quantity)));
-        $is_item_added = array_sum($request_services_quantity) > $order->items->sum('quantity');
+        $is_item_added          = array_sum($request_services_quantity) > $order->items->sum('quantity');
 
         return $is_full_order_returned ?
             ReturnNatures::FULL_RETURN :
@@ -349,7 +349,7 @@ class OrderController extends Controller
 
             if ($request->has('customer_id') && is_null($order->customer_id)) {
                 $requested_customer = PosCustomer::find($request->customer_id);
-                $order = $updater->setOrder($order)->setData(['customer_id' => $requested_customer->id])->update();
+                $order              = $updater->setOrder($order)->setData(['customer_id' => $requested_customer->id])->update();
             }
 
             if (!$order) return api_response($request, null, 404, ['msg' => 'Order not found']);
@@ -384,7 +384,7 @@ class OrderController extends Controller
 
             if ($request->has('customer_id') && is_null($order->customer_id)) {
                 $requested_customer = PosCustomer::find($request->customer_id);
-                $order = $updater->setOrder($order)->setData(['customer_id' => $requested_customer->id])->update();
+                $order              = $updater->setOrder($order)->setData(['customer_id' => $requested_customer->id])->update();
             }
 
             if (!$order) return api_response($request, null, 404, ['msg' => 'Order not found']);
@@ -404,19 +404,19 @@ class OrderController extends Controller
         $this->setModifier($request->manager_resource);
         try {
             $this->validate($request, [
-                'paid_amount' => 'required|numeric',
+                'paid_amount'    => 'required|numeric',
                 'payment_method' => 'required|string|in:' . implode(',', config('pos.payment_method'))
             ]);
 
             /** @var PosOrder $order */
-            $order = PosOrder::find($request->order);
+            $order        = PosOrder::find($request->order);
             $payment_data = [
                 'pos_order_id' => $order->id,
-                'amount' => $request->paid_amount,
-                'method' => $request->payment_method
+                'amount'       => $request->paid_amount,
+                'method'       => $request->payment_method
             ];
             $payment_creator->credit($payment_data);
-            $order = $order->calculate();
+            $order                 = $order->calculate();
             $order->payment_status = $order->getPaymentStatus();
             $this->updateIncome($order, $request->paid_amount);
 
@@ -435,7 +435,7 @@ class OrderController extends Controller
     private function updateIncome(PosOrder $order, $paid_amount)
     {
         /** @var AutomaticEntryRepository $entry */
-        $entry = app(AutomaticEntryRepository::class);
+        $entry  = app(AutomaticEntryRepository::class);
         $amount = (double)$order->getNetBill();
         $entry->setPartner($order->partner)
             ->setAmount($amount)
@@ -458,37 +458,37 @@ class OrderController extends Controller
         try {
             AccessManager::checkAccess(AccessManager::Rules()->POS->INVOICE->DOWNLOAD, $request->partner->subscription->getAccessRules());
             $pdf_handler = new PdfHandler();
-            $pos_order = $order->calculate();
-            $partner = $pos_order->partner;
-            $info = [
-                'amount' => $pos_order->getNetBill(),
-                'created_at' => $pos_order->created_at->format('jS M, Y, h:i A'),
+            $pos_order   = $order->calculate();
+            $partner     = $pos_order->partner;
+            $info        = [
+                'amount'           => $pos_order->getNetBill(),
+                'created_at'       => $pos_order->created_at->format('jS M, Y, h:i A'),
                 'payment_receiver' => [
-                    'name'      => $partner->name,
-                    'image'     => $partner->logo,
-                    'mobile'    => $partner->getContactNumber(),
-                    'address'   => $partner->address,
+                    'name'                    => $partner->name,
+                    'image'                   => $partner->logo,
+                    'mobile'                  => $partner->getContactNumber(),
+                    'address'                 => $partner->address,
                     'vat_registration_number' => $partner->vat_registration_number
                 ],
-                'pos_order' => $pos_order ? [
-                    'items'     => $pos_order->items,
-                    'discount'  => $pos_order->getTotalDiscount(),
-                    'total'     => $pos_order->getTotalPrice(),
+                'pos_order'        => $pos_order ? [
+                    'items'       => $pos_order->items,
+                    'discount'    => $pos_order->getTotalDiscount(),
+                    'total'       => $pos_order->getTotalPrice(),
                     'grand_total' => $pos_order->getTotalBill(),
-                    'paid'      => $pos_order->getPaid(),
-                    'due'       => $pos_order->getDue(),
-                    'status'    => $pos_order->getPaymentStatus(),
-                    'vat'       => $pos_order->getTotalVat()] : null
+                    'paid'        => $pos_order->getPaid(),
+                    'due'         => $pos_order->getDue(),
+                    'status'      => $pos_order->getPaymentStatus(),
+                    'vat'         => $pos_order->getTotalVat()] : null
             ];
             if ($pos_order->customer) {
-                $customer = $pos_order->customer->profile;
+                $customer     = $pos_order->customer->profile;
                 $info['user'] = [
-                    'name'      => $customer->name,
-                    'mobile'    => $customer->mobile
+                    'name'   => $customer->name,
+                    'mobile' => $customer->mobile
                 ];
             }
             $invoice_name = 'pos_order_invoice_' . $pos_order->id;
-            $link = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
+            $link         = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
 
             return api_response($request, null, 200, ['message' => 'Successfully Download receipt', 'link' => $link]);
         } catch (Throwable $e) {

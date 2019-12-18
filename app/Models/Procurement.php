@@ -73,4 +73,9 @@ class Procurement extends Model implements PayableType
         return $this->morphMany(Comment::class, 'commentable');
     }
 
+    public function hasAccepted()
+    {
+        return $this->status == config('b2b.PROCUREMENT_STATUS')['accepted'];
+    }
+
 }

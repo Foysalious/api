@@ -21,6 +21,7 @@ use DB;
 use Sheba\Dal\PartnerLocation\PartnerLocation;
 use Sheba\Dal\PartnerLocation\PartnerLocationRepository;
 use Sheba\ModificationFields;
+use Sheba\Partner\PartnerStatuses;
 use Sheba\Partner\StatusChanger;
 use Sheba\RequestIdentification;
 use Throwable;
@@ -136,7 +137,7 @@ class OperationController extends Controller
                 }
 
                 if (isPartnerReadyToVerified($partner)) {
-                    $status_changer = new StatusChanger($partner, ['status' => constants('PARTNER_STATUSES')['Waiting']]);
+                    $status_changer = new StatusChanger($partner, ['status' => PartnerStatuses::WAITING]);
                     $status_changer->change();
                 }
             });
@@ -180,7 +181,7 @@ class OperationController extends Controller
                 if (!empty($services)) $partner->services()->sync($services);
 
                 if (isPartnerReadyToVerified($partner)) {
-                    $status_changer = new StatusChanger($partner, ['status' => constants('PARTNER_STATUSES')['Waiting']]);
+                    $status_changer = new StatusChanger($partner, ['status' => PartnerStatuses::WAITING]);
                     $status_changer->change();
                 }
 

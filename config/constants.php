@@ -1,9 +1,12 @@
 <?php
-
 return [
     'STARTING_YEAR' => '2017',
     'HOTLINE' => '09639 - 444 000',
-    'SERVICE_VARIABLE_TYPES' => ['Fixed' => 'Fixed', 'Options' => 'Options', 'Custom' => 'Custom'],
+    'SERVICE_VARIABLE_TYPES' => [
+        'Fixed' => 'Fixed',
+        'Options' => 'Options',
+        'Custom' => 'Custom'
+    ],
     'PARTNER_STATUSES' => [
         'Verified' => 'Verified',
         'Unverified' => 'Unverified',
@@ -16,19 +19,69 @@ return [
         'Inactive' => 'Inactive'
     ],
     'PARTNER_STATUSES_SHOW' => [
-        'Verified' => ['sheba' => 'Verified', 'partner' => 'Active', 'customer' => 'Verified'],
-        'Unverified' => ['sheba' => 'Inactive', 'partner' => 'Inactive', 'customer' => 'Inactive'],
-        'Paused' => ['sheba' => 'Blocked', 'partner' => 'Inactive', 'customer' => 'Blocked'],
-        'Closed' => ['sheba' => 'Closed', 'partner' => 'Closed', 'customer' => 'Closed'],
-        'Blacklisted' => ['sheba' => 'Blacklisted', 'partner' => 'Blacklisted', 'customer' => 'Blacklisted'],
-        'Waiting' => ['sheba' => 'Ready to verified', 'partner' => 'Inactive', 'customer' => 'Ready to verified'],
-        'Onboarded' => ['sheba' => 'Onboarded', 'partner' => 'Inactive', 'customer' => 'Onboarded'],
-        'Rejected' => ['sheba' => 'Rejected', 'partner' => 'Inactive', 'customer' => 'Rejected'],
-        'Inactive' => ['sheba' => 'Inactive', 'partner' => 'Inactive', 'customer' => 'Inactive']
+        'Verified' => [
+            'sheba' => 'Verified',
+            'partner' => 'Active',
+            'customer' => 'Verified'
+        ],
+        'Unverified' => [
+            'sheba' => 'Inactive',
+            'partner' => 'Inactive',
+            'customer' => 'Inactive'
+        ],
+        'Paused' => [
+            'sheba' => 'Blocked',
+            'partner' => 'Inactive',
+            'customer' => 'Blocked'
+        ],
+        'Closed' => [
+            'sheba' => 'Closed',
+            'partner' => 'Closed',
+            'customer' => 'Closed'
+        ],
+        'Blacklisted' => [
+            'sheba' => 'Blacklisted',
+            'partner' => 'Blacklisted',
+            'customer' => 'Blacklisted'
+        ],
+        'Waiting' => [
+            'sheba' => 'Ready to verified',
+            'partner' => 'Inactive',
+            'customer' => 'Ready to verified'
+        ],
+        'Onboarded' => [
+            'sheba' => 'Onboarded',
+            'partner' => 'Inactive',
+            'customer' => 'Onboarded'
+        ],
+        'Rejected' => [
+            'sheba' => 'Rejected',
+            'partner' => 'Inactive',
+            'customer' => 'Rejected'
+        ],
+        'Inactive' => [
+            'sheba' => 'Inactive',
+            'partner' => 'Inactive',
+            'customer' => 'Inactive'
+        ]
     ],
-    'PARTNER_LEVELS' => ['Starter', 'Intermediate', 'Advanced'],
-    'PARTNER_TYPES' => ['USP', 'NSP', 'ESP'],
-    'RESOURCE_TYPES' => ['Admin' => 'Admin', 'Operation' => 'Operation', 'Finance' => 'Finance', 'Handyman' => 'Handyman', 'Salesman' => 'Salesman'],
+    'PARTNER_LEVELS' => [
+        'Starter',
+        'Intermediate',
+        'Advanced'
+    ],
+    'PARTNER_TYPES' => [
+        'USP',
+        'NSP',
+        'ESP'
+    ],
+    'RESOURCE_TYPES' => [
+        'Admin' => 'Admin',
+        'Operation' => 'Operation',
+        'Finance' => 'Finance',
+        'Handyman' => 'Handyman',
+        'Salesman' => 'Salesman'
+    ],
     'JOB_STATUSES' => [
         'Pending' => 'Pending',
         'Not_Responded' => 'Not Responded',
@@ -53,26 +106,98 @@ return [
         'Served' => 6
     ],
     'JOB_STATUSES_SHOW' => [
-        'Pending' => ['sheba' => 'Pending', 'partner' => 'Pending', 'customer' => 'Order Placed'],
-        'Declined' => ['sheba' => 'Declined', 'partner' => 'Declined', 'customer' => 'Order Placed'],
-        'Not Responded' => ['sheba' => 'Not Responded', 'partner' => 'Not Responded', 'customer' => 'Order Placed'],
-        'Accepted' => ['sheba' => 'Accepted', 'partner' => 'Accepted', 'customer' => 'Order Confirmed'],
-        'Schedule Due' => ['sheba' => 'Schedule Due', 'partner' => 'Schedule Due', 'customer' => 'Order Confirmed'],
-        'Process' => ['sheba' => 'Process', 'partner' => 'Process', 'customer' => 'Service is in Process'],
-        'Serve Due' => ['sheba' => 'Process', 'partner' => 'Process', 'customer' => 'Service is in Process'],
-        'Served' => ['sheba' => 'Served', 'partner' => 'Served', 'customer' => 'Order Completed'],
-        'Cancelled' => ['sheba' => 'Cancelled', 'partner' => 'Cancelled', 'customer' => 'Order Cancelled']
+        'Pending' => [
+            'sheba' => 'Pending',
+            'partner' => 'Pending',
+            'customer' => 'Order Placed'
+        ],
+        'Declined' => [
+            'sheba' => 'Declined',
+            'partner' => 'Declined',
+            'customer' => 'Order Placed'
+        ],
+        'Not Responded' => [
+            'sheba' => 'Not Responded',
+            'partner' => 'Not Responded',
+            'customer' => 'Order Placed'
+        ],
+        'Accepted' => [
+            'sheba' => 'Accepted',
+            'partner' => 'Accepted',
+            'customer' => 'Order Confirmed'
+        ],
+        'Schedule Due' => [
+            'sheba' => 'Schedule Due',
+            'partner' => 'Schedule Due',
+            'customer' => 'Order Confirmed'
+        ],
+        'Process' => [
+            'sheba' => 'Process',
+            'partner' => 'Process',
+            'customer' => 'Service is in Process'
+        ],
+        'Serve Due' => [
+            'sheba' => 'Process',
+            'partner' => 'Process',
+            'customer' => 'Service is in Process'
+        ],
+        'Served' => [
+            'sheba' => 'Served',
+            'partner' => 'Served',
+            'customer' => 'Order Completed'
+        ],
+        'Cancelled' => [
+            'sheba' => 'Cancelled',
+            'partner' => 'Cancelled',
+            'customer' => 'Order Cancelled'
+        ]
     ],
     'JOB_STATUSES_COLOR' => [
-        'Pending' => ['sheba' => 'Pending', 'partner' => 'Pending', 'customer' => '#fcce54'],
-        'Accepted' => ['sheba' => 'Accepted', 'partner' => 'Accepted', 'customer' => '#4ec2e7'],
-        'Not Responded' => ['sheba' => 'Not Responded', 'partner' => 'Not Responded', 'customer' => '#fcce54'],
-        'Schedule Due' => ['sheba' => 'Schedule Due', 'partner' => 'Schedule Due', 'customer' => '#fcce54'],
-        'Process' => ['sheba' => 'Process', 'partner' => 'Process', 'customer' => '#5c9ded'],
-        'Served' => ['sheba' => 'Served', 'partner' => 'Served', 'customer' => '#42cb6f'],
-        'Serve Due' => ['sheba' => 'Served', 'partner' => 'Served', 'customer' => '#42cb6f'],
-        'Cancelled' => ['sheba' => 'Served', 'partner' => 'Served', 'customer' => '#42cb6f'],
-        'Declined' => ['sheba' => 'Served', 'partner' => 'Served', 'customer' => '#fcce54']
+        'Pending' => [
+            'sheba' => 'Pending',
+            'partner' => 'Pending',
+            'customer' => '#fcce54'
+        ],
+        'Accepted' => [
+            'sheba' => 'Accepted',
+            'partner' => 'Accepted',
+            'customer' => '#4ec2e7'
+        ],
+        'Not Responded' => [
+            'sheba' => 'Not Responded',
+            'partner' => 'Not Responded',
+            'customer' => '#fcce54'
+        ],
+        'Schedule Due' => [
+            'sheba' => 'Schedule Due',
+            'partner' => 'Schedule Due',
+            'customer' => '#fcce54'
+        ],
+        'Process' => [
+            'sheba' => 'Process',
+            'partner' => 'Process',
+            'customer' => '#5c9ded'
+        ],
+        'Served' => [
+            'sheba' => 'Served',
+            'partner' => 'Served',
+            'customer' => '#42cb6f'
+        ],
+        'Serve Due' => [
+            'sheba' => 'Served',
+            'partner' => 'Served',
+            'customer' => '#42cb6f'
+        ],
+        'Cancelled' => [
+            'sheba' => 'Served',
+            'partner' => 'Served',
+            'customer' => '#42cb6f'
+        ],
+        'Declined' => [
+            'sheba' => 'Served',
+            'partner' => 'Served',
+            'customer' => '#fcce54'
+        ]
     ],
     'BID_STATUSES_COLOR' => [
         'pending' => '#ff8219',
@@ -89,10 +214,26 @@ return [
         'Cancelled' => 'Cancelled'
     ],
     'PARTNER_ORDER_STATUSES_SHOW' => [
-        'Open' => ['sheba' => 'Open', 'partner' => 'Open', 'customer' => 'Open'],
-        'Process' => ['sheba' => 'Process', 'partner' => 'Process', 'customer' => 'On Going'],
-        'Closed' => ['sheba' => 'Closed', 'partner' => 'Closed', 'customer' => 'Closed'],
-        'Cancelled' => ['sheba' => 'Cancelled', 'partner' => 'Cancelled', 'customer' => 'Cancelled']
+        'Open' => [
+            'sheba' => 'Open',
+            'partner' => 'Open',
+            'customer' => 'Open'
+        ],
+        'Process' => [
+            'sheba' => 'Process',
+            'partner' => 'Process',
+            'customer' => 'On Going'
+        ],
+        'Closed' => [
+            'sheba' => 'Closed',
+            'partner' => 'Closed',
+            'customer' => 'Closed'
+        ],
+        'Cancelled' => [
+            'sheba' => 'Cancelled',
+            'partner' => 'Cancelled',
+            'customer' => 'Cancelled'
+        ]
     ],
     'ORDER_STATUSES' => [
         'Open' => 'Open',
@@ -101,10 +242,26 @@ return [
         'Cancelled' => 'Cancelled'
     ],
     'ORDER_STATUSES_SHOW' => [
-        'Open' => ['sheba' => 'Open', 'partner' => 'Open', 'customer' => 'Open'],
-        'Process' => ['sheba' => 'Process', 'partner' => 'Process', 'customer' => 'On Going'],
-        'Closed' => ['sheba' => 'Closed', 'partner' => 'Closed', 'customer' => 'Closed'],
-        'Cancelled' => ['sheba' => 'Cancelled', 'partner' => 'Cancelled', 'customer' => 'Cancelled']
+        'Open' => [
+            'sheba' => 'Open',
+            'partner' => 'Open',
+            'customer' => 'Open'
+        ],
+        'Process' => [
+            'sheba' => 'Process',
+            'partner' => 'Process',
+            'customer' => 'On Going'
+        ],
+        'Closed' => [
+            'sheba' => 'Closed',
+            'partner' => 'Closed',
+            'customer' => 'Closed'
+        ],
+        'Cancelled' => [
+            'sheba' => 'Cancelled',
+            'partner' => 'Cancelled',
+            'customer' => 'Cancelled'
+        ]
     ],
     'PARTNER_MINIMUM_RESPONSE_TIME' => 30,
     'PARTNER_MAXIMUM_RESPONSE_TIME' => 120,
@@ -148,8 +305,16 @@ return [
         'Minor' => 'Need to be completed within 3 Days',
         'Moderate' => 'Need to be completed within 7 Days'
     ],
-    'PRIORITY_LEVELS' => ['Green' => 'Green', 'Amber' => 'Amber', 'Red' => 'Red'],
-    'ALT_PRIORITY_LEVELS' => ['Low' => 'Low', 'Medium' => 'Medium', 'High' => 'High'],
+    'PRIORITY_LEVELS' => [
+        'Green' => 'Green',
+        'Amber' => 'Amber',
+        'Red' => 'Red'
+    ],
+    'ALT_PRIORITY_LEVELS' => [
+        'Low' => 'Low',
+        'Medium' => 'Medium',
+        'High' => 'High'
+    ],
     'JOB_PREFERRED_TIMES' => [
         '10.00 A.M. - 01.00 P.M.' => '10.00 A.M. - 01.00 P.M.',
         '01.00 P.M. - 05.00 P.M.' => '01.00 P.M. - 05.00 P.M.',
@@ -163,13 +328,33 @@ return [
         'Anytime' => 4,
     ],
     'JOB_START_END_TIMES' => [
-        '10.00 A.M. - 01.00 P.M.' => ['10:00 AM', '1:00 PM'],
-        '01.00 P.M. - 05.00 P.M.' => ['1:01 PM', '5:00 PM'],
-        '05.00 P.M. - 09.00 P.M.' => ['5:01 PM', '09:00 PM'],
-        'Anytime' => ['12:00 AM', '11:59 PM']
+        '10.00 A.M. - 01.00 P.M.' => [
+            '10:00 AM',
+            '1:00 PM'
+        ],
+        '01.00 P.M. - 05.00 P.M.' => [
+            '1:01 PM',
+            '5:00 PM'
+        ],
+        '05.00 P.M. - 09.00 P.M.' => [
+            '5:01 PM',
+            '09:00 PM'
+        ],
+        'Anytime' => [
+            '12:00 AM',
+            '11:59 PM'
+        ]
     ],
-    'JOB_CI_LEVELS' => ['High' => 'High', 'Medium' => 'Medium', 'Low' => 'Low'],
-    'JOB_SATISFACTION_LEVELS' => ['High' => 'High', 'Medium' => 'Medium', 'Low' => 'Low'],
+    'JOB_CI_LEVELS' => [
+        'High' => 'High',
+        'Medium' => 'Medium',
+        'Low' => 'Low'
+    ],
+    'JOB_SATISFACTION_LEVELS' => [
+        'High' => 'High',
+        'Medium' => 'Medium',
+        'Low' => 'Low'
+    ],
     'JOB_CANCEL_REASONS' => [
         'Customer Dependency' => 'Customer Dependency',
         'Customer Management' => 'Customer Management',
@@ -194,9 +379,27 @@ return [
         'Technical' => 'Technical'
     ],
     'COMPLAIN_CATEGORIES' => [
-        'Service Partner' => ['Schedule', 'Appoint Missed', 'Billing', 'Behavior', 'Performance'],
-        'Communication' => ['Callback Issue', 'Bill SMS', 'Money Receipt', 'Invoice Copy', 'Behaviour Issue', 'Wrong Information'],
-        'Technical' => ['Within Warranty Period', 'After Warranty Period', 'Another Parts', 'System Bug']
+        'Service Partner' => [
+            'Schedule',
+            'Appoint Missed',
+            'Billing',
+            'Behavior',
+            'Performance'
+        ],
+        'Communication' => [
+            'Callback Issue',
+            'Bill SMS',
+            'Money Receipt',
+            'Invoice Copy',
+            'Behaviour Issue',
+            'Wrong Information'
+        ],
+        'Technical' => [
+            'Within Warranty Period',
+            'After Warranty Period',
+            'Another Parts',
+            'System Bug'
+        ]
     ],
     'CUSTOM_ORDER_STATUSES' => [
         'Open' => 'Open',
@@ -207,12 +410,36 @@ return [
         'Cancelled' => 'Cancelled'
     ],
     'CUSTOM_ORDER_STATUSES_SHOW' => [
-        'Open' => ['sheba' => 'Open', 'partner' => 'Open', 'customer' => 'Open'],
-        'Process' => ['sheba' => 'Process', 'partner' => 'Process', 'customer' => 'Process'],
-        'OnInspection' => ['sheba' => 'On Inspection', 'partner' => 'On Inspection', 'customer' => 'On Inspection'],
-        'QuotationSent' => ['sheba' => 'Quotation Sent', 'partner' => 'Quotation Sent', 'customer' => 'Quotation Sent'],
-        'ConvertedToOrder' => ['sheba' => 'Converted To Order', 'partner' => 'Converted To Order', 'customer' => 'Converted To Order'],
-        'Cancelled' => ['sheba' => 'Cancelled', 'partner' => 'Cancelled', 'customer' => 'Cancelled']
+        'Open' => [
+            'sheba' => 'Open',
+            'partner' => 'Open',
+            'customer' => 'Open'
+        ],
+        'Process' => [
+            'sheba' => 'Process',
+            'partner' => 'Process',
+            'customer' => 'Process'
+        ],
+        'OnInspection' => [
+            'sheba' => 'On Inspection',
+            'partner' => 'On Inspection',
+            'customer' => 'On Inspection'
+        ],
+        'QuotationSent' => [
+            'sheba' => 'Quotation Sent',
+            'partner' => 'Quotation Sent',
+            'customer' => 'Quotation Sent'
+        ],
+        'ConvertedToOrder' => [
+            'sheba' => 'Converted To Order',
+            'partner' => 'Converted To Order',
+            'customer' => 'Converted To Order'
+        ],
+        'Cancelled' => [
+            'sheba' => 'Cancelled',
+            'partner' => 'Cancelled',
+            'customer' => 'Cancelled'
+        ]
     ],
     'CUSTOM_ORDER_CANCEL_REASONS' => [
         'CustomerDependency' => 'Customer Dependency',
@@ -322,7 +549,25 @@ return [
             'department' => 'TEL'
         ]
     ],
-    'SERVICE_UNITS' => ['ft', 'sft', 'hour', 'kg', 'meal', 'person', 'piece', 'rft', 'seat', 'strip', 'km', 'basket', 'Cow Price', 'litre', 'বান্ডেল', 'দিন', 'cft'],
+    'SERVICE_UNITS' => [
+        'ft',
+        'sft',
+        'hour',
+        'kg',
+        'meal',
+        'person',
+        'piece',
+        'rft',
+        'seat',
+        'strip',
+        'km',
+        'basket',
+        'Cow Price',
+        'litre',
+        'বান্ডেল',
+        'দিন',
+        'cft'
+    ],
     'FEEDBACK_STATUSES' => [
         'Open' => 'Open',
         'Acknowledged' => 'Acknowledged',
@@ -370,10 +615,15 @@ return [
         env('SHEBA_AFFILIATION_APP') => 'affiliate',
         env('SHEBA_RESOURCE_APP') => 'resource',
         env('SHEBA_MANGER_APP') => 'resource',
-        'user' => 'user'
+        'user' => 'user',
+        'bank-loan-portal' => 'bankUser'
     ],
     'MANAGER' => [
-        'Owner', 'Management', 'Admin', 'Operation', 'Finance'
+        'Owner',
+        'Management',
+        'Admin',
+        'Operation',
+        'Finance'
     ],
     'FROM' => [
         'resource-app',
@@ -382,6 +632,7 @@ return [
         'manager-app',
         'manager-web',
         'business-portal',
+        'bank-loan-portal'
     ],
     'PARTNER_ACQUISITION_CHANNEL' => [
         'PM' => 'PM',
@@ -392,19 +643,60 @@ return [
     'AFFILIATION_REGISTRATION_BONUS' => 0,
     'AFFILIATION_ACQUISITION_MONEY' => 2,
     'API_RESPONSE_CODES' => [
-        200 => ['message' => 'Successful', 'code' => 200],
-        202 => ['message' => 'Successful', 'code' => 202],
-        400 => ['message' => 'Bad request', 'code' => 400],
-        401 => ['message' => 'Unauthorized', 'code' => 401],
-        403 => ['message' => 'Forbidden', 'code' => 403],
-        404 => ['message' => 'Not found', 'code' => 404],
-        409 => ['message' => 'Conflict', 'code' => 409],
-        420 => ['message' => 'Not Allowed', 'code' => 420],
-        421 => ['message' => 'Misdirected.', 'code' => 421],
-        422 => ['message' => 'Unprocessable Entity', 'code' => 422],
-        500 => ['message' => 'Internal Server Error', 'code' => 500],
+        200 => [
+            'message' => 'Successful',
+            'code' => 200
+        ],
+        202 => [
+            'message' => 'Successful',
+            'code' => 202
+        ],
+        400 => [
+            'message' => 'Bad request',
+            'code' => 400
+        ],
+        401 => [
+            'message' => 'Unauthorized',
+            'code' => 401
+        ],
+        403 => [
+            'message' => 'Forbidden',
+            'code' => 403
+        ],
+        404 => [
+            'message' => 'Not found',
+            'code' => 404
+        ],
+        409 => [
+            'message' => 'Conflict',
+            'code' => 409
+        ],
+        420 => [
+            'message' => 'Not Allowed',
+            'code' => 420
+        ],
+        421 => [
+            'message' => 'Misdirected.',
+            'code' => 421
+        ],
+        422 => [
+            'message' => 'Unprocessable Entity',
+            'code' => 422
+        ],
+        500 => [
+            'message' => 'Internal Server Error',
+            'code' => 500
+        ],
     ],
-    'TRENDING' => [875, 775, 783, 629, 118, 76, 756],
+    'TRENDING' => [
+        875,
+        775,
+        783,
+        629,
+        118,
+        76,
+        756
+    ],
     'APP_VOUCHER' => env('APP_VOUCHER'),
     'PARTNER_WITHDRAWAL_REQUEST_STATUSES' => [
         'pending' => 'Pending',
@@ -494,15 +786,29 @@ return [
         'Rejected' => 'Rejected'
     ],
     'WITHDRAW_LIMIT' => [
-        'bkash' => ['min' => 500, 'max' => 15000],
-        'bank' => ['min' => 20000, 'max' => 250000]
+        'bkash' => [
+            'min' => 500,
+            'max' => 15000
+        ],
+        'bank' => [
+            'min' => 20000,
+            'max' => 250000
+        ]
     ],
     'DELIVERY_CHARGE_UPDATE_STATUSES' => [
         'pending' => 'Pending',
         'approved' => 'Approved',
         'rejected' => 'Rejected'
     ],
-    'WEEK_DAYS' => ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+    'WEEK_DAYS' => [
+        'Sunday',
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday'
+    ],
     'PARTNER_BADGE' => [
         'silver' => 'silver',
         'gold' => 'gold'
@@ -543,30 +849,136 @@ return [
         'failed' => 'failed',
     ],
     'BANK_ACCOUNT_TYPE' => [
-        ['key' => 'savings', 'en' => 'savings', 'bn' => 'সেভিংস'],
-        ['key' => 'current', 'en' => 'current', 'bn' => 'কারেন্ট']
+        [
+            'key' => 'savings',
+            'en' => 'savings',
+            'bn' => 'সেভিংস'
+        ],
+        [
+            'key' => 'current',
+            'en' => 'current',
+            'bn' => 'কারেন্ট'
+        ]
     ],
     'BKASH_ACCOUNT_TYPE' => [
-        ['key' => 'personal', 'en' => 'personal', 'bn' => 'পার্সোনাল'],
-        ['key' => 'agent', 'en' => 'agent', 'bn' => 'এজেন্ট'],
-        ['key' => 'merchant', 'en' => 'merchant', 'bn' => 'মার্চেন্ট']
+        [
+            'key' => 'personal',
+            'en' => 'personal',
+            'bn' => 'পার্সোনাল'
+        ],
+        [
+            'key' => 'agent',
+            'en' => 'agent',
+            'bn' => 'এজেন্ট'
+        ],
+        [
+            'key' => 'merchant',
+            'en' => 'merchant',
+            'bn' => 'মার্চেন্ট'
+        ]
     ],
     'SUGGESTED_OCCUPATION' => [
-        ['key' => 'government_service', 'en' => 'government_service', 'bn' => 'গভর্নমেন্ট সার্ভিস '],
-        ['key' => 'private_service', 'en' => 'private_service', 'bn' => 'প্রাইভেট সার্ভিস'],
-        ['key' => 'business', 'en' => 'business', 'bn' => 'বিজনেস'],
-        ['key' => 'other', 'en' => 'other', 'bn' => 'অন্যান্য']
+        [
+            'key' => 'government_service',
+            'en' => 'government_service',
+            'bn' => 'গভর্নমেন্ট সার্ভিস '
+        ],
+        [
+            'key' => 'private_service',
+            'en' => 'private_service',
+            'bn' => 'প্রাইভেট সার্ভিস'
+        ],
+        [
+            'key' => 'business',
+            'en' => 'business',
+            'bn' => 'বিজনেস'
+        ],
+        [
+            'key' => 'other',
+            'en' => 'other',
+            'bn' => 'অন্যান্য'
+        ]
     ],
     'GENDER' => [
-        ['key' => 'female', 'en' => 'Female', 'bn' => 'মহিলা'],
-        ['key' => 'male', 'en' => 'Male', 'bn' => 'পুরুষ'],
-        ['key' => 'other', 'en' => 'Other', 'bn' => 'অন্যান্য']
+        [
+            'key' => 'female',
+            'en' => 'Female',
+            'bn' => 'মহিলা'
+        ],
+        [
+            'key' => 'male',
+            'en' => 'Male',
+            'bn' => 'পুরুষ'
+        ],
+        [
+            'key' => 'other',
+            'en' => 'Other',
+            'bn' => 'অন্যান্য'
+        ]
     ],
-    'LOAN_STATUS' => [
-        'rejected' => 'rejected',
-        'approved' => 'approved',
-        'closed' => 'closed',
-        'considerable' => 'considerable'
+    'LOAN_STATUS'                                 => [
+        'applied'         => 'applied',
+        'submitted'       => 'submitted',
+        'verified'        => 'verified',
+        'approved'        => 'approved',
+        'sanction_issued' => 'sanction_issued',
+        'disbursed'       => 'disbursed',
+        'closed'          => 'closed',
+        'rejected'        => 'rejected',
+        'hold'            => 'hold',
+        'declined'        => 'declined',
+        'withdrawal'      => 'withdrawal',
+        'considerable'    => 'considerable'
+    ],
+    'LOAN_STATUS_BN'                              => [
+        'applied'         => [
+            'bn'    => 'এপ্লাইড',
+            'color' => '#F2994A'
+        ],
+        'submitted'       => [
+            'bn'    => 'সাবমিটেড',
+            'color' => '#2D9CDB'
+        ],
+        'verified'        => [
+            'bn'    => 'ভেরিফাইড',
+            'color' => '#404FD3'
+        ],
+        'approved'        => [
+            'bn'    => 'এপ্রুভড',
+            'color' => '#9B51E0'
+        ],
+        'sanction_issued' => [
+            'bn'    => 'স্যাংশন ইস্যু',
+            'color' => '#1FB3A2'
+        ],
+        'disbursed'       => [
+            'bn'    => 'ডিসবার্সড',
+            'color' => '#27AE60'
+        ],
+        'closed'          => [
+            'bn'    => 'ক্লোজ',
+            'color' => '#117746'
+        ],
+        'rejected'        => [
+            'bn'    => 'রিজেক্ট',
+            'color' => '#EC2020'
+        ],
+        'hold'            => [
+            'bn'    => 'হোল্ড',
+            'color' => '#EAB618'
+        ],
+        'declined'        => [
+            'bn'    => 'ডিকলাইন',
+            'color' => '#EC2020'
+        ],
+        'withdrawal'      => [
+            'bn'    => 'উইথড্রয়াল',
+            'color' => '#979797'
+        ],
+        'considerable'    => [
+            'bn'    => 'এপ্লাইড',
+            'color' => '#F2994A'
+        ]
     ],
     'AVAILABLE_BANK_FOR_LOAN' => [
         'IPDC Finance' => [
@@ -590,36 +1002,104 @@ return [
             'interest' => '25',
         ],
     ],
-    'WEEKS' => ['Saturday' => 1, 'Sunday' => 2, 'Monday' => 3, 'Tuesday' => 4, 'Wednesday' => 5, 'Thursday' => 6, 'Friday' => 7],
-    'FUEL_TYPES' => ['petrol', 'diesel', 'octane', 'cng'],
-    'FUEL_UNITS' => ['ltr', 'cubic_feet'],
+    'LOAN_CONFIG' => [
+        'interest' => 15,
+    ],
+    'WEEKS' => [
+        'Saturday' => 1,
+        'Sunday' => 2,
+        'Monday' => 3,
+        'Tuesday' => 4,
+        'Wednesday' => 5,
+        'Thursday' => 6,
+        'Friday' => 7
+    ],
+    'FUEL_TYPES' => [
+        'petrol',
+        'diesel',
+        'octane',
+        'cng'
+    ],
+    'FUEL_UNITS' => [
+        'ltr',
+        'cubic_feet'
+    ],
     'AVATAR_FROM_CLASS' => [
         env('SHEBA_CUSTOMER_APP') => 'Customer',
         env('SHEBA_AFFILIATION_APP') => 'Affiliate',
         env('SHEBA_RESOURCE_APP') => 'Resource',
         env('SHEBA_MANGER_APP') => 'Partner',
-        'user' => 'Profile'
+        'user' => 'Profile',
+        'bank-loan-portal' => 'BankUser'
     ],
     'PARTNER_PACKAGE_CHARGE_TYPES' => [
         'Upgrade' => 'upgrade',
         'Downgrade' => 'downgrade',
         'Renewed' => 'renewed'
     ],
-    'DEVELOPMENT_PLATFORMS' => ['android', 'ios', 'web', 'all'],
+    'DEVELOPMENT_PLATFORMS' => [
+        'android',
+        'ios',
+        'web',
+        'all'
+    ],
     'POS_SERVICE_UNITS' => [
-        'ft' => ['bn' => 'ফুট', 'en' => 'ft'],
-        'sft' => ['bn' => 'স্কয়ার ফিট', 'en' => 'sft'],
-        'sq.m' => ['bn' => 'স্কয়ার মিটার', 'en' => 'sq.m'],
-        'kg' => ['bn' => 'কেজি', 'en' => 'kg'],
-        'piece' => ['bn' => 'পিস', 'en' => 'piece'],
-        'km' => ['bn' => 'কিমি', 'en' => 'km'],
-        'litre' => ['bn' => 'লিটার', 'en' => 'litre'],
-        'meter' => ['bn' => 'মিটার', 'en' => 'meter'],
-        'dozon' => ['bn' => 'ডজন', 'en' => 'dozon'],
-        'inch' => ['bn' => 'ইঞ্চি', 'en' => 'inch'],
-        'bosta' => ['bn' => 'বস্তা', 'en' => 'bosta'],
-        'unit' => ['bn' => 'টি', 'en' => 'unit'],
-        'set' => ['bn' => 'সেট', 'en' => 'set']
+        'ft' => [
+            'bn' => 'ফুট',
+            'en' => 'ft'
+        ],
+        'sft' => [
+            'bn' => 'স্কয়ার ফিট',
+            'en' => 'sft'
+        ],
+        'sq.m' => [
+            'bn' => 'স্কয়ার মিটার',
+            'en' => 'sq.m'
+        ],
+        'kg' => [
+            'bn' => 'কেজি',
+            'en' => 'kg'
+        ],
+        'piece' => [
+            'bn' => 'পিস',
+            'en' => 'piece'
+        ],
+        'km' => [
+            'bn' => 'কিমি',
+            'en' => 'km'
+        ],
+        'litre' => [
+            'bn' => 'লিটার',
+            'en' => 'litre'
+        ],
+        'meter' => [
+            'bn' => 'মিটার',
+            'en' => 'meter'
+        ],
+        'dozon' => [
+            'bn' => 'ডজন',
+            'en' => 'dozon'
+        ],
+        'inch' => [
+            'bn' => 'ইঞ্চি',
+            'en' => 'inch'
+        ],
+        'bosta' => [
+            'bn' => 'বস্তা',
+            'en' => 'bosta'
+        ],
+        'unit' => [
+            'bn' => 'টি',
+            'en' => 'unit'
+        ],
+        'set' => [
+            'bn' => 'সেট',
+            'en' => 'set'
+        ],
+        'carton' => [
+            'bn' => 'কার্টন',
+            'en' => 'carton'
+        ]
     ],
     'TICKET_LOG' => [
         'movie_ticket_purchase' => [
@@ -667,4 +1147,103 @@ return [
         'rejected' => '#B3B7CC',
         'paid' => '#12B886'
     ],
+    'TOPUP_BULK_REQUEST_STATUS' => [
+        'pending' => 'pending',
+        'completed' => 'completed',
+        'successful' => 'successful',
+        'failed' => 'failed'
+    ],
+    'AFFILIATE_REWARD' => [
+        'SERVICE_REFER' => [
+            'AGENT' => [
+                'percentage' => 5,
+                'cap' => 200
+            ],
+            'AMBASSADOR' => [
+                'percentage' => 2,
+                'cap' => 20
+            ]
+        ],
+        'TOP_UP' => [
+            'AGENT' => [
+                'percentage' => 2.5,
+                'cap' => 50
+            ],
+            'AMBASSADOR' => [
+                'percentage' => 0.02,
+                'cap' => 20
+            ]
+        ],
+        'MOVIE' => [
+            'AGENT' => [
+                'percentage' => 2,
+                'cap' => 50
+            ],
+            'AMBASSADOR' => [
+                'percentage' => 0.2,
+                'cap' => 20
+            ]
+        ],
+        'TRANSPORT' => [
+            'AGENT' => [
+                'percentage' => 0,
+                'cap' => 0
+            ],
+            'AMBASSADOR' => [
+                'percentage' => 0,
+                'cap' => 0
+            ]
+        ],
+    ],
+    'PARTNER_BUSINESS_TYPES' => [
+        [
+            'key' => 'manufacturing',
+            'en' => 'Manufacturing',
+            'bn' => 'ম্যানুফ্যাকচারিং'
+        ],
+        [
+            'key' => 'trading',
+            'en' => 'Trading',
+            'bn' => 'ট্রেডিং'
+        ],
+        [
+            'key' => 'service',
+            'en' => 'Service',
+            'bn' => 'সার্ভিস'
+        ]
+    ],
+    'PARTNER_SMANAGER_BUSINESS_TYPE' => [
+        [
+            'key' => 'ownership',
+            'en' => 'Ownership',
+            'bn' => 'মালিকানা'
+        ],
+        [
+            'key' => 'partnership',
+            'en' => 'Partnership',
+            'bn' => 'পার্টনারশিপ'
+        ],
+        [
+            'key' => 'limited',
+            'en' => 'Limited Company',
+            'bn' => 'লিমিটেড কোম্পানি'
+        ]
+    ],
+    'PARTNER_OWNER_TYPES'                         => [
+        [
+            'key' => 'limited',
+            'en'  => 'Limited',
+            'bn'  => 'লিমিটেড'
+        ],
+        [
+            'key' => 'partnership',
+            'en'  => 'Partnership',
+            'bn'  => 'পার্টনারশিপ'
+        ],
+        [
+            'key' => 'proprietorship',
+            'en'  => 'Proprietorship',
+            'bn'  => 'প্রোপ্রাইটরশিপ'
+        ],
+    ]
 ];

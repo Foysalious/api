@@ -18,7 +18,7 @@ class JWTAuthentication
         if ($payload) {
             if (isset($payload['profile'])) {
                 $profile = Profile::find($payload['profile']['id']);
-                if ($profile) $request->merge(['profile' => $profile]);
+                if ($profile) $request->merge(['profile' => $profile, 'auth_info' => $payload]);
             }
             return $next($request);
         } else return api_response($request, null, 403);

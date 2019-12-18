@@ -6,6 +6,7 @@ use Sheba\Helpers\Formatters\BDMobileFormatter;
 class CreateRequest
 {
     private $licenseNumber;
+    private $licenseNumberEndDate;
     private $licenseClass;
     private $driverMobile;
     private $name;
@@ -25,6 +26,16 @@ class CreateRequest
     public function setLicenseNumber($license_number)
     {
         $this->licenseNumber = $license_number;
+        return $this;
+    }
+
+    /**
+     * @param $license_number_end_date
+     * @return $this
+     */
+    public function setLicenseNumberEndDate($license_number_end_date)
+    {
+        $this->licenseNumberEndDate = $license_number_end_date;
         return $this;
     }
 
@@ -62,6 +73,14 @@ class CreateRequest
     public function getLicenseNumber()
     {
         return $this->licenseNumber;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getLicenseNumberEndDate()
+    {
+        return $this->licenseNumberEndDate;
     }
 
     /**

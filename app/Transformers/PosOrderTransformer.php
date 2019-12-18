@@ -33,7 +33,9 @@ class PosOrderTransformer extends TransformerAbstract
             'customer' => null,
             'is_refundable' => $order->isRefundable(),
             'refund_status' => $order->getRefundStatus(),
-            'return_orders' => null
+            'return_orders' => null,
+            'partner_wise_order_id' => $order->partner_wise_order_id,
+            'partner_wise_previous_order_id' => $order->previousOrder ? $order->previousOrder->partner_wise_order_id : null
         ];
         if ($data['due'] > 0) {
             $repo = app(PaymentLinkRepositoryInterface::class);
@@ -83,7 +85,9 @@ class PosOrderTransformer extends TransformerAbstract
     public function includeReturnOrders($order)
     {
         if ($order->id <= (int)config('pos.last_returned_order_for_v1')) {
-            return $this->item(null, function () { return []; });
+            return $this->item(null, function () {
+                return [];
+            });
         }
         $collection = $this->collection($order->refundLogs()->get(), new PosOrderReturnedTransformer());
         return $collection->getData() ? $collection : $this->item(null, function () {

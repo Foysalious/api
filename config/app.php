@@ -1,6 +1,9 @@
 <?php
 
 
+use App\Providers\CollectionServiceProvider;
+use App\Providers\CustomValidatorProvider;
+
 return [
 
     /*
@@ -156,8 +159,10 @@ return [
         App\Providers\AuthServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
+        App\Providers\DingoServiceProvider::class,
+        App\Providers\CustomValidatorProvider::class,
+        App\Providers\CollectionServiceProvider::class,
 
-        Dingo\Api\Provider\LaravelServiceProvider::class,
         Tymon\JWTAuth\Providers\JWTAuthServiceProvider::class,
         Sentry\SentryLaravel\SentryLaravelServiceProvider::class,
         Jenssegers\Mongodb\MongodbServiceProvider::class,
@@ -168,10 +173,8 @@ return [
         Maatwebsite\Excel\ExcelServiceProvider::class,
         Barryvdh\DomPDF\ServiceProvider::class,
 
-        App\Providers\CustomValidatorProvider::class,
         Sheba\Dal\Providers\RepositoriesServiceProvider::class,
         Sheba\Notification\NotificationServiceProvider::class,
-        App\Providers\CollectionServiceProvider::class,
         Sheba\Repositories\Providers\RepositoryServiceProvider::class,
         Sheba\Pos\Repositories\PosRepositoryServiceProvider::class,
         Sheba\Dal\Providers\DalEventsListenerProvider::class

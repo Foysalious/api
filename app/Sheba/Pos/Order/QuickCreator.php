@@ -4,6 +4,7 @@ use App\Models\PartnerPosSetting;
 use App\Models\PosOrder;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\ExpenseTracker\AutomaticIncomes;
+use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\Pos\Discount\DiscountTypes;
 use Sheba\Pos\Discount\Handler as DiscountHandler;
@@ -42,6 +43,7 @@ class QuickCreator
 
     /**
      * @return PosOrder
+     * @throws ExpenseTrackingServerError
      * @throws InvalidDiscountType
      */
     public function create()
@@ -91,16 +93,18 @@ class QuickCreator
         return (isset($this->data['vat_percentage']) && $this->data['vat_percentage'] > 0);
     }
 
+
     /**
      * @param PosOrder $order
+     * @throws ExpenseTrackingServerError
      */
     private function storeIncome(PosOrder $order)
     {
         /** @var AutomaticEntryRepository $entry */
         $entry = app(AutomaticEntryRepository::class);
         $order = $order->calculate();
-        $amount = (double)$this->data['amount'];
-        $amount_cleared = (double)$this->data['paid_amount'];
+        $amount = (double)$order->getNetBill();
+        $amount_cleared = (double)$order->getPaid();
         $entry->setPartner($order->partner)
             ->setAmount($amount)
             ->setAmountCleared($amount_cleared)

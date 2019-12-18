@@ -11,6 +11,8 @@ use App\Sheba\SocialProfile;
 use Google_Client;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\ShebaAccountKit\Requests\AccessTokenRequest;
+use Sheba\ShebaAccountKit\ShebaAccountKit;
 
 class GoogleController extends Controller
 {
@@ -49,13 +51,13 @@ class GoogleController extends Controller
                 }
             }
             return api_response($request, null, 403);
-        } catch ( ValidationException $e ) {
+        } catch (ValidationException $e) {
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all()]);
             $sentry->captureException($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch ( \Throwable $e ) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -66,7 +68,7 @@ class GoogleController extends Controller
         try {
             $this->validate($request, ['id_token' => 'required', 'kit_code' => 'required', 'from' => "required|in:" . implode(',', constants('FROM'))]);
             $payload = $this->getGooglePayload($request->id_token);
-            $kit_data = $this->fbKit->authenticateKit($request->kit_code);
+            $kit_data = $this->resolveAccountKit($request->kit_code);
             if ($payload && $kit_data) {
                 $social_profile = new SocialProfile(array_merge($payload, ['mobile' => formatMobile($kit_data['mobile'])]));
                 $profile_info = $social_profile->getProfileInfo('google');
@@ -88,16 +90,34 @@ class GoogleController extends Controller
                 return $info ? api_response($request, $info, 200, ['info' => $info]) : api_response($request, null, 404);
             }
             return api_response($request, null, 403, ['message' => 'Authentication failed. Please try again.']);
-        } catch ( ValidationException $e ) {
+        } catch (ValidationException $e) {
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all()]);
             $sentry->captureException($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch ( \Throwable $e ) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function resolveAccountKit($code)
+    {
+        $version = (int)\request()->header('Version-Code');
+        $portal_name = \request()->header('portal-name');
+        $platform_name = \request()->header('Platform-Name');
+        if (($version > 30211 && $portal_name == 'customer-app') || ($version > 12003 && $portal_name == 'bondhu-app') || ($version > 126 && $portal_name == 'customer-app' && $platform_name == 'ios')) {
+            $access_token_request = new AccessTokenRequest();
+            $access_token_request->setAuthorizationCode($code);
+            $account_kit = app(ShebaAccountKit::class);
+            $kit = [];
+            $mobile = $account_kit->getMobile($access_token_request);
+            if (!$mobile) return null;
+            $kit['mobile'] = $mobile;
+            return $kit;
+        }
+        return $this->fbKit->authenticateKit($code);
     }
 
     private function getGooglePayload($id_token)
@@ -106,7 +126,7 @@ class GoogleController extends Controller
         try {
             $payload = $client->verifyIdToken($id_token);
             return $payload ? $payload : null;
-        } catch ( \Throwable $e ) {
+        } catch (\Throwable $e) {
             return null;
         }
     }

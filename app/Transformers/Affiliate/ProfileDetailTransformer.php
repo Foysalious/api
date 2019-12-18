@@ -13,7 +13,6 @@ class ProfileDetailTransformer extends TransformerAbstract
             'name' => $profile->name,
             'bn_name' => $profile->bn_name,
             'profile_image' => $profile->pro_pic,
-            'remember_token' => $profile->remember_token,
             'nid_no' => $profile->nid_no,
             'dob' => $profile->dob,
             'father_name' => $profile->father_name,

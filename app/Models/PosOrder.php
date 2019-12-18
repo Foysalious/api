@@ -43,7 +43,7 @@ class PosOrder extends Model
         $this->netBill = $this->totalBill - $this->appliedDiscount;
         $this->_calculatePaidAmount();
         $this->paid = $this->paid ?: 0;
-        $this->due = ($this->netBill - $this->paid) > 0 ? ($this->netBill - $this->paid ) : 0;
+        $this->due = ($this->netBill - $this->paid) > 0 ? ($this->netBill - $this->paid) : 0;
         $this->_setPaymentStatus();
         $this->isCalculated = true;
         $this->_formatAllToTaka();
@@ -167,7 +167,7 @@ class PosOrder extends Model
 
     public function scopeByVoucher($query, $voucher_id)
     {
-        if(is_array($voucher_id))
+        if (is_array($voucher_id))
             return $query->whereIn('voucher_id', $voucher_id);
         else
             return $query->where('voucher_id', $voucher_id);
@@ -296,7 +296,7 @@ class PosOrder extends Model
 
         $this->logs->each(function ($log) use (&$is_exchanged, &$is_full_returned, &$is_partial_return) {
             $is_exchanged = ($log->type == Types::EXCHANGE) ? $log : null;
-            $is_full_returned = ($log->type == Types::FULL_RETURN) ? $log: null;
+            $is_full_returned = ($log->type == Types::FULL_RETURN) ? $log : null;
             $is_partial_return = ($log->type == Types::PARTIAL_RETURN) ? $log : null;
         });
 
@@ -329,5 +329,10 @@ class PosOrder extends Model
     {
         if (is_array($customer)) $query->whereIn('customer_id', $customer);
         else $query->where('customer_id', '=', $customer);
+    }
+
+    public function previousOrder()
+    {
+        return $this->belongsTo(PosOrder::class, 'previous_order_id', 'id');
     }
 }

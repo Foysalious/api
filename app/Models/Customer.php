@@ -21,10 +21,11 @@ use Sheba\Transport\TransportAgent;
 use Sheba\Transport\TransportTicketTransaction;
 use Sheba\Voucher\Contracts\CanApplyVoucher;
 use Sheba\Voucher\VoucherCodeGenerator;
+use Sheba\Voucher\VoucherGeneratorTrait;
 
 class Customer extends Authenticatable implements Rechargable, Rewardable, TopUpAgent, MovieAgent, TransportAgent, CanApplyVoucher, PayableUser, HasWalletTransaction
 {
-    use TopUpTrait, MovieTicketTrait, Wallet, ReportUpdater;
+    use TopUpTrait, MovieTicketTrait, Wallet, ReportUpdater, VoucherGeneratorTrait;
 
     protected $fillable = ['name', 'mobile', 'email', 'password', 'fb_id', 'mobile_verified', 'email_verified', 'address', 'gender', 'dob', 'pro_pic', 'wallet', 'created_by', 'created_by_name', 'updated_by', 'updated_by_name', 'remember_token', 'reference_code', 'referrer_id', 'profile_id', 'has_rated_customer_app'];
     protected $hidden = ['password', 'remember_token',];
@@ -76,11 +77,6 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
     public function promotions()
     {
         return $this->hasMany(Promotion::class);
-    }
-
-    public function generateReferral()
-    {
-        return VoucherCodeGenerator::byName($this->profile->name);
     }
 
     public function vouchers()

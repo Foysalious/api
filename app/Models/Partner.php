@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use DB;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Business\Bid\Bidder;
+use Sheba\Dal\BaseModel;
 use Sheba\Dal\Complain\Model as Complain;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use Sheba\FraudDetection\TransactionSources;
@@ -32,7 +33,7 @@ use Sheba\Transport\TransportTicketTransaction;
 use Sheba\Voucher\Contracts\CanApplyVoucher;
 use Sheba\Voucher\VoucherCodeGenerator;
 
-class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent, Rechargable, Bidder, HasWalletTransaction
+class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent, Rechargable, Bidder, HasWalletTransaction
 {
     use Wallet, TopUpTrait, MovieTicketTrait;
 
@@ -294,6 +295,18 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
         if ($admin_resource = $this->admins()->first()) return $admin_resource->profile->mobile;
         return null;
     }
+    public function isNIDVerified()
+    {
+        if ($operation_resource = $this->operationResources()->first()) return $operation_resource->profile->nid_verified;
+        if ($admin_resource = $this->admins()->first()) return $admin_resource->profile->nid_verified;
+        return null;
+    }
+    public function updatedAt()
+    {
+        if ($operation_resource = $this->operationResources()->first()) return $operation_resource->profile->updated_at;
+        if ($admin_resource = $this->admins()->first()) return $admin_resource->profile->updated_at;
+        return null;
+    }
 
     public function getAdmin()
     {
@@ -429,6 +442,11 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
         return $this->hasMany(SubscriptionOrder::class);
     }
 
+    public function getSubscriptionRulesAttribute($rules)
+    {
+        return json_decode($rules);
+    }
+
     public function subscribe($package, $billing_type)
     {
         $package = $package ? (($package) instanceof PartnerSubscriptionPackage ? $package : PartnerSubscriptionPackage::find($package)) : $this->subscription;
@@ -470,7 +488,7 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
 
     public function getCommissionAttribute()
     {
-        return $this->subscriber()->commission();
+        return (double)$this->subscription_rules->commission->value;
     }
 
     public function canCreateResource(Array $types)
@@ -495,7 +513,7 @@ class Partner extends Model implements Rewardable, TopUpAgent, HasWallet, Transp
 
     public function isFirstTimeVerified()
     {
-        return $this->statusChangeLogs()->where('to', constants('PARTNER_STATUSES')['Verified'])->count() == 0;
+        return $this->statusChangeLogs()->where('to', PartnerStatuses::VERIFIED)->count() == 0;
     }
 
     public function statusChangeLogs()

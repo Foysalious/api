@@ -23,6 +23,7 @@ class Cors2MiddleWare
             "http://localhost:8082",
             "http://localhost:8083",
             "http://localhost:8084",
+            "http://localhost:7891",
             "http://localhost:3333",
             "http://localhost:3334",
             "http://localhost:3335",
@@ -56,6 +57,7 @@ class Cors2MiddleWare
             "file://",
             "http://admin.sheba.test",
             "http://partners.sheba.test",
+            "http://loan.sheba.test",
             "http://partners.sheba.new",
             "https://www.sheba.xyz",
             "https://admin.sheba.xyz",
@@ -79,7 +81,12 @@ class Cors2MiddleWare
             "https://pl.sheba.xyz",
             "https://topup.sheba.xyz",
             "https://transport.sheba.xyz",
-            "https://movie.sheba.xyz"
+            "https://movie.sheba.xyz",
+            "http://www.new.dev-sheba.xyz",
+            "https://www.new.dev-sheba.xyz",
+            "https://new.dev-sheba.xyz",
+            "https://banks.dev-sheba.xyz",
+            "https://banks.sheba.xyz"
         ];
         // ALLOW OPTIONS METHOD
         $headers['Access-Control-Allow-Credentials'] = 'true';

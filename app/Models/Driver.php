@@ -51,5 +51,22 @@ class Driver extends Model
         return $query->where('owner_type', '<>', "App\\Models\\Business");
     }
 
+    public function getLicenseAcceptanceDay($today, $license_number_end_date)
+    {
+        $license_expire_date = Carbon::parse($license_number_end_date);
+        return $today->diffInDays($license_expire_date, false) + 1;
+    }
+
+    public function licenseRemainingDays()
+    {
+        $today = Carbon::now();
+        $license_paper_expire_date = Carbon::parse($this->license_number_end_date);
+        return $today->diffInDays($license_paper_expire_date, false) + 1;
+    }
+
+    public function isLicenseDue()
+    {
+        return $this->licenseRemainingDays() <= 0;
+    }
 
 }

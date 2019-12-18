@@ -76,7 +76,11 @@ trait FileManager
         $file = (new TradeLicense($file))->make();
         return [$file, $filename];
     }
-
+    protected function makeExtraLoanFile($file,$name){
+        $filename = $this->uniqueFileName($file, $name);
+        $file=(new ExtraFileForLoan($file))->make();
+        return [$file,$filename];
+    }
     protected function makeVatRegistration($file, $name)
     {
         $filename = $this->uniqueFileName($file, $name);
