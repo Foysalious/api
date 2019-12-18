@@ -24,6 +24,7 @@ class SubscriptionOrderRequestTransformer extends TransformerAbstract
 
         return [
             'id'                    => $request->id,
+            'subscription_order_id' => $subscription_order->id,
             'service_name'          => [
                 'bn' => $category->bn_name ?: null,
                 'en' => $category->name
