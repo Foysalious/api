@@ -128,15 +128,17 @@ class TripRequests
             'event_type' => get_class($this->businessTripRequest),
             'event_id' => $this->businessTripRequest->id
         ]);
+        #For Push Notifications
+        event(new NotificationCreated([
+            'notifiable_id' => $this->member->id,
+            'notifiable_type' => "member",
+            'event_id' => $this->businessTripRequest->id,
+            'event_type' => get_class($this->businessTripRequest),
+            "title" => $this->notificationTitle,
+        ], $this->member->id, get_class($this->member)));
+
         if ($mail && $for === 'TripAccepted') {
             $this->mailForTripCreateAccepted();
-            event(new NotificationCreated([
-                'notifiable_id' => $this->member->id,
-                'notifiable_type' => "member",
-                'event_id' => $this->businessTripRequest->id,
-                'event_type' => get_class($this->businessTripRequest),
-                "title" => $this->notificationTitle,
-            ], $this->member->id, get_class($this->member)));
         }
     }
 
@@ -148,16 +150,17 @@ class TripRequests
                 'event_type' => get_class($this->businessTripRequest),
                 'event_id' => $this->businessTripRequest->id
             ]);
+            #For Push Notifications
+            event(new NotificationCreated([
+                'notifiable_id' => $admin->id,
+                'notifiable_type' => "member",
+                'event_id' => $this->businessTripRequest->id,
+                'event_type' => get_class($this->businessTripRequest),
+                "title" => $this->notificationTitle,
+            ], $admin->id, get_class($admin)));
 
             if ($mail && $for === 'TripCreate') {
                 $this->mailForTripCreate($admin);
-                event(new NotificationCreated([
-                    'notifiable_id' => $admin->id,
-                    'notifiable_type' => "member",
-                    'event_id' => $this->businessTripRequest->id,
-                    'event_type' => get_class($this->businessTripRequest),
-                    "title" => $this->notificationTitle,
-                ], $admin->id, get_class($admin)));
             }
         }
     }
