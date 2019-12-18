@@ -4,6 +4,7 @@ namespace Sheba\Loan;
 
 use App\Models\BankUser;
 use App\Models\PartnerBankLoan;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -24,6 +25,7 @@ use Sheba\Loan\DS\RunningApplication;
 use Sheba\Loan\Exceptions\AlreadyAssignToBank;
 use Sheba\Loan\Exceptions\AlreadyRequestedForLoan;
 use Sheba\Loan\Exceptions\InvalidStatusTransaction;
+use Sheba\Loan\Exceptions\NotAllowedToAccess;
 use Sheba\Loan\Exceptions\NotApplicableForLoan;
 use Sheba\ModificationFields;
 
@@ -358,13 +360,18 @@ class Loan
 
     /**
      * @param $loan_id
+     * @param BankUser|null $user
      * @return array
      * @throws ReflectionException
+     * @throws NotAllowedToAccess
      */
-    public function show($loan_id)
+    public function show($loan_id, $user = null)
     {
         /** @var PartnerBankLoan $request */
-        $request                = $this->repo->find($loan_id);
+        $request = $this->repo->find($loan_id);
+        if (!empty($user)&& (!($user instanceof User)&& ($user instanceof BankUser && $user->bank->id != $request->bank_id))) {
+            throw new NotAllowedToAccess();
+        }
         $loan                   = (new PartnerLoanRequest($request));
         $details                = $loan->details();
         $details['next_status'] = $loan->getNextStatus($loan_id);
@@ -458,16 +465,17 @@ class Loan
         }
     }
 
-    public function downloadFromUrl($url){
-        $file=public_path('temp');
-        $f=HZip::downLoadFile($url,$file);
-        return $f?$file.'/'.basename($url):false;
-    }
-
     private function zipDir()
     {
 
         HZip::zipDir($this->downloadDir, $this->zipDir);
         return $this->zipDir;
+    }
+
+    public function downloadFromUrl($url)
+    {
+        $file = public_path('temp');
+        $f    = HZip::downLoadFile($url, $file);
+        return $f ? $file . '/' . basename($url) : false;
     }
 }
