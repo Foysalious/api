@@ -1,8 +1,7 @@
 <?php namespace App\Models;
 
-use Illuminate\Foundation\Auth\User as Authenticatable;
-
 use Carbon\Carbon;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class User extends Authenticatable
 {
@@ -24,7 +23,8 @@ class User extends Authenticatable
      * @var array
      */
     protected $hidden = [
-        'password', 'remember_token',
+        'password',
+        'remember_token',
     ];
 
     public function department()
@@ -107,6 +107,11 @@ class User extends Authenticatable
     public function notifications()
     {
         return $this->morphMany(Notification::class, 'notifiable');
+    }
+
+    public function getContactPerson()
+    {
+        return $this->name;
     }
 
     public function defaultList()
