@@ -546,6 +546,7 @@ class ShebaController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -563,8 +564,11 @@ class ShebaController extends Controller
         if ($param) {
             if ($type === 'service') {
                 $service = Service::where('slug', $param)->first();
-                $category = Category::find($service->category_id);
-                $master = Category::find($category->parent_id);
+                $category = $service ? Category::find($service->category_id) : null;
+                $master = $category ? Category::find($category->parent_id) : null;
+
+
+                if(!($service && $category && $master)) return $items;
 
                 array_push($items,[
                     'name' => $master->name,
@@ -579,7 +583,10 @@ class ShebaController extends Controller
             }
             if ($type === 'secondary_category') {
                 $category = Category::where('slug', $param)->first();
-                $master = Category::find($category->parent_id);
+                $master = $category ? Category::find($category->parent_id) : null;
+
+                if(!($category && $master)) return $items;
+
                 array_push($items,[
                     'name' => $master->name,
                     'url' => $marketplace_url.'/'.$master->slug,
@@ -590,6 +597,9 @@ class ShebaController extends Controller
             }
             if ($type === 'master_category') {
                 $master = Category::where('slug', $param)->first();
+
+                if(!$master) return $items;
+
                 array_push($items,  [
                     'name' => $master->name,
                     'url' => $marketplace_url.'/'.$master->slug,
