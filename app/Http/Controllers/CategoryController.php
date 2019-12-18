@@ -533,9 +533,11 @@ class CategoryController extends Controller
         foreach ($prices as $key => $price) {
             $option_array = explode(',', $key);
             $options->push([
-                'option'        => collect($option_array)->map(function ($key) { return (int)$key;}),
-                'price'         => $price_calculation->setOption($option_array)->getUnitPrice(),
-                'upsell_price'  => $upsell_calculation->setOption($option_array)->getAllUpsellWithMinMaxQuantity()
+                'option' => collect($option_array)->map(function ($key) {
+                    return (int)$key;
+                }),
+                'price' => $price_calculation->setOption($option_array)->getUnitPrice(),
+                'upsell_price' => $upsell_calculation->setOption($option_array)->getAllUpsellWithMinMaxQuantity()
             ]);
         }
         return $options;
@@ -643,7 +645,7 @@ class CategoryController extends Controller
                 ],
                 [
                     "value" => 2,
-                    "count" => 2
+                    "count" => 5
                 ],
                 [
                     "value" => 3,
@@ -657,7 +659,12 @@ class CategoryController extends Controller
                     "value" => 5,
                     "count" => 500
                 ]];
-            return count($reviews) > 0 ? api_response($request, $reviews, 200, ['reviews' => $reviews, 'group_rating' => $group_rating]) : api_response($request, null, 404);
+            $info = [
+                'avg_rating' => 4.5,
+                'total_review_count' => 500,
+                'total_rating_count' => 680
+            ];
+            return count($reviews) > 0 ? api_response($request, $reviews, 200, ['reviews' => $reviews, 'group_rating' => $group_rating, 'info' => $info]) : api_response($request, null, 404);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
