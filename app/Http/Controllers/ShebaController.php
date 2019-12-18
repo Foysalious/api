@@ -534,7 +534,9 @@ class ShebaController extends Controller
             $param = $request->param;
             $type = $request->type;
 
-            $items = $this->generateBreadcrumbItems($param, $type);
+            $param_item = SluggableType::where('slug', $param)->first();
+
+            $items = $this->generateBreadcrumbItems($param_item, $type);
 
 
             return api_response($request, true, 200, ['breadcrumb' => $this->generateBreadcrumb($items)]);
@@ -563,7 +565,7 @@ class ShebaController extends Controller
         ];
         if ($param) {
             if ($type === 'service') {
-                $service = Service::where('slug', $param)->first();
+                $service = Service::find($param->id);
                 $category = $service ? Category::find($service->category_id) : null;
                 $master = $category ? Category::find($category->parent_id) : null;
 
@@ -582,7 +584,7 @@ class ShebaController extends Controller
                 ]);
             }
             if ($type === 'secondary_category') {
-                $category = Category::where('slug', $param)->first();
+                $category = Category::find($param->id);
                 $master = $category ? Category::find($category->parent_id) : null;
 
                 if(!($category && $master)) return $items;
@@ -596,7 +598,7 @@ class ShebaController extends Controller
                 ]);
             }
             if ($type === 'master_category') {
-                $master = Category::where('slug', $param)->first();
+                $master = Category::find($param->id);
 
                 if(!$master) return $items;
 
