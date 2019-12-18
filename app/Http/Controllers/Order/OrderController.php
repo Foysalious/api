@@ -88,14 +88,20 @@ class OrderController extends Controller
             $payment = $this->getPayment($payment_method, $order);
             if ($payment) $payment = $payment->getFormattedPayment();
             $job = $order->jobs->first();
-            return api_response($request, null, 200, ['job_id' => $job->id,
+            $order_with_response_data = [
+                'job_id' => $job->id,
                 'order_code' => $order->code(),
                 'payment' => $payment,
                 'order' => [
                     'id' => $order->id,
                     'code' => $order->code(),
                     'job' => ['id' => $job->id]
-                ]]);
+                ]
+            ];
+            if ($request->has('partner_id') && $request->partner_id)
+                $order_with_response_data['provider_mobile'] = $order->lastJob()->partnerOrder()->partner->getContactNumber();
+
+            return api_response($request, null, 200, $order_with_response_data);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
