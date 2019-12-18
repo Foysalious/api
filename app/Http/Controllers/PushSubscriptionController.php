@@ -4,6 +4,7 @@ use App\Models\PushSubscription;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Notification\NotificationCreated;
 use Throwable;
 
 class PushSubscriptionController extends Controller
@@ -40,5 +41,17 @@ class PushSubscriptionController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function send()
+    {
+        event(new NotificationCreated([
+            'notifiable_id' => 17,
+            'notifiable_type' => "member",
+            'event_id' => 314,
+            'event_type' => "bid",
+            "title" => "Test notification",
+            'message' => "Test notification",
+        ], 233, "App\Models\Partner"));
     }
 }
