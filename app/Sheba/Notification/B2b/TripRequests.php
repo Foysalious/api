@@ -18,11 +18,12 @@ class TripRequests
     private $driver;
     private $vehicle;
     private $superAdmins;
-    private $superAdmin;
+    private $notificationSender;
 
     public function setMember($member)
     {
         $this->member = $member;
+        $this->notificationSender = $this->member;
         return $this;
     }
 
@@ -135,7 +136,7 @@ class TripRequests
             'event_id' => $this->businessTripRequest->id,
             'event_type' => get_class($this->businessTripRequest),
             "title" => $this->notificationTitle,
-        ], $this->member->id, get_class($this->member)));
+        ], $this->notificationSender->id, get_class($this->notificationSender)));
 
         if ($mail && $for === 'TripAccepted') {
             $this->mailForTripCreateAccepted();
@@ -157,7 +158,7 @@ class TripRequests
                 'event_id' => $this->businessTripRequest->id,
                 'event_type' => get_class($this->businessTripRequest),
                 "title" => $this->notificationTitle,
-            ], $admin->id, get_class($admin)));
+            ], $this->notificationSender->id, get_class($this->notificationSender)));
 
             if ($mail && $for === 'TripCreate') {
                 $this->mailForTripCreate($admin);
