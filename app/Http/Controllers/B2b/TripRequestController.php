@@ -236,18 +236,21 @@ class TripRequestController extends Controller
                 $business_trip_request = $this->storeTripRequest($request);
             }
             DBTransaction::beginTransaction();
+            $super_admins = Business::find((int)$business_trip_request->business_id)->superAdmins;
+            $trip_requests = new TripRequests();
+            $trip_requests->setMember($request->member)
+                ->setBusinessMember($business_member)
+                ->setBusinessTripRequest($business_trip_request)
+                ->setSuperAdmins($super_admins);
+
             if ($request->has('status') && $request->status == "accept") {
                 $business_trip_request->vehicle_id = $request->vehicle_id;
                 $business_trip_request->driver_id = $request->driver_id;
                 $business_trip_request->status = 'accepted';
                 $business_trip_request->update();
-                $super_admins = Business::find((int)$business_trip_request->business_id)->superAdmins;
-                $trip_requests = new TripRequests();
-                $trip_requests->setMember($request->member)
-                    ->setBusinessMember($business_member)
-                    ->setBusinessTripRequest($business_trip_request)
-                    ->setSuperAdmins($super_admins)
-                    ->setNotificationTitle($trip_requests->getRequesterIdentity() . '\'s trip request accepted successfully.')
+
+
+                $trip_requests->setNotificationTitle($trip_requests->getRequesterIdentity() . '\'s trip request accepted successfully.')
                     ->setEmailSubject('Trip Request Accepted')
                     ->setEmailTemplate('emails.trip_request_accepted_notifications')
                     ->setEmailTitle($trip_requests->getRequesterIdentity() . '\'s trip request accepted successfully.')
@@ -262,6 +265,16 @@ class TripRequestController extends Controller
             } else {
                 $business_trip_request->status = 'rejected';
                 $business_trip_request->update();
+
+                $trip_requests->setNotificationTitle($trip_requests->getRequesterIdentity() . '\'s trip request rejected.')
+                    ->setEmailSubject('Trip Request Rejected')
+                    ->setEmailTemplate('emails.trip_request_accepted_notifications')
+                    ->setEmailTitle($trip_requests->getRequesterIdentity() . '\'s trip request rejected.')
+                    ->setVehicle($request->vehicle_id)
+                    ->setDriver($request->driver)
+                    ->notifications(true, 'TripAccepted', false, true);
+
+                DBTransaction::commit();
                 return api_response($request, null, 200, ['message' => 'Trip Request rejected successfully']);
             }
         } catch (ValidationException $e) {
