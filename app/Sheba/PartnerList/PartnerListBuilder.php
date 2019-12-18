@@ -191,7 +191,7 @@ class PartnerListBuilder implements Builder
         foreach ($this->serviceRequestObject as $serviceRequestObject) {
             array_push($service_ids, $serviceRequestObject->getServiceId());
         }
-        return $service_ids;
+        return array_unique($service_ids);
     }
 
 

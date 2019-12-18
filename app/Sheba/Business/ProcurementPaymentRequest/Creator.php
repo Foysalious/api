@@ -4,7 +4,9 @@ use App\Models\Bid;
 use App\Models\Procurement;
 use Illuminate\Database\QueryException;
 use phpDocumentor\Reflection\DocBlock\Description;
+use Sheba\Dal\ProcurementPaymentRequest\Model;
 use Sheba\Dal\ProcurementPaymentRequest\ProcurementPaymentRequestRepositoryInterface;
+use Sheba\Notification\NotificationCreated;
 
 class Creator
 {
@@ -102,6 +104,7 @@ class Creator
         $this->makePaymentRequestData();
         try {
             $payment_request = $this->procurementPaymentRequestRepository->create($this->data);
+             $this->sendPaymentRequestCreateNotification($payment_request);
         } catch (QueryException $e) {
             throw  $e;
         }
@@ -130,5 +133,26 @@ class Creator
             'note' => $this->paymentRequest->note,
             'created_at' => $this->paymentRequest->created_at->format('d/m/y'),
         ];
+    }
+
+    private function sendPaymentRequestCreateNotification(Model $payment_request)
+    {
+        $message = $this->bid->bidder->name . ' created payment request #' . $this->bid->procurement->id;
+        foreach ($payment_request->procurement->owner->superAdmins as $member) {
+            notify()->member($member)->send([
+                'title' => $message,
+                'type' => 'warning',
+                'event_type' => get_class($this->bid),
+                'event_id' => $this->bid->id
+            ]);
+            event(new NotificationCreated([
+                'notifiable_id' => $member->id,
+                'notifiable_type' => "member",
+                'event_id' => $this->bid->id,
+                'event_type' => "bid",
+                "title" => $message,
+                'message' => $message,
+            ], $this->bid->bidder->id, get_class($this->bid->bidder)));
+        }
     }
 }

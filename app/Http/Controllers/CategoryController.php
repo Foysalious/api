@@ -11,6 +11,7 @@ use App\Models\Partner;
 use App\Models\ReviewQuestionAnswer;
 use App\Models\Service;
 use App\Models\ServiceGroupService;
+use App\Models\ServiceSubscription;
 use App\Repositories\CategoryRepository;
 use App\Repositories\ServiceRepository;
 use Dingo\Api\Routing\Helpers;
@@ -30,6 +31,7 @@ use Sheba\JobDiscount\JobDiscountCheckingParams;
 use Sheba\JobDiscount\JobDiscountHandler;
 use Sheba\Location\Coords;
 use Sheba\LocationService\PriceCalculation;
+use Sheba\LocationService\UpsellCalculation;
 use Sheba\ModificationFields;
 use Sheba\OrderPlace\DeliveryChargeCalculator;
 use Throwable;
@@ -81,7 +83,10 @@ class CategoryController extends Controller
             $best_deal_categories_id = explode(',', config('sheba.best_deal_ids'));
             $best_deal_category = CategoryGroupCategory::whereIn('category_group_id', $best_deal_categories_id)->pluck('category_id')->toArray();
 
-            $categories = Category::where('parent_id', null)->orderBy('order');
+            $categories = Category::where('parent_id', null);
+            if ($is_b2b) $categories = $categories->orderBy('order_for_b2b');
+            else $categories = $categories->orderBy('order');
+
             if ($location) {
                 $categories = $categories->whereHas('locations', function ($q) use ($location) {
                     $q->where('locations.id', $location->id);
@@ -331,9 +336,12 @@ class CategoryController extends Controller
      * @param PriceCalculation $price_calculation
      * @param DeliveryCharge $delivery_charge
      * @param JobDiscountHandler $job_discount_handler
+     * @param UpsellCalculation $upsell_calculation
      * @return JsonResponse
      */
-    public function getServices($category, Request $request, PriceCalculation $price_calculation, DeliveryCharge $delivery_charge, JobDiscountHandler $job_discount_handler)
+    public function getServices($category, Request $request,
+                                PriceCalculation $price_calculation, DeliveryCharge $delivery_charge,
+                                JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation)
     {
         ini_set('memory_limit', '2048M');
         try {
@@ -423,25 +431,33 @@ class CategoryController extends Controller
                 }
 
                 $subscriptions = collect();
-                $services->each(function (&$service) use ($price_calculation, $location) {
+                $services->each(function (&$service) use ($price_calculation, $location, $upsell_calculation) {
                     /** @var LocationService $location_service */
                     $location_service = LocationService::where('location_id', $location)->where('service_id', $service->id)->first();
+
                     /** @var ServiceDiscount $discount */
                     $discount = $location_service->discounts()->running()->first();
+
                     $prices = json_decode($location_service->prices);
                     $price_calculation->setLocationService($location_service);
+                    $upsell_calculation->setLocationService($location_service);
+
                     if ($service->variable_type == 'Options') {
-                        $service['option_prices'] = $this->formatOptionWithPrice($price_calculation, $prices);
+                        $service['option_prices'] = $this->formatOptionWithPrice($price_calculation, $prices, $upsell_calculation, $location_service);
                     } else {
                         $service['fixed_price'] = $price_calculation->getUnitPrice();
+                        $service['fixed_upsell_price'] = $upsell_calculation->getAllUpsellWithMinMaxQuantity();
                     }
+
                     $service['discount'] = $discount ? [
                         'value' => (double)$discount->amount,
                         'is_percentage' => $discount->isPercentage(),
                         'cap' => (double)$discount->cap
                     ] : null;
                 });
+
                 foreach ($services as $service) {
+                    /** @var ServiceSubscription $subscription */
                     if ($subscription = $service->activeSubscription) {
                         list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);
                         $subscription->min_price = $service->min_price;
@@ -506,16 +522,21 @@ class CategoryController extends Controller
     /**
      * @param PriceCalculation $price_calculation
      * @param $prices
+     * @param UpsellCalculation $upsell_calculation
+     * @param LocationService $location_service
      * @return Collection
      */
-    private function formatOptionWithPrice(PriceCalculation $price_calculation, $prices)
+    private function formatOptionWithPrice(PriceCalculation $price_calculation, $prices,
+                                           UpsellCalculation $upsell_calculation, LocationService $location_service)
     {
         $options = collect();
         foreach ($prices as $key => $price) {
             $option_array = explode(',', $key);
-            $options->push(array('option' => collect($option_array)->map(function ($key) {
-                return (int)$key;
-            }), 'price' => $price_calculation->setOption($option_array)->getUnitPrice()));
+            $options->push([
+                'option'        => collect($option_array)->map(function ($key) { return (int)$key;}),
+                'price'         => $price_calculation->setOption($option_array)->getUnitPrice(),
+                'upsell_price'  => $upsell_calculation->setOption($option_array)->getAllUpsellWithMinMaxQuantity()
+            ]);
         }
         return $options;
     }
@@ -553,7 +574,24 @@ class CategoryController extends Controller
                     $question->put('input_type', $this->resolveInputTypeField($question->get('answers')));
                     $question->put('screen', count($questions) > 3 ? 'slide' : 'normal');
                     $explode_answers = explode(',', $question->get('answers'));
+                    $contents = [];
+                    foreach ($explode_answers as $answer) {
+                        array_push($contents, [
+                            'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/74/600.jpg',
+                            'description' => [
+                                "We have more than 300 services",
+                                "Verified experts all arround the country"
+                            ],
+                            'images' => [
+                                'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/74/600.jpg',
+                                'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/74/600.jpg',
+                                'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/74/600.jpg',
+                                'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/74/600.jpg'
+                            ]
+                        ]);
+                    }
                     $question->put('answers', $explode_answers);
+                    $question->put('contents', $contents);
                 }
                 if (count($questions) == 1) {
                     $questions[0]->put('input_type', 'selectbox');

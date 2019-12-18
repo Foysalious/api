@@ -37,9 +37,9 @@ class SubscriptionOrderAdapter
     /** @var SubscriptionServicePricingAndBreakdown */
     private $servicePricingBreakdown;
 
-    public function __construct(SubscriptionOrderInterface $subscriptionOrder)
+    public function __construct(SubscriptionOrderInterface $subscription_order)
     {
-        $this->subscriptionOrder = $subscriptionOrder;
+        $this->subscriptionOrder = $subscription_order;
     }
 
     /**

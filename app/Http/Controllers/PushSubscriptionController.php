@@ -16,7 +16,7 @@ class PushSubscriptionController extends Controller
     {
         try {
             $this->validate($request, [
-                'subscriber_type' => 'required|string|in:customer', 'device' => 'required|string', 'subscriber_id' => 'numeric'
+                'subscriber_type' => 'required|string|in:customer,partner,member', 'device' => 'required|string', 'subscriber_id' => 'numeric'
             ]);
             $model_name = "App\\Models\\" . ucwords($request->subscriber_type);
             $push_sub = null;

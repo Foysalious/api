@@ -21,7 +21,6 @@ class CustomerSubscriptionOrderPlaceFactory extends SubscriptionOrderPlaceAbstra
     /**
      * @param Request $request
      * @return SubscriptionOrderPlace|SubscriptionOrderPlaceWithOutPartner|SubscriptionOrderPlaceWithPartner
-     * @throws InvalidDiscountType
      */
     protected function getCreator(Request $request)
     {

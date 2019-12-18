@@ -1,8 +1,10 @@
 <?php namespace Sheba\Notification\B2b;
 
 use App\Models\Driver;
+use App\Models\Member;
 use App\Models\Vehicle;
 use Illuminate\Support\Facades\Mail;
+use Sheba\Notification\NotificationCreated;
 
 class TripRequests
 {
@@ -15,6 +17,8 @@ class TripRequests
     private $template;
     private $driver;
     private $vehicle;
+    private $superAdmins;
+    private $superAdmin;
 
     public function setMember($member)
     {
@@ -70,8 +74,15 @@ class TripRequests
         return $this;
     }
 
+    public function setSuperAdmins($super_admins)
+    {
+        $this->superAdmins = $super_admins;
+        return $this;
+    }
+
     public function getRequesterIdentity()
     {
+        $this->member = Member::find((int)$this->businessTripRequest->member_id);
         $identity = $this->member->profile->name;
         if (!$identity) $identity = $this->member->profile->mobile;
         if (!$identity) $identity = $this->member->profile->email;
@@ -95,26 +106,66 @@ class TripRequests
         return $this->getDriverProfile()->name ? $this->getDriverProfile()->name : '';
     }
 
-    public function notify($mail = false, $for = null)
+    public function notifications($mail = false, $for = null, $comment = false, $co_worker = false)
+    {
+        if ($comment) {
+            if ($this->member->id == $this->businessTripRequest->member_id) {
+                $this->notifySuperAdmins($mail, $for);
+            } elseif ($this->member->id != $this->businessTripRequest->member_id) {
+                $this->notify($mail, $for);
+            }
+        } elseif ($co_worker) {
+            $this->notify($mail, $for);
+        } else {
+            $this->notifySuperAdmins($mail, $for);
+        }
+    }
+
+    public function notify($mail, $for)
     {
         notify($this->member)->send([
             'title' => $this->notificationTitle,
             'event_type' => get_class($this->businessTripRequest),
             'event_id' => $this->businessTripRequest->id
         ]);
-
-        if ($mail && $for === 'TripCreate') {
-            $this->mailForTripCreate();
-        }
         if ($mail && $for === 'TripAccepted') {
             $this->mailForTripCreateAccepted();
+            event(new NotificationCreated([
+                'notifiable_id' => $this->member->id,
+                'notifiable_type' => "member",
+                'event_id' => $this->businessTripRequest->id,
+                'event_type' => get_class($this->businessTripRequest),
+                "title" => $this->notificationTitle,
+            ], $this->member->id, get_class($this->member)));
         }
     }
 
-    private function mailForTripCreate()
+    public function notifySuperAdmins($mail, $for)
+    {
+        foreach ($this->superAdmins as $admin) {
+            notify($admin)->send([
+                'title' => $this->notificationTitle,
+                'event_type' => get_class($this->businessTripRequest),
+                'event_id' => $this->businessTripRequest->id
+            ]);
+
+            if ($mail && $for === 'TripCreate') {
+                $this->mailForTripCreate($admin);
+                event(new NotificationCreated([
+                    'notifiable_id' => $admin->id,
+                    'notifiable_type' => "member",
+                    'event_id' => $this->businessTripRequest->id,
+                    'event_type' => get_class($this->businessTripRequest),
+                    "title" => $this->notificationTitle,
+                ], $admin->id, get_class($admin)));
+            }
+        }
+    }
+
+    private function mailForTripCreate($admin)
     {
         $link = config('sheba.b2b_url') . "/dashboard/fleet-management/requests/" . $this->businessTripRequest->id . "/details";
-        #$email = $this->businessMember->member->profile->email;
+        #$email = $admin->profile->email;
         $email = 'saiful.sheba@gmail.com';
         $trip_requester = $this->getRequesterIdentity();
         $trip_pickup_address = $this->businessTripRequest->pickup_address;
@@ -136,7 +187,7 @@ class TripRequests
     private function mailForTripCreateAccepted()
     {
         $link = config('sheba.b2b_url') . "/dashboard/fleet-management/requests/" . $this->businessTripRequest->id . "/details";
-        #$email = $this->member->profile->email;#For Trip Request Accepted
+        #$email = $this->>member->profile->email;#For Trip Request Accepted
         $email = 'saiful.sheba@gmail.com';
         #$email = 'fahiman2.sheba@gmail.com';
 

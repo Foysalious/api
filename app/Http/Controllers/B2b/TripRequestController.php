@@ -2,6 +2,7 @@
 
 
 use App\Http\Controllers\Controller;
+use App\Models\Business;
 use App\Models\BusinessTrip;
 use App\Models\BusinessTripRequest;
 use App\Repositories\CommentRepository;
@@ -240,17 +241,19 @@ class TripRequestController extends Controller
                 $business_trip_request->driver_id = $request->driver_id;
                 $business_trip_request->status = 'accepted';
                 $business_trip_request->update();
-
+                $super_admins = Business::find((int)$business_trip_request->business_id)->superAdmins;
                 $trip_requests = new TripRequests();
                 $trip_requests->setMember($request->member)
                     ->setBusinessMember($business_member)
                     ->setBusinessTripRequest($business_trip_request)
+                    ->setSuperAdmins($super_admins)
                     ->setNotificationTitle($trip_requests->getRequesterIdentity() . '\'s trip request accepted successfully.')
                     ->setEmailSubject('Trip Request Accepted')
                     ->setEmailTemplate('emails.trip_request_accepted_notifications')
                     ->setEmailTitle($trip_requests->getRequesterIdentity() . '\'s trip request accepted successfully.')
-                    ->setVehicle($request->vehicle_id)->setDriver($request->driver)
-                    ->notify(true, 'TripAccepted');
+                    ->setVehicle($request->vehicle_id)
+                    ->setDriver($request->driver)
+                    ->notifications(true, 'TripAccepted', false, true);
 
                 $business_trip = $this->storeTrip($business_trip_request);
                 $businessTripSms->setTrip($business_trip)->sendTripRequestAccept();
@@ -281,16 +284,17 @@ class TripRequestController extends Controller
             $business_trip_request = null;
             DB::transaction(function () use ($request, $business_member, $vehicleScheduler, $businessTripSms, &$business_trip_request) {
                 $business_trip_request = $this->storeTripRequest($request);
-
+                $super_admins = Business::find((int)$business_trip_request->business_id)->superAdmins;
                 $trip_requests = new TripRequests();
                 $trip_requests->setMember($request->member)
                     ->setBusinessMember($business_member)
                     ->setBusinessTripRequest($business_trip_request)
+                    ->setSuperAdmins($super_admins)
                     ->setNotificationTitle($trip_requests->getRequesterIdentity() . ' has created a new trip request.')
                     ->setEmailSubject('New Trip Request')
                     ->setEmailTemplate('emails.trip_request_create_notifications')
                     ->setEmailTitle($trip_requests->getRequesterIdentity() . ' has created a new trip request.')
-                    ->notify(true, 'TripCreate');
+                    ->notifications(true, 'TripCreate', false, false);
 
                 $will_auto_assign = (int)$business_member->is_super || $business_member->actions()->where('tag', config('business.actions.trip_request.auto_assign'))->first();
                 if ($will_auto_assign) {
@@ -327,12 +331,14 @@ class TripRequestController extends Controller
             DBTransaction::beginTransaction();
             $business_member = $request->business_member;
             $business_trip_request = BusinessTripRequest::findOrFail((int)$trip_request);
+            $super_admins = Business::find((int)$business_trip_request->business_id)->superAdmins;
             $trip_requests = new TripRequests();
             $trip_requests->setMember($request->member)
                 ->setBusinessMember($business_member)
+                ->setSuperAdmins($super_admins)
                 ->setBusinessTripRequest($business_trip_request)
                 ->setNotificationTitle($trip_requests->getRequesterIdentity() . ' commented on trip request.')
-                ->notify();
+                ->notifications(false, null, true, false);
 
             $comment = (new CommentRepository('BusinessTripRequest', $trip_request, $request->member))->store($request->comment);
             DBTransaction::commit();

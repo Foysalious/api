@@ -192,6 +192,7 @@ class BusinessRoute
                     });
                 });
                 $api->group(['prefix' => 'announcements'], function ($api) {
+                    $api->get('/', 'B2b\AnnouncementController@index');
                     $api->post('/', 'B2b\AnnouncementController@store');
                     $api->group(['prefix' => '{announcement}'], function ($api) {
                         $api->put('/', 'B2b\AnnouncementController@update');

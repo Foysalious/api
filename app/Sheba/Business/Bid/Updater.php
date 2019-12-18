@@ -5,6 +5,7 @@ use App\Models\Bid;
 use App\Sheba\Repositories\Business\BidRepository;
 use Illuminate\Database\QueryException;
 use Sheba\Business\BidStatusChangeLog\Creator;
+use Sheba\Notification\NotificationCreated;
 use Sheba\Repositories\Interfaces\BidItemFieldRepositoryInterface;
 use DB;
 use App\Sheba\Business\Procurement\Updater as ProcurementUpdater;
@@ -118,10 +119,31 @@ class Updater
                 }
                 $this->updateBidPrice();
                 $this->statusLogCreator->setBid($this->bid)->setPreviousStatus($previous_status)->setStatus($this->status)->create();
+                if ($this->status != 'sent') $this->sendVendorParticipatedNotification();
+                elseif ($this->status != 'rejected') $this->sendBidRejectedNotification();
+                elseif ($this->status != 'accepted') $this->sendBidAcceptedNotification();
             });
         } catch (QueryException $e) {
             throw  $e;
         }
+    }
+
+    private function sendVendorParticipatedNotification()
+    {
+        $message = $this->bid->bidder->name . ' participated on your procurement #' . $this->bid->procurement->id;
+        $this->notify($message);
+    }
+
+    private function sendBidRejectedNotification()
+    {
+        $message = $this->bid->bidder->name . ' rejected your hiring request #' . $this->bid->id;
+        $this->notify($message);
+    }
+
+    private function sendBidAcceptedNotification()
+    {
+        $message = $this->bid->bidder->name . ' accepted your hiring request #' . $this->bid->id;
+        $this->notify($message);
     }
 
     public function hire()
@@ -155,6 +177,7 @@ class Updater
                 }
                 $this->updateBidPrice();
                 $this->statusLogCreator->setBid($this->bid)->setPreviousStatus($previous_status)->setStatus($this->bid->status)->create();
+                $this->sendHiringRequestNotification();
             });
         } catch (QueryException $e) {
             throw  $e;
@@ -183,6 +206,48 @@ class Updater
             $this->bidRepository->update($this->bid, ['price' => (double)$bid_price_quotation_item->fields->sum('result')]);
         } else {
             $this->bidRepository->update($this->bid, ['price' => (double)$this->price]);
+        }
+    }
+
+    private function sendHiringRequestNotification()
+    {
+        $message = $this->bid->procurement->owner->name . ' sent you a hiring request for BID #' . $this->bid->id;
+        $link = config('sheba.partners_url') . '/' . $this->bid->bidder->sub_domain . '/procurements/' . $this->bid->procurement->id . '/summary';
+        notify()->partner($this->bid->bidder)->send([
+            'title' => $message,
+            'type' => 'warning',
+            'event_type' => get_class($this->bid),
+            'event_id' => $this->bid->id,
+            'link' => $link
+        ]);
+        event(new NotificationCreated([
+            'notifiable_id' => $this->bid->bidder->id,
+            'notifiable_type' => "partner",
+            'event_id' => $this->bid->id,
+            'event_type' => "bid",
+            "title" => $message,
+            "message" => $message,
+            'link' => $link
+        ], $this->bid->procurement->owner->id, get_class($this->bid->procurement->owner)));
+    }
+
+    private function notify($message)
+    {
+        foreach ($this->bid->procurement->owner->superAdmins as $member) {
+            notify()->member($member)->send([
+                'title' => $message,
+                'type' => 'warning',
+                'event_type' => get_class($this->bid),
+                'event_id' => $this->bid->id
+            ]);
+            event(new NotificationCreated([
+                'notifiable_id' => $member->id,
+                'notifiable_type' => "member",
+                'event_id' => $this->bid->id,
+                'event_type' => "bid",
+                "title" => $message,
+                'message' => $message,
+            ], $this->bid->bidder->id, get_class($this->bid->bidder)));
         }
     }
 }
