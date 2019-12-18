@@ -233,12 +233,14 @@ class Updater
 
     private function notify($message)
     {
+        $link = config('sheba.business_url') . '/dashboard/procurement/' . $this->bid->procurement_id . '/quotation?id=' . $this->bid->bidder_id;
         foreach ($this->bid->procurement->owner->superAdmins as $member) {
             notify()->member($member)->send([
                 'title' => $message,
                 'type' => 'warning',
                 'event_type' => get_class($this->bid),
-                'event_id' => $this->bid->id
+                'event_id' => $this->bid->id,
+                'link' => $link
             ]);
             event(new NotificationCreated([
                 'notifiable_id' => $member->id,
@@ -247,6 +249,7 @@ class Updater
                 'event_type' => "bid",
                 "title" => $message,
                 'message' => $message,
+                'link' => $link
             ], $this->bid->bidder->id, get_class($this->bid->bidder)));
         }
     }
