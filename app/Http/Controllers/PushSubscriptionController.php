@@ -52,6 +52,7 @@ class PushSubscriptionController extends Controller
             'event_type' => "bid",
             "title" => "Test notification",
             'message' => "Test notification",
+            'link' => config('sheba.business_url') . "/dashboard/procurement/316/quotation?id=155"
         ], 233, "App\Models\Partner"));
     }
 }
