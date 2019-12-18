@@ -4,13 +4,14 @@ use App\Models\Procurement;
 use Illuminate\Database\QueryException;
 use Sheba\Business\ProcurementStatusChangeLog\Creator;
 use Sheba\FraudDetection\TransactionSources;
+use Sheba\Notification\NotificationCreated;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class Updater
 {
-
     private $status;
+    /** @var Procurement */
     private $procurement;
     private $statusLogCreator;
     private $procurementRepository;
@@ -53,5 +54,29 @@ class Updater
             throw  $e;
         }
         return $procurement;
+    }
+
+    private function notify($message)
+    {
+        $bid = $this->procurement->getActiveBid();
+        $link = config('sheba.business_url') . '/dashboard/procurement/orders/' . $this->procurement->id . '?bid=' . $bid->id;
+        foreach ($this->procurement->owner->superAdmins as $member) {
+            notify()->member($member)->send([
+                'title' => $message,
+                'type' => 'warning',
+                'event_type' => get_class($bid),
+                'event_id' => $bid->id,
+                'link' => $link
+            ]);
+            event(new NotificationCreated([
+                'notifiable_id' => $member->id,
+                'notifiable_type' => "member",
+                'event_id' => $bid->id,
+                'event_type' => "bid",
+                "title" => $message,
+                'message' => $message,
+                'link' => $link
+            ], $bid->bidder_id, get_class($bid->bidder)));
+        }
     }
 }

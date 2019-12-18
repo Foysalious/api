@@ -104,7 +104,7 @@ class Creator
         $this->makePaymentRequestData();
         try {
             $payment_request = $this->procurementPaymentRequestRepository->create($this->data);
-             $this->sendPaymentRequestCreateNotification($payment_request);
+            $this->sendPaymentRequestCreateNotification($payment_request);
         } catch (QueryException $e) {
             throw  $e;
         }
@@ -138,20 +138,23 @@ class Creator
     private function sendPaymentRequestCreateNotification(Model $payment_request)
     {
         $message = $this->bid->bidder->name . ' created payment request #' . $this->bid->procurement->id;
+        $link = config('sheba.business_url') . '/dashboard/procurement/orders/' . $this->bid->procurement_id . '/bill?bid=' . $this->bid->id;
         foreach ($payment_request->procurement->owner->superAdmins as $member) {
             notify()->member($member)->send([
                 'title' => $message,
                 'type' => 'warning',
                 'event_type' => get_class($this->bid),
-                'event_id' => $this->bid->id
+                'event_id' => $this->bid->id,
+                'link' => $link
             ]);
             event(new NotificationCreated([
                 'notifiable_id' => $member->id,
                 'notifiable_type' => "member",
                 'event_id' => $this->bid->id,
                 'event_type' => "bid",
-                "title" => $message,
+                'title' => $message,
                 'message' => $message,
+                'link' => $link
             ], $this->bid->bidder->id, get_class($this->bid->bidder)));
         }
     }
