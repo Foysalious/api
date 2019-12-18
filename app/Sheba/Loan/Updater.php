@@ -48,6 +48,9 @@ class Updater
     private function evaluateDifference($old, $new)
     {
         foreach ($new as $key => $value) {
+            if (in_array($key, self::skipChanges())) {
+                continue;
+            }
             if (array_key_exists($key, $old)) {
                 if ($new[$key] != $old[$key])
                     array_push($this->difference, [
@@ -65,6 +68,11 @@ class Updater
                 ]);
             }
         }
+    }
+    private static function skipChanges(){
+        return [
+          'is_same_address','is_nid_verified','online_order'
+        ];
     }
 
     public function update(PartnerLoanRequest $loan, Request $request)

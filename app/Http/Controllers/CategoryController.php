@@ -1,7 +1,6 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\Category;
-use App\Models\CategoryGroup;
 use App\Models\CategoryGroupCategory;
 use App\Models\CategoryPartner;
 use App\Models\HyperLocal;
@@ -10,7 +9,6 @@ use App\Models\LocationService;
 use App\Models\Partner;
 use App\Models\ReviewQuestionAnswer;
 use App\Models\Service;
-use App\Models\ServiceGroupService;
 use App\Models\ServiceSubscription;
 use App\Repositories\CategoryRepository;
 use App\Repositories\ServiceRepository;
@@ -24,16 +22,16 @@ use Illuminate\Validation\ValidationException;
 use Sheba\CategoryServiceGroup;
 use Sheba\Checkout\DeliveryCharge;
 use Sheba\Dal\Discount\Discount;
-use Sheba\Dal\Discount\DiscountRules;
 use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Dal\ServiceDiscount\Model as ServiceDiscount;
+use Sheba\Dal\UniversalSlug\Model as UniversalSlugModel;
+use Sheba\Dal\UniversalSlug\SluggableType;
 use Sheba\JobDiscount\JobDiscountCheckingParams;
 use Sheba\JobDiscount\JobDiscountHandler;
 use Sheba\Location\Coords;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\LocationService\UpsellCalculation;
 use Sheba\ModificationFields;
-use Sheba\OrderPlace\DeliveryChargeCalculator;
 use Throwable;
 
 class CategoryController extends Controller
@@ -160,7 +158,9 @@ class CategoryController extends Controller
     public function getAllCategories(Request $request)
     {
         try {
-            $this->validate($request, ['lat' => 'required|numeric', 'lng' => 'required|numeric', 'with' => 'sometimes|string|in:children']);
+            $this->validate($request, [
+                'lat' => 'required|numeric', 'lng' => 'required|numeric', 'with' => 'sometimes|string|in:children'
+            ]);
             $with = $request->with;
             $hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->first();
             if (!$hyper_location) return api_response($request, null, 404);
@@ -202,15 +202,21 @@ class CategoryController extends Controller
 
             $categories = $categories->get();
 
+            $secondary_categories_slug = UniversalSlugModel::where('sluggable_type', SluggableType::SECONDARY_CATEGORY)->pluck('slug', 'sluggable_id')->toArray();
             foreach ($categories as &$category) {
+                /** @var Category $category */
+                $category->slug = $category->getSlug();
                 array_forget($category, 'parent_id');
                 foreach ($category->children as &$child) {
+                    /** @var Category $child */
+                    $child->slug = array_key_exists($child->id, $secondary_categories_slug) ? $secondary_categories_slug[$child->id] : null;
                     array_forget($child, 'parent_id');
                 }
             }
 
             foreach ($categories as &$category) {
-                if (is_null($category->children)) app('sentry')->captureException(new Exception('Category null on ' . $category->id));
+                if (is_null($category->children))
+                    app('sentry')->captureException(new Exception('Category null on ' . $category->id));
             }
             return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $categories]) : api_response($request, null, 404);
         } catch (ValidationException $e) {
@@ -367,6 +373,7 @@ class CategoryController extends Controller
             } else {
                 $category = $cat->published()->first();
             }
+            $category_slug = $category->getSlug();
 
             if ($category != null) {
                 list($offset, $limit) = calculatePagination($request);
@@ -503,6 +510,7 @@ class CategoryController extends Controller
                         'cap' => (double)$delivery_discount->cap,
                         'min_order_amount' => (double)$delivery_discount->rules->getMinOrderAmount()
                     ] : null;
+                    $category['slug'] = $category_slug;
 
                     if ($subscriptions->count()) {
                         $category['subscription_faq'] = $subscription_faq;
