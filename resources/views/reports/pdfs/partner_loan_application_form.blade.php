@@ -8,8 +8,10 @@
 
     <style >
 
-        .background {
-            background-color: #ffffff;
+        @font-face {
+            font-family: "Shonar Bangla";
+            src: {{storage_path("Shonar Bangla.ttf")}} format("truetype"); /* IE9*/
+            font-weight: bold;
         }
 
         .loan-summery p {
@@ -18,7 +20,7 @@
         }
 
         .loan-summery span {
-            font-family: OpenSans;
+            font-family: OpenSans,sans-serif;
             font-size: 14px;
             font-weight: 600;
             color: #121212;
@@ -40,6 +42,7 @@
         .form-control {
             background-color: rgba(243, 247, 250, 0.7) !important;
             line-height: 1.5;
+            font-family: 'Shonar Bangla',DejaVu Sans,  'Roboto', sans-serif!important;
             height: 20px;
          }
 
@@ -206,7 +209,7 @@
                         <table>
                             <tr>
                                 <th style="width: 35%;padding-top: 5px;;">Total Fixed Asset</th>
-                                <th style="width: 60%"><div class="form-control" >{{$final_information_for_loan['business']['fixed_asset']}}</div></th>
+                                <th style="width: 60%"><div class="form-control" >{{$final_information_for_loan['personal']['expenses']['total_asset_amount']}}</div></th>
                             </tr>
                         </table>
                         <table>
@@ -259,7 +262,7 @@
                         <table>
                             <tr>
                                 <th style="width: 35%;padding-top: 5px;;">Issue Date</th>
-                                <th style="width: 60%"><div class="form-control" > {{$final_information_for_loan['business']['tin_no']}}</div></th>
+                                <th style="width: 60%"><div class="form-control" ></div></th>
                             </tr>
                         </table>
                         <table>
@@ -275,7 +278,7 @@
                             </tr>
                         </table>
                     </div>
-                    <div class="inner-div" style="margin-top: 10px">
+                    <div class="inner-div" style="margin-top: 5px">
                         <p>Bank Details</p>
                         <table>
                             <tr>
@@ -308,12 +311,12 @@
                             </tr>
                         </table>
                     </div>
-                    <div class="inner-div" style="margin-top: 10px">
+                    <div class="inner-div" style="margin-top: 5px">
                         <p>Proposed Secuirity Details</p>
                         <table>
                             <tr>
                                 <th style="width: 35%;padding-top: 5px;;">Secuirity</th>
-                                <th style="width: 60%"><div class="form-control" >static data</div></th>
+                                <th style="width: 60%"><div class="form-control" >{{ $final_information_for_loan['business']['security_check']}}</div></th>
                             </tr>
                         </table>
                     </div>

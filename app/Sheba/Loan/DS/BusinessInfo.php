@@ -164,6 +164,7 @@ class BusinessInfo implements Arrayable
             'ownership_types',
             'annual_cost',
             'fixed_asset',
+            'security_check'
         ];
     }
 
