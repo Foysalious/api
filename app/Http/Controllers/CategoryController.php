@@ -624,11 +624,12 @@ class CategoryController extends Controller
             list($offset, $limit) = calculatePagination($request);
             $category = Category::find($category);
             if (!$category) return api_response($request, null, 404);
-            $reviews = ReviewQuestionAnswer::select('category_id', 'customer_id', 'partner_id', 'reviews.rating', 'review_title')
-                ->selectRaw("partners.name as partner_name,profiles.name as customer_name,rate_answer_text as review,review_id as id,pro_pic as customer_picture")
+            $reviews = ReviewQuestionAnswer::select('reviews.category_id', 'customer_id', 'partner_id', 'reviews.rating', 'review_title')
+                ->selectRaw("partners.name as partner_name,profiles.name as customer_name,rate_answer_text as review,review_id as id,pro_pic as customer_picture,jobs.created_at as order_created_at")
                 ->join('reviews', 'reviews.id', '=', 'review_question_answer.review_id')
                 ->join('partners', 'partners.id', '=', 'reviews.partner_id')
                 ->join('customers', 'customers.id', '=', 'reviews.customer_id')
+                ->join('jobs', 'jobs.id', '=', 'reviews.job_id')
                 ->join('profiles', 'profiles.id', '=', 'customers.profile_id')
                 ->where('review_type', 'like', '%' . '\\Review')
                 ->where('review_question_answer.rate_answer_text', '<>', '')
