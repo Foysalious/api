@@ -65,7 +65,7 @@ class LoanController extends Controller
     public function show(Request $request, $loan_id, Loan $loan)
     {
         try {
-            $data = $loan->show($loan_id, $request->user);
+            $data = $loan->show($loan_id);
             return api_response($request, $data, 200, ['data' => $data]);
         }catch (NotAllowedToAccess $e){
             return api_response($request, null, 400,['message'=>$e->getMessage()]);
