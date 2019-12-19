@@ -1,5 +1,7 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\Member;
+use App\Models\Partner;
 use App\Models\PushSubscription;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -57,13 +59,12 @@ class PushSubscriptionController extends Controller
 
     public function sendV2()
     {
-        event(new NotificationCreated([
-            'notifiable_id' => 17,
-            'notifiable_type' => "member",
+        $partner = Partner::find(277);
+        notify($partner)->send([
             'event_id' => 321,
             'event_type' => "procurement",
             "title" => "Test notification",
             'message' => "Test notification",
-        ], 277, "App\Models\Partner"));
+        ]);
     }
 }
