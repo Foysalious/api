@@ -136,12 +136,12 @@ class TripRequests
             'event_id' => $this->businessTripRequest->id,
             'event_type' => get_class($this->businessTripRequest),
             "title" => $this->notificationTitle,
-            'link' => "dashboard/fleet-management/requests/{$this->businessTripRequest->id}/details"
+            'link' => config('sheba.business_url') . "/dashboard/fleet-management/requests/{$this->businessTripRequest->id}/details"
         ], $this->notificationSender->id, get_class($this->notificationSender)));
 
-        if ($mail && $for === 'TripAccepted') {
+        /*if ($mail && $for === 'TripAccepted') {
             $this->mailForTripCreateAccepted();
-        }
+        }*/
     }
 
     public function notifySuperAdmins($mail, $for)
@@ -150,21 +150,22 @@ class TripRequests
             notify($admin)->send([
                 'title' => $this->notificationTitle,
                 'event_type' => get_class($this->businessTripRequest),
-                'event_id' => $this->businessTripRequest->id
+                'event_id' => $this->businessTripRequest->id,
+                'link' => config('sheba.business_url') . "/dashboard/fleet-management/requests/{$this->businessTripRequest->id}/details"
             ]);
             #For Push Notifications
-            event(new NotificationCreated([
-                'notifiable_id' => $admin->id,
-                'notifiable_type' => "member",
-                'event_id' => $this->businessTripRequest->id,
-                'event_type' => get_class($this->businessTripRequest),
-                "title" => $this->notificationTitle,
-                'link' => "dashboard/fleet-management/requests/{$this->businessTripRequest->id}/details"
-            ], $this->notificationSender->id, get_class($this->notificationSender)));
+//            event(new NotificationCreated([
+//                'notifiable_id' => $admin->id,
+//                'notifiable_type' => "member",
+//                'event_id' => $this->businessTripRequest->id,
+//                'event_type' => get_class($this->businessTripRequest),
+//                "title" => $this->notificationTitle,
+//                'link' => config('sheba.business_url') . "/dashboard/fleet-management/requests/{$this->businessTripRequest->id}/details"
+//            ], $this->notificationSender->id, get_class($this->notificationSender)));
 
-            if ($mail && $for === 'TripCreate') {
+            /*if ($mail && $for === 'TripCreate') {
                 $this->mailForTripCreate($admin);
-            }
+            }*/
         }
     }
 
