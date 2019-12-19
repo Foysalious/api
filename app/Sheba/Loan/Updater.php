@@ -84,10 +84,9 @@ class Updater
         foreach (self::updateFields() as $key) {
             $loan->partnerBankLoan->{$key} = array_key_exists($key, $this->new) ? $this->new[$key] : $loan->partnerBankLoan->{$key};
         }
-        $rate                                              = (double)$loan->partnerBankLoan->interest_rate / (12 * 100);
         $amount                                            = (double)$loan->partnerBankLoan->loan_amount;
         $duration                                          = (int)$loan->partnerBankLoan->duration * 12;
-        $loan->partnerBankLoan->monthly_installment        = round(((double)$amount * $rate * (1 + $rate) ^ $duration) / ((1 + $rate) ^ $duration - 1));
+        $loan->partnerBankLoan->monthly_installment        = emi_calculator($loan->partnerBankLoan->interest_rate, $amount, $duration);
         $loan->partnerBankLoan->final_information_for_loan = json_encode($this->new['final_information_for_loan']);
         $loan->partnerBankLoan->save();
         $this->setModifier($request->user);
