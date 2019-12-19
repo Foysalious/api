@@ -64,7 +64,7 @@ class PushSubscriptionController extends Controller
             'event_id' => 321,
             'event_type' => "procurement",
             "title" => "Test notification",
-            'message' => "Test notification",
+            'link' => "www.google.com"
         ]);
     }
 }
