@@ -71,8 +71,9 @@ class PartnerLoanRequest implements Arrayable
     {
         $data['partner_id']          = $this->partner->id;
         $data['status']              = constants('LOAN_STATUS')['applied'];
-        $data['interest_rate']       = constants('LOAN_CONFIG')['interest'];
-        $data['monthly_installment'] = ((double)$data['loan_amount'] + ((double)$data['loan_amount'] * ($data['interest_rate'] / 100))) / ((int)$data['duration'] * 12);
+        $data['interest_rate']       = (int)constants('LOAN_CONFIG')['interest'];
+        $duration                    = (int)$data['duration'] * 12;
+        $data['monthly_installment'] = emi_calculator($data['interest_rate'], $data['loan_amount'], $duration);
         $this->setModifier($this->partner);
         $this->partnerBankLoan = new PartnerBankLoan($this->withCreateModificationField($data));
         $this->setDetails();

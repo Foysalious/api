@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BankUser;
 use App\Models\Comment;
 use App\Models\PartnerBankInformation;
 use App\Models\PartnerBankLoan;
 use App\Models\Profile;
+use App\Models\User;
 use App\Repositories\CommentRepository;
 use App\Repositories\FileRepository;
 use Carbon\Carbon;
@@ -47,8 +49,8 @@ class LoanController extends Controller
         try {
             $output = $loan->all($request);
             return api_response($request, $output, 200, ['data' => $output]);
-        }catch (NotAllowedToAccess $e){
-            return api_response($request, null, 400,['message'=>$e->getMessage()]);
+        } catch (NotAllowedToAccess $e) {
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -67,8 +69,8 @@ class LoanController extends Controller
         try {
             $data = $loan->show($loan_id);
             return api_response($request, $data, 200, ['data' => $data]);
-        }catch (NotAllowedToAccess $e){
-            return api_response($request, null, 400,['message'=>$e->getMessage()]);
+        } catch (NotAllowedToAccess $e) {
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -85,8 +87,8 @@ class LoanController extends Controller
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (InvalidStatusTransaction $e) {
             return api_response($request, null, 400, ['message' => $e->getMessage()]);
-        }catch (NotAllowedToAccess $e){
-            return api_response($request, null, 400,['message'=>$e->getMessage()]);
+        } catch (NotAllowedToAccess $e) {
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -105,8 +107,8 @@ class LoanController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        }catch (NotAllowedToAccess $e){
-            return api_response($request, null, 400,['message'=>$e->getMessage()]);
+        } catch (NotAllowedToAccess $e) {
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (InvalidStatusTransaction $e) {
             return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (Throwable $e) {
@@ -134,9 +136,8 @@ class LoanController extends Controller
             $interest_rate           = constants('LOAN_CONFIG')['interest'];
             $amount                  = $request->has('amount') ? (double)$request->amount : 0;
             $duration                = $request->has('duration') ? (int)$request->duration * 12 : 1;
-            $total_interest          = ($interest_rate / 100) * $amount;
-            $total_instalment_amount = $amount + $total_interest;
-            $interest_per_month      = $total_instalment_amount / $duration;
+            $interest_per_month      = emi_calculator($interest_rate, $amount, $duration);
+            $total_instalment_amount = $interest_per_month * $duration;
             $bank_lists              = [
                 [
                     'interest'           => $interest_rate,
@@ -472,10 +473,16 @@ class LoanController extends Controller
     {
 
         try {
+            $user = $request->user;
+            if (!empty($user) && (!($user instanceof User) && ($user instanceof BankUser && $user->bank->id != $partner_bank_loan->bank_id))) {
+                throw new NotAllowedToAccess();
+            }
             list($offset, $limit) = calculatePagination($request);
             $partner_bank_loan_logs = $partner_bank_loan->changeLogs->slice($offset)->take($limit);
             $output                 = $partner_bank_loan_logs->sortByDesc('id')->values();
             return api_response($request, null, 200, ['logs' => $output]);
+        } catch (NotAllowedToAccess $e) {
+            return api_response($request, null, 400);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -527,8 +534,8 @@ class LoanController extends Controller
                 'id'         => $comment->id,
                 'comment'    => $comment->comment,
                 'user'       => [
-                    'name'  => $comment->commentator->profile?$comment->commentator->profile->name:$comment->commentator->name,
-                    'image' => $comment->commentator->profile?$comment->commentator->profile->pro_pic:$comment->commentator->pro_pic
+                    'name'  => $comment->commentator->profile ? $comment->commentator->profile->name : $comment->commentator->name,
+                    'image' => $comment->commentator->profile ? $comment->commentator->profile->pro_pic : $comment->commentator->pro_pic
                 ],
                 'created_at' => (Carbon::parse($comment->created_at))->format('j F, Y h:i A')
             ];
@@ -542,11 +549,14 @@ class LoanController extends Controller
             ]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        }catch (NotAllowedToAccess $e){
-            return api_response($request, null, 400,['message'=>$e->getMessage()]);
+        } catch (NotAllowedToAccess $e) {
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
-            return api_response($request, null, 500,['e'=>$e->getMessage(),'line'=>$e->getLine()]);
+            return api_response($request, null, 500, [
+                'e'    => $e->getMessage(),
+                'line' => $e->getLine()
+            ]);
         }
     }
 
@@ -561,16 +571,16 @@ class LoanController extends Controller
                     'id'         => $comment->id,
                     'comment'    => $comment->comment,
                     'user'       => [
-                        'name'  => $comment->commentator->profile?$comment->commentator->profile->name:$comment->commentator->name,
-                        'image' => $comment->commentator->profile?$comment->commentator->profile->pro_pic:$comment->commentator->pro_pic
+                        'name'  => $comment->commentator->profile ? $comment->commentator->profile->name : $comment->commentator->name,
+                        'image' => $comment->commentator->profile ? $comment->commentator->profile->pro_pic : $comment->commentator->pro_pic
                     ],
                     'created_at' => (Carbon::parse($comment->created_at))->format('j F, Y h:i A')
                 ]);
             }
             if (count($comment_lists) > 0)
                 return api_response($request, $comment_lists, 200, ['comment_lists' => $comment_lists]); else  return api_response($request, null, 404);
-        }catch (NotAllowedToAccess $e){
-            return api_response($request, null, 400,['message'=>$e->getMessage()]);
+        } catch (NotAllowedToAccess $e) {
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -584,8 +594,8 @@ class LoanController extends Controller
             return api_response($request, true, 200);
         } catch (AlreadyAssignToBank $e) {
             return api_response($request, null, 400, ['message' => $e->getMessage()]);
-        }catch (NotAllowedToAccess $e){
-            return api_response($request, null, 400,['message'=>$e->getMessage()]);
+        } catch (NotAllowedToAccess $e) {
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -602,8 +612,8 @@ class LoanController extends Controller
             ]);
             $loan->uploadDocument($loan_id, $request, $request->user);
             return api_response($request, true, 200);
-        }catch (NotAllowedToAccess $e){
-            return api_response($request, null, 400,['message'=>$e->getMessage()]);
+        } catch (NotAllowedToAccess $e) {
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
@@ -623,8 +633,8 @@ class LoanController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        }catch (NotAllowedToAccess $e){
-            return api_response($request, null, 400,['message'=>$e->getMessage()]);
+        } catch (NotAllowedToAccess $e) {
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -649,8 +659,8 @@ class LoanController extends Controller
                 return api_response($request, null, 500);
             }
             return api_response($request, $doc, 200, ['link' => $doc]);
-        }catch (NotAllowedToAccess $e){
-            return api_response($request, null, 400,['message'=>$e->getMessage()]);
+        } catch (NotAllowedToAccess $e) {
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
