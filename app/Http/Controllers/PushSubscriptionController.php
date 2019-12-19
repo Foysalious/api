@@ -65,7 +65,7 @@ class PushSubscriptionController extends Controller
             'event_id' => 321,
             'event_type' => "procurement",
             "title" => "Test notification",
-            'link' => "www.google.com"
+            'link' => "https://partners.dev-sheba.xyz/star-auto-power/procurements/321/summary"
         ]);
         print_r('DONE');
     }
