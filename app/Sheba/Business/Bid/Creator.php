@@ -142,21 +142,23 @@ class Creator
     {
         if ($this->status != 'sent') return;
         $message = $bid->bidder->name . ' participated on your procurement #' . $bid->procurement->id;
+        $link = config('sheba.business_url') . '/dashboard/procurement/' . $bid->procurement_id . '/quotation?id=' . $bid->id;
         foreach ($bid->procurement->owner->superAdmins as $member) {
             notify()->member($member)->send([
                 'title' => $message,
                 'type' => 'warning',
                 'event_type' => get_class($bid),
-                'event_id' => $bid->id
-            ]);
-            event(new NotificationCreated([
-                'notifiable_id' => $member->id,
-                'notifiable_type' => "member",
                 'event_id' => $bid->id,
-                'event_type' => "bid",
-                "title" => $message,
-                'message' => $message,
-            ], $bid->bidder->id, get_class($bid->bidder)));
+                'link' => $link
+            ]);
+//            event(new NotificationCreated([
+//                'notifiable_id' => $member->id,
+//                'notifiable_type' => "member",
+//                'event_id' => $bid->id,
+//                'event_type' => "bid",
+//                "title" => $message,
+//                'message' => $message,
+//            ], $bid->bidder->id, get_class($bid->bidder)));
         }
 
     }

@@ -119,9 +119,9 @@ class Updater
                 }
                 $this->updateBidPrice();
                 $this->statusLogCreator->setBid($this->bid)->setPreviousStatus($previous_status)->setStatus($this->status)->create();
-                if ($this->status != 'sent') $this->sendVendorParticipatedNotification();
-                elseif ($this->status != 'rejected') $this->sendBidRejectedNotification();
-                elseif ($this->status != 'accepted') $this->sendBidAcceptedNotification();
+                if ($this->status == 'sent') $this->sendVendorParticipatedNotification();
+                elseif ($this->status == 'rejected') $this->sendBidRejectedNotification();
+                elseif ($this->status == 'accepted') $this->sendBidAcceptedNotification();
             });
         } catch (QueryException $e) {
             throw  $e;
