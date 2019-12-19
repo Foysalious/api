@@ -113,7 +113,7 @@ class Comments
                     'link' => config('sheba.partners_url') . "/" . $partner->sub_domain . "/bids/" . $this->commentableModel->id
                 ]);
             } elseif ($this->commentatorModel instanceof Partner) {
-                foreach ($this->commentableModel->owner->superAdmins as $member) {
+                foreach ($bid->procurement->owner->superAdmins as $member) {
                     notify()->member($member)->send([
                         'title' => $message,
                         'type' => 'warning',
