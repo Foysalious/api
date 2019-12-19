@@ -54,7 +54,7 @@ class PushSubscriptionController extends Controller
             'event_type' => "bid",
             "title" => "Test notification",
             'message' => "Test notification",
-            'link' => "dashboard/fleet-management/requests/151/details"
+            'link' => "https://b2b.dev-sheba.xyz/dashboard/fleet-management/requests/151/details"
         ], 233, "App\Models\Partner"));
     }
 
