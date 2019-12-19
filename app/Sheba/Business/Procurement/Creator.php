@@ -1,6 +1,7 @@
 <?php namespace Sheba\Business\Procurement;
 
 use App\Models\Bid;
+use App\Models\Partner;
 use App\Models\Procurement;
 use App\Models\ProcurementItem;
 use App\Models\Tag;
@@ -312,6 +313,7 @@ class Creator
             'published_at' => $this->isPublished ? Carbon::now() : ''
         ];
         $this->procurementRepository->update($procurement, $this->procurementData);
+        if ($this->isPublished) $this->sendNotification($procurement);
     }
 
     private function makeItemFields(ProcurementItem $procurement_item, $fields)
@@ -426,14 +428,17 @@ class Creator
 
     private function sendNotification(Procurement $procurement)
     {
-        return;
-        event(new NotificationCreated([
-            'notifiable_id' => 17,
-            'notifiable_type' => "member",
-            'event_id' => $procurement->id,
-            'event_type' => "procurement",
-            "title" => "afa",
-            "message" => "ada"
-        ], 44, "App\Models\Partner"));
+        $partners = Partner::verified()->select('id', 'sub_domain')->get();
+        $message = $procurement->owner->name . "has created RFQ #" . $procurement->id;
+        foreach ($partners as $partner) {
+            notify()->partner($partner)->send([
+                'title' => $message,
+                'type' => 'warning',
+                'event_type' => get_class($procurement),
+                'event_id' => $procurement->id,
+                'link' => config('sheba.partners_url') . "/" . $partner->sub_domain . "/procurements/" . $procurement->id
+            ]);
+        }
+
     }
 }
