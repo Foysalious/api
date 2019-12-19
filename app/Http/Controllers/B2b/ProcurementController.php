@@ -10,6 +10,7 @@ use App\Transformers\AttachmentTransformer;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\Procurement\Creator;
 use Sheba\Logs\ErrorLog;
@@ -363,5 +364,39 @@ class ProcurementController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function downloadPdf(Request $request)
+    {
+        $procurement = Procurement::find($request->procurement);
+
+        $price_quotation = $procurement->items->where('type', 'price_quotation')->first();
+        $technical_evaluation = $procurement->items->where('type', 'technical_evaluation')->first();
+        $company_evaluation = $procurement->items->where('type', 'company_evaluation')->first();
+
+        $procurement_details = [
+            'id' => $procurement->id,
+            'title' => $procurement->title,
+            'status' => $procurement->status,
+            'long_description' => $procurement->long_description,
+            'labels' => $procurement->getTagNamesAttribute()->toArray(),
+            'start_date' => Carbon::parse($procurement->procurement_start_date)->format('d/m/y'),
+            'published_at' => $procurement->is_published ? Carbon::parse($procurement->published_at)->format('d/m/y') : null,
+            'end_date' => Carbon::parse($procurement->procurement_end_date)->format('d/m/y'),
+            'number_of_participants' => $procurement->number_of_participants,
+            'last_date_of_submission' => Carbon::parse($procurement->last_date_of_submission)->format('Y-m-d'),
+            'payment_options' => $procurement->payment_options,
+            'created_at' => Carbon::parse($procurement->created_at)->format('d/m/y'),
+            'price_quotation' => $price_quotation ? $price_quotation->fields ? $price_quotation->fields->toArray() : null : null,
+            'technical_evaluation' => $technical_evaluation ? $technical_evaluation->fields ? $technical_evaluation->fields->toArray() : null : null,
+            'company_evaluation' => $company_evaluation ? $company_evaluation->fields ? $company_evaluation->fields->toArray() : null : null,
+        ];
+
+        // dd($procurement_details);
+        return view('pdfs.procurement_details', compact('procurement_details'));
+
+        return App::make('dompdf.wrapper')
+            ->loadView('pdfs.procurement_details', compact('procurement_details'))
+            ->download("procurement_details.pdf");
     }
 }
