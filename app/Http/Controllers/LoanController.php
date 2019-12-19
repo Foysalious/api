@@ -136,9 +136,9 @@ class LoanController extends Controller
             $interest_rate           = constants('LOAN_CONFIG')['interest'];
             $amount                  = $request->has('amount') ? (double)$request->amount : 0;
             $duration                = $request->has('duration') ? (int)$request->duration * 12 : 1;
-            $total_interest          = ($interest_rate / 100) * $amount;
-            $total_instalment_amount = $amount + $total_interest;
-            $interest_per_month      = $total_instalment_amount / $duration;
+            $rate                    = $interest_rate / (12 * 100);
+            $interest_per_month      = round(($amount * $rate * (1 + $rate) ^ $duration) / ((1 + $rate) ^ $duration - 1));
+            $total_instalment_amount = $interest_per_month * $duration;
             $bank_lists              = [
                 [
                     'interest'           => $interest_rate,
@@ -554,8 +554,9 @@ class LoanController extends Controller
             return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
-            return api_response($request, null, 500, ['e'    => $e->getMessage(),
-                                                      'line' => $e->getLine()
+            return api_response($request, null, 500, [
+                'e'    => $e->getMessage(),
+                'line' => $e->getLine()
             ]);
         }
     }
