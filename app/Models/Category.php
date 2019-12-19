@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Sheba\Dal\CrosssaleService\Model as CrosssaleServiceModel;
 use Sheba\Dal\UniversalSlug\Model as UniversalSlugModel;
 use Sheba\Logistics\Literals\Natures as LogisticNatures;
 use Sheba\Logistics\Literals\OneWayInitEvents as OneWayLogisticInitEvents;
@@ -276,5 +277,10 @@ class Category extends Model
     {
         Relation::morphMap(['secondary_category' => 'App\Models\Category']);
         return $this->morphOne(UniversalSlugModel::class, 'sluggable');
+    }
+
+    public function crossSaleService()
+    {
+        return $this->hasOne(CrosssaleServiceModel::class);
     }
 }

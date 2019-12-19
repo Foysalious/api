@@ -374,6 +374,7 @@ class CategoryController extends Controller
                 $category = $cat->published()->first();
             }
             $category_slug = $category->getSlug();
+            $cross_sale_service = $category->crossSaleService;
 
             if ($category != null) {
                 list($offset, $limit) = calculatePagination($request);
@@ -498,6 +499,13 @@ class CategoryController extends Controller
                     }
                     $category['services'] = $services;
                     $category['subscriptions'] = $subscriptions;
+                    $category['cross_sale'] = $cross_sale_service ? [
+                        'title'         => $cross_sale_service->title,
+                        'description'   => $cross_sale_service->description,
+                        'icon'          => $cross_sale_service->icon,
+                        'category_id'   => $cross_sale_service->category_id,
+                        'service_id'    => $cross_sale_service->service_id
+                    ] : null;
 
                     $category['delivery_charge'] = $delivery_charge->setCategory($service->category)->get();
                     $discount_checking_params = (new JobDiscountCheckingParams())->setDiscountableAmount($category['delivery_charge']);
