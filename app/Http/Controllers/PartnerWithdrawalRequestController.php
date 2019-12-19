@@ -54,7 +54,10 @@ class PartnerWithdrawalRequestController extends Controller
             /** @var Partner $partner */
             $partner = $request->partner;
 
-            if ($request->header('version-code') && $request->header('version-code') > 21104) {
+            if (
+                ($request->header('portal-name') && $request->header('portal-name') == 'partner-portal') ||
+                $request->header('version-code') && $request->header('version-code') > 21104
+            ) {
                 $access_token_request->setAuthorizationCode($request->code);
                 $authenticate_data['mobile'] = $sheba_account_kit->getMobile($access_token_request);
             } else {
