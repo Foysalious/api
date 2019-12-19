@@ -30,7 +30,9 @@ class CustomerController extends Controller
                         $q->select('id', 'name', 'min_quantity', 'thumb', 'app_thumb', 'banner', 'app_banner');
                     }]);
                 }, 'partnerOrder' => function ($q) {
-                    $q->select('id', 'order_id', 'partner_id')->with(['order' => function ($q) {
+                    $q->select('id', 'order_id', 'partner_id')->with(['partner' => function ($q) {
+                        $q->select('id', 'name', 'logo');
+                    }, 'order' => function ($q) {
                         $q->select('id', 'location_id');
                     }]);
                 }]);
@@ -88,6 +90,7 @@ class CustomerController extends Controller
             if (empty($all_services)) continue;
             $data['category']['services'] = $all_services;
             $data['rating'] = $review->rating;
+            $data['partner'] = $review->job->partnerOrder->partner;
             array_push($final, $data);
         }
         return api_response($request, $final, 200, ['data' => $final]);
