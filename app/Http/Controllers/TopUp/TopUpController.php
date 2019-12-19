@@ -142,7 +142,7 @@ class TopUpController extends Controller
 
             $data = Excel::selectSheets(TopUpExcel::SHEET)->load($file_path)->get();
 
-            $data = $data->filter(function($row) {
+            $data = $data->filter(function ($row) {
                 return ($row->mobile && $row->operator && $row->connection_type && $row->amount);
             });
 
@@ -188,14 +188,15 @@ class TopUpController extends Controller
         try {
             $model = "App\\Models\\" . ucfirst(camel_case($request->type));
             $agent_id = $request->user->id;
-
             $topup_bulk_requests = TopUpBulkRequest::where([
                 ['status', 'pending'],
                 ['agent_id', $agent_id],
                 ['agent_type', $model]
             ])->with('numbers')->where('status', 'pending')->orderBy('id', 'desc')->get();
             $final = [];
-            $topup_bulk_requests->map(function ($topup_bulk_request) use (&$final) {
+            $topup_bulk_requests->filter(function ($topup_bulk_request) {
+                return $topup_bulk_request->numbers->count() > 0;
+            })->map(function ($topup_bulk_request) use (&$final) {
                 array_push($final, [
                     'id' => $topup_bulk_request->id,
                     'agent_id' => $topup_bulk_request->agent_id,
