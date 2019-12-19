@@ -50,7 +50,11 @@ class CustomerAddressController extends Controller
         $this->setModifier($request->customer);
         $address = $creator->setCustomer($request->customer)->setAddressText($address_text)->setHouseNo($request->house_no)->setRoadNo($request->road_no)->setBlockNo($request->block_no)
             ->setSectorNo($request->sector_no)->setCity($request->city)->setGeo($geo)->setName($request->name)->create();
-        return api_response($request, $address, 200, ['id' => $address->id]);
+        return api_response($request, $address, 200, ['address' => [
+            'id' => $address->id,
+            'lat' => $geo->getLat(),
+            'lng' => $geo->getLng(),
+        ]]);
     }
 
 
