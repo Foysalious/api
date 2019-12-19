@@ -7,13 +7,9 @@
           integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 
     <style >
-
-        @font-face {
-            font-family: "Shonar Bangla";
-            src: {{storage_path("Shonar Bangla.ttf")}} format("truetype"); /* IE9*/
-            font-weight: bold;
+        .body{
+            font-family:  'SolaimanLipi',sans-serif!important;
         }
-
         .loan-summery p {
             font-size: 14px;
             font-weight: bold;
@@ -41,9 +37,10 @@
 
         .form-control {
             background-color: rgba(243, 247, 250, 0.7) !important;
-            line-height: 1.5;
-            font-family: 'Shonar Bangla',DejaVu Sans,  'Roboto', sans-serif!important;
+            font-family: 'SolaimanLipi',sans-serif!important;
             height: 20px;
+            display: block;
+            line-height: 1;
          }
 
         table {
@@ -83,6 +80,7 @@
             width: 5px;
             color: #121212;
         }
+
     </style>
 </head>
 <body>
@@ -249,7 +247,7 @@
                         </table>
                         <table>
                             <tr>
-                                <th style="width: 35%;padding-top: 5px;;">usiness Type</th>
+                                <th style="width: 35%;padding-top: 5px;;">Business Type</th>
                                 <th style="width: 60%"><div class="form-control" >{{$final_information_for_loan['business']['business_type']}}</div></th>
                             </tr>
                         </table>
