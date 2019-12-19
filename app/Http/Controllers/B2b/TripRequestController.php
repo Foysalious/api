@@ -250,10 +250,10 @@ class TripRequestController extends Controller
                 $business_trip_request->update();
 
 
-                $trip_requests->setNotificationTitle($trip_requests->getRequesterIdentity() . '\'s trip request accepted successfully.')
+                $trip_requests->setNotificationTitle($trip_requests->getRequesterIdentity(false, true) . '\'s trip request accepted successfully.')
                     ->setEmailSubject('Trip Request Accepted')
                     ->setEmailTemplate('emails.trip_request_accepted_notifications')
-                    ->setEmailTitle($trip_requests->getRequesterIdentity() . '\'s trip request accepted successfully.')
+                    ->setEmailTitle($trip_requests->getRequesterIdentity(false, true) . '\'s trip request accepted successfully.')
                     ->setVehicle($request->vehicle_id)
                     ->setDriver($request->driver)
                     ->notifications(true, 'TripAccepted', false, true);
@@ -266,10 +266,10 @@ class TripRequestController extends Controller
                 $business_trip_request->status = 'rejected';
                 $business_trip_request->update();
 
-                $trip_requests->setNotificationTitle($trip_requests->getRequesterIdentity() . '\'s trip request rejected.')
+                $trip_requests->setNotificationTitle($trip_requests->getRequesterIdentity(false, true) . '\'s trip request rejected.')
                     ->setEmailSubject('Trip Request Rejected')
                     ->setEmailTemplate('emails.trip_request_accepted_notifications')
-                    ->setEmailTitle($trip_requests->getRequesterIdentity() . '\'s trip request rejected.')
+                    ->setEmailTitle($trip_requests->getRequesterIdentity(false, true) . '\'s trip request rejected.')
                     ->setVehicle($request->vehicle_id)
                     ->setDriver($request->driver)
                     ->notifications(true, 'TripAccepted', false, true);
@@ -350,7 +350,7 @@ class TripRequestController extends Controller
                 ->setBusinessMember($business_member)
                 ->setSuperAdmins($super_admins)
                 ->setBusinessTripRequest($business_trip_request)
-                ->setNotificationTitle($trip_requests->getRequesterIdentity() . ' commented on trip request.')
+                ->setNotificationTitle($trip_requests->getRequesterIdentity(true) . ' commented on trip request.')
                 ->notifications(false, null, true, false);
 
             $comment = (new CommentRepository('BusinessTripRequest', $trip_request, $request->member))->store($request->comment);
