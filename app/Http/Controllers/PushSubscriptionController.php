@@ -66,5 +66,6 @@ class PushSubscriptionController extends Controller
             "title" => "Test notification",
             'link' => "www.google.com"
         ]);
+        print_r('DONE');
     }
 }
