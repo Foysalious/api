@@ -82,7 +82,11 @@ class LoginController extends Controller
 
     public function generateDummyToken()
     {
-        $business_member = BusinessMember::where([['business_id', 11], ['is_super', 1]])->first();
+        $business_member = BusinessMember::where([
+//            ['business_id', 11],
+//            ['is_super', 1],
+            ['id',4]
+        ])->first();
         $member = $business_member->member;
         return JWTAuth::fromUser($business_member->member->profile, [
             'member_id' => $member->id,

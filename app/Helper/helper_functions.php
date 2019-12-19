@@ -9,12 +9,11 @@ $helper_files = [
     "app/Sheba/Partner/functions.php",
     "app/Sheba/Helpers/Formatters/functions.php"
 ];
-
 foreach ($helper_files as $file) {
     $file = dirname(dirname(__DIR__)) . "/" . $file;
-    if (file_exists($file)) require $file;
+    if (file_exists($file))
+        require $file;
 }
-
 if (!function_exists('constants')) {
     /**
      * Get the constant from config constants file.
@@ -27,9 +26,7 @@ if (!function_exists('constants')) {
         return config('constants.' . $key);
     }
 }
-
-if (!function_exists('randomString'))
-{
+if (!function_exists('randomString')) {
     /**
      * @param $len
      * @param int $num
@@ -39,14 +36,18 @@ if (!function_exists('randomString'))
      */
     function randomString($len, $num = 0, $alpha = 0, $spec_char = 0)
     {
-        $alphabets = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        $numbers = "0123456789";
+        $alphabets          = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        $numbers            = "0123456789";
         $special_characters = "!@#$%^&*()_-+=}{][|:;.,/?";
-        $characters = "";
-        if ($num) $characters .= $numbers;
-        if ($alpha) $characters .= $alphabets;
-        if ($spec_char) $characters .= $special_characters;
-        if (!$num && !$alpha && !$spec_char) $characters .= $numbers . $alphabets . $special_characters;
+        $characters         = "";
+        if ($num)
+            $characters .= $numbers;
+        if ($alpha)
+            $characters .= $alphabets;
+        if ($spec_char)
+            $characters .= $special_characters;
+        if (!$num && !$alpha && !$spec_char)
+            $characters .= $numbers . $alphabets . $special_characters;
         $rand_string = '';
         for ($i = 0; $i < $len; $i++) {
             $rand_string .= $characters[mt_rand(0, strlen($characters) - 1)];
@@ -54,7 +55,6 @@ if (!function_exists('randomString'))
         return $rand_string;
     }
 }
-
 if (!function_exists('isEmailValid')) {
     /**
      * Email formatting check.
@@ -68,7 +68,6 @@ if (!function_exists('isEmailValid')) {
         return preg_match($regex, $email);
     }
 }
-
 if (!function_exists('api_response')) {
 
     function api_response($request, $internal_response, $response_code, array $external_response = null)
@@ -84,42 +83,47 @@ if (!function_exists('api_response')) {
         }
     }
 }
-
 if (!function_exists('calculatePagination')) {
 
     function calculatePagination($request)
     {
         $offset = $request->has('offset') ? $request->offset : 0;
-        $limit = $request->has('limit') ? $request->limit : 50;
-        return array($offset, $limit);
+        $limit  = $request->has('limit') ? $request->limit : 50;
+        return array(
+            $offset,
+            $limit
+        );
     }
 }
-
 if (!function_exists('calculatePaginationNew')) {
 
     function calculatePaginationNew($request)
     {
-        $page = $request->has('page') ? $request->page : 0;
+        $page  = $request->has('page') ? $request->page : 0;
         $limit = $request->has('limit') ? $request->limit : 50;
-        return array($page, $limit);
+        return array(
+            $page,
+            $limit
+        );
     }
 }
-
 if (!function_exists('calculateSort')) {
 
     function calculateSort($request, $default = 'id')
     {
         $offset = $request->has('sort') ? $request->sort : $default;
-        $limit = $request->has('sort_order') ? $request->sort_order : 'DESC';
-        return array($offset, $limit);
+        $limit  = $request->has('sort_order') ? $request->sort_order : 'DESC';
+        return array(
+            $offset,
+            $limit
+        );
     }
 }
-
 if (!function_exists('getRangeFormat')) {
     function getRangeFormat($request, $param = 'range')
     {
-        $filter = (is_array($request)) ? $request[$param] : $request->{$param};
-        $today = Carbon::today();
+        $filter    = (is_array($request)) ? $request[$param] : $request->{$param};
+        $today     = Carbon::today();
         $dateFrame = new \Sheba\Helpers\TimeFrame();
         switch ($filter) {
             case 'today':
@@ -145,11 +149,13 @@ if (!function_exists('getRangeFormat')) {
             case 'lifetime':
                 return $dateFrame->forLifeTime()->getArray();
             default:
-                return [$today->startOfDay(), $today->endOfDay()];
+                return [
+                    $today->startOfDay(),
+                    $today->endOfDay()
+                ];
         }
     }
 }
-
 if (!function_exists('getDayName')) {
     /**
      * @param Carbon $date
@@ -164,8 +170,7 @@ if (!function_exists('getDayName')) {
                 return 'tomorrow';
             case $date->isPast():
                 if ($date->isYesterday())
-                    return "yesterday";
-                else {
+                    return "yesterday"; else {
                     return Carbon::now()->diffInDays($date);
                 }
             default:
@@ -173,7 +178,6 @@ if (!function_exists('getDayName')) {
         }
     }
 }
-
 if (!function_exists('getDayNameAndDateTime')) {
     /**
      * @param Carbon $date
@@ -185,41 +189,37 @@ if (!function_exists('getDayNameAndDateTime')) {
             case $date->isSameDay(Carbon::now()):
                 return Carbon::now()->format('h:iA');
             case $date->isYesterday():
-                return 'Yesterday at '.$date->format('h:iA');
+                return 'Yesterday at ' . $date->format('h:iA');
             default:
-                return $date->format('d M').' at '.$date->format('h:iA');
+                return $date->format('d M') . ' at ' . $date->format('h:iA');
         }
     }
 }
-
 if (!function_exists('createAuthorWithType')) {
     function createAuthorWithType($author)
     {
-        $data = createAuthor($author);
+        $data                    = createAuthor($author);
         $data['created_by_type'] = "App\Models\\" . class_basename($author);
         return $data;
     }
 }
-
 if (!function_exists('createAuthor')) {
     function createAuthor($author)
     {
-        $data = [];
-        $data['created_by'] = $author->id;
+        $data                    = [];
+        $data['created_by']      = $author->id;
         $data['created_by_name'] = class_basename($author) . " - " . ($author->profile != null ? $author->profile->name : $author->name);
         return $data;
     }
 }
-
 if (!function_exists('updateAuthor')) {
     function updateAuthor($model, $author)
     {
-        $model->updated_by = $author->id;
+        $model->updated_by      = $author->id;
         $model->updated_by_name = class_basename($author) . " - " . ($author->profile != null ? $author->profile->name : $author->name);
         return $model;
     }
 }
-
 if (!function_exists('removeRelationsFromModel')) {
 
     function removeRelationsFromModel($model)
@@ -229,7 +229,6 @@ if (!function_exists('removeRelationsFromModel')) {
         }
     }
 }
-
 if (!function_exists('removeRelationsAndFields')) {
     function removeRelationsAndFields($model, array $columns_to_remove = [])
     {
@@ -238,7 +237,6 @@ if (!function_exists('removeRelationsAndFields')) {
         return $model;
     }
 }
-
 if (!function_exists('removeSelectedFieldsFromModel')) {
 
     function removeSelectedFieldsFromModel($model, array $columns_to_remove = [])
@@ -255,25 +253,22 @@ if (!function_exists('removeSelectedFieldsFromModel')) {
         return $model;
     }
 }
-
 if (!function_exists('createAuthor')) {
     function createAuthor($model, $author)
     {
-        $model->created_by = $author->id;
+        $model->created_by      = $author->id;
         $model->created_by_name = class_basename($author) . " - " . ($author->profile != null ? $author->profile->name : $author->name);
         return $model;
     }
 }
-
 if (!function_exists('updateAuthor')) {
     function updateAuthor($model, $author)
     {
-        $model->updated_by = $author->id;
+        $model->updated_by      = $author->id;
         $model->updated_by_name = class_basename($author) . " - " . ($author->profile != null ? $author->profile->name : $author->name);
         return $model;
     }
 }
-
 if (!function_exists('getValidationErrorMessage')) {
     function getValidationErrorMessage($errors)
     {
@@ -284,14 +279,12 @@ if (!function_exists('getValidationErrorMessage')) {
         return $msg;
     }
 }
-
 if (!function_exists('floatValFormat')) {
     function floatValFormat($value)
     {
         return floatval(number_format($value, 2, '.', ''));
     }
 }
-
 if (!function_exists('humanReadableShebaTime')) {
     function humanReadableShebaTime($time)
     {
@@ -302,23 +295,20 @@ if (!function_exists('humanReadableShebaTime')) {
         return (Carbon::parse($time[0]))->format('g:i A') . (isset($time[1]) ? ('-' . (Carbon::parse($time[1]))->format('g:i A')) : '');
     }
 }
-
 if (!function_exists('clean')) {
     function clean($string, $separator = "-", $keep = [])
     {
-        $string = str_replace(' ', $separator, $string); // Replaces all spaces with hyphens.
+        $string    = str_replace(' ', $separator, $string); // Replaces all spaces with hyphens.
         $keep_only = "/[^A-Za-z0-9";
         foreach ($keep as $item) {
             $keep_only .= "$item";
         }
         $keep_only .= (($separator == '-') ? '\-' : "_");
         $keep_only .= "]/";
-
-        $string = preg_replace($keep_only, '', $string); // Removes special chars.
+        $string = preg_replace($keep_only, '', $string);           // Removes special chars.
         return preg_replace("/$separator+/", $separator, $string); // Replaces multiple hyphens with single one.
     }
 }
-
 if (!function_exists('ordinal')) {
     /**
      * Ordinal numbers refer to a position in a series.
@@ -328,12 +318,22 @@ if (!function_exists('ordinal')) {
      */
     function ordinal($number)
     {
-        $ends = array('th', 'st', 'nd', 'rd', 'th', 'th', 'th', 'th', 'th', 'th');
-        if ((($number % 100) >= 11) && (($number % 100) <= 13)) return $number . 'th';
-        else return $number . $ends[$number % 10];
+        $ends = array(
+            'th',
+            'st',
+            'nd',
+            'rd',
+            'th',
+            'th',
+            'th',
+            'th',
+            'th',
+            'th'
+        );
+        if ((($number % 100) >= 11) && (($number % 100) <= 13))
+            return $number . 'th'; else return $number . $ends[$number % 10];
     }
 }
-
 if (!function_exists('findStartEndDateOfAMonth')) {
     /**
      * @param $month
@@ -344,19 +344,28 @@ if (!function_exists('findStartEndDateOfAMonth')) {
     {
         if ($month == 0 && $year != 0) {
             $start_time = \Carbon\Carbon::now()->year($year)->month(1)->day(1)->hour(0)->minute(0)->second(0);
-            $end_time = \Carbon\Carbon::now()->year($year)->month(12)->day(31)->hour(23)->minute(59)->second(59);
-            return ['start_time' => $start_time, 'end_time' => $end_time, 'days_in_month' => 31];
+            $end_time   = \Carbon\Carbon::now()->year($year)->month(12)->day(31)->hour(23)->minute(59)->second(59);
+            return [
+                'start_time'    => $start_time,
+                'end_time'      => $end_time,
+                'days_in_month' => 31
+            ];
         } else {
-            if (empty($month)) $month = \Carbon\Carbon::now()->month;
-            if (empty($year)) $year = \Carbon\Carbon::now()->year;
+            if (empty($month))
+                $month = \Carbon\Carbon::now()->month;
+            if (empty($year))
+                $year = \Carbon\Carbon::now()->year;
             $days_in_month = cal_days_in_month(CAL_GREGORIAN, $month, $year);
-            $start_time = \Carbon\Carbon::now()->year($year)->month($month)->day(1)->hour(0)->minute(0)->second(0);
-            $end_time = \Carbon\Carbon::now()->year($year)->month($month)->day($days_in_month)->hour(23)->minute(59)->second(59);
-            return ['start_time' => $start_time, 'end_time' => $end_time, 'days_in_month' => $days_in_month];
+            $start_time    = \Carbon\Carbon::now()->year($year)->month($month)->day(1)->hour(0)->minute(0)->second(0);
+            $end_time      = \Carbon\Carbon::now()->year($year)->month($month)->day($days_in_month)->hour(23)->minute(59)->second(59);
+            return [
+                'start_time'    => $start_time,
+                'end_time'      => $end_time,
+                'days_in_month' => $days_in_month
+            ];
         }
     }
 }
-
 if (!function_exists('en2bnNumber')) {
     /**
      * @param  $number
@@ -364,13 +373,33 @@ if (!function_exists('en2bnNumber')) {
      */
     function en2bnNumber($number)
     {
-        $search_array = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
-        $replace_array = ["১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯", "০"];
-
+        $search_array  = [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0"
+        ];
+        $replace_array = [
+            "১",
+            "২",
+            "৩",
+            "৪",
+            "৫",
+            "৬",
+            "৭",
+            "৮",
+            "৯",
+            "০"
+        ];
         return str_replace($search_array, $replace_array, $number);
     }
 }
-
 if (!function_exists('indexedArrayToAssociative')) {
     /**
      * @param $key
@@ -382,14 +411,12 @@ if (!function_exists('indexedArrayToAssociative')) {
         return array_combine(array_values($key), array_values($value));
     }
 }
-
 if (!function_exists('dispatchReward')) {
     function dispatchReward()
     {
         return app(ActionRewardDispatcher::class);
     }
 }
-
 if (!function_exists('getSalesChannels')) {
     /**
      * Return Sales channel associative column (default to name).
@@ -402,7 +429,6 @@ if (!function_exists('getSalesChannels')) {
         return array_combine(array_keys(constants('SALES_CHANNELS')), array_column(constants('SALES_CHANNELS'), $key));
     }
 }
-
 if (!function_exists('formatDateRange')) {
     /**
      * Return Date Range Formatted
@@ -413,59 +439,73 @@ if (!function_exists('formatDateRange')) {
     function formatDateRange($filter_type)
     {
         $currentDate = Carbon::now();
-
         switch ($filter_type) {
             case "today":
-                return ["from" => Carbon::today(), "to" => Carbon::today()];
+                return [
+                    "from" => Carbon::today(),
+                    "to"   => Carbon::today()
+                ];
             case "yesterday":
-                return ["from" => Carbon::yesterday()->addDay(-1), "to" => Carbon::today()];
+                return [
+                    "from" => Carbon::yesterday()->addDay(-1),
+                    "to"   => Carbon::today()
+                ];
             case "week":
-                return ["from" => $currentDate->startOfWeek()->addDays(-1), "to" => Carbon::today()];
+                return [
+                    "from" => $currentDate->startOfWeek()->addDays(-1),
+                    "to"   => Carbon::today()
+                ];
             case "month":
-                return ["from" => $currentDate->startOfMonth(), "to" => Carbon::today()];
+                return [
+                    "from" => $currentDate->startOfMonth(),
+                    "to"   => Carbon::today()
+                ];
             case "year":
-                return ["from" => $currentDate->startOfYear(), "to" => Carbon::today()];
+                return [
+                    "from" => $currentDate->startOfYear(),
+                    "to"   => Carbon::today()
+                ];
             case "all_time":
-                return ["from" => '2017-01-01', "to" => Carbon::today()];
+                return [
+                    "from" => '2017-01-01',
+                    "to"   => Carbon::today()
+                ];
             default:
-                return ["from" => '2017-01-01', "to" => Carbon::today()];
+                return [
+                    "from" => '2017-01-01',
+                    "to"   => Carbon::today()
+                ];
         }
     }
 }
-
 if (!function_exists('createOptionsFromOptionVariables')) {
 
     function createOptionsFromOptionVariables($variables)
     {
         $options = '';
         foreach ($variables->options as $key => $option) {
-            $input = explode(',', $option->answers);
-            $output = implode(',', array_map(
-                function ($value, $key) {
-                    return sprintf("%s", $key);
-                }, $input, array_keys($input)
-            ));
-            $output = '[' . $output . '],';
+            $input   = explode(',', $option->answers);
+            $output  = implode(',', array_map(function ($value, $key) {
+                return sprintf("%s", $key);
+            }, $input, array_keys($input)));
+            $output  = '[' . $output . '],';
             $options .= $output;
         }
         return '[' . substr($options, 0, -1) . ']';
     }
 }
-
 if (!function_exists('trim_phone_number')) {
     function trim_phone_number($number, $index_number = '0')
     {
         return strstr($number, $index_number);
     }
 }
-
 if (!function_exists('pamelCase')) {
     function pamelCase($string)
     {
         return ucfirst(camel_case($string));
     }
 }
-
 if (!function_exists('scramble_string')) {
     /**
      * Returns scrambled string replaced by '*'
@@ -476,16 +516,15 @@ if (!function_exists('scramble_string')) {
      */
     function scramble_string($str, $scramble_ratio = 15)
     {
-        $str = \Sheba\BanglaToEnglish::convert($str);
-        $str = preg_replace('/[\x00-\x1F\x7F]/u', '', $str);
-        $len = strlen($str);
+        $str                     = \Sheba\BanglaToEnglish::convert($str);
+        $str                     = preg_replace('/[\x00-\x1F\x7F]/u', '', $str);
+        $len                     = strlen($str);
         $number_of_words_visible = (int)ceil(($scramble_ratio * $len) / 100);
-        $number_of_words_hidden = $len - ($number_of_words_visible * 2);
-        $number_of_words_hidden = $number_of_words_hidden > 0 ? $number_of_words_hidden : 0;
+        $number_of_words_hidden  = $len - ($number_of_words_visible * 2);
+        $number_of_words_hidden  = $number_of_words_hidden > 0 ? $number_of_words_hidden : 0;
         return substr($str, 0, $number_of_words_visible) . str_repeat('*', $number_of_words_hidden) . substr($str, $len - $number_of_words_visible, $len);
     }
 }
-
 if (!function_exists('isResourceAdmin')) {
     /**
      * Returns true if resource is admin, else return false if handyman
@@ -496,10 +535,15 @@ if (!function_exists('isResourceAdmin')) {
      */
     function isResourceAdmin($resource_types = array())
     {
-        return (array_intersect($resource_types, ['Admin', 'Operation', 'Finance', 'Management', 'Owner'])) ? true : false;
+        return (array_intersect($resource_types, [
+            'Admin',
+            'Operation',
+            'Finance',
+            'Management',
+            'Owner'
+        ])) ? true : false;
     }
 }
-
 if (!function_exists('getDefaultWorkingDays')) {
     /**
      * Returns default working days of sheba
@@ -509,10 +553,17 @@ if (!function_exists('getDefaultWorkingDays')) {
      */
     function getDefaultWorkingDays()
     {
-        return ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+        return [
+            'Saturday',
+            'Sunday',
+            'Monday',
+            'Tuesday',
+            'Wednesday',
+            'Thursday',
+            'Friday'
+        ];
     }
 }
-
 if (!function_exists('getDefaultWorkingHours')) {
     /**
      * Returns default working days of sheba
@@ -524,11 +575,10 @@ if (!function_exists('getDefaultWorkingHours')) {
     {
         return (object)[
             'start_time' => '09:00:00',
-            'end_time' => '18:00:00'
+            'end_time'   => '18:00:00'
         ];
     }
 }
-
 if (!function_exists('normalizeCases')) {
     /**
      * @param $value
@@ -537,10 +587,12 @@ if (!function_exists('normalizeCases')) {
     function normalizeCases($value)
     {
         $value = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $value));
-        return ucwords(str_replace(['_', '-'], ' ', $value));
+        return ucwords(str_replace([
+            '_',
+            '-'
+        ], ' ', $value));
     }
 }
-
 if (!function_exists('isNormalized')) {
     /**
      * @param string $value
@@ -551,7 +603,6 @@ if (!function_exists('isNormalized')) {
         return str_contains($value, ' ');
     }
 }
-
 if (!function_exists('ramp')) {
     /**
      * @param $value
@@ -562,7 +613,6 @@ if (!function_exists('ramp')) {
         return max($value, 0);
     }
 }
-
 if (!function_exists('decodeGuzzleResponse')) {
     /**
      * @param $response
@@ -573,7 +623,6 @@ if (!function_exists('decodeGuzzleResponse')) {
         return json_decode($response->getBody()->getContents(), true);
     }
 }
-
 if (!function_exists('isAssoc')) {
     /**
      * @param $arr
@@ -581,17 +630,52 @@ if (!function_exists('isAssoc')) {
      */
     function isAssoc($arr)
     {
-        if (!is_array($arr)) return false;
-        if ([] === $arr) return false;
+        if (!is_array($arr))
+            return false;
+        if ([] === $arr)
+            return false;
         return array_keys($arr) !== range(0, count($arr) - 1);
     }
 }
-
+if (!function_exists('asset_from')) {
+    /**
+     * Generate an asset path for the application.
+     * Might be a missing laravel helper.
+     *
+     * @param string $root
+     * @param string $path
+     * @param bool $secure
+     * @return string
+     */
+    function asset_from($root, $path, $secure = null)
+    {
+        return app('url')->assetFrom($root, $path, $secure);
+    }
+}
+if (!function_exists('getCDNAssetsFolder')) {
+    /**
+     * @return string
+     */
+    function getCDNAssetsFolder()
+    {
+        return config('s3.url') . 'partner_assets';
+    }
+}
+if (!function_exists('assetLink')) {
+    /**
+     * @param  $file
+     * @return string
+     */
+    function assetLink($file)
+    {
+        return config('sheba.use_cdn_for_asset') ? asset_from(getCDNAssetsFolder(), $file) : asset($file);
+    }
+}
 if (!function_exists('convertNumbersToBangla')) {
     function convertNumbersToBangla(float $number, $formatted = true, $decimal = 2)
     {
-        $format = (array)json_decode('{"0":"০","1":"১","2":"২","3":"৩","4":"৪","5":"৫","6":"৬","7":"৭","8":"৮","9":"৯",".":".",",":","}');
-        $number = str_split($formatted ? number_format($number, $decimal) : "$number");
+        $format    = (array)json_decode('{"0":"০","1":"১","2":"২","3":"৩","4":"৪","5":"৫","6":"৬","7":"৭","8":"৮","9":"৯",".":".",",":","}');
+        $number    = str_split($formatted ? number_format($number, $decimal) : "$number");
         $converted = array_map(function ($item) use ($format) {
             foreach ($format as $key => $val) {
                 if ($key === $item) {
@@ -603,16 +687,28 @@ if (!function_exists('convertNumbersToBangla')) {
         return implode('', $converted);
     }
 }
-
 if (!function_exists('banglaMonth')) {
     function banglaMonth(int $month)
     {
-        $months = ['জানুয়ারি', 'ফেব্রুয়ারি', 'মার্চ', 'এপ্রিল', 'মে', 'জুন', 'জুলাই', 'আগস্ট', 'সেপ্টেম্বর', 'অক্টোবর', 'নভেম্বর', 'ডিসেম্বর'];
-        if ($month > 0) $month -= 1;
+        $months = [
+            'জানুয়ারি',
+            'ফেব্রুয়ারি',
+            'মার্চ',
+            'এপ্রিল',
+            'মে',
+            'জুন',
+            'জুলাই',
+            'আগস্ট',
+            'সেপ্টেম্বর',
+            'অক্টোবর',
+            'নভেম্বর',
+            'ডিসেম্বর'
+        ];
+        if ($month > 0)
+            $month -= 1;
         return $months[$month];
     }
 }
-
 if (!function_exists('isInProduction')) {
     /**
      * @return bool
@@ -622,8 +718,6 @@ if (!function_exists('isInProduction')) {
         return app()->environment() == "production";
     }
 }
-
-
 if (!function_exists('strContainsAll')) {
     /**
      * @param $haystack
@@ -633,9 +727,40 @@ if (!function_exists('strContainsAll')) {
     function strContainsAll($haystack, array $needles)
     {
         foreach ($needles as $needle) {
-            if (!str_contains($haystack, $needle)) return false;
+            if (!str_contains($haystack, $needle))
+                return false;
         }
-
         return true;
+    }
+}
+if (!function_exists('getBloodGroupsList')) {
+
+    /**
+     * Get list of blood groups.
+     *
+     * @param bool $associate
+     * @return array
+     */
+    function getBloodGroupsList($associate = true)
+    {
+        $groups = [
+            'A+',
+            'B+',
+            'AB+',
+            'O+',
+            'A-',
+            'B-',
+            'AB-',
+            'O-'
+        ];
+        return $associate ? array_combine($groups, $groups) : $groups;
+    }
+}
+if (!function_exists('emi_calculator')) {
+    function emi_calculator($interest, $amount, $duration)
+    {
+        $rate = (double)$interest / (12 * 100);
+        $duration=(int) $duration;
+        return round(((double)$amount * $rate * pow((1 + $rate), $duration)) / (pow((1 + $rate), $duration) - 1));
     }
 }

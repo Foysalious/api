@@ -67,7 +67,10 @@ class CategoryController extends Controller
             $best_deal_categories_id = explode(',', config('sheba.best_deal_ids'));
             $best_deal_category = CategoryGroupCategory::whereIn('category_group_id', $best_deal_categories_id)->pluck('category_id')->toArray();
 
-            $categories = Category::where('parent_id', null)->orderBy('order');
+            $categories = Category::where('parent_id', null);
+            if ($is_b2b) $categories = $categories->orderBy('order_for_b2b');
+            else $categories = $categories->orderBy('order');
+
             if ($location) {
                 $categories = $categories->whereHas('locations', function ($q) use ($location) {
                     $q->where('locations.id', $location->id);
@@ -103,7 +106,7 @@ class CategoryController extends Controller
                         }
                         $q->whereNotIn('id', $best_deal_category);
                         $filter_publication($q);
-                        if($is_business) $q->orderBy('order_for_b2b');
+                        if ($is_business) $q->orderBy('order_for_b2b');
                         else $q->orderBy('order');
                     }]);
                 }

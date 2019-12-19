@@ -7,6 +7,7 @@ use Sheba\Dal\ProcurementPaymentRequest\ProcurementPaymentRequestRepositoryInter
 use Sheba\Business\ProcurementPaymentRequestStatusChangeLog\Creator;
 use App\Models\Procurement;
 use App\Models\Bid;
+use Sheba\Notification\NotificationCreated;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
 
 class Updater
@@ -15,6 +16,7 @@ class Updater
     private $procurementRepository;
     private $procurement;
     private $bid;
+    /** @var ProcurementPaymentRequest */
     private $paymentRequest;
     private $note;
     private $status;
@@ -87,6 +89,7 @@ class Updater
                 $this->procurement->getActiveBid()->bidder->minusWallet($amount, ['log' => 'Received money for RFQ Order #' . $this->procurement->id]);
                 $this->procurementRepository->update($this->procurement, ['partner_collection' => $this->procurement->partner_collection + $amount]);
             }
+            $this->sendStatusChangeNotification();
         } catch (QueryException $e) {
             throw  $e;
         }
@@ -111,5 +114,27 @@ class Updater
             throw  $e;
         }
         return $payment_request;
+    }
+
+    private function sendStatusChangeNotification()
+    {
+        $message = $this->paymentRequest->procurement->owner->name . ' has ' . $this->status . ' your payment request #' . $this->paymentRequest->id;
+        $link = config('sheba.partners_url') . '/' . $this->paymentRequest->bid->bidder->sub_domain . '/rfq-orders/' . $this->paymentRequest->procurement->id;
+        notify()->partner($this->paymentRequest->bid->bidder)->send([
+            'title' => $message,
+            'type' => 'warning',
+            'event_type' => get_class($this->paymentRequest),
+            'event_id' => $this->paymentRequest->id,
+            'link' => $link
+        ]);
+        event(new NotificationCreated([
+            'notifiable_id' => $this->bid->bidder->id,
+            'notifiable_type' => "partner",
+            'event_id' => $this->paymentRequest->id,
+            'event_type' => "procurement_payment_request",
+            "title" => $message,
+            "message" => $message,
+            'link' => $link
+        ], $this->paymentRequest->procurement->owner->id, get_class($this->paymentRequest->procurement->owner)));
     }
 }

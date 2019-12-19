@@ -6,32 +6,12 @@ class BusinessRoute
     {
         $api->post('business/login', 'B2b\LoginController@login');
         $api->get('business/test-login', 'B2b\LoginController@generateDummyToken')->middleware('admin.auth');
+        $api->get('business/test-push-notification', 'PushSubscriptionController@send');
         $api->post('business/register', 'B2b\RegistrationController@registerV2');
         $api->group(['prefix' => 'businesses', 'middleware' => ['business.auth']], function ($api) {
             $api->group(['prefix' => '{business}'], function ($api) {
                 $api->get('members', 'B2b\MemberController@index');
                 $api->post('/invite', 'B2b\BusinessesController@inviteVendors');
-                $api->group(['prefix' => 'notifications'], function ($api) {
-                    $api->get('/', 'B2b\BusinessesController@getNotifications');
-                    $api->post('/{notification}/seen', 'B2b\BusinessesController@notificationSeen');
-                });
-                $api->group(['prefix' => 'vendors'], function ($api) {
-                    $api->get('/', 'B2b\BusinessesController@getVendorsList');
-                    $api->post('/', 'B2b\VendorController@store');
-                    $api->post('/bulk-store', 'B2b\VendorController@bulkStore');
-                    $api->group(['prefix' => '{vendor}'], function ($api) {
-                        $api->get('/info', 'B2b\BusinessesController@getVendorInfo');
-                    });
-                });
-                $api->group(['prefix' => 'subscription-orders'], function ($api) {
-                    $api->post('/', 'B2b\OrderController@placeSubscriptionOrder');
-                    $api->get('/', 'B2b\SubscriptionOrderController@index');
-                    $api->get('/{order}', 'B2b\SubscriptionOrderController@show');
-                    $api->get('/{order}/invoice', 'B2b\SubscriptionOrderController@orderInvoice');
-                    $api->group(['prefix' => '{subscription_order}'], function ($api) {
-                        $api->get('bills/clear', 'B2b\SubscriptionOrderController@clearPayment');
-                    });
-                });
                 $api->get('/vendors', 'B2b\BusinessesController@getVendorsList');
                 $api->get('/vendors/{vendor}/info', 'B2b\BusinessesController@getVendorInfo');
                 $api->get('/vendors/{vendor}/resource-info', 'B2b\BusinessesController@getVendorAdminInfo');
@@ -47,6 +27,7 @@ class BusinessRoute
                 $api->get('/test-sms', 'B2b\BusinessSmsTemplateController@sendSms');
                 $api->post('/sms-templates/{sms}', 'B2b\BusinessSmsTemplateController@update');
                 $api->get('/sms-templates/{sms}', 'B2b\BusinessSmsTemplateController@show');
+                $api->post('/download-transactions', 'B2b\BusinessesController@downloadTransactionReport');
                 $api->group(['prefix' => 'employees'], function ($api) {
                     $api->post('/', 'B2b\CoWorkerController@store');
                     $api->get('/', 'B2b\CoWorkerController@index');
@@ -192,7 +173,35 @@ class BusinessRoute
                         $api->get('/', 'B2b\SupportController@show');
                     });
                 });
-                $api->post('/download-transactions', 'B2b\BusinessesController@downloadTransactionReport');
+                $api->group(['prefix' => 'notifications'], function ($api) {
+                    $api->get('/', 'B2b\BusinessesController@getNotifications');
+                    $api->post('/{notification}/seen', 'B2b\BusinessesController@notificationSeen');
+                });
+                $api->group(['prefix' => 'vendors'], function ($api) {
+                    $api->get('/', 'B2b\BusinessesController@getVendorsList');
+                    $api->post('/', 'B2b\VendorController@store');
+                    $api->post('/bulk-store', 'B2b\VendorController@bulkStore');
+                    $api->group(['prefix' => '{vendor}'], function ($api) {
+                        $api->get('/info', 'B2b\BusinessesController@getVendorInfo');
+                    });
+                });
+                $api->group(['prefix' => 'subscription-orders'], function ($api) {
+                    $api->post('/', 'B2b\OrderController@placeSubscriptionOrder');
+                    $api->get('/', 'B2b\SubscriptionOrderController@index');
+                    $api->get('/{order}', 'B2b\SubscriptionOrderController@show');
+                    $api->get('/{order}/invoice', 'B2b\SubscriptionOrderController@orderInvoice');
+                    $api->group(['prefix' => '{subscription_order}'], function ($api) {
+                        $api->get('bills/clear', 'B2b\SubscriptionOrderController@clearPayment');
+                    });
+                });
+                $api->group(['prefix' => 'announcements'], function ($api) {
+                    $api->get('/', 'B2b\AnnouncementController@index');
+                    $api->post('/', 'B2b\AnnouncementController@store');
+                    $api->group(['prefix' => '{announcement}'], function ($api) {
+                        $api->put('/', 'B2b\AnnouncementController@update');
+                        $api->get('/', 'B2b\AnnouncementController@show');
+                    });
+                });
             });
         });
         $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {

@@ -148,6 +148,24 @@ class EventDataConverter
                                 'class' => 'Sheba\Reward\Event\Partner\Action\PaymentLinkUsage\Parameter\Amount'
                             ],
                         ]
+                    ],
+                    'pos_order_create' => [
+                        'name' => 'Pos Order Create',
+                        'event_class' => 'Sheba\Reward\Event\Partner\Action\PosOrderCreate\Event',
+                        'rule_class' => 'Sheba\Reward\Event\Partner\Action\PosOrderCreate\Rule',
+                        'parameters' => [
+                            'amount' => [
+                                'type'  => 'number',
+                                'min'   => 0,
+                                'class' => 'Sheba\Reward\Event\Partner\Action\PosOrderCreate\Parameter\Amount'
+                            ],
+                            'created_from' => [
+                                'type' => 'select',
+                                'possible_value' => indexedArrayToAssociative(config('sheba.portals'), config('sheba.portals')),
+                                'is_multi_selectable' => 1,
+                                'class' => 'Sheba\Reward\Event\Partner\Action\PosOrderCreate\Parameter\CreatedFrom'
+                            ]
+                        ]
                     ]
                 ],
                 'campaign' => [
