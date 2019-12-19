@@ -429,7 +429,7 @@ class Creator
     private function sendNotification(Procurement $procurement)
     {
         $partners = Partner::verified()->select('id', 'sub_domain')->get();
-        $message = $procurement->owner->name . "has created RFQ #" . $procurement->id;
+        $message = $procurement->owner->name . " has created RFQ #" . $procurement->id;
         foreach ($partners as $partner) {
             notify()->partner($partner)->send([
                 'title' => $message,
