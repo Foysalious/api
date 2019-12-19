@@ -27,7 +27,7 @@ class CustomerController extends Controller
             }, 'job' => function ($q) {
                 $q->select('id', 'category_id', 'partner_order_id')->with('category')->with(['jobServices' => function ($q) {
                     $q->select('id', 'job_id', 'service_id', 'quantity', 'option', 'variable_type')->with(['service' => function ($q) {
-                        $q->select('id', 'min_quantity', 'thumb', 'app_thumb', 'banner', 'app_banner');
+                        $q->select('id', 'name', 'min_quantity', 'thumb', 'app_thumb', 'banner', 'app_banner');
                     }]);
                 }, 'partnerOrder' => function ($q) {
                     $q->select('id', 'order_id', 'partner_id')->with(['order' => function ($q) {
@@ -86,7 +86,8 @@ class CustomerController extends Controller
                 array_push($all_services, $service);
             }
             if (empty($all_services)) continue;
-            $data['services'] = $all_services;
+            $data['category']['services'] = $all_services;
+            $data['rating'] = $review->rating;
             array_push($final, $data);
         }
         return api_response($request, $final, 200, ['data' => $final]);
