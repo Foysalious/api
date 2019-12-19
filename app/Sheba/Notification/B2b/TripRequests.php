@@ -81,9 +81,19 @@ class TripRequests
         return $this;
     }
 
-    public function getRequesterIdentity()
+    public function getRequesterIdentity($comment = false, $admin = false)
     {
-        $this->member = Member::find((int)$this->businessTripRequest->member_id);
+        #$this->member = Member::find((int)$this->businessTripRequest->member_id);
+        if ($comment) {
+            if ($this->member->id == $this->businessTripRequest->member_id) {
+                $this->member = Member::find((int)$this->businessTripRequest->member_id);
+            } elseif ($this->member->id != $this->businessTripRequest->member_id) {
+                $this->member = $this->businessMember->member;
+            }
+        }
+        if ($admin){
+            $this->member = $this->businessMember->member;
+        }
         $identity = $this->member->profile->name;
         if (!$identity) $identity = $this->member->profile->mobile;
         if (!$identity) $identity = $this->member->profile->email;
@@ -124,21 +134,21 @@ class TripRequests
 
     public function notify($mail, $for)
     {
-        notify($this->member)->send([
+        notify($this->member)->send([#Also Push Notifications
             'title' => $this->notificationTitle,
             'event_type' => get_class($this->businessTripRequest),
             'event_id' => $this->businessTripRequest->id,
             'link' => config('sheba.business_url') . "/dashboard/fleet-management/requests/{$this->businessTripRequest->id}/details"
         ]);
         #For Push Notifications
-        event(new NotificationCreated([
+        /*event(new NotificationCreated([
             'notifiable_id' => $this->member->id,
             'notifiable_type' => "member",
             'event_id' => $this->businessTripRequest->id,
             'event_type' => get_class($this->businessTripRequest),
             "title" => $this->notificationTitle,
             'link' => config('sheba.business_url') . "/dashboard/fleet-management/requests/{$this->businessTripRequest->id}/details"
-        ], $this->notificationSender->id, get_class($this->notificationSender)));
+        ], $this->notificationSender->id, get_class($this->notificationSender)));*/
 
         if ($mail && $for === 'TripAccepted') {
             $this->mailForTripCreateAccepted();
@@ -148,21 +158,21 @@ class TripRequests
     public function notifySuperAdmins($mail, $for)
     {
         foreach ($this->superAdmins as $admin) {
-            notify($admin)->send([
+            notify($admin)->send([#Also Push Notifications
                 'title' => $this->notificationTitle,
                 'event_type' => get_class($this->businessTripRequest),
                 'event_id' => $this->businessTripRequest->id,
                 'link' => config('sheba.business_url') . "/dashboard/fleet-management/requests/{$this->businessTripRequest->id}/details"
             ]);
             #For Push Notifications
-            event(new NotificationCreated([
+            /*event(new NotificationCreated([
                 'notifiable_id' => $admin->id,
                 'notifiable_type' => "member",
                 'event_id' => $this->businessTripRequest->id,
                 'event_type' => get_class($this->businessTripRequest),
                 "title" => $this->notificationTitle,
                 'link' => config('sheba.business_url') . "/dashboard/fleet-management/requests/{$this->businessTripRequest->id}/details"
-            ], $this->notificationSender->id, get_class($this->notificationSender)));
+            ], $this->notificationSender->id, get_class($this->notificationSender)));*/
 
             if ($mail && $for === 'TripCreate') {
                 $this->mailForTripCreate($admin);
