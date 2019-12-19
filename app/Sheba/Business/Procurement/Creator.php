@@ -1,5 +1,6 @@
 <?php namespace Sheba\Business\Procurement;
 
+use App\Jobs\Business\SendRFQCreateNotificationToPartners;
 use App\Models\Bid;
 use App\Models\Partner;
 use App\Models\Procurement;
@@ -8,6 +9,7 @@ use App\Models\Tag;
 use App\Sheba\Attachments\Attachments;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\UploadedFile;
 use Sheba\Notification\NotificationCreated;
 use Sheba\Repositories\Interfaces\ProcurementItemFieldRepositoryInterface;
@@ -18,6 +20,7 @@ use DB;
 
 class Creator
 {
+    use DispatchesJobs;
     private $procurementRepository;
     private $procurementItemRepository;
     private $procurementQuestionRepository;
@@ -428,17 +431,6 @@ class Creator
 
     private function sendNotification(Procurement $procurement)
     {
-        $partners = Partner::verified()->select('id', 'sub_domain')->get();
-        $message = $procurement->owner->name . " has created RFQ #" . $procurement->id;
-        foreach ($partners as $partner) {
-            notify()->partner($partner)->send([
-                'title' => $message,
-                'type' => 'warning',
-                'event_type' => get_class($procurement),
-                'event_id' => $procurement->id,
-                'link' => config('sheba.partners_url') . "/" . $partner->sub_domain . "/procurements/" . $procurement->id
-            ]);
-        }
-
+        dispatch(new SendRFQCreateNotificationToPartners($procurement));
     }
 }
