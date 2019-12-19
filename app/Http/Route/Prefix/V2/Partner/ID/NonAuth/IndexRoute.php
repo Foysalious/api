@@ -5,6 +5,7 @@ class IndexRoute
     public function set($api)
     {
         $api->group(['prefix' => '{partner}'], function ($api) {
+            $api->get('test-push-notification', 'PushSubscriptionController@sendV2');
             (new PosRoute())->set($api);
             $api->get('/', 'PartnerController@show');
             $api->get('locations', 'PartnerController@getLocations');

@@ -54,4 +54,16 @@ class PushSubscriptionController extends Controller
             'message' => "Test notification",
         ], 233, "App\Models\Partner"));
     }
+
+    public function sendV2()
+    {
+        event(new NotificationCreated([
+            'notifiable_id' => 17,
+            'notifiable_type' => "member",
+            'event_id' => 321,
+            'event_type' => "procurement",
+            "title" => "Test notification",
+            'message' => "Test notification",
+        ], 277, "App\Models\Partner"));
+    }
 }
