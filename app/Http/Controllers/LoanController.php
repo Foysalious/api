@@ -483,7 +483,7 @@ class LoanController extends Controller
             $output                 = $partner_bank_loan_logs->sortByDesc('id')->values();
             return api_response($request, null, 200, ['logs' => $output]);
         } catch (NotAllowedToAccess $e) {
-            return api_response($request, null, 403);
+            return api_response($request, null, 400);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
