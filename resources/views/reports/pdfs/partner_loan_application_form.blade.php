@@ -8,7 +8,7 @@
 
     <style >
         .body{
-            font-family:  'SolaimanLipi',sans-serif!important;
+            font-family:  Siyamrupali,sans-serif!important;
         }
         .loan-summery p {
             font-size: 14px;
@@ -37,7 +37,7 @@
 
         .form-control {
             background-color: rgba(243, 247, 250, 0.7) !important;
-            font-family: 'SolaimanLipi',sans-serif!important;
+            font-family: Siyamrupali,sans-serif!important;
             height: 20px;
             display: block;
             line-height: 1;
