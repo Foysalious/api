@@ -220,15 +220,6 @@ class Updater
             'event_id' => $this->bid->id,
             'link' => $link
         ]);
-        event(new NotificationCreated([
-            'notifiable_id' => $this->bid->bidder->id,
-            'notifiable_type' => "partner",
-            'event_id' => $this->bid->id,
-            'event_type' => "bid",
-            "title" => $message,
-            "message" => $message,
-            'link' => $link
-        ], $this->bid->procurement->owner->id, get_class($this->bid->procurement->owner)));
     }
 
     private function notify($message)
@@ -242,15 +233,6 @@ class Updater
                 'event_id' => $this->bid->id,
                 'link' => $link
             ]);
-            event(new NotificationCreated([
-                'notifiable_id' => $member->id,
-                'notifiable_type' => "member",
-                'event_id' => $this->bid->id,
-                'event_type' => "bid",
-                "title" => $message,
-                'message' => $message,
-                'link' => $link
-            ], $this->bid->bidder->id, get_class($this->bid->bidder)));
         }
     }
 }
