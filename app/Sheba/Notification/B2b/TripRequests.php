@@ -3,6 +3,7 @@
 use App\Models\Driver;
 use App\Models\Member;
 use App\Models\Vehicle;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
 use Sheba\Notification\NotificationCreated;
 
@@ -90,7 +91,7 @@ class TripRequests
                 $this->member = $this->businessMember->member;
             }
         }
-        if ($admin){
+        if ($admin) {
             $this->member = $this->businessMember->member;
         }
         $identity = $this->member->profile->name;
@@ -211,11 +212,10 @@ class TripRequests
         #$email = $this->>member->profile->email;#For Trip Request Accepted
         #$email = 'saiful.sheba@gmail.com';
         $email = 'fahiman2.sheba@gmail.com';
-
-        $trip_request_start_date = $this->businessTripRequest->start_date->format('jS F, Y g:i A');
-        $vehicle_number = $this->vehicle->registrationInformations->license_number;
-        $driver_name = $this->getDriverName();
-        $driver_phone_number = $this->getDriverPhoneNumber();
+        $trip_request_start_date = Carbon::parse($this->businessTripRequest->start_date)->format('jS F, Y g:i A');
+        $vehicle_number = $this->vehicle ? $this->vehicle->registrationInformations->license_number : 'n/a';
+        $driver_name = $this->driver ? $this->getDriverName() : 'n/a';
+        $driver_phone_number = $this->driver ? $this->getDriverPhoneNumber() : 'n/a';
 
         Mail::send($this->template, [
             'title' => $this->emailTitle,

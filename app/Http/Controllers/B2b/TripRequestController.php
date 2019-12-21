@@ -249,7 +249,6 @@ class TripRequestController extends Controller
                 $business_trip_request->status = 'accepted';
                 $business_trip_request->update();
 
-
                 $trip_requests->setNotificationTitle($trip_requests->getRequesterIdentity(false, true) . ' has accepted trip request.')
                     ->setEmailSubject('Trip Request Accepted')
                     ->setEmailTemplate('emails.trip_request_accepted_notifications')
@@ -270,8 +269,6 @@ class TripRequestController extends Controller
                     ->setEmailSubject('Trip Request Rejected')
                     ->setEmailTemplate('emails.trip_request_accepted_notifications')
                     ->setEmailTitle($trip_requests->getRequesterIdentity(false, true) . ' has rejected trip request.')
-                    ->setVehicle($request->vehicle_id)
-                    ->setDriver($request->driver)
                     ->notifications(true, 'TripAccepted', false, true);
 
                 DBTransaction::commit();
