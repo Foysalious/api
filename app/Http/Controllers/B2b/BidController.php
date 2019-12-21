@@ -4,6 +4,7 @@ use App\Models\Bid;
 use App\Models\Procurement;
 use App\Sheba\Business\Bid\Updater;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\App;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\Bid\Creator;
 use Sheba\ModificationFields;
@@ -15,6 +16,14 @@ use Illuminate\Http\Request;
 class BidController extends Controller
 {
     use ModificationFields;
+
+    /** @var BidRepositoryInterface */
+    private $repo;
+
+    public function __construct(BidRepositoryInterface $bid_repository)
+    {
+        $this->repo = $bid_repository;
+    }
 
     public function index($business, $procurement, Request $request, AccessControl $access_control)
     {
@@ -175,7 +184,7 @@ class BidController extends Controller
         }
     }
 
-    public function sendHireRequest($business, $bid, Request $request, BidRepositoryInterface $bid_repository, Updater $updater)
+    public function sendHireRequest($business, $bid, Request $request, Updater $updater)
     {
         try {
             $this->validate($request, [
@@ -184,7 +193,7 @@ class BidController extends Controller
                 'items' => 'required|string',
                 'price' => 'required|numeric'
             ]);
-            $bid = $bid_repository->find((int)$bid);
+            $bid = $this->repo->find((int)$bid);
             $this->setModifier($request->manager_member);
             $updater->setBid($bid)->setTerms($request->terms)->setPolicies($request->policies)->setItems(json_decode($request->items))
                 ->setPrice($request->price)
@@ -202,11 +211,11 @@ class BidController extends Controller
         }
     }
 
-    public function show($business, $bid, Request $request, BidRepositoryInterface $bid_repository, Updater $updater)
+    public function show($business, $bid, Request $request)
     {
         try {
             /** @var Bid $bid */
-            $bid = $bid_repository->find((int)$bid);
+            $bid = $this->repo->find((int)$bid);
             $bid->load(['items' => function ($q) {
                 $q->with(['fields' => function ($q) {
                     $q->select('id', 'bid_item_id', 'title', 'short_description', 'input_type', 'variables', 'result');
@@ -242,6 +251,53 @@ class BidController extends Controller
             ];
             return api_response($request, $bid_details, 200, ['bid' => $bid_details]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function downloadPdf($business, $bid, Request $request)
+    {
+        try {
+            /** @var Bid $bid */
+            $bid = $this->repo->find((int)$bid);
+            $bid->load(['items' => function ($q) {
+                $q->with(['fields' => function ($q) {
+                    $q->select('id', 'bid_item_id', 'title', 'short_description', 'input_type', 'variables', 'result');
+                }]);
+            }]);
+            $price_quotation = $bid->items->where('type', 'price_quotation')->first();
+            $technical_evaluation = $bid->items->where('type', 'technical_evaluation')->first();
+            $company_evaluation = $bid->items->where('type', 'company_evaluation')->first();
+            $bid_details = [
+                'id' => $bid->id,
+                'procurement_id' => $bid->procurement_id,
+                'status' => $bid->status,
+                'price' => $bid->price,
+                'title' => $bid->procurement->title,
+                'type' => $bid->procurement->type,
+                'vendor' => [
+                    'name' => $bid->bidder->name,
+                    'logo' => $bid->bidder->logo,
+                    'domain' => $bid->bidder->sub_domain,
+                    'rating' => round($bid->bidder->reviews->avg('rating'), 2),
+                    'total_rating' => $bid->bidder->reviews->count()
+                ],
+                'proposal' => $bid->proposal,
+                'start_date' => Carbon::parse($bid->procurement->procurement_start_date)->format('d/m/y'),
+                'end_date' => Carbon::parse($bid->procurement->procurement_end_date)->format('d/m/y'),
+                'created_at' => Carbon::parse($bid->created_at)->format('d/m/y'),
+                'price_quotation' => $price_quotation ? $price_quotation->fields ? $price_quotation->fields->toArray() : null : null,
+                'technical_evaluation' => $technical_evaluation ? $technical_evaluation->fields ? $technical_evaluation->fields->toArray() : null : null,
+                'company_evaluation' => $company_evaluation ? $company_evaluation->fields ? $company_evaluation->fields->toArray() : null : null,
+            ];
+
+            return App::make('dompdf.wrapper')
+                ->loadView('pdfs.quotation_details', compact('bid_details'))
+                ->download("quotation_details.pdf");
+
+        } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
