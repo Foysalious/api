@@ -250,10 +250,10 @@ class TripRequestController extends Controller
                 $business_trip_request->update();
 
 
-                $trip_requests->setNotificationTitle($trip_requests->getRequesterIdentity(false, true) . '\'s trip request accepted successfully.')
+                $trip_requests->setNotificationTitle($trip_requests->getRequesterIdentity(false, true) . ' has accepted trip request.')
                     ->setEmailSubject('Trip Request Accepted')
                     ->setEmailTemplate('emails.trip_request_accepted_notifications')
-                    ->setEmailTitle($trip_requests->getRequesterIdentity(false, true) . '\'s trip request accepted successfully.')
+                    ->setEmailTitle($trip_requests->getRequesterIdentity(false, true) . ' has accepted trip request.')
                     ->setVehicle($request->vehicle_id)
                     ->setDriver($request->driver)
                     ->notifications(true, 'TripAccepted', false, true);
@@ -266,10 +266,10 @@ class TripRequestController extends Controller
                 $business_trip_request->status = 'rejected';
                 $business_trip_request->update();
 
-                $trip_requests->setNotificationTitle($trip_requests->getRequesterIdentity(false, true) . '\'s trip request rejected.')
+                $trip_requests->setNotificationTitle($trip_requests->getRequesterIdentity(false, true) . ' has rejected trip request.')
                     ->setEmailSubject('Trip Request Rejected')
                     ->setEmailTemplate('emails.trip_request_accepted_notifications')
-                    ->setEmailTitle($trip_requests->getRequesterIdentity(false, true) . '\'s trip request rejected.')
+                    ->setEmailTitle($trip_requests->getRequesterIdentity(false, true) . ' has rejected trip request.')
                     ->setVehicle($request->vehicle_id)
                     ->setDriver($request->driver)
                     ->notifications(true, 'TripAccepted', false, true);

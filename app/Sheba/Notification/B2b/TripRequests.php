@@ -83,7 +83,6 @@ class TripRequests
 
     public function getRequesterIdentity($comment = false, $admin = false)
     {
-        #$this->member = Member::find((int)$this->businessTripRequest->member_id);
         if ($comment) {
             if ($this->member->id == $this->businessTripRequest->member_id) {
                 $this->member = Member::find((int)$this->businessTripRequest->member_id);
@@ -128,6 +127,7 @@ class TripRequests
                 $this->notify($mail, $for);
             }
         } elseif ($co_worker) {
+            $this->member = Member::find((int)$this->businessTripRequest->member_id);
             $this->notify($mail, $for);
         } else {
             $this->notifySuperAdmins($mail, $for);
