@@ -193,6 +193,8 @@ class Updater
                 if ($this->status == config('b2b.BID_STATUSES')['accepted']) $this->procurementUpdater->setProcurement($this->bid->procurement)
                     ->setStatus(config('b2b.PROCUREMENT_STATUS')['accepted'])->updateStatus();
                 $this->statusLogCreator->setBid($this->bid)->setPreviousStatus($previous_status)->setStatus($this->status)->create();
+                if ($this->status == 'rejected') $this->sendBidRejectedNotification();
+                elseif ($this->status == 'accepted') $this->sendBidAcceptedNotification();
             });
         } catch (QueryException $e) {
             throw  $e;
