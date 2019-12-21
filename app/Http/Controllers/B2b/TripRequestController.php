@@ -341,6 +341,7 @@ class TripRequestController extends Controller
             $this->validate($request, [
                 'comment' => 'required'
             ]);
+
             DBTransaction::beginTransaction();
             $business_member = $request->business_member;
             $business_trip_request = BusinessTripRequest::findOrFail((int)$trip_request);

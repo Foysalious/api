@@ -123,6 +123,8 @@ class TripRequests
             if ($this->member->id == $this->businessTripRequest->member_id) {
                 $this->notifySuperAdmins($mail, $for);
             } elseif ($this->member->id != $this->businessTripRequest->member_id) {
+                $this->notificationTitle = $this->getRequesterIdentity(true) . ' commented on trip request.';
+                $this->member = Member::find((int)$this->businessTripRequest->member_id);
                 $this->notify($mail, $for);
             }
         } elseif ($co_worker) {
@@ -158,6 +160,7 @@ class TripRequests
     public function notifySuperAdmins($mail, $for)
     {
         foreach ($this->superAdmins as $admin) {
+            dd($admin);
             notify($admin)->send([#Also Push Notifications
                 'title' => $this->notificationTitle,
                 'event_type' => get_class($this->businessTripRequest),
