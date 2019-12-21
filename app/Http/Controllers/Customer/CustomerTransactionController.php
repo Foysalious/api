@@ -7,6 +7,7 @@ use App\Models\GiftCardPurchase;
 use App\Models\PartnerOrder;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Throwable;
 
 class CustomerTransactionController extends Controller
 {
@@ -57,7 +58,7 @@ class CustomerTransactionController extends Controller
                 'credit' => round($customer->shebaCredit(), 2), 'bonus' => round($customer->shebaBonusCredit(), 2),
                 'warning_message' => $warning_message
             ]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -109,25 +110,28 @@ class CustomerTransactionController extends Controller
         if ($spent_on instanceof PartnerOrder) {
             $category = $spent_on->jobs->first()->category;
             $log = $category->name;
-        } else if ($spent_on) {
+        } elseif ($spent_on) {
             $log = 'Purchased ' . class_basename($spent_on);
         } else {
             $log = 'Bonus credit expired';
         }
-        $category = $spent_on ? $bonus->spent_on->jobs->first()->category : null;
-        $transactions->push(array(
-            'id' => $bonus->id,
-            'customer_id' => $bonus->user_id,
-            'type' => 'Debit',
-            'amount' => $bonus->amount,
-            'log' => $log,
-            'created_at' => $bonus->created_at->toDateTimeString(),
-            'partner_order_id' => $bonus->spent_on_id,
-            'valid_till' => null,
-            'order_code' => $spent_on ? $spent_on->order->code() : '',
-            'transaction_type' => $category ? 'Service Purchase' : '',
+        $is_spend_on_order = $spent_on && ($spent_on instanceof PartnerOrder);
+        $category = $is_spend_on_order ? $bonus->spent_on->jobs->first()->category : null;
+
+        $transactions->push([
+            'id'            => $bonus->id,
+            'customer_id'   => $bonus->user_id,
+            'type'          => 'Debit',
+            'amount'        => $bonus->amount,
+            'log'           => $log,
+            'created_at'    => $bonus->created_at->toDateTimeString(),
+            'valid_till'    => null,
+            'order_code'    => $is_spend_on_order ? $spent_on->order->code() : '',
             'category_name' => $category ? $category->name : '',
-        ));
+            'partner_order_id' => $bonus->spent_on_id,
+            'transaction_type' => $category ? 'Service Purchase' : ''
+        ]);
+
         return $transactions;
     }
 
