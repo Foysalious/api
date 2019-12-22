@@ -40,8 +40,9 @@ class TripScheduler
     {
         $vehicle_ids = $this->businessDepartment->vehicles->pluck('id')->toArray();
         $businessDepartment = $this->businessDepartment;
+        $this->businessDepartment->business->load('hiredVehicles.vehicle');
         $hired_vehicles = $this->businessDepartment->business->hiredVehicles->filter(function ($hVehicle) use ($businessDepartment) {
-            return $hVehicle->vehicle->business_department_id == $businessDepartment->id;
+            return $hVehicle->vehicle && $hVehicle->vehicle->business_department_id == $businessDepartment->id;
         });
         $hired_vehicle_ids = $hired_vehicles->count() > 0 ? $hired_vehicles->pluck('vehicle_id')->toArray() : [];
         $vehicle_ids = array_unique(array_merge($vehicle_ids, $hired_vehicle_ids));
