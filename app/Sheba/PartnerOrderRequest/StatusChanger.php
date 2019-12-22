@@ -37,24 +37,25 @@ class StatusChanger
             $this->setError(403, $this->partnerOrderRequest->status . " is not acceptable.");
             return;
         }
-        if ($this->repo->hasAnyAcceptedRequest($this->partnerOrderRequest->partnerOrder)) {
+        $partner_order = $this->partnerOrderRequest->partnerOrder;
+        if ($this->repo->hasAnyAcceptedRequest($partner_order)) {
             $this->setError(403, "Someone already did it.");
             return;
         }
 
-        $request->merge(['job' => $this->partnerOrderRequest->partnerOrder->lastJob()]);
+        $request->merge(['job' => $partner_order->lastJob()]);
         $this->jobStatusChanger->checkForError($request);
         if ($this->jobStatusChanger->hasError()) {
             $this->setError($this->jobStatusChanger->getErrorCode(), $this->jobStatusChanger->getErrorMessage());
             return;
         }
 
-        DB::transaction(function () use ($request) {
+        DB::transaction(function () use ($request, $partner_order) {
             $this->repo->update($this->partnerOrderRequest, ['status' => Statuses::ACCEPTED]);
-            $this->partnerOrderRequest->partnerOrder->update(['partner_id' => $request->partner->id]);
+            $partner_order->update(['partner_id' => $request->partner->id]);
             $this->jobStatusChanger->acceptJobAndAssignResource($request);
 
-            $this->repo->updatePendingRequestsOfOrder($this->partnerOrderRequest->partner_order, [
+            $this->repo->updatePendingRequestsOfOrder($partner_order, [
                 'status' => Statuses::MISSED
             ]);
         });
