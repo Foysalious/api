@@ -27,12 +27,14 @@ return [
     'push_notification_topic_name' => [
         'customer' => env('CUSTOMER_TOPIC_NAME', 'customer_'),
         'resource' => env('RESOURCE_TOPIC_NAME', 'resource_'),
-        'manager' => env('MANAGER_TOPIC_NAME', 'manager_')
+        'manager' => env('MANAGER_TOPIC_NAME', 'manager_'),
+        'employee' => env('EMPLOYEE_TOPIC_NAME', 'employee_'),
     ],
     'push_notification_channel_name' => [
         'customer' => 'customer_channel',
         'manager' => 'manager_channel',
-        'resource' => 'resource_channel'
+        'resource' => 'resource_channel',
+        'employee' => 'employee_channel'
     ],
     'push_notification_sound' => [
         'customer' => 'default',
@@ -135,5 +137,6 @@ return [
     ],
     'min_order_amount_for_emi' => 5000,
     'gift_card_validity_month' => 3,
-    'marketplace_not_accessible_packages_id' => explode(',', env('MARKETPLACE_NOT_ACCESSIBLE_PACKAGES_ID', '1,2'))
+    'marketplace_not_accessible_packages_id' => explode(',', env('MARKETPLACE_NOT_ACCESSIBLE_PACKAGES_ID', '1,2')),
+    'use_cdn_for_asset' => env('SHEBA_USE_CDN_FOR_ASSET', true),
 ];

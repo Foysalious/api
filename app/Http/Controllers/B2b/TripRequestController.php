@@ -2,21 +2,23 @@
 
 
 use App\Http\Controllers\Controller;
+use App\Models\Business;
 use App\Models\BusinessTrip;
 use App\Models\BusinessTripRequest;
 use App\Repositories\CommentRepository;
 use App\Sheba\Business\BusinessTripSms;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\Scheduler\TripScheduler;
 use DB;
+use Sheba\Notification\B2b\TripRequests;
+use Illuminate\Support\Facades\DB as DBTransaction;
 
 class TripRequestController extends Controller
 {
-
     public function getTripRequests(Request $request)
     {
-
         try {
             $business_member = $request->business_member;
             $type = implode(',', config('business.VEHICLE_TYPES'));
@@ -127,7 +129,6 @@ class TripRequestController extends Controller
 
     public function tripRequestInfo($member, $trip_request, Request $request)
     {
-
         try {
             $trip_request = BusinessTripRequest::find((int)$trip_request);
             if (!$trip_request) return api_response($request, null, 404);
@@ -222,7 +223,6 @@ class TripRequestController extends Controller
         }
     }
 
-
     public function createTrip(Request $request, BusinessTripSms $businessTripSms)
     {
         try {
@@ -235,17 +235,43 @@ class TripRequestController extends Controller
             } else {
                 $business_trip_request = $this->storeTripRequest($request);
             }
+            DBTransaction::beginTransaction();
+            $super_admins = Business::find((int)$business_trip_request->business_id)->superAdmins;
+            $trip_requests = new TripRequests();
+            $trip_requests->setMember($request->member)
+                ->setBusinessMember($business_member)
+                ->setBusinessTripRequest($business_trip_request)
+                ->setSuperAdmins($super_admins);
+
             if ($request->has('status') && $request->status == "accept") {
                 $business_trip_request->vehicle_id = $request->vehicle_id;
                 $business_trip_request->driver_id = $request->driver_id;
                 $business_trip_request->status = 'accepted';
                 $business_trip_request->update();
+
+                $trip_requests->setNotificationTitle($trip_requests->getRequesterIdentity(false, true) . ' has accepted trip request.')
+                    ->setEmailSubject('Trip Request Accepted')
+                    ->setEmailTemplate('emails.trip_request_accepted_notifications')
+                    ->setEmailTitle($trip_requests->getRequesterIdentity(false, true) . ' has accepted trip request.')
+                    ->setVehicle($request->vehicle_id)
+                    ->setDriver($request->driver_id)
+                    ->notifications(true, 'TripAccepted', false, true);
+
                 $business_trip = $this->storeTrip($business_trip_request);
                 $businessTripSms->setTrip($business_trip)->sendTripRequestAccept();
+                DBTransaction::commit();
                 return api_response($request, $business_trip, 200, ['id' => $business_trip->id]);
             } else {
                 $business_trip_request->status = 'rejected';
                 $business_trip_request->update();
+
+                $trip_requests->setNotificationTitle($trip_requests->getRequesterIdentity(false, true) . ' has rejected trip request.')
+                    ->setEmailSubject('Trip Request Rejected')
+                    ->setEmailTemplate('emails.trip_request_accepted_notifications')
+                    ->setEmailTitle($trip_requests->getRequesterIdentity(false, true) . ' has rejected trip request.')
+                    ->notifications(true, 'TripAccepted', false, true);
+
+                DBTransaction::commit();
                 return api_response($request, null, 200, ['message' => 'Trip Request rejected successfully']);
             }
         } catch (ValidationException $e) {
@@ -255,6 +281,8 @@ class TripRequestController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
+            DBTransaction::rollback();
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -267,6 +295,18 @@ class TripRequestController extends Controller
             $business_trip_request = null;
             DB::transaction(function () use ($request, $business_member, $vehicleScheduler, $businessTripSms, &$business_trip_request) {
                 $business_trip_request = $this->storeTripRequest($request);
+                $super_admins = Business::find((int)$business_trip_request->business_id)->superAdmins;
+                $trip_requests = new TripRequests();
+                $trip_requests->setMember($request->member)
+                    ->setBusinessMember($business_member)
+                    ->setBusinessTripRequest($business_trip_request)
+                    ->setSuperAdmins($super_admins)
+                    ->setNotificationTitle($trip_requests->getRequesterIdentity() . ' has created a new trip request.')
+                    ->setEmailSubject('New Trip Request')
+                    ->setEmailTemplate('emails.trip_request_create_notifications')
+                    ->setEmailTitle($trip_requests->getRequesterIdentity() . ' has created a new trip request.')
+                    ->notifications(true, 'TripCreate', false, false);
+
                 $will_auto_assign = (int)$business_member->is_super || $business_member->actions()->where('tag', config('business.actions.trip_request.auto_assign'))->first();
                 if ($will_auto_assign) {
                     $vehicleScheduler->setStartDate($request->start_date)->setEndDate($request->end_date)
@@ -296,9 +336,27 @@ class TripRequestController extends Controller
     public function commentOnTripRequest($member, $trip_request, Request $request)
     {
         try {
+            $this->validate($request, [
+                'comment' => 'required'
+            ]);
+
+            DBTransaction::beginTransaction();
+            $business_member = $request->business_member;
+            $business_trip_request = BusinessTripRequest::findOrFail((int)$trip_request);
+            $super_admins = Business::find((int)$business_trip_request->business_id)->superAdmins;
+            $trip_requests = new TripRequests();
+            $trip_requests->setMember($request->member)
+                ->setBusinessMember($business_member)
+                ->setSuperAdmins($super_admins)
+                ->setBusinessTripRequest($business_trip_request)
+                ->setNotificationTitle($trip_requests->getRequesterIdentity(true) . ' commented on trip request.')
+                ->notifications(false, null, true, false);
+
             $comment = (new CommentRepository('BusinessTripRequest', $trip_request, $request->member))->store($request->comment);
+            DBTransaction::commit();
             return $comment ? api_response($request, $comment, 200) : api_response($request, $comment, 500);
         } catch (\Throwable $e) {
+            DBTransaction::rollback();
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

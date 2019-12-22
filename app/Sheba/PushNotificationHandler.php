@@ -20,8 +20,8 @@ class PushNotificationHandler
 
         $topic = (new Topics())->topic($topic);
 
-        if(config('sheba.send_push_notifications')) {
-            FCM::sendToTopic($topic, null, $notification, $data);
+        if (config('sheba.send_push_notifications')) {
+            $topicResponse = FCM::sendToTopic($topic, null, $notification, $data);
         }
 
         //$topicResponse->isSuccess();

@@ -137,6 +137,13 @@ class Updater
         if ((isset($this->data['show_image']) && $this->data['show_image'] != $this->service->show_image)) {
             $this->updatedData['show_image'] = $this->data['show_image'];
         }
+        if ((isset($this->data['shape']) && $this->data['shape'] != $this->service->shape)) {
+            $this->updatedData['shape'] = $this->data['shape'];
+        }
+        if ((isset($this->data['color']) && $this->data['color'] != $this->service->color)) {
+            $this->updatedData['color'] = $this->data['color'];
+        }
+
 
 
     }

@@ -1,9 +1,12 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\Member;
+use App\Models\Partner;
 use App\Models\PushSubscription;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Notification\NotificationCreated;
 use Throwable;
 
 class PushSubscriptionController extends Controller
@@ -16,7 +19,7 @@ class PushSubscriptionController extends Controller
     {
         try {
             $this->validate($request, [
-                'subscriber_type' => 'required|string|in:customer', 'device' => 'required|string', 'subscriber_id' => 'numeric'
+                'subscriber_type' => 'required|string|in:customer,partner,member', 'device' => 'required|string', 'subscriber_id' => 'numeric'
             ]);
             $model_name = "App\\Models\\" . ucwords($request->subscriber_type);
             $push_sub = null;
@@ -40,5 +43,29 @@ class PushSubscriptionController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function send()
+    {
+        event(new NotificationCreated([
+            'notifiable_id' => 17,
+            'notifiable_type' => "member",
+            'event_id' => 314,
+            'event_type' => "bid",
+            "title" => "Test notification",
+            'message' => "Test notification",
+        ], 233, "App\Models\Partner"));
+    }
+
+    public function sendV2()
+    {
+        $partner = Partner::find(277);
+        notify($partner)->send([
+            'event_id' => 321,
+            'event_type' => "procurement",
+            "title" => "Test notification",
+            'link' => "https://partners.dev-sheba.xyz/star-auto-power/procurements/321/summary"
+        ]);
+        print_r('DONE');
     }
 }
