@@ -77,6 +77,18 @@
         'italic' => $rootDir . '/lib/fonts/DejaVuSerif-Italic',
         'normal' => $rootDir . '/lib/fonts/DejaVuSerif',
     ),
+    'material icons' => array(
+        'normal' => $fontDir . '/a83785ccbfc5713b63b97bbf71e6fa23',
+    ),
+    'siyamrupali' => array(
+        'normal' => $fontDir . '/Siyamrupali',
+        'bold' => $fontDir . '/Siyamrupali',
+        'italic' => $fontDir . '/Siyamrupali',
+        'bold_italic' => $fontDir . '/Siyamrupali',
+    ),
+    'mukti' => array(
+        'normal' => $fontDir . '/de6864b7c244ef5dd14002c2a4b0809e',
+    ),
     'lato' => array(
         'normal' => $fontDir . '/Lato-Regular',
         'bold' => $fontDir . '/Lato-Bold',
