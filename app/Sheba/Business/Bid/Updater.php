@@ -130,14 +130,14 @@ class Updater
 
     private function sendVendorParticipatedNotification()
     {
-        $link = config('sheba.business_url') . '/dashboard/procurement/' . $this->bid->procurement_id . '/quotation?id=' . $this->bid->bidder_id;
+        $link = config('sheba.business_url') . '/dashboard/procurement/' . $this->bid->procurement_id . '/quotation?id=' . $this->bid->id;
         $message = $this->bid->bidder->name . ' participated on your procurement #' . $this->bid->procurement->id;
         $this->notify($message, $link);
     }
 
     private function sendBidRejectedNotification()
     {
-        $link = config('sheba.business_url') . '/dashboard/procurement/' . $this->bid->procurement_id . '/quotation?id=' . $this->bid->bidder_id;
+        $link = config('sheba.business_url') . '/dashboard/procurement/' . $this->bid->procurement_id . '/quotation?id=' . $this->bid->id;
         $message = $this->bid->bidder->name . ' rejected your hiring request #' . $this->bid->id;
         $this->notify($message, $link);
     }
