@@ -258,7 +258,6 @@ class BidController extends Controller
 
     public function downloadPdf($business, $bid, Request $request)
     {
-        try {
             /** @var Bid $bid */
             $bid = $this->repo->find((int)$bid);
             $bid->load(['items' => function ($q) {
@@ -291,15 +290,10 @@ class BidController extends Controller
                 'technical_evaluation' => $technical_evaluation ? $technical_evaluation->fields ? $technical_evaluation->fields->toArray() : null : null,
                 'company_evaluation' => $company_evaluation ? $company_evaluation->fields ? $company_evaluation->fields->toArray() : null : null,
             ];
-
+       /* dd($bid_details);*/
             return App::make('dompdf.wrapper')
                 ->loadView('pdfs.quotation_details', compact('bid_details'))
                 ->download("quotation_details.pdf");
 
-        } catch (\Throwable $e) {
-            dd($e);
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
     }
 }

@@ -50,8 +50,10 @@ class CustomHandler extends DingoHandler
      */
     public function render($request, Exception $e)
     {
+        dd($e);
         if($handler = HandlerFactory::get($request, $e)) return $handler->render();
 
         return parent::render($request, $e);
     }
+
 }
