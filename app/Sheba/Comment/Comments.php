@@ -87,7 +87,7 @@ class Comments
                     'type' => 'warning',
                     'event_type' => get_class($this->commentableModel),
                     'event_id' => $this->commentableModel->id,
-                    'link' => config('sheba.partners_url') . "/" . $partner->sub_domain . "/procurements/" . $this->commentableModel->id
+                    'link' => config('sheba.partners_url') . "/" . $partner->sub_domain . "/rfq-orders/" . $this->commentableModel->id
                 ]);
             } elseif ($this->commentatorModel instanceof Partner) {
                 foreach ($this->commentableModel->owner->superAdmins as $member) {
@@ -110,7 +110,7 @@ class Comments
                     'type' => 'warning',
                     'event_type' => get_class($this->commentableModel),
                     'event_id' => $this->commentableModel->id,
-                    'link' => config('sheba.partners_url') . "/" . $partner->sub_domain . "/bids/" . $this->commentableModel->id
+                    'link' => config('sheba.partners_url') . "/" . $partner->sub_domain . "/procurements/" . $bid->procurement_id
                 ]);
             } elseif ($this->commentatorModel instanceof Partner) {
                 foreach ($bid->procurement->owner->superAdmins as $member) {
