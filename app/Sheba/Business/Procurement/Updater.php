@@ -49,6 +49,7 @@ class Updater
                 $this->walletTransactionHandler->setModel($procurement->getActiveBid()->bidder)->setAmount($procurement->due)->setSource(TransactionSources::SERVICE_PURCHASE)
                     ->setType('credit')->setLog("Credited for RFQ ID:" . $procurement->id)->dispatch();
                 $creator->setProcurement($procurement)->setAmount($procurement->due)->setPaymentMethod('cod')->setPaymentType('Credit');
+                $this->notify();
             }
         } catch (QueryException $e) {
             throw  $e;
@@ -56,9 +57,10 @@ class Updater
         return $procurement;
     }
 
-    private function notify($message)
+    private function notify()
     {
         $bid = $this->procurement->getActiveBid();
+        $message = $bid->bidder->name . " has served your order";
         $link = config('sheba.business_url') . '/dashboard/procurement/orders/' . $this->procurement->id . '?bid=' . $bid->id;
         foreach ($this->procurement->owner->superAdmins as $member) {
             notify()->member($member)->send([
@@ -68,15 +70,6 @@ class Updater
                 'event_id' => $bid->id,
                 'link' => $link
             ]);
-            event(new NotificationCreated([
-                'notifiable_id' => $member->id,
-                'notifiable_type' => "member",
-                'event_id' => $bid->id,
-                'event_type' => "bid",
-                "title" => $message,
-                'message' => $message,
-                'link' => $link
-            ], $bid->bidder_id, get_class($bid->bidder)));
         }
     }
 }
