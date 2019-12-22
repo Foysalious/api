@@ -193,6 +193,7 @@ class BusinessesController extends Controller
                     "title" => $notification->title,
                     "is_seen" => $notification->is_seen,
                     "event_type" => $notification->getType(),
+                    "link" => $notification->link,
                     "event_id" => $notification->event_id,
                     "created_at" => $notification->created_at->format('M d h:ia')
                 ]);
