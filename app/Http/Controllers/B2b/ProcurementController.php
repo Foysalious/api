@@ -375,7 +375,6 @@ class ProcurementController extends Controller
     public function downloadPdf(Request $request)
     {
         $procurement = Procurement::find($request->procurement);
-
         $price_quotation = $procurement->items->where('type', 'price_quotation')->first();
         $technical_evaluation = $procurement->items->where('type', 'technical_evaluation')->first();
         $company_evaluation = $procurement->items->where('type', 'company_evaluation')->first();
@@ -394,15 +393,15 @@ class ProcurementController extends Controller
             'payment_options' => $procurement->payment_options,
             'created_at' => Carbon::parse($procurement->created_at)->format('d/m/y'),
             'price_quotation' => $price_quotation ? $price_quotation->fields ? $price_quotation->fields->toArray() : null : null,
-            'technical_evaluation' => $technical_evaluation ? $technical_evaluation->fields ? $technical_evaluation->fields->toArray() : null : null,
-            'company_evaluation' => $company_evaluation ? $company_evaluation->fields ? $company_evaluation->fields->toArray() : null : null,
+            'technical_evaluation' => $technical_evaluation ? $technical_evaluation->fields ? $technical_evaluation->fields : null : null,
+            'company_evaluation' => $company_evaluation ? $company_evaluation->fields ? $company_evaluation->fields : null : null,
         ];
 
         // dd($procurement_details);
-        return view('pdfs.procurement_details', compact('procurement_details'));
+        // return view('pdfs.procurement_details', compact('procurement_details'));
 
         return App::make('dompdf.wrapper')
             ->loadView('pdfs.procurement_details', compact('procurement_details'))
-            ->download("procurement_details.pdf");
+                ->download("procurement_details.pdf");
     }
 }
