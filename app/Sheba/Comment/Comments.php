@@ -96,7 +96,7 @@ class Comments
                         'type' => 'warning',
                         'event_type' => get_class($this->commentableModel),
                         'event_id' => $this->commentableModel->id,
-                        'link' => config('sheba.business_url') . 'dashboard/procurement/orders/' . $this->commentableModel->id . '?bid=' . $bid->id
+                        'link' => config('sheba.business_url') . '/dashboard/procurement/orders/' . $this->commentableModel->id . '?bid=' . $bid->id
                     ]);
                 }
             }
