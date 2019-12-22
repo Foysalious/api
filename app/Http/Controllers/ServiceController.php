@@ -114,7 +114,8 @@ class ServiceController extends Controller
                             'name' => $answer,
                             'indexes' => array($index),
                             'min_price' => $service_min_price,
-                            'max_price' => $service_max_price
+                            'max_price' => $service_max_price,
+                            'price'     => 102
                         );
                         array_push($total_breakdown, $breakdown);
                     }
@@ -170,6 +171,18 @@ class ServiceController extends Controller
             array_add($service, 'master_category_name', $category->parent->name);
             array_add($service, 'service_breakdown', $service_breakdown);
             array_add($service, 'options', $options);
+            array_add($service, 'discount', [
+                'value' => (double)10.5,
+                'is_percentage' => 1,
+                'cap' => (double)200
+            ]);
+            array_add($service, 'delivery_charge', 50);
+            array_add($service, 'delivery_discount', [
+                'value' => (double)50,
+                'is_percentage' => 1,
+                'cap' => (double)30,
+                'min_order_amount' => (double)200
+            ]);
 
             removeRelationsAndFields($service);
             if (config('sheba.online_payment_discount_percentage') > 0) {
@@ -288,12 +301,14 @@ class ServiceController extends Controller
                         'indexes' => array_merge(array($array_index), $t['indexes']),
                         'min_price' => $t['min_price'],
                         'max_price' => $t['max_price'],
+                        'price' => 100
                     ) :
                     array(
                         'name' => $v . " - " . $t,
                         'indexes' => array($array_index, $index),
                         'min_price' => $min_price,
-                        'max_price' => $max_price
+                        'max_price' => $max_price,
+                        'price' => 105
                     );
             }
         }
