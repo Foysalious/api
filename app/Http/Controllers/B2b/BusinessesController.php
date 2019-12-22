@@ -174,7 +174,14 @@ class BusinessesController extends Controller
             $manager_member = $request->manager_member;
             $all_notifications = Notification::where('notifiable_type', 'App\Models\Member')
                 ->where('notifiable_id', (int)$manager_member->id)
-                ->whereIn('event_type', ['App\Models\Driver', 'App\Models\Vehicle', 'Sheba\Dal\Support\Model', 'App\Models\BusinessTripRequest'])
+                ->whereIn('event_type', [
+                    'App\Models\Procurement',
+                    'App\Models\Bid',
+                    'App\Models\Driver',
+                    'App\Models\Vehicle',
+                    'Sheba\Dal\Support\Model',
+                    'App\Models\BusinessTripRequest'
+                ])
                 ->orderBy('id', 'DESC');
 
             $notifications = [];
