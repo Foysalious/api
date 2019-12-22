@@ -25,6 +25,11 @@ class Route
                     $api->get('secondaries', 'Category\CategoryController@getSecondaries');
                 });
             });
+            $api->group(['prefix' => 'services'], function ($api) {
+                $api->group(['prefix' => '{service}'], function ($api) {
+                    $api->get('/', 'Service\ServiceController@show');
+                });
+            });
             $api->group(['prefix' => 'service-requests'], function ($api) {
                 $api->post('/', 'ServiceRequest\ServiceRequestController@store');
             });
