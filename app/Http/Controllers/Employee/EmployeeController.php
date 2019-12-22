@@ -45,7 +45,8 @@ class EmployeeController extends Controller
         if($request->has('name')) $data['name'] = $request->name;
         if($request->has('date_of_birth')) $data['dob'] = $request->date_of_birth;
         if($request->hasFile('profile_picture')) {
-            $data['pro_pic'] = $profile_repo->saveProPic($request->profile_picture, $data['name'] ?: $member->profile->name);
+            $name = array_key_exists('name', $data) ? $data['name'] : $member->profile->name;
+            $data['pro_pic'] = $profile_repo->saveProPic($request->profile_picture, $name);
         }
         if($request->has('gender')) $data['gender'] = $request->gender;
         if($request->has('address')) $data['address'] = $request->address;
