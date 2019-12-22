@@ -41,7 +41,7 @@ class StatusChanger
             return;
         }
         $this->repo->update($this->partnerOrderRequest, ['status' => Statuses::ACCEPTED]);
-        $this->partnerOrderRequest->partner_order->update(['partner_id' => $request->partner->id]);
+        $this->partnerOrderRequest->partnerOrder->update(['partner_id' => $request->partner->id]);
         $this->jobStatusChanger->acceptJobAndAssignResource($request);
         if ($this->jobStatusChanger->hasError()) {
             $this->setError($this->jobStatusChanger->getErrorCode(), $this->getErrorMessage());
