@@ -130,20 +130,23 @@ class Updater
 
     private function sendVendorParticipatedNotification()
     {
+        $link = config('sheba.business_url') . '/dashboard/procurement/' . $this->bid->procurement_id . '/quotation?id=' . $this->bid->bidder_id;
         $message = $this->bid->bidder->name . ' participated on your procurement #' . $this->bid->procurement->id;
-        $this->notify($message);
+        $this->notify($message, $link);
     }
 
     private function sendBidRejectedNotification()
     {
+        $link = config('sheba.business_url') . '/dashboard/procurement/' . $this->bid->procurement_id . '/quotation?id=' . $this->bid->bidder_id;
         $message = $this->bid->bidder->name . ' rejected your hiring request #' . $this->bid->id;
-        $this->notify($message);
+        $this->notify($message, $link);
     }
 
     private function sendBidAcceptedNotification()
     {
         $message = $this->bid->bidder->name . ' accepted your hiring request #' . $this->bid->id;
-        $this->notify($message);
+        $link = config('sheba.business_url') . '/dashboard/procurement/orders/' . $this->bid->procurement_id . '?bid=' . $this->bid->id;
+        $this->notify($message, $link);
     }
 
     public function hire()
@@ -224,9 +227,8 @@ class Updater
         ]);
     }
 
-    private function notify($message)
+    private function notify($message, $link)
     {
-        $link = config('sheba.business_url') . '/dashboard/procurement/' . $this->bid->procurement_id . '/quotation?id=' . $this->bid->bidder_id;
         foreach ($this->bid->procurement->owner->superAdmins as $member) {
             notify()->member($member)->send([
                 'title' => $message,
