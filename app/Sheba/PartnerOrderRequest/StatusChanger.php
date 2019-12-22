@@ -1,6 +1,7 @@
 <?php namespace Sheba\PartnerOrderRequest;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequest;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequestRepositoryInterface;
 use Sheba\Dal\PartnerOrderRequest\Statuses;
@@ -48,13 +49,15 @@ class StatusChanger
             return;
         }
 
-        $this->repo->update($this->partnerOrderRequest, ['status' => Statuses::ACCEPTED]);
-        $this->partnerOrderRequest->partnerOrder->update(['partner_id' => $request->partner->id]);
-        $this->jobStatusChanger->acceptJobAndAssignResource($request);
+        DB::transaction(function () use ($request) {
+            $this->repo->update($this->partnerOrderRequest, ['status' => Statuses::ACCEPTED]);
+            $this->partnerOrderRequest->partnerOrder->update(['partner_id' => $request->partner->id]);
+            $this->jobStatusChanger->acceptJobAndAssignResource($request);
 
-        $this->repo->updatePendingRequestsOfOrder($this->partnerOrderRequest->partner_order, [
-            'status' => Statuses::MISSED
-        ]);
+            $this->repo->updatePendingRequestsOfOrder($this->partnerOrderRequest->partner_order, [
+                'status' => Statuses::MISSED
+            ]);
+        });
     }
 
     public function decline(Request $request)
