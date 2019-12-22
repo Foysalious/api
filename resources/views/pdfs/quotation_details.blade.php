@@ -7,6 +7,13 @@
     <meta name="author" content="Dennis Ji">
     <meta name="keyword" content="">
     <style>
+        @media print {
+            table { page-break-after:auto }
+            tr    { page-break-inside:avoid; page-break-after:auto }
+            /*td    { page-break-inside:avoid; !*page-break-after:auto*! }*/
+            /*thead { display: table-header-group}
+            tfoot { display: table-footer-group}*/
+        }
         ​@font-face {
             font-family: Lato;
         }
@@ -71,6 +78,17 @@
             left: 0;
             border: solid 0px #d2d8e6;
         }
+        @page {
+            margin-top: 250px;
+        }
+        .header{
+            top: 0;
+            left: 0;
+            position: fixed;
+            width: 100%;
+            margin-top: -160px;
+            background-color: #f8f8fb;
+        }
 
         ​/*new styles end*/
     </style>
@@ -89,8 +107,8 @@
     </tr>
 </table>
 
-{{--1st table--}}
-<table  class="tableHeadRegular" style="width: 100%;  margin-bottom: 20px; background-color: #f8f8fb; padding: 0px" >
+{{--header--}}
+<table  class="tableHeadRegular header" style="width: 100%;  margin-bottom: 20px; background-color: #f8f8fb; padding: 0px" >
     <tr style="border: 0px">
         <td class="table1th" style="padding: 20px 20px 4px 20px; font-family: Lato">
             ID
@@ -126,7 +144,7 @@
                         <table style="border: solid 0px #d2d8e6;">
                             <tr>
                                 <td rowspan="2">
-                                    <img src="{{$bid_details['vendor']['logo']}}" alt="sheba logo" style="width: 40px; height: 40px; border-radius: 5px;border: solid 1px rgba(0, 0, 0, 0.05);">
+                                    <img src="{{$bid_details['vendor']['logo']}}" alt="company logo" style="width: 40px; height: 40px; border-radius: 5px;border: solid 1px rgba(0, 0, 0, 0.05);">
                                 </td>
                                 <td style="padding: 6px 8px 8px 10px">{{$bid_details['vendor']['name']}}</td>
                             </tr>
@@ -174,6 +192,8 @@
 </table>
 
 {{--3rd table--}}
+
+@if(count($bid_details['price_quotation']))
 <table  class="tableHead" style="width: 100%; table-spacing: 0px; margin-bottom: 20px">
     <tr>
         <th class="tableHeadRegular"  colspan="5">
@@ -217,9 +237,11 @@
     </tr>
         @endforeach
 </table>
+@endif
 
 {{--4th table--}}
-<table  class="tableHead" style="width: 100%;  margin-bottom: 20px;border: solid 1px #d2d8e6;border-collapse: collapse;page-break-after: always;">
+@if(count($bid_details['technical_evaluation']))
+<table  class="tableHead" style="width: 100%;  margin-bottom: 20px;border: solid 1px #d2d8e6;border-collapse: collapse;">
     <tr>
         <th class="tableHeadRegular">
             Technical Evaluation
@@ -248,11 +270,12 @@
         </td>
     </tr>
 </table>
+@endif
 
 {{--2nd PAGE--}}
 
 {{--1st table--}}
-<table  class="tableHeadRegular" style="width: 100%;  margin-bottom: 20px; background-color: #f8f8fb; padding: 0px" >
+{{--<table  class="tableHeadRegular" style="width: 100%;  margin-bottom: 20px; background-color: #f8f8fb; padding: 0px" >
     <tr style="border: 0px">
         <td class="table1th" style="padding: 20px 20px 4px 20px">
             ID
@@ -319,8 +342,9 @@
             </table>
         </td>
     </tr>
-</table>
+</table>--}}
 {{--2nd table--}}
+@if(count($bid_details['company_evaluation']))
 <table  class="tableHead" style="width: 100%;  margin-bottom: 20px;border: solid 1px #d2d8e6;border-collapse: collapse">
     <tr>
         <th class="tableHeadRegular">
@@ -350,6 +374,8 @@
         </td>
     </tr>
 </table>
+@endif
+
 <script type="text/php">
         if (isset($pdf))
         {
@@ -361,7 +387,5 @@
             $pdf->page_text($x, $y, $text, $font, $size);
         }
     </script>
-
-
 </body>
 </html>
