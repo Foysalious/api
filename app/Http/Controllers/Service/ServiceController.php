@@ -87,6 +87,8 @@ class ServiceController extends Controller
             'cross_sale' => $cross_sale,
             'delivery_discount' => $delivery_discount,
             'delivery_charge' => $delivery_charge,
+            'name' => $category->name,
+            'slug' => $category->getSlug()
         ];
         $info = array_merge($info, $service->toArray());
         $info['questions'] = null;
