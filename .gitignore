@@ -1,7 +1,8 @@
 /vendor
 .env
 .idea/
-/storage
+storage/*
+!storage/fonts/
 /node_modules
 npm-debug.log
 build/config.gypi

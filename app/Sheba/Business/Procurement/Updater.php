@@ -4,9 +4,9 @@ use App\Models\Procurement;
 use Illuminate\Database\QueryException;
 use Sheba\Business\ProcurementStatusChangeLog\Creator;
 use Sheba\FraudDetection\TransactionSources;
-use Sheba\Notification\NotificationCreated;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
+use Sheba\Business\ProcurementPayment\Creator as PaymentCreator;
 
 class Updater
 {
@@ -16,13 +16,15 @@ class Updater
     private $statusLogCreator;
     private $procurementRepository;
     private $walletTransactionHandler;
+    private $paymentCreator;
 
 
-    public function __construct(ProcurementRepositoryInterface $procurement_repository, Creator $creator, WalletTransactionHandler $wallet_transaction_handler)
+    public function __construct(ProcurementRepositoryInterface $procurement_repository, Creator $creator, WalletTransactionHandler $wallet_transaction_handler, PaymentCreator $payment_creator)
     {
         $this->procurementRepository = $procurement_repository;
         $this->statusLogCreator = $creator;
         $this->walletTransactionHandler = $wallet_transaction_handler;
+        $this->paymentCreator = $payment_creator;
     }
 
     public function setProcurement(Procurement $procurement)
@@ -41,20 +43,19 @@ class Updater
     {
         try {
             $previous_status = $this->procurement->status;
-            $procurement = $this->procurementRepository->update($this->procurement, ['status' => $this->status]);
+            $this->procurementRepository->update($this->procurement, ['status' => $this->status]);
             $this->statusLogCreator->setProcurement($this->procurement)->setPreviousStatus($previous_status)->setStatus($this->status)->create();
-            $creator = app(\Sheba\Business\ProcurementPayment\Creator::class);
-            $procurement->calculate();
+            $this->procurement->calculate();
             if ($this->status == 'served') {
-                $this->walletTransactionHandler->setModel($procurement->getActiveBid()->bidder)->setAmount($procurement->due)->setSource(TransactionSources::SERVICE_PURCHASE)
-                    ->setType('credit')->setLog("Credited for RFQ ID:" . $procurement->id)->dispatch();
-                $creator->setProcurement($procurement)->setAmount($procurement->due)->setPaymentMethod('cod')->setPaymentType('Credit');
+                $this->walletTransactionHandler->setModel($this->procurement->getActiveBid()->bidder)->setAmount($this->procurement->due)->setSource(TransactionSources::SERVICE_PURCHASE)
+                    ->setType('credit')->setLog("Credited for RFQ ID:" . $this->procurement->id)->dispatch();
+                $this->paymentCreator->setProcurement($this->procurement)->setAmount($this->procurement->due)->setPaymentMethod('cod')->setPaymentType('Credit')->create();
                 $this->notify();
             }
         } catch (QueryException $e) {
             throw  $e;
         }
-        return $procurement;
+        return $this->procurement;
     }
 
     private function notify()
