@@ -254,7 +254,7 @@ class TripRequestController extends Controller
                     ->setEmailTemplate('emails.trip_request_accepted_notifications')
                     ->setEmailTitle($trip_requests->getRequesterIdentity(false, true) . ' has accepted trip request.')
                     ->setVehicle($request->vehicle_id)
-                    ->setDriver($request->driver)
+                    ->setDriver($request->driver_id)
                     ->notifications(true, 'TripAccepted', false, true);
 
                 $business_trip = $this->storeTrip($business_trip_request);
@@ -281,6 +281,7 @@ class TripRequestController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             DBTransaction::rollback();
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
