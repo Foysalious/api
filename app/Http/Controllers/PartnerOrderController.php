@@ -98,7 +98,13 @@ class PartnerOrderController extends Controller
                 return api_response($request, $total_new_orders, 200, ['total_new_orders' => $total_new_orders]);
             }
             $orders = $this->partnerOrderRepository->getNewOrdersWithJobs($request);
-            return count($orders) > 0 ? api_response($request, $orders, 200, ['orders' => $orders]) : api_response($request, null, 404);
+            $category_ids = array_map('intval', explode(',', env('RENT_CAR_IDS')));
+            $final = [];
+            foreach ($orders as $order) {
+                if (in_array($order['category_id'], $category_ids)) continue;
+                array_push($final, $order);
+            }
+            return count($final) > 0 ? api_response($request, $final, 200, ['orders' => $final]) : api_response($request, null, 404);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
