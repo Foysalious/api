@@ -40,14 +40,17 @@ class StatusChanger
             $this->setError(403, "Someone already did it.");
             return;
         }
-        $this->repo->update($this->partnerOrderRequest, ['status' => Statuses::ACCEPTED]);
-        $this->partnerOrderRequest->partnerOrder->update(['partner_id' => $request->partner->id]);
+
         $request->merge(['job' => $this->partnerOrderRequest->partnerOrder->lastJob()]);
-        $this->jobStatusChanger->acceptJobAndAssignResource($request);
+        $this->jobStatusChanger->checkForError($request);
         if ($this->jobStatusChanger->hasError()) {
-            $this->setError($this->jobStatusChanger->getErrorCode(), $this->getErrorMessage());
+            $this->setError($this->jobStatusChanger->getErrorCode(), $this->jobStatusChanger->getErrorMessage());
             return;
         }
+
+        $this->repo->update($this->partnerOrderRequest, ['status' => Statuses::ACCEPTED]);
+        $this->partnerOrderRequest->partnerOrder->update(['partner_id' => $request->partner->id]);
+        $this->jobStatusChanger->acceptJobAndAssignResource($request);
 
         $this->repo->updatePendingRequestsOfOrder($this->partnerOrderRequest->partner_order, [
             'status' => Statuses::MISSED
