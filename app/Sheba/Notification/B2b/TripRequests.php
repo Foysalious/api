@@ -143,16 +143,6 @@ class TripRequests
             'event_id' => $this->businessTripRequest->id,
             'link' => config('sheba.business_url') . "/dashboard/fleet-management/requests/{$this->businessTripRequest->id}/details"
         ]);
-        #For Push Notifications
-        /*event(new NotificationCreated([
-            'notifiable_id' => $this->member->id,
-            'notifiable_type' => "member",
-            'event_id' => $this->businessTripRequest->id,
-            'event_type' => get_class($this->businessTripRequest),
-            "title" => $this->notificationTitle,
-            'link' => config('sheba.business_url') . "/dashboard/fleet-management/requests/{$this->businessTripRequest->id}/details"
-        ], $this->notificationSender->id, get_class($this->notificationSender)));*/
-
         if ($mail && $for === 'TripAccepted') {
             $this->mailForTripCreateAccepted();
         }
@@ -167,16 +157,6 @@ class TripRequests
                 'event_id' => $this->businessTripRequest->id,
                 'link' => config('sheba.business_url') . "/dashboard/fleet-management/requests/{$this->businessTripRequest->id}/details"
             ]);
-            #For Push Notifications
-            /*event(new NotificationCreated([
-                'notifiable_id' => $admin->id,
-                'notifiable_type' => "member",
-                'event_id' => $this->businessTripRequest->id,
-                'event_type' => get_class($this->businessTripRequest),
-                "title" => $this->notificationTitle,
-                'link' => config('sheba.business_url') . "/dashboard/fleet-management/requests/{$this->businessTripRequest->id}/details"
-            ], $this->notificationSender->id, get_class($this->notificationSender)));*/
-
             if ($mail && $for === 'TripCreate') {
                 $this->mailForTripCreate($admin);
             }
@@ -186,9 +166,7 @@ class TripRequests
     private function mailForTripCreate($admin)
     {
         $link = config('sheba.b2b_url') . "/dashboard/fleet-management/requests/" . $this->businessTripRequest->id . "/details";
-        #$email = $admin->profile->email;
-        #$email = 'saiful.sheba@gmail.com';
-        $email = 'fahiman2.sheba@gmail.com';
+        $email = $admin->profile->email;
         $trip_requester = $this->getRequesterIdentity();
         $trip_pickup_address = $this->businessTripRequest->pickup_address;
         $trip_dropoff_address = $this->businessTripRequest->dropoff_address;
@@ -209,9 +187,7 @@ class TripRequests
     private function mailForTripCreateAccepted()
     {
         $link = config('sheba.b2b_url') . "/dashboard/fleet-management/requests/" . $this->businessTripRequest->id . "/details";
-        #$email = $this->>member->profile->email;#For Trip Request Accepted
-        #$email = 'saiful.sheba@gmail.com';
-        $email = 'fahiman2.sheba@gmail.com';
+        $email = $this->member->profile->email;
         $trip_request_start_date = Carbon::parse($this->businessTripRequest->start_date)->format('jS F, Y g:i A');
         $vehicle_number = $this->vehicle ? $this->vehicle->registrationInformations->license_number : 'n/a';
         $driver_name = $this->driver ? $this->getDriverName() : 'n/a';
