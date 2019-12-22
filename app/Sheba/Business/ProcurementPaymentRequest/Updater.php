@@ -127,14 +127,5 @@ class Updater
             'event_id' => $this->paymentRequest->id,
             'link' => $link
         ]);
-        event(new NotificationCreated([
-            'notifiable_id' => $this->bid->bidder->id,
-            'notifiable_type' => "partner",
-            'event_id' => $this->paymentRequest->id,
-            'event_type' => "procurement_payment_request",
-            "title" => $message,
-            "message" => $message,
-            'link' => $link
-        ], $this->paymentRequest->procurement->owner->id, get_class($this->paymentRequest->procurement->owner)));
     }
 }
