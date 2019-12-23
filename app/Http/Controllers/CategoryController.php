@@ -1,7 +1,6 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\Category;
-use App\Models\CategoryGroup;
 use App\Models\CategoryGroupCategory;
 use App\Models\CategoryPartner;
 use App\Models\HyperLocal;
@@ -10,7 +9,6 @@ use App\Models\LocationService;
 use App\Models\Partner;
 use App\Models\ReviewQuestionAnswer;
 use App\Models\Service;
-use App\Models\ServiceGroupService;
 use App\Models\ServiceSubscription;
 use App\Repositories\CategoryRepository;
 use App\Repositories\ServiceRepository;
@@ -24,16 +22,16 @@ use Illuminate\Validation\ValidationException;
 use Sheba\CategoryServiceGroup;
 use Sheba\Checkout\DeliveryCharge;
 use Sheba\Dal\Discount\Discount;
-use Sheba\Dal\Discount\DiscountRules;
 use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Dal\ServiceDiscount\Model as ServiceDiscount;
+use Sheba\Dal\UniversalSlug\Model as UniversalSlugModel;
+use Sheba\Dal\UniversalSlug\SluggableType;
 use Sheba\JobDiscount\JobDiscountCheckingParams;
 use Sheba\JobDiscount\JobDiscountHandler;
 use Sheba\Location\Coords;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\LocationService\UpsellCalculation;
 use Sheba\ModificationFields;
-use Sheba\OrderPlace\DeliveryChargeCalculator;
 use Throwable;
 
 class CategoryController extends Controller
@@ -160,7 +158,9 @@ class CategoryController extends Controller
     public function getAllCategories(Request $request)
     {
         try {
-            $this->validate($request, ['lat' => 'required|numeric', 'lng' => 'required|numeric', 'with' => 'sometimes|string|in:children']);
+            $this->validate($request, [
+                'lat' => 'required|numeric', 'lng' => 'required|numeric', 'with' => 'sometimes|string|in:children'
+            ]);
             $with = $request->with;
             $hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->first();
             if (!$hyper_location) return api_response($request, null, 404);
@@ -202,15 +202,21 @@ class CategoryController extends Controller
 
             $categories = $categories->get();
 
+            $secondary_categories_slug = UniversalSlugModel::where('sluggable_type', SluggableType::SECONDARY_CATEGORY)->pluck('slug', 'sluggable_id')->toArray();
             foreach ($categories as &$category) {
+                /** @var Category $category */
+                $category->slug = $category->getSlug();
                 array_forget($category, 'parent_id');
                 foreach ($category->children as &$child) {
+                    /** @var Category $child */
+                    $child->slug = array_key_exists($child->id, $secondary_categories_slug) ? $secondary_categories_slug[$child->id] : null;
                     array_forget($child, 'parent_id');
                 }
             }
 
             foreach ($categories as &$category) {
-                if (is_null($category->children)) app('sentry')->captureException(new Exception('Category null on ' . $category->id));
+                if (is_null($category->children))
+                    app('sentry')->captureException(new Exception('Category null on ' . $category->id));
             }
             return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $categories]) : api_response($request, null, 404);
         } catch (ValidationException $e) {
@@ -367,6 +373,8 @@ class CategoryController extends Controller
             } else {
                 $category = $cat->published()->first();
             }
+            $category_slug = $category->getSlug();
+            $cross_sale_service = $category->crossSaleService;
 
             if ($category != null) {
                 list($offset, $limit) = calculatePagination($request);
@@ -491,6 +499,13 @@ class CategoryController extends Controller
                     }
                     $category['services'] = $services;
                     $category['subscriptions'] = $subscriptions;
+                    $category['cross_sale'] = $cross_sale_service ? [
+                        'title'         => $cross_sale_service->title,
+                        'description'   => $cross_sale_service->description,
+                        'icon'          => $cross_sale_service->icon,
+                        'category_id'   => $cross_sale_service->category_id,
+                        'service_id'    => $cross_sale_service->service_id
+                    ] : null;
 
                     $category['delivery_charge'] = $delivery_charge->setCategory($service->category)->get();
                     $discount_checking_params = (new JobDiscountCheckingParams())->setDiscountableAmount($category['delivery_charge']);
@@ -503,6 +518,7 @@ class CategoryController extends Controller
                         'cap' => (double)$delivery_discount->cap,
                         'min_order_amount' => (double)$delivery_discount->rules->getMinOrderAmount()
                     ] : null;
+                    $category['slug'] = $category_slug;
 
                     if ($subscriptions->count()) {
                         $category['subscription_faq'] = $subscription_faq;
@@ -533,9 +549,11 @@ class CategoryController extends Controller
         foreach ($prices as $key => $price) {
             $option_array = explode(',', $key);
             $options->push([
-                'option'        => collect($option_array)->map(function ($key) { return (int)$key;}),
-                'price'         => $price_calculation->setOption($option_array)->getUnitPrice(),
-                'upsell_price'  => $upsell_calculation->setOption($option_array)->getAllUpsellWithMinMaxQuantity()
+                'option' => collect($option_array)->map(function ($key) {
+                    return (int)$key;
+                }),
+                'price' => $price_calculation->setOption($option_array)->getUnitPrice(),
+                'upsell_price' => $upsell_calculation->setOption($option_array)->getAllUpsellWithMinMaxQuantity()
             ]);
         }
         return $options;
@@ -622,11 +640,12 @@ class CategoryController extends Controller
             list($offset, $limit) = calculatePagination($request);
             $category = Category::find($category);
             if (!$category) return api_response($request, null, 404);
-            $reviews = ReviewQuestionAnswer::select('category_id', 'customer_id', 'partner_id', 'reviews.rating', 'review_title')
-                ->selectRaw("partners.name as partner_name,profiles.name as customer_name,rate_answer_text as review,review_id as id,pro_pic as customer_picture")
+            $reviews = ReviewQuestionAnswer::select('reviews.category_id', 'customer_id', 'partner_id', 'reviews.rating', 'review_title')
+                ->selectRaw("partners.name as partner_name,profiles.name as customer_name,rate_answer_text as review,review_id as id,pro_pic as customer_picture,jobs.created_at as order_created_at")
                 ->join('reviews', 'reviews.id', '=', 'review_question_answer.review_id')
                 ->join('partners', 'partners.id', '=', 'reviews.partner_id')
                 ->join('customers', 'customers.id', '=', 'reviews.customer_id')
+                ->join('jobs', 'jobs.id', '=', 'reviews.job_id')
                 ->join('profiles', 'profiles.id', '=', 'customers.profile_id')
                 ->where('review_type', 'like', '%' . '\\Review')
                 ->where('review_question_answer.rate_answer_text', '<>', '')
@@ -637,27 +656,18 @@ class CategoryController extends Controller
                 ->groupBy('customer_id')
                 ->get();
             $group_rating = [
-                [
-                    "value" => 1,
-                    "count" => 10
-                ],
-                [
-                    "value" => 2,
-                    "count" => 2
-                ],
-                [
-                    "value" => 3,
-                    "count" => 15
-                ],
-                [
-                    "value" => 4,
-                    "count" => 150
-                ],
-                [
-                    "value" => 5,
-                    "count" => 500
-                ]];
-            return count($reviews) > 0 ? api_response($request, $reviews, 200, ['reviews' => $reviews, 'group_rating' => $group_rating]) : api_response($request, null, 404);
+                "1" => 10,
+                "2" => 5,
+                "3" => 15,
+                "4" => 150,
+                "5" => 500,
+            ];
+            $info = [
+                'avg_rating' => 4.5,
+                'total_review_count' => 500,
+                'total_rating_count' => 680
+            ];
+            return count($reviews) > 0 ? api_response($request, $reviews, 200, ['reviews' => $reviews, 'group_rating' => $group_rating, 'info' => $info]) : api_response($request, null, 404);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

@@ -20,7 +20,15 @@ class Route
                 $api->post('accountkit', 'AccountKit\AccountKitController@continueWithKit');
             });
             $api->group(['prefix' => 'categories'], function ($api) {
-                $api->get('{category}', 'Category\CategoryController@show');
+                $api->group(['prefix' => '{category}'], function ($api) {
+                    $api->get('/', 'Category\CategoryController@show');
+                    $api->get('secondaries', 'Category\CategoryController@getSecondaries');
+                });
+            });
+            $api->group(['prefix' => 'services'], function ($api) {
+                $api->group(['prefix' => '{service}'], function ($api) {
+                    $api->get('/', 'Service\ServiceController@show');
+                });
             });
             $api->group(['prefix' => 'service-requests'], function ($api) {
                 $api->post('/', 'ServiceRequest\ServiceRequestController@store');

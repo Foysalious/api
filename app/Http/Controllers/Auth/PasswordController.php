@@ -102,7 +102,7 @@ class PasswordController extends Controller
     {
         try {
             $this->validate($request, [
-                'password' => 'required|min:6',
+                'password' => 'required|min:4',
                 'from'     => 'required|string|in:' . implode(',', constants('FROM')),
                 'code'     => 'required'
             ]);
@@ -132,7 +132,7 @@ class PasswordController extends Controller
     public function resetPasswordForBank(Request $request)
     {
         try {
-            $this->validate($request, ['new_password' => 'required']);
+            $this->validate($request, ['new_password' => 'required|min:4']);
             $request->user->profile->update(['password' => bcrypt($request->new_password)]);
             return api_response($request, true, 200);
         } catch (ValidationException $e) {

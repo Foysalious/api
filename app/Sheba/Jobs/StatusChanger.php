@@ -33,11 +33,7 @@ class StatusChanger
         return $this->changedJob;
     }
 
-    /**
-     * @param Request $request
-     * @return void
-     */
-    public function acceptJobAndAssignResource(Request $request)
+    public function checkForError(Request $request)
     {
         $job = $request->job;
         if(!$request->partner->hasThisResource((int)$request->resource_id, ResourceTypes::HANDYMAN)) {
@@ -49,7 +45,18 @@ class StatusChanger
             $this->setError(403, $job->status . " job cannot be accepted.");
             return;
         }
+    }
 
+    /**
+     * @param Request $request
+     * @return void
+     */
+    public function acceptJobAndAssignResource(Request $request)
+    {
+        $this->checkForError($request);
+        if($this->hasError()) return;
+
+        $job = $request->job;
         $this->changeStatus($job, $request, JobStatuses::ACCEPTED);
         $this->changedJob = $this->assignResource($job, $request->resource_id, $request->manager_resource);
     }

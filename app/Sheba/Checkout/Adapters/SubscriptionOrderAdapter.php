@@ -168,6 +168,7 @@ class SubscriptionOrderAdapter
         $job->delivery_charge = $this->deliveryCharge;
         $this->withCreateModificationField($job);
         $job->save();
+
         return $job;
     }
 

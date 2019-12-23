@@ -9,6 +9,7 @@ class Creator
 {
     private $customerDeliveryAddressRepository;
     private $data;
+    private $name;
     private $houseNo;
     private $roadNo;
     private $blockNo;
@@ -70,6 +71,12 @@ class Creator
     public function setGeo(Geo $geo)
     {
         $this->geo = $geo;
+        return $this;
+    }
+
+    public function setName($name)
+    {
+        $this->name = $name;
         return $this;
     }
 

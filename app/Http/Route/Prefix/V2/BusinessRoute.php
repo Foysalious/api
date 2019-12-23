@@ -79,6 +79,8 @@ class BusinessRoute
                     $api->post('/', 'B2b\ProcurementController@store');
                     $api->get('/orders', 'B2b\ProcurementController@procurementOrders');
                     $api->group(['prefix' => '{procurement}'], function ($api) {
+                        $api->get('/', 'B2b\ProcurementController@show');
+                        $api->get('/download', 'B2b\ProcurementController@downloadPdf');
                         $api->group(['prefix' => 'comments'], function ($api) {
                             $api->post('/', 'CommentController@storeComments');
                             $api->get('/', 'CommentController@getComments');
@@ -107,11 +109,11 @@ class BusinessRoute
                         });
                     });
                     $api->get('/', 'B2b\ProcurementController@index');
-                    $api->get('/{procurement}', 'B2b\ProcurementController@show');
                 });
                 $api->group(['prefix' => 'bids'], function ($api) {
                     $api->group(['prefix' => '{bid}'], function ($api) {
                         $api->get('/', 'B2b\BidController@show');
+                        $api->get('/download', 'B2b\BidController@downloadPdf');
                         $api->post('/', 'B2b\BidController@updateFavourite');
                         $api->post('hire', 'B2b\BidController@sendHireRequest');
                         $api->group(['prefix' => 'comments'], function ($api) {

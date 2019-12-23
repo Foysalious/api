@@ -3,6 +3,8 @@
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
+use Sheba\Dal\UniversalSlug\Model as UniversalSlugModel;
 use stdClass;
 
 class Service extends Model
@@ -286,4 +288,14 @@ class Service extends Model
         return array($options, $variables);
     }
 
+    public function getSlug()
+    {
+        $slug_obj = $this->getSlugObj()->first();
+        return $slug_obj ? $slug_obj->slug : null;
+    }
+
+    private function getSlugObj()
+    {
+        return $this->morphOne(UniversalSlugModel::class, 'sluggable');
+    }
 }

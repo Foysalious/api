@@ -119,9 +119,9 @@ class Updater
                 }
                 $this->updateBidPrice();
                 $this->statusLogCreator->setBid($this->bid)->setPreviousStatus($previous_status)->setStatus($this->status)->create();
-                if ($this->status != 'sent') $this->sendVendorParticipatedNotification();
-                elseif ($this->status != 'rejected') $this->sendBidRejectedNotification();
-                elseif ($this->status != 'accepted') $this->sendBidAcceptedNotification();
+                if ($this->status == 'sent') $this->sendVendorParticipatedNotification();
+                elseif ($this->status == 'rejected') $this->sendBidRejectedNotification();
+                elseif ($this->status == 'accepted') $this->sendBidAcceptedNotification();
             });
         } catch (QueryException $e) {
             throw  $e;
@@ -130,20 +130,23 @@ class Updater
 
     private function sendVendorParticipatedNotification()
     {
+        $link = config('sheba.business_url') . '/dashboard/procurement/' . $this->bid->procurement_id . '/quotation?id=' . $this->bid->id;
         $message = $this->bid->bidder->name . ' participated on your procurement #' . $this->bid->procurement->id;
-        $this->notify($message);
+        $this->notify($message, $link);
     }
 
     private function sendBidRejectedNotification()
     {
+        $link = config('sheba.business_url') . '/dashboard/procurement/' . $this->bid->procurement_id . '/quotation?id=' . $this->bid->id;
         $message = $this->bid->bidder->name . ' rejected your hiring request #' . $this->bid->id;
-        $this->notify($message);
+        $this->notify($message, $link);
     }
 
     private function sendBidAcceptedNotification()
     {
         $message = $this->bid->bidder->name . ' accepted your hiring request #' . $this->bid->id;
-        $this->notify($message);
+        $link = config('sheba.business_url') . '/dashboard/procurement/orders/' . $this->bid->procurement_id . '?bid=' . $this->bid->id;
+        $this->notify($message, $link);
     }
 
     public function hire()
@@ -193,6 +196,8 @@ class Updater
                 if ($this->status == config('b2b.BID_STATUSES')['accepted']) $this->procurementUpdater->setProcurement($this->bid->procurement)
                     ->setStatus(config('b2b.PROCUREMENT_STATUS')['accepted'])->updateStatus();
                 $this->statusLogCreator->setBid($this->bid)->setPreviousStatus($previous_status)->setStatus($this->status)->create();
+                if ($this->status == 'rejected') $this->sendBidRejectedNotification();
+                elseif ($this->status == 'accepted') $this->sendBidAcceptedNotification();
             });
         } catch (QueryException $e) {
             throw  $e;
@@ -220,34 +225,18 @@ class Updater
             'event_id' => $this->bid->id,
             'link' => $link
         ]);
-        event(new NotificationCreated([
-            'notifiable_id' => $this->bid->bidder->id,
-            'notifiable_type' => "partner",
-            'event_id' => $this->bid->id,
-            'event_type' => "bid",
-            "title" => $message,
-            "message" => $message,
-            'link' => $link
-        ], $this->bid->procurement->owner->id, get_class($this->bid->procurement->owner)));
     }
 
-    private function notify($message)
+    private function notify($message, $link)
     {
         foreach ($this->bid->procurement->owner->superAdmins as $member) {
             notify()->member($member)->send([
                 'title' => $message,
                 'type' => 'warning',
                 'event_type' => get_class($this->bid),
-                'event_id' => $this->bid->id
-            ]);
-            event(new NotificationCreated([
-                'notifiable_id' => $member->id,
-                'notifiable_type' => "member",
                 'event_id' => $this->bid->id,
-                'event_type' => "bid",
-                "title" => $message,
-                'message' => $message,
-            ], $this->bid->bidder->id, get_class($this->bid->bidder)));
+                'link' => $link
+            ]);
         }
     }
 }

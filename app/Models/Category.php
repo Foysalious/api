@@ -1,6 +1,9 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
+use Sheba\Dal\CrosssaleService\Model as CrosssaleServiceModel;
+use Sheba\Dal\UniversalSlug\Model as UniversalSlugModel;
 use Sheba\Logistics\Literals\Natures as LogisticNatures;
 use Sheba\Logistics\Literals\OneWayInitEvents as OneWayLogisticInitEvents;
 use Sheba\Logistics\Repository\ParcelRepository;
@@ -251,5 +254,33 @@ class Category extends Model
     public function isRentACar()
     {
         return in_array($this->id, array_map('intval', explode(',', env('RENT_CAR_IDS'))));
+    }
+
+    public function getSlug()
+    {
+        return $this->getSlugObj() ? $this->getSlugObj()->slug : null;
+    }
+
+    public function getSlugObj()
+    {
+        if ($this->isParent()) return $this->getMasterCategorySlug()->first();
+        return $this->getSecondaryCategorySlug()->first();
+    }
+
+    public function getMasterCategorySlug()
+    {
+        Relation::morphMap(['master_category' => 'App\Models\Category']);
+        return $this->morphOne(UniversalSlugModel::class, 'sluggable');
+    }
+
+    public function getSecondaryCategorySlug()
+    {
+        Relation::morphMap(['secondary_category' => 'App\Models\Category']);
+        return $this->morphOne(UniversalSlugModel::class, 'sluggable');
+    }
+
+    public function crossSaleService()
+    {
+        return $this->hasOne(CrosssaleServiceModel::class);
     }
 }

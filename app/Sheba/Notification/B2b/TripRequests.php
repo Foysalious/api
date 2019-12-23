@@ -3,6 +3,7 @@
 use App\Models\Driver;
 use App\Models\Member;
 use App\Models\Vehicle;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
 use Sheba\Notification\NotificationCreated;
 
@@ -18,11 +19,12 @@ class TripRequests
     private $driver;
     private $vehicle;
     private $superAdmins;
-    private $superAdmin;
+    private $notificationSender;
 
     public function setMember($member)
     {
         $this->member = $member;
+        $this->notificationSender = $member;
         return $this;
     }
 
@@ -80,9 +82,18 @@ class TripRequests
         return $this;
     }
 
-    public function getRequesterIdentity()
+    public function getRequesterIdentity($comment = false, $admin = false)
     {
-        $this->member = Member::find((int)$this->businessTripRequest->member_id);
+        if ($comment) {
+            if ($this->member->id == $this->businessTripRequest->member_id) {
+                $this->member = Member::find((int)$this->businessTripRequest->member_id);
+            } elseif ($this->member->id != $this->businessTripRequest->member_id) {
+                $this->member = $this->businessMember->member;
+            }
+        }
+        if ($admin) {
+            $this->member = $this->businessMember->member;
+        }
         $identity = $this->member->profile->name;
         if (!$identity) $identity = $this->member->profile->mobile;
         if (!$identity) $identity = $this->member->profile->email;
@@ -112,9 +123,12 @@ class TripRequests
             if ($this->member->id == $this->businessTripRequest->member_id) {
                 $this->notifySuperAdmins($mail, $for);
             } elseif ($this->member->id != $this->businessTripRequest->member_id) {
+                $this->notificationTitle = $this->getRequesterIdentity(true) . ' commented on trip request.';
+                $this->member = Member::find((int)$this->businessTripRequest->member_id);
                 $this->notify($mail, $for);
             }
         } elseif ($co_worker) {
+            $this->member = Member::find((int)$this->businessTripRequest->member_id);
             $this->notify($mail, $for);
         } else {
             $this->notifySuperAdmins($mail, $for);
@@ -123,41 +137,28 @@ class TripRequests
 
     public function notify($mail, $for)
     {
-        notify($this->member)->send([
+        notify($this->member)->send([#Also Push Notifications
             'title' => $this->notificationTitle,
             'event_type' => get_class($this->businessTripRequest),
-            'event_id' => $this->businessTripRequest->id
+            'event_id' => $this->businessTripRequest->id,
+            'link' => config('sheba.business_url') . "/dashboard/fleet-management/requests/{$this->businessTripRequest->id}/details"
         ]);
         if ($mail && $for === 'TripAccepted') {
             $this->mailForTripCreateAccepted();
-            event(new NotificationCreated([
-                'notifiable_id' => $this->member->id,
-                'notifiable_type' => "member",
-                'event_id' => $this->businessTripRequest->id,
-                'event_type' => get_class($this->businessTripRequest),
-                "title" => $this->notificationTitle,
-            ], $this->member->id, get_class($this->member)));
         }
     }
 
     public function notifySuperAdmins($mail, $for)
     {
         foreach ($this->superAdmins as $admin) {
-            notify($admin)->send([
+            notify($admin)->send([#Also Push Notifications
                 'title' => $this->notificationTitle,
                 'event_type' => get_class($this->businessTripRequest),
-                'event_id' => $this->businessTripRequest->id
+                'event_id' => $this->businessTripRequest->id,
+                'link' => config('sheba.business_url') . "/dashboard/fleet-management/requests/{$this->businessTripRequest->id}/details"
             ]);
-
             if ($mail && $for === 'TripCreate') {
                 $this->mailForTripCreate($admin);
-                event(new NotificationCreated([
-                    'notifiable_id' => $admin->id,
-                    'notifiable_type' => "member",
-                    'event_id' => $this->businessTripRequest->id,
-                    'event_type' => get_class($this->businessTripRequest),
-                    "title" => $this->notificationTitle,
-                ], $admin->id, get_class($admin)));
             }
         }
     }
@@ -165,8 +166,7 @@ class TripRequests
     private function mailForTripCreate($admin)
     {
         $link = config('sheba.b2b_url') . "/dashboard/fleet-management/requests/" . $this->businessTripRequest->id . "/details";
-        #$email = $admin->profile->email;
-        $email = 'saiful.sheba@gmail.com';
+        $email = $admin->profile->email;
         $trip_requester = $this->getRequesterIdentity();
         $trip_pickup_address = $this->businessTripRequest->pickup_address;
         $trip_dropoff_address = $this->businessTripRequest->dropoff_address;
@@ -187,14 +187,11 @@ class TripRequests
     private function mailForTripCreateAccepted()
     {
         $link = config('sheba.b2b_url') . "/dashboard/fleet-management/requests/" . $this->businessTripRequest->id . "/details";
-        #$email = $this->>member->profile->email;#For Trip Request Accepted
-        $email = 'saiful.sheba@gmail.com';
-        #$email = 'fahiman2.sheba@gmail.com';
-
-        $trip_request_start_date = $this->businessTripRequest->start_date->format('jS F, Y g:i A');
-        $vehicle_number = $this->vehicle->registrationInformations->license_number;
-        $driver_name = $this->getDriverName();
-        $driver_phone_number = $this->getDriverPhoneNumber();
+        $email = $this->member->profile->email;
+        $trip_request_start_date = Carbon::parse($this->businessTripRequest->start_date)->format('jS F, Y g:i A');
+        $vehicle_number = $this->vehicle ? $this->vehicle->registrationInformations->license_number : 'n/a';
+        $driver_name = $this->driver ? $this->getDriverName() : 'n/a';
+        $driver_phone_number = $this->driver ? $this->getDriverPhoneNumber() : 'n/a';
 
         Mail::send($this->template, [
             'title' => $this->emailTitle,

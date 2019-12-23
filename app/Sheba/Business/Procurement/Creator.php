@@ -1,12 +1,15 @@
 <?php namespace Sheba\Business\Procurement;
 
+use App\Jobs\Business\SendRFQCreateNotificationToPartners;
 use App\Models\Bid;
+use App\Models\Partner;
 use App\Models\Procurement;
 use App\Models\ProcurementItem;
 use App\Models\Tag;
 use App\Sheba\Attachments\Attachments;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\UploadedFile;
 use Sheba\Notification\NotificationCreated;
 use Sheba\Repositories\Interfaces\ProcurementItemFieldRepositoryInterface;
@@ -17,6 +20,7 @@ use DB;
 
 class Creator
 {
+    use DispatchesJobs;
     private $procurementRepository;
     private $procurementItemRepository;
     private $procurementQuestionRepository;
@@ -312,6 +316,7 @@ class Creator
             'published_at' => $this->isPublished ? Carbon::now() : ''
         ];
         $this->procurementRepository->update($procurement, $this->procurementData);
+        if ($this->isPublished) $this->sendNotification($procurement);
     }
 
     private function makeItemFields(ProcurementItem $procurement_item, $fields)
@@ -426,14 +431,6 @@ class Creator
 
     private function sendNotification(Procurement $procurement)
     {
-        return;
-        event(new NotificationCreated([
-            'notifiable_id' => 17,
-            'notifiable_type' => "member",
-            'event_id' => $procurement->id,
-            'event_type' => "procurement",
-            "title" => "afa",
-            "message" => "ada"
-        ], 44, "App\Models\Partner"));
+        dispatch(new SendRFQCreateNotificationToPartners($procurement));
     }
 }

@@ -4,6 +4,7 @@ namespace Sheba\Loan;
 
 use App\Models\BankUser;
 use App\Models\PartnerBankLoan;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -24,6 +25,7 @@ use Sheba\Loan\DS\RunningApplication;
 use Sheba\Loan\Exceptions\AlreadyAssignToBank;
 use Sheba\Loan\Exceptions\AlreadyRequestedForLoan;
 use Sheba\Loan\Exceptions\InvalidStatusTransaction;
+use Sheba\Loan\Exceptions\NotAllowedToAccess;
 use Sheba\Loan\Exceptions\NotApplicableForLoan;
 use Sheba\ModificationFields;
 
@@ -43,12 +45,14 @@ class Loan
     private $document;
     private $downloadDir;
     private $zipDir;
+    private $user;
 
     public function __construct()
     {
         $this->repo        = new LoanRepository();
         $this->downloadDir = storage_path('downloads');
         $this->zipDir      = public_path('temp/documents.zip');
+        $this->user        = request()->user;
     }
 
     /**
@@ -131,10 +135,20 @@ class Loan
         return $request->toArray();
     }
 
+    /**
+     * @param $loan_id
+     * @param Request $request
+     * @throws NotAllowedToAccess
+     * @throws ReflectionException
+     */
     public function update($loan_id, Request $request)
     {
         /** @var PartnerBankLoan $loan */
         $loan        = $this->repo->find($loan_id);
+        $user=$this->user;
+        if (!empty($user) && (!($user instanceof User) && ($user instanceof BankUser && $user->bank->id != $loan->bank_id))) {
+            throw new NotAllowedToAccess();
+        }
         $loanRequest = (new PartnerLoanRequest($loan));
         $details     = $loanRequest->details();
         // $new_data = json_decode($request->get('data'),true);
@@ -358,13 +372,19 @@ class Loan
 
     /**
      * @param $loan_id
+     * @param BankUser|null $user
      * @return array
      * @throws ReflectionException
+     * @throws NotAllowedToAccess
      */
     public function show($loan_id)
     {
         /** @var PartnerBankLoan $request */
-        $request                = $this->repo->find($loan_id);
+        $request = $this->repo->find($loan_id);
+        $user=$this->user;
+        if (!empty($user) && (!($user instanceof User) && ($user instanceof BankUser && $user->bank->id != $request->bank_id))) {
+            throw new NotAllowedToAccess();
+        }
         $loan                   = (new PartnerLoanRequest($request));
         $details                = $loan->details();
         $details['next_status'] = $loan->getNextStatus($loan_id);
@@ -376,11 +396,16 @@ class Loan
      * @param Request $request
      * @param $user
      * @throws ReflectionException
+     * @throws NotAllowedToAccess
      */
     public function uploadDocument($loan_id, Request $request, $user)
     {
         /** @var PartnerBankLoan $loan */
         $loan           = $this->repo->find($loan_id);
+        $user=$this->user;
+        if (!empty($user) && (!($user instanceof User) && ($user instanceof BankUser && $user->bank->id != $loan->bank_id))) {
+            throw new NotAllowedToAccess();
+        }
         $picture        = $request->file('picture');
         $name           = $request->name;
         $formatted_name = strtolower(preg_replace("/ /", "_", $name));
@@ -402,11 +427,16 @@ class Loan
      * @param $loan_id
      * @param Request $request
      * @throws InvalidStatusTransaction
+     * @throws NotAllowedToAccess
      */
     public function statusChange($loan_id, Request $request)
     {
 
         $partner_bank_loan = $this->repo->find($loan_id);
+        $user=$this->user;
+        if (!empty($user) && (!($user instanceof User) && ($user instanceof BankUser && $user->bank->id != $partner_bank_loan->bank_id))) {
+            throw new NotAllowedToAccess();
+        }
         $old_status        = $partner_bank_loan->status;
         $new_status        = $request->new_status;
         $description       = $request->has('description') ? $request->description : 'Status Changed';
@@ -441,10 +471,19 @@ class Loan
 
     }
 
+    /**
+     * @param $loan_id
+     * @return bool|string
+     * @throws NotAllowedToAccess
+     */
     public function downloadDocuments($loan_id)
     {
         /** @var PartnerBankLoan $loan */
         $loan      = $this->repo->find($loan_id);
+        $user=$this->user;
+        if (!empty($user) && (!($user instanceof User) && ($user instanceof BankUser && $user->bank->id != $loan->bank_id))) {
+            throw new NotAllowedToAccess();
+        }
         $documents = (new PartnerLoanRequest($loan))->getDocuments();
         $flat      = new RecursiveIteratorIterator(new RecursiveArrayIterator($documents));
         $files     = HZip::downloadFiles($flat, $this->downloadDir);
@@ -458,16 +497,17 @@ class Loan
         }
     }
 
-    public function downloadFromUrl($url){
-        $file=public_path('temp');
-        $f=HZip::downLoadFile($url,$file);
-        return $f?$file.'/'.basename($url):false;
-    }
-
     private function zipDir()
     {
 
         HZip::zipDir($this->downloadDir, $this->zipDir);
         return $this->zipDir;
+    }
+
+    public function downloadFromUrl($url)
+    {
+        $file = public_path('temp');
+        $f    = HZip::downLoadFile($url, $file);
+        return $f ? $file . '/' . basename($url) : false;
     }
 }

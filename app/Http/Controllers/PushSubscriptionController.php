@@ -1,5 +1,7 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\Member;
+use App\Models\Partner;
 use App\Models\PushSubscription;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -52,6 +54,19 @@ class PushSubscriptionController extends Controller
             'event_type' => "bid",
             "title" => "Test notification",
             'message' => "Test notification",
+            'link' => "https://b2b.dev-sheba.xyz/dashboard/fleet-management/requests/151/details"
         ], 233, "App\Models\Partner"));
+    }
+
+    public function sendV2()
+    {
+        $partner = Partner::find(277);
+        notify($partner)->send([
+            'event_id' => 321,
+            'event_type' => "procurement",
+            "title" => "Test notification",
+            'link' => "https://partners.dev-sheba.xyz/star-auto-power/procurements/321/summary"
+        ]);
+        print_r('DONE');
     }
 }

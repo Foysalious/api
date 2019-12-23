@@ -48,6 +48,9 @@ class Updater
     private function evaluateDifference($old, $new)
     {
         foreach ($new as $key => $value) {
+            if (in_array($key, self::skipChanges())) {
+                continue;
+            }
             if (array_key_exists($key, $old)) {
                 if ($new[$key] != $old[$key])
                     array_push($this->difference, [
@@ -67,13 +70,23 @@ class Updater
         }
     }
 
+    private static function skipChanges()
+    {
+        return [
+            'is_same_address',
+            'is_nid_verified',
+            'online_order'
+        ];
+    }
+
     public function update(PartnerLoanRequest $loan, Request $request)
     {
         foreach (self::updateFields() as $key) {
             $loan->partnerBankLoan->{$key} = array_key_exists($key, $this->new) ? $this->new[$key] : $loan->partnerBankLoan->{$key};
         }
-        $loan_interest                                     = (double)$loan->partnerBankLoan->loan_amount * ((double)$loan->partnerBankLoan->interest_rate / 100);
-        $loan->partnerBankLoan->monthly_installment        = ((double)$loan->partnerBankLoan->loan_amount + $loan_interest) / ((int)$loan->partnerBankLoan->duration * 12);
+        $amount                                            = (double)$loan->partnerBankLoan->loan_amount;
+        $duration                                          = (int)$loan->partnerBankLoan->duration * 12;
+        $loan->partnerBankLoan->monthly_installment        = emi_calculator($loan->partnerBankLoan->interest_rate, $amount, $duration);
         $loan->partnerBankLoan->final_information_for_loan = json_encode($this->new['final_information_for_loan']);
         $loan->partnerBankLoan->save();
         $this->setModifier($request->user);
