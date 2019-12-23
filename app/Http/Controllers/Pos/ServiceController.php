@@ -221,7 +221,7 @@ class ServiceController extends Controller
             $partner_pos_service->unit          = $partner_pos_service->unit ? constants('POS_SERVICE_UNITS')[$partner_pos_service->unit] : null;
             $partner_pos_service->warranty_unit = $partner_pos_service->warranty_unit ? config('pos.warranty_unit')[$partner_pos_service->warranty_unit] : null;
             $partner_pos_service_arr            =         $partner_pos_service->toArray();
-            $partner_pos_service_arr['discount'] =        $partner_pos_service->discount();
+            $partner_pos_service_arr['discount'] =        [$partner_pos_service->discount()];
             return api_response($request, null, 200, ['msg' => 'Product Updated Successfully', 'service' => $partner_pos_service_arr]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
