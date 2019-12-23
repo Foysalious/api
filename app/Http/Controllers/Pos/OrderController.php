@@ -217,7 +217,7 @@ class OrderController extends Controller
                 'partner_wise_order_id' => $order->partner_wise_order_id
             ];
             
-            app()->make(ActionRewardDispatcher::class)->run('pos_order_create', $request->partner, $request->partner, $order,(new RequestIdentification())->get()['portal_name']);
+            app()->make(ActionRewardDispatcher::class)->run('pos_order_create', $partner, $partner, $order,(new RequestIdentification())->get()['portal_name']);
 
             return api_response($request, null, 200, ['message' => 'Order Created Successfully', 'order' => $order, 'payment' => $link]);
         } catch (ValidationException $e) {
