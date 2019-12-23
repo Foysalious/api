@@ -222,7 +222,7 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
     public function saveProPic($file, $name)
     {
         list($file, $filename) = $this->makeProPic($file, $name);
-        return $this->saveImageToCDN($file, getProfileAvatarFolder(), $filename);
+        return $this->saveFileToCDN($file, getProfileAvatarFolder(), $filename);
     }
 
     /**
