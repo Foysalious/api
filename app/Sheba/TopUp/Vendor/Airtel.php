@@ -5,8 +5,8 @@ use Sheba\TopUp\Vendor\Internal\Ssl;
 
 class Airtel extends Vendor
 {
-    // use Ssl;
-    use RobiAxiata;
+     use Ssl;
+    /*use RobiAxiata;
 
     private function getMid()
     {
@@ -16,5 +16,5 @@ class Airtel extends Vendor
     private function getPin()
     {
         return config('topup.robi.airtel_pin');
-    }
+    }*/
 }
