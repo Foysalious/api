@@ -36,12 +36,12 @@ class StatusChanger
     public function checkForError(Request $request)
     {
         $job = $request->job;
-        if(!$request->partner->hasThisResource((int)$request->resource_id, ResourceTypes::HANDYMAN)) {
+        if (!$request->partner->hasThisResource((int)$request->resource_id, ResourceTypes::HANDYMAN)) {
             $this->setError(403, "Resource doesn't work for you");
             return;
         }
 
-        if(!$job->isAcceptable()) {
+        if (!$job->isAcceptable()) {
             $this->setError(403, $job->status . " job cannot be accepted.");
             return;
         }
@@ -54,7 +54,7 @@ class StatusChanger
     public function acceptJobAndAssignResource(Request $request)
     {
         $this->checkForError($request);
-        if($this->hasError()) return;
+        if ($this->hasError()) return;
 
         $job = $request->job;
         $this->changeStatus($job, $request, JobStatuses::ACCEPTED);
