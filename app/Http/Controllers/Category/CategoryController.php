@@ -6,6 +6,8 @@ use App\Models\Category;
 use App\Models\CategoryGroupCategory;
 use App\Models\HyperLocal;
 use Illuminate\Http\Request;
+use Sheba\Dal\UniversalSlug\Model as UniversalSlugModel;
+use Sheba\Dal\UniversalSlug\SluggableType;
 
 class CategoryController extends Controller
 {
@@ -37,8 +39,9 @@ class CategoryController extends Controller
         }]);
         $category['slug'] = $category->getSlug();
         $children = $category->children;
-        $children = $children->map(function ($child){
-            $child['slug'] =  $child->getSlug();
+        $secondary_categories_slug = UniversalSlugModel::where('sluggable_type', SluggableType::SECONDARY_CATEGORY)->pluck('slug', 'sluggable_id')->toArray();
+        $children = $children->map(function ($child) use ($secondary_categories_slug) {
+            $child['slug'] =  array_key_exists($child->id, $secondary_categories_slug) ? $secondary_categories_slug[$child->id] : null;
             return $child;
         });
         if (count($children) == 0) return api_response($request, null, 404);
