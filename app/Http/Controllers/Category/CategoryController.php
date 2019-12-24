@@ -35,9 +35,14 @@ class CategoryController extends Controller
                     });
                 });
         }]);
+        $category['slug'] = $category->getSlug();
         $children = $category->children;
+        $children = $children->map(function ($child){
+            $child['slug'] =  $child->getSlug();
+            return $child;
+        });
         if (count($children) == 0) return api_response($request, null, 404);
-        $category = collect($category)->only(['name', 'id', 'banner', 'app_banner']);
+        $category = collect($category)->only(['name', 'id', 'banner', 'app_banner', 'slug']);
         $category->put('secondaries', $children->values()->all());
         return api_response($request, $category, 200, ['category' => $category]);
     }
