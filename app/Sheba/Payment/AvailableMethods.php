@@ -132,7 +132,7 @@ class AvailableMethods
     private static function getWalletRechargePayments($version_code, $platform_name)
     {
         return [
-            self::bkash() + ['is_published' => 1],
+            array_merge(self::bkash(), ['is_published' => 1]),
             self::cbl($version_code, $platform_name),
             self::ssl()
         ];
