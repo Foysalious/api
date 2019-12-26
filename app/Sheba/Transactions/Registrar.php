@@ -2,11 +2,20 @@
 
 use App\Models\Partner;
 use GuzzleHttp\Exception\GuzzleException;
-use Sheba\TopUp\Commission\Customer;
 
 class Registrar
 {
-    private $amount, $from_account, $details, $time;
+    private $amount, $from_account, $details, $time, $isValidated=0;
+
+    /**
+     * @param mixed $isValidated
+     * @return Registrar
+     */
+    public function setIsValidated($isValidated)
+    {
+        $this->isValidated = $isValidated;
+        return $this;
+    }
 
     /**
      * @param mixed $time
@@ -76,7 +85,7 @@ class Registrar
             'details'         => $this->details,
             'from_account'    => $this->from_account,
             'time'            => $this->time,
-            'customer'        => !!$user instanceof Customer
+            'is_validated'     => $this->isValidated
         ];
         $walletClient    = new WalletClient();
         $response_wallet = json_decode(json_encode($walletClient->registerTransaction($data)), 1);
