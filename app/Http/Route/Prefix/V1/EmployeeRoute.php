@@ -22,6 +22,10 @@ class EmployeeRoute
             });
             $api->group(['prefix' => 'expense'], function ($api) {
                 $api->get('/', 'Employee\ExpenseController@index');
+                $api->group(['prefix' => '{expense}'], function ($api) {
+                    $api->get('/', 'Employee\ExpenseController@show');
+                    $api->post('/', 'Employee\ExpenseController@update');
+                });
                 $api->post('/', 'Employee\ExpenseController@store');
             });
             $api->group(['prefix' => 'announcements'], function ($api) {

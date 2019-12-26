@@ -48,7 +48,7 @@ class ExpenseController extends Controller
         }
     }
 
-    public function store(Request $request, Creator $creator, MemberRepositoryInterface $member_repository)
+    public function store(Request $request, MemberRepositoryInterface $member_repository)
     {
         try {
             $this->validate($request, [
@@ -70,7 +70,55 @@ class ExpenseController extends Controller
 
             return api_response($request, $expense, 200, ['expense' => ['id' => $expense->id]]);
         } catch (\Throwable $e) {
-            dd($e->getMessage());
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function show(Request $request, $expense)
+    {
+        try {
+            $auth_info = $request->auth_info;
+            $business_member = $auth_info['business_member'];
+            if (!$business_member) return api_response($request, null, 401);
+            $expense = Expense::where('id', $expense)
+                ->select('id', 'member_id', 'amount', 'status', 'remarks', 'type')->first();
+
+            if (!$expense) return api_response($request, null, 404);
+
+            $expense['date'] = $expense->created_at ? $expense->created_at->format('M d') : null;
+            $expense['time'] = $expense->created_at ? $expense->created_at->format('h:i A') : null;
+            return api_response($request, $expense, 200, ['expense' => $expense]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function update(Request $request, $expense)
+    {
+        try {
+            $this->validate($request, [
+                'amount' => 'required|string',
+                'remarks' => 'string',
+                'type' => 'string',
+            ]);
+
+            $auth_info = $request->auth_info;
+            $business_member = $auth_info['business_member'];
+            if (!$business_member) return api_response($request, null, 401);
+
+            $expense = Expense::find($expense);
+            if (!$expense) return api_response($request, null, 404);
+
+
+            $expense->amount = $request->amount;
+            $expense->remarks = $request->remarks;
+            $expense->type = $request->type;
+            $expense->save();
+
+            return api_response($request, $expense, 200, ['expense' => ['id' => $expense->id]]);
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
