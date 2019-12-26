@@ -157,7 +157,7 @@ class Bkash extends PaymentMethod
         if ($execute_response->hasSuccess()) {
             $success = $execute_response->getSuccess();
             try {
-                (new Registrar())->setFromAccount($success->details->sender)->setAmount($this->payable->amount)->setDetails(json_encode($success->details))->setTime(isset($success->details->trxTimestamp) ? Carbon::parse($success->details->trxTimestamp)->format('Y-m-d H:s:i') : null)->register($payment->payable->user, 'bkash', $success->id, $this->merchantNumber);
+                (new Registrar())->setAmount($payment->payable->amount)->setDetails(json_encode($success->details))->setTime(isset($success->details->createTime) ? Carbon::parse($success->details->createTime)->format('Y-m-d H:s:i') : null)->setIsValidated(1)->register($payment->payable->user, 'bkash', $success->id, $this->merchantNumber);
                 $status              = Statuses::VALIDATED;
                 $transaction_details = json_encode($success->details);
             } catch (InvalidTransaction $e) {
