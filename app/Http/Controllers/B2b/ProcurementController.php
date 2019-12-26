@@ -10,6 +10,7 @@ use App\Transformers\AttachmentTransformer;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\Procurement\Creator;
 use Sheba\Logs\ErrorLog;
@@ -52,7 +53,7 @@ class ProcurementController extends Controller
                 ->setLastDateOfSubmission($request->last_date_of_submission)->setPaymentOptions($request->payment_options)->setIsPublished($request->is_published)
                 ->setLabels($request->labels)->setCreatedBy($request->manager_member);
 
-            if($request->attachments && is_array($request->attachments)) $creator->setAttachments($request->attachments);
+            if ($request->attachments && is_array($request->attachments)) $creator->setAttachments($request->attachments);
 
             $procurement = $creator->create();
 
@@ -80,11 +81,15 @@ class ProcurementController extends Controller
             $this->setModifier($request->manager_member);
             $business = $request->business;
             list($offset, $limit) = calculatePagination($request);
-            $procurements = $procurement_repository->ofBusiness($business->id)->select(['id', 'title', 'status', 'last_date_of_submission', 'created_at'])->orderBy('id', 'desc');
+            $procurements = $procurement_repository->ofBusiness($business->id)->select(['id', 'title', 'status', 'last_date_of_submission', 'created_at', 'is_published'])->orderBy('id', 'desc');
             $total_procurement = $procurements->get()->count();
 
             if ($request->has('status') && $request->status != 'all') {
-                $procurements->where('status', $request->status);
+                if ($request->status === 'drafted') {
+                    $procurements->where('is_published', 0);
+                } else {
+                    $procurements->where('status', $request->status);
+                }
             }
 
             $start_date = $request->has('start_date') ? $request->start_date : null;
@@ -99,6 +104,7 @@ class ProcurementController extends Controller
                     "id" => $procurement->id,
                     "title" => $procurement->title,
                     "status" => $procurement->status,
+                    "is_published" => $procurement->is_published,
                     "last_date_of_submission" => Carbon::parse($procurement->last_date_of_submission)->format('d/m/y'),
                     "bid_count" => $procurement->bids()->where('status', '<>', 'pending')->get()->count()
                 ]);
@@ -292,7 +298,8 @@ class ProcurementController extends Controller
             list($offset, $limit) = calculatePagination($request);
             $procurements = Procurement::order()->with(['bids' => function ($q) {
                 $q->select('id', 'procurement_id', 'bidder_id', 'bidder_type', 'status', 'price');
-            }])->orderBy('id', 'DESC');
+            }])->where('owner_id', (int)$business)->orderBy('id', 'DESC');
+
             $total_procurement = $procurements->get()->count();
 
             if ($request->has('status') && $request->status != 'all') {
@@ -363,5 +370,38 @@ class ProcurementController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function downloadPdf(Request $request)
+    {
+        $procurement = Procurement::find($request->procurement);
+        $price_quotation = $procurement->items->where('type', 'price_quotation')->first();
+        $technical_evaluation = $procurement->items->where('type', 'technical_evaluation')->first();
+        $company_evaluation = $procurement->items->where('type', 'company_evaluation')->first();
+
+        $procurement_details = [
+            'id' => $procurement->id,
+            'title' => $procurement->title,
+            'status' => $procurement->status,
+            'long_description' => $procurement->long_description,
+            'labels' => $procurement->getTagNamesAttribute()->toArray(),
+            'start_date' => Carbon::parse($procurement->procurement_start_date)->format('d/m/y'),
+            'published_at' => $procurement->is_published ? Carbon::parse($procurement->published_at)->format('d/m/y') : null,
+            'end_date' => Carbon::parse($procurement->procurement_end_date)->format('d/m/y'),
+            'number_of_participants' => $procurement->number_of_participants,
+            'last_date_of_submission' => Carbon::parse($procurement->last_date_of_submission)->format('Y-m-d'),
+            'payment_options' => $procurement->payment_options,
+            'created_at' => Carbon::parse($procurement->created_at)->format('d/m/y'),
+            'price_quotation' => $price_quotation ? $price_quotation->fields ? $price_quotation->fields->toArray() : null : null,
+            'technical_evaluation' => $technical_evaluation ? $technical_evaluation->fields ? $technical_evaluation->fields : null : null,
+            'company_evaluation' => $company_evaluation ? $company_evaluation->fields ? $company_evaluation->fields : null : null,
+        ];
+
+        // dd($procurement_details);
+        // return view('pdfs.procurement_details', compact('procurement_details'));
+
+        return App::make('dompdf.wrapper')
+            ->loadView('pdfs.procurement_details', compact('procurement_details'))
+                ->download("procurement_details.pdf");
     }
 }

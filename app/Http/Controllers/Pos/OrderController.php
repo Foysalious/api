@@ -33,6 +33,8 @@ use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Profile\Creator as ProfileCreator;
 use Sheba\Reports\PdfHandler;
 use Sheba\Repositories\PartnerRepository;
+use Sheba\RequestIdentification;
+use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Subscription\Partner\Access\AccessManager;
 use Throwable;
 
@@ -214,6 +216,8 @@ class OrderController extends Controller
                 "client_pos_order_id"   => $request->has('client_pos_order_id') ? $request->client_pos_order_id : null,
                 'partner_wise_order_id' => $order->partner_wise_order_id
             ];
+            
+            app()->make(ActionRewardDispatcher::class)->run('pos_order_create', $partner, $partner, $order,(new RequestIdentification())->get()['portal_name']);
 
             return api_response($request, null, 200, ['message' => 'Order Created Successfully', 'order' => $order, 'payment' => $link]);
         } catch (ValidationException $e) {

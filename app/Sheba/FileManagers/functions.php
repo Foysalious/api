@@ -588,6 +588,15 @@ if (!function_exists('getTradeLicenceDocumentsFolder')) {
         return $url . 'partner/trade_license/trade_';
     }
 }
+if (!function_exists('getLoanDocumentFolder')){
+    function getLoanDocumentsFolder($with_base_url=false){
+        $url = '';
+        if ($with_base_url)
+            $url = env('S3_URL');
+
+        return $url . 'partner/loans/temp';
+    }
+}
 
 if (!function_exists('getTradeLicenseDefaultImage')) {
 

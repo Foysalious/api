@@ -5,6 +5,7 @@ use App\Models\Member;
 use Sheba\Dal\Support\SupportRepositoryInterface;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use DB;
+use Sheba\Dal\Support\Model as Support;
 
 class Creator
 {
@@ -44,7 +45,7 @@ class Creator
         return $support;
     }
 
-    private function notifySuperAdmins($support)
+    private function notifySuperAdmins(Support $support)
     {
         $super_admins = $this->businessMemberRepository->where('is_super', 1)
             ->where('business_id', $this->member->businesses()->first()->id)->get();
@@ -53,7 +54,8 @@ class Creator
                 'title' => $this->member->profile->name . ' #' . $this->member->id . ' has created a Support Ticket',
                 'type' => 'warning',
                 'event_type' => 'Sheba\Dal\Support\Model',
-                'event_id' => $support->id
+                'event_id' => $support->id,
+                'link' => config('sheba.business_url') . '/dashboard/support/' . $support->id
             ]);
         }
 

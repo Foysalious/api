@@ -50,6 +50,12 @@ class ProfileRepository
         return $profile;
     }
 
+    public function update(Profile $profile, array $data)
+    {
+        $profile->update($this->withUpdateModificationField($data));
+        return $profile;
+    }
+
     public function ifExist($data, $queryColumn)
     {
         $user = Profile::where($queryColumn, $data)->where('is_blacklisted', 0)->first();
@@ -141,7 +147,7 @@ class ProfileRepository
         $filename = Carbon::now()->timestamp . '_profile_image_' . $profile->id . $extension;
         $s3 = Storage::disk('s3');
         $s3->put($folder . $filename, file_get_contents($photo), 'public');
-        return env('S3_URL') . $folder . $filename;
+        return config('s3.url') . $folder . $filename;
     }
 
     public function registerAvatarByFacebook($avatar, $request, $user)

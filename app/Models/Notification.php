@@ -35,8 +35,13 @@ class Notification extends Model
 
     public function getType()
     {
-        if (stripos($this->event_type, 'support')) return 'support';
-        elseif (stripos($this->event_type, 'vehicle')) return 'vehicle';
-        elseif (stripos($this->event_type, 'driver')) return 'driver';
+        $type = strtolower($this->event_type);
+        if (stripos($type, 'support')) return 'support';
+        if (stripos($type, 'announcement')) return 'announcement';
+        elseif (stripos($type, 'vehicle')) return 'vehicle';
+        elseif (stripos($type, 'driver')) return 'driver';
+        elseif (stripos($type, 'procurement')) return 'procurement';
+        elseif (stripos($type, 'bid')) return 'bid';
+        elseif (stripos($type, 'businesstriprequest')) return 'businesstriprequest';
     }
 }

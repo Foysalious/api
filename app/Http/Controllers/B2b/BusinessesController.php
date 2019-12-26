@@ -173,7 +173,15 @@ class BusinessesController extends Controller
             $business = $request->business;
             $manager_member = $request->manager_member;
             $all_notifications = Notification::where('notifiable_type', 'App\Models\Member')
-                ->where('notifiable_id', (int)$manager_member->id)->whereIn('event_type', ['App\Models\Driver', 'App\Models\Vehicle', 'Sheba\Dal\Support\Model'])
+                ->where('notifiable_id', (int)$manager_member->id)
+                ->whereIn('event_type', [
+                    'App\Models\Procurement',
+                    'App\Models\Bid',
+                    'App\Models\Driver',
+                    'App\Models\Vehicle',
+                    'Sheba\Dal\Support\Model',
+                    'App\Models\BusinessTripRequest'
+                ])
                 ->orderBy('id', 'DESC');
 
             $notifications = [];
@@ -185,6 +193,7 @@ class BusinessesController extends Controller
                     "title" => $notification->title,
                     "is_seen" => $notification->is_seen,
                     "event_type" => $notification->getType(),
+                    "link" => $notification->link,
                     "event_id" => $notification->event_id,
                     "created_at" => $notification->created_at->format('M d h:ia')
                 ]);

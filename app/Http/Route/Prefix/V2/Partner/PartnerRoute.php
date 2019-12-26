@@ -27,6 +27,7 @@ class PartnerRoute
             $api->get('/', 'LoanController@index');
             $api->get('/{loan_id}/details','LoanController@show');
             $api->post('/{loan_id}','LoanController@update');
+            $api->get('/{loan_id}/download-documents','LoanController@downloadDocuments');
             $api->post('/{loan_id}/upload-documents','LoanController@uploadDocuments');
             $api->post('/{loan_id}/status','LoanController@statusChange');
             $api->get('/{loan_id}/banks/{bank_id}', 'LoanController@assignBank');
@@ -35,6 +36,8 @@ class PartnerRoute
             $api->post('/{partner_bank_loan}/comments', 'LoanController@storeComment');
             $api->get('/{partner_bank_loan}/comments', 'LoanController@getComments');
             $api->post('/{partner_bank_loan}/status-change', 'LoanController@statusChange');
+            $api->get('/{loan_id}/generate-application','LoanController@generateApplication');
+
         });
     }
 }

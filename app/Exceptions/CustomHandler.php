@@ -54,4 +54,5 @@ class CustomHandler extends DingoHandler
 
         return parent::render($request, $e);
     }
+
 }
