@@ -123,4 +123,23 @@ class ExpenseController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function delete(Request $request, $expense)
+    {
+        try {
+            $auth_info = $request->auth_info;
+            $business_member = $auth_info['business_member'];
+            if (!$business_member) return api_response($request, null, 401);
+
+            $expense = Expense::find($expense);
+            if (!$expense) return api_response($request, null, 404);
+
+            $expense->delete();
+
+            return api_response($request, $expense, 200);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }

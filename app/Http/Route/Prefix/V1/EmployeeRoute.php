@@ -25,6 +25,7 @@ class EmployeeRoute
                 $api->group(['prefix' => '{expense}'], function ($api) {
                     $api->get('/', 'Employee\ExpenseController@show');
                     $api->post('/', 'Employee\ExpenseController@update');
+                    $api->delete('/', 'Employee\ExpenseController@delete');
                 });
                 $api->post('/', 'Employee\ExpenseController@store');
             });
