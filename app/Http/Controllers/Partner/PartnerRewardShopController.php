@@ -17,7 +17,7 @@ class PartnerRewardShopController extends Controller
     {
         try{
             $products = RewardShopProduct::published()->select('id', 'name', 'thumb', 'point')
-                ->sortBy('point')->get()->map(function ($product) {
+                ->orderBy('point')->get()->map(function ($product) {
                     return [
                         'id' => $product->id,
                         'name' => $product->name,
