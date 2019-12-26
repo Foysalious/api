@@ -173,7 +173,8 @@ return [
         Sheba\Notification\NotificationServiceProvider::class,
         Sheba\Repositories\Providers\RepositoryServiceProvider::class,
         Sheba\Pos\Repositories\PosRepositoryServiceProvider::class,
-        Sheba\Dal\Providers\DalEventsListenerProvider::class
+        Sheba\Dal\Providers\DalEventsListenerProvider::class,
+        Sheba\Report\Listeners\ReportUpdateProvider::class
     ],
 
     /*
