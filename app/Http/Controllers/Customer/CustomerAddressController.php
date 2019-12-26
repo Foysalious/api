@@ -54,6 +54,7 @@ class CustomerAddressController extends Controller
             'id' => $address->id,
             'lat' => $geo->getLat(),
             'lng' => $geo->getLng(),
+            'address' => $address->address,
         ]]);
     }
 
