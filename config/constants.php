@@ -630,6 +630,7 @@ return [
         'customer-app',
         'affiliation-app',
         'manager-app',
+        'employee-app',
         'manager-web',
         'business-portal',
         'bank-loan-portal'
@@ -916,67 +917,67 @@ return [
             'bn' => 'অন্যান্য'
         ]
     ],
-    'LOAN_STATUS'                                 => [
-        'applied'         => 'applied',
-        'submitted'       => 'submitted',
-        'verified'        => 'verified',
-        'approved'        => 'approved',
+    'LOAN_STATUS' => [
+        'applied' => 'applied',
+        'submitted' => 'submitted',
+        'verified' => 'verified',
+        'approved' => 'approved',
         'sanction_issued' => 'sanction_issued',
-        'disbursed'       => 'disbursed',
-        'closed'          => 'closed',
-        'rejected'        => 'rejected',
-        'hold'            => 'hold',
-        'declined'        => 'declined',
-        'withdrawal'      => 'withdrawal',
-        'considerable'    => 'considerable'
+        'disbursed' => 'disbursed',
+        'closed' => 'closed',
+        'rejected' => 'rejected',
+        'hold' => 'hold',
+        'declined' => 'declined',
+        'withdrawal' => 'withdrawal',
+        'considerable' => 'considerable'
     ],
-    'LOAN_STATUS_BN'                              => [
-        'applied'         => [
-            'bn'    => 'এপ্লাইড',
+    'LOAN_STATUS_BN' => [
+        'applied' => [
+            'bn' => 'এপ্লাইড',
             'color' => '#F2994A'
         ],
-        'submitted'       => [
-            'bn'    => 'সাবমিটেড',
+        'submitted' => [
+            'bn' => 'সাবমিটেড',
             'color' => '#2D9CDB'
         ],
-        'verified'        => [
-            'bn'    => 'ভেরিফাইড',
+        'verified' => [
+            'bn' => 'ভেরিফাইড',
             'color' => '#404FD3'
         ],
-        'approved'        => [
-            'bn'    => 'এপ্রুভড',
+        'approved' => [
+            'bn' => 'এপ্রুভড',
             'color' => '#9B51E0'
         ],
         'sanction_issued' => [
-            'bn'    => 'স্যাংশন ইস্যু',
+            'bn' => 'স্যাংশন ইস্যু',
             'color' => '#1FB3A2'
         ],
-        'disbursed'       => [
-            'bn'    => 'ডিসবার্সড',
+        'disbursed' => [
+            'bn' => 'ডিসবার্সড',
             'color' => '#27AE60'
         ],
-        'closed'          => [
-            'bn'    => 'ক্লোজ',
+        'closed' => [
+            'bn' => 'ক্লোজ',
             'color' => '#117746'
         ],
-        'rejected'        => [
-            'bn'    => 'রিজেক্ট',
+        'rejected' => [
+            'bn' => 'রিজেক্ট',
             'color' => '#EC2020'
         ],
-        'hold'            => [
-            'bn'    => 'হোল্ড',
+        'hold' => [
+            'bn' => 'হোল্ড',
             'color' => '#EAB618'
         ],
-        'declined'        => [
-            'bn'    => 'ডিকলাইন',
+        'declined' => [
+            'bn' => 'ডিকলাইন',
             'color' => '#EC2020'
         ],
-        'withdrawal'      => [
-            'bn'    => 'উইথড্রয়াল',
+        'withdrawal' => [
+            'bn' => 'উইথড্রয়াল',
             'color' => '#979797'
         ],
-        'considerable'    => [
-            'bn'    => 'এপ্লাইড',
+        'considerable' => [
+            'bn' => 'এপ্লাইড',
             'color' => '#F2994A'
         ]
     ],
@@ -1229,21 +1230,21 @@ return [
             'bn' => 'লিমিটেড কোম্পানি'
         ]
     ],
-    'PARTNER_OWNER_TYPES'                         => [
+    'PARTNER_OWNER_TYPES' => [
         [
             'key' => 'limited',
-            'en'  => 'Limited',
-            'bn'  => 'লিমিটেড'
+            'en' => 'Limited',
+            'bn' => 'লিমিটেড'
         ],
         [
             'key' => 'partnership',
-            'en'  => 'Partnership',
-            'bn'  => 'পার্টনারশিপ'
+            'en' => 'Partnership',
+            'bn' => 'পার্টনারশিপ'
         ],
         [
             'key' => 'proprietorship',
-            'en'  => 'Proprietorship',
-            'bn'  => 'প্রোপ্রাইটরশিপ'
+            'en' => 'Proprietorship',
+            'bn' => 'প্রোপ্রাইটরশিপ'
         ],
     ]
 ];
