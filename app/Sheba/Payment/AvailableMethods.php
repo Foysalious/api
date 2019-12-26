@@ -132,7 +132,7 @@ class AvailableMethods
     private static function getWalletRechargePayments($version_code, $platform_name)
     {
         return [
-            array_merge(self::bkash(), ['is_published' => 1]),
+            self::bkash(),
             self::cbl($version_code, $platform_name),
             self::ssl()
         ];
@@ -156,11 +156,9 @@ class AvailableMethods
 
     private static function getCblStatus($version_code, $platform_name)
     {
-        if ($version_code) {
-            return $platform_name && $platform_name == 'ios' ? 1 : ($version_code > 30112 ? 1 : 0);
-        } else {
-            return 1;
-        }
+        if (!$version_code) return 1;
+
+        return $platform_name && $platform_name == 'ios' ? 1 : ($version_code > 30112 ? 1 : 0);
     }
 
     /**
