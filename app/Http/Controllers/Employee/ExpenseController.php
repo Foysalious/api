@@ -25,6 +25,8 @@ class ExpenseController extends Controller
                 'status' => 'string|in:open,closed',
                 'limit' => 'numeric',
                 'offset' => 'numeric',
+                'start_date' => 'string',
+                'end_date' => 'string',
             ]);
             $auth_info = $request->auth_info;
             $business_member = $auth_info['business_member'];
@@ -38,6 +40,12 @@ class ExpenseController extends Controller
 
             if ($request->has('status')) $supports = $expenses->where('status', $request->status);
             if ($request->has('limit')) $supports = $expenses->skip($offset)->limit($limit);
+
+            $start_date = $request->has('start_date') ? $request->start_date : null;
+            $end_date = $request->has('end_date') ? $request->end_date : null;
+            if ($start_date && $end_date) {
+                $expenses->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
+            }
 
             $expenses = $expenses->get();
 
