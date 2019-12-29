@@ -196,7 +196,7 @@ class AvailableMethods
     {
         return [
             'name' => 'bKash',
-            'is_published' => 0,
+            'is_published' => 1,
             'description' => '',
             'asset' => 'bkash',
             'method_name' => 'bkash'
