@@ -68,6 +68,7 @@ class FacebookController extends Controller
             $this->validate($request, ['access_token' => 'required', 'kit_code' => 'required', 'from' => "required|in:$from"]);
             $fb_profile_info = $this->getFacebookProfileInfo($request->access_token);
             $kit_data = $this->resolveAccountKit($request->kit_code);
+            dd();
             if ($fb_profile_info && $kit_data) {
                 $from = $this->profileRepository->getAvatar($request->from);
                 $fb_profile = new FacebookProfile($fb_profile_info);
@@ -116,7 +117,7 @@ class FacebookController extends Controller
         $version = (int)\request()->header('Version-Code');
         $portal_name = \request()->header('portal-name');
         $platform_name = \request()->header('Platform-Name');
-        if ($portal_name == 'customer-portal' && ($version > 30211 && $portal_name == 'customer-app') || ($version > 12003 && $portal_name == 'bondhu-app') || ($version > 2145 && $portal_name == 'resource-app') ||
+        if ($portal_name == 'customer-portal' || ($version > 30211 && $portal_name == 'customer-app') || ($version > 12003 && $portal_name == 'bondhu-app') || ($version > 2145 && $portal_name == 'resource-app') ||
             ($version > 126 && $portal_name == 'customer-app' && $platform_name == 'ios')) {
             $access_token_request = new AccessTokenRequest();
             $access_token_request->setAuthorizationCode($code);
