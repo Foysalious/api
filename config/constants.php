@@ -612,6 +612,7 @@ return [
     'REFERRAL_VALID_DAYS' => 90,
     'AVATAR' => [
         env('SHEBA_CUSTOMER_APP') => 'customer',
+        'customer-portal' => 'customer',
         env('SHEBA_AFFILIATION_APP') => 'affiliate',
         env('SHEBA_RESOURCE_APP') => 'resource',
         env('SHEBA_MANGER_APP') => 'resource',
@@ -633,7 +634,8 @@ return [
         'employee-app',
         'manager-web',
         'business-portal',
-        'bank-loan-portal'
+        'bank-loan-portal',
+        'customer-portal',
     ],
     'PARTNER_ACQUISITION_CHANNEL' => [
         'PM' => 'PM',
