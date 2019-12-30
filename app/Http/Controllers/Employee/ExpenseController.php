@@ -2,16 +2,23 @@
 
 
 use App\Http\Controllers\Controller;
+use App\Models\Attachment;
+use App\Models\FuelLog;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Sheba\Attachments\FilesAttachment;
 use Sheba\Business\Support\Creator;
 use Sheba\Dal\Expense\Expense;
 use Sheba\Dal\Support\SupportRepositoryInterface;
+use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
 
 class ExpenseController extends Controller
 {
     /** @var SupportRepositoryInterface */
     private $repo;
+    use ModificationFields;
+    use FilesAttachment;
 
     public function __construct(SupportRepositoryInterface $repo)
     {
@@ -65,6 +72,9 @@ class ExpenseController extends Controller
                 'amount' => 'required|string',
                 'remarks' => 'string',
                 'type' => 'string',
+                'start_date' => 'string',
+                'end_date' => 'string',
+                'file' => 'file',
             ]);
             $auth_info = $request->auth_info;
             $business_member = $auth_info['business_member'];
@@ -78,10 +88,61 @@ class ExpenseController extends Controller
             $expense->type = $request->type;
             $expense->save();
 
+            if ($request['file']) {
+                $this->storeAttachment($expense, $request);
+            }
+
             return api_response($request, $expense, 200, ['expense' => ['id' => $expense->id]]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
+        }
+    }
+
+    public function storeAttachment(Expense $expense, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'file' => 'required'
+            ]);
+            $business = $request->business;
+            $member = $request->manager_member;
+            $this->setModifier($member);
+            $data = $this->storeAttachmentToCDN($request->file('file'));
+            $attachment = $expense->attachments()->save(new Attachment($this->withBothModificationFields($data)));
+            return $attachment;
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return false;
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return false;
+        }
+    }
+
+    public function getAttachments(Expense $expense, Request $request)
+    {
+        try {
+            if (!$expense) return false;
+            $attaches = Attachment::where('attachable_type', get_class($expense))->where('attachable_id', $expense->id);
+            $attach_lists = [];
+            foreach ($attaches as $attach) {
+                array_push($attach_lists, [
+                    'id' => $attach->id,
+                    'title' => $attach->title,
+                    'file' => $attach->file,
+                    'file_type' => $attach->file_type,
+                ]);
+            }
+
+            if (count($attach_lists) > 0) return api_response($request, $attach_lists, 200, ['attach_lists' => $attach_lists]);
+            else  return false;
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return false;
         }
     }
 
@@ -92,7 +153,7 @@ class ExpenseController extends Controller
             $business_member = $auth_info['business_member'];
             if (!$business_member) return api_response($request, null, 401);
             $expense = Expense::where('id', $expense)
-                ->select('id', 'member_id', 'amount', 'status', 'remarks', 'type')->first();
+                ->select('id', 'member_id', 'amount', 'status', 'remarks', 'type', 'created_at')->first();
 
             if (!$expense) return api_response($request, null, 404);
 
