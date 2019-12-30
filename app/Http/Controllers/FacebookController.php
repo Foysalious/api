@@ -68,7 +68,6 @@ class FacebookController extends Controller
             $this->validate($request, ['access_token' => 'required', 'kit_code' => 'required', 'from' => "required|in:$from"]);
             $fb_profile_info = $this->getFacebookProfileInfo($request->access_token);
             $kit_data = $this->resolveAccountKit($request->kit_code);
-            dd();
             if ($fb_profile_info && $kit_data) {
                 $from = $this->profileRepository->getAvatar($request->from);
                 $fb_profile = new FacebookProfile($fb_profile_info);
