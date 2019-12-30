@@ -49,7 +49,9 @@ class ExpenseController extends Controller
 
             $expenses = $expenses->get();
 
-            return api_response($request, $expenses, 200, ['expenses' => $expenses]);
+            $sum = $expenses->sum('amount');
+
+            return api_response($request, $expenses, 200, ['data' => ['expenses' => $expenses, 'sum' => $sum]]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
