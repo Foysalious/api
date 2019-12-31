@@ -156,11 +156,9 @@ class AvailableMethods
 
     private static function getCblStatus($version_code, $platform_name)
     {
-        if ($version_code) {
-            return $platform_name && $platform_name == 'ios' ? 1 : ($version_code > 30112 ? 1 : 0);
-        } else {
-            return 1;
-        }
+        if (!$version_code) return 1;
+
+        return $platform_name && $platform_name == 'ios' ? 1 : ($version_code > 30112 ? 1 : 0);
     }
 
     /**

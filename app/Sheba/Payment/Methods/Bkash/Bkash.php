@@ -73,7 +73,7 @@ class Bkash extends PaymentMethod
     private function setCredentials($user)
     {
         /** @var BkashAuthBuilder $bkash_auth */
-        $bkash_auth = BkashAuthBuilder::getForUser($user);
+        $bkash_auth           = BkashAuthBuilder::getForUser($user);
         $this->appKey         = $bkash_auth->appKey;
         $this->appSecret      = $bkash_auth->appSecret;
         $this->username       = $bkash_auth->username;
@@ -157,7 +157,7 @@ class Bkash extends PaymentMethod
         if ($execute_response->hasSuccess()) {
             $success = $execute_response->getSuccess();
             try {
-                (new Registrar())->register($payment->payable->user, 'bkash', $success->id, $this->merchantNumber);
+                (new Registrar())->setAmount($payment->payable->amount)->setDetails(json_encode($success->details))->setTime(Carbon::now()->format('Y-m-d H:s:i'))->setIsValidated(1)->register($payment->payable->user, 'bkash', $success->id, $this->merchantNumber);
                 $status              = Statuses::VALIDATED;
                 $transaction_details = json_encode($success->details);
             } catch (InvalidTransaction $e) {
