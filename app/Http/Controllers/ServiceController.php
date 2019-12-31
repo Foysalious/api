@@ -15,6 +15,10 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Checkout\DeliveryCharge;
+use Sheba\Dal\Discount\Discount;
+use Sheba\Dal\Discount\DiscountTypes;
+use Sheba\Dal\ServiceDiscount\Model as ServiceDiscount;
+use Sheba\JobDiscount\JobDiscountCheckingParams;
 use Sheba\JobDiscount\JobDiscountHandler;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\Subscription\ApproximatePriceCalculator;
@@ -75,9 +79,14 @@ class ServiceController extends Controller
      * @param $service
      * @param Request $request
      * @param ApproximatePriceCalculator $approximatePriceCalculator
+     * @param PriceCalculation $price_calculation
+     * @param DeliveryCharge $delivery_charge
+     * @param JobDiscountHandler $job_discount_handler
      * @return JsonResponse
      */
-    public function get($service, Request $request, ApproximatePriceCalculator $approximatePriceCalculator)
+    public function get($service, Request $request, ApproximatePriceCalculator $approximatePriceCalculator,
+                        PriceCalculation $price_calculation, DeliveryCharge $delivery_charge,
+                        JobDiscountHandler $job_discount_handler)
     {
         try {
             ini_set('memory_limit', '2048M');
@@ -104,40 +113,54 @@ class ServiceController extends Controller
             $service_min_price = $price_range[1] > 0 ? $price_range[1] : 0;
 
             $service_breakdown = [];
+
+            $location = null;
+            if ($request->has('lat') && $request->has('lng')) {
+                $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+                if (!is_null($hyperLocation)) $location = $hyperLocation->location_id;
+            }
+            $location = !is_null($location) ? $location : 4;
+            $location_service = LocationService::where('location_id', $location)->where('service_id', $service->first()->id)->first();
+
+            $price_calculation->setLocationService($location_service);
+
             if ($options) {
                 if (count($answers) > 1) {
-                    $service_breakdown = $this->breakdown_service_with_min_max_price($answers, $service_min_price, $service_max_price);
+                    $service_breakdown = $this->breakdown_service_with_min_max_price($answers, $service_min_price, $service_max_price, 0, $price_calculation, $location_service);
                 } else {
-                    $total_breakdown = array();
+                    $total_breakdown = [];
                     foreach ($answers[0] as $index => $answer) {
-                        $breakdown = array(
-                            'name' => $answer,
-                            'indexes' => array($index),
+                        $breakdown = [
+                            'name'      => $answer,
+                            'indexes'   => [$index],
                             'min_price' => $service_min_price,
                             'max_price' => $service_max_price,
-                            'price'     => 102
-                        );
+                            'price'     => $price_calculation->setOption([$index])->getUnitPrice()
+                        ];
                         array_push($total_breakdown, $breakdown);
                     }
                     $service_breakdown = $total_breakdown;
                 }
             } else {
-                $service_breakdown = array(array(
-                    'name' => $service->first()->name,
-                    'indexes' => null,
-                    'min_price' => $service_min_price,
-                    'max_price' => $service_max_price
-                ));
+                $service_breakdown = [
+                    [
+                        'name' => $service->first()->name,
+                        'indexes' => null,
+                        'min_price' => $service_min_price,
+                        'max_price' => $service_max_price,
+                        'price'     => $price_calculation->getUnitPrice()
+                    ]
+                ];
             }
 
             $service = $request->has('is_business') ? $service->publishedForBusiness() : $service->publishedForAll();
             $service = $service->first();
 
-            if ($service == null)
-                return api_response($request, null, 404);
+            if ($service == null) return api_response($request, null, 404);
             if ($service->variable_type == 'Options') {
                 $service['first_option'] = $this->serviceRepository->getFirstOption($service);
             }
+
             $scope = [];
             if ($request->has('scope')) {
                 $scope = $this->serviceRepository->getServiceScope($request->scope);
@@ -171,18 +194,30 @@ class ServiceController extends Controller
             array_add($service, 'master_category_name', $category->parent->name);
             array_add($service, 'service_breakdown', $service_breakdown);
             array_add($service, 'options', $options);
-            array_add($service, 'discount', [
-                'value' => (double)10.5,
-                'is_percentage' => 1,
-                'cap' => (double)200
-            ]);
-            array_add($service, 'delivery_charge', 50);
-            array_add($service, 'delivery_discount', [
-                'value' => (double)50,
-                'is_percentage' => 1,
-                'cap' => (double)30,
-                'min_order_amount' => (double)200
-            ]);
+
+            /** @var ServiceDiscount $discount */
+            $discount = $location_service->discounts()->running()->first();
+            $service_discount = $discount ? [
+                'value' => (double)$discount->amount,
+                'is_percentage' => $discount->isPercentage(),
+                'cap' => (double)$discount->cap
+            ] : null;
+            array_add($service, 'discount', $service_discount);
+
+            $category_delivery_charge = $delivery_charge->setCategory($service->category)->get();
+            array_add($service, 'delivery_charge', $category_delivery_charge);
+
+            $discount_checking_params = (new JobDiscountCheckingParams())->setDiscountableAmount($category_delivery_charge);
+            $job_discount_handler->setType(DiscountTypes::DELIVERY)->setCategory($service->category)->setCheckingParams($discount_checking_params)->calculate();
+            /** @var Discount $delivery_discount */
+            $delivery_discount = $job_discount_handler->getDiscount();
+            $category_delivery_discount = $delivery_discount ? [
+                'value' => (double)$delivery_discount->amount,
+                'is_percentage' => $delivery_discount->is_percentage,
+                'cap' => (double)$delivery_discount->cap,
+                'min_order_amount' => (double)$delivery_discount->rules->getMinOrderAmount()
+            ] : null;
+            array_add($service, 'delivery_discount', $category_delivery_discount);
 
             removeRelationsAndFields($service);
             if (config('sheba.online_payment_discount_percentage') > 0) {
@@ -279,39 +314,44 @@ class ServiceController extends Controller
         return $questions;
     }
 
-    private function breakdown_service_with_min_max_price($arrays, $min_price, $max_price, $i = 0)
+    /**
+     * @param $arrays
+     * @param $min_price
+     * @param $max_price
+     * @param int $i
+     * @param PriceCalculation $price_calculation
+     * @param LocationService $location_service
+     * @return array
+     */
+    private function breakdown_service_with_min_max_price($arrays, $min_price, $max_price, $i = 0, PriceCalculation $price_calculation, LocationService $location_service)
     {
-        if (!isset($arrays[$i])) {
-            return array();
-        }
+        if (!isset($arrays[$i])) return [];
+        if ($i == count($arrays) - 1) return $arrays[$i];
 
-        if ($i == count($arrays) - 1) {
-            return $arrays[$i];
-        }
+        $tmp = $this->breakdown_service_with_min_max_price($arrays, $min_price, $max_price, $i + 1, $price_calculation, $location_service);
 
-        $tmp = $this->breakdown_service_with_min_max_price($arrays, $min_price, $max_price, $i + 1);
-
-        $result = array();
+        $result = [];
 
         foreach ($arrays[$i] as $array_index => $v) {
             foreach ($tmp as $index => $t) {
+
                 $result[] = is_array($t) ?
-                    array(
+                    [
                         'name' => $v . " - " . $t['name'],
-                        'indexes' => array_merge(array($array_index), $t['indexes']),
+                        'indexes' => array_merge([$array_index], $t['indexes']),
                         'min_price' => $t['min_price'],
                         'max_price' => $t['max_price'],
-                        'price' => 100
-                    ) :
-                    array(
+                        'price'     => $price_calculation->setLocationService($location_service)->setOption(array_merge([$array_index], $t['indexes']))->getUnitPrice()
+                    ] : [
                         'name' => $v . " - " . $t,
                         'indexes' => array($array_index, $index),
                         'min_price' => $min_price,
                         'max_price' => $max_price,
-                        'price' => 105
-                    );
+                        'price'     => $price_calculation->setLocationService($location_service)->setOption([$array_index, $index])->getUnitPrice()
+                    ];
             }
         }
+
         return $result;
     }
 

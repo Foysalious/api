@@ -15,7 +15,7 @@ trait LocationSetter
     {
         if ($request->has('location')) {
             $this->location = Location::find($request->location)->id;
-        } else if ($request->has('lat') && $request->has('lng')) {
+        } elseif ($request->has('lat') && $request->has('lng')) {
             $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
             if (!is_null($hyperLocation)) $this->location = $hyperLocation->location_id;
         }
