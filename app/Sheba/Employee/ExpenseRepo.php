@@ -9,13 +9,12 @@ use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
 
 class ExpenseRepo
 {
-    public function index(Request $request, $business_member)
+    public function index(Request $request, $member)
     {
-
         try {
             list($offset, $limit) = calculatePagination($request);
 
-            $expenses = Expense::where('member_id', $business_member['member_id'])
+            $expenses = Expense::where('member_id', $member->id)
                 ->select('id', 'member_id', 'amount', 'status', 'remarks', 'type')
                 ->orderBy('id', 'desc');
 
@@ -30,9 +29,7 @@ class ExpenseRepo
 
             $expenses = $expenses->get();
 
-            $sum = $expenses->sum('amount');
-
-            return ['data' => ['expenses' => $expenses, 'sum' => $sum]];
+            return $expenses;
         } catch (\Throwable $e) {
             return null;
         }
