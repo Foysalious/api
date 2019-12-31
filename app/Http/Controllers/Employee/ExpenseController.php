@@ -12,17 +12,20 @@ use Sheba\Dal\Expense\Expense;
 use Sheba\Dal\Support\SupportRepositoryInterface;
 use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
+use Sheba\Employee\ExpenseRepo;
 
 class ExpenseController extends Controller
 {
     /** @var SupportRepositoryInterface */
     private $repo;
+    private $expense_repo;
     use ModificationFields;
     use FilesAttachment;
 
-    public function __construct(SupportRepositoryInterface $repo)
+    public function __construct(SupportRepositoryInterface $repo, ExpenseRepo $expense_repo)
     {
         $this->repo = $repo;
+        $this->expense_repo = $expense_repo;
     }
 
     public function index(Request $request, MemberRepositoryInterface $member_repository)
@@ -35,30 +38,14 @@ class ExpenseController extends Controller
                 'start_date' => 'string',
                 'end_date' => 'string',
             ]);
+
             $auth_info = $request->auth_info;
             $business_member = $auth_info['business_member'];
             if (!$business_member) return api_response($request, null, 401);
 
-            list($offset, $limit) = calculatePagination($request);
+            $data = $this->expense_repo->index($request, $business_member);
 
-            $expenses = Expense::where('member_id', $business_member['member_id'])
-                ->select('id', 'member_id', 'amount', 'status', 'remarks', 'type')
-                ->orderBy('id', 'desc');
-
-            if ($request->has('status')) $supports = $expenses->where('status', $request->status);
-            if ($request->has('limit')) $supports = $expenses->skip($offset)->limit($limit);
-
-            $start_date = $request->has('start_date') ? $request->start_date : null;
-            $end_date = $request->has('end_date') ? $request->end_date : null;
-            if ($start_date && $end_date) {
-                $expenses->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
-            }
-
-            $expenses = $expenses->get();
-
-            $sum = $expenses->sum('amount');
-
-            return api_response($request, $expenses, 200, ['data' => ['expenses' => $expenses, 'sum' => $sum]]);
+            return api_response($request, $data, 200, $data);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -81,68 +68,12 @@ class ExpenseController extends Controller
             if (!$business_member) return api_response($request, null, 401);
             $member = $member_repository->where('id', $business_member['member_id'])->first();
 
-            $expense = new Expense;
-            $expense->amount = $request->amount;
-            $expense->member_id = $member->id;
-            $expense->remarks = $request->remarks;
-            $expense->type = $request->type;
-            $expense->save();
+            $data =  $this->expense_repo->store($request, $member);
 
-            if ($request['file']) {
-                $this->storeAttachment($expense, $request);
-            }
-
-            return api_response($request, $expense, 200, ['expense' => ['id' => $expense->id]]);
+            return api_response($request, $data, 200, $data);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
-        }
-    }
-
-    public function storeAttachment(Expense $expense, Request $request)
-    {
-        try {
-            $this->validate($request, [
-                'file' => 'required'
-            ]);
-            $business = $request->business;
-            $member = $request->manager_member;
-            $this->setModifier($member);
-            $data = $this->storeAttachmentToCDN($request->file('file'));
-            $attachment = $expense->attachments()->save(new Attachment($this->withBothModificationFields($data)));
-            return $attachment;
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return false;
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return false;
-        }
-    }
-
-    public function getAttachments(Expense $expense, Request $request)
-    {
-        try {
-            if (!$expense) return false;
-            $attaches = Attachment::where('attachable_type', get_class($expense))->where('attachable_id', $expense->id);
-            $attach_lists = [];
-            foreach ($attaches as $attach) {
-                array_push($attach_lists, [
-                    'id' => $attach->id,
-                    'title' => $attach->title,
-                    'file' => $attach->file,
-                    'file_type' => $attach->file_type,
-                ]);
-            }
-
-            if (count($attach_lists) > 0) return api_response($request, $attach_lists, 200, ['attach_lists' => $attach_lists]);
-            else  return false;
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return false;
         }
     }
 
@@ -152,14 +83,12 @@ class ExpenseController extends Controller
             $auth_info = $request->auth_info;
             $business_member = $auth_info['business_member'];
             if (!$business_member) return api_response($request, null, 401);
-            $expense = Expense::where('id', $expense)
-                ->select('id', 'member_id', 'amount', 'status', 'remarks', 'type', 'created_at')->first();
 
-            if (!$expense) return api_response($request, null, 404);
+            $data = $this->expense_repo->show($request, $expense);
 
-            $expense['date'] = $expense->created_at ? $expense->created_at->format('M d') : null;
-            $expense['time'] = $expense->created_at ? $expense->created_at->format('h:i A') : null;
-            return api_response($request, $expense, 200, ['expense' => $expense]);
+            return $data ?
+                api_response($request, $expense, 200, $data)
+                : api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -179,16 +108,11 @@ class ExpenseController extends Controller
             $business_member = $auth_info['business_member'];
             if (!$business_member) return api_response($request, null, 401);
 
-            $expense = Expense::find($expense);
-            if (!$expense) return api_response($request, null, 404);
+            $data = $this->expense_repo->update($request, $expense);
 
-
-            $expense->amount = $request->amount;
-            $expense->remarks = $request->remarks;
-            $expense->type = $request->type;
-            $expense->save();
-
-            return api_response($request, $expense, 200, ['expense' => ['id' => $expense->id]]);
+            return $data ?
+                api_response($request, $expense, 200, $data)
+                : api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -202,12 +126,10 @@ class ExpenseController extends Controller
             $business_member = $auth_info['business_member'];
             if (!$business_member) return api_response($request, null, 401);
 
-            $expense = Expense::find($expense);
-            if (!$expense) return api_response($request, null, 404);
-
-            $expense->delete();
-
-            return api_response($request, $expense, 200);
+            $data = $this->expense_repo->delete($request, $expense);
+            return $data ?
+                api_response($request, $expense, 200)
+                : api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
