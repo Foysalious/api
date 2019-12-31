@@ -384,7 +384,7 @@ class CategoryController extends Controller
                 if ($category->parent_id == null) {
                     if ((int)$request->is_business) {
                         $services = $this->categoryRepository->getServicesOfCategory((Category::where('parent_id', $category->id)->publishedForBusiness()->orderBy('order')->get())->pluck('id')->toArray(), $location, $offset, $limit);
-                    } else if ($request->is_b2b) {
+                    } elseif ($request->is_b2b) {
                         $services = $this->categoryRepository->getServicesOfCategory(Category::where('parent_id', $category->id)->publishedForB2B()
                             ->orderBy('order')->get()->pluck('id')->toArray(), $location, $offset, $limit);
                     } else {

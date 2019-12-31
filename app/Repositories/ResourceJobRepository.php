@@ -1,7 +1,4 @@
-<?php
-
-namespace App\Repositories;
-
+<?php namespace App\Repositories;
 
 use App\Models\PartnerOrder;
 use App\Sheba\UserRequestInformation;

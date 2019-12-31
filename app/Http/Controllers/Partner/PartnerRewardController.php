@@ -111,4 +111,47 @@ class PartnerRewardController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function getReferralFaqs(Request $request){
+        try{
+            $faqs = array(
+                array(
+                    'question' => '',
+                    'answer' => ''
+                ),
+                array(
+                    'question' => '',
+                    'answer' => ''
+                ),
+                array(
+                    'question' => '',
+                    'answer' => ''
+                )
+            );
+            return api_response($request, $faqs, 200, ['faqs' => $faqs]);
+
+        }catch (\Throwable $e){
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getReferralSteps(Request $request){
+        try{
+            $stepDetails = collect(config('partner.referral_steps'))
+                ->map(function($item) {
+                    return [
+                        'ধাপ' => $item['step'],
+                        'আপনার আয়' => $item['amount'],
+                        'কিভাবে করবেন' => $item['details']
+                    ];
+                });
+            return api_response($request, $stepDetails, 200, ['steps' => $stepDetails]);
+
+        }catch (\Throwable $e){
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
+    }
 }
