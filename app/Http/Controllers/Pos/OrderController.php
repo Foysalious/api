@@ -298,7 +298,6 @@ class OrderController extends Controller
             $is_returned   = ($this->isReturned($order, $request));
             $refund_nature = $is_returned ? Natures::RETURNED : Natures::EXCHANGED;
             $return_nature = $is_returned ? $this->getReturnType($request, $order) : null;
-
             /** @var RefundNature $refund */
             $refund = NatureFactory::getRefundNature($order, $request->all(), $refund_nature, $return_nature);
             $refund->update();
@@ -318,9 +317,8 @@ class OrderController extends Controller
      */
     private function isReturned(PosOrder $order, Request $request)
     {
-        $services         = $order->items->pluck('service_id')->toArray();
+        $services         = $order->items->pluck('id')->toArray();
         $request_services = collect(json_decode($request->services, true))->pluck('id')->toArray();
-
         return $services === $request_services;
     }
 

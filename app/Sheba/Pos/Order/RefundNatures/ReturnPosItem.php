@@ -23,7 +23,7 @@ abstract class ReturnPosItem extends RefundNature
     public function update()
     {
         $this->oldOrder = clone $this->order;
-        $this->old_services = $this->order->items->pluckMultiple(['quantity', 'unit_price'], 'service_id', true)->toArray();
+        $this->old_services = $this->order->items->pluckMultiple(['quantity', 'unit_price'], 'id', true)->toArray();
         $this->updater->setOrder($this->order)->setData($this->data)->update();
         $this->refundPayment();
         $this->generateDetails();

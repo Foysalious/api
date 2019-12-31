@@ -23,12 +23,11 @@ class ExchangePosItem extends RefundNature
     /** @var PaymentTransfer $paymentTransfer */
     private $paymentTransfer;
 
-    public function __construct(LogCreator $log_creator, Updater $updater,
-                                PosServiceRepositoryInterface $service_repo, StockManager $stock_manager, PaymentTransfer $transfer)
+    public function __construct(LogCreator $log_creator, Updater $updater, PosServiceRepositoryInterface $service_repo, StockManager $stock_manager, PaymentTransfer $transfer)
     {
         parent::__construct($log_creator, $updater);
-        $this->stockManager = $stock_manager;
-        $this->serviceRepo = $service_repo;
+        $this->stockManager    = $stock_manager;
+        $this->serviceRepo     = $service_repo;
         $this->paymentTransfer = $transfer;
     }
 
@@ -37,19 +36,37 @@ class ExchangePosItem extends RefundNature
         $creator = app(Creator::class);
         $this->stockRefill();
         $this->data['previous_order_id'] = $this->order->id;
-        $this->newOrder = $creator->setPartner($this->order->partner)->setData($this->data)->create();
+        $this->newOrder                  = $creator->setPartner($this->order->partner)->setData($this->prepareCreateData())->create();
         $this->generateDetails();
         $this->saveLog();
         $this->transferPaidAmount();
     }
 
-    protected function saveLog()
+    private function stockRefill()
     {
-        $this->logCreator->setOrder($this->order)
-            ->setType(Types::EXCHANGE)
-            ->setLog("New Order Created for Exchange, old order id: {$this->order->id}")
-            ->setDetails($this->details)
-            ->create();
+        $this->order->items->each(function ($item) {
+            dump($item->service_id);
+            if ($item->service_id) {
+                $partner_pos_service   = $this->serviceRepo->find($item->service_id);
+                $is_stock_maintainable = $this->stockManager->setPosService($partner_pos_service)->isStockMaintainable();
+                if ($is_stock_maintainable)
+                    $this->stockManager->increase($item->quantity);
+            }
+        });
+    }
+
+    private function prepareCreateData()
+    {
+        $data        = $this->data;
+        $services    = json_decode($data['services'], true);
+        $newServices = [];
+        foreach ($services as $service) {
+            $item          = $this->order->items->where('id', $service['id'])->first();
+            $service['id'] = $item->service_id;
+            array_push($newServices, $service);
+        }
+        $data['services'] = json_encode($newServices);
+        return $data;
     }
 
     /**
@@ -57,26 +74,22 @@ class ExchangePosItem extends RefundNature
      */
     protected function generateDetails()
     {
-        $details['orders']['changes'] = ['new' => $this->newOrder, 'old' => $this->order];
-        $this->details = json_encode($details);
+        $details['orders']['changes'] = [
+            'new' => $this->newOrder,
+            'old' => $this->order
+        ];
+        $this->details                = json_encode($details);
     }
 
-    private function stockRefill()
+    protected function saveLog()
     {
-        $this->order->items->each(function ($item) {
-            $partner_pos_service = $this->serviceRepo->find($item->service_id);
-            $is_stock_maintainable = $this->stockManager->setPosService($partner_pos_service)->isStockMaintainable();
-            if ($is_stock_maintainable) $this->stockManager->increase($item->quantity);
-        });
+        $this->logCreator->setOrder($this->order)->setType(Types::EXCHANGE)->setLog("New Order Created for Exchange, old order id: {$this->order->id}")->setDetails($this->details)->create();
     }
 
     private function transferPaidAmount()
     {
-        $log = "Transfer to " . $this->newOrder->id . " from " . $this->order->id . ", as per exchange.";
+        $log                        = "Transfer to " . $this->newOrder->id . " from " . $this->order->id . ", as per exchange.";
         $previous_order_paid_amount = $this->order->getPaid();
-        $this->paymentTransfer->setOrder($this->newOrder)
-            ->setLog($log)
-            ->setAmount($previous_order_paid_amount)
-            ->process();
+        $this->paymentTransfer->setOrder($this->newOrder)->setLog($log)->setAmount($previous_order_paid_amount)->process();
     }
 }
