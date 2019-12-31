@@ -100,6 +100,7 @@ class PartnerLocationController extends Controller
                 'lng' => 'required|numeric',
                 'partner_count' => 'numeric',
             ]);
+            return api_response($request, null, 404, ['message' => 'No partner found.']);
             $partner = $request->has('partner') ? $request->partner : null;
             $partner_count = $request->has('partner_count') ? (int)$request->partner_count : 0;
             if ($partner_count < 50 && $request->services != 'null') {
