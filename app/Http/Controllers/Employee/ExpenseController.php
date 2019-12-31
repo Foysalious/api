@@ -3,6 +3,7 @@
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Sheba\Business\Support\Creator;
 use Sheba\Dal\Expense\Expense;
 use Sheba\Dal\Support\SupportRepositoryInterface;
@@ -141,5 +142,13 @@ class ExpenseController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function downloadPdf()
+    {
+        return App::make('dompdf.wrapper')
+            ->loadView('pdfs.employee_expense')
+            ->download("employee_expense.pdf");
+//        return view('pdfs.employee_expense');
     }
 }
