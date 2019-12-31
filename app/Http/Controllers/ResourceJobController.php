@@ -13,6 +13,7 @@ use Validator;
 class ResourceJobController extends Controller
 {
     use Helpers;
+
     private $resourceJobRepository;
 
     public function __construct()
@@ -212,7 +213,6 @@ class ResourceJobController extends Controller
         }
     }
 
-
     public function otherJobs($resource, $job, Request $request)
     {
         try {
@@ -237,5 +237,4 @@ class ResourceJobController extends Controller
             return api_response($request, null, 500);
         }
     }
-
 }
