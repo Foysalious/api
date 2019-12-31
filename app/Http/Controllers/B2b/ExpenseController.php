@@ -1,4 +1,4 @@
-<?php namespace App\Http\Controllers\Employee;
+<?php namespace App\Http\Controllers\B2b;
 
 
 use App\Http\Controllers\Controller;
@@ -13,6 +13,7 @@ use Sheba\Dal\Support\SupportRepositoryInterface;
 use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
 use Sheba\Employee\ExpenseRepo;
+use Illuminate\Support\Collection;
 
 class ExpenseController extends Controller
 {
@@ -39,42 +40,19 @@ class ExpenseController extends Controller
                 'end_date' => 'string',
             ]);
 
-            $auth_info = $request->auth_info;
-            $business_member = $auth_info['business_member'];
+            $business_member = $request->business_member;
             if (!$business_member) return api_response($request, null, 401);
-            $member = $member_repository->where('id', $business_member['member_id'])->first();
+            $members = $member_repository->where('id', $business_member['member_id'])->get();
+            $expenses = new Collection();
 
-            $expenses = $this->expense_repo->index($request,$member);
+            foreach($members as $member){
+                $member_expenses = $this->expense_repo->index($request, $member);
+                if($member_expenses) $expenses = $expenses->merge($member_expenses);
+            }
 
-            $sum = $expenses->sum('amount');
-
-            return api_response($request, $expenses, 200, ['data' => ['expenses' => $expenses, 'sum' => $sum]]);
+            return api_response($request, $expenses, 200, ['expenses' => $expenses]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
-    public function store(Request $request, MemberRepositoryInterface $member_repository)
-    {
-        try {
-            $this->validate($request, [
-                'amount' => 'required|string',
-                'remarks' => 'string',
-                'type' => 'string',
-                'start_date' => 'string',
-                'end_date' => 'string',
-                'file' => 'file',
-            ]);
-            $auth_info = $request->auth_info;
-            $business_member = $auth_info['business_member'];
-            if (!$business_member) return api_response($request, null, 401);
-            $member = $member_repository->where('id', $business_member['member_id'])->first();
-
-            $data =  $this->expense_repo->store($request, $member);
-
-            return api_response($request, $data, 200, $data);
-        } catch (\Throwable $e) {
+            dd( $e->getMessage());
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -83,8 +61,7 @@ class ExpenseController extends Controller
     public function show(Request $request, $expense)
     {
         try {
-            $auth_info = $request->auth_info;
-            $business_member = $auth_info['business_member'];
+            $business_member = $request->business_member;
             if (!$business_member) return api_response($request, null, 401);
 
             $data = $this->expense_repo->show($request, $expense);
@@ -107,8 +84,7 @@ class ExpenseController extends Controller
                 'type' => 'string',
             ]);
 
-            $auth_info = $request->auth_info;
-            $business_member = $auth_info['business_member'];
+            $business_member = $request->business_member;
             if (!$business_member) return api_response($request, null, 401);
 
             $data = $this->expense_repo->update($request, $expense);
@@ -125,8 +101,7 @@ class ExpenseController extends Controller
     public function delete(Request $request, $expense)
     {
         try {
-            $auth_info = $request->auth_info;
-            $business_member = $auth_info['business_member'];
+            $business_member = $request->business_member;
             if (!$business_member) return api_response($request, null, 401);
 
             $data = $this->expense_repo->delete($request, $expense);

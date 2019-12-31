@@ -202,6 +202,14 @@ class BusinessRoute
                         $api->get('/', 'B2b\AnnouncementController@show');
                     });
                 });
+                $api->group(['prefix' => 'expense'], function ($api) {
+                    $api->get('/', 'B2b\ExpenseController@index');
+                    $api->group(['prefix' => '{expense}'], function ($api) {
+                        $api->get('/', 'B2b\ExpenseController@show');
+                        $api->post('/', 'B2b\ExpenseController@update');
+                        $api->delete('/', 'B2b\ExpenseController@delete');
+                    });
+                });
             });
         });
         $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {
