@@ -4,11 +4,16 @@
 use App\Models\Attachment;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Attachments\FilesAttachment;
 use Sheba\Dal\Expense\Expense;
+use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
 
 class ExpenseRepo
 {
+    use ModificationFields;
+    use FilesAttachment;
+
     public function index(Request $request, $member)
     {
         try {
@@ -48,7 +53,8 @@ class ExpenseRepo
             $expense->save();
 
             if ($request['file']) {
-                $this->storeAttachment($expense, $request);
+                $this->storeAttachment($expense, $request, $member);
+
             }
 
             return ['expense' => ['id' => $expense->id]];
@@ -66,6 +72,8 @@ class ExpenseRepo
 
             $expense['date'] = $expense->created_at ? $expense->created_at->format('M d') : null;
             $expense['time'] = $expense->created_at ? $expense->created_at->format('h:i A') : null;
+
+            if($this->getAttachments($expense,$request))  $expense['attachments'] = $this->getAttachments($expense,$request);
 
             return ['expense' => $expense];
         } catch (\Throwable $e) {
@@ -105,14 +113,9 @@ class ExpenseRepo
         }
     }
 
-    public function storeAttachment(Expense $expense, Request $request)
+    public function storeAttachment(Expense $expense, Request $request, $member)
     {
         try {
-            $this->validate($request, [
-                'file' => 'required'
-            ]);
-            $business = $request->business;
-            $member = $request->manager_member;
             $this->setModifier($member);
             $data = $this->storeAttachmentToCDN($request->file('file'));
             $attachment = $expense->attachments()->save(new Attachment($this->withBothModificationFields($data)));
@@ -133,7 +136,7 @@ class ExpenseRepo
     {
         try {
             if (!$expense) return false;
-            $attaches = Attachment::where('attachable_type', get_class($expense))->where('attachable_id', $expense->id);
+            $attaches = Attachment::where('attachable_type', get_class($expense))->where('attachable_id', $expense->id)->get();
             $attach_lists = [];
             foreach ($attaches as $attach) {
                 array_push($attach_lists, [
@@ -143,7 +146,7 @@ class ExpenseRepo
                     'file_type' => $attach->file_type,
                 ]);
             }
-            if (count($attach_lists) > 0) return api_response($request, $attach_lists, 200, ['attach_lists' => $attach_lists]);
+            if (count($attach_lists) > 0) return $attach_lists;
             else  return false;
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
