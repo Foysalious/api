@@ -636,6 +636,8 @@ return [
         'business-portal',
         'bank-loan-portal',
         'customer-portal',
+        'bank-loan-portal',
+        'employee-app'
     ],
     'PARTNER_ACQUISITION_CHANNEL' => [
         'PM' => 'PM',

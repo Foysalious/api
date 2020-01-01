@@ -83,7 +83,7 @@ class ResourceHandler
             ->merge($schedules_at_start_end);
 
         if ($job) {
-            $this->bookedSchedules = $this->bookedSchedules->reject(function ($schedule, $job) {
+            $this->bookedSchedules = $this->bookedSchedules->reject(function ($schedule) use ($job) {
                 return $schedule->job_id == $job->id;
             });
         }
