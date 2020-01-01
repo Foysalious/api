@@ -839,4 +839,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
         return [$remaining, $wallet, $bonus_wallet, $threshold];
     }
+    public function referCode(){
+        return $this->id. str_random(8-(strlen($this->id)));
+    }
 }
