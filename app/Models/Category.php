@@ -283,4 +283,9 @@ class Category extends Model
     {
         return $this->hasOne(CrosssaleServiceModel::class);
     }
+
+    public function  getContentsAttribute()
+    {
+        return $this->structured_contents ? json_decode($this->structured_contents) : null;
+    }
 }
