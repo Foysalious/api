@@ -821,7 +821,7 @@ class PartnerController extends Controller
     {
         try {
             if ($partner = Partner::find((int)$partner)) {
-                $service = $partner->services()->select('services.id', 'name', 'variable_type', 'services.min_quantity', 'services.variables')
+                $service = $partner->services()->select('services.id', 'name', 'variable_type', 'services.min_quantity', 'services.variables', 'services.is_published_for_b2b')
                     ->where('services.id', $service)
                     ->first();
 
@@ -841,6 +841,7 @@ class PartnerController extends Controller
                         $service['fixed_price'] = (double)$service->pivot->prices;
                         $service['fixed_old_price'] = $partner_service_price_update ? (double)$partner_service_price_update->new_prices : null;
                     }
+                    $service['is_published_for_b2b'] = $service->is_published_for_b2b ? true : false;
                     array_forget($service, 'variables');
                     removeRelationsAndFields($service);
                     return api_response($request, null, 200, ['service' => $service]);
