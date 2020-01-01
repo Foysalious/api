@@ -4,7 +4,8 @@ use App\Models\Transport\TransportTicketOrder;
 use App\Sheba\Payment\Rechargable;
 use Carbon\Carbon;
 use DB;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Sheba\Business\Bid\Bidder;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\Complain\Model as Complain;
@@ -20,6 +21,7 @@ use Sheba\MovieTicket\MovieTicketTransaction;
 use Sheba\Partner\BadgeResolver;
 use Sheba\Partner\PartnerStatuses;
 use Sheba\Payment\Wallet;
+use Sheba\Referral\HasReferrals;
 use Sheba\Reward\Rewardable;
 use Sheba\Subscription\Partner\PartnerSubscriber;
 use Sheba\TopUp\TopUpAgent;
@@ -33,21 +35,82 @@ use Sheba\Transport\TransportTicketTransaction;
 use Sheba\Voucher\Contracts\CanApplyVoucher;
 use Sheba\Voucher\VoucherCodeGenerator;
 
-class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent, Rechargable, Bidder, HasWalletTransaction
+class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent, Rechargable, Bidder, HasWalletTransaction, HasReferrals
 {
     use Wallet, TopUpTrait, MovieTicketTrait;
 
-    protected $guarded = ['id'];
-    protected $dates = ['last_billed_date', 'billing_start_date'];
-    protected $casts = ['wallet' => 'double', 'last_billed_amount' => 'double', 'reward_point' => 'int', 'current_impression' => 'double', 'impression_limit' => 'double', 'uses_sheba_logistic' => 'int'];
-    protected $resourcePivotColumns = ['id', 'designation', 'department', 'resource_type', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
-    protected $categoryPivotColumns = ['id', 'experience', 'preparation_time_minutes', 'response_time_min', 'response_time_max', 'commission', 'is_verified', 'uses_sheba_logistic', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at', 'is_home_delivery_applied', 'is_partner_premise_applied', 'delivery_charge'];
-    protected $servicePivotColumns = ['id', 'description', 'options', 'prices', 'min_prices', 'base_prices', 'base_quantity', 'is_published', 'discount', 'discount_start_date', 'discount_start_date', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
-    private $resourceTypes;
-
-    public $totalCreditForSubscription;
-    public $totalPriceRequiredForSubscription;
-    public $creditBreakdown;
+    public    $totalCreditForSubscription;
+    public    $totalPriceRequiredForSubscription;
+    public    $creditBreakdown;
+    protected $guarded              = ['id'];
+    protected $dates                = [
+        'last_billed_date',
+        'billing_start_date'
+    ];
+    protected $casts                = [
+        'wallet'              => 'double',
+        'last_billed_amount'  => 'double',
+        'reward_point'        => 'int',
+        'current_impression'  => 'double',
+        'impression_limit'    => 'double',
+        'uses_sheba_logistic' => 'int'
+    ];
+    protected $resourcePivotColumns = [
+        'id',
+        'designation',
+        'department',
+        'resource_type',
+        'is_verified',
+        'verification_note',
+        'created_by',
+        'created_by_name',
+        'created_at',
+        'updated_by',
+        'updated_by_name',
+        'updated_at'
+    ];
+    protected $categoryPivotColumns = [
+        'id',
+        'experience',
+        'preparation_time_minutes',
+        'response_time_min',
+        'response_time_max',
+        'commission',
+        'is_verified',
+        'uses_sheba_logistic',
+        'verification_note',
+        'created_by',
+        'created_by_name',
+        'created_at',
+        'updated_by',
+        'updated_by_name',
+        'updated_at',
+        'is_home_delivery_applied',
+        'is_partner_premise_applied',
+        'delivery_charge'
+    ];
+    protected $servicePivotColumns  = [
+        'id',
+        'description',
+        'options',
+        'prices',
+        'min_prices',
+        'base_prices',
+        'base_quantity',
+        'is_published',
+        'discount',
+        'discount_start_date',
+        'discount_start_date',
+        'is_verified',
+        'verification_note',
+        'created_by',
+        'created_by_name',
+        'created_at',
+        'updated_by',
+        'updated_by_name',
+        'updated_at'
+    ];
+    private   $resourceTypes;
 
     public function __construct($attributes = [])
     {
@@ -60,34 +123,9 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->hasOne(PartnerBasicInformation::class);
     }
 
-    public function admins()
-    {
-        return $this->belongsToMany(Resource::class)->where('resource_type', constants('RESOURCE_TYPES')['Admin'])->withPivot($this->resourcePivotColumns);
-    }
-
-    public function operationResources()
-    {
-        return $this->belongsToMany(Resource::class)->where('resource_type', constants('RESOURCE_TYPES')['Operation'])->withPivot($this->resourcePivotColumns);
-    }
-
     public function financeResources()
     {
         return $this->belongsToMany(Resource::class)->where('resource_type', constants('RESOURCE_TYPES')['Finance'])->withPivot($this->resourcePivotColumns);
-    }
-
-    public function handymanResources()
-    {
-        return $this->belongsToMany(Resource::class)->where('resource_type', constants('RESOURCE_TYPES')['Handyman'])->withPivot($this->resourcePivotColumns);
-    }
-
-    public function resources()
-    {
-        return $this->belongsToMany(Resource::class)->withPivot($this->resourcePivotColumns);
-    }
-
-    public function categories()
-    {
-        return $this->belongsToMany(Category::class)->withPivot($this->categoryPivotColumns);
     }
 
     public function services()
@@ -128,11 +166,6 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function orders()
     {
         return $this->hasMany(PartnerOrder::class);
-    }
-
-    public function jobs()
-    {
-        return $this->hasManyThrough(Job::class, PartnerOrder::class);
     }
 
     public function complains()
@@ -186,9 +219,9 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->categories()->find($service_category)->pivot->commission;
     }
 
-    public function leaves()
+    public function categories()
     {
-        return $this->hasMany(PartnerLeave::class);
+        return $this->belongsToMany(Category::class)->withPivot($this->categoryPivotColumns);
     }
 
     public function loan()
@@ -196,19 +229,25 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->hasMany(PartnerBankLoan::class);
     }
 
-    public function runningLeave($date = null)
-    {
-        $date = ($date) ? (($date instanceof Carbon) ? $date : new Carbon($date)) : Carbon::now();
-        foreach ($this->leaves()->whereDate('start', '<=', $date)->get() as $leave) {
-            if ($leave->isRunning($date)) return $leave;
-        }
-        return null;
-    }
-
     public function onIndefiniteLeave()
     {
         $leave = $this->runningLeave();
         return ($leave && !$leave->end_date) ? true : false;
+    }
+
+    public function runningLeave($date = null)
+    {
+        $date = ($date) ? (($date instanceof Carbon) ? $date : new Carbon($date)) : Carbon::now();
+        foreach ($this->leaves()->whereDate('start', '<=', $date)->get() as $leave) {
+            if ($leave->isRunning($date))
+                return $leave;
+        }
+        return null;
+    }
+
+    public function leaves()
+    {
+        return $this->hasMany(PartnerLeave::class);
     }
 
     public function shebaCredit()
@@ -219,6 +258,11 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function shebaBonusCredit()
     {
         return (double)$this->bonuses()->where('status', 'valid')->sum('amount');
+    }
+
+    public function bonuses()
+    {
+        return $this->morphMany(Bonus::class, 'user');
     }
 
     public function hasLeave($date)
@@ -242,6 +286,15 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->email;
     }
 
+    public function getContactResource()
+    {
+        if ($operation_resource = $this->getFirstOperationResource())
+            return $operation_resource;
+        if ($admin_resource = $this->getFirstAdminResource())
+            return $admin_resource;
+        return null;
+    }
+
     public function getFirstOperationResource()
     {
         if ($this->resources) {
@@ -258,15 +311,6 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         } else {
             return $this->admins->first();
         }
-    }
-
-    public function getContactResource()
-    {
-        if ($operation_resource = $this->getFirstOperationResource())
-            return $operation_resource;
-        if ($admin_resource = $this->getFirstAdminResource())
-            return $admin_resource;
-        return null;
     }
 
     public function generateReferral()
@@ -289,34 +333,45 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->status === 'Verified';
     }
 
-    public function getContactNumber()
-    {
-        if ($operation_resource = $this->operationResources()->first()) return $operation_resource->profile->mobile;
-        if ($admin_resource = $this->admins()->first()) return $admin_resource->profile->mobile;
-        return null;
-    }
     public function isNIDVerified()
     {
-        if ($operation_resource = $this->operationResources()->first()) return $operation_resource->profile->nid_verified;
-        if ($admin_resource = $this->admins()->first()) return $admin_resource->profile->nid_verified;
-        return null;
-    }
-    public function updatedAt()
-    {
-        if ($operation_resource = $this->operationResources()->first()) return $operation_resource->profile->updated_at;
-        if ($admin_resource = $this->admins()->first()) return $admin_resource->profile->updated_at;
+        if ($operation_resource = $this->operationResources()->first())
+            return $operation_resource->profile->nid_verified;
+        if ($admin_resource = $this->admins()->first())
+            return $admin_resource->profile->nid_verified;
         return null;
     }
 
-    public function getAdmin()
+    public function operationResources()
     {
-        if ($admin_resource = $this->admins()->first()) return $admin_resource;
+        return $this->belongsToMany(Resource::class)->where('resource_type', constants('RESOURCE_TYPES')['Operation'])->withPivot($this->resourcePivotColumns);
+    }
+
+    public function admins()
+    {
+        return $this->belongsToMany(Resource::class)->where('resource_type', constants('RESOURCE_TYPES')['Admin'])->withPivot($this->resourcePivotColumns);
+    }
+
+    public function updatedAt()
+    {
+        if ($operation_resource = $this->operationResources()->first())
+            return $operation_resource->profile->updated_at;
+        if ($admin_resource = $this->admins()->first())
+            return $admin_resource->profile->updated_at;
         return null;
     }
 
     public function getContactPerson()
     {
-        if ($admin_resource = $this->getAdmin()) return $admin_resource->profile->name;
+        if ($admin_resource = $this->getAdmin())
+            return $admin_resource->profile->name;
+        return null;
+    }
+
+    public function getAdmin()
+    {
+        if ($admin_resource = $this->admins()->first())
+            return $admin_resource;
         return null;
     }
 
@@ -345,14 +400,14 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->morphMany(Notification::class, 'notifiable');
     }
 
-    public function withdrawalRequests()
-    {
-        return $this->hasMany(PartnerWithdrawalRequest::class);
-    }
-
     public function lastWeekWithdrawalRequest()
     {
         return $this->withdrawalRequests()->lastWeek()->notCancelled()->first();
+    }
+
+    public function withdrawalRequests()
+    {
+        return $this->hasMany(PartnerWithdrawalRequest::class);
     }
 
     public function currentWeekWithdrawalRequest()
@@ -362,29 +417,45 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function onGoingJobs()
     {
-        return $this->jobs()->whereIn('status', [constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Schedule_Due']])->count();
+        return $this->jobs()->whereIn('status', [
+            constants('JOB_STATUSES')['Accepted'],
+            constants('JOB_STATUSES')['Process'],
+            constants('JOB_STATUSES')['Schedule_Due']
+        ])->count();
+    }
+
+    public function jobs()
+    {
+        return $this->hasManyThrough(Job::class, PartnerOrder::class);
     }
 
     public function resourcesInCategory($category)
     {
-        $category = $category instanceof Category ? $category->id : $category;
+        $category             = $category instanceof Category ? $category->id : $category;
         $partner_resource_ids = [];
         $this->handymanResources()->verified()->get()->map(function ($resource) use (&$partner_resource_ids) {
             $partner_resource_ids[$resource->pivot->id] = $resource;
         });
-
         $result = [];
-
         collect(DB::table('category_partner_resource')->select('partner_resource_id')->whereIn('partner_resource_id', array_keys($partner_resource_ids))->where('category_id', $category)->get())->pluck('partner_resource_id')->each(function ($partner_resource_id) use ($partner_resource_ids, &$result) {
             $result[] = $partner_resource_ids[$partner_resource_id];
         });
-
         return collect($result);
+    }
+
+    public function handymanResources()
+    {
+        return $this->belongsToMany(Resource::class)->where('resource_type', constants('RESOURCE_TYPES')['Handyman'])->withPivot($this->resourcePivotColumns);
     }
 
     public function isCreditLimitExceed()
     {
         return !$this->hasAppropriateCreditLimit();
+    }
+
+    public function hasAppropriateCreditLimit()
+    {
+        return (double)$this->wallet >= (double)$this->walletSetting->min_wallet_threshold;
     }
 
     public function bankInformations()
@@ -402,19 +473,9 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->belongsTo(Affiliate::class);
     }
 
-    public function hasAppropriateCreditLimit()
-    {
-        return (double)$this->wallet >= (double)$this->walletSetting->min_wallet_threshold;
-    }
-
     public function totalWalletAmount()
     {
         return (double)$this->wallet + $this->bonusWallet();
-    }
-
-    public function bonuses()
-    {
-        return $this->morphMany(Bonus::class, 'user');
     }
 
     public function bonusWallet()
@@ -449,10 +510,15 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function subscribe($package, $billing_type)
     {
-        $package = $package ? (($package) instanceof PartnerSubscriptionPackage ? $package : PartnerSubscriptionPackage::find($package)) : $this->subscription;
-        $discount = $package->runningDiscount($billing_type);
+        $package     = $package ? (($package) instanceof PartnerSubscriptionPackage ? $package : PartnerSubscriptionPackage::find($package)) : $this->subscription;
+        $discount    = $package->runningDiscount($billing_type);
         $discount_id = $discount ? $discount->id : null;
         $this->subscriber()->getPackage($package)->subscribe($billing_type, $discount_id);
+    }
+
+    public function subscriber()
+    {
+        return new PartnerSubscriber($this);
     }
 
     public function subscriptionUpgrade($package, $upgradeRequest = null)
@@ -474,16 +540,6 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function runUpfrontSubscriptionBilling()
     {
         $this->subscriber()->getBilling()->runUpfrontBilling();
-    }
-
-    public function subscriber()
-    {
-        return new PartnerSubscriber($this);
-    }
-
-    public function periodicBillingHandler()
-    {
-        return $this->subscriber()->periodicBillingHandler();
     }
 
     public function getCommissionAttribute()
@@ -535,60 +591,77 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::TOP_UP)->setType('debit')->setLog($transaction->getLog())->dispatch();
     }
 
+    public function todayJobs($jobs = null)
+    {
+        if (is_null($jobs)) {
+            return $this->notCancelledJobs()->filter(function ($job, $key) {
+                return $job->schedule_date == Carbon::now()->toDateString() && !in_array($job->status, [
+                        'Served',
+                        'Cancelled',
+                        'Declined',
+                        'Not Responded'
+                    ]);
+            });
+        }
+        return $jobs->filter(function ($job, $key) {
+            return $job->schedule_date == Carbon::now()->toDateString() && !in_array($job->status, [
+                    'Served',
+                    'Cancelled',
+                    'Declined',
+                    'Not Responded'
+                ]);
+        });
+    }
+
     public function notCancelledJobs()
     {
         /*return $this->jobs->reject(function ($job) {
             return $job->cancelRequests()->count() > 0;
         });*/
-
         return $this->jobs()->whereNotExists(function ($q) {
             $q->from('job_cancel_requests')->whereRaw('job_id = jobs.id');
         })->select('jobs.id', 'schedule_date', 'status')->get();
 
     }
 
-    public function todayJobs($jobs = null)
-    {
-        if (is_null($jobs)) {
-            return $this->notCancelledJobs()->filter(function ($job, $key) {
-                return $job->schedule_date == Carbon::now()->toDateString() && !in_array($job->status, ['Served', 'Cancelled', 'Declined', 'Not Responded']);
-            });
-        }
-        return $jobs->filter(function ($job, $key) {
-            return $job->schedule_date == Carbon::now()->toDateString() && !in_array($job->status, ['Served', 'Cancelled', 'Declined', 'Not Responded']);
-        });
-    }
-
     public function tomorrowJobs($jobs = null)
     {
         if (is_null($jobs)) {
             return $this->notCancelledJobs()->filter(function ($job, $key) {
-                return $job->schedule_date == Carbon::tomorrow()->toDateString() && !in_array($job->status, ['Served', 'Cancelled', 'Declined']);
+                return $job->schedule_date == Carbon::tomorrow()->toDateString() && !in_array($job->status, [
+                        'Served',
+                        'Cancelled',
+                        'Declined'
+                    ]);
             });
         }
         return $jobs->filter(function ($job, $key) {
-            return $job->schedule_date == Carbon::tomorrow()->toDateString() && !in_array($job->status, ['Served', 'Cancelled', 'Declined']);
+            return $job->schedule_date == Carbon::tomorrow()->toDateString() && !in_array($job->status, [
+                    'Served',
+                    'Cancelled',
+                    'Declined'
+                ]);
         });
     }
 
     public function notRespondedJobs($jobs = null)
     {
-        if (is_null($jobs)) return $this->notCancelledJobs()->where('status', constants('JOB_STATUSES')['Not_Responded']);
-
+        if (is_null($jobs))
+            return $this->notCancelledJobs()->where('status', constants('JOB_STATUSES')['Not_Responded']);
         return $jobs->where('status', constants('JOB_STATUSES')['Not_Responded']);
     }
 
     public function scheduleDueJobs($jobs = null)
     {
-        if (is_null($jobs)) return $this->notCancelledJobs()->where('status', constants('JOB_STATUSES')['Schedule_Due']);
-
+        if (is_null($jobs))
+            return $this->notCancelledJobs()->where('status', constants('JOB_STATUSES')['Schedule_Due']);
         return $jobs->where('status', constants('JOB_STATUSES')['Schedule_Due']);
     }
 
     public function serveDueJobs($jobs = null)
     {
-        if (is_null($jobs)) return $this->notCancelledJobs()->where('status', constants('JOB_STATUSES')['Serve_Due']);
-
+        if (is_null($jobs))
+            return $this->notCancelledJobs()->where('status', constants('JOB_STATUSES')['Serve_Due']);
         return $jobs->where('status', constants('JOB_STATUSES')['Serve_Due']);
     }
 
@@ -605,9 +678,9 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function hasCoverageOn(Coords $coords)
     {
-        $geo = json_decode($this->geo_informations);
+        $geo           = json_decode($this->geo_informations);
         $partner_coord = new Coords(floatval($geo->lat), floatval($geo->lng));
-        $distance = (new Distance(DistanceStrategy::$VINCENTY))->linear();
+        $distance      = (new Distance(DistanceStrategy::$VINCENTY))->linear();
         return $distance->to($coords)->from($partner_coord)->isWithin($geo->radius * 1000);
     }
 
@@ -638,11 +711,15 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function servingMasterCategories()
     {
-        $this->load(['categories' => function ($q) {
-            $q->with(['parent' => function ($q) {
-                $q->select('id', 'categories.name');
-            }]);
-        }]);
+        $this->load([
+            'categories' => function ($q) {
+                $q->with([
+                    'parent' => function ($q) {
+                        $q->select('id', 'categories.name');
+                    }
+                ]);
+            }
+        ]);
         return $this->categories->pluck('parent.name')->unique()->implode(', ');
     }
 
@@ -664,6 +741,11 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function getTopFiveResources()
     {
         return $this->resources()->reviews()->groupBy('resource_id')->orderBy('avg(reviews.rating)')->select('id, avg(reviews.rating)')->get();
+    }
+
+    public function resources()
+    {
+        return $this->belongsToMany(Resource::class)->withPivot($this->resourcePivotColumns);
     }
 
     public function businessAdditionalInformation()
@@ -696,6 +778,15 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->getContactNumber();
     }
 
+    public function getContactNumber()
+    {
+        if ($operation_resource = $this->operationResources()->first())
+            return $operation_resource->profile->mobile;
+        if ($admin_resource = $this->admins()->first())
+            return $admin_resource->profile->mobile;
+        return null;
+    }
+
     public function isAllowedToSendWithdrawalRequest()
     {
         return !($this->withdrawalRequests()->active()->count() > 0);
@@ -711,18 +802,18 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function transportTicketTransaction(TransportTicketTransaction $transaction)
     {
-       /*
-        * WALLET TRANSACTION NEED TO REMOVE
-        * $this->creditWallet($transaction->getAmount());
-        $wallet_transaction = [
-            'amount' => $transaction->getAmount(),
-            'type' => 'Credit',
-            'log' => $transaction->getLog(),
-            'created_by_type' => get_class($this),
-            'created_by' => $this->id,
-            'created_by_name' => $this->name
-        ];
-        $this->walletTransaction($wallet_transaction);*/
+        /*
+         * WALLET TRANSACTION NEED TO REMOVE
+         * $this->creditWallet($transaction->getAmount());
+         $wallet_transaction = [
+             'amount' => $transaction->getAmount(),
+             'type' => 'Credit',
+             'log' => $transaction->getLog(),
+             'created_by_type' => get_class($this),
+             'created_by' => $this->id,
+             'created_by_name' => $this->name
+         ];
+         $this->walletTransaction($wallet_transaction);*/
         (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::TRANSPORT)->setType('credit')->setLog($transaction->getLog())->dispatch();
     }
 
@@ -733,18 +824,18 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function movieTicketTransaction(MovieTicketTransaction $transaction)
     {
-       /*
-        * WALLET TRANSACTION NEED TO REMOVE
-        * $this->debitWallet($transaction->getAmount());
-        $wallet_transaction = [
-            'amount' => $transaction->getAmount(),
-            'type' => 'Debit',
-            'log' => $transaction->getLog(),
-            'created_by_type' => get_class($this),
-            'created_by' => $this->id,
-            'created_by_name' => $this->name
-        ];
-        $this->walletTransaction($wallet_transaction);*/
+        /*
+         * WALLET TRANSACTION NEED TO REMOVE
+         * $this->debitWallet($transaction->getAmount());
+         $wallet_transaction = [
+             'amount' => $transaction->getAmount(),
+             'type' => 'Debit',
+             'log' => $transaction->getLog(),
+             'created_by_type' => get_class($this),
+             'created_by' => $this->id,
+             'created_by_name' => $this->name
+         ];
+         $this->walletTransaction($wallet_transaction);*/
         (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::MOVIE)->setType('debit')->setLog($transaction->getLog())->dispatch();
     }
 
@@ -756,8 +847,6 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Credit', 'log' => $transaction->getLog()]);*/
         (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::MOVIE)->setType('credit')->setLog($transaction->getLog())->dispatch();
     }
-
-
 
     public function getMovieTicketCommission()
     {
@@ -773,7 +862,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function hasCreditForSubscription(PartnerSubscriptionPackage $package, $billingType, $billingCycle = 1)
     {
         $this->totalPriceRequiredForSubscription = $package->originalPrice($billingType) - (double)$package->discountPrice($billingType, $billingCycle);
-        $this->totalCreditForSubscription = $this->getTotalCreditExistsForSubscription();
+        $this->totalCreditForSubscription        = $this->getTotalCreditExistsForSubscription();
         return $this->totalCreditForSubscription >= $this->totalPriceRequiredForSubscription;
     }
 
@@ -784,27 +873,55 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return round($bonus_wallet + $wallet + $remaining) - $threshold;
     }
 
+    /** @return array */
+    public function getCreditBreakdown()
+    {
+        $remaining             = (double)$this->subscriber()->getBilling()->remainingCredit($this->subscription, $this->billing_type);
+        $wallet                = (double)$this->wallet;
+        $bonus_wallet          = (double)$this->bonusWallet();
+        $threshold             = $this->walletSetting ? (double)$this->walletSetting->min_wallet_threshold : 0;
+        $this->creditBreakdown = [
+            'remaining_subscription_charge' => $remaining,
+            'wallet'                        => $wallet,
+            'threshold'                     => $threshold,
+            'bonus_wallet'                  => $bonus_wallet
+        ];
+        return [
+            $remaining,
+            $wallet,
+            $bonus_wallet,
+            $threshold
+        ];
+    }
+
+    public function alreadyCollectedSubscriptionFee()
+    {
+        if (!$this->isAlreadyCollectedAdvanceSubscriptionFee())
+            return 0;
+        $last_subscription_package_charge = $this->subscriptionPackageCharges()->orderBy('id', 'desc')->first();
+        if (!empty($last_subscription_package_charge))
+            return $last_subscription_package_charge->package_price; else return 0;
+    }
+
     /**
      * @return bool
      */
     public function isAlreadyCollectedAdvanceSubscriptionFee()
     {
         $last_subscription_package_charge = $this->subscriptionPackageCharges()->orderBy('id', 'desc')->first();
-        if (empty($last_subscription_package_charge)) return false;
+        if (empty($last_subscription_package_charge))
+            return false;
         return $this->last_billed_date ? $last_subscription_package_charge->billing_date->between($this->last_billed_date->addSecond(), $this->periodicBillingHandler()->nextBillingDate()) : false;
-    }
-
-    public function alreadyCollectedSubscriptionFee()
-    {
-        if (!$this->isAlreadyCollectedAdvanceSubscriptionFee()) return 0;
-        $last_subscription_package_charge = $this->subscriptionPackageCharges()->orderBy('id', 'desc')->first();
-        if (!empty($last_subscription_package_charge)) return $last_subscription_package_charge->package_price;
-        else return 0;
     }
 
     public function subscriptionPackageCharges()
     {
         return $this->hasMany(PartnerSubscriptionPackageCharge::class);
+    }
+
+    public function periodicBillingHandler()
+    {
+        return $this->subscriber()->periodicBillingHandler();
     }
 
     public function getStatusToCalculateAccess()
@@ -822,21 +939,18 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->morphMany(Comment::class, 'commentable');
     }
 
-    /** @return array */
-    public function getCreditBreakdown()
+    public function referrals(): HasMany
     {
-        $remaining = (double)$this->subscriber()->getBilling()->remainingCredit($this->subscription, $this->billing_type);
-        $wallet = (double)$this->wallet;
-        $bonus_wallet = (double)$this->bonusWallet();
-        $threshold = $this->walletSetting ? (double)$this->walletSetting->min_wallet_threshold : 0;
+        return $this->hasMany(Partner::class, 'referrer_id', 'id');
+    }
 
-        $this->creditBreakdown = [
-            'remaining_subscription_charge' => $remaining,
-            'wallet' => $wallet,
-            'threshold' => $threshold,
-            'bonus_wallet' => $bonus_wallet
-        ];
+    public function referredBy(): BelongsTo
+    {
+        return $this->belongsTo(Partner::class, 'referrer_id', 'id');
+    }
 
-        return [$remaining, $wallet, $bonus_wallet, $threshold];
+    public function usage(): HasMany
+    {
+        return $this->hasMany(PartnerUsageHistory::class, 'partner_id', 'id');
     }
 }

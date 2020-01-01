@@ -1,0 +1,19 @@
+<?php namespace App\Http\Route\Prefix\V2\Partner;
+class ReferralRoute
+{
+    private $namespace = 'Referral';
+
+    public function globals($api)
+    {
+        $api->group(['prefix' => 'referrals'], function ($api) {
+
+        });
+    }
+
+    public function individuals($api)
+    {
+        $api->group(['prefix' => 'referrals'], function ($api) {
+            $api->get('/', "$this->namespace\\PartnerReferralController@index");
+        });
+    }
+}
