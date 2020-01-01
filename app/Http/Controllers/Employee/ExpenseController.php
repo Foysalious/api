@@ -5,6 +5,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Attachment;
 use App\Models\FuelLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\Validation\ValidationException;
 use Sheba\Attachments\FilesAttachment;
 use Sheba\Business\Support\Creator;
@@ -137,5 +138,13 @@ class ExpenseController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function downloadPdf()
+    {
+        return App::make('dompdf.wrapper')
+            ->loadView('pdfs.employee_expense')
+            ->download("employee_expense.pdf");
+//        return view('pdfs.employee_expense');
     }
 }

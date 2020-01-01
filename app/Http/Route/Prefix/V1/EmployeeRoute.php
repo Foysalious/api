@@ -22,6 +22,7 @@ class EmployeeRoute
             });
             $api->group(['prefix' => 'expense'], function ($api) {
                 $api->get('/', 'Employee\ExpenseController@index');
+                $api->get('/download-pdf', 'Employee\ExpenseController@downloadPdf');
                 $api->group(['prefix' => '{expense}'], function ($api) {
                     $api->get('/', 'Employee\ExpenseController@show');
                     $api->post('/', 'Employee\ExpenseController@update');
