@@ -61,7 +61,7 @@ class MemberController extends Controller
                 $this->saveSmsTemplate($business);
             }
 
-            return api_response($request, 1, 200);
+            return api_response($request, 1, 200, ['business_id' => $business->id]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
