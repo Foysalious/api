@@ -68,6 +68,7 @@ class CoWorkerController extends Controller
                 BusinessMember::create($this->withCreateModificationField($member_business_data));
             } else {
                 $old_member = $profile->member;
+                if ($old_member && !$old_member->businesses()->where('businesses.id', $business->id)->first()) return api_response($request, null, 403, ['message' => "This person is already connected with another business."]);
                 if (!$old_member) {
                     $new_member = $this->makeMember($profile);
                     $co_member->push($new_member);
