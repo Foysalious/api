@@ -76,10 +76,14 @@ class ResourceHandler
         $schedules_at_start = $this->resourceSchedules->filterByDateTime($this->resource, $start_time);
         $schedules_at_end = $this->resourceSchedules->filterByDateTime($this->resource, $end_time);
         $schedules_at_start_end = $this->resourceSchedules->filterStartAndEndAt($this->resource, $start_time, $end_time);
-        #dump($start_time, $end_time, $schedules_start_between, $schedules_end_between, $schedules_at_start, $schedules_at_end, $schedules_at_start_end);
-        $this->bookedSchedules = $schedules_start_between->merge($schedules_end_between)->merge($schedules_at_start)->merge($schedules_at_end)->merge($schedules_at_start_end);
+
+        $this->bookedSchedules = $schedules_start_between->merge($schedules_end_between)
+            ->merge($schedules_at_start)
+            ->merge($schedules_at_end)
+            ->merge($schedules_at_start_end);
+
         if ($job) {
-            $this->bookedSchedules = $this->bookedSchedules->reject(function ($schedule, $job) {
+            $this->bookedSchedules = $this->bookedSchedules->reject(function ($schedule) use ($job) {
                 return $schedule->job_id == $job->id;
             });
         }

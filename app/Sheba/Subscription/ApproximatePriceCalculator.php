@@ -4,6 +4,8 @@ use App\Models\Service;
 use App\Models\ServiceSubscription;
 use App\Models\ServiceSubscriptionDiscount;
 use App\Sheba\Checkout\Discount;
+use Exception;
+use Throwable;
 
 class ApproximatePriceCalculator extends Discount
 {
@@ -20,7 +22,7 @@ class ApproximatePriceCalculator extends Discount
     /**
      * @param ServiceSubscription $subscription
      * @return ApproximatePriceCalculator
-     * @throws \Exception
+     * @throws Exception
      */
     public function setSubscription($subscription)
     {
@@ -29,7 +31,7 @@ class ApproximatePriceCalculator extends Discount
             $this->setService($subscription->service);
             return $this;
         }
-        throw new \Exception('Subscription has no services');
+        throw new Exception('Subscription has no services');
     }
 
     /**
@@ -42,19 +44,33 @@ class ApproximatePriceCalculator extends Discount
         return $this;
     }
 
+    public function getDiscountAmount()
+    {
+        return $this->calculateServiceDiscount();
+    }
+
+    public function getSubscriptionType()
+    {
+        return $this->getPreferredSubscriptionType();
+    }
+
+    public function getMinSubscriptionQuantityBySubscriptionType()
+    {
+        $subscription_type = $this->getPreferredSubscriptionType();
+        return $this->getMinSubscriptionQuantity($subscription_type);
+    }
+
     public function getPriceRange()
     {
         $partner_price_range_for_service = $this->getMinMaxPartnerPrice();
         $subscription_type = $this->getPreferredSubscriptionType();
         $min_subscription_quantity = $this->getMinSubscriptionQuantity($subscription_type);
         $discounted_subscription_price = $this->calculateServiceDiscount();
-        $price_list = [
+        return [
             'min_price' => (($partner_price_range_for_service[1] - $discounted_subscription_price) * $min_subscription_quantity * $this->service->min_quantity),
             'max_price' => (($partner_price_range_for_service[0] - $discounted_subscription_price) * $min_subscription_quantity * $this->service->min_quantity),
             'price_applicable_for' => $subscription_type
         ];
-
-        return $price_list;
     }
 
     protected function calculateServiceDiscount()
@@ -113,7 +129,7 @@ class ApproximatePriceCalculator extends Discount
                 array_push($min_price, $min);
             }
             return array((double)max($max_price), (double)min($min_price));
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return array(0, 0);
         }
     }

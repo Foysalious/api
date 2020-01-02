@@ -14,6 +14,7 @@ class Route
             (new AffiliateRoute())->set($api);
             (new PartnerRoute())->set($api);
             $api->post('training-status-update', 'ResourceController@trainingStatusUpdate');
+            $api->post('newsletter', 'NewsletterController@create');
             $api->group(['prefix' => 'profile'], function ($api) {
                 $api->post('registration/partner', 'Auth\PartnerRegistrationController@registerByProfile')->middleware('jwtAuth');
                 $api->post('registration/affiliate', 'Auth\AffiliateRegistrationController@registerByProfile')->middleware('jwtAuth');
@@ -103,7 +104,7 @@ class Route
             $api->get('settings/car', 'HomePageSettingController@getCar');
             $api->get('home-grids', 'HomeGridController@index');
             $api->group(['prefix' => 'category-groups'], function ($api) {
-                $api->get('', 'CategoryGroupController@index');
+                $api->get('/', 'CategoryGroupController@index');
                 $api->group(['prefix' => '{id}'], function ($api) {
                     $api->get('', 'CategoryGroupController@show');
                 });
@@ -121,14 +122,6 @@ class Route
                 });
             });
             (new BusinessRoute())->set($api);
-            $api->group(['prefix' => 'categories'], function ($api) {
-                $api->group(['prefix' => '{id}'], function ($api) {
-                    $api->get('', 'CategoryController@show');
-                    $api->get('services', 'CategoryController@getServices');
-                    $api->get('reviews', 'CategoryController@getReviews');
-                    $api->get('locations/{location}/partners', 'CategoryController@getPartnersOfLocation');
-                });
-            });
             $api->group(['prefix' => 'services'], function ($api) {
                 $api->get('', 'ServiceController@index');
             });

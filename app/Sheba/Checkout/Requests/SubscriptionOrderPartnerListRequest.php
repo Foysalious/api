@@ -6,29 +6,24 @@ use App\Models\HyperLocal;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
-class SubscriptionOrderRequest extends PartnerListRequest
+class SubscriptionOrderPartnerListRequest extends PartnerListRequest
 {
-    private $salesChannel;
-    private $geo;
+    protected $salesChannel;
+    protected $geo;
     /** @var $address CustomerDeliveryAddress */
-    private $address;
+    protected $address;
     /** @var $customer Customer */
-    private $customer;
+    protected $customer;
     /** @var $billingCycleStart Carbon */
-    private $billingCycleStart;
+    protected $billingCycleStart;
     /** @var $user Model */
-    private $user;
+    protected $user;
     /** @var $billingCycleEnd Carbon */
-    private $billingCycleEnd;
+    protected $billingCycleEnd;
     protected $location;
-    private $deliveryName;
-    private $deliveryMobile;
-    private $additionalInfo;
-
-    public function __get($name)
-    {
-        return $this->$name;
-    }
+    protected $deliveryName;
+    protected $deliveryMobile;
+    protected $additionalInfo;
 
     public function prepareObject()
     {

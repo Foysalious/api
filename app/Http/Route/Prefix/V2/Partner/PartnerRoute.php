@@ -12,6 +12,8 @@ class PartnerRoute
             $api->get('performance-faqs', 'FaqController@getPartnerPerformanceFaqs');
             $api->get('welcome', 'Auth\PartnerRegistrationController@getWelcomeMessage');
             $api->get('rewards/faqs', 'Partner\PartnerRewardController@getFaqs');
+            $api->get('referral/faqs', 'Partner\PartnerRewardController@getReferralFaqs');
+            $api->get('referral/steps', 'Partner\PartnerRewardController@getReferralSteps');
             $api->get('resource-types', 'PartnerController@getResourceTypes');
             $api->get('subscriptions', 'Partner\PartnerSubscriptionController@getAllPackages');
             (new IDNonAuthRoute())->set($api);

@@ -7,10 +7,13 @@ use App\Models\Location;
 use App\Models\Partner;
 use App\Models\PartnerWorkingHour;
 use App\Models\Resource;
+use App\Models\SubscriptionOrder;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
+use Sheba\ResourceScheduler\ResourceHandler;
 
 class PartnerRepository
 {
@@ -25,8 +28,16 @@ class PartnerRepository
         $this->serviceRepo = new ServiceRepository();
     }
 
-
-    public function resources($verify = null, $category_id = null, $date = null, $preferred_time = null, Job $job = null)
+    /**
+     * @param null $verify
+     * @param null $category_id
+     * @param null $date
+     * @param null $preferred_time
+     * @param Job|null $job
+     * @param SubscriptionOrder|null $subscription_order
+     * @return Collection
+     */
+    public function resources($verify = null, $category_id = null, $date = null, $preferred_time = null, Job $job = null, SubscriptionOrder $subscription_order = null)
     {
         $resources = $this->partner->resources()->get()->unique();
         $resources->load(['jobs' => function ($q) {
@@ -52,7 +63,7 @@ class PartnerRepository
             });
         }
 
-        return $resources->map(function ($resource) use ($category_id, $date, $preferred_time, $job) {
+        return $resources->map(function ($resource) use ($category_id, $date, $preferred_time, $job, $subscription_order) {
             $data = [];
             $data['id'] = $resource->id;
             $data['profile_id'] = $resource->profile_id;
@@ -71,34 +82,60 @@ class PartnerRepository
             $data['booked_jobs'] = [];
             $data['is_tagged'] = $resource->is_tagged;
             $data['total_tagged_categories'] = isset($resource->total_tagged_categories) ? count($resource->total_tagged_categories) : count($resource->categoriesIn($this->partner->id));
+
             if ($category_id) {
                 $category = Category::find($category_id);
                 if (in_array($category_id, array_map('intval', explode(',', env('RENT_CAR_IDS'))))) {
                     foreach ($ongoing_jobs->where('resource_id', $resource->id)->where('category_id', $category_id) as $job) {
-                        array_push($data['booked_jobs'], array(
+                        array_push($data['booked_jobs'], [
                             'job_id' => $job->id,
                             'partner_order_id' => $job->partnerOrder->id,
                             'code' => $job->partnerOrder->order->code()
-                        ));
+                        ]);
                     }
                 } else {
                     $resource_scheduler = scheduler($resource);
-                    if (!$resource_scheduler->isAvailableForCategory($date, explode('-', $preferred_time)[0], $category, $job)) {
-                        $data['is_available'] = 0;
-                        foreach ($resource_scheduler->getBookedJobs() as $job) {
-                            array_push($data['booked_jobs'], array(
-                                'job_id' => $job->id,
-                                'partner_order_id' => $job->partnerOrder->id,
-                                'code' => $job->partnerOrder->order->code()
-                            ));
+                    if ($subscription_order) {
+                        foreach (json_decode($subscription_order->schedules) as $schedule) {
+                            $preferred_subscription_order_time = Carbon::parse(explode('-', $schedule->time)[0])->format('H:s:i');
+                            if (!$resource_scheduler->isAvailableForCategory($schedule->date, $preferred_subscription_order_time, $category)) {
+                                $data = $this->getBookedJobs($data, $resource_scheduler);
+                            }
                         }
+                    } elseif (!$resource_scheduler->isAvailableForCategory($date, explode('-', $preferred_time)[0], $category, $job)) {
+                        $data = $this->getBookedJobs($data, $resource_scheduler);
                     }
                 }
             }
+
             return $data;
         });
     }
 
+    /**
+     * @param array $data
+     * @param ResourceHandler $resource_scheduler
+     * @return array
+     */
+    private function getBookedJobs(array &$data, ResourceHandler $resource_scheduler)
+    {
+        $data['is_available'] = 0;
+        foreach ($resource_scheduler->getBookedJobs() as $job) {
+            array_push($data['booked_jobs'], [
+                'job_id' => $job->id,
+                'partner_order_id' => $job->partnerOrder->id,
+                'code' => $job->partnerOrder->order->code()
+            ]);
+        }
+        return $data;
+    }
+
+    /**
+     * @param array $statuses
+     * @param $offset
+     * @param $limit
+     * @return mixed
+     */
     public function jobs(Array $statuses, $offset, $limit)
     {
         $this->partner->load(['jobs' => function ($q) use ($statuses, $offset, $limit) {

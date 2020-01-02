@@ -10,6 +10,7 @@ class Procurement extends Model implements PayableType
     protected $guarded = ['id'];
     public $paid;
     public $due;
+    public $totalPrice;
 
     public function items()
     {
@@ -61,6 +62,7 @@ class Procurement extends Model implements PayableType
         $bid = $this->getActiveBid();
         $this->paid = $this->sheba_collection + $this->partner_collection;
         $this->due = $bid ? $bid->price - $this->paid : 0;
+        $this->totalPrice = $bid ? $bid->price : null;
     }
 
     public function attachments()

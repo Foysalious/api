@@ -53,23 +53,25 @@ class PartnerWithdrawalRequestController extends Controller
 
             /** @var Partner $partner */
             $partner = $request->partner;
+            if ($request->payment_method != 'bank') {
+                if (
+                    ($request->header('portal-name') && $request->header('portal-name') == 'partner-portal') ||
+                    $request->header('version-code') && $request->header('version-code') > 21104
+                ) {
+                    $access_token_request->setAuthorizationCode($request->code);
+                    $authenticate_data['mobile'] = $sheba_account_kit->getMobile($access_token_request);
+                } else {
+                    /**
+                     * NUMBER MATCH VALIDATIONS BY FACEBOOK ACCOUNT KIT
+                     */
+                    $authenticate_data = (new FacebookAccountKit())->authenticateKit($request->code);
+                }
 
-            if (
-                ($request->header('portal-name') && $request->header('portal-name') == 'partner-portal') ||
-                $request->header('version-code') && $request->header('version-code') > 21104
-            ) {
-                $access_token_request->setAuthorizationCode($request->code);
-                $authenticate_data['mobile'] = $sheba_account_kit->getMobile($access_token_request);
-            } else {
-                /**
-                 * NUMBER MATCH VALIDATIONS BY FACEBOOK ACCOUNT KIT
-                 */
-                $authenticate_data = (new FacebookAccountKit())->authenticateKit($request->code);
+                if (trim_phone_number($request->bkash_number) != trim_phone_number($authenticate_data['mobile'])) {
+                    return api_response($request, null, 400, ['message' => 'Your provided bkash number and verification number did not match,please verify using your bkash number']);
+                }
             }
 
-            if (trim_phone_number($request->bkash_number) != trim_phone_number($authenticate_data['mobile'])) {
-                return api_response($request, null, 400, ['message' => 'Your provided bkash number and verification number did not match,please verify using your bkash number']);
-            }
 
             /**
              * Limit Validation

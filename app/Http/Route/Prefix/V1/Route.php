@@ -1,5 +1,6 @@
 <?php namespace App\Http\Route\Prefix\V1;
 
+use App\Http\Route\Prefix\V1\Partner\PartnerRoute;
 
 class Route
 {
@@ -7,6 +8,7 @@ class Route
     {
         $api->group(['prefix' => 'v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
             (new EmployeeRoute())->set($api);
+            (new PartnerRoute())->set($api);
             $api->group(['prefix' => 'geo'], function ($api) {
                 $api->get('geocode/reverse', 'GeocodeController@reverseGeocode');
             });
@@ -188,7 +190,6 @@ class Route
                 $api->get('reviews', 'PartnerController@getReviewInfo');
                 $api->get('info', 'PartnerController@getInfo');
                 $api->get('notifications', 'PartnerController@getNotifications');
-
                 $api->group(['prefix' => 'withdrawals'], function ($api) {
                     $api->get('/', 'PartnerWithdrawalRequestController@index');
                     $api->post('/', 'PartnerWithdrawalRequestController@store');
@@ -199,7 +200,6 @@ class Route
                 $api->group(['prefix' => 'transactions'], function ($api) {
                     $api->get('/', 'PartnerTransactionController@index');
                 });
-
                 $api->group(['prefix' => 'graphs'], function ($api) {
                     $api->get('orders', 'GraphController@getOrdersGraph');
                     $api->get('sales', 'GraphController@getSalesGraph');
