@@ -4,7 +4,6 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
-use Psy\Util\Str;
 use Sheba\FraudDetection\Exceptions\FraudDetectionServerError;
 use Sheba\FraudDetection\Repository\TransactionRepository;
 use Sheba\ModificationFields;
@@ -22,7 +21,7 @@ class WalletTransactionHandler extends WalletTransaction
     protected $type;
     /** @var TransactionDetails $transaction_details */
     protected $transaction_details;
-    private $source;
+    private   $source;
 
     /**
      * @param array $extras
@@ -32,9 +31,10 @@ class WalletTransactionHandler extends WalletTransaction
     public function store($extras = [], $isJob = false)
     {
         try {
-            if (empty($this->type) || empty($this->amount) || empty($this->model)) throw new InvalidWalletTransaction();
-            if (!$isJob) $extras = $this->withCreateModificationField((new RequestIdentification())->set($extras));
-
+            if (empty($this->type) || empty($this->amount) || empty($this->model))
+                throw new InvalidWalletTransaction();
+            if (!$isJob)
+                $extras = $this->withCreateModificationField((new RequestIdentification())->set($extras));
             $transaction = $this->storeTransaction($extras);
             try {
                 $this->storeFraudDetectionTransaction(!$isJob);
@@ -45,7 +45,6 @@ class WalletTransactionHandler extends WalletTransaction
         } catch (Exception $e) {
             WalletTransaction::throwException($e);
         }
-        
         return null;
     }
 
@@ -61,17 +60,19 @@ class WalletTransactionHandler extends WalletTransaction
         DB::transaction(function () use ($data, &$transaction) {
             $typeMethod = sprintf("%sWallet", $this->type);
             $this->$typeMethod();
-            $data = array_merge($data, [
-                'type' => ucfirst($this->type), 'log' => $this->log, 'created_at' => Carbon::now(), 'transaction_details' => $this->transaction_details ? $this->transaction_details->toString() : null, 'amount' => $this->amount
+            $data             = array_merge($data, [
+                'type'                => ucfirst($this->type),
+                'log'                 => $this->log,
+                'created_at'          => Carbon::now(),
+                'transaction_details' => $this->transaction_details ? $this->transaction_details->toString() : null,
+                'amount'              => $this->amount
             ]);
             $transaction_data = $this->getTransactionClass()->fill($data);
-            $transaction = $this->model->transactions()->save($transaction_data);
-
+            $transaction      = $this->model->transactions()->save($transaction_data);
             event(new WalletUpdateEvent([
-                'amount' => $this->model->fresh()->wallet,
+                'amount'    => $this->model->fresh()->wallet,
                 'user_type' => strtolower(class_basename($this->model)),
-                'user_id' => $this->model->id,
-
+                'user_id'   => $this->model->id,
             ]));
         });
         return $transaction;
@@ -94,19 +95,18 @@ class WalletTransactionHandler extends WalletTransaction
     {
         /** @noinspection PhpUndefinedFieldInspection */
         $data = [
-            'user_type' => strtolower(class_basename($this->model)),
-            'user_id' => $this->model->id,
-            'user_name' => $this->getName(),
-            'source' => $this->source,
-            'type' => $this->type,
-            'log' => $this->log,
-            'detail' => $this->transaction_details ? $this->transaction_details->toString() : null,
-            'gateway' => $this->transaction_details ? $this->transaction_details->getGateway() : null,
+            'user_type'      => strtolower(class_basename($this->model)),
+            'user_id'        => $this->model->id,
+            'user_name'      => $this->getName(),
+            'source'         => $this->source,
+            'type'           => $this->type,
+            'log'            => $this->log,
+            'detail'         => $this->transaction_details ? $this->transaction_details->toString() : null,
+            'gateway'        => $this->transaction_details ? $this->transaction_details->getGateway() : null,
             'gateway_trx_id' => $this->transaction_details ? $this->transaction_details->getTransactionID() : null,
-            'amount' => $this->amount,
-            'created_at' => Carbon::now()->format('Y-m-d H:s:i')
+            'amount'         => $this->amount,
+            'created_at'     => Carbon::now()->format('Y-m-d H:s:i')
         ];
-
         if ($isJob) {
             dispatch((new FraudTransactionJob())->setData($data));
         } else {
@@ -193,7 +193,7 @@ class WalletTransactionHandler extends WalletTransaction
      */
     public function setAmount($amount)
     {
-        $this->amount = $amount;
+        $this->amount = round($amount, 2);
         return $this;
     }
 
