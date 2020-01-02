@@ -84,6 +84,7 @@ class OfferController extends Controller
                 $manager = new Manager();
                 $manager->setSerializer(new ArraySerializer());
                 $data = $manager->createData((new Item($offer, new OfferDetailsTransformer())))->toArray();
+                dd($data);
                 return api_response($request, $offer, 200, ['offer' => $data]);
             } else {
                 return api_response($request, null, 404);

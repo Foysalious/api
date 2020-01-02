@@ -47,7 +47,8 @@ class OfferDetailsTransformer extends TransformerAbstract
             'category_id' => $category_id,
             'category_slug' => $category ? $category->slug : null,
             'is_category_master' => $category ? !$category->parent_id : false,
-            'service_slug' => $target_type == 'service' ? $this->getServiceSlug($offer->target_id) : null
+            'service_slug' => $target_type == 'service' ? $this->getServiceSlug($offer->target_id) : null,
+            'button_text' => $offer->button_text,
         ];
     }
 
