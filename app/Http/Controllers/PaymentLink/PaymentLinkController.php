@@ -1,19 +1,21 @@
 <?php namespace App\Http\Controllers\PaymentLink;
 
-use App\Transformers\PaymentDetailTransformer;
-use Illuminate\Validation\ValidationException;
-use League\Fractal\Resource\Collection;
-use App\Transformers\PaymentLinkArrayTransform;
-use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
-use Sheba\Repositories\PaymentLinkRepository;
-use Sheba\PaymentLink\PaymentLinkClient;
 use App\Http\Controllers\Controller;
-use Sheba\PaymentLink\Creator;
-use Sheba\ModificationFields;
-use League\Fractal\Manager;
-use Illuminate\Http\Request;
+use App\Models\Partner;
+use App\Transformers\PaymentDetailTransformer;
+use App\Transformers\PaymentLinkArrayTransform;
 use Carbon\Carbon;
 use DB;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
+use Sheba\ModificationFields;
+use Sheba\PaymentLink\Creator;
+use Sheba\PaymentLink\PaymentLinkClient;
+use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
+use Sheba\Repositories\PaymentLinkRepository;
+use Sheba\Usage\Usage;
 
 class PaymentLinkController extends Controller
 {
@@ -25,9 +27,9 @@ class PaymentLinkController extends Controller
 
     public function __construct(PaymentLinkClient $payment_link_client, PaymentLinkRepository $payment_link_repo, Creator $creator)
     {
-        $this->paymentLinkClient = $payment_link_client;
-        $this->paymentLinkRepo = $payment_link_repo;
-        $this->creator = $creator;
+        $this->paymentLinkClient        = $payment_link_client;
+        $this->paymentLinkRepo          = $payment_link_repo;
+        $this->creator                  = $creator;
         $this->paymentDetailTransformer = new PaymentDetailTransformer();
     }
 
@@ -40,9 +42,9 @@ class PaymentLinkController extends Controller
                     return array_key_exists('targetType', $link) ? $link['targetType'] == null : $link;
                 });
                 list($offset, $limit) = calculatePagination($request);
-                $links = collect($payment_links_list)->slice($offset)->take($limit);
-                $fractal = new Manager();
-                $resources = new Collection($links, new PaymentLinkArrayTransform());
+                $links         = collect($payment_links_list)->slice($offset)->take($limit);
+                $fractal       = new Manager();
+                $resources     = new Collection($links, new PaymentLinkArrayTransform());
                 $payment_links = $fractal->createData($resources)->toArray()['data'];
                 return api_response($request, $payment_links, 200, ['payment_links' => $payment_links]);
             } else {
@@ -59,22 +61,24 @@ class PaymentLinkController extends Controller
         try {
             $link = $paymentLinkRepository->findByIdentifier($identifier);
             if ($link && (int)$link->getIsActive()) {
-                $user = $link->getPaymentReceiver();
+                $user  = $link->getPaymentReceiver();
                 $payer = $link->getPayer();
-                return api_response($request, $link, 200, ['link' => [
-                    'id' => $link->getLinkID(),
-                    'identifier' => $link->getLinkIdentifier(),
-                    'purpose' => $link->getReason(),
-                    'amount' => $link->getAmount(),
-                    'payment_receiver' => [
-                        'name' => $user->name,
-                        'image' => $user->logo
-                    ],
-                    'payer' => $payer ? [
-                        'name' => $payer->name,
-                        'mobile' => $payer->mobile
-                    ] : null
-                ]]);
+                return api_response($request, $link, 200, [
+                    'link' => [
+                        'id'               => $link->getLinkID(),
+                        'identifier'       => $link->getLinkIdentifier(),
+                        'purpose'          => $link->getReason(),
+                        'amount'           => $link->getAmount(),
+                        'payment_receiver' => [
+                            'name'  => $user->name,
+                            'image' => $user->logo
+                        ],
+                        'payer'            => $payer ? [
+                            'name'   => $payer->name,
+                            'mobile' => $payer->mobile
+                        ] : null
+                    ]
+                ]);
             } else {
                 return api_response($request, null, 404);
             }
@@ -91,28 +95,26 @@ class PaymentLinkController extends Controller
     {
         try {
             $this->validate($request, [
-                'amount' => 'required',
+                'amount'  => 'required',
                 'purpose' => 'required',
             ]);
-            $this->creator->setIsDefault($request->isDefault)
-                ->setAmount($request->amount)
-                ->setReason($request->purpose)
-                ->setUserName($request->user->name)
-                ->setUserId($request->user->id)
-                ->setUserType($request->type)
-                ->setTargetId($request->pos_order_id)
-                ->setTargetType('pos_order');
-
+            $this->creator->setIsDefault($request->isDefault)->setAmount($request->amount)->setReason($request->purpose)->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type)->setTargetId($request->pos_order_id)->setTargetType('pos_order');
             $payment_link_store = $this->creator->save();
             if ($payment_link_store) {
                 $payment_link = [
                     'link_id' => $payment_link_store->linkId,
-                    'reason' => $payment_link_store->reason,
-                    'type' => $payment_link_store->type,
-                    'status' => $payment_link_store->isActive == 1 ? 'active' : 'inactive',
-                    'amount' => $payment_link_store->amount,
-                    'link' => $payment_link_store->link,
+                    'reason'  => $payment_link_store->reason,
+                    'type'    => $payment_link_store->type,
+                    'status'  => $payment_link_store->isActive == 1 ? 'active' : 'inactive',
+                    'amount'  => $payment_link_store->amount,
+                    'link'    => $payment_link_store->link,
                 ];
+                if ($request->user instanceof Partner) {
+                    (new Usage())->create([
+                        'partner_id' => $request->user->id,
+                        'type'       => Usage::Partner()::PAYMENT_LINK
+                    ], $request->user);
+                }
                 return api_response($request, $payment_link, 200, ['payment_link' => $payment_link]);
             } else {
                 return api_response($request, null, 500);
@@ -155,24 +157,18 @@ class PaymentLinkController extends Controller
             if ($default_payment_link) {
                 $default_payment_link = [
                     'link_id' => $default_payment_link[0]['linkId'],
-                    'link' => $default_payment_link[0]['link'],
-                    'amount' => $default_payment_link[0]['amount'],
+                    'link'    => $default_payment_link[0]['link'],
+                    'amount'  => $default_payment_link[0]['amount'],
                 ];
                 return api_response($request, $default_payment_link, 200, ['default_payment_link' => $default_payment_link]);
             } else {
                 $request->merge(['isDefault' => 1]);
-                $this->creator->setIsDefault($request->isDefault)
-                    ->setAmount($request->amount)
-                    ->setReason($request->purpose)
-                    ->setUserName($request->user->name)
-                    ->setUserId($request->user->id)
-                    ->setUserType($request->type);
-
-                $store_default_link = $this->creator->save();
+                $this->creator->setIsDefault($request->isDefault)->setAmount($request->amount)->setReason($request->purpose)->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type);
+                $store_default_link   = $this->creator->save();
                 $default_payment_link = [
                     'link_id' => $store_default_link->linkId,
-                    'link' => $store_default_link->link,
-                    'amount' => $store_default_link->amount,
+                    'link'    => $store_default_link->link,
+                    'amount'  => $store_default_link->amount,
                 ];
                 return api_response($request, $default_payment_link, 200, ['default_payment_link' => $default_payment_link]);
             }
@@ -187,29 +183,29 @@ class PaymentLinkController extends Controller
         try {
             $payment_link_details = $this->paymentLinkClient->paymentLinkDetails($link);
             if ($payment_link_details) {
-                $payables = $this->paymentLinkRepo->payables($payment_link_details);
+                $payables    = $this->paymentLinkRepo->payables($payment_link_details);
                 $all_payment = [];
                 foreach ($payables->get() as $payable) {
                     $payment = $payable->payment ? $payable->payment : null;
                     $payment = [
-                        'id' => $payment ? $payment->id : null,
-                        'code' => $payment ? '#' . $payment->id : null,
-                        'name' => $payment ? $payment->payable->getName() : null,
-                        'amount' => $payment ? $payable->amount : null,
+                        'id'         => $payment ? $payment->id : null,
+                        'code'       => $payment ? '#' . $payment->id : null,
+                        'name'       => $payment ? $payment->payable->getName() : null,
+                        'amount'     => $payment ? $payable->amount : null,
                         'created_at' => $payment ? Carbon::parse($payment->created_at)->format('Y-m-d h:i a') : null,
                     ];
                     array_push($all_payment, $payment);
                 }
                 $payment_link_payments = [
-                    'id' => $payment_link_details['linkId'],
-                    'code' => '#' . $payment_link_details['linkId'],
-                    'purpose' => $payment_link_details['reason'],
-                    'status' => $payment_link_details['isActive'] == 1 ? 'active' : 'inactive',
-                    'payment_link' => $payment_link_details['link'],
-                    'amount' => $payment_link_details['amount'],
+                    'id'             => $payment_link_details['linkId'],
+                    'code'           => '#' . $payment_link_details['linkId'],
+                    'purpose'        => $payment_link_details['reason'],
+                    'status'         => $payment_link_details['isActive'] == 1 ? 'active' : 'inactive',
+                    'payment_link'   => $payment_link_details['link'],
+                    'amount'         => $payment_link_details['amount'],
                     'total_payments' => $payables->count(),
-                    'created_at' => date('Y-m-d h:i a', $payment_link_details['createdAt'] / 1000),
-                    'payments' => $all_payment
+                    'created_at'     => date('Y-m-d h:i a', $payment_link_details['createdAt'] / 1000),
+                    'payments'       => $all_payment
                 ];
                 return api_response($request, $payment_link_payments, 200, ['payment_link_payments' => $payment_link_payments]);
             } else {
@@ -225,9 +221,9 @@ class PaymentLinkController extends Controller
     {
         try {
             $payment_link_payment_details = $this->paymentLinkRepo->paymentLinkDetails($link);
-            $payment = $this->paymentLinkRepo->payment($payment);
+            $payment                      = $this->paymentLinkRepo->payment($payment);
             if ($payment_link_payment_details) {
-                $payment_detail = $payment->paymentDetails ? $payment->paymentDetails->last() : null;
+                $payment_detail  = $payment->paymentDetails ? $payment->paymentDetails->last() : null;
                 $payment_details = $this->paymentDetailTransformer->transform($payment, $payment_detail, $payment_link_payment_details);
                 return api_response($request, $payment_details, 200, ['payment_details' => $payment_details]);
             } else {
