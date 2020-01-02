@@ -1,6 +1,5 @@
 <?php namespace Sheba\Business\ProcurementPayment;
 
-
 use App\Models\Procurement;
 use Sheba\Dal\ProcurementPayment\ProcurementPaymentRepositoryInterface;
 
