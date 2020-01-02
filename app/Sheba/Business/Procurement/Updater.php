@@ -52,7 +52,7 @@ class Updater
                     $partner = $this->procurement->getActiveBid()->bidder;
                     $price = $this->procurement->totalPrice;
                     $price_after_commission = $price - (($price * $partner->commission) / 100);
-                    if ($price_after_commission > 0 && $this->procurement->due != 0) {
+                    if ($price_after_commission > 0 && $this->procurement->due == 0) {
                         $this->walletTransactionHandler->setModel($partner)->setAmount($price_after_commission)
                             ->setSource(TransactionSources::SERVICE_PURCHASE)
                             ->setType('credit')->setLog("Credited for RFQ ID:" . $this->procurement->id)->dispatch();
