@@ -4,10 +4,11 @@ use App\Models\Procurement;
 use Illuminate\Database\QueryException;
 use Sheba\Business\ProcurementPayment\Creator;
 use DB;
+use Sheba\FraudDetection\TransactionSources;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class ProcurementComplete extends PaymentComplete
 {
-
     public function complete()
     {
         try {
@@ -15,6 +16,7 @@ class ProcurementComplete extends PaymentComplete
             $this->paymentRepository->setPayment($this->payment);
             $payable = $this->payment->payable;
             $this->setModifier($payable->user);
+            /** @var Procurement $procurement */
             $procurement = $payable->getPayableType();
             DB::transaction(function () use ($procurement, $payable) {
                 /** @var Creator $creator */
@@ -28,6 +30,14 @@ class ProcurementComplete extends PaymentComplete
             });
             $this->payment->transaction_details = null;
             $this->completePayment();
+
+            $partner = $procurement->getActiveBid()->bidder;
+            $procurement->calculate();
+            if ($procurement->status == 'served' && $procurement->due == 0) {
+                $price = $procurement->totalPrice;
+                $price_after_commission = $price - (($price * $partner->commission) / 100);
+                if ($price_after_commission > 0) app(WalletTransactionHandler::class)->setModel($partner)->setAmount($price_after_commission)->setSource(TransactionSources::SERVICE_PURCHASE)->setType('credit')->setLog("Credited for RFQ ID:" . $procurement->id)->dispatch();
+            }
         } catch (QueryException $e) {
             $this->failPayment();
             throw $e;
