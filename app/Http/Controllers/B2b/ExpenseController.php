@@ -48,6 +48,10 @@ class ExpenseController extends Controller
             foreach($members as $member){
                 $member_expenses = $this->expense_repo->index($request, $member);
                 if($member_expenses) $expenses = $expenses->merge($member_expenses);
+
+                foreach($member_expenses as $expense){
+                    $expense['employee_name'] = $member->profile->name;
+                }
             }
 
             return api_response($request, $expenses, 200, ['expenses' => $expenses]);
