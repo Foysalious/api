@@ -6,5 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class PartnerReferral extends Model
 {
-    //
+    protected $guarded = ['id',];
+
 }

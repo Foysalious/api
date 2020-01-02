@@ -14,6 +14,7 @@ class ReferralRoute
     {
         $api->group(['prefix' => 'referrals'], function ($api) {
             $api->get('/', "$this->namespace\\PartnerReferralController@index");
+            $api->post('/', "$this->namespace\\PartnerReferralController@store");
         });
     }
 }
