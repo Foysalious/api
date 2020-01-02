@@ -4,6 +4,7 @@
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Sheba\Notification\SeenBy;
+use Sheba\PushNotificationHandler;
 use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
 
 class NotificationController extends Controller
@@ -52,5 +53,32 @@ class NotificationController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function test(Request $request, PushNotificationHandler $pushNotificationHandler)
+    {
+        $this->validate($request, ['support_id' => 'numeric|required', 'announcement_id' => 'numeric|required']);
+        $auth_info = $request->auth_info;
+        $business_member = $auth_info['business_member'];
+        if (!$business_member) return api_response($request, null, 401);
+        $topic = config('sheba.push_notification_topic_name.employee') . (int)$business_member['member_id'];
+        $channel = config('sheba.push_notification_channel_name.employee');
+        $pushNotificationHandler->send([
+            "title" => 'New support created',
+            "message" => "Test support",
+            "event_type" => 'support',
+            "event_id" => $request->support_id,
+            "sound" => "notification_sound",
+            "channel_id" => $channel
+        ], $topic, $channel);
+        $pushNotificationHandler->send([
+            "title" => 'New announcement arrived',
+            "message" => "Test announcement",
+            "event_type" => 'announcement',
+            "event_id" => $request->announcement_id,
+            "sound" => "notification_sound",
+            "channel_id" => $channel
+        ], $topic, $channel);
+        return api_response($request, null, 200);
     }
 }
