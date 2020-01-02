@@ -163,7 +163,6 @@
 
 {{--<body style="margin: 50px 30px; font-family: Lato; ">--}}
 
-
 <table  class="tableHeadRegular header" style="width: 100%;  margin-bottom: 20px; padding: 0px; background-color: #fff;border: none " >
     <tr>
         <td style="opacity: 0.8; font-family: Lato; font-size: 20px; font-weight: bold; color: #000000;">Employee Expense</td>
@@ -184,31 +183,31 @@
                 <tr>
                     <td style="vertical-align: top; font-family: Lato; font-size: 10px; color: #000000; opacity: 0.8; padding-bottom: 13px">Employee Name</td>
                     <td style="vertical-align: top; font-family: Lato; font-size: 10px; color: #000000; opacity: 0.8; padding-bottom: 13px">:</td>
-                    <td style="padding-left: 10px;  padding-bottom: 13px; font-family: Lato; font-size: 12px; font-weight: bold; color: #000000; opacity: 0.8">Mohammad Johanur Rahman Bhuiyan</td>
+                    <td style="padding-left: 10px;  padding-bottom: 13px; font-family: Lato; font-size: 12px; font-weight: bold; color: #000000; opacity: 0.8">{{ $data['employee_name'] }}</td>
                 </tr>
 
                 <tr>
                     <td style="font-family: Lato; padding-bottom: 13px; font-size: 10px; color: #000000; opacity: 0.8">Designation</td>
                     <td style="font-family: Lato; padding-bottom: 13px;  font-size: 10px; color: #000000; opacity: 0.8">:</td>
-                    <td style="padding-left: 10px; padding-bottom: 13px; font-family: Lato; font-size: 10px; font-weight: bold; color: #000000; opacity: 0.8">Software Engineer</td>
+                    <td style="padding-left: 10px; padding-bottom: 13px; font-family: Lato; font-size: 10px; font-weight: bold; color: #000000; opacity: 0.8">{{ $data['designation'] }}</td>
                 </tr>
 
                 <tr>
                     <td style="font-family: Lato; padding-bottom: 13px; font-size: 10px; color: #000000; opacity: 0.8">Department</td>
                     <td style="font-family: Lato; padding-bottom: 13px; font-size: 10px; color: #000000; opacity: 0.8">:</td>
-                    <td style="padding-left: 10px; padding-bottom: 13px; font-family: Lato; font-size: 10px; font-weight: bold; color: #000000; opacity: 0.8">Technology</td>
+                    <td style="padding-left: 10px; padding-bottom: 13px; font-family: Lato; font-size: 10px; font-weight: bold; color: #000000; opacity: 0.8">{{ $data['department'] }}</td>
                 </tr>
 
                 <tr>
-                    <td style="font-family: Lato; padding-bottom: 13px; font-size: 10px; color: #000000; opacity: 0.8">Employee ID</td>
+                    <td style="font-family: Lato; padding-bottom: 13px; font-size: 10px; color: #000000; opacity: 0.8">ID</td>
                     <td style="font-family: Lato; padding-bottom: 13px; font-size: 10px; color: #000000; opacity: 0.8">:</td>
-                    <td style="padding-left: 10px; padding-bottom: 13px; font-family: Lato; font-size: 10px; font-weight: bold; color: #000000; opacity: 0.8">447</td>
+                    <td style="padding-left: 10px; padding-bottom: 13px; font-family: Lato; font-size: 10px; font-weight: bold; color: #000000; opacity: 0.8">{{ $data['employee_id'] }}</td>
                 </tr>
 
                 <tr>
                     <td style="font-family: Lato; padding-bottom: 13px; font-size: 10px; color: #000000; opacity: 0.8">Mobile Number</td>
                     <td style="font-family: Lato; padding-bottom: 13px; font-size: 10px; color: #000000; opacity: 0.8">:</td>
-                    <td style="padding-left: 10px; padding-bottom: 13px; font-family: Lato; font-size: 10px; font-weight: bold; color: #000000; opacity: 0.8">01678016516</td>
+                    <td style="padding-left: 10px; padding-bottom: 13px; font-family: Lato; font-size: 10px; font-weight: bold; color: #000000; opacity: 0.8">{{ $data['employee_mobile'] }}</td>
                 </tr>
             </table>
         </td>
@@ -279,10 +278,14 @@
         <td style="width: 60%; border : none; ">
             <table style="width: 100%; border : none">
                 <tr>
-                    <td style="font-family: Lato; font-size: 10px; color: #000000; opacity: 0.8; padding-bottom: 13px; width: 36.5%;">Amount Requested</td>
-                    <td style="font-family: Lato; font-size: 10px; color: #000000; opacity: 0.8; padding-bottom: 13px; width: 2%">:</td>
+                    <td style="font-family: Lato; font-size: 10px; color: #000000; opacity: 0.8; padding-bottom: 13px; width: 36.5%;">
+                        Amount Requested
+                    </td>
+                    <td style="font-family: Lato; font-size: 10px; color: #000000; opacity: 0.8; padding-bottom: 13px; width: 2%">
+                        :
+                    </td>
                     <td style="padding-left: 10px;  padding-bottom: 13px; font-family: Lato; font-size: 14px; font-weight: bold; color: #000000; opacity: 0.8">
-                        1,500
+                        {{ $data['total_amount'] }}
                     </td>
                 </tr>
 
@@ -290,10 +293,9 @@
                     <td style="font-family: Lato; padding-bottom: 13px; font-size: 10px; color: #000000; opacity: 0.8">Month</td>
                     <td style="font-family: Lato; padding-bottom: 13px;  font-size: 10px; color: #000000; opacity: 0.8">:</td>
                     <td style="padding-left: 10px; padding-bottom: 13px; font-family: Lato; font-size: 10px; font-weight: bold; color: #000000; opacity: 0.8">
-                        December, 2019
+                        {{ $data['month_name'] }}
                     </td>
                 </tr>
-
             </table>
         </td>
 
@@ -303,7 +305,7 @@
                     <td style="font-family: Lato; vertical-align: top; font-size: 10px; color: #000000; opacity: 0.8; padding-bottom: 13px">In Words</td>
                     <td style="font-family: Lato; vertical-align: top; font-size: 10px; color: #000000; opacity: 0.8; padding-bottom: 13px">:</td>
                     <td style="padding-left: 10px;  padding-bottom: 13px; font-family: Lato; font-size: 10px; font-weight: bold; color: #000000; opacity: 0.8">
-                        One thousand five hundred taka only
+                        {{ $data['total_amount_in_words'] }}
                     </td>
                 </tr>
             </table>
@@ -333,49 +335,22 @@
 
     {{--    @foreach($bid_details['price_quotation'] as $price_quotation)--}}
     <tbody>
+    @foreach($data['expenses']->toArray() as $expense)
     <tr>
         <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px 10px;border: solid 1px #d2d8e6;">
-            01-12-19
+            {{ $expense['created_at'] }}
         </td>
         <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;">
-            Transport
+            {{ $expense['type'] }}
         </td>
         <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;">
-            Client office visit
+            {{ $expense['remarks'] }}
         </td>
-        <td style="font-size: 10px; opacity: 0.8; padding: 5px 10px; bottom: normal; font-family: Lato;border: solid 1px #d2d8e6; text-align: right; ">
-            300
+        <td style="font-size: 10px; opacity: 0.8; padding: 5px 10px; font-family: Lato;border: solid 1px #d2d8e6; text-align: right; ">
+            {{ formatTakaToDecimal($expense['amount'], true) }}
         </td>
     </tr>
-    <tr>
-        <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;">
-            01-12-19
-        </td>
-        <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;">
-            Transport
-        </td>
-        <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;">
-            Client office visit
-        </td>
-        <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6; text-align: right; ">
-            300
-        </td>
-    </tr>
-    <tr>
-        <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;">
-            01-12-19
-        </td>
-        <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;">
-            Transport
-        </td>
-        <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;">
-            Client office visit
-        </td>
-        <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6; text-align: right; ">
-            300
-        </td>
-    </tr>
-
+    @endforeach
 
 
     </tbody>
@@ -390,7 +365,7 @@
             Sum
         </td>
         <td style="font-size: 10px; font-weight: bold; opacity: 0.8; font-weight: bold; font-family: Lato; text-align: right; padding: 5px;border-right: solid 1px #d2d8e6;">
-            1500
+            {{ $data['total_amount'] }}
         </td>
     </tr>
 

@@ -3,13 +3,17 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\Attachment;
+use App\Models\BusinessMember;
 use App\Models\FuelLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\Validation\ValidationException;
 use Sheba\Attachments\FilesAttachment;
 use Sheba\Business\Support\Creator;
 use Sheba\Dal\Expense\Expense;
 use Sheba\Dal\Support\SupportRepositoryInterface;
+use Sheba\Employee\ExpensePdf;
+use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
 use Sheba\Employee\ExpenseRepo;
@@ -116,5 +120,14 @@ class ExpenseController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function downloadPdf(Request $request, ExpensePdf $pdf)
+    {
+        $business_member = BusinessMember::where('business_id', $request->business_member->business_id)
+            ->where('member_id', $request->member_id)
+            ->first();
+
+        return $pdf->generate($business_member, $request->month, $request->year);
     }
 }
