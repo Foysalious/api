@@ -2,11 +2,37 @@
 
 
 use App\Http\Controllers\Controller;
+use App\Models\Profile;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 class ProfileController extends Controller
 {
+
+    public function checkProfile(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'email' => 'required|email',
+            ]);
+            $profile = Profile::where('email', $request->email)->first();
+            if ($profile) {
+                return api_response($request, null, 420, ['message' => 'This profile already exist']);
+            }
+            return api_response($request, null, 401, ['message' => 'Create Profile First']);
+
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     public function getInfo(Request $request)
     {
         try {

@@ -16,9 +16,9 @@ class TakaFormatter
         return self::formatTaka($amount, $comma_separation, $comma_separation_format);
     }
 
-    public static function toDecimal($amount)
+    public static function toDecimal($amount, $comma_separation = false, $comma_separation_format = "BDT")
     {
-        return self::formatTaka($amount);
+        return self::formatTaka($amount, $comma_separation, $comma_separation_format);
     }
 
     public static function commaSeparate($amount, $decimal = 0, $format = "BDT")
