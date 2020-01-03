@@ -93,6 +93,22 @@ class Category extends Model
         return $this->morphMany(BlogPost::class, 'owner');
     }
 
+    public function getMasterCategorySlug()
+    {
+        Relation::morphMap(['master_category' => 'App\Models\Category']);
+        return $this->morphOne(UniversalSlugModel::class, 'sluggable');
+    }
+
+    public function getSecondaryCategorySlug()
+    {
+        Relation::morphMap(['secondary_category' => 'App\Models\Category']);
+        return $this->morphOne(UniversalSlugModel::class, 'sluggable');
+    }
+
+    public function crossSaleService()
+    {
+        return $this->hasOne(CrosssaleServiceModel::class);
+    }
 
     /**
      *
@@ -293,23 +309,6 @@ class Category extends Model
     {
         if ($this->isParent()) return $this->getMasterCategorySlug()->first();
         return $this->getSecondaryCategorySlug()->first();
-    }
-
-    public function getMasterCategorySlug()
-    {
-        Relation::morphMap(['master_category' => 'App\Models\Category']);
-        return $this->morphOne(UniversalSlugModel::class, 'sluggable');
-    }
-
-    public function getSecondaryCategorySlug()
-    {
-        Relation::morphMap(['secondary_category' => 'App\Models\Category']);
-        return $this->morphOne(UniversalSlugModel::class, 'sluggable');
-    }
-
-    public function crossSaleService()
-    {
-        return $this->hasOne(CrosssaleServiceModel::class);
     }
 
     public function getContentsAttribute()

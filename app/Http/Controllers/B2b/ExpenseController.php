@@ -60,7 +60,6 @@ class ExpenseController extends Controller
 
             return api_response($request, $expenses, 200, ['expenses' => $expenses]);
         } catch (\Throwable $e) {
-            dd( $e->getMessage());
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

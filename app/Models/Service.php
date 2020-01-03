@@ -4,6 +4,9 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Sheba\Dal\BlogPost\BlogPost;
+use Sheba\Dal\Gallery\Gallery;
+use Sheba\Dal\Partnership\Partnership;
 use Sheba\Dal\UniversalSlug\Model as UniversalSlugModel;
 use stdClass;
 
@@ -297,5 +300,26 @@ class Service extends Model
     private function getSlugObj()
     {
         return $this->morphOne(UniversalSlugModel::class, 'sluggable');
+    }
+
+    public function partnership()
+    {
+        return $this->morphOne(Partnership::class, 'owner');
+    }
+
+    public function galleries()
+    {
+        return $this->morphMany(Gallery::class, 'owner');
+    }
+
+    public function blogPosts()
+    {
+        return $this->morphMany(BlogPost::class, 'owner');
+    }
+
+
+    public function getContentsAttribute()
+    {
+        return $this->structured_contents ? json_decode($this->structured_contents) : null;
     }
 }

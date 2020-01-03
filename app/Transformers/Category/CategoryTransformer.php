@@ -25,8 +25,9 @@ class CategoryTransformer extends TransformerAbstract
             'total_resources' => 40,
             'total_served_orders' => 1000,
             'banner' => $category->banner,
-            'usp' => count($usps) > 0 ? $usps->pluck('name')->toArray() : [],
-            'overview' => $category->contents ? $category->contents : [],
+            'usp' => count($usps) > 0 ? $usps->pluck('name')->toArray() : null,
+            'overview' => $category->contents ? $category->contents : null,
+            'details' => $category->long_description,
             'partnership' => $partnership ? [
                 'title' => $partnership->title,
                 'short_description' => $partnership->short_description,
@@ -35,7 +36,6 @@ class CategoryTransformer extends TransformerAbstract
             'faqs' => $category->faqs ? json_decode($category->faqs) : null,
             'gallery' => count($galleries) > 0 ? $galleries : null,
             'blog' => count($blog_posts) > 0 ? $blog_posts : null,
-            'details' => $category->long_description
         ];
     }
 }
