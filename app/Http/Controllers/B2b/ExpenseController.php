@@ -62,7 +62,7 @@ class ExpenseController extends Controller
 
                 foreach($member_expenses as $expense){
                     $expense['employee_name'] = $member->profile->name;
-                    $expense['employee_designation'] = $member->businessMember->role->name;
+                    $expense['employee_department'] = $member->businessMember->department ? $member->businessMember->department->name : null;
                 }
             }
 
@@ -70,7 +70,7 @@ class ExpenseController extends Controller
 
             if ($request->has('limit')) $expenses = $expenses->splice($offset, $limit);
 
-            return api_response($request, $expenses, 200, ['expenses' => $expenses, 'count' => $totalExpenseCount]);
+            return api_response($request, $expenses, 200, ['expenses' => $expenses, 'total_expenses_count' => $totalExpenseCount]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
