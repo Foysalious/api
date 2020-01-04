@@ -290,7 +290,6 @@ class Route
             $api->group(['prefix' => 'profile', 'middleware' => ['profile.auth']], function ($api) {
                 $api->post('change-picture', 'ProfileController@changePicture');
             });
-            $api->post('temporary-otp-by-ssl', 'AccountController@temporaryOtpBySsl');
         });
         return $api;
     }

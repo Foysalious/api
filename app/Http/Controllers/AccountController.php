@@ -81,15 +81,4 @@ class AccountController extends Controller
             return response()->json(['code' => 404]);
         }
     }
-
-    /**
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function temporaryOtpBySsl(Request $request)
-    {
-        $sms = new Sms();
-        $sms->shoot($request->from, $request->text);
-        return api_response($request, null, 200);
-    }
 }
