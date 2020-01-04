@@ -50,6 +50,12 @@ class ExpenseController extends Controller
             if (!$business_member) return api_response($request, null, 401);
             $members = $member_repository->where('id', $business_member['member_id'])->get();
 
+            if ($request->has('department_id')) {
+                $members = $members->filter(function ($member, $key) use ($request) {
+                    $member->businessMember->department ?  ($member->businessMember->department->id === $request->department_id) : false;
+                });
+            }
+
             if ($request->has('employee_id')) $members = $members->filter(function ($value, $key) use ($request) {
                 return $value->id == $request->employee_id;
             });
@@ -63,6 +69,7 @@ class ExpenseController extends Controller
                 foreach($member_expenses as $expense){
                     $expense['employee_name'] = $member->profile->name;
                     $expense['employee_department'] = $member->businessMember->department ? $member->businessMember->department->name : null;
+                    $expense['attachment'] = $this->expense_repo->getAttachments($expense,$request) ? $this->expense_repo->getAttachments($expense,$request) : null;
                 }
             }
 
