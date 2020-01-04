@@ -76,7 +76,7 @@ class ExpenseController extends Controller
         }
     }
 
-    public function show(Request $request, $expense)
+    public function show($business, $expense, Request $request)
     {
         try {
             $business_member = $request->business_member;
@@ -93,7 +93,7 @@ class ExpenseController extends Controller
         }
     }
 
-    public function update(Request $request, $expense)
+    public function update($business, $expense, Request $request)
     {
         try {
             $this->validate($request, [
@@ -116,7 +116,7 @@ class ExpenseController extends Controller
         }
     }
 
-    public function delete(Request $request, $expense)
+    public function delete($business, $expense, Request $request)
     {
         try {
             $business_member = $request->business_member;
