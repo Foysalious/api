@@ -65,6 +65,7 @@ class ExpenseRepo
             $expense = Expense::where('id', $expense)
                 ->orderBy('created_at', 'DESC')
                 ->select('id', 'member_id', 'amount', 'status', 'remarks', 'type', 'created_at')->first();
+
             if (!$expense) return false;
 
             $expense['date'] = $expense->created_at ? $expense->created_at->format('M d') : null;
