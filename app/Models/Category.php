@@ -302,7 +302,9 @@ class Category extends Model
 
     public function getSlug()
     {
-        return $this->getSlugObj() ? $this->getSlugObj()->slug : null;
+        $type = $this->isParent() ? 'master_category' : 'secondary_category';
+        $universal_slug = UniversalSlugModel::where([['sluggable_type', $type], ['sluggable_id', $this->id]])->first();
+        return $universal_slug ? $universal_slug->slug : null;
     }
 
     public function getSlugObj()

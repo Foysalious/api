@@ -317,7 +317,6 @@ class Service extends Model
         return $this->morphMany(BlogPost::class, 'owner');
     }
 
-
     public function getContentsAttribute()
     {
         return $this->structured_contents ? json_decode($this->structured_contents) : null;
