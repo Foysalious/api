@@ -43,6 +43,11 @@ class ExpenseController extends Controller
             $business_member = $request->business_member;
             if (!$business_member) return api_response($request, null, 401);
             $members = $member_repository->where('id', $business_member['member_id'])->get();
+
+            if ($request->has('employee_id')) $members = $members->filter(function ($value, $key) use ($request) {
+                return $value->id == $request->employee_id;
+            });
+
             $expenses = new Collection();
 
             foreach($members as $member){
@@ -56,7 +61,7 @@ class ExpenseController extends Controller
 
             return api_response($request, $expenses, 200, ['expenses' => $expenses]);
         } catch (\Throwable $e) {
-            dd( $e->getMessage());
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
