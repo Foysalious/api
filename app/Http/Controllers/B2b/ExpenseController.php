@@ -101,7 +101,7 @@ class ExpenseController extends Controller
             $business_member = $request->business_member;
             if (!$business_member) return api_response($request, null, 401);
 
-            $data = $this->expense_repo->update($request, $expense);
+            $data = $this->expense_repo->update($request, $expense, $business_member);
 
             return $data ?
                 api_response($request, $expense, 200, $data)
