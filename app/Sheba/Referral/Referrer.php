@@ -1,5 +1,6 @@
 <?php namespace Sheba\Referral;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 
 abstract class Referrer
@@ -14,10 +15,9 @@ abstract class Referrer
     protected function init()
     {
 
-        return $this->refers = $this->referrer->referrals()->select([
-                'referrer_income',
-                'refer_level'
-            ]);
+        return $this->refers = $this->referrer->referrals();
     }
+
+    abstract function store(Request $request);
 
 }

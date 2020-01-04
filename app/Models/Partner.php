@@ -941,7 +941,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function referrals(): HasMany
     {
-        return $this->hasMany(Partner::class, 'referrer_id', 'id');
+        return $this->hasMany(PartnerReferral::class, 'partner_id', 'id');
     }
 
     public function referredBy(): BelongsTo
