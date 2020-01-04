@@ -68,12 +68,13 @@ class CoWorkerController extends Controller
                 BusinessMember::create($this->withCreateModificationField($member_business_data));
             } else {
                 $old_member = $profile->member;
-                if (!$old_member->businesses()->where('businesses.id', $business->id)->first()) return api_response($request, null, 403, ['message' => "This person is already connected with another business."]);
-                if (!$old_member) {
+                if ($old_member) {
+                    if ($old_member->businesses()->where('businesses.id', $business->id)->count() > 0) return api_response($request, $profile, 200, ['co_worker' => $old_member->id, ['message' => "This person is already added."]]);
+                    if ($old_member->businesses()->where('businesses.id', '<>', $business->id)->count() > 0) return api_response($request, null, 403, ['message' => "This person is already connected with another business."]);
+                    $co_member->push($old_member);
+                } else {
                     $new_member = $this->makeMember($profile);
                     $co_member->push($new_member);
-                } else {
-                    $co_member->push($old_member);
                 }
                 $this->sendExistingUserMail($profile);
                 $business = $member->businesses->first();
@@ -124,6 +125,7 @@ class CoWorkerController extends Controller
                     'pro_pic' => $profile->pro_pic,
                     'mobile' => $profile->mobile,
                     'email' => $profile->email,
+                    'department_id' => $role ? $role->businessDepartment->id : null,
                     'department' => $role ? $role->businessDepartment->name : null,
                     'designation' => $role ? $role->name : null
                 ];

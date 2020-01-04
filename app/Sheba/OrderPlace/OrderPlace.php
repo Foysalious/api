@@ -1,8 +1,5 @@
 <?php namespace Sheba\OrderPlace;
 
-use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
-use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
-use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
 use App\Models\Affiliation;
 use App\Models\CarRentalJobDetail;
 use App\Models\Category;
@@ -19,7 +16,6 @@ use App\Models\PartnerOrder;
 use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
-use Illuminate\Validation\ValidationException;
 use Sheba\Checkout\DeliveryCharge;
 use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Dal\Discount\InvalidDiscountType;

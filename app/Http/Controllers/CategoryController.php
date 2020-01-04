@@ -373,10 +373,10 @@ class CategoryController extends Controller
             } else {
                 $category = $cat->published()->first();
             }
-            $category_slug = $category->getSlug();
-            $cross_sale_service = $category->crossSaleService;
 
             if ($category != null) {
+                $category_slug = $category->getSlug();
+                $cross_sale_service = $category->crossSaleService;
                 list($offset, $limit) = calculatePagination($request);
                 $scope = [];
                 if ($request->has('scope')) $scope = $this->serviceRepository->getServiceScope($request->scope);

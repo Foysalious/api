@@ -5,6 +5,7 @@ class BusinessRoute
     public function set($api)
     {
         $api->post('business/login', 'B2b\LoginController@login');
+        $api->post('business/contact-us', 'B2b\BusinessesController@contactUs');
         $api->get('business/test-login', 'B2b\LoginController@generateDummyToken')->middleware('admin.auth');
         $api->get('business/test-push-notification', 'PushSubscriptionController@send');
         $api->post('business/register', 'B2b\RegistrationController@registerV2');

@@ -38,7 +38,7 @@ class ProcurementController extends Controller
                 'payment_options' => 'required|string',
                 'type' => 'required|string:in:basic,advanced',
                 'items' => 'sometimes|required|string',
-                'long_description' => 'sometimes|required|string',
+                'description' => 'sometimes|required|string',
                 'is_published' => 'sometimes|required|integer',
                 'attachments.*' => 'file'
             ]);
