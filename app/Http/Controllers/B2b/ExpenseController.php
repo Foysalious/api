@@ -62,6 +62,7 @@ class ExpenseController extends Controller
 
                 foreach($member_expenses as $expense){
                     $expense['employee_name'] = $member->profile->name;
+                    $expense['employee_designation'] = $member->businessMember->role->name;
                 }
             }
 
