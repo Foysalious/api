@@ -125,6 +125,7 @@ class CoWorkerController extends Controller
                     'pro_pic' => $profile->pro_pic,
                     'mobile' => $profile->mobile,
                     'email' => $profile->email,
+                    'department_id' => $role ? $role->businessDepartment->id : null,
                     'department' => $role ? $role->businessDepartment->name : null,
                     'designation' => $role ? $role->name : null
                 ];
