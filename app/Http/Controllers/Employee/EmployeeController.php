@@ -42,15 +42,15 @@ class EmployeeController extends Controller
         $member = $this->repo->find($business_member['member_id']);
 
         $data = [];
-        if($request->has('name')) $data['name'] = $request->name;
-        if($request->has('date_of_birth')) $data['dob'] = $request->date_of_birth;
-        if($request->hasFile('profile_picture')) {
+        if ($request->has('name')) $data['name'] = $request->name;
+        if ($request->has('date_of_birth')) $data['dob'] = $request->date_of_birth;
+        if ($request->hasFile('profile_picture')) {
             $name = array_key_exists('name', $data) ? $data['name'] : $member->profile->name;
             $data['pro_pic'] = $profile_repo->saveProPic($request->profile_picture, $name);
         }
-        if($request->has('gender')) $data['gender'] = $request->gender;
-        if($request->has('address')) $data['address'] = $request->address;
-        if($request->has('blood_group')) $data['blood_group'] = $request->blood_group;
+        if ($request->has('gender')) $data['gender'] = $request->gender;
+        if ($request->has('address')) $data['address'] = $request->address;
+        if ($request->has('blood_group')) $data['blood_group'] = $request->blood_group;
 
         $profile_repo->updateRaw($member->profile, $data);
 
@@ -67,7 +67,7 @@ class EmployeeController extends Controller
         if (!$business_member) return api_response($request, null, 404);
         $member = $this->repo->find($business_member['member_id']);
         $profile = $member->profile;
-        if(!password_verify($request->old_password, $profile->password)) {
+        if (!password_verify($request->old_password, $profile->password)) {
             return api_response($request, null, 403, [
                 'message' => "Old password does not match"
             ]);
@@ -82,8 +82,11 @@ class EmployeeController extends Controller
             $business_member = $this->getBusinessMember($request);
             if (!$business_member) return api_response($request, null, 404);
             $member = $this->repo->find($business_member['member_id']);
-            if ($business_member) return api_response($request, $business_member, 200, ['info' => [
-                'notification_count' => $member->notifications()->unSeen()->count()
+            return api_response($request, $business_member, 200, ['info' => [
+                'notification_count' => $member->notifications()->unSeen()->count(),
+                'employee' => [
+                    'id' => $member->id
+                ]
             ]]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
