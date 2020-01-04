@@ -70,8 +70,9 @@ class ExpenseRepo
 
             $expense['date'] = $expense->created_at ? $expense->created_at->format('M d') : null;
             $expense['time'] = $expense->created_at ? $expense->created_at->format('h:i A') : null;
+            $expense['can_edit'] = $request->has('can_edit') ? 1 : 0;
 
-            if($this->getAttachments($expense,$request))  $expense['attachment'] = $this->getAttachments($expense,$request);
+            if ($this->getAttachments($expense, $request)) $expense['attachment'] = $this->getAttachments($expense, $request);
 
             return ['expense' => $expense];
         } catch (\Throwable $e) {
@@ -91,6 +92,7 @@ class ExpenseRepo
             $expense->save();
 
             if ($request['file']) {
+                $expense->attachments()->detach();
                 $this->storeAttachment($expense, $request, $member);
             }
 
