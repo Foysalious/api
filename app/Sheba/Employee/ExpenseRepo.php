@@ -138,6 +138,7 @@ class ExpenseRepo
             if (!$expense) return false;
             $attachment = Attachment::where('attachable_type', get_class($expense))
                 ->where('attachable_id', $expense->id)
+                ->orderBy('created_at', 'DESC')
                 ->select('id', 'title', 'file', 'file_type', 'created_at')
                 ->first();
             return $attachment ? $attachment : false;
