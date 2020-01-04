@@ -32,6 +32,7 @@ class BusinessRoute
                     $api->post('/', 'B2b\CoWorkerController@store');
                     $api->get('/', 'B2b\CoWorkerController@index');
                     $api->get('/{employee}', 'B2b\CoWorkerController@show');
+                    $api->get('/{employee}/expense/pdf', 'B2b\CoWorkerController@show');
                 });
                 $api->group(['prefix' => 'orders'], function ($api) {
                     $api->get('/', 'B2b\OrderController@index');
@@ -204,6 +205,7 @@ class BusinessRoute
                 });
                 $api->group(['prefix' => 'expense'], function ($api) {
                     $api->get('/', 'B2b\ExpenseController@index');
+                    $api->get('/download-pdf', 'B2b\ExpenseController@downloadPdf');
                     $api->group(['prefix' => '{expense}'], function ($api) {
                         $api->get('/', 'B2b\ExpenseController@show');
                         $api->post('/', 'B2b\ExpenseController@update');

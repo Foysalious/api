@@ -17,14 +17,11 @@ class ExpenseRepo
     public function index(Request $request, $member)
     {
         try {
-            list($offset, $limit) = calculatePagination($request);
-
             $expenses = Expense::where('member_id', $member->id)
-                ->select('id', 'member_id', 'amount', 'status', 'remarks', 'type')
+                ->select('id', 'member_id', 'amount', 'status', 'remarks', 'type', 'created_at')
                 ->orderBy('id', 'desc');
 
-            if ($request->has('status')) $supports = $expenses->where('status', $request->status);
-            if ($request->has('limit')) $supports = $expenses->skip($offset)->limit($limit);
+            if ($request->has('status')) $expenses = $expenses->where('status', $request->status);
 
             $start_date = $request->has('start_date') ? $request->start_date : null;
             $end_date = $request->has('end_date') ? $request->end_date : null;
@@ -54,7 +51,6 @@ class ExpenseRepo
 
             if ($request['file']) {
                 $this->storeAttachment($expense, $request, $member);
-
             }
 
             return ['expense' => ['id' => $expense->id]];
@@ -67,13 +63,14 @@ class ExpenseRepo
     {
         try {
             $expense = Expense::where('id', $expense)
+                ->orderBy('created_at', 'DESC')
                 ->select('id', 'member_id', 'amount', 'status', 'remarks', 'type', 'created_at')->first();
             if (!$expense) return false;
 
             $expense['date'] = $expense->created_at ? $expense->created_at->format('M d') : null;
             $expense['time'] = $expense->created_at ? $expense->created_at->format('h:i A') : null;
 
-            if($this->getAttachments($expense,$request))  $expense['attachments'] = $this->getAttachments($expense,$request);
+            if($this->getAttachments($expense,$request))  $expense['attachment'] = $this->getAttachments($expense,$request);
 
             return ['expense' => $expense];
         } catch (\Throwable $e) {
@@ -81,7 +78,7 @@ class ExpenseRepo
         }
     }
 
-    public function update(Request $request, $expense)
+    public function update(Request $request, $expense, $member)
     {
         try {
             $expense = Expense::find($expense);
@@ -91,6 +88,10 @@ class ExpenseRepo
             $expense->remarks = $request->remarks;
             $expense->type = $request->type;
             $expense->save();
+
+            if ($request['file']) {
+                $this->storeAttachment($expense, $request, $member);
+            }
 
             return ['expense' => ['id' => $expense->id]];
         } catch (\Throwable $e) {
@@ -116,7 +117,6 @@ class ExpenseRepo
     public function storeAttachment(Expense $expense, Request $request, $member)
     {
         try {
-            $this->setModifier($member);
             $data = $this->storeAttachmentToCDN($request->file('file'));
             $attachment = $expense->attachments()->save(new Attachment($this->withBothModificationFields($data)));
             return $attachment;
@@ -136,18 +136,12 @@ class ExpenseRepo
     {
         try {
             if (!$expense) return false;
-            $attaches = Attachment::where('attachable_type', get_class($expense))->where('attachable_id', $expense->id)->get();
-            $attach_lists = [];
-            foreach ($attaches as $attach) {
-                array_push($attach_lists, [
-                    'id' => $attach->id,
-                    'title' => $attach->title,
-                    'file' => $attach->file,
-                    'file_type' => $attach->file_type,
-                ]);
-            }
-            if (count($attach_lists) > 0) return $attach_lists;
-            else  return false;
+            $attachment = Attachment::where('attachable_type', get_class($expense))
+                ->where('attachable_id', $expense->id)
+                ->orderBy('created_at', 'DESC')
+                ->select('id', 'title', 'file', 'file_type', 'created_at')
+                ->first();
+            return $attachment ? $attachment : false;
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return false;
