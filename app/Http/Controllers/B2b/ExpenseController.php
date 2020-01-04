@@ -40,6 +40,8 @@ class ExpenseController extends Controller
                 'end_date' => 'string',
             ]);
 
+            list($offset, $limit) = calculatePagination($request);
+
             $business_member = $request->business_member;
             if (!$business_member) return api_response($request, null, 401);
             $members = $member_repository->where('id', $business_member['member_id'])->get();
@@ -59,9 +61,12 @@ class ExpenseController extends Controller
                 }
             }
 
-            return api_response($request, $expenses, 200, ['expenses' => $expenses]);
+            $totalExpenseCount = $expenses->count();
+
+            if ($request->has('limit')) $expenses = $expenses->splice($offset, $limit);
+
+            return api_response($request, $expenses, 200, ['expenses' => $expenses, 'count' => $totalExpenseCount]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

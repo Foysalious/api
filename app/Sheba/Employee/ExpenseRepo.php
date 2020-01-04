@@ -17,14 +17,11 @@ class ExpenseRepo
     public function index(Request $request, $member)
     {
         try {
-            list($offset, $limit) = calculatePagination($request);
-
             $expenses = Expense::where('member_id', $member->id)
-                ->select('id', 'member_id', 'amount', 'status', 'remarks', 'type')
+                ->select('id', 'member_id', 'amount', 'status', 'remarks', 'type', 'created_at')
                 ->orderBy('id', 'desc');
 
-            if ($request->has('status')) $supports = $expenses->where('status', $request->status);
-            if ($request->has('limit')) $supports = $expenses->skip($offset)->limit($limit);
+            if ($request->has('status')) $expenses = $expenses->where('status', $request->status);
 
             $start_date = $request->has('start_date') ? $request->start_date : null;
             $end_date = $request->has('end_date') ? $request->end_date : null;

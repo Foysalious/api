@@ -40,12 +40,16 @@ class ExpenseController extends Controller
                 'end_date' => 'string',
             ]);
 
+            list($offset, $limit) = calculatePagination($request);
+
             $auth_info = $request->auth_info;
             $business_member = $auth_info['business_member'];
             if (!$business_member) return api_response($request, null, 401);
             $member = $member_repository->where('id', $business_member['member_id'])->first();
 
             $expenses = $this->expense_repo->index($request,$member);
+
+            if ($request->has('limit')) $expenses = $expenses->splice($offset, $limit);
 
             $sum = $expenses->sum('amount');
 
