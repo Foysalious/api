@@ -143,7 +143,7 @@ class ExpenseRepo
                 ->where('attachable_id', $expense->id)
                 ->orderBy('created_at', 'DESC')
                 ->select('id', 'title', 'file', 'file_type', 'created_at')
-                ->first();
+                ->get();
             return $attachment ? $attachment : false;
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
