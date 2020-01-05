@@ -21,7 +21,6 @@ class ServiceProvider extends BaseServiceProvider
     public function register()
     {
         $this->app->singleton(Recommender::class, function ($app) {
-            return new Basic();
             return new CacheWrapper(new Basic());
         });
     }
