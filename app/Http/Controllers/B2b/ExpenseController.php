@@ -74,10 +74,11 @@ class ExpenseController extends Controller
             }
 
             $totalExpenseCount = $expenses->count();
+            $totalExpenseSum = $expenses->sum('amount');
 
             if ($request->has('limit')) $expenses = $expenses->splice($offset, $limit);
 
-            return api_response($request, $expenses, 200, ['expenses' => $expenses, 'total_expenses_count' => $totalExpenseCount]);
+            return api_response($request, $expenses, 200, ['expenses' => $expenses, 'total_expenses_count' => $totalExpenseCount, 'total_expenses_sum' => $totalExpenseSum]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
