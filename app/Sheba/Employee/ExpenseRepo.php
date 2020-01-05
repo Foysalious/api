@@ -2,12 +2,12 @@
 
 
 use App\Models\Attachment;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Attachments\FilesAttachment;
 use Sheba\Dal\Expense\Expense;
 use Sheba\ModificationFields;
-use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
 
 class ExpenseRepo
 {
@@ -70,7 +70,7 @@ class ExpenseRepo
 
             $expense['date'] = $expense->created_at ? $expense->created_at->format('M d') : null;
             $expense['time'] = $expense->created_at ? $expense->created_at->format('h:i A') : null;
-            $expense['can_edit'] = $request->has('can_edit') ? 1 : 0;
+            $expense['can_edit'] = $this->canEdit($expense);
 
             if ($this->getAttachments($expense, $request)) $expense['attachment'] = $this->getAttachments($expense, $request);
 
@@ -78,6 +78,14 @@ class ExpenseRepo
         } catch (\Throwable $e) {
             return false;
         }
+    }
+
+    private function canEdit(Expense $expense)
+    {
+        $created_at = $expense->created_at;
+        if ($created_at->month == 12) $can_edit_until = Carbon::create($created_at->year + 1, 1, 5, 11, 59, 59);
+        else $can_edit_until = Carbon::create($created_at->year, $created_at->month + 1, 5, 11, 59, 59);
+        return Carbon::now() <= $can_edit_until ? 1 : 0;
     }
 
     public function update(Request $request, $expense, $member)
@@ -92,7 +100,6 @@ class ExpenseRepo
             $expense->save();
 
             if ($request['file']) {
-                $expense->attachments()->detach();
                 $this->storeAttachment($expense, $request, $member);
             }
 
