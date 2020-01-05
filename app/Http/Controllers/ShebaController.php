@@ -586,6 +586,7 @@ class ShebaController extends Controller
                 $category = Category::find($param->id);
                 $master = $category ? Category::find($category->parent_id) : null;
 
+
                 if(!($category && $master)) return $items;
 
                 array_push($items,[
