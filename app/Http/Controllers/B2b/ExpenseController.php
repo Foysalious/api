@@ -68,7 +68,7 @@ class ExpenseController extends Controller
 
                 foreach($member_expenses as $expense){
                     $expense['employee_name'] = $member->profile->name;
-                    $expense['employee_department'] = $member->businessMember->department ? $member->businessMember->department->name : null;
+                    $expense['employee_department'] = $member->businessMember->department() ? $member->businessMember->department()->name : null;
                     $expense['attachment'] = $this->expense_repo->getAttachments($expense,$request) ? $this->expense_repo->getAttachments($expense,$request) : null;
                 }
             }
