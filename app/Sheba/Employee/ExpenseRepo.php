@@ -83,9 +83,9 @@ class ExpenseRepo
     private function canEdit(Expense $expense)
     {
         $created_at = $expense->created_at;
-        if ($created_at->month == 12) $can_edit_until = Carbon::create($created_at->year + 1, 1, 5, 11, 59, 59);
-        else $can_edit_until = Carbon::create($created_at->year, $created_at->month + 1, 5, 11, 59, 59);
-        return Carbon::now() <= $can_edit_until ? 1 : 0;
+        if ($created_at->month == 12) $can_edit_until = Carbon::create($created_at->year + 1, 1, 5, 23, 59, 59);
+        else $can_edit_until = Carbon::create($created_at->year, $created_at->month + 1, 5, 23, 59, 59);
+        return Carbon::now()->lte($can_edit_until) ? 1 : 0;
     }
 
     public function update(Request $request, $expense, $member)
