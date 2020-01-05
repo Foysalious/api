@@ -260,7 +260,7 @@ class OrderController extends Controller
             $partner = $request->partner;
             $this->setModifier($request->manager_resource);
 
-            $order = $creator->setData($request->all())->create();
+            $order = $creator->setPartner($partner)->setData($request->all())->create();
             $order = $order->calculate();
             if ($partner->wallet >= 1) $this->sendCustomerSms($order);
             $this->sendCustomerEmail($order);
