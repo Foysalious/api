@@ -48,8 +48,11 @@ class CoWorkerController extends Controller
             $business = $request->business;
             $member = $request->manager_member;
             $this->setModifier($member);
-
-            $profile = $this->profileRepository->checkExistingProfile($request->mobile, $request->email);
+            $email_profile = $this->profileRepository->where('email', $request->email)->first();
+            $mobile_profile = $this->profileRepository->where('mobile', formatMobile($request->mobile))->first();
+            if ($email_profile) $profile = $email_profile;
+            elseif ($mobile_profile) $profile = $mobile_profile;
+            else $profile = null;
             $co_member = collect();
             if (!$profile) {
                 $profile = $this->createProfile($member, $request);
