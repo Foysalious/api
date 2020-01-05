@@ -5,6 +5,7 @@ use App\Models\BusinessDepartment;
 use App\Models\BusinessRole;
 use App\Models\BusinessSmsTemplate;
 use App\Models\InspectionItemIssue;
+use App\Sheba\Business\ACL\AccessControl;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessMember;
@@ -61,7 +62,7 @@ class MemberController extends Controller
                 $this->saveSmsTemplate($business);
             }
 
-            return api_response($request, 1, 200);
+            return api_response($request, 1, 200, ['business_id' => $business->id]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
@@ -111,12 +112,13 @@ class MemberController extends Controller
         }
     }
 
-    public function getMemberInfo($member, Request $request)
+    public function getMemberInfo($member, Request $request, AccessControl $access_control)
     {
         try {
             $member = Member::find((int)$member);
             $business = $member->businesses->first();
             $profile = $member->profile;
+            $access_control->setBusinessMember($member->businessMember);
             $info = [
                 'profile_id' => $profile->id,
                 'name' => $profile->name,
@@ -131,6 +133,11 @@ class MemberController extends Controller
                 'business_id' => $business ? $business->id : null,
                 'remember_token' => $member->remember_token,
                 'is_super' => $member->businessMember ? $member->businessMember->is_super : null,
+                'access' => [
+                    'support' => $access_control->hasAccess('support.rw') ? 1 : 0,
+                    'expense' => $access_control->hasAccess('expense.rw') ? 1 : 0,
+                    'announcement' => $access_control->hasAccess('announcement.rw') ? 1 : 0
+                ]
             ];
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {

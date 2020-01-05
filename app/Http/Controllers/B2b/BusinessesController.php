@@ -6,14 +6,13 @@ use App\Models\Notification;
 use App\Models\Partner;
 use App\Models\Profile;
 use App\Models\Resource;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
-use App\Models\BusinessMember;
 use Sheba\Business\TransactionReportData;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use App\Models\Business;
-use App\Models\Member;
 use Carbon\Carbon;
 use DB;
 use Sheba\Reports\ExcelHandler;
@@ -245,11 +244,22 @@ class BusinessesController extends Controller
      */
     public function downloadTransactionReport($business, TimeFrameReportRequest $request, ExcelHandler $excel, TransactionReportData $data)
     {
-        if(!$request->isLifetime()) $data->setTimeFrame($request->getTimeFrame());
-        $business = $request->business instanceof Business ? $request->business : Business::find((int) $request->business);
+        if (!$request->isLifetime()) $data->setTimeFrame($request->getTimeFrame());
+        $business = $request->business instanceof Business ? $request->business : Business::find((int)$request->business);
         $data->setBusiness($business);
         $excel->setName('Transactions')
             ->createReport($data->get())
             ->download();
+    }
+
+    public function contactUs(Request $request)
+    {
+        $this->validate($request, ['name' => 'required|string', 'email' => 'required|email', 'message' => 'required|string']);
+        Mail::raw($request->message, function ($m) use ($request) {
+            $m->from($request->email, $request->name);
+            $m->to('b2b@sheba.xyz');
+            $m->subject('Contact Us');
+        });
+        return api_response($request, null, 200);
     }
 }
