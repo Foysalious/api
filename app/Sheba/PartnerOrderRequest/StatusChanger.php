@@ -69,7 +69,7 @@ class StatusChanger
         $this->repo->update($this->partnerOrderRequest, ['status' => Statuses::DECLINED]);
 
         if (!$this->repo->isAllRequestDeclinedOrNotResponded($this->partnerOrderRequest->partnerOrder)) return;
-        $request->merge(['job' => $this->partnerOrderRequest->partnerOrder->job]);
+        $request->merge(['job' => $this->partnerOrderRequest->partnerOrder->lastJob()]);
         $this->jobStatusChanger->decline($request);
         if ($this->jobStatusChanger->hasError()) {
             $this->setError($this->jobStatusChanger->getErrorCode(), $this->getErrorMessage());
