@@ -9,7 +9,7 @@ class Route
         $api->group(['prefix' => 'v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
             (new EmployeeRoute())->set($api);
             (new PartnerRoute())->set($api);
-            $api->group(['prefix' => 'geo'], function ($api) {
+            $api->group(['prefix' => 'geo', 'middleware' => 'geo.auth'], function ($api) {
                 $api->get('geocode/reverse', 'GeocodeController@reverseGeocode');
             });
             $api->group(['prefix' => 'vendors', 'middleware' => ['vendor.auth']], function ($api) {
