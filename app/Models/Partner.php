@@ -953,4 +953,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     {
         return $this->hasMany(PartnerUsageHistory::class, 'partner_id', 'id');
     }
+    public function referCode(){
+        return $this->id. str_random(8-(strlen($this->id)));
+    }
 }

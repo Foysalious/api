@@ -26,12 +26,13 @@ class ProcurementAdapter implements PayableAdapter
     public function getPayable(): Payable
     {
         $bid = $this->procurement->getActiveBid();
+        $this->procurement->calculate();
         $payable = new Payable();
         $payable->type = 'procurement';
         $payable->type_id = $this->procurement->id;
         $payable->user_id = $this->procurement->owner_id;
         $payable->user_type = $this->procurement->owner_type;
-        $payable->amount = (double)$bid->price;
+        $payable->amount = (double)$this->procurement->due;
         $payable->emi_month = $this->resolveEmiMonth($payable);
         $payable->completion_type = 'procurement';
         $payable->success_url = $this->getSuccessUrl();

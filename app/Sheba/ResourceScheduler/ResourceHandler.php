@@ -79,7 +79,7 @@ class ResourceHandler
         #dump($start_time, $end_time, $schedules_start_between, $schedules_end_between, $schedules_at_start, $schedules_at_end, $schedules_at_start_end);
         $this->bookedSchedules = $schedules_start_between->merge($schedules_end_between)->merge($schedules_at_start)->merge($schedules_at_end)->merge($schedules_at_start_end);
         if ($job) {
-            $this->bookedSchedules = $this->bookedSchedules->reject(function ($schedule, $job) {
+            $this->bookedSchedules = $this->bookedSchedules->reject(function ($schedule) use ($job) {
                 return $schedule->job_id == $job->id;
             });
         }

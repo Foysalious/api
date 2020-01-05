@@ -1,6 +1,7 @@
 <?php namespace App\Repositories;
 
 use App\Models\Job;
+use App\Models\OfferShowcase;
 use App\Models\Order;
 use App\Models\Partner;
 use App\Models\PartnerOrder;
@@ -156,10 +157,17 @@ class NotificationRepository
     public function getManagerNotifications($model, $offset, $limit)
     {
         $notifications = $model->notifications()->select('id', 'title', 'event_type', 'event_id', 'type', 'is_seen', 'created_at')->orderBy('id', 'desc')->skip($offset)->limit($limit)->get();
+
         if (count($notifications) > 0) {
             $notifications = $notifications->map(function ($notification) {
                 $notification->event_type = str_replace('App\Models\\', "", $notification->event_type);
                 array_add($notification, 'time', $notification->created_at->format('j M \\a\\t h:i A'));
+
+                $diff = strtotime(date('Y-m-d')) - strtotime($notification->created_at->format('Y-m-d'));
+                $days = (int)$diff/(60*60*24);
+                array_add($notification, 'day_before', $days);
+                $icon = $this->getNotificationIcon($notification->event_id,$notification->type);
+                array_add($notification, 'icon', $icon);
                 if ($notification->event_type == 'Job') {
                     if (!stristr($notification->title, 'cancel')) {
                         $job = Job::find($notification->event_id);
@@ -229,6 +237,16 @@ class NotificationRepository
                 'grade_text' => $gradeType
             ]);
         }
+    }
+
+    private function getNotificationIcon($event_id, $type)
+    {
+        $offer = OfferShowcase::query()->where('id', $event_id)->first();
+        if($offer) {
+            if ($offer->thumb != '') return $offer->thumb;
+            return config('constants.NOTIFICATION_ICONS.'.$type);
+        }
+        return config('constants.NOTIFICATION_ICONS.'.$type);
     }
 
 }

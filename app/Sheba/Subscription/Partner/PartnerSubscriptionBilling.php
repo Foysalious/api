@@ -144,7 +144,7 @@ class PartnerSubscriptionBilling
                 $this->partnerTransactionForSubscriptionBilling($package_price);
             }
             $this->partner->last_billed_date = $this->today;
-            $this->partner->last_billed_amount = $package_price;
+            $this->partner->last_billed_amount = $this->getSubscribedPackageDiscountedPrice();
             if ($this->partner->status == PartnerStatuses::INACTIVE) {
                 $this->revokeStatus();
             }
@@ -206,7 +206,7 @@ class PartnerSubscriptionBilling
         $remaining_credit = ($this->partner->last_billed_amount ?: 0) - $used_credit;
         $alreadyCollectedSubscriptionFee = $this->partner->alreadyCollectedSubscriptionFee();
         $remaining_credit += $alreadyCollectedSubscriptionFee;
-        return $remaining_credit < 0 ? 0 : $remaining_credit;
+        return $remaining_credit < 0 ? 0 : round($remaining_credit,2);
     }
 
     /**

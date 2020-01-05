@@ -540,8 +540,14 @@ class PartnerController extends Controller
         try {
             list($offset, $limit) = calculatePagination($request);
             $notifications = (new NotificationRepository())->getManagerNotifications($request->partner, $offset, $limit);
+            $counter = 0;
+            foreach ($notifications as $notification){
+                if(!$notification->is_seen){
+                    $counter += 1;
+                }
+            }
             if (count($notifications) > 0) {
-                return api_response($request, $notifications, 200, ['notifications' => $notifications->values()->all()]);
+                return api_response($request, $notifications, 200, ['notifications' => $notifications->values()->all(),'unseen' => $counter]);
             } else {
                 return api_response($request, null, 404);
             }

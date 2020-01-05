@@ -452,10 +452,16 @@ return [
         'ServiceChange' => 'Service Change'
     ],
     'NOTIFICATION_TYPES' => [
-        'Info' => 'Info',
-        'Warning' => 'Warning',
-        'Danger' => 'Danger',
-        'Success' => 'Success'
+        'Info'      => 'Info',
+        'Warning'   => 'Warning',
+        'Danger'    => 'Danger',
+        'Success'   => 'Success'
+    ],
+    'NOTIFICATION_ICONS'=>[
+        'Info'      =>'info icon',
+        'Warning'   =>'warning icon',
+        'Danger'    =>'Danger icon',
+        'Success'   =>'success icon'
     ],
     'SALES_CHANNELS' => [
         'Call-Center' => [
@@ -633,7 +639,8 @@ return [
         'employee-app',
         'manager-web',
         'business-portal',
-        'bank-loan-portal'
+        'bank-loan-portal',
+        'employee-app'
     ],
     'PARTNER_ACQUISITION_CHANNEL' => [
         'PM' => 'PM',

@@ -2,22 +2,26 @@
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\FacebookAccountKit;
+
 use App\Models\BusinessJoinRequest;
 use App\Models\Partner;
 use App\Models\PartnerAffiliation;
 use App\Models\PartnerBasicInformation;
-use App\Models\PartnerReferral;
+use App\Models\PartnerSubscriptionPackage;
 use App\Models\PartnerWalletSetting;
 use App\Models\Profile;
 use App\Models\Resource;
+
 use App\Repositories\PartnerRepository;
 use App\Repositories\ProfileRepository;
+
 use Carbon\Carbon;
 use DB;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\EntryRepository;
 use Sheba\Logs\ErrorLog;
@@ -27,6 +31,7 @@ use Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
 use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Sms\Sms;
 use Sheba\Voucher\Creator\Referral;
+use DB;
 use Throwable;
 
 class PartnerRegistrationController extends Controller
@@ -96,6 +101,7 @@ class PartnerRegistrationController extends Controller
             if (!$code_data)
                 return api_response($request, null, 401, ['message' => 'AccountKit authorization failed']);
             $mobile = formatMobile($code_data['mobile']);
+
             if ($profile = $this->profileRepository->ifExist($mobile, 'mobile')) {
                 $resource = $profile->resource;
                 if (!$resource) {
@@ -192,7 +198,9 @@ class PartnerRegistrationController extends Controller
         $partner = $this->store($resource, $data, $by, $partner);
         if ($partner) {
             $this->sms->shoot($resource->profile->mobile, "You have successfully completed your registration at Sheba.xyz. Please complete your profile to start serving orders.");
-           $this->referrals::setReference($partner,$this->ref);
+            $this->referrals::setReference($partner,$this->ref);
+            $partner->refer_code = $partner->referCode();
+            $partner->save();
         }
         app()->make(ActionRewardDispatcher::class)->run('partner_creation_bonus', $partner, $partner);
         $this->storeExpense($partner);
@@ -394,6 +402,7 @@ class PartnerRegistrationController extends Controller
                 'mobile'       => 'required|mobile:bd',
                 'name'         => 'required'
             ]);
+
             $mobile = formatMobile($request->mobile);
             if ($profile = $this->profileRepository->ifExist($mobile, 'mobile')) {
                 if ($profile->name === "" || $profile->name === null) {
