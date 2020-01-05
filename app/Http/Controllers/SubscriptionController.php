@@ -124,40 +124,32 @@ class SubscriptionController extends Controller
         }
     }
 
-    /**
-     * @param Request $request
-     * @param ApproximatePriceCalculator $approximatePriceCalculator
-     * @return JsonResponse
-     */
+
     public function all(Request $request, ApproximatePriceCalculator $approximatePriceCalculator)
     {
-        try {
-            $subscriptions = ServiceSubscription::active()->get();
-            foreach ($subscriptions as $index => $subscription) {
-                if (!in_array($this->location, $subscription->service->locations->pluck('id')->toArray())) {
-                    array_forget($subscriptions, $index);
-                    continue;
-                }
-                $service = removeRelationsAndFields($subscription->service);
-                $subscription['offers'] = $subscription->getDiscountOffers();
-                $price_range = $approximatePriceCalculator->setSubscription($subscription)->getPriceRange();
-                $subscription = removeRelationsAndFields($subscription);
-                $subscription['max_price'] = $price_range['max_price'] > 0 ? $price_range['max_price'] : 0;
-                $subscription['min_price'] = $price_range['min_price'] > 0 ? $price_range['min_price'] : 0;
-                $subscription['price_applicable_for'] = $price_range['price_applicable_for'];
-                $subscription['thumb'] = $service['thumb'];
-                $subscription['banner'] = $service['banner'];
-                $subscription['unit'] = $service['unit'];
-
+        $subscriptions = ServiceSubscription::active()->get();
+        foreach ($subscriptions as $index => $subscription) {
+            if (!in_array($this->location, $subscription->service->locations->pluck('id')->toArray())) {
+                array_forget($subscriptions, $index);
+                continue;
             }
-            if (count($subscriptions) > 0)
-                return api_response($request, $subscriptions, 200, ['subscriptions' => $subscriptions->values()->all()]);
-            else
-                return api_response($request, null, 404);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+            $location_service = LocationService::where([['location_id', $this->location], ['service_id', $subscription->service->id]])->first();
+            $service = removeRelationsAndFields($subscription->service);
+            $subscription['offers'] = $subscription->getDiscountOffers();
+            $price_range = $approximatePriceCalculator->setLocationService($location_service)->setSubscription($subscription)->getPriceRange();
+            $subscription = removeRelationsAndFields($subscription);
+            $subscription['max_price'] = $price_range['max_price'] > 0 ? $price_range['max_price'] : 0;
+            $subscription['min_price'] = $price_range['min_price'] > 0 ? $price_range['min_price'] : 0;
+            $subscription['price_applicable_for'] = $price_range['price_applicable_for'];
+            $subscription['thumb'] = $service['thumb'];
+            $subscription['banner'] = $service['banner'];
+            $subscription['unit'] = $service['unit'];
+
         }
+        if (count($subscriptions) > 0)
+            return api_response($request, $subscriptions, 200, ['subscriptions' => $subscriptions->values()->all()]);
+        else
+            return api_response($request, null, 404);
     }
 
     /**
@@ -212,7 +204,7 @@ class SubscriptionController extends Controller
                             'indexes' => [$index],
                             'min_price' => $serviceSubscription['min_price'],
                             'max_price' => $serviceSubscription['max_price'],
-                            'price'     => $price_calculation->setLocationService($location_service)->setOption([$index])->getUnitPrice()
+                            'price' => $price_calculation->setLocationService($location_service)->setOption([$index])->getUnitPrice()
                         ];
                         array_push($total_breakdown, $breakdown);
                     }
@@ -221,11 +213,11 @@ class SubscriptionController extends Controller
             } else {
                 $serviceSubscription['service_breakdown'] = [
                     [
-                        'name'      => $serviceSubscription->service->name,
-                        'indexes'   => null,
+                        'name' => $serviceSubscription->service->name,
+                        'indexes' => null,
                         'min_price' => $serviceSubscription['min_price'],
                         'max_price' => $serviceSubscription['max_price'],
-                        'price'     => $price_calculation->setLocationService($location_service)->getUnitPrice()
+                        'price' => $price_calculation->setLocationService($location_service)->getUnitPrice()
                     ]
                 ];
             }
@@ -358,17 +350,17 @@ class SubscriptionController extends Controller
             foreach ($tmp as $index => $t) {
 
                 $result[] = is_array($t) ? [
-                    'name'      => $v . " - " . $t['name'],
-                    'indexes'   => array_merge([$array_index], $t['indexes']),
+                    'name' => $v . " - " . $t['name'],
+                    'indexes' => array_merge([$array_index], $t['indexes']),
                     'min_price' => $t['min_price'],
                     'max_price' => $t['max_price'],
-                    'price'     => $price_calculation->setLocationService($location_service)->setOption(array_merge([$array_index], $t['indexes']))->getUnitPrice()
+                    'price' => $price_calculation->setLocationService($location_service)->setOption(array_merge([$array_index], $t['indexes']))->getUnitPrice()
                 ] : [
-                    'name'      => $v . " - " . $t,
-                    'indexes'   => [$array_index, $index],
+                    'name' => $v . " - " . $t,
+                    'indexes' => [$array_index, $index],
                     'min_price' => $min_price,
                     'max_price' => $max_price,
-                    'price'     => $price_calculation->setLocationService($location_service)->setOption([$array_index, $index])->getUnitPrice()
+                    'price' => $price_calculation->setLocationService($location_service)->setOption([$array_index, $index])->getUnitPrice()
                 ];
             }
         }

@@ -19,6 +19,7 @@ class CategoryTransformer extends TransformerAbstract
             'slug' => $category->getSlug(),
             'thumb' => $category->thumb,
             'app_thumb' => $category->app_thumb,
+            'service_title' => $category->service_title,
             'avg_rating' => 4.75,
             'total_ratings' => 500,
             'total_services' => 200,
