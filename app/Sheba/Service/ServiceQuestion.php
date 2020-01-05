@@ -18,23 +18,15 @@ class ServiceQuestion
     {
         if ($this->service->isFixed()) return null;
         $options = (json_decode($this->service->variables))->options;
-        foreach ($options as &$option) {
+        $option_contents = $this->service->options_content ? json_decode($this->service->options_content, true) : [];
+        foreach ($options as $option_keys => &$option) {
+            $option_key = $option_keys + 1;
+            $option_content = key_exists($option_key, $option_contents) ? $option_contents[$option_key] : [];
             $option->answers = explode(',', $option->answers);
             $contents = [];
-            foreach ($option->answers as $answer) {
-                array_push($contents, [
-                    'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/74/600.jpg',
-                    'description' => [
-                        "We have more than 300 services",
-                        "Verified experts all arround the country"
-                    ],
-                    'images' => [
-                        'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/74/600.jpg',
-                        'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/74/600.jpg',
-                        'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/74/600.jpg',
-                        'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/74/600.jpg'
-                    ]
-                ]);
+            foreach ($option->answers as $answer_keys => $answer) {
+                $answer_key = $answer_keys + 1;
+                array_push($contents, key_exists($answer_key, $option_content) ? $option_content[$answer_key] : null);
             }
             $option->contents = $contents;
         }

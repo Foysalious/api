@@ -402,7 +402,7 @@ class CategoryController extends Controller
                         $q->select(
                             'id', 'category_id', 'unit', 'name', 'bn_name', 'thumb',
                             'app_thumb', 'app_banner', 'short_description', 'description',
-                            'banner', 'faqs', 'variables', 'variable_type', 'min_quantity'
+                            'banner', 'faqs', 'variables', 'variable_type', 'min_quantity', 'options_content'
                         )->orderBy('order')->skip($offset)->take($limit);
 
                         if ((int)\request()->is_business) $q->publishedForBusiness();
@@ -500,11 +500,11 @@ class CategoryController extends Controller
                     $category['services'] = $services;
                     $category['subscriptions'] = $subscriptions;
                     $category['cross_sale'] = $cross_sale_service ? [
-                        'title'         => $cross_sale_service->title,
-                        'description'   => $cross_sale_service->description,
-                        'icon'          => $cross_sale_service->icon,
-                        'category_id'   => $cross_sale_service->category_id,
-                        'service_id'    => $cross_sale_service->service_id
+                        'title' => $cross_sale_service->title,
+                        'description' => $cross_sale_service->description,
+                        'icon' => $cross_sale_service->icon,
+                        'category_id' => $cross_sale_service->category_id,
+                        'service_id' => $cross_sale_service->service_id
                     ] : null;
 
                     $category['delivery_charge'] = $delivery_charge->setCategory($service->category)->get();
@@ -587,26 +587,18 @@ class CategoryController extends Controller
             $service['type'] = 'normal';
             if ($service->variable_type == 'Options') {
                 $questions = json_decode($service->variables)->options;
-                foreach ($questions as &$question) {
+                $option_contents = $service->options_content ? json_decode($service->options_content, true) : [];
+                foreach ($questions as $option_keys => &$question) {
                     $question = collect($question);
                     $question->put('input_type', $this->resolveInputTypeField($question->get('answers')));
                     $question->put('screen', count($questions) > 3 ? 'slide' : 'normal');
+                    $option_key = $option_keys + 1;
+                    $option_content = key_exists($option_key, $option_contents) ? $option_contents[$option_key] : [];
                     $explode_answers = explode(',', $question->get('answers'));
                     $contents = [];
-                    foreach ($explode_answers as $answer) {
-                        array_push($contents, [
-                            'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/74/600.jpg',
-                            'description' => [
-                                "We have more than 300 services",
-                                "Verified experts all arround the country"
-                            ],
-                            'images' => [
-                                'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/74/600.jpg',
-                                'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/74/600.jpg',
-                                'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/74/600.jpg',
-                                'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/bulk/jpg/Services/74/600.jpg'
-                            ]
-                        ]);
+                    foreach ($explode_answers as $answer_keys => $answer) {
+                        $answer_key = $answer_keys + 1;
+                        array_push($contents, key_exists($answer_key, $option_content) ? $option_content[$answer_key] : null);
                     }
                     $question->put('answers', $explode_answers);
                     $question->put('contents', $contents);

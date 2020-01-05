@@ -1,5 +1,6 @@
 <?php namespace Sheba\Recommendations\HighlyDemands\Categories;
 
+use App\Models\Category;
 use App\Models\Job;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -23,9 +24,17 @@ class Basic extends Recommender
             ->orderBy('total', 'desc')
             ->take($this->numberOfCategories)
             ->get()->each(function ($job) use ($secondaries_categories) {
-                $secondaries_categories->push(
-                    $job->category()->select('id', 'name', 'app_thumb', 'app_banner', 'icon', 'icon_png')->first()
-                );
+                /** @var Category $secondary_category */
+                $secondary_category = $job->category()->first();
+                $secondaries_categories->push([
+                    'id'        => $secondary_category->id,
+                    'name'      => $secondary_category->name,
+                    'app_thumb' => $secondary_category->app_thumb,
+                    'app_banner'=> $secondary_category->app_banner,
+                    'icon'      => $secondary_category->icon,
+                    'icon_png'  => $secondary_category->icon_png,
+                    'slug'      => $secondary_category->getSlug()
+                ]);
             });
 
         return $secondaries_categories->values();
