@@ -1,10 +1,12 @@
 <?php namespace Sheba\Subscription;
 
+use App\Models\LocationService;
 use App\Models\Service;
 use App\Models\ServiceSubscription;
 use App\Models\ServiceSubscriptionDiscount;
 use App\Sheba\Checkout\Discount;
 use Exception;
+use Sheba\Service\MinMaxPrice;
 use Throwable;
 
 class ApproximatePriceCalculator extends Discount
@@ -13,11 +15,13 @@ class ApproximatePriceCalculator extends Discount
      * @var ServiceSubscription $subscription
      */
     private $subscription;
+    private $locationService;
 
     /**
      * @var Service $service
      */
     private $service;
+
 
     /**
      * @param ServiceSubscription $subscription
@@ -44,6 +48,12 @@ class ApproximatePriceCalculator extends Discount
         return $this;
     }
 
+    public function setLocationService(LocationService $location_service)
+    {
+        $this->locationService = $location_service;
+        return $this;
+    }
+
     public function getDiscountAmount()
     {
         return $this->calculateServiceDiscount();
@@ -62,7 +72,7 @@ class ApproximatePriceCalculator extends Discount
 
     public function getPriceRange()
     {
-        $partner_price_range_for_service = $this->getMinMaxPartnerPrice();
+        $partner_price_range_for_service = $this->getMaxMinForService();
         $subscription_type = $this->getPreferredSubscriptionType();
         $min_subscription_quantity = $this->getMinSubscriptionQuantity($subscription_type);
         $discounted_subscription_price = $this->calculateServiceDiscount();
@@ -133,4 +143,13 @@ class ApproximatePriceCalculator extends Discount
             return array(0, 0);
         }
     }
+
+    public function getMaxMinForService()
+    {
+        $max_min = new MinMaxPrice();
+        $max = $max_min->setService($this->service)->setLocationService($this->locationService)->getMax();
+        $min = $max_min->setService($this->service)->setLocationService($this->locationService)->getMin();
+        return array($max, $min);
+    }
+
 }
