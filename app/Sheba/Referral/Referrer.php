@@ -10,14 +10,16 @@ abstract class Referrer
     /** @var HasReferrals */
     protected $referrer;
 
-    abstract function getReferrals(): Collection;
-
+    abstract function getReferrals(Request $request): Collection;
+    abstract function totalIncome(Request $request);
+    abstract function totalRefer();
+    abstract function details($id);
+    abstract function totalSuccessfulRefer();
     protected function init()
     {
 
         return $this->refers = $this->referrer->referrals();
     }
-
     abstract function store(Request $request);
 
 }

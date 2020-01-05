@@ -110,10 +110,10 @@ class PaymentLinkController extends Controller
                     'link'    => $payment_link_store->link,
                 ];
                 if ($request->user instanceof Partner) {
-                    (new Usage())->create([
-                        'partner_id' => $request->user->id,
-                        'type'       => Usage::Partner()::PAYMENT_LINK
-                    ], $request->user);
+                    /**
+                     * USAGE LOG
+                     */
+                    (new Usage())->setUser($request->user)->setType(Usage::Partner()::PAYMENT_LINK)->create($request->user);
                 }
                 return api_response($request, $payment_link, 200, ['payment_link' => $payment_link]);
             } else {

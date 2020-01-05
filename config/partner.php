@@ -38,9 +38,15 @@ return [
         [
             'step'             => '৫ম',
             'amount'           => 100,
-            'duration'         => 0,
+            'duration'         => 999999999999999999999999999,
             'nid_verification' => true,
             'details'          => 'আপনার বন্ধুকে sManager অ্যাপের মাধ্যমে NID ভেরিফিকেশন করতে হবে।'
-        ],
+        ]
+    ],
+    'refer_details_faq'=>[
+        'title'=>'আপনি দ্রুত রেফারের টাকা পেতে -',
+        'details'=>[
+            ''
+        ]
     ]
 ];
