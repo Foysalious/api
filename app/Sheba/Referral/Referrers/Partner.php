@@ -2,6 +2,7 @@
 
 use App\Models\PartnerReferral;
 use App\Models\Resource;
+use App\Repositories\SmsHandler;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Sheba\ModificationFields;
@@ -34,21 +35,42 @@ class Partner extends Referrer implements ReferrerInterface
      * @param Request $request
      * @throws AlreadyExistProfile
      * @throws AlreadyReferred
+     * @throws \Exception
      */
     function store(Request $request)
     {
         $mobile = formatMobile($request->mobile);
         if ($this->validateStore($mobile)) {
             $this->setModifier($this->referrer);
-            $this->referrer->referrals()->create($this->withCreateModificationField([
+            $ref=$this->referrer->referrals()->create($this->withCreateModificationField([
                 'company_name'    => $request->name,
                 'resource_name'   => $request->name,
                 'resource_mobile' => $mobile
             ]));
-            (new Sms())->shoot($mobile, "");
+            $this->sendSms($mobile);
+            $this->notify($ref);
         }
     }
 
+    /**
+     * @param $mobile
+     * @throws \Exception
+     */
+    private function sendSms($mobile){
+        $partner = $this->referrer->getContactPerson() ;
+        (new SmsHandler('partner-referral-create'))->send($mobile, [
+            'partner' => $partner
+        ]);
+    }
+    private function notify($ref){
+        notify()->department(7)->send([
+            'title' => 'New SP Referral Arrived from ' . $this->referrer->getContactNumber(),
+            'link' => env('SHEBA_BACKEND_URL') . '/partner-referrals/' . $ref->id,
+            'type' => notificationType('Info'),
+            'event_type' => "App\\Models\\" . class_basename($ref),
+            'event_id' => $ref->id
+        ]);
+    }
     /**
      * @param $mobile
      * @return bool
