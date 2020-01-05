@@ -105,7 +105,7 @@ class ExpenseController extends Controller
     {
         try {
             $this->validate($request, [
-                'amount' => 'required|string',
+                'amount' => 'required|numeric',
                 'remarks' => 'string',
                 'type' => 'string',
             ]);

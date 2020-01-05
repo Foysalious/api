@@ -95,8 +95,8 @@ class ExpenseRepo
             if (!$expense) return false;
 
             $expense->amount = $request->amount;
-            $expense->remarks = $request->remarks;
-            $expense->type = $request->type;
+            if ($request->remarks) $expense->remarks = $request->remarks;
+            if ($request->type) $expense->type = $request->type;
             $expense->save();
 
             if ($request['file']) {
