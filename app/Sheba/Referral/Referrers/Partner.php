@@ -12,6 +12,7 @@ use Sheba\Referral\Exceptions\ReferenceNotFound;
 use Sheba\Referral\HasReferrals;
 use Sheba\Referral\Referrer;
 use Sheba\Referral\ReferrerInterface;
+use Sheba\Sms\Sms;
 
 class Partner extends Referrer implements ReferrerInterface
 {
@@ -44,6 +45,7 @@ class Partner extends Referrer implements ReferrerInterface
                 'resource_name'   => $request->name,
                 'resource_mobile' => $mobile
             ]));
+            (new Sms())->shoot($mobile, "");
         }
     }
 
@@ -68,6 +70,7 @@ class Partner extends Referrer implements ReferrerInterface
 
     /**
      * @param $id
+     * @return array
      * @throws ReferenceNotFound
      */
     function details($id)
@@ -77,7 +80,7 @@ class Partner extends Referrer implements ReferrerInterface
             throw new ReferenceNotFound();
         $ref_data              = $this->generateDetails($ref);
         $last_use              = $ref->refer->usage()->get()->last();
-        $ref_data['last_used'] = !empty($last_use) ? $last_use->created_at->format('Y-m-d H:s:i'):null;
+        $ref_data['last_used'] = !empty($last_use) ? $last_use->created_at->format('Y-m-d H:s:i') : null;
         return $ref_data;
     }
 
@@ -149,11 +152,30 @@ class Partner extends Referrer implements ReferrerInterface
         ];
     }
 
-    function totalIncome(Request $request)
+    function totalRefer()
     {
-        if ($this->refers->isEmpty())
-            $this->refers = $this->getReferrals($request);
-        return round((double)$this->refers->sum('referrer_income'), 2);
+        $ref = $this->init()->selectRaw('count(*) as count')->first();
+        return $ref ? $ref->count : 0;
+    }
+
+    function totalSuccessfulRefer()
+    {
+        $ref = $this->referrer->referrals()->selectRaw('count(*) as count')->where('status', 'successful')->first();
+        return $ref ? $ref->count : 0;
+    }
+
+    public function home()
+    {
+        return [
+            'income' => $this->totalIncome(),
+            'link'=>config('sheba.front_url').'/rf/'.$this->referrer->refer_code
+        ];
+    }
+
+    function totalIncome()
+    {
+        $ref=$this->attachSelect($this->init())->get()->sum('referrer_income');
+        return round((double)$ref?:0, 2);
     }
 
     /**
@@ -190,17 +212,5 @@ class Partner extends Referrer implements ReferrerInterface
             $all_referred->push($this->generateDetails($refer));
         }
         return $all_referred;
-    }
-
-    function totalRefer()
-    {
-        $ref = $this->referrer->referrals()->selectRaw('count(*) as count')->first();
-        return $ref ? $ref->count : 0;
-    }
-
-    function totalSuccessfulRefer()
-    {
-        $ref = $this->referrer->referrals()->selectRaw('count(*) as count')->where('status', 'successful')->first();
-        return $ref ? $ref->count : 0;
     }
 }

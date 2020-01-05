@@ -13,10 +13,10 @@ class ReferralRoute
     public function individuals($api)
     {
         $api->group(['prefix' => 'referrals'], function ($api) {
+            $api->get('/home',"$this->namespace\\PartnerReferralController@home");
             $api->get('/', "$this->namespace\\PartnerReferralController@index");
             $api->post('/', "$this->namespace\\PartnerReferralController@store");
             $api->get('/{referral}',"$this->namespace\\PartnerReferralController@show");
-            $api->get('/tes', "$this->namespace\\PartnerReferralController@setReference");
         });
     }
 }

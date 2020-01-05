@@ -45,7 +45,17 @@ class PartnerReferralController extends Controller
 
     public function referLinkGenerate() { }
 
-    public function earnings() { }
+    public function home(Request $request, Referrals $referrals)
+    {
+        try {
+            $partner = $request->partner;
+            $ref     = $referrals::getReference($partner)->home();
+            return api_response($request, $ref, 200, ['data' => $ref]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 
     public function show(Request $request, $partner, $referral, Referrals $referrals)
     {

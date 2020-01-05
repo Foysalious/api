@@ -11,13 +11,15 @@ abstract class Referrer
     protected $referrer;
 
     abstract function getReferrals(Request $request): Collection;
-    abstract function totalIncome(Request $request);
+    abstract function totalIncome();
     abstract function totalRefer();
     abstract function details($id);
     abstract function totalSuccessfulRefer();
+
+    abstract public function home();
+
     protected function init()
     {
-
         return $this->refers = $this->referrer->referrals();
     }
     abstract function store(Request $request);
