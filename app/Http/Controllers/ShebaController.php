@@ -564,7 +564,7 @@ class ShebaController extends Controller
         ];
         if ($param) {
             if ($type === 'service') {
-                $service = Service::find($param->id);
+                $service = Service::find($param->sluggable_id);
                 $category = $service ? Category::find($service->category_id) : null;
                 $master = $category ? Category::find($category->parent_id) : null;
 
@@ -583,7 +583,7 @@ class ShebaController extends Controller
                 ]);
             }
             if ($type === 'secondary_category') {
-                $category = Category::find($param->id);
+                $category = Category::find($param->sluggable_id);
                 $master = $category ? Category::find($category->parent_id) : null;
 
 
@@ -598,7 +598,7 @@ class ShebaController extends Controller
                 ]);
             }
             if ($type === 'master_category') {
-                $master = Category::find($param->id);
+                $master = Category::find($param->sluggable_id);
 
                 if(!$master) return $items;
 
