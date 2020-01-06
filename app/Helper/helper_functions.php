@@ -764,6 +764,35 @@ if (!function_exists('emi_calculator')) {
         return round(((double)$amount * $rate * pow((1 + $rate), $duration)) / (pow((1 + $rate), $duration) - 1));
     }
 }
+if (!function_exists('getMonthsName')) {
+    /**
+     * Return months array.
+     *
+     * @param string $format
+     * @return array
+     */
+    function getMonthsName($format = "m")
+    {
+        if ($format == "m") {
+            return ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        } elseif ($format == "M") {
+            return ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        }
+    }
+}
+if (!function_exists('getMonthName')) {
+    /**
+     * Return months array.
+     *
+     * @param int $month_no
+     * @param string $format
+     * @return array
+     */
+    function getMonthName($month_no, $format = "m")
+    {
+        return getMonthsName($format)[$month_no - 1];
+    }
+}
 
 if (!function_exists('getMonthsName')) {
     /**
