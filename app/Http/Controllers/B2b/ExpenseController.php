@@ -34,17 +34,29 @@ class ExpenseController extends Controller
             list($offset, $limit) = calculatePagination($request);
             $business_member = $request->business_member;
             if (!$business_member) return api_response($request, null, 401);
-            $members = $request->business->members()->select('business_member.member_id')->get();
+
+            $members = $request->business->members()->get();
             if ($request->has('department_id')) {
                 $members = $members->filter(function ($member, $key) use ($request) {
-                    $member->businessMember->department ? ($member->businessMember->department->id === $request->department_id) : false;
+                    if($member->businessMember->role) {
+                        if($member->businessMember->department()) {
+                            return $member->businessMember->department()->id == $request->department_id;
+                        }
+                    } else {
+                        return false;
+                    }
                 });
             }
+
             if ($request->has('employee_id')) $members = $members->filter(function ($value, $key) use ($request) {
                 return $value->member_id == $request->employee_id;
             });
-            $members = $members->pluck('member_id')->toArray();
-            $expenses = Expense::whereIn('member_id', $members)->select('id', 'member_id', 'amount', 'status', 'remarks', 'type', 'created_at')->orderBy('id', 'desc');
+
+            $members = $members->pluck('id')->toArray();
+            $expenses = Expense::whereIn('member_id', $members)
+                ->select('id', 'member_id', 'amount', 'status', 'remarks', 'type', 'created_at')
+                ->orderBy('id', 'desc');
+
             $start_date = $request->has('start_date') ? $request->start_date : null;
             $end_date = $request->has('end_date') ? $request->end_date : null;
             if ($start_date && $end_date) {
@@ -62,6 +74,7 @@ class ExpenseController extends Controller
             if ($request->has('limit')) $expenses = $expenses->splice($offset, $limit);
             return api_response($request, $expenses, 200, ['expenses' => $expenses, 'total_expenses_count' => $totalExpenseCount, 'total_expenses_sum' => $totalExpenseSum]);
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
