@@ -49,7 +49,7 @@ class ExpenseController extends Controller
             }
 
             if ($request->has('employee_id')) $members = $members->filter(function ($value, $key) use ($request) {
-                return $value->member_id == $request->employee_id;
+                return $value->id == $request->employee_id;
             });
 
             $members = $members->pluck('id')->toArray();
@@ -74,7 +74,6 @@ class ExpenseController extends Controller
             if ($request->has('limit')) $expenses = $expenses->splice($offset, $limit);
             return api_response($request, $expenses, 200, ['expenses' => $expenses, 'total_expenses_count' => $totalExpenseCount, 'total_expenses_sum' => $totalExpenseSum]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
