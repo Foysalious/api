@@ -7,6 +7,7 @@ use App\Models\BusinessJoinRequest;
 use App\Models\Partner;
 use App\Models\PartnerAffiliation;
 use App\Models\PartnerBasicInformation;
+use App\Models\PartnerReferral;
 use App\Models\PartnerSubscriptionPackage;
 use App\Models\PartnerWalletSetting;
 use App\Models\Profile;
@@ -31,7 +32,6 @@ use Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
 use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Sms\Sms;
 use Sheba\Voucher\Creator\Referral;
-use DB;
 use Throwable;
 
 class PartnerRegistrationController extends Controller
