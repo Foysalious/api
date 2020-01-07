@@ -1,4 +1,4 @@
 <?php
 return [
-    'api_key' => "MTQ4NDoyR1BSMjRORTNS"
+    'api_key' => env('BARIKOI_API_KEY', 'MTU2MTpYWDVZT0tGQk5I')
 ];
