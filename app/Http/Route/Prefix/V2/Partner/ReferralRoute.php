@@ -6,7 +6,8 @@ class ReferralRoute
     public function globals($api)
     {
         $api->group(['prefix' => 'referrals'], function ($api) {
-
+            $api->get('faqs', "$this->namespace\\PartnerReferralController@getReferralFaqs");
+            $api->get('steps', "$this->namespace\\PartnerReferralController@getReferralSteps");
         });
     }
 
