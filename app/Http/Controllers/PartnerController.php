@@ -563,6 +563,20 @@ class PartnerController extends Controller
         }
     }
 
+    public function getNotification($partner,$notification, Request $request)
+    {
+        try {
+            list($offset, $limit) = calculatePagination($request);
+            $unseen_notifications = (new NotificationRepository())->getUnseenNotifications($request->partner,$notification,$offset, $limit);
+            $notification = (new NotificationRepository())->getManagerNotification($request->partner,$notification);
+            return api_response($request, $notification, 200, ['notification' => $notification,
+                'unseen_notifications' => $unseen_notifications]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     public function findPartners(Request $request, $location, PartnerListRequest $partnerListRequest)
     {
         try {
