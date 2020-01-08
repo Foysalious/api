@@ -1,6 +1,7 @@
 <?php namespace App\Repositories;
 
 use App\Models\Job;
+use App\Models\OfferShowcase;
 use App\Models\Order;
 use App\Models\Partner;
 use App\Models\PartnerOrder;
@@ -165,6 +166,8 @@ class NotificationRepository
                 $diff = strtotime(date('Y-m-d')) - strtotime($notification->created_at->format('Y-m-d'));
                 $days = (int)$diff/(60*60*24);
                 array_add($notification, 'day_before', $days);
+                $icon = $this->getNotificationIcon($notification->event_id,$notification->type);
+                array_add($notification, 'icon', $icon);
                 if ($notification->event_type == 'Job') {
                     if (!stristr($notification->title, 'cancel')) {
                         $job = Job::find($notification->event_id);
@@ -234,6 +237,16 @@ class NotificationRepository
                 'grade_text' => $gradeType
             ]);
         }
+    }
+
+    private function getNotificationIcon($event_id, $type)
+    {
+        $offer = OfferShowcase::query()->where('id', $event_id)->first();
+        if($offer) {
+            if ($offer->thumb != '') return $offer->thumb;
+            return config('constants.NOTIFICATION_ICONS.'.$type);
+        }
+        return config('constants.NOTIFICATION_ICONS.'.$type);
     }
 
 }

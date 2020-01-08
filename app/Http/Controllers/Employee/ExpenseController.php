@@ -1,6 +1,5 @@
 <?php namespace App\Http\Controllers\Employee;
 
-
 use App\Http\Controllers\Controller;
 use App\Models\Attachment;
 use App\Models\BusinessMember;
