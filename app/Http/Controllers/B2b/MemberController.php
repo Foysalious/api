@@ -134,9 +134,9 @@ class MemberController extends Controller
                 'remember_token' => $member->remember_token,
                 'is_super' => $member->businessMember ? $member->businessMember->is_super : null,
                 'access' => [
-                    'support' => $access_control->hasAccess('support.rw') ? 1 : 0,
-                    'expense' => $access_control->hasAccess('expense.rw') ? 1 : 0,
-                    'announcement' => $access_control->hasAccess('announcement.rw') ? 1 : 0
+                    'support' => $business ? ($business->id == 110 && $access_control->hasAccess('support.rw') ? 1 : 0) : 0,
+                    'expense' => $business ? ($business->id == 110 && $access_control->hasAccess('expense.rw') ? 1 : 0) : 0,
+                    'announcement' => $business ? ($business->id == 110 && $access_control->hasAccess('announcement.rw') ? 1 : 0) : 0
                 ]
             ];
             return api_response($request, $info, 200, ['info' => $info]);
