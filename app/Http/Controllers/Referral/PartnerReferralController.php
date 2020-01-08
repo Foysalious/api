@@ -142,7 +142,7 @@ class PartnerReferralController extends Controller
                 ->map(function($item) {
                     return [
                         'ধাপ' => $item['step'],
-                        'আপনার আয়' => $item['amount'],
+                        'আপনার আয়' => convertNumbersToBangla($item['amount'],true,0),
                         'কিভাবে করবেন' => $item['details']
                     ];
                 });
