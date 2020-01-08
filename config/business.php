@@ -26,6 +26,12 @@ return [
             'rw' => 'announcement_rw',
             'r' => 'announcement_r',
         ],
+        'support' => [
+            'rw' => 'support_rw',
+        ],
+        'expense' => [
+            'rw' => 'expense_rw',
+        ],
     ],
     'DRIVER_CONTRACT_TYPES' => ['permanent', 'temporary'],
     'VEHICLE_TYPES' => ['hatchback', 'sedan', 'suv', 'passenger_van', 'others'],
