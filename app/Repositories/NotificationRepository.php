@@ -1,6 +1,7 @@
 <?php namespace App\Repositories;
 
 use App\Models\Job;
+use App\Models\Notification;
 use App\Models\OfferShowcase;
 use App\Models\Order;
 use App\Models\Partner;
@@ -192,6 +193,53 @@ class NotificationRepository
             });
         }
         return $notifications;
+    }
+
+    /**
+     * @param $model
+     * @param $notification_id
+     * @return array
+     */
+    public function getManagerNotification($model, $notification_id){
+        $notification = Notification::query()->where('id',$notification_id)->first();
+        try{
+            $event = app($notification->event_type);
+            if ($event) {
+                $offer = $event::find($notification->event_id);
+                return [
+                    'banner'        => $offer->banner ? $offer->banner : 'dummy banner',
+                    'title'         => $notification->title ? $notification->title : 'dummy title',
+                    'type'          => $notification->type ? $notification->type : 'dummy type',
+                    'description'   => $offer->short_description ? $offer->short_description : 'dummy description',
+                    'button_text'   => $offer->button_text ? $offer->button_text : 'dummy button text',
+                    "target_link"   => $offer->target_link ? $offer->target_link : 'dummy target link',
+                    "target_type"   => $offer->target_type ? str_replace('App\Models\\', "", $offer->target_type) : 'dummy target type',
+                    "target_id"     => $offer->target_id ? $offer->target_id : 'dummy target id',
+                ];
+            }
+        }catch (\Throwable $e){
+            dd($e);
+        }
+    }
+
+    /**
+     * @param $model
+     * @param $notification_id
+     * @param $offset
+     * @param $limit
+     * @return array
+     */
+    public function getUnseenNotifications($model, $notification_id, $offset, $limit)
+    {
+        $unseen_notifications = $model->notifications()->where('is_seen','0')->select('id')->orderBy('id', 'desc')->skip($offset)->limit($limit)->get();
+        $index = 0;
+        if($unseen_notifications[0]->id == $notification_id) {
+            $index = 1;
+        }
+        return [
+            'next_notification' => $unseen_notifications[$index]->id,
+            'total_unseen'      => count($unseen_notifications),
+        ];
     }
 
     public function sendToCRM($cm_id, $title, $model)
