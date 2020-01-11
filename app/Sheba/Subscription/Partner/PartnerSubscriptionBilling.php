@@ -129,7 +129,9 @@ class PartnerSubscriptionBilling
 
     private function getSubscribedPackageDiscountedPrice()
     {
-        $original_price = $this->partner->subscription->originalPrice($this->partner->billing_type);
+        /** @var PartnerSubscriptionPackage $partner_subscription */
+        $partner_subscription = PartnerSubscriptionPackage::find($this->partner->package_id);
+        $original_price = $partner_subscription->originalPrice($this->partner->billing_type);
         $discount = $this->calculateSubscribedPackageDiscount($this->runningCycleNumber, $original_price);
         return $original_price - $discount;
     }
