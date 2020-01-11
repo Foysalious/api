@@ -22,7 +22,7 @@ class Route
                 $api->get('locations', 'Vendor\LocationController@index');
                 $api->group(['prefix' => 'topup'], function ($api) {
                     $api->post('/', 'Vendor\TopUpController@topUp');
-                    $api->get('', 'Vendor\TopUpController@history');
+                    $api->get('/', 'Vendor\TopUpController@history');
                     $api->get('{topup}', 'Vendor\TopUpController@historyDetails');
                 });
                 $api->get('balance', 'Vendor\ShebaController@getDetails');
