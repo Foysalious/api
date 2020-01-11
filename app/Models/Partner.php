@@ -774,6 +774,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     {
         $this->totalPriceRequiredForSubscription = $package->originalPrice($billingType) - (double)$package->discountPrice($billingType, $billingCycle);
         $this->totalCreditForSubscription = $this->getTotalCreditExistsForSubscription();
+
         return $this->totalCreditForSubscription >= $this->totalPriceRequiredForSubscription;
     }
 
