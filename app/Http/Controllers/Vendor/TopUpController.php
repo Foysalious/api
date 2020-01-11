@@ -32,6 +32,11 @@ class TopUpController extends Controller
                 'amount' => 'required|min:10|max:50000|numeric'
             ]);
             $agent = $request->vendor;
+            
+            $temporary_blocked_vendor_id = [1, 4, 5, 7];
+            if (in_array($agent->id, $temporary_blocked_vendor_id))
+                return api_response($request, null, 403, ['message' => "Temporary topup service down"]);
+
             $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->operator_id);
             if ($top_up_request->hasError()) return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
             $top_up_order = $creator->setTopUpRequest($top_up_request)->create();
