@@ -546,6 +546,11 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         }
     }
 
+    /**
+     * @param $affiliate
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function rechargeWallet($affiliate, Request $request)
     {
         try {
@@ -554,12 +559,14 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
                 'type'           => 'required|in:bkash',
             ]);
 
-            $affiliate   = $request->affiliate;
+            return api_response($request, null, 403, ['message' => 'Recharge system turned off']);
+
+            /*$affiliate   = $request->affiliate;
             $transaction = (new Registrar())->register($affiliate, $request->type, $request->transaction_id);
 
             $this->setModifier($affiliate);
             $this->recharge($affiliate, $transaction);
-            return api_response($request, null, 200, ['message' => "Moneybag refilled."]);
+            return api_response($request, null, 200, ['message' => "Moneybag refilled."]);*/
         } catch (InvalidTransaction $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 400, ['message' => $e->getMessage()]);
