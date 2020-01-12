@@ -1,5 +1,6 @@
 <?php
 return [
+    'AFFILIATE_VIDEO_LINK' => '',
     'STARTING_YEAR' => '2017',
     'HOTLINE' => '09639 - 444 000',
     'SERVICE_VARIABLE_TYPES' => [
