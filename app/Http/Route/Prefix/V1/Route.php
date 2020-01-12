@@ -9,7 +9,7 @@ class Route
         $api->group(['prefix' => 'v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
             (new EmployeeRoute())->set($api);
             (new PartnerRoute())->set($api);
-            $api->group(['prefix' => 'geo'], function ($api) {
+            $api->group(['prefix' => 'geo', 'middleware' => 'geo.auth'], function ($api) {
                 $api->get('geocode/reverse', 'GeocodeController@reverseGeocode');
             });
             $api->group(['prefix' => 'vendors', 'middleware' => ['vendor.auth']], function ($api) {
@@ -24,7 +24,7 @@ class Route
                 $api->get('locations', 'Vendor\LocationController@index');
                 $api->group(['prefix' => 'topup'], function ($api) {
                     $api->post('/', 'Vendor\TopUpController@topUp');
-                    $api->get('', 'Vendor\TopUpController@history');
+                    $api->get('/', 'Vendor\TopUpController@history');
                     $api->get('{topup}', 'Vendor\TopUpController@historyDetails');
                 });
                 $api->get('balance', 'Vendor\ShebaController@getDetails');
@@ -190,6 +190,8 @@ class Route
                 $api->get('reviews', 'PartnerController@getReviewInfo');
                 $api->get('info', 'PartnerController@getInfo');
                 $api->get('notifications', 'PartnerController@getNotifications');
+                $api->get('notifications/{notification}', 'PartnerController@getNotification');
+
                 $api->group(['prefix' => 'withdrawals'], function ($api) {
                     $api->get('/', 'PartnerWithdrawalRequestController@index');
                     $api->post('/', 'PartnerWithdrawalRequestController@store');

@@ -49,11 +49,14 @@ class StatusChanger
             $this->setError($this->jobStatusChanger->getErrorCode(), $this->jobStatusChanger->getErrorMessage());
             return;
         }
-
+        $this->jobStatusChanger->acceptJobAndAssignResource($request);
+        if ($this->jobStatusChanger->hasError()) {
+            $this->setError($this->jobStatusChanger->getErrorCode(), $this->jobStatusChanger->getErrorMessage());
+            return;
+        }
         DB::transaction(function () use ($request, $partner_order) {
             $this->repo->update($this->partnerOrderRequest, ['status' => Statuses::ACCEPTED]);
             $partner_order->update(['partner_id' => $request->partner->id]);
-            $this->jobStatusChanger->acceptJobAndAssignResource($request);
 
             $this->repo->updatePendingRequestsOfOrder($partner_order, [
                 'status' => Statuses::MISSED
@@ -66,7 +69,7 @@ class StatusChanger
         $this->repo->update($this->partnerOrderRequest, ['status' => Statuses::DECLINED]);
 
         if (!$this->repo->isAllRequestDeclinedOrNotResponded($this->partnerOrderRequest->partnerOrder)) return;
-
+        $request->merge(['job' => $this->partnerOrderRequest->partnerOrder->lastJob()]);
         $this->jobStatusChanger->decline($request);
         if ($this->jobStatusChanger->hasError()) {
             $this->setError($this->jobStatusChanger->getErrorCode(), $this->getErrorMessage());

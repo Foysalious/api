@@ -1,5 +1,6 @@
 <?php namespace Sheba\Business\ProcurementPaymentRequest;
 
+use App\Models\Partner;
 use Illuminate\Database\QueryException;
 use Sheba\Dal\ProcurementPaymentRequest\Model as ProcurementPaymentRequest;
 use Sheba\Business\ProcurementPayment\Creator as PaymentCreator;
@@ -7,13 +8,16 @@ use Sheba\Dal\ProcurementPaymentRequest\ProcurementPaymentRequestRepositoryInter
 use Sheba\Business\ProcurementPaymentRequestStatusChangeLog\Creator;
 use App\Models\Procurement;
 use App\Models\Bid;
+use Sheba\FraudDetection\TransactionSources;
 use Sheba\Notification\NotificationCreated;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class Updater
 {
     private $procurementPaymentRequestRepository;
     private $procurementRepository;
+    /** @var Procurement $procurement */
     private $procurement;
     private $bid;
     /** @var ProcurementPaymentRequest */
@@ -23,15 +27,26 @@ class Updater
     private $statusLogCreator;
     private $paymentCreator;
     private $data;
+    private $walletTransactionHandler;
 
-
-    public function __construct(ProcurementPaymentRequestRepositoryInterface $procurement_payment_request_repository, Creator $creator, PaymentCreator $payment_creator, ProcurementRepositoryInterface $procurement_repository)
+    /**
+     * Updater constructor.
+     * @param ProcurementPaymentRequestRepositoryInterface $procurement_payment_request_repository
+     * @param Creator $creator
+     * @param PaymentCreator $payment_creator
+     * @param ProcurementRepositoryInterface $procurement_repository
+     * @param WalletTransactionHandler $wallet_transaction_handler
+     */
+    public function __construct(ProcurementPaymentRequestRepositoryInterface $procurement_payment_request_repository,
+                                Creator $creator, PaymentCreator $payment_creator, ProcurementRepositoryInterface $procurement_repository,
+                                WalletTransactionHandler $wallet_transaction_handler)
     {
         $this->procurementPaymentRequestRepository = $procurement_payment_request_repository;
         $this->procurementRepository = $procurement_repository;
         $this->statusLogCreator = $creator;
         $this->paymentCreator = $payment_creator;
         $this->data = [];
+        $this->walletTransactionHandler = $wallet_transaction_handler;
     }
 
     public function setProcurement($procurement)
@@ -84,15 +99,26 @@ class Updater
             $this->statusLogCreator->setPaymentRequest($this->paymentRequest)->setPreviousStatus($previous_status)->setStatus($this->status)->create();
             if ($this->status == config('b2b.PROCUREMENT_PAYMENT_STATUS')['approved']) {
                 $amount = $this->paymentRequest->amount;
-                $this->paymentCreator->setPaymentType('Debit')->setPaymentMethod('cheque')->setProcurement($this->procurement)
-                    ->setAmount($amount)->create();
-                $this->procurement->getActiveBid()->bidder->minusWallet($amount, ['log' => 'Received money for RFQ Order #' . $this->procurement->id]);
+                $this->paymentCreator->setPaymentType('Debit')->setPaymentMethod('cheque')->setProcurement($this->procurement)->setAmount($amount)->create();
+
+                /** @var Partner $partner */
+                $partner = $this->procurement->getActiveBid()->bidder;
+                $partner->minusWallet($amount, ['log' => 'Received money for RFQ Order #' . $this->procurement->id]);
                 $this->procurementRepository->update($this->procurement, ['partner_collection' => $this->procurement->partner_collection + $amount]);
+
+                $this->procurement->calculate();
+                if ($this->procurement->status == 'served' && $this->procurement->due == 0) {
+                    $price = $this->procurement->totalPrice;
+                    $price_after_commission = $price - (($price * $partner->commission) / 100);
+                    if ($price_after_commission > 0)
+                        $this->walletTransactionHandler->setModel($partner)->setAmount($price_after_commission)->setSource(TransactionSources::SERVICE_PURCHASE)->setType('credit')->setLog("Credited for RFQ ID:" . $this->procurement->id)->dispatch();
+                }
             }
             $this->sendStatusChangeNotification();
         } catch (QueryException $e) {
             throw  $e;
         }
+
         return $payment_request;
     }
 

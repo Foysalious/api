@@ -22,4 +22,9 @@ class Address
         $this->address = $address;
         return $this;
     }
+
+    public function hasAddress()
+    {
+        return !empty($this->address);
+    }
 }

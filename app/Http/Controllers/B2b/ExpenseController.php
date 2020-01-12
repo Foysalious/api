@@ -1,116 +1,129 @@
 <?php namespace App\Http\Controllers\B2b;
 
-
 use App\Http\Controllers\Controller;
-use App\Models\Attachment;
-use App\Models\FuelLog;
+use App\Models\BusinessMember;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 use Sheba\Attachments\FilesAttachment;
-use Sheba\Business\Support\Creator;
 use Sheba\Dal\Expense\Expense;
-use Sheba\Dal\Support\SupportRepositoryInterface;
+use Sheba\Employee\ExpensePdf;
 use Sheba\ModificationFields;
-use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
 use Sheba\Employee\ExpenseRepo;
-use Illuminate\Support\Collection;
+use Throwable;
 
 class ExpenseController extends Controller
 {
-    /** @var SupportRepositoryInterface */
-    private $repo;
     private $expense_repo;
     use ModificationFields;
     use FilesAttachment;
 
-    public function __construct(SupportRepositoryInterface $repo, ExpenseRepo $expense_repo)
+    /**
+     * ExpenseController constructor.
+     * @param ExpenseRepo $expense_repo
+     */
+    public function __construct(ExpenseRepo $expense_repo)
     {
-        $this->repo = $repo;
         $this->expense_repo = $expense_repo;
     }
 
-    public function index(Request $request, MemberRepositoryInterface $member_repository)
+    public function index(Request $request)
     {
         try {
             $this->validate($request, [
-                'status' => 'string|in:open,closed',
-                'limit' => 'numeric',
-                'offset' => 'numeric',
-                'start_date' => 'string',
-                'end_date' => 'string',
+                'status' => 'string|in:open,closed', 'limit' => 'numeric', 'offset' => 'numeric', 'start_date' => 'string', 'end_date' => 'string',
             ]);
-
+            list($offset, $limit) = calculatePagination($request);
             $business_member = $request->business_member;
             if (!$business_member) return api_response($request, null, 401);
-            $members = $member_repository->where('id', $business_member['member_id'])->get();
-            $expenses = new Collection();
 
-            foreach($members as $member){
-                $member_expenses = $this->expense_repo->index($request, $member);
-                if($member_expenses) $expenses = $expenses->merge($member_expenses);
+            $members = $request->business->members()->get();
+            if ($request->has('department_id')) {
+                $members = $members->filter(function ($member, $key) use ($request) {
+                    if($member->businessMember->role) {
+                        if($member->businessMember->department()) {
+                            return $member->businessMember->department()->id == $request->department_id;
+                        }
+                    } else {
+                        return false;
+                    }
+                });
             }
 
-            return api_response($request, $expenses, 200, ['expenses' => $expenses]);
-        } catch (\Throwable $e) {
-            dd( $e->getMessage());
+            if ($request->has('employee_id')) $members = $members->filter(function ($value, $key) use ($request) {
+                return $value->id == $request->employee_id;
+            });
+
+            $members = $members->pluck('id')->toArray();
+            $expenses = Expense::whereIn('member_id', $members)
+                ->select('id', 'member_id', 'amount', 'status', 'remarks', 'type', 'created_at')
+                ->orderBy('id', 'desc');
+
+            $start_date = $request->has('start_date') ? $request->start_date : null;
+            $end_date = $request->has('end_date') ? $request->end_date : null;
+            if ($start_date && $end_date) {
+                $expenses->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
+            }
+            $expenses = $expenses->get();
+            foreach ($expenses as $expense) {
+                $expense['employee_name'] = $expense->member->profile->name;
+                $expense['employee_department'] = $expense->member->businessMember->department() ? $expense->member->businessMember->department()->name : null;
+                $expense['attachment'] = $this->expense_repo->getAttachments($expense, $request) ? $this->expense_repo->getAttachments($expense, $request) : null;
+                unset($expense->member);
+            }
+            $totalExpenseCount = $expenses->count();
+            $totalExpenseSum = $expenses->sum('amount');
+            if ($request->has('limit')) $expenses = $expenses->splice($offset, $limit);
+            return api_response($request, $expenses, 200, ['expenses' => $expenses, 'total_expenses_count' => $totalExpenseCount, 'total_expenses_sum' => $totalExpenseSum]);
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
-    public function show(Request $request, $expense)
+    public function show($business, $expense, Request $request)
     {
         try {
             $business_member = $request->business_member;
             if (!$business_member) return api_response($request, null, 401);
-
             $data = $this->expense_repo->show($request, $expense);
-
-            return $data ?
-                api_response($request, $expense, 200, $data)
-                : api_response($request, null, 404);
-        } catch (\Throwable $e) {
+            return $data ? api_response($request, $expense, 200, $data) : api_response($request, null, 404);
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
-    public function update(Request $request, $expense)
+    public function update($business, $expense, Request $request)
     {
         try {
             $this->validate($request, [
-                'amount' => 'required|string',
-                'remarks' => 'string',
-                'type' => 'string',
+                'amount' => 'required|numeric', 'remarks' => 'string', 'type' => 'string',
             ]);
-
             $business_member = $request->business_member;
             if (!$business_member) return api_response($request, null, 401);
-
-            $data = $this->expense_repo->update($request, $expense);
-
-            return $data ?
-                api_response($request, $expense, 200, $data)
-                : api_response($request, null, 404);
-        } catch (\Throwable $e) {
+            $data = $this->expense_repo->update($request, $expense, $business_member);
+            return $data ? api_response($request, $expense, 200, $data) : api_response($request, null, 404);
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
-    public function delete(Request $request, $expense)
+    public function delete($business, $expense, Request $request)
     {
         try {
             $business_member = $request->business_member;
             if (!$business_member) return api_response($request, null, 401);
-
             $data = $this->expense_repo->delete($request, $expense);
-            return $data ?
-                api_response($request, $expense, 200)
-                : api_response($request, null, 404);
-        } catch (\Throwable $e) {
+            return $data ? api_response($request, $expense, 200) : api_response($request, null, 404);
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function downloadPdf(Request $request, ExpensePdf $pdf)
+    {
+        $business_member = BusinessMember::where('business_id', $request->business_member->business_id)->where('member_id', $request->member_id)->first();
+        return $pdf->generate($business_member, $request->month, $request->year);
     }
 }

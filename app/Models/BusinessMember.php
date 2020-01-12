@@ -31,7 +31,7 @@ class BusinessMember extends Model
 
     public function department()
     {
-        return $this->role()->department;
+        return $this->role ? $this->role->businessDepartment : null;
     }
 
     public function isSuperAdmin()

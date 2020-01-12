@@ -6,8 +6,12 @@ use App\Models\HyperLocal;
 use App\Models\Location;
 use App\Models\LocationService;
 use App\Models\Service;
+use App\Transformers\Category\CategoryTransformer;
+use App\Transformers\Service\ServiceTransformer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Item;
 use Sheba\Checkout\DeliveryCharge;
 use Sheba\Dal\Discount\Discount;
 use Sheba\Dal\Discount\DiscountTypes;
@@ -20,25 +24,25 @@ use Sheba\LocationService\UpsellCalculation;
 class ServiceController extends Controller
 {
     /**
-     * @param $service
-     * @param Request $request
-     * @param PriceCalculation $price_calculation
-     * @param UpsellCalculation $upsell_calculation
-     * @param DeliveryCharge $delivery_charge
-     * @param JobDiscountHandler $job_discount_handler
-     * @return \Illuminate\Http\JsonResponse
-     * @throws \Sheba\Dal\Discount\InvalidDiscountType
      * @todo Code refactor
      */
-    public function show($service, Request $request, PriceCalculation $price_calculation, UpsellCalculation $upsell_calculation, DeliveryCharge $delivery_charge, JobDiscountHandler $job_discount_handler)
+    public function show($service, Request $request, ServiceTransformer $service_transformer, PriceCalculation $price_calculation, UpsellCalculation $upsell_calculation, DeliveryCharge $delivery_charge, JobDiscountHandler $job_discount_handler)
     {
         $this->validate($request, ['lat' => 'required|numeric', 'lng' => 'required|numeric']);
         $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
         if (!$hyperLocation) return api_response($request, null, 404);
+        /** @var Service $service */
+        $service = Service::find($service);
+        if (!$service) return api_response($request, null, 404);
         /** @var Location $location */
         $location = $hyperLocation->location;
-        /** @var Service $service */
-        $service = Service::select('id', 'category_id', 'name', 'thumb', 'banner', 'app_thumb', 'variable_type', 'variables')->where('id', $service)->first();
+        $location_service = LocationService::where('location_id', $location->id)->where('service_id', $service->id)->first();
+        $fractal = new Manager();
+        $service_transformer->setLocationService($location_service);
+        $resource = new Item($service, $service_transformer);
+        $data = $fractal->createData($resource)->toArray()['data'];
+        return api_response($request, $data, 200, ['service' => $data]);
+//        $service = Service::select('id', 'category_id', 'name', 'thumb', 'banner', 'app_thumb', 'variable_type', 'variables')->where('id', $service)->first();
         $location_service = LocationService::where('location_id', $location->id)->where('service_id', $service->id)->first();
         /** @var ServiceDiscount $discount */
         $discount = $location_service->discounts()->running()->first();

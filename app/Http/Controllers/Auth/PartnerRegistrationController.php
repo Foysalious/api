@@ -173,6 +173,8 @@ class PartnerRegistrationController extends Controller
         $partner = $this->store($resource, $data, $by, $partner);
         if ($partner) {
             $this->sms->shoot($resource->profile->mobile, "You have successfully completed your registration at Sheba.xyz. Please complete your profile to start serving orders.");
+            $partner->refer_code = $partner->referCode();
+            $partner->save();
         }
 
         app()->make(ActionRewardDispatcher::class)->run('partner_creation_bonus', $partner, $partner);

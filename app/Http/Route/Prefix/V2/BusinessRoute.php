@@ -5,6 +5,7 @@ class BusinessRoute
     public function set($api)
     {
         $api->post('business/login', 'B2b\LoginController@login');
+        $api->post('business/contact-us', 'B2b\BusinessesController@contactUs');
         $api->get('business/test-login', 'B2b\LoginController@generateDummyToken')->middleware('admin.auth');
         $api->get('business/test-push-notification', 'PushSubscriptionController@send');
         $api->post('business/register', 'B2b\RegistrationController@registerV2');
@@ -32,6 +33,7 @@ class BusinessRoute
                     $api->post('/', 'B2b\CoWorkerController@store');
                     $api->get('/', 'B2b\CoWorkerController@index');
                     $api->get('/{employee}', 'B2b\CoWorkerController@show');
+                    $api->get('/{employee}/expense/pdf', 'B2b\CoWorkerController@show');
                 });
                 $api->group(['prefix' => 'orders'], function ($api) {
                     $api->get('/', 'B2b\OrderController@index');
@@ -204,6 +206,7 @@ class BusinessRoute
                 });
                 $api->group(['prefix' => 'expense'], function ($api) {
                     $api->get('/', 'B2b\ExpenseController@index');
+                    $api->get('/download-pdf', 'B2b\ExpenseController@downloadPdf');
                     $api->group(['prefix' => '{expense}'], function ($api) {
                         $api->get('/', 'B2b\ExpenseController@show');
                         $api->post('/', 'B2b\ExpenseController@update');
