@@ -26,10 +26,7 @@ class PartnerPackage implements Package
         $this->upgradeCommission($this->package->commission);
     }
 
-    public function unsubscribe()
-    {
-
-    }
+    public function unsubscribe(){}
 
     public function upgradeCommission($commission)
     {
