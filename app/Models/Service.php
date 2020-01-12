@@ -5,6 +5,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Sheba\Dal\BlogPost\BlogPost;
+use Sheba\Dal\ComboService\ComboService;
 use Sheba\Dal\Gallery\Gallery;
 use Sheba\Dal\Partnership\Partnership;
 use Sheba\Dal\UniversalSlug\Model as UniversalSlugModel;
@@ -73,6 +74,11 @@ class Service extends Model
     public function jobs()
     {
         return $this->hasMany(Job::class);
+    }
+
+    public function comboServices()
+    {
+        return $this->hasMany(ComboService::class);
     }
 
     public function commission($partner_id)

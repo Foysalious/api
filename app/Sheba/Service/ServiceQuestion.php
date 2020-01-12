@@ -32,4 +32,18 @@ class ServiceQuestion
         }
         return $options;
     }
+
+    public function getQuestionForThisOption(array $option)
+    {
+        $variables = $this->get();
+        $questions = [];
+        foreach ($variables as $key => $variable) {
+            array_push($questions, [
+                'question' => $variable->question,
+                'answer' => $variable->answers[$option[$key]],
+                'contents' => $variable->contents[$option[$key]]
+            ]);
+        }
+        return $questions;
+    }
 }
