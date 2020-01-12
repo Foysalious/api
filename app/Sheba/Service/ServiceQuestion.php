@@ -1,4 +1,4 @@
-<?php namespace App\Sheba\Service;
+<?php namespace Sheba\Service;
 
 
 use App\Models\Service;

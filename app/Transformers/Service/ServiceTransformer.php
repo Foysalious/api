@@ -4,7 +4,7 @@
 use App\Models\Category;
 use App\Models\LocationService;
 use App\Models\Service;
-use App\Sheba\Service\ServiceQuestion;
+use Sheba\Service\ServiceQuestion;
 use League\Fractal\TransformerAbstract;
 use DB;
 use Sheba\Checkout\DeliveryCharge;
