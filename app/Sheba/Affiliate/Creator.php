@@ -21,6 +21,19 @@ class Creator
     /** @var WalletTransactionHandler $walletTransactionHandler */
     private $walletTransactionHandler;
 
+    private $geolocation;
+
+
+    /**
+     * @param $geolocation
+     * @return $this
+     */
+    public function setGeolocation($geolocation)
+    {
+        $this->geolocation = $geolocation;
+        return $this;
+    }
+
     public function __construct(AffiliateRepository $affiliate_repo, WalletTransactionHandler $wallet_transaction_handler)
     {
         $this->affiliateRepo            = $affiliate_repo;
@@ -39,9 +52,9 @@ class Creator
         $data = [
             'profile_id' => $this->profile->id,
             'remember_token' => randomString(255, 0, 1, 0),
-            'verification_status' => VerificationStatus::VERIFIED
+            'verification_status' => VerificationStatus::VERIFIED,
+            'geolocation' => $this->geolocation
         ];
-
         $this->affiliate = $this->affiliateRepo->setModel(new Affiliate())->create($data);
         $this->registrationBonus();
         (new NotificationRepository())->forAffiliateRegistration($this->affiliate);

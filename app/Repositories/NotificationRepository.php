@@ -163,10 +163,9 @@ class NotificationRepository
             $notifications = $notifications->map(function ($notification) {
                 $notification->event_type = str_replace('App\Models\\', "", $notification->event_type);
                 array_add($notification, 'time', $notification->created_at->format('j M \\a\\t h:i A'));
-
-                $diff = strtotime(date('Y-m-d')) - strtotime($notification->created_at->format('Y-m-d'));
-                $days = (int)$diff/(60*60*24);
-                array_add($notification, 'day_before', $days);
+//                $diff = strtotime(date('Y-m-d')) - strtotime($notification->created_at->format('Y-m-d'));
+//                $days = (int)$diff/(60*60*24);
+//                array_add($notification, 'day_before', $days);
                 $icon = $this->getNotificationIcon($notification->event_id,$notification->type);
                 array_add($notification, 'icon', $icon);
                 if ($notification->event_type == 'Job') {
@@ -218,7 +217,7 @@ class NotificationRepository
                 ];
             }
         }catch (\Throwable $e){
-            dd($e);
+            app('sentry')->captureException($e);
         }
     }
 
