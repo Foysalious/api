@@ -658,7 +658,7 @@ if (!function_exists('getCDNAssetsFolder')) {
      */
     function getCDNAssetsFolder()
     {
-        return config('s3.url') . 'partner_assets';
+        return config('s3.url');
     }
 }
 if (!function_exists('assetLink')) {

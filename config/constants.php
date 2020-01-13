@@ -458,11 +458,11 @@ return [
         'Danger'    => 'Danger',
         'Success'   => 'Success'
     ],
-    'NOTIFICATION_ICONS'=>[
-        'Info'      =>'info icon',
-        'Warning'   =>'warning icon',
-        'Danger'    =>'Danger icon',
-        'Success'   =>'success icon'
+    'NOTIFICATION_ICONS'=> [
+        'Info'      =>  'sheba_xyz/svg/notification/info.svg',
+        'Warning'   =>  'sheba_xyz/svg/notification/warning.svg',
+        'Danger'    =>  'sheba_xyz/svg/notification/danger.svg',
+        'Success'   =>  'sheba_xyz/svg/notification/success.svg'
     ],
     'SALES_CHANNELS' => [
         'Call-Center' => [
