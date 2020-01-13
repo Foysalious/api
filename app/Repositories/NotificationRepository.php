@@ -163,9 +163,10 @@ class NotificationRepository
             $notifications = $notifications->map(function ($notification) {
                 $notification->event_type = str_replace('App\Models\\', "", $notification->event_type);
                 array_add($notification, 'time', $notification->created_at->format('j M \\a\\t h:i A'));
-//                $diff = strtotime(date('Y-m-d')) - strtotime($notification->created_at->format('Y-m-d'));
-//                $days = (int)$diff/(60*60*24);
-//                array_add($notification, 'day_before', $days);
+                /* */
+                /*$diff = strtotime(date('Y-m-d')) - strtotime($notification->created_at->format('Y-m-d'));
+                $days = (int)$diff/(60*60*24);
+                array_add($notification, 'day_before', $days);*/
                 $icon = $this->getNotificationIcon($notification->event_id,$notification->type);
                 array_add($notification, 'icon', $icon);
                 if ($notification->event_type == 'Job') {
@@ -200,11 +201,11 @@ class NotificationRepository
      * @return array
      */
     public function getManagerNotification($notification_id){
-        $notification = Notification::find($notification_id);
-        $notification->timestamps = false;
-        $notification->is_seen = 1;
-        $notification->save();
         try{
+            $notification = Notification::find($notification_id);
+            $notification->timestamps = false;
+            $notification->is_seen = 1;
+            $notification->save();
             $event = app($notification->event_type);
             if ($event) {
                 $offer = $event::find($notification->event_id);
@@ -292,11 +293,9 @@ class NotificationRepository
     private function getNotificationIcon($event_id, $type)
     {
         $offer = OfferShowcase::query()->where('id', $event_id)->first();
-        if($offer) {
-            if ($offer->thumb != '') return $offer->thumb;
-            return config('constants.NOTIFICATION_ICONS.'.$type);
-        }
-        return config('constants.NOTIFICATION_ICONS.'.$type);
-    }
+        if ($offer && $offer->thumb != '')
+            return $offer->thumb;
 
+        return getCDNAssetsFolder() . config('constants.NOTIFICATION_ICONS.' . $type);
+    }
 }
