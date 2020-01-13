@@ -131,7 +131,6 @@ class OrderPlace
     public function setDeliveryAddressId($deliveryAddressId)
     {
         $this->deliveryAddressId = $deliveryAddressId;
-        $this->setDeliveryAddressFromId();
         return $this;
     }
 
@@ -329,7 +328,6 @@ class OrderPlace
 
     private function setDeliveryAddressFromId()
     {
-        if (!$this->deliveryAddressId) return;
         $this->deliveryAddress = $this->customer->delivery_addresses()->withTrashed()->where('id', $this->deliveryAddressId)->first();
         if ($this->deliveryAddress->mobile != $this->deliveryMobile) {
             $new_address = $this->deliveryAddress->replicate();
@@ -392,6 +390,7 @@ class OrderPlace
 
     private function resolveAddress()
     {
+        $this->setDeliveryAddressFromId();
         if ($this->deliveryAddressId) return;
         $address = new CustomerDeliveryAddress();
         $address->name = $this->address;
