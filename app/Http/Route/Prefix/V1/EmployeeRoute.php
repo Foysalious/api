@@ -1,6 +1,5 @@
 <?php namespace App\Http\Route\Prefix\V1;
 
-
 class EmployeeRoute
 {
     public function set($api)
@@ -35,6 +34,11 @@ class EmployeeRoute
                 $api->get('/', 'Employee\AnnouncementController@index');
                 $api->group(['prefix' => '{announcement}'], function ($api) {
                     $api->get('/', 'Employee\AnnouncementController@show');
+                });
+            });
+            $api->group(['prefix' => 'attendance'], function ($api) {
+                $api->group(['prefix' => '{report}'], function ($api) {
+                    $api->get('/', 'Employee\AttendanceReportController@index');
                 });
             });
         });
