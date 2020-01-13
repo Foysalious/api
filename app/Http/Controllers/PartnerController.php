@@ -567,11 +567,12 @@ class PartnerController extends Controller
     {
         try {
             list($offset, $limit) = calculatePagination($request);
+            $notification = (new NotificationRepository())->getManagerNotification($notification);
             $unseen_notifications = (new NotificationRepository())->getUnseenNotifications($request->partner,$notification,$offset, $limit);
-            $notification = (new NotificationRepository())->getManagerNotification($request->partner,$notification);
             return api_response($request, $notification, 200, ['notification' => $notification,
                 'unseen_notifications' => $unseen_notifications]);
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

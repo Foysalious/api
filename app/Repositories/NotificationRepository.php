@@ -199,8 +199,11 @@ class NotificationRepository
      * @param $notification_id
      * @return array
      */
-    public function getManagerNotification($model, $notification_id){
-        $notification = Notification::query()->where('id',$notification_id)->first();
+    public function getManagerNotification($notification_id){
+        $notification = Notification::find($notification_id);
+        $notification->timestamps = false;
+        $notification->is_seen = 1;
+        $notification->save();
         try{
             $event = app($notification->event_type);
             if ($event) {
