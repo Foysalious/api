@@ -2,6 +2,7 @@
 
 
 use App\Models\Category;
+use Carbon\Carbon;
 use League\Fractal\TransformerAbstract;
 use DB;
 
@@ -19,6 +20,7 @@ class CategoryTransformer extends TransformerAbstract
             'slug' => $category->getSlug(),
             'thumb' => $category->thumb,
             'app_thumb' => $category->app_thumb,
+            'is_trending' => $category->is_trending ? ['last_week_order_count' => $this->getLastWeekOrderCount($category)] : null,
             'service_title' => $category->service_title,
             'popular_service_description' => $category->popular_service_description,
             'other_service_description' => $category->other_service_description,
@@ -40,5 +42,17 @@ class CategoryTransformer extends TransformerAbstract
             'gallery' => count($galleries) > 0 ? $galleries : null,
             'blog' => count($blog_posts) > 0 ? $blog_posts : null,
         ];
+    }
+
+    private function getLastWeekOrderCount($category)
+    {
+        $now = Carbon::now();
+        $week_end_date = $now->format('Y-m-d');
+        $week_start_date = $now->subDays(7)->format('Y-m-d');
+        $jobs = $category->jobs();
+        if ($week_start_date && $week_end_date) {
+            $jobs->whereBetween('created_at', [$week_start_date . ' 00:00:00', $week_end_date . ' 23:59:59']);
+        }
+        return $jobs->count();
     }
 }
