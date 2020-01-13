@@ -108,7 +108,7 @@ class Creator
             'block_no' => $this->blockNo,
             'sector_no' => $this->sectorNo,
             'city' => $this->city,
-            'name' => $this->customer->profile->name,
+            'name' => $this->name ? $this->name : $this->customer->profile->name,
             'mobile' => $this->customer->profile->mobile,
             'geo_informations' => json_encode(['lat' => $this->geo->getLat(), 'lng' => $this->geo->getLng()]),
             'location_id' => $hyper_local->location_id
