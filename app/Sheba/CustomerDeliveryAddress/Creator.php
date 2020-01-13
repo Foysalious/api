@@ -20,10 +20,12 @@ class Creator
     private $customer;
     /** @var Geo */
     private $geo;
+    private $isSave;
 
     public function __construct(CustomerDeliveryAddressInterface $customer_delivery_address_repository)
     {
         $this->customerDeliveryAddressRepository = $customer_delivery_address_repository;
+        $this->isSave = 1;
     }
 
     public function setHouseNo($house_no)
@@ -80,10 +82,18 @@ class Creator
         return $this;
     }
 
+    public function setIsSave($is_save)
+    {
+        $this->isSave = $is_save;
+        return $this;
+    }
+
     public function create()
     {
         $this->makeData();
-        return $this->customerDeliveryAddressRepository->create($this->data);
+        $address = $this->customerDeliveryAddressRepository->create($this->data);
+        if (!$this->isSave) $address->delete();
+        return $address;
     }
 
     private function makeData()

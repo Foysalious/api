@@ -39,6 +39,7 @@ class CustomerAddressController extends Controller
             'city' => 'required|string',
             'lat' => 'required|numeric',
             'lng' => 'required|numeric',
+            'is_save' => 'numeric|in:0,1',
         ]);
         $address_text = $request->house_no . ',' . $request->road_no;
         if ($request->has('block_no')) $address_text .= ',' . $request->block_no;
@@ -49,7 +50,7 @@ class CustomerAddressController extends Controller
         if (!$geo) $geo = $geo_class->setLat($request->lat)->setLng($request->lng);
         $this->setModifier($request->customer);
         $address = $creator->setCustomer($request->customer)->setAddressText($address_text)->setHouseNo($request->house_no)->setRoadNo($request->road_no)->setBlockNo($request->block_no)
-            ->setSectorNo($request->sector_no)->setCity($request->city)->setGeo($geo)->setName($request->name)->create();
+            ->setSectorNo($request->sector_no)->setCity($request->city)->setGeo($geo)->setName($request->name)->setIsSave((int)$request->is_save)->create();
         return api_response($request, $address, 200, ['address' => [
             'id' => $address->id,
             'lat' => $geo->getLat(),
