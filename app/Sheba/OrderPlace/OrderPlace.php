@@ -27,6 +27,7 @@ use Sheba\Jobs\PreferredTime;
 use Sheba\Location\Geo;
 use Sheba\LocationService\DiscountCalculation;
 use Sheba\LocationService\PriceCalculation;
+use Sheba\LocationService\UpsellCalculation;
 use Sheba\ModificationFields;
 use Sheba\PartnerList\Director;
 use Sheba\PartnerList\PartnerListBuilder;
@@ -73,6 +74,8 @@ class OrderPlace
     private $location;
     /** @var PriceCalculation */
     private $priceCalculation;
+    /** @var UpsellCalculation */
+    private $upsellCalculation;
     /** @var DiscountCalculation */
     private $discountCalculation;
     /** @var OrderVoucherData */
@@ -96,21 +99,10 @@ class OrderPlace
     /** @var float */
     private $orderAmount;
 
-    /**
-     * OrderPlace constructor.
-     * @param Creator $creator
-     * @param PriceCalculation $priceCalculation
-     * @param DiscountCalculation $discountCalculation
-     * @param OrderVoucherData $orderVoucherData
-     * @param PartnerListBuilder $partnerListBuilder
-     * @param Director $director
-     * @param ServiceRequest $serviceRequest
-     * @param OrderRequestAlgorithm $orderRequestAlgorithm
-     * @param JobDiscountHandler $job_discount_handler
-     */
+
     public function __construct(Creator $creator, PriceCalculation $priceCalculation, DiscountCalculation $discountCalculation, OrderVoucherData $orderVoucherData,
                                 PartnerListBuilder $partnerListBuilder, Director $director, ServiceRequest $serviceRequest,
-                                OrderRequestAlgorithm $orderRequestAlgorithm, JobDiscountHandler $job_discount_handler)
+                                OrderRequestAlgorithm $orderRequestAlgorithm, JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation)
     {
         $this->priceCalculation = $priceCalculation;
         $this->discountCalculation = $discountCalculation;
@@ -121,6 +113,7 @@ class OrderPlace
         $this->partnerOrderRequestCreator = $creator;
         $this->orderRequestAlgorithm = $orderRequestAlgorithm;
         $this->jobDiscountHandler = $job_discount_handler;
+        $this->upsellCalculation = $upsell_calculation;
     }
 
 
@@ -437,8 +430,9 @@ class OrderPlace
             /** @var ServiceRequestObject $selected_service */
             $service = $selected_service->getService();
             $location_service = LocationService::where([['service_id', $service->id], ['location_id', $this->location->id]])->first();
-            $this->priceCalculation->setLocationService($location_service)->setOption($selected_service->getOption())->setQuantity($selected_service->getQuantity());
-            $unit_price = $this->priceCalculation->getUnitPrice();
+            $this->priceCalculation->setService($service)->setLocationService($location_service)->setOption($selected_service->getOption())->setQuantity($selected_service->getQuantity());
+            $upsell_unit_price = $this->upsellCalculation->setService($service)->setLocationService($location_service)->setOption($selected_service->getOption())->setQuantity($selected_service->getQuantity())->getUpsellUnitPriceForSpecificQuantity();
+            $unit_price = $upsell_unit_price ? $upsell_unit_price : $this->priceCalculation->getUnitPrice();
             $this->discountCalculation->setLocationService($location_service)->setOriginalPrice($unit_price * $selected_service->getQuantity())->calculate();
             $service_data = [
                 'service_id' => $service->id,

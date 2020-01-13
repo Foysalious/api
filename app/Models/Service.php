@@ -285,6 +285,11 @@ class Service extends Model
         return $this->belongsToMany(Location::class);
     }
 
+    public function locationServices()
+    {
+        return $this->hasMany(LocationService::class);
+    }
+
     public function getVariableAndOption(array $options)
     {
         if ($this->isOptions()) {

@@ -32,6 +32,8 @@ use Sheba\Location\Coords;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\LocationService\UpsellCalculation;
 use Sheba\ModificationFields;
+use Sheba\Service\MinMaxPrice;
+use Sheba\Subscription\ApproximatePriceCalculator;
 use Throwable;
 
 class CategoryController extends Controller
@@ -336,18 +338,9 @@ class CategoryController extends Controller
         }
     }
 
-    /**
-     * @param $category
-     * @param Request $request
-     * @param PriceCalculation $price_calculation
-     * @param DeliveryCharge $delivery_charge
-     * @param JobDiscountHandler $job_discount_handler
-     * @param UpsellCalculation $upsell_calculation
-     * @return JsonResponse
-     */
     public function getServices($category, Request $request,
                                 PriceCalculation $price_calculation, DeliveryCharge $delivery_charge,
-                                JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation)
+                                JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, MinMaxPrice $min_max_price, ApproximatePriceCalculator $approximate_price_calculator)
     {
         ini_set('memory_limit', '2048M');
         try {
@@ -392,14 +385,14 @@ class CategoryController extends Controller
                     }
                     $services = $this->serviceRepository->addServiceInfo($services, $scope);
                 } else {
-                    $category = $category->load(['services' => function ($q) use ($offset, $limit, $location) {
+                    $category->load(['services' => function ($q) use ($offset, $limit, $location) {
                         if (!(int)\request()->is_business) {
-                            $q->whereNotIn('id', $this->serviceGroupServiceIds())
-                                ->whereHas('locations', function ($query) use ($location) {
-                                    $query->where('locations.id', $location);
-                                });
+                            $q->whereNotIn('id', $this->serviceGroupServiceIds());
+
                         }
-                        $q->select(
+                        $q->whereHas('locations', function ($query) use ($location) {
+                            $query->where('locations.id', $location);
+                        })->select(
                             'id', 'category_id', 'unit', 'name', 'bn_name', 'thumb',
                             'app_thumb', 'app_banner', 'short_description', 'description',
                             'banner', 'faqs', 'variables', 'variable_type', 'min_quantity', 'options_content'
@@ -410,26 +403,13 @@ class CategoryController extends Controller
                         elseif ((int)\request()->is_b2b) $q->publishedForB2B();
                         else $q->published();
                     }]);
-
-                    $services = $this->serviceRepository->getPartnerServicesAndPartners($category->services, $location)->each(function ($service) use ($request) {
-                        $service->partners = $service->partners->filter(function (Partner $partner) use ($request) {
-                            return $partner->hasCoverageOn(new Coords((double)$request->lat, (double)$request->lng));
-                        });
-                        list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);
-                        removeRelationsAndFields($service);
-                    });
+                    $services = $category->services;
                 }
 
                 if ($location) {
-                    $services->load(['activeSubscription', 'locations' => function ($q) {
-                        $q->select('locations.id');
+                    $services->load(['activeSubscription', 'locationServices' => function ($q) use ($location) {
+                        $q->where('location_id', $location);
                     }]);
-
-                    $services = collect($services);
-                    $services = $services->filter(function ($service) use ($location) {
-                        $locations = $service->locations->pluck('id')->toArray();
-                        return in_array($location, $locations);
-                    });
                 }
 
                 if ($request->has('service_id')) {
@@ -439,16 +419,17 @@ class CategoryController extends Controller
                 }
 
                 $subscriptions = collect();
-                $services->each(function (&$service) use ($price_calculation, $location, $upsell_calculation) {
+
+                foreach ($services as $service) {
                     /** @var LocationService $location_service */
-                    $location_service = LocationService::where('location_id', $location)->where('service_id', $service->id)->first();
+                    $location_service = $service->locationServices->first();
 
                     /** @var ServiceDiscount $discount */
                     $discount = $location_service->discounts()->running()->first();
 
                     $prices = json_decode($location_service->prices);
-                    $price_calculation->setLocationService($location_service);
-                    $upsell_calculation->setLocationService($location_service);
+                    $price_calculation->setService($service)->setLocationService($location_service);
+                    $upsell_calculation->setService($service)->setLocationService($location_service);
 
                     if ($service->variable_type == 'Options') {
                         $service['option_prices'] = $this->formatOptionWithPrice($price_calculation, $prices, $upsell_calculation, $location_service);
@@ -462,14 +443,15 @@ class CategoryController extends Controller
                         'is_percentage' => $discount->isPercentage(),
                         'cap' => (double)$discount->cap
                     ] : null;
-                });
-
-                foreach ($services as $service) {
+                    $min_max_price->setService($service)->setLocationService($location_service);
+                    $service['max_price'] = $min_max_price->getMax();
+                    $service['min_price'] = $min_max_price->getMin();
                     /** @var ServiceSubscription $subscription */
                     if ($subscription = $service->activeSubscription) {
-                        list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);
-                        $subscription->min_price = $service->min_price;
-                        $subscription->max_price = $service->max_price;
+                        $price_range = $approximate_price_calculator->setLocationService($location_service)->setSubscription($subscription)->getPriceRange();
+                        $subscription = removeRelationsAndFields($subscription);
+                        $subscription['max_price'] = $price_range['max_price'] > 0 ? $price_range['max_price'] : 0;
+                        $subscription['min_price'] = $price_range['min_price'] > 0 ? $price_range['min_price'] : 0;
                         $subscription['thumb'] = $service['thumb'];
                         $subscription['banner'] = $service['banner'];
                         $subscription['offers'] = $subscription->getDiscountOffers();
@@ -610,6 +592,7 @@ class CategoryController extends Controller
             $service['questions'] = $questions;
             $service['faqs'] = json_decode($service->faqs);
             array_forget($service, 'variables');
+            array_forget($service, 'options_content');
         }
         return $services;
     }
