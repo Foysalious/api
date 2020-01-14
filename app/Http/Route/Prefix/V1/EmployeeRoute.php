@@ -36,7 +36,8 @@ class EmployeeRoute
                     $api->get('/', 'Employee\AnnouncementController@show');
                 });
             });
-            $api->group(['prefix' => 'attendance'], function ($api) {
+            $api->group(['prefix' => 'attendances'], function ($api) {
+                $api->post('action', 'Employee\AttendanceController@takeAction');
                 $api->group(['prefix' => '{report}'], function ($api) {
                     $api->get('/', 'Employee\AttendanceReportController@index');
                 });
