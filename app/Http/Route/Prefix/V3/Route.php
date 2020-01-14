@@ -12,6 +12,13 @@ class Route
             $api->get('sluggable-type/{slug}', 'ShebaController@getSluggableType');
             $api->post('redirect-url', 'ShebaController@redirectUrl');
             $api->post('breadcrumb', 'ShebaController@getBreadcrumb');
+
+            $api->group(['prefix' => 'schema'], function ($api) {
+                $api->get('/faq', 'SchemaController@getFaqSchema');
+                $api->get('/website', 'SchemaController@getWebsiteSchema');
+                $api->get('/organisation', 'SchemaController@getOrganisationSchema');
+            });
+
             $api->get('partners/send-order-requests', 'Partner\PartnerListController@getPartners');
             $api->group(['prefix' => 'rent-a-car'], function ($api) {
                 $api->get('prices', 'RentACar\RentACarController@getPrices');
