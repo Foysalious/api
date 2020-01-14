@@ -1,5 +1,9 @@
 <?php namespace App\Repositories;
 
+use App\Models\Job;
+use App\Models\Notification;
+use App\Models\OfferShowcase;
+use App\Models\Order;
 use App\Models\Partner;
 use App\Models\PartnerOrder;
 use App\Sheba\Subscription\Partner\PartnerSubscriptionChange;
@@ -139,20 +143,100 @@ class NotificationRepository
         ]);
     }
 
+    public function getManagerNotifications($model, $offset, $limit)
+    {
+        $notifications = $model->notifications()->select('id', 'title', 'event_type', 'event_id', 'type', 'is_seen', 'created_at')->orderBy('id', 'desc')->skip($offset)->limit($limit)->get();
+        if (count($notifications) > 0) {
+            $notifications = $notifications->map(function ($notification) {
+                $notification->event_type = str_replace('App\Models\\', "", $notification->event_type);
+                array_add($notification, 'time', $notification->created_at->format('j M \\a\\t h:i A'));
+                /* */
+                /*$diff = strtotime(date('Y-m-d')) - strtotime($notification->created_at->format('Y-m-d'));
+                $days = (int)$diff/(60*60*24);
+                array_add($notification, 'day_before', $days);*/
+                $icon = $this->getNotificationIcon($notification->event_id, $notification->type);
+                array_add($notification, 'icon', $icon);
+                if ($notification->event_type == 'Job') {
+                    if (!stristr($notification->title, 'cancel')) {
+                        $job                      = Job::find($notification->event_id);
+                        $notification->event_type = 'PartnerOrder';
+                        $notification->event_id   = $job->partner_order->id;
+                        $notification->event_code = $job->partner_order->code();
+                        $notification->status     = (($job->partner_order)->calculate(true))->status;
+                        array_add($notification, 'version', $job->partner_order->getVersion());
+                    } else {
+                        $notification->event_type = null;
+                        $notification->event_id   = null;
+                    }
+                } elseif ($notification->event_type == 'Order') {
+                    array_add($notification, 'event_code', (Order::find($notification->event_id))->code());
+                } elseif ($notification->event_type == 'PartnerOrder') {
+                    $partner_order = PartnerOrder::find($notification->event_id);
+                    array_add($notification, 'event_code', $partner_order->code());
+                    array_add($notification, 'version', $partner_order->getVersion());
+                    $notification->status = ((PartnerOrder::find($notification->event_id))->calculate(true))->status;
+                }
+                return $notification;
+            });
+        }
+        return $notifications;
+    }
+
+    private function getNotificationIcon($event_id, $type)
+    {
+        $offer = OfferShowcase::query()->where('id', $event_id)->first();
+        if ($offer && $offer->thumb != '')
+            return $offer->thumb;
+        return getCDNAssetsFolder() . config('constants.NOTIFICATION_ICONS.' . $type);
+    }
+
     /**
      * @param $model
      * @param $notification_id
      * @return array
      */
-    public function getUnseenNotifications($model, $notification_id)
+    public function getManagerNotification($notification_id)
     {
-        $unseen_notifications = $model->notifications()->where('is_seen', '0')->select('id')->orderBy('id', 'desc')->get();
+        try {
+            $notification             = Notification::find($notification_id);
+            $notification->timestamps = false;
+            $notification->is_seen    = 1;
+            $notification->save();
+            $event = app($notification->event_type);
+            if ($event) {
+                $offer = $event::find($notification->event_id);
+                return [
+                    'banner'      => $offer->banner ? $offer->banner : config('constants.NOTIFICATION_DEFAULTS.banner'),
+                    'title'       => $notification->title ? $notification->title : config('constants.NOTIFICATION_DEFAULTS.title'),
+                    'type'        => $notification->type ? $notification->type : config('constants.NOTIFICATION_DEFAULTS.type'),
+                    'description' => $offer->short_description ? $offer->short_description : config('constants.NOTIFICATION_DEFAULTS.short_description'),
+                    'button_text' => $offer->button_text ? $offer->button_text : config('constants.NOTIFICATION_DEFAULTS.button_text'),
+                    "target_link" => $offer->target_link ? $offer->target_link : config('constants.NOTIFICATION_DEFAULTS.target_link'),
+                    "target_type" => $offer->target_type ? str_replace('App\Models\\', "", $offer->target_type) : 'dummy target type',
+                    "target_id"   => $offer->target_id ? $offer->target_id : 'dummy target id',
+                ];
+            }
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+        }
+    }
+
+    /**
+     * @param $model
+     * @param $notification_id
+     * @param $offset
+     * @param $limit
+     * @return array
+     */
+    public function getUnseenNotifications($model, $notification_id, $offset, $limit)
+    {
+        $unseen_notifications = $model->notifications()->where('is_seen', '0')->select('id')->orderBy('id', 'desc')->skip($offset)->limit($limit)->get();
         $index                = 0;
-        if (!$unseen_notifications->isEmpty() && $unseen_notifications[0]->id == $notification_id) {
+        if ($unseen_notifications[0]->id == $notification_id) {
             $index = 1;
         }
         return [
-            'next_notification' => !$unseen_notifications->isEmpty() ? $unseen_notifications[$index]->id : null,
+            'next_notification' => $unseen_notifications[$index]->id,
             'total_unseen'      => count($unseen_notifications),
         ];
     }
@@ -201,7 +285,6 @@ class NotificationRepository
             "channel_id" => $channel
         ], $topic, $channel, $sound);
     }
-
 
     private function sendNotificationToCRM()
     {
