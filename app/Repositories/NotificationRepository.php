@@ -21,49 +21,27 @@ class NotificationRepository
         $this->order = $order;
         $this->send();
     }*/
-
     public function send($order)
     {
         $this->order = $order;
-        if (in_array($this->order->sales_channel, ['Web', 'App', 'App-iOS', 'E-Shop'])) {
-            $this->sender_id = $this->order->customer_id;
+        if (in_array($this->order->sales_channel, [
+            'Web',
+            'App',
+            'App-iOS',
+            'E-Shop'
+        ])) {
+            $this->sender_id   = $this->order->customer_id;
             $this->sender_type = 'customer';
 
             //$this->sendNotificationToBackEnd();
         } else {
-            $this->sender_id = $this->order->created_by;
+            $this->sender_id   = $this->order->created_by;
             $this->sender_type = 'user';
 
             //$this->sendNotificationToCRM(); //REMOVE
         }
-        if (!$this->order->jobs->first()->resource_id) $this->sendNotificationToPartner($this->order->partner_orders);
-    }
-
-    public function updateSeenBy($by, $notifications)
-    {
-        foreach ($notifications as $notification) {
-            $notification->timestamps = false;
-            $notification->is_seen = 1;
-            $notification->update();
-        }
-    }
-
-    private function sendNotificationToCRM()
-    {
-        notify()->user($this->order->jobs->first()->crm_id)->sender($this->sender_id, $this->sender_type)->send([
-            'title' => 'You have been assigned to a new order - ' . $this->order->code(),
-            'link' => env('SHEBA_BACKEND_URL') . '/order/' . $this->order->id,
-            'type' => notificationType('Info')
-        ]);
-    }
-
-    private function sendNotificationToBackEnd()
-    {
-        notify()->departments([5, 7])->sender($this->sender_id, $this->sender_type)->send([
-            'title' => 'New Order Placed From Front End - ' . $this->order->code(),
-            'link' => env('SHEBA_BACKEND_URL') . '/order/' . $this->order->id,
-            'type' => notificationType('Info')
-        ]);
+        if (!$this->order->jobs->first()->resource_id)
+            $this->sendNotificationToPartner($this->order->partner_orders);
     }
 
     private function sendNotificationToPartner($partner_orders)
@@ -71,36 +49,43 @@ class NotificationRepository
         foreach ($partner_orders as $partner_order) {
             $partner = Partner::find($partner_order->partner_id);
             notify()->partner($partner->id)->sender($this->sender_id, $this->sender_type)->send([
-                'title' => 'New Order Placed ID ' . $partner_order->code(),
-                'link' => env('SHEBA_PARTNER_END_URL') . '/' . $partner->sub_domain . '/order/' . $partner_order->id,
-                'type' => notificationType('Info'),
+                'title'      => 'New Order Placed ID ' . $partner_order->code(),
+                'link'       => env('SHEBA_PARTNER_END_URL') . '/' . $partner->sub_domain . '/order/' . $partner_order->id,
+                'type'       => notificationType('Info'),
                 'event_type' => "App\Models\PartnerOrder",
-                'event_id' => $partner_order->id,
+                'event_id'   => $partner_order->id,
                 //'version' => $partner_order->getVersion()
             ]);
-
-            $topic = config('sheba.push_notification_topic_name.manager') . $partner_order->partner_id;
+            $topic   = config('sheba.push_notification_topic_name.manager') . $partner_order->partner_id;
             $channel = config('sheba.push_notification_channel_name.manager');
-            $sound = config('sheba.push_notification_sound.manager');
-
+            $sound   = config('sheba.push_notification_sound.manager');
             (new PushNotificationHandler())->send([
-                "title" => 'New Order',
-                "message" => "প্রিয় $partner->name আপনার একটি নতুন অর্ডার রয়েছে " . $partner_order->code() . ", অনুগ্রহ করে ম্যানেজার অ্যাপ থেকে অর্ডারটি একসেপ্ট করুন",
+                "title"      => 'New Order',
+                "message"    => "প্রিয় $partner->name আপনার একটি নতুন অর্ডার রয়েছে " . $partner_order->code() . ", অনুগ্রহ করে ম্যানেজার অ্যাপ থেকে অর্ডারটি একসেপ্ট করুন",
                 "event_type" => 'PartnerOrder',
-                "event_id" => $partner_order->id,
-                "link" => "new_order",
-                "sound" => "notification_sound",
+                "event_id"   => $partner_order->id,
+                "link"       => "new_order",
+                "sound"      => "notification_sound",
                 "channel_id" => $channel
             ], $topic, $channel, $sound);
+        }
+    }
+
+    public function updateSeenBy($by, $notifications)
+    {
+        foreach ($notifications as $notification) {
+            $notification->timestamps = false;
+            $notification->is_seen    = 1;
+            $notification->update();
         }
     }
 
     public function forOnlinePayment($partner_order, $amount)
     {
         try {
-            $partner_order = ($partner_order instanceof PartnerOrder) ? $partner_order : PartnerOrder::find($partner_order);
-            $this->order = $partner_order->order;
-            $this->sender_id = $this->order->customer_id;
+            $partner_order     = ($partner_order instanceof PartnerOrder) ? $partner_order : PartnerOrder::find($partner_order);
+            $this->order       = $partner_order->order;
+            $this->sender_id   = $this->order->customer_id;
             $this->sender_type = 'customer';
             $this->_sendPaymentNotificationToCM($partner_order, $amount);
             return true;
@@ -113,18 +98,21 @@ class NotificationRepository
     {
         notify()->user($partner_order->jobs[0]->crm_id)->sender($this->sender_id, $this->sender_type)->send([
             'title' => 'An online payment of ' . $amount . ' has been completed to this order ' . $this->order->code(),
-            'link' => env('SHEBA_BACKEND_URL') . '/order/' . $this->order->id,
-            'type' => notificationType('Info')
+            'link'  => env('SHEBA_BACKEND_URL') . '/order/' . $this->order->id,
+            'type'  => notificationType('Info')
         ]);
     }
 
     public function forAffiliateRegistration($affiliate)
     {
         try {
-            notify()->departments([3, 8])->send([
+            notify()->departments([
+                3,
+                8
+            ])->send([
                 'title' => 'New Affiliate Registration from ' . $affiliate->profile->mobile,
-                'link' => env('SHEBA_BACKEND_URL') . '/affiliate/' . $affiliate->id,
-                'type' => notificationType('Info')
+                'link'  => env('SHEBA_BACKEND_URL') . '/affiliate/' . $affiliate->id,
+                'type'  => notificationType('Info')
             ]);
         } catch (\Throwable $e) {
             return null;
@@ -136,8 +124,8 @@ class NotificationRepository
         try {
             notify()->department(7)->send([
                 'title' => 'New Affiliation Arrived from ' . $affiliate->profile->mobile,
-                'link' => env('SHEBA_BACKEND_URL') . '/affiliation/' . $affiliation->id,
-                'type' => notificationType('Info')
+                'link'  => env('SHEBA_BACKEND_URL') . '/affiliation/' . $affiliation->id,
+                'type'  => notificationType('Info')
             ]);
         } catch (\Throwable $e) {
             return null;
@@ -147,18 +135,17 @@ class NotificationRepository
     public function forPartnerAffiliation($affiliate, $partner_affiliation)
     {
         notify()->department(7)->send([
-            'title' => 'New SP Referral Arrived from ' . $affiliate->profile->mobile,
-            'link' => env('SHEBA_BACKEND_URL') . '/partner-affiliation/' . $partner_affiliation->id,
-            'type' => notificationType('Info'),
+            'title'      => 'New SP Referral Arrived from ' . $affiliate->profile->mobile,
+            'link'       => env('SHEBA_BACKEND_URL') . '/partner-affiliation/' . $partner_affiliation->id,
+            'type'       => notificationType('Info'),
             'event_type' => "App\\Models\\" . class_basename($affiliate),
-            'event_id' => $partner_affiliation->id
+            'event_id'   => $partner_affiliation->id
         ]);
     }
 
     public function getManagerNotifications($model, $offset, $limit)
     {
         $notifications = $model->notifications()->select('id', 'title', 'event_type', 'event_id', 'type', 'is_seen', 'created_at')->orderBy('id', 'desc')->skip($offset)->limit($limit)->get();
-
         if (count($notifications) > 0) {
             $notifications = $notifications->map(function ($notification) {
                 $notification->event_type = str_replace('App\Models\\', "", $notification->event_type);
@@ -167,19 +154,19 @@ class NotificationRepository
                 /*$diff = strtotime(date('Y-m-d')) - strtotime($notification->created_at->format('Y-m-d'));
                 $days = (int)$diff/(60*60*24);
                 array_add($notification, 'day_before', $days);*/
-                $icon = $this->getNotificationIcon($notification->event_id,$notification->type);
+                $icon = $this->getNotificationIcon($notification->event_id, $notification->type);
                 array_add($notification, 'icon', $icon);
                 if ($notification->event_type == 'Job') {
                     if (!stristr($notification->title, 'cancel')) {
-                        $job = Job::find($notification->event_id);
+                        $job                      = Job::find($notification->event_id);
                         $notification->event_type = 'PartnerOrder';
-                        $notification->event_id = $job->partner_order->id;
+                        $notification->event_id   = $job->partner_order->id;
                         $notification->event_code = $job->partner_order->code();
-                        $notification->status = (($job->partner_order)->calculate(true))->status;
+                        $notification->status     = (($job->partner_order)->calculate(true))->status;
                         array_add($notification, 'version', $job->partner_order->getVersion());
                     } else {
                         $notification->event_type = null;
-                        $notification->event_id = null;
+                        $notification->event_id   = null;
                     }
                 } elseif ($notification->event_type == 'Order') {
                     array_add($notification, 'event_code', (Order::find($notification->event_id))->code());
@@ -195,32 +182,41 @@ class NotificationRepository
         return $notifications;
     }
 
+    private function getNotificationIcon($event_id, $type)
+    {
+        $offer = OfferShowcase::query()->where('id', $event_id)->first();
+        if ($offer && $offer->thumb != '')
+            return $offer->thumb;
+        return getCDNAssetsFolder() . config('constants.NOTIFICATION_ICONS.' . $type);
+    }
+
     /**
      * @param $model
      * @param $notification_id
      * @return array
      */
-    public function getManagerNotification($notification_id){
-        try{
-            $notification = Notification::find($notification_id);
+    public function getManagerNotification($notification_id)
+    {
+        try {
+            $notification             = Notification::find($notification_id);
             $notification->timestamps = false;
-            $notification->is_seen = 1;
+            $notification->is_seen    = 1;
             $notification->save();
             $event = app($notification->event_type);
             if ($event) {
                 $offer = $event::find($notification->event_id);
                 return [
-                    'banner'        => $offer->banner ? $offer->banner : 'dummy banner',
-                    'title'         => $notification->title ? $notification->title : 'dummy title',
-                    'type'          => $notification->type ? $notification->type : 'dummy type',
-                    'description'   => $offer->short_description ? $offer->short_description : 'dummy description',
-                    'button_text'   => $offer->button_text ? $offer->button_text : 'dummy button text',
-                    "target_link"   => $offer->target_link ? $offer->target_link : 'dummy target link',
-                    "target_type"   => $offer->target_type ? str_replace('App\Models\\', "", $offer->target_type) : 'dummy target type',
-                    "target_id"     => $offer->target_id ? $offer->target_id : 'dummy target id',
+                    'banner'      => $offer->banner ? $offer->banner : config('constants.NOTIFICATION_DEFAULTS.banner'),
+                    'title'       => $notification->title ? $notification->title : config('constants.NOTIFICATION_DEFAULTS.title'),
+                    'type'        => $notification->type ? $notification->type : config('constants.NOTIFICATION_DEFAULTS.type'),
+                    'description' => $offer->short_description ? $offer->short_description : config('constants.NOTIFICATION_DEFAULTS.short_description'),
+                    'button_text' => $offer->button_text ? $offer->button_text : config('constants.NOTIFICATION_DEFAULTS.button_text'),
+                    "target_link" => $offer->target_link ? $offer->target_link : config('constants.NOTIFICATION_DEFAULTS.target_link'),
+                    "target_type" => $offer->target_type ? str_replace('App\Models\\', "", $offer->target_type) : 'dummy target type',
+                    "target_id"   => $offer->target_id ? $offer->target_id : 'dummy target id',
                 ];
             }
-        }catch (\Throwable $e){
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
         }
     }
@@ -234,9 +230,9 @@ class NotificationRepository
      */
     public function getUnseenNotifications($model, $notification_id, $offset, $limit)
     {
-        $unseen_notifications = $model->notifications()->where('is_seen','0')->select('id')->orderBy('id', 'desc')->skip($offset)->limit($limit)->get();
-        $index = 0;
-        if($unseen_notifications[0]->id == $notification_id) {
+        $unseen_notifications = $model->notifications()->where('is_seen', '0')->select('id')->orderBy('id', 'desc')->skip($offset)->limit($limit)->get();
+        $index                = 0;
+        if ($unseen_notifications[0]->id == $notification_id) {
             $index = 1;
         }
         return [
@@ -250,52 +246,64 @@ class NotificationRepository
         try {
             notify()->user($cm_id)->send([
                 'title' => $title,
-                'link' => env('SHEBA_BACKEND_URL') . '/' . strtolower(class_basename($model)) . '/' . $model->id,
-                'type' => notificationType('Info')
+                'link'  => env('SHEBA_BACKEND_URL') . '/' . strtolower(class_basename($model)) . '/' . $model->id,
+                'type'  => notificationType('Info')
             ]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
         }
     }
 
-    public function sendSubscriptionNotification($title, $message, Partner $partner)
-    {
-        $topic = config('sheba.push_notification_topic_name.manager') . $partner->id;
-        $channel = config('sheba.push_notification_channel_name.manager');
-        $sound = config('sheba.push_notification_sound.manager');
-        (new PushNotificationHandler())->send([
-            'title' => $title,
-            'message' => $message,
-            'event_type' => 'Subscription',
-            'event_id' => $partner->id,
-            'link' => $partner->subscription ? $partner->subscription->name : 'LITE',
-            "sound" => "notification_sound",
-            "channel_id" => $channel
-        ], $topic, $channel, $sound);
-    }
-
     public function sendInsufficientNotification(Partner $partner, $package, $package_type, $grade, $withMessage = true)
     {
-        $title = ' অপর্যাপ্ত  ব্যলেন্স';
-        $type = BillingType::BN()[$package_type];
+        $title     = ' অপর্যাপ্ত  ব্যলেন্স';
+        $type      = BillingType::BN()[$package_type];
         $gradeType = $grade == PartnerSubscriptionChange::UPGRADE ? " এর" : $grade == PartnerSubscriptionChange::RENEWED ? " নাবায়ন এর" : " এর";
-        $message = "এসম্যানেজার এর $type $package->show_name_bn প্যকেজ এ সাবস্ক্রিপশন $gradeType  জন্য আপনার ওয়ালেট এ  পর্যাপ্ত  ব্যলেন্স নেই আনুগ্রহ করে ওয়ালেট রিচার্জ করুন এবং সাবস্ক্রিপশন সক্রিয় করুন।";
+        $message   = "এসম্যানেজার এর $type $package->show_name_bn প্যকেজ এ সাবস্ক্রিপশন $gradeType  জন্য আপনার ওয়ালেট এ  পর্যাপ্ত  ব্যলেন্স নেই আনুগ্রহ করে ওয়ালেট রিচার্জ করুন এবং সাবস্ক্রিপশন সক্রিয় করুন।";
         $this->sendSubscriptionNotification($title, $message, $partner);
         if ($withMessage) {
             (new SmsHandler('insufficient-balance-subscription'))->send($partner->getContactNumber(), [
                 'package_type_bn' => $type,
-                'package_name' => $package->show_name_bn,
-                'grade_text' => $gradeType
+                'package_name'    => $package->show_name_bn,
+                'grade_text'      => $gradeType
             ]);
         }
     }
 
-    private function getNotificationIcon($event_id, $type)
+    public function sendSubscriptionNotification($title, $message, Partner $partner)
     {
-        $offer = OfferShowcase::query()->where('id', $event_id)->first();
-        if ($offer && $offer->thumb != '')
-        return $offer->thumb;
+        $topic   = config('sheba.push_notification_topic_name.manager') . $partner->id;
+        $channel = config('sheba.push_notification_channel_name.manager');
+        $sound   = config('sheba.push_notification_sound.manager');
+        (new PushNotificationHandler())->send([
+            'title'      => $title,
+            'message'    => $message,
+            'event_type' => 'Subscription',
+            'event_id'   => $partner->id,
+            'link'       => $partner->subscription ? $partner->subscription->name : 'LITE',
+            "sound"      => "notification_sound",
+            "channel_id" => $channel
+        ], $topic, $channel, $sound);
+    }
 
-        return getCDNAssetsFolder() . config('constants.NOTIFICATION_ICONS.' . $type);
+    private function sendNotificationToCRM()
+    {
+        notify()->user($this->order->jobs->first()->crm_id)->sender($this->sender_id, $this->sender_type)->send([
+            'title' => 'You have been assigned to a new order - ' . $this->order->code(),
+            'link'  => env('SHEBA_BACKEND_URL') . '/order/' . $this->order->id,
+            'type'  => notificationType('Info')
+        ]);
+    }
+
+    private function sendNotificationToBackEnd()
+    {
+        notify()->departments([
+            5,
+            7
+        ])->sender($this->sender_id, $this->sender_type)->send([
+            'title' => 'New Order Placed From Front End - ' . $this->order->code(),
+            'link'  => env('SHEBA_BACKEND_URL') . '/order/' . $this->order->id,
+            'type'  => notificationType('Info')
+        ]);
     }
 }
