@@ -37,10 +37,8 @@ class EmployeeRoute
                 });
             });
             $api->group(['prefix' => 'attendances'], function ($api) {
+                $api->get('/', 'Employee\AttendanceController@index');
                 $api->post('action', 'Employee\AttendanceController@takeAction');
-                $api->group(['prefix' => '{report}'], function ($api) {
-                    $api->get('/', 'Employee\AttendanceReportController@index');
-                });
             });
         });
     }
