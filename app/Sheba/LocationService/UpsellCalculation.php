@@ -65,10 +65,11 @@ class UpsellCalculation
     {
         $service = $this->getService();
         $upsell_prices = $service->isFixed() ? $this->getFixedServiceUpsell() : $this->getOptionServiceUpsell();
+        if (!$upsell_prices) return null;
         foreach ($upsell_prices as $upsell_price) {
             if ($this->quantity >= $upsell_price['min'] && $this->quantity <= $upsell_price['max']) return $upsell_price['price'];
         }
-        return null;
+
     }
 
     private function getFixedServiceUpsell()
