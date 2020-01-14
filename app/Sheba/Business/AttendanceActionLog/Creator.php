@@ -71,7 +71,7 @@ class Creator
 
     public function create()
     {
-        $this->attendanceActionLogRepository->create([
+        return $this->attendanceActionLogRepository->create([
             'attendance_id' => $this->attendance->id,
             'action' => $this->action
         ]);

@@ -51,7 +51,8 @@ class AttendanceAction
         if (!$this->canTakeThisAction()) return null;
         DB::transaction(function () {
             if (!$this->attendance) $this->createAttendance();
-            $this->attendanceActionLogCreator->setAction($this->action)->setAttendance($this->attendance)->create();
+            $attendance_action_log = $this->attendanceActionLogCreator->setAction($this->action)->setAttendance($this->attendance)->create();
+            $this->updateAttendance($attendance_action_log);
         });
         return true;
     }
@@ -65,8 +66,8 @@ class AttendanceAction
 
     public function canTakeThisAction()
     {
-        if ($this->attendance) return $this->action == Actions::CHECK_IN ? 0 : 1;
-        return $this->action == Actions::CHECK_IN ? 1 : 0;
+        if ($this->attendance) return $this->action == Actions::CHECKIN ? 0 : 1;
+        return $this->action == Actions::CHECKIN ? 1 : 0;
     }
 
     private function createAttendance()
@@ -78,7 +79,7 @@ class AttendanceAction
     private function updateAttendance(AttendanceActionLog $model)
     {
         $this->attendance->status = $model->status;
-        if ($this->action == Actions::CHECK_OUT) $this->attendance->checkout_time = $model->created_at->format('H:i:s');
+        if ($this->action == Actions::CHECKOUT) $this->attendance->checkout_time = $model->created_at->format('H:i:s');
         $this->attendance->update();
     }
 
