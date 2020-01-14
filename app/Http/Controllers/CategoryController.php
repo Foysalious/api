@@ -395,7 +395,7 @@ class CategoryController extends Controller
                         })->select(
                             'id', 'category_id', 'unit', 'name', 'bn_name', 'thumb',
                             'app_thumb', 'app_banner', 'short_description', 'description',
-                            'banner', 'faqs', 'variables', 'variable_type', 'min_quantity', 'options_content'
+                            'banner', 'faqs', 'variables', 'variable_type', 'min_quantity', 'options_content', 'terms_and_conditions', 'features'
                         )->orderBy('order')->skip($offset)->take($limit);
 
                         if ((int)\request()->is_business) $q->publishedForBusiness();
@@ -446,6 +446,9 @@ class CategoryController extends Controller
                     $min_max_price->setService($service)->setLocationService($location_service);
                     $service['max_price'] = $min_max_price->getMax();
                     $service['min_price'] = $min_max_price->getMin();
+                    $service['terms_and_conditions'] = $service->terms_and_conditions ? json_decode($service->terms_and_conditions) : null;
+                    $service['features'] = $service->features ? json_decode($service->features) : null;
+
                     /** @var ServiceSubscription $subscription */
                     if ($subscription = $service->activeSubscription) {
                         $price_range = $approximate_price_calculator->setLocationService($location_service)->setSubscription($subscription)->getPriceRange();

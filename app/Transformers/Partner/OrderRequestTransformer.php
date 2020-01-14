@@ -23,6 +23,7 @@ class OrderRequestTransformer extends TransformerAbstract
         return [
             'id'                    => $request->id,
             'job_id'                => $job->id,
+            'code'                  => $order->code(),
             'partner_order_id'      => $request->partner_order_id,
             'service_name'          => [
                 'bn' => $category->bn_name ?: null,
