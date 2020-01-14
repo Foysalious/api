@@ -172,7 +172,15 @@ class LocationController extends Controller
             });
             $models = $models->get();
             if ($model_name == 'Category') {
-                $models = $models->load('children.locations', 'services.locations');
+                $models = $models->load(['children' => function ($q) use ($location) {
+                    $q->whereHas('locations', function ($q) use ($location) {
+                        $q->where('locations.id', $location->id);
+                    });
+                }, 'services' => function ($q) use ($location) {
+                    $q->whereHas('locations', function ($q) use ($location) {
+                        $q->where('locations.id', $location->id);
+                    });
+                }]);
                 $models = $models->filter(function ($category) use ($location) {
                     $children = $category->isParent() ? $category->children : $category->services;
                     foreach ($children as $child) {
