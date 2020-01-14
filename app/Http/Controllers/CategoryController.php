@@ -446,8 +446,8 @@ class CategoryController extends Controller
                     $min_max_price->setService($service)->setLocationService($location_service);
                     $service['max_price'] = $min_max_price->getMax();
                     $service['min_price'] = $min_max_price->getMin();
-                    $service['terms_and_conditions'] = $service->terms_and_conditions ? json_decode($service->terms_and_conditions) : null;
-                    $service['features'] = $service->features ? json_decode($service->features) : null;
+                    // $service['terms_and_conditions'] = $service->terms_and_conditions ? json_decode($service->terms_and_conditions) : null;
+                    // $service['features'] = $service->features ? json_decode($service->features) : null;
 
                     /** @var ServiceSubscription $subscription */
                     if ($subscription = $service->activeSubscription) {
