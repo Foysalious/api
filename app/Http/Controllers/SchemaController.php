@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -33,6 +34,54 @@ class SchemaController extends Controller
                 "mainEntity" => $lists
             ]);
             return api_response($request, true, 200, ['faq_list' => $faq_lists]);
+        } catch (ValidationException $e) {
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all()]);
+            $sentry->captureException($e);
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getReviewSchema(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'type_id' => 'required|integer',
+            ]);
+            $category = Category::find((int)$request->type_id);
+            $reviews = $category->reviews()->select('id', 'review_title', 'review', 'rating', 'category_id', 'created_by_name', 'created_at')->limit(5);
+            $review_lists = [];
+            $lists = [];
+            foreach ($reviews->get() as $review) {
+                array_push($lists, [
+                    "@type" => "Review",
+                    "author" => $review->created_by_name,
+                    "datePublished" => $review->created_at->format('Y-m-d'),
+                    "description" => $review->review,
+                    "name" => $review->review_title,
+                    "reviewRating" => [
+                        "@type" => "Rating",
+                        "ratingValue" => $review->rating
+                    ]
+                ]);
+            }
+            array_push($review_lists, [
+                "@context" => "http://schema.org",
+                "@type" => "LocalBusiness",
+                "name" => $category->name,
+                "image" => $category->thumb,
+                "aggregateRating" => [
+                    "@type" => "AggregateRating",
+                    "ratingValue" => $reviews->avg('rating'),
+                    "reviewCount" => $reviews->count()
+                ],
+                "review"=> $lists
+            ]);
+            return api_response($request, true, 200, ['review_lists' => $review_lists]);
         } catch (ValidationException $e) {
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all()]);

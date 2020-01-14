@@ -17,6 +17,7 @@ class Route
                 $api->get('/faq', 'SchemaController@getFaqSchema');
                 $api->get('/website', 'SchemaController@getWebsiteSchema');
                 $api->get('/organisation', 'SchemaController@getOrganisationSchema');
+                $api->get('/review', 'SchemaController@getReviewSchema');
             });
 
             $api->get('partners/send-order-requests', 'Partner\PartnerListController@getPartners');
