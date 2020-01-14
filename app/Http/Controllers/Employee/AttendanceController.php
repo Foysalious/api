@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\BusinessMember;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Sheba\Business\AttendanceActionLog\AttendanceAction;
 use Sheba\Dal\Attendance\EloquentImplementation;
@@ -49,11 +50,15 @@ class AttendanceController extends Controller
             $business_member = $business_member_repo->find($business_member_info['id']);
 
             $time_frame = $time_frame->forAMonth($month, $year);
+            $time_frame->end = $this->isShowRunningMonthsAttendance($year, $month) ? Carbon::now() : $time_frame->end;
             $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
+
+            $business_holiday = $business_holiday_repo->getAll();
+            $business_weekend = $business_weekend_repo->getAll();
 
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($attendances, new AttendanceTransformer($time_frame));
+            $resource = new Item($attendances, new AttendanceTransformer($time_frame, $business_holiday, $business_weekend));
             $attendances_data = $manager->createData($resource)->toArray()['data'];
 
             return api_response($request, null, 200, ['attendance' => $attendances_data]);
@@ -82,5 +87,15 @@ class AttendanceController extends Controller
         $action = $attendance_action->doAction();
         if ($action) return api_response($request, $action, 200);
         return api_response($request, null, 500);
+    }
+
+    /**
+     * @param $month
+     * @param $year
+     * @return bool
+     */
+    private function isShowRunningMonthsAttendance($year, $month)
+    {
+        return (Carbon::now()->month == (int)$month && Carbon::now()->year == (int)$year);
     }
 }
