@@ -15,7 +15,7 @@ class SchemaController extends Controller
             ]);
             $model = "App\\Models\\" . ucfirst(camel_case($request->type));
             $model = $model::find((int)$request->type_id);
-            $faqs = json_decode($model->faqs, true);
+            $faqs = json_decode($model->faqs, true) ? :[];
             $faq_lists = [];
             $lists = [];
             foreach ($faqs as $key => $faq) {
@@ -53,7 +53,7 @@ class SchemaController extends Controller
                 'type_id' => 'required|integer',
             ]);
             $category = Category::find((int)$request->type_id);
-            $reviews = $category->reviews()->select('id', 'review_title', 'review', 'rating', 'category_id', 'created_by_name', 'created_at')->limit(5);
+            $reviews = $category->reviews()->select('id', 'review_title', 'review', 'rating', 'category_id', 'created_by_name', 'created_at');
             $review_lists = [];
             $lists = [];
             foreach ($reviews->get() as $review) {
@@ -185,4 +185,26 @@ class SchemaController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function getCategorySchema(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'type_id' => 'required|integer',
+            ]);
+            $category = Category::find((int)$request->type_id);
+            $category_lists = [];
+            return api_response($request, true, 200, ['category_lists' => $category_lists]);
+        } catch (ValidationException $e) {
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all()]);
+            $sentry->captureException($e);
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
 }
