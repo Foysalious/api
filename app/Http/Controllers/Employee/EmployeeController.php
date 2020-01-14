@@ -2,6 +2,9 @@
 
 
 use App\Http\Controllers\Controller;
+use App\Models\BusinessMember;
+use Sheba\Dal\Attendance\Model as Attendance;
+use Sheba\Dal\AttendanceActionLog\Actions;
 use Sheba\Repositories\ProfileRepository;
 use App\Transformers\Business\EmployeeTransformer;
 use Illuminate\Http\Request;
@@ -82,10 +85,14 @@ class EmployeeController extends Controller
             $business_member = $this->getBusinessMember($request);
             if (!$business_member) return api_response($request, null, 404);
             $member = $this->repo->find($business_member['member_id']);
-            return api_response($request, $business_member, 200, ['info' => [
+            $business_member = BusinessMember::find($business_member['id']);
+            /** @var Attendance $attendance */
+            $attendance = $business_member->attendanceOfToday();
+            if ($business_member) return api_response($request, $business_member, 200, ['info' => [
                 'notification_count' => $member->notifications()->unSeen()->count(),
-                'employee' => [
-                    'id' => $member->id
+                'attendance' => [
+                    'can_checkin' => !$attendance ? 1 : ($attendance->canTakeThisAction(Actions::CHECKIN) ? 1 : 0),
+                    'can_checkout' => $attendance && $attendance->canTakeThisAction(Actions::CHECKOUT) ? 1 : 0,
                 ]
             ]]);
         } catch (\Throwable $e) {
