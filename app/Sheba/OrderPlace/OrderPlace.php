@@ -622,7 +622,7 @@ class OrderPlace
      */
     private function canCreatePartnerOrderRequest()
     {
-        return !$this->selectedPartner || count($this->partnersFromList) > 0;
+        return !$this->selectedPartner && count($this->partnersFromList) > 0;
     }
 
     /**
@@ -647,4 +647,5 @@ class OrderPlace
                 return $job_service->unit_price * $job_service->quantity;
             })->sum() + (double)$this->category->delivery_charge;
     }
+
 }
