@@ -54,8 +54,8 @@ class OrderRequestController extends Controller
     {
         try {
             $this->validate($request, [
-                'filter'    => 'required|string|in:all,active,missed',
-                'sort'      => 'sometimes|required|string|in:created_at,created_at:asc,created_at:desc,schedule_date,schedule_date:asc,schedule_date:desc'
+                'filter' => 'required|string|in:all,active,missed',
+                'sort' => 'sometimes|required|string|in:created_at,created_at:asc,created_at:desc,schedule_date,schedule_date:asc,schedule_date:desc'
             ]);
 
             $original_offset = $request->offset;
@@ -173,9 +173,11 @@ class OrderRequestController extends Controller
             $this->validate($request, ['resource_id' => 'required|int']);
             $this->statusChanger->setPartnerOrderRequest($partner_order_request)->accept($request);
             if ($this->statusChanger->hasError()) {
-                return api_response($request, null, $this->statusChanger->getErrorCode(), [
-                    'message' => $this->statusChanger->getErrorMessage()
-                ]);
+                $sentry = app('sentry');
+                $sentry->user_context(['code' => $this->statusChanger->getErrorCode(), 'message' => $this->statusChanger->getErrorMessage()]);
+                $e = new \Exception('Order request not accepted #' . $partner_order_request->id);
+                $sentry->captureException($e);
+                return api_response($request, null, $this->statusChanger->getErrorCode(), ['message' => $this->statusChanger->getErrorMessage()]);
             }
             return api_response($request, null, 200);
         } catch (ValidationException $e) {
