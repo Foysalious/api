@@ -93,7 +93,6 @@ class CustomerDeliveryAddressController extends Controller
             $customer = $request->customer;
             $location = null;
             $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'location_id', 'address', 'name', 'geo_informations', 'flat_no')->get();
-
             $hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->first();
             if ($hyper_location) $location = $hyper_location->location;
 
@@ -128,6 +127,11 @@ class CustomerDeliveryAddressController extends Controller
                     $inside_radius = ($distance->from([$current])->to($to)->sortedDistance()[0][$to[0]->id] <= (double)$partner_geo->radius * 1000) ? 1 : 0;
                     $customer_delivery_address['is_valid'] = $inside_radius;
                     return $customer_delivery_address;
+                });
+            } else {
+                $customer_delivery_addresses->map(function ($address) use ($location) {
+                    $address['is_valid'] = $address->location_id == $location->id ? 1 : 0;
+                    return $address;
                 });
             }
 
