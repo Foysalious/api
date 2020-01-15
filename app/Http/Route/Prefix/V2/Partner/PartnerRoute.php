@@ -20,12 +20,10 @@ class PartnerRoute
             (new IDAuthRoute())->set($api);
             (new PosRoute())->set($api);
         });
-        $api->group(['prefix'=>'bank','middleware'=>'jwtGlobalAuth'],function($api){
+        $api->group(['prefix'=>'bank', 'middleware'=>'jwtGlobalAuth'],function($api){
             $api->post('/password/reset','Auth\PasswordController@resetPasswordForBank');
         });
-        $api->group(['prefix'     => 'loans',
-                     'middleware' => 'jwtGlobalAuth'
-        ], function ($api) {
+        $api->group(['prefix'=>'loans', 'middleware'=>'jwtGlobalAuth'], function ($api) {
             $api->get('/', 'LoanController@index');
             $api->get('/{loan_id}/details','LoanController@show');
             $api->post('/{loan_id}','LoanController@update');
@@ -39,7 +37,6 @@ class PartnerRoute
             $api->get('/{partner_bank_loan}/comments', 'LoanController@getComments');
             $api->post('/{partner_bank_loan}/status-change', 'LoanController@statusChange');
             $api->get('/{loan_id}/generate-application','LoanController@generateApplication');
-
         });
     }
 }
