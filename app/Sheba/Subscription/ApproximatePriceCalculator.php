@@ -147,8 +147,9 @@ class ApproximatePriceCalculator extends Discount
     public function getMaxMinForService()
     {
         $max_min = new MinMaxPrice();
-        $max = $max_min->setService($this->service)->setLocationService($this->locationService)->getMax();
-        $min = $max_min->setService($this->service)->setLocationService($this->locationService)->getMin();
+        $max_min->setService($this->service)->setLocationService($this->locationService);
+        $max = $max_min->getMax();
+        $min = $max_min->getMin();
         return array($max, $min);
     }
 
