@@ -6,7 +6,7 @@ use App\Models\HyperLocal;
 use App\Models\Location;
 use App\Models\Partner;
 use App\Models\Profile;
-use App\Sheba\Geo;
+use App\Sheba\Address\AddressValidator;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -15,6 +15,7 @@ use Illuminate\Validation\ValidationException;
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
 use Sheba\Location\Distance\DistanceStrategy;
+use Sheba\Location\Geo;
 use Sheba\ModificationFields;
 use Throwable;
 
@@ -80,7 +81,7 @@ class CustomerDeliveryAddressController extends Controller
         }
     }
 
-    public function filterAddress($customer, Request $request)
+    public function filterAddress($customer, Request $request, AddressValidator $address_validator, Geo $geo)
     {
         try {
             $this->validate($request, [
@@ -102,13 +103,13 @@ class CustomerDeliveryAddressController extends Controller
             $target = new Coords((double)$request->lat, (double)$request->lng);
             $customer_delivery_addresses = $customer_delivery_addresses->reject(function ($address) {
                 return $address->geo_informations == null;
-            })->map(function ($customer_delivery_address) use ($customer_order_addresses, $target) {
+            })->map(function ($customer_delivery_address) use ($customer_order_addresses, $target, $address_validator, $geo) {
                 $customer_delivery_address['count'] = $this->getOrderCount($customer_order_addresses, $customer_delivery_address);
-                $geo = json_decode($customer_delivery_address['geo_informations']);
-                $customer_delivery_address['geo_informations'] = $geo ? array('lat' => (double)$geo->lat, 'lng' => (double)$geo->lng) : null;
+                $geo_info = json_decode($customer_delivery_address['geo_informations']);
+                $customer_delivery_address['geo_informations'] = $geo_info ? array('lat' => (double)$geo_info->lat, 'lng' => (double)$geo_info->lng) : null;
                 $customer_delivery_address['is_valid'] = 1;
-                $address = new Coords($customer_delivery_address['geo_informations']['lat'], $customer_delivery_address['geo_informations']['lng']);
-                $customer_delivery_address['is_same'] = $address->isSameTo($target);
+                $geo->setLat($customer_delivery_address['geo_informations']['lat'])->setLng($customer_delivery_address['geo_informations']['lng']);
+                $customer_delivery_address['is_same'] = $address_validator->isSameAddress($geo, $target);
 
                 return $customer_delivery_address;
             });
