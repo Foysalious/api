@@ -8,6 +8,7 @@ use App\Repositories\PartnerOrderRepository;
 use App\Repositories\ResourceJobRepository;
 use App\Sheba\Checkout\PartnerList;
 use Illuminate\Http\JsonResponse;
+use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequest;
 use Sheba\Jobs\Discount;
 use Sheba\Logistics\Exceptions\LogisticServerError;
 use Sheba\Logistics\Repository\OrderRepository;
@@ -90,11 +91,12 @@ class PartnerOrderController extends Controller
                             }]);
                         }]);
                 }]);
+                $order_request_count = PartnerOrderRequest::openRequest()->where('partner_id', $partner->id)->count();
                 $total_new_orders = $partner->jobs->pluck('partnerOrder')->unique()->pluck('order')
-                    ->groupBy('subscription_order_id')
-                    ->map(function ($order, $key) {
-                        return !empty($key) ? 1 : $order->count();
-                    })->sum();
+                        ->groupBy('subscription_order_id')
+                        ->map(function ($order, $key) {
+                            return !empty($key) ? 1 : $order->count();
+                        })->sum() + $order_request_count;
                 return api_response($request, $total_new_orders, 200, ['total_new_orders' => $total_new_orders]);
             }
             $orders = $this->partnerOrderRepository->getNewOrdersWithJobs($request);
