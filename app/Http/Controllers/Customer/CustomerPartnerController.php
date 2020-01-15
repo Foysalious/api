@@ -11,6 +11,7 @@ class CustomerPartnerController extends Controller
 
     public function getPreferredPartners($customer, Request $request, Recommended $recommended, Geo $geo, ServiceRequest $service_request)
     {
+        return api_response($request, null, 404);
         $this->validate($request, ['services' => 'required|string', 'lat' => 'required|numeric', 'lng' => 'required|numeric']);
         $service_request_object = $service_request->setServices(json_decode($request->services, 1))->get();
         $geo->setLat($request->lat)->setLng($request->lng);
