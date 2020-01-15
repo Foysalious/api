@@ -1,9 +1,11 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\CategoryPartner;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;
 use App\Models\Location;
+use App\Models\LocationService;
 use App\Models\Partner;
 use App\Models\Profile;
 use App\Sheba\Geo;
@@ -12,6 +14,7 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Dal\CategoryLocation\CategoryLocation;
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
 use Sheba\Location\Distance\DistanceStrategy;
@@ -87,8 +90,8 @@ class CustomerDeliveryAddressController extends Controller
                 'lat' => 'required|numeric',
                 'lng' => 'required|numeric',
                 'partner' => 'sometimes|numeric',
-                'ser' => 'sometimes|numeric',
-
+                'service' => 'sometimes|string',
+                'category' => 'sometimes|string',
             ]);
             $customer = $request->customer;
             $location = null;
@@ -128,9 +131,24 @@ class CustomerDeliveryAddressController extends Controller
                     $customer_delivery_address['is_valid'] = $inside_radius;
                     return $customer_delivery_address;
                 });
-            } else {
-                $customer_delivery_addresses->map(function ($address) use ($location) {
-                    $address['is_valid'] = $address->location_id == $location->id ? 1 : 0;
+            }
+            if ($request->has('service')) {
+                $service = array_map('intval', json_decode($request->service));
+                $location_service = LocationService::whereIn('service_id', $service)->select('location_id')->get();
+                $location_ids = count($location_service) > 0 ? $location_service->pluck('location_id')->toArray() : [];
+                $customer_delivery_addresses->map(function ($address) use ($location_ids) {
+                    if (!$address['is_valid']) return $address;
+                    $address['is_valid'] = in_array($address->location_id, $location_ids) ? 1 : 0;
+                    return $address;
+                });
+            }
+            if ($request->has('category')) {
+                $category = array_map('intval', json_decode($request->category));
+                $category_location = CategoryLocation::whereIn('category_id', $category)->select('location_id')->get();
+                $location_ids = count($category_location) > 0 ? $category_location->pluck('location_id')->toArray() : [];
+                $customer_delivery_addresses->map(function ($address) use ($location_ids) {
+                    if (!$address['is_valid']) return $address;
+                    $address['is_valid'] = in_array($address->location_id, $location_ids) ? 1 : 0;
                     return $address;
                 });
             }

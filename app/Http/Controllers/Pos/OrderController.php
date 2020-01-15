@@ -116,7 +116,6 @@ class OrderController extends Controller
             }
             return api_response($request, $orders_formatted, 200, ['orders' => $orders_formatted]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

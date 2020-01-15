@@ -572,7 +572,6 @@ class PartnerController extends Controller
             return api_response($request, $notification, 200, ['notification' => $notification,
                 'unseen_notifications' => $unseen_notifications]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
