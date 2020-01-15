@@ -83,6 +83,7 @@ class BusinessRoute
                     $api->group(['prefix' => '{procurement}'], function ($api) {
                         $api->get('/', 'B2b\ProcurementController@show');
                         $api->get('/download', 'B2b\ProcurementController@downloadPdf');
+                        $api->post('adjust-payment', 'B2b\ProcurementPaymentController@adjustPayment');
                         $api->group(['prefix' => 'comments'], function ($api) {
                             $api->post('/', 'CommentController@storeComments');
                             $api->get('/', 'CommentController@getComments');

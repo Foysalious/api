@@ -42,7 +42,7 @@ class Creator
 
     public function create()
     {
-        $this->paymentRepository->create([
+        return $this->paymentRepository->create([
             'amount' => $this->amount,
             'transaction_type' => $this->paymentType,
             'method' => $this->method,

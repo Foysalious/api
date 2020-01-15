@@ -18,6 +18,8 @@ class Updater
     private $procurementRepository;
     private $walletTransactionHandler;
     private $paymentCreator;
+    private $shebaCollection;
+    private $data;
 
 
     public function __construct(ProcurementRepositoryInterface $procurement_repository, Creator $creator, WalletTransactionHandler $wallet_transaction_handler, PaymentCreator $payment_creator)
@@ -26,6 +28,7 @@ class Updater
         $this->statusLogCreator = $creator;
         $this->walletTransactionHandler = $wallet_transaction_handler;
         $this->paymentCreator = $payment_creator;
+        $this->data = [];
     }
 
     public function setProcurement(Procurement $procurement)
@@ -37,6 +40,12 @@ class Updater
     public function setStatus($status)
     {
         $this->status = $status;
+        return $this;
+    }
+
+    public function setShebaCollection($sheba_collection)
+    {
+        $this->shebaCollection = $sheba_collection;
         return $this;
     }
 
@@ -83,5 +92,16 @@ class Updater
                 'link' => $link
             ]);
         }
+    }
+
+    public function update()
+    {
+        $this->procurementRepository->update($this->procurement, $this->data);
+    }
+
+    private function makeData()
+    {
+        $this->data['status'] = $this->status ? $this->status : $this->procurement->status;
+        $this->data['sheba_collection'] = $this->shebaCollection ? $this->shebaCollection : $this->procurement->sheba_collection;
     }
 }
