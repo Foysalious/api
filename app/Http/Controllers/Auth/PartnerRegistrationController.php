@@ -172,7 +172,7 @@ class PartnerRegistrationController extends Controller
         $partner = new Partner();
         $partner = $this->store($resource, $data, $by, $partner);
         if ($partner) {
-            $this->sms->shoot($resource->profile->mobile, "You have successfully completed your registration at Sheba.xyz. Please complete your profile to start serving orders.");
+            $this->sms->shoot($resource->profile->mobile, "অভিনন্দন! sManager-এ আপনি সফল ভাবে রেজিস্ট্রেশন সম্পন্ন করেছেন। বিস্তারিত দেখুন: http://bit.ly/sManagerGettingStarted");
         }
 
         app()->make(ActionRewardDispatcher::class)->run('partner_creation_bonus', $partner, $partner);
