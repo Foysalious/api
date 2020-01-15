@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "da81118c5d894c9e7c4b64ca9f4763b5",
+    "content-hash": "cde5dd8fa49396c20c1b5294bc20ade4",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -3099,7 +3099,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
+                "url": "https://mac_pasha@bitbucket.org/startern/sheba_dal.git",
                 "reference": "5d0d6c83b3c715a0603438dc58628d9144c7ae7b"
             },
             "require": {
@@ -3134,7 +3134,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_notification.git",
+                "url": "https://mac_pasha@bitbucket.org/startern/sheba_notification.git",
                 "reference": "dc29747984b6a69e6959e5de551d37a43105922d"
             },
             "require": {
@@ -3166,7 +3166,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_report.git",
+                "url": "https://mac_pasha@bitbucket.org/startern/sheba_report.git",
                 "reference": "548e3494488c089f2a5b6e0b43ccbb0882a70f7d"
             },
             "require": {
@@ -3195,7 +3195,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_sms.git",
+                "url": "https://mac_pasha@bitbucket.org/startern/sheba_sms.git",
                 "reference": "78a5bcc7f9f19bbbae0422fc9bf9016715d8edd6"
             },
             "require": {
@@ -3224,7 +3224,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_voucher.git",
+                "url": "https://mac_pasha@bitbucket.org/startern/sheba_voucher.git",
                 "reference": "35da8856f9d4918614ce686df316fee6c176a1e2"
             },
             "require": {
