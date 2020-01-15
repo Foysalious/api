@@ -10,6 +10,7 @@ class Creator
     private $amount;
     private $paymentType;
     private $method;
+    private $log;
 
     public function __construct(ProcurementPaymentRepositoryInterface $payment_repository)
     {
@@ -40,13 +41,20 @@ class Creator
         return $this;
     }
 
+    public function setLog($log)
+    {
+        $this->log = $log;
+        return $this;
+    }
+
     public function create()
     {
         return $this->paymentRepository->create([
             'amount' => $this->amount,
             'transaction_type' => $this->paymentType,
             'method' => $this->method,
-            'procurement_id' => $this->procurement->id
+            'procurement_id' => $this->procurement->id,
+            'log' => $this->log
         ]);
     }
 }
