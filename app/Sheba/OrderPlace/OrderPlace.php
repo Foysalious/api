@@ -546,6 +546,8 @@ class OrderPlace
             'status' => JobStatuses::PENDING,
         ];
 
+        if ($this->selectedPartner) $job_data['commission_rate'] = $this->category->commission($this->selectedPartner->id);
+
         $job_data['discount'] = 0.00;
         if ($this->orderVoucherData->isValid()) {
             $job_data['discount'] = $this->orderVoucherData->getDiscount();

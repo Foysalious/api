@@ -1,5 +1,6 @@
 <?php namespace Sheba\PartnerOrderRequest;
 
+use App\Models\Job;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequest;
@@ -38,12 +39,14 @@ class StatusChanger
             return;
         }
         $partner_order = $this->partnerOrderRequest->partnerOrder;
+        /** @var Job $job */
+        $job = $partner_order->lastJob();
         if ($this->repo->hasAnyAcceptedRequest($partner_order)) {
             $this->setError(403, "Someone already did it.");
             return;
         }
 
-        $request->merge(['job' => $partner_order->lastJob()]);
+        $request->merge(['job' => $job]);
         $this->jobStatusChanger->checkForError($request);
         if ($this->jobStatusChanger->hasError()) {
             $this->setError($this->jobStatusChanger->getErrorCode(), $this->jobStatusChanger->getErrorMessage());
@@ -54,13 +57,12 @@ class StatusChanger
             $this->setError($this->jobStatusChanger->getErrorCode(), $this->jobStatusChanger->getErrorMessage());
             return;
         }
-        DB::transaction(function () use ($request, $partner_order) {
+        DB::transaction(function () use ($request, $partner_order, $job) {
             $this->repo->update($this->partnerOrderRequest, ['status' => Statuses::ACCEPTED]);
             $partner_order->update(['partner_id' => $request->partner->id]);
+            $job->update(['commission_rate' => $job->category->commission($request->partner->id)]);
 
-            $this->repo->updatePendingRequestsOfOrder($partner_order, [
-                'status' => Statuses::MISSED
-            ]);
+            $this->repo->updatePendingRequestsOfOrder($partner_order, ['status' => Statuses::MISSED]);
         });
     }
 
