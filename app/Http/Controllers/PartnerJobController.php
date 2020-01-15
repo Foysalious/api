@@ -36,9 +36,10 @@ class PartnerJobController extends Controller
     public function index($partner, Request $request)
     {
         try {
-            $this->validate($request, [
-                'filter' => 'required|string|in:new,ongoing,history'
-            ]);
+            ini_set('memory_limit', '4096M');
+            ini_set('max_execution_time', 660);
+
+            $this->validate($request, ['filter' => 'required|string|in:new,ongoing,history']);
             $filter = $request->filter;
             $partner = $request->partner->load([
                 'partnerOrders' => function ($q) use ($filter, $request) {
