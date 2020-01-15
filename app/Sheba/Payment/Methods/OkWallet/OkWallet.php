@@ -27,6 +27,7 @@ class OkWallet extends PaymentMethod
      * @param Payable $payable
      * @return Payment
      * @throws Exception\FailedToInitiateException
+     * @throws Exception\KeyEncryptionFailed
      */
     public function init(Payable $payable): Payment
     {

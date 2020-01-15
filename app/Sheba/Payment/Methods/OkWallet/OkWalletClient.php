@@ -14,7 +14,7 @@ class OkWalletClient
 
     public function __construct()
     {
-        $this->baseUrl    = config('OK_WALLET_BASE_URL', 'https://103.197.207.9/uat/okPay');
+        $this->baseUrl    = config('OK_WALLET_BASE_URL', 'http://103.97.44.39/uat/okPay');
         $this->account    = config('OK_WALLET_ACCOUNT', '01799444000');
         $this->apiKey     = config('OK_WALLET_APP_KEY', 'opox9ps6pdfje4wchsejkqb7hd9de1qmh2');
         $this->apiSecret  = config('OK_WALLET_APP_SECRET', 'tf1rkktb7fttewbtik3m11ed7xmhhkgpogsojn2yt9w1j16v');
@@ -26,7 +26,7 @@ class OkWalletClient
     public static function getTransactionUrl($sessionKey)
     {
         $cls = (new OkWalletClient());
-        return "$cls->baseUrl/okPay/okTransaction/$sessionKey";
+        return "$cls->baseUrl/okTransaction/$sessionKey";
     }
 
     /**
@@ -55,7 +55,6 @@ class OkWalletClient
                 ])
             ];
             $response = $this->client->post("$this->baseUrl/createSession/", $this->getOptions($data))->getBody()->getContents();
-            dd($response);
             return new InitResponse(json_decode($response, true));
         } catch (ClientException $e) {
             throw new FailedToInitiateException($e->getMessage());
@@ -67,7 +66,8 @@ class OkWalletClient
      * @return string
      * @throws KeyEncryptionFailed
      */
-    private function encrypt_value($value){
+    private function encrypt_value($value)
+    {
         if (!$public = openssl_get_publickey($this->public_key)) {
             //Invalid x509 certificate;
             throw new KeyEncryptionFailed("Invalid Certificate for key encryption");
@@ -76,10 +76,10 @@ class OkWalletClient
             //OpenSSL public key encryption failed
             throw new KeyEncryptionFailed();
         }
-        $value=base64_encode($crypted);
-
+        $value = base64_encode($crypted);
         return $value;
     }
+
     private function getOptions($data = null)
     {
         $options['form_params'] = $data;
