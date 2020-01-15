@@ -89,6 +89,7 @@ class EmployeeController extends Controller
             /** @var Attendance $attendance */
             $attendance = $business_member->attendanceOfToday();
             if ($business_member) return api_response($request, $business_member, 200, ['info' => [
+                'id' => $member->id,
                 'notification_count' => $member->notifications()->unSeen()->count(),
                 'attendance' => [
                     'can_checkin' => !$attendance ? 1 : ($attendance->canTakeThisAction(Actions::CHECKIN) ? 1 : 0),
