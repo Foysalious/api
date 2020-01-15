@@ -356,6 +356,7 @@ class OrderPlace
     public function create()
     {
         try {
+            $this->setAdditionalInformation('Order Place From V4');
             $this->resolveAddress();
             $this->fetchPartner();
             $job_services = $this->createJobService();
@@ -544,6 +545,8 @@ class OrderPlace
             'material_commission_rate' => config('sheba.material_commission_rate'),
             'status' => JobStatuses::PENDING,
         ];
+
+        if ($this->selectedPartner) $job_data['commission_rate'] = $this->category->commission($this->selectedPartner->id);
 
         $job_data['discount'] = 0.00;
         if ($this->orderVoucherData->isValid()) {
