@@ -387,6 +387,11 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
         return $query->where([['closed_and_paid_at', '<>', null], ['cancelled_at', null]]);
     }
 
+    public function scopeCancelled($query)
+    {
+        $query->where('cancelled_at', '<>', null);
+    }
+
     public function stageChangeLogs()
     {
         return $this->hasMany(PartnerOrderStatusLog::class);
