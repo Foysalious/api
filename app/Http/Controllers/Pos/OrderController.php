@@ -262,7 +262,7 @@ class OrderController extends Controller
 
             $order = $creator->setData($request->all())->create();
             $order = $order->calculate();
-            if ($partner->wallet >= 1) $this->sendCustomerSms($order);
+            /*if ($partner->wallet >= 1) $this->sendCustomerSms($order);*/
             $this->sendCustomerEmail($order);
             $order->payment_status = $order->getPaymentStatus();
 
