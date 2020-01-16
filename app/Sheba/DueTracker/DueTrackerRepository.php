@@ -9,11 +9,17 @@ use App\Models\Profile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
+use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\BaseRepository;
+use Sheba\FileManagers\CdnFileManager;
+use Sheba\ModificationFields;
+use Sheba\RequestIdentification;
 
 class DueTrackerRepository extends BaseRepository
 {
+    use ModificationFields,CdnFileManager;
+
     public function getDueList(Request $request, $paginate = true)
     {
         $url      = "accounts/$this->accountId/entries/due-list?";
@@ -102,9 +108,40 @@ class DueTrackerRepository extends BaseRepository
         ];
     }
 
-    public function store(Request $request)
+    /**
+     * @param Partner $partner
+     * @param Request $request
+     * @throws InvalidPartnerPosCustomer
+     */
+    public function store(Partner $partner, Request $request)
     {
-        dd($request->all());
+
+        $partner_pos_customer = PartnerPosCustomer::byPartner($partner->id)->where('customer_id', $request->customer_id)->with(['customer'])->first();
+        if (empty($partner_pos_customer))
+            throw new InvalidPartnerPosCustomer();
+        /** @var PosCustomer $customer */
+        $customer = $partner_pos_customer->customer;
+        $this->setModifier($partner);
+        $data = $this->createStoreData($request);
+    }
+
+    private function createStoreData(Request $request)
+    {
+        $data                   = $request->except('manager_resource', 'partner', 'customer_id');
+        $data['created_from']   = $this->withBothModificationFields((new RequestIdentification())->get());
+        $data['amount_cleared'] = $request->type == "due" ? 0 : $request['amount'];
+        $data['head_name']      = AutomaticIncomes::DUE_TRACKER;
+        $data['created_at']     = $request->created_at;
+        $data['attachments']    = $this->uploadAttachments($request);
+    }
+
+    private function uploadAttachments(Request $request)
+    {
+        if ($request->has('attachments')) {
+            foreach ($request->allFiles() as $file) {
+                
+            }
+        }
     }
 
 }
