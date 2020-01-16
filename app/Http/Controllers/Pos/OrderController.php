@@ -254,8 +254,7 @@ class OrderController extends Controller
             $this->setModifier($request->manager_resource);
             $order = $creator->setData($request->all())->create();
             $order = $order->calculate();
-            if ($partner->wallet >= 1)
-                $this->sendCustomerSms($order);
+            /*if ($partner->wallet >= 1) $this->sendCustomerSms($order);*/
             $this->sendCustomerEmail($order);
             $order->payment_status        = $order->getPaymentStatus();
             $order["client_pos_order_id"] = $request->has('client_pos_order_id') ? $request->client_pos_order_id : null;
