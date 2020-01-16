@@ -194,7 +194,9 @@ class NotificationRepository
         $offer = OfferShowcase::query()->where('id', $event_id)->first();
         if ($offer && $offer->thumb != '')
             return $offer->thumb;
-        return getCDNAssetsFolder() . config('constants.NOTIFICATION_ICONS.' . $type);
+        if(in_array(config('constants.NOTIFICATION_ICONS.' . $type), config('constants.NOTIFICATION_ICONS')))
+            return getCDNAssetsFolder() . config('constants.NOTIFICATION_ICONS.' . $type);
+        return getCDNAssetsFolder() . config('constants.NOTIFICATION_ICONS.Default');
     }
 
     /**

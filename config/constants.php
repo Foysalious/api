@@ -462,7 +462,8 @@ return [
         'Info'    => 'sheba_xyz/svg/notification/info.svg',
         'Warning' => 'sheba_xyz/svg/notification/warning.svg',
         'Danger'  => 'sheba_xyz/svg/notification/danger.svg',
-        'Success' => 'sheba_xyz/svg/notification/success.svg'
+        'Success' => 'sheba_xyz/svg/notification/success.svg',
+        'Default' => 'sheba_xyz/svg/notification/default.svg'
     ],
     'NOTIFICATION_DEFAULTS'                       => [
         'banner'            => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/partner_assets/assets/images/home_v3/slider-img3.jpg',
