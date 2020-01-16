@@ -1,11 +1,9 @@
 <?php namespace App\Http\Controllers\Pos;
 
 use App\Http\Controllers\Controller;
-use App\Models\PartnerPosCustomer;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 use Sheba\DueTracker\DueTrackerRepository;
-use Sheba\Pos\Repositories\PartnerPosCustomerRepository;
+use Sheba\Reports\PdfHandler;
 
 class DueTrackerController extends Controller
 {
@@ -13,8 +11,10 @@ class DueTrackerController extends Controller
     {
         try {
             $data = $dueTrackerRepository->setPartner($request->partner)->getDueList($request);
+            if ($request->has('download_pdf')) return (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile('due_tracker_due_list')->download();
             return api_response($request, $data, 200, ['data' => $data]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -30,33 +30,5 @@ class DueTrackerController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
-    }
-
-    public function store(Request $request, DueTrackerRepository $dueTrackerRepository, $partner, $customer_id)
-    {
-        try {
-            $request->merge(['customer_id' => $customer_id]);
-            $response = $dueTrackerRepository->setPartner($request->partner)->store($request);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
-    public function setDueDateReminder(Request $request, PartnerPosCustomerRepository $partner_pos_customer_repo)
-    {
-        try {
-            $this->validate($request, ['due_date_reminder' => 'required|date']);
-            $partner_pos_customer = PartnerPosCustomer::byPartnerAndCustomer($request->partner->id, $request->customer_id)->first();
-            $partner_pos_customer_repo->update($partner_pos_customer, ['due_date_reminder' => $request->due_date_reminder]);
-            return api_response($request, null, 200);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-
     }
 }
