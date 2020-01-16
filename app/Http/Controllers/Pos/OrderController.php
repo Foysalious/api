@@ -195,7 +195,11 @@ class OrderController extends Controller
             if ($error = $creator->hasError()) return $error;
             $order = $creator->create();
             $order = $order->calculate();
-           /* if ($partner->wallet >= 1) $this->sendCustomerSms($order);*/
+            /**
+             * TURNED OFF POS ORDER CREATE SMS BY SERVER END, HANDLED BY CLIENT SIDE
+             *
+             * if ($partner->wallet >= 1) $this->sendCustomerSms($order);
+             */
             $this->sendCustomerEmail($order);
             $order->payment_status      = $order->getPaymentStatus();
             $order->client_pos_order_id = $request->client_pos_order_id;
@@ -262,7 +266,11 @@ class OrderController extends Controller
 
             $order = $creator->setData($request->all())->create();
             $order = $order->calculate();
-            /*if ($partner->wallet >= 1) $this->sendCustomerSms($order);*/
+            /**
+             * TURNED OFF POS ORDER CREATE SMS BY SERVER END, HANDLED BY CLIENT SIDE
+             *
+             * if ($partner->wallet >= 1) $this->sendCustomerSms($order);
+             */
             $this->sendCustomerEmail($order);
             $order->payment_status = $order->getPaymentStatus();
 
