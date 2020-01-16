@@ -24,11 +24,16 @@ class ServiceQuestion
             $option_content = key_exists($option_key, $option_contents) ? $option_contents[$option_key] : [];
             $option->answers = explode(',', $option->answers);
             $contents = [];
+            $answer_contents = [];
+
             foreach ($option->answers as $answer_keys => $answer) {
                 $answer_key = $answer_keys + 1;
-                array_push($contents, key_exists($answer_key, $option_content) ? $option_content[$answer_key] : null);
+                $value = key_exists($answer_key, $option_content) ? $option_content[$answer_key] : null;
+                array_push($contents, $value);
+                array_push($answer_contents, ['key' => $answer_keys, 'content' => $value]);
             }
             $option->contents = $contents;
+            $option->answer_contents = $answer_contents;
         }
         return $options;
     }

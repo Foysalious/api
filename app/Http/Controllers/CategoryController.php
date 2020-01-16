@@ -581,12 +581,16 @@ class CategoryController extends Controller
                     $option_content = key_exists($option_key, $option_contents) ? $option_contents[$option_key] : [];
                     $explode_answers = explode(',', $question->get('answers'));
                     $contents = [];
+                    $answer_contents = [];
                     foreach ($explode_answers as $answer_keys => $answer) {
                         $answer_key = $answer_keys + 1;
-                        array_push($contents, key_exists($answer_key, $option_content) ? $option_content[$answer_key] : null);
+                        $value = key_exists($answer_key, $option_content) ? $option_content[$answer_key] : null;
+                        array_push($contents, $value);
+                        array_push($answer_contents, ['key' => $answer_keys, 'content' => $value]);
                     }
                     $question->put('answers', $explode_answers);
                     $question->put('contents', $contents);
+                    $question->put('answer_contents', $answer_contents);
                 }
                 if (count($questions) == 1) {
                     $questions[0]->put('input_type', 'selectbox');
