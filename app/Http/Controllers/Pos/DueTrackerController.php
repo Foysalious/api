@@ -36,7 +36,8 @@ class DueTrackerController extends Controller
     {
         try {
             $request->merge(['customer_id' => $customer_id]);
-            $response = $dueTrackerRepository->setPartner($request->partner)->store($request);
+            $response = $dueTrackerRepository->setPartner($request->partner)->store($request->partner, $request);
+            return api_response($request, $response, 200, ['data' => $response]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
