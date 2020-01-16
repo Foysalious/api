@@ -14,11 +14,11 @@ class OkWalletClient
 
     public function __construct()
     {
-        $this->baseUrl    = config('OK_WALLET_BASE_URL', 'http://103.97.44.39/uat/okPay');
-        $this->account    = config('OK_WALLET_ACCOUNT', '01799444000');
-        $this->apiKey     = config('OK_WALLET_APP_KEY', 'opox9ps6pdfje4wchsejkqb7hd9de1qmh2');
-        $this->apiSecret  = config('OK_WALLET_APP_SECRET', 'tf1rkktb7fttewbtik3m11ed7xmhhkgpogsojn2yt9w1j16v');
-        $this->format     = config('OK_WALLET_API_FORMAT', 'json');
+        $this->baseUrl    = config('ok_wallet.base_url');
+        $this->account    = config('ok_wallet.account');
+        $this->apiKey     = config('ok_wallet.api_key');
+        $this->apiSecret  = config('ok_wallet.api_secret');
+        $this->format     = config('ok_wallet.format', 'json');
         $this->client     = new Client();
         $this->public_key = file_get_contents(resource_path('assets/ok-wallet/public_uat.key'));
     }
