@@ -16,6 +16,11 @@ class PartnerPosCustomer extends Model
         return $query->where('partner_id', $partner_id);
     }
 
+    public function scopeByPartnerAndCustomer($query, $partner_id, $customer_id)
+    {
+        return $query->where('partner_id', $partner_id)->where('customer_id',$customer_id);
+    }
+
     public function details()
     {
         $customer = $this->customer;
