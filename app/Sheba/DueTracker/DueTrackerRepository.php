@@ -14,7 +14,7 @@ use Sheba\ExpenseTracker\Repository\BaseRepository;
 
 class DueTrackerRepository extends BaseRepository
 {
-    public function getDueList(Request $request)
+    public function getDueList(Request $request, $paginate = true)
     {
         $url      = "accounts/$this->accountId/entries/due-list?";
         $url      = $this->updateRequestParam($request, $url);
@@ -33,8 +33,10 @@ class DueTrackerRepository extends BaseRepository
             $order = $request->order == 'desc' ? 'sortBy' : 'sortByDesc';
             $list  = $list->$order('customer_name')->values();
         }
-        list($offset, $limit) = calculatePagination($request);
-        $list = $list->slice($offset)->take($limit);
+        if ($paginate) {
+            list($offset, $limit) = calculatePagination($request);
+            $list = $list->slice($offset)->take($limit);
+        }
         return [
             'list'  => $list,
             'stats' => $result['data']['totals']
@@ -98,6 +100,11 @@ class DueTrackerRepository extends BaseRepository
                 'due_date_reminder' => $partner_pos_customer->due_date_reminder
             ]
         ];
+    }
+
+    public function store(Request $request)
+    {
+        dd($request->all());
     }
 
 }

@@ -28,4 +28,16 @@ class DueTrackerController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function store(Request $request, DueTrackerRepository $dueTrackerRepository, $partner, $customer_id)
+    {
+        try {
+            $request->merge(['customer_id' => $customer_id]);
+            $response = $dueTrackerRepository->setPartner($request->partner)->store($request);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
+    }
 }
