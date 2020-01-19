@@ -3,6 +3,7 @@
 use App\Exceptions\HyperLocationNotFoundException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\OrderCreateFromBondhuRequest;
+use App\Jobs\AddCustomerGender;
 use App\Models\Affiliate;
 use App\Models\Customer;
 use App\Models\Order;
@@ -13,6 +14,7 @@ use App\Repositories\SmsHandler;
 use App\Sheba\Bondhu\BondhuAutoOrderV3;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -25,6 +27,7 @@ use Throwable;
 
 class OrderController extends Controller
 {
+    use DispatchesJobs;
     use ModificationFields;
 
     /**
@@ -83,11 +86,14 @@ class OrderController extends Controller
                 ->create();
             if (!$order) return api_response($request, null, 500);
             $order = Order::find($order->id);
+            $customer = $request->customer;
+            if (!empty($customer->profile->name) && empty($customer->profile->gender)) dispatch(new AddCustomerGender($customer->profile));
             $payment_method = $request->payment_method;
             /** @var Payment $payment */
             $payment = $this->getPayment($payment_method, $order);
             if ($payment) $payment = $payment->getFormattedPayment();
             $job = $order->jobs->first();
+            $partner_order = $job->partnerOrder;
             $order_with_response_data = [
                 'job_id' => $job->id,
                 'order_code' => $order->code(),
@@ -98,8 +104,10 @@ class OrderController extends Controller
                     'job' => ['id' => $job->id]
                 ]
             ];
-            if ($request->has('partner') && $request->partner)
-                $order_with_response_data['provider_mobile'] = $order->lastJob()->partnerOrder->partner->getContactNumber();
+            if ($partner_order->partner_id) {
+                $order_with_response_data['provider_mobile'] = $partner_order->partner->getContactNumber();
+                $this->sendNotifications($customer, $order);
+            }
 
             return api_response($request, null, 200, $order_with_response_data);
         } catch (ValidationException $e) {
@@ -110,6 +118,38 @@ class OrderController extends Controller
             $sentry->user_context(['request' => $request->all()]);
             $sentry->captureException($e);
             return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @TODO FIx notification sending
+     * @param $customer
+     * @param $order
+     * @return |null
+     */
+    private function sendNotifications($customer, $order)
+    {
+        try {
+            $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
+            /** @var Partner $partner */
+            $partner = $order->partnerOrders->first()->partner;
+            if ((bool)config('sheba.send_order_create_sms')) {
+                if ($this->isSendingServedConfirmationSms($order)) {
+                    (new SmsHandler('order-created'))->send($customer->profile->mobile, [
+                        'order_code' => $order->code()
+                    ]);
+                }
+
+                if (!$order->jobs->first()->resource_id) {
+                    (new SmsHandler('order-created-to-partner'))->send($partner->getContactNumber(), [
+                        'order_code' => $order->code(), 'partner_name' => $partner->name
+                    ]);
+                }
+            }
+            (new NotificationRepository())->send($order);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return null;
         }
     }
 
@@ -141,7 +181,7 @@ class OrderController extends Controller
                         }
                     }
 
-                    $this->sendNotifications($bondhu_auto_order->customer, $order);
+                    $this->sendNotificationsForBondhu($bondhu_auto_order->customer, $order);
                     if ($bondhu_auto_order->isAsOfflineBondhu()) $this->sendSms($affiliate, $order);
                     DB::commit();
                     return api_response($request, $order, 200, ['link' => $link, 'job_id' => $order->jobs->first()->id, 'order_code' => $order->code(), 'payment' => $payment]);
@@ -212,7 +252,7 @@ class OrderController extends Controller
         }
     }
 
-    private function sendNotifications($customer, $order)
+    private function sendNotificationsForBondhu($customer, $order)
     {
         try {
             $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
