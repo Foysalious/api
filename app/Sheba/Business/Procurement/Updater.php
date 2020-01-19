@@ -96,6 +96,7 @@ class Updater
 
     public function update()
     {
+        $this->makeData();
         $this->procurementRepository->update($this->procurement, $this->data);
     }
 
