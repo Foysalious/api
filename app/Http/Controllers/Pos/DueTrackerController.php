@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\PartnerPosCustomer;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\DueTracker\DueTrackerRepository;
@@ -57,6 +58,46 @@ class DueTrackerController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+
+    }
+    public function dueDatewiseCustomerList(Request $request,DueTrackerRepository $dueTrackerRepository){
+
+        try {
+            $request->merge(['balance_type' => 'due']);
+            $dueList = $dueTrackerRepository->setPartner($request->partner)->getDueList($request, false);
+            $response['today'] = [];
+            $response['previous'] = [];
+            $response['next'] = [];
+            foreach ($dueList['list'] as $item) {
+                $partner_pos_customer = PartnerPosCustomer::byPartnerAndCustomer($request->partner->id, $item['customer_id'])->first();
+                $due_date_reminder = $partner_pos_customer['due_date_reminder'];
+
+                if ($partner_pos_customer && $due_date_reminder) {
+                    $temp['customer_name'] = $item['customer_name'];
+                    $temp['customer_id'] = $item['customer_id'];
+                    $temp['profile_id'] = $item['profile_id'];
+                    $temp['phone'] = $partner_pos_customer->details()['phone'];
+                    $temp['balance'] = $item['balance'];
+                    $temp['due_date_reminder'] = $due_date_reminder;
+
+
+                    if (Carbon::parse($due_date_reminder)->format('d-m-Y') == Carbon::parse(Carbon::today())->format('d-m-Y')) {
+                        array_push($response['today'], $temp);
+                    } else if (Carbon::parse($due_date_reminder)->format('d-m-Y') < Carbon::parse(Carbon::today())->format('d-m-Y')) {
+                        array_push($response['previous'], $temp);
+                    } else if (Carbon::parse($due_date_reminder)->format('d-m-Y') > Carbon::parse(Carbon::today())->format('d-m-Y')) {
+                        array_push($response['next'], $temp);
+                    }
+                }
+
+            }
+            return api_response($request, null, 200, ['data' => $response]);
+        } catch (\Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
 
     }
 }
