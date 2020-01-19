@@ -19,9 +19,12 @@ class ProcurementPaymentController extends Controller
     {
         $this->validate($request, ['payment_method' => 'required|string', 'sheba_collection' => 'required|numeric']);
         $this->setModifier($request->manager_member);
-        DB::transaction(function () use ($request, $procurement_updater, $procurement_repository, $procurement, $payment_creator, $procurement_order_close_handler) {
-            /** @var Procurement $procurement */
-            $procurement = $procurement_repository->find($procurement);
+        /** @var Procurement $procurement */
+        $procurement = $procurement_repository->where('procurement_id', $procurement)->where('business_id', $business)->first();
+        if (!$procurement) return api_response($request, 1, 404);
+        $procurement->calculate();
+        if ((double)$request->sheba_collection > $procurement->due) return api_response($request, 1, 403, ['message' => "Can't collect more than due"]);
+        DB::transaction(function () use ($request, $procurement_updater, $procurement, $procurement, $payment_creator, $procurement_order_close_handler) {
             $payment_creator->setAmount($request->sheba_collection)->setPaymentMethod($request->payment_method)->setPaymentType('Debit')
                 ->setLog("Adjusted payment from Sheba Admin")->setProcurement($procurement)->create();
             $procurement_updater->setProcurement($procurement)->setShebaCollection($procurement->sheba_collection + $request->sheba_collection)->update();
