@@ -215,7 +215,7 @@ class NotificationRepository
             if ($event) {
                 $offer = $event::find($notification->event_id);
                 return [
-                    'banner' => $offer->app_banner ? $offer->app_banner : "",
+                    'banner' => $offer->app_banner ? $offer->app_banner : null,
                     'title' => $offer->title ? $offer->title : config('constants.NOTIFICATION_DEFAULTS.title'),
                     'type' => $notification->type ? $notification->type : config('constants.NOTIFICATION_DEFAULTS.type'),
                     'description' => $offer->detail_description ? strip_tags($offer->detail_description): config('constants.NOTIFICATION_DEFAULTS.short_description'),
