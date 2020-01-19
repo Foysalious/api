@@ -13,6 +13,7 @@ class Creator
     private $attendance;
     private $ip;
     private $userAgent;
+    private $note;
 
     public function __construct(EloquentImplementation $attendance_action_log_repository)
     {
@@ -28,6 +29,13 @@ class Creator
         $this->action = $action;
         return $this;
     }
+
+    public function setNote($note)
+    {
+        $this->note = $note;
+        return $this;
+    }
+
 
     /**
      * @param mixed $deviceId
@@ -73,7 +81,10 @@ class Creator
     {
         return $this->attendanceActionLogRepository->create([
             'attendance_id' => $this->attendance->id,
-            'action' => $this->action
+            'action' => $this->action,
+            'note' => $this->note,
+            'ip' => $this->ip,
+            'user_agent' => $this->userAgent
         ]);
     }
 }

@@ -818,6 +818,7 @@
                 "laravel",
                 "react"
             ],
+            "abandoned": true,
             "time": "2018-02-01T20:14:01+00:00"
         },
         {
@@ -3100,8 +3101,8 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
-                "reference": "8993e7569d18c25835dad3dc56d461b7b8f4398d"
+                "url": "https://mac_pasha@bitbucket.org/startern/sheba_dal.git",
+                "reference": "4a147d99d116dca7885096e42f3170c4484966ad"
             },
             "require": {
                 "php": ">=5.4"
@@ -3128,7 +3129,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2020-01-16T04:44:48+00:00"
+            "time": "2020-01-19T07:29:34+00:00"
         },
         {
             "name": "sheba/notification",
