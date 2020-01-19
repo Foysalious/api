@@ -155,5 +155,33 @@ class DueTrackerRepository extends BaseRepository
         }
         return json_encode($attachments);
     }
+    public function generateDueReminders(array $list,Partner $partner){
+        $response['today'] = [];
+        $response['previous'] = [];
+        $response['next'] = [];
+        foreach ($list['list'] as $item) {
+            $partner_pos_customer = PartnerPosCustomer::byPartnerAndCustomer($partner->id, $item['customer_id'])->first();
+            $due_date_reminder = $partner_pos_customer['due_date_reminder'];
 
+            if ($partner_pos_customer && $due_date_reminder) {
+                $temp['customer_name'] = $item['customer_name'];
+                $temp['customer_id'] = $item['customer_id'];
+                $temp['profile_id'] = $item['profile_id'];
+                $temp['phone'] = $partner_pos_customer->details()['phone'];
+                $temp['balance'] = $item['balance'];
+                $temp['due_date_reminder'] = $due_date_reminder;
+
+
+                if (Carbon::parse($due_date_reminder)->format('d-m-Y') == Carbon::parse(Carbon::today())->format('d-m-Y')) {
+                    array_push($response['today'], $temp);
+                } else if (Carbon::parse($due_date_reminder)->format('d-m-Y') < Carbon::parse(Carbon::today())->format('d-m-Y')) {
+                    array_push($response['previous'], $temp);
+                } else if (Carbon::parse($due_date_reminder)->format('d-m-Y') > Carbon::parse(Carbon::today())->format('d-m-Y')) {
+                    array_push($response['next'], $temp);
+                }
+            }
+
+        }
+        return $response;
+    }
 }
