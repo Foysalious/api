@@ -1074,3 +1074,12 @@ if (!function_exists('getVatRegistrationDocumentsFolder')) {
         return $url . 'partner/vat_registration/vat_';
     }
 }
+if (!function_exists('getDueTrackerAttachmentsFolder')){
+    function getDueTrackerAttachmentsFolder($with_base_url=false){
+        $url = '';
+        if ($with_base_url)
+            $url = env('S3_URL');
+
+        return $url . 'partner/due-list-attachments/';
+    }
+}

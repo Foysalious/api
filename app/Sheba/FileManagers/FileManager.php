@@ -135,4 +135,8 @@ trait FileManager
         $filename = $this->uniqueFileName($file, $name);
         return [$file, $filename];
     }
+    protected function makeAttachment($file,$name){
+        $filename = $this->uniqueFileName($file, $name);
+        return [$file, $filename];
+    }
 }

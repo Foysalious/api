@@ -6,6 +6,7 @@ use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
 use App\Models\PosCustomer;
 use App\Models\Profile;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
@@ -13,12 +14,13 @@ use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\BaseRepository;
 use Sheba\FileManagers\CdnFileManager;
+use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
 use Sheba\RequestIdentification;
 
 class DueTrackerRepository extends BaseRepository
 {
-    use ModificationFields,CdnFileManager;
+    use ModificationFields, CdnFileManager, FileManager;
 
     public function getDueList(Request $request, $paginate = true)
     {
@@ -51,6 +53,7 @@ class DueTrackerRepository extends BaseRepository
 
     private function updateRequestParam(Request $request, $url)
     {
+        $order_by = $request->order_by;
         if (!empty($order_by) && $order_by != "name") {
             $order = !empty($request->order) ? strtolower($request->order) : 'desc';
             $url   .= "&order_by=$order_by&order=$order";
@@ -111,7 +114,9 @@ class DueTrackerRepository extends BaseRepository
     /**
      * @param Partner $partner
      * @param Request $request
+     * @return array
      * @throws InvalidPartnerPosCustomer
+     * @throws ExpenseTrackingServerError
      */
     public function store(Partner $partner, Request $request)
     {
@@ -122,26 +127,33 @@ class DueTrackerRepository extends BaseRepository
         /** @var PosCustomer $customer */
         $customer = $partner_pos_customer->customer;
         $this->setModifier($partner);
-        $data = $this->createStoreData($request);
+        $data     = $this->createStoreData($request);
+        $response = $this->client->post("accounts/$this->accountId/entries/due-store/$customer->profile_id", $data);
+        return $response['data'];
     }
 
     private function createStoreData(Request $request)
     {
-        $data                   = $request->except('manager_resource', 'partner', 'customer_id');
-        $data['created_from']   = $this->withBothModificationFields((new RequestIdentification())->get());
-        $data['amount_cleared'] = $request->type == "due" ? 0 : $request['amount'];
+        $data['created_from']   = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
+        $data['amount']         = (double)$request->amount;
+        $data['note']           = $request->note;
+        $data['amount_cleared'] = $request->type == "due" ? 0 : (double)$request['amount'];
         $data['head_name']      = AutomaticIncomes::DUE_TRACKER;
-        $data['created_at']     = $request->created_at;
+        $data['created_at']     = $request->created_at ?: Carbon::now()->format('Y-m-d H:s:i');
         $data['attachments']    = $this->uploadAttachments($request);
+        return $data;
     }
 
     private function uploadAttachments(Request $request)
     {
-        if ($request->has('attachments')) {
-            foreach ($request->allFiles() as $file) {
-                
+        $attachments = [];
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $key => $file) {
+                list($file, $filename) = $this->makeAttachment($file, '_attachments');
+                $attachments[] = $this->saveFileToCDN($file, getDueTrackerAttachmentsFolder(), $filename);;
             }
         }
+        return json_encode($attachments);
     }
 
 }

@@ -35,10 +35,18 @@ class DueTrackerController extends Controller
     public function store(Request $request, DueTrackerRepository $dueTrackerRepository, $partner, $customer_id)
     {
         try {
+            $this->validate($request, [
+                'amount' => 'required',
+                'type'   => 'required|in:due,deposit'
+            ]);
             $request->merge(['customer_id' => $customer_id]);
             $response = $dueTrackerRepository->setPartner($request->partner)->store($request->partner, $request);
             return api_response($request, $response, 200, ['data' => $response]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
