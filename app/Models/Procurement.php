@@ -58,6 +58,7 @@ class Procurement extends Model implements PayableType
 
     public function calculate()
     {
+        if ($this->paid) return;
         $bid = $this->getActiveBid();
         $this->paid = $this->sheba_collection + $this->partner_collection;
         $this->due = $bid ? $bid->price - $this->paid : 0;
