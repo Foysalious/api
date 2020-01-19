@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\City;
 use App\Models\Location;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -259,7 +260,6 @@ class SchemaController extends Controller
                 return api_response($request, true, 420);
             }*/
             $services = $category->publishedServices()->select('id', 'name', 'thumb');
-            $has_offer_catalog = [];
             $item_list_elements = [];
             $popular_service = [];
             foreach ($services->limit(4)->get() as $service) {
@@ -294,13 +294,13 @@ class SchemaController extends Controller
                 "itemListElement" => $other_service
             ];
             array_push($item_list_elements, $popular_item_element, $other_item_element);
-            array_push($has_offer_catalog, [
-                "@type" => "OfferCatalog",
-                "name" => $category->name,
-                "itemListElement" => $item_list_elements
-            ]);
 
-            #$selected_cities = $category->locations()->pluck('id', 'city_id')->toArray();
+            $selected_city_ids = $category->locations()->pluck('city_id')->unique()->toArray();
+            $cities = City::wherein('id', $selected_city_ids)->select('id', 'name')->get();
+            $selected_city_names = [];
+            foreach ($cities as $city) {
+                $selected_city_names [] = $city->name;
+            }
 
             $final_category = [
                 "@context" => "http://schema.org/",
@@ -311,15 +311,19 @@ class SchemaController extends Controller
                     "@type" => "LocalBusiness",
                     "name" => "Sheba.xyz",
                     "address" => "113/A Gulshan 2, Dhaka",
-                    "priceRange" => "BDT 200 to BDT 1000",
-                    "telephone" => "09678-016516",
-                    "image" => "https://www.sheba.xyz/service-image-link.png"
+                    "priceRange" => "৳৳৳",
+                    "telephone" => "+8809678016516",
+                    "image" => "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/images/sheba_logo_blue.png"
                 ],
                 "areaServed" => [
                     "@type" => "State",
-                    "name" => "Dhaka, Chittagong"
+                    "name" => implode(', ',$selected_city_names)
                 ],
-                "hasOfferCatalog" => $has_offer_catalog
+                "hasOfferCatalog" => [
+                    "@type" => "OfferCatalog",
+                    "name" => $category->name,
+                    "itemListElement" => $item_list_elements
+                ]
             ];
             return api_response($request, true, 200, ['category' => $final_category]);
         } catch (ValidationException $e) {
