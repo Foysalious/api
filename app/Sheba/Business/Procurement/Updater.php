@@ -2,8 +2,8 @@
 
 use App\Models\Procurement;
 use Illuminate\Database\QueryException;
+use Sheba\Business\Procurement\OrderClosedHandler;
 use Sheba\Business\ProcurementStatusChangeLog\Creator;
-use Sheba\FraudDetection\TransactionSources;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Sheba\Business\ProcurementPayment\Creator as PaymentCreator;
@@ -20,15 +20,17 @@ class Updater
     private $paymentCreator;
     private $shebaCollection;
     private $data;
+    private $procurementOrderCloseHandler;
 
 
-    public function __construct(ProcurementRepositoryInterface $procurement_repository, Creator $creator, WalletTransactionHandler $wallet_transaction_handler, PaymentCreator $payment_creator)
+    public function __construct(ProcurementRepositoryInterface $procurement_repository, OrderClosedHandler $procurement_order_close_handler, Creator $creator, WalletTransactionHandler $wallet_transaction_handler, PaymentCreator $payment_creator)
     {
         $this->procurementRepository = $procurement_repository;
         $this->statusLogCreator = $creator;
         $this->walletTransactionHandler = $wallet_transaction_handler;
         $this->paymentCreator = $payment_creator;
         $this->data = [];
+        $this->procurementOrderCloseHandler = $procurement_order_close_handler;
     }
 
     public function setProcurement(Procurement $procurement)
@@ -58,16 +60,7 @@ class Updater
                 $this->statusLogCreator->setProcurement($this->procurement)->setPreviousStatus($previous_status)->setStatus($this->status)->create();
                 $this->procurement->calculate();
                 if ($this->status == 'served') {
-                    $partner = $this->procurement->getActiveBid()->bidder;
-                    $price = $this->procurement->totalPrice;
-                    $price_after_commission = $price - (($price * $partner->commission) / 100);
-                    if ($price_after_commission > 0 && $this->procurement->due == 0) {
-                        $this->walletTransactionHandler->setModel($partner)->setAmount($price_after_commission)
-                            ->setSource(TransactionSources::SERVICE_PURCHASE)
-                            ->setType('credit')->setLog("Credited for RFQ ID:" . $this->procurement->id)->dispatch();
-                        $this->paymentCreator->setProcurement($this->procurement)->setAmount($price_after_commission)->setPaymentMethod('cod')
-                            ->setPaymentType('Credit')->create();
-                    }
+                    $this->procurementOrderCloseHandler->setProcurement($this->procurement->fresh())->run();
                     $this->notify();
                 }
             });
