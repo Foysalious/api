@@ -1,6 +1,5 @@
 <?php namespace App\Http\Route\Prefix\V1;
 
-
 class Route
 {
     public function set($api)
@@ -48,6 +47,7 @@ class Route
             $api->get('images', 'ShebaController@getImages');
             $api->get('sliders', 'SliderController@index');
             $api->get('locations', 'LocationController@getAllLocations');
+            $api->get('divisions-with-districts', 'LocationController@getDivisionsWithDistrictsAndThana');
             $api->get('lead-reward', 'ShebaController@getLeadRewardAmount');
             $api->get('search', 'SearchController@searchService');
             $api->get('career', 'CareerController@getVacantPosts');

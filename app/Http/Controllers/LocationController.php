@@ -1,15 +1,20 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Models\City;
+use App\Models\Division;
 use App\Models\HyperLocal;
 use App\Models\Location;
 use App\Models\Partner;
+use App\Transformers\CustomSerializer;
+use App\Transformers\DivisionsWithDistrictsTransformer;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Item;
 use Sheba\Events\OutOfZoneEvent;
 use Sheba\Location\Geo;
+use stdClass;
+use Throwable;
 
 class LocationController extends Controller
 {
@@ -35,7 +40,7 @@ class LocationController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -56,7 +61,7 @@ class LocationController extends Controller
                 array_forget($location, 'geo_informations');
             });
             return response()->json(['locations' => $locations, 'code' => 200, 'msg' => 'successful']);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -89,7 +94,7 @@ class LocationController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -119,7 +124,7 @@ class LocationController extends Controller
     {
         try {
             $this->validate($request, ['lat' => 'required|numeric', 'lng' => 'required|numeric', 'radius' => 'required|numeric']);
-            $geo_info = new \stdClass();
+            $geo_info = new stdClass();
             $geo_info->lat = $request->lat;
             $geo_info->lng = $request->lng;
             $geo_info->radius = $request->radius;
@@ -183,5 +188,21 @@ class LocationController extends Controller
             }
         }
         return $final_services;
+    }
+
+    public function getDivisionsWithDistrictsAndThana()
+    {
+        try {
+            $divisions = Division::with('districts.thanas')->get();
+            $manager = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+            $resource = new Item($divisions, new DivisionsWithDistrictsTransformer());
+            $formatted_data = $manager->createData($resource)->toArray()['data'];
+            return api_response(null, $formatted_data, 200, ['divisions' => $formatted_data]);
+        } catch (Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response(null, null, 500);
+        }
     }
 }

@@ -552,6 +552,7 @@ class PartnerController extends Controller
                 return api_response($request, null, 404);
             }
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -560,12 +561,12 @@ class PartnerController extends Controller
     public function getNotification($partner,$notification, Request $request)
     {
         try {
-            list($offset, $limit) = calculatePagination($request);
-            $unseen_notifications = (new NotificationRepository())->getUnseenNotifications($request->partner,$notification,$offset, $limit);
-            $notification = (new NotificationRepository())->getManagerNotification($request->partner,$notification);
+            $notification = (new NotificationRepository())->getManagerNotification($notification);
+            $unseen_notifications = (new NotificationRepository())->getUnseenNotifications($request->partner,$notification);
             return api_response($request, $notification, 200, ['notification' => $notification,
                 'unseen_notifications' => $unseen_notifications]);
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
