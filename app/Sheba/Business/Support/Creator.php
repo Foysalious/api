@@ -69,7 +69,8 @@ class Creator
                 "event_type" => 'support',
                 "event_id" => $support->id,
                 "sound" => "notification_sound",
-                "channel_id" => $channel
+                "channel_id" => $channel,
+                "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel);
         }
 
