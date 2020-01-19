@@ -453,18 +453,18 @@ return [
         'WronglyCreateOrderTestOrder' => 'Wrongly Create Order/ Test Order',
         'ServiceChange'               => 'Service Change'
     ],
-    'NOTIFICATION_TYPES'                          => [
+    'NOTIFICATION_TYPES' => [
         'Info'    => 'Info',
         'Warning' => 'Warning',
         'Danger'  => 'Danger',
         'Success' => 'Success'
     ],
-    'NOTIFICATION_ICONS'                          => [
-        'Info'    => 'sheba_xyz/svg/notification/info.svg',
-        'Warning' => 'sheba_xyz/svg/notification/warning.svg',
-        'Danger'  => 'sheba_xyz/svg/notification/danger.svg',
-        'Success' => 'sheba_xyz/svg/notification/success.svg',
-        'Default' => 'sheba_xyz/svg/notification/default.svg'
+    'NOTIFICATION_ICONS' => [
+        'Info'    => 'sheba_xyz/png/notification/info.png',
+        'Warning' => 'sheba_xyz/png/notification/warning.png',
+        'Danger'  => 'sheba_xyz/png/notification/danger.png',
+        'Success' => 'sheba_xyz/png/notification/success.png',
+        'Default' => 'sheba_xyz/png/notification/default.png'
     ],
     'NOTIFICATION_DEFAULTS'                       => [
         'banner'            => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/partner_assets/assets/images/home_v3/slider-img3.jpg',
