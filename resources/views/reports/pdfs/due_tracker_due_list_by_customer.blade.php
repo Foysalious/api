@@ -114,30 +114,35 @@
 <div>
     <table style="width: 100%">
         <tr>
-            <td style="width: 50%">Deposit: {{ $stats["deposit"]}}TK</td>
-            <td style="width: 50%">Due: {{ $stats["due"]}}TK</td>
+            <td style="width: 50%">Name: {{ $customer["name"]}}</td>
+            <td style="width: 50%">Mobile Number: {{ $customer["mobile"]}}</td>
+        </tr>
+    </table>
+    <table style="width: 100%">
+        <tr>
+            <td>Total Due: {{ $stats["due"]}} TK</td>
         </tr>
     </table>
     <table class="table table-bordered">
         <thead>
         <tr class="table-head">
-            <th>name</th>
-            <th>mobile</th>
-            <th>Balance</th>
-            <th>type</th>
+            <th>Due</th>
+            <th>Cleared</th>
+            <th>Original</th>
             <th>Head</th>
-            <th>Transaction</th>
+            <th>transaction Type</th>
+            <th>Type</th>
         </tr>
         </thead>
         <tbody>
         @foreach($list as $item)
             <tr>
-                <td>{{$item['customer_name']}}</td>
-                <td>{{$item['customer_mobile']}}</td>
-                <td>{{number_format((float)$item['balance'],2)}} TK</td>
-                <td>{{$item['balance_type']}}</td>
+                <td>{{number_format((float)$item['amount'],2)}} TK</td>
+                <td>{{number_format((float)$item['amount_cleared'],2)}} TK</td>
+                <td>{{number_format((float)$item['original_amount'],2)}} TK</td>
                 <td>{{$item['head']}}</td>
                 <td>{{$item['transaction_type']}}</td>
+                <td>{{$item['type']}}</td>
             </tr>
         @endforeach
         </tbody>

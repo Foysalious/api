@@ -16,7 +16,6 @@ class DueTrackerController extends Controller
             if ($request->has('download_pdf')) return (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile('due_tracker_due_list')->download();
             return api_response($request, $data, 200, ['data' => $data]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -27,8 +26,10 @@ class DueTrackerController extends Controller
         try {
             $request->merge(['customer_id' => $customer_id]);
             $data = $dueTrackerRepository->setPartner($request->partner)->getDueListByProfile($request->partner, $request);
+            if ($request->has('download_pdf')) return (new PdfHandler())->setName("due tracker by customer")->setData($data)->setViewFile('due_tracker_due_list_by_customer')->download();
             return api_response($request, $data, 200, ['data' => $data]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
