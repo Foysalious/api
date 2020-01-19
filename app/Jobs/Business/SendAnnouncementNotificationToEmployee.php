@@ -43,7 +43,8 @@ class SendAnnouncementNotificationToEmployee extends Job implements ShouldQueue
                     "event_type" => 'announcement',
                     "event_id" => $this->announcement->id,
                     "sound" => "notification_sound",
-                    "channel_id" => $channel
+                    "channel_id" => $channel,
+                    "click_action" => "FLUTTER_NOTIFICATION_CLICK"
                 ], $topic, $channel);
             }
         }
