@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "da81118c5d894c9e7c4b64ca9f4763b5",
+    "content-hash": "0db8380a51ebced3380c1a7e6ac11e34",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -818,6 +818,7 @@
                 "laravel",
                 "react"
             ],
+            "abandoned": true,
             "time": "2018-02-01T20:14:01+00:00"
         },
         {
@@ -2007,6 +2008,7 @@
                 "cron",
                 "schedule"
             ],
+            "abandoned": "dragonmantank/cron-expression",
             "time": "2017-01-23T04:29:33+00:00"
         },
         {
@@ -3100,7 +3102,7 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
-                "reference": "5d4bdd67b536bc1d42997c6f384ea9041b9c7c6a"
+                "reference": "4a147d99d116dca7885096e42f3170c4484966ad"
             },
             "require": {
                 "php": ">=5.4"
@@ -3127,7 +3129,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2020-01-06T06:10:16+00:00"
+            "time": "2020-01-19T07:29:34+00:00"
         },
         {
             "name": "sheba/notification",
@@ -5721,8 +5723,7 @@
         "ext-openssl": "^7.0",
         "ext-mcrypt": "^7.0",
         "ext-redis": "*",
-        "ext-mysql_xdevapi": "*",
-        "ext-intl": "*"
+        "ext-mysql_xdevapi": "*"
     },
     "platform-dev": []
 }

@@ -42,7 +42,8 @@
     "ext-openssl": "^7.0",
     "ext-mcrypt": "^7.0",
     "ext-redis": "*",
-    "ext-mysql_xdevapi": "*"
+    "ext-mysql_xdevapi": "*",
+    "ext-intl": "*"
   },
   "require-dev": {
     "fzaninotto/faker": "~1.4",
