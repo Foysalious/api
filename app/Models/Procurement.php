@@ -58,6 +58,7 @@ class Procurement extends Model implements PayableType
 
     public function calculate()
     {
+        if ($this->paid) return;
         $bid = $this->getActiveBid();
         $this->paid = $this->sheba_collection + $this->partner_collection;
         $this->due = $bid ? $bid->price - $this->paid : 0;
@@ -77,5 +78,10 @@ class Procurement extends Model implements PayableType
     public function hasAccepted()
     {
         return $this->status == config('b2b.PROCUREMENT_STATUS')['accepted'];
+    }
+
+    public function isServed()
+    {
+        return $this->status == config('b2b.PROCUREMENT_STATUS')['served'];
     }
 }
