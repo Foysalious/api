@@ -63,22 +63,28 @@ class NotificationController extends Controller
         if (!$business_member) return api_response($request, null, 401);
         $topic = config('sheba.push_notification_topic_name.employee') . (int)$business_member['member_id'];
         $channel = config('sheba.push_notification_channel_name.employee');
-        $pushNotificationHandler->send([
-            "title" => 'New support created',
-            "message" => "Test support",
-            "event_type" => 'support',
-            "event_id" => $request->support_id,
-            "sound" => "notification_sound",
-            "channel_id" => $channel
-        ], $topic, $channel);
-        $pushNotificationHandler->send([
-            "title" => 'New announcement arrived',
-            "message" => "Test announcement",
-            "event_type" => 'announcement',
-            "event_id" => $request->announcement_id,
-            "sound" => "notification_sound",
-            "channel_id" => $channel
-        ], $topic, $channel);
+        if ($request->has('support_id')) {
+            $pushNotificationHandler->send([
+                "title" => 'New support created',
+                "message" => "Test support",
+                "event_type" => 'support',
+                "event_id" => $request->support_id,
+                "sound" => "notification_sound",
+                "channel_id" => $channel,
+                "click_action" => "FLUTTER_NOTIFICATION_CLICK"
+            ], $topic, $channel);
+        }
+        if ($request->has('announcement_id')) {
+            $pushNotificationHandler->send([
+                "title" => 'New announcement arrived',
+                "message" => "Test announcement",
+                "event_type" => 'announcement',
+                "event_id" => $request->announcement_id,
+                "sound" => "notification_sound",
+                "channel_id" => $channel,
+                "click_action" => "FLUTTER_NOTIFICATION_CLICK"
+            ], $topic, $channel);
+        }
         return api_response($request, null, 200);
     }
 }
