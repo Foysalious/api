@@ -24,6 +24,9 @@ class AttendanceAction
     private $attendanceCreator;
     private $attendanceActionLogCreator;
     private $action;
+    private $note;
+    private $deviceId;
+    private $userAgent;
 
     public function __construct(EloquentImplementation $attendance_repository, AttendanceCreator $attendance_creator, AttendanceActionLogCreator $attendance_action_log_creator)
     {
@@ -46,12 +49,27 @@ class AttendanceAction
         return $this;
     }
 
+    public function setNote($note)
+    {
+        $this->note = $note;
+        return $this;
+    }
+
+    public function setDeviceId($device_id)
+    {
+        $this->deviceId = $device_id;
+        return $this;
+    }
+
     public function doAction()
     {
         if (!$this->canTakeThisAction()) return null;
         DB::transaction(function () {
             if (!$this->attendance) $this->createAttendance();
-            $attendance_action_log = $this->attendanceActionLogCreator->setAction($this->action)->setAttendance($this->attendance)->create();
+            $this->attendanceActionLogCreator->setAction($this->action)->setAttendance($this->attendance)->setIp(request()->ip())
+                ->setDeviceId($this->deviceId)->setUserAgent($this->userAgent);
+            if ($this->action == Actions::CHECKOUT) $this->attendanceActionLogCreator->setNote($this->note);
+            $attendance_action_log = $this->attendanceActionLogCreator->create();
             $this->updateAttendance($attendance_action_log);
         });
         return true;
@@ -79,7 +97,10 @@ class AttendanceAction
     private function updateAttendance(AttendanceActionLog $model)
     {
         $this->attendance->status = $model->status;
-        if ($this->action == Actions::CHECKOUT) $this->attendance->checkout_time = $model->created_at->format('H:i:s');
+        if ($this->action == Actions::CHECKOUT) {
+            $this->attendance->checkout_time = $model->created_at->format('H:i:s');
+            $this->attendance->staying_time_in_minutes = $model->created_at->diffInMinutes($this->attendance->checkin_time);
+        }
         $this->attendance->update();
     }
 

@@ -76,13 +76,13 @@ class AttendanceController extends Controller
 
     public function takeAction(Request $request, EloquentImplementation $attendance_repository, AttendanceAction $attendance_action)
     {
-        $this->validate($request, ['action' => 'required|string|in:' . implode(',', Actions::get())]);
+        $this->validate($request, ['action' => 'required|string|in:' . implode(',', Actions::get()), 'note' => 'string']);
         $auth_info = $request->auth_info;
         $business_member = $auth_info['business_member'];
         /** @var BusinessMember $business_member */
         $business_member = BusinessMember::find($business_member['id']);
         $this->setModifier($business_member->member);
-        $attendance_action->setBusinessMember($business_member)->setAction($request->action);
+        $attendance_action->setBusinessMember($business_member)->setAction($request->action)->setNote($request->note);
         if (!$attendance_action->canTakeThisAction()) return api_response($request, null, 403);
         $action = $attendance_action->doAction();
         if ($action) return api_response($request, $action, 200);
