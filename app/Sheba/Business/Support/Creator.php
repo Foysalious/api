@@ -3,6 +3,7 @@
 
 use App\Models\Member;
 use Sheba\Dal\Support\SupportRepositoryInterface;
+use Sheba\PushNotificationHandler;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use DB;
 use Sheba\Dal\Support\Model as Support;
@@ -13,11 +14,13 @@ class Creator
     private $businessMemberRepository;
     private $member;
     private $description;
+    private $pushNotification;
 
     public function __construct(SupportRepositoryInterface $support_repository, BusinessMemberRepositoryInterface $business_member_repository)
     {
         $this->supportRepository = $support_repository;
         $this->businessMemberRepository = $business_member_repository;
+        $this->pushNotification = new PushNotificationHandler();
     }
 
     public function setMember(Member $member)
@@ -50,13 +53,25 @@ class Creator
         $super_admins = $this->businessMemberRepository->where('is_super', 1)
             ->where('business_id', $this->member->businesses()->first()->id)->get();
         foreach ($super_admins as $super_admin) {
+            $title = $this->member->profile->name . ' #' . $this->member->id . ' has created a Support Ticket';
             notify()->member($super_admin->member)->send([
-                'title' => $this->member->profile->name . ' #' . $this->member->id . ' has created a Support Ticket',
+                'title' => $title,
                 'type' => 'warning',
                 'event_type' => 'Sheba\Dal\Support\Model',
                 'event_id' => $support->id,
                 'link' => config('sheba.business_url') . '/dashboard/support/' . $support->id
             ]);
+            $topic = config('sheba.push_notification_topic_name.employee') . $super_admin->member->id;
+            $channel = config('sheba.push_notification_channel_name.employee');
+            $this->pushNotification->send([
+                "title" => 'New support created',
+                "message" => $title,
+                "event_type" => 'support',
+                "event_id" => $support->id,
+                "sound" => "notification_sound",
+                "channel_id" => $channel,
+                "click_action" => "FLUTTER_NOTIFICATION_CLICK"
+            ], $topic, $channel);
         }
 
     }

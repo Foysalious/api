@@ -187,7 +187,7 @@ class Creator
     public function setLabels($labels)
     {
         $this->labels = $labels;
-        $this->labels = explode(', ', $this->labels);
+        $this->labels = $this->labels ? explode(', ', $this->labels) : [];
         return $this;
     }
 

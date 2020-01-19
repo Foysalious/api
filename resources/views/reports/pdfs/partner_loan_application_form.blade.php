@@ -94,7 +94,7 @@
                     <table>
                         <tr>
                             <td style="align-items: center;">
-                                <img class="sheba-logo" src="{{ assetLink('/assets/images/logo_35_135.jpg') }}" alt="">
+                                <img class="sheba-logo" src="{{ getCDNAssetsFolder() . 'partner_assets/assets/images/logo_35_135.jpg' }}" alt="">
                                 <span style="padding-bottom: 10px"> | </span>  <img class="bank-logo" src="{{ $bank['logo'] }}" alt="">
                             </td>
                         </tr>

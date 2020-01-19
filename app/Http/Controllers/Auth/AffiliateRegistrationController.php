@@ -40,12 +40,14 @@ class AffiliateRegistrationController extends Controller
         $this->sms = new Sms();
     }
 
+
     /**
      * @param Request $request
      * @param Creator $creator
+     * @param ProfileRepository $profile_repo
      * @return JsonResponse
      */
-    public function registerByProfile(Request $request, Creator $creator)
+    public function registerByProfile(Request $request, Creator $creator, ProfileRepository $profile_repo)
     {
         try {
             $this->validate($request, []);
@@ -53,8 +55,12 @@ class AffiliateRegistrationController extends Controller
             if ($profile->affiliate)
                 return api_response($request, null, 409);
 
-            $creator->setProfile($profile)->create();
-            return api_response($request, null, 200);
+            $data = $this->getUpdatableData($request);
+            $profile_repo->update($profile, $data);
+            $geoLocation = $this->getGeoLocation($request);
+            $creator->setGeolocation($geoLocation)->setProfile($profile)->create();
+            $video_link = config('constants.AFFILIATE_VIDEO_LINK');
+            return api_response($request, null,200,['video_link' => $video_link]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
@@ -65,5 +71,33 @@ class AffiliateRegistrationController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    /**
+     * @param $request
+     * @return array
+     */
+    private function getUpdatableData($request)
+    {
+        $data = [];
+        if($request->has('name')) $data['name'] = $request->name;
+        if($request->has('address')) $data['address'] = $request->address;
+        if($request->has('gender')) $data['gender'] = $request->gender;
+        return $data;
+    }
+
+    /**
+     * @param $request
+     * @return string|null
+     */
+    private function getGeoLocation($request)
+    {
+        $location = null;
+        if($request->has('lat') && $request->has('lon')){
+            $lat = $request->lat;
+            $lon = $request->lon;
+            $location = "{'lat':$lat,'lng':$lon}";
+        }
+        return $location;
     }
 }

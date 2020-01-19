@@ -36,9 +36,10 @@ class ProcurementController extends Controller
                 'procurement_start_date' => 'required|date_format:Y-m-d',
                 'procurement_end_date' => 'required|date_format:Y-m-d',
                 'payment_options' => 'required|string',
-                'type' => 'required|string:in:basic,advanced,product,service',
-                'items' => 'sometimes|string',
-                'is_published' => 'sometimes|integer',
+                'type' => 'required|string:in:basic,advanced',
+                'items' => 'sometimes|required|string',
+                'description' => 'sometimes|required|string',
+                'is_published' => 'sometimes|required|integer',
                 'attachments.*' => 'file'
             ]);
             if (!$access_control->setBusinessMember($request->business_member)->hasAccess('procurement.rw'))

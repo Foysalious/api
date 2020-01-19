@@ -128,6 +128,7 @@ class CoWorkerController extends Controller
                     'pro_pic' => $profile->pro_pic,
                     'mobile' => $profile->mobile,
                     'email' => $profile->email,
+                    'department_id' => $role ? $role->businessDepartment->id : null,
                     'department' => $role ? $role->businessDepartment->name : null,
                     'designation' => $role ? $role->name : null
                 ];
@@ -155,6 +156,7 @@ class CoWorkerController extends Controller
                 'pro_pic' => $profile->pro_pic,
                 'dob' => Carbon::parse($profile->dob)->format('M j, Y'),
                 'designation' => $member->businessMember->role ? $member->businessMember->role->name : null,
+                'department' => $member->businessMember->role->businessDepartment ? $member->businessMember->role->businessDepartment->name : null,
             ];
 
             if (count($employee) > 0) return api_response($request, $employee, 200, ['employee' => $employee]);

@@ -47,6 +47,7 @@ class Route
             $api->get('images', 'ShebaController@getImages');
             $api->get('sliders', 'SliderController@index');
             $api->get('locations', 'LocationController@getAllLocations');
+            $api->get('divisions-with-districts', 'LocationController@getDivisionsWithDistrictsAndThana');
             $api->get('lead-reward', 'ShebaController@getLeadRewardAmount');
             $api->get('search', 'SearchController@searchService');
             $api->get('career', 'CareerController@getVacantPosts');
@@ -187,6 +188,7 @@ class Route
                 $api->get('reviews', 'PartnerController@getReviewInfo');
                 $api->get('info', 'PartnerController@getInfo');
                 $api->get('notifications', 'PartnerController@getNotifications');
+                $api->get('notifications/{notification}', 'PartnerController@getNotification');
 
                 $api->group(['prefix' => 'withdrawals'], function ($api) {
                     $api->get('/', 'PartnerWithdrawalRequestController@index');
