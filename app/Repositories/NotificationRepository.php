@@ -192,15 +192,12 @@ class NotificationRepository
     private function getNotificationIcon($event_id, $type)
     {
         $offer = OfferShowcase::query()->where('id', $event_id)->first();
-        if ($offer && $offer->thumb != '')
-            return $offer->thumb;
-        if(in_array(config('constants.NOTIFICATION_ICONS.' . $type), config('constants.NOTIFICATION_ICONS')))
-            return getCDNAssetsFolder() . config('constants.NOTIFICATION_ICONS.' . $type);
+        if ($offer && $offer->thumb != '') return $offer->thumb;
+        if (in_array(config('constants.NOTIFICATION_ICONS.' . $type), config('constants.NOTIFICATION_ICONS'))) return getCDNAssetsFolder() . config('constants.NOTIFICATION_ICONS.' . $type);
         return getCDNAssetsFolder() . config('constants.NOTIFICATION_ICONS.Default');
     }
 
     /**
-     * @param $model
      * @param $notification_id
      * @return array
      */

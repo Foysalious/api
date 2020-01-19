@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "cde5dd8fa49396c20c1b5294bc20ade4",
+    "content-hash": "0db8380a51ebced3380c1a7e6ac11e34",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -3101,7 +3101,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://mac_pasha@bitbucket.org/startern/sheba_dal.git",
+                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
                 "reference": "4a147d99d116dca7885096e42f3170c4484966ad"
             },
             "require": {
@@ -5723,8 +5723,7 @@
         "ext-openssl": "^7.0",
         "ext-mcrypt": "^7.0",
         "ext-redis": "*",
-        "ext-mysql_xdevapi": "*",
-        "ext-intl": "*"
+        "ext-mysql_xdevapi": "*"
     },
     "platform-dev": []
 }
