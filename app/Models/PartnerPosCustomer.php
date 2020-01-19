@@ -35,4 +35,8 @@ class PartnerPosCustomer extends Model
             'note' => $this->note
         ];
     }
+    public function scopeDueDateReminder($query,$partner_id,$customer_id){
+        return $query->where('partner_id', $partner_id)->where('customer_id',$customer_id)->pluck('due_date_reminder');
+
+    }
 }
