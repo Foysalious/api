@@ -2007,6 +2007,7 @@
                 "cron",
                 "schedule"
             ],
+            "abandoned": "dragonmantank/cron-expression",
             "time": "2017-01-23T04:29:33+00:00"
         },
         {
@@ -3099,8 +3100,8 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://mac_pasha@bitbucket.org/startern/sheba_dal.git",
-                "reference": "5d0d6c83b3c715a0603438dc58628d9144c7ae7b"
+                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
+                "reference": "8993e7569d18c25835dad3dc56d461b7b8f4398d"
             },
             "require": {
                 "php": ">=5.4"
@@ -3127,7 +3128,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2020-01-15T05:59:41+00:00"
+            "time": "2020-01-16T04:44:48+00:00"
         },
         {
             "name": "sheba/notification",

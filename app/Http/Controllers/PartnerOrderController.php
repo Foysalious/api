@@ -91,7 +91,9 @@ class PartnerOrderController extends Controller
                             }]);
                         }]);
                 }]);
-                $order_request_count = PartnerOrderRequest::openRequest()->where('partner_id', $partner->id)->count();
+                $order_request_count = PartnerOrderRequest::openRequest()->whereDoesntHave('partnerOrder', function ($q) {
+                    $q->cancelled();
+                })->where('partner_id', $partner->id)->count();
                 $total_new_orders = $partner->jobs->pluck('partnerOrder')->unique()->pluck('order')
                         ->groupBy('subscription_order_id')
                         ->map(function ($order, $key) {

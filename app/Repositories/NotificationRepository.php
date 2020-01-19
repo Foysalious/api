@@ -194,7 +194,9 @@ class NotificationRepository
         $offer = OfferShowcase::query()->where('id', $event_id)->first();
         if ($offer && $offer->thumb != '')
             return $offer->thumb;
-        return getCDNAssetsFolder() . config('constants.NOTIFICATION_ICONS.' . $type);
+        if(in_array(config('constants.NOTIFICATION_ICONS.' . $type), config('constants.NOTIFICATION_ICONS')))
+            return getCDNAssetsFolder() . config('constants.NOTIFICATION_ICONS.' . $type);
+        return getCDNAssetsFolder() . config('constants.NOTIFICATION_ICONS.Default');
     }
 
     /**
@@ -213,10 +215,10 @@ class NotificationRepository
             if ($event) {
                 $offer = $event::find($notification->event_id);
                 return [
-                    'banner' => $offer->banner ? $offer->banner : config('constants.NOTIFICATION_DEFAULTS.banner'),
-                    'title' => $notification->title ? $notification->title : config('constants.NOTIFICATION_DEFAULTS.title'),
+                    'banner' => $offer->app_banner ? $offer->app_banner : config('constants.NOTIFICATION_DEFAULTS.banner'),
+                    'title' => $offer->title ? $offer->title : config('constants.NOTIFICATION_DEFAULTS.title'),
                     'type' => $notification->type ? $notification->type : config('constants.NOTIFICATION_DEFAULTS.type'),
-                    'description' => $offer->short_description ? $offer->short_description : config('constants.NOTIFICATION_DEFAULTS.short_description'),
+                    'description' => $offer->detail_description ? strip_tags($offer->detail_description): config('constants.NOTIFICATION_DEFAULTS.short_description'),
                     'button_text' => $offer->button_text ? $offer->button_text : config('constants.NOTIFICATION_DEFAULTS.button_text'),
                     "target_link" => $offer->target_link ? $offer->target_link : config('constants.NOTIFICATION_DEFAULTS.target_link'),
                     "target_type" => $offer->target_type ? str_replace('App\Models\\', "", $offer->target_type) : 'dummy target type',
