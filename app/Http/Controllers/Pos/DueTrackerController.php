@@ -4,9 +4,8 @@ use App\Http\Controllers\Controller;
 use App\Models\PartnerPosCustomer;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 use Sheba\DueTracker\DueTrackerRepository;
-use Sheba\Pos\Repositories\PartnerPosCustomerRepository;
+use Sheba\Reports\PdfHandler;
 
 class DueTrackerController extends Controller
 {
@@ -14,8 +13,10 @@ class DueTrackerController extends Controller
     {
         try {
             $data = $dueTrackerRepository->setPartner($request->partner)->getDueList($request);
+            if ($request->has('download_pdf')) return (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile('due_tracker_due_list')->download();
             return api_response($request, $data, 200, ['data' => $data]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -37,7 +38,8 @@ class DueTrackerController extends Controller
     {
         try {
             $request->merge(['customer_id' => $customer_id]);
-            $response = $dueTrackerRepository->setPartner($request->partner)->store($request);
+            $response = $dueTrackerRepository->setPartner($request->partner)->store($request->partner, $request);
+            return api_response($request, $response, 200, ['data' => $response]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -93,7 +95,6 @@ class DueTrackerController extends Controller
             }
             return api_response($request, null, 200, ['data' => $response]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
