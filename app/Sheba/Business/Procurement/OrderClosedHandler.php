@@ -27,6 +27,7 @@ class OrderClosedHandler
 
     public function run()
     {
+        if (!$this->procurement->isServed()) return;
         $this->procurement->calculate();
         /** @var Partner $partner */
         $partner = $this->procurement->getActiveBid()->bidder;

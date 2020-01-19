@@ -78,4 +78,9 @@ class Procurement extends Model implements PayableType
     {
         return $this->status == config('b2b.PROCUREMENT_STATUS')['accepted'];
     }
+
+    public function isServed()
+    {
+        return $this->status == config('b2b.PROCUREMENT_STATUS')['served'];
+    }
 }
