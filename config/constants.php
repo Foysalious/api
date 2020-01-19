@@ -1,5 +1,6 @@
 <?php
 return [
+    'PARTNER_SHOWABLE_PACKAGE' => [1, 2, 3, 4],
     'AFFILIATE_VIDEO_LINK'                        => '',
     'STARTING_YEAR'                               => '2017',
     'HOTLINE'                                     => '09639 - 444 000',

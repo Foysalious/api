@@ -368,6 +368,7 @@ class PartnerSubscriptionController extends Controller
         $featured_package_id = config('partner.subscription_featured_package_id');
         $partner_subscription_packages = PartnerSubscriptionPackage::validDiscounts()
             ->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'rules', 'usps', 'badge', 'features')
+            ->whereIn('id', constants('PARTNER_SHOWABLE_PACKAGE'))
             ->get();
 
         foreach ($partner_subscription_packages as $package) {
