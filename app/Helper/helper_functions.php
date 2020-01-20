@@ -793,37 +793,30 @@ if (!function_exists('getMonthName')) {
         return getMonthsName($format)[$month_no - 1];
     }
 }
-
-if (!function_exists('getMonthsName')) {
+if (!function_exists('getPrettifyTimeDifference')) {
     /**
      * Return months array.
-     *
-     * @param string $format
-     * @return array
+     * @param Carbon $deferrable_timer
+     * @param string $language
+     * @return int
      */
-    function getMonthsName($format = "m")
+    function getTimeDifference(Carbon $deferrable_timer, $language = 'en')
     {
-        if ($format == "m") {
-            return ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-        } elseif ($format == "M") {
-            return ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-        }
+        $diff_in_seconds = Carbon::now()->diffInSeconds($deferrable_timer);
+        $diff_in_minutes = Carbon::now()->diffInMinutes($deferrable_timer);
+        $diff_in_hours = Carbon::now()->diffInHours($deferrable_timer);
+        $diff_in_days = Carbon::now()->diffInDays($deferrable_timer);
+        $is_in_english = $language == 'en';
+
+        if ($diff_in_seconds < 60)
+            return $is_in_english ? $diff_in_seconds . ' Second' : en2bnNumber($diff_in_seconds) . ' সেকেন্ড';
+
+        if ($diff_in_minutes < 60)
+            return $is_in_english ? $diff_in_minutes . ' Minute' : en2bnNumber($diff_in_minutes) . ' মিনিট';
+
+        if ($diff_in_hours < 24)
+            return $is_in_english ? $diff_in_hours . ' Hour' : en2bnNumber($diff_in_hours) . ' ঘন্টা';
+
+        return $is_in_english ? $diff_in_days . ' Day' : en2bnNumber($diff_in_days) . ' দিন';
     }
 }
-
-if (!function_exists('getMonthName')) {
-    /**
-     * Return months array.
-     *
-     * @param int $month_no
-     * @param string $format
-     * @return array
-     */
-    function getMonthName($month_no, $format = "m")
-    {
-        return getMonthsName($format)[$month_no - 1];
-    }
-}
-
-
-

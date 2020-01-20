@@ -1,6 +1,8 @@
 <?php namespace Sheba\PartnerOrderRequest;
 
 use App\Models\Job;
+use App\Models\PartnerOrder;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequest;
@@ -34,18 +36,28 @@ class StatusChanger
 
     public function accept(Request $request)
     {
-        if ($this->partnerOrderRequest->isNotAcceptable()) {
-            $this->setError(403, $this->partnerOrderRequest->status . " is not acceptable.");
-            return;
-        }
+        $order_request_missed_msg = '';
+        /** @var PartnerOrder $partner_order */
         $partner_order = $this->partnerOrderRequest->partnerOrder;
-        /** @var Job $job */
-        $job = $partner_order->lastJob();
-        if ($this->repo->hasAnyAcceptedRequest($partner_order)) {
-            $this->setError(403, "Someone already did it.");
+
+        $accepted_request = $this->repo->getAcceptedRequest($partner_order);
+        if ($accepted_request)
+            $order_request_missed_msg = getTimeDifference($accepted_request->updated_at) . " আগে অন্য সার্ভিস প্রোভাইডার অর্ডারটি একসেপ্ট করেছেন। পরের অর্ডারটি পেতে আরও সক্রিয় থাকুন।";
+
+        if ($this->partnerOrderRequest->isNotAcceptable()) {
+            $msg = !empty($order_request_missed_msg) ? $order_request_missed_msg : $this->partnerOrderRequest->status . " is not acceptable.";
+            $this->setError(403, $msg);
             return;
         }
 
+        if ($this->repo->hasAnyAcceptedRequest($partner_order)) {
+            $msg = !empty($order_request_missed_msg) ? $order_request_missed_msg : "Someone already did it.";
+            $this->setError(403, $msg);
+            return;
+        }
+
+        /** @var Job $job */
+        $job = $partner_order->lastJob();
         $request->merge(['job' => $job]);
         $this->jobStatusChanger->checkForError($request);
         if ($this->jobStatusChanger->hasError()) {
