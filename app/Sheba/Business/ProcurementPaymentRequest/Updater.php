@@ -28,12 +28,13 @@ class Updater
     private $paymentCreator;
     private $data;
     private $walletTransactionHandler;
+    /** @var OrderClosedHandler  */
     private $orderClosedHandler;
 
 
     public function __construct(ProcurementPaymentRequestRepositoryInterface $procurement_payment_request_repository,
                                 Creator $creator, PaymentCreator $payment_creator, ProcurementRepositoryInterface $procurement_repository,
-                                WalletTransactionHandler $wallet_transaction_handler, OrderClosedHandler $order_closed_handler)
+                                WalletTransactionHandler $wallet_transaction_handler,OrderClosedHandler $order_closed_handler)
     {
         $this->procurementPaymentRequestRepository = $procurement_payment_request_repository;
         $this->procurementRepository = $procurement_repository;

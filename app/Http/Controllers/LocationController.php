@@ -200,7 +200,7 @@ class LocationController extends Controller
             $formatted_data = $manager->createData($resource)->toArray()['data'];
             return api_response(null, $formatted_data, 200, ['divisions' => $formatted_data]);
         } catch (Throwable $e) {
-            dd($e);
+
             app('sentry')->captureException($e);
             return api_response(null, null, 500);
         }

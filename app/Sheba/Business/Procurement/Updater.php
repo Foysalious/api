@@ -1,6 +1,7 @@
 <?php namespace App\Sheba\Business\Procurement;
 
 use App\Models\Procurement;
+use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Sheba\Business\Procurement\OrderClosedHandler;
 use Sheba\Business\ProcurementStatusChangeLog\Creator;
@@ -71,6 +72,7 @@ class Updater
                 $this->statusLogCreator->setProcurement($this->procurement)->setPreviousStatus($previous_status)->setStatus($this->status)->create();
                 $this->procurement->calculate();
                 if ($this->status == 'served') {
+                    $this->procurementRepository->update($this->procurement, ['closed_at' => Carbon::now()]);
                     $this->procurementOrderCloseHandler->setProcurement($this->procurement->fresh())->run();
                     $this->notify();
                 }

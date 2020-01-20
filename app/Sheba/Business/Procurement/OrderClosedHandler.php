@@ -3,10 +3,9 @@
 
 use App\Models\Partner;
 use App\Models\Procurement;
-use App\Sheba\Business\Procurement\Updater;
 use Carbon\Carbon;
-use Sheba\Dal\ProcurementPayment\ProcurementPaymentRepositoryInterface;
 use Sheba\FraudDetection\TransactionSources;
+use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class OrderClosedHandler
@@ -15,13 +14,13 @@ class OrderClosedHandler
     private $procurement;
     /** @var WalletTransactionHandler */
     private $walletTransactionHandler;
+    /** @var ProcurementRepositoryInterface */
+    private $procurementRepository;
 
-    private $procurementUpdater;
-
-    public function __construct(WalletTransactionHandler $wallet_transaction_handler, Updater $procurement_updater)
+    public function __construct(WalletTransactionHandler $wallet_transaction_handler, ProcurementRepositoryInterface $procurement_repository)
     {
         $this->walletTransactionHandler = $wallet_transaction_handler;
-        $this->procurementUpdater = $procurement_updater;
+        $this->procurementRepository = $procurement_repository;
     }
 
 
@@ -40,7 +39,7 @@ class OrderClosedHandler
         $partner = $this->procurement->getActiveBid()->bidder;
         $price = $this->procurement->totalPrice;
         $price_after_commission = $price - (($price * $partner->commission) / 100);
-        $this->procurementUpdater->setProcurement($this->procurement)->setClosedAndPaidAt(Carbon::now())->update();
+        $this->procurementRepository->update($this->procurement, ['closed_and_paid_at' => Carbon::now()]);
         if ($price_after_commission > 0) {
             $this->walletTransactionHandler->setModel($partner)->setAmount($price_after_commission)
                 ->setSource(TransactionSources::SERVICE_PURCHASE)
