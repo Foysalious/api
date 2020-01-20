@@ -34,8 +34,7 @@ class Handler extends ExceptionHandler
      * @return void
      */
     public function report(Exception $e)
-    {
-        dd($e);
+    {;
         if (app()->bound('sentry') && $this->shouldReport($e)) {
             app('sentry')->captureException($e);
         }

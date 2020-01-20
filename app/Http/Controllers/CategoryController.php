@@ -419,15 +419,15 @@ class CategoryController extends Controller
                 }
 
                 $subscriptions = collect();
-
-                foreach ($services as $service) {
+                $final_services = collect();
+                foreach ($services as $key => $service) {
                     /** @var LocationService $location_service */
                     $location_service = $service->locationServices->first();
 
                     /** @var ServiceDiscount $discount */
                     $discount = $location_service->discounts()->running()->first();
-
                     $prices = json_decode($location_service->prices);
+                    if (!$prices) continue;
                     $price_calculation->setService($service)->setLocationService($location_service);
                     $upsell_calculation->setService($service)->setLocationService($location_service);
 
@@ -471,8 +471,9 @@ class CategoryController extends Controller
                         $subscriptions->push($subscription);
                     }
                     removeRelationsAndFields($service);
+                    $final_services->push($service);
                 }
-
+                $services = $final_services;
                 if ($services->count() > 0) {
                     $category = collect($category)->only(['name', 'slug', 'banner', 'parent_id', 'app_banner']);
                     $version_code = (int)$request->header('Version-Code');
