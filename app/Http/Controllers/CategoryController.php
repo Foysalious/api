@@ -475,6 +475,8 @@ class CategoryController extends Controller
                 }
                 $services = $final_services;
                 if ($services->count() > 0) {
+                    $parent_category = null;
+                    if ($category->parent_id != null)  $parent_category = $category->parent()->select('id', 'name', 'slug')->first();
                     $category = collect($category)->only(['name', 'slug', 'banner', 'parent_id', 'app_banner']);
                     $version_code = (int)$request->header('Version-Code');
                     $services = $this->serviceQuestionSet($services);
@@ -483,6 +485,9 @@ class CategoryController extends Controller
                             return $service->subscription;
                         })->values()->all();
                     }
+                    $category['parent_name'] = $parent_category ? $parent_category->name : null;
+                    $category['parent_slug'] = $parent_category ? $parent_category->slug : null;
+
                     $category['services'] = $services;
                     $category['subscriptions'] = $subscriptions;
                     $category['cross_sale'] = $cross_sale_service ? [
