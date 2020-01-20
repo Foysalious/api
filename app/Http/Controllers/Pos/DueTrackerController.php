@@ -5,6 +5,7 @@ use App\Models\PartnerPosCustomer;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\DueTracker\DueTrackerRepository;
+use Sheba\Pos\Repositories\PartnerPosCustomerRepository;
 use Sheba\Reports\PdfHandler;
 
 class DueTrackerController extends Controller
