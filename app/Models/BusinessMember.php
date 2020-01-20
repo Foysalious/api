@@ -15,9 +15,9 @@ class BusinessMember extends Model
         return $this->belongsTo(Member::class);
     }
 
-    public function businesses()
+    public function business()
     {
-        return $this->belongsToMany(Business::class);
+        return $this->belongsTo(Business::class);
     }
 
     public function actions()

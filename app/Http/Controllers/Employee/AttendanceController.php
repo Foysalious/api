@@ -82,7 +82,7 @@ class AttendanceController extends Controller
         /** @var BusinessMember $business_member */
         $business_member = BusinessMember::find($business_member['id']);
         $this->setModifier($business_member->member);
-        $attendance_action->setBusinessMember($business_member)->setAction($request->action)->setNote($request->note);
+        $attendance_action->setBusinessMember($business_member)->setAction($request->action)->setBusiness($business_member->business)->setNote($request->note);
         if (!$attendance_action->canTakeThisAction()) return api_response($request, null, 403);
         $action = $attendance_action->doAction();
         if ($action) return api_response($request, $action, 200);

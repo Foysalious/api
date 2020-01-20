@@ -1,5 +1,6 @@
 <?php namespace Sheba\Business\AttendanceActionLog\ActionChecker;
 
+use App\Models\Business;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Model as AttendanceActionLog;
 use Sheba\Location\Geo;
@@ -14,6 +15,18 @@ abstract class Action
     protected $deviceId;
     /** @var ActionError */
     protected $actionError;
+    /** @var Business */
+    protected $business;
+
+    /**
+     * @param Business $business
+     * @return Action
+     */
+    public function setBusiness($business)
+    {
+        $this->business = $business;
+        return $this;
+    }
 
     public function setGeo(Geo $geo)
     {
@@ -52,12 +65,17 @@ abstract class Action
 
     protected function checkIp()
     {
+//        $this->business->offices()->where
     }
 
     protected function checkDeviceId()
     {
 
     }
+
+    abstract public function getActionName();
+
+    abstract public function canTakeTheAction();
 
     /**
      * @return ActionError
@@ -67,8 +85,5 @@ abstract class Action
         return $this->actionError;
     }
 
-    abstract public function getActionName();
-
-    abstract public function canTakeTheAction();
 
 }

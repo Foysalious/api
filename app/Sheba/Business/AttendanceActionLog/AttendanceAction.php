@@ -1,6 +1,7 @@
 <?php namespace Sheba\Business\AttendanceActionLog;
 
 
+use App\Models\Business;
 use App\Models\BusinessMember;
 use Carbon\Carbon;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
@@ -16,6 +17,8 @@ class AttendanceAction
 {
     /** @var BusinessMember */
     private $businessMember;
+    /** @var Business */
+    private $business;
     /** @var Carbon */
     private $today;
     /** @var EloquentImplementation */
@@ -41,6 +44,12 @@ class AttendanceAction
     {
         $this->businessMember = $business_member;
         $this->setAttendance($this->businessMember->attendanceOfToday());
+        return $this;
+    }
+
+    public function setBusiness(Business $business)
+    {
+        $this->business = $business;
         return $this;
     }
 
