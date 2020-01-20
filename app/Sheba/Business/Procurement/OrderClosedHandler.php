@@ -21,7 +21,7 @@ class OrderClosedHandler
 
     public function setProcurement(Procurement $procurement)
     {
-        $this->procurement = $procurement;
+        $this->procurement = $procurement->fresh();
         return $this;
     }
 
