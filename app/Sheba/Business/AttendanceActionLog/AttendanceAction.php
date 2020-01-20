@@ -100,10 +100,12 @@ class AttendanceAction
     public function canTakeThisAction()
     {
         $processor = new ActionProcessor();
-        $processor->setActionName(Actions::CHECKIN);
-        $action = $processor->getAction();
+        $action = $processor->setActionName($this->action)->getAction();
         $action->setAttendance($this->attendance)->setIp($this->getIp())->setDeviceId($this->deviceId);
         if ($action->canTakeTheAction()) return 1;
+        else{
+
+        }
         return $action->getError();
     }
 

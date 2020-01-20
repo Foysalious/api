@@ -1,15 +1,28 @@
 <?php namespace Sheba\Business\AttendanceActionLog\ActionChecker;
 
 
+use Sheba\Dal\AttendanceActionLog\Actions;
+
 class CheckOut extends Action
 {
-
     public function canTakeTheAction()
     {
-        // TODO: Implement canTakeTheAction() method.
+        if (!$this->attendanceOfToday) return 1;
+        if (!$this->checkAlreadyHasActionForToday()) return 1;
     }
+
+
     public function getActionName()
     {
-        // TODO: Implement getActionName() method.
+        return Actions::CHECKOUT;
+    }
+
+    protected function checkAlreadyHasActionForToday()
+    {
+        if ($this->getAttendanceActionLog()) {
+            $this->actionError->setCode(ActionErrorCodes::ALREADY_CHECKED_OUT)->setMessage(ActionErrorCodeMessages::ALREADY_CHECKED_OUT);
+            return 0;
+        }
+        return 1;
     }
 }

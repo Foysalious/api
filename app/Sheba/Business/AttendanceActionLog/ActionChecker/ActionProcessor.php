@@ -10,6 +10,7 @@ class ActionProcessor
     public function setActionName($action)
     {
         $this->action = $this->getMethod($action);
+        return $this;
     }
 
     /**
