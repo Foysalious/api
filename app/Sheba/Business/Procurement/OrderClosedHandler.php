@@ -34,7 +34,7 @@ class OrderClosedHandler
     {
         if (!$this->procurement->isServed() || $this->procurement->isClosedAndPaid()) return;
         $this->procurement->calculate();
-        if ($this->procurement->due > 0) return;
+        if ($this->procurement->due != 0) return;
         /** @var Partner $partner */
         $partner = $this->procurement->getActiveBid()->bidder;
         $price = $this->procurement->totalPrice;
