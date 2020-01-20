@@ -477,7 +477,7 @@ class CategoryController extends Controller
                 if ($services->count() > 0) {
                     $parent_category = null;
                     if ($category->parent_id != null) $parent_category = $category->parent()->select('id', 'name', 'slug')->first();
-                    $category = collect($category)->only(['id','name', 'slug', 'banner', 'parent_id', 'app_banner']);
+                    $category = collect($category)->only(['id','name', 'slug', 'banner', 'parent_id', 'app_banner', 'service_title']);
                     $version_code = (int)$request->header('Version-Code');
                     $services = $this->serviceQuestionSet($services);
                     if ($version_code && $version_code <= 30122 && $version_code <= 107) {
