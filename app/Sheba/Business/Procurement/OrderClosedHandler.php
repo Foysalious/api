@@ -32,7 +32,7 @@ class OrderClosedHandler
 
     public function run()
     {
-        if (!$this->procurement->isServed() || $this->procurement->isClosed()) return;
+        if (!$this->procurement->isServed() || $this->procurement->isClosedAndPaid()) return;
         $this->procurement->calculate();
         if ($this->procurement->due > 0) return;
         /** @var Partner $partner */
