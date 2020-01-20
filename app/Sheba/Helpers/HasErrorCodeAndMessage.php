@@ -1,6 +1,5 @@
 <?php namespace Sheba\Helpers;
 
-
 trait HasErrorCodeAndMessage
 {
     private $errorCode = null;
@@ -24,6 +23,6 @@ trait HasErrorCodeAndMessage
     private function setError($code, $message = null)
     {
         $this->errorCode = $code;
-        if($message) $this->errorMessage = $message;
+        if ($message) $this->errorMessage = $message;
     }
 }

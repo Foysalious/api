@@ -135,6 +135,10 @@ class CategoryController extends Controller
             foreach ($categories as $key => &$category) {
                 if ($with == 'children') {
                     $category->children = $category->allChildren;
+                    foreach ($category->children as $children) {
+                        $children->parent_name = $category->name;
+                        $children->parent_slug = $category->slug;
+                    }
                     unset($category->allChildren);
                     if ($category->children->isEmpty()) {
                         $categories->forget($key);
@@ -477,7 +481,7 @@ class CategoryController extends Controller
                 if ($services->count() > 0) {
                     $parent_category = null;
                     if ($category->parent_id != null) $parent_category = $category->parent()->select('id', 'name', 'slug')->first();
-                    $category = collect($category)->only(['id','name', 'slug', 'banner', 'parent_id', 'app_banner']);
+                    $category = collect($category)->only(['id', 'name', 'slug', 'banner', 'parent_id', 'app_banner', 'service_title']);
                     $version_code = (int)$request->header('Version-Code');
                     $services = $this->serviceQuestionSet($services);
                     if ($version_code && $version_code <= 30122 && $version_code <= 107) {
