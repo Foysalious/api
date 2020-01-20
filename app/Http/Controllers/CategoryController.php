@@ -476,8 +476,8 @@ class CategoryController extends Controller
                 $services = $final_services;
                 if ($services->count() > 0) {
                     $parent_category = null;
-                    if ($category->parent_id != null)  $parent_category = $category->parent()->select('id', 'name', 'slug')->first();
-                    $category = collect($category)->only(['name', 'slug', 'banner', 'parent_id', 'app_banner']);
+                    if ($category->parent_id != null) $parent_category = $category->parent()->select('id', 'name', 'slug')->first();
+                    $category = collect($category)->only(['id','name', 'slug', 'banner', 'parent_id', 'app_banner']);
                     $version_code = (int)$request->header('Version-Code');
                     $services = $this->serviceQuestionSet($services);
                     if ($version_code && $version_code <= 30122 && $version_code <= 107) {
@@ -487,7 +487,6 @@ class CategoryController extends Controller
                     }
                     $category['parent_name'] = $parent_category ? $parent_category->name : null;
                     $category['parent_slug'] = $parent_category ? $parent_category->slug : null;
-
                     $category['services'] = $services;
                     $category['subscriptions'] = $subscriptions;
                     $category['cross_sale'] = $cross_sale_service ? [
@@ -497,10 +496,10 @@ class CategoryController extends Controller
                         'category_id' => $cross_sale_service->category_id,
                         'service_id' => $cross_sale_service->service_id
                     ] : null;
-
-                    $category['delivery_charge'] = $delivery_charge->setCategory($service->category)->get();
+                    $category_model = Category::find($category['id']);
+                    $category['delivery_charge'] = $delivery_charge->setCategory($category_model)->get();
                     $discount_checking_params = (new JobDiscountCheckingParams())->setDiscountableAmount($category['delivery_charge']);
-                    $job_discount_handler->setType(DiscountTypes::DELIVERY)->setCategory($service->category)->setCheckingParams($discount_checking_params)->calculate();
+                    $job_discount_handler->setType(DiscountTypes::DELIVERY)->setCategory($category_model)->setCheckingParams($discount_checking_params)->calculate();
                     /** @var Discount $delivery_discount */
                     $delivery_discount = $job_discount_handler->getDiscount();
                     $category['delivery_discount'] = $delivery_discount ? [
