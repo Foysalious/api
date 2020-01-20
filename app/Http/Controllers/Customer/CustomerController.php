@@ -40,12 +40,11 @@ class CustomerController extends Controller
         if ($request->has('category_id')) $reviews = $reviews->where('category_id', $request->category_id);
         $reviews = $reviews->get();
         if (count($reviews) == 0) return api_response($request, null, 404);
-        $reviews = $reviews->unique('category_id');
         $final = [];
         foreach ($reviews as $review) {
             if ($review->job->jobServices->count() == 0) continue;
             $data = [];
-            $data['category'] = $review->category;
+            $data['category'] = clone $review->category;
             $data['category']['delivery_charge'] = $delivery_charge->setCategory($review->category)->get();
             $discount_checking_params = (new JobDiscountCheckingParams())->setDiscountableAmount($data['category']['delivery_charge']);
             $job_discount_handler->setType(DiscountTypes::DELIVERY)->setCategory($review->category)->setCheckingParams($discount_checking_params)->calculate();
@@ -59,7 +58,7 @@ class CustomerController extends Controller
             ] : null;
             $all_services = [];
             foreach ($review->job->jobServices as $job_service) {
-                $service = $job_service->service;
+                $service = clone $job_service->service;
                 /** @var LocationService $location_service */
                 $location_service = LocationService::where('location_id', $review->job->partnerOrder->order->location_id)->where('service_id', $job_service->service_id)->first();
                 if (!$location_service) continue;
