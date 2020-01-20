@@ -86,7 +86,7 @@ class Procurement extends Model implements PayableType
         return $this->status == config('b2b.PROCUREMENT_STATUS')['served'];
     }
 
-    public function isClosed()
+    public function isClosedAndPaid()
     {
         return $this->closed_and_paid_at != null;
     }
