@@ -3,6 +3,7 @@
 
 use App\Models\BusinessMember;
 use Carbon\Carbon;
+use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
 use Sheba\Dal\Attendance\EloquentImplementation;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Model as AttendanceActionLog;
@@ -61,12 +62,17 @@ class AttendanceAction
         return $this;
     }
 
+    private function getIp()
+    {
+        return request()->ip();
+    }
+
     public function doAction()
     {
         if (!$this->canTakeThisAction()) return null;
         DB::transaction(function () {
             if (!$this->attendance) $this->createAttendance();
-            $this->attendanceActionLogCreator->setAction($this->action)->setAttendance($this->attendance)->setIp(request()->ip())
+            $this->attendanceActionLogCreator->setAction($this->action)->setAttendance($this->attendance)->setIp($this->getIp())
                 ->setDeviceId($this->deviceId)->setUserAgent($this->userAgent);
             if ($this->action == Actions::CHECKOUT) $this->attendanceActionLogCreator->setNote($this->note);
             $attendance_action_log = $this->attendanceActionLogCreator->create();
@@ -84,8 +90,12 @@ class AttendanceAction
 
     public function canTakeThisAction()
     {
-        if ($this->attendance) return $this->action == Actions::CHECKIN ? 0 : 1;
-        return $this->action == Actions::CHECKIN ? 1 : 0;
+        $processor = new ActionProcessor();
+        $processor->setActionName(Actions::CHECKIN);
+        $action = $processor->getAction();
+        $action->setAttendance($this->attendance)->setIp($this->getIp())->setDeviceId($this->deviceId);
+        if ($action->canTakeTheAction()) return 1;
+        return $action->getError();
     }
 
     private function createAttendance()
