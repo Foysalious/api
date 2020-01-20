@@ -198,7 +198,7 @@ class LocationController extends Controller
         return $final_services;
     }
 
-    public function getDivisionsWithDistrictsAndThana()
+    public function getDivisionsWithDistrictsAndThana(Request $request)
     {
         try {
             $divisions = Division::with('districts.thanas')->get();
@@ -206,10 +206,10 @@ class LocationController extends Controller
             $manager->setSerializer(new CustomSerializer());
             $resource = new Item($divisions, new DivisionsWithDistrictsTransformer());
             $formatted_data = $manager->createData($resource)->toArray()['data'];
-            return api_response(null, $formatted_data, 200, ['divisions' => $formatted_data]);
+            return api_response($request, $request, 200, $formatted_data);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
-            return api_response(null, null, 500);
+            return api_response($request, $request, 500);
         }
     }
 }
