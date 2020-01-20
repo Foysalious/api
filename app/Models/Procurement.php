@@ -10,6 +10,7 @@ class Procurement extends Model implements PayableType
     public $paid;
     public $due;
     public $totalPrice;
+    protected $dates = ['closed_and_paid_at'];
 
     public function items()
     {
@@ -83,5 +84,10 @@ class Procurement extends Model implements PayableType
     public function isServed()
     {
         return $this->status == config('b2b.PROCUREMENT_STATUS')['served'];
+    }
+
+    public function isClosed()
+    {
+        return $this->closed_and_paid_at != null;
     }
 }
