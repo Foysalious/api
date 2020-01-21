@@ -142,9 +142,9 @@ abstract class ActionChecker
         $business_member_ids = $this->business->members()->select('business_member.id')->get();
         if (count($business_member_ids) == 0) return 0;
         $business_member_ids = $business_member_ids->pluck('id');
-        if ($this->attendanceLogsOfToday) {
+        if ($this->attendanceOfToday) {
             $business_member_ids = $business_member_ids->filter(function ($id) {
-                return $id != $this->attendanceLogsOfToday->business_member_id;
+                return $id != $this->attendanceOfToday->business_member_id;
             })->values()->all();
         }
         $attendances = Attendance::whereIn('business_member_id', $business_member_ids)->where('date', date('Y-m-d'))
