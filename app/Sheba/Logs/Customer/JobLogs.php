@@ -159,7 +159,7 @@ class JobLogs
         if (in_array($job_status, [constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']])) {
             return array(
                 'status' => 'message',
-                'log' => 'Your order is awaiting for confirmation. Please, contact the service provider.',
+                'log' => 'Your order is awaiting for confirmation. Please contact 16516.',
                 'type' => 'danger'
             );
         } elseif ($job_status == constants('JOB_STATUSES')['Accepted']) {

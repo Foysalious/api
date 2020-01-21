@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
 use Sheba\Dal\Attendance\EloquentImplementation;
 use Sheba\Dal\Attendance\Model as Attendance;
+use Sheba\Dal\Attendance\Statuses;
 use Sheba\Dal\AttendanceActionLog\Model as AttendanceActionLog;
 use Sheba\Dal\AttendanceActionLog\Actions;
 use Sheba\Business\AttendanceActionLog\Creator as AttendanceActionLogCreator;
@@ -135,11 +136,15 @@ class AttendanceAction
      */
     private function updateAttendance(AttendanceActionLog $model)
     {
-        $this->attendance->status = $model->status;
         if ($this->action == Actions::CHECKOUT) {
+            $status = ($this->attendance->status == Statuses::LATE) ? Statuses::LATE : $model->status;
+            $this->attendance->status = $status;
             $this->attendance->checkout_time = $model->created_at->format('H:i:s');
             $this->attendance->staying_time_in_minutes = $model->created_at->diffInMinutes($this->attendance->checkin_time);
+        } else {
+            $this->attendance->status = $model->status;
         }
+        
         $this->attendance->update();
     }
 }
