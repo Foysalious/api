@@ -24,6 +24,7 @@ class CategoryTransformer extends TransformerAbstract
             'service_title' => $category->service_title,
             'popular_service_description' => $category->popular_service_description,
             'other_service_description' => $category->other_service_description,
+            'is_auto_sp_enabled' => $category->is_auto_sp_enabled,
             'avg_rating' => 4.75,
             'total_ratings' => 500,
             'total_services' => 200,

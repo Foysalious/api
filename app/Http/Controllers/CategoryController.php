@@ -98,7 +98,7 @@ class CategoryController extends Controller
                     });
                 });
             }
-            $categories = $categories->select('id', 'name', 'bn_name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id');
+            $categories = $categories->select('id', 'name', 'bn_name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id','is_auto_sp_enabled');
             if ($request->has('with')) {
                 $with = $request->with;
                 if ($with == 'children') {
