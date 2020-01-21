@@ -28,29 +28,14 @@ class ProcurementPaymentRequestController extends Controller
 
     public function updatePaymentRequest($business, $procurement, $bid, $payment_request, Request $request, Updater $updater)
     {
-        try {
-            $this->validate($request, [
-                'note' => 'sometimes|string',
-                'status' => 'sometimes|string'
-            ]);
-            $this->setModifier($request->manager_member);
-            $updater->setProcurement($procurement)->setBid($bid);
-            $updater = $updater->setPaymentRequest($payment_request)->setNote($request->note)
-                ->setStatus($request->status);
-            $payment_request = $updater->paymentRequestUpdate();
-            return api_response($request, $payment_request, 200);
-        } catch (ModelNotFoundException $e) {
-            return api_response($request, null, 404, ["message" => "Model Not found."]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $this->validate($request, [
+            'note' => 'sometimes|string',
+            'status' => 'sometimes|string'
+        ]);
+        $this->setModifier($request->manager_member);
+        $updater->setProcurement($procurement)->setBid($bid)->setPaymentRequest($payment_request)->setNote($request->note)->setStatus($request->status);
+        $payment_request = $updater->paymentRequestUpdate();
+        return api_response($request, $payment_request, 200);
     }
 
     public function show($partner, $procurement, $bid, $payment_request, Request $request, Creator $creator)

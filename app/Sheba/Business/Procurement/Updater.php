@@ -1,6 +1,7 @@
 <?php namespace App\Sheba\Business\Procurement;
 
 use App\Models\Procurement;
+use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Sheba\Business\Procurement\OrderClosedHandler;
 use Sheba\Business\ProcurementStatusChangeLog\Creator;
@@ -19,8 +20,19 @@ class Updater
     private $walletTransactionHandler;
     private $paymentCreator;
     private $shebaCollection;
+    private $closedAndPaidAt;
     private $data;
     private $procurementOrderCloseHandler;
+
+    /**
+     * @param mixed $closedAndPaidAt
+     * @return Updater
+     */
+    public function setClosedAndPaidAt($closedAndPaidAt)
+    {
+        $this->closedAndPaidAt = $closedAndPaidAt;
+        return $this;
+    }
 
 
     public function __construct(ProcurementRepositoryInterface $procurement_repository, OrderClosedHandler $procurement_order_close_handler, Creator $creator, WalletTransactionHandler $wallet_transaction_handler, PaymentCreator $payment_creator)
@@ -60,6 +72,7 @@ class Updater
                 $this->statusLogCreator->setProcurement($this->procurement)->setPreviousStatus($previous_status)->setStatus($this->status)->create();
                 $this->procurement->calculate();
                 if ($this->status == 'served') {
+                    $this->procurementRepository->update($this->procurement, ['closed_at' => Carbon::now()]);
                     $this->procurementOrderCloseHandler->setProcurement($this->procurement->fresh())->run();
                     $this->notify();
                 }
@@ -97,5 +110,6 @@ class Updater
     {
         $this->data['status'] = $this->status ? $this->status : $this->procurement->status;
         $this->data['sheba_collection'] = $this->shebaCollection ? $this->shebaCollection : $this->procurement->sheba_collection;
+        $this->data['closed_and_paid_at'] = $this->closedAndPaidAt ? $this->closedAndPaidAt : $this->procurement->closed_and_paid_at;
     }
 }
