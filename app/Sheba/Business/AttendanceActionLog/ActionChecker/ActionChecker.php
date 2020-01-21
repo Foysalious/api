@@ -1,7 +1,6 @@
 <?php namespace Sheba\Business\AttendanceActionLog\ActionChecker;
 
 use App\Models\Business;
-use Sheba\Dal\Attendance\EloquentImplementation;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Model as AttendanceActionLog;
 use Sheba\Location\Geo;
@@ -41,7 +40,6 @@ abstract class ActionChecker
         return $this;
     }
 
-
     public function setAttendanceOfToday($attendance)
     {
         $this->attendanceOfToday = $attendance;
@@ -59,7 +57,6 @@ abstract class ActionChecker
         $this->deviceId = $device_id;
         return $this;
     }
-
 
     protected function setResultCode($code)
     {
@@ -84,16 +81,12 @@ abstract class ActionChecker
     }
 
 
-    protected function checkIp()
-    {
-//        $this->business->offices()->where
-    }
-
     public function check()
     {
         $this->setAttendanceActionLogsOfToday();
         $this->checkAlreadyHasActionForToday();
         $this->checkDeviceId();
+        $this->checkIp();
     }
 
     private function setAttendanceActionLogsOfToday()
@@ -154,6 +147,16 @@ abstract class ActionChecker
         return count($attendances) > 0 ? 1 : 0;
     }
 
+    protected function checkIp()
+    {
+        if (!$this->isSuccess()) return;
+        if ($this->business->offices()->count() > 0 && $this->business->offices()->where('ip', $this->ip)->first()) {
+            $this->setResult(ActionResultCodes::OUT_OF_WIFI_AREA, ActionResultCodeMessages::OUT_OF_WIFI_AREA);
+        } else {
+            $this->setSuccessfulResponseMessage();
+        }
+    }
+
     protected function setResult($result_code, $result_message)
     {
         $this->setResultCode($result_code)->setResultMessage($result_message);
@@ -172,5 +175,4 @@ abstract class ActionChecker
     abstract protected function setAlreadyHasActionForTodayResponse();
 
     abstract protected function getActionName();
-
 }

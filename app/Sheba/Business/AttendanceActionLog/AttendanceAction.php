@@ -107,8 +107,13 @@ class AttendanceAction
     {
         DB::transaction(function () {
             if (!$this->attendance) $this->createAttendance();
-            $this->attendanceActionLogCreator->setAction($this->action)->setAttendance($this->attendance)->setIp($this->getIp())
-                ->setDeviceId($this->deviceId)->setUserAgent($this->userAgent);
+            $this->attendanceActionLogCreator
+                ->setAction($this->action)
+                ->setAttendance($this->attendance)
+                ->setIp($this->getIp())
+                ->setDeviceId($this->deviceId)
+                ->setUserAgent($this->userAgent);
+
             if ($this->action == Actions::CHECKOUT) $this->attendanceActionLogCreator->setNote($this->note);
             $attendance_action_log = $this->attendanceActionLogCreator->create();
             $this->updateAttendance($attendance_action_log);
@@ -117,10 +122,17 @@ class AttendanceAction
 
     private function createAttendance()
     {
-        $attendance = $this->attendanceCreator->setBusinessMemberId($this->businessMember->id)->setDate(Carbon::now()->toDateString())->create();
+        $attendance = $this->attendanceCreator
+            ->setBusinessMemberId($this->businessMember->id)
+            ->setDate(Carbon::now()->toDateString())
+            ->create();
+
         $this->setAttendance($attendance);
     }
 
+    /**
+     * @param AttendanceActionLog $model
+     */
     private function updateAttendance(AttendanceActionLog $model)
     {
         $this->attendance->status = $model->status;
@@ -130,6 +142,4 @@ class AttendanceAction
         }
         $this->attendance->update();
     }
-
-
 }
