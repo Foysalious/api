@@ -41,7 +41,6 @@ abstract class ActionChecker
         return $this;
     }
 
-
     public function setAttendanceOfToday($attendance)
     {
         $this->attendanceOfToday = $attendance;
@@ -59,7 +58,6 @@ abstract class ActionChecker
         $this->deviceId = $device_id;
         return $this;
     }
-
 
     protected function setResultCode($code)
     {
@@ -83,10 +81,9 @@ abstract class ActionChecker
         return $this->resultMessage;
     }
 
-
     protected function checkIp()
     {
-//        $this->business->offices()->where
+        // $this->business->offices()->where
     }
 
     public function check()
@@ -172,5 +169,4 @@ abstract class ActionChecker
     abstract protected function setAlreadyHasActionForTodayResponse();
 
     abstract protected function getActionName();
-
 }

@@ -1,11 +1,9 @@
 <?php namespace Sheba\Business\AttendanceActionLog\ActionChecker;
 
-
 use Sheba\Dal\AttendanceActionLog\Actions;
 
 class CheckOut extends ActionChecker
 {
-
     public function getActionName()
     {
         return Actions::CHECKOUT;
