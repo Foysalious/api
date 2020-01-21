@@ -4,7 +4,7 @@ use Sheba\Dal\AttendanceActionLog\Actions;
 
 class ActionProcessor
 {
-    /** @var Action */
+    /** @var ActionChecker */
     private $action;
 
     public function setActionName($action)
@@ -14,7 +14,7 @@ class ActionProcessor
     }
 
     /**
-     * @return Action
+     * @return ActionChecker
      */
     public function getAction()
     {
@@ -40,7 +40,7 @@ class ActionProcessor
             case Actions::CHECKIN:
                 return new CheckIn();
             case Actions::CHECKOUT:
-                return new Checkout();
+                return new CheckOut();
         }
     }
 }

@@ -1,6 +1,5 @@
 <?php namespace Sheba\Business\AttendanceActionLog;
 
-
 use App\Models\Business;
 use App\Models\BusinessMember;
 use Carbon\Carbon;
@@ -76,9 +75,36 @@ class AttendanceAction
         return request()->ip();
     }
 
+
+    private function setAttendance($attendance)
+    {
+        $this->attendance = $attendance;
+        return $this;
+    }
+
     public function doAction()
     {
-        if (!$this->canTakeThisAction()) return null;
+        /** @var ActionChecker\ActionChecker $action */
+        $action = $this->checkTheAction();
+        if ($action->isSuccess()) $this->doDatabaseTransaction();
+        return $action;
+    }
+
+
+    /**
+     * @return ActionChecker\ActionChecker
+     */
+    public function checkTheAction()
+    {
+        $processor = new ActionProcessor();
+        $action = $processor->setActionName($this->action)->getAction();
+        $action->setAttendanceOfToday($this->attendance)->setIp($this->getIp())->setDeviceId($this->deviceId);
+        $action->check();
+        return $action;
+    }
+
+    private function doDatabaseTransaction()
+    {
         DB::transaction(function () {
             if (!$this->attendance) $this->createAttendance();
             $this->attendanceActionLogCreator->setAction($this->action)->setAttendance($this->attendance)->setIp($this->getIp())
@@ -87,26 +113,6 @@ class AttendanceAction
             $attendance_action_log = $this->attendanceActionLogCreator->create();
             $this->updateAttendance($attendance_action_log);
         });
-        return true;
-    }
-
-
-    private function setAttendance($attendance)
-    {
-        $this->attendance = $attendance;
-        return $this;
-    }
-
-    public function canTakeThisAction()
-    {
-        $processor = new ActionProcessor();
-        $action = $processor->setActionName($this->action)->getAction();
-        $action->setAttendance($this->attendance)->setIp($this->getIp())->setDeviceId($this->deviceId);
-        if ($action->canTakeTheAction()) return 1;
-        else{
-
-        }
-        return $action->getError();
     }
 
     private function createAttendance()
@@ -124,5 +130,6 @@ class AttendanceAction
         }
         $this->attendance->update();
     }
+
 
 }

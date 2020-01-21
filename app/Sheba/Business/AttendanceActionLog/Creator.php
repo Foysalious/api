@@ -84,7 +84,7 @@ class Creator
             'action' => $this->action,
             'note' => $this->note,
             'ip' => $this->ip,
-            'user_agent' => $this->userAgent
+            'user_agent' => $this->userAgent,
         ]);
     }
 }

@@ -3,26 +3,16 @@
 
 use Sheba\Dal\AttendanceActionLog\Actions;
 
-class CheckOut extends Action
+class CheckOut extends ActionChecker
 {
-    public function canTakeTheAction()
-    {
-        if (!$this->attendanceOfToday) return 1;
-        if (!$this->checkAlreadyHasActionForToday()) return 1;
-    }
-
 
     public function getActionName()
     {
         return Actions::CHECKOUT;
     }
 
-    protected function checkAlreadyHasActionForToday()
+    protected function setAlreadyHasActionForTodayResponse()
     {
-        if ($this->getAttendanceActionLog()) {
-            $this->actionError->setCode(ActionErrorCodes::ALREADY_CHECKED_OUT)->setMessage(ActionErrorCodeMessages::ALREADY_CHECKED_OUT);
-            return 0;
-        }
-        return 1;
+        $this->setResult(ActionResultCodes::ALREADY_CHECKED_OUT, ActionResultCodeMessages::ALREADY_CHECKED_OUT);
     }
 }

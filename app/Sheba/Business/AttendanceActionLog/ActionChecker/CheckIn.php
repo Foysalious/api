@@ -3,27 +3,16 @@
 
 use Sheba\Dal\AttendanceActionLog\Actions;
 
-class CheckIn extends Action
+class CheckIn extends ActionChecker
 {
-
-    public function canTakeTheAction()
-    {
-        if (!$this->attendanceOfToday) return 1;
-        if (!$this->checkAlreadyHasActionForToday()) return 1;
-    }
-
 
     public function getActionName()
     {
         return Actions::CHECKIN;
     }
 
-    protected function checkAlreadyHasActionForToday()
+    protected function setAlreadyHasActionForTodayResponse()
     {
-        if ($this->getAttendanceActionLog()) {
-            $this->actionError->setCode(ActionErrorCodes::ALREADY_CHECKED_IN)->setMessage(ActionErrorCodeMessages::ALREADY_CHECKED_IN);
-            return 0;
-        }
-        return 1;
+        $this->setResult(ActionResultCodes::ALREADY_CHECKED_IN, ActionResultCodeMessages::ALREADY_CHECKED_IN);
     }
 }
