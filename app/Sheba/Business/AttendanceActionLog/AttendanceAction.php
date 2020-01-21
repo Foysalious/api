@@ -98,7 +98,7 @@ class AttendanceAction
     {
         $processor = new ActionProcessor();
         $action = $processor->setActionName($this->action)->getAction();
-        $action->setAttendanceOfToday($this->attendance)->setIp($this->getIp())->setDeviceId($this->deviceId);
+        $action->setAttendanceOfToday($this->attendance)->setIp($this->getIp())->setDeviceId($this->deviceId)->setBusiness($this->business);
         $action->check();
         return $action;
     }
