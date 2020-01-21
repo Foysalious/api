@@ -89,7 +89,6 @@ abstract class ActionChecker
 //        $this->business->offices()->where
     }
 
-
     public function check()
     {
         $this->setAttendanceActionLogsOfToday();
