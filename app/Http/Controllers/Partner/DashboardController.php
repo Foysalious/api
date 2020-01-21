@@ -162,11 +162,11 @@ class DashboardController extends Controller
                     'https://www.youtube.com/watch?v=gY5Prr9Lsa8'
                 ],
                 'feature_videos' => [
-                    'payment_link' => 'https://www.youtube.com/watch?v=gY5Prr9Lsa8',
-                    'pos' => 'https://www.youtube.com/watch?v=gY5Prr9Lsa8',
-                    'inventory' => 'https://www.youtube.com/watch?v=gY5Prr9Lsa8',
-                    'referral' => 'https://www.youtube.com/watch?v=gY5Prr9Lsa8',
-                    'due_tracker' => 'https://www.youtube.com/watch?v=gY5Prr9Lsa8',
+                    ['key'=>'payment_link','link'=>'https://www.youtube.com/watch?v=gY5Prr9Lsa8'],
+                    ['key'=>'pos','link'=>'https://www.youtube.com/watch?v=gY5Prr9Lsa8'],
+                    ['key'=>'inventory','link'=>'https://www.youtube.com/watch?v=gY5Prr9Lsa8'],
+                    ['key'=>'referral','link'=>'https://www.youtube.com/watch?v=gY5Prr9Lsa8'],
+                    ['key'=>'due_tracker','link'=>'https://www.youtube.com/watch?v=gY5Prr9Lsa8'],
                 ]
             ];
 
