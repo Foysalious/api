@@ -7,9 +7,11 @@ use Illuminate\Validation\ValidationException;
 use Sheba\DueTracker\DueTrackerRepository;
 use Sheba\Pos\Repositories\PartnerPosCustomerRepository;
 use Sheba\Reports\PdfHandler;
+use Sheba\ModificationFields;
 
 class DueTrackerController extends Controller
 {
+    use ModificationFields;
     public function dueList(Request $request, DueTrackerRepository $dueTrackerRepository)
     {
         try {
@@ -63,6 +65,7 @@ class DueTrackerController extends Controller
         try {
             $this->validate($request, ['due_date_reminder' => 'required|date']);
             $partner_pos_customer = PartnerPosCustomer::byPartnerAndCustomer($request->partner->id, $request->customer_id)->first();
+            $this->setModifier($request->partner);
             $partner_pos_customer_repo->update($partner_pos_customer, ['due_date_reminder' => $request->due_date_reminder]);
             return api_response($request, null, 200);
         } catch (ValidationException $e) {

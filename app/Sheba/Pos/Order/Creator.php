@@ -7,6 +7,7 @@ use App\Models\PosOrder;
 use App\Models\Profile;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\ExpenseTracker\AutomaticIncomes;
+use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\Pos\Discount\DiscountTypes;
 use Sheba\Pos\Discount\Handler as DiscountHandler;
@@ -95,6 +96,7 @@ class Creator
     /**
      * @return PosOrder
      * @throws InvalidDiscountType
+     * @throws ExpenseTrackingServerError
      */
     public function create()
     {
@@ -197,6 +199,7 @@ class Creator
 
     /**
      * @param PosOrder $order
+     * @throws ExpenseTrackingServerError
      */
     private function storeIncome(PosOrder $order)
     {
