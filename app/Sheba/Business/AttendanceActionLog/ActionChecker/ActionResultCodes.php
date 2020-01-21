@@ -9,6 +9,7 @@ class ActionResultCodes
     const ALREADY_CHECKED_IN = 504;
     const ALREADY_CHECKED_OUT = 505;
     const CHECKIN_FIRST = 506;
+    const ALREADY_DEVICE_USED = 507;
     const SUCCESSFUL = 200;
 
 }

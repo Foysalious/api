@@ -10,4 +10,5 @@ class ActionResultCodeMessages
     const ALREADY_CHECKED_OUT = "You've already checked out";
     const SUCCESSFUL = "Successful";
     const CHECKIN_FIRST = "You've to checkin first";
+    const ALREADY_DEVICE_USED = "This device is already used in another account today";
 }
