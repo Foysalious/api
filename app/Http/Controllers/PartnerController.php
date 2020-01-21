@@ -535,16 +535,39 @@ class PartnerController extends Controller
         }
     }
 
+    /**
+     * @param $partner
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getNotifications($partner, Request $request)
     {
         try {
             list($offset, $limit) = calculatePagination($request);
             $notifications = (new NotificationRepository())->getManagerNotifications($request->partner, $offset, $limit);
+            $counter = 0;
+            foreach ($notifications as $notification) {
+                if (!$notification->is_seen) {
+                    $counter += 1;
+                }
+            }
             if (count($notifications) > 0) {
-                return api_response($request, $notifications, 200, ['notifications' => $notifications->values()->all()]);
+                return api_response($request, $notifications, 200, ['notifications' => $notifications->values()->all(), 'unseen' => $counter]);
             } else {
                 return api_response($request, null, 404);
             }
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getNotification($partner, $notification, Request $request)
+    {
+        try {
+            $notification = (new NotificationRepository())->getManagerNotification($notification);
+            $unseen_notifications = (new NotificationRepository())->getUnseenNotifications($request->partner, $notification);
+            return api_response($request, $notification, 200, ['notification' => $notification, 'unseen_notifications' => $unseen_notifications]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

@@ -24,7 +24,12 @@ return [
         ],
         'announcement' => [
             'rw' => 'announcement_rw',
-            'r' => 'announcement_r',
+        ],
+        'support' => [
+            'rw' => 'announcement_rw',
+        ],
+        'expense' => [
+            'rw' => 'announcement_rw',
         ],
         'support' => [
             'rw' => 'support_rw',

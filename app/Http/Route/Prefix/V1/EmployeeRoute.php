@@ -10,6 +10,7 @@ class EmployeeRoute
             $api->post('password', 'Employee\EmployeeController@updateMyPassword');
             $api->get('dashboard', 'Employee\EmployeeController@getDashboard');
             $api->get('notifications', 'Employee\NotificationController@index');
+            $api->get('test-notification', 'Employee\NotificationController@test');
             $api->post('notifications/seen', 'Employee\NotificationController@seen');
             $api->group(['prefix' => 'supports'], function ($api) {
                 $api->get('/', 'Employee\SupportController@index');

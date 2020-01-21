@@ -29,26 +29,23 @@ class SendAnnouncementNotificationToEmployee extends Job implements ShouldQueue
     {
         if ($this->attempts() <= 1) {
             foreach ($this->members as $member) {
-                try {
-                    notify()->member($member)->send([
-                        'title' => $this->announcement->title,
-                        'type' => 'warning',
-                        'event_type' => get_class($this->announcement),
-                        'event_id' => $this->announcement->id
-                    ]);
-                    $topic = config('sheba.push_notification_topic_name.employee') . $member->id;
-                    $channel = config('sheba.push_notification_channel_name.employee');
-                    $this->pushNotification->send([
-                        "title" => 'New announcement arrived',
-                        "message" => $this->announcement->title,
-                        "event_type" => 'announcement',
-                        "event_id" => $this->announcement->id,
-                        "sound" => "notification_sound",
-                        "channel_id" => $channel
-                    ], $topic, $channel);
-                } catch (\Throwable $e) {
-                    app('sentry')->captureException($e);
-                }
+                notify()->member($member)->send([
+                    'title' => $this->announcement->title,
+                    'type' => 'warning',
+                    'event_type' => get_class($this->announcement),
+                    'event_id' => $this->announcement->id
+                ]);
+                $topic = config('sheba.push_notification_topic_name.employee') . $member->id;
+                $channel = config('sheba.push_notification_channel_name.employee');
+                $this->pushNotification->send([
+                    "title" => 'New announcement arrived',
+                    "message" => $this->announcement->title,
+                    "event_type" => 'announcement',
+                    "event_id" => $this->announcement->id,
+                    "sound" => "notification_sound",
+                    "channel_id" => $channel,
+                    "click_action" => "FLUTTER_NOTIFICATION_CLICK"
+                ], $topic, $channel);
             }
         }
     }
