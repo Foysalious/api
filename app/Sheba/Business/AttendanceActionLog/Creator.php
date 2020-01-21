@@ -1,23 +1,31 @@
 <?php namespace Sheba\Business\AttendanceActionLog;
 
-
 use Sheba\Dal\Attendance\Model as Attendance;
-use Sheba\Dal\AttendanceActionLog\EloquentImplementation;
+use Sheba\Dal\AttendanceActionLog\EloquentImplementation as AttendanceActionLogRepositoryInterface;
 
 class Creator
 {
     private $attendanceActionLogRepository;
     private $action;
     private $deviceId;
-    /** @var Attendance */
+    /** @var Attendance $attendance */
     private $attendance;
     private $ip;
     private $userAgent;
     private $note;
+    /** @var StatusCalculator $calculator */
+    private $calculator;
 
-    public function __construct(EloquentImplementation $attendance_action_log_repository)
+    /**
+     * Creator constructor.
+     *
+     * @param AttendanceActionLogRepositoryInterface $attendance_action_log_repository
+     * @param StatusCalculator $calculator
+     */
+    public function __construct(AttendanceActionLogRepositoryInterface $attendance_action_log_repository, StatusCalculator $calculator)
     {
         $this->attendanceActionLogRepository = $attendance_action_log_repository;
+        $this->calculator = $calculator;
     }
 
     /**
@@ -35,7 +43,6 @@ class Creator
         $this->note = $note;
         return $this;
     }
-
 
     /**
      * @param mixed $deviceId
@@ -79,12 +86,16 @@ class Creator
 
     public function create()
     {
-        return $this->attendanceActionLogRepository->create([
+        $status = $this->calculator->setAction($this->action)->setAttendance($this->attendance)->calculate();
+        $attendance_log_data = [
             'attendance_id' => $this->attendance->id,
             'action' => $this->action,
             'note' => $this->note,
             'ip' => $this->ip,
-            'user_agent' => $this->userAgent
-        ]);
+            'user_agent' => $this->userAgent,
+            'device_id' => $this->deviceId,
+            'status' => $status
+        ];
+        return $this->attendanceActionLogRepository->create($attendance_log_data);
     }
 }

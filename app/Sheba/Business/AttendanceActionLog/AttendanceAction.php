@@ -1,8 +1,9 @@
 <?php namespace Sheba\Business\AttendanceActionLog;
 
-
+use App\Models\Business;
 use App\Models\BusinessMember;
 use Carbon\Carbon;
+use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
 use Sheba\Dal\Attendance\EloquentImplementation;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Model as AttendanceActionLog;
@@ -15,6 +16,8 @@ class AttendanceAction
 {
     /** @var BusinessMember */
     private $businessMember;
+    /** @var Business */
+    private $business;
     /** @var Carbon */
     private $today;
     /** @var EloquentImplementation */
@@ -43,6 +46,12 @@ class AttendanceAction
         return $this;
     }
 
+    public function setBusiness(Business $business)
+    {
+        $this->business = $business;
+        return $this;
+    }
+
     public function setAction($action)
     {
         $this->action = $action;
@@ -61,18 +70,9 @@ class AttendanceAction
         return $this;
     }
 
-    public function doAction()
+    private function getIp()
     {
-        if (!$this->canTakeThisAction()) return null;
-        DB::transaction(function () {
-            if (!$this->attendance) $this->createAttendance();
-            $this->attendanceActionLogCreator->setAction($this->action)->setAttendance($this->attendance)->setIp(request()->ip())
-                ->setDeviceId($this->deviceId)->setUserAgent($this->userAgent);
-            if ($this->action == Actions::CHECKOUT) $this->attendanceActionLogCreator->setNote($this->note);
-            $attendance_action_log = $this->attendanceActionLogCreator->create();
-            $this->updateAttendance($attendance_action_log);
-        });
-        return true;
+        return request()->ip();
     }
 
 
@@ -82,10 +82,37 @@ class AttendanceAction
         return $this;
     }
 
-    public function canTakeThisAction()
+    public function doAction()
     {
-        if ($this->attendance) return $this->action == Actions::CHECKIN ? 0 : 1;
-        return $this->action == Actions::CHECKIN ? 1 : 0;
+        /** @var ActionChecker\ActionChecker $action */
+        $action = $this->checkTheAction();
+        if ($action->isSuccess()) $this->doDatabaseTransaction();
+        return $action;
+    }
+
+
+    /**
+     * @return ActionChecker\ActionChecker
+     */
+    public function checkTheAction()
+    {
+        $processor = new ActionProcessor();
+        $action = $processor->setActionName($this->action)->getAction();
+        $action->setAttendanceOfToday($this->attendance)->setIp($this->getIp())->setDeviceId($this->deviceId);
+        $action->check();
+        return $action;
+    }
+
+    private function doDatabaseTransaction()
+    {
+        DB::transaction(function () {
+            if (!$this->attendance) $this->createAttendance();
+            $this->attendanceActionLogCreator->setAction($this->action)->setAttendance($this->attendance)->setIp($this->getIp())
+                ->setDeviceId($this->deviceId)->setUserAgent($this->userAgent);
+            if ($this->action == Actions::CHECKOUT) $this->attendanceActionLogCreator->setNote($this->note);
+            $attendance_action_log = $this->attendanceActionLogCreator->create();
+            $this->updateAttendance($attendance_action_log);
+        });
     }
 
     private function createAttendance()
@@ -103,5 +130,6 @@ class AttendanceAction
         }
         $this->attendance->update();
     }
+
 
 }
