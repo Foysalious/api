@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BusinessMember;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Sheba\Business\AttendanceActionLog\ActionChecker\ActionChecker;
 use Sheba\Business\AttendanceActionLog\AttendanceAction;
 use Sheba\Dal\Attendance\EloquentImplementation;
 use Sheba\Dal\AttendanceActionLog\Actions;
@@ -74,19 +75,25 @@ class AttendanceController extends Controller
         }
     }
 
-    public function takeAction(Request $request, EloquentImplementation $attendance_repository, AttendanceAction $attendance_action)
+    public function takeAction(Request $request, AttendanceAction $attendance_action)
     {
-        $this->validate($request, ['action' => 'required|string|in:' . implode(',', Actions::get()), 'note' => 'string']);
+        $this->validate($request, [
+            'action' => 'required|string|in:' . implode(',', Actions::get()),
+            'note' => 'string|required_if:action,' . Actions::CHECKOUT,
+            'device_id' => 'string',
+            'user_agent' => 'string',
+        ]);
         $auth_info = $request->auth_info;
         $business_member = $auth_info['business_member'];
         /** @var BusinessMember $business_member */
         $business_member = BusinessMember::find($business_member['id']);
+        if (!$business_member) return api_response($request, null, 404);
         $this->setModifier($business_member->member);
-        $attendance_action->setBusinessMember($business_member)->setAction($request->action)->setNote($request->note);
-        if (!$attendance_action->canTakeThisAction()) return api_response($request, null, 403);
+        $attendance_action->setBusinessMember($business_member)->setAction($request->action)->setBusiness($business_member->business)
+            ->setNote($request->note)->setDeviceId($request->device_id);
+        /** @var ActionChecker $action */
         $action = $attendance_action->doAction();
-        if ($action) return api_response($request, $action, 200);
-        return api_response($request, null, 500);
+        return response()->json(['code' => $action->getResultCode(), 'message' => $action->getResultMessage()]);
     }
 
     /**

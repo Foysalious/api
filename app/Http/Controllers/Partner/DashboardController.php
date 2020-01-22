@@ -157,6 +157,17 @@ class DashboardController extends Controller
                 'has_kyc_profile_completed' => $this->getSpLoanInformationCompletion($partner, $request),
                 'has_pos_due_order' => $total_due_for_pos_orders > 0 ? 1 : 0,
                 'has_pos_paid_order' => $has_pos_paid_order,
+                'videos' => [
+                    'https://www.youtube.com/watch?v=gY5Prr9Lsa8',
+                    'https://www.youtube.com/watch?v=gY5Prr9Lsa8'
+                ],
+                'feature_videos' => [
+                    'payment_link' => 'https://www.youtube.com/watch?v=gY5Prr9Lsa8',
+                    'pos' => 'https://www.youtube.com/watch?v=gY5Prr9Lsa8',
+                    'inventory' => 'https://www.youtube.com/watch?v=gY5Prr9Lsa8',
+                    'referral' => 'https://www.youtube.com/watch?v=gY5Prr9Lsa8',
+                    'due_tracker' => 'https://www.youtube.com/watch?v=gY5Prr9Lsa8',
+                ]
             ];
 
             if (request()->hasHeader('Portal-Name'))

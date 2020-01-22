@@ -5,6 +5,7 @@ class Director
 {
     /** @var Builder */
     private $builder;
+    private $baseQueryFunctions;
 
     public function setBuilder(Builder $builder)
     {
@@ -28,6 +29,10 @@ class Director
 
     private function buildBaseQuery()
     {
+        $this->baseQueryFunctions = [
+            'checkCategory', 'checkService', 'checkLeave', 'checkPartnerVerification', 'checkPartner',
+            'checkCanAccessMarketPlace', 'withResource', 'withAvgReview'
+        ];
         $this->builder->checkCategory();
         $this->builder->checkService();
         $this->builder->checkLeave();

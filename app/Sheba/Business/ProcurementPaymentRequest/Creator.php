@@ -28,7 +28,7 @@ class Creator
 
     public function setProcurement($procurement)
     {
-        $this->procurement = Procurement::findOrFail((int)$procurement);
+        $this->procurement = $procurement instanceof Procurement ? $procurement : Procurement::findOrFail((int)$procurement);
         return $this;
     }
 

@@ -1,23 +1,40 @@
 <?php namespace Sheba\Business\AttendanceActionLog;
 
-
+use Sheba\Business\AttendanceActionLog\StatusCalculator\CheckinStatusCalculator;
+use Sheba\Business\AttendanceActionLog\StatusCalculator\CheckoutStatusCalculator;
 use Sheba\Dal\Attendance\Model as Attendance;
-use Sheba\Dal\AttendanceActionLog\EloquentImplementation;
+use Sheba\Dal\AttendanceActionLog\Actions;
+use Sheba\Dal\AttendanceActionLog\EloquentImplementation as AttendanceActionLogRepositoryInterface;
 
 class Creator
 {
     private $attendanceActionLogRepository;
     private $action;
     private $deviceId;
-    /** @var Attendance */
+    /** @var Attendance $attendance */
     private $attendance;
     private $ip;
     private $userAgent;
     private $note;
+    /** @var CheckinStatusCalculator $checkinStatusCalculator */
+    private $checkinStatusCalculator;
+    /** @var CheckoutStatusCalculator $checkoutStatusCalculator */
+    private $checkoutStatusCalculator;
 
-    public function __construct(EloquentImplementation $attendance_action_log_repository)
+    /**
+     * Creator constructor.
+     *
+     * @param AttendanceActionLogRepositoryInterface $attendance_action_log_repository
+     * @param CheckinStatusCalculator $checkin_status_calculator
+     * @param CheckoutStatusCalculator $checkout_status_calculator
+     */
+    public function __construct(AttendanceActionLogRepositoryInterface $attendance_action_log_repository,
+                                CheckinStatusCalculator $checkin_status_calculator,
+                                CheckoutStatusCalculator $checkout_status_calculator)
     {
         $this->attendanceActionLogRepository = $attendance_action_log_repository;
+        $this->checkinStatusCalculator = $checkin_status_calculator;
+        $this->checkoutStatusCalculator = $checkout_status_calculator;
     }
 
     /**
@@ -35,7 +52,6 @@ class Creator
         $this->note = $note;
         return $this;
     }
-
 
     /**
      * @param mixed $deviceId
@@ -79,12 +95,20 @@ class Creator
 
     public function create()
     {
-        return $this->attendanceActionLogRepository->create([
+        if ($this->action == Actions::CHECKIN)
+            $status = $this->checkinStatusCalculator->setAction($this->action)->setAttendance($this->attendance)->calculate();
+        else
+            $status = $this->checkoutStatusCalculator->setAction($this->action)->setAttendance($this->attendance)->calculate();
+
+        $attendance_log_data = [
             'attendance_id' => $this->attendance->id,
             'action' => $this->action,
             'note' => $this->note,
             'ip' => $this->ip,
-            'user_agent' => $this->userAgent
-        ]);
+            'user_agent' => $this->userAgent,
+            'device_id' => $this->deviceId,
+            'status' => $status
+        ];
+        return $this->attendanceActionLogRepository->create($attendance_log_data);
     }
 }

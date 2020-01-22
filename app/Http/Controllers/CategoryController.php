@@ -98,7 +98,7 @@ class CategoryController extends Controller
                     });
                 });
             }
-            $categories = $categories->select('id', 'name', 'bn_name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id');
+            $categories = $categories->select('id', 'name', 'bn_name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id', 'is_auto_sp_enabled');
             if ($request->has('with')) {
                 $with = $request->with;
                 if ($with == 'children') {
@@ -189,12 +189,12 @@ class CategoryController extends Controller
                             });
                         })->whereNotIn('id', $best_deal_category_ids);
                 })
-                ->select('id', 'name', 'parent_id', 'icon_png', 'app_thumb', 'app_banner', 'slug')
+                ->select('id', 'name', 'parent_id', 'icon_png', 'app_thumb', 'app_banner', 'slug', 'is_auto_sp_enabled')
                 ->parent()->orderBy('order');
 
             if ($with) {
                 $categories->with(['children' => function ($q) use ($location_id, $best_deal_category_ids) {
-                    $q->select('id', 'name', 'thumb', 'parent_id', 'app_thumb', 'icon_png', 'icon', 'slug')
+                    $q->select('id', 'name', 'thumb', 'parent_id', 'app_thumb', 'icon_png', 'icon', 'slug', 'is_auto_sp_enabled')
                         ->whereHas('locations', function ($q) use ($location_id) {
                             $q->select('locations.id')->where('locations.id', $location_id);
                         })->whereHas('services', function ($q) use ($location_id) {
@@ -237,7 +237,7 @@ class CategoryController extends Controller
     public function show($category, Request $request)
     {
         try {
-            $category = Category::select('id', 'name', 'short_description', 'long_description', 'thumb', 'video_link', 'banner', 'app_thumb', 'app_banner', 'publication_status', 'icon', 'questions')->published()->where('id', $category)->first();
+            $category = Category::select('id', 'name', 'short_description', 'is_auto_sp_enabled', 'long_description', 'thumb', 'video_link', 'banner', 'app_thumb', 'app_banner', 'publication_status', 'icon', 'questions')->published()->where('id', $category)->first();
             if ($category == null) {
                 return api_response($request, null, 404);
             }
@@ -305,7 +305,7 @@ class CategoryController extends Controller
                 $children = $children->each(function (&$child) use ($location) {
                     removeRelationsAndFields($child);
                 });
-                $category = collect($category)->only(['name', 'banner', 'app_banner']);
+                $category = collect($category)->only(['name', 'banner', 'app_banner', 'is_auto_sp_enabled']);
                 $category->put('secondaries', $children->sortBy('order')->values()->all());
                 return api_response($request, $category->all(), 200, ['category' => $category->all()]);
             } else
@@ -481,7 +481,7 @@ class CategoryController extends Controller
                 if ($services->count() > 0) {
                     $parent_category = null;
                     if ($category->parent_id != null) $parent_category = $category->parent()->select('id', 'name', 'slug')->first();
-                    $category = collect($category)->only(['id', 'name', 'slug', 'banner', 'parent_id', 'app_banner', 'service_title']);
+                    $category = collect($category)->only(['id', 'name', 'slug', 'banner', 'parent_id', 'app_banner', 'service_title', 'is_auto_sp_enabled']);
                     $version_code = (int)$request->header('Version-Code');
                     $services = $this->serviceQuestionSet($services);
                     if ($version_code && $version_code <= 30122 && $version_code <= 107) {
@@ -524,6 +524,7 @@ class CategoryController extends Controller
                 return api_response($request, null, 404);
             }
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
