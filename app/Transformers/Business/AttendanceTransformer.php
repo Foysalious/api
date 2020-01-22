@@ -37,7 +37,7 @@ class AttendanceTransformer extends TransformerAbstract
             $is_weekend_or_holiday = in_array(strtolower($date->format('l')), $weekday) ? 1 : 0;
 
             // $breakdown_data['is_weekend_or_holiday'] = $is_weekend_or_holiday;
-            $breakdown_data['weekend_or_holiday_tag']=null;
+            $breakdown_data['weekend_or_holiday_tag'] = null;
             if ($is_weekend_or_holiday) $breakdown_data['weekend_or_holiday_tag'] = 'Weekend';
             $breakdown_data['show_attendance'] = 0;
             $breakdown_data['attendance'] = null;
