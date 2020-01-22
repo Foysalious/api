@@ -22,11 +22,13 @@ class StatusChanger
     private $jobStatusChanger;
 
     private $partnerOrderRequest;
+    private $orderRequestResend;
 
-    public function __construct(JobStatusChanger $job_status_changer, PartnerOrderRequestRepositoryInterface $repo)
+    public function __construct(JobStatusChanger $job_status_changer, PartnerOrderRequestRepositoryInterface $repo, OrderRequestResend $order_request_resend)
     {
         $this->jobStatusChanger = $job_status_changer;
         $this->repo = $repo;
+        $this->orderRequestResend = $order_request_resend;
     }
 
     public function setPartnerOrderRequest(PartnerOrderRequest $partner_order_request)
@@ -79,13 +81,13 @@ class StatusChanger
         });
     }
 
-    public function decline(Request $request, OrderRequestResend $order_request_resend)
+    public function decline(Request $request)
     {
         $this->repo->update($this->partnerOrderRequest, ['status' => Statuses::DECLINED]);
 
         if (!$this->repo->isAllRequestDeclinedOrNotResponded($this->partnerOrderRequest->partnerOrder)) return;
         if ($this->partnerOrderRequest->partnerOrder->partner_searched_count == 1) {
-            $order_request_resend->setOrder($this->partnerOrderRequest->partnerOrder->order)->send();
+            $this->orderRequestResend->setOrder($this->partnerOrderRequest->partnerOrder->order)->send();
             return;
         }
         $request->merge(['job' => $this->partnerOrderRequest->partnerOrder->lastJob()]);

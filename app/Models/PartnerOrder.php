@@ -23,6 +23,7 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
 
     protected $guarded = ['id'];
     protected $dates = ['closed_at', 'closed_and_paid_at', 'cancelled_at'];
+    protected $casts = ['partner_searched_count'];
 
     public $status;
     public $paymentStatus;
