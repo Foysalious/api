@@ -2,6 +2,8 @@
 
 use App\Models\Partner;
 use App\Models\PartnerOrder;
+use App\Repositories\SmsHandler as SmsHandlerRepo;
+use Illuminate\Support\Collection;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequestRepositoryInterface;
 use Sheba\PartnerOrderRequest\Validators\CreateValidator;
 use Sheba\PushNotificationHandler;
@@ -16,6 +18,8 @@ class Creator
     private $partnerOrder;
     /** @var array $partnersId */
     private $partnersId;
+    /** @var Collection $partners */
+    private $partners;
     /** @var PushNotificationHandler $pushNotificationHandler */
     private $pushNotificationHandler;
 
@@ -59,6 +63,7 @@ class Creator
     public function setPartners(array $partners_id)
     {
         $this->partnersId = $partners_id;
+        $this->partners = Partner::whereIn('id', $partners_id)->get();
         return $this;
     }
 
@@ -66,7 +71,8 @@ class Creator
     {
         $data = [];
         foreach ($this->partnersId as $partner_id) {
-            $this->sendOrderRequestToPartner($partner_id);
+            $this->sendOrderRequestPushNotificationToPartner($partner_id);
+            $this->sendOrderRequestSmsToPartner($partner_id);
             $data[] = [
                 'partner_order_id' => $this->partnerOrder->id,
                 'partner_id' => $partner_id
@@ -79,10 +85,10 @@ class Creator
     /**
      * @param $partner_id
      */
-    private function sendOrderRequestToPartner($partner_id)
+    private function sendOrderRequestPushNotificationToPartner($partner_id)
     {
         /** @var Partner $partner */
-        $partner = Partner::find($partner_id);
+        $partner = $this->partners->keyBy('id')->get($partner_id);
         $topic = config('sheba.push_notification_topic_name.manager') . $partner->id;
         $channel = config('sheba.push_notification_channel_name.manager');
         $sound = config('sheba.push_notification_sound.manager');
@@ -92,5 +98,14 @@ class Creator
             "message" => "প্রিয় $partner->name আপনার একটি নতুন অর্ডার রয়েছে, অনুগ্রহ করে ম্যানেজার অ্যাপ থেকে অর্ডারটি একসেপ্ট করুন",
             "sound" => "notification_sound"
         ], $topic, $channel, $sound);
+    }
+
+    private function sendOrderRequestSmsToPartner($partner_id)
+    {
+        /** @var Partner $partner */
+        $partner = $this->partners->keyBy('id')->get($partner_id);
+        (new SmsHandlerRepo('partner-order-request'))->send($partner->getContactNumber(), [
+            'partner_name' => $partner->name
+        ]);
     }
 }
