@@ -190,6 +190,7 @@ class SubscriptionController extends Controller
             ];
             $serviceSubscription['offers'] = $serviceSubscription->getDiscountOffers();
             $serviceSubscription['category_id'] = $serviceSubscription->service->category->id;
+            $serviceSubscription['is_auto_sp_enabled'] = $serviceSubscription->service->category->is_auto_sp_enabled;
 
             if ($options) {
                 if (count($answers) > 1)
