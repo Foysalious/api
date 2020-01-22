@@ -58,6 +58,7 @@ class StatusChanger
 
         $job = $request->job;
         $this->changeStatus($job, $request, JobStatuses::ACCEPTED);
+        if ($this->hasError()) return;
         $this->changedJob = $this->assignResource($job, $request->resource_id, $request->manager_resource);
     }
 
@@ -88,6 +89,9 @@ class StatusChanger
         return $job;
     }
 
+    /**
+     * @param Job $job
+     */
     private function sendAssignResourcePushNotifications(Job $job)
     {
         $topic   = config('sheba.push_notification_topic_name.customer') . $job->partner_order->order->customer->id;
