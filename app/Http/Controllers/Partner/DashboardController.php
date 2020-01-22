@@ -45,6 +45,17 @@ class DashboardController extends Controller
                 ->where('screen', 'home')
                 ->get();
             $slide = !$slider_portal->isEmpty() ? $slider_portal->last()->slider->slides->last() : null;
+
+            $screens = ['payment_link','pos','inventory','referral','due','training_video_1','training_video_2'];
+            $slides = [];
+            foreach($screens as $screen){
+                $slider_portals[$screen] = SliderPortal::with('slider.slides')
+                    ->where('portal_name', 'manager-app')
+                    ->where('screen', $screen)
+                    ->get();
+                $slides[$screen] = !$slider_portals[$screen]->isEmpty() ? $slider_portals[$screen]->last()->slider->slides->last() : null;
+            }
+
             $performance->setPartner($partner)->setTimeFrame((new TimeFrame())->forCurrentWeek())->calculate();
             $performanceStats = $performance->getData();
 
@@ -162,11 +173,26 @@ class DashboardController extends Controller
                     'https://www.youtube.com/watch?v=gY5Prr9Lsa8'
                 ],
                 'feature_videos' => [
-                    ['key'=>'payment_link','link'=>'https://www.youtube.com/watch?v=gY5Prr9Lsa8'],
-                    ['key'=>'pos','link'=>'https://www.youtube.com/watch?v=gY5Prr9Lsa8'],
-                    ['key'=>'inventory','link'=>'https://www.youtube.com/watch?v=gY5Prr9Lsa8'],
-                    ['key'=>'referral','link'=>'https://www.youtube.com/watch?v=gY5Prr9Lsa8'],
-                    ['key'=>'due_tracker','link'=>'https://www.youtube.com/watch?v=gY5Prr9Lsa8'],
+                    [
+                        'key'=>'payment_link',
+                        'details' => $slides['payment_link'] ? json_decode($slides['payment_link']->video_info) : null
+                    ],
+                    [
+                        'key'=>'pos',
+                        'details' => $slides['pos'] ? json_decode($slides['pos']->video_info) : null
+                    ],
+                    [
+                        'key'=>'inventory',
+                        'details' => $slides['inventory'] ? json_decode($slides['inventory']->video_info) : null
+                    ],
+                    [
+                        'key'=>'referral',
+                        'details' => $slides['referral'] ? json_decode($slides['referral']->video_info) : null
+                    ],
+                    [
+                        'key'=>'due',
+                        'details' => $slides['due'] ? json_decode($slides['due']->video_info) : null
+                    ],
                 ]
             ];
 
@@ -175,6 +201,7 @@ class DashboardController extends Controller
 
             return api_response($request, $dashboard, 200, ['data' => $dashboard]);
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
