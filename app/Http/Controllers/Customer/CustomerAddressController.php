@@ -55,7 +55,15 @@ class CustomerAddressController extends Controller
             'id' => $address->id,
             'lat' => $geo->getLat(),
             'lng' => $geo->getLng(),
-            'address' => $address->address
+            'address' => $address->address,
+            'flat_no' => $address->flat_no,
+            'road_no' => $address->road_no,
+            'house_no' => $address->house_no,
+            'block_no' => $address->block_no,
+            'sector_no' => $address->sector_no,
+            'city' => $address->city,
+            'street_address' => $address->street_address,
+            'landmark' => $address->landmark,
         ]]);
     }
 
