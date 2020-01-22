@@ -1,6 +1,5 @@
 <?php namespace App\Http\Controllers\Employee;
 
-
 use App\Http\Controllers\Controller;
 use App\Models\BusinessMember;
 use Sheba\Dal\Attendance\Model as Attendance;
