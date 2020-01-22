@@ -268,7 +268,8 @@ class ShebaController extends Controller
                 'method' => $payment->paymentDetails->last()->readable_method,
                 'description' => $payment->payable->description,
                 'created_at' => $payment->created_at->format('jS M, Y, h:i A'),
-                'invoice_link' => $payment->invoice_link
+                'invoice_link' => $payment->invoice_link,
+                'transaction_id' => $transactionID
             ];
             $info = array_merge($info, $this->getInfoForPaymentLink($payment->payable));
             if ($payment->status == 'validated' || $payment->status == 'failed') {
