@@ -2,6 +2,7 @@
 
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
+use Illuminate\Support\Collection;
 use League\Fractal\TransformerAbstract;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Helpers\TimeFrame;
@@ -76,7 +77,7 @@ class AttendanceTransformer extends TransformerAbstract
 
     /**
      * @param Carbon $date
-     * @param $weekend_day
+     * @param Collection $weekend_day
      * @return bool
      */
     private function isWeekend(Carbon $date, $weekend_day)
@@ -84,6 +85,11 @@ class AttendanceTransformer extends TransformerAbstract
         return in_array(strtolower($date->format('l')), $weekend_day);
     }
 
+    /**
+     * @param Carbon $date
+     * @param Collection $holidays
+     * @return bool
+     */
     private function isHoliday(Carbon $date, $holidays)
     {
         return in_array($date->format('Y-m-d'), $holidays);
