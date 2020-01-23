@@ -290,7 +290,6 @@ class BidController extends Controller
                 'technical_evaluation' => $technical_evaluation ? $technical_evaluation->fields ? $technical_evaluation->fields->toArray() : null : null,
                 'company_evaluation' => $company_evaluation ? $company_evaluation->fields ? $company_evaluation->fields->toArray() : null : null,
             ];
-       /* dd($bid_details);*/
             return App::make('dompdf.wrapper')
                 ->loadView('pdfs.quotation_details', compact('bid_details'))
                 ->download("quotation_details.pdf");
