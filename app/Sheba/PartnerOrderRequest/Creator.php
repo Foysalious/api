@@ -71,8 +71,6 @@ class Creator
     {
         $data = [];
         foreach ($this->partnersId as $partner_id) {
-            $this->sendOrderRequestPushNotificationToPartner($partner_id);
-            $this->sendOrderRequestSmsToPartner($partner_id);
             $data[] = [
                 'partner_order_id' => $this->partnerOrder->id,
                 'partner_id' => $partner_id
