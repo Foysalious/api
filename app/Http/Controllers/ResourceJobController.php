@@ -163,6 +163,7 @@ class ResourceJobController extends Controller
         try {
             $job = $request->job;
             if ($request->has('status')) {
+                $request->merge(['partner' => $job->partnerOrder->partner]);
                 $response = $this->resourceJobRepository->changeStatus($job->id, $request);
                 if ($response) {
                     return api_response($request, $response, $response->code);
