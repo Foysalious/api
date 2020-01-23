@@ -128,7 +128,7 @@ class TopUpRequest
         }
         if ($last_topup = $this->agent->topups()->select('id', 'created_at')->orderBy('id', 'desc')->first()) {
             if ($last_topup->created_at->diffInSeconds(Carbon::now()) < self::MINIMUM_TOPUP_INTERVAL_BETWEEN_TWO_TOPUP_IN_SECOND) {
-                $this->errorMessage = "Sorry, wait sometime's to request topup.";
+                $this->errorMessage = "Please wait a minutes to request topup.";
                 return 1;
             }
         }
