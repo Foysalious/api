@@ -1,7 +1,4 @@
-<?php
-
-namespace App\Repositories;
-
+<?php namespace App\Repositories;
 
 use App\Models\PartnerService;
 use App\Models\Service;
@@ -152,7 +149,6 @@ class ServiceRepository
                 } else {
                     $partner_service['discount'] = $partner_service->discounts->first();
                 }
-//                $partner_service['discount'] = $partner_service->discount();
                 $calculate_partner = $this->discountRepository->addDiscountToPartnerForService($partner_service, $partner_service['discount']);
                 array_push($price, $calculate_partner['discounted_price']);
             }
@@ -173,7 +169,6 @@ class ServiceRepository
                 } else {
                     $partner_service['discount'] = $partner_service->discounts->first();
                 }
-//                $partner_service['discount'] = $partner_service->discount();
                 $calculate_partner = $this->discountRepository->addDiscountToPartnerForService($partner_service, $partner_service['discount']);
                 array_push($price, $calculate_partner['discounted_price']);
             }
@@ -200,7 +195,6 @@ class ServiceRepository
         $rating = $partner->reviews()->where('service_id', $service->id)->avg('rating');
         array_add($partner, 'review', $review);
         $partner['rating'] = empty($rating) ? 5 : floor($rating);
-//        $partner['rating'] = floor($rating);
         return $partner;
     }
 
@@ -239,7 +233,6 @@ class ServiceRepository
         array_push($final_partners, $partner);
         return $final_partners;
     }
-
 
     /**
      * @param $service_partners
@@ -347,16 +340,6 @@ class ServiceRepository
                     $service['discount'] = true;
                     break;
                 }
-//                else{
-//                    $partner_service['discount']=$partner_service->discounts->first();
-//                }
-//                if ($service['start_price'] == null) {
-//                    $partner_service['discount'] = $partner_service->discounts->first();
-//                }
-//                if ($partner_service['discount'] != null) {
-//                    $service['discount'] = true;
-//                    break;
-//                }
             }
         }
         return $service;
@@ -382,5 +365,4 @@ class ServiceRepository
         $first_option = array_map('intval', explode(',', key($variables->prices)));
         return $first_option;
     }
-
 }

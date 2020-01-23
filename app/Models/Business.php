@@ -13,12 +13,18 @@ use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 use Sheba\Wallet\WalletUpdateEvent;
+use Sheba\Dal\BusinessOffice\Model as BusinessOffice;
 
 class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTransaction
 {
     use Wallet, ModificationFields, TopUpTrait;
 
     protected $guarded = ['id'];
+
+    public function offices()
+    {
+        return $this->hasMany(BusinessOffice::class);
+    }
 
     public function members()
     {

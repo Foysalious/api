@@ -67,15 +67,13 @@ class PartnerScheduleSlot
         $last_day = $this->today->copy()->addDays($for_days);
         $start = $this->today->toDateString() . ' ' . $this->shebaSlots->first()->start;
         $end = $last_day->format('Y-m-d') . ' ' . $this->shebaSlots->last()->end;
-        if ($this->partner) {
-            $this->resources = $this->getResources();
-            $this->bookedSchedules = $this->getBookedSchedules($start, $end);
-            $this->runningLeaves = $this->getLeavesBetween($start, $end);
-            $this->preparationTime = $this->partner->categories->where('id', $this->category->id)->first()->pivot->preparation_time_minutes;
-        }
+        $this->resources = $this->getResources();
+        $this->bookedSchedules = $this->getBookedSchedules($start, $end);
+        $this->runningLeaves = $this->getLeavesBetween($start, $end);
+        $this->preparationTime = $this->partner->categories->where('id', $this->category->id)->first()->pivot->preparation_time_minutes;
         $day = $this->today->copy();
         while ($day < $last_day) {
-            if ($this->partner) $this->addAvailabilityToShebaSlots($day);
+            $this->addAvailabilityToShebaSlots($day);
             array_push($final, ['value' => $day->toDateString(), 'slots' => $this->formatSlots($day, $this->shebaSlots->toArray())]);
             $day->addDay();
         }

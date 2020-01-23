@@ -1,7 +1,4 @@
-<?php
-
-namespace App\Repositories;
-
+<?php namespace App\Repositories;
 
 use App\Models\PartnerOrder;
 use App\Sheba\UserRequestInformation;
@@ -151,7 +148,8 @@ class ResourceJobRepository
                         'resource_id' => $request->resource->id,
                         'remember_token' => $request->resource->remember_token,
                         'status' => $request->status,
-                        'created_by_type' => $this->created_by_type
+                        'created_by_type' => $this->created_by_type,
+                        'partner_id' => $request->partner->id
                     ])
                 ]);
             return json_decode($res->getBody());

@@ -16,24 +16,25 @@ class PosOrderReturnedTransformer extends TransformerAbstract
 
     public function transform(PosOrderLog $order_log)
     {
-        $orders = [];
+        $orders  = [];
         $details = $order_log->details;
         foreach ($details->items->changes as $key => $item) {
             $service = $this->serviceRepo->findWithTrashed($key);
-            $orders['item'][] = [
-                'id'            => $service->id,
-                'name'          => $service->name,
-                'app_thumb'     => $service->app_thumb,
-                'unit_price'    => (double)$item->unit_price,
-                'old_quantity'  => $item->qty->old,
-                'new_quantity'  => $item->qty->new,
-                'backed_quantity' => $item->qty->old - $item->qty->new
-            ];
+            if ($service) {
+                $orders['item'][] = [
+                    'id'              => $service->id,
+                    'name'            => $service->name,
+                    'app_thumb'       => $service->app_thumb,
+                    'unit_price'      => (double)$item->unit_price,
+                    'old_quantity'    => $item->qty->old,
+                    'new_quantity'    => $item->qty->new,
+                    'backed_quantity' => $item->qty->old - $item->qty->new
+                ];
+            }
         }
-        $orders['old_total_sale'] = (double)$details->items->total_sale;
-        $orders['old_vat_amount'] = (double)$details->items->vat_amount;
-        $orders['total_returned_amount'] = (double)$details->items->returned_amount;
-
+        $orders['old_total_sale']        = isset($details->items->total_sale) ? (double)$details->items->total_sale : 0;
+        $orders['old_vat_amount']        = isset($details->items->vat_amount) ? (double)$details->items->vat_amount : 0;
+        $orders['total_returned_amount'] = isset($details->items->returned_amount) ? (double)$details->items->returned_amount : 0;
         return $orders;
     }
 }

@@ -26,7 +26,6 @@ class DeliveryCharge
     private function setShebaLogisticDeliveryCharge()
     {
         if (!$this->category || !$this->categoryPartnerPivot || !is_null($this->shebaLogisticDeliveryCharge)) return $this;
-
         if ($this->category->needsLogistic() && $this->doesUseShebaLogistic()) {
             $this->shebaLogisticDeliveryCharge = $this->category->getShebaLogisticsPrice();
         }
@@ -36,13 +35,16 @@ class DeliveryCharge
 
     public function doesUseShebaLogistic()
     {
-        return (bool)$this->categoryPartnerPivot->uses_sheba_logistic;
+        if ($this->categoryPartnerPivot)
+            return (bool)$this->categoryPartnerPivot->uses_sheba_logistic;
+
+        return $this->category->needsLogistic();
     }
 
     public function get()
     {
         return $this->doesUseShebaLogistic() ?
             (double)$this->shebaLogisticDeliveryCharge :
-            (double)$this->categoryPartnerPivot->delivery_charge;
+            $this->categoryPartnerPivot ? (double)$this->categoryPartnerPivot->delivery_charge : (double)$this->category->delivery_charge;
     }
 }

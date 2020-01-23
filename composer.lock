@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0db8380a51ebced3380c1a7e6ac11e34",
+    "content-hash": "cde5dd8fa49396c20c1b5294bc20ade4",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -1371,7 +1371,7 @@
             "time": "2017-09-05T11:17:05+00:00"
         },
         {
-            "name": "jeremeamia/superclosure",
+            "name": "jeremeamia/SuperClosure",
             "version": "2.3.0",
             "source": {
                 "type": "git",
@@ -3101,8 +3101,8 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
-                "reference": "4a147d99d116dca7885096e42f3170c4484966ad"
+                "url": "https://mac_pasha@bitbucket.org/startern/sheba_dal.git",
+                "reference": "9d79811e4f6af408bd2618eeb97b5922e2b8e547"
             },
             "require": {
                 "php": ">=5.4"
@@ -3129,14 +3129,14 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2020-01-19T07:29:34+00:00"
+            "time": "2020-01-22T10:28:13+00:00"
         },
         {
             "name": "sheba/notification",
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_notification.git",
+                "url": "https://mac_pasha@bitbucket.org/startern/sheba_notification.git",
                 "reference": "dc29747984b6a69e6959e5de551d37a43105922d"
             },
             "require": {
@@ -3168,7 +3168,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_report.git",
+                "url": "https://mac_pasha@bitbucket.org/startern/sheba_report.git",
                 "reference": "548e3494488c089f2a5b6e0b43ccbb0882a70f7d"
             },
             "require": {
@@ -3197,7 +3197,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_sms.git",
+                "url": "https://mac_pasha@bitbucket.org/startern/sheba_sms.git",
                 "reference": "78a5bcc7f9f19bbbae0422fc9bf9016715d8edd6"
             },
             "require": {
@@ -3226,7 +3226,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_voucher.git",
+                "url": "https://mac_pasha@bitbucket.org/startern/sheba_voucher.git",
                 "reference": "35da8856f9d4918614ce686df316fee6c176a1e2"
             },
             "require": {
@@ -5723,7 +5723,8 @@
         "ext-openssl": "^7.0",
         "ext-mcrypt": "^7.0",
         "ext-redis": "*",
-        "ext-mysql_xdevapi": "*"
+        "ext-mysql_xdevapi": "*",
+        "ext-intl": "*"
     },
     "platform-dev": []
 }
