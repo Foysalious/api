@@ -13,6 +13,7 @@ class BonusCredit
     private $payableType;
     private $logRepo;
     private $log;
+    private $spent_model;
 
     public function __construct(BonusLogRepository $log_repo)
     {
@@ -34,6 +35,12 @@ class BonusCredit
     public function setPayableType(PayableType $payable_type)
     {
         $this->payableType = $payable_type;
+        return $this;
+    }
+
+    public function setSpentModel($spent_on)
+    {
+        $this->spent_model = $spent_on;
         return $this;
     }
 
