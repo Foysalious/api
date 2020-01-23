@@ -91,7 +91,7 @@ class StatusChanger
             return;
         }
         $request->merge(['job' => $this->partnerOrderRequest->partnerOrder->lastJob()]);
-        $this->jobStatusChanger->decline($request);
+        $this->jobStatusChanger->notResponded($request);
         if ($this->jobStatusChanger->hasError()) {
             $this->setError($this->jobStatusChanger->getErrorCode(), $this->getErrorMessage());
             return;

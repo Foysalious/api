@@ -151,4 +151,9 @@ class StatusChanger
     {
         $this->changeStatus($request->job, $request, JobStatuses::DECLINED);
     }
+
+    public function notResponded(Request $request)
+    {
+        $this->changeStatus($request->job, $request, JobStatuses::NOT_RESPONDED);
+    }
 }

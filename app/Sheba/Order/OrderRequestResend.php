@@ -5,6 +5,8 @@ use App\Models\Order;
 use App\Models\PartnerOrder;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use Sheba\Jobs\JobLogsCreator;
+use Sheba\Jobs\JobStatuses;
 
 class OrderRequestResend
 {
@@ -33,6 +35,10 @@ class OrderRequestResend
         if ($response && $response->code == 200) {
             $partner_order->partner_searched_count = (int)$partner_order->partner_searched_count + 1;
             $partner_order->update();
+            $old_status = $job->status;
+            if ($partner_order->partner_searched_count == 2 && $partner_order->partnerOrderRequests()->count() == 0) {
+                (new JobLogsCreator(new Job()))->statusChangeLog($old_status, JobStatuses::NOT_RESPONDED);
+            }
         }
     }
 
