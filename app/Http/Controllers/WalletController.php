@@ -72,83 +72,67 @@ class WalletController extends Controller
         }
     }
 
+    /**
+     * @TODO REFACTOR wallet purchase
+     */
     public function purchase(Request $request, PaymentRepository $paymentRepository, BonusCredit $bonus_credit)
     {
+        $this->validate($request, ['transaction_id' => 'required']);
+        /** @var Payment $payment */
+        $payment = Payment::where('transaction_id', $request->transaction_id)->valid()->first();
+        if (!$payment) return api_response($request, null, 404); elseif ($payment->isFailed()) return api_response($request, null, 500, ['message' => 'Payment failed']);
+        elseif ($payment->isPassed()) return api_response($request, null, 200);
+        $user = $payment->payable->user;
+        $sheba_credit = $user->shebaCredit();
+        $paymentRepository->setPayment($payment);
+        if ($sheba_credit == 0) {
+            $paymentRepository->changeStatus(['to' => 'validation_failed', 'from' => $payment->status, 'transaction_details' => $payment->transaction_details, 'log' => "Insufficient balance. Purchase Amount: " . $payment->payable->amount . " & Sheba Credit: $sheba_credit"]);
+            $payment->status = 'validation_failed';
+            $payment->update();
+            return api_response($request, null, 400, ['message' => 'You don\'t have sufficient credit']);
+        }
         try {
-            $this->validate($request, ['transaction_id' => 'required']);
-            /** @var Payment $payment */
-            $payment = Payment::where('transaction_id', $request->transaction_id)->valid()->first();
-            if (!$payment) return api_response($request, null, 404); elseif ($payment->isFailed()) return api_response($request, null, 500, ['message' => 'Payment failed']);
-            elseif ($payment->isPassed()) return api_response($request, null, 200);
-            $user = $payment->payable->user;
-            $sheba_credit = $user->shebaCredit();
-            $paymentRepository->setPayment($payment);
-            if ($sheba_credit == 0) {
-                $paymentRepository->changeStatus(['to' => 'validation_failed', 'from' => $payment->status, 'transaction_details' => $payment->transaction_details, 'log' => "Insufficient balance. Purchase Amount: " . $payment->payable->amount . " & Sheba Credit: $sheba_credit"]);
-                $payment->status = 'validation_failed';
-                $payment->update();
-                return api_response($request, null, 400, ['message' => 'You don\'t have sufficient credit']);
-            }
-            try {
-                $transaction = '';
-                DB::transaction(function () use ($payment, $user, $bonus_credit, &$transaction) {
-                    $spent_model = $payment->payable->getPayableType();
-                    $remaining = $bonus_credit->setUser($user)->setPayableType($spent_model)->deduct($payment->payable->amount);
-                    if ($remaining > 0) {
-                        if ($user->wallet < $remaining) {
-                            $remaining = $user->wallet;
-                            $payment_detail = $payment->paymentDetails->where('method', 'wallet')->first();
-                            $payment_detail->amount = $remaining;
-                            $payment_detail->update();
-                        }
-                        $this->setModifier($user);
-                        $transactionHandler = (new WalletTransactionHandler())->setModel($user)->setType('debit')->setAmount($remaining);
-                        if (in_array($payment->payable->type, ['movie_ticket_purchase', 'transport_ticket_purchase'])) {
-                            $log = sprintf(constants('TICKET_LOG')[$payment->payable->type]['log'], number_format($remaining, 2));
-                            $source = ($payment->payable->type == 'movie_ticket_purchase') ? TransactionSources::MOVIE : TransactionSources::TRANSPORT;
-                            $transactionHandler->setSource($source);
-                        } else {
-                            $log = 'Service Purchase';
-                            $transactionHandler->setSource(TransactionSources::SERVICE_PURCHASE);
-                        }
-                        $transactionHandler->setTransactionDetails(['gateway' => TransactionGateways::WALLET]);
-                        $transactionHandler->setLog($log);
-                        if ($user instanceof Customer) {
-                            $transaction = $transactionHandler->store(['event_type' => get_class($spent_model), 'event_id' => $spent_model->id]);
-                        } else {
-                            $transaction = $transactionHandler->store();
-                        }
-                       /*
-                        * WALLET TRANSACTION NEED TO REMOVE
-                        *  $wallet_transaction_data = ['amount' => $remaining, 'type' => 'Debit', 'log' => $log, 'created_at' => Carbon::now()];
-                        if ($user instanceof Customer) $wallet_transaction_data += ['event_type' => get_class($spent_model), 'event_id' => $spent_model->id];
-
-                        $user->debitWallet($remaining);
-                        $transaction = $user->walletTransaction($wallet_transaction_data);*/
-
+            $transaction = '';
+            DB::transaction(function () use ($payment, $user, $bonus_credit, &$transaction) {
+                $spent_model = $payment->payable->getPayableType();
+                $remaining = $bonus_credit->setUser($user)->setPayableType($spent_model)->deduct($payment->payable->amount);
+                if ($remaining > 0 && $user->wallet > 0) {
+                    if ($user->wallet < $remaining) {
+                        $remaining = $user->wallet;
+                        $payment_detail = $payment->paymentDetails->where('method', 'wallet')->first();
+                        $payment_detail->amount = $remaining;
+                        $payment_detail->update();
                     }
-                });
-                $paymentRepository->changeStatus(['to' => 'validated', 'from' => $payment->status, 'transaction_details' => $payment->transaction_details]);
-                $payment->status = 'validated';
-                $payment->transaction_details = json_encode(array('payment_id' => $payment->id, 'transaction_id' => $transaction ? $transaction->id : null));
-                $payment->update();
-            } catch (QueryException $e) {
-                $payment->status = 'failed';
-                $payment->update();
-                app('sentry')->captureException($e);
-                return api_response($request, null, 500);
-            }
-            return api_response($request, $user, 200);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+                    $this->setModifier($user);
+                    $transactionHandler = (new WalletTransactionHandler())->setModel($user)->setType('debit')->setAmount($remaining);
+                    if (in_array($payment->payable->type, ['movie_ticket_purchase', 'transport_ticket_purchase'])) {
+                        $log = sprintf(constants('TICKET_LOG')[$payment->payable->type]['log'], number_format($remaining, 2));
+                        $source = ($payment->payable->type == 'movie_ticket_purchase') ? TransactionSources::MOVIE : TransactionSources::TRANSPORT;
+                        $transactionHandler->setSource($source);
+                    } else {
+                        $log = 'Service Purchase';
+                        $transactionHandler->setSource(TransactionSources::SERVICE_PURCHASE);
+                    }
+                    $transactionHandler->setTransactionDetails(['gateway' => TransactionGateways::WALLET]);
+                    $transactionHandler->setLog($log);
+                    if ($user instanceof Customer) {
+                        $transaction = $transactionHandler->store(['event_type' => get_class($spent_model), 'event_id' => $spent_model->id]);
+                    } else {
+                        $transaction = $transactionHandler->store();
+                    }
+                }
+            });
+            $paymentRepository->changeStatus(['to' => 'validated', 'from' => $payment->status, 'transaction_details' => $payment->transaction_details]);
+            $payment->status = 'validated';
+            $payment->transaction_details = json_encode(array('payment_id' => $payment->id, 'transaction_id' => $transaction ? $transaction->id : null));
+            $payment->update();
+        } catch (QueryException $e) {
+            $payment->status = 'failed';
+            $payment->update();
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+        return api_response($request, $user, 200);
     }
 
     public function getFaqs(Request $request)
