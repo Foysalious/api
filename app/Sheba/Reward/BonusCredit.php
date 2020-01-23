@@ -4,7 +4,6 @@ use Sheba\HasWallet;
 use Sheba\ModificationFields;
 use Sheba\Payment\PayableType;
 use Sheba\Repositories\BonusLogRepository;
-use DB;
 
 class BonusCredit
 {
@@ -41,24 +40,22 @@ class BonusCredit
     public function deduct($amount)
     {
         $original_amount = $amount;
-        DB::transaction(function () use (&$original_amount, &$amount) {
-            $bonuses = $this->user->bonuses()->valid()->orderBy('valid_till')->get();
-            foreach ($bonuses as $bonus) {
-                if ($amount == 0) break;
-                elseif ($bonus->amount >= $amount) {
-                    if ($bonus->amount != $amount) {
-                        $this->createNewBonus($amount, $bonus);
-                        $bonus->amount = $amount;
-                    }
-                    $amount = 0;
-                } elseif ($bonus->amount < $amount) {
-                    $amount = $amount - $bonus->amount;
+        $bonuses = $this->user->bonuses()->valid()->orderBy('valid_till')->get();
+        foreach ($bonuses as $bonus) {
+            if ($amount == 0) break;
+            elseif ($bonus->amount >= $amount) {
+                if ($bonus->amount != $amount) {
+                    $this->createNewBonus($amount, $bonus);
+                    $bonus->amount = $amount;
                 }
-                $this->updateExistingBonus($bonus);
+                $amount = 0;
+            } elseif ($bonus->amount < $amount) {
+                $amount = $amount - $bonus->amount;
             }
+            $this->updateExistingBonus($bonus);
+        }
 
-            if ($amount < $original_amount) $this->saveLog($original_amount - $amount);
-        });
+        if ($amount < $original_amount) $this->saveLog($original_amount - $amount);
 
         return $amount;
     }

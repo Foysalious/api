@@ -72,6 +72,9 @@ class WalletController extends Controller
         }
     }
 
+    /**
+     * @TODO REFACTOR wallet purchase
+     */
     public function purchase(Request $request, PaymentRepository $paymentRepository, BonusCredit $bonus_credit)
     {
         $this->validate($request, ['transaction_id' => 'required']);
@@ -93,7 +96,7 @@ class WalletController extends Controller
             DB::transaction(function () use ($payment, $user, $bonus_credit, &$transaction) {
                 $spent_model = $payment->payable->getPayableType();
                 $remaining = $bonus_credit->setUser($user)->setPayableType($spent_model)->deduct($payment->payable->amount);
-                if ($remaining > 0) {
+                if ($remaining > 0 && $user->wallet > 0) {
                     if ($user->wallet < $remaining) {
                         $remaining = $user->wallet;
                         $payment_detail = $payment->paymentDetails->where('method', 'wallet')->first();
