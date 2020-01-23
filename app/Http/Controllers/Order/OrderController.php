@@ -9,6 +9,7 @@ use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Partner;
 use App\Models\Payment;
+use App\Models\User;
 use App\Repositories\NotificationRepository;
 use App\Repositories\SmsHandler;
 use App\Sheba\Bondhu\BondhuAutoOrderV3;
@@ -61,8 +62,11 @@ class OrderController extends Controller
                 'business_id' => 'sometimes|required|numeric',
                 'voucher' => 'sometimes|required|numeric',
                 'emi_month' => 'numeric',
+                'created_by' => 'numeric',
+                'created_by_name' => 'string',
             ], ['mobile' => 'Invalid mobile number!']);
-            $this->setModifier($request->customer);
+            if ($request->has('created_by')) $this->setModifier(User::find((int)$request->created_by));
+            else $this->setModifier($request->customer);
             $order = $order_place
                 ->setCustomer($request->customer)
                 ->setDeliveryName($request->name)
