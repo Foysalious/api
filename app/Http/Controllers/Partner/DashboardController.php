@@ -169,30 +169,36 @@ class DashboardController extends Controller
                 'has_pos_due_order' => $total_due_for_pos_orders > 0 ? 1 : 0,
                 'has_pos_paid_order' => $has_pos_paid_order,
                 'videos' => [
-                    'https://www.youtube.com/watch?v=gY5Prr9Lsa8',
-                    'https://www.youtube.com/watch?v=gY5Prr9Lsa8'
+                    [
+                        'key' => 'training_video_1',
+                        'details' => $slides['training_video_1'] ? json_decode($slides['training_video_1']->video_info) : null
+                    ],
+                    [
+                        'key' => 'training_video_2',
+                        'details' => $slides['training_video_2'] ? json_decode($slides['training_video_2']->video_info) : null
+                    ]
                 ],
                 'feature_videos' => [
                     [
-                        'key'=>'payment_link',
+                        'key' => 'payment_link',
                         'details' => $slides['payment_link'] ? json_decode($slides['payment_link']->video_info) : null
                     ],
                     [
-                        'key'=>'pos',
+                        'key' => 'pos',
                         'details' => $slides['pos'] ? json_decode($slides['pos']->video_info) : null
                     ],
                     [
-                        'key'=>'inventory',
+                        'key' => 'inventory',
                         'details' => $slides['inventory'] ? json_decode($slides['inventory']->video_info) : null
                     ],
                     [
-                        'key'=>'referral',
+                        'key' => 'referral',
                         'details' => $slides['referral'] ? json_decode($slides['referral']->video_info) : null
                     ],
                     [
-                        'key'=>'due',
+                        'key' => 'due',
                         'details' => $slides['due'] ? json_decode($slides['due']->video_info) : null
-                    ],
+                    ]
                 ]
             ];
 
@@ -201,7 +207,6 @@ class DashboardController extends Controller
 
             return api_response($request, $dashboard, 200, ['data' => $dashboard]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
