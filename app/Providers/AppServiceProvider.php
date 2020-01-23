@@ -1,10 +1,12 @@
 <?php namespace App\Providers;
 
+use Exception;
 use Illuminate\Support\ServiceProvider;
 
 use Sheba\Dal\Providers\CustomMigrationServiceProvider;
 use Sheba\Dev\DevelopmentEnvironmentChecker;
 use Sheba\Partner\HomePageSetting\Providers\ServiceProvider as PartnerHomeSettingServiceProvider;
+use Sheba\Recommendations\HighlyDemands\Categories\ServiceProvider as HighlyDemandsCategoriesServiceProvider;
 use Sheba\Sms\SmsServiceProvider;
 use Sheba\Voucher\VoucherCodeServiceProvider;
 use Sheba\Voucher\VoucherSuggesterServiceProvider;
@@ -18,7 +20,7 @@ class AppServiceProvider extends ServiceProvider
      * Bootstrap any application services.
      *
      * @return void
-     * @throws \Exception
+     * @throws Exception
      */
     public function boot()
     {
@@ -42,5 +44,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->register(SmsServiceProvider::class);
         $this->app->register(HomePageSettingGettersProvider::class);
         $this->app->register(PartnerHomeSettingServiceProvider::class);
+        $this->app->register(HighlyDemandsCategoriesServiceProvider::class);
     }
 }
