@@ -1,6 +1,5 @@
 <?php namespace App\Http\Controllers\Category;
 
-
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\CategoryGroupCategory;
@@ -14,7 +13,6 @@ use League\Fractal\Resource\Item;
 
 class CategoryController extends Controller
 {
-
     public function show($category, Request $request)
     {
         $category = Category::find($category);
