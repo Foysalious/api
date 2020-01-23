@@ -185,11 +185,12 @@ class ServiceController extends Controller
             $service['bn_faqs'] = $service->bn_faqs ? json_decode($service->bn_faqs) : null;
             $category = Category::with(['parent' => function ($query) {
                 $query->select('id', 'name');
-            }])->where('id', $service->category_id)->select('id', 'name', 'parent_id', 'video_link', 'slug')->first();
+            }])->where('id', $service->category_id)->select('id', 'name', 'parent_id', 'video_link', 'slug', 'is_auto_sp_enabled')->first();
 
             array_add($service, 'category_name', $category->name);
             array_add($service, 'video_link', $category->video_link);
             array_add($service, 'category_slug', $category->slug);
+            array_add($service, 'is_auto_sp_enabled', $category->is_auto_sp_enabled);
             array_add($service, 'master_category_id', $category->parent->id);
             array_add($service, 'master_category_name', $category->parent->name);
             array_add($service, 'service_breakdown', $service_breakdown);

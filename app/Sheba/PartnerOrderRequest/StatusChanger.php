@@ -2,6 +2,7 @@
 
 use App\Models\Job;
 use App\Models\PartnerOrder;
+use App\Sheba\Order\OrderRequestResend;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -21,11 +22,13 @@ class StatusChanger
     private $jobStatusChanger;
 
     private $partnerOrderRequest;
+    private $orderRequestResend;
 
-    public function __construct(JobStatusChanger $job_status_changer, PartnerOrderRequestRepositoryInterface $repo)
+    public function __construct(JobStatusChanger $job_status_changer, PartnerOrderRequestRepositoryInterface $repo, OrderRequestResend $order_request_resend)
     {
         $this->jobStatusChanger = $job_status_changer;
         $this->repo = $repo;
+        $this->orderRequestResend = $order_request_resend;
     }
 
     public function setPartnerOrderRequest(PartnerOrderRequest $partner_order_request)
@@ -83,6 +86,10 @@ class StatusChanger
         $this->repo->update($this->partnerOrderRequest, ['status' => Statuses::DECLINED]);
 
         if (!$this->repo->isAllRequestDeclinedOrNotResponded($this->partnerOrderRequest->partnerOrder)) return;
+        if ($this->partnerOrderRequest->partnerOrder->partner_searched_count == 1) {
+            $this->orderRequestResend->setOrder($this->partnerOrderRequest->partnerOrder->order)->send();
+            return;
+        }
         $request->merge(['job' => $this->partnerOrderRequest->partnerOrder->lastJob()]);
         $this->jobStatusChanger->decline($request);
         if ($this->jobStatusChanger->hasError()) {

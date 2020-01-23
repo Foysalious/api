@@ -164,10 +164,10 @@ class SubscriptionController extends Controller
         try {
             /** @var ServiceSubscription $serviceSubscription */
             $serviceSubscription = ServiceSubscription::find((int)$serviceSubscription);
-            if (!in_array($this->location, $serviceSubscription->service->locations->pluck('id')->toArray()))
-                return api_response($request, null, 404);
-
+            $location_service = LocationService::where('location_id', $this->location)->where('service_id', $serviceSubscription->service_id)->first();
+            if (!$location_service) return api_response($request, null, 404);
             $options = $this->serviceQuestionSet($serviceSubscription->service);
+            $serviceSubscription['questions'] = json_encode($options, true);
             $serviceSubscription['questions'] = json_encode($options, true);
             $answers = collect();
             if ($options) {
@@ -176,8 +176,7 @@ class SubscriptionController extends Controller
                 }
             }
 
-            $price_range = $approximatePriceCalculator->setSubscription($serviceSubscription)->getPriceRange();
-            $approximatePriceCalculator->setSubscription($serviceSubscription);
+            $price_range = $approximatePriceCalculator->setLocationService($location_service)->setSubscription($serviceSubscription)->getPriceRange();
             $serviceSubscription['max_price'] = $price_range['max_price'] > 0 ? $price_range['max_price'] : 0;
             $serviceSubscription['min_price'] = $price_range['min_price'] > 0 ? $price_range['min_price'] : 0;
             $serviceSubscription['price_applicable_for'] = $approximatePriceCalculator->getSubscriptionType();
@@ -191,8 +190,8 @@ class SubscriptionController extends Controller
             ];
             $serviceSubscription['offers'] = $serviceSubscription->getDiscountOffers();
             $serviceSubscription['category_id'] = $serviceSubscription->service->category->id;
+            $serviceSubscription['is_auto_sp_enabled'] = $serviceSubscription->service->category->is_auto_sp_enabled;
 
-            $location_service = LocationService::where('location_id', $this->location)->where('service_id', $serviceSubscription->service_id)->first();
             if ($options) {
                 if (count($answers) > 1)
                     $serviceSubscription['service_breakdown'] = $this->breakdown_service_with_min_max_price($answers, $serviceSubscription['min_price'], $serviceSubscription['max_price'], 0, $price_calculation, $location_service);

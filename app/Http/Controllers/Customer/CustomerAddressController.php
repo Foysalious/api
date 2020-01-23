@@ -31,7 +31,7 @@ class CustomerAddressController extends Controller
     public function store($customer, Request $request, GeoCode $geo_code, Address $address, Creator $creator, Geo $geo_class)
     {
         $this->validate($request, [
-            'name' => 'required|string',
+            'name' => 'required_if:is_save,1|string',
             'house_no' => 'required|string',
             'road_no' => 'required|string',
             'block_no' => 'string',
@@ -46,7 +46,7 @@ class CustomerAddressController extends Controller
         if ($request->has('sector_no')) $address_text .= ',' . $request->sector_no;
         $address_text .= ',' . $request->city;
         $address->setAddress($address_text);
-        $geo = $this->getGeo($geo_code, $address);
+        $geo = $geo_code->setAddress($address)->getGeo();
         if (!$geo) $geo = $geo_class->setLat($request->lat)->setLng($request->lng);
         $this->setModifier($request->customer);
         $address = $creator->setCustomer($request->customer)->setAddressText($address_text)->setHouseNo($request->house_no)->setRoadNo($request->road_no)->setBlockNo($request->block_no)
@@ -56,25 +56,15 @@ class CustomerAddressController extends Controller
             'lat' => $geo->getLat(),
             'lng' => $geo->getLng(),
             'address' => $address->address,
+            'flat_no' => $address->flat_no,
+            'road_no' => $address->road_no,
+            'house_no' => $address->house_no,
+            'block_no' => $address->block_no,
+            'sector_no' => $address->sector_no,
+            'city' => $address->city,
+            'street_address' => $address->street_address,
+            'landmark' => $address->landmark,
         ]]);
     }
-
-
-    /**
-     * @param GeoCode $geo_code
-     * @param Address $address
-     * @return \Sheba\Location\Geo|null
-     * @throws \GuzzleHttp\Exception\GuzzleException
-     */
-    private function getGeo(GeoCode $geo_code, Address $address)
-    {
-        try {
-            return $geo_code->setAddress($address)->getGeo();
-        } catch (RequestException $e) {
-            app('sentry')->captureException($e);
-            return null;
-        }
-    }
-
 
 }

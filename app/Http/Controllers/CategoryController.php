@@ -98,7 +98,7 @@ class CategoryController extends Controller
                     });
                 });
             }
-            $categories = $categories->select('id', 'name', 'bn_name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id');
+            $categories = $categories->select('id', 'name', 'bn_name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id', 'is_auto_sp_enabled');
             if ($request->has('with')) {
                 $with = $request->with;
                 if ($with == 'children') {
@@ -135,6 +135,10 @@ class CategoryController extends Controller
             foreach ($categories as $key => &$category) {
                 if ($with == 'children') {
                     $category->children = $category->allChildren;
+                    foreach ($category->children as $children) {
+                        $children->parent_name = $category->name;
+                        $children->parent_slug = $category->slug;
+                    }
                     unset($category->allChildren);
                     if ($category->children->isEmpty()) {
                         $categories->forget($key);
@@ -185,12 +189,12 @@ class CategoryController extends Controller
                             });
                         })->whereNotIn('id', $best_deal_category_ids);
                 })
-                ->select('id', 'name', 'parent_id', 'icon_png', 'app_thumb', 'app_banner', 'slug')
+                ->select('id', 'name', 'parent_id', 'icon_png', 'app_thumb', 'app_banner', 'slug', 'is_auto_sp_enabled')
                 ->parent()->orderBy('order');
 
             if ($with) {
                 $categories->with(['children' => function ($q) use ($location_id, $best_deal_category_ids) {
-                    $q->select('id', 'name', 'thumb', 'parent_id', 'app_thumb', 'icon_png', 'icon', 'slug')
+                    $q->select('id', 'name', 'thumb', 'parent_id', 'app_thumb', 'icon_png', 'icon', 'slug', 'is_auto_sp_enabled')
                         ->whereHas('locations', function ($q) use ($location_id) {
                             $q->select('locations.id')->where('locations.id', $location_id);
                         })->whereHas('services', function ($q) use ($location_id) {
@@ -233,7 +237,7 @@ class CategoryController extends Controller
     public function show($category, Request $request)
     {
         try {
-            $category = Category::select('id', 'name', 'short_description', 'long_description', 'thumb', 'video_link', 'banner', 'app_thumb', 'app_banner', 'publication_status', 'icon', 'questions')->published()->where('id', $category)->first();
+            $category = Category::select('id', 'name', 'short_description', 'is_auto_sp_enabled', 'long_description', 'thumb', 'video_link', 'banner', 'app_thumb', 'app_banner', 'publication_status', 'icon', 'questions')->published()->where('id', $category)->first();
             if ($category == null) {
                 return api_response($request, null, 404);
             }
@@ -301,7 +305,7 @@ class CategoryController extends Controller
                 $children = $children->each(function (&$child) use ($location) {
                     removeRelationsAndFields($child);
                 });
-                $category = collect($category)->only(['name', 'banner', 'app_banner']);
+                $category = collect($category)->only(['name', 'banner', 'app_banner', 'is_auto_sp_enabled']);
                 $category->put('secondaries', $children->sortBy('order')->values()->all());
                 return api_response($request, $category->all(), 200, ['category' => $category->all()]);
             } else
@@ -395,8 +399,8 @@ class CategoryController extends Controller
                         })->select(
                             'id', 'category_id', 'unit', 'name', 'bn_name', 'thumb',
                             'app_thumb', 'app_banner', 'short_description', 'description',
-                            'banner', 'faqs', 'variables', 'variable_type', 'min_quantity', 'options_content'
-                            // , 'terms_and_conditions', 'features'
+                            'banner', 'faqs', 'variables', 'variable_type', 'min_quantity', 'options_content',
+                            'terms_and_conditions', 'features'
                         )->orderBy('order')->skip($offset)->take($limit);
 
                         if ((int)\request()->is_business) $q->publishedForBusiness();
@@ -420,15 +424,15 @@ class CategoryController extends Controller
                 }
 
                 $subscriptions = collect();
-
-                foreach ($services as $service) {
+                $final_services = collect();
+                foreach ($services as $key => $service) {
                     /** @var LocationService $location_service */
                     $location_service = $service->locationServices->first();
 
                     /** @var ServiceDiscount $discount */
                     $discount = $location_service->discounts()->running()->first();
-
                     $prices = json_decode($location_service->prices);
+                    if (!$prices) continue;
                     $price_calculation->setService($service)->setLocationService($location_service);
                     $upsell_calculation->setService($service)->setLocationService($location_service);
 
@@ -447,8 +451,8 @@ class CategoryController extends Controller
                     $min_max_price->setService($service)->setLocationService($location_service);
                     $service['max_price'] = $min_max_price->getMax();
                     $service['min_price'] = $min_max_price->getMin();
-                    // $service['terms_and_conditions'] = $service->terms_and_conditions ? json_decode($service->terms_and_conditions) : null;
-                    // $service['features'] = $service->features ? json_decode($service->features) : null;
+                    $service['terms_and_conditions'] = $service->terms_and_conditions ? json_decode($service->terms_and_conditions) : null;
+                    $service['features'] = $service->features ? json_decode($service->features) : null;
 
                     /** @var ServiceSubscription $subscription */
                     if ($subscription = $service->activeSubscription) {
@@ -472,10 +476,13 @@ class CategoryController extends Controller
                         $subscriptions->push($subscription);
                     }
                     removeRelationsAndFields($service);
+                    $final_services->push($service);
                 }
-
+                $services = $final_services;
                 if ($services->count() > 0) {
-                    $category = collect($category)->only(['name', 'slug', 'banner', 'parent_id', 'app_banner']);
+                    $parent_category = null;
+                    if ($category->parent_id != null) $parent_category = $category->parent()->select('id', 'name', 'slug')->first();
+                    $category = collect($category)->only(['id', 'name', 'slug', 'banner', 'parent_id', 'app_banner', 'service_title', 'is_auto_sp_enabled']);
                     $version_code = (int)$request->header('Version-Code');
                     $services = $this->serviceQuestionSet($services);
                     if ($version_code && $version_code <= 30122 && $version_code <= 107) {
@@ -483,6 +490,8 @@ class CategoryController extends Controller
                             return $service->subscription;
                         })->values()->all();
                     }
+                    $category['parent_name'] = $parent_category ? $parent_category->name : null;
+                    $category['parent_slug'] = $parent_category ? $parent_category->slug : null;
                     $category['services'] = $services;
                     $category['subscriptions'] = $subscriptions;
                     $category['cross_sale'] = $cross_sale_service ? [
@@ -492,10 +501,10 @@ class CategoryController extends Controller
                         'category_id' => $cross_sale_service->category_id,
                         'service_id' => $cross_sale_service->service_id
                     ] : null;
-
-                    $category['delivery_charge'] = $delivery_charge->setCategory($service->category)->get();
+                    $category_model = Category::find($category['id']);
+                    $category['delivery_charge'] = $delivery_charge->setCategory($category_model)->get();
                     $discount_checking_params = (new JobDiscountCheckingParams())->setDiscountableAmount($category['delivery_charge']);
-                    $job_discount_handler->setType(DiscountTypes::DELIVERY)->setCategory($service->category)->setCheckingParams($discount_checking_params)->calculate();
+                    $job_discount_handler->setType(DiscountTypes::DELIVERY)->setCategory($category_model)->setCheckingParams($discount_checking_params)->calculate();
                     /** @var Discount $delivery_discount */
                     $delivery_discount = $job_discount_handler->getDiscount();
                     $category['delivery_discount'] = $delivery_discount ? [
@@ -516,6 +525,7 @@ class CategoryController extends Controller
                 return api_response($request, null, 404);
             }
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -582,12 +592,16 @@ class CategoryController extends Controller
                     $option_content = key_exists($option_key, $option_contents) ? $option_contents[$option_key] : [];
                     $explode_answers = explode(',', $question->get('answers'));
                     $contents = [];
+                    $answer_contents = [];
                     foreach ($explode_answers as $answer_keys => $answer) {
                         $answer_key = $answer_keys + 1;
-                        array_push($contents, key_exists($answer_key, $option_content) ? $option_content[$answer_key] : null);
+                        $value = key_exists($answer_key, $option_content) ? $option_content[$answer_key] : null;
+                        array_push($contents, $value);
+                        array_push($answer_contents, ['key' => $answer_keys, 'content' => $value]);
                     }
                     $question->put('answers', $explode_answers);
                     $question->put('contents', $contents);
+                    $question->put('answer_contents', $answer_contents);
                 }
                 if (count($questions) == 1) {
                     $questions[0]->put('input_type', 'selectbox');

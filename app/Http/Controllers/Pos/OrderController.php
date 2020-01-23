@@ -116,7 +116,6 @@ class OrderController extends Controller
             }
             return api_response($request, $orders_formatted, 200, ['orders' => $orders_formatted]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -187,8 +186,11 @@ class OrderController extends Controller
                 return $error;
             $order = $creator->create();
             $order = $order->calculate();
-            if ($partner->wallet >= 1)
-                $this->sendCustomerSms($order);
+            /**
+             * TURNED OFF POS ORDER CREATE SMS BY SERVER END, HANDLED BY CLIENT SIDE
+             *
+             * if ($partner->wallet >= 1) $this->sendCustomerSms($order);
+             */
             $this->sendCustomerEmail($order);
             $order->payment_status      = $order->getPaymentStatus();
             $order->client_pos_order_id = $request->client_pos_order_id;
@@ -256,8 +258,11 @@ class OrderController extends Controller
             $this->setModifier($request->manager_resource);
             $order = $creator->setData($request->all())->create();
             $order = $order->calculate();
-            if ($partner->wallet >= 1)
-                $this->sendCustomerSms($order);
+            /**
+             * TURNED OFF POS ORDER CREATE SMS BY SERVER END, HANDLED BY CLIENT SIDE
+             *
+             * if ($partner->wallet >= 1) $this->sendCustomerSms($order);
+             */
             $this->sendCustomerEmail($order);
             $order->payment_status        = $order->getPaymentStatus();
             $order["client_pos_order_id"] = $request->has('client_pos_order_id') ? $request->client_pos_order_id : null;

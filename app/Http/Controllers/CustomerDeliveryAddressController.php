@@ -1,9 +1,11 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\CategoryPartner;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;
 use App\Models\Location;
+use App\Models\LocationService;
 use App\Models\Partner;
 use App\Models\Profile;
 use App\Sheba\Address\AddressValidator;
@@ -12,6 +14,7 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Dal\CategoryLocation\CategoryLocation;
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
 use Sheba\Location\Distance\DistanceStrategy;
@@ -88,14 +91,18 @@ class CustomerDeliveryAddressController extends Controller
                 'lat' => 'required|numeric',
                 'lng' => 'required|numeric',
                 'partner' => 'sometimes|numeric',
+                'service' => 'sometimes|string',
+                'category' => 'sometimes|string',
             ]);
             $customer = $request->customer;
             $location = null;
-            $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'location_id', 'address', 'name', 'geo_informations', 'flat_no')->get();
+            $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'location_id', 'address', 'name', 'geo_informations', 'flat_no', 'flat_no', 'road_no', 'house_no', 'block_no', 'sector_no', 'city', 'street_address', 'landmark')->get();
+            $hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->first();
+            if ($hyper_location) $location = $hyper_location->location;
 
             $hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->first();
             if ($hyper_location) $location = $hyper_location->location;
-            
+
             if ($location == null) return api_response($request, null, 404, ['message' => "No address at this location"]);
 
             $customer_order_addresses = $customer->orders()->selectRaw('delivery_address,count(*) as c')->groupBy('delivery_address')->orderBy('c', 'desc')->get();
@@ -127,6 +134,26 @@ class CustomerDeliveryAddressController extends Controller
                     $inside_radius = ($distance->from([$current])->to($to)->sortedDistance()[0][$to[0]->id] <= (double)$partner_geo->radius * 1000) ? 1 : 0;
                     $customer_delivery_address['is_valid'] = $inside_radius;
                     return $customer_delivery_address;
+                });
+            }
+            if ($request->has('service')) {
+                $service = array_map('intval', json_decode($request->service));
+                $location_service = LocationService::whereIn('service_id', $service)->select('location_id')->get();
+                $location_ids = count($location_service) > 0 ? $location_service->pluck('location_id')->toArray() : [];
+                $customer_delivery_addresses->map(function ($address) use ($location_ids) {
+                    if (!$address['is_valid']) return $address;
+                    $address['is_valid'] = in_array($address->location_id, $location_ids) ? 1 : 0;
+                    return $address;
+                });
+            }
+            if ($request->has('category')) {
+                $category = array_map('intval', json_decode($request->category));
+                $category_location = CategoryLocation::whereIn('category_id', $category)->select('location_id')->get();
+                $location_ids = count($category_location) > 0 ? $category_location->pluck('location_id')->toArray() : [];
+                $customer_delivery_addresses->map(function ($address) use ($location_ids) {
+                    if (!$address['is_valid']) return $address;
+                    $address['is_valid'] = in_array($address->location_id, $location_ids) ? 1 : 0;
+                    return $address;
                 });
             }
 

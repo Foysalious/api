@@ -1,7 +1,8 @@
 <?php namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\Attendance\Model as Attendance;
 
 class BusinessMember extends Model
 {
@@ -14,9 +15,9 @@ class BusinessMember extends Model
         return $this->belongsTo(Member::class);
     }
 
-    public function businesses()
+    public function business()
     {
-        return $this->belongsToMany(Business::class);
+        return $this->belongsTo(Business::class);
     }
 
     public function actions()
@@ -37,5 +38,15 @@ class BusinessMember extends Model
     public function isSuperAdmin()
     {
         return $this->is_super;
+    }
+
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class);
+    }
+
+    public function attendanceOfToday()
+    {
+        return $this->hasMany(Attendance::class)->where('date', (Carbon::now())->toDateString())->first();
     }
 }

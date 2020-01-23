@@ -1,6 +1,5 @@
 <?php namespace App\Transformers\Service;
 
-
 use App\Models\Category;
 use App\Models\LocationService;
 use App\Models\Service;
@@ -107,10 +106,10 @@ class ServiceTransformer extends TransformerAbstract
                 'images' => count($partnership->slides) > 0 ? $partnership->slides->pluck('thumb') : []
             ] : null,
             'faqs' => $service->faqs ? json_decode($service->faqs) : null,
-            // 'terms_and_conditions' => $service->terms_and_conditions ? json_decode($service->terms_and_conditions) : null,
-            // 'features' => $service->features ? json_decode($service->features) : null,
+            'terms_and_conditions' => $service->terms_and_conditions ? json_decode($service->terms_and_conditions) : null,
+            'features' => $service->features ? json_decode($service->features) : null,
             'gallery' => count($galleries) > 0 ? $galleries : null,
-            'blog' => count($blog_posts) > 0 ? $blog_posts : null,
+            'blog' => count($blog_posts) > 0 ? $blog_posts : null
         ];
     }
 

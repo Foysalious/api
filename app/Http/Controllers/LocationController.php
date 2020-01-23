@@ -172,7 +172,15 @@ class LocationController extends Controller
             });
             $models = $models->get();
             if ($model_name == 'Category') {
-                $models = $models->load('children.locations', 'services.locations');
+                $models = $models->load(['children' => function ($q) use ($location) {
+                    $q->whereHas('locations', function ($q) use ($location) {
+                        $q->where('locations.id', $location->id);
+                    });
+                }, 'services' => function ($q) use ($location) {
+                    $q->whereHas('locations', function ($q) use ($location) {
+                        $q->where('locations.id', $location->id);
+                    });
+                }]);
                 $models = $models->filter(function ($category) use ($location) {
                     $children = $category->isParent() ? $category->children : $category->services;
                     foreach ($children as $child) {
@@ -190,7 +198,7 @@ class LocationController extends Controller
         return $final_services;
     }
 
-    public function getDivisionsWithDistrictsAndThana()
+    public function getDivisionsWithDistrictsAndThana(Request $request)
     {
         try {
             $divisions = Division::with('districts.thanas')->get();
@@ -198,11 +206,10 @@ class LocationController extends Controller
             $manager->setSerializer(new CustomSerializer());
             $resource = new Item($divisions, new DivisionsWithDistrictsTransformer());
             $formatted_data = $manager->createData($resource)->toArray()['data'];
-            return api_response(null, $formatted_data, 200, ['divisions' => $formatted_data]);
+            return api_response($request, $request, 200, $formatted_data);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
-            return api_response(null, null, 500);
+            return api_response($request, $request, 500);
         }
     }
 }
