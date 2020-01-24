@@ -416,8 +416,12 @@ class OrderPlace
     {
         $geo = new Geo();
         $geo->setLng($this->deliveryAddress->geo->lng)->setLat($this->deliveryAddress->geo->lat);
-        $this->partnerListBuilder->setGeo($geo)->setServiceRequestObjectArray($this->serviceRequestObject)
-            ->setScheduleTime($this->scheduleTime)->setScheduleDate($this->scheduleDate);
+        $this->partnerListBuilder
+            ->setGeo($geo)
+            ->setServiceRequestObjectArray($this->serviceRequestObject)
+            ->setScheduleTime($this->scheduleTime)
+            ->setScheduleDate($this->scheduleDate);
+
         if ($this->selectedPartnerId) $this->partnerListBuilder->setPartnerIds([$this->selectedPartnerId]);
         $this->partnerListDirector->setBuilder($this->partnerListBuilder)->buildPartnerListForOrderPlacement();
         $this->partnersFromList = $this->partnerListBuilder->get();

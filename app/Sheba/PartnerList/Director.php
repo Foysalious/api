@@ -1,6 +1,5 @@
 <?php namespace Sheba\PartnerList;
 
-
 class Director
 {
     /** @var Builder */
@@ -67,5 +66,4 @@ class Director
         $this->builder->checkPartnerAvailability();
         $this->builder->removeUnavailablePartners();
     }
-
 }

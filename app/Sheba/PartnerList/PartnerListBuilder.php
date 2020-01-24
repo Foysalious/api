@@ -39,6 +39,11 @@ class PartnerListBuilder implements Builder
         });
     }
 
+    private function getCategoryId()
+    {
+        return $this->serviceRequestObject[0]->getCategory()->id;
+    }
+
     public function checkService()
     {
         $this->partnerQuery = $this->partnerQuery->whereHas('services', function ($query) {
@@ -50,11 +55,17 @@ class PartnerListBuilder implements Builder
     {
         $query->whereHas('category', function ($q) {
             $q->publishedForAny();
-        })->select(DB::raw('count(*) as c'))->whereIn('services.id', $this->getServiceIds())
-            ->where('partner_service.is_published', 1)
-            ->publishedForAll()
-            ->groupBy('partner_id')->havingRaw('c=' . count($this->getServiceIds()));
+        })->select(DB::raw('count(*) as c'))->whereIn('services.id', $this->getServiceIds())->where('partner_service.is_published', 1)->publishedForAll()->groupBy('partner_id')->havingRaw('c=' . count($this->getServiceIds()));
         $query->where('partner_service.is_verified', 1);
+    }
+
+    private function getServiceIds()
+    {
+        $service_ids = [];
+        foreach ($this->serviceRequestObject as $serviceRequestObject) {
+            array_push($service_ids, $serviceRequestObject->getServiceId());
+        }
+        return array_unique($service_ids);
     }
 
     public function checkLeave()
@@ -66,38 +77,40 @@ class PartnerListBuilder implements Builder
 
     public function withResource()
     {
-        $this->partnerQuery = $this->partnerQuery->with(['handymanResources' => function ($q) {
-            $q->selectRaw('count(distinct resources.id) as total_experts, partner_id')
-                ->join('category_partner_resource', 'category_partner_resource.partner_resource_id', '=', 'partner_resource.id')
-                ->where('category_partner_resource.category_id', $this->getCategoryId())->groupBy('partner_id')->verified();
-        }]);
+        $this->partnerQuery = $this->partnerQuery->with([
+            'handymanResources' => function ($q) {
+                $q->selectRaw('count(distinct resources.id) as total_experts, partner_id')->join('category_partner_resource', 'category_partner_resource.partner_resource_id', '=', 'partner_resource.id')->where('category_partner_resource.category_id', $this->getCategoryId())->groupBy('partner_id')->verified();
+            }
+        ]);
     }
 
     public function WithAvgReview()
     {
-        $this->partnerQuery = $this->partnerQuery->with(['reviews' => function ($q) {
-            $q->selectRaw("AVG(reviews.rating) as avg_rating")
-                ->selectRaw("reviews.partner_id")
-                ->where('reviews.category_id', $this->getCategoryId())
-                ->groupBy('reviews.partner_id');
-        }]);
+        $this->partnerQuery = $this->partnerQuery->with([
+            'reviews' => function ($q) {
+                $q->selectRaw("AVG(reviews.rating) as avg_rating")->selectRaw("reviews.partner_id")->where('reviews.category_id', $this->getCategoryId())->groupBy('reviews.partner_id');
+            }
+        ]);
     }
 
     public function withTotalCompletedOrder()
     {
-        $this->partnerQuery = $this->partnerQuery->with(['jobs' => function ($q) {
-            $q->selectRaw("count(case when status in ('Served') and category_id in(" . implode([$this->getCategoryId()], ',') . ") then status end) as total_completed_orders")
-                ->groupBy('partner_id');
-        }]);
+        $this->partnerQuery = $this->partnerQuery->with([
+            'jobs' => function ($q) {
+                $q->selectRaw("count(case when status in ('Served') and category_id in(" . implode([$this->getCategoryId()], ',') . ") then status end) as total_completed_orders")->groupBy('partner_id');
+            }
+        ]);
     }
 
     public function withService()
     {
-        $this->partnerQuery = $this->partnerQuery->with(['services' => function ($q) {
-            $q->whereIn('service_id', $this->getServiceIds());
-        }, 'categories' => function ($q) {
-            $q->where('categories.id', $this->getCategoryId());
-        }]);
+        $this->partnerQuery = $this->partnerQuery->with([
+            'services' => function ($q) {
+                $q->whereIn('service_id', $this->getServiceIds());
+            }, 'categories' => function ($q) {
+                $q->where('categories.id', $this->getCategoryId());
+            }
+        ]);
     }
 
     public function checkPartnerHasResource()
@@ -130,9 +143,11 @@ class PartnerListBuilder implements Builder
 
     public function checkPartnerCreditLimit()
     {
-        $this->partners->load(['walletSetting' => function ($q) {
-            $q->select('id', 'partner_id', 'min_wallet_threshold');
-        }]);
+        $this->partners->load([
+            'walletSetting' => function ($q) {
+                $q->select('id', 'partner_id', 'min_wallet_threshold');
+            }
+        ]);
         $this->partners = $this->partners->filter(function ($partner, $key) {
             /** @var Partner $partner */
             return $partner->hasAppropriateCreditLimit();
@@ -174,26 +189,6 @@ class PartnerListBuilder implements Builder
         $this->scheduleTime = $time;
         return $this;
     }
-
-    private function getCategoryId()
-    {
-        return $this->serviceRequestObject[0]->getCategory()->id;
-    }
-
-    private function getCategory()
-    {
-        return $this->serviceRequestObject[0]->getCategory();
-    }
-
-    private function getServiceIds()
-    {
-        $service_ids = [];
-        foreach ($this->serviceRequestObject as $serviceRequestObject) {
-            array_push($service_ids, $serviceRequestObject->getServiceId());
-        }
-        return array_unique($service_ids);
-    }
-
 
     public function checkGeoWithinOperationalZone()
     {
@@ -247,12 +242,13 @@ class PartnerListBuilder implements Builder
         });
     }
 
-
     public function checkPartnerDailyOrderLimit()
     {
-        $this->partners->load(['todayOrders' => function ($q) {
-            $q->select('id', 'partner_id');
-        }]);
+        $this->partners->load([
+            'todayOrders' => function ($q) {
+                $q->select('id', 'partner_id');
+            }
+        ]);
         $this->partners = $this->partners->filter(function ($partner, $key) {
             /** @var Partner $partner */
             if (is_null($partner->order_limit)) return true;
@@ -272,6 +268,17 @@ class PartnerListBuilder implements Builder
                 });
             }
         }
+    }
+
+    private function hasThisOption($prices, $option)
+    {
+        $prices = json_decode($prices);
+        foreach ($prices as $key => $price) {
+            if ($key == $option) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public function checkPartnerAvailability()
@@ -316,16 +323,8 @@ class PartnerListBuilder implements Builder
         return $time[1];
     }
 
-    private function hasThisOption($prices, $option)
+    private function getCategory()
     {
-        $prices = json_decode($prices);
-        foreach ($prices as $key => $price) {
-            if ($key == $option) {
-                return true;
-            }
-        }
-        return false;
+        return $this->serviceRequestObject[0]->getCategory();
     }
-
-
 }
