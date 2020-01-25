@@ -72,13 +72,6 @@ class PriceCalculation
 
     }
 
-    private function getBaseQuantity()
-    {
-        $service = $this->getService();
-        if ($service->isFixed()) return (double)$this->locationService->base_quantity;
-        return $this->getOptionPrice($this->locationService->base_quantity);
-    }
-
     public function getUnitPrice()
     {
         $service = $this->getService();
@@ -101,6 +94,7 @@ class PriceCalculation
     public function getMinPrice()
     {
         $service = $this->getService();
+        if (!$this->locationService->min_prices) return null;
         if ($service->isFixed()) return (double)$this->locationService->min_prices;
         return $this->getOptionPrice($this->locationService->min_prices);
     }
@@ -108,8 +102,17 @@ class PriceCalculation
     public function getBasePrice()
     {
         $service = $this->getService();
+        if (!$this->locationService->base_prices) return null;
         if ($service->isFixed()) return (double)$this->locationService->base_prices;
         return $this->getOptionPrice($this->locationService->base_prices);
+    }
+
+    private function getBaseQuantity()
+    {
+        $service = $this->getService();
+        if (!$this->locationService->base_quantity) return null;
+        if ($service->isFixed()) return (double)$this->locationService->base_quantity;
+        return $this->getOptionPrice($this->locationService->base_quantity);
     }
 
     /**
