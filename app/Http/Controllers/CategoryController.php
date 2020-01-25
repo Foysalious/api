@@ -432,7 +432,7 @@ class CategoryController extends Controller
                     /** @var ServiceDiscount $discount */
                     $discount = $location_service->discounts()->running()->first();
                     $prices = json_decode($location_service->prices);
-                    if (!$prices) continue;
+                    if ($prices === null) continue;
                     $price_calculation->setService($service)->setLocationService($location_service);
                     $upsell_calculation->setService($service)->setLocationService($location_service);
 
