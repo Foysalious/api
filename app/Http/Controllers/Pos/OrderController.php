@@ -44,7 +44,9 @@ class OrderController extends Controller
 
     public function index(Request $request)
     {
-        ini_set('memory_limit', '2096M');
+        ini_set('memory_limit', '4096M');
+        ini_set('max_execution_time', 120);
+        
         try {
             $status  = $request->status;
             $partner = $request->partner;
@@ -58,15 +60,8 @@ class OrderController extends Controller
                     $query->orWhere('profiles.mobile', 'LIKE', '%' . $request->q . '%');
                 });
                 $orders_query = $orders_query->orWhere([
-                    [
-                        'pos_orders.id',
-                        'LIKE',
-                        '%' . $request->q . '%'
-                    ],
-                    [
-                        'pos_orders.partner_id',
-                        $partner->id
-                    ]
+                    ['pos_orders.id', 'LIKE', '%' . $request->q . '%'],
+                    ['pos_orders.partner_id', $partner->id]
                 ]);
             }
             $orders       = empty($status) ? $orders_query->orderBy('created_at', 'desc')->skip($offset)->take($limit)->get() : $orders_query->orderBy('created_at', 'desc')->get();

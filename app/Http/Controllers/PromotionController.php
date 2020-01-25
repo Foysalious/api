@@ -251,6 +251,9 @@ class PromotionController extends Controller
     public function getAllApplicable(ApplicableVoucherFinder $finder, Request $request, $customer, PartnerListRequest $partnerListRequest)
     {
         try {
+            ini_set('memory_limit', '1024M');
+            ini_set('max_execution_time', 120);
+
             $customer = $request->customer;
             $location = $request->location;
             $partnerListRequest->setRequest($request)->prepareObject();
