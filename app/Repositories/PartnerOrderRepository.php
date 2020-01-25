@@ -175,7 +175,7 @@ class PartnerOrderRepository
                         $services->push([
                             'name' => $jobService->service->name,
                             'variables' => $variables,
-                            'quantity' => (double)$jobService->quantity
+                            'quantity' => (int)$jobService->quantity // TODO: FORCEFULLY CONVERTED DOUBLE TO INTEGER. REMOVE LATER
                         ]);
                     }
                 }
