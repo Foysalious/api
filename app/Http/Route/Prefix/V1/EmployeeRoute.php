@@ -37,6 +37,10 @@ class EmployeeRoute
                     $api->get('/', 'Employee\AnnouncementController@show');
                 });
             });
+            $api->group(['prefix' => 'attendances'], function ($api) {
+                $api->get('/', 'Employee\AttendanceController@index');
+                $api->post('action', 'Employee\AttendanceController@takeAction');
+            });
         });
     }
 }

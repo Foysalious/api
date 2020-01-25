@@ -2,10 +2,10 @@
 
 namespace App\Sheba\Address;
 
-
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
 use Sheba\Location\Distance\DistanceStrategy;
+use Sheba\Location\Geo;
 
 class AddressValidator
 {
@@ -39,5 +39,15 @@ class AddressValidator
             if ($percent >= 80) return $address;
         }
         return 0;
+    }
+
+    public function isSameAddress(Geo $geo, Coords $current)
+    {
+        $to = [new Coords(floatval($geo->getLat()), floatval($geo->getLng()))];
+        $distance = (new Distance(DistanceStrategy::$VINCENTY))->matrix();
+        $results = collect($distance->from([$current])->to($to)->sortedDistance()[0])->reject(function ($value) {
+            return $value > self::THRESHOLD_DISTANCE;
+        });
+        return count($results) > 0;
     }
 }

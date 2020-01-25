@@ -50,7 +50,9 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Exception $e)
     {
-        if($handler = HandlerFactory::get($request, $e)) return $handler->render();
+        $handler = HandlerFactory::get($request, $e);
+
+        if ($handler) return $handler->render();
 
         return parent::render($request, $e);
     }

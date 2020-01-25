@@ -37,8 +37,26 @@ class ServiceSubscriptionDiscount extends Model
         return (int)$this->is_discount_amount_percentage;
     }
 
+    public function isFlat()
+    {
+        return !$this->isPercentage();
+    }
+
     public function hasCap()
     {
         return $this->cap > 0;
+    }
+
+    public function getApplicableAmount($target_amount, $quantity)
+    {
+        if ($this->isFlat()) {
+            $discount = $quantity * $this->discount_amount;
+            if ($discount > $target_amount) $discount = $target_amount;
+            return $discount;
+        }
+
+        $discount = ($target_amount * $this->discount_amount) / 100;
+        if ($this->hasCap() && $discount > $this->cap) $discount = $this->cap;
+        return $discount;
     }
 }

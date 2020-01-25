@@ -13,6 +13,7 @@ use Validator;
 class ResourceJobController extends Controller
 {
     use Helpers;
+
     private $resourceJobRepository;
 
     public function __construct()
@@ -162,6 +163,7 @@ class ResourceJobController extends Controller
         try {
             $job = $request->job;
             if ($request->has('status')) {
+                $request->merge(['partner' => $job->partnerOrder->partner]);
                 $response = $this->resourceJobRepository->changeStatus($job->id, $request);
                 if ($response) {
                     return api_response($request, $response, $response->code);
@@ -212,7 +214,6 @@ class ResourceJobController extends Controller
         }
     }
 
-
     public function otherJobs($resource, $job, Request $request)
     {
         try {
@@ -237,5 +238,4 @@ class ResourceJobController extends Controller
             return api_response($request, null, 500);
         }
     }
-
 }

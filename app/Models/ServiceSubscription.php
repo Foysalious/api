@@ -99,4 +99,11 @@ class ServiceSubscription extends Model
             'is_percentage' => $discount_offer->is_discount_amount_percentage
         ];
     }
+
+    public function getDiscount($type, $dates_count)
+    {
+        $this->discounts()->where([
+            ['subscription_type', $type], ['min_discount_qty', '<=', $dates_count]
+        ])->valid()->first();
+    }
 }

@@ -57,10 +57,15 @@ class NotificationController extends Controller
 
     public function test(Request $request, PushNotificationHandler $pushNotificationHandler)
     {
-        $this->validate($request, ['support_id' => 'numeric|required', 'announcement_id' => 'numeric|required']);
+        $this->validate($request, [
+            'support_id' => 'sometimes|required|numeric',
+            'announcement_id' => 'sometimes|required|numeric'
+        ]);
+
         $auth_info = $request->auth_info;
         $business_member = $auth_info['business_member'];
         if (!$business_member) return api_response($request, null, 401);
+
         $topic = config('sheba.push_notification_topic_name.employee') . (int)$business_member['member_id'];
         $channel = config('sheba.push_notification_channel_name.employee');
         if ($request->has('support_id')) {
@@ -74,6 +79,7 @@ class NotificationController extends Controller
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel);
         }
+
         if ($request->has('announcement_id')) {
             $pushNotificationHandler->send([
                 "title" => 'New announcement arrived',
@@ -85,6 +91,18 @@ class NotificationController extends Controller
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel);
         }
+
+        if ($request->has('attendance')) {
+            $pushNotificationHandler->send([
+                "title" => 'Attendance Alert',
+                "message" => "Have you reached office yet?  You are 5 minutes behind from being late! Hurry up!",
+                "event_type" => 'attendance',
+                "sound" => "notification_sound",
+                "channel_id" => $channel,
+                "click_action" => "FLUTTER_NOTIFICATION_CLICK"
+            ], $topic, $channel);
+        }
+
         return api_response($request, null, 200);
     }
 }
