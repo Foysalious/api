@@ -89,7 +89,7 @@ class PriceCalculation
     private function getOptionPrice($prices)
     {
         $option = implode(',', $this->option);
-        $prices = json_decode($this->locationService->prices);
+        $prices = json_decode($prices);
         foreach ($prices as $key => $price) {
             if ($key == $option) {
                 return (double)$price;
