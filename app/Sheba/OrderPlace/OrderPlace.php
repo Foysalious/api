@@ -609,7 +609,7 @@ class OrderPlace
         $car_rental_detail->pick_up_address_geo = json_encode(array('lat' => $service->getPickUpGeo()->getLat(), 'lng' => $service->getPickUpGeo()->getLng()));
         $car_rental_detail->pick_up_address = $service->getPickUpAddress();
         if ($destination_thana) {
-            $car_rental_detail->destination_location_id = $destination_thana;
+            $car_rental_detail->destination_location_id = $destination_thana->id;
             $car_rental_detail->destination_location_type = "App\\Models\\" . class_basename($destination_thana);
             $car_rental_detail->destination_address_geo = json_encode(array('lat' => $service->getDestinationGeo()->getLat(), 'lng' => $service->getDestinationGeo()->getLng()));
             $car_rental_detail->destination_address = $service->getDestinationAddress();
