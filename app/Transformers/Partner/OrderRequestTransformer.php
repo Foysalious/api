@@ -2,6 +2,7 @@
 
 use App\Jobs\Job;
 use App\Models\Order;
+use Carbon\Carbon;
 use League\Fractal\TransformerAbstract;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequest;
 
@@ -37,6 +38,7 @@ class OrderRequestTransformer extends TransformerAbstract
             'schedule_date'         => $job->schedule_date,
             'schedule_time_start'   => $job->preferred_time_start,
             'schedule_time_end'     => $job->preferred_time_end,
+            'schedule_at'           => Carbon::parse($job->schedule_date .' '. $job->preferred_time_end)->timestamp,
             'created_time'          => $request->created_at->format('h:m:s A'),
             'total_price'           => (double)$request->partnerOrder->calculate()->totalPrice,
             'status'                => $request->status,
