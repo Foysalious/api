@@ -76,8 +76,10 @@ class OrderController extends Controller
                 $final_orders->push($order_formatted);
             }
             if (!empty($status))
-                $final_orders = $final_orders->where('status', $status);
+                $final_orders = $final_orders->where('status', $status)->slice($offset)->take($limit);
+                
             $final_orders     = $final_orders->groupBy('date')->toArray();
+            
             $orders_formatted = [];
             $pos_orders_repo  = new PosOrderRepository();
             $pos_sales        = [];
