@@ -132,19 +132,14 @@ abstract class ActionChecker
 
     private function hasDeviceUsedInDifferentAccountToday()
     {
-        $business_member_ids = $this->business->members()->select('business_member.id')->get();
-        if (count($business_member_ids) == 0) return 0;
-        $business_member_ids = $business_member_ids->pluck('id');
-        if ($this->attendanceOfToday) {
-            $business_member_ids = $business_member_ids->filter(function ($id) {
-                return $id != $this->attendanceOfToday->business_member_id;
-            })->values()->all();
-        }
-        $attendances = Attendance::whereIn('business_member_id', $business_member_ids)->where('date', date('Y-m-d'))
-            ->whereHas('actions', function ($q) {
-                $q->where('device_id', $this->deviceId);
-            })->select('id', 'business_member_id')->get();
-        return count($attendances) > 0 ? 1 : 0;
+        $business_members = $this->business->members()->select('business_member.id');
+        if ($this->attendanceOfToday) $business_members = $business_members->where('business_member.id', '<>', $this->attendanceOfToday->business_member_id);
+        $business_members = $business_members->get();
+        if (count($business_members) == 0) return 0;
+        $attendances_count = Attendance::whereIn('business_member_id', $business_members->pluck('id'))->where('date', date('Y-m-d'))->whereHas('actions', function ($q) {
+            $q->where('device_id', $this->deviceId);
+        })->select('id')->count();
+        return $attendances_count > 0 ? 1 : 0;
     }
 
     protected function checkIp()
