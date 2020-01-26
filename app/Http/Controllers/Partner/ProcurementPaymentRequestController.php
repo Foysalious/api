@@ -6,6 +6,8 @@ use Sheba\Business\ProcurementPaymentRequest\Creator;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use Sheba\Business\ProcurementPaymentRequest\Updater;
+use Sheba\Dal\ProcurementPaymentRequest\Model;
+use Sheba\Dal\ProcurementPaymentRequest\ProcurementPaymentRequestRepositoryInterface;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
@@ -57,14 +59,14 @@ class ProcurementPaymentRequestController extends Controller
         }
     }
 
-    public function updateStatus($partner, $procurement, $bid, $payment_request, Request $request, Updater $updater)
+    public function updateStatus($partner, $procurement, $bid, $payment_request, ProcurementPaymentRequestRepositoryInterface $procurement_payment_request_repository, Request $request, Updater $updater)
     {
         try {
             $this->validate($request, [
                 'status' => 'required|string'
             ]);
             $this->setModifier($request->manager_resource);
-            $updater->setProcurement($procurement)->setBid($bid)->setPaymentRequest($payment_request)->setStatus($request->status);
+            $updater->setProcurement($procurement)->setBid($bid)->setPaymentRequest($procurement_payment_request_repository->find($payment_request))->setStatus($request->status);
             $updater->updateStatus();
             return api_response($request, null, 200);
         } catch (ModelNotFoundException $e) {

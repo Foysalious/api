@@ -172,13 +172,9 @@ class OrderRequestController extends Controller
         try {
             $this->validate($request, ['resource_id' => 'required|int']);
             $this->statusChanger->setPartnerOrderRequest($partner_order_request)->accept($request);
-            if ($this->statusChanger->hasError()) {
-                $sentry = app('sentry');
-                $sentry->user_context(['code' => $this->statusChanger->getErrorCode(), 'message' => $this->statusChanger->getErrorMessage()]);
-                $e = new \Exception('Order request not accepted #' . $partner_order_request->id);
-                $sentry->captureException($e);
-                return api_response($request, null, $this->statusChanger->getErrorCode(), ['message' => $this->statusChanger->getErrorMessage()]);
-            }
+            if ($this->statusChanger->hasError()) return api_response($request, null, $this->statusChanger->getErrorCode(), [
+                'message' => $this->statusChanger->getErrorMessage()
+            ]);
             return api_response($request, null, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
