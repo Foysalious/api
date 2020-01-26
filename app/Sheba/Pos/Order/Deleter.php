@@ -72,7 +72,7 @@ class Deleter
     {
         $items = $this->order->items()->whereNotNull('service_id')->get();
         foreach ($items as $item) {
-            if (!is_null($item->service->stock)) {
+            if (!empty($item->service) && !is_null($item->service->stock)) {
                 $item->service->stock += (int)$item->quantity;
                 $item->service->save();
             }
