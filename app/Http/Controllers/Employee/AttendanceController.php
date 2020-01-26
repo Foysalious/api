@@ -79,7 +79,7 @@ class AttendanceController extends Controller
     {
         $this->validate($request, [
             'action' => 'required|string|in:' . implode(',', Actions::get()),
-            'note' => 'string|required_if:action,' . Actions::CHECKOUT,
+            'note' => 'string',
             'device_id' => 'string',
             'user_agent' => 'string',
         ]);

@@ -117,6 +117,7 @@ class IndexRoute
                     $api->group(['prefix' => '{order}'], function ($api) {
                         $api->get('/', 'Pos\OrderController@show');
                         $api->post('/', 'Pos\OrderController@update');
+                        $api->delete('/','Pos\OrderController@delete');
                         $api->post('/collect-payment', 'Pos\OrderController@collectPayment');
                         $api->get('/send-sms', 'Pos\OrderController@sendSms');
                         $api->get('/send-email', 'Pos\OrderController@sendEmail');
