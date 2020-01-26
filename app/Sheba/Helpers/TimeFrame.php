@@ -59,6 +59,14 @@ class TimeFrame
         return $this;
     }
 
+    public function forTodayAndYesterday()
+    {
+        $date = Carbon::today();
+        $this->start = $date->copy()->subDay()->startOfDay();
+        $this->end = $date->endOfDay();
+        return $this;
+    }
+
     public function forToday()
     {
         return $this->forADay(Carbon::today());
@@ -74,6 +82,13 @@ class TimeFrame
         $start_end_date = findStartEndDateOfAMonth(0, $year);
         $this->start = $start_end_date['start_time'];
         $this->end = $start_end_date['end_time'];
+        return $this;
+    }
+
+    public function forSixMonth(Carbon $date)
+    {
+        $this->start = $date->copy()->subMonths(6)->startOfMonth();
+        $this->end = $date->copy()->endOfMonth();
         return $this;
     }
 

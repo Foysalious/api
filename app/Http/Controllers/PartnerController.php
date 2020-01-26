@@ -18,6 +18,7 @@ use App\Models\PartnerService;
 use App\Models\PartnerServicePricesUpdate;
 use App\Models\ReviewQuestionAnswer;
 use App\Models\Service;
+use App\Models\SubscriptionOrder;
 use App\Repositories\DiscountRepository;
 use App\Repositories\NotificationRepository;
 use App\Repositories\PartnerOrderRepository;
@@ -392,27 +393,32 @@ class PartnerController extends Controller
         try {
             ini_set('memory_limit', '2048M');
             $this->validate($request, [
-                'type' => 'sometimes|required|string',
-                'verified' => 'sometimes|required',
-                'job_id' => 'sometimes|required|numeric|exists:jobs,id',
-                'category_id' => 'sometimes|required|numeric',
-                'date' => 'sometimes|required|date',
-                'time' => 'sometimes|required'
+                'type'      => 'sometimes|required|string',
+                'verified'  => 'sometimes|required',
+                'date'      => 'sometimes|required|date',
+                'time'      => 'sometimes|required',
+                'job_id'    => 'sometimes|required|numeric|exists:jobs,id',
+                'category_id'           => 'sometimes|required|numeric',
+                'subscription_order_id' => 'sometimes|required|numeric|exists:subscription_orders,id'
             ]);
+
             $partnerRepo = new PartnerRepository($request->partner);
             $verified = $request->has('verified') ? (int)$request->verified : null;
-            $category_id = $date = $preferred_time = $job = null;
+            $category_id = $date = $preferred_time = $job = $subscription_order = null;
             if ($request->has('job_id')) {
                 $job = Job::find((int)$request->job_id);
                 $category_id = $job->category_id;
                 $date = $job->schedule_date;
                 $preferred_time = $job->preferred_time;
-            } else if ($request->has('category_id') && $request->has('date') && $request->has('time')) {
+            } elseif ($request->has('subscription_order_id')) {
+                $subscription_order = SubscriptionOrder::find((int)$request->subscription_order_id);
+                $category_id = $subscription_order->category_id;
+            } elseif ($request->has('category_id') && $request->has('date') && $request->has('time')) {
                 $category_id = $request->category_id;
                 $date = $request->date;
                 $preferred_time = $request->time;
             }
-            $resources = $partnerRepo->resources($verified, $category_id, $date, $preferred_time, $job);
+            $resources = $partnerRepo->resources($verified, $category_id, $date, $preferred_time, $job, $subscription_order);
             if (count($resources) > 0) {
                 return api_response($request, $resources, 200, ['resources' => $resources->sortBy('name')->values()->all()]);
             } else {
@@ -535,19 +541,24 @@ class PartnerController extends Controller
         }
     }
 
+    /**
+     * @param $partner
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getNotifications($partner, Request $request)
     {
         try {
             list($offset, $limit) = calculatePagination($request);
             $notifications = (new NotificationRepository())->getManagerNotifications($request->partner, $offset, $limit);
             $counter = 0;
-            foreach ($notifications as $notification){
-                if(!$notification->is_seen){
+            foreach ($notifications as $notification) {
+                if (!$notification->is_seen) {
                     $counter += 1;
                 }
             }
             if (count($notifications) > 0) {
-                return api_response($request, $notifications, 200, ['notifications' => $notifications->values()->all(),'unseen' => $counter]);
+                return api_response($request, $notifications, 200, ['notifications' => $notifications->values()->all(), 'unseen' => $counter]);
             } else {
                 return api_response($request, null, 404);
             }
@@ -557,16 +568,13 @@ class PartnerController extends Controller
         }
     }
 
-    public function getNotification($partner,$notification, Request $request)
+    public function getNotification($partner, $notification, Request $request)
     {
         try {
-            list($offset, $limit) = calculatePagination($request);
             $notification = (new NotificationRepository())->getManagerNotification($notification);
-            $unseen_notifications = (new NotificationRepository())->getUnseenNotifications($request->partner,$notification,$offset, $limit);
-            return api_response($request, $notification, 200, ['notification' => $notification,
-                'unseen_notifications' => $unseen_notifications]);
+            $unseen_notifications = (new NotificationRepository())->getUnseenNotifications($request->partner, $notification);
+            return api_response($request, $notification, 200, ['notification' => $notification, 'unseen_notifications' => $unseen_notifications]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -830,7 +838,7 @@ class PartnerController extends Controller
     {
         try {
             if ($partner = Partner::find((int)$partner)) {
-                $service = $partner->services()->select('services.id', 'name', 'variable_type', 'services.min_quantity', 'services.variables')
+                $service = $partner->services()->select('services.id', 'name', 'variable_type', 'services.min_quantity', 'services.variables', 'services.is_published_for_b2b')
                     ->where('services.id', $service)
                     ->first();
 
@@ -850,6 +858,7 @@ class PartnerController extends Controller
                         $service['fixed_price'] = (double)$service->pivot->prices;
                         $service['fixed_old_price'] = $partner_service_price_update ? (double)$partner_service_price_update->new_prices : null;
                     }
+                    $service['is_published_for_b2b'] = $service->is_published_for_b2b ? true : false;
                     array_forget($service, 'variables');
                     removeRelationsAndFields($service);
                     return api_response($request, null, 200, ['service' => $service]);

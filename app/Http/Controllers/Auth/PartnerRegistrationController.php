@@ -169,10 +169,11 @@ class PartnerRegistrationController extends Controller
             "sub_domain" => $this->guessSubDomain($data['name']), "affiliation_id" => $this->partnerAffiliation($resource->profile->mobile),
         ]);
         $by = ["created_by" => $resource->id, "created_by_name" => "Resource - " . $resource->profile->name];
+        /** @var Partner $partner */
         $partner = new Partner();
         $partner = $this->store($resource, $data, $by, $partner);
         if ($partner) {
-            $this->sms->shoot($resource->profile->mobile, "You have successfully completed your registration at Sheba.xyz. Please complete your profile to start serving orders.");
+            $this->sms->shoot($resource->profile->mobile, "অভিনন্দন! sManager-এ আপনি সফল ভাবে রেজিস্ট্রেশন সম্পন্ন করেছেন। বিস্তারিত দেখুন: http://bit.ly/sManagerGettingStarted");
             $partner->refer_code = $partner->referCode();
             $partner->save();
         }
@@ -191,7 +192,7 @@ class PartnerRegistrationController extends Controller
     {
         $blacklist = ["google", "facebook", "microsoft", "sheba", "sheba.xyz"];
         $base_name = $name = preg_replace('/-$/', '', substr(strtolower(clean($name)), 0, 15));
-        $already_used = Partner::select('sub_domain')->lists('sub_domain')->toArray();
+        $already_used = Partner::select('sub_domain')->where('sub_domain', 'like', $name . '%')->lists('sub_domain')->toArray();
         $counter = 0;
         while (in_array($name, array_merge($blacklist, $already_used))) {
             $name = $base_name . $counter;

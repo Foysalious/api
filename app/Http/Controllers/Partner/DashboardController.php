@@ -45,6 +45,17 @@ class DashboardController extends Controller
                 ->where('screen', 'home')
                 ->get();
             $slide = !$slider_portal->isEmpty() ? $slider_portal->last()->slider->slides->last() : null;
+
+            $screens = ['payment_link','pos','inventory','referral','due','training_video_1','training_video_2'];
+            $slides = [];
+            foreach($screens as $screen){
+                $slider_portals[$screen] = SliderPortal::with('slider.slides')
+                    ->where('portal_name', 'manager-app')
+                    ->where('screen', $screen)
+                    ->get();
+                $slides[$screen] = !$slider_portals[$screen]->isEmpty() ? $slider_portals[$screen]->last()->slider->slides->last() : null;
+            }
+
             $performance->setPartner($partner)->setTimeFrame((new TimeFrame())->forCurrentWeek())->calculate();
             $performanceStats = $performance->getData();
 
@@ -157,6 +168,38 @@ class DashboardController extends Controller
                 'has_kyc_profile_completed' => $this->getSpLoanInformationCompletion($partner, $request),
                 'has_pos_due_order' => $total_due_for_pos_orders > 0 ? 1 : 0,
                 'has_pos_paid_order' => $has_pos_paid_order,
+                'videos' => [
+                    [
+                        'key' => 'training_video_1',
+                        'details' => $slides['training_video_1'] ? json_decode($slides['training_video_1']->video_info) : null
+                    ],
+                    [
+                        'key' => 'training_video_2',
+                        'details' => $slides['training_video_2'] ? json_decode($slides['training_video_2']->video_info) : null
+                    ]
+                ],
+                'feature_videos' => [
+                    [
+                        'key' => 'payment_link',
+                        'details' => $slides['payment_link'] ? json_decode($slides['payment_link']->video_info) : null
+                    ],
+                    [
+                        'key' => 'pos',
+                        'details' => $slides['pos'] ? json_decode($slides['pos']->video_info) : null
+                    ],
+                    [
+                        'key' => 'inventory',
+                        'details' => $slides['inventory'] ? json_decode($slides['inventory']->video_info) : null
+                    ],
+                    [
+                        'key' => 'referral',
+                        'details' => $slides['referral'] ? json_decode($slides['referral']->video_info) : null
+                    ],
+                    [
+                        'key' => 'due',
+                        'details' => $slides['due'] ? json_decode($slides['due']->video_info) : null
+                    ]
+                ]
             ];
 
             if (request()->hasHeader('Portal-Name'))
