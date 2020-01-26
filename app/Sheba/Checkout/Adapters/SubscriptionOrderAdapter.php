@@ -1,7 +1,7 @@
 <?php namespace Sheba\Checkout\Adapters;
 
 use App\Models\Job;
-use Illuminate\Database\Eloquent\Model;
+use Sheba\Checkout\Services\SubscriptionServicePricingAndBreakdown;
 use Sheba\Dal\JobService\JobService;
 use App\Models\Order;
 use App\Models\PartnerOrder;
@@ -9,22 +9,21 @@ use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use App\Models\Payable;
 use App\Models\PaymentDetail;
 use App\Models\Resource;
-use App\Models\Service;
 use App\Models\ServiceSubscriptionDiscount;
 use App\Models\SubscriptionOrder;
-use Sheba\Checkout\ShebaOrderInterface;
 use Sheba\Checkout\SubscriptionOrderInterface;
+use Sheba\Dal\SubscriptionOrder\Statuses as SubscriptionOrderStatuses;
 use Sheba\Jobs\JobStatuses;
 use Sheba\Jobs\PreferredTime;
 use Sheba\ModificationFields;
-use Sheba\Payment\Statuses;
+use Sheba\Payment\Statuses as PaymentStatuses;
 use Sheba\RequestIdentification;
 use DB;
 
-class SubscriptionOrderAdapter implements ShebaOrderInterface
+class SubscriptionOrderAdapter
 {
     use ModificationFields;
-    private $partnerServiceDetails;
+
     private $deliveryCharge;
     private $totalSchedules;
     /** @var SubscriptionOrder $subscriptionOrder */
@@ -35,25 +34,12 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
     private $bonusPaymentDetail;
     /** @var PaymentDetail $otherPaymentDetail */
     private $otherPaymentDetail;
+    /** @var SubscriptionServicePricingAndBreakdown */
+    private $servicePricingBreakdown;
 
-    public function __construct(SubscriptionOrderInterface $subscriptionOrder)
+    public function __construct(SubscriptionOrderInterface $subscription_order)
     {
-        $this->subscriptionOrder = $subscriptionOrder;
-    }
-
-    public function setPaymentMethod()
-    {
-
-    }
-
-    public function partnerOrders()
-    {
-
-    }
-
-    public function jobs()
-    {
-        // TODO: Implement jobs() method.
+        $this->subscriptionOrder = $subscription_order;
     }
 
     /**
@@ -82,7 +68,7 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
                 $jobs->push($job);
                 $this->createJobServices($job);
             }
-            $this->subscriptionOrder->status = 'converted';
+            $this->subscriptionOrder->status = SubscriptionOrderStatuses::CONVERTED;
             $this->subscriptionOrder->update();
             $this->bookResources($jobs);
         });
@@ -92,19 +78,18 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
     {
         $this->setPaymentDetails();
         $this->setTotalSchedules();
-        $this->setPartnerServiceDetails();
+        $this->setServicePricingBreakdown();
         $this->setDeliveryCharge();
     }
 
-
-    private function setPartnerServiceDetails()
+    private function setServicePricingBreakdown()
     {
-        $this->partnerServiceDetails = json_decode($this->subscriptionOrder->service_details);
+        $this->servicePricingBreakdown = $this->subscriptionOrder->getServicesPriceBreakdown();
     }
 
     private function setDeliveryCharge()
     {
-        $this->deliveryCharge = $this->partnerServiceDetails->delivery_charge / count($this->totalSchedules);
+        $this->deliveryCharge = $this->servicePricingBreakdown->getDeliveryCharge() / count($this->totalSchedules);
     }
 
     private function setTotalSchedules()
@@ -115,7 +100,7 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
     private function setPaymentDetails()
     {
         $payable = Payable::whereHas('payment', function ($q) {
-            $q->where('status', Statuses::COMPLETED);
+            $q->where('status', PaymentStatuses::COMPLETED);
         })->where('type_id', $this->subscriptionOrder->id)->where('type', 'subscription_order')->first();
         if (!$payable) return;
         $this->paymentDetails = Payable::where('type_id', $this->subscriptionOrder->id)->where('type', 'subscription_order')->first()->payment->paymentDetails;
@@ -157,7 +142,8 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
         $partner_order->order_id = $order->id;
         $partner_order->partner_id = $this->subscriptionOrder->partner_id;
         $partner_order->payment_method = $this->paymentDetails ? strtolower($this->paymentDetails->last()->readable_method) : null;
-        $partner_order->sheba_collection = $this->paymentDetails && (int)$this->partnerServiceDetails->discounted_price > 0 ? $this->partnerServiceDetails->discounted_price / count($this->totalSchedules) : 0;
+        $price = $this->servicePricingBreakdown->getDiscountedPrice();
+        $partner_order->sheba_collection = $this->paymentDetails && $price > 0 ? $price / count($this->totalSchedules) : 0;
         $this->withCreateModificationField($partner_order);
         $partner_order->save();
         $this->createPartnerOrderPayment($partner_order);
@@ -182,54 +168,35 @@ class SubscriptionOrderAdapter implements ShebaOrderInterface
         $job->delivery_charge = $this->deliveryCharge;
         $this->withCreateModificationField($job);
         $job->save();
+
         return $job;
     }
 
     private function createJobServices(Job $job)
     {
         $job_services = collect();
-        foreach ($this->partnerServiceDetails->breakdown as $service) {
-            $serviceModel = Service::find((int)$service->id);
+        $services_with_price = $this->servicePricingBreakdown->getServices();
+        foreach ($services_with_price as $service_with_price) {
+            $service = $service_with_price->getService();
             /** @var ServiceSubscriptionDiscount $discount */
-            $discount = $serviceModel->subscription->discounts()->where('subscription_type', $this->subscriptionOrder->billing_cycle)->valid()->first();
-            $service_data = array(
-                'service_id' => $service->id,
-                'quantity' => $service->quantity,
-                'unit_price' => $service->unit_price,
-                'min_price' => $service->min_price,
-                'sheba_contribution' => $service->sheba_contribution,
-                'partner_contribution' => $service->partner_contribution,
-                'discount' => $service->discount,
+            $discount = $service->subscription->discounts()->where('subscription_type', $this->subscriptionOrder->billing_cycle)->valid()->first();
+            $service_data = [
+                'service_id' => $service_with_price->getId(),
+                'quantity' => $service_with_price->getQuantity(),
+                'unit_price' => $service_with_price->getUnitPrice(),
+                'min_price' => $service_with_price->getMinPrice(),
+                'sheba_contribution' => $service_with_price->getShebaContribution(),
+                'partner_contribution' => $service_with_price->getPartnerContribution(),
+                'discount' => $service_with_price->getDiscount(),
                 'discount_percentage' => $discount && $discount->isPercentage() ? $discount->discount_amount : 0,
-                'name' => $service->name,
-                'variable_type' => $serviceModel->variable_type,
-            );
+                'name' => $service_with_price->getName(),
+                'variable_type' => $service->variable_type,
+            ];
             $service_data = $this->withCreateModificationField($service_data);
-            list($service_data['option'], $service_data['variables']) = $this->getVariableOptionOfService($serviceModel, $service->option);
+            list($service_data['option'], $service_data['variables']) = $service->getVariableAndOption($service_with_price->getOption());
             $job_services->push(new JobService($service_data));
         }
         $job->jobServices()->saveMany($job_services);
-    }
-
-    private function getVariableOptionOfService(Service $service, Array $option)
-    {
-        if ($service->variable_type == 'Options') {
-            $variables = [];
-            foreach ((array)(json_decode($service->variables))->options as $key => $service_option) {
-                array_push($variables, [
-                    'title' => isset($service_option->title) ? $service_option->title : null,
-                    'question' => $service_option->question,
-                    'answer' => explode(',', $service_option->answers)[$option[$key]]
-                ]);
-            }
-            $options = implode(',', $option);
-            $option = '[' . $options . ']';
-            $variables = json_encode($variables);
-        } else {
-            $option = '[]';
-            $variables = '[]';
-        }
-        return array($option, $variables);
     }
 
     private function createPartnerOrderPayment(PartnerOrder $partner_order)

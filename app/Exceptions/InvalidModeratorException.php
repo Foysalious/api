@@ -1,13 +1,4 @@
-<?php
-/**
- * Created by PhpStorm.
- * User: tonmoy
- * Date: 1/10/19
- * Time: 6:40 PM
- */
-
-namespace App\Exceptions;
-
+<?php namespace App\Exceptions;
 
 use Exception;
 use Throwable;
@@ -21,10 +12,5 @@ class InvalidModeratorException extends Exception
         }
         parent::__construct($message, $code, $previous);
 
-    }
-
-    protected function render(Exception $e)
-    {
-        parent::render($e);
     }
 }

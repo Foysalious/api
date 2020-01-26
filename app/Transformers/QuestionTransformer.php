@@ -1,7 +1,4 @@
-<?php
-
-namespace App\Transformers;
-
+<?php namespace App\Transformers;
 
 use Illuminate\Support\Collection;
 use League\Fractal\TransformerAbstract;

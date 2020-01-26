@@ -1,9 +1,14 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Checkout\Services\ServiceWithPrice;
+use Sheba\Checkout\Services\SubscriptionServicePricingAndBreakdown;
 use Sheba\Checkout\SubscriptionOrderInterface;
+use Sheba\Dal\SubscriptionOrder\Cycles;
+use Sheba\Dal\SubscriptionOrder\Statuses;
 use Sheba\Payment\PayableType;
 use Sheba\Dal\SubscriptionOrderPayment\Model as SubscriptionOrderPayment;
+use Sheba\ServiceRequest\ServiceRequestObject;
 
 class SubscriptionOrder extends Model implements SubscriptionOrderInterface, PayableType
 {
@@ -22,7 +27,6 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface, Pay
     {
         return $this->belongsTo(Category::class);
     }
-
 
     public function partner()
     {
@@ -49,9 +53,22 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface, Pay
         return json_decode($this->schedules);
     }
 
+    public function getScheduleDates()
+    {
+        $schedules = $this->schedules();
+        return array_map(function($schedule) {
+            return $schedule->date;
+        }, $schedules);
+    }
+
+    public function getScheduleTime()
+    {
+        return $this->schedules()[0]->time;
+    }
+
     public function deliveryAddress()
     {
-        return $this->hasOne(CustomerDeliveryAddress::class, 'id', 'delivery_address_id');
+        return $this->hasOne(CustomerDeliveryAddress::class, 'id', 'delivery_address_id')->withTrashed();
     }
 
     public function location()
@@ -66,7 +83,7 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface, Pay
 
     public function scopeAccepted($query)
     {
-        return $query->where('status', 'accepted');
+        return $query->status(Statuses::ACCEPTED);
     }
 
     public function channelCode()
@@ -112,12 +129,40 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface, Pay
         return $this->due > 0 ? 0 : 1;
     }
 
-
     /**
      * @return bool
      */
     public function hasOrders()
     {
         return $this->orders->count() > 0;
+    }
+
+    /**
+     * @return ServiceRequestObject[]
+     */
+    public function getServiceRequestObjects()
+    {
+        return array_map(function($service) {
+            return (new ServiceRequestObject())->setServiceId($service['id'])
+                ->setQuantity($service['quantity'])->setOption($service['option'])->build();
+        }, json_decode($this->service_details, true)['breakdown']);
+    }
+
+    /**
+     * @return SubscriptionServicePricingAndBreakdown
+     */
+    public function getServicesPriceBreakdown()
+    {
+        return new SubscriptionServicePricingAndBreakdown(json_decode($this->service_details, true));
+    }
+
+    public function isWeekly()
+    {
+        return $this->billing_cycle == Cycles::WEEKLY;
+    }
+
+    public function isMonthly()
+    {
+        return $this->billing_cycle == Cycles::MONTHLY;
     }
 }

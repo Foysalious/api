@@ -1,24 +1,40 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\Category;
-use App\Models\CategoryGroup;
 use App\Models\CategoryGroupCategory;
 use App\Models\CategoryPartner;
 use App\Models\HyperLocal;
 use App\Models\Location;
+use App\Models\LocationService;
 use App\Models\Partner;
 use App\Models\ReviewQuestionAnswer;
 use App\Models\Service;
-use App\Models\ServiceGroupService;
+use App\Models\ServiceSubscription;
 use App\Repositories\CategoryRepository;
 use App\Repositories\ServiceRepository;
 use Dingo\Api\Routing\Helpers;
+use Exception;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use DB;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use Sheba\CategoryServiceGroup;
+use Sheba\Checkout\DeliveryCharge;
+use Sheba\Dal\Discount\Discount;
+use Sheba\Dal\Discount\DiscountTypes;
+use Sheba\Dal\ServiceDiscount\Model as ServiceDiscount;
+use Sheba\Dal\UniversalSlug\Model as UniversalSlugModel;
+use Sheba\Dal\UniversalSlug\SluggableType;
+use Sheba\JobDiscount\JobDiscountCheckingParams;
+use Sheba\JobDiscount\JobDiscountHandler;
 use Sheba\Location\Coords;
+use Sheba\LocationService\PriceCalculation;
+use Sheba\LocationService\UpsellCalculation;
 use Sheba\ModificationFields;
+use Sheba\Service\MinMaxPrice;
+use Sheba\Subscription\ApproximatePriceCalculator;
+use Throwable;
 
 class CategoryController extends Controller
 {
@@ -82,7 +98,7 @@ class CategoryController extends Controller
                     });
                 });
             }
-            $categories = $categories->select('id', 'name', 'bn_name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id');
+            $categories = $categories->select('id', 'name', 'bn_name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id', 'is_auto_sp_enabled');
             if ($request->has('with')) {
                 $with = $request->with;
                 if ($with == 'children') {
@@ -119,6 +135,10 @@ class CategoryController extends Controller
             foreach ($categories as $key => &$category) {
                 if ($with == 'children') {
                     $category->children = $category->allChildren;
+                    foreach ($category->children as $children) {
+                        $children->parent_name = $category->name;
+                        $children->parent_slug = $category->slug;
+                    }
                     unset($category->allChildren);
                     if ($category->children->isEmpty()) {
                         $categories->forget($key);
@@ -135,7 +155,7 @@ class CategoryController extends Controller
                 array_push($categories_final, $category);
             }
             return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $categories_final]) : api_response($request, null, 404);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -144,7 +164,9 @@ class CategoryController extends Controller
     public function getAllCategories(Request $request)
     {
         try {
-            $this->validate($request, ['lat' => 'required|numeric', 'lng' => 'required|numeric', 'with' => 'sometimes|string|in:children']);
+            $this->validate($request, [
+                'lat' => 'required|numeric', 'lng' => 'required|numeric', 'with' => 'sometimes|string|in:children'
+            ]);
             $with = $request->with;
             $hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->first();
             if (!$hyper_location) return api_response($request, null, 404);
@@ -167,12 +189,12 @@ class CategoryController extends Controller
                             });
                         })->whereNotIn('id', $best_deal_category_ids);
                 })
-                ->select('id', 'name', 'parent_id', 'icon_png', 'app_thumb', 'app_banner')
+                ->select('id', 'name', 'parent_id', 'icon_png', 'app_thumb', 'app_banner', 'slug', 'is_auto_sp_enabled')
                 ->parent()->orderBy('order');
 
             if ($with) {
                 $categories->with(['children' => function ($q) use ($location_id, $best_deal_category_ids) {
-                    $q->select('id', 'name', 'thumb', 'parent_id', 'app_thumb', 'icon_png', 'icon')
+                    $q->select('id', 'name', 'thumb', 'parent_id', 'app_thumb', 'icon_png', 'icon', 'slug', 'is_auto_sp_enabled')
                         ->whereHas('locations', function ($q) use ($location_id) {
                             $q->select('locations.id')->where('locations.id', $location_id);
                         })->whereHas('services', function ($q) use ($location_id) {
@@ -186,21 +208,27 @@ class CategoryController extends Controller
 
             $categories = $categories->get();
 
+            $secondary_categories_slug = UniversalSlugModel::where('sluggable_type', SluggableType::SECONDARY_CATEGORY)->pluck('slug', 'sluggable_id')->toArray();
             foreach ($categories as &$category) {
+                /** @var Category $category */
+                $category->slug = $category->getSlug();
                 array_forget($category, 'parent_id');
                 foreach ($category->children as &$child) {
+                    /** @var Category $child */
+                    $child->slug = array_key_exists($child->id, $secondary_categories_slug) ? $secondary_categories_slug[$child->id] : null;
                     array_forget($child, 'parent_id');
                 }
             }
 
             foreach ($categories as &$category) {
-                if (is_null($category->children)) app('sentry')->captureException(new \Exception('Category null on ' . $category->id));
+                if (is_null($category->children))
+                    app('sentry')->captureException(new Exception('Category null on ' . $category->id));
             }
             return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $categories]) : api_response($request, null, 404);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -209,7 +237,7 @@ class CategoryController extends Controller
     public function show($category, Request $request)
     {
         try {
-            $category = Category::select('id', 'name', 'short_description', 'long_description', 'thumb', 'video_link', 'banner', 'app_thumb', 'app_banner', 'publication_status', 'icon', 'questions')->published()->where('id', $category)->first();
+            $category = Category::select('id', 'name', 'short_description', 'is_auto_sp_enabled', 'long_description', 'thumb', 'video_link', 'banner', 'app_thumb', 'app_banner', 'publication_status', 'icon', 'questions')->published()->where('id', $category)->first();
             if ($category == null) {
                 return api_response($request, null, 404);
             }
@@ -232,7 +260,7 @@ class CategoryController extends Controller
             }));
             removeRelationsAndFields($category);
             return api_response($request, $category, 200, ['category' => $category]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -277,12 +305,12 @@ class CategoryController extends Controller
                 $children = $children->each(function (&$child) use ($location) {
                     removeRelationsAndFields($child);
                 });
-                $category = collect($category)->only(['name', 'banner', 'app_banner']);
+                $category = collect($category)->only(['name', 'banner', 'app_banner', 'is_auto_sp_enabled']);
                 $category->put('secondaries', $children->sortBy('order')->values()->all());
                 return api_response($request, $category->all(), 200, ['category' => $category->all()]);
             } else
                 return api_response($request, null, 404);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -308,13 +336,15 @@ class CategoryController extends Controller
             $available_partners = $category->partners;
             $total_available_partners = count($available_partners);
             return api_response($request, $available_partners, 200, ['total_available_partners' => $total_available_partners, 'isAvailable' => $total_available_partners > 0 ? 1 : 0]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
-    public function getServices($category, Request $request)
+    public function getServices($category, Request $request,
+                                PriceCalculation $price_calculation, DeliveryCharge $delivery_charge,
+                                JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, MinMaxPrice $min_max_price, ApproximatePriceCalculator $approximate_price_calculator)
     {
         ini_set('memory_limit', '2048M');
         try {
@@ -328,6 +358,7 @@ class CategoryController extends Controller
                 } else $location = 4;
             }
 
+            /** @var Category $cat */
             $cat = Category::where('id', $category)->whereHas('locations', function ($q) use ($location) {
                 $q->where('locations.id', $location);
             });
@@ -339,14 +370,18 @@ class CategoryController extends Controller
             } else {
                 $category = $cat->published()->first();
             }
+
             if ($category != null) {
+                $category_slug = $category->getSlug();
+                $cross_sale_service = $category->crossSaleService;
                 list($offset, $limit) = calculatePagination($request);
                 $scope = [];
                 if ($request->has('scope')) $scope = $this->serviceRepository->getServiceScope($request->scope);
+
                 if ($category->parent_id == null) {
                     if ((int)$request->is_business) {
                         $services = $this->categoryRepository->getServicesOfCategory((Category::where('parent_id', $category->id)->publishedForBusiness()->orderBy('order')->get())->pluck('id')->toArray(), $location, $offset, $limit);
-                    } else if ($request->is_b2b) {
+                    } elseif ($request->is_b2b) {
                         $services = $this->categoryRepository->getServicesOfCategory(Category::where('parent_id', $category->id)->publishedForB2B()
                             ->orderBy('order')->get()->pluck('id')->toArray(), $location, $offset, $limit);
                     } else {
@@ -354,38 +389,34 @@ class CategoryController extends Controller
                     }
                     $services = $this->serviceRepository->addServiceInfo($services, $scope);
                 } else {
-                    $category = $category->load(['services' => function ($q) use ($offset, $limit, $location) {
+                    $category->load(['services' => function ($q) use ($offset, $limit, $location) {
                         if (!(int)\request()->is_business) {
-                            $q->whereNotIn('id', $this->serviceGroupServiceIds())
-                                ->whereHas('locations', function ($query) use ($location) {
-                                    $query->where('locations.id', $location);
-                                });
+                            $q->whereNotIn('id', $this->serviceGroupServiceIds());
+
                         }
-                        $q->select('id', 'category_id', 'unit', 'name', 'bn_name', 'thumb', 'app_thumb', 'app_banner', 'short_description', 'description', 'banner', 'faqs', 'variables', 'variable_type', 'min_quantity')->orderBy('order')->skip($offset)->take($limit);
+                        $q->whereHas('locations', function ($query) use ($location) {
+                            $query->where('locations.id', $location);
+                        })->select(
+                            'id', 'category_id', 'unit', 'name', 'bn_name', 'thumb',
+                            'app_thumb', 'app_banner', 'short_description', 'description',
+                            'banner', 'faqs', 'variables', 'variable_type', 'min_quantity', 'options_content',
+                            'terms_and_conditions', 'features'
+                        )->orderBy('order')->skip($offset)->take($limit);
+
                         if ((int)\request()->is_business) $q->publishedForBusiness();
                         elseif ((int)\request()->is_for_backend) $q->publishedForAll();
                         elseif ((int)\request()->is_b2b) $q->publishedForB2B();
                         else $q->published();
                     }]);
+                    $services = $category->services;
+                }
 
-                    $services = $this->serviceRepository->getPartnerServicesAndPartners($category->services, $location)->each(function ($service) use ($request) {
-                        $service->partners = $service->partners->filter(function (Partner $partner) use ($request) {
-                            return $partner->hasCoverageOn(new Coords((double)$request->lat, (double)$request->lng));
-                        });
-                        list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);
-                        removeRelationsAndFields($service);
-                    });
-                }
                 if ($location) {
-                    $services->load(['activeSubscription', 'locations' => function ($q) {
-                        $q->select('locations.id');
+                    $services->load(['activeSubscription', 'locationServices' => function ($q) use ($location) {
+                        $q->where('location_id', $location);
                     }]);
-                    $services = collect($services);
-                    $services = $services->filter(function ($service) use ($location) {
-                        $locations = $service->locations->pluck('id')->toArray();
-                        return in_array($location, $locations);
-                    });
                 }
+
                 if ($request->has('service_id')) {
                     $services = $services->filter(function ($service) use ($request) {
                         return $request->service_id == $service->id;
@@ -393,11 +424,42 @@ class CategoryController extends Controller
                 }
 
                 $subscriptions = collect();
-                foreach ($services as $service) {
+                $final_services = collect();
+                foreach ($services as $key => $service) {
+                    /** @var LocationService $location_service */
+                    $location_service = $service->locationServices->first();
+
+                    /** @var ServiceDiscount $discount */
+                    $discount = $location_service->discounts()->running()->first();
+                    $prices = json_decode($location_service->prices);
+                    if ($prices === null) continue;
+                    $price_calculation->setService($service)->setLocationService($location_service);
+                    $upsell_calculation->setService($service)->setLocationService($location_service);
+
+                    if ($service->variable_type == 'Options') {
+                        $service['option_prices'] = $this->formatOptionWithPrice($price_calculation, $prices, $upsell_calculation, $location_service);
+                    } else {
+                        $service['fixed_price'] = $price_calculation->getUnitPrice();
+                        $service['fixed_upsell_price'] = $upsell_calculation->getAllUpsellWithMinMaxQuantity();
+                    }
+
+                    $service['discount'] = $discount ? [
+                        'value' => (double)$discount->amount,
+                        'is_percentage' => $discount->isPercentage(),
+                        'cap' => (double)$discount->cap
+                    ] : null;
+                    $min_max_price->setService($service)->setLocationService($location_service);
+                    $service['max_price'] = $min_max_price->getMax();
+                    $service['min_price'] = $min_max_price->getMin();
+                    $service['terms_and_conditions'] = $service->terms_and_conditions ? json_decode($service->terms_and_conditions) : null;
+                    $service['features'] = $service->features ? json_decode($service->features) : null;
+
+                    /** @var ServiceSubscription $subscription */
                     if ($subscription = $service->activeSubscription) {
-                        list($service['max_price'], $service['min_price']) = $this->getPriceRange($service);
-                        $subscription->min_price = $service->min_price;
-                        $subscription->max_price = $service->max_price;
+                        $price_range = $approximate_price_calculator->setLocationService($location_service)->setSubscription($subscription)->getPriceRange();
+                        $subscription = removeRelationsAndFields($subscription);
+                        $subscription['max_price'] = $price_range['max_price'] > 0 ? $price_range['max_price'] : 0;
+                        $subscription['min_price'] = $price_range['min_price'] > 0 ? $price_range['min_price'] : 0;
                         $subscription['thumb'] = $service['thumb'];
                         $subscription['banner'] = $service['banner'];
                         $subscription['offers'] = $subscription->getDiscountOffers();
@@ -414,10 +476,13 @@ class CategoryController extends Controller
                         $subscriptions->push($subscription);
                     }
                     removeRelationsAndFields($service);
+                    $final_services->push($service);
                 }
-
+                $services = $final_services;
                 if ($services->count() > 0) {
-                    $category = collect($category)->only(['name', 'slug', 'banner', 'parent_id', 'app_banner']);
+                    $parent_category = null;
+                    if ($category->parent_id != null) $parent_category = $category->parent()->select('id', 'name', 'slug')->first();
+                    $category = collect($category)->only(['id', 'name', 'slug', 'banner', 'parent_id', 'app_banner', 'service_title', 'is_auto_sp_enabled']);
                     $version_code = (int)$request->header('Version-Code');
                     $services = $this->serviceQuestionSet($services);
                     if ($version_code && $version_code <= 30122 && $version_code <= 107) {
@@ -425,8 +490,31 @@ class CategoryController extends Controller
                             return $service->subscription;
                         })->values()->all();
                     }
+                    $category['parent_name'] = $parent_category ? $parent_category->name : null;
+                    $category['parent_slug'] = $parent_category ? $parent_category->slug : null;
                     $category['services'] = $services;
                     $category['subscriptions'] = $subscriptions;
+                    $category['cross_sale'] = $cross_sale_service ? [
+                        'title' => $cross_sale_service->title,
+                        'description' => $cross_sale_service->description,
+                        'icon' => $cross_sale_service->icon,
+                        'category_id' => $cross_sale_service->category_id,
+                        'service_id' => $cross_sale_service->service_id
+                    ] : null;
+                    $category_model = Category::find($category['id']);
+                    $category['delivery_charge'] = $delivery_charge->setCategory($category_model)->get();
+                    $discount_checking_params = (new JobDiscountCheckingParams())->setDiscountableAmount($category['delivery_charge']);
+                    $job_discount_handler->setType(DiscountTypes::DELIVERY)->setCategory($category_model)->setCheckingParams($discount_checking_params)->calculate();
+                    /** @var Discount $delivery_discount */
+                    $delivery_discount = $job_discount_handler->getDiscount();
+                    $category['delivery_discount'] = $delivery_discount ? [
+                        'value' => (double)$delivery_discount->amount,
+                        'is_percentage' => $delivery_discount->is_percentage,
+                        'cap' => (double)$delivery_discount->cap,
+                        'min_order_amount' => (double)$delivery_discount->rules->getMinOrderAmount()
+                    ] : null;
+                    $category['slug'] = $category_slug;
+
                     if ($subscriptions->count()) {
                         $category['subscription_faq'] = $subscription_faq;
                     }
@@ -436,10 +524,35 @@ class CategoryController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    /**
+     * @param PriceCalculation $price_calculation
+     * @param $prices
+     * @param UpsellCalculation $upsell_calculation
+     * @param LocationService $location_service
+     * @return Collection
+     */
+    private function formatOptionWithPrice(PriceCalculation $price_calculation, $prices,
+                                           UpsellCalculation $upsell_calculation, LocationService $location_service)
+    {
+        $options = collect();
+        foreach ($prices as $key => $price) {
+            $option_array = explode(',', $key);
+            $options->push([
+                'option' => collect($option_array)->map(function ($key) {
+                    return (int)$key;
+                }),
+                'price' => $price_calculation->setOption($option_array)->getUnitPrice(),
+                'upsell_price' => $upsell_calculation->setOption($option_array)->getAllUpsellWithMinMaxQuantity()
+            ]);
+        }
+        return $options;
     }
 
     private function getPriceRange(Service $service)
@@ -458,7 +571,7 @@ class CategoryController extends Controller
                 array_push($min_price, $min);
             }
             return array((double)max($max_price) * $service->min_quantity, (double)min($min_price) * $service->min_quantity);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return array(0, 0);
         }
     }
@@ -470,12 +583,25 @@ class CategoryController extends Controller
             $service['type'] = 'normal';
             if ($service->variable_type == 'Options') {
                 $questions = json_decode($service->variables)->options;
-                foreach ($questions as &$question) {
+                $option_contents = $service->options_content ? json_decode($service->options_content, true) : [];
+                foreach ($questions as $option_keys => &$question) {
                     $question = collect($question);
                     $question->put('input_type', $this->resolveInputTypeField($question->get('answers')));
                     $question->put('screen', count($questions) > 3 ? 'slide' : 'normal');
+                    $option_key = $option_keys + 1;
+                    $option_content = key_exists($option_key, $option_contents) ? $option_contents[$option_key] : [];
                     $explode_answers = explode(',', $question->get('answers'));
+                    $contents = [];
+                    $answer_contents = [];
+                    foreach ($explode_answers as $answer_keys => $answer) {
+                        $answer_key = $answer_keys + 1;
+                        $value = key_exists($answer_key, $option_content) ? $option_content[$answer_key] : null;
+                        array_push($contents, $value);
+                        array_push($answer_contents, ['key' => $answer_keys, 'content' => $value]);
+                    }
                     $question->put('answers', $explode_answers);
+                    $question->put('contents', $contents);
+                    $question->put('answer_contents', $answer_contents);
                 }
                 if (count($questions) == 1) {
                     $questions[0]->put('input_type', 'selectbox');
@@ -484,6 +610,7 @@ class CategoryController extends Controller
             $service['questions'] = $questions;
             $service['faqs'] = json_decode($service->faqs);
             array_forget($service, 'variables');
+            array_forget($service, 'options_content');
         }
         return $services;
     }
@@ -506,11 +633,12 @@ class CategoryController extends Controller
             list($offset, $limit) = calculatePagination($request);
             $category = Category::find($category);
             if (!$category) return api_response($request, null, 404);
-            $reviews = ReviewQuestionAnswer::select('category_id', 'customer_id', 'partner_id', 'reviews.rating', 'review_title')
-                ->selectRaw("partners.name as partner_name,profiles.name as customer_name,rate_answer_text as review,review_id as id,pro_pic as customer_picture")
+            $reviews = ReviewQuestionAnswer::select('reviews.category_id', 'customer_id', 'partner_id', 'reviews.rating', 'review_title')
+                ->selectRaw("partners.name as partner_name,profiles.name as customer_name,rate_answer_text as review,review_id as id,pro_pic as customer_picture,jobs.created_at as order_created_at")
                 ->join('reviews', 'reviews.id', '=', 'review_question_answer.review_id')
                 ->join('partners', 'partners.id', '=', 'reviews.partner_id')
                 ->join('customers', 'customers.id', '=', 'reviews.customer_id')
+                ->join('jobs', 'jobs.id', '=', 'reviews.job_id')
                 ->join('profiles', 'profiles.id', '=', 'customers.profile_id')
                 ->where('review_type', 'like', '%' . '\\Review')
                 ->where('review_question_answer.rate_answer_text', '<>', '')
@@ -520,8 +648,20 @@ class CategoryController extends Controller
                 ->orderBy('id', 'desc')
                 ->groupBy('customer_id')
                 ->get();
-            return count($reviews) > 0 ? api_response($request, $reviews, 200, ['reviews' => $reviews]) : api_response($request, null, 404);
-        } catch (\Throwable $e) {
+            $group_rating = [
+                "1" => 10,
+                "2" => 5,
+                "3" => 15,
+                "4" => 150,
+                "5" => 500,
+            ];
+            $info = [
+                'avg_rating' => 4.5,
+                'total_review_count' => 500,
+                'total_rating_count' => 680
+            ];
+            return count($reviews) > 0 ? api_response($request, $reviews, 200, ['reviews' => $reviews, 'group_rating' => $group_rating, 'info' => $info]) : api_response($request, null, 404);
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -557,7 +697,7 @@ class CategoryController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -579,7 +719,7 @@ class CategoryController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return api_response($request, null, 500, ['message' => $e->getMessage()]);
         }
     }

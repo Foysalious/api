@@ -8,6 +8,7 @@ use App\Models\JobUpdateLog;
 use App\Models\Resource;
 use App\Repositories\PartnerOrderRepository;
 use App\Repositories\ResourceJobRepository;
+use Sheba\Jobs\JobStatuses;
 use Sheba\Jobs\JobTime;
 use App\Sheba\UserRequestInformation;
 use Carbon\Carbon;
@@ -15,6 +16,7 @@ use DB;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Jobs\StatusChanger;
 use Sheba\Logistics\DTO\Order;
 use Sheba\Logistics\OrderManager;
 use Sheba\PushNotificationHandler;
@@ -26,11 +28,14 @@ class PartnerJobController extends Controller
     private $resourceJobRepository;
     /** @var mixed $jobStatuses */
     private $jobStatuses;
+    /** @var StatusChanger $jobStatusChanger */
+    private $jobStatusChanger;
 
-    public function __construct()
+    public function __construct(StatusChanger $job_status_changer)
     {
         $this->resourceJobRepository = new ResourceJobRepository();
         $this->jobStatuses = constants('JOB_STATUSES');
+        $this->jobStatusChanger = $job_status_changer;
     }
 
     public function index($partner, Request $request)
@@ -161,23 +166,16 @@ class PartnerJobController extends Controller
             $this->validate($request, [
                 'resource_id' => 'required|int'
             ]);
-            $job = $request->job;
-            $hasThisResource = $request->partner->hasThisResource((int)$request->resource_id, 'Handyman');
-            $jobHasValidStatus = $job->hasStatus(['Pending', 'Not_Responded']);
-            if ($hasThisResource && $jobHasValidStatus) {
-                $request->merge(['remember_token' => $request->manager_resource->remember_token, 'status' => 'Accepted', 'resource' => $request->manager_resource]);
-                $response = $this->resourceJobRepository->changeStatus($job->id, $request);
-                if ($response) {
-                    if ($response->code == 200) {
-                        $job = $this->assignResource($job, $request->resource_id, $request->manager_resource);
-                        return api_response($request, $job, 200);
-                    }
-                    return api_response($request, $response, $response->code, ['message' => $response->msg]);
-                }
-                return api_response($request, null, 500);
+
+            $this->jobStatusChanger->acceptJobAndAssignResource($request);
+            if($this->jobStatusChanger->hasError()) {
+                return api_response($request, null, $this->jobStatusChanger->getErrorCode(), [
+                    'message' => $this->jobStatusChanger->getErrorMessage()
+                ]);
             }
-            $message = !$hasThisResource ? "Resource doesn't work for you" : $job->status . "job cannot be accepted.";
-            return api_response($request, null, 403, ['message' => $message]);
+
+            return api_response($request, $this->jobStatusChanger->getChangedJob(), 200);
+
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
@@ -193,12 +191,13 @@ class PartnerJobController extends Controller
     public function declineJob($partner, $job, Request $request)
     {
         try {
-            $request->merge(['remember_token' => $request->manager_resource->remember_token, 'status' => 'Declined', 'resource' => $request->manager_resource]);
-            $response = $this->resourceJobRepository->changeStatus($request->job->id, $request);
-            if ($response) {
-                return api_response($request, $response, $response->code);
+            $this->jobStatusChanger->decline($request);
+            if($this->jobStatusChanger->hasError()) {
+                return api_response($request, null, $this->jobStatusChanger->getErrorCode(), [
+                    'message' => $this->jobStatusChanger->getErrorMessage()
+                ]);
             }
-            return api_response($request, null, 500);
+            return api_response($request, null, 200);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
