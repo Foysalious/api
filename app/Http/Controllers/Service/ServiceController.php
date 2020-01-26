@@ -3,7 +3,6 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\HyperLocal;
-use App\Models\Location;
 use App\Models\LocationService;
 use App\Models\Service;
 use App\Transformers\Service\ServiceTransformer;
@@ -17,14 +16,13 @@ class ServiceController extends Controller
     public function show($service, Request $request, ServiceTransformer $service_transformer)
     {
         $this->validate($request, ['lat' => 'required|numeric', 'lng' => 'required|numeric']);
-        $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
-        if (!$hyperLocation) return api_response($request, null, 404);
+        $hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+        if (!$hyper_location) return api_response($request, null, 404);
         /** @var Service $service */
         $service = Service::find($service);
         if (!$service) return api_response($request, null, 404);
-        /** @var Location $location */
-        $location = $hyperLocation->location;
-        $location_service = LocationService::where('location_id', $location->id)->where('service_id', $service->id)->first();
+        $location_service = LocationService::where('location_id', $hyper_location->location_id)->where('service_id', $service->id)->first();
+        if (!$location_service) return api_response($request, null, 404);
         $fractal = new Manager();
         $service_transformer->setLocationService($location_service);
         $resource = new Item($service, $service_transformer);
