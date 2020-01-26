@@ -2,6 +2,7 @@
 
 use App\Models\Category;
 use App\Models\SubscriptionOrder;
+use Carbon\Carbon;
 use League\Fractal\TransformerAbstract;
 use Sheba\Dal\SubscriptionOrderRequest\SubscriptionOrderRequest;
 
@@ -37,6 +38,7 @@ class SubscriptionOrderRequestTransformer extends TransformerAbstract
             'schedule_date'         => $schedules[0]->date,
             'schedule_time_start'   => $schedule_time[0],
             'schedule_time_end'     => $schedule_time[1],
+            'schedule_at'           => Carbon::parse($schedules[0]->date .' '. $schedule_time[0])->timestamp,
             'schedules'             => $subscription_order->getScheduleDates(),
             'created_time'          => $request->created_at->format('h:m:s A'),
             'total_price'           => (double)$subscription_order->getTotalPrice(),

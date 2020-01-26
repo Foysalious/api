@@ -149,6 +149,7 @@ class PartnerOrderRepository
                 'is_subscription_order' => true,
                 'schedule_time_start'   => Carbon::parse($schedule_time[0])->format('H:i:s'),
                 'schedule_time_end'     => Carbon::parse($schedule_time[1])->format('H:i:s'),
+                'schedule_at'           => Carbon::parse($schedules->first()->date .' '. $schedules->first()->time)->timestamp,
                 'schedules'             => $subscription_order->getScheduleDates()
             ]);
             $all_partner_orders->push($subscription);
@@ -210,7 +211,8 @@ class PartnerOrderRepository
                     'is_order_request'      => false,
                     'is_subscription_order' => $jobs[0]->partner_order->order->subscription ? true : false,
                     'schedule_time_start'   => $job_preferred_time[0],
-                    'schedule_time_end'     => $job_preferred_time[1]
+                    'schedule_time_end'     => $job_preferred_time[1],
+                    'schedule_at'           => Carbon::parse($jobs[0]->schedule_date .' '. $job_preferred_time[0])->timestamp,
                 ]);
 
                 $all_partner_orders->push($order);
