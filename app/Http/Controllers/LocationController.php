@@ -172,7 +172,15 @@ class LocationController extends Controller
             });
             $models = $models->get();
             if ($model_name == 'Category') {
-                $models = $models->load('children.locations', 'services.locations');
+                $models = $models->load(['children' => function ($q) use ($location) {
+                    $q->whereHas('locations', function ($q) use ($location) {
+                        $q->where('locations.id', $location->id);
+                    });
+                }, 'services' => function ($q) use ($location) {
+                    $q->whereHas('locations', function ($q) use ($location) {
+                        $q->where('locations.id', $location->id);
+                    });
+                }]);
                 $models = $models->filter(function ($category) use ($location) {
                     $children = $category->isParent() ? $category->children : $category->services;
                     foreach ($children as $child) {
@@ -200,7 +208,6 @@ class LocationController extends Controller
             $formatted_data = $manager->createData($resource)->toArray()['data'];
             return api_response($request, $request, 200, $formatted_data);
         } catch (Throwable $e) {
-
             app('sentry')->captureException($e);
             return api_response($request, $request, 500);
         }

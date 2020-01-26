@@ -1,5 +1,6 @@
 <?php namespace Sheba\TopUp;
 
+use Carbon\Carbon;
 use Sheba\TopUp\Vendor\Vendor;
 use Sheba\TopUp\Vendor\VendorFactory;
 
@@ -16,6 +17,7 @@ class TopUpRequest
     private $errorMessage;
     private $name;
     private $bulk_id;
+    const MINIMUM_TOPUP_INTERVAL_BETWEEN_TWO_TOPUP_IN_SECOND = 20;
 
     public function __construct(VendorFactory $vendor_factory)
     {
@@ -40,15 +42,15 @@ class TopUpRequest
         return $this;
     }
 
+    public function getAgent()
+    {
+        return $this->agent;
+    }
+
     public function setAgent(TopUpAgent $agent)
     {
         $this->agent = $agent;
         return $this;
-    }
-
-    public function getAgent()
-    {
-        return $this->agent;
     }
 
     public function setVendorId($vendor_id)
@@ -85,6 +87,16 @@ class TopUpRequest
     }
 
     /**
+     * @param mixed $mobile
+     * @return TopUpRequest
+     */
+    public function setMobile($mobile)
+    {
+        $this->mobile = formatMobile($mobile);
+        return $this;
+    }
+
+    /**
      * @return Vendor
      */
     public function getVendor()
@@ -100,16 +112,6 @@ class TopUpRequest
         return getOriginalMobileNumber($this->mobile);
     }
 
-    /**
-     * @param mixed $mobile
-     * @return TopUpRequest
-     */
-    public function setMobile($mobile)
-    {
-        $this->mobile = formatMobile($mobile);
-        return $this;
-    }
-
     public function hasError()
     {
         if ($this->agent->wallet < $this->amount) {
@@ -120,6 +122,17 @@ class TopUpRequest
             $this->errorMessage = "Sorry, we don't support this operator at this moment.";
             return 1;
         }
+        if (get_class($this->agent) == "App\Models\Partner") {
+            $this->errorMessage = "Temporary turned off.";
+            return 1;
+        }
+        if ($last_topup = $this->agent->topups()->select('id', 'created_at')->orderBy('id', 'desc')->first()) {
+            if ($last_topup->created_at->diffInSeconds(Carbon::now()) < self::MINIMUM_TOPUP_INTERVAL_BETWEEN_TWO_TOPUP_IN_SECOND) {
+                $this->errorMessage = "Please wait a minutes to request topup.";
+                return 1;
+            }
+        }
+
         return 0;
     }
 

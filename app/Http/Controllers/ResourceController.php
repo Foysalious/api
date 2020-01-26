@@ -40,8 +40,8 @@ class ResourceController extends Controller
             $specialized_categories = $resource->categoriesIn($request->partner->id)->pluck('name');
             $resource['specialized_categories'] = $specialized_categories;
             $resource['total_specialized_categories'] = $specialized_categories->count();
-            $resource['served_jobs'] = $resource->jobs->where('status', 'Served')->count();
-            $resource['ongoing_jobs'] = $resource->jobs->whereIn('status', ['Schedule Due', 'Process', 'Accepted', 'Serve Due'])->count();
+            $resource['served_jobs'] = $resource->jobs()->where('status', 'Served')->count();
+            $resource['ongoing_jobs'] = $resource->jobs()->whereIn('status', ['Schedule Due', 'Process', 'Accepted', 'Serve Due'])->count();
             $profile = $resource->profile;
             $resource['name'] = $profile->name;
             $resource['mobile'] = $profile->mobile;

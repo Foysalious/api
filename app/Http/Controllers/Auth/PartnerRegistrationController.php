@@ -192,7 +192,7 @@ class PartnerRegistrationController extends Controller
     {
         $blacklist = ["google", "facebook", "microsoft", "sheba", "sheba.xyz"];
         $base_name = $name = preg_replace('/-$/', '', substr(strtolower(clean($name)), 0, 15));
-        $already_used = Partner::select('sub_domain')->lists('sub_domain')->toArray();
+        $already_used = Partner::select('sub_domain')->where('sub_domain', 'like', $name . '%')->lists('sub_domain')->toArray();
         $counter = 0;
         while (in_array($name, array_merge($blacklist, $already_used))) {
             $name = $base_name . $counter;
@@ -268,7 +268,6 @@ class PartnerRegistrationController extends Controller
             $request['billing_type'] = 'monthly';
             if ($request->has('name')) $profile->update(['name' => $request->name]);
             if ($request->has('gender')) $profile->update(['gender' => $request->gender]);
-
             if ($resource->partnerResources->count() == 0) {
                 $data = $this->makePartnerCreateData($request);
                 $this->createPartner($resource, $data);

@@ -1,9 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Http\Controllers\Controller;
-use App\Models\Business;
-use App\Models\Customer;
-use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;
 use App\Models\InspectionItemIssue;
 use App\Models\Member;
@@ -14,20 +11,26 @@ use Carbon\Carbon;
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Business\MemberManager;
 use Sheba\Checkout\Adapters\SubscriptionOrderAdapter;
+use Sheba\Checkout\SubscriptionOrderPlace\B2bSubscriptionOrderPlaceFactory;
 use Sheba\Checkout\PromotionCalculation;
 use Sheba\Checkout\Requests\PartnerListRequest;
-use Sheba\Checkout\Requests\SubscriptionOrderRequest;
-use Sheba\Checkout\SubscriptionOrderPlace;
 use Sheba\Location\Coords;
 use Sheba\ModificationFields;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
 use Sheba\Payment\ShebaPayment;
-use Sheba\Voucher\PromotionList;
 
 class OrderController extends Controller
 {
     use ModificationFields;
+
+    private $memberManager;
+
+    public function __construct(MemberManager $member_manager)
+    {
+        $this->memberManager = $member_manager;
+    }
 
     public function index(Request $request)
     {
@@ -158,7 +161,7 @@ class OrderController extends Controller
             $member = $request->manager_member;
             $customer = $member->profile->customer;
             $geo = json_decode($business->geo_informations);
-            if (!$customer) $customer = $this->createCustomerFromMember($member);
+            if (!$customer) $customer = $this->memberManager->createCustomerFromMember($member);
             $request->merge(['lat' => (double)$geo->lat, 'lng' => (double)$geo->lng]);
             $partnerListRequest->setRequest($request)->prepareObject();
             $hyper_local = HyperLocal::insidePolygon((double)$geo->lat, (double)$geo->lng)->with('location')->first();
@@ -203,14 +206,14 @@ class OrderController extends Controller
             $customer = $member->profile->customer;
             $this->setModifier($customer);
             if (!$customer) {
-                $customer = $this->createCustomerFromMember($member);
+                $customer = $this->memberManager->createCustomerFromMember($member);
                 $member = Member::find($member->id);
-                $address = $this->createAddress($member, $business);
+                $address = $this->memberManager->createAddress($member, $business);
             } else {
                 $geo = json_decode($business->geo_informations);
                 $coords = new Coords($geo->lat, $geo->lng);
                 $address = (new AddressValidator())->isAddressLocationExists($customer->delivery_addresses, $coords);
-                if (!$address) $address = $this->createAddress($member, $business);
+                if (!$address) $address = $this->memberManager->createAddress($member, $business);
             }
             $order = new Checkout($customer);
             $request->merge(['customer' => $customer,
@@ -240,7 +243,7 @@ class OrderController extends Controller
         }
     }
 
-    public function placeSubscriptionOrder(Request $request, SubscriptionOrderRequest $subscriptionOrderRequest, SubscriptionOrderPlace $subscriptionOrder)
+    public function placeSubscriptionOrder(Request $request, B2bSubscriptionOrderPlaceFactory $factory)
     {
         try {
             $this->validate($request, [
@@ -251,29 +254,9 @@ class OrderController extends Controller
                 'subscription_type' => 'required|string',
                 'additional_info' => 'string'
             ]);
-            $business = $request->business;
-            $member = $request->manager_member;
-            $customer = $member->profile->customer;
-            $this->setModifier($customer);
-            if (!$customer) {
-                $customer = $this->createCustomerFromMember($member);
-                $member = Member::find($member->id);
-                $address = $this->createAddress($member, $business);
-            } else {
-                $geo = json_decode($business->geo_informations);
-                $coords = new Coords($geo->lat, $geo->lng);
-                $address = (new AddressValidator())->isAddressLocationExists($customer->delivery_addresses, $coords);
-                if (!$address) $address = $this->createAddress($member, $business);
-                if (!$address->mobile) $address->update(['mobile' => formatMobile($member->profile->mobile)]);
-            }
-            $subscriptionOrderRequest->setRequest($request)->setSalesChannel(constants('SALES_CHANNELS')['B2B']['name'])->setCustomer($customer)->setAddress($address)
-                ->setDeliveryMobile($address->mobile)
-                ->setDeliveryName($address->name)
-                ->setUser($business)
-                ->prepareObject();
-            $subscription_order = $subscriptionOrder->setSubscriptionRequest($subscriptionOrderRequest)->place();
-            $subscription_order = new SubscriptionOrderAdapter($subscription_order);
-            $order = $subscription_order->convertToOrder();
+            $this->setModifier($request->manager_member->profile->customer);
+            $subscription_order = $factory->get($request)->place();
+            $order = (new SubscriptionOrderAdapter($subscription_order))->convertToOrder();
             return api_response($request, $order, 200, ['order' => ['id' => $order->id]]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -283,29 +266,4 @@ class OrderController extends Controller
             return api_response($request, null, 500);
         }
     }
-
-    private function createCustomerFromMember(Member $member)
-    {
-        $customer = new Customer();
-        $customer->profile_id = $member->profile->id;
-        $customer->remember_token = str_random(255);
-        $customer->save();
-        return $customer;
-
-    }
-
-    private function createAddress(Member $member, Business $business)
-    {
-        $address = new CustomerDeliveryAddress();
-        $address->address = $business->address;
-        $address->name = $business->name;
-        $geo = json_decode($business->geo_informations);
-        $address->geo_informations = $business->geo_informations;
-        $address->location_id = HyperLocal::insidePolygon($geo->lat, $geo->lng)->with('location')->first()->location->id;
-        $address->customer_id = $member->profile->customer->id;
-        $address->mobile = $member->profile->mobile;
-        $address->save();
-        return $address;
-    }
-
 }

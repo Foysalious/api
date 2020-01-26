@@ -28,13 +28,13 @@ class Updater
     private $paymentCreator;
     private $data;
     private $walletTransactionHandler;
-    /** @var OrderClosedHandler  */
+    /** @var OrderClosedHandler */
     private $orderClosedHandler;
 
 
     public function __construct(ProcurementPaymentRequestRepositoryInterface $procurement_payment_request_repository,
                                 Creator $creator, PaymentCreator $payment_creator, ProcurementRepositoryInterface $procurement_repository,
-                                WalletTransactionHandler $wallet_transaction_handler,OrderClosedHandler $order_closed_handler)
+                                WalletTransactionHandler $wallet_transaction_handler, OrderClosedHandler $order_closed_handler)
     {
         $this->procurementPaymentRequestRepository = $procurement_payment_request_repository;
         $this->procurementRepository = $procurement_repository;
@@ -74,9 +74,9 @@ class Updater
         return $this;
     }
 
-    public function setPaymentRequest($payment_request)
+    public function setPaymentRequest(ProcurementPaymentRequest $payment_request)
     {
-        $this->paymentRequest = $this->procurementPaymentRequestRepository->find((int)$payment_request);
+        $this->paymentRequest = $payment_request;
         return $this;
     }
 
@@ -92,7 +92,10 @@ class Updater
         $payment_request = null;
         try {
             DB::transaction(function () use (&$payment_request) {
+                $payment_request = $this->procurementPaymentRequestRepository->where('id', $this->paymentRequest->id)->lockForUpdate()->first();
+                $this->setPaymentRequest($payment_request);
                 $previous_status = $this->paymentRequest->status;
+                if ($previous_status == $this->status) return null;
                 $payment_request = $this->procurementPaymentRequestRepository->update($this->paymentRequest, $this->data);
                 $this->statusLogCreator->setPaymentRequest($this->paymentRequest)->setPreviousStatus($previous_status)->setStatus($this->status)->create();
                 if ($this->status == config('b2b.PROCUREMENT_PAYMENT_STATUS')['approved']) {
@@ -119,6 +122,11 @@ class Updater
             'note' => $this->note,
             'status' => $this->status
         ];
+    }
+
+    private function getLockedPaymentInstance()
+    {
+
     }
 
     public function updateStatus()
