@@ -98,7 +98,7 @@ return [
         ['#5B247A', '#1BCEDF'],
         ['#00B8BA', '#00FFED']
     ],
-    'screen' => ['home', 'eshop','payment_link','pos','inventory','referral','due','training_video_1','training_video_2'],
+    'screen' => ['home', 'eshop','payment_link','pos','inventory','referral','due'],
     'partner_lite_packages_id' => env('LITE_PACKAGE_ID'),
     'rent_a_car' => [
         'inside_city' => [
