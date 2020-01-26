@@ -97,7 +97,7 @@ class ServiceController extends Controller
             if ($service_groups) {
                 $service_groups->map(function ($service_group) use ($offers) {
                     $offer = $service_group->offers()->active()->flash()->validFlashOffer()->orderBy('end_date', 'desc')->first();
-                    if($offer) $offers->push($offer);
+                    if ($offer) $offers->push($offer);
                 });
                 $offer = $offers->sortBy('end_date')->first();
             }
@@ -121,7 +121,7 @@ class ServiceController extends Controller
             }
             $location = !is_null($location) ? $location : 4;
             $location_service = LocationService::where('location_id', $location)->where('service_id', $service->first()->id)->first();
-
+            if (!$location_service) return api_response($request, null, 404, ['message' => 'Service is not available at this location.']);
             $price_calculation->setLocationService($location_service);
 
             if ($options) {
@@ -131,11 +131,11 @@ class ServiceController extends Controller
                     $total_breakdown = [];
                     foreach ($answers[0] as $index => $answer) {
                         $breakdown = [
-                            'name'      => $answer,
-                            'indexes'   => [$index],
+                            'name' => $answer,
+                            'indexes' => [$index],
                             'min_price' => $service_min_price,
                             'max_price' => $service_max_price,
-                            'price'     => $price_calculation->setOption([$index])->getUnitPrice()
+                            'price' => $price_calculation->setOption([$index])->getUnitPrice()
                         ];
                         array_push($total_breakdown, $breakdown);
                     }
@@ -148,7 +148,7 @@ class ServiceController extends Controller
                         'indexes' => null,
                         'min_price' => $service_min_price,
                         'max_price' => $service_max_price,
-                        'price'     => $price_calculation->getUnitPrice()
+                        'price' => $price_calculation->getUnitPrice()
                     ]
                 ];
             }
@@ -287,7 +287,7 @@ class ServiceController extends Controller
             $manager = new Manager();
             $manager->setSerializer(new ArraySerializer());
             $resource = new Item($service, new ServiceV2Transformer($location_service, $price_calculation, $delivery_charge, $job_discount_handler));
-            $service  = $manager->createData($resource)->toArray();
+            $service = $manager->createData($resource)->toArray();
 
             return api_response($request, null, 200, ['service' => $service]);
         } catch (Throwable $e) {
@@ -342,13 +342,13 @@ class ServiceController extends Controller
                         'indexes' => array_merge([$array_index], $t['indexes']),
                         'min_price' => $t['min_price'],
                         'max_price' => $t['max_price'],
-                        'price'     => $price_calculation->setLocationService($location_service)->setOption(array_merge([$array_index], $t['indexes']))->getUnitPrice()
+                        'price' => $price_calculation->setLocationService($location_service)->setOption(array_merge([$array_index], $t['indexes']))->getUnitPrice()
                     ] : [
                         'name' => $v . " - " . $t,
                         'indexes' => array($array_index, $index),
                         'min_price' => $min_price,
                         'max_price' => $max_price,
-                        'price'     => $price_calculation->setLocationService($location_service)->setOption([$array_index, $index])->getUnitPrice()
+                        'price' => $price_calculation->setLocationService($location_service)->setOption([$array_index, $index])->getUnitPrice()
                     ];
             }
         }
