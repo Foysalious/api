@@ -136,15 +136,13 @@ class AttendanceAction
      */
     private function updateAttendance(AttendanceActionLog $model)
     {
+        $data = [];
+        $data['status'] = $model->status;
         if ($this->action == Actions::CHECKOUT) {
-            $status = ($this->attendance->status == Statuses::LATE) ? Statuses::LATE : $model->status;
-            $this->attendance->status = $status;
-            $this->attendance->checkout_time = $model->created_at->format('H:i:s');
-            $this->attendance->staying_time_in_minutes = $model->created_at->diffInMinutes($this->attendance->checkin_time);
-        } else {
-            $this->attendance->status = $model->status;
+            $data['status'] = ($this->attendance->status == Statuses::LATE) ? Statuses::LATE : $model->status;
+            $data['checkout_time'] = $model->created_at->format('H:i:s');
+            $data['staying_time_in_minutes'] = $model->created_at->diffInMinutes($this->attendance->checkin_time);
         }
-        
-        $this->attendance->update();
+        $this->attendanceRepository->update($this->attendance, $data);
     }
 }
