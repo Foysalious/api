@@ -2,7 +2,10 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\BusinessMember;
+use Sheba\Business\AttendanceActionLog\ActionChecker\ActionChecker;
+use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
 use Sheba\Dal\Attendance\Model as Attendance;
+use Sheba\Dal\Attendance\Statuses;
 use Sheba\Dal\AttendanceActionLog\Actions;
 use Sheba\Repositories\ProfileRepository;
 use App\Transformers\Business\EmployeeTransformer;
@@ -78,29 +81,27 @@ class EmployeeController extends Controller
         return api_response($request, null, 200);
     }
 
-    public function getDashboard(Request $request)
+    public function getDashboard(Request $request, ActionProcessor $action_processor)
     {
-        try {
-            $business_member = $this->getBusinessMember($request);
-            if (!$business_member) return api_response($request, null, 404);
-            $member = $this->repo->find($business_member['member_id']);
-            /** @var BusinessMember $business_member */
-            $business_member = BusinessMember::find($business_member['id']);
-            /** @var Attendance $attendance */
-            $attendance = $business_member->attendanceOfToday();
-            $data = [
-                'id' => $member->id,
-                'notification_count' => $member->notifications()->unSeen()->count(),
-                'attendance' => [
-                    'can_checkin' => !$attendance ? 1 : ($attendance->canTakeThisAction(Actions::CHECKIN) ? 1 : 0),
-                    'can_checkout' => $attendance && $attendance->canTakeThisAction(Actions::CHECKOUT) ? 1 : 0,
-                    'is_note_required' => 0
-                ]];
-            if ($data['attendance']['can_checkout']) $data['attendance']['is_note_required'] = $attendance->isNoteRequired();
-            if ($business_member) return api_response($request, $business_member, 200, ['info' => $data]);
-        } catch (\Throwable $e) {
-            return api_response($request, null, 500);
-        }
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $member = $this->repo->find($business_member['member_id']);
+        /** @var BusinessMember $business_member */
+        $business_member = BusinessMember::find($business_member['id']);
+        /** @var Attendance $attendance */
+        $attendance = $business_member->attendanceOfToday();
+        /** @var ActionChecker $checkout */
+        $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
+        $data = [
+            'id' => $member->id,
+            'notification_count' => $member->notifications()->unSeen()->count(),
+            'attendance' => [
+                'can_checkin' => !$attendance ? 1 : ($attendance->canTakeThisAction(Actions::CHECKIN) ? 1 : 0),
+                'can_checkout' => $attendance && $attendance->canTakeThisAction(Actions::CHECKOUT) ? 1 : 0,
+                'is_note_required' => 0
+            ]];
+        if ($data['attendance']['can_checkout']) $data['attendance']['is_note_required'] = $checkout->isNoteRequired();
+        if ($business_member) return api_response($request, $business_member, 200, ['info' => $data]);
     }
 
     private function getBusinessMember(Request $request)

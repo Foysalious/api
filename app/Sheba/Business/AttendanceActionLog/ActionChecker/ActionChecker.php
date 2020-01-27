@@ -1,6 +1,7 @@
 <?php namespace Sheba\Business\AttendanceActionLog\ActionChecker;
 
 use App\Models\Business;
+use Carbon\Carbon;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Model as AttendanceActionLog;
 use Sheba\Location\Geo;
@@ -165,6 +166,11 @@ abstract class ActionChecker
     public function isSuccess()
     {
         return $this->resultCode ? in_array($this->resultCode, [ActionResultCodes::SUCCESSFUL, ActionResultCodes::LATE_TODAY]) : true;
+    }
+
+    public function isNoteRequired()
+    {
+        return Carbon::now()->lt(Carbon::parse('18:30:00')) ? 1 : 0;
     }
 
     abstract protected function setSuccessfulResponseMessage();
