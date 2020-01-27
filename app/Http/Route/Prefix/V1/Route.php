@@ -209,7 +209,6 @@ class Route
                 });
                 $api->group(['prefix' => 'resources'], function ($api) {
                     $api->get('/', 'PartnerController@getResources');
-
                     $api->group(['prefix' => '{resource}', 'middleware' => ['partner_resource.auth']], function ($api) {
                         $api->get('/', 'ResourceController@show');
                         $api->get('reviews', 'ResourceController@getReviews');

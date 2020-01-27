@@ -10,6 +10,9 @@ class DueTrackerRoute
             $api->post('/set-due-date-reminder/{customer_id}', 'Pos\\DueTrackerController@setDueDateReminder');
             $api->get('/due-datewise-customer-list', 'Pos\\DueTrackerController@dueDateWiseCustomerList');
             $api->get('/due-calender', 'Pos\\DueTrackerController@getDueCalender');
+            $api->delete('/entries/{entry_id}', 'Pos\\DueTrackerController@delete');
+
         });
+        $api->delete('/customers/{customer}', 'Pos\\CustomerController@delete');
     }
 }

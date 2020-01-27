@@ -155,23 +155,22 @@ class DueTrackerRepository extends BaseRepository
         }
         return json_encode($attachments);
     }
-    public function generateDueReminders(array $list,Partner $partner){
-        $response['today'] = [];
+
+    public function generateDueReminders(array $list, Partner $partner)
+    {
+        $response['today']    = [];
         $response['previous'] = [];
-        $response['next'] = [];
+        $response['next']     = [];
         foreach ($list['list'] as $item) {
             $partner_pos_customer = PartnerPosCustomer::byPartnerAndCustomer($partner->id, $item['customer_id'])->first();
-            $due_date_reminder = $partner_pos_customer['due_date_reminder'];
-
+            $due_date_reminder    = $partner_pos_customer['due_date_reminder'];
             if ($partner_pos_customer && $due_date_reminder) {
-                $temp['customer_name'] = $item['customer_name'];
-                $temp['customer_id'] = $item['customer_id'];
-                $temp['profile_id'] = $item['profile_id'];
-                $temp['phone'] = $partner_pos_customer->details()['phone'];
-                $temp['balance'] = $item['balance'];
+                $temp['customer_name']     = $item['customer_name'];
+                $temp['customer_id']       = $item['customer_id'];
+                $temp['profile_id']        = $item['profile_id'];
+                $temp['phone']             = $partner_pos_customer->details()['phone'];
+                $temp['balance']           = $item['balance'];
                 $temp['due_date_reminder'] = $due_date_reminder;
-
-
                 if (Carbon::parse($due_date_reminder)->format('d-m-Y') == Carbon::parse(Carbon::today())->format('d-m-Y')) {
                     array_push($response['today'], $temp);
                 } else if (Carbon::parse($due_date_reminder)->format('d-m-Y') < Carbon::parse(Carbon::today())->format('d-m-Y')) {
@@ -185,7 +184,9 @@ class DueTrackerRepository extends BaseRepository
         return $response;
     }
 
-    public function generateDueCalender(array $dueList,Request $request){
+
+    public function generateDueCalender(array $dueList,Request $request)
+    {
         $calender = [];
 
         foreach ($dueList['list'] as $item) {
@@ -196,26 +197,46 @@ class DueTrackerRepository extends BaseRepository
                 $year = Carbon::parse($due_date_reminder)->year;
                 $month = Carbon::parse($due_date_reminder)->month;
                 $day = Carbon::parse($due_date_reminder)->day;
-                if($year == $request->year && $month == $request->month) {
+                if ($year == $request->year && $month == $request->month) {
                     if (!isset($calender[$day])) $calender[$day] = [];
                     array_push($calender[$day], $item);
                 }
             }
         }
         $response = [];
-        foreach($calender as $key => $items){
-            $data['date'] = Carbon::create($request->year,$request->month,$key)->format('d-m-Y');
+        foreach ($calender as $key => $items) {
+            $data['date'] = Carbon::create($request->year, $request->month, $key)->format('d-m-Y');
             $data['count'] = count($items);
             $data['customers'] = [];
-            foreach($items as $item){
+            foreach ($items as $item) {
                 $temp['customer_name'] = $item['customer_name'];
                 $temp['customer_id'] = $item['customer_id'];
                 $temp['profile_id'] = $item['profile_id'];
                 $temp['balance'] = $item['balance'];
-                array_push($data['customers'],$temp);
+                array_push($data['customers'], $temp);
             }
-            array_push($response,$data);
+            array_push($response, $data);
         }
         return $response;
+    }
+    /**
+     * @param $entry_id
+     * @return mixed
+     * @throws ExpenseTrackingServerError
+     */
+    public function removeEntry($entry_id)
+    {
+        return $this->client->delete("accounts/$this->accountId/entries/$entry_id");
+    }
+
+    /**
+     * @param $profile_id
+     * @throws ExpenseTrackingServerError
+     */
+    public function removeCustomer( $profile_id)
+    {
+        $url        = "accounts/$this->accountId/remove/$profile_id";
+        $this->client->delete($url);
+
     }
 }

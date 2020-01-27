@@ -5,13 +5,15 @@ use App\Models\PartnerPosCustomer;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\DueTracker\DueTrackerRepository;
+use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
+use Sheba\ModificationFields;
 use Sheba\Pos\Repositories\PartnerPosCustomerRepository;
 use Sheba\Reports\PdfHandler;
-use Sheba\ModificationFields;
 
 class DueTrackerController extends Controller
 {
     use ModificationFields;
+
     public function dueList(Request $request, DueTrackerRepository $dueTrackerRepository)
     {
         try {
@@ -34,7 +36,6 @@ class DueTrackerController extends Controller
                 return (new PdfHandler())->setName("due tracker by customer")->setData($data)->setViewFile('due_tracker_due_list_by_customer')->download();
             return api_response($request, $data, 200, ['data' => $data]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -108,5 +109,19 @@ class DueTrackerController extends Controller
             return api_response($request, null, 500);
         }
 
+    }
+
+    public function delete(Request $request, DueTrackerRepository $dueTrackerRepository, $partner, $entry_id)
+    {
+        try {
+            $dueTrackerRepository->setPartner($request->partner)->removeEntry($entry_id);
+            return api_response($request, true, 200);
+        } catch (ExpenseTrackingServerError $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500, ['message' => $e->getMessage()]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 }
