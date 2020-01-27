@@ -5,6 +5,7 @@ use App\Models\PartnerPosCustomer;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\DueTracker\DueTrackerRepository;
+use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ModificationFields;
 use Sheba\Pos\Repositories\PartnerPosCustomerRepository;
 use Sheba\Reports\PdfHandler;
@@ -97,8 +98,11 @@ class DueTrackerController extends Controller
     public function delete(Request $request, DueTrackerRepository $dueTrackerRepository, $partner, $entry_id)
     {
         try {
-            $response = $dueTrackerRepository->setPartner($request->partner)->removeEntry($entry_id);
-            return api_response($request, true, 200, ['response' => $response]);
+            $dueTrackerRepository->setPartner($request->partner)->removeEntry($entry_id);
+            return api_response($request, true, 200);
+        } catch (ExpenseTrackingServerError $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500, ['message' => $e->getMessage()]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
