@@ -5,6 +5,7 @@ use App\Models\BusinessMember;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionChecker;
+use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
 use Sheba\Business\AttendanceActionLog\AttendanceAction;
 use Sheba\Dal\Attendance\EloquentImplementation;
 use Sheba\Dal\AttendanceActionLog\Actions;
@@ -75,15 +76,26 @@ class AttendanceController extends Controller
         }
     }
 
-    public function takeAction(Request $request, AttendanceAction $attendance_action)
+    /**
+     * @param Request $request
+     * @param AttendanceAction $attendance_action
+     * @param ActionProcessor $action_processor
+     * @return JsonResponse
+     */
+    public function takeAction(Request $request, AttendanceAction $attendance_action, ActionProcessor $action_processor)
     {
         try {
-            $this->validate($request, [
+            $validation_data = [
                 'action' => 'required|string|in:' . implode(',', Actions::get()),
-                'note' => 'string|required_if:action,' . Actions::CHECKOUT,
                 'device_id' => 'string',
-                'user_agent' => 'string',
-            ]);
+                'user_agent' => 'string'
+            ];
+
+            $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
+            if ($request->action == Actions::CHECKOUT && $checkout->isNoteRequired())
+                $validation_data += ['note' => 'string|required_if:action,' . Actions::CHECKOUT];
+
+            $this->validate($request, $validation_data);
             $auth_info = $request->auth_info;
             $business_member = $auth_info['business_member'];
             /** @var BusinessMember $business_member */

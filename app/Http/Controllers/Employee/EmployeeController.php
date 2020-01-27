@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\BusinessMember;
+use Illuminate\Http\JsonResponse;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionChecker;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
 use Sheba\Dal\Attendance\Model as Attendance;
@@ -81,6 +82,11 @@ class EmployeeController extends Controller
         return api_response($request, null, 200);
     }
 
+    /**
+     * @param Request $request
+     * @param ActionProcessor $action_processor
+     * @return JsonResponse
+     */
     public function getDashboard(Request $request, ActionProcessor $action_processor)
     {
         $business_member = $this->getBusinessMember($request);
