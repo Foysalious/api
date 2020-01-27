@@ -30,18 +30,21 @@ class PartnerScheduleSlot
     const SCHEDULE_END = '21:00:00';
     private $resources;
     private $preparationTime;
+    private $portalName;
+    private $whitelistedPortals;
 
     public function __construct()
     {
         $this->shebaSlots = $this->getShebaSlots();
         $this->today = Carbon::now()->addMinutes(15);
+        $this->portalName = request()->header('portal-name');
+        $this->whitelistedPortals = ['manager-app', 'manager-portal', 'admin-portal'];
     }
 
     private function getShebaSlots()
     {
-        $portal_name = request()->header('portal-name');
         $end_time = self::SCHEDULE_END;
-        if ($portal_name == 'manager-app') $end_time = '24:00:00';
+        if ($this->portalName == 'manager-app') $end_time = '24:00:00';
         return ScheduleSlot::select('start', 'end')
             ->where([
                 ['start', '>=', DB::raw("CAST('" . self::SCHEDULE_START . "' As time)")],
@@ -109,9 +112,14 @@ class PartnerScheduleSlot
 
     private function addAvailabilityToShebaSlots(Carbon $day)
     {
-        $this->addAvailabilityByWorkingInformation($day);
+        if ($this->checkWorkingDay()) $this->addAvailabilityByWorkingInformation($day);
         $this->addAvailabilityByPreparationTime($day);
         $this->addAvailabilityByResource($day);
+    }
+
+    private function checkWorkingDay()
+    {
+        return !in_array($this->portalName, $this->whitelistedPortals);
     }
 
     private function getWorkingDay(Carbon $day)
