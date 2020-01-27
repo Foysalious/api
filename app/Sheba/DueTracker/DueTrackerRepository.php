@@ -184,4 +184,38 @@ class DueTrackerRepository extends BaseRepository
         }
         return $response;
     }
+
+    public function generateDueCalender(array $dueList,Request $request){
+        $calender = [];
+
+        foreach ($dueList['list'] as $item) {
+            $item['customer_id'] = 271;
+            $partner_pos_customer = PartnerPosCustomer::byPartnerAndCustomer($request->partner->id, $item['customer_id'])->first();
+            $due_date_reminder = $partner_pos_customer['due_date_reminder'];
+            if ($partner_pos_customer && $due_date_reminder) {
+                $year = Carbon::parse($due_date_reminder)->year;
+                $month = Carbon::parse($due_date_reminder)->month;
+                $day = Carbon::parse($due_date_reminder)->day;
+                if($year == $request->year && $month == $request->month) {
+                    if (!isset($calender[$day])) $calender[$day] = [];
+                    array_push($calender[$day], $item);
+                }
+            }
+        }
+        $response = [];
+        foreach($calender as $key => $items){
+            $data['date'] = Carbon::create($request->year,$request->month,$key)->format('d-m-Y');
+            $data['count'] = count($items);
+            $data['customers'] = [];
+            foreach($items as $item){
+                $temp['customer_name'] = $item['customer_name'];
+                $temp['customer_id'] = $item['customer_id'];
+                $temp['profile_id'] = $item['profile_id'];
+                $temp['balance'] = $item['balance'];
+                array_push($data['customers'],$temp);
+            }
+            array_push($response,$data);
+        }
+        return $response;
+    }
 }

@@ -90,7 +90,23 @@ class DueTrackerController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+    public function getDueCalender(Request $request, DueTrackerRepository $dueTrackerRepository){
 
+        try{
+            $this->validate($request, ['month' => 'required','year' => 'required']);
+            $request->merge(['balance_type' => 'due']);
+            $dueList  = $dueTrackerRepository->setPartner($request->partner)->getDueList($request, false);
+            $response = $dueTrackerRepository->generateDueCalender($dueList, $request);
+            return api_response($request, null, 200, ['data' => $response]);
+        }
+        catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        }catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
 
     }
 }
