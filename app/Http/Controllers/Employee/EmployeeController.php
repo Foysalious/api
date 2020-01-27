@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\BusinessMember;
+use Sheba\Business\AttendanceActionLog\ActionChecker\ActionChecker;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
 use Sheba\Repositories\ProfileRepository;
@@ -78,7 +79,7 @@ class EmployeeController extends Controller
         return api_response($request, null, 200);
     }
 
-    public function getDashboard(Request $request)
+    public function getDashboard(Request $request,ActionChecker $action_checker)
     {
         try {
             $business_member = $this->getBusinessMember($request);
@@ -96,7 +97,7 @@ class EmployeeController extends Controller
                     'can_checkout' => $attendance && $attendance->canTakeThisAction(Actions::CHECKOUT) ? 1 : 0,
                     'is_note_required' => 0
                 ]];
-            if ($data['attendance']['can_checkout']) $data['attendance']['is_note_required'] = $attendance->isNoteRequired();
+            if ($data['attendance']['can_checkout']) $data['attendance']['is_note_required'] = $action_checker->isNoteRequired();
             if ($business_member) return api_response($request, $business_member, 200, ['info' => $data]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
