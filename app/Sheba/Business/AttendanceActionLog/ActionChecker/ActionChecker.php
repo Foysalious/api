@@ -162,16 +162,13 @@ abstract class ActionChecker
         $this->setResultCode($result_code)->setResultMessage($result_message);
     }
 
-    protected function setSuccessfulResponseMessage()
-    {
-        $this->setResult(ActionResultCodes::SUCCESSFUL, ActionResultCodeMessages::SUCCESSFUL);
-    }
-
     public function isSuccess()
     {
-        return $this->resultCode ? $this->resultCode == 200 : true;
+        return $this->resultCode ? in_array($this->resultCode, [ActionResultCodes::SUCCESSFUL, ActionResultCodes::LATE_TODAY]) : true;
     }
 
+    abstract protected function setSuccessfulResponseMessage();
+    
     abstract protected function setAlreadyHasActionForTodayResponse();
 
     abstract protected function getActionName();

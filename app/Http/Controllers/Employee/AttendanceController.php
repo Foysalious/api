@@ -77,23 +77,35 @@ class AttendanceController extends Controller
 
     public function takeAction(Request $request, AttendanceAction $attendance_action)
     {
-        $this->validate($request, [
-            'action' => 'required|string|in:' . implode(',', Actions::get()),
-            'note' => 'string|required_if:action,' . Actions::CHECKOUT,
-            'device_id' => 'string',
-            'user_agent' => 'string',
-        ]);
-        $auth_info = $request->auth_info;
-        $business_member = $auth_info['business_member'];
-        /** @var BusinessMember $business_member */
-        $business_member = BusinessMember::find($business_member['id']);
-        if (!$business_member) return api_response($request, null, 404);
-        $this->setModifier($business_member->member);
-        $attendance_action->setBusinessMember($business_member)->setAction($request->action)->setBusiness($business_member->business)
-            ->setNote($request->note)->setDeviceId($request->device_id);
-        /** @var ActionChecker $action */
-        $action = $attendance_action->doAction();
-        return response()->json(['code' => $action->getResultCode(), 'message' => $action->getResultMessage()]);
+        try {
+            $this->validate($request, [
+                'action' => 'required|string|in:' . implode(',', Actions::get()),
+                'note' => 'string|required_if:action,' . Actions::CHECKOUT,
+                'device_id' => 'string',
+                'user_agent' => 'string',
+            ]);
+            $auth_info = $request->auth_info;
+            $business_member = $auth_info['business_member'];
+            /** @var BusinessMember $business_member */
+            $business_member = BusinessMember::find($business_member['id']);
+            if (!$business_member) return api_response($request, null, 404);
+            $this->setModifier($business_member->member);
+            $attendance_action->setBusinessMember($business_member)->setAction($request->action)->setBusiness($business_member->business)
+                ->setNote($request->note)->setDeviceId($request->device_id);
+            /** @var ActionChecker $action */
+            $action = $attendance_action->doAction();
+            return response()->json(['code' => $action->getResultCode(), 'message' => $action->getResultMessage()]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500, ['message' => 'Something went wrong. Please try again!']);
+        }
+
     }
 
     /**
