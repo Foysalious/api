@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers\Partner;
 
+use App\Http\Controllers\Controller;
 use App\Sheba\PartnerOrder\PartnerAsCustomer;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
+use Sheba\PartnerOrder\Exceptions\PartnerAddressNotFound;
 
 class AsCustomerController extends Controller
 {
@@ -12,17 +13,20 @@ class AsCustomerController extends Controller
     {
         try {
             $partnerAsCustomer = new PartnerAsCustomer($request);
-            $customerInfo = $partnerAsCustomer->getCustomerProfile();
-            $addresses = $customerInfo->delivery_addresses()->where('location_id', $request->partner->getHyperLocation()->location->id)
-                ->select('id', 'address')->get();
-            return api_response($request, $customerInfo, 200, ['customer_info' => [
-                'id' => $customerInfo->id,
-                'mobile' => $customerInfo->profile->mobile,
-                'address' => $customerInfo->profile->address,
-                'addresses' => $addresses,
-                'name' => $customerInfo->profile->name,
-                'remember_token' => $customerInfo->remember_token
-            ]]);
+            $customerInfo      = $partnerAsCustomer->getCustomerProfile();
+            $addresses         = $customerInfo->delivery_addresses()->where('location_id', $request->partner->getHyperLocation()->location->id)->select('id', 'address')->get();
+            return api_response($request, $customerInfo, 200, [
+                'customer_info' => [
+                    'id'             => $customerInfo->id,
+                    'mobile'         => $customerInfo->profile->mobile,
+                    'address'        => $customerInfo->profile->address,
+                    'addresses'      => $addresses,
+                    'name'           => $customerInfo->profile->name,
+                    'remember_token' => $customerInfo->remember_token
+                ]
+            ]);
+        } catch (PartnerAddressNotFound $e) {
+            return api_response($request, $e->getMessage(), 404, ['message' => $e->getMessage()]);
         } catch (\Throwable $e) {
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all()]);
