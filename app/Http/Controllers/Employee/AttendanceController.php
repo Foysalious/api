@@ -54,8 +54,8 @@ class AttendanceController extends Controller
             $time_frame->end = $this->isShowRunningMonthsAttendance($year, $month) ? Carbon::now() : $time_frame->end;
             $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
 
-            $business_holiday = $business_holiday_repo->getAll();
-            $business_weekend = $business_weekend_repo->getAll();
+            $business_holiday = $business_holiday_repo->getAllByBusiness($business_member->business);
+            $business_weekend = $business_weekend_repo->getAllByBusiness($business_member->business);
 
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());

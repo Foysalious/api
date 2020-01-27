@@ -5,6 +5,7 @@ use Carbon\CarbonPeriod;
 use Illuminate\Support\Collection;
 use League\Fractal\TransformerAbstract;
 use Sheba\Dal\Attendance\Model as Attendance;
+use Sheba\Dal\Attendance\Statuses;
 use Sheba\Helpers\TimeFrame;
 
 class AttendanceTransformer extends TransformerAbstract
@@ -35,10 +36,10 @@ class AttendanceTransformer extends TransformerAbstract
         $period = CarbonPeriod::create($this->timeFrame->start, $this->timeFrame->end);
         $statistics = [
             'working_days' => $this->timeFrame->start->daysInMonth,
-            'on_time' => 0,
-            'late' => 0,
-            'left_early' => 0,
-            'absent' => 0
+            Statuses::ON_TIME => 0,
+            Statuses::LATE => 0,
+            Statuses::LEFT_EARLY => 0,
+            Statuses::ABSENT => 0
         ];
 
         $daily_breakdown = [];
@@ -68,6 +69,7 @@ class AttendanceTransformer extends TransformerAbstract
                 ];
                 $statistics[$attendance->status]++;
             }
+            if (!$attendance && !$is_weekend_or_holiday) $statistics[Statuses::ABSENT]++;
 
             $daily_breakdown[] = ['date' => $date->toDateString()] + $breakdown_data;
         }
