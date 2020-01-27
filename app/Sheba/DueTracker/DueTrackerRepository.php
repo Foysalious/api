@@ -193,4 +193,14 @@ class DueTrackerRepository extends BaseRepository
     {
         return $this->client->delete("accounts/$this->accountId/entries/$entry_id");
     }
+
+    /**
+     * @param $profile_id
+     * @throws ExpenseTrackingServerError
+     */
+    public function removeCustomer( $profile_id)
+    {
+        $url        = "accounts/$this->accountId/remove/$profile_id";
+        $this->client->delete($url);
+    }
 }

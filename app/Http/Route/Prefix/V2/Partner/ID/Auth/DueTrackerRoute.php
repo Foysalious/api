@@ -11,5 +11,6 @@ class DueTrackerRoute
             $api->get('/due-datewise-customer-list', 'Pos\\DueTrackerController@dueDateWiseCustomerList');
             $api->delete('/entries/{entry_id}', 'Pos\\DueTrackerController@delete');
         });
+        $api->delete('/customers/{customer}', 'Pos\\CustomerController@delete');
     }
 }
