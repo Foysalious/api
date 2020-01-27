@@ -150,7 +150,7 @@ abstract class ActionChecker
     protected function checkIp()
     {
         if (!$this->isSuccess()) return;
-        if ($this->business->offices()->count() > 0 && $this->business->offices()->where('ip', $this->ip)->first()) {
+        if ($this->business->offices()->count() > 0 && $this->business->offices()->where('ip', '<>', $this->ip)->first()) {
             $this->setResult(ActionResultCodes::OUT_OF_WIFI_AREA, ActionResultCodeMessages::OUT_OF_WIFI_AREA);
         } else {
             $this->setSuccessfulResponseMessage();
@@ -168,7 +168,7 @@ abstract class ActionChecker
     }
 
     abstract protected function setSuccessfulResponseMessage();
-    
+
     abstract protected function setAlreadyHasActionForTodayResponse();
 
     abstract protected function getActionName();
