@@ -40,7 +40,7 @@ class SmsCampaignOrderController extends Controller
         try {
             return api_response($request, null, 200, [
                 'message' => 'SMS Marketing has been turned off temporarily',
-                'error_code' => 'temporarily_turned_off ',
+                'error_code' => 'temporarily_turned_off',
                 'code' => 200
             ]);
 
