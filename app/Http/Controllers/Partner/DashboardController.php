@@ -49,7 +49,7 @@ class DashboardController extends Controller
             $videos = [];
             foreach ($slider_portal as $item) {
                 $home_slide = $item->slider->slides->last();
-                if ($home_slide)
+                if ($home_slide && json_decode($home_slide->video_info))
                 {
                     array_push($videos,json_decode($home_slide->video_info));
                 }
@@ -65,7 +65,7 @@ class DashboardController extends Controller
                     ->get();
                 $slides[$screen] = !$slider_portals[$screen]->isEmpty() ? $slider_portals[$screen]->last()->slider->slides->last() : null;
 
-                if($slides[$screen]){
+                if($slides[$screen] && json_decode($slides[$screen]->video_info)){
                     $details[$screen] = json_decode($slides[$screen]->video_info);
                 }else
                     $details[$screen] = null;
