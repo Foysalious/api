@@ -33,8 +33,8 @@ class ProcurementPaymentRequestController extends Controller
             'status' => 'sometimes|string'
         ]);
         $this->setModifier($request->manager_member);
-        $payment_request = $updater->setProcurement($procurement)->setBid($bid)->setPaymentRequest($procurement_payment_request_repository->find($payment_request))
-            ->setNote($request->note)->setStatus($request->status)->paymentRequestUpdate();
+//        $payment_request = $updater->setProcurement($procurement)->setBid($bid)->setPaymentRequest($procurement_payment_request_repository->find($payment_request))
+//            ->setNote($request->note)->setStatus($request->status)->paymentRequestUpdate();
         return api_response($request, $payment_request, 200);
     }
 
