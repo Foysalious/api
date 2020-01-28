@@ -190,7 +190,6 @@ class DueTrackerRepository extends BaseRepository
         $calender = [];
 
         foreach ($dueList['list'] as $item) {
-            $item['customer_id'] = 271;
             $partner_pos_customer = PartnerPosCustomer::byPartnerAndCustomer($request->partner->id, $item['customer_id'])->first();
             $due_date_reminder = $partner_pos_customer['due_date_reminder'];
             if ($partner_pos_customer && $due_date_reminder) {
