@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Redis;
 use Sheba\Analysis\PartnerPerformance\PartnerPerformance;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
 use Sheba\Helpers\TimeFrame;
+use Sheba\Location\LocationSetter;
 use Sheba\Manager\JobList;
 use Sheba\ModificationFields;
 use Sheba\Partner\HomePageSetting\CacheManager;
@@ -28,7 +29,7 @@ use Throwable;
 
 class DashboardController extends Controller
 {
-    use ModificationFields;
+    use ModificationFields, LocationSetter;
 
     private $partnerRepo;
 
@@ -44,30 +45,33 @@ class DashboardController extends Controller
                 ->where('portal_name', 'manager-app')
                 ->where('screen', 'home')
                 ->get();
-            $slide = !$slider_portal->isEmpty() ? $slider_portal->last()->slider->slides->last() : null;
 
+            $slides_query = !$slider_portal->isEmpty() ? $slider_portal->last()->slider->slides()->where('location_id', $this->location)->orderBy('id', 'desc') : null;
+            $slide = null;
+            $all_slides = $slides_query ? $slides_query->get() : null;
             $videos = [];
-            foreach ($slider_portal as $item) {
-                $home_slide = $item->slider->slides->last();
-                if ($home_slide && json_decode($home_slide->video_info))
-                {
-                    array_push($videos,json_decode($home_slide->video_info));
+            if($all_slides && !$all_slides->isEmpty()) {
+                foreach ($all_slides as $key => $item) {
+                    if ($item && json_decode($item->video_info)) {
+                        if ($key == 0) $slide = $item;
+                        array_push($videos, json_decode($item->video_info));
+                    }
                 }
             }
 
             $screens = ['payment_link','pos','inventory','referral','due'];
             $slides = [];
             $details = [];
-            foreach($screens as $screen){
+            foreach ($screens as $screen) {
                 $slider_portals[$screen] = SliderPortal::with('slider.slides')
                     ->where('portal_name', 'manager-app')
                     ->where('screen', $screen)
                     ->get();
                 $slides[$screen] = !$slider_portals[$screen]->isEmpty() ? $slider_portals[$screen]->last()->slider->slides->last() : null;
 
-                if($slides[$screen] && json_decode($slides[$screen]->video_info)){
+                if ($slides[$screen] && json_decode($slides[$screen]->video_info)) {
                     $details[$screen] = json_decode($slides[$screen]->video_info);
-                }else
+                } else
                     $details[$screen] = null;
             }
 
@@ -214,6 +218,7 @@ class DashboardController extends Controller
 
             return api_response($request, $dashboard, 200, ['data' => $dashboard]);
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
