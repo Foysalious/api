@@ -1,6 +1,5 @@
 <?php namespace Sheba\TopUp;
 
-use Carbon\Carbon;
 use Sheba\TopUp\Vendor\Vendor;
 use Sheba\TopUp\Vendor\VendorFactory;
 
@@ -17,7 +16,6 @@ class TopUpRequest
     private $errorMessage;
     private $name;
     private $bulk_id;
-    const MINIMUM_TOPUP_INTERVAL_BETWEEN_TWO_TOPUP_IN_SECOND = 20;
 
     public function __construct(VendorFactory $vendor_factory)
     {
@@ -126,13 +124,6 @@ class TopUpRequest
             $this->errorMessage = "Temporary turned off.";
             return 1;
         }
-        if ($last_topup = $this->agent->topups()->select('id', 'created_at')->orderBy('id', 'desc')->first()) {
-            if ($last_topup->created_at->diffInSeconds(Carbon::now()) < self::MINIMUM_TOPUP_INTERVAL_BETWEEN_TWO_TOPUP_IN_SECOND) {
-                $this->errorMessage = "Please wait a minutes to request topup.";
-                return 1;
-            }
-        }
-
         return 0;
     }
 
@@ -176,4 +167,5 @@ class TopUpRequest
         $this->bulk_id = $bulk_id;
         return $this;
     }
+
 }
