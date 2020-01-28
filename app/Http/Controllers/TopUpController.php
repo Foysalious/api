@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\Business;
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
@@ -11,7 +12,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
-use Sheba\TopUp\Commission\Business;
 use Sheba\TopUp\Creator;
 use Sheba\TopUp\TopUp;
 use Sheba\TopUp\Jobs\TopUpExcelJob;
@@ -75,7 +75,10 @@ class TopUpController extends Controller
                 'amount' => 'required|min:10|max:1000|numeric'
             ]);
             $agent = $this->getAgent($request);
-            if ($this->hasLastTopupWithinIntervalTime($agent)) return api_response($request, null, 400, ['message' => 'Wait another minute to topup']);
+
+            if ($this->hasLastTopupWithinIntervalTime($agent))
+                return api_response($request, null, 400, ['message' => 'Wait another minute to topup']);
+
             $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id);
             if ($top_up_request->hasError())
                 return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
