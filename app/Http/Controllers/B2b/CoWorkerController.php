@@ -145,7 +145,6 @@ class CoWorkerController extends Controller
     public function show($business, $employee, Request $request)
     {
         try {
-            $business = $request->business;
             $member = Member::find((int)$employee);
             if (!$member) return api_response($request, null, 404);
             $profile = $member->profile;
@@ -156,7 +155,7 @@ class CoWorkerController extends Controller
                 'pro_pic' => $profile->pro_pic,
                 'dob' => Carbon::parse($profile->dob)->format('M j, Y'),
                 'designation' => $member->businessMember->role ? $member->businessMember->role->name : null,
-                'department' => $member->businessMember->role->businessDepartment ? $member->businessMember->role->businessDepartment->name : null,
+                'department' => $member->businessMember->role && $member->businessMember->role->businessDepartment ? $member->businessMember->role->businessDepartment->name : null,
             ];
 
             if (count($employee) > 0) return api_response($request, $employee, 200, ['employee' => $employee]);
