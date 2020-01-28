@@ -277,6 +277,10 @@ class BusinessRoute
                         $api->post('/comments', 'B2b\TripRequestController@commentOnTripRequest');
                     });
                 });
+                $api->group(['prefix' => 'approvals'], function ($api) {
+                    $api->post('/', 'B2b\ApprovalController@createApprovals');
+                    $api->get('/', 'B2b\ApprovalController@getApprovals');
+                });
                 $api->group(['prefix' => 'inspections'], function ($api) {
                     $api->get('/', 'B2b\InspectionController@individualInspection');
                 });
