@@ -95,7 +95,7 @@ class Updater
         if (Redis::get($key_name)) return null;
         try {
             DB::transaction(function () use (&$payment_request, $key_name) {
-                Redis::set($key_name);
+                Redis::set($key_name, 1);
                 Redis::expire($key_name, 10 * 60);
                 $payment_request = $this->procurementPaymentRequestRepository->where('id', $this->paymentRequest->id)->first();
                 $this->setPaymentRequest($payment_request);
