@@ -261,7 +261,6 @@ class TopUpController extends Controller
 
     private function hasLastTopupWithinIntervalTime(TopUpAgent $agent)
     {
-        if ($agent instanceof Business) return 0;
         $last_topup = $agent->topups()->select('id', 'created_at')->orderBy('id', 'desc')->first();
         return $last_topup && $last_topup->created_at->diffInSeconds(Carbon::now()) < self::MINIMUM_TOPUP_INTERVAL_BETWEEN_TWO_TOPUP_IN_SECOND;
     }
