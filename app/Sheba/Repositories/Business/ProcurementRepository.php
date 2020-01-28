@@ -18,9 +18,4 @@ class ProcurementRepository extends BaseRepository implements ProcurementReposit
     {
         return $this->model->where('owner_id', $business_id)->where('owner_type', "App\\Models\\Business");
     }
-
-   public function update(Model $model, array $data)
-   {
-       return $model->lockForUpdate()->update($this->withUpdateModificationField($data));
-   }
 }

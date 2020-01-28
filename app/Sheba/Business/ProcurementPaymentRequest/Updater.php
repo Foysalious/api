@@ -92,7 +92,7 @@ class Updater
         $payment_request = null;
         try {
             DB::transaction(function () use (&$payment_request) {
-                $payment_request = $this->procurementPaymentRequestRepository->where('id', $this->paymentRequest->id)->lockForUpdate()->first();
+                $payment_request = $this->procurementPaymentRequestRepository->where('id', $this->paymentRequest->id)->first();
                 $this->setPaymentRequest($payment_request);
                 $previous_status = $this->paymentRequest->status;
                 if ($previous_status == $this->status) return null;
@@ -107,6 +107,7 @@ class Updater
                     $partner->minusWallet($amount, ['log' => 'Received money for RFQ Order #' . $this->procurement->id]);
                     $this->procurementRepository->update($this->procurement, ['partner_collection' => $this->procurement->partner_collection + $amount]);
                     $this->orderClosedHandler->setProcurement($this->procurement)->run();
+
                 }
             });
             $this->sendStatusChangeNotification();
