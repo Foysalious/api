@@ -55,6 +55,7 @@ class AttendanceTransformer extends TransformerAbstract
             }
             $breakdown_data['show_attendance'] = 0;
             $breakdown_data['attendance'] = null;
+            $breakdown_data['is_absent'] = 0;
 
             /** @var Attendance $attendance */
             $attendance = $attendances->where('date', $date->toDateString())->first();
@@ -69,7 +70,10 @@ class AttendanceTransformer extends TransformerAbstract
                 ];
                 $statistics[$attendance->status]++;
             }
-            if (!$attendance && !$is_weekend_or_holiday) $statistics[Statuses::ABSENT]++;
+            if (!$attendance && !$is_weekend_or_holiday) {
+                $breakdown_data['is_absent'] = 1;
+                $statistics[Statuses::ABSENT]++;
+            }
 
             $daily_breakdown[] = ['date' => $date->toDateString()] + $breakdown_data;
         }
