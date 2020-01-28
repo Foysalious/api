@@ -2,6 +2,7 @@
 
 use App\Models\Partner;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Redis;
 use Sheba\Business\Procurement\OrderClosedHandler;
 use Sheba\Dal\ProcurementPaymentRequest\Model as ProcurementPaymentRequest;
 use Sheba\Business\ProcurementPayment\Creator as PaymentCreator;
@@ -90,8 +91,12 @@ class Updater
     {
         $this->makePaymentRequestData();
         $payment_request = null;
+        $key_name = 'procurement_payment_request_' . $this->paymentRequest->id;
+        if (Redis::get($key_name)) return null;
         try {
-            DB::transaction(function () use (&$payment_request) {
+            DB::transaction(function () use (&$payment_request, $key_name) {
+                Redis::set($key_name);
+                Redis::expire($key_name, 10 * 60);
                 $payment_request = $this->procurementPaymentRequestRepository->where('id', $this->paymentRequest->id)->first();
                 $this->setPaymentRequest($payment_request);
                 $previous_status = $this->paymentRequest->status;
@@ -107,7 +112,7 @@ class Updater
                     $partner->minusWallet($amount, ['log' => 'Received money for RFQ Order #' . $this->procurement->id]);
                     $this->procurementRepository->update($this->procurement, ['partner_collection' => $this->procurement->partner_collection + $amount]);
                     $this->orderClosedHandler->setProcurement($this->procurement)->run();
-
+                    Redis::del($key_name);
                 }
             });
             $this->sendStatusChangeNotification();
