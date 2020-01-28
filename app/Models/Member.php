@@ -55,4 +55,14 @@ class Member extends Model
     {
         return $this->profile->customer();
     }
+
+    public function getIdentityAttribute()
+    {
+        if ($this->profile->name != '') {
+            return $this->profile->name;
+        } elseif ($this->profile->mobile) {
+            return $this->profile->mobile;
+        }
+        return $this->profile->email;
+    }
 }
