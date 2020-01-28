@@ -1,5 +1,7 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use Sheba\Dal\TripRequestApprovalFlow\TripRequestApprovalFlowRepositoryInterface;
+use Sheba\Dal\TripRequestApprovalFlow\Model as TripRequestApprovalFlow;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\ApprovalFlow\Creator;
 use App\Http\Controllers\Controller;
@@ -8,7 +10,7 @@ use Illuminate\Http\Request;
 
 class ApprovalFlowController extends Controller
 {
-    public function createApprovalFlow(Request $request, Creator $creator)
+    public function store(Request $request, Creator $creator)
     {
         try {
             $this->validate($request, [
@@ -28,6 +30,36 @@ class ApprovalFlowController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function index(Request $request, TripRequestApprovalFlowRepositoryInterface $approval_flow_repo)
+    {
+        try {
+            $approvals_flow = TripRequestApprovalFlow::query();
+            $approval = [];
+            foreach ($approvals_flow->get() as $approval_flow) {
+                $business_department = $approval_flow->businessDepartment;
+                $business_members = $approval_flow->approvers;
+                $approvers_names = collect();
+                $approvers_images = collect();
+                foreach ($business_members as $business_member) {
+                    $approvers_names->push($business_member->member->profile->name);
+                    $approvers_images->push($business_member->member->profile->pro_pic);
+                }
+                array_push($approval, [
+                    'id' => $approval_flow->id,
+                    'title' => $approval_flow->title,
+                    'department' => $business_department->name,
+                    'approvers_name' => $approvers_names,
+                    'approvers_images' => $approvers_images
+                ]);
+            }
+            if (count($approval) > 0) return api_response($request, $approval, 200, ['approval' => $approval]);
+            else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

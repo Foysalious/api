@@ -1,7 +1,6 @@
 <?php namespace Sheba\Business\ApprovalFlow;
 
 use Illuminate\Support\Facades\DB;
-use Sheba\Dal\TripRequestApprovalFlow\Model as TripRequestApprovalFlow;
 use Sheba\Dal\TripRequestApprovalFlow\TripRequestApprovalFlowRepositoryInterface;
 use Sheba\ModificationFields;
 

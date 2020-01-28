@@ -278,8 +278,8 @@ class BusinessRoute
                     });
                 });
                 $api->group(['prefix' => 'approval-flow'], function ($api) {
-                    $api->post('/', 'B2b\ApprovalFlowController@createApprovalFlow');
-                    $api->get('/', 'B2b\ApprovalFlowController@getApprovalFlow');
+                    $api->post('/', 'B2b\ApprovalFlowController@store');
+                    $api->get('/', 'B2b\ApprovalFlowController@index');
                 });
                 $api->group(['prefix' => 'inspections'], function ($api) {
                     $api->get('/', 'B2b\InspectionController@individualInspection');
