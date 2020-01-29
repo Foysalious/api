@@ -12,6 +12,7 @@ class Updater
     private $tripRequestApprovalRepo;
     private $tripRequestApproval;
     private $member;
+    private $businessMember;
     private $statuses;
     private $data;
 
@@ -24,12 +25,19 @@ class Updater
     public function hasError()
     {
         if (!in_array($this->data['status'], $this->statuses)) return "Invalid Status!";
+        if ($this->tripRequestApproval->business_member_id != $this->businessMember->id) return "You are not authorized to  change the Status!";
         return false;
     }
 
     public function setMember($member)
     {
         $this->member = $member;
+        return $this;
+    }
+
+    public function setBusinessMember($business_member)
+    {
+        $this->businessMember = $business_member;
         return $this;
     }
 
