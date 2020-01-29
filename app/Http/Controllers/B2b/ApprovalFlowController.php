@@ -40,7 +40,18 @@ class ApprovalFlowController extends Controller
     public function index(Request $request)
     {
         try {
-            $approvals_flow = TripRequestApprovalFlow::query();
+            list($offset, $limit) = calculatePagination($request);
+            $approvals_flow = TripRequestApprovalFlow::query()->orderBy('id', 'desc')->skip($offset)->limit($limit);
+
+            if ($request->has('business_department_id')) {
+                $approvals_flow = $approvals_flow->where('business_department_id', $request->business_department_id);
+            }
+
+            $start_date = $request->has('start_date') ? $request->start_date : null;
+            $end_date = $request->has('end_date') ? $request->end_date : null;
+            if ($start_date && $end_date) {
+                $approvals_flow->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
+            }
             $approval = [];
             foreach ($approvals_flow->get() as $approval_flow) {
                 $business_department = $approval_flow->businessDepartment;

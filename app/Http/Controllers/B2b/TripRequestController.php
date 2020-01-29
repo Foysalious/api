@@ -8,6 +8,7 @@ use App\Models\BusinessTripRequest;
 use App\Repositories\CommentRepository;
 use App\Sheba\Business\BusinessTripSms;
 use App\Sheba\Business\TripRequest\Creator;
+use FontLib\Table\Type\name;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
@@ -147,6 +148,22 @@ class TripRequestController extends Controller
                     'created_at' => $comment->created_at->toDateTimeString()
                 ]);
             }
+            $trip_request_approvers = [];
+            if ($request_approvals = $trip_request->tripRequestApprovals) {
+                foreach ($request_approvals as $trip_request_approval) {
+                    $business_member = $trip_request_approval->businessMember;
+                    $member = $business_member->member;
+                    $profile = $member->profile;
+                    array_push($trip_request_approvers, [
+                        'name' => $profile->name ? $profile->name : null,
+                        'pro_pic' => $profile->pro_pic ? $profile->pro_pic : null,
+                        'type' => $business_member->type,
+                        'status' => $trip_request_approval->status,
+                        'mobile' => $profile->mobile ? $profile->mobile : null,
+                    ]);
+                }
+            }
+
             $info = [
                 'id' => $trip_request->id,
                 'reason' => $trip_request->reason,
@@ -165,6 +182,7 @@ class TripRequestController extends Controller
                 'end_date' => $trip_request->end_date,
                 'no_of_seats' => $trip_request->no_of_seats,
                 'created_at' => $trip_request->created_at->toDateTimeString(),
+                'trip_request_approvers' => $trip_request_approvers
             ];
 
             return api_response($request, $info, 200, ['info' => $info]);
@@ -285,6 +303,12 @@ class TripRequestController extends Controller
                 DBTransaction::commit();
                 return api_response($request, null, 200, ['message' => 'Trip Request rejected successfully']);
             }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             DBTransaction::rollback();
             app('sentry')->captureException($e);

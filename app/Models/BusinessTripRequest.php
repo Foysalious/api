@@ -1,5 +1,7 @@
 <?php namespace App\Models;
 
+use Sheba\Dal\TripRequestApproval\Model as TripRequestApproval;
+use App\Http\Controllers\B2b\TripRequestApprovalController;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Comment\MorphCommentable;
 use Sheba\Comment\MorphComments;
@@ -25,6 +27,11 @@ class BusinessTripRequest extends Model implements MorphCommentable
         return $this->belongsTo(Member::class);
     }
 
+    public function tripRequestApprovals()
+    {
+        return $this->hasMany(TripRequestApproval::class);
+    }
+
     public function getBusinessMember()
     {
         return BusinessMember::where([['member_id', $this->member_id], ['business_id', $this->business_id]])->first();
@@ -47,5 +54,4 @@ class BusinessTripRequest extends Model implements MorphCommentable
     {
         // TODO: Implement getNotificationHandlerClass() method.
     }
-
 }
