@@ -60,6 +60,7 @@ class TripRequestApprovalController extends Controller
         try {
             $this->validate($request, ['status' => 'required|string']);
             $updater->setMember($request->member)
+                ->setBusinessMember($request->business_member)
                 ->setTripRequestApproval((int)$approval)
                 ->setData($request->all());
             if ($error = $updater->hasError())

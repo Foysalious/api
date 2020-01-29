@@ -70,7 +70,11 @@ class ApprovalFlowController extends Controller
                     'approvers_images' => $approvers_images
                 ]);
             }
-            if (count($approval) > 0) return api_response($request, $approval, 200, ['approval' => $approval]);
+            $total_approvals_flow = $approvals_flow->count();
+            if (count($approval) > 0) return api_response($request, $approval, 200, [
+                'approval' => $approval,
+                'total_approvals_flow' => $total_approvals_flow
+            ]);
             else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);

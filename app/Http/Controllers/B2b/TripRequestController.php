@@ -157,7 +157,6 @@ class TripRequestController extends Controller
                     array_push($trip_request_approvers, [
                         'name' => $profile->name ? $profile->name : null,
                         'pro_pic' => $profile->pro_pic ? $profile->pro_pic : null,
-                        #'type' => $business_member->type,
                         'designation' => $business_member->role ? $business_member->role->name : '',
                         'department' => $business_member->role && $business_member->role->businessDepartment ? $business_member->role->businessDepartment->name : null,
                         'status' => $trip_request_approval->status,
