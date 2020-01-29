@@ -34,10 +34,10 @@ class PartnerScheduleSlot
 
     public function __construct()
     {
+        $this->whitelistedPortals = ['manager-app', 'manager-web', 'admin-portal'];
         $this->shebaSlots = $this->getShebaSlots();
         $this->today = Carbon::now()->addMinutes(15);
         $this->portalName = request()->header('portal-name');
-        $this->whitelistedPortals = ['manager-app', 'manager-web', 'admin-portal'];
     }
 
     private function getShebaSlots()
