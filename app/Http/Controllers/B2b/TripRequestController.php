@@ -7,16 +7,20 @@ use App\Models\BusinessTrip;
 use App\Models\BusinessTripRequest;
 use App\Repositories\CommentRepository;
 use App\Sheba\Business\BusinessTripSms;
+use App\Sheba\Business\TripRequest\Creator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\Scheduler\TripScheduler;
 use DB;
+use Sheba\Location\Geo;
+use Sheba\ModificationFields;
 use Sheba\Notification\B2b\TripRequests;
 use Illuminate\Support\Facades\DB as DBTransaction;
 
 class TripRequestController extends Controller
 {
+    use ModificationFields;
     public function getTripRequests(Request $request)
     {
         try {
@@ -223,7 +227,7 @@ class TripRequestController extends Controller
         }
     }
 
-    public function createTrip(Request $request, BusinessTripSms $businessTripSms)
+    public function createTrip(Request $request, BusinessTripSms $businessTripSms, Creator $trip_request_creator)
     {
         try {
             $business_member = $request->business_member;
@@ -233,7 +237,14 @@ class TripRequestController extends Controller
                 $business_trip_request = BusinessTripRequest::find((int)$request->trip_request_id);
                 if ($business_trip_request->status != 'pending' && !$will_auto_assign) return api_response($request, null, 403);
             } else {
-                $business_trip_request = $this->storeTripRequest($request);
+                $trip_request_creator->setBusinessMember($business_member)->setDriverId($request->driver_id)->setVehicleId($request->vehicle_id)
+                    ->setPickupAddress($request->pickup_address)->setDropoffAddress($request->dropoff_address)->setStartDate($request->start_date)
+                    ->setEndDate($request->end_date)->setTripType($request->trip_type)->setVehicleType($request->vehicle_type)->setReason($request->reason)
+                    ->setDetails($request->details)->setNoOfSeats($request->no_of_seats);
+                if ($request->has('pickup_lat')) $trip_request_creator->setPickupGeo((new Geo())->setLat($request->pickup_lat)->setLng($request->pickup_lng));
+                if ($request->has('dropoff_lat')) $trip_request_creator->setPickupGeo((new Geo())->setLat($request->dropoff_lat)->setLng($request->dropoff_lng));
+                /** @var BusinessTripRequest $business_trip_request */
+                $business_trip_request = $trip_request_creator->create();
             }
             DBTransaction::beginTransaction();
             $super_admins = Business::find((int)$business_trip_request->business_id)->superAdmins;
@@ -274,12 +285,6 @@ class TripRequestController extends Controller
                 DBTransaction::commit();
                 return api_response($request, null, 200, ['message' => 'Trip Request rejected successfully']);
             }
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             DBTransaction::rollback();
             app('sentry')->captureException($e);
@@ -287,13 +292,21 @@ class TripRequestController extends Controller
         }
     }
 
-    public function createTripRequests(Request $request, TripScheduler $vehicleScheduler, BusinessTripSms $businessTripSms)
+    public function createTripRequests(Request $request, TripScheduler $vehicleScheduler, BusinessTripSms $businessTripSms, Creator $trip_request_creator)
     {
         try {
             $business_member = $request->business_member;
             $business_trip_request = null;
-            DB::transaction(function () use ($request, $business_member, $vehicleScheduler, $businessTripSms, &$business_trip_request) {
-                $business_trip_request = $this->storeTripRequest($request);
+            $this->setModifier($request->member);
+            DB::transaction(function () use ($request, $business_member, $vehicleScheduler, $businessTripSms, $trip_request_creator, &$business_trip_request) {
+                $trip_request_creator->setBusinessMember($business_member)->setDriverId($request->driver_id)->setVehicleId($request->vehicle_id)
+                    ->setPickupAddress($request->pickup_address)->setDropoffAddress($request->dropoff_address)->setStartDate($request->start_date)
+                    ->setEndDate($request->end_date)->setTripType($request->trip_type)->setVehicleType($request->vehicle_type)->setReason($request->reason)
+                    ->setDetails($request->details)->setNoOfSeats($request->no_of_seats);
+                if ($request->has('pickup_lat')) $trip_request_creator->setPickupGeo((new Geo())->setLat($request->pickup_lat)->setLng($request->pickup_lng));
+                if ($request->has('dropoff_lat')) $trip_request_creator->setPickupGeo((new Geo())->setLat($request->dropoff_lat)->setLng($request->dropoff_lng));
+                /** @var BusinessTripRequest $business_trip_request */
+                $business_trip_request = $trip_request_creator->create();
                 $super_admins = Business::find((int)$business_trip_request->business_id)->superAdmins;
                 $trip_requests = new TripRequests();
                 $trip_requests->setMember($request->member)
@@ -392,28 +405,4 @@ class TripRequestController extends Controller
         $business_trip->save();
         return $business_trip;
     }
-
-    private function storeTripRequest(Request $request)
-    {
-        $business_trip_request = new BusinessTripRequest();
-        $business_trip_request->member_id = $request->member_id;
-        $business_trip_request->business_id = $request->business->id;
-        $business_trip_request->driver_id = $request->has('driver_id') ? $request->driver_id : null;
-        $business_trip_request->vehicle_id = $request->has('vehicle_id') ? $request->vehicle_id : null;
-        $business_trip_request->pickup_geo = $request->has('pickup_lat') ? json_encode(['lat' => $request->pickup_lat, 'lng' => $request->pickup_lng]) : null;
-        $business_trip_request->dropoff_geo = $request->has('dropoff_lat') ? json_encode(['lat' => $request->dropoff_lat, 'lng' => $request->dropoff_lng]) : null;
-        $business_trip_request->pickup_address = $request->pickup_address;
-        $business_trip_request->dropoff_address = $request->dropoff_address;
-        $business_trip_request->start_date = $request->start_date;
-        $business_trip_request->end_date = $request->end_date;
-        $business_trip_request->trip_type = $request->trip_type;
-        $business_trip_request->vehicle_type = $request->vehicle_type;
-        $business_trip_request->reason = $request->reason;
-        $business_trip_request->details = $request->details;
-        $business_trip_request->no_of_seats = $request->no_of_seats;
-        $business_trip_request->save();
-        return $business_trip_request;
-    }
-
-
 }

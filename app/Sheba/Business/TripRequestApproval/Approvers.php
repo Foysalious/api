@@ -1,4 +1,4 @@
-<?php namespace Sheba\TripRequestApproval;
+<?php namespace Sheba\Business\TripRequestApproval;
 
 
 use App\Models\Business;
@@ -79,6 +79,7 @@ class Approvers
     {
         $this->setBusinessMembersOfThisDepartment();
         $this->setBusinessMembersOfFlow();
+        return $this->businessMembersOfFlow->pluck('id')->toArray();
         $business_member_ids_of_this_department = $this->businessMembersOfThisDepartment->pluck('id')->toArray();
         foreach ($this->businessMembersOfFlow as $business_member) {
             if ($business_member->manager_id == null || !in_array($business_member->id, $business_member_ids_of_this_department)) {
@@ -94,6 +95,6 @@ class Approvers
     private function canSentApproval(BusinessMember $business_member)
     {
         if ($business_member->manager_id == $this->requester->manager_id) return false;
-        while($business_member->manager_id==)
+//        while ($business_member->manager_id ==)
     }
 }
