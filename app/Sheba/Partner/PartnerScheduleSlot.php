@@ -42,9 +42,8 @@ class PartnerScheduleSlot
 
     private function getShebaSlots()
     {
-        $portal_name = request()->header('portal-name');
         $end_time = self::SCHEDULE_END;
-        if ($portal_name == 'manager-app') $end_time = '24:00:00';
+        if ($this->portalName == 'manager-app') $end_time = '24:00:00';
         return ScheduleSlot::select('start', 'end')
             ->where([
                 ['start', '>=', DB::raw("CAST('" . self::SCHEDULE_START . "' As time)")],
@@ -117,20 +116,13 @@ class PartnerScheduleSlot
         $this->addAvailabilityByResource($day);
     }
 
-    private function checkWorkingDay()
-    {
-        return !in_array($this->portalName, $this->whitelistedPortals);
-    }
-
-    private function getWorkingDay(Carbon $day)
-    {
-        return $this->partner->workingHours->where('day', $day->format('l'))->first();
-    }
-
     private function addAvailabilityByWorkingInformation(Carbon $day)
     {
-        $working_day = $this->getWorkingDay($day);
-        if ($working_day) {
+        if (!$this->checkWorkingDay()) {
+            $this->shebaSlots->each(function ($slot) {
+                $slot['is_available'] = 1;
+            });
+        } elseif ($working_day = $this->getWorkingDay($day)) {
             $date_string = $day->toDateString();
             $working_hour_start_time = Carbon::parse($date_string . ' ' . $working_day->start_time);
             $working_hour_end_time = Carbon::parse($date_string . ' ' . $working_day->end_time);
@@ -149,6 +141,16 @@ class PartnerScheduleSlot
                 $slot['is_available'] = 0;
             });
         }
+    }
+
+    private function checkWorkingDay()
+    {
+        return !in_array($this->portalName, $this->whitelistedPortals);
+    }
+
+    private function getWorkingDay(Carbon $day)
+    {
+        return $this->partner->workingHours->where('day', $day->format('l'))->first();
     }
 
     private function isBetweenAnyLeave(Carbon $time)
