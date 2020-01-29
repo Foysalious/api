@@ -156,6 +156,11 @@ class DueTrackerRepository extends BaseRepository
         return json_encode($attachments);
     }
 
+    /**
+     * @param array $list
+     * @param Partner $partner
+     * @return mixed
+     */
     public function generateDueReminders(array $list, Partner $partner)
     {
         $response['today']    = [];
@@ -185,7 +190,12 @@ class DueTrackerRepository extends BaseRepository
     }
 
 
-    public function generateDueCalender(array $dueList,Request $request)
+    /**
+     * @param array $dueList
+     * @param Request $request
+     * @return array
+     */
+    public function generateDueCalender(array $dueList, Request $request)
     {
         $calender = [];
 
