@@ -66,4 +66,9 @@ return [
         'rejected' => 'rejected',
         'paid' => 'paid'
     ],
+    'TRIP_REQUEST_APPROVAL_STATUS' => [
+        'pending' => 'pending',
+        'accepted' => 'accepted',
+        'rejected' => 'rejected'
+    ]
 ];

@@ -1,5 +1,7 @@
 <?php namespace App\Models;
 
+use Sheba\Dal\TripRequestApproval\Model as TripRequestApproval;
+use App\Http\Controllers\B2b\TripRequestApprovalController;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Comment\MorphCommentable;
 use Sheba\Comment\MorphComments;
@@ -23,6 +25,11 @@ class BusinessTripRequest extends Model implements MorphCommentable
     public function member()
     {
         return $this->belongsTo(Member::class);
+    }
+
+    public function tripRequestApprovals()
+    {
+        return $this->hasMany(TripRequestApproval::class);
     }
 
     public function getTripReadableTypeAttribute()
