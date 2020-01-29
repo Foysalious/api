@@ -280,6 +280,7 @@ class BusinessRoute
                 $api->group(['prefix' => 'approval-flow'], function ($api) {
                     $api->post('/', 'B2b\ApprovalFlowController@store');
                     $api->get('/', 'B2b\ApprovalFlowController@index');
+                    $api->post('{approval}', 'B2b\ApprovalFlowController@update');
                 });
                 $api->group(['prefix' => 'inspections'], function ($api) {
                     $api->get('/', 'B2b\InspectionController@individualInspection');

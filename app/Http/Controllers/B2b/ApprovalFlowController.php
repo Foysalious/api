@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use Sheba\Business\ApprovalFlow\Updater;
 use Sheba\Dal\TripRequestApprovalFlow\TripRequestApprovalFlowRepositoryInterface;
 use Sheba\Dal\TripRequestApprovalFlow\Model as TripRequestApprovalFlow;
 use Illuminate\Validation\ValidationException;
@@ -36,7 +37,7 @@ class ApprovalFlowController extends Controller
         }
     }
 
-    public function index(Request $request, TripRequestApprovalFlowRepositoryInterface $approval_flow_repo)
+    public function index(Request $request)
     {
         try {
             $approvals_flow = TripRequestApprovalFlow::query();
@@ -60,6 +61,31 @@ class ApprovalFlowController extends Controller
             }
             if (count($approval) > 0) return api_response($request, $approval, 200, ['approval' => $approval]);
             else  return api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function update($member, $approval, Request $request, Updater $updater)
+    {
+        try {
+            $this->validate($request, [
+                'title' => 'required|string',
+                'business_member_ids' => 'required'
+            ]);
+            $approval_flow = $updater->setMember($request->member)
+                ->setApproval((int)$approval)
+                ->setTitle($request->title)
+                ->setBusinessMemberIds($request->business_member_ids)
+                ->update();
+            return api_response($request, $approval_flow, 200, ['id' => $approval_flow->id]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
