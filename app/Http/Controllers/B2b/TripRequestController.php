@@ -1,20 +1,18 @@
 <?php namespace App\Http\Controllers\B2b;
 
 
-use App\Http\Controllers\Controller;
-use App\Models\Business;
-use App\Models\BusinessTrip;
-use App\Models\BusinessTripRequest;
-use App\Repositories\CommentRepository;
-use App\Sheba\Business\BusinessTripSms;
-use FontLib\Table\Type\name;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\DB as DBTransaction;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\Scheduler\TripScheduler;
-use DB;
 use Sheba\Notification\B2b\TripRequests;
-use Illuminate\Support\Facades\DB as DBTransaction;
+use App\Repositories\CommentRepository;
+use App\Sheba\Business\BusinessTripSms;
+use App\Http\Controllers\Controller;
+use App\Models\BusinessTripRequest;
+use App\Models\BusinessTrip;
+use Illuminate\Http\Request;
+use App\Models\Business;
+use DB;
 
 class TripRequestController extends Controller
 {

@@ -283,6 +283,7 @@ class BusinessRoute
                     $api->post('{approval_flow}', 'B2b\ApprovalFlowController@update');
                 });
                 $api->group(['prefix' => 'trip-request-approval'], function ($api) {
+                    $api->get('/', 'B2b\TripRequestApprovalController@index');
                     $api->post('{approval}/change-status', 'B2b\TripRequestApprovalController@statusUpdate');
                 });
 
