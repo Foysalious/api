@@ -2,6 +2,7 @@
 
 use App\Models\Partner;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Redis;
 use Sheba\Business\Procurement\OrderClosedHandler;
 use Sheba\Dal\ProcurementPaymentRequest\Model as ProcurementPaymentRequest;
 use Sheba\Business\ProcurementPayment\Creator as PaymentCreator;
@@ -30,6 +31,7 @@ class Updater
     private $walletTransactionHandler;
     /** @var OrderClosedHandler */
     private $orderClosedHandler;
+    private $errorMessage;
 
 
     public function __construct(ProcurementPaymentRequestRepositoryInterface $procurement_payment_request_repository,
@@ -86,13 +88,32 @@ class Updater
         return $this;
     }
 
+    private function setErrorMessage($message)
+    {
+        $this->errorMessage = $message;
+        return $this;
+    }
+
+    public function getErrorMessage()
+    {
+        return $this->errorMessage;
+
+    }
+
     public function paymentRequestUpdate()
     {
         $this->makePaymentRequestData();
         $payment_request = null;
+        $key_name = 'procurement_payment_request_' . $this->paymentRequest->id;
+        if (Redis::get($key_name)) {
+            $this->setErrorMessage("Already a request pending");
+            return null;
+        }
+        Redis::set($key_name, 1);
+        Redis::expire($key_name, 2 * 60);
         try {
-            DB::transaction(function () use (&$payment_request) {
-                $payment_request = $this->procurementPaymentRequestRepository->where('id', $this->paymentRequest->id)->lockForUpdate()->first();
+            DB::transaction(function () use (&$payment_request, $key_name) {
+                $payment_request = $this->procurementPaymentRequestRepository->where('id', $this->paymentRequest->id)->first();
                 $this->setPaymentRequest($payment_request);
                 $previous_status = $this->paymentRequest->status;
                 if ($previous_status == $this->status) return null;
@@ -113,6 +134,7 @@ class Updater
         } catch (QueryException $e) {
             throw  $e;
         }
+        Redis::del($key_name);
         return $payment_request;
     }
 
