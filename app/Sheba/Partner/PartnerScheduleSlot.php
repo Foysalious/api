@@ -9,7 +9,6 @@ use App\Models\ScheduleSlot;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Support\Collection;
-use phpDocumentor\Reflection\Types\Integer;
 
 class PartnerScheduleSlot
 {
@@ -43,8 +42,9 @@ class PartnerScheduleSlot
 
     private function getShebaSlots()
     {
+        $portal_name = request()->header('portal-name');
         $end_time = self::SCHEDULE_END;
-        if ($this->portalName == 'manager-app') $end_time = '24:00:00';
+        if ($portal_name == 'manager-app') $end_time = '24:00:00';
         return ScheduleSlot::select('start', 'end')
             ->where([
                 ['start', '>=', DB::raw("CAST('" . self::SCHEDULE_START . "' As time)")],
@@ -112,7 +112,7 @@ class PartnerScheduleSlot
 
     private function addAvailabilityToShebaSlots(Carbon $day)
     {
-        if ($this->checkWorkingDay()) $this->addAvailabilityByWorkingInformation($day);
+        $this->addAvailabilityByWorkingInformation($day);
         $this->addAvailabilityByPreparationTime($day);
         $this->addAvailabilityByResource($day);
     }
