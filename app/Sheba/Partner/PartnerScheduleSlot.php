@@ -43,7 +43,7 @@ class PartnerScheduleSlot
     private function getShebaSlots()
     {
         $end_time = self::SCHEDULE_END;
-        if ($this->portalName == 'manager-app') $end_time = '24:00:00';
+        if ($this->isWhitelistedPortal()) $end_time = '24:00:00';
         return ScheduleSlot::select('start', 'end')
             ->where([
                 ['start', '>=', DB::raw("CAST('" . self::SCHEDULE_START . "' As time)")],
@@ -118,7 +118,7 @@ class PartnerScheduleSlot
 
     private function addAvailabilityByWorkingInformation(Carbon $day)
     {
-        if (!$this->checkWorkingDay()) {
+        if ($this->isWhitelistedPortal()) {
             $this->shebaSlots->each(function ($slot) {
                 $slot['is_available'] = 1;
             });
@@ -143,9 +143,9 @@ class PartnerScheduleSlot
         }
     }
 
-    private function checkWorkingDay()
+    private function isWhitelistedPortal()
     {
-        return !in_array($this->portalName, $this->whitelistedPortals);
+        return in_array($this->portalName, $this->whitelistedPortals);
     }
 
     private function getWorkingDay(Carbon $day)
