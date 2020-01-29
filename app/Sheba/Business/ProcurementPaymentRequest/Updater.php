@@ -31,6 +31,7 @@ class Updater
     private $walletTransactionHandler;
     /** @var OrderClosedHandler */
     private $orderClosedHandler;
+    private $errorMessage;
 
 
     public function __construct(ProcurementPaymentRequestRepositoryInterface $procurement_payment_request_repository,
@@ -87,16 +88,31 @@ class Updater
         return $this;
     }
 
+    private function setErrorMessage($message)
+    {
+        $this->errorMessage = $message;
+        return $this;
+    }
+
+    public function getErrorMessage()
+    {
+        return $this->errorMessage;
+
+    }
+
     public function paymentRequestUpdate()
     {
         $this->makePaymentRequestData();
         $payment_request = null;
         $key_name = 'procurement_payment_request_' . $this->paymentRequest->id;
-        if (Redis::get($key_name)) return null;
+        if (Redis::get($key_name)) {
+            $this->setErrorMessage("Already a request pending");
+            return null;
+        }
+        Redis::set($key_name, 1);
+        Redis::expire($key_name, 2 * 60);
         try {
             DB::transaction(function () use (&$payment_request, $key_name) {
-                Redis::set($key_name, 1);
-                Redis::expire($key_name, 10 * 60);
                 $payment_request = $this->procurementPaymentRequestRepository->where('id', $this->paymentRequest->id)->first();
                 $this->setPaymentRequest($payment_request);
                 $previous_status = $this->paymentRequest->status;
@@ -112,13 +128,13 @@ class Updater
                     $partner->minusWallet($amount, ['log' => 'Received money for RFQ Order #' . $this->procurement->id]);
                     $this->procurementRepository->update($this->procurement, ['partner_collection' => $this->procurement->partner_collection + $amount]);
                     $this->orderClosedHandler->setProcurement($this->procurement)->run();
-                    Redis::del($key_name);
                 }
             });
             $this->sendStatusChangeNotification();
         } catch (QueryException $e) {
             throw  $e;
         }
+        Redis::del($key_name);
         return $payment_request;
     }
 
