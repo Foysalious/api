@@ -16,7 +16,7 @@ class ApprovalFlowController extends Controller
         try {
             $this->validate($request, [
                 'title' => 'required|string',
-                'business_department_id' => 'required|integer',
+                'business_department_id' => 'required|integer|unique:trip_request_approval_flows',
                 'business_member_ids' => 'required'
             ]);
             $approval_flow = $creator->setMember($request->member)
