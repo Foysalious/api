@@ -152,8 +152,9 @@ class NotificationRepository
     public function getManagerNotifications($model, $offset, $limit)
     {
         $notifications = $model->notifications()->select('id', 'title', 'event_type', 'event_id', 'type', 'is_seen', 'created_at')
-            ->where('event_type','not like','%procurement%')
-            ->orderBy('id', 'desc')->skip($offset)->limit($limit)->get();
+            ->orderBy('id', 'desc')->skip($offset)->limit($limit);
+        if (request()->header('portal-name') == 'manager-app') $notifications = $notifications->where('event_type', 'not like', '%procurement%');
+        $notifications = $notifications->get();
         if (count($notifications) > 0) {
             $notifications = $notifications->map(function ($notification) {
                 $notification->event_type = str_replace('App\Models\\', "", $notification->event_type);
@@ -217,7 +218,7 @@ class NotificationRepository
                     'banner' => $offer->app_banner ? $offer->app_banner : null,
                     'title' => $offer->title ? $offer->title : config('constants.NOTIFICATION_DEFAULTS.title'),
                     'type' => $notification->type ? $notification->type : config('constants.NOTIFICATION_DEFAULTS.type'),
-                    'description' => $offer->detail_description ? strip_tags($offer->detail_description): config('constants.NOTIFICATION_DEFAULTS.short_description'),
+                    'description' => $offer->detail_description ? strip_tags($offer->detail_description) : config('constants.NOTIFICATION_DEFAULTS.short_description'),
                     'button_text' => $offer->button_text ? $offer->button_text : config('constants.NOTIFICATION_DEFAULTS.button_text'),
                     "target_link" => $offer->target_link ? $offer->target_link : config('constants.NOTIFICATION_DEFAULTS.target_link'),
                     "target_type" => $offer->target_type ? str_replace('App\Models\\', "", $offer->target_type) : 'dummy target type',
