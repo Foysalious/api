@@ -1,36 +1,47 @@
 <?php namespace Sheba\Business\TripRequestApproval;
 
-use Illuminate\Support\Facades\DB;
-use Sheba\Dal\TripRequestApproval\TripRequestApprovalRepositoryInterface;
-use Sheba\ModificationFields;
+
+use App\Models\BusinessMember;
+use App\Models\BusinessTripRequest;
+use Sheba\Dal\TripRequestApproval\EloquentImplementation;
+use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 
 class Creator
 {
-    use ModificationFields;
-    private $member;
-    private $data = [];
+    /** @var BusinessTripRequest */
+    private $tripRequest;
+    /** @var Approvers */
+    private $approvers;
+    /** @var EloquentImplementation */
     private $tripRequestApprovalRepository;
 
-    public function __construct(TripRequestApprovalRepositoryInterface $tripRequestApprovalRepository)
+
+    public function __construct(Approvers $approvers, EloquentImplementation $eloquent_implementation)
     {
-        $this->tripRequestApprovalRepository = $tripRequestApprovalRepository;
+        $this->approvers = $approvers;
+        $this->tripRequestApprovalRepository = $eloquent_implementation;
     }
 
-    public function setMember($member)
+    /**
+     * @param BusinessTripRequest $tripRequest
+     * @return Creator
+     */
+    public function setTripRequest($tripRequest)
     {
-        $this->member = $member;
+        $this->tripRequest = $tripRequest;
         return $this;
     }
 
-    public function makeData()
+    public function create()
     {
-        $this->data;
-    }
-
-    public function store()
-    {
-        return $this;
-
+        /** @var BusinessMember $business_member */
+        $business_member = $this->tripRequest->getBusinessMember();
+        if (!$business_member->role || !$business_member->role->businessDepartment || !$business_member->role->businessDepartment->tripRequestFlow) return;
+        $ids = $this->approvers->setApprovalFlow($business_member->role->businessDepartment->tripRequestFlow)->setBusiness($business_member->business)
+            ->setRequester($business_member->member)->getBusinessMemberIds();
+        foreach ($ids as $id) {
+            $this->tripRequestApprovalRepository->create(['business_trip_request_id' => $this->tripRequest->id, 'business_member_id' => $id]);
+        }
     }
 
 }

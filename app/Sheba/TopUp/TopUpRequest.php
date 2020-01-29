@@ -167,5 +167,4 @@ class TopUpRequest
         $this->bulk_id = $bulk_id;
         return $this;
     }
-
 }

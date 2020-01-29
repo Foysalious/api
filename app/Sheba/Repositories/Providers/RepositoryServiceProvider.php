@@ -2,6 +2,7 @@
 
 use App\Sheba\Repositories\Business\BidRepository;
 use Illuminate\Support\ServiceProvider;
+use Sheba\Business\TripRequest\TripRequestRepository;
 use Sheba\Dal\ProcurementPaymentRequest\ProcurementPaymentRequestRepositoryInterface;
 use Sheba\Dal\ProcurementPaymentRequestStatusChangeLog\ProcurementPaymentRequestStatusChangeLogRepositoryInterface;
 use Sheba\Repositories\Business\BidItemFieldRepository;
@@ -34,6 +35,7 @@ use Sheba\Repositories\CustomerRepository;
 use Sheba\Repositories\Interfaces\BidItemFieldRepositoryInterface;
 use Sheba\Repositories\Interfaces\BidItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\BidRepositoryInterface;
+use Sheba\Repositories\Interfaces\Business\TripRequestRepositoryInterface;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Repositories\Interfaces\Customer\CustomerDeliveryAddressInterface;
 use Sheba\Repositories\Interfaces\CustomerRepositoryInterface;
@@ -108,5 +110,6 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(ProfileBankingRepositoryInterface::class, ProfileBankingRepository::class);
         $this->app->bind(ProfileMobileBankingRepositoryInterface::class, ProfileMobileBankingRepository::class);
         $this->app->bind(CustomerDeliveryAddressInterface::class, CustomerDeliveryAddressRepository::class);
+        $this->app->bind(TripRequestRepositoryInterface::class, TripRequestRepository::class);
     }
 }

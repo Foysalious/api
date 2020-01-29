@@ -32,6 +32,11 @@ class BusinessTripRequest extends Model implements MorphCommentable
         return $this->hasMany(TripRequestApproval::class);
     }
 
+    public function getBusinessMember()
+    {
+        return BusinessMember::where([['member_id', $this->member_id], ['business_id', $this->business_id]])->first();
+    }
+
     public function getTripReadableTypeAttribute()
     {
         return title_case(str_replace('_', ' ', $this->trip_type));
