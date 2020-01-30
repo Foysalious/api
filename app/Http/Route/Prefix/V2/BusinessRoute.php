@@ -33,6 +33,7 @@ class BusinessRoute
                     $api->post('/', 'B2b\CoWorkerController@store');
                     $api->get('/', 'B2b\CoWorkerController@index');
                     $api->get('/{employee}', 'B2b\CoWorkerController@show');
+                    $api->post('/{employee}', 'B2b\CoWorkerController@update');
                     $api->get('/{employee}/expense/pdf', 'B2b\CoWorkerController@show');
                 });
                 $api->group(['prefix' => 'orders'], function ($api) {
