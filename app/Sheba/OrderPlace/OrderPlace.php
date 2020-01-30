@@ -448,7 +448,7 @@ class OrderPlace
                 'sheba_contribution' => $this->discountCalculation->getShebaContribution(),
                 'partner_contribution' => $this->discountCalculation->getPartnerContribution(),
                 'location_service_discount_id' => $this->discountCalculation->getDiscountId(),
-                'discount' => $this->discountCalculation->getDiscount(),
+                'discount' => $this->discountCalculation->getJobServiceDiscount(),
                 'discount_percentage' => $this->discountCalculation->getIsDiscountPercentage() ? $this->discountCalculation->getDiscount() : 0,
                 'name' => $service->name,
                 'variable_type' => $service->variable_type,
