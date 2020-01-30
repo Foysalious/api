@@ -55,7 +55,6 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
         return $this->hasMany(CustomerDeliveryAddress::class);
     }
 
-
     public function orders()
     {
         return $this->hasMany(Order::class);
@@ -269,7 +268,13 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
          * WALLET TRANSACTION NEED TO REMOVE
          * $this->debitWallet($transaction->getAmount());
         $this->walletTransaction(['amount' => $transaction->getAmount(), 'event_type' => $transaction->getEventType(), 'event_id' => $transaction->getEventId(), 'type' => 'Debit', 'log' => $transaction->getLog()]);*/
-        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setType('debit')->setSource(TransactionSources::TRANSPORT)->setLog($transaction->getLog())->dispatch(['event_type' => $transaction->getEventType(), 'event_id' => $transaction->getEventId()]);
+        (new WalletTransactionHandler())
+            ->setModel($this)
+            ->setAmount($transaction->getAmount())
+            ->setType('debit')
+            ->setSource(TransactionSources::TRANSPORT)
+            ->setLog($transaction->getLog())
+            ->dispatch(['event_type' => $transaction->getEventType(), 'event_id' => $transaction->getEventId()]);
     }
 
     public function getMobile()
