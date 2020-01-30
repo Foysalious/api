@@ -108,7 +108,10 @@ class ApprovalFlowController extends Controller
            $approval_flow_details = [
                 'id' => $approval_flow->id,
                 'title' => $approval_flow->title,
-                'department' => $business_department->name,
+                'department' => [
+                    'id' => $business_department->id,
+                    'name' => $business_department->name
+                ],
                 'request_approvers' => $approvers
             ];
 
