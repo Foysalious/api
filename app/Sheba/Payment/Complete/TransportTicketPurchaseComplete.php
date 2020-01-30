@@ -50,10 +50,10 @@ class TransportTicketPurchaseComplete extends PaymentComplete
                 $vendor = app(VendorFactory::class);
                 $vendor = $vendor->getById($transport_ticket_order->vendor_id);
                 /** @var BdTickets $vendor */
-                $vendor->confirmTicket($transaction_details->id);
+                $ticket_confirm_response = $vendor->confirmTicket($transaction_details->id);
+                $this->payment->transaction_details = json_encode($ticket_confirm_response);
 
                 $this->storeTicketTransaction($transport_ticket_order, $seat_count, $vendor, $this->payment->transaction_id);
-
 
                 $bus_ticket->setAgent($transport_ticket_order->agent)->setOrder($transport_ticket_order);
                 // $payment_method = $this->payment->paymentDetails()->first()->method;
