@@ -435,14 +435,16 @@ class OrderPlace
             $service = $selected_service->getService();
             $location_service = LocationService::where([['service_id', $service->id], ['location_id', $this->location->id]])->first();
             $this->priceCalculation->setService($service)->setLocationService($location_service)->setOption($selected_service->getOption())->setQuantity($selected_service->getQuantity());
-            $upsell_unit_price = $this->upsellCalculation->setService($service)->setLocationService($location_service)->setOption($selected_service->getOption())->setQuantity($selected_service->getQuantity())->getUpsellUnitPriceForSpecificQuantity();
+            $upsell_unit_price = $this->upsellCalculation->setService($service)->setLocationService($location_service)->setOption($selected_service->getOption())
+                ->setQuantity($selected_service->getQuantity())->getUpsellUnitPriceForSpecificQuantity();
             $unit_price = $upsell_unit_price ? $upsell_unit_price : $this->priceCalculation->getUnitPrice();
-            $this->discountCalculation->setLocationService($location_service)->setOriginalPrice($unit_price * $selected_service->getQuantity())->calculate();
+            $total_original_price = $this->category->isRentACar() ? $this->priceCalculation->getTotalOriginalPrice() : $unit_price * $selected_service->getQuantity();
+            $this->discountCalculation->setLocationService($location_service)->setOriginalPrice($total_original_price)->calculate();
             $service_data = [
                 'service_id' => $service->id,
                 'quantity' => $selected_service->getQuantity(),
                 'unit_price' => $unit_price,
-                'min_price' => 0,
+                'min_price' => $this->priceCalculation->getMinPrice(),
                 'sheba_contribution' => $this->discountCalculation->getShebaContribution(),
                 'partner_contribution' => $this->discountCalculation->getPartnerContribution(),
                 'location_service_discount_id' => $this->discountCalculation->getDiscountId(),
