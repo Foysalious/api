@@ -53,6 +53,22 @@ class Approvers
         return $this;
     }
 
+    /**
+     * @return array
+     */
+    public function getBusinessMemberIds()
+    {
+        $this->setBusinessMembersOfThisDepartment();
+        $this->setBusinessMembersOfFlow();
+        foreach ($this->businessMembersOfFlow as $business_member) {
+            if ($this->isRequesterIsInTheApprovalFlow($business_member)) continue;
+            elseif (!$this->isMemberOfOtherDepartment($business_member)) $this->pushToMemberId($business_member->id);
+            elseif (!$business_member->manager_id) $this->pushToMemberId($business_member->id);
+            elseif ($this->canSentApproval($business_member)) $this->pushToMemberId($business_member->id);
+        }
+        return $this->businessMemberIds;
+    }
+
     private function setBusinessMembersOfThisDepartment()
     {
         $this->businessMembersOfThisDepartment = BusinessMember::where('business_id', $this->business->id)->whereHas('role', function ($q) {
@@ -67,34 +83,27 @@ class Approvers
         return $this;
     }
 
-    private function pushToMemberId(array $element)
+    private function isRequesterIsInTheApprovalFlow(BusinessMember $business_member)
     {
-        $this->businessMemberIds = array_merge($this->businessMemberIds, $element);
+        return $business_member->id == $this->requester->id ? 1 : 0;
+    }
+
+    private function isMemberOfOtherDepartment(BusinessMember $business_member)
+    {
+        return $this->businessMembersOfThisDepartment->where('id', $business_member->id)->first() ? 0 : 1;
     }
 
     /**
-     * @return array
+     * @param integer $id
      */
-    public function getBusinessMemberIds()
+    private function pushToMemberId($id)
     {
-        $this->setBusinessMembersOfThisDepartment();
-        $this->setBusinessMembersOfFlow();
-        return $this->businessMembersOfFlow->pluck('id')->toArray();
-        $business_member_ids_of_this_department = $this->businessMembersOfThisDepartment->pluck('id')->toArray();
-        foreach ($this->businessMembersOfFlow as $business_member) {
-            if ($business_member->manager_id == null || !in_array($business_member->id, $business_member_ids_of_this_department)) {
-                $this->pushToMemberId([$business_member->id]);
-                continue;
-            } else {
-                $this->canSentApproval($business_member);
-            }
-        }
-        dd($this->businessMemberIds);
+        array_push($this->businessMemberIds, $id);
     }
 
     private function canSentApproval(BusinessMember $business_member)
     {
         if ($business_member->manager_id == $this->requester->manager_id) return false;
-//        while ($business_member->manager_id ==)
+        return true;
     }
 }
