@@ -96,6 +96,7 @@ class ApprovalFlowController extends Controller
                     $member = $business_member->member;
                     $profile = $member->profile;
                     array_push($approvers, [
+                        'id' => $member->id,
                         'name' => $profile->name ? $profile->name : null,
                         'pro_pic' => $profile->pro_pic ? $profile->pro_pic : null,
                         'designation' => $business_member->role ? $business_member->role->name : '',
