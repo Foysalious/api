@@ -78,7 +78,42 @@ class ApprovalFlowController extends Controller
             ]);
             else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
-            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function show($member, $approval, Request $request)
+    {
+        try {
+            $approval_flow = TripRequestApprovalFlow::findOrFail((int)$approval);
+            $business_department = $approval_flow->businessDepartment;
+            $business_members = $approval_flow->approvers;
+
+            $approvers = [];
+            if ($business_members) {
+                foreach ($business_members as $business_member) {
+                    $member = $business_member->member;
+                    $profile = $member->profile;
+                    array_push($approvers, [
+                        'name' => $profile->name ? $profile->name : null,
+                        'pro_pic' => $profile->pro_pic ? $profile->pro_pic : null,
+                        'designation' => $business_member->role ? $business_member->role->name : '',
+                        'department' => $business_member->role && $business_member->role->businessDepartment ? $business_member->role->businessDepartment->name : null,
+                    ]);
+                }
+            }
+
+           $approval_flow_details = [
+                'id' => $approval_flow->id,
+                'title' => $approval_flow->title,
+                'department' => $business_department->name,
+                'request_approvers' => $approvers
+            ];
+
+            if (count($approval) > 0) return api_response($request, $approval_flow_details, 200, ['approval_flow_details' => $approval_flow_details]);
+            else  return api_response($request, null, 404);
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
