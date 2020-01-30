@@ -453,6 +453,7 @@ class CategoryController extends Controller
                     $service['min_price'] = $min_max_price->getMin();
                     $service['terms_and_conditions'] = $service->terms_and_conditions ? json_decode($service->terms_and_conditions) : null;
                     $service['features'] = $service->features ? json_decode($service->features) : null;
+                    $service['slug'] =$service->getSlug();
 
                     /** @var ServiceSubscription $subscription */
                     if ($subscription = $service->activeSubscription) {
@@ -525,7 +526,6 @@ class CategoryController extends Controller
                 return api_response($request, null, 404);
             }
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

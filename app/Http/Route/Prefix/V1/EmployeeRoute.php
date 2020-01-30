@@ -40,6 +40,7 @@ class EmployeeRoute
             $api->group(['prefix' => 'attendances'], function ($api) {
                 $api->get('/', 'Employee\AttendanceController@index');
                 $api->post('action', 'Employee\AttendanceController@takeAction');
+                $api->get('today', 'Employee\AttendanceController@getTodaysInfo');
             });
         });
     }

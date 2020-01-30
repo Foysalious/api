@@ -284,6 +284,7 @@ class ServiceController extends Controller
 
             $service = Service::find($service);
             $location_service = LocationService::where('location_id', $location)->where('service_id', $service->id)->first();
+            if (!$location_service) return api_response($request, null, 404, ['message' => 'Service is not available at this location.']);
             $manager = new Manager();
             $manager->setSerializer(new ArraySerializer());
             $resource = new Item($service, new ServiceV2Transformer($location_service, $price_calculation, $delivery_charge, $job_discount_handler));

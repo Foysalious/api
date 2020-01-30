@@ -115,6 +115,7 @@ class JobController extends Controller
             $job_collection->put('resource_name', $job->resource ? $job->resource->profile->name : null);
             $job_collection->put('resource_picture', $job->resource ? $job->resource->profile->pro_pic : null);
             $job_collection->put('resource_mobile', $job->resource ? $job->resource->profile->mobile : null);
+            $job_collection->put('customer_identity', $customer->getIdentityAttribute());
             $job_collection->put('delivery_address', $job->partnerOrder->order->deliveryAddress->address);
             $job_collection->put('delivery_name', $job->partnerOrder->order->deliveryAddress->name);
             $job_collection->put('delivery_mobile', $job->partnerOrder->order->deliveryAddress->mobile);

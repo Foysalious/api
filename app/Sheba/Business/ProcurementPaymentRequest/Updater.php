@@ -2,6 +2,7 @@
 
 use App\Models\Partner;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Redis;
 use Sheba\Business\Procurement\OrderClosedHandler;
 use Sheba\Dal\ProcurementPaymentRequest\Model as ProcurementPaymentRequest;
 use Sheba\Business\ProcurementPayment\Creator as PaymentCreator;
@@ -28,13 +29,14 @@ class Updater
     private $paymentCreator;
     private $data;
     private $walletTransactionHandler;
-    /** @var OrderClosedHandler  */
+    /** @var OrderClosedHandler */
     private $orderClosedHandler;
+    private $errorMessage;
 
 
     public function __construct(ProcurementPaymentRequestRepositoryInterface $procurement_payment_request_repository,
                                 Creator $creator, PaymentCreator $payment_creator, ProcurementRepositoryInterface $procurement_repository,
-                                WalletTransactionHandler $wallet_transaction_handler,OrderClosedHandler $order_closed_handler)
+                                WalletTransactionHandler $wallet_transaction_handler, OrderClosedHandler $order_closed_handler)
     {
         $this->procurementPaymentRequestRepository = $procurement_payment_request_repository;
         $this->procurementRepository = $procurement_repository;
@@ -74,9 +76,9 @@ class Updater
         return $this;
     }
 
-    public function setPaymentRequest($payment_request)
+    public function setPaymentRequest(ProcurementPaymentRequest $payment_request)
     {
-        $this->paymentRequest = $this->procurementPaymentRequestRepository->find((int)$payment_request);
+        $this->paymentRequest = $payment_request;
         return $this;
     }
 
@@ -86,13 +88,35 @@ class Updater
         return $this;
     }
 
+    private function setErrorMessage($message)
+    {
+        $this->errorMessage = $message;
+        return $this;
+    }
+
+    public function getErrorMessage()
+    {
+        return $this->errorMessage;
+
+    }
+
     public function paymentRequestUpdate()
     {
         $this->makePaymentRequestData();
         $payment_request = null;
+        $key_name = 'procurement_payment_request_' . $this->paymentRequest->id;
+        if (Redis::get($key_name)) {
+            $this->setErrorMessage("Already a request pending");
+            return null;
+        }
+        Redis::set($key_name, 1);
+        Redis::expire($key_name, 2 * 60);
         try {
-            DB::transaction(function () use (&$payment_request) {
+            DB::transaction(function () use (&$payment_request, $key_name) {
+                $payment_request = $this->procurementPaymentRequestRepository->where('id', $this->paymentRequest->id)->first();
+                $this->setPaymentRequest($payment_request);
                 $previous_status = $this->paymentRequest->status;
+                if ($previous_status == $this->status) return null;
                 $payment_request = $this->procurementPaymentRequestRepository->update($this->paymentRequest, $this->data);
                 $this->statusLogCreator->setPaymentRequest($this->paymentRequest)->setPreviousStatus($previous_status)->setStatus($this->status)->create();
                 if ($this->status == config('b2b.PROCUREMENT_PAYMENT_STATUS')['approved']) {
@@ -110,6 +134,7 @@ class Updater
         } catch (QueryException $e) {
             throw  $e;
         }
+        Redis::del($key_name);
         return $payment_request;
     }
 
@@ -119,6 +144,11 @@ class Updater
             'note' => $this->note,
             'status' => $this->status
         ];
+    }
+
+    private function getLockedPaymentInstance()
+    {
+
     }
 
     public function updateStatus()

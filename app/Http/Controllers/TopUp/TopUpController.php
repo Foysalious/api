@@ -168,8 +168,13 @@ class TopUpController extends Controller
                 if (!$topup_order) return;
 
                 $this->storeBulkRequestNumbers($bulk_request->id, BDMobileFormatter::format($value->$mobile_field), $topup_order->vendor_id);
-
-                if (!$top_up_request->hasError()) dispatch(new TopUpExcelJob($agent, $vendor_id, $topup_order, $file_path, $key + 2, $total, $bulk_request));
+                if ($top_up_request->hasError()) {
+                    $sentry = app('sentry');
+                    $sentry->user_context(['request' => $request->all(), 'message' => $top_up_request->getErrorMessage()]);
+                    $sentry->captureException(new \Exception("Bulk Topup request error"));
+                    return;
+                }
+                dispatch(new TopUpExcelJob($agent, $vendor_id, $topup_order, $file_path, $key + 2, $total, $bulk_request));
             });
 
             $response_msg = "Your top-up request has been received and will be transferred and notified shortly.";

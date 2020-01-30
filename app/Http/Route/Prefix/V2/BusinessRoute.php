@@ -33,6 +33,7 @@ class BusinessRoute
                     $api->post('/', 'B2b\CoWorkerController@store');
                     $api->get('/', 'B2b\CoWorkerController@index');
                     $api->get('/{employee}', 'B2b\CoWorkerController@show');
+                    $api->post('/{employee}', 'B2b\CoWorkerController@update');
                     $api->get('/{employee}/expense/pdf', 'B2b\CoWorkerController@show');
                 });
                 $api->group(['prefix' => 'orders'], function ($api) {
@@ -277,6 +278,16 @@ class BusinessRoute
                         $api->post('/comments', 'B2b\TripRequestController@commentOnTripRequest');
                     });
                 });
+                $api->group(['prefix' => 'approval-flow'], function ($api) {
+                    $api->post('/', 'B2b\ApprovalFlowController@store');
+                    $api->get('/', 'B2b\ApprovalFlowController@index');
+                    $api->post('{approval_flow}', 'B2b\ApprovalFlowController@update');
+                });
+                $api->group(['prefix' => 'trip-request-approval'], function ($api) {
+                    $api->get('/', 'B2b\TripRequestApprovalController@index');
+                    $api->post('{approval}/change-status', 'B2b\TripRequestApprovalController@statusUpdate');
+                });
+
                 $api->group(['prefix' => 'inspections'], function ($api) {
                     $api->get('/', 'B2b\InspectionController@individualInspection');
                 });

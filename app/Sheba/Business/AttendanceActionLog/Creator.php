@@ -5,6 +5,7 @@ use Sheba\Business\AttendanceActionLog\StatusCalculator\CheckoutStatusCalculator
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
 use Sheba\Dal\AttendanceActionLog\EloquentImplementation as AttendanceActionLogRepositoryInterface;
+use Sheba\Location\Geo;
 
 class Creator
 {
@@ -13,6 +14,8 @@ class Creator
     private $deviceId;
     /** @var Attendance $attendance */
     private $attendance;
+    /** @var Geo */
+    private $geo;
     private $ip;
     private $userAgent;
     private $note;
@@ -93,6 +96,12 @@ class Creator
         return $this;
     }
 
+    public function setGeo(Geo $geo)
+    {
+        $this->geo = $geo;
+        return $this;
+    }
+
     public function create()
     {
         if ($this->action == Actions::CHECKIN)
@@ -109,6 +118,7 @@ class Creator
             'device_id' => $this->deviceId,
             'status' => $status
         ];
+        if ($this->geo) $attendance_log_data['location'] = json_encode(['lat' => $this->geo->getLat(), 'lng' => $this->geo->getLng()]);
         return $this->attendanceActionLogRepository->create($attendance_log_data);
     }
 }

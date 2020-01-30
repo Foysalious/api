@@ -213,7 +213,8 @@ class WalletTransactionHandler extends WalletTransaction
      */
     public function dispatch($extras = [])
     {
-        $extras = $this->withCreateModificationField((new RequestIdentification())->set($extras));
-        dispatch((new WalletTransactionJob($this))->setExtras($extras));
+        /*$extras = $this->withCreateModificationField((new RequestIdentification())->set($extras));*/
+        /*dispatch((new WalletTransactionJob($this))->setExtras($extras));*/
+        $this->store($extras);
     }
 }

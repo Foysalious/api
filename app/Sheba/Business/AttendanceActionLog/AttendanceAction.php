@@ -12,6 +12,7 @@ use Sheba\Dal\AttendanceActionLog\Actions;
 use Sheba\Business\AttendanceActionLog\Creator as AttendanceActionLogCreator;
 use Sheba\Business\Attendance\Creator as AttendanceCreator;
 use DB;
+use Sheba\Location\Geo;
 
 class AttendanceAction
 {
@@ -31,6 +32,8 @@ class AttendanceAction
     private $note;
     private $deviceId;
     private $userAgent;
+    private $lat;
+    private $lng;
 
     public function __construct(EloquentImplementation $attendance_repository, AttendanceCreator $attendance_creator, AttendanceActionLogCreator $attendance_action_log_creator)
     {
@@ -83,6 +86,26 @@ class AttendanceAction
         return $this;
     }
 
+    /**
+     * @param mixed $lat
+     * @return AttendanceAction
+     */
+    public function setLat($lat)
+    {
+        $this->lat = $lat;
+        return $this;
+    }
+
+    /**
+     * @param mixed $lng
+     * @return AttendanceAction
+     */
+    public function setLng($lng)
+    {
+        $this->lng = $lng;
+        return $this;
+    }
+
     public function doAction()
     {
         /** @var ActionChecker\ActionChecker $action */
@@ -114,7 +137,7 @@ class AttendanceAction
                 ->setIp($this->getIp())
                 ->setDeviceId($this->deviceId)
                 ->setUserAgent($this->userAgent);
-
+            if ($geo = $this->getGeo()) $this->attendanceActionLogCreator->setGeo($geo);
             if ($this->action == Actions::CHECKOUT) $this->attendanceActionLogCreator->setNote($this->note);
             $attendance_action_log = $this->attendanceActionLogCreator->create();
             $this->updateAttendance($attendance_action_log);
@@ -136,15 +159,23 @@ class AttendanceAction
      */
     private function updateAttendance(AttendanceActionLog $model)
     {
+        $data = [];
+        $data['status'] = $model->status;
         if ($this->action == Actions::CHECKOUT) {
-            $status = ($this->attendance->status == Statuses::LATE) ? Statuses::LATE : $model->status;
-            $this->attendance->status = $status;
-            $this->attendance->checkout_time = $model->created_at->format('H:i:s');
-            $this->attendance->staying_time_in_minutes = $model->created_at->diffInMinutes($this->attendance->checkin_time);
-        } else {
-            $this->attendance->status = $model->status;
+            $data['status'] = ($this->attendance->status == Statuses::LATE) ? Statuses::LATE : $model->status;
+            $data['checkout_time'] = $model->created_at->format('H:i:s');
+            $data['staying_time_in_minutes'] = $model->created_at->diffInMinutes($this->attendance->checkin_time);
         }
-        
-        $this->attendance->update();
+        $this->attendanceRepository->update($this->attendance, $data);
+    }
+
+    /**
+     * @return Geo|null
+     */
+    private function getGeo()
+    {
+        if (!$this->lat || !$this->lng) return null;
+        $geo = new Geo();
+        return $geo->setLat($this->lat)->setLng($this->lng);
     }
 }

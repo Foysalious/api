@@ -1,6 +1,8 @@
 <?php namespace Sheba\Repositories\Business;
 
 use App\Models\Procurement;
+use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\BaseModel;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
 use Sheba\Repositories\BaseRepository;
 
