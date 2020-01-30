@@ -39,6 +39,7 @@ class CoWorkerController extends Controller
                 'mobile' => 'required|string|mobile:bd',
                 'email' => 'required|email',
                 'role' => 'required|integer',
+                'manager_id' => 'sometimes|required|integer',
                 #'pro_pic' => 'required|mimes:jpeg,png',
                 #'dob' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
                 #'address' => 'required|string',
@@ -66,6 +67,7 @@ class CoWorkerController extends Controller
                     'type' => 'Admin',
                     'join_date' => Carbon::now(),
                     #'department' => $request->department,
+                    'manager_id' => $request->manager_id,
                     'business_role_id' => $request->role,
                 ];
                 BusinessMember::create($this->withCreateModificationField($member_business_data));
@@ -87,6 +89,7 @@ class CoWorkerController extends Controller
                     'type' => 'Admin',
                     'join_date' => Carbon::now(),
                     #'department' => $request->department,
+                    'manager_id' => $request->manager_id,
                     'business_role_id' => $request->role,
                 ];
                 BusinessMember::create($this->withCreateModificationField($member_business_data));
@@ -160,6 +163,27 @@ class CoWorkerController extends Controller
 
             if (count($employee) > 0) return api_response($request, $employee, 200, ['employee' => $employee]);
             else  return api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function update($business, $employee, Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'manager_id' => 'required|integer'
+            ]);
+            $member = $request->manager_member;
+            $this->setModifier($member);
+            $business_member = BusinessMember::findOrFail((int)$employee);
+            if ((int)$business != $business_member->business_id) return api_response($request, null, 420);
+            $business_member->update($this->withUpdateModificationField(['manager_id' => $request->manager_id]));
+            return api_response($request, null, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
