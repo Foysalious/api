@@ -41,7 +41,7 @@ class ApprovalFlowController extends Controller
     {
         try {
             list($offset, $limit) = calculatePagination($request);
-            $approvals_flows = TripRequestApprovalFlow::query()->orderBy('id', 'desc')->skip($offset)->limit($limit);
+            $approvals_flows = TripRequestApprovalFlow::query()->orderBy('id', 'desc');
             if ($request->has('business_department_id')) {
                 $approvals_flows = $approvals_flows->where('business_department_id', $request->business_department_id);
             }
@@ -51,8 +51,11 @@ class ApprovalFlowController extends Controller
             if ($start_date && $end_date) {
                 $approvals_flows->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
             }
+            $approvals_flows = $approvals_flows->get();
+            $total_approvals_flow = $approvals_flows->count();
+            if ($request->has('limit')) $approvals_flows = $approvals_flows->splice($offset, $limit);
             $approval = [];
-            foreach ($approvals_flows->get() as $approval_flow) {
+            foreach ($approvals_flows as $approval_flow) {
                 $business_department = $approval_flow->businessDepartment;
                 $business_members = $approval_flow->approvers;
                 $approvers_names = collect();
@@ -69,13 +72,13 @@ class ApprovalFlowController extends Controller
                     'approvers_images' => $approvers_images
                 ]);
             }
-            $total_approvals_flow = $approvals_flows->count();
             if (count($approval) > 0) return api_response($request, $approval, 200, [
                 'approval' => $approval,
                 'total_approvals_flow' => $total_approvals_flow
             ]);
             else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
