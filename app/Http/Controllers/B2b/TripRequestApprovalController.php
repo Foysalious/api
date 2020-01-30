@@ -15,14 +15,17 @@ class TripRequestApprovalController extends Controller
     {
         try {
             list($offset, $limit) = calculatePagination($request);
-            $trip_request_approvals = TripRequestApproval::query()->orderBy('id', 'desc')->skip($offset)->limit($limit);
-
+            $business_member = $request->business_member;
+            $trip_request_approvals = TripRequestApproval::where('business_member_id', $business_member->id)
+                ->orderBy('id', 'desc')
+                ->skip($offset)
+                ->limit($limit);
             if ($request->has('status')) {
                 $trip_request_approvals = $trip_request_approvals->where('status', $request->status);
             }
 
             if ($request->has('vehicle_type')) {
-                $trip_request_approvals = $trip_request_approvals->whereHas('businessTripRequest', function ($query)use($request){
+                $trip_request_approvals = $trip_request_approvals->whereHas('businessTripRequest', function ($query) use ($request) {
                     $query->where('vehicle_type', $request->vehicle_type);
                 });
             }
@@ -39,7 +42,7 @@ class TripRequestApprovalController extends Controller
                 array_push($request_approvals, [
                     'id' => $trip_request_approval->id,
                     'status' => $trip_request_approval->status,
-                    'business_trip_request'=> [
+                    'business_trip_request' => [
                         'vehicle_type' => $business_trip_request->vehicle_type,
                         'pickup_address' => $business_trip_request->pickup_address,
                         'dropoff_address' => $business_trip_request->dropoff_address,
@@ -55,6 +58,7 @@ class TripRequestApprovalController extends Controller
             return api_response($request, null, 500);
         }
     }
+
     public function statusUpdate($member, $approval, Request $request, Updater $updater)
     {
         try {
