@@ -3,6 +3,8 @@
 use App\Http\Controllers\Controller;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
+use Exception;
+use Illuminate\Http\JsonResponse;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
 use Sheba\Wallet\WalletUpdateEvent;
@@ -22,7 +24,6 @@ use Sheba\TopUp\Vendor\VendorFactory;
 use Storage;
 use Throwable;
 use Validator;
-
 
 class TopUpController extends Controller
 {
@@ -88,39 +89,6 @@ class TopUpController extends Controller
         }
     }
 
-    public function topUpTest(Request $request, TopUpRequest $top_up_request, Creator $creator)
-    {
-        try {
-            $this->validate($request, [
-                'mobile' => 'required|string|mobile:bd',
-                'connection_type' => 'required|in:prepaid,postpaid',
-                'vendor_id' => 'required|exists:topup_vendors,id',
-                'amount' => 'required|min:10|max:1000|numeric'
-            ]);
-            $agent = $request->user;
-            $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id);
-            if ($top_up_request->hasError()) return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
-            $topup_order = $creator->setTopUpRequest($top_up_request)->create();
-            if ($topup_order) {
-                $vendor_factory = app(VendorFactory::class);
-                $vendor = $vendor_factory->getById($request->vendor_id);
-                /** @var TopUp $topUp */
-                $topUp = app(TopUp::class);
-                $topUp->setAgent($agent)->setVendor($vendor)->recharge($topup_order);
-                return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $topup_order->id]);
-            } else {
-                return api_response($request, null, 500);
-            }
-        } catch (ValidationException $e) {
-            app('sentry')->captureException($e);
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
     public function bulkTopUp(Request $request, VendorFactory $vendor, TopUpRequest $top_up_request, Creator $creator)
     {
         try {
@@ -171,7 +139,7 @@ class TopUpController extends Controller
                 if ($top_up_request->hasError()) {
                     $sentry = app('sentry');
                     $sentry->user_context(['request' => $request->all(), 'message' => $top_up_request->getErrorMessage()]);
-                    $sentry->captureException(new \Exception("Bulk Topup request error"));
+                    $sentry->captureException(new Exception("Bulk Topup request error"));
                     return;
                 }
                 dispatch(new TopUpExcelJob($agent, $vendor_id, $topup_order, $file_path, $key + 2, $total, $bulk_request));
@@ -214,7 +182,7 @@ class TopUpController extends Controller
                 ]);
             });
             return response()->json(['code' => 200, 'active_bulk_topups' => $final]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -317,19 +285,50 @@ class TopUpController extends Controller
             }
 
             return response()->json(['code' => 200, 'data' => $topup_data, 'total_topups' => $total_topups, 'offset' => $offset]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
-    public function walletDummyEvent()
+    /**
+     * TOPUP TEST ROUTES
+     *
+     * @param Request $request
+     * @param TopUpRequest $top_up_request
+     * @param Creator $creator
+     * @return JsonResponse
+     */
+    public function topUpTest(Request $request, TopUpRequest $top_up_request, Creator $creator)
     {
-        event(new WalletUpdateEvent([
-            'amount' => 100,
-            'user_type' => 'business',
-            'user_id' => 11,
-
-        ]));
+        try {
+            $this->validate($request, [
+                'mobile' => 'required|string|mobile:bd',
+                'connection_type' => 'required|in:prepaid,postpaid',
+                'vendor_id' => 'required|exists:topup_vendors,id',
+                'amount' => 'required|min:10|max:1000|numeric'
+            ]);
+            $agent = $request->user;
+            $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id);
+            if ($top_up_request->hasError()) return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
+            $topup_order = $creator->setTopUpRequest($top_up_request)->create();
+            if ($topup_order) {
+                $vendor_factory = app(VendorFactory::class);
+                $vendor = $vendor_factory->getById($request->vendor_id);
+                /** @var TopUp $topUp */
+                $topUp = app(TopUp::class);
+                $topUp->setAgent($agent)->setVendor($vendor)->recharge($topup_order);
+                return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $topup_order->id]);
+            } else {
+                return api_response($request, null, 500);
+            }
+        } catch (ValidationException $e) {
+            app('sentry')->captureException($e);
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 }
