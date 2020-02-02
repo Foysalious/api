@@ -145,7 +145,8 @@ class CoWorkerController extends Controller
             $member = $business_member->member;
             $manager_member_detail = [];
             if ($business_member->manager_id) {
-                $manager_member = BusinessMember::findOrFail($business_member->manager_id);
+                $manager_business_member = BusinessMember::findOrFail($business_member->manager_id);
+                $manager_member = $manager_business_member->member;
                 $manager_profile = $manager_member->profile;
                 $manager_member_detail = [
                     'id' => $manager_member->id,
@@ -175,6 +176,7 @@ class CoWorkerController extends Controller
             if (count($employee) > 0) return api_response($request, $employee, 200, ['employee' => $employee]);
             else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -185,9 +187,8 @@ class CoWorkerController extends Controller
         $this->validate($request, ['manager_employee_id' => 'required|integer']);
         $business_member = BusinessMember::where([['business_id', $business], ['member_id', $employee]])->first();
         $manager_business_member = BusinessMember::where([['business_id', $business], ['member_id', $request->manager_employee_id]])->first();
-        if ((int)$business != $manager_business_member->business_id) return api_response($request, null, 404);
-        $this->setModifier($business_member->member);
-        if ((int)$business != $business_member->business_id) return api_response($request, null, 404);
+        if ((int)$business != $manager_business_member->business_id || (int)$business != $business_member->business_id) return api_response($request, null, 404);
+        $this->setModifier($request->manager_member);
         $business_member->update($this->withUpdateModificationField(['manager_id' => $manager_business_member->id]));
         return api_response($request, null, 200);
     }
