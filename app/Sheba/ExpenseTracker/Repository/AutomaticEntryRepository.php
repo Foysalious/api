@@ -221,7 +221,7 @@ class AutomaticEntryRepository extends BaseRepository
         try {
             $data = $this->getData();
             if (empty($data['source_type']) || empty($data['source_id'])) throw new Exception('Source Type or Source id is not present');
-            return $this->client->post('accounts/' . $this->accountId . '/entries/from-type/delete', $data)['data'];
+            return !!$this->client->post('accounts/' . $this->accountId . '/entries/from-type/delete', $data);
         } catch (Throwable $e) {
             $this->notifyBug($e);
             return false;
