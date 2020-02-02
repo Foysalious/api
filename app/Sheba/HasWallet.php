@@ -1,6 +1,5 @@
 <?php namespace Sheba;
 
-
 interface HasWallet
 {
     public function rechargeWallet($amount, $transaction_data);
