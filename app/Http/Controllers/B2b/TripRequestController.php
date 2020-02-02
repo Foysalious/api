@@ -149,11 +149,13 @@ class TripRequestController extends Controller
                 ]);
             }
             $trip_request_approvers = [];
-            if ($request_approvals = $trip_request->tripRequestApprovals) {
+            $can_approve = false;
+            if ($request_approvals = $trip_request->tripRequestApprovals->load('businessMember')) {
                 foreach ($request_approvals as $trip_request_approval) {
                     $business_member = $trip_request_approval->businessMember;
                     $member = $business_member->member;
                     $profile = $member->profile;
+                    if($business_member->id === $request->business_member->id) $can_approve = true;
                     array_push($trip_request_approvers, [
                         'name' => $profile->name ? $profile->name : null,
                         'pro_pic' => $profile->pro_pic ? $profile->pro_pic : null,
@@ -174,6 +176,7 @@ class TripRequestController extends Controller
                     "designation" => $trip_request->member->businessMember->role ? $trip_request->member->businessMember->role->name : ''
                 ],
                 'status' => $trip_request->status,
+                'can_approve' => $can_approve ? 1 : 0,
                 'comments' => $comments,
                 'vehicle_type' => ucfirst($trip_request->vehicle_type),
                 'trip_type' => $trip_request->trip_readable_type,
