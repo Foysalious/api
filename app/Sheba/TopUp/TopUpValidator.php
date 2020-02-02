@@ -64,11 +64,11 @@ class TopUpValidator
             $this->error = new TopUpErrorResponse();
             $this->error->errorCode = 421;
             $this->error->errorMessage = "Unsupported operator.";
-        } else if (!(new MobileNumberValidator())->validateBangladeshi($this->topUpOrder->payee_mobile)) {
+        } elseif (!(new MobileNumberValidator())->validateBangladeshi($this->topUpOrder->payee_mobile)) {
             $this->error = new TopUpErrorResponse();
             $this->error->errorCode = 421;
             $this->error->errorMessage = "Invalid number.";
-        } else if ($this->agent->wallet < $this->topUpOrder->amount) {
+        } elseif ($this->agent->wallet < $this->topUpOrder->amount) {
             $this->error = new TopUpWalletErrorResponse();
         }
 
