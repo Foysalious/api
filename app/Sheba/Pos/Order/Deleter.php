@@ -2,8 +2,10 @@
 
 use App\Models\Partner;
 use App\Models\PosOrder;
+use Exception;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\Pos\Exceptions\InvalidPosOrder;
+use Sheba\Pos\Exceptions\PosExpenseCanNotBeDeleted;
 
 class Deleter
 {
@@ -21,15 +23,22 @@ class Deleter
     }
 
     /**
-     * @throws \Exception
+     * @throws PosExpenseCanNotBeDeleted
+     * @throws Exception
      */
     public function delete()
     {
-        self::removePreviousOrder($this->order);
-        $this->removePreviousBy();
-        self::updateExpense($this->order);
-        $this->updateStock();
-        $this->order->delete();
+        DB::transaction(function () {
+            self::removePreviousOrder($this->order);
+            $this->removePreviousBy();
+            $expense = self::updateExpense($this->order);
+            if ($expense) {
+                $this->updateStock();
+                $this->order->delete();
+            } else {
+                throw new PosExpenseCanNotBeDeleted();
+            }
+        });
     }
 
     public static function removePreviousOrder(PosOrder $order)
@@ -49,7 +58,7 @@ class Deleter
     {
         /** @var AutomaticEntryRepository $entry */
         $entry = app(AutomaticEntryRepository::class);
-        $entry->setSourceId($order->id)->setSourceType(class_basename($order))->delete();
+        return $entry->setSourceId($order->id)->setSourceType(class_basename($order))->delete();
     }
 
     /**
