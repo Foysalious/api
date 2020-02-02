@@ -168,6 +168,7 @@ class TripRequestController extends Controller
                     $profile = $member->profile;
                     if($business_member->id === $request->business_member->id) $can_approve = true;
                     array_push($trip_request_approvers, [
+                        'id' => $member->id,
                         'name' => $profile->name ? $profile->name : null,
                         'pro_pic' => $profile->pro_pic ? $profile->pro_pic : null,
                         'designation' => $business_member->role ? $business_member->role->name : '',
