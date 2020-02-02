@@ -20,6 +20,7 @@ use Sheba\PaymentLink\Creator as PaymentLinkCreator;
 use Sheba\PaymentLink\PaymentLinkTransformer;
 use Sheba\Pos\Customer\Creator as PosCustomerCreator;
 use Sheba\Pos\Exceptions\InvalidPosOrder;
+use Sheba\Pos\Exceptions\PosExpenseCanNotBeDeleted;
 use Sheba\Pos\Jobs\OrderBillEmail;
 use Sheba\Pos\Jobs\OrderBillSms;
 use Sheba\Pos\Order\Creator;
@@ -243,11 +244,14 @@ class OrderController extends Controller
         try {
             $deleter->setPartner($request->partner)->setOrder($order)->delete();
             return api_response($request, true, 200);
+        }catch (PosExpenseCanNotBeDeleted $e){
+            app('sentry')->captureException($e);
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         } catch (InvalidPosOrder $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         } catch (Throwable $e) {
-            dd($e);
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
