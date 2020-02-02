@@ -45,7 +45,7 @@ class ApprovalFlowController extends Controller
             list($offset, $limit) = calculatePagination($request);
             $approvals_flows = TripRequestApprovalFlow::query()->orderBy('id', 'desc');
             if ($request->has('business_department_id')) {
-                $approvals_flows = $approvals_flows->where('business_department_id', $request->business_department_id);
+                $approvals_flows = $approvals_flows->where('business_department_id', $request->business_department_id)->with('approvers');
             }
 
             $start_date = $request->has('start_date') ? $request->start_date : null;
@@ -62,7 +62,8 @@ class ApprovalFlowController extends Controller
                 $business_members = $approval_flow->approvers;
                 $approvers_names = collect();
                 $approvers_images = collect();
-                foreach ($business_members as $business_member) {
+                foreach ($business_members->groupBy('member_id') as $business_member) {
+                    $business_member = $business_member->first();
                     $approvers_names->push($business_member->member->profile->name);
                     $approvers_images->push($business_member->member->profile->pro_pic);
                 }
@@ -91,7 +92,6 @@ class ApprovalFlowController extends Controller
             $approval_flow = TripRequestApprovalFlow::findOrFail((int)$approval);
             $business_department = $approval_flow->businessDepartment;
             $business_members = $approval_flow->approvers;
-
             $approvers = [];
             if ($business_members) {
                 foreach ($business_members as $business_member) {
