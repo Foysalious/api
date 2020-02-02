@@ -39,22 +39,19 @@ class CoWorkerController extends Controller
                 'mobile' => 'required|string|mobile:bd',
                 'email' => 'required|email',
                 'role' => 'required|integer',
-                'manager_id' => 'sometimes|required|integer',
-                #'pro_pic' => 'required|mimes:jpeg,png',
-                #'dob' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
-                #'address' => 'required|string',
-                #'department' => 'required|integer',
-
+                'manager_employee_id' => 'integer',
             ]);
             $business = $request->business;
             $member = $request->manager_member;
             $this->setModifier($member);
+            $manager_business_member = null;
             $email_profile = $this->profileRepository->where('email', $request->email)->first();
             $mobile_profile = $this->profileRepository->where('mobile', formatMobile($request->mobile))->first();
             if ($email_profile) $profile = $email_profile;
             elseif ($mobile_profile) $profile = $mobile_profile;
             else $profile = null;
             $co_member = collect();
+            if ($request->has('manager_employee_id')) $manager_business_member = BusinessMember::where([['member_id', $request->manager_employee_id], ['business_id', $business->id]])->first();
             if (!$profile) {
                 $profile = $this->createProfile($member, $request);
                 $new_member = $this->makeMember($profile);
@@ -64,10 +61,8 @@ class CoWorkerController extends Controller
                 $member_business_data = [
                     'business_id' => $business->id,
                     'member_id' => $co_member->first()->id,
-                    'type' => 'Admin',
                     'join_date' => Carbon::now(),
-                    #'department' => $request->department,
-                    'manager_id' => $request->manager_id,
+                    'manager_id' => $manager_business_member ? $manager_business_member->id : null,
                     'business_role_id' => $request->role,
                 ];
                 BusinessMember::create($this->withCreateModificationField($member_business_data));
@@ -86,10 +81,8 @@ class CoWorkerController extends Controller
                 $member_business_data = [
                     'business_id' => $business->id,
                     'member_id' => $co_member->first()->id,
-                    'type' => 'Admin',
                     'join_date' => Carbon::now(),
-                    #'department' => $request->department,
-                    'manager_id' => $request->manager_id,
+                    'manager_id' => $manager_business_member ? $manager_business_member->id : null,
                     'business_role_id' => $request->role,
                 ];
                 BusinessMember::create($this->withCreateModificationField($member_business_data));
@@ -148,11 +141,12 @@ class CoWorkerController extends Controller
     public function show($business, $employee, Request $request)
     {
         try {
-            $member = Member::find((int)$employee);
-            $business_member = $member->businessMember;
+            $business_member = BusinessMember::where([['business_id', $business], ['member_id', $employee]])->first();
+            $member = $business_member->member;
             $manager_member_detail = [];
             if ($business_member->manager_id) {
-                $manager_member = Member::findOrFail($business_member->manager_id);
+                $manager_business_member = BusinessMember::findOrFail($business_member->manager_id);
+                $manager_member = $manager_business_member->member;
                 $manager_profile = $manager_member->profile;
                 $manager_member_detail = [
                     'id' => $manager_member->id,
@@ -182,6 +176,7 @@ class CoWorkerController extends Controller
             if (count($employee) > 0) return api_response($request, $employee, 200, ['employee' => $employee]);
             else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -192,9 +187,8 @@ class CoWorkerController extends Controller
         $this->validate($request, ['manager_employee_id' => 'required|integer']);
         $business_member = BusinessMember::where([['business_id', $business], ['member_id', $employee]])->first();
         $manager_business_member = BusinessMember::where([['business_id', $business], ['member_id', $request->manager_employee_id]])->first();
-        if ((int)$business != $manager_business_member->business_id) return api_response($request, null, 404);
-        $this->setModifier($business_member->member);
-        if ((int)$business != $business_member->business_id) return api_response($request, null, 404);
+        if ((int)$business != $manager_business_member->business_id || (int)$business != $business_member->business_id) return api_response($request, null, 404);
+        $this->setModifier($request->manager_member);
         $business_member->update($this->withUpdateModificationField(['manager_id' => $manager_business_member->id]));
         return api_response($request, null, 200);
     }
