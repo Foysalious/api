@@ -75,7 +75,7 @@ class TripRequestController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -129,7 +129,7 @@ class TripRequestController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -161,12 +161,12 @@ class TripRequestController extends Controller
             $trip_request_approvers = [];
             $can_approve = false;
             $can_take_action = $access_control->setBusinessMember($request->business_member)->hasAccess('form_template.rw');
-            if ($request_approvals = $trip_request->tripRequestApprovals) {
+            if ($request_approvals = $trip_request->tripRequestApprovals->load('businessMember')) {
                 foreach ($request_approvals as $trip_request_approval) {
                     $business_member = $trip_request_approval->businessMember;
                     $member = $business_member->member;
                     $profile = $member->profile;
-                    if($business_member->member->id === $request->business_member->id) $can_approve = true;
+                    if($business_member->id === $request->business_member->id) $can_approve = true;
                     array_push($trip_request_approvers, [
                         'name' => $profile->name ? $profile->name : null,
                         'pro_pic' => $profile->pro_pic ? $profile->pro_pic : null,
@@ -202,7 +202,7 @@ class TripRequestController extends Controller
             ];
 
             return api_response($request, $info, 200, ['info' => $info]);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -255,7 +255,7 @@ class TripRequestController extends Controller
                 'created_at' => $trip->created_at->toDateTimeString(),
             ];
             return api_response($request, $info, 200, ['info' => $info]);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -325,7 +325,7 @@ class TripRequestController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             DBTransaction::rollback();
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -379,7 +379,7 @@ class TripRequestController extends Controller
                 }
             });
             return api_response($request, $business_trip_request, 200, ['id' => $business_trip_request->id]);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -407,7 +407,7 @@ class TripRequestController extends Controller
             $comment = (new CommentRepository('BusinessTripRequest', $trip_request, $request->member))->store($request->comment);
             DBTransaction::commit();
             return $comment ? api_response($request, $comment, 200) : api_response($request, $comment, 500);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             DBTransaction::rollback();
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -419,7 +419,7 @@ class TripRequestController extends Controller
         try {
             $comment = (new CommentRepository('BusinessTrip', $trip, $request->member))->store($request->comment);
             return $comment ? api_response($request, $comment, 200) : api_response($request, $comment, 500);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

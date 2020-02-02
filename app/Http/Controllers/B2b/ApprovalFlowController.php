@@ -1,7 +1,7 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Models\BusinessMember;
 use Sheba\Business\ApprovalFlow\Updater;
-use Sheba\Dal\TripRequestApprovalFlow\TripRequestApprovalFlowRepositoryInterface;
 use Sheba\Dal\TripRequestApprovalFlow\Model as TripRequestApprovalFlow;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\ApprovalFlow\Creator;
@@ -11,18 +11,20 @@ use Illuminate\Http\Request;
 
 class ApprovalFlowController extends Controller
 {
-    public function store(Request $request, Creator $creator)
+    public function store($business, Request $request, Creator $creator)
     {
         try {
             $this->validate($request, [
                 'title' => 'required|string',
                 'business_department_id' => 'required|integer|unique:trip_request_approval_flows',
-                'business_member_ids' => 'required'
+                'employee_ids' => 'required'
             ]);
-            $approval_flow = $creator->setMember($request->member)
+            $business_member_ids = BusinessMember::where('business_id', $business)->whereIn('member_id', json_decode($request->employee_ids))
+                ->select('id')->get()->pluck('id')->toArray();
+            $approval_flow = $creator->setMember($request->manager_member)
                 ->setTitle($request->title)
                 ->setBusinessDepartmentId($request->business_department_id)
-                ->setBusinessMemberIds($request->business_member_ids)
+                ->setBusinessMemberIds($business_member_ids)
                 ->store();
             return api_response($request, $approval_flow, 200, ['id' => $approval_flow->id]);
         } catch (ValidationException $e) {
@@ -83,7 +85,7 @@ class ApprovalFlowController extends Controller
         }
     }
 
-    public function show($member, $approval, Request $request)
+    public function show($business, $approval, Request $request)
     {
         try {
             $approval_flow = TripRequestApprovalFlow::findOrFail((int)$approval);
@@ -104,7 +106,7 @@ class ApprovalFlowController extends Controller
                 }
             }
 
-           $approval_flow_details = [
+            $approval_flow_details = [
                 'id' => $approval_flow->id,
                 'title' => $approval_flow->title,
                 'department' => $business_department->name,
@@ -119,17 +121,19 @@ class ApprovalFlowController extends Controller
         }
     }
 
-    public function update($member, $approval, Request $request, Updater $updater)
+    public function update($business, $approval, Request $request, Updater $updater)
     {
         try {
             $this->validate($request, [
                 'title' => 'required|string',
-                'business_member_ids' => 'required'
+                'employee_ids' => 'required'
             ]);
-            $approval_flow = $updater->setMember($request->member)
+            $business_member_ids = BusinessMember::where('business_id', $business)->whereIn('member_id', json_decode($request->employee_ids))
+                ->select('id')->get()->pluck('id')->toArray();
+            $approval_flow = $updater->setMember($request->manager_member)
                 ->setApproval((int)$approval)
                 ->setTitle($request->title)
-                ->setBusinessMemberIds($request->business_member_ids)
+                ->setBusinessMemberIds($business_member_ids)
                 ->update();
             return api_response($request, $approval_flow, 200, ['id' => $approval_flow->id]);
         } catch (ValidationException $e) {
