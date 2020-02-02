@@ -3,6 +3,7 @@
 use App\Models\Partner;
 use App\Models\PosOrder;
 use Exception;
+use Illuminate\Support\Facades\DB;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\Pos\Exceptions\InvalidPosOrder;
 use Sheba\Pos\Exceptions\PosExpenseCanNotBeDeleted;
