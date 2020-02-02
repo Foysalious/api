@@ -1,5 +1,6 @@
 <?php namespace Sheba\TopUp;
 
+use Sheba\Affiliate\VerificationStatus;
 use Sheba\TopUp\Vendor\Vendor;
 use Sheba\TopUp\Vendor\VendorFactory;
 
@@ -122,6 +123,10 @@ class TopUpRequest
         }
         if (get_class($this->agent) == "App\Models\Partner") {
             $this->errorMessage = "Temporary turned off.";
+            return 1;
+        }
+        if (get_class($this->agent) == "App\Models\Affiliate" && $this->agent->verification_status != VerificationStatus::VERIFIED) {
+            $this->errorMessage = "Your account is not verified, please call 16516 for verification";
             return 1;
         }
         return 0;
