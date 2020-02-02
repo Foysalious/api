@@ -6,9 +6,11 @@ use App\Models\Business;
 use App\Models\BusinessTrip;
 use App\Models\BusinessTripRequest;
 use App\Repositories\CommentRepository;
+use App\Sheba\Business\ACL\AccessControl;
 use App\Sheba\Business\BusinessTripSms;
 use App\Sheba\Business\TripRequest\Creator;
 use FontLib\Table\Type\name;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
@@ -18,6 +20,7 @@ use Sheba\Location\Geo;
 use Sheba\ModificationFields;
 use Sheba\Notification\B2b\TripRequests;
 use Illuminate\Support\Facades\DB as DBTransaction;
+use Throwable;
 
 class TripRequestController extends Controller
 {
@@ -132,7 +135,14 @@ class TripRequestController extends Controller
         }
     }
 
-    public function tripRequestInfo($member, $trip_request, Request $request)
+    /**
+     * @param $member
+     * @param AccessControl $access_control
+     * @param $trip_request
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function tripRequestInfo($member, AccessControl $access_control, $trip_request, Request $request)
     {
         try {
             $trip_request = BusinessTripRequest::find((int)$trip_request);
@@ -150,6 +160,7 @@ class TripRequestController extends Controller
             }
             $trip_request_approvers = [];
             $can_approve = false;
+            $can_take_action = $access_control->setBusinessMember($request->business_member)->hasAccess('form_template.rw');
             if ($request_approvals = $trip_request->tripRequestApprovals->load('businessMember')) {
                 foreach ($request_approvals as $trip_request_approval) {
                     $business_member = $trip_request_approval->businessMember;
@@ -157,6 +168,7 @@ class TripRequestController extends Controller
                     $profile = $member->profile;
                     if($business_member->id === $request->business_member->id) $can_approve = true;
                     array_push($trip_request_approvers, [
+                        'id' => $member->id,
                         'name' => $profile->name ? $profile->name : null,
                         'pro_pic' => $profile->pro_pic ? $profile->pro_pic : null,
                         'designation' => $business_member->role ? $business_member->role->name : '',
@@ -177,6 +189,7 @@ class TripRequestController extends Controller
                 ],
                 'status' => $trip_request->status,
                 'can_approve' => $can_approve ? 1 : 0,
+                'can_take_action' => $can_take_action ? 1 : 0,
                 'comments' => $comments,
                 'vehicle_type' => ucfirst($trip_request->vehicle_type),
                 'trip_type' => $trip_request->trip_readable_type,
