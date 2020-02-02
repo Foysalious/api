@@ -99,6 +99,23 @@ class AutomaticEntryRepository extends BaseRepository
     }
 
     /**
+     * @param $head
+     * @throws InvalidHeadException
+     */
+    private function validateHead($head)
+    {
+        if (!in_array($head, AutomaticIncomes::heads()) && !in_array($head, AutomaticExpense::heads()))
+            throw new InvalidHeadException();
+        if (in_array($head, AutomaticExpense::heads()))
+            $this->for = EntryType::EXPENSE; else $this->for = EntryType::INCOME;
+    }
+
+    private function notifyBug(Throwable $e)
+    {
+        app('sentry')->captureException($e);
+    }
+
+    /**
      * @param Carbon $created_at
      * @return $this
      */
@@ -111,19 +128,6 @@ class AutomaticEntryRepository extends BaseRepository
             $this->notifyBug($e);
             return $this;
         }
-    }
-
-    /**
-     * @param $head
-     * @throws InvalidHeadException
-     */
-    private function validateHead($head)
-    {
-        if (!in_array($head, AutomaticIncomes::heads()) && !in_array($head, AutomaticExpense::heads()))
-            throw new InvalidHeadException();
-
-        if (in_array($head, AutomaticExpense::heads())) $this->for = EntryType::EXPENSE;
-        else $this->for = EntryType::INCOME;
     }
 
     /**
@@ -143,9 +147,9 @@ class AutomaticEntryRepository extends BaseRepository
     {
         try {
             $data = $this->getData();
-            if (empty($data['head_name'])) throw new Exception('Head is not found');
+            if (empty($data['head_name']))
+                throw new Exception('Head is not found');
             $this->result = $this->client->post('accounts/' . $this->accountId . '/' . EntryType::getRoutable($this->for), $data)['data'];
-
             return $this->result;
         } catch (Throwable $e) {
             $this->notifyBug($e);
@@ -159,31 +163,27 @@ class AutomaticEntryRepository extends BaseRepository
      */
     private function getData()
     {
-        $created_from = $this->withBothModificationFields((new RequestIdentification())->get());
+        $created_from               = $this->withBothModificationFields((new RequestIdentification())->get());
         $created_from['created_at'] = $created_from['created_at']->format('Y-m-d H:s:i');
         $created_from['updated_at'] = $created_from['updated_at']->format('Y-m-d H:s:i');
-
         $data = [
-            'created_at' => $this->createdAt ?: Carbon::now()->format('Y-m-d H:s:i'),
-            'created_from' => json_encode($created_from),
-            'amount' => $this->amount,
+            'created_at'     => $this->createdAt ?: Carbon::now()->format('Y-m-d H:s:i'),
+            'created_from'   => json_encode($created_from),
+            'amount'         => $this->amount,
             'amount_cleared' => $this->amountCleared,
-            'head_name' => $this->head,
-            'note' => 'Automatically Placed from Sheba',
-            'source_type' => $this->sourceType,
-            'source_id' => $this->sourceId,
-            'type' => $this->for
+            'head_name'      => $this->head,
+            'note'           => 'Automatically Placed from Sheba',
+            'source_type'    => $this->sourceType,
+            'source_id'      => $this->sourceId,
+            'type'           => $this->for
         ];
-        if (empty($data['amount'])) $data['amount'] = 0;
-        if (is_null($this->amountCleared)) $data['amount_cleared'] = $data['amount'];
-        if ($this->profileId) $data['profile_id'] = $this->profileId;
-
+        if (empty($data['amount']))
+            $data['amount'] = 0;
+        if (is_null($this->amountCleared))
+            $data['amount_cleared'] = $data['amount'];
+        if ($this->profileId)
+            $data['profile_id'] = $this->profileId;
         return $data;
-    }
-
-    private function notifyBug(Throwable $e)
-    {
-        app('sentry')->captureException($e);
     }
 
     public function update()
@@ -194,8 +194,8 @@ class AutomaticEntryRepository extends BaseRepository
     {
         try {
             $data = $this->getData();
-            if (empty($data['source_type']) || empty($data['source_id'])) throw new Exception('Source Type or Source id is not present');
-
+            if (empty($data['source_type']) || empty($data['source_id']))
+                throw new Exception('Source Type or Source id is not present');
             $this->result = $this->client->post('accounts/' . $this->accountId . '/entries/from-type', $data)['data'];
             return $this->result;
         } catch (Throwable $e) {
@@ -208,7 +208,8 @@ class AutomaticEntryRepository extends BaseRepository
     {
         try {
             $data = $this->getData();
-            if (empty($data['source_type']) || empty($data['source_id'])) throw new Exception('Source Type or Source id is not present');
+            if (empty($data['source_type']) || empty($data['source_id']))
+                throw new Exception('Source Type or Source id is not present');
             return $this->client->post('accounts/' . $this->accountId . '/entries/from-type/deduct', $data)['data'];
         } catch (Throwable $e) {
             $this->notifyBug($e);
@@ -220,8 +221,10 @@ class AutomaticEntryRepository extends BaseRepository
     {
         try {
             $data = $this->getData();
-            if (empty($data['source_type']) || empty($data['source_id'])) throw new Exception('Source Type or Source id is not present');
-            return !!$this->client->post('accounts/' . $this->accountId . '/entries/from-type/delete', $data);
+            if (empty($data['source_type']) || empty($data['source_id']))
+                throw new Exception('Source Type or Source id is not present');
+            $this->client->post('accounts/' . $this->accountId . '/entries/from-type/delete', $data);
+            return true;
         } catch (Throwable $e) {
             $this->notifyBug($e);
             return false;
