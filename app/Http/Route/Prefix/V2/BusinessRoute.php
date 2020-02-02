@@ -215,6 +215,12 @@ class BusinessRoute
                         $api->delete('/', 'B2b\ExpenseController@delete');
                     });
                 });
+                $api->group(['prefix' => 'approval-flows'], function ($api) {
+                    $api->post('/', 'B2b\ApprovalFlowController@store');
+                    $api->get('/', 'B2b\ApprovalFlowController@index');
+                    $api->get('{approval_flow}', 'B2b\ApprovalFlowController@show');
+                    $api->post('{approval_flow}', 'B2b\ApprovalFlowController@update');
+                });
             });
         });
         $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {
@@ -277,12 +283,6 @@ class BusinessRoute
                         $api->get('/', 'B2b\TripRequestController@tripRequestInfo');
                         $api->post('/comments', 'B2b\TripRequestController@commentOnTripRequest');
                     });
-                });
-                $api->group(['prefix' => 'approval-flow'], function ($api) {
-                    $api->post('/', 'B2b\ApprovalFlowController@store');
-                    $api->get('/', 'B2b\ApprovalFlowController@index');
-                    $api->get('{approval_flow}', 'B2b\ApprovalFlowController@show');
-                    $api->post('{approval_flow}', 'B2b\ApprovalFlowController@update');
                 });
                 $api->group(['prefix' => 'trip-request-approval'], function ($api) {
                     $api->get('/', 'B2b\TripRequestApprovalController@index');

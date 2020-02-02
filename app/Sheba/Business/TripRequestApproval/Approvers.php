@@ -64,7 +64,7 @@ class Approvers
             if ($this->isRequesterIsInTheApprovalFlow($business_member)) continue;
             elseif (!$this->isMemberOfOtherDepartment($business_member)) $this->pushToMemberId($business_member->id);
             elseif (!$business_member->manager_id) $this->pushToMemberId($business_member->id);
-            elseif ($this->canSentApproval($business_member)) $this->pushToMemberId($business_member->id);
+            elseif ($this->isMemberBeneathRequester($business_member)) $this->pushToMemberId($business_member->id);
         }
         return $this->businessMemberIds;
     }
@@ -101,9 +101,19 @@ class Approvers
         array_push($this->businessMemberIds, $id);
     }
 
-    private function canSentApproval(BusinessMember $business_member)
+    private function isMemberBeneathRequester(BusinessMember $business_member)
     {
-        if ($business_member->manager_id == $this->requester->manager_id) return false;
-        return true;
+        if ($business_member->manager_id == $this->requester->manager_id) return 0;
+        return $this->isRequesterIsManagerOfMember($business_member);
+    }
+
+    private function isRequesterIsManagerOfMember(BusinessMember $business_member)
+    {
+        while ($business_member->manager_id != $this->requester->id) {
+            $business_member = $this->businessMembersOfThisDepartment->where('id', $business_member->manager_id)->first();
+            if ($business_member->manager_id == null) return 0;
+        }
+        return 1;
+
     }
 }

@@ -155,6 +155,7 @@ class CoWorkerController extends Controller
                 $manager_member = Member::findOrFail($business_member->manager_id);
                 $manager_profile = $manager_member->profile;
                 $manager_member_detail = [
+                    'id' => $manager_member->id,
                     'name' => $manager_profile->name,
                     'mobile' => $manager_profile->mobile,
                     'email' => $manager_profile->email,
@@ -167,6 +168,7 @@ class CoWorkerController extends Controller
             if (!$member) return api_response($request, null, 404);
             $profile = $member->profile;
             $employee = [
+                'id' => $member->id,
                 'name' => $profile->name,
                 'mobile' => $profile->mobile,
                 'email' => $profile->email,

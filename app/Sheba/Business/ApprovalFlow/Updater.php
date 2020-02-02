@@ -41,9 +41,9 @@ class Updater
         return $this;
     }
 
-    public function setBusinessMemberIds($business_member_ids)
+    public function setBusinessMemberIds(array $business_member_ids)
     {
-        $this->businessMemberIds = json_decode($business_member_ids);
+        $this->businessMemberIds = $business_member_ids;
         return $this;
     }
 
