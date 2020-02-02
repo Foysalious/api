@@ -149,6 +149,21 @@ class CoWorkerController extends Controller
     {
         try {
             $member = Member::find((int)$employee);
+            $business_member = $member->businessMember;
+            $manager_member_detail = [];
+            if ($business_member->manager_id){
+                $manager_member = Member::findOrFail($business_member->manager_id);
+                $manager_profile = $manager_member->profile;
+                $manager_member_detail = [
+                    'name' => $manager_profile->name,
+                    'mobile' => $manager_profile->mobile,
+                    'email' => $manager_profile->email,
+                    'pro_pic' => $manager_profile->pro_pic,
+                    'designation' => $manager_member->businessMember->role ? $manager_member->businessMember->role->name : null,
+                    'department' => $manager_member->businessMember->role && $manager_member->businessMember->role->businessDepartment ? $manager_member->businessMember->role->businessDepartment->name : null,
+                ];
+            }
+
             if (!$member) return api_response($request, null, 404);
             $profile = $member->profile;
             $employee = [
@@ -159,6 +174,7 @@ class CoWorkerController extends Controller
                 'dob' => Carbon::parse($profile->dob)->format('M j, Y'),
                 'designation' => $member->businessMember->role ? $member->businessMember->role->name : null,
                 'department' => $member->businessMember->role && $member->businessMember->role->businessDepartment ? $member->businessMember->role->businessDepartment->name : null,
+                'manager_detail' => $manager_member_detail
             ];
 
             if (count($employee) > 0) return api_response($request, $employee, 200, ['employee' => $employee]);

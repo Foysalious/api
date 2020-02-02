@@ -41,7 +41,7 @@ class ApprovalFlowController extends Controller
     {
         try {
             list($offset, $limit) = calculatePagination($request);
-            $approvals_flows = TripRequestApprovalFlow::query()->orderBy('id', 'desc')->skip($offset)->limit($limit);
+            $approvals_flows = TripRequestApprovalFlow::query()->orderBy('id', 'desc');
             if ($request->has('business_department_id')) {
                 $approvals_flows = $approvals_flows->where('business_department_id', $request->business_department_id);
             }
@@ -51,8 +51,11 @@ class ApprovalFlowController extends Controller
             if ($start_date && $end_date) {
                 $approvals_flows->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
             }
+            $approvals_flows = $approvals_flows->get();
+            $total_approvals_flow = $approvals_flows->count();
+            if ($request->has('limit')) $approvals_flows = $approvals_flows->splice($offset, $limit);
             $approval = [];
-            foreach ($approvals_flows->get() as $approval_flow) {
+            foreach ($approvals_flows as $approval_flow) {
                 $business_department = $approval_flow->businessDepartment;
                 $business_members = $approval_flow->approvers;
                 $approvers_names = collect();
@@ -69,11 +72,46 @@ class ApprovalFlowController extends Controller
                     'approvers_images' => $approvers_images
                 ]);
             }
-            $total_approvals_flow = $approvals_flows->count();
             if (count($approval) > 0) return api_response($request, $approval, 200, [
                 'approval' => $approval,
                 'total_approvals_flow' => $total_approvals_flow
             ]);
+            else  return api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function show($member, $approval, Request $request)
+    {
+        try {
+            $approval_flow = TripRequestApprovalFlow::findOrFail((int)$approval);
+            $business_department = $approval_flow->businessDepartment;
+            $business_members = $approval_flow->approvers;
+
+            $approvers = [];
+            if ($business_members) {
+                foreach ($business_members as $business_member) {
+                    $member = $business_member->member;
+                    $profile = $member->profile;
+                    array_push($approvers, [
+                        'name' => $profile->name ? $profile->name : null,
+                        'pro_pic' => $profile->pro_pic ? $profile->pro_pic : null,
+                        'designation' => $business_member->role ? $business_member->role->name : '',
+                        'department' => $business_member->role && $business_member->role->businessDepartment ? $business_member->role->businessDepartment->name : null,
+                    ]);
+                }
+            }
+
+           $approval_flow_details = [
+                'id' => $approval_flow->id,
+                'title' => $approval_flow->title,
+                'department' => $business_department->name,
+                'request_approvers' => $approvers
+            ];
+
+            if (count($approval) > 0) return api_response($request, $approval_flow_details, 200, ['approval_flow_details' => $approval_flow_details]);
             else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
