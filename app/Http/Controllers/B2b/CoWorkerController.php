@@ -77,7 +77,6 @@ class CoWorkerController extends Controller
                     $co_member->push($new_member);
                 }
                 $this->sendExistingUserMail($profile);
-                $business = $member->businesses->first();
                 $member_business_data = [
                     'business_id' => $business->id,
                     'member_id' => $co_member->first()->id,
