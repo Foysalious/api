@@ -160,7 +160,7 @@ class TripRequestController extends Controller
             }
             $trip_request_approvers = [];
             $can_approve = false;
-            $can_take_action = $access_control->setBusinessMember($request->business_member)->hasAccess('form_template.rw');
+            $can_take_action = $access_control->setBusinessMember($request->business_member)->hasAccess('trip_request.rw');
             if ($request_approvals = $trip_request->tripRequestApprovals->load('businessMember')) {
                 foreach ($request_approvals as $trip_request_approval) {
                     $business_member = $trip_request_approval->businessMember;
