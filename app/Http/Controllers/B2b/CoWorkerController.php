@@ -151,7 +151,7 @@ class CoWorkerController extends Controller
             $member = Member::find((int)$employee);
             $business_member = $member->businessMember;
             $manager_member_detail = [];
-            if ($business_member->manager_id){
+            if ($business_member->manager_id) {
                 $manager_member = Member::findOrFail($business_member->manager_id);
                 $manager_profile = $manager_member->profile;
                 $manager_member_detail = [
@@ -190,13 +190,15 @@ class CoWorkerController extends Controller
     public function update($business, $employee, Request $request)
     {
         try {
-            $this->validate($request, [
-                'manager_id' => 'required|integer'
-            ]);
+            $this->validate($request, ['manager_employee_id' => 'integer']);
             $member = $request->manager_member;
+            $business_member = BusinessMember::where([['business_id', $business], ['member_id', $employee]])->first();
+            if ($request->has('manager_id')) {
+                $manager_business_member = BusinessMember::where([['business_id', $business], ['member_id', $request->manager_employee_id]])->first();
+                if ((int)$business != $manager_business_member->business_id) return api_response($request, null, 404);
+            }
             $this->setModifier($member);
-            $business_member = BusinessMember::findOrFail((int)$employee);
-            if ((int)$business != $business_member->business_id) return api_response($request, null, 420);
+            if ((int)$business != $business_member->business_id) return api_response($request, null, 404);
             $business_member->update($this->withUpdateModificationField(['manager_id' => $request->manager_id]));
             return api_response($request, null, 200);
         } catch (ValidationException $e) {
