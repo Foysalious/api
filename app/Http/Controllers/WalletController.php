@@ -6,6 +6,7 @@ use App\Repositories\PartnerRepository;
 use App\Repositories\PaymentRepository;
 use DB;
 use Illuminate\Database\QueryException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\FraudDetection\TransactionSources;
@@ -15,11 +16,17 @@ use Sheba\Payment\ShebaPayment;
 use Sheba\Reward\BonusCredit;
 use Sheba\Transactions\Wallet\TransactionGateways;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
+use Throwable;
 
 class WalletController extends Controller
 {
     use ModificationFields;
 
+    /**
+     * @param Request $request
+     * @param ShebaPayment $sheba_payment
+     * @return JsonResponse
+     */
     public function validatePayment(Request $request, ShebaPayment $sheba_payment)
     {
         try {
@@ -31,21 +38,22 @@ class WalletController extends Controller
             $payment = $sheba_payment->setMethod('wallet')->complete($payment);
             if ($payment->isComplete()) $message = 'Payment successfully completed'; elseif ($payment->isPassed()) $message = 'Your payment has been received but there was a system error. It will take some time to transaction your order. Call 16516 for support.';
             return api_response($request, null, 200, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
+    /**
+     * @param Request $request
+     * @param ShebaPayment $sheba_payment
+     * @return JsonResponse
+     */
     public function recharge(Request $request, ShebaPayment $sheba_payment)
     {
         try {
             $this->validate($request, [
-                'payment_method' => 'required|in:online,bkash,cbl',
-                'amount' => 'required|numeric|min:10|max:100000',
-                'user_id' => 'required',
-                'user_type' => 'required|in:customer,affiliate,partner',
-                'remember_token' => 'required'
+                'payment_method' => 'required|in:online,bkash,cbl', 'amount' => 'required|numeric|min:10|max:100000', 'user_id' => 'required', 'user_type' => 'required|in:customer,affiliate,partner', 'remember_token' => 'required'
             ]);
 
             $class_name = "App\\Models\\" . ucwords($request->user_type);
@@ -66,22 +74,29 @@ class WalletController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
     /**
-     * @TODO REFACTOR wallet purchase
+     * @param Request $request
+     * @param PaymentRepository $paymentRepository
+     * @param BonusCredit $bonus_credit
+     * @return JsonResponse
      */
     public function purchase(Request $request, PaymentRepository $paymentRepository, BonusCredit $bonus_credit)
     {
         $this->validate($request, ['transaction_id' => 'required']);
+
         /** @var Payment $payment */
         $payment = Payment::where('transaction_id', $request->transaction_id)->valid()->first();
-        if (!$payment) return api_response($request, null, 404); elseif ($payment->isFailed()) return api_response($request, null, 500, ['message' => 'Payment failed']);
-        elseif ($payment->isPassed()) return api_response($request, null, 200);
+        if (!$payment)
+            return api_response($request, null, 404); elseif ($payment->isFailed()) return api_response($request, null, 500, ['message' => 'Payment failed']);
+        elseif ($payment->isPassed())
+            return api_response($request, null, 200);
+
         $user = $payment->payable->user;
         $sheba_credit = $user->shebaCredit();
         $paymentRepository->setPayment($payment);
@@ -91,11 +106,13 @@ class WalletController extends Controller
             $payment->update();
             return api_response($request, null, 400, ['message' => 'You don\'t have sufficient credit']);
         }
+
         try {
             $transaction = '';
             DB::transaction(function () use ($payment, $user, $bonus_credit, &$transaction) {
                 $spent_model = $payment->payable->getPayableType();
                 $remaining = $bonus_credit->setUser($user)->setPayableType($spent_model)->deduct($payment->payable->amount);
+
                 if ($remaining > 0 && $user->wallet > 0) {
                     if ($user->wallet < $remaining) {
                         $remaining = $user->wallet;
@@ -122,9 +139,14 @@ class WalletController extends Controller
                     }
                 }
             });
-            $paymentRepository->changeStatus(['to' => 'validated', 'from' => $payment->status, 'transaction_details' => $payment->transaction_details]);
+
+            $paymentRepository->changeStatus([
+                'to' => 'validated',
+                'from' => $payment->status,
+                'transaction_details' => $payment->transaction_details
+            ]);
             $payment->status = 'validated';
-            $payment->transaction_details = json_encode(array('payment_id' => $payment->id, 'transaction_id' => $transaction ? $transaction->id : null));
+            $payment->transaction_details = json_encode(['payment_id' => $payment->id, 'transaction_id' => $transaction ? $transaction->id : null]);
             $payment->update();
         } catch (QueryException $e) {
             $payment->status = 'failed';
@@ -132,18 +154,24 @@ class WalletController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+
         return api_response($request, $user, 200);
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getFaqs(Request $request)
     {
         try {
-            $faqs = [['question' => '1. What is Bonus Credit?', 'answer' => 'Bonus credit is a promotional credit which is given by Sheba.xyz to make service purchase at discounted price.'], ['question' => '2. How to get bonus credit?', 'answer' => 'You can get bonus credit by purchasing services for which bonus credit offer is running. '], ['question' => '3. When does bonus credit expire?', 'answer' => 'From bonus credit list you can check the validity of each bonus credit.'], ['question' => '4. Where is bonus credit applicable?', 'answer' => 'Bonus credit can be applied in any sort of service booking. You can pay the full or partial amount of the total bill by bonus credit. '], ['question' => '5. What is Voucher?', 'answer' => 'Voucher is a promotional offer to buy bonus credit which can be used in any sort of service purchase. Each voucher has its own validity.'], ['question' => '6. How can I purchase Voucher?', 'answer' => 'Sheba voucher can be purchased through any payment method available at payment screen.'], ['question' => '7. Is there any hidden charge in purchasing Sheba Voucher?', 'answer' => 'There is no hidden charge applicable.']];
+            $faqs = [
+                ['question' => '1. What is Bonus Credit?', 'answer' => 'Bonus credit is a promotional credit which is given by Sheba.xyz to make service purchase at discounted price.'], ['question' => '2. How to get bonus credit?', 'answer' => 'You can get bonus credit by purchasing services for which bonus credit offer is running. '], ['question' => '3. When does bonus credit expire?', 'answer' => 'From bonus credit list you can check the validity of each bonus credit.'], ['question' => '4. Where is bonus credit applicable?', 'answer' => 'Bonus credit can be applied in any sort of service booking. You can pay the full or partial amount of the total bill by bonus credit. '], ['question' => '5. What is Voucher?', 'answer' => 'Voucher is a promotional offer to buy bonus credit which can be used in any sort of service purchase. Each voucher has its own validity.'], ['question' => '6. How can I purchase Voucher?', 'answer' => 'Sheba voucher can be purchased through any payment method available at payment screen.'], ['question' => '7. Is there any hidden charge in purchasing Sheba Voucher?', 'answer' => 'There is no hidden charge applicable.']
+            ];
             return api_response($request, $faqs, 200, ['faqs' => $faqs]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
-
 }
