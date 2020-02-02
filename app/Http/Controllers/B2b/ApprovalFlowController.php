@@ -20,7 +20,7 @@ class ApprovalFlowController extends Controller
                 'employee_ids' => 'required'
             ]);
             $business_member_ids = BusinessMember::where('business_id', $business)->whereIn('member_id', json_decode($request->employee_ids))
-                ->select('id')->first()->pluck('id')->toArray();
+                ->select('id')->get()->pluck('id')->toArray();
             $approval_flow = $creator->setMember($request->manager_member)
                 ->setTitle($request->title)
                 ->setBusinessDepartmentId($request->business_department_id)
@@ -85,7 +85,7 @@ class ApprovalFlowController extends Controller
         }
     }
 
-    public function show($member, $approval, Request $request)
+    public function show($business, $approval, Request $request)
     {
         try {
             $approval_flow = TripRequestApprovalFlow::findOrFail((int)$approval);
@@ -133,7 +133,7 @@ class ApprovalFlowController extends Controller
                 'employee_ids' => 'required'
             ]);
             $business_member_ids = BusinessMember::where('business_id', $business)->whereIn('member_id', json_decode($request->employee_ids))
-                ->select('id')->first()->pluck('id')->toArray();
+                ->select('id')->get()->pluck('id')->toArray();
             $approval_flow = $updater->setMember($request->manager_member)
                 ->setApproval((int)$approval)
                 ->setTitle($request->title)
