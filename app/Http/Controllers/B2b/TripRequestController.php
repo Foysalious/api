@@ -150,12 +150,12 @@ class TripRequestController extends Controller
             }
             $trip_request_approvers = [];
             $can_approve = false;
-            if ($request_approvals = $trip_request->tripRequestApprovals) {
+            if ($request_approvals = $trip_request->tripRequestApprovals->load('businessMember')) {
                 foreach ($request_approvals as $trip_request_approval) {
                     $business_member = $trip_request_approval->businessMember;
                     $member = $business_member->member;
                     $profile = $member->profile;
-                    if($business_member->member->id === $request->business_member->id) $can_approve = true;
+                    if($business_member->id === $request->business_member->id) $can_approve = true;
                     array_push($trip_request_approvers, [
                         'name' => $profile->name ? $profile->name : null,
                         'pro_pic' => $profile->pro_pic ? $profile->pro_pic : null,
