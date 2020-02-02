@@ -43,6 +43,7 @@ class TripRequestApprovalController extends Controller
                     'id' => $trip_request_approval->id,
                     'status' => $trip_request_approval->status,
                     'business_trip_request' => [
+                        'id' => $business_trip_request->id,
                         'vehicle_type' => $business_trip_request->vehicle_type,
                         'pickup_address' => $business_trip_request->pickup_address,
                         'dropoff_address' => $business_trip_request->dropoff_address,
