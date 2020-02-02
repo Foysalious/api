@@ -189,25 +189,14 @@ class CoWorkerController extends Controller
 
     public function update($business, $employee, Request $request)
     {
-        try {
-            $this->validate($request, ['manager_employee_id' => 'integer']);
-            $member = $request->manager_member;
-            $business_member = BusinessMember::where([['business_id', $business], ['member_id', $employee]])->first();
-            if ($request->has('manager_id')) {
-                $manager_business_member = BusinessMember::where([['business_id', $business], ['member_id', $request->manager_employee_id]])->first();
-                if ((int)$business != $manager_business_member->business_id) return api_response($request, null, 404);
-            }
-            $this->setModifier($member);
-            if ((int)$business != $business_member->business_id) return api_response($request, null, 404);
-            $business_member->update($this->withUpdateModificationField(['manager_id' => $request->manager_id]));
-            return api_response($request, null, 200);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $this->validate($request, ['manager_employee_id' => 'required|integer']);
+        $business_member = BusinessMember::where([['business_id', $business], ['member_id', $employee]])->first();
+        $manager_business_member = BusinessMember::where([['business_id', $business], ['member_id', $request->manager_employee_id]])->first();
+        if ((int)$business != $manager_business_member->business_id) return api_response($request, null, 404);
+        $this->setModifier($business_member->member);
+        if ((int)$business != $business_member->business_id) return api_response($request, null, 404);
+        $business_member->update($this->withUpdateModificationField(['manager_id' => $manager_business_member->id]));
+        return api_response($request, null, 200);
     }
 
     public function departmentRole($business, Request $request)
