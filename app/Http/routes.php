@@ -1,14 +1,6 @@
 <?php
 
 Route::get('/', function () {
-    $flow = \Sheba\Dal\TripRequestApprovalFlow\Model::where('business_department_id', 7)->first();
-    $approvers = new \Sheba\TripRequestApproval\Approvers();
-    $approvers->setApprovalFlow($flow)->setBusiness(\App\Models\Business::find(1))->setRequester(\App\Models\BusinessMember::find(5))->getBusinessMemberIds();
-    $flow = new Sheba\Dal\TripRequestApprovalFlow\Model();
-    $flow->title = "ad";
-    $flow->business_department_id = 7;
-    $flow->save();
-    $flow->approvers()->sync([1, 4, 5, 6,7]);
     return ['code' => 200, 'message' => "Success. This project will hold the api's"];
 });
 
