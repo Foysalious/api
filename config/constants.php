@@ -662,9 +662,9 @@ return [
         'Web' => 'Web',
         'App' => 'App'
     ],
-    'AFFILIATION_REWARD_MONEY'                    => 10,
+    'AFFILIATION_REWARD_MONEY'                    => 0,
     'AFFILIATION_REGISTRATION_BONUS'              => 0,
-    'AFFILIATION_ACQUISITION_MONEY'               => 2,
+    'AFFILIATION_ACQUISITION_MONEY'               => 0,
     'API_RESPONSE_CODES'                          => [
         200 => [
             'message' => 'Successful',

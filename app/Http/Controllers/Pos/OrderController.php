@@ -19,9 +19,12 @@ use Sheba\ModificationFields;
 use Sheba\PaymentLink\Creator as PaymentLinkCreator;
 use Sheba\PaymentLink\PaymentLinkTransformer;
 use Sheba\Pos\Customer\Creator as PosCustomerCreator;
+use Sheba\Pos\Exceptions\InvalidPosOrder;
+use Sheba\Pos\Exceptions\PosExpenseCanNotBeDeleted;
 use Sheba\Pos\Jobs\OrderBillEmail;
 use Sheba\Pos\Jobs\OrderBillSms;
 use Sheba\Pos\Order\Creator;
+use Sheba\Pos\Order\Deleter as PosOrderDeleter;
 use Sheba\Pos\Order\QuickCreator;
 use Sheba\Pos\Order\RefundNatures\NatureFactory;
 use Sheba\Pos\Order\RefundNatures\Natures;
@@ -46,7 +49,6 @@ class OrderController extends Controller
     {
         ini_set('memory_limit', '4096M');
         ini_set('max_execution_time', 120);
-        
         try {
             $status  = $request->status;
             $partner = $request->partner;
@@ -60,8 +62,15 @@ class OrderController extends Controller
                     $query->orWhere('profiles.mobile', 'LIKE', '%' . $request->q . '%');
                 });
                 $orders_query = $orders_query->orWhere([
-                    ['pos_orders.id', 'LIKE', '%' . $request->q . '%'],
-                    ['pos_orders.partner_id', $partner->id]
+                    [
+                        'pos_orders.id',
+                        'LIKE',
+                        '%' . $request->q . '%'
+                    ],
+                    [
+                        'pos_orders.partner_id',
+                        $partner->id
+                    ]
                 ]);
             }
             $orders       = empty($status) ? $orders_query->orderBy('created_at', 'desc')->skip($offset)->take($limit)->get() : $orders_query->orderBy('created_at', 'desc')->get();
@@ -77,9 +86,7 @@ class OrderController extends Controller
             }
             if (!empty($status))
                 $final_orders = $final_orders->where('status', $status)->slice($offset)->take($limit);
-                
             $final_orders     = $final_orders->groupBy('date')->toArray();
-            
             $orders_formatted = [];
             $pos_orders_repo  = new PosOrderRepository();
             $pos_sales        = [];
@@ -226,16 +233,27 @@ class OrderController extends Controller
         }
     }
 
-    private function sendCustomerSms(PosOrder $order)
-    {
-        if ($order->customer && $order->customer->profile->mobile)
-            dispatch(new OrderBillSms($order));
-    }
-
     private function sendCustomerEmail($order)
     {
         if ($order->customer && $order->customer->profile->email)
             dispatch(new OrderBillEmail($order));
+    }
+
+    public function delete($partner, $order, Request $request, PosOrderDeleter $deleter)
+    {
+        try {
+            $deleter->setPartner($request->partner)->setOrder($order)->delete();
+            return api_response($request, true, 200);
+        }catch (PosExpenseCanNotBeDeleted $e){
+            app('sentry')->captureException($e);
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
+        } catch (InvalidPosOrder $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 
     /**
@@ -516,5 +534,11 @@ class OrderController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function sendCustomerSms(PosOrder $order)
+    {
+        if ($order->customer && $order->customer->profile->mobile)
+            dispatch(new OrderBillSms($order));
     }
 }

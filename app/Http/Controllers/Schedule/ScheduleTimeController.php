@@ -1,6 +1,5 @@
 <?php namespace App\Http\Controllers\Schedule;
 
-
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Partner;
@@ -9,7 +8,6 @@ use Sheba\Schedule\ScheduleSlot;
 
 class ScheduleTimeController extends Controller
 {
-
     public function index(Request $request, ScheduleSlot $slot)
     {
         $this->validate($request, [
@@ -25,5 +23,4 @@ class ScheduleTimeController extends Controller
         $dates = $slot->get();
         return api_response($request, $dates, 200, ['dates' => $dates]);
     }
-
 }
