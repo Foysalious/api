@@ -32,49 +32,32 @@ class AttendanceController extends Controller
     /**
      * @param Request $request
      * @param AttendanceRepoInterface $attendance_repo
-     * @param BusinessMemberRepositoryInterface $business_member_repo
      * @param TimeFrame $time_frame
      * @param BusinessHolidayRepoInterface $business_holiday_repo
      * @param BusinessWeekendRepoInterface $business_weekend_repo
      * @return JsonResponse
      */
-    public function index(Request $request, AttendanceRepoInterface $attendance_repo,
-                          BusinessMemberRepositoryInterface $business_member_repo, TimeFrame $time_frame,
-                          BusinessHolidayRepoInterface $business_holiday_repo,
+    public function index(Request $request, AttendanceRepoInterface $attendance_repo, TimeFrame $time_frame, BusinessHolidayRepoInterface $business_holiday_repo,
                           BusinessWeekendRepoInterface $business_weekend_repo)
     {
-        try {
-            $this->validate($request, ['year' => 'required|string', 'month' => 'required|string']);
-            $year = $request->year;
-            $month = $request->month;
-            $auth_info = $request->auth_info;
-            $business_member_info = $auth_info['business_member'];
-            /** @var BusinessMember $business_member */
-            $business_member = $business_member_repo->find($business_member_info['id']);
+        $this->validate($request, ['year' => 'required|string', 'month' => 'required|string']);
+        $year = $request->year;
+        $month = $request->month;
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $time_frame = $time_frame->forAMonth($month, $year);
+        $time_frame->end = $this->isShowRunningMonthsAttendance($year, $month) ? Carbon::now() : $time_frame->end;
+        $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
 
-            $time_frame = $time_frame->forAMonth($month, $year);
-            $time_frame->end = $this->isShowRunningMonthsAttendance($year, $month) ? Carbon::now() : $time_frame->end;
-            $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
+        $business_holiday = $business_holiday_repo->getAllByBusiness($business_member->business);
+        $business_weekend = $business_weekend_repo->getAllByBusiness($business_member->business);
 
-            $business_holiday = $business_holiday_repo->getAllByBusiness($business_member->business);
-            $business_weekend = $business_weekend_repo->getAllByBusiness($business_member->business);
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Item($attendances, new AttendanceTransformer($time_frame, $business_holiday, $business_weekend));
+        $attendances_data = $manager->createData($resource)->toArray()['data'];
 
-            $manager = new Manager();
-            $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($attendances, new AttendanceTransformer($time_frame, $business_holiday, $business_weekend));
-            $attendances_data = $manager->createData($resource)->toArray()['data'];
-
-            return api_response($request, null, 200, ['attendance' => $attendances_data]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        return api_response($request, null, 200, ['attendance' => $attendances_data]);
     }
 
     /**
@@ -153,6 +136,7 @@ class AttendanceController extends Controller
     {
         $auth_info = $request->auth_info;
         $business_member = $auth_info['business_member'];
+        if (!isset($business_member['id'])) return null;
         return BusinessMember::find($business_member['id']);
     }
 }
