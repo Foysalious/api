@@ -670,7 +670,7 @@ class LoanController extends Controller
     public function getStatus(Request $request)
     {
         try {
-            $statuses = constants('PARTNER_WITHDRAWAL_REQUEST_STATUSES');
+            $statuses = constants('LOAN_STATUS');
             return api_response($request, $statuses, 200, ['statuses' => $statuses]);
         } catch (NotAllowedToAccess $e) {
             return api_response($request, null, 400, ['message' => $e->getMessage()]);
