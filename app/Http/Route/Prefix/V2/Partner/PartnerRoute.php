@@ -37,6 +37,7 @@ class PartnerRoute
             $api->get('/{partner_bank_loan}/comments', 'LoanController@getComments');
             $api->post('/{partner_bank_loan}/status-change', 'LoanController@statusChange');
             $api->get('/{loan_id}/generate-application','LoanController@generateApplication');
+            $api->get('/status','LoanController@getStatus');
         });
     }
 }
