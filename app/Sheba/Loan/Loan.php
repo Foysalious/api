@@ -356,7 +356,7 @@ class Loan
         }
         if ($request->has('status')) {
             $output = $output->filter(function ($item) use ($request) {
-                return $item->status == $request->status;
+                return $item['status'] == $request->status;
             });
         }
         return $output->values();
