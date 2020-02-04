@@ -62,9 +62,9 @@ class Approvers
         $this->setBusinessMembersOfFlow();
         foreach ($this->businessMembersOfFlow as $business_member) {
             if ($this->isRequesterIsInTheApprovalFlow($business_member)) continue;
-            elseif (!$this->isMemberOfOtherDepartment($business_member)) $this->pushToMemberId($business_member->id);
+            elseif ($this->isMemberOfOtherDepartment($business_member)) $this->pushToMemberId($business_member->id);
             elseif (!$business_member->manager_id) $this->pushToMemberId($business_member->id);
-            elseif ($this->isMemberBeneathRequester($business_member)) $this->pushToMemberId($business_member->id);
+            elseif (!$this->isRequesterAboveMember($business_member)) $this->pushToMemberId($business_member->id);
         }
         return $this->businessMemberIds;
     }
@@ -101,9 +101,10 @@ class Approvers
         array_push($this->businessMemberIds, $id);
     }
 
-    private function isMemberBeneathRequester(BusinessMember $business_member)
+    private function isRequesterAboveMember(BusinessMember $business_member)
     {
-        if ($business_member->manager_id == $this->requester->manager_id) return 0;
+        if ($this->requester->manager_id == null) return 1;
+        if ($business_member->manager_id == $this->requester->manager_id) return 1;
         return $this->isRequesterIsManagerOfMember($business_member);
     }
 

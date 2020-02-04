@@ -55,7 +55,7 @@ class DiscountCalculation
      */
     public function getDiscount()
     {
-        return $this->discount;
+        return (double)$this->discount;
     }
 
     /**
@@ -79,7 +79,7 @@ class DiscountCalculation
      */
     public function getOriginalPrice()
     {
-        return $this->originalPrice;
+        return (double)$this->originalPrice;
     }
 
     public function setOriginalPrice($original_price)
@@ -148,7 +148,7 @@ class DiscountCalculation
 
     private function setDiscountedPriceUptoCap()
     {
-        $this->cap = $this->serviceDiscount->cap;
+        $this->cap = (double)$this->serviceDiscount->cap;
         $this->discountedPrice = ($this->cap && $this->discountedPrice > $this->cap) ? $this->cap : $this->discountedPrice;
     }
 
