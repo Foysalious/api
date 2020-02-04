@@ -1330,7 +1330,7 @@ class PartnerController extends Controller
         try {
             $partner = $request->partner;
             $data = [
-                'account_type' => $partner->qr_code_account_type ?: null,
+                'account_type' => $partner->qr_code_account_type ? config('partner.qr_code.account_types')[$partner->qr_code_account_type] : null,
                 'image' => $partner->qr_code_image ?: null
             ];
 
