@@ -38,7 +38,7 @@ class Creator
         $business_member = $this->tripRequest->getBusinessMember();
         if (!$business_member->role || !$business_member->role->businessDepartment || !$business_member->role->businessDepartment->tripRequestFlow) return;
         $ids = $this->approvers->setApprovalFlow($business_member->role->businessDepartment->tripRequestFlow)->setBusiness($business_member->business)
-            ->setRequester($business_member->member)->getBusinessMemberIds();
+            ->setRequester($business_member)->getBusinessMemberIds();
         foreach ($ids as $id) {
             $this->tripRequestApprovalRepository->create(['business_trip_request_id' => $this->tripRequest->id, 'business_member_id' => $id]);
         }
