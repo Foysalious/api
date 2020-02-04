@@ -1301,7 +1301,7 @@ class PartnerController extends Controller
             }
 
             $file_name = $partner->id . '_QR_code' . '.' . $image->extension();
-            $image_link = $this->fileRepository->uploadToCDN($file_name, $request->file('image'), 'partner_assets/');
+            $image_link = $this->fileRepository->uploadToCDN($file_name, $request->file('image'), 'partner/qr-code/');
 
             $partner->update($this->withBothModificationFields([
                 'qr_code_account_type' => $request->account_type,
@@ -1338,6 +1338,25 @@ class PartnerController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function getSliderDetailsAndAccountTypes(Request $request)
+    {
+        try{
+            $data = [
+                'description' => config('partner.qr_code.description'),
+                'slider_image_1' => config('partner.qr_code.slider_image_1'),
+                'slider_image_2' => config('partner.qr_code.slider_image_2'),
+                'account_types' => AccountType::get()
+            ];
+
+            return api_response($request, null, 200, ['data' => $data]);
+
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
     }
 }
 

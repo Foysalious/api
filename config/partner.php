@@ -43,5 +43,11 @@ return [
             'nid_verification' => true,
             'details' => 'আপনার বন্ধুকে sManager অ্যাপের মাধ্যমে NID ভেরিফিকেশন করতে হবে।'
         ],
+    ],
+
+    'qr_code' => [
+        'description' => 'ঘরে-বাইরে যেকোনো সময় দ্রুত পেমেন্ট সংগ্রহ করার জন্য আপনার বিকাশ, নগদ, মাস্টার কার্ড অথবা অন্যান্য একাউন্টের QR কোডের ছবি আপলোড করুন।',
+        'slider_image_1' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/partners/logos/1519727255_express_solution.jpg',
+        'slider_image_2' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/partners/logos/1519727255_express_solution.jpg'
     ]
 ];
