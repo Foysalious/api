@@ -20,6 +20,7 @@ use App\Models\ReviewQuestionAnswer;
 use App\Models\Service;
 use App\Models\SubscriptionOrder;
 use App\Repositories\DiscountRepository;
+use App\Repositories\FileRepository;
 use App\Repositories\NotificationRepository;
 use App\Repositories\PartnerOrderRepository;
 use App\Repositories\PartnerRepository;
@@ -41,6 +42,7 @@ use Sheba\Logistics\Repository\ParcelRepository;
 use Sheba\Manager\JobList;
 use Sheba\ModificationFields;
 use Sheba\Partner\LeaveStatus;
+use Sheba\Partner\QRCode\AccountType;
 use Sheba\Reward\PartnerReward;
 use Throwable;
 use Validator;
@@ -57,6 +59,7 @@ class PartnerController extends Controller
     private $discountRepository;
     private $rentCarCategoryIds;
     private $days;
+    private $fileRepository;
 
     const COMPLIMENT_QUESTION_ID = 2;
 
@@ -68,6 +71,7 @@ class PartnerController extends Controller
         $this->partnerOrderRepository = new PartnerOrderRepository();
         $this->partnerServiceRepository = new PartnerServiceRepository();
         $this->discountRepository = new DiscountRepository();
+        $this->fileRepository      = new FileRepository();
         $this->rentCarCategoryIds = array_map('intval', explode(',', env('RENT_CAR_IDS')));
         $this->days = constants('WEEK_DAYS');
     }
@@ -1273,6 +1277,63 @@ class PartnerController extends Controller
         try {
             $wallet_balance = $request->partner->wallet;
             return api_response($request, null, 200, ['wallet_balance' => $wallet_balance]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function setQRCode(Request $request)
+    {
+        try {
+            $account_type = implode(',', AccountType::get());
+            $this->validate($request, [
+                'account_type' => "required|in:$account_type",
+                'image' => "required|mimes:jpeg,png,jpg",
+            ]);
+
+            $image = $request->file('image');
+            $partner = $request->partner;
+
+            if ($partner->qr_code_image) {
+                $file_name = substr($partner->qr_code_image, strlen(env('S3_URL')));
+                $this->fileRepository->deleteFileFromCDN($file_name);
+            }
+
+            $file_name = $partner->id . '_QR_code' . '.' . $image->extension();
+            $image_link = $this->fileRepository->uploadToCDN($file_name, $request->file('image'), 'partner_assets/');
+
+            $partner->update($this->withBothModificationFields([
+                'qr_code_account_type' => $request->account_type,
+                'qr_code_image' => $image_link,
+            ]));
+
+            return api_response($request, null, 200, ['message' => 'QR Code set successfully']);
+
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getQRCode(Request $request)
+    {
+
+        try {
+            $partner = $request->partner;
+            $data = [
+                'account_type' => $partner->qr_code_account_type ?: null,
+                'image' => $partner->qr_code_image ?: null
+            ];
+
+            return api_response($request, null, 200, ['data' => $data]);
+
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
