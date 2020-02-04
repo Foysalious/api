@@ -46,8 +46,18 @@ return [
     ],
 
     'qr_code' => [
+        'account_types' => [
+            'bkash' => ['key' => 'BKASH', 'en' => 'bkash', 'bn' => 'বিকাশ'],
+            'rocket' => ['key' => 'ROCKET', 'en' => 'rocket', 'bn' => 'রকেট'],
+            'nagad' => ['key' => 'NAGAD', 'en' => 'nagad', 'bn' => 'নগদ'],
+            'mastercard' => ['key' => 'MASTERCARD', 'en' => 'mastercard', 'bn' => 'মাস্টারকার্ড'],
+
+
+        ],
         'description' => 'ঘরে-বাইরে যেকোনো সময় দ্রুত পেমেন্ট সংগ্রহ করার জন্য আপনার বিকাশ, নগদ, মাস্টার কার্ড অথবা অন্যান্য একাউন্টের QR কোডের ছবি আপলোড করুন।',
-        'slider_image_1' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/partners/logos/1519727255_express_solution.jpg',
-        'slider_image_2' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/partners/logos/1519727255_express_solution.jpg'
+        'slider_image' => [
+            'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/partners/logos/1519727255_express_solution.jpg',
+            'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/partners/logos/1519727255_express_solution.jpg'
+        ]
     ]
 ];
