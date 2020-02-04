@@ -186,6 +186,7 @@ class PersonalInfo implements Arrayable
             'other_id',
             'other_id_issue_date',
             'utility_bill_attachment',
+            'net_worth'
         ];
     }
 
