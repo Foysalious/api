@@ -42,6 +42,10 @@ class EmployeeRoute
                 $api->post('action', 'Employee\AttendanceController@takeAction');
                 $api->get('today', 'Employee\AttendanceController@getTodaysInfo');
             });
+
+            $api->group(['prefix' => 'leaves'], function ($api){
+                $api->get('/types', 'Employee\LeaveController@getLeaveTypes');
+            });
         });
     }
 }
