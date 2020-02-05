@@ -112,7 +112,6 @@ class AttendanceController extends Controller
             if (count($all_employee_attendance) > 0) return api_response($request, $all_employee_attendance, 200, ['all_employee_attendance' => $all_employee_attendance]);
             else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
