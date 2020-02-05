@@ -1,7 +1,9 @@
 <?php namespace App\Http\Controllers\Employee;
 
 use App\Http\Controllers\Controller;
+use App\Models\Business;
 use App\Models\BusinessMember;
+use App\Sheba\Business\Attendance\Calculate;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionChecker;
@@ -10,6 +12,7 @@ use Sheba\Business\AttendanceActionLog\AttendanceAction;
 use Sheba\Dal\Attendance\EloquentImplementation;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
+use Sheba\Dal\TripRequestApprovalFlow\Model as TripRequestApprovalFlow;
 use Sheba\ModificationFields;
 
 use App\Transformers\Business\AttendanceTransformer;
@@ -58,6 +61,61 @@ class AttendanceController extends Controller
         $attendances_data = $manager->createData($resource)->toArray()['data'];
 
         return api_response($request, null, 200, ['attendance' => $attendances_data]);
+    }
+
+    /**
+     * @param $business
+     * @param Request $request
+     * @param AttendanceRepoInterface $attendance_repo
+     * @param TimeFrame $time_frame
+     * @param BusinessHolidayRepoInterface $business_holiday_repo
+     * @param BusinessWeekendRepoInterface $business_weekend_repo
+     * @return JsonResponse
+     */
+    public function allEmployeeAttendance($business, Request $request, AttendanceRepoInterface $attendance_repo, TimeFrame $time_frame, BusinessHolidayRepoInterface $business_holiday_repo,
+                                          BusinessWeekendRepoInterface $business_weekend_repo)
+    {
+        try {
+            list($offset, $limit) = calculatePagination($request);
+            $business = Business::findOrFail((int)$business);
+            #$members = $business->members()->limit(20)->get();
+            $members = $business->members;
+            $all_employee_attendance = [];
+            foreach ($members as $member) {
+                $member_name = $member->getIdentityAttribute();
+                $business_member = $member->businessMember;
+                $member_department = $business_member->department() ? $business_member->department() : null;
+                $department_name = $member_department ? $member_department->name : 'N/S';
+                $department_id = $member_department ? $member_department->id : 'N/S';
+
+                $year = (int)date('Y');
+                $month = (int)date('m');
+                $time_frame = $time_frame->forAMonth($month, $year);
+                $time_frame->end = $this->isShowRunningMonthsAttendance($year, $month) ? Carbon::now() : $time_frame->end;
+                $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
+
+                $business_holiday = $business_holiday_repo->getAllByBusiness($business_member->business);
+                $business_weekend = $business_weekend_repo->getAllByBusiness($business_member->business);
+
+                $employee_attendance = (new Calculate($time_frame, $business_holiday, $business_weekend, false))->transform($attendances);
+
+                array_push($all_employee_attendance, [
+                    'member_id' => $member->id,
+                    'name' => $member_name,
+                    'business_member_id' => $business_member->id,
+                    'department_id' => $department_id,
+                    'department_name' => $department_name,
+                    'attendance' => $employee_attendance['statistics']
+                ]);
+            }
+
+            if (count($all_employee_attendance) > 0) return api_response($request, $all_employee_attendance, 200, ['all_employee_attendance' => $all_employee_attendance]);
+            else  return api_response($request, null, 404);
+        } catch (\Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 
     /**
