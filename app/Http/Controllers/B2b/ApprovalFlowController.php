@@ -39,11 +39,15 @@ class ApprovalFlowController extends Controller
         }
     }
 
-    public function index(Request $request)
+    public function index($business, Request $request)
     {
         try {
             list($offset, $limit) = calculatePagination($request);
-            $approvals_flows = TripRequestApprovalFlow::query()->orderBy('id', 'desc');
+            $approvals_flows = TripRequestApprovalFlow::whereHas('businessDepartment', function ($q) use ($business) {
+                $q->whereHas('business', function ($q) use ($business) {
+                    $q->where('businesses.id', (int)$business);
+                });
+            })->orderBy('id', 'desc');
             if ($request->has('business_department_id')) {
                 $approvals_flows = $approvals_flows->where('business_department_id', $request->business_department_id)->with('approvers');
             }
@@ -81,6 +85,7 @@ class ApprovalFlowController extends Controller
             ]);
             else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
