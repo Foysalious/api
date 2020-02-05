@@ -401,6 +401,6 @@ class ProcurementController extends Controller
 
         return App::make('dompdf.wrapper')
             ->loadView('pdfs.procurement_details', compact('procurement_details'))
-                ->download("procurement_details.pdf");
+            ->download("procurement_details.pdf");
     }
 }
