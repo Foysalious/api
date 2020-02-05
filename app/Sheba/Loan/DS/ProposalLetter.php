@@ -17,5 +17,6 @@ class ProposalLetter
     protected $dbr;
     protected $ipdc_equity;
     protected $disbursement_to;
+    protected $client_profile;
     protected $availability;
 }

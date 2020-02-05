@@ -10,6 +10,7 @@ class BankInformation
     protected $branch_name;
     protected $acc_type;
     protected $period;
+    protected $routing_no;
     protected $debit_sum;
     protected $credit_sum;
     protected $monthly_avg_credit_sum;

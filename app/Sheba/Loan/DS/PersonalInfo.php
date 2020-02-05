@@ -6,6 +6,7 @@ use App\Models\Resource;
 use Carbon\Carbon;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Http\Request;
+use ReflectionException;
 use Sheba\Loan\Completion;
 use Sheba\Loan\Exceptions\EmailUsed;
 use Sheba\ModificationFields;
@@ -58,7 +59,7 @@ class PersonalInfo implements Arrayable
     /**
      * @param Request $request
      * @throws EmailUsed
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function update(Request $request)
     {
@@ -105,7 +106,7 @@ class PersonalInfo implements Arrayable
 
     /**
      * @return array
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function completion()
     {
@@ -121,7 +122,7 @@ class PersonalInfo implements Arrayable
      * Get the instance as an array.
      *
      * @return array
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function toArray()
     {
@@ -130,6 +131,7 @@ class PersonalInfo implements Arrayable
 
     /**
      * @return array
+     * @throws ReflectionException
      */
     private function dataFromLoanRequest()
     {
@@ -192,7 +194,7 @@ class PersonalInfo implements Arrayable
 
     /**
      * @return array
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     private function dataFromProfile()
     {

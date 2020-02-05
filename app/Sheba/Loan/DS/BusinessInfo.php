@@ -165,14 +165,15 @@ class BusinessInfo implements Arrayable
             'part_time_employee',
             'business_additional_information',
             'last_six_month_sales_information',
-            'business_types',
-            'smanager_business_types',
-            'ownership_types',
             'annual_cost',
             'fixed_asset',
             'security_check',
             'business_category',
-            'sector'
+            'sector',
+            'business_categories',
+            'business_types',
+            'smanager_business_types',
+            'ownership_types'
         ];
     }
 
