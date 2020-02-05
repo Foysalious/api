@@ -123,7 +123,7 @@ class Approvers
     {
         while ($business_member->manager_id != $this->requester->id) {
             $business_member = $this->businessMembersOfThisDepartment->where('id', $business_member->manager_id)->first();
-            if ($business_member->manager_id == null) return 0;
+            if (!$business_member || $business_member->manager_id == null) return 0;
         }
         return 1;
 
