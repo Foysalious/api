@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\Business;
-use App\Sheba\Business\Attendance\Calculate;
+use App\Sheba\Business\Attendance\MonthlyStat;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Sheba\Business\Attendance\DailyStat as AttendanceDailyStat;
@@ -29,7 +29,7 @@ class AttendanceController extends Controller
     }
 
     public function getMonthlyStats($business, Request $request, AttendanceRepoInterface $attendance_repo, TimeFrame $time_frame, BusinessHolidayRepoInterface $business_holiday_repo,
-                                          BusinessWeekendRepoInterface $business_weekend_repo)
+                                    BusinessWeekendRepoInterface $business_weekend_repo)
     {
         try {
             list($offset, $limit) = calculatePagination($request);
@@ -70,14 +70,18 @@ class AttendanceController extends Controller
                 $business_holiday = $business_holiday_repo->getAllByBusiness($business_member->business);
                 $business_weekend = $business_weekend_repo->getAllByBusiness($business_member->business);
 
-                $employee_attendance = (new Calculate($time_frame, $business_holiday, $business_weekend, false))->transform($attendances);
+                $employee_attendance = (new MonthlyStat($time_frame, $business_holiday, $business_weekend, false))->transform($attendances);
 
                 array_push($all_employee_attendance, [
-                    'member_id' => $member->id,
-                    'name' => $member_name,
                     'business_member_id' => $business_member->id,
-                    'department_id' => $department_id,
-                    'department_name' => $department_name,
+                    'member' => [
+                        'id' => $member->id,
+                        'name' => $member_name,
+                    ],
+                    'department' => [
+                        'id' => $department_id,
+                        'name' => $department_name,
+                    ],
                     'attendance' => $employee_attendance['statistics']
                 ]);
             }

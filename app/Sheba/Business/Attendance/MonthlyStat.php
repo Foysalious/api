@@ -7,7 +7,7 @@ use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\Attendance\Statuses;
 use Sheba\Helpers\TimeFrame;
 
-class Calculate
+class MonthlyStat
 {
     /** @var TimeFrame $timeFrame */
     private $timeFrame;

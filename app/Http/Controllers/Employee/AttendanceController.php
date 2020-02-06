@@ -3,7 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
-use App\Sheba\Business\Attendance\Calculate;
+use App\Sheba\Business\Attendance\MonthlyStat;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionChecker;
