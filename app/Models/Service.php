@@ -209,6 +209,11 @@ class Service extends Model
         return $query->where('is_published_for_b2b', 1);
     }
 
+    public function scopePublishedForDdn($query)
+    {
+        return $query->where('is_published_for_ddn', 1);
+    }
+
     public function tags()
     {
         return $this->morphToMany(Tag::class, 'taggable');
