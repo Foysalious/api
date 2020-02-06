@@ -38,15 +38,15 @@ class AttendanceController extends Controller
             $members = $business->members()->with(['profile' => function ($q) {
                 $q->select('id', 'name', 'mobile', 'email');
             }]);
-            /*if ($request->has('department_id')) {
+            if ($request->has('department_id')) {
                 $members = $members->whereHas('businessMember', function ($q) use ($request) {
                     $q->whereHas('role', function ($q) use ($request) {
                         $q->whereHas('businessDepartment', function ($q) use ($request) {
-                            $q->where('businessDepartment.id', $request->department_id);
+                            $q->where('business_departments.id', $request->department_id);
                         });
                     });
                 });
-            }*/
+            }
             $members = $members->get();
             $total_members = $members->count();
             if ($request->has('limit')) $members = $members->splice($offset, $limit);
