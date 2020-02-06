@@ -29,7 +29,7 @@ class BusinessRoute
                 $api->post('/sms-templates/{sms}', 'B2b\BusinessSmsTemplateController@update');
                 $api->get('/sms-templates/{sms}', 'B2b\BusinessSmsTemplateController@show');
                 $api->post('/download-transactions', 'B2b\BusinessesController@downloadTransactionReport');
-                $api->get('employee-attendance', 'Employee\AttendanceController@allEmployeeAttendance');
+                $api->get('attendances', 'B2b\AttendanceController@allEmployeeAttendance');
                 $api->group(['prefix' => 'employees'], function ($api) {
                     $api->post('/', 'B2b\CoWorkerController@store');
                     $api->get('/', 'B2b\CoWorkerController@index');

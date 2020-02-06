@@ -79,8 +79,27 @@ class AttendanceController extends Controller
             list($offset, $limit) = calculatePagination($request);
             $business = Business::findOrFail((int)$business);
             #$members = $business->members()->limit(20)->get();
-            $members = $business->members;
+            $members = $business->members()->with(['profile' => function ($q) {
+                $q->select('id', 'name', 'mobile', 'email');
+            }]);
+            if ($request->has('department_id')) {
+                $members = $members->whereHas('businessMember', function ($q) use ($request) {
+                    $q->whereHas('role', function ($q) use ($request) {
+                        $q->whereHas('businessDepartment', function ($q) use ($request) {
+                            $q->where('businessDepartment.id', $request->department_id);
+                        });
+                    });
+                });
+            }
+            $members = $members->get();
+            $total_members = $members->count();
+            if ($request->has('limit')) $members = $members->splice($offset, $limit);
+
             $all_employee_attendance = [];
+
+            $year = (int)date('Y');
+            $month = (int)date('m');
+            if ($request->has('month')) $month = $request->month;
             foreach ($members as $member) {
                 $member_name = $member->getIdentityAttribute();
                 $business_member = $member->businessMember;
@@ -88,8 +107,6 @@ class AttendanceController extends Controller
                 $department_name = $member_department ? $member_department->name : 'N/S';
                 $department_id = $member_department ? $member_department->id : 'N/S';
 
-                $year = (int)date('Y');
-                $month = (int)date('m');
                 $time_frame = $time_frame->forAMonth($month, $year);
                 $time_frame->end = $this->isShowRunningMonthsAttendance($year, $month) ? Carbon::now() : $time_frame->end;
                 $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
@@ -109,7 +126,10 @@ class AttendanceController extends Controller
                 ]);
             }
 
-            if (count($all_employee_attendance) > 0) return api_response($request, $all_employee_attendance, 200, ['all_employee_attendance' => $all_employee_attendance]);
+            if (count($all_employee_attendance) > 0) return api_response($request, $all_employee_attendance, 200, [
+                'all_employee_attendance' => $all_employee_attendance,
+                'total_members' => $total_members,
+            ]);
             else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
             dd($e);
