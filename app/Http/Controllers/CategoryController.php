@@ -165,7 +165,9 @@ class CategoryController extends Controller
     {
         try {
             $this->validate($request, [
-                'lat' => 'required|numeric', 'lng' => 'required|numeric', 'with' => 'sometimes|string|in:children'
+                'lat' => 'required|numeric',
+                'lng' => 'required|numeric',
+                'with' => 'sometimes|string|in:children'
             ]);
             $with = $request->with;
             $hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->first();
@@ -189,12 +191,12 @@ class CategoryController extends Controller
                             });
                         })->whereNotIn('id', $best_deal_category_ids);
                 })
-                ->select('id', 'name', 'parent_id', 'icon_png', 'app_thumb', 'app_banner', 'slug', 'is_auto_sp_enabled')
+                ->select('id', 'name', 'parent_id', 'icon_png', 'icon_png_hover', 'app_thumb', 'app_banner', 'slug', 'is_auto_sp_enabled')
                 ->parent()->orderBy('order');
 
             if ($with) {
                 $categories->with(['children' => function ($q) use ($location_id, $best_deal_category_ids) {
-                    $q->select('id', 'name', 'thumb', 'parent_id', 'app_thumb', 'icon_png', 'icon', 'slug', 'is_auto_sp_enabled')
+                    $q->select('id', 'name', 'thumb', 'parent_id', 'app_thumb', 'icon_png', 'icon_png_hover', 'icon', 'icon_hover', 'slug', 'is_auto_sp_enabled')
                         ->whereHas('locations', function ($q) use ($location_id) {
                             $q->select('locations.id')->where('locations.id', $location_id);
                         })->whereHas('services', function ($q) use ($location_id) {
@@ -210,9 +212,13 @@ class CategoryController extends Controller
 
             $secondary_categories_slug = UniversalSlugModel::where('sluggable_type', SluggableType::SECONDARY_CATEGORY)->pluck('slug', 'sluggable_id')->toArray();
             foreach ($categories as &$category) {
+                if (is_null($category->children))
+                    app('sentry')->captureException(new Exception('Category null on ' . $category->id));
+
                 /** @var Category $category */
                 $category->slug = $category->getSlug();
                 array_forget($category, 'parent_id');
+
                 foreach ($category->children as &$child) {
                     /** @var Category $child */
                     $child->slug = array_key_exists($child->id, $secondary_categories_slug) ? $secondary_categories_slug[$child->id] : null;
@@ -220,10 +226,6 @@ class CategoryController extends Controller
                 }
             }
 
-            foreach ($categories as &$category) {
-                if (is_null($category->children))
-                    app('sentry')->captureException(new Exception('Category null on ' . $category->id));
-            }
             return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $categories]) : api_response($request, null, 404);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
