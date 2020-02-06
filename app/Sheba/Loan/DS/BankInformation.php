@@ -14,4 +14,5 @@ class BankInformation
     protected $debit_sum;
     protected $credit_sum;
     protected $monthly_avg_credit_sum;
+    protected $disbursement_amount;
 }

@@ -112,7 +112,7 @@ class BusinessInfo implements Arrayable
      */
     public function toArray()
     {
-        return $this->loanDetails ? $this->dataFromLoanRequest() : $this->dataFromProfile();
+        return $this->loanDetails ? $this->dataFromLoanRequest() + self::staticsData() : $this->dataFromProfile();
     }
 
     /**
@@ -169,17 +169,24 @@ class BusinessInfo implements Arrayable
             'fixed_asset',
             'security_check',
             'business_category',
-            'sector',
-            'business_categories',
-            'business_types',
-            'smanager_business_types',
-            'ownership_types'
+            'sector'
         ];
     }
 
     private function getTotalOnlineOrderServed()
     {
         return $this->partner->jobs()->where('status', 'Served')->count();
+    }
+
+    public static function staticsData()
+    {
+        return [
+            'business_types'          => constants('PARTNER_BUSINESS_TYPES'),
+            'smanager_business_types' => constants('PARTNER_SMANAGER_BUSINESS_TYPE'),
+            'ownership_types'         => constants('PARTNER_OWNER_TYPES'),
+            'business_categories'     => constants('PARTNER_BUSINESS_CATEGORIES'),
+            'sectors'                 => constants('PARTNER_BUSINESS_SECTORS')
+        ];
     }
 
     /**
@@ -190,28 +197,24 @@ class BusinessInfo implements Arrayable
     {
 
         return [
-            'business_name'                    => $this->partner->name,
-            'business_type'                    => $this->partner->business_type,
-            'smanager_business_type'           => $this->partner->smanager_business_type,
-            'ownership_type'                   => $this->partner->ownership_type,
-            'stock_price'                      => (double)$this->partner->stock_price,
-            'location'                         => $this->partner->address,
-            'establishment_year'               => $this->basic_information->establishment_year,
-            'tin_no'                           => $this->profile->tin_no,
-            'tin_certificate'                  => $this->profile->tin_certificate,
-            'trade_license'                    => $this->basic_information->trade_license,
-            'trade_license_issue_date'         => $this->basic_information->trade_license_issue_date,
-            'business_category'                => $this->basic_information->business_category,
-            'sector'                           => $this->basic_information->sector,
-            'yearly_income'                    => $this->partner->yearly_income,
-            'full_time_employee'               => (int)$this->partner->full_time_employee ?: null,
-            'part_time_employee'               => (int)$this->partner->part_time_employee ?: null,
-            'business_additional_information'  => (new BusinessAdditionalInfo($this->business_additional_information))->toArray(),
-            'last_six_month_sales_information' => (new SalesInfo($this->sales_information))->toArray(),
-            'business_types'                   => constants('PARTNER_BUSINESS_TYPES'),
-            'smanager_business_types'          => constants('PARTNER_SMANAGER_BUSINESS_TYPE'),
-            'ownership_types'                  => constants('PARTNER_OWNER_TYPES'),
-            'business_categories'              => constants('PARTNER_BUSINESS_CATEGORIES')
-        ];
+                   'business_name'                    => $this->partner->name,
+                   'business_type'                    => $this->partner->business_type,
+                   'smanager_business_type'           => $this->partner->smanager_business_type,
+                   'ownership_type'                   => $this->partner->ownership_type,
+                   'stock_price'                      => (double)$this->partner->stock_price,
+                   'location'                         => $this->partner->address,
+                   'establishment_year'               => $this->basic_information->establishment_year,
+                   'tin_no'                           => $this->profile->tin_no,
+                   'tin_certificate'                  => $this->profile->tin_certificate,
+                   'trade_license'                    => $this->basic_information->trade_license,
+                   'trade_license_issue_date'         => $this->basic_information->trade_license_issue_date,
+                   'business_category'                => $this->basic_information->business_category,
+                   'sector'                           => $this->basic_information->sector,
+                   'yearly_income'                    => $this->partner->yearly_income,
+                   'full_time_employee'               => (int)$this->partner->full_time_employee ?: null,
+                   'part_time_employee'               => (int)$this->partner->part_time_employee ?: null,
+                   'business_additional_information'  => (new BusinessAdditionalInfo($this->business_additional_information))->toArray(),
+                   'last_six_month_sales_information' => (new SalesInfo($this->sales_information))->toArray()
+               ] + self::staticsData();
     }
 }

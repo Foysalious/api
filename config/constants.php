@@ -633,8 +633,8 @@ return [
     ],
     'REFERRAL_VALID_DAYS'                         => 90,
     'AVATAR'                                      => [
-        env('SHEBA_CUSTOMER_APP') => 'customer',
-        'customer-portal'         => 'customer',
+        env('SHEBA_CUSTOMER_APP')    => 'customer',
+        'customer-portal'            => 'customer',
         env('SHEBA_AFFILIATION_APP') => 'affiliate',
         env('SHEBA_RESOURCE_APP')    => 'resource',
         env('SHEBA_MANGER_APP')      => 'resource',
@@ -1273,9 +1273,13 @@ return [
             'bn'  => 'প্রোপ্রাইটরশিপ'
         ],
     ],
-    'PARTNER_BUSINESS_CATEGORY'                   => [
+    'PARTNER_BUSINESS_CATEGORIES'                 => [
         'Small',
         'Micro',
         'Medium'
+    ],
+    'PARTNER_BUSINESS_SECTORS'                    => [
+        'Service',
+        'Non Service'
     ]
 ];
