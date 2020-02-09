@@ -5,9 +5,8 @@ use Illuminate\Http\Request;
 
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
-use League\Fractal\Manager;
-use League\Fractal\Resource\Collection;
 use Sheba\Dal\LeaveType\Contract as LeaveTypesRepoInterface;
+use App\Sheba\Leave\Creator as LeaveCreator;
 
 class LeaveController extends Controller
 {
@@ -27,5 +26,20 @@ class LeaveController extends Controller
         $business_member = $auth_info['business_member'];
         if (!isset($business_member['id'])) return null;
         return BusinessMember::find($business_member['id']);
+    }
+
+    public function store(Request $request, LeaveCreator $leave_creator)
+    {
+        try {
+            $business_member = $this->getBusinessMember($request);
+            if (!$business_member) return api_response($request, null, 404);
+
+            $leave = $leave_creator->setTitle($request->title)->setBusinessMemberId($request->business_member_id)->setLeaveTypeId($request->leave_type_id)->create();
+            return api_response($request, null,200,['leave' => $leave->id]);
+        }
+        catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 }
