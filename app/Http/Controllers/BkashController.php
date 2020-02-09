@@ -16,7 +16,7 @@ class BkashController extends Controller
             $this->validate($request, ['paymentID' => 'required']);
             /** @var Payment $payment */
             $payment = Payment::where('gateway_transaction_id', $request->paymentID)->valid()->first();
-            
+
             if (!$payment) return api_response($request, null, 404, ['message' => 'Valid Payment not found.']);
             $payment = $sheba_payment->setMethod('bkash')->complete($payment);
 
@@ -45,13 +45,15 @@ class BkashController extends Controller
 
     public function getPaymentInfo($paymentID, Request $request)
     {
-        try {
-            $payment = Payment::where('gateway_transaction_id', $paymentID)->valid()->first();
-            $data = array_merge(collect(json_decode($payment->transaction_details))->toArray(), ['order_id' => $payment->payable->type_id, 'order_type' => $payment->payable->type, 'token' => $payment->payable->user->remember_token, 'id' => $payment->payable->user->id, 'redirect_url' => $payment->payable->success_url . '?invoice_id=' . $payment->transaction_id]);
-            return $payment ? api_response($request, $payment, 200, ['data' => $data]) : api_response($request, null, 404);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $payment = Payment::where('gateway_transaction_id', $paymentID)->valid()->first();
+        if (!$payment) return api_response($request, null, 404, ['message' => 'Payment not found.']);
+        $data = array_merge(collect(json_decode($payment->transaction_details))->toArray(), [
+            'order_id' => $payment->payable->type_id,
+            'order_type' => $payment->payable->type,
+            'token' => $payment->payable->user->remember_token,
+            'id' => $payment->payable->user->id,
+            'redirect_url' => $payment->payable->success_url . '?invoice_id=' . $payment->transaction_id
+        ]);
+        return $payment ? api_response($request, $payment, 200, ['data' => $data]) : api_response($request, null, 404);
     }
 }
