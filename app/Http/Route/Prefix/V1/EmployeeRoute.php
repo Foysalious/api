@@ -46,6 +46,9 @@ class EmployeeRoute
             $api->group(['prefix' => 'leaves'], function ($api){
                 $api->get('/types', 'Employee\LeaveController@getLeaveTypes');
             });
+            $api->group(['prefix' => 'holidays'], function ($api){
+               $api->get('/', 'Employee\HolidayController@getHolidays');
+            });
         });
     }
 }
