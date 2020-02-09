@@ -3,6 +3,7 @@
 use App\Models\Driver;
 use App\Models\Member;
 use App\Models\Vehicle;
+use App\Repositories\SmsHandler;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
 use Sheba\Notification\NotificationCreated;
@@ -133,6 +134,13 @@ class TripRequests
         } else {
             $this->notifySuperAdmins($mail, $for);
         }
+        (new SmsHandler('trip-accept-req-to-driver'))->send($this->driver->profile->mobile, [
+            'name' => $this->driver->profile->name,
+            'mobile' => $this->driver->profile->mobile,
+            'pickup_address' => $this->businessTripRequest->pickup_address,
+            'destination_address' => $this->businessTripRequest->dropoff_address,
+            'start_time' => $this->businessTripRequest->start_date ? Carbon::parse($this->businessTripRequest->start_date)->format('Y-m-d g:i:A') : ''
+        ]);
     }
 
     public function notify($mail, $for)
