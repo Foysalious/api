@@ -210,7 +210,8 @@ class DashboardController extends Controller
                         'key' => 'due',
                         'details' => $details['due']
                     ]
-                ]
+                ],
+                'has_qr_code' => ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0
             ];
 
             if (request()->hasHeader('Portal-Name'))

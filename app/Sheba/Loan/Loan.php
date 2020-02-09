@@ -144,8 +144,8 @@ class Loan
     public function update($loan_id, Request $request)
     {
         /** @var PartnerBankLoan $loan */
-        $loan        = $this->repo->find($loan_id);
-        $user=$this->user;
+        $loan = $this->repo->find($loan_id);
+        $user = $this->user;
         if (!empty($user) && (!($user instanceof User) && ($user instanceof BankUser && $user->bank->id != $loan->bank_id))) {
             throw new NotAllowedToAccess();
         }
@@ -354,6 +354,11 @@ class Loan
                 return $date == $item_date;
             });
         }
+        if ($request->has('status')) {
+            $output = $output->filter(function ($item) use ($request) {
+                return $item['status'] == $request->status;
+            });
+        }
         return $output->values();
     }
 
@@ -381,7 +386,7 @@ class Loan
     {
         /** @var PartnerBankLoan $request */
         $request = $this->repo->find($loan_id);
-        $user=$this->user;
+        $user    = $this->user;
         if (!empty($user) && (!($user instanceof User) && ($user instanceof BankUser && $user->bank->id != $request->bank_id))) {
             throw new NotAllowedToAccess();
         }
@@ -401,8 +406,8 @@ class Loan
     public function uploadDocument($loan_id, Request $request, $user)
     {
         /** @var PartnerBankLoan $loan */
-        $loan           = $this->repo->find($loan_id);
-        $user=$this->user;
+        $loan = $this->repo->find($loan_id);
+        $user = $this->user;
         if (!empty($user) && (!($user instanceof User) && ($user instanceof BankUser && $user->bank->id != $loan->bank_id))) {
             throw new NotAllowedToAccess();
         }
@@ -433,14 +438,14 @@ class Loan
     {
 
         $partner_bank_loan = $this->repo->find($loan_id);
-        $user=$this->user;
+        $user              = $this->user;
         if (!empty($user) && (!($user instanceof User) && ($user instanceof BankUser && $user->bank->id != $partner_bank_loan->bank_id))) {
             throw new NotAllowedToAccess();
         }
-        $old_status        = $partner_bank_loan->status;
-        $new_status        = $request->new_status;
-        $description       = $request->has('description') ? $request->description : 'Status Changed';
-        $status            = [
+        $old_status  = $partner_bank_loan->status;
+        $new_status  = $request->new_status;
+        $description = $request->has('description') ? $request->description : 'Status Changed';
+        $status      = [
             'applied',
             'submitted',
             'verified',
@@ -449,8 +454,8 @@ class Loan
             'disbursed',
             'closed'
         ];
-        $old_index         = array_search($old_status, $status);
-        $new_index         = array_search($new_status, $status);
+        $old_index   = array_search($old_status, $status);
+        $new_index   = array_search($new_status, $status);
         if (!(($old_status == 'hold') || $new_index - $old_index == 1 || (in_array($new_status, [
                     'declined',
                     'hold',
@@ -479,8 +484,8 @@ class Loan
     public function downloadDocuments($loan_id)
     {
         /** @var PartnerBankLoan $loan */
-        $loan      = $this->repo->find($loan_id);
-        $user=$this->user;
+        $loan = $this->repo->find($loan_id);
+        $user = $this->user;
         if (!empty($user) && (!($user instanceof User) && ($user instanceof BankUser && $user->bank->id != $loan->bank_id))) {
             throw new NotAllowedToAccess();
         }

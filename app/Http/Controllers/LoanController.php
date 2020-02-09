@@ -666,4 +666,20 @@ class LoanController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function getStatus(Request $request)
+    {
+        try {
+            $statuses = constants('LOAN_STATUS');
+            $statuses=array_map(function ($status) {
+                return ucfirst(preg_replace('/_/', ' ', $status));
+            }, $statuses);
+            return api_response($request, $statuses, 200, ['data' => $statuses]);
+        } catch (NotAllowedToAccess $e) {
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }

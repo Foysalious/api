@@ -1,6 +1,11 @@
 <?php
 return [
-    'PARTNER_SHOWABLE_PACKAGE' => [1, 2, 3, 4],
+    'PARTNER_SHOWABLE_PACKAGE'                    => [
+        1,
+        2,
+        3,
+        4
+    ],
     'AFFILIATE_VIDEO_LINK'                        => '',
     'STARTING_YEAR'                               => '2017',
     'HOTLINE'                                     => '09639 - 444 000',
@@ -453,13 +458,13 @@ return [
         'WronglyCreateOrderTestOrder' => 'Wrongly Create Order/ Test Order',
         'ServiceChange'               => 'Service Change'
     ],
-    'NOTIFICATION_TYPES' => [
+    'NOTIFICATION_TYPES'                          => [
         'Info'    => 'Info',
         'Warning' => 'Warning',
         'Danger'  => 'Danger',
         'Success' => 'Success'
     ],
-    'NOTIFICATION_ICONS' => [
+    'NOTIFICATION_ICONS'                          => [
         'Info'    => 'sheba_xyz/png/notification/info.png',
         'Warning' => 'sheba_xyz/png/notification/warning.png',
         'Danger'  => 'sheba_xyz/png/notification/danger.png',
@@ -626,11 +631,10 @@ return [
         'Medium' => 'Medium',
         'High'   => 'High',
     ],
-    'REFERRAL_VALID_DAYS' => 90,
-    'AVATAR' => [
-        env('SHEBA_CUSTOMER_APP') => 'customer',
-        'customer-portal' => 'customer',
-
+    'REFERRAL_VALID_DAYS'                         => 90,
+    'AVATAR'                                      => [
+        env('SHEBA_CUSTOMER_APP')    => 'customer',
+        'customer-portal'            => 'customer',
         env('SHEBA_AFFILIATION_APP') => 'affiliate',
         env('SHEBA_RESOURCE_APP')    => 'resource',
         env('SHEBA_MANGER_APP')      => 'resource',
@@ -1268,5 +1272,14 @@ return [
             'en'  => 'Proprietorship',
             'bn'  => 'প্রোপ্রাইটরশিপ'
         ],
+    ],
+    'PARTNER_BUSINESS_CATEGORIES'                 => [
+        'Small',
+        'Micro',
+        'Medium'
+    ],
+    'PARTNER_BUSINESS_SECTORS'                    => [
+        'Service',
+        'Non Service'
     ]
 ];
