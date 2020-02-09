@@ -102,6 +102,15 @@ class Stat
         return (int)$this->absent;
     }
 
+    /**
+     * @return int
+     */
+    public function getWorkingDay()
+    {
+        return (int)$this->workingDay;
+    }
+
+
     public function calculate()
     {
         $weekend_day = $this->businessWeekendRepository->where('business_id', $this->business->id)->get()->pluck('weekday_name')->toArray();

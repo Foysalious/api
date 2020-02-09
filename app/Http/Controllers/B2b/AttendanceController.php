@@ -6,7 +6,7 @@ use App\Models\BusinessMember;
 use App\Sheba\Business\Attendance\MonthlyStat;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Sheba\Business\Attendance\DailyStat as AttendanceDailyStat;
+use Sheba\Business\Attendance\AttendanceList;
 use Sheba\Business\Attendance\Monthly\Stat;
 use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
 use Sheba\Dal\Attendance\Statuses;
@@ -18,7 +18,7 @@ use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 class AttendanceController extends Controller
 {
 
-    public function getDailyStats($business, Request $request, AttendanceDailyStat $stat)
+    public function getDailyStats($business, Request $request, AttendanceList $stat)
     {
         $this->validate($request, [
             'status' => 'string|in:' . implode(',', Statuses::get()),
@@ -26,7 +26,8 @@ class AttendanceController extends Controller
             'date' => 'date|date_format:Y-m-d',
         ]);
         $date = $request->has('date') ? Carbon::parse($request->date) : Carbon::now();
-        $attendances = $stat->setBusiness($request->business)->setDate($date)->setBusinessDepartment($request->business_department_id)->setStatus($request->status)->get();
+        $attendances = $stat->setBusiness($request->business)->setStartDate($date)->setEndDate($date)
+            ->setBusinessDepartment($request->business_department_id)->setStatus($request->status)->get();
         if (count($attendances) == 0) return api_response($request, null, 404);
         return api_response($request, null, 200, ['attendances' => $attendances]);
     }
@@ -37,7 +38,6 @@ class AttendanceController extends Controller
         try {
             list($offset, $limit) = calculatePagination($request);
             $business = Business::findOrFail((int)$business);
-            #$members = $business->members()->limit(20)->get();
             $members = $business->members()->with(['profile' => function ($q) {
                 $q->select('id', 'name', 'mobile', 'email');
             }]);
@@ -110,12 +110,32 @@ class AttendanceController extends Controller
         return (Carbon::now()->month == (int)$month && Carbon::now()->year == (int)$year);
     }
 
-    public function showStat($business, $member, Request $request, Stat $monthly_stat, BusinessMemberRepositoryInterface $business_member_repository, TimeFrame $time_frame)
+    public function showStat($business, $member, Request $request, Stat $monthly_stat, BusinessMemberRepositoryInterface $business_member_repository, TimeFrame $time_frame, AttendanceList $list)
     {
+        $this->validate($request, ['month' => 'numeric|min:1|max:12']);
         $business = $request->business;
         /** @var BusinessMember $business_member */
         $business_member = $business_member_repository->where('business_id', $business->id)->where('member_id', $member)->first();
-        $time_frame = $time_frame->forAMonth(date('m'), date('Y'));
+        $month = $request->has('month') ? $request->month : date('m');
+        $time_frame = $time_frame->forAMonth($month, date('Y'));
         $monthly_stat->setBusiness($business)->setBusinessMember($business_member)->setTimeFrame($time_frame)->calculate();
+        $list = $list->setStartDate($time_frame->start)->setEndDate($time_frame->end)->setBusinessMemberId($business_member->id)->get();
+        return api_response($request, $list, 200, [
+            'stat' => [
+                'absent' => $monthly_stat->getAbsent(),
+                'late' => $monthly_stat->getLate(),
+                'left_early' => $monthly_stat->getLeftEarly(),
+                'on_time' => $monthly_stat->getOnTime(),
+                'present' => $monthly_stat->getPresent(),
+                'working_day' => $monthly_stat->getWorkingDay(),
+            ],
+            'attendances' => count($list) ? $list : null,
+            'employee' => [
+                'id' => $business_member->member->id,
+                'name' => $business_member->member->profile->name,
+                'designation' => $business_member->role ? $business_member->role->name : null,
+                'department' => $business_member->role && $business_member->role->businessDepartment ? $business_member->role->businessDepartment->name : null,
+            ]
+        ]);
     }
 }

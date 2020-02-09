@@ -11,12 +11,14 @@ use Sheba\Dal\Attendance\Model;
 use Sheba\Dal\Attendance\Statuses;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 
-class DailyStat
+class AttendanceList
 {
     /** @var Business */
     private $business;
     /** @var Carbon */
-    private $date;
+    private $startDate;
+    /** @var Carbon */
+    private $endDate;
     /** @var Model[] */
     private $attendances;
     /** @var EloquentImplementation */
@@ -24,6 +26,7 @@ class DailyStat
     /** @var BusinessMemberRepositoryInterface */
     private $businessMemberRepository;
     private $businessDepartmentId;
+    private $businessMemberId;
     private $status;
     /** @var BusinessDepartment[] */
     private $attendanceDepartments;
@@ -37,7 +40,7 @@ class DailyStat
 
     /**
      * @param Business $business
-     * @return DailyStat
+     * @return AttendanceList
      */
     public function setBusiness(Business $business)
     {
@@ -47,17 +50,27 @@ class DailyStat
 
     /**
      * @param Carbon $date
-     * @return DailyStat
+     * @return AttendanceList
      */
-    public function setDate(Carbon $date)
+    public function setStartDate(Carbon $date)
     {
-        $this->date = $date;
+        $this->startDate = $date;
+        return $this;
+    }
+
+    /**
+     * @param Carbon $date
+     * @return AttendanceList
+     */
+    public function setEndDate(Carbon $date)
+    {
+        $this->endDate = $date;
         return $this;
     }
 
     /**
      * @param $businessDepartmentId
-     * @return DailyStat
+     * @return AttendanceList
      */
     public function setBusinessDepartment($businessDepartmentId)
     {
@@ -66,8 +79,18 @@ class DailyStat
     }
 
     /**
+     * @param $businessMemberId
+     * @return AttendanceList
+     */
+    public function setBusinessMemberId($businessMemberId)
+    {
+        $this->businessMemberId = $businessMemberId;
+        return $this;
+    }
+
+    /**
      * @param mixed $status
-     * @return DailyStat
+     * @return AttendanceList
      */
     public function setStatus($status)
     {
@@ -86,9 +109,14 @@ class DailyStat
 
     private function runAttendanceQuery()
     {
-        $business_member_ids = $this->getBusinessMemberIds();
-        $attendances = $this->attendRepository->where('date', $this->date->toDateString())->whereIn('business_member_id', $business_member_ids)
+        $business_member_ids = [];
+        if ($this->businessMemberId) $business_member_ids = [$this->businessMemberId];
+        elseif ($this->business) $business_member_ids = $this->getBusinessMemberIds();
+        $attendances = $this->attendRepository->builder()
             ->select('id', 'business_member_id', 'checkin_time', 'checkout_time', 'staying_time_in_minutes', 'status')
+            ->whereIn('business_member_id', $business_member_ids)
+            ->where('date', '>=', $this->startDate->toDateString())
+            ->where('date', '<=', $this->endDate->toDateString())
             ->with(['actions' => function ($q) {
                 $q->select('id', 'attendance_id', 'note')->where('status', Statuses::LEFT_EARLY);
             }, 'businessMember' => function ($q) {
@@ -141,6 +169,11 @@ class DailyStat
         $data = [];
         $this->setDepartments();
         foreach ($this->attendances as $attendance) {
+            $note = null;
+            if ($attendance->status == Statuses::LEFT_EARLY) {
+                $att = $attendance->actions->first();
+                $note = $att ? $att->note : null;
+            }
             array_push($data, [
                 'id' => $attendance->id,
                 'member' => [
@@ -155,7 +188,7 @@ class DailyStat
                 'checkout_time' => $attendance->checkout_time ? Carbon::parse($attendance->date . ' ' . $attendance->checkout_time)->format('g:i a') : null,
                 'active_hours' => $attendance->staying_time_in_minutes ? $this->formatMinute($attendance->staying_time_in_minutes) : null,
                 'status' => $attendance->status,
-                'note' => $attendance->status == Statuses::LEFT_EARLY ? $attendance->actions->first()->note : null
+                'note' => $note
             ]);
         }
         return $data;
