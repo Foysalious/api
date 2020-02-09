@@ -5,7 +5,7 @@ use Sheba\Dal\AttendanceActionLog\Actions;
 
 class CheckIn extends ActionChecker
 {
-    CONST ENTRY_TIME = '9:30:00';
+    CONST ENTRY_TIME = '9:30:59';
 
     public function getActionName()
     {
