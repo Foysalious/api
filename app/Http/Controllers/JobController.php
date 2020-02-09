@@ -550,7 +550,7 @@ class JobController extends Controller
     {
         try {
             $job = $request->job;
-            $logs = (new JobLogs($job))->getorderStatusLogs();
+            $logs = (new JobLogs($job))->getOrderStatusLogs();
             return api_response($request, $logs, 200, ['logs' => $logs]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
