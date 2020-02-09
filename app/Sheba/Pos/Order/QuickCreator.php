@@ -3,6 +3,7 @@
 use App\Models\Partner;
 use App\Models\PartnerPosSetting;
 use App\Models\PosOrder;
+use App\Models\Profile;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
@@ -125,8 +126,10 @@ class QuickCreator
         $order = $order->calculate();
         $amount = (double)$order->getNetBill();
         $amount_cleared = (double)$order->getPaid();
+        $customer_profile = $order->customer ? $order->customer->profile : new Profile();
         $entry->setPartner($order->partner)
             ->setAmount($amount)
+            ->setParty($customer_profile)
             ->setAmountCleared($amount_cleared)
             ->setHead(AutomaticIncomes::POS)
             ->setSourceType(class_basename($order))
