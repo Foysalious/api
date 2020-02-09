@@ -94,6 +94,7 @@ class EmployeeController extends Controller
         $member = $this->repo->find($business_member['member_id']);
         /** @var BusinessMember $business_member */
         $business_member = BusinessMember::find($business_member['id']);
+        if (!$business_member) return api_response($request, null, 404);
         /** @var Attendance $attendance */
         $attendance = $business_member->attendanceOfToday();
         /** @var ActionChecker $checkout */
