@@ -2,15 +2,18 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\Business;
+use App\Models\BusinessMember;
 use App\Sheba\Business\Attendance\MonthlyStat;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Sheba\Business\Attendance\DailyStat as AttendanceDailyStat;
+use Sheba\Business\Attendance\Monthly\Stat;
 use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
 use Sheba\Dal\Attendance\Statuses;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Helpers\TimeFrame;
+use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 
 class AttendanceController extends Controller
 {
@@ -105,5 +108,14 @@ class AttendanceController extends Controller
     private function isShowRunningMonthsAttendance($year, $month)
     {
         return (Carbon::now()->month == (int)$month && Carbon::now()->year == (int)$year);
+    }
+
+    public function showStat($business, $member, Request $request, Stat $monthly_stat, BusinessMemberRepositoryInterface $business_member_repository, TimeFrame $time_frame)
+    {
+        $business = $request->business;
+        /** @var BusinessMember $business_member */
+        $business_member = $business_member_repository->where('business_id', $business->id)->where('member_id', $member)->first();
+        $time_frame = $time_frame->forAMonth(date('m'), date('Y'));
+        $monthly_stat->setBusiness($business)->setBusinessMember($business_member)->setTimeFrame($time_frame)->calculate();
     }
 }
