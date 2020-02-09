@@ -75,7 +75,8 @@ class Updater
         return [
             'is_same_address',
             'is_nid_verified',
-            'online_order'
+            'online_order',
+            'monthly_installment'
         ];
     }
 
