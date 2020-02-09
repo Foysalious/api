@@ -31,6 +31,7 @@ class PartnerScheduleSlot
     private $preparationTime;
     private $portalName;
     private $whitelistedPortals;
+    private $for;
 
     public function __construct()
     {
@@ -60,6 +61,12 @@ class PartnerScheduleSlot
     public function setCategory($category)
     {
         $this->category = ($category instanceof Category) ? $category : Category::find($category);
+        return $this;
+    }
+
+    public function setFor($for)
+    {
+        $this->for = $for;
         return $this;
     }
 
@@ -145,7 +152,7 @@ class PartnerScheduleSlot
 
     private function isWhitelistedPortal()
     {
-        return in_array($this->portalName, $this->whitelistedPortals);
+        return in_array($this->portalName, $this->whitelistedPortals) && $this->for != 'eshop';
     }
 
     private function getWorkingDay(Carbon $day)
