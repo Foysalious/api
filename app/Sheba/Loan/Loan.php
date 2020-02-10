@@ -402,7 +402,7 @@ class Loan
      * @throws ReflectionException
      * @throws NotAllowedToAccess
      */
-    public function uploadDocument($loan_id, Request $request, $user)
+    public function uploadDocument($loan_id, Request $request)
     {
         /** @var PartnerBankLoan $loan */
         $loan = $this->repo->find($loan_id);
@@ -410,20 +410,7 @@ class Loan
         if (!empty($user) && (!($user instanceof User) && ($user instanceof BankUser && $user->bank->id != $loan->bank_id))) {
             throw new NotAllowedToAccess();
         }
-        $picture        = $request->file('picture');
-        $name           = $request->name;
-        $formatted_name = strtolower(preg_replace("/ /", "_", $name));
-        list($extra_file, $extra_file_name) = $this->makeExtraLoanFile($picture, $formatted_name);
-        $url                                                                         = $this->saveImageToCDN($extra_file, getTradeLicenceImagesFolder(), $extra_file_name);
-        $detail                                                                      = (new PartnerLoanRequest($loan))->details();
-        $detail['final_information_for_loan']['document']['extras'][$formatted_name] = $url;
-        $this->setModifier($user);
-        DB::transaction(function () use ($loan, $detail, $formatted_name, $user, $name) {
-            $loan->update($this->withUpdateModificationField([
-                'final_information_for_loan' => json_encode($detail['final_information_for_loan'])
-            ]));
-            (new PartnerLoanRequest($loan))->storeChangeLog($user, 'extra_image', 'none', $formatted_name, $name);
-        });
+        (new DocumentUploader($loan))->setUser($user)->setFor($request->for)->update($request);
 
     }
 

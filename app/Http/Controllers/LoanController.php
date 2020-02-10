@@ -608,9 +608,10 @@ class LoanController extends Controller
         try {
             $this->validate($request, [
                 'picture' => 'required|mimes:jpg,jpeg,png,pdf',
-                'name'    => 'required'
+                'name'    => 'required',
+                'for'     => 'required|in:extras,nominee_document,grantor_document,business_document,extras'
             ]);
-            $loan->uploadDocument($loan_id, $request, $request->user);
+            $loan->uploadDocument($loan_id, $request);
             return api_response($request, true, 200);
         } catch (NotAllowedToAccess $e) {
             return api_response($request, null, 400, ['message' => $e->getMessage()]);
@@ -618,6 +619,7 @@ class LoanController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -671,7 +673,7 @@ class LoanController extends Controller
     {
         try {
             $statuses = constants('LOAN_STATUS');
-            $statuses=array_map(function ($status) {
+            $statuses = array_map(function ($status) {
                 return ucfirst(preg_replace('/_/', ' ', $status));
             }, $statuses);
             return api_response($request, $statuses, 200, ['data' => $statuses]);
