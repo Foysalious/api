@@ -1157,7 +1157,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             $filter = $request->filter;
             list($offset, $limit) = calculatePagination($request);
             $affiliate = $request->affiliate->load(['orders' => function ($q) use ($filter, $offset, $limit) {
-                $q->select('orders.id', 'customer_id', 'partner_id', 'location_id', 'sales_channel', 'delivery_name', 'delivery_mobile', 'delivery_address', 'subscription_order_id')->where('sales_channel','DDn')->orderBy('orders.id', 'desc')
+                $q->select('orders.id', 'customer_id', 'partner_id', 'location_id', 'sales_channel', 'delivery_name', 'delivery_mobile', 'delivery_address', 'subscription_order_id')->where('sales_channel',constants('SALES_CHANNELS')['DDN']['name'])->orderBy('orders.id', 'desc')
                     ->skip($offset)->take($limit);
 
                 if ($filter) {
