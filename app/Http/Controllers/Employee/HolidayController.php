@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
+use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 
 class HolidayController extends Controller
 {
