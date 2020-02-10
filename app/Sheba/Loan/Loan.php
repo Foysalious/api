@@ -377,10 +377,9 @@ class Loan
 
     /**
      * @param $loan_id
-     * @param BankUser|null $user
      * @return array
-     * @throws ReflectionException
      * @throws NotAllowedToAccess
+     * @throws ReflectionException
      */
     public function show($loan_id)
     {
