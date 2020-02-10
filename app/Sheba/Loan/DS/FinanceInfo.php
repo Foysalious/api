@@ -52,7 +52,7 @@ class FinanceInfo implements Arrayable
      */
     public function update(Request $request)
     {
-        $bank_data    = (new BankInformation($request->all()))->toArray();
+        $bank_data    = (new BankInformation($request->all()))->noNullableArray();
         $partner_data = [
             'bkash_no'           => !empty($request->bkash_no) ? formatMobile($request->bkash_no) : null,
             'bkash_account_type' => $request->bkash_account_type
