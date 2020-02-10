@@ -8,8 +8,6 @@ abstract class StatusCalculator
     protected $attendance;
     protected $action;
 
-    const MINIMUM_HOURS_TO_STAY_IN_OFFICE = 9;
-
     /**
      * @param Attendance $attendance
      * @return $this

@@ -2,6 +2,7 @@
 
 use App\Models\Business;
 use Carbon\Carbon;
+use Sheba\Business\AttendanceActionLog\Time;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Model as AttendanceActionLog;
 use Sheba\Location\Geo;
@@ -165,7 +166,7 @@ abstract class ActionChecker
 
     public function isNoteRequired()
     {
-        return Carbon::now()->lt(Carbon::parse('18:30:00')) ? 1 : 0;
+        return Carbon::now()->lt(Carbon::parse(Time::OFFICE_END_TIME)) ? 1 : 0;
     }
 
     abstract protected function setSuccessfulResponseMessage();
