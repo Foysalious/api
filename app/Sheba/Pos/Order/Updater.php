@@ -27,6 +27,7 @@ class Updater
     private $stockManager;
     /** @var DiscountHandler $discountHandler */
     private $discountHandler;
+    private $new;
 
     public function __construct(PosOrderRepository $order_repo, PosOrderItemRepository $item_repo, PosServiceRepositoryInterface $service_repo, StockManager $stock_manager, DiscountHandler $discount_handler)
     {
@@ -35,6 +36,16 @@ class Updater
         $this->serviceRepo     = $service_repo;
         $this->stockManager    = $stock_manager;
         $this->discountHandler = $discount_handler;
+    }
+
+    /**
+     * @param mixed $new
+     * @return Updater
+     */
+    public function setNew($new)
+    {
+        $this->new = $new;
+        return $this;
     }
 
     public function setOrder(PosOrder $order)
@@ -54,7 +65,7 @@ class Updater
         if (isset($this->data['services'])) {
             $services = json_decode($this->data['services'], true);
             foreach ($services as $service) {
-                $item                     = $this->itemRepo->findFromOrder($this->order, $service['id']);
+                $item                     = $this->new ? $this->itemRepo->findFromOrder($this->order, $service['id']) : $this->itemRepo->findByService($this->order, $service['id']);
                 $service_data['quantity'] = $service['quantity'];
                 if ($item->discount && $item->quantity) {
                     $service_discount_data['amount'] = ($item->discount->amount / $item->quantity) * $service['quantity'];

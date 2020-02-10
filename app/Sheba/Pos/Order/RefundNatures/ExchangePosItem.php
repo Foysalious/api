@@ -22,6 +22,7 @@ class ExchangePosItem extends RefundNature
     private $serviceRepo;
     /** @var PaymentTransfer $paymentTransfer */
     private $paymentTransfer;
+    private $new;
 
     public function __construct(LogCreator $log_creator, Updater $updater, PosServiceRepositoryInterface $service_repo, StockManager $stock_manager, PaymentTransfer $transfer)
     {
@@ -61,7 +62,7 @@ class ExchangePosItem extends RefundNature
         $services    = json_decode($data['services'], true);
         $newServices = [];
         foreach ($services as $service) {
-            $item          = $this->order->items->where('id', $service['id'])->first();
+            $item          = $this->new ? $this->order->items->where('id', $service['id'])->first() : $this->order->items->where('service_id', $service['id'])->first();
             $service['id'] = $item->service_id;
             array_push($newServices, $service);
         }
@@ -92,4 +93,5 @@ class ExchangePosItem extends RefundNature
         $previous_order_paid_amount = $this->order->getPaid();
         $this->paymentTransfer->setOrder($this->newOrder)->setLog($log)->setAmount($previous_order_paid_amount)->process();
     }
+
 }
