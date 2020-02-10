@@ -19,13 +19,14 @@ class DocumentUploader
     private $loanRequest;
     private $user;
     private $fileRepository;
-
+    private $uploadFolder;
 
     public function __construct(PartnerBankLoan $loan)
     {
         $this->loanRequest    = (new PartnerLoanRequest($loan));
         $this->repo           = new LoanRepository();
         $this->fileRepository = app(FileRepository::class);
+        $this->uploadFolder   = getLoanFolder(). $this->loanRequest->partnerBankLoan->id . '/';
     }
 
     /**
@@ -63,15 +64,15 @@ class DocumentUploader
         if (isset($detail['final_information_for_loan']['document'][$this->for][$formatted_name])) {
             $this->deleteOld($detail['final_information_for_loan']['document'][$this->for][$formatted_name]);
         }
-        $detail['final_information_for_loan']['document'][$this->for][$formatted_name] = $url;
-        $user                                                                          = $this->user;
-        $loan                                                                          = $this->loanRequest->partnerBankLoan;
+        $this->setData($detail, $url, $formatted_name);
+        $user = $this->user;
+        $loan = $this->loanRequest->partnerBankLoan;
         $this->setModifier($this->user);
         DB::transaction(function () use ($loan, $detail, $formatted_name, $user, $name) {
             $loan->update($this->withUpdateModificationField([
                 'final_information_for_loan' => json_encode($detail['final_information_for_loan'])
             ]));
-            $this->loanRequest->storeChangeLog($user, "images_$this->for -> $name" , 'none', $formatted_name, $name);
+            $this->loanRequest->storeChangeLog($user, "images_$this->for -> $name", 'none', $formatted_name, $name);
         });
     }
 
@@ -101,9 +102,19 @@ class DocumentUploader
     {
         $base_name        = basename($filename);
         $old_image_folder = preg_replace("/$base_name/", '', $filename);
-        if ($old_image_folder == getLoanFolder()) {
+        if ($old_image_folder == $this->uploadFolder) {
             $this->fileRepository->deleteFileFromCDN($filename);
         }
+    }
+
+    private function setData(&$detail, $url, $formatted_name)
+    {
+        if ($this->for != 'profile') {
+            $detail['final_information_for_loan']['document'][$this->for][$formatted_name] = $url;
+        } else {
+            $detail['final_information_for_loan']['document'][$formatted_name] = $url;
+        }
+
     }
 
     /**
@@ -114,12 +125,7 @@ class DocumentUploader
     private function uploadExtras($name, $file)
     {
         $formatted_name = $this->formatName($name);
-        list($extra_file, $extra_file_name) = $this->makeLoanFile($file, $formatted_name);
-        $url = $this->saveFileToCDN($extra_file, getLoanFolder(), $extra_file_name);
-        return [
-            $formatted_name,
-            $url
-        ];
+        return $this->uploadDocument($file, $formatted_name);
     }
 
     /**
@@ -129,6 +135,16 @@ class DocumentUploader
     private function formatName($name)
     {
         return strtolower(preg_replace("/ /", "_", $name));
+    }
+
+    private function uploadDocument($file, $formatted_name)
+    {
+        list($file, $filename) = $this->makeLoanFile($file, $formatted_name);
+        $url = $this->saveFileToCDN($file, $this->uploadFolder, $filename);
+        return [
+            $formatted_name,
+            $url
+        ];
     }
 
     /**
@@ -148,27 +164,61 @@ class DocumentUploader
      * @return array
      * @throws InvalidFileName
      */
-    private function uploadNomineeDocument($name, $file){
-        return $this->uploadBasicDocument($name, $file);
+    private function uploadBasicDocument($name, $file)
+    {
+        $formatted_name = $this->formatName($name);
+        $url            = null;
+        if (!in_array($formatted_name, [
+            'picture',
+            'nid_front_image',
+            'nid_back_image',
+            'nid_image_front',
+            'nid_image_back'
+        ])) {
+            throw new InvalidFileName();
+        }
+        return $this->uploadDocument($file, $formatted_name);
     }
+
     /**
      * @param $name
      * @param $file
      * @return array
      * @throws InvalidFileName
      */
-    private function uploadBasicDocument($name, $file)
+    private function uploadNomineeDocument($name, $file)
+    {
+        return $this->uploadBasicDocument($name, $file);
+    }
+
+    /**
+     * @param $name
+     * @param $file
+     * @return array
+     * @throws InvalidFileName
+     */
+    private function uploadProfile($name, $file)
+    {
+        return $this->uploadBasicDocument($name, $file);
+    }
+
+    /**
+     * @param $name
+     * @param $file
+     * @return array
+     * @throws InvalidFileName
+     */
+    private function uploadBusinessDocument($name, $file)
     {
         $formatted_name = $this->formatName($name);
         $url            = null;
-        if (!in_array($formatted_name, ['picture'])) {
+        if (!in_array($formatted_name, [
+            'tin_certificate',
+            'trade_license_attachment',
+            'statement'
+        ])) {
             throw new InvalidFileName();
         }
-        list($file, $filename) = $this->makeLoanFile($file, $formatted_name);
-        $url = $this->saveFileToCDN($file, getLoanFolder(), $filename);
-        return [
-            $formatted_name,
-            $url
-        ];
+        return $this->uploadDocument($file, $formatted_name);
     }
 }
