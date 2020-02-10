@@ -1157,7 +1157,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             $filter = $request->filter;
             list($offset, $limit) = calculatePagination($request);
             $affiliate = $request->affiliate->load(['orders' => function ($q) use ($filter, $offset, $limit) {
-                $q->select('orders.id', 'customer_id', 'partner_id', 'location_id', 'sales_channel', 'delivery_name', 'delivery_mobile', 'delivery_address', 'subscription_order_id')->orderBy('orders.id', 'desc')
+                $q->select('orders.id', 'customer_id', 'partner_id', 'location_id', 'sales_channel', 'delivery_name', 'delivery_mobile', 'delivery_address', 'subscription_order_id')->where('sales_channel','DDn')->orderBy('orders.id', 'desc')
                     ->skip($offset)->take($limit);
 
                 if ($filter) {
@@ -1189,7 +1189,6 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
                     $job['can_take_review'] = $this->canTakeReview($order_job);
                     return $job;
                 });
-
 
             } else {
                 $all_jobs = collect();
@@ -1263,6 +1262,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
     private function getJobInformation(Job $job, PartnerOrder $partnerOrder)
     {
         $category = $job->category;
+        $service = $job->service;
         $show_expert = $job->canCallExpert();
         $process_log = $job->statusChangeLogs->where('to_status', constants('JOB_STATUSES')['Process'])->first();
         return collect(array(
@@ -1271,6 +1271,9 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             'subscription_order_id' => $partnerOrder->order->subscription_order_id,
             'category_name' => $category ? $category->name : null,
             'category_thumb' => $category ? $category->thumb : null,
+            'service_id' => $service ? $service->id : null,
+            'service_name' => $service ? $service->name : null,
+            'service_thumb' => $service ? $service->thumb : null,
             'schedule_date' => $job->schedule_date ? $job->schedule_date : null,
             'served_date' => $job->delivered_date ? $job->delivered_date->format('Y-m-d H:i:s') : null,
             'process_date' => $process_log ? $process_log->created_at->format('Y-m-d H:i:s') : null,
