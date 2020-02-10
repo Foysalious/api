@@ -84,23 +84,10 @@ class BidController extends Controller
 
     public function takeAction($partner, $bid, Request $request, BidRepositoryInterface $bid_repository, Updater $updater)
     {
-        try {
-            $this->validate($request, [
-                'status' => 'required|string|in:accepted,rejected,sent,pending'
-            ]);
-            $bid = $bid_repository->find((int)$bid);
-            $this->setModifier($request->manager_resource);
-            $updater->setBid($bid)->setStatus($request->status)->updateStatus();
-            return api_response($request, $bid, 200);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $this->validate($request, ['status' => 'required|string|in:accepted,rejected,sent,pending']);
+        $bid = $bid_repository->find((int)$bid);
+        $this->setModifier($request->manager_resource);
+        $updater->setBid($bid)->setStatus($request->status)->updateStatus();
+        return api_response($request, $bid, 200);
     }
 }
