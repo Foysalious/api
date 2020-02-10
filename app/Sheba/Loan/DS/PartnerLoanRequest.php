@@ -159,13 +159,13 @@ class PartnerLoanRequest implements Arrayable
     public function getNextStatus($loan_id)
     {
         $status_res = [
+            'considerable'    => 'applied',
             'applied'         => 'submitted',
             'submitted'       => 'verified',
             'verified'        => 'approved',
             'approved'        => 'sanction_issued',
             'sanction_issued' => 'disbursed',
             'disbursed'       => 'closed',
-            'considerable'    => 'verified',
             'rejected'        => 'closed',
         ];
         $all        = [

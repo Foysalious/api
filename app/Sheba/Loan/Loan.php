@@ -398,9 +398,8 @@ class Loan
     /**
      * @param $loan_id
      * @param Request $request
-     * @param $user
-     * @throws ReflectionException
      * @throws NotAllowedToAccess
+     * @throws ReflectionException
      */
     public function uploadDocument($loan_id, Request $request)
     {
