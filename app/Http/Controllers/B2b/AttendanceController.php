@@ -7,6 +7,7 @@ use App\Sheba\Business\Attendance\MonthlyStat;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Sheba\Business\Attendance\AttendanceList;
+use Sheba\Business\Attendance\Monthly\Excel;
 use Sheba\Business\Attendance\Monthly\Stat;
 use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
 use Sheba\Dal\Attendance\Statuses;
@@ -34,9 +35,10 @@ class AttendanceController extends Controller
     }
 
     public function getMonthlyStats($business, Request $request, AttendanceRepoInterface $attendance_repo, TimeFrame $time_frame, BusinessHolidayRepoInterface $business_holiday_repo,
-                                    BusinessWeekendRepoInterface $business_weekend_repo)
+                                    BusinessWeekendRepoInterface $business_weekend_repo, Excel $monthly_excel)
     {
         try {
+            $this->validate($request, ['file' => 'string|in:excel']);
             list($offset, $limit) = calculatePagination($request);
             $business = Business::where('id', (int)$business)->select('id', 'name', 'phone', 'email', 'type')->first();
             $members = $business->members()->select('members.id', 'profile_id')->with(['profile' => function ($q) {
@@ -97,13 +99,16 @@ class AttendanceController extends Controller
                 ]);
             }
 
-            if (count($all_employee_attendance) > 0) return api_response($request, $all_employee_attendance, 200, [
-                'all_employee_attendance' => $all_employee_attendance,
-                'total_members' => $total_members,
-            ]);
-            else  return api_response($request, null, 404);
+            if (count($all_employee_attendance) > 0) {
+                if ($request->file == 'excel') {
+                    return $monthly_excel->setMonthlyData($all_employee_attendance)->get();
+                }
+                return api_response($request, $all_employee_attendance, 200, [
+                    'all_employee_attendance' => $all_employee_attendance,
+                    'total_members' => $total_members,
+                ]);
+            } else  return api_response($request, null, 404);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -147,4 +152,5 @@ class AttendanceController extends Controller
             ]
         ]);
     }
+
 }
