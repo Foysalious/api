@@ -7,6 +7,7 @@ use App\Models\HyperLocal;
 use App\Models\Location;
 use App\Models\LocationService;
 use App\Models\Partner;
+use App\Models\Review;
 use App\Models\ReviewQuestionAnswer;
 use App\Models\Service;
 use App\Models\ServiceSubscription;
@@ -453,7 +454,7 @@ class CategoryController extends Controller
                     $service['min_price'] = $min_max_price->getMin();
                     $service['terms_and_conditions'] = $service->terms_and_conditions ? json_decode($service->terms_and_conditions) : null;
                     $service['features'] = $service->features ? json_decode($service->features) : null;
-                    $service['slug'] =$service->getSlug();
+                    $service['slug'] = $service->getSlug();
 
                     /** @var ServiceSubscription $subscription */
                     if ($subscription = $service->activeSubscription) {
@@ -655,6 +656,16 @@ class CategoryController extends Controller
                 "4" => 150,
                 "5" => 500,
             ];
+            $reviews = Review::selectRaw("count(DISTINCT(reviews.id)) as total_ratings")
+                ->selectRaw("count(DISTINCT(case when rating=5 then reviews.id end)) as total_five_star_ratings")
+                ->selectRaw("count(DISTINCT(case when rating=4 then reviews.id end)) as total_four_star_ratings")
+                ->selectRaw("count(DISTINCT(case when rating=3 then reviews.id end)) as total_three_star_ratings")
+                ->selectRaw("count(DISTINCT(case when rating=2 then reviews.id end)) as total_two_star_ratings")
+                ->selectRaw("count(DISTINCT(case when rating=1 then reviews.id end)) as total_one_star_ratings")
+                ->selectRaw("avg(reviews.rating) as avg_rating")
+                ->selectRaw("reviews.category_id")
+                ->where('reviews.category_id', $category->id)
+                ->groupBy("reviews.category_id")->first();
             $info = [
                 'avg_rating' => 4.5,
                 'total_review_count' => 500,
