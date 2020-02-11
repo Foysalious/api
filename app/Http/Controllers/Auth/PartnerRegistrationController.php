@@ -166,10 +166,11 @@ class PartnerRegistrationController extends Controller
     private function createPartner($resource, $data)
     {
         $data = array_merge($data, [
-            "sub_domain" => $this->guessSubDomain($data['name']), "affiliation_id" => $this->partnerAffiliation($resource->profile->mobile),
+            "sub_domain" => $this->guessSubDomain($data['name']),
+            "affiliation_id" => $this->partnerAffiliation($resource->profile->mobile)
         ]);
         $by = ["created_by" => $resource->id, "created_by_name" => "Resource - " . $resource->profile->name];
-        /** @var Partner $partner */
+
         $partner = new Partner();
         $partner = $this->store($resource, $data, $by, $partner);
         if ($partner) {
@@ -191,6 +192,10 @@ class PartnerRegistrationController extends Controller
     private function guessSubDomain($name)
     {
         $blacklist = ["google", "facebook", "microsoft", "sheba", "sheba.xyz"];
+
+        $is_unicode = (strlen($name) != strlen(utf8_decode($name)));
+        if ($is_unicode) $name = "Partner No Name";
+
         $base_name = $name = preg_replace('/-$/', '', substr(strtolower(clean($name)), 0, 15));
         $already_used = Partner::select('sub_domain')->where('sub_domain', 'like', $name . '%')->lists('sub_domain')->toArray();
         $counter = 0;
@@ -198,6 +203,7 @@ class PartnerRegistrationController extends Controller
             $name = $base_name . $counter;
             $counter++;
         }
+        
         return $name;
     }
 
