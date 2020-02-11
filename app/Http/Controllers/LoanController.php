@@ -631,6 +631,10 @@ class LoanController extends Controller
             $data                  = $loan->show($loan_id);
             $pdf_handler           = new PdfHandler();
             $loan_application_name = 'loan_application_' . $loan_id;
+            if($request->has('pdf_type') && $request->pdf_type == constants('BANK_LOAN_PDF_TYPES')['SanctionLetter']){
+                $loan_application_name = 'sanction_letter_' . $loan_id;
+                return $pdf_handler->setData($data)->setName($loan_application_name)->setViewFile('partner_loan_sanction_letter_form')->download();
+            }
             return $pdf_handler->setData($data)->setName($loan_application_name)->setViewFile('partner_loan_application_form')->download();
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -641,8 +645,6 @@ class LoanController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
-
-
     }
 
     public function downloadDocuments(Request $request, $loan_id, Loan $loan)

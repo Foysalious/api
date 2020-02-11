@@ -1,5 +1,10 @@
 <?php
 return [
+    'BANK_LOAN_PDF_TYPES'                      => [
+        'SanctionLetter'   => 'sanctionLetter',
+        'Application' => 'application',
+        'Proposal'  => 'proposal'
+    ],
     'PARTNER_SHOWABLE_PACKAGE'                    => [
         1,
         2,
