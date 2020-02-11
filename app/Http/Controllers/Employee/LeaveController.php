@@ -34,7 +34,12 @@ class LeaveController extends Controller
             $business_member = $this->getBusinessMember($request);
             if (!$business_member) return api_response($request, null, 404);
 
-            $leave = $leave_creator->setTitle($request->title)->setBusinessMemberId($request->business_member_id)->setLeaveTypeId($request->leave_type_id)->create();
+            $leave = $leave_creator->setTitle($request->title)
+                ->setBusinessMemberId($business_member->id)
+                ->setLeaveTypeId($request->leave_type_id)
+                ->setStartDate($request->start_date)
+                ->setEndDate($request->end_date)
+                ->create();
             return api_response($request, null,200,['leave' => $leave->id]);
         }
         catch (\Throwable $e) {
