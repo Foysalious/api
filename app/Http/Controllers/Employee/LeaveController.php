@@ -1,12 +1,17 @@
 <?php namespace App\Http\Controllers\Employee;
 
 use App\Models\BusinessMember;
+use App\Transformers\Business\LeaveTransformer;
+use App\Transformers\CustomSerializer;
 use Illuminate\Http\Request;
 
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Item;
 use Sheba\Dal\LeaveType\Contract as LeaveTypesRepoInterface;
 use App\Sheba\Leave\Creator as LeaveCreator;
+use Sheba\Dal\Leave\Contract as LeaveRepoInterface;
 
 class LeaveController extends Controller
 {
@@ -46,5 +51,17 @@ class LeaveController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function show($leave, Request $request, LeaveRepoInterface $leave_repo)
+    {
+        $leave = $leave_repo->find($leave);
+//        dd($leave);
+        $business_member = $this->getBusinessMember($request);
+        if (!$leave || $leave->business_member_id != $business_member->id) return api_response($request, null, 403);
+        $fractal = new Manager();
+        $fractal->setSerializer(new CustomSerializer());
+        $resource = new Item($leave, new LeaveTransformer());
+        return api_response($request, $leave, 200, ['leave' => $fractal->createData($resource)->toArray()['data']]);
     }
 }
