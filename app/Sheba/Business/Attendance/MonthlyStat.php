@@ -84,6 +84,8 @@ class MonthlyStat
             if ($is_weekend_or_holiday) $statistics['working_days']--;
         }
 
+        $statistics['present'] = $statistics['working_days'] - $statistics['absent'];
+
         return $this->forOneEmployee ? ['statistics' => $statistics, 'daily_breakdown' => $daily_breakdown] : ['statistics' => $statistics];
     }
 

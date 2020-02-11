@@ -14,6 +14,7 @@ use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
+use Throwable;
 
 class AttendanceController extends Controller
 {
@@ -37,12 +38,17 @@ class AttendanceController extends Controller
     {
         try {
             list($offset, $limit) = calculatePagination($request);
-            $business = Business::findOrFail((int)$business);
+            $business = Business::where('id', (int)$business)->select('id', 'name', 'phone', 'email', 'type')->first();
             $members = $business->members()->select('members.id', 'profile_id')->with(['profile' => function ($q) {
                 $q->select('profiles.id', 'name', 'mobile', 'email');
             }, 'businessMember' => function ($q) {
-                $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id');
+                $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id')->with(['role' => function ($q) {
+                    $q->select('business_roles.id', 'business_department_id', 'name')->with(['businessDepartment' => function ($q) {
+                        $q->select('business_departments.id', 'business_id', 'name');
+                    }]);
+                }]);
             }]);
+
             if ($request->has('department_id')) {
                 $members = $members->whereHas('businessMember', function ($q) use ($request) {
                     $q->whereHas('role', function ($q) use ($request) {
@@ -61,6 +67,10 @@ class AttendanceController extends Controller
             $year = (int)date('Y');
             $month = (int)date('m');
             if ($request->has('month')) $month = $request->month;
+
+            $business_holiday = $business_holiday_repo->getAllByBusiness($business);
+            $business_weekend = $business_weekend_repo->getAllByBusiness($business);
+
             foreach ($members as $member) {
                 $member_name = $member->getIdentityAttribute();
                 $business_member = $member->businessMember;
@@ -71,10 +81,6 @@ class AttendanceController extends Controller
                 $time_frame = $time_frame->forAMonth($month, $year);
                 $time_frame->end = $this->isShowRunningMonthsAttendance($year, $month) ? Carbon::now() : $time_frame->end;
                 $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
-
-                $business_holiday = $business_holiday_repo->getAllByBusiness($business_member->business);
-                $business_weekend = $business_weekend_repo->getAllByBusiness($business_member->business);
-
                 $employee_attendance = (new MonthlyStat($time_frame, $business_holiday, $business_weekend, false))->transform($attendances);
 
                 array_push($all_employee_attendance, [
@@ -96,7 +102,7 @@ class AttendanceController extends Controller
                 'total_members' => $total_members,
             ]);
             else  return api_response($request, null, 404);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
