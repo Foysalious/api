@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BusinessMember;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redis;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionChecker;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
 use Sheba\Business\AttendanceActionLog\AttendanceAction;
@@ -77,8 +78,10 @@ class AttendanceController extends Controller
                 'lng' => 'numeric'
             ];
             $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
-            if ($request->action == Actions::CHECKOUT && $checkout->isNoteRequired())
+            if ($request->action == Actions::CHECKOUT && $checkout->isNoteRequired()) {
+                Redis::set('lamisa', json_encode(array_merge($request->auth_info, ['note' => $request->note])));
                 $validation_data += ['note' => 'string|required_if:action,' . Actions::CHECKOUT];
+            }
 
             $this->validate($request, $validation_data);
             $business_member = $this->getBusinessMember($request);
