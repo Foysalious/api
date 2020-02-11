@@ -77,8 +77,9 @@ class AttendanceController extends Controller
                 'lng' => 'numeric'
             ];
             $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
-            if ($request->action == Actions::CHECKOUT && $checkout->isNoteRequired())
+            if ($request->action == Actions::CHECKOUT && $checkout->isNoteRequired()) {
                 $validation_data += ['note' => 'string|required_if:action,' . Actions::CHECKOUT];
+            }
 
             $this->validate($request, $validation_data);
             $business_member = $this->getBusinessMember($request);
