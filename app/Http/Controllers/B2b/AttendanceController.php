@@ -38,8 +38,10 @@ class AttendanceController extends Controller
         try {
             list($offset, $limit) = calculatePagination($request);
             $business = Business::findOrFail((int)$business);
-            $members = $business->members()->with(['profile' => function ($q) {
-                $q->select('id', 'name', 'mobile', 'email');
+            $members = $business->members()->select('members.id', 'profile_id')->with(['profile' => function ($q) {
+                $q->select('profiles.id', 'name', 'mobile', 'email');
+            }, 'businessMember' => function ($q) {
+                $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id');
             }]);
             if ($request->has('department_id')) {
                 $members = $members->whereHas('businessMember', function ($q) use ($request) {
@@ -95,6 +97,7 @@ class AttendanceController extends Controller
             ]);
             else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
