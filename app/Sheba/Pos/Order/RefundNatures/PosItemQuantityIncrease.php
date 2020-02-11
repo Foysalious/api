@@ -12,7 +12,7 @@ class PosItemQuantityIncrease extends ReturnPosItem
         ], 'id', true)->toArray() : $this->old_services = $this->order->items->pluckMultiple([
             'quantity',
             'unit_price'
-        ], 'service_id')->toArray();;
+        ], 'service_id')->toArray();
         $this->updater->setOrder($this->order)->setData($this->data)->setNew($this->new)->update();
         $this->refundPayment();
         $this->generateDetails();

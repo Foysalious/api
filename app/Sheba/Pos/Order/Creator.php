@@ -96,6 +96,7 @@ class Creator
     /**
      * @return PosOrder
      * @throws InvalidDiscountType
+     * @throws ExpenseTrackingServerError
      */
     public function create()
     {

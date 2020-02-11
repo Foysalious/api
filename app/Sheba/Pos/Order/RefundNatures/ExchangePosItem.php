@@ -1,6 +1,8 @@
 <?php namespace Sheba\Pos\Order\RefundNatures;
 
 use App\Models\PosOrder;
+use Sheba\Dal\Discount\InvalidDiscountType;
+use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\Pos\Log\Creator as LogCreator;
 use Sheba\Pos\Log\Supported\Types;
 use Sheba\Pos\Order\Creator;
@@ -22,7 +24,6 @@ class ExchangePosItem extends RefundNature
     private $serviceRepo;
     /** @var PaymentTransfer $paymentTransfer */
     private $paymentTransfer;
-    private $new;
 
     public function __construct(LogCreator $log_creator, Updater $updater, PosServiceRepositoryInterface $service_repo, StockManager $stock_manager, PaymentTransfer $transfer)
     {
@@ -32,8 +33,13 @@ class ExchangePosItem extends RefundNature
         $this->paymentTransfer = $transfer;
     }
 
+    /**
+     * @throws InvalidDiscountType
+     * @throws ExpenseTrackingServerError
+     */
     public function update()
     {
+        /** @var Creator $creator */
         $creator = app(Creator::class);
         $this->stockRefill();
         $this->data['previous_order_id'] = $this->order->id;
@@ -46,7 +52,6 @@ class ExchangePosItem extends RefundNature
     private function stockRefill()
     {
         $this->order->items->each(function ($item) {
-            dump($item->service_id);
             if ($item->service_id) {
                 $partner_pos_service   = $this->serviceRepo->find($item->service_id);
                 $is_stock_maintainable = $this->stockManager->setPosService($partner_pos_service)->isStockMaintainable();
@@ -62,8 +67,9 @@ class ExchangePosItem extends RefundNature
         $services    = json_decode($data['services'], true);
         $newServices = [];
         foreach ($services as $service) {
-            $item          = $this->new ? $this->order->items->where('id', $service['id'])->first() : $this->order->items->where('service_id', $service['id'])->first();
-            $service['id'] = $item->service_id;
+            $item = $this->new ? $this->order->items()->where('id', $service['id'])->first() : $this->order->items()->where('service_id', $service['id'])->first();
+            $service['id']            = $item->service_id;
+            $service['updated_price'] = $item->unit_price;
             array_push($newServices, $service);
         }
         $data['services'] = json_encode($newServices);
