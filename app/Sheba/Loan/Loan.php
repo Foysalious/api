@@ -3,7 +3,10 @@
 namespace Sheba\Loan;
 
 use App\Models\BankUser;
+use App\Models\Partner;
 use App\Models\PartnerBankLoan;
+use App\Models\Profile;
+use App\Models\Resource;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -27,6 +30,7 @@ use Sheba\Loan\Exceptions\AlreadyRequestedForLoan;
 use Sheba\Loan\Exceptions\InvalidStatusTransaction;
 use Sheba\Loan\Exceptions\NotAllowedToAccess;
 use Sheba\Loan\Exceptions\NotApplicableForLoan;
+use Sheba\Loan\Exceptions\NotShebaPartner;
 use Sheba\ModificationFields;
 
 class Loan
@@ -46,6 +50,7 @@ class Loan
     private $downloadDir;
     private $zipDir;
     private $user;
+    private $finalFields;
 
     public function __construct()
     {
@@ -53,6 +58,13 @@ class Loan
         $this->downloadDir = storage_path('downloads');
         $this->zipDir      = public_path('temp/documents.zip');
         $this->user        = request()->user;
+        $this->finalFields = [
+            'personal'        => 'personalInfo',
+            'business'        => 'businessInfo',
+            'finance'         => 'financeInfo',
+            'nominee_granter' => 'nomineeGranter',
+            'document'        => 'documents'
+        ];
     }
 
     /**
@@ -214,20 +226,7 @@ class Loan
     public function apply()
     {
         $this->validate();
-        $data       = $this->data;
-        $fields     = [
-            'personal',
-            'business',
-            'finance',
-            'nominee_granter',
-            'document'
-        ];
-        $final_info = [];
-        foreach ($fields as $val) {
-            $final_info[$val] = $this->$val->toArray();
-        }
-        $data['final_information_for_loan'] = json_encode($final_info);
-        return (new PartnerLoanRequest())->setPartner($this->partner)->create($data);
+        return $this->create();
     }
 
     /**
@@ -237,17 +236,7 @@ class Loan
      */
     public function validate()
     {
-        $requests = $this->repo->where('partner_id', $this->partner->id)->get();
-        if (!$requests->isEmpty()) {
-            $last_request = $requests->last();
-            $statuses     = constants('LOAN_STATUS');
-            if (in_array($last_request->status, [
-                $statuses['approved'],
-                $statuses['considerable']
-            ])) {
-                throw new AlreadyRequestedForLoan();
-            }
-        }
+        $this->validateAlreadyRequested();
         $applicable = $this->getCompletion()['is_applicable_for_loan'];
         if (!$applicable)
             throw new NotApplicableForLoan();
@@ -255,20 +244,65 @@ class Loan
     }
 
     /**
+     * @throws AlreadyRequestedForLoan
+     */
+    private function validateAlreadyRequested()
+    {
+        $requests = $this->repo->where('partner_id', $this->partner->id)->get();
+        if (!$requests->isEmpty()) {
+            $last_request = $requests->last();
+            $statuses     = constants('LOAN_STATUS');
+            if (!in_array($last_request->status, [
+                $statuses['closed'],
+                $statuses['withdrawal'],
+                $statuses['rejected'],
+                $statuses['hold'],
+                $statuses['declined']
+            ])) {
+                throw new AlreadyRequestedForLoan();
+            }
+        }
+    }
+
+    /**
      * @return array
-     * @throws ReflectionException
      */
     public function getCompletion()
     {
-        $data                           = [
-            'personal'  => $this->personalInfo()->completion(),
-            'business'  => $this->businessInfo()->completion(),
-            'finance'   => $this->financeInfo()->completion(),
-            'nominee'   => $this->nomineeGranter()->completion(),
-            'documents' => $this->documents()->completion()
-        ];
+        $data = $this->initiateFinalFields();
+        foreach ($data as $key => $val) {
+            $data[$key] = $val->completion();
+        }
         $data['is_applicable_for_loan'] = $this->isApplicableForLoan($data);
         return $data;
+    }
+
+    /**
+     * @return array
+     */
+    private function initiateFinalFields()
+    {
+        $data = [];
+        foreach ($this->finalFields as $key => $val) {
+            $data[$key] = $this->$val();
+        }
+        return $data;
+    }
+
+    private function isApplicableForLoan($data)
+    {
+        return Completion::isApplicableForLoan($data);
+    }
+
+    public function create()
+    {
+        $data       = $this->data;
+        $final_info = [];
+        foreach ($this->finalFields as $key => $val) {
+            $final_info[$key] = $this->$key->toArray();
+        }
+        $data['final_information_for_loan'] = json_encode($final_info);
+        return (new PartnerLoanRequest())->setPartner($this->partner)->create($data);
     }
 
     public function personalInfo()
@@ -299,11 +333,6 @@ class Loan
     {
         $this->document = (new Documents($this->partner, $this->resource));
         return $this->document;
-    }
-
-    private function isApplicableForLoan($data)
-    {
-        return Completion::isApplicableForLoan($data);
     }
 
     public function history()
@@ -499,5 +528,41 @@ class Loan
         $file = public_path('temp');
         $f    = HZip::downLoadFile($url, $file);
         return $f ? $file . '/' . basename($url) : false;
+    }
+
+    /**
+     * @param Request $request
+     * @return PartnerBankLoan
+     * @throws NotShebaPartner
+     * @throws NotAllowedToAccess
+     * @throws AlreadyRequestedForLoan
+     */
+    public function createNew(Request $request)
+    {
+        if (!($this->user instanceof BankUser) && !($this->user instanceof User))
+            throw new NotAllowedToAccess();
+        $mobile  = formatMobile($request->mobile);
+        $profile = Profile::where('mobile', $mobile)->first();
+        if (empty($profile) || !$profile->resource)
+            throw new NotShebaPartner();
+        /** @var Partner $partner */
+        $partner = $profile->resource->firstPartner();
+        /** @var Resource $resource */
+        $resource = $profile->resource;
+        if (!$resource->isManager($partner) || !$resource->isAdmin($partner)) {
+            throw new NotShebaPartner();
+        }
+        $config = constants('LOAN_CONFIG');
+        $data   = [
+            'loan_amount' => $config['minimum_amount'],
+            'duration'    => $config['minimum_duration']
+        ];
+        if ($this->user instanceof BankUser) {
+            $data['bank_id'] = $this->user->bank->id;
+        }
+        $request = $this->setPartner($partner)->setResource($resource)->setData($data);
+        $this->validateAlreadyRequested();
+        $this->initiateFinalFields();
+        return $request->create();
     }
 }
