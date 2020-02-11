@@ -471,7 +471,13 @@ class Loan
         DB::transaction(function () use ($partner_bank_loan, $request, $old_status, $new_status, $description) {
             $partner_bank_loan->update();
             (new PartnerLoanRequest($partner_bank_loan))->storeChangeLog($request->user, 'status', $old_status, $new_status, $description);
+            $title="Loan status has been updated from $old_status to $new_status";
+            $class=class_basename($partner_bank_loan);
+            $event_type="App\\Models\\$class";
+            $event_id=$partner_bank_loan->id;
+            $this->sendLoanNotification($title,$event_type,$event_id);
         });
+
 
     }
 
@@ -513,5 +519,16 @@ class Loan
         $file = public_path('temp');
         $f    = HZip::downLoadFile($url, $file);
         return $f ? $file . '/' . basename($url) : false;
+    }
+
+    private function sendLoanNotification($title,$event_type,$event_id){
+        notify()->departments([9, 13])->send([
+            "title" => $title,
+            'link' => env('SHEBA_BACKEND_URL') . '/sp-loan',
+            "type"  => notificationType('Info'),
+            "event_type" => $event_type,
+            "event_id"   => $event_id
+        ]);
+
     }
 }
