@@ -25,6 +25,7 @@ class PartnerRoute
         });
         $api->group(['prefix'=>'loans', 'middleware'=>'jwtGlobalAuth'], function ($api) {
             $api->get('/', 'LoanController@index');
+            $api->post('/from-portal','LoanController@storeFromPortals');
             $api->get('/{loan_id}/details','LoanController@show');
             $api->post('/{loan_id}','LoanController@update');
             $api->get('/{loan_id}/download-documents','LoanController@downloadDocuments');
