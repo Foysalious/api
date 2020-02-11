@@ -24,6 +24,7 @@ use Sheba\Loan\Exceptions\AlreadyAssignToBank;
 use Sheba\Loan\Exceptions\AlreadyRequestedForLoan;
 use Sheba\Loan\Exceptions\EmailUsed;
 use Sheba\Loan\Exceptions\InvalidStatusTransaction;
+use Sheba\Loan\Exceptions\LoanException;
 use Sheba\Loan\Exceptions\NotAllowedToAccess;
 use Sheba\Loan\Exceptions\NotApplicableForLoan;
 use Sheba\Loan\Loan;
@@ -175,6 +176,24 @@ class LoanController extends Controller
             return api_response($request, $e->getMessage(), 400, ['message' => $e->getMessage()]);
         } catch (NotApplicableForLoan $e) {
             return api_response($request, $e->getMessage(), 400, ['message' => $e->getMessage()]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function storeFromPortals(Request $request, Loan $loan)
+    {
+        try {
+            $this->validate($request, ['mobile' => 'required|mobile:bd']);
+            $partnerBankLoan=$loan->createNew($request)->toArray();
+            unset($partnerBankLoan['final_information_for_loan']);
+            return api_response($request,$partnerBankLoan,200,['data'=>$partnerBankLoan]);
+        } catch (LoanException $e) {
+            return api_response($request, null, $e->getCode()?:500, ['message' => $e->getMessage()]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -608,9 +627,10 @@ class LoanController extends Controller
         try {
             $this->validate($request, [
                 'picture' => 'required|mimes:jpg,jpeg,png,pdf',
-                'name'    => 'required'
+                'name'    => 'required',
+                'for'     => 'required|in:profile,nominee_document,grantor_document,business_document,extras'
             ]);
-            $loan->uploadDocument($loan_id, $request, $request->user);
+            $loan->uploadDocument($loan_id, $request);
             return api_response($request, true, 200);
         } catch (NotAllowedToAccess $e) {
             return api_response($request, null, 400, ['message' => $e->getMessage()]);
@@ -671,7 +691,7 @@ class LoanController extends Controller
     {
         try {
             $statuses = constants('LOAN_STATUS');
-            $statuses=array_map(function ($status) {
+            $statuses = array_map(function ($status) {
                 return ucfirst(preg_replace('/_/', ' ', $status));
             }, $statuses);
             return api_response($request, $statuses, 200, ['data' => $statuses]);

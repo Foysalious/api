@@ -1030,7 +1030,9 @@ return [
         ],
     ],
     'LOAN_CONFIG'                                 => [
-        'interest' => 15,
+        'interest'         => 15,
+        'minimum_amount'   => 50000,
+        'minimum_duration' => 1
     ],
     'WEEKS'                                       => [
         'Saturday'  => 1,
