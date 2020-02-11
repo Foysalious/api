@@ -649,14 +649,7 @@ class CategoryController extends Controller
                 ->orderBy('id', 'desc')
                 ->groupBy('customer_id')
                 ->get();
-            $group_rating = [
-                "1" => 10,
-                "2" => 5,
-                "3" => 15,
-                "4" => 150,
-                "5" => 500,
-            ];
-            $reviews = Review::selectRaw("count(DISTINCT(reviews.id)) as total_ratings")
+            $review_stat = Review::selectRaw("count(DISTINCT(reviews.id)) as total_ratings")
                 ->selectRaw("count(DISTINCT(case when rating=5 then reviews.id end)) as total_five_star_ratings")
                 ->selectRaw("count(DISTINCT(case when rating=4 then reviews.id end)) as total_four_star_ratings")
                 ->selectRaw("count(DISTINCT(case when rating=3 then reviews.id end)) as total_three_star_ratings")
@@ -667,11 +660,22 @@ class CategoryController extends Controller
                 ->where('reviews.category_id', $category->id)
                 ->groupBy("reviews.category_id")->first();
             $info = [
-                'avg_rating' => 4.5,
+                'avg_rating' => $review_stat && $review_stat->avg_rating ? round($review_stat->avg_rating,2) : 0,
                 'total_review_count' => 500,
-                'total_rating_count' => 680
+                'total_rating_count' => $review_stat && $review_stat->total_ratings ? $review_stat->total_ratings : 0
             ];
-            return count($reviews) > 0 ? api_response($request, $reviews, 200, ['reviews' => $reviews, 'group_rating' => $group_rating, 'info' => $info]) : api_response($request, null, 404);
+            $group_rating = [
+                "1" => $review_stat && $review_stat->total_one_star_ratings ? $review_stat->total_one_star_ratings : null,
+                "2" => $review_stat && $review_stat->total_two_star_ratings ? $review_stat->total_two_star_ratings : null,
+                "3" => $review_stat && $review_stat->total_three_star_ratings ? $review_stat->total_three_star_ratings : null,
+                "4" => $review_stat && $review_stat->total_four_star_ratings ? $review_stat->total_four_star_ratings : null,
+                "5" => $review_stat && $review_stat->total_five_star_ratings ? $review_stat->total_five_star_ratings : null,
+            ];
+            return count($reviews) > 0 ? api_response($request, $reviews, 200, [
+                'reviews' => $reviews,
+                'group_rating' => $group_rating,
+                'info' => $info
+            ]) : api_response($request, null, 404);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
