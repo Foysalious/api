@@ -25,7 +25,7 @@ class PosOrderReturnedTransformer extends TransformerAbstract
             $orders['item'][] = [
                 'id'              => $service->service ? $service->service->id : null,
                 'item_id'         => $service->id,
-                'name'            => $service->name,
+                'name'            => $service->service_name,
                 'app_thumb'       => $service->service ? $service->service->app_thumb : null,
                 'unit_price'      => (double)$item->unit_price,
                 'old_quantity'    => $item->qty->old,
