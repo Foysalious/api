@@ -559,13 +559,14 @@ class Loan
             throw new NotAllowedToAccess();
         $mobile  = formatMobile($request->mobile);
         $profile = Profile::where('mobile', $mobile)->first();
-        if (empty($profile) || !$profile->resource)
+        /** @var Resource $resource */
+        $resource = $profile->resource;
+        if (empty($profile) || empty($resource))
             throw new NotShebaPartner();
         /** @var Partner $partner */
         $partner = $profile->resource->firstPartner();
-        /** @var Resource $resource */
-        $resource = $profile->resource;
-        if (!$resource->isManager($partner) || !$resource->isAdmin($partner)) {
+
+        if (empty($partner)||!$resource->isManager($partner) || !$resource->isAdmin($partner)) {
             throw new NotShebaPartner();
         }
         $config = constants('LOAN_CONFIG');
