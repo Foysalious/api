@@ -653,6 +653,10 @@ class LoanController extends Controller
                 $loan_application_name = 'sanction_letter_' . $loan_id;
                 return $pdf_handler->setData($data)->setName($loan_application_name)->setViewFile('partner_loan_sanction_letter_form')->download();
             }
+            if($request->has('pdf_type') && $request->pdf_type == constants('BANK_LOAN_PDF_TYPES')['ProposalLetter']){
+                $loan_application_name = 'proposal_letter_' . $loan_id;
+                return $pdf_handler->setData($data)->setName($loan_application_name)->setViewFile('partner_loan_proposal_letter')->download();
+            }
             return $pdf_handler->setData($data)->setName($loan_application_name)->setViewFile('partner_loan_application_form')->download();
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
