@@ -536,7 +536,6 @@ class Loan
         return $f ? $file . '/' . basename($url) : false;
     }
 
-<<<<<<< HEAD
     private function sendLoanNotification($title,$event_type,$event_id){
         notify()->departments([9, 13])->send([
             "title" => $title,
@@ -545,8 +544,8 @@ class Loan
             "event_type" => $event_type,
             "event_id"   => $event_id
         ]);
-
-=======
+    }
+    
     /**
      * @param Request $request
      * @return PartnerBankLoan
@@ -581,6 +580,5 @@ class Loan
         $this->validateAlreadyRequested();
         $this->initiateFinalFields();
         return $request->create();
->>>>>>> 155bbb541f8da3a9dce622eb5378757e5f03f1ff
     }
 }
