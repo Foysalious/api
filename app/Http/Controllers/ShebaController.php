@@ -490,7 +490,8 @@ class ShebaController extends Controller
 
     public function getSluggableType(Request $request, $slug, MetaTagRepositoryInterface $meta_tag_repository)
     {
-        $type = SluggableType::where('slug', $slug)->select('sluggable_type','sluggable_id')->first();
+        $type = SluggableType::where('slug', $slug)->select('sluggable_type', 'sluggable_id')->first();
+        if (!$type) return api_response($request, null, 404);
         if ($type->sluggable_type == 'service') $model = 'service';
         else $model = 'category';
         $meta_tag = $meta_tag_repository->builder()->select('meta_tag', 'og_tag')->where('taggable_type', 'like', '%' . $model)->where('taggable_id', $type->id)->first();
