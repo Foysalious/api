@@ -94,6 +94,7 @@ class LeaveController extends Controller
             $business_member = $this->getBusinessMember($request);
             if (!$business_member) return api_response($request, null, 404);
             $leaves = $leave_repo->getLeavesByBusinessMember($business_member);
+            if ($request->has('type')) $leaves = $leaves->where('leave_type_id', $request->type)->get();
             $fractal = new Manager();
             $resource = new Collection($leaves, function ($leave){
                 return [
@@ -106,6 +107,7 @@ class LeaveController extends Controller
                     'status' => $leave['status']
                 ];
             });
+
             return api_response($request, null, 200, ['leaves' => $fractal->createData($resource)->toArray()['data']]);
         }
         catch (\Throwable $e) {
