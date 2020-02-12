@@ -1,4 +1,5 @@
 <?php namespace App\Sheba\Leave;
+
 use Carbon\Carbon;
 use Sheba\Dal\Leave\EloquentImplementation as LeaveRepository;
 
@@ -11,6 +12,7 @@ class Creator
     private $now;
     private $startDate;
     private $endDate;
+    private $totalDays;
 
     public function __construct(LeaveRepository $leave_repo)
     {
@@ -48,6 +50,15 @@ class Creator
         return $this;
     }
 
+    public function setTotalDays()
+    {
+        $start_date = new \DateTime($this->startDate);
+        $end_date = new \DateTime($this->endDate);
+        $total_days = $start_date->diff($end_date)->format("%r%a");
+        $this->totalDays = $total_days;
+        return $this;
+    }
+
     public function create()
     {
         return $this->leaveRepository->create([
@@ -55,7 +66,8 @@ class Creator
             'business_member_id' => $this->businessMemberId,
             'leave_type_id' => $this->leaveTypeId,
             'start_date' => $this->startDate,
-            'end_date' => $this->endDate
+            'end_date' => $this->endDate,
+            'total_days' => $this->totalDays
         ]);
     }
 }
