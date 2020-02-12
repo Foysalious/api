@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\Employee;
 
 use App\Models\BusinessMember;
+use App\Transformers\Business\HolidayListTransformer;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -20,14 +21,9 @@ class HolidayController extends Controller
         $business_holidays = $business_holiday_repo->getAllByBusiness($business_member->business);
         $weekend = $business_weekend_repo->weekendDates($business_member->business);
         $fractal = new Manager();
-        $resource = new Collection($business_holidays, function ($holiday){
-            return [
-                'title' => $holiday['title'],
-                'start_date' => Carbon::parse($holiday['start_date'])->format('Y-m-d'),
-                'end_date' => Carbon::parse($holiday['end_date'])->format('Y-m-d')
-            ];
-        });
-        return api_response($request, null,200, ['holidays' => $fractal->createData($resource)->toArray()['data'], 'weekends' => $weekend]);
+        $resource = new Collection($business_holidays, new HolidayListTransformer());
+        $holidays = $fractal->createData($resource)->toArray()['data'];
+        return api_response($request, null,200, ['holidays' => $holidays, 'weekends' => $weekend]);
     }
 
     private function getBusinessMember(Request $request)
