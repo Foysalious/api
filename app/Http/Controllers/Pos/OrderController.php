@@ -293,7 +293,7 @@ class OrderController extends Controller
             /** @var PosOrder $order */
             $new           = $request->new;
             $order         = PosOrder::with('items')->find($request->order);
-            $is_returned   = ($this->isReturned($order, $request));
+            $is_returned   = ($this->isReturned($order, $request, $new));
             $refund_nature = $is_returned ? Natures::RETURNED : Natures::EXCHANGED;
             $return_nature = $is_returned ? $this->getReturnType($request, $order) : null;
             /** @var RefundNature $refund */
@@ -313,6 +313,7 @@ class OrderController extends Controller
     /**
      * @param PosOrder $order
      * @param Request $request
+     * @param bool $new
      * @return bool
      */
     private function isReturned(PosOrder $order, Request $request, $new = false)
