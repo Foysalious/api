@@ -72,7 +72,7 @@ class PartnerLoanRequest implements Arrayable
         $data['partner_id']          = $this->partner->id;
         $data['status']              = constants('LOAN_STATUS')['applied'];
         $data['interest_rate']       = (int)constants('LOAN_CONFIG')['interest'];
-        $duration                    = (int)$data['duration'] * 12;
+        $duration                    = (int)$data['duration'];
         $data['monthly_installment'] = emi_calculator($data['interest_rate'], $data['loan_amount'], $duration);
         $this->setModifier($this->partner);
         $this->partnerBankLoan = new PartnerBankLoan($this->withCreateModificationField($data));
@@ -149,7 +149,7 @@ class PartnerLoanRequest implements Arrayable
             ],
             'monthly_installment'        => $this->partnerBankLoan->monthly_installment,
             'loan_amount'                => $this->partnerBankLoan->loan_amount,
-            'total_installment'          => (int)$this->partnerBankLoan->duration * 12,
+            'total_installment'          => (int)$this->partnerBankLoan->duration,
             'status_'                    => constants('LOAN_STATUS_BN')[$this->partnerBankLoan->status],
             'final_information_for_loan' => $this->final_details->toArray(),
             'next_status'                => $output
