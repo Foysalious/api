@@ -291,7 +291,7 @@ class OrderController extends Controller
         $this->setModifier($request->manager_resource);
         try {
             /** @var PosOrder $order */
-            $new           = $request->new;
+            $new           = 1;
             $order         = PosOrder::with('items')->find($request->order);
             $is_returned   = ($this->isReturned($order, $request, $new));
             $refund_nature = $is_returned ? Natures::RETURNED : Natures::EXCHANGED;
