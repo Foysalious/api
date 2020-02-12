@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
 use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use Sheba\Dal\LeaveType\Contract as LeaveTypesRepoInterface;
 use App\Sheba\Leave\Creator as LeaveCreator;
@@ -79,6 +80,33 @@ class LeaveController extends Controller
             $fractal->setSerializer(new CustomSerializer());
             $resource = new Item($leave, new LeaveTransformer());
             return api_response($request, $leave, 200, ['leave' => $fractal->createData($resource)->toArray()['data']]);
+        }
+        catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
+    }
+
+    public function index(Request $request, LeaveRepoInterface $leave_repo)
+    {
+        try {
+            $business_member = $this->getBusinessMember($request);
+            if (!$business_member) return api_response($request, null, 404);
+            $leaves = $leave_repo->getLeavesByBusinessMember($business_member);
+            $fractal = new Manager();
+            $resource = new Collection($leaves, function ($leave){
+                return [
+                    'id' => $leave['id'],
+                    'title' => $leave['title'],
+                    'leave_type_id' => $leave['leave_type_id'],
+                    'leave_type' => $leave->leaveType->title,
+                    'start_date' => $leave['start_date'],
+                    'end_date' => $leave['end_date'],
+                    'status' => $leave['status']
+                ];
+            });
+            return api_response($request, null, 200, ['leaves' => $fractal->createData($resource)->toArray()['data']]);
         }
         catch (\Throwable $e) {
             app('sentry')->captureException($e);
