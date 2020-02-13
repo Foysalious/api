@@ -57,12 +57,12 @@
     </style>
 </head>
 <body>
-<?php $today = \Carbon\Carbon::today()->format('d-m-y')?>
+<?php $today = \Carbon\Carbon::today()->format('d-M-y')?>
 <?php $current_year = \Carbon\Carbon::today()->format('Y')?>
 
 <div class="proposal-letter">
     <div class="proposal-letter-table">
-        <div style="text-align: right">Management Memo No. <span style="padding-left: 50px">3579-20</span></div>
+        <div style="text-align: right">Management Memo No. <span style="padding-left: 50px">{{$final_information_for_loan['proposal_info']['management_memo_no']}}</span></div>
         <table cellpadding="0" cellspacing="0" width="100%">
             <col width="15%">
             <col width="15%">
@@ -100,7 +100,7 @@
                 <td>Strategic Partner</td>
                 <td colspan="3">Sheba.xyz</td>
                 <td>Date:</td>
-                <td colspan="2">6-Jan-20</td>
+                <td class="text-center" colspan="2">{{$today}}</td>
             </tr>
             <tr>
                 <td colspan="7" style="text-align: center">Client Details</td>
@@ -109,74 +109,74 @@
                 <td>Segment</td>
                 <td colspan="2">MME Investment</td>
                 <td colspan="2">Authority Level</td>
-                <td colspan="2">MCC</td>
+                <td class="text-center" colspan="2">MCC</td>
             </tr>
             <tr>
                 <td>Company Name</td>
-                <td colspan="2">Pabitra Chandra Shil Proprietor of INP Engineering</td>
+                <td colspan="2">{{$partner['name']}}</td>
                 <td colspan="2">Establishment Date</td>
-                <td colspan="2">17-May-15</td>
+                <td class="text-center" colspan="2">{{ date('d-M-y', strtotime($final_information_for_loan['business']['establishment_year']))}}</td>
             </tr>
             <tr>
                 <td>Key Sponsor</td>
-                <td colspan="2">Pabitra Chandra Shil</td>
+                <td colspan="2">{{$final_information_for_loan['proposal_info']['key_sponsor_name']}}</td>
                 <td colspan="2">CRG Score</td>
-                <td colspan="2">N/A</td>
+                <td class="text-center" colspan="2">N/A</td>
             </tr>
             <tr>
                 <td>Trade License No.</td>
-                <td colspan="2">007101</td>
+                <td colspan="2">{{$final_information_for_loan['business']['trade_license']}}</td>
                 <td rowspan="3">Contact Details</td>
                 <td>Business Address:</td>
-                <td colspan="2">Ta-129/A, Badda Link
-                    Road, Gulshan 1, Dhaka 1212
+                <td class="text-center" colspan="2">{{$final_information_for_loan['business']['location']}}
                 </td>
             </tr>
             <tr>
                 <td>Legal Status</td>
-                <td colspan="2">Proprietorship</td>
+                <td colspan="2">{{$final_information_for_loan['business']['ownership_type']}} </td>
                 <td>Residential Address:</td>
-                <td colspan="2">Ta-129/A, Badda Link
-                    Road, Gulshan 1, Dhaka 1212
+                <td class="text-center" colspan="2">
+                    {{$final_information_for_loan['personal']['present_address']['street']}},
+                    {{$final_information_for_loan['personal']['present_address']['thana']}},
+                    {{$final_information_for_loan['personal']['present_address']['zilla']}}-
+                    {{$final_information_for_loan['personal']['present_address']['post_code']}}
                 </td>
             </tr>
             <tr>
                 <td>Industry & Business
                     Nature
                 </td>
-                <td colspan="2">Air Conditioner Repair, Sales/Service</td>
+                <td colspan="2">{{$final_information_for_loan['business']['industry_and_business_nature']}}</td>
                 <td>Contact No</td>
-                <td colspan="2">01748422846</td>
+                <td class="text-center" colspan="2">{{$partner['profile']['mobile']}}</td>
             </tr>
             <tr>
                 <td>Sector</td>
-                <td colspan="2">Service</td>
+                <td colspan="2">{{$final_information_for_loan['business']['sector']}}</td>
                 <td colspan="2">CIB Status</td>
-                <td colspan="2">UC on 29-Dec-2019</td>
+                <td class="text-center" colspan="2">{{$final_information_for_loan['proposal_info']['cib_status']}}</td>
             </tr>
             <tr>
                 <td>Human Resource</td>
-                <td colspan="2">12</td>
+                <td colspan="2">{{$final_information_for_loan['business']['full_time_employee']}}</td>
                 <td colspan="2">Total Asset (excl. Land and Building)</td>
-                <td colspan="2">BDT 510,000</td>
+                <td class="text-center" colspan="2">
+                    {{
+                        $final_information_for_loan['business']['fixed_asset'] ? "BDT " . $final_information_for_loan['business']['fixed_asset'] : "BDT 0.00"
+                    }}
+                </td>
             </tr>
             <tr>
                 <td>Business Category</td>
-                <td colspan="2">Micro</td>
+                <td colspan="2">{{$final_information_for_loan['business']['business_category']}}</td>
                 <td colspan="2">Supplier Category (As per Sheba.xyz)</td>
-                <td colspan="2">Enterprise Service Provider</td>
+                <td class="text-center" colspan="2">Enterprise Service Provider</td>
             </tr>
             <tr>
                 <td colspan="7" style="text-align: center">Client Profile:</td>
             </tr>
             <tr>
-                <td colspan="7">INP Engineering works as a proprietorship concern engaged in providing Air Conditioner
-                    repair and maintainence service. They provide support to household as
-                    well as businesses. Proprietor also sells new Air Conditioners on demand or pre order. Proprietor
-                    runs the business through Sheba.XYZ platform from the year
-                    2017, though it was established on 2015. Currently proprietor has 12 employees working under the
-                    concern. All of them are permanent.
-                </td>
+                <td colspan="7">{{$final_information_for_loan['proposal_info']['client_profile']}}</td>
             </tr>
             <tr>
                 <td colspan="7" style="text-align: center">Liability Position (Brac Bank As on 30-Nov-2019)</td>
@@ -191,31 +191,24 @@
             </tr>
             <tr>
                 <td>Total</td>
-                <td style="text-align: center">Term Loan</td>
+                <td style="text-align: center">{{$final_information_for_loan['proposal_info']['loan_type']}}</td>
                 <td style="text-align: center">BDT 0.60 M</td>
-                <td style="text-align: center">BDT 24,850</td>
-                <td style="text-align: center">BDT 0.00 M</td>
-                <td colspan="2" style="text-align: center">Liability position with Brac Bank has
-                    been setteled
-                </td>
+                <td style="text-align: center">BDT {{$final_information_for_loan['proposal_info']['outstanding']}}</td>
+                <td style="text-align: center">BDT {{$final_information_for_loan['proposal_info']['overdue']}}</td>
+                <td colspan="2" style="text-align: center">{{$final_information_for_loan['proposal_info']['remarks']}}</td>
             </tr>
             <tr>
                 <td colspan="7" style="text-align: center">Conditions and Purpose of the Proposed Facility</td>
             </tr>
             <tr>
-                <td style="text-align: center">Term Loan</td>
-                <td style="text-align: center">BDT 1.00 M</td>
-                <td style="text-align: center">To meet additional fund requirement for business expansion & increasing
-                    stock of new
-                    products.
-                </td>
-                <td style="text-align: center">Interest Rate 15.00% p.a.</td>
-                <td style="text-align: center">30 Months</td>
+                <td style="text-align: center">{{$final_information_for_loan['proposal_info']['loan_type']}}</td>
+                <td style="text-align: center">BDT {{$loan_amount}}</td>
+                <td style="text-align: center">{{$purpose}}</td>
+                <td style="text-align: center">Interest Rate {{$interest_rate}}% p.a.</td>
+                <td style="text-align: center">{{$duration}} Months</td>
                 <td colspan="2">
                     <ul style="padding: 0 10px">
-                        <li>Assignment of Payment from Sheba Platform Limited.</li>
-                        <li>PG of Brother and Business friend.</li>
-                        <li>Other usual charge documents.</li>
+                        <li>{{$final_information_for_loan['business']['security_check']}}</li>
                     </ul>
                 </td>
             </tr>
@@ -225,7 +218,7 @@
             </tr>
             <tr>
                 <td>Annual Turnover (Only Sheba. XYZ)</td>
-                <td style="text-align: right">269,070</td>
+                <td style="text-align: right"></td>
                 <td>(as per SP Report)</td>
                 <td>Monthly Operating Income</td>
                 <td></td>
@@ -233,41 +226,41 @@
             </tr>
             <tr>
                 <td>Total Annual Turnover</td>
-                <td style="text-align: right">7,200,000</td>
+                <td style="text-align: right"></td>
                 <td>Overall</td>
                 <td></td>
-                <td style="text-align: right">124,800</td>
+                <td style="text-align: right"></td>
                 <td colspan="2"></td>
             </tr>
             <tr>
                 <td>Net Profit</td>
-                <td style="text-align: right">1,497,600</td>
-                <td>20.80%</td>
+                <td style="text-align: right">{{ $final_information_for_loan['proposal_info']['net_profit'] }}</td>
+                <td>{{ $final_information_for_loan['proposal_info']['profit_ratio'] }}%</td>
                 <td>Total Existing Monthly
                     Debt Repayment</td>
-                <td></td>
+                <td>{{ $final_information_for_loan['proposal_info']['existing_debt_repayment'] }} </td>
                 <td colspan="2">(Previous Liability Exposure with
                     Brac Bank which has been setteled)</td>
             </tr>
             <tr>
                 <td>Total Fixed Assets</td>
-                <td style="text-align: right">220,000</td>
+                <td style="text-align: right">{{$final_information_for_loan['business']['fixed_asset'] ? $final_information_for_loan['business']['fixed_asset'] : "0.00"}}</td>
                 <td></td>
                 <td>Proposed EMI</td>
-                <td style="text-align: right">40,179</td>
+                <td style="text-align: right">{{$monthly_installment}}</td>
                 <td colspan="2"></td>
             </tr>
             <tr>
                 <td>Total Current Assets</td>
-                <td style="text-align: right">150,765</td>
+                <td style="text-align: right">{{ $final_information_for_loan['proposal_info']['total_current_asset'] }}</td>
                 <td></td>
                 <td>DBR%</td>
-                <td style="text-align: right">32.19%</td>
+                <td style="text-align: right">{{ $final_information_for_loan['proposal_info']['dbr'] }}</td>
                 <td colspan="2"></td>
             </tr>
             <tr>
                 <td>Total Equity</td>
-                <td style="text-align: right">200,000</td>
+                <td style="text-align: right">{{ $final_information_for_loan['proposal_info']['total_equity'] }}</td>
                 <td></td>
                 <td colspan="4"></td>
             </tr>
@@ -284,14 +277,17 @@
                 <td class="text-center" width="18%">Monthly Average Credit Sum (BDT)</td>
             </tr>
             <tr>
-                <td class="text-center">INP Engineering</td>
-                <td class="text-center">Brac Bank (A/C:
-                    1501203960600001)</td>
-                <td class="text-center">C/A</td>
-                <td class="text-center">12 Months</td>
-                <td class="text-center">BDT 7,208,349</td>
-                <td class="text-center">BDT 7,229,035</td>
-                <td class="text-center">BDT 602,420</td>
+                <td class="text-center">{{ $final_information_for_loan['finance']['acc_name'] }}</td>
+                <td class="text-center">{{ $final_information_for_loan['finance']['bank_name'] }} (A/C:
+                    {{ $final_information_for_loan['finance']['acc_no'] }} )</td>
+                <td class="text-center">{{ $final_information_for_loan['finance']['acc_type'] }}</td>
+                <td class="text-center">{{ $final_information_for_loan['finance']['period'] }} Months</td>
+                <td class="text-center">{{ $final_information_for_loan['finance']['debit_sum'] ?
+"BDT ".$final_information_for_loan['finance']['debit_sum']:"BDT 0.00"}}</td>
+                <td class="text-center">{{ $final_information_for_loan['finance']['credit_sum'] ?
+"BDT ".$final_information_for_loan['finance']['credit_sum']:"BDT 0.00"}}</td>
+                <td class="text-center">{{ $final_information_for_loan['finance']['monthly_avg_credit_sum'] ?
+"BDT ".$final_information_for_loan['finance']['monthly_avg_credit_sum']:"BDT 0.00"}}</td>
             </tr>
             <tr>
                 <td style="text-align: center" colspan="7">Personal Guarantor Details</td>
@@ -307,31 +303,34 @@
             </tr>
             <tr>
                 <td class="text-center">1</td>
-                <td class="text-center">Pabitra Chandra Shil</td>
-                <td class="text-center">30</td>
+                <td class="text-center">{{$partner['profile']['name']}}</td>
+                <td class="text-center">{{calculateAge($partner['profile']['dob'])}}</td>
                 <td class="text-center">Business</td>
-                <td class="text-center">BDT 295,776</td>
+                <td class="text-center">BDT 00000</td>
                 <td class="text-center">Self</td>
-                <td class="text-center">199/A, West agargao,Dhaka 1207</td>
+                <td class="text-center">{{$final_information_for_loan['personal']['present_address']['street']}},
+                    {{$final_information_for_loan['personal']['present_address']['thana']}},
+                    {{$final_information_for_loan['personal']['present_address']['zilla']}}-
+                    {{$final_information_for_loan['personal']['present_address']['post_code']}}</td>
             </tr>
             <tr>
                 <td class="text-center">2</td>
-                <td class="text-center">Gopal Chandra Sheel</td>
-                <td class="text-center">25</td>
-                <td class="text-center">Service</td>
-                <td class="text-center">BDT 255,776</td>
-                <td class="text-center">Brother</td>
-                <td class="text-center">Khalishakhali,
-                    Patuakhali 8600</td>
+                <td class="text-center">{{$final_information_for_loan['nominee_granter']['grantor']['name']}}</td>
+                <td class="text-center">{{calculateAge($final_information_for_loan['nominee_granter']['grantor']['dob'])}}
+                </td>
+                <td class="text-center">{{$final_information_for_loan['nominee_granter']['grantor']['occupation']}}</td>
+                <td class="text-center">BDT {{$final_information_for_loan['nominee_granter']['grantor']['net_worth']}}</td>
+                <td class="text-center">{{$final_information_for_loan['nominee_granter']['grantor']['grantor_relation']}}</td>
+                <td class="text-center">{{$final_information_for_loan['nominee_granter']['grantor']['address']}}</td>
             </tr>
             <tr>
                 <td class="text-center">3</td>
-                <td class="text-center">Sushanata Guha</td>
-                <td class="text-center">29</td>
-                <td class="text-center">Service</td>
-                <td class="text-center">BDT 243,565</td>
-                <td class="text-center">Business Friend</td>
-                <td class="text-center">Khalishakhali,Patuakhali 8600</td>
+                <td class="text-center">{{$final_information_for_loan['nominee_granter']['nominee']['name']}}</td>
+                <td class="text-center">{{calculateAge($final_information_for_loan['nominee_granter']['nominee']['dob'])}}</td>
+                <td class="text-center">{{$final_information_for_loan['nominee_granter']['nominee']['occupation']}}</td>
+                <td class="text-center">BDT {{$final_information_for_loan['nominee_granter']['nominee']['net_worth']}}</td>
+                <td class="text-center">{{$final_information_for_loan['nominee_granter']['nominee']['nominee_relation']}}</td>
+                <td class="text-center">{{$final_information_for_loan['nominee_granter']['nominee']['address']}}</td>
             </tr>
             <tr>
                 <td style="text-align: center" colspan="7">SHEBA.XYZ Performance With IPDC</td>
@@ -345,10 +344,10 @@
             </tr>
             <tr>
                 <td>29</td>
-                <td class="text-center">BDT 9.05 M</td>
-                <td class="text-center">BDT 6.90 M</td>
+                <td class="text-center">BDT {{$loan_amount}}</td>
+                <td class="text-center">BDT {{$final_information_for_loan['finance']['disbursement_amount']}}</td>
                 <td class="text-center"></td>
-                <td colspan="3" class="text-center">BDT 0.250 M (EMI is collected on 10th of every month)</td>
+                <td colspan="3" class="text-center">BDT {{$monthly_installment}}</td>
             </tr>
             <tr>
                 <td colspan="4">Exposure Limit</td>
@@ -359,35 +358,35 @@
                 <td colspan="3" rowspan="2">Single Borrower Exposure</td>
                 <td>Amount</td>
                 <td style="text-align: right"></td>
-                <td colspan="2" style="text-align: right">BDT 1.00 M</td>
+                <td colspan="2" style="text-align: right">BDT {{$final_information_for_loan['finance']['disbursement_amount']}}</td>
             </tr>
             <tr>
                 <td>% of IPDC equity</td>
                 <td style="text-align: right"></td>
-                <td colspan="2" style="text-align: right">0.01%</td>
+                <td colspan="2" style="text-align: right">{{$final_information_for_loan['proposal_info']['ipdc_equity'].'%'}}</td>
             </tr>
             <tr>
                 <td colspan="3" rowspan="2">Group Exposure</td>
                 <td>Amount</td>
                 <td style="text-align: right"></td>
-                <td colspan="2" style="text-align: right">BDT 1.00 M</td>
+                <td colspan="2" style="text-align: right"></td>
             </tr>
             <tr>
                 <td>% of IPDC equity</td>
                 <td style="text-align: right"></td>
-                <td colspan="2" style="text-align: right">0.01%</td>
+                <td colspan="2" style="text-align: right"></td>
             </tr>
             <tr>
                 <td colspan="3">Ind. Exp. (Service)</td>
                 <td>Amount</td>
-                <td style="text-align: right">BDT 16.00 M</td>
-                <td colspan="2" style="text-align: right">BDT 17.00 M</td>
+                <td style="text-align: right"></td>
+                <td colspan="2" style="text-align: right"></td>
             </tr>
             <tr>
                 <td colspan="3">Max 5% of Investment Portfolio</td>
                 <td>% of IPDC Investment Portfolio</td>
-                <td style="text-align: right">0.03%</td>
-                <td colspan="2" style="text-align: right">0.03%</td>
+                <td style="text-align: right"></td>
+                <td colspan="2" style="text-align: right"></td>
             </tr>
             <div>
                 *Client has low sales volume with Sheba.XYZ. However, client has
@@ -397,7 +396,8 @@
 
         <div style="page-break-before:always">&nbsp;</div>
 
-        <div style="text-align: right">Management Memo No. <span style="padding-left: 50px">3579-20</span></div>
+        <div style="text-align: right">Management Memo No. <span style="padding-left: 50px">{{$final_information_for_loan['proposal_info']['management_memo_no']}}</span></div>
+
         <table width="100%">
             <tr>
                 <td>FEATURES</td>
@@ -405,39 +405,39 @@
             </tr>
             <tr>
                 <td>Facility Type</td>
-                <td colspan="3">Term Loan</td>
+                <td colspan="3">{{$final_information_for_loan['proposal_info']['loan_type']}}</td>
             </tr>
             <tr>
                 <td>Facility Amount</td>
-                <td colspan="3">BDT 1.00 million</td>
+                <td colspan="3">BDT {{$final_information_for_loan['finance']['disbursement_amount']}}</td>
             </tr>
             <tr>
                 <td>Purpose</td>
-                <td colspan="3">To meet additional fund requirement for business expansion & increasing stock of new products.</td>
+                <td colspan="3">{{$purpose}}</td>
             </tr>
             <tr>
                 <td>Tenure</td>
-                <td colspan="3">30 months</td>
+                <td colspan="3">{{$duration}} months</td>
             </tr>
             <tr>
                 <td>Interest rate</td>
-                <td>15% p.a.</td>
+                <td>{{$interest_rate}}% p.a.</td>
                 <td colspan="2" class="text-center">based on client profile and relevant risk parameters. IPDC will
                     have the discretion to re-fix the interest rate.</td>
             </tr>
             <tr>
                 <td>Disbursement</td>
                 <td colspan="2" class="text-center">Disbursement will be made in single or multiple tranches directly to the</td>
-                <td>client</td>
+                <td>{{$final_information_for_loan['proposal_info']['disbursement_to']}}</td>
             </tr>
             <tr>
                 <td>Availability Period</td>
-                <td>6</td>
+                <td>{{$final_information_for_loan['proposal_info']['availability']}}</td>
                 <td colspan="2" class="text-center">months from the date of offer</td>
             </tr>
             <tr>
                 <td>Repayment</td>
-                <td>30</td>
+                <td>{{$duration}}</td>
                 <td colspan="2" class="text-center">equal monthly installments. (IPDC reserves the right to review
                     and change this instalment amount during the loan period subject
                     to adverse change in money market)</td>
@@ -463,10 +463,7 @@
                 </td>
                 <td>
                     <ul>
-                        <li>Personal Guarantee of Gopal
-                            Chandra Sheel (Brother of the
-                            Proprietor) and Sushanata Guha
-                            (Business Friend of the Proprietor).</li>
+                        <li>{{ $security_check }}</li>
                     </ul>
                 </td>
             </tr>
