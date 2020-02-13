@@ -12,7 +12,7 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use Sheba\Dal\LeaveType\Contract as LeaveTypesRepoInterface;
-use App\Sheba\Leave\Creator as LeaveCreator;
+use App\Sheba\Business\Leave\Creator as LeaveCreator;
 use Sheba\Dal\Leave\Contract as LeaveRepoInterface;
 use Sheba\Helpers\TimeFrame;
 

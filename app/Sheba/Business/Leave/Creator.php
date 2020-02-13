@@ -1,4 +1,4 @@
-<?php namespace App\Sheba\Leave;
+<?php namespace App\Sheba\Business\Leave;
 
 use Carbon\Carbon;
 use Sheba\Dal\Leave\EloquentImplementation as LeaveRepository;
