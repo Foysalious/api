@@ -281,15 +281,17 @@ class CategoryController extends Controller
 
             $best_deal_categories_id = explode(',', config('sheba.best_deal_ids'));
             $best_deal_category = CategoryGroupCategory::whereIn('category_group_id', $best_deal_categories_id)->pluck('category_id')->toArray();
-            $category->load(['children' => function ($q) use ($best_deal_category, $location) {
+            $category->load(['children' => function ($q) use ($best_deal_category, $location, $request) {
                 $q->published()->whereNotIn('id', $best_deal_category);
                 if ($location) {
                     $q->whereHas('locations', function ($q) use ($location) {
                         $q->where('locations.id', $location->id);
                     });
                 }
-                $q->whereHas('services', function ($q) use ($location) {
-                    $q->published();
+                $q->whereHas('services', function ($q) use ($location, $request) {
+                    if ($request->has('portal') && $request->portal == 'admin-portal') $q->publishedForAll();
+                    else $q->published();
+
                     if ($location) {
                         $q->whereHas('locations', function ($q) use ($location) {
                             $q->where('locations.id', $location->id);
