@@ -169,7 +169,8 @@ class BusinessInfo implements Arrayable
             'fixed_asset',
             'security_check',
             'business_category',
-            'sector'
+            'sector',
+            'industry_and_business_nature'
         ];
     }
 
