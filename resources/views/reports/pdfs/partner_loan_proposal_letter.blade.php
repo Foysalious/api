@@ -170,7 +170,7 @@
                 <td>Business Category</td>
                 <td colspan="2">{{$final_information_for_loan['business']['business_category']}}</td>
                 <td colspan="2">Supplier Category (As per Sheba.xyz)</td>
-                <td class="text-center" colspan="2">Enterprise Service Provider</td>
+                <td class="text-center" colspan="2">{{$partner['current_package']}}</td>
             </tr>
             <tr>
                 <td colspan="7" style="text-align: center">Client Profile:</td>
@@ -463,7 +463,7 @@
                 </td>
                 <td>
                     <ul>
-                        <li>{{ $security_check }}</li>
+                        <li>{{ $final_information_for_loan['business']['security_check'] }}</li>
                     </ul>
                 </td>
             </tr>

@@ -4,6 +4,7 @@ namespace Sheba\Loan\DS;
 
 use App\Models\Partner;
 use App\Models\PartnerBankLoan;
+use App\Models\PartnerSubscriptionPackage;
 use Carbon\Carbon;
 use Illuminate\Contracts\Support\Arrayable;
 use Sheba\ModificationFields;
@@ -127,6 +128,7 @@ class PartnerLoanRequest implements Arrayable
             'generated_id' => $generated_id,
             'partner' => [
                 'id' => $this->partner->id,
+                'current_package' =>  PartnerSubscriptionPackage::find($this->partner->package_id)->show_name,
                 'name' => $this->partner->name,
                 'logo' => $this->partner->logo,
                 'updated_at' => (Carbon::parse($this->partner->updated_at))->format('j F, Y h:i A'),
