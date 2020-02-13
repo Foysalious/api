@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\Employee;
 
 use App\Models\BusinessMember;
+use App\Transformers\Business\LeaveListTransformer;
 use App\Transformers\Business\LeaveTransformer;
 use App\Transformers\CustomSerializer;
 use Illuminate\Http\Request;
@@ -94,21 +95,12 @@ class LeaveController extends Controller
             $business_member = $this->getBusinessMember($request);
             if (!$business_member) return api_response($request, null, 404);
             $leaves = $leave_repo->getLeavesByBusinessMember($business_member);
-            if ($request->has('type')) $leaves = $leaves->where('leave_type_id', $request->type)->get();
+            if ($request->has('type')) $leaves = $leaves->where('leave_type_id', $request->type);
+            $leaves = $leaves->get();
             $fractal = new Manager();
-            $resource = new Collection($leaves, function ($leave){
-                return [
-                    'id' => $leave['id'],
-                    'title' => $leave['title'],
-                    'leave_type_id' => $leave['leave_type_id'],
-                    'leave_type' => $leave->leaveType->title,
-                    'start_date' => $leave['start_date'],
-                    'end_date' => $leave['end_date'],
-                    'status' => $leave['status']
-                ];
-            });
-
-            return api_response($request, null, 200, ['leaves' => $fractal->createData($resource)->toArray()['data']]);
+            $resource = new Collection($leaves, new LeaveListTransformer());
+            $leaves = $fractal->createData($resource)->toArray()['data'];
+            return api_response($request, null, 200, ['leaves' => $leaves]);
         }
         catch (\Throwable $e) {
             app('sentry')->captureException($e);
