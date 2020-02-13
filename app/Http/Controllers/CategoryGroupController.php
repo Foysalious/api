@@ -60,7 +60,7 @@ class CategoryGroupController extends Controller
                             })->whereHas('locations', function ($query) {
                                 $query->select('locations.id')->where('locations.id', $this->location);
                             });
-                        if (\request()->has('new')) $query->select('id', 'name', 'thumb', 'app_thumb');
+                        if (\request()->has('new')) $query->select('id', 'name', 'thumb', 'app_thumb', 'icon_png', 'icon_png_active');
                     }]);
                     $categoryGroups = $categoryGroups->each(function ($category_group) {
                         $category_group->categories->each(function ($category) {
