@@ -2,11 +2,13 @@
 
 use Carbon\Carbon;
 use Sheba\Dal\Leave\EloquentImplementation as LeaveRepository;
+use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
+use Sheba\Dal\Leave\Model as Leave;
 
 class Creator
 {
     private $title;
-    private $businessMemberId;
+    private $businessMember;
     private $leaveTypeId;
     private $leaveRepository;
     private $now;
@@ -14,9 +16,10 @@ class Creator
     private $endDate;
     private $totalDays;
 
-    public function __construct(LeaveRepository $leave_repo)
+    public function __construct(LeaveRepository $leave_repo, BusinessMemberRepositoryInterface $business_member_repo)
     {
         $this->leaveRepository = $leave_repo;
+        $this->businessMemberRepository = $business_member_repo;
         $this->now = Carbon::now();
     }
 
@@ -26,9 +29,9 @@ class Creator
         return $this;
     }
 
-    public function setBusinessMemberId($businessMemberId)
+    public function setBusinessMember($businessMember)
     {
-        $this->businessMemberId = $businessMemberId;
+        $this->businessMember = $businessMember;
         return $this;
     }
 
@@ -61,13 +64,30 @@ class Creator
 
     public function create()
     {
-        return $this->leaveRepository->create([
+        $leave = $this->leaveRepository->create([
             'title' => $this->title,
-            'business_member_id' => $this->businessMemberId,
+            'business_member_id' => $this->businessMember->id,
             'leave_type_id' => $this->leaveTypeId,
             'start_date' => $this->startDate,
             'end_date' => $this->endDate,
             'total_days' => $this->totalDays
         ]);
+        $this->notifySuperAdmins($leave);
+        return $leave;
+    }
+
+    private function notifySuperAdmins(Leave $leave)
+    {
+        $super_admins = $this->businessMemberRepository->where('is_super',1)
+            ->where('business_id', $this->businessMember->business_id)->get();
+        foreach ($super_admins as $super_admin) {
+            $title = $this->businessMember->member->profile->name . ' #' . $this->businessMember->member->id . ' has created a Leave Request';
+            notify()->member($super_admin->member)->send([
+                'title' => $title,
+                'type' => 'Info',
+                'event_type' => 'Sheba\Dal\Support\Model',
+                'event_id' => $leave->id
+            ]);
+        }
     }
 }
