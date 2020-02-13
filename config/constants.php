@@ -3,7 +3,7 @@ return [
     'BANK_LOAN_PDF_TYPES'                      => [
         'SanctionLetter'   => 'sanctionLetter',
         'Application' => 'application',
-        'Proposal'  => 'proposal'
+        'ProposalLetter'  => 'proposalLetter'
     ],
     'PARTNER_SHOWABLE_PACKAGE'                    => [
         1,
