@@ -38,7 +38,6 @@ class CategoryGroupController extends Controller
                     ]
                 ]);
             }
-
             if ($request->has('name')) {
                 $categories = $this->getCategoryByColumn('name', $request->name, $this->location);
                 return $categories ? api_response($request, $categories, 200, ['category' => $categories]) : api_response($request, null, 404);
@@ -71,7 +70,16 @@ class CategoryGroupController extends Controller
                     });
                 }
             }
-            return count($categoryGroups) > 0 ? api_response($request, $categoryGroups, 200, ['categories' => $categoryGroups]) : api_response($request, null, 404);
+
+            if (count($categoryGroups) > 0) {
+                $categoryGroups->map(function ($category_group) {
+                    $category_group->icon_png = "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/images/category_images/default_icons/default_v3.png";
+                    $category_group->icon_png_active = "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/images/category_images/default_icons/active_v3.png";
+                });
+                return api_response($request, $categoryGroups, 200, ['categories' => $categoryGroups]);
+            }
+
+            return api_response($request, null, 404);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
