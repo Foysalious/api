@@ -109,7 +109,7 @@ class Creator
         $services = json_decode($this->data['services'], true);
         foreach ($services as $service) {
             /** @var PartnerPosService $original_service */
-            $original_service = isset($service['id']) ? $this->posServiceRepo->find($service['id']) : $this->posServiceRepo->defaultInstance($service);
+            $original_service = isset($service['id']) &&!empty($service['id']) ? $this->posServiceRepo->find($service['id']) : $this->posServiceRepo->defaultInstance($service);
 
             // $is_service_discount_applied = $original_service->discount();
             $service_wholesale_applicable = $original_service->wholesale_price ? true : false;

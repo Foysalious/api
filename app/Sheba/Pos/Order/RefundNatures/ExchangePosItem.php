@@ -67,9 +67,9 @@ class ExchangePosItem extends RefundNature
         $services    = json_decode($data['services'], true);
         $newServices = [];
         foreach ($services as $service) {
-            $item = $this->new ? $this->order->items()->where('id', $service['id'])->first() : $this->order->items()->where('service_id', $service['id'])->first();
-            $service['id']            = $item->service_id;
-            $service['updated_price'] = $item->unit_price;
+            $item                     = $this->new ? $this->order->items()->where('id', $service['id'])->first() : $this->order->items()->where('service_id', $service['id'])->first();
+            $service['id']            = $item ? $item->service_id : null;
+            $service['updated_price'] = (isset($service['updated_price']) ? $service['updated_price'] :( !empty($item) ? $item->unit_price : 0));
             array_push($newServices, $service);
         }
         $data['services'] = json_encode($newServices);
