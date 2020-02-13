@@ -85,7 +85,7 @@ class Creator
             notify()->member($super_admin->member)->send([
                 'title' => $title,
                 'type' => 'Info',
-                'event_type' => 'Sheba\Dal\Support\Model',
+                'event_type' => 'Sheba\Dal\Leave\Model',
                 'event_id' => $leave->id
             ]);
         }
