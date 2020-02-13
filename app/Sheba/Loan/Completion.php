@@ -17,8 +17,10 @@ class Completion
         $this->updatedStamps = $updated_stamps;
     }
 
-    public static function isApplicableForLoan($data)
+    public static function isApplicableForLoan(&$data)
     {
+        if (isset($data['nominee_granter']))
+            $data['nominee'] = $data['nominee_granter'];
         return (($data['personal']['completion_percentage'] >= 50) && ($data['business']['completion_percentage'] >= 20) && ($data['finance']['completion_percentage'] >= 70) && ($data['nominee']['completion_percentage'] == 100) && ($data['documents']['completion_percentage'] >= 50)) ? 1 : 0;
     }
 

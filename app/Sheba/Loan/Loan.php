@@ -289,7 +289,7 @@ class Loan
         return $data;
     }
 
-    private function isApplicableForLoan($data)
+    private function isApplicableForLoan(&$data)
     {
         return Completion::isApplicableForLoan($data);
     }
