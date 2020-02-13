@@ -118,6 +118,7 @@ class Updater
                     }
                 }
                 $this->updateBidPrice();
+                $this->updatePartnerCommission();
                 $this->statusLogCreator->setBid($this->bid)->setPreviousStatus($previous_status)->setStatus($this->status)->create();
                 if ($this->status == 'sent') $this->sendVendorParticipatedNotification();
                 elseif ($this->status == 'rejected') $this->sendBidRejectedNotification();
@@ -195,6 +196,7 @@ class Updater
                 $this->bidRepository->update($this->bid, ['status' => $this->status]);
                 if ($this->status == config('b2b.BID_STATUSES')['accepted']) $this->procurementUpdater->setProcurement($this->bid->procurement)
                     ->setStatus(config('b2b.PROCUREMENT_STATUS')['accepted'])->updateStatus();
+                $this->updatePartnerCommission();
                 $this->statusLogCreator->setBid($this->bid)->setPreviousStatus($previous_status)->setStatus($this->status)->create();
                 if ($this->status == 'rejected') $this->sendBidRejectedNotification();
                 elseif ($this->status == 'accepted') $this->sendBidAcceptedNotification();
@@ -212,6 +214,11 @@ class Updater
         } else {
             $this->bidRepository->update($this->bid, ['price' => (double)$this->price]);
         }
+    }
+
+    private function updatePartnerCommission()
+    {
+        $this->bidRepository->update($this->bid, ['commission_percentage' => (double)$this->bid->bidder->commission]);
     }
 
     private function sendHiringRequestNotification()

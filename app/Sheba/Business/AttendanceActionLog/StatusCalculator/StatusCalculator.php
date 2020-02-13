@@ -1,7 +1,6 @@
 <?php namespace Sheba\Business\AttendanceActionLog\StatusCalculator;
 
 use Sheba\Dal\Attendance\Model as Attendance;
-use Sheba\Business\AttendanceActionLog\Time;
 abstract class StatusCalculator
 {
     /** @var Attendance $attendance */
