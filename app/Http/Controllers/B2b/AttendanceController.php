@@ -30,8 +30,9 @@ class AttendanceController extends Controller
         $date = $request->has('date') ? Carbon::parse($request->date) : Carbon::now();
         $attendances = $stat->setBusiness($request->business)->setStartDate($date)->setEndDate($date)
             ->setBusinessDepartment($request->business_department_id)->setStatus($request->status)->get();
-        if (count($attendances) == 0) return api_response($request, null, 404);
-        return api_response($request, null, 200, ['attendances' => $attendances]);
+        $count = count($attendances);
+        if ($count == 0) return api_response($request, null, 404);
+        return api_response($request, null, 200, ['attendances' => $attendances, 'total' => $count]);
     }
 
     public function getMonthlyStats($business, Request $request, AttendanceRepoInterface $attendance_repo, TimeFrame $time_frame, BusinessHolidayRepoInterface $business_holiday_repo,
