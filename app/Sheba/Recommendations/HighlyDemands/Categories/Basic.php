@@ -29,6 +29,8 @@ class Basic extends Recommender
                 $secondaries_categories->push([
                     'id'        => $secondary_category->id,
                     'name'      => $secondary_category->name,
+                    'thumb'     => $secondary_category->thumb,
+                    'banner'    => $secondary_category->banner,
                     'app_thumb' => $secondary_category->app_thumb,
                     'app_banner'=> $secondary_category->app_banner,
                     'icon'      => $secondary_category->icon,
