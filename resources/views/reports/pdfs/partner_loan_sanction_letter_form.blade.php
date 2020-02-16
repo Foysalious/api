@@ -54,7 +54,7 @@
     <div style="padding: 5px">
         <div>
             <p>{{$bank['name']}}/INPE/{{$current_year}}/{{$final_information_for_loan['sanction_letter_info']['reference_no']}}</p>
-            <p>Date: <span> {{ $sanction_issue_date ? date('F d, Y', strtotime($sanction_issue_date)) : null }} </span></p>
+            <p>Date: <span> {{ $sanction_issue_date ? date('F d, Y', strtotime($sanction_issue_date)) : "N/A" }} </span></p>
         </div>
         <div class="bank-contact-info">
             <p>To:</p>
