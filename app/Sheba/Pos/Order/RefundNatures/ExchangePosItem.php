@@ -1,5 +1,6 @@
 <?php namespace Sheba\Pos\Order\RefundNatures;
 
+use App\Models\PartnerPosService;
 use App\Models\PosOrder;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
@@ -68,12 +69,21 @@ class ExchangePosItem extends RefundNature
         $newServices = [];
         foreach ($services as $service) {
             $item                     = $this->new ? $this->order->items()->where('id', $service['id'])->first() : $this->order->items()->where('service_id', $service['id'])->first();
-            $service['id']            = $item ? $item->service_id : null;
-            $service['updated_price'] = (isset($service['updated_price']) ? $service['updated_price'] :( !empty($item) ? $item->unit_price : 0));
+            $service['id']            = $item ? $item->service_id : $service['id'];
+            $service['updated_price'] = (isset($service['updated_price']) ? $service['updated_price'] : (!empty($item) ? $item->unit_price : $this->findPosServiceItem($service['id'])));
             array_push($newServices, $service);
         }
         $data['services'] = json_encode($newServices);
         return $data;
+    }
+
+    private function findPosServiceItem($id)
+    {
+        if (!empty($id)) {
+            $service = PartnerPosService::find($id);
+            return $service->price;
+        }
+        return 0;
     }
 
     /**
