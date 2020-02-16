@@ -36,10 +36,10 @@ if (!function_exists('randomString')) {
      */
     function randomString($len, $num = 0, $alpha = 0, $spec_char = 0)
     {
-        $alphabets          = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        $numbers            = "0123456789";
+        $alphabets = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        $numbers = "0123456789";
         $special_characters = "!@#$%^&*()_-+=}{][|:;.,/?";
-        $characters         = "";
+        $characters = "";
         if ($num)
             $characters .= $numbers;
         if ($alpha)
@@ -201,7 +201,7 @@ if (!function_exists('calculatePagination')) {
     function calculatePagination($request)
     {
         $offset = $request->has('offset') ? $request->offset : 0;
-        $limit  = $request->has('limit') ? $request->limit : 50;
+        $limit = $request->has('limit') ? $request->limit : 50;
         return array(
             $offset,
             $limit
@@ -212,7 +212,7 @@ if (!function_exists('calculatePaginationNew')) {
 
     function calculatePaginationNew($request)
     {
-        $page  = $request->has('page') ? $request->page : 0;
+        $page = $request->has('page') ? $request->page : 0;
         $limit = $request->has('limit') ? $request->limit : 50;
         return array(
             $page,
@@ -225,7 +225,7 @@ if (!function_exists('calculateSort')) {
     function calculateSort($request, $default = 'id')
     {
         $offset = $request->has('sort') ? $request->sort : $default;
-        $limit  = $request->has('sort_order') ? $request->sort_order : 'DESC';
+        $limit = $request->has('sort_order') ? $request->sort_order : 'DESC';
         return array(
             $offset,
             $limit
@@ -235,8 +235,8 @@ if (!function_exists('calculateSort')) {
 if (!function_exists('getRangeFormat')) {
     function getRangeFormat($request, $param = 'range')
     {
-        $filter    = (is_array($request)) ? $request[$param] : $request->{$param};
-        $today     = Carbon::today();
+        $filter = (is_array($request)) ? $request[$param] : $request->{$param};
+        $today = Carbon::today();
         $dateFrame = new \Sheba\Helpers\TimeFrame();
         switch ($filter) {
             case 'today':
@@ -311,7 +311,7 @@ if (!function_exists('getDayNameAndDateTime')) {
 if (!function_exists('createAuthorWithType')) {
     function createAuthorWithType($author)
     {
-        $data                    = createAuthor($author);
+        $data = createAuthor($author);
         $data['created_by_type'] = "App\Models\\" . class_basename($author);
         return $data;
     }
@@ -319,8 +319,8 @@ if (!function_exists('createAuthorWithType')) {
 if (!function_exists('createAuthor')) {
     function createAuthor($author)
     {
-        $data                    = [];
-        $data['created_by']      = $author->id;
+        $data = [];
+        $data['created_by'] = $author->id;
         $data['created_by_name'] = class_basename($author) . " - " . ($author->profile != null ? $author->profile->name : $author->name);
         return $data;
     }
@@ -328,7 +328,7 @@ if (!function_exists('createAuthor')) {
 if (!function_exists('updateAuthor')) {
     function updateAuthor($model, $author)
     {
-        $model->updated_by      = $author->id;
+        $model->updated_by = $author->id;
         $model->updated_by_name = class_basename($author) . " - " . ($author->profile != null ? $author->profile->name : $author->name);
         return $model;
     }
@@ -369,7 +369,7 @@ if (!function_exists('removeSelectedFieldsFromModel')) {
 if (!function_exists('createAuthor')) {
     function createAuthor($model, $author)
     {
-        $model->created_by      = $author->id;
+        $model->created_by = $author->id;
         $model->created_by_name = class_basename($author) . " - " . ($author->profile != null ? $author->profile->name : $author->name);
         return $model;
     }
@@ -377,7 +377,7 @@ if (!function_exists('createAuthor')) {
 if (!function_exists('updateAuthor')) {
     function updateAuthor($model, $author)
     {
-        $model->updated_by      = $author->id;
+        $model->updated_by = $author->id;
         $model->updated_by_name = class_basename($author) . " - " . ($author->profile != null ? $author->profile->name : $author->name);
         return $model;
     }
@@ -399,26 +399,27 @@ if (!function_exists('floatValFormat')) {
     }
 }
 if (!function_exists('humanReadableShebaTime')) {
-    function humanReadableShebaTime($time)
+    function humanReadableShebaTime($time, $for_v3_schedule_slot = false)
     {
         if ($time === 'Anytime') {
             return $time;
         }
         $time = explode('-', $time);
+        if ($for_v3_schedule_slot) return (Carbon::parse($time[0]))->format('g:i a') . (isset($time[1]) ? ('-' . (Carbon::parse($time[1]))->format('g:i a')) : '');
         return (Carbon::parse($time[0]))->format('g:i A') . (isset($time[1]) ? ('-' . (Carbon::parse($time[1]))->format('g:i A')) : '');
     }
 }
 if (!function_exists('clean')) {
     function clean($string, $separator = "-", $keep = [])
     {
-        $string    = str_replace(' ', $separator, $string); // Replaces all spaces with hyphens.
+        $string = str_replace(' ', $separator, $string); // Replaces all spaces with hyphens.
         $keep_only = "/[^A-Za-z0-9";
         foreach ($keep as $item) {
             $keep_only .= "$item";
         }
         $keep_only .= (($separator == '-') ? '\-' : "_");
         $keep_only .= "]/";
-        $string    = preg_replace($keep_only, '', $string);           // Removes special chars.
+        $string = preg_replace($keep_only, '', $string);           // Removes special chars.
         return preg_replace("/$separator+/", $separator, $string);    // Replaces multiple hyphens with single one.
     }
 }
@@ -457,10 +458,10 @@ if (!function_exists('findStartEndDateOfAMonth')) {
     {
         if ($month == 0 && $year != 0) {
             $start_time = \Carbon\Carbon::now()->year($year)->month(1)->day(1)->hour(0)->minute(0)->second(0);
-            $end_time   = \Carbon\Carbon::now()->year($year)->month(12)->day(31)->hour(23)->minute(59)->second(59);
+            $end_time = \Carbon\Carbon::now()->year($year)->month(12)->day(31)->hour(23)->minute(59)->second(59);
             return [
-                'start_time'    => $start_time,
-                'end_time'      => $end_time,
+                'start_time' => $start_time,
+                'end_time' => $end_time,
                 'days_in_month' => 31
             ];
         } else {
@@ -469,11 +470,11 @@ if (!function_exists('findStartEndDateOfAMonth')) {
             if (empty($year))
                 $year = \Carbon\Carbon::now()->year;
             $days_in_month = cal_days_in_month(CAL_GREGORIAN, $month, $year);
-            $start_time    = \Carbon\Carbon::now()->year($year)->month($month)->day(1)->hour(0)->minute(0)->second(0);
-            $end_time      = \Carbon\Carbon::now()->year($year)->month($month)->day($days_in_month)->hour(23)->minute(59)->second(59);
+            $start_time = \Carbon\Carbon::now()->year($year)->month($month)->day(1)->hour(0)->minute(0)->second(0);
+            $end_time = \Carbon\Carbon::now()->year($year)->month($month)->day($days_in_month)->hour(23)->minute(59)->second(59);
             return [
-                'start_time'    => $start_time,
-                'end_time'      => $end_time,
+                'start_time' => $start_time,
+                'end_time' => $end_time,
                 'days_in_month' => $days_in_month
             ];
         }
@@ -486,7 +487,7 @@ if (!function_exists('en2bnNumber')) {
      */
     function en2bnNumber($number)
     {
-        $search_array  = [
+        $search_array = [
             "1",
             "2",
             "3",
@@ -556,37 +557,37 @@ if (!function_exists('formatDateRange')) {
             case "today":
                 return [
                     "from" => Carbon::today(),
-                    "to"   => Carbon::today()
+                    "to" => Carbon::today()
                 ];
             case "yesterday":
                 return [
                     "from" => Carbon::yesterday()->addDay(-1),
-                    "to"   => Carbon::today()
+                    "to" => Carbon::today()
                 ];
             case "week":
                 return [
                     "from" => $currentDate->startOfWeek()->addDays(-1),
-                    "to"   => Carbon::today()
+                    "to" => Carbon::today()
                 ];
             case "month":
                 return [
                     "from" => $currentDate->startOfMonth(),
-                    "to"   => Carbon::today()
+                    "to" => Carbon::today()
                 ];
             case "year":
                 return [
                     "from" => $currentDate->startOfYear(),
-                    "to"   => Carbon::today()
+                    "to" => Carbon::today()
                 ];
             case "all_time":
                 return [
                     "from" => '2017-01-01',
-                    "to"   => Carbon::today()
+                    "to" => Carbon::today()
                 ];
             default:
                 return [
                     "from" => '2017-01-01',
-                    "to"   => Carbon::today()
+                    "to" => Carbon::today()
                 ];
         }
     }
@@ -597,11 +598,11 @@ if (!function_exists('createOptionsFromOptionVariables')) {
     {
         $options = '';
         foreach ($variables->options as $key => $option) {
-            $input   = explode(',', $option->answers);
-            $output  = implode(',', array_map(function ($value, $key) {
+            $input = explode(',', $option->answers);
+            $output = implode(',', array_map(function ($value, $key) {
                 return sprintf("%s", $key);
             }, $input, array_keys($input)));
-            $output  = '[' . $output . '],';
+            $output = '[' . $output . '],';
             $options .= $output;
         }
         return '[' . substr($options, 0, -1) . ']';
@@ -629,12 +630,12 @@ if (!function_exists('scramble_string')) {
      */
     function scramble_string($str, $scramble_ratio = 15)
     {
-        $str                     = \Sheba\BanglaToEnglish::convert($str);
-        $str                     = preg_replace('/[\x00-\x1F\x7F]/u', '', $str);
-        $len                     = strlen($str);
+        $str = \Sheba\BanglaToEnglish::convert($str);
+        $str = preg_replace('/[\x00-\x1F\x7F]/u', '', $str);
+        $len = strlen($str);
         $number_of_words_visible = (int)ceil(($scramble_ratio * $len) / 100);
-        $number_of_words_hidden  = $len - ($number_of_words_visible * 2);
-        $number_of_words_hidden  = $number_of_words_hidden > 0 ? $number_of_words_hidden : 0;
+        $number_of_words_hidden = $len - ($number_of_words_visible * 2);
+        $number_of_words_hidden = $number_of_words_hidden > 0 ? $number_of_words_hidden : 0;
         return substr($str, 0, $number_of_words_visible) . str_repeat('*', $number_of_words_hidden) . substr($str, $len - $number_of_words_visible, $len);
     }
 }
@@ -688,7 +689,7 @@ if (!function_exists('getDefaultWorkingHours')) {
     {
         return (object)[
             'start_time' => '09:00:00',
-            'end_time'   => '18:00:00'
+            'end_time' => '18:00:00'
         ];
     }
 }
@@ -787,8 +788,8 @@ if (!function_exists('assetLink')) {
 if (!function_exists('convertNumbersToBangla')) {
     function convertNumbersToBangla(float $number, $formatted = true, $decimal = 2)
     {
-        $format    = (array)json_decode('{"0":"০","1":"১","2":"২","3":"৩","4":"৪","5":"৫","6":"৬","7":"৭","8":"৮","9":"৯",".":".",",":","}');
-        $number    = str_split($formatted ? number_format($number, $decimal) : "$number");
+        $format = (array)json_decode('{"0":"০","1":"১","2":"২","3":"৩","4":"৪","5":"৫","6":"৬","7":"৭","8":"৮","9":"৯",".":".",",":","}');
+        $number = str_split($formatted ? number_format($number, $decimal) : "$number");
         $converted = array_map(function ($item) use ($format) {
             foreach ($format as $key => $val) {
                 if ($key === $item) {
@@ -872,12 +873,12 @@ if (!function_exists('getBloodGroupsList')) {
 if (!function_exists('emi_calculator')) {
     function emi_calculator($interest, $amount, $duration)
     {
-        $rate     = (double)($interest / (12 * 100));
+        $rate = (double)($interest / (12 * 100));
         $duration = (int)$duration;
         if (!$interest || !$amount || !$duration)
             return 0;
         $accessor = ((double)$amount * $rate * pow((1 + $rate), $duration));
-        $divisor  = (pow((1 + $rate), $duration) - 1);
+        $divisor = (pow((1 + $rate), $duration) - 1);
         return $divisor > 0 ? round($accessor / $divisor) : round($amount / $duration);
     }
 }
@@ -947,9 +948,9 @@ if (!function_exists('getPrettifyTimeDifference')) {
     {
         $diff_in_seconds = Carbon::now()->diffInSeconds($deferrable_timer);
         $diff_in_minutes = Carbon::now()->diffInMinutes($deferrable_timer);
-        $diff_in_hours   = Carbon::now()->diffInHours($deferrable_timer);
-        $diff_in_days    = Carbon::now()->diffInDays($deferrable_timer);
-        $is_in_english   = $language == 'en';
+        $diff_in_hours = Carbon::now()->diffInHours($deferrable_timer);
+        $diff_in_days = Carbon::now()->diffInDays($deferrable_timer);
+        $is_in_english = $language == 'en';
         if ($diff_in_seconds < 60)
             return $is_in_english ? $diff_in_seconds . ' Second' : en2bnNumber($diff_in_seconds) . ' সেকেন্ড';
         if ($diff_in_minutes < 60)
