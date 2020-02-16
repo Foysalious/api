@@ -43,7 +43,7 @@ class UpdateProfileMutation extends Mutation
             ['remember_token', $args['remember_token']],
         ])->first();
 
-        return $avatar ? true : false;
+        return (bool)$avatar;
     }
 
     public function resolve($root, $args)

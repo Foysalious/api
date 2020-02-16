@@ -1,7 +1,6 @@
 <?php namespace App\GraphQL\Query;
 
 use App\Models\Category;
-use App\Models\HyperLocal;
 use GraphQL;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
@@ -9,6 +8,8 @@ use Folklore\GraphQL\Support\Query;
 
 class CategoriesQuery extends Query
 {
+    use LocationFilter;
+
     protected $attributes = [
         'name' => 'categories'
     ];
@@ -56,24 +57,5 @@ class CategoriesQuery extends Query
         }
         $categories = $category->where($where)->get();
         return $categories ? $categories : null;
-    }
-
-    private function getLocationId($args)
-    {
-        if (!isset($args['location']) || !(isset($args['lat']) && isset($args['lng']))) return null;
-
-        if (isset($args['location'])) return $args['location'];
-
-        $hyper_location= HyperLocal::insidePolygon((double) $args['lat'], (double) $args['lng'])->with('location')->first();
-        if(is_null($hyper_location) || is_null($hyper_location->location)) return null;
-
-        return $hyper_location->location->id;
-    }
-
-    private function filterLocation($query, $location)
-    {
-        $query->whereHas('locations' , function ($q) use ($location) {
-            $q->where('locations.id', $location);
-        });
     }
 }
