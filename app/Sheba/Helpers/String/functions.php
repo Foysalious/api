@@ -68,7 +68,8 @@ if (!function_exists('scramble_string')) {
      * Returns scrambled string replaced by '*'
      *
      *
-     * @param $scramble_ratio = The ratio (in percentage) by which the visible portion of the string is shown
+     * @param $str
+     * @param int $scramble_ratio = The ratio (in percentage) by which the visible portion of the string is shown
      * @return String
      */
     function scramble_string($str, $scramble_ratio = 15)
@@ -91,10 +92,7 @@ if (!function_exists('normalizeCases')) {
     function normalizeCases($value)
     {
         $value = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $value));
-        return ucwords(str_replace([
-            '_',
-            '-'
-        ], ' ', $value));
+        return ucwords(str_replace(['_','-'], ' ', $value));
     }
 }
 
