@@ -503,7 +503,7 @@ class Loan
             13
         ])->send([
             "title"      => $title,
-            'link'       => env('SHEBA_BACKEND_URL') . '/sp-loan',
+            'link'       => env('SHEBA_BACKEND_URL') . "/sp-loan/$event_id",
             "type"       => notificationType('Info'),
             "event_type" => $event_type,
             "event_id"   => $event_id
