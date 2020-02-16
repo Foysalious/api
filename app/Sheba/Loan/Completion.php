@@ -19,8 +19,11 @@ class Completion
 
     public static function isApplicableForLoan(&$data)
     {
-        if (isset($data['nominee_granter']))
+        if (isset($data['nominee_granter'])) {
             $data['nominee'] = $data['nominee_granter'];
+        }
+        if (isset($data['document']))
+            $data['documents'] = $data['document'];
         return (($data['personal']['completion_percentage'] >= 50) && ($data['business']['completion_percentage'] >= 20) && ($data['finance']['completion_percentage'] >= 70) && ($data['nominee']['completion_percentage'] == 100) && ($data['documents']['completion_percentage'] >= 50)) ? 1 : 0;
     }
 
