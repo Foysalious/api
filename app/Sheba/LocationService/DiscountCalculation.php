@@ -155,7 +155,7 @@ class DiscountCalculation
     public function getJobServiceDiscount()
     {
         if (!$this->serviceDiscount) return 0;
-        if (!$this->serviceDiscount->isPercentage()) return $this->serviceDiscount->amount * $this->quantity;
+        if (!$this->serviceDiscount->isPercentage()) return (double)$this->serviceDiscount->amount * $this->quantity;
         $discount = ($this->originalPrice * $this->serviceDiscount->amount) / 100;
         if ($this->serviceDiscount->cap && $discount > $this->serviceDiscount->cap) $discount = $this->serviceDiscount->cap;
         return $discount;

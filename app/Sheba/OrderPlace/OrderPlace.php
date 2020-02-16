@@ -439,7 +439,7 @@ class OrderPlace
                 ->setQuantity($selected_service->getQuantity())->getUpsellUnitPriceForSpecificQuantity();
             $unit_price = $upsell_unit_price ? $upsell_unit_price : $this->priceCalculation->getUnitPrice();
             $total_original_price = $this->category->isRentACar() ? $this->priceCalculation->getTotalOriginalPrice() : $unit_price * $selected_service->getQuantity();
-            $this->discountCalculation->setLocationService($location_service)->setOriginalPrice($total_original_price)->calculate();
+            $this->discountCalculation->setLocationService($location_service)->setOriginalPrice($total_original_price)->setQuantity($selected_service->getQuantity())->calculate();
             $service_data = [
                 'service_id' => $service->id,
                 'quantity' => $selected_service->getQuantity(),
