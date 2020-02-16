@@ -222,8 +222,8 @@ class ScheduleSlot
             $start = Carbon::parse($day->toDateString() . ' ' . $slot['start']);
             $end = Carbon::parse($day->toDateString() . ' ' . $slot['end']);
             $slot['value'] = $start->format('g') . ' - ' . $end->format('g A');
-            $slot_start = humanReadableShebaTime($slot['start']);
-            $slot_end = humanReadableShebaTime($slot['end']);
+            $slot_start = humanReadableShebaTime($slot['start'], true);
+            $slot_end = humanReadableShebaTime($slot['end'], true);
             $slot['start'] = $slot_start;
             $slot['end'] = $slot_end;
             $slot['is_valid'] = $start > $current_time ? 1 : 0;
