@@ -305,8 +305,7 @@ class PosOrder extends Model
 
     public function isRefundable()
     {
-        $service_ids = $this->items->pluck('service_id')->toArray();
-        return !in_array(null, $service_ids);
+        return !$this->previous_order_id;
     }
 
     public function scopeCreatedAt($query, Carbon $date)
