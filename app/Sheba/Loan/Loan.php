@@ -226,6 +226,8 @@ class Loan
     public function apply()
     {
         $this->validate();
+        if (isset($this->data['month']) && $this->data['month'])
+            $this->data['duration'] = ((int)$this->data['duration'] * 12);
         return $this->create();
     }
 
@@ -603,7 +605,7 @@ class Loan
                 'to',
                 'sanction_issued'
             ]
-        ])->orderBy('created_at','ASC')->first();
+        ])->orderBy('created_at', 'ASC')->first();
         if (!empty($changeLog))
             return $changeLog->created_at;
         return null;

@@ -166,6 +166,7 @@ class LoanController extends Controller
             $data     = [
                 'loan_amount' => $request->loan_amount,
                 'duration'    => $request->duration,
+                'month'       => $resource->month ?: 0
             ];
             $info     = $loan->setPartner($partner)->setResource($resource)->setData($data)->apply();
             return api_response($request, 1, 200, ['data' => $info]);
@@ -650,7 +651,7 @@ class LoanController extends Controller
             $pdf_handler           = new PdfHandler();
             $loan_application_name = 'loan_application_' . $loan_id;
             if ($request->has('pdf_type') && $request->pdf_type == constants('BANK_LOAN_PDF_TYPES')['SanctionLetter']) {
-                $loan_application_name = 'sanction_letter_' . $loan_id;
+                $loan_application_name       = 'sanction_letter_' . $loan_id;
                 $data['sanction_issue_date'] = $loan->getSanctionIssueDate($loan_id);
                 return $pdf_handler->setData($data)->setName($loan_application_name)->setViewFile('partner_loan_sanction_letter_form')->download();
             }
