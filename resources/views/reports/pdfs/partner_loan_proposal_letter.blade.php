@@ -115,7 +115,7 @@
                 <td>Company Name</td>
                 <td colspan="2">{{$partner['name']}}</td>
                 <td colspan="2">Establishment Date</td>
-                <td class="text-center" colspan="2">{{ date('d-M-y', strtotime($final_information_for_loan['business']['establishment_year']))}}</td>
+                <td class="text-center" colspan="2">{{ date('d-M-y', strtotime($final_information_for_loan['business']['establishment_year'])) }}</td>
             </tr>
             <tr>
                 <td>Key Sponsor</td>
