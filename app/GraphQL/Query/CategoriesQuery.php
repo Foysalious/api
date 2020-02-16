@@ -64,15 +64,14 @@ class CategoriesQuery extends Query
 
         if (isset($args['location'])) return $args['location'];
 
-        $hyper_location= HyperLocal::insidePolygon((double) $args['lat'], (double) $args['lng'])->with('location')->first();
-        if(is_null($hyper_location) || is_null($hyper_location->location)) return null;
+        $hyper_location = HyperLocal::insidePolygon((double) $args['lat'], (double) $args['lng'])->first();
 
-        return $hyper_location->location->id;
+        return is_null($hyper_location) ? null : $hyper_location->location_id;
     }
 
     private function filterLocation($query, $location)
     {
-        $query->whereHas('locations' , function ($q) use ($location) {
+        $query->whereHas('locations', function ($q) use ($location) {
             $q->where('locations.id', $location);
         });
     }
