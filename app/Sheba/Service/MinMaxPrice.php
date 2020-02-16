@@ -1,6 +1,5 @@
 <?php namespace Sheba\Service;
 
-
 use App\Models\LocationService;
 use App\Models\Service;
 
@@ -28,11 +27,6 @@ class MinMaxPrice
         return $this->calculate('max');
     }
 
-    public function getMin()
-    {
-        return $this->calculate('min');
-    }
-
     private function calculate($condition)
     {
         if ($this->service->isFixed()) return (double)$this->locationService->prices;
@@ -40,4 +34,8 @@ class MinMaxPrice
         return $condition == 'min' ? (double)min($prices) : (double)max($prices);
     }
 
+    public function getMin()
+    {
+        return $this->calculate('min');
+    }
 }
