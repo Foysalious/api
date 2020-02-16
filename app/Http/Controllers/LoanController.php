@@ -186,11 +186,11 @@ class LoanController extends Controller
     {
         try {
             $this->validate($request, ['mobile' => 'required|mobile:bd']);
-            $partnerBankLoan=$loan->createNew($request)->toArray();
+            $partnerBankLoan = $loan->createNew($request)->toArray();
             unset($partnerBankLoan['final_information_for_loan']);
-            return api_response($request,$partnerBankLoan,200,['data'=>$partnerBankLoan]);
+            return api_response($request, $partnerBankLoan, 200, ['data' => $partnerBankLoan]);
         } catch (LoanException $e) {
-            return api_response($request, null, $e->getCode()?:500, ['message' => $e->getMessage()]);
+            return api_response($request, null, $e->getCode() ?: 500, ['message' => $e->getMessage()]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
@@ -649,11 +649,12 @@ class LoanController extends Controller
             $data                  = $loan->show($loan_id);
             $pdf_handler           = new PdfHandler();
             $loan_application_name = 'loan_application_' . $loan_id;
-            if($request->has('pdf_type') && $request->pdf_type == constants('BANK_LOAN_PDF_TYPES')['SanctionLetter']){
+            if ($request->has('pdf_type') && $request->pdf_type == constants('BANK_LOAN_PDF_TYPES')['SanctionLetter']) {
                 $loan_application_name = 'sanction_letter_' . $loan_id;
+                $sanction_issue_date   = $loan->getSanctionIssueDate($loan_id);
                 return $pdf_handler->setData($data)->setName($loan_application_name)->setViewFile('partner_loan_sanction_letter_form')->download();
             }
-            if($request->has('pdf_type') && $request->pdf_type == constants('BANK_LOAN_PDF_TYPES')['ProposalLetter']){
+            if ($request->has('pdf_type') && $request->pdf_type == constants('BANK_LOAN_PDF_TYPES')['ProposalLetter']) {
                 $loan_application_name = 'proposal_letter_' . $loan_id;
                 return $pdf_handler->setData($data)->setName($loan_application_name)->setViewFile('partner_loan_proposal_letter')->download();
             }
@@ -664,7 +665,6 @@ class LoanController extends Controller
         } catch (NotAllowedToAccess $e) {
             return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

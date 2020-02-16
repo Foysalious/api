@@ -586,6 +586,10 @@ class Loan
         return $request->create();
     }
 
+    /**
+     * @param $loan_id
+     * @return mixed|null
+     */
     public function getSanctionIssueDate($loan_id)
     {
         /** @var PartnerBankLoan $loan */
