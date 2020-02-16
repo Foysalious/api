@@ -603,7 +603,7 @@ class Loan
                 'to',
                 'sanction_issued'
             ]
-        ])->orderBy('created_at','DESC')->first();
+        ])->orderBy('created_at','ASC')->first();
         if (!empty($changeLog))
             return $changeLog->created_at;
         return null;

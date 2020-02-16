@@ -651,7 +651,7 @@ class LoanController extends Controller
             $loan_application_name = 'loan_application_' . $loan_id;
             if ($request->has('pdf_type') && $request->pdf_type == constants('BANK_LOAN_PDF_TYPES')['SanctionLetter']) {
                 $loan_application_name = 'sanction_letter_' . $loan_id;
-                $sanction_issue_date   = $loan->getSanctionIssueDate($loan_id);
+                $data['sanction_issue_date'] = $loan->getSanctionIssueDate($loan_id);
                 return $pdf_handler->setData($data)->setName($loan_application_name)->setViewFile('partner_loan_sanction_letter_form')->download();
             }
             if ($request->has('pdf_type') && $request->pdf_type == constants('BANK_LOAN_PDF_TYPES')['ProposalLetter']) {
