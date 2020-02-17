@@ -1,6 +1,8 @@
 <?php namespace Sheba\Partner;
 
 use App\Models\Partner;
+use App\Models\PartnerWalletSetting;
+use App\Sheba\Repositories\PartnerWalletSettingRepository;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
 use Sheba\FileManagers\CdnFileManager;
@@ -22,11 +24,14 @@ class Creator
     private $partnerBasicInformationRepository;
     /** @var Partner $partner */
     private $partner;
+    /** @var PartnerWalletSettingRepository $partnerWalletSettingRepository */
+    private $partnerWalletSettingRepository;
 
-    public function __construct(PartnerRepositoryInterface $partner_repository, PartnerBasicInformationRepository $basic_information_repository)
+    public function __construct(PartnerRepositoryInterface $partner_repository, PartnerBasicInformationRepository $basic_information_repository, PartnerWalletSettingRepository $wallet_setting_repository)
     {
         $this->partnerRepository = $partner_repository;
         $this->partnerBasicInformationRepository = $basic_information_repository;
+        $this->partnerWalletSettingRepository = $wallet_setting_repository;
     }
 
     public function setPartnerCreateRequest(CreateRequest $create_request)
@@ -44,9 +49,18 @@ class Creator
         DB::transaction(function () {
             $this->partner = $this->partnerRepository->create($this->formatPartnerGeneralSpecificData());
             $this->partnerBasicInformationRepository->create($this->formatPartnerBasicSpecificData());
+            $this->partnerWalletSettingRepository->create($this->partnerWalletSettingsDefault());
         });
-
         return $this->partner;
+    }
+
+    private function partnerWalletSettingsDefault()
+    {
+        $data = [
+            'partner_id' => $this->partner->id,
+            'security_money' => constants('PARTNER_DEFAULT_SECURITY_MONEY')
+        ];
+        return $data;
     }
 
     private function formatPartnerGeneralSpecificData()

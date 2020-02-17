@@ -29,6 +29,15 @@ class BusinessRoute
                 $api->post('/sms-templates/{sms}', 'B2b\BusinessSmsTemplateController@update');
                 $api->get('/sms-templates/{sms}', 'B2b\BusinessSmsTemplateController@show');
                 $api->post('/download-transactions', 'B2b\BusinessesController@downloadTransactionReport');
+                $api->group(['prefix' => 'members'], function ($api) {
+                    $api->group(['prefix' => '{member}'], function ($api) {
+                        $api->get('attendances', 'B2b\AttendanceController@showStat');
+                    });
+                });
+                $api->group(['prefix' => 'attendances'], function ($api) {
+                    $api->get('daily', 'B2b\AttendanceController@getDailyStats');
+                    $api->get('monthly', 'B2b\AttendanceController@getMonthlyStats');
+                });
                 $api->group(['prefix' => 'employees'], function ($api) {
                     $api->post('/', 'B2b\CoWorkerController@store');
                     $api->get('/', 'B2b\CoWorkerController@index');

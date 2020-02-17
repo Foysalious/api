@@ -1,7 +1,9 @@
 <?php namespace App\Http\Controllers\Employee;
 
 use App\Http\Controllers\Controller;
+use App\Models\Business;
 use App\Models\BusinessMember;
+use App\Sheba\Business\Attendance\MonthlyStat;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionChecker;
@@ -10,6 +12,7 @@ use Sheba\Business\AttendanceActionLog\AttendanceAction;
 use Sheba\Dal\Attendance\EloquentImplementation;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
+use Sheba\Dal\TripRequestApprovalFlow\Model as TripRequestApprovalFlow;
 use Sheba\ModificationFields;
 
 use App\Transformers\Business\AttendanceTransformer;
