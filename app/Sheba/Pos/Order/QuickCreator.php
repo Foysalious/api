@@ -1,7 +1,9 @@
 <?php namespace Sheba\Pos\Order;
 
+use App\Models\Partner;
 use App\Models\PartnerPosSetting;
 use App\Models\PosOrder;
+use App\Models\Profile;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
@@ -25,6 +27,17 @@ class QuickCreator
     /** @var DiscountHandler $discountHandler */
     private $discountHandler;
     const QUICK_CREATE_DEFAULT_QUANTITY = 1;
+    private $partner;
+
+    /**
+     * @param mixed $partner
+     * @return QuickCreator
+     */
+    public function setPartner(Partner $partner)
+    {
+        $this->partner = $partner;
+        return $this;
+    }
 
     public function __construct(PosOrderRepository $order_repo, PosOrderItemRepository $item_repo,
                                 PaymentCreator $payment_creator, DiscountHandler $discount_handler)
@@ -60,6 +73,7 @@ class QuickCreator
         $order_data['discount_percentage'] = $is_discount_applied ? ($this->data['is_percentage'] ? $this->data['discount'] : 0) : 0;*/
 
         $order_data['customer_id'] = (isset($this->data['customer_id']) && $this->data['customer_id']) ? $this->data['customer_id'] : null;
+        $order_data['partner_wise_order_id'] =$this->createPartnerWiseOrderId($this->partner);
         $order = $this->orderRepo->save($order_data);
 
         $this->discountHandler->setOrder($order)->setType(DiscountTypes::ORDER)->setData($this->data);
@@ -92,6 +106,13 @@ class QuickCreator
 
         return (isset($this->data['vat_percentage']) && $this->data['vat_percentage'] > 0);
     }
+    private function createPartnerWiseOrderId(Partner $partner)
+    {
+        $lastOrder = $partner->posOrders()->orderBy('id', 'desc')->first();
+        $lastOrder_id = $lastOrder ? $lastOrder->partner_wise_order_id : 0;
+        return $lastOrder_id + 1;
+    }
+
 
 
     /**
@@ -105,8 +126,10 @@ class QuickCreator
         $order = $order->calculate();
         $amount = (double)$order->getNetBill();
         $amount_cleared = (double)$order->getPaid();
+        $customer_profile = $order->customer ? $order->customer->profile : new Profile();
         $entry->setPartner($order->partner)
             ->setAmount($amount)
+            ->setParty($customer_profile)
             ->setAmountCleared($amount_cleared)
             ->setHead(AutomaticIncomes::POS)
             ->setSourceType(class_basename($order))
