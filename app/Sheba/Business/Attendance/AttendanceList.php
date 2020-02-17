@@ -113,7 +113,7 @@ class AttendanceList
         if ($this->businessMemberId) $business_member_ids = [$this->businessMemberId];
         elseif ($this->business) $business_member_ids = $this->getBusinessMemberIds();
         $attendances = $this->attendRepository->builder()
-            ->select('id', 'business_member_id', 'checkin_time', 'checkout_time', 'staying_time_in_minutes', 'status')
+            ->select('id', 'business_member_id', 'checkin_time', 'checkout_time', 'staying_time_in_minutes', 'status','date')
             ->whereIn('business_member_id', $business_member_ids)
             ->where('date', '>=', $this->startDate->toDateString())
             ->where('date', '<=', $this->endDate->toDateString())
@@ -184,6 +184,7 @@ class AttendanceList
                     'id' => $attendance->businessMember->role->business_department_id,
                     'name' => $this->attendanceDepartments->where('id', $attendance->businessMember->role->business_department_id)->first()->name
                 ] : null,
+                'date' => $attendance->date,
                 'checkin_time' => Carbon::parse($attendance->date . ' ' . $attendance->checkin_time)->format('g:i a'),
                 'checkout_time' => $attendance->checkout_time ? Carbon::parse($attendance->date . ' ' . $attendance->checkout_time)->format('g:i a') : null,
                 'active_hours' => $attendance->staying_time_in_minutes ? $this->formatMinute($attendance->staying_time_in_minutes) : null,
