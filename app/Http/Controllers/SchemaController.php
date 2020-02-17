@@ -9,9 +9,6 @@ use Illuminate\Validation\ValidationException;
 
 class SchemaController extends Controller
 {
-    private $locations;
-    private $cities;
-
     public function getFaqSchema(Request $request)
     {
         try {
@@ -318,7 +315,7 @@ class SchemaController extends Controller
                 ],
                 "areaServed" => [
                     "@type" => "State",
-                    "name" => implode(', ',$selected_city_names)
+                    "name" => implode(', ', $selected_city_names)
                 ],
                 "hasOfferCatalog" => [
                     "@type" => "OfferCatalog",
@@ -355,7 +352,6 @@ class SchemaController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
