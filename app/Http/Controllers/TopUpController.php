@@ -156,26 +156,10 @@ class TopUpController extends Controller
 
     public function sslFail(Request $request, SslFailResponse $error_response, TopUp $top_up)
     {
-        try {
-            $data = $request->all();
-            $error_response->setResponse($data);
-            $top_up->processFailedTopUp($error_response->getTopUpOrder(), $error_response);
-
-            $topup_fail_namespace = 'Topup:Fail_' . Carbon::now()->timestamp . str_random(6);
-            Redis::set($topup_fail_namespace, json_encode($data));
-
-            return api_response($request, 1, 200);
-        } catch (QueryException $e) {
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all()]);
-            $sentry->captureException($e);
-            return api_response($request, null, 500);
-        } catch (Throwable $e) {
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all()]);
-            $sentry->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $data = $request->all();
+        $error_response->setResponse($data);
+        $top_up->processFailedTopUp($error_response->getTopUpOrder(), $error_response);
+        return api_response($request, 1, 200);
     }
 
     public function sslSuccess(Request $request, SslSuccessResponse $success_response, TopUp $top_up)

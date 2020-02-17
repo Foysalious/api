@@ -11,10 +11,11 @@ use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\TopUp\TopUp;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpRequest;
+use Sheba\TopUp\Vendor\Vendor;
 use Sheba\TopUp\Vendor\VendorFactory;
 use Sheba\TopUp\TopUpCompletedEvent;
 
-class TopUpJob extends Job implements ShouldQueue
+class TopUpJob extends Job
 {
     use InteractsWithQueue, SerializesModels;
 
@@ -22,6 +23,7 @@ class TopUpJob extends Job implements ShouldQueue
 
     protected $agent;
     protected $vendorId;
+    /** @var Vendor */
     protected $vendor;
 
     /** @var TopUpOrder */
@@ -50,7 +52,6 @@ class TopUpJob extends Job implements ShouldQueue
         if ($this->attempts() < 2) {
             $vendor_factory = app(VendorFactory::class);
             $this->vendor = $vendor_factory->getById($this->vendorId);
-
             $this->topUp = app(TopUp::class);
             $this->topUp->setAgent($this->agent)->setVendor($this->vendor);
 

@@ -69,13 +69,16 @@ class TopUp
         if ($this->validator->setTopupOrder($topup_order)->validate()->hasError()) {
             $this->updateFailedTopOrder($topup_order, $this->validator->getError());
         } else {
+            dd($this->vendor);
             $this->response = $this->vendor->recharge($topup_order);
             if ($this->response->hasSuccess()) {
                 $response = $this->response->getSuccess();
                 DB::transaction(function () use ($response, $topup_order) {
                     $this->setModifier($this->agent);
                     $topup_order = $this->updateSuccessfulTopOrder($topup_order, $response);
-                    $this->agent->getCommission()->setTopUpOrder($topup_order)->disburse();
+                    /** @var TopUpCommission $top_up_commission */
+                    $top_up_commission = $this->agent->getCommission();
+                    $top_up_commission->setTopUpOrder($topup_order)->disburse();
                     $this->vendor->deductAmount($topup_order->amount);
                     $this->isSuccessful = true;
                 });

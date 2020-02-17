@@ -1,7 +1,9 @@
 <?php namespace Sheba\TopUp;
 
 use App\Models\TopUpOrder;
+use App\Models\TopUpVendor;
 use Sheba\ModificationFields;
+use Sheba\TopUp\Vendor\Vendor;
 
 class Creator
 {
@@ -24,7 +26,9 @@ class Creator
         if ($this->topUpRequest->hasError()) return null;
         $top_up_order = new TopUpOrder();
         $agent = $this->topUpRequest->getAgent();
+        /** @var Vendor $vendor */
         $vendor = $this->topUpRequest->getVendor();
+        /** @var TopUpVendor $model */
         $model = $vendor->getModel();
         $top_up_order->agent_type = "App\\Models\\" . class_basename($this->topUpRequest->getAgent());
         $top_up_order->agent_id = $agent->id;
