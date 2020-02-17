@@ -2,7 +2,6 @@
 
 use App\Models\PosOrder;
 use App\Models\PosOrderItem;
-use Illuminate\Database\Eloquent\Model;
 use Sheba\Repositories\BaseRepository;
 
 class PosOrderItemRepository extends BaseRepository
@@ -16,7 +15,9 @@ class PosOrderItemRepository extends BaseRepository
     {
         return $order->items->where('service_id', $service_id)->first();
     }
-
+    public function findFromOrder(PosOrder $order,$id){
+        return $order->items->where('id',$id)->first();
+    }
     /**
      * @param array $data
      * @return PosOrderItem
