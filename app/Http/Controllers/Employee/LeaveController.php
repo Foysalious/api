@@ -1,6 +1,8 @@
 <?php namespace App\Http\Controllers\Employee;
 
 use App\Models\BusinessMember;
+use App\Sheba\Business\ACL\AccessControl;
+use App\Sheba\Business\Leave\Updater as LeaveUpdater;
 use App\Transformers\Business\LeaveListTransformer;
 use App\Transformers\Business\LeaveTransformer;
 use App\Transformers\CustomSerializer;
@@ -15,9 +17,13 @@ use Sheba\Dal\LeaveType\Contract as LeaveTypesRepoInterface;
 use App\Sheba\Business\Leave\Creator as LeaveCreator;
 use Sheba\Dal\Leave\Contract as LeaveRepoInterface;
 use Sheba\Helpers\TimeFrame;
+use Sheba\Dal\Leave\Model as Leave;
+use Sheba\ModificationFields;
 
 class LeaveController extends Controller
 {
+    use ModificationFields;
+
     public function getLeaveTypes(Request $request, LeaveTypesRepoInterface $leave_types_repo, LeaveRepoInterface $leave_repo, TimeFrame $time_frame)
     {
         try {
@@ -105,6 +111,16 @@ class LeaveController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
 
+    public function updateStatus($leave, Request $request, AccessControl $accessControl, LeaveUpdater $leaveUpdater)
+    {
+        $business_member = $this->getBusinessMember($request);
+        $this->setModifier($business_member->member);
+        $accessControl->setBusinessMember($business_member);
+        if(!$accessControl->hasAccess('leave.rw')) return api_response($request, null, 403);
+        $leave = Leave::findOrFail((int)$leave);
+        $leaveUpdater->setLeave($leave)->setStatus($request->status)->updateStatus();
+        return api_response($request, null, 200);
     }
 }

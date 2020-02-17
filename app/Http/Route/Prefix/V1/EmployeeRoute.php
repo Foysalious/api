@@ -49,6 +49,7 @@ class EmployeeRoute
                 $api->post('/', 'Employee\LeaveController@store');
                 $api->group(['prefix' => '{leave}'], function ($api) {
                     $api->get('/', 'Employee\LeaveController@show');
+                    $api->post('/', 'Employee\LeaveController@updateStatus');
                 });
             });
             $api->group(['prefix' => 'holidays'], function ($api){
