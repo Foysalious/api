@@ -2,7 +2,7 @@
 
 use Sheba\Repositories\Interfaces\BaseRepositoryInterface;
 
-interface PartnerRepositoryInterface extends BaseRepositoryInterface
+interface PartnerWalletSettingRepositoryInterface extends BaseRepositoryInterface
 {
 
 }

@@ -7,6 +7,7 @@ use App\Models\HyperLocal;
 use App\Models\Location;
 use App\Models\LocationService;
 use App\Models\Partner;
+use App\Models\Review;
 use App\Models\ReviewQuestionAnswer;
 use App\Models\Service;
 use App\Models\ServiceSubscription;
@@ -165,7 +166,9 @@ class CategoryController extends Controller
     {
         try {
             $this->validate($request, [
-                'lat' => 'required|numeric', 'lng' => 'required|numeric', 'with' => 'sometimes|string|in:children'
+                'lat' => 'required|numeric',
+                'lng' => 'required|numeric',
+                'with' => 'sometimes|string|in:children'
             ]);
             $with = $request->with;
             $hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->first();
@@ -189,12 +192,12 @@ class CategoryController extends Controller
                             });
                         })->whereNotIn('id', $best_deal_category_ids);
                 })
-                ->select('id', 'name', 'parent_id', 'icon_png', 'app_thumb', 'app_banner', 'slug', 'is_auto_sp_enabled')
+                ->select('id', 'name', 'parent_id', 'icon_png', 'icon_png_hover', 'icon_png_active', 'app_thumb', 'app_banner', 'slug', 'is_auto_sp_enabled')
                 ->parent()->orderBy('order');
 
             if ($with) {
                 $categories->with(['children' => function ($q) use ($location_id, $best_deal_category_ids) {
-                    $q->select('id', 'name', 'thumb', 'parent_id', 'app_thumb', 'icon_png', 'icon', 'slug', 'is_auto_sp_enabled')
+                    $q->select('id', 'name', 'thumb', 'parent_id', 'app_thumb', 'icon_png', 'icon_png_hover', 'icon_png_active', 'icon', 'icon_hover', 'slug', 'is_auto_sp_enabled')
                         ->whereHas('locations', function ($q) use ($location_id) {
                             $q->select('locations.id')->where('locations.id', $location_id);
                         })->whereHas('services', function ($q) use ($location_id) {
@@ -210,9 +213,13 @@ class CategoryController extends Controller
 
             $secondary_categories_slug = UniversalSlugModel::where('sluggable_type', SluggableType::SECONDARY_CATEGORY)->pluck('slug', 'sluggable_id')->toArray();
             foreach ($categories as &$category) {
+                if (is_null($category->children))
+                    app('sentry')->captureException(new Exception('Category null on ' . $category->id));
+
                 /** @var Category $category */
                 $category->slug = $category->getSlug();
                 array_forget($category, 'parent_id');
+
                 foreach ($category->children as &$child) {
                     /** @var Category $child */
                     $child->slug = array_key_exists($child->id, $secondary_categories_slug) ? $secondary_categories_slug[$child->id] : null;
@@ -220,10 +227,6 @@ class CategoryController extends Controller
                 }
             }
 
-            foreach ($categories as &$category) {
-                if (is_null($category->children))
-                    app('sentry')->captureException(new Exception('Category null on ' . $category->id));
-            }
             return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $categories]) : api_response($request, null, 404);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -455,7 +458,7 @@ class CategoryController extends Controller
                     $service['min_price'] = $min_max_price->getMin();
                     $service['terms_and_conditions'] = $service->terms_and_conditions ? json_decode($service->terms_and_conditions) : null;
                     $service['features'] = $service->features ? json_decode($service->features) : null;
-                    $service['slug'] =$service->getSlug();
+                    $service['slug'] = $service->getSlug();
 
                     /** @var ServiceSubscription $subscription */
                     if ($subscription = $service->activeSubscription) {
@@ -650,19 +653,33 @@ class CategoryController extends Controller
                 ->orderBy('id', 'desc')
                 ->groupBy('customer_id')
                 ->get();
-            $group_rating = [
-                "1" => 10,
-                "2" => 5,
-                "3" => 15,
-                "4" => 150,
-                "5" => 500,
-            ];
+            $review_stat = Review::selectRaw("count(DISTINCT(reviews.id)) as total_ratings")
+                ->selectRaw("count(DISTINCT(case when rating=5 then reviews.id end)) as total_five_star_ratings")
+                ->selectRaw("count(DISTINCT(case when rating=4 then reviews.id end)) as total_four_star_ratings")
+                ->selectRaw("count(DISTINCT(case when rating=3 then reviews.id end)) as total_three_star_ratings")
+                ->selectRaw("count(DISTINCT(case when rating=2 then reviews.id end)) as total_two_star_ratings")
+                ->selectRaw("count(DISTINCT(case when rating=1 then reviews.id end)) as total_one_star_ratings")
+                ->selectRaw("avg(reviews.rating) as avg_rating")
+                ->selectRaw("reviews.category_id")
+                ->where('reviews.category_id', $category->id)
+                ->groupBy("reviews.category_id")->first();
             $info = [
-                'avg_rating' => 4.5,
+                'avg_rating' => $review_stat && $review_stat->avg_rating ? round($review_stat->avg_rating,2) : 0,
                 'total_review_count' => 500,
-                'total_rating_count' => 680
+                'total_rating_count' => $review_stat && $review_stat->total_ratings ? $review_stat->total_ratings : 0
             ];
-            return count($reviews) > 0 ? api_response($request, $reviews, 200, ['reviews' => $reviews, 'group_rating' => $group_rating, 'info' => $info]) : api_response($request, null, 404);
+            $group_rating = [
+                "1" => $review_stat && $review_stat->total_one_star_ratings ? $review_stat->total_one_star_ratings : null,
+                "2" => $review_stat && $review_stat->total_two_star_ratings ? $review_stat->total_two_star_ratings : null,
+                "3" => $review_stat && $review_stat->total_three_star_ratings ? $review_stat->total_three_star_ratings : null,
+                "4" => $review_stat && $review_stat->total_four_star_ratings ? $review_stat->total_four_star_ratings : null,
+                "5" => $review_stat && $review_stat->total_five_star_ratings ? $review_stat->total_five_star_ratings : null,
+            ];
+            return count($reviews) > 0 ? api_response($request, $reviews, 200, [
+                'reviews' => $reviews,
+                'group_rating' => $group_rating,
+                'info' => $info
+            ]) : api_response($request, null, 404);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

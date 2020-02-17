@@ -1,6 +1,7 @@
 <?php namespace Sheba\Repositories\Providers;
 
 use App\Sheba\Repositories\Business\BidRepository;
+use App\Sheba\Repositories\PartnerWalletSettingRepository;
 use Illuminate\Support\ServiceProvider;
 use Sheba\Business\TripRequest\TripRequestRepository;
 use Sheba\Dal\ProcurementPaymentRequest\ProcurementPaymentRequestRepositoryInterface;
@@ -53,6 +54,7 @@ use Sheba\Repositories\Interfaces\InspectionScheduleRepositoryInterface;
 use Sheba\Repositories\Interfaces\IssueRepositoryInterface;
 use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
 use Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
+use Sheba\Repositories\Interfaces\Partner\PartnerWalletSettingRepositoryInterface;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementItemFieldRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementItemRepositoryInterface;
@@ -104,6 +106,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(ProfileRepositoryInterface::class, ProfileRepository::class);
         $this->app->bind(CustomerRepositoryInterface::class, CustomerRepository::class);
         $this->app->bind(PartnerRepositoryInterface::class, PartnerRepository::class);
+        $this->app->bind(PartnerWalletSettingRepositoryInterface::class, PartnerWalletSettingRepository::class);
         $this->app->bind(BidItemRepositoryInterface::class, BidItemRepository::class);
         $this->app->bind(BidItemFieldRepositoryInterface::class, BidItemFieldRepository::class);
         $this->app->bind(BidRepositoryInterface::class, BidRepository::class);
