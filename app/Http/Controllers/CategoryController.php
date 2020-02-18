@@ -513,6 +513,7 @@ class CategoryController extends Controller
                     $job_discount_handler->setType(DiscountTypes::DELIVERY)->setCategory($category_model)->setCheckingParams($discount_checking_params)->calculate();
                     /** @var Discount $delivery_discount */
                     $delivery_discount = $job_discount_handler->getDiscount();
+
                     $category['delivery_discount'] = $delivery_discount ? [
                         'value' => (double)$delivery_discount->amount,
                         'is_percentage' => $delivery_discount->is_percentage,

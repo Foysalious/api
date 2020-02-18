@@ -31,7 +31,7 @@ class CustomerController extends Controller
         }
         $reviews = Review::where([['customer_id', $customer->id], ['rating', '>=', 4]])->select('id', 'category_id', 'job_id', 'rating', 'partner_id')
             ->with(['category' => function ($q) {
-                $q->select('id', 'name', 'thumb', 'app_thumb', 'banner', 'app_banner', 'frequency_in_days', 'publication_status');
+                $q->select('id', 'name', 'thumb', 'app_thumb', 'banner', 'app_banner', 'frequency_in_days', 'publication_status', 'delivery_charge');
             }, 'job' => function ($q) {
                 $q->select('id', 'category_id', 'partner_order_id')->with('category')->with(['jobServices' => function ($q) {
                     $q->select('id', 'job_id', 'service_id', 'quantity', 'option', 'variable_type', 'created_at')->with(['service' => function ($q) {
