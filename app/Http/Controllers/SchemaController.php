@@ -3,14 +3,12 @@
 use App\Models\Category;
 use App\Models\City;
 use App\Models\Location;
+use App\Sheba\Schema\CategorySchema;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 class SchemaController extends Controller
 {
-    private $locations;
-    private $cities;
-
     public function getFaqSchema(Request $request)
     {
         try {
@@ -317,7 +315,7 @@ class SchemaController extends Controller
                 ],
                 "areaServed" => [
                     "@type" => "State",
-                    "name" => implode(', ',$selected_city_names)
+                    "name" => implode(', ', $selected_city_names)
                 ],
                 "hasOfferCatalog" => [
                     "@type" => "OfferCatalog",
@@ -338,5 +336,24 @@ class SchemaController extends Controller
         }
     }
 
-
+    public function getAllSchemas(Request $request, CategorySchema $category_schema)
+    {
+        try {
+            $this->validate($request, [
+                'type' => 'required|string',
+                'type_id' => 'required|integer'
+            ]);
+            $schema_lists = $category_schema->setTypeID($request->type_id)->setType($request->type)->generate();
+            return api_response($request, true, 200, ['schema_lists' => $schema_lists]);
+        } catch (ValidationException $e) {
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all()]);
+            $sentry->captureException($e);
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }

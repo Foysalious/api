@@ -20,6 +20,7 @@ class Route
                 $api->get('/review', 'SchemaController@getReviewSchema');
                 $api->get('/aggregate-review', 'SchemaController@getAggregateReviewSchema');
                 $api->get('/category', 'SchemaController@getCategorySchema');
+                $api->get('/category-schemas', 'SchemaController@getAllSchemas');
             });
 
             $api->get('partners/send-order-requests', 'Partner\PartnerListController@getPartners');
