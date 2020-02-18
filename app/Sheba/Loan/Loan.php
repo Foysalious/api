@@ -566,7 +566,7 @@ class Loan
         $mobile  = formatMobile($request->mobile);
         $profile = Profile::where('mobile', $mobile)->first();
         /** @var Resource $resource */
-        $resource = $profile->resource;
+        $resource = $profile ? $profile->resource : null;
         if (empty($profile) || empty($resource))
             throw new NotShebaPartner();
         /** @var Partner $partner */
