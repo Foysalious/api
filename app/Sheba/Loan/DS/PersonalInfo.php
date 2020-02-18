@@ -115,7 +115,7 @@ class PersonalInfo implements Arrayable
             $this->profile->updated_at,
             $this->partner->updated_at,
             $this->basic_information->updated_at
-        ]))->get();
+        ], ['net_worth']))->get();
     }
 
     /**
@@ -180,8 +180,8 @@ class PersonalInfo implements Arrayable
             'spouse_name',
             'mother_name',
             'birth_place',
-            'occupation_lists',
             'occupation',
+            'occupation_lists',
             'expenses',
             'nid_no',
             'nid_issue_date',

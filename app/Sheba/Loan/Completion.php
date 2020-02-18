@@ -10,15 +10,22 @@ class Completion
     private $data;
     private $updatedStamps;
     private $flatten;
+    private $skipFields;
 
-    public function __construct(array $data, array $updated_stamps)
+    public function __construct(array $data, array $updated_stamps, array $skipFields = [])
     {
         $this->data          = $data;
         $this->updatedStamps = $updated_stamps;
+        $this->skipFields    = $skipFields;
     }
 
-    public static function isApplicableForLoan($data)
+    public static function isApplicableForLoan(&$data)
     {
+        if (isset($data['nominee_granter'])) {
+            $data['nominee'] = $data['nominee_granter'];
+        }
+        if (isset($data['document']))
+            $data['documents'] = $data['document'];
         return (($data['personal']['completion_percentage'] >= 50) && ($data['business']['completion_percentage'] >= 20) && ($data['finance']['completion_percentage'] >= 70) && ($data['nominee']['completion_percentage'] == 100) && ($data['documents']['completion_percentage'] >= 50)) ? 1 : 0;
     }
 
@@ -35,13 +42,15 @@ class Completion
         $count  = 0;
         $filled = 0;
         foreach ($this->flatten as $key => $value) {
-            if (is_array($value) || $value === true || $value === false || $key == 'extra_images') {
+            if (is_array($value) || $value === true || $value === false) {
                 continue;
             }
-            if ($value !== null) {
-                $filled++;
+            if (!in_array($key, $this->skipFields)) {
+                if ($value !== null) {
+                    $filled++;
+                }
+                $count++;
             }
-            $count++;
         }
         return ($filled / $count) * 100;
     }
