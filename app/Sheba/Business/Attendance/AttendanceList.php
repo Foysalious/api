@@ -113,7 +113,7 @@ class AttendanceList
         if ($this->businessMemberId) $business_member_ids = [$this->businessMemberId];
         elseif ($this->business) $business_member_ids = $this->getBusinessMemberIds();
         $attendances = $this->attendRepository->builder()
-            ->select('id', 'business_member_id', 'checkin_time', 'checkout_time', 'staying_time_in_minutes', 'status','date')
+            ->select('id', 'business_member_id', 'checkin_time', 'checkout_time', 'staying_time_in_minutes', 'status', 'date')
             ->whereIn('business_member_id', $business_member_ids)
             ->where('date', '>=', $this->startDate->toDateString())
             ->where('date', '<=', $this->endDate->toDateString())
@@ -127,11 +127,10 @@ class AttendanceList
                 }]);
             }])->whereIn('status', $this->getStatus());
         if ($this->businessDepartmentId) {
-            if ($role_ids = $this->getBusinessRoleIds()) {
-                $attendances = $attendances->whereHas('businessMember', function ($q) use ($role_ids) {
-                    $q->whereIn('business_role_id', $role_ids);
-                });
-            }
+            $role_ids = $this->getBusinessRoleIds();
+            $attendances = $attendances->whereHas('businessMember', function ($q) use ($role_ids) {
+                $q->whereIn('business_role_id', $role_ids);
+            });
         }
         $this->attendances = $attendances->get();
     }
@@ -160,7 +159,7 @@ class AttendanceList
         $role_ids = BusinessRole::select('id', 'business_department_id')->whereHas('businessDepartment', function ($q) {
             $q->where([['business_id', $this->business->id], ['business_departments.id', $this->businessDepartmentId]]);
         })->get();
-        return count($role_ids) > 0 ? $role_ids->pluck('id')->toArray() : null;
+        return count($role_ids) > 0 ? $role_ids->pluck('id')->toArray() : [];
     }
 
     private function getData()
