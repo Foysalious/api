@@ -129,7 +129,7 @@ class AttendanceList
         if ($this->businessDepartmentId) {
             if ($role_ids = $this->getBusinessRoleIds()) {
                 $attendances = $attendances->whereHas('businessMember', function ($q) use ($role_ids) {
-                    $q->whereIn('business_role_id', $role_ids->toArray());
+                    $q->whereIn('business_role_id', $role_ids);
                 });
             }
         }
@@ -157,7 +157,7 @@ class AttendanceList
     private function getBusinessRoleIds()
     {
         /** @var Collection $role_ids */
-        $role_ids = BusinessRole::select('id', 'business_department_id')->whereHas('businessDepartmentId', function ($q) {
+        $role_ids = BusinessRole::select('id', 'business_department_id')->whereHas('businessDepartment', function ($q) {
             $q->where([['business_id', $this->business->id], ['business_departments.id', $this->businessDepartmentId]]);
         })->get();
         return count($role_ids) > 0 ? $role_ids->pluck('id')->toArray() : null;
