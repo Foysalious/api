@@ -123,7 +123,10 @@ class LoanController extends Controller
         try {
             $partner  = $request->partner;
             $resource = $request->manager_resource;
+            $new      = $request->new;
             $homepage = $loan->setPartner($partner)->setResource($resource)->homepage();
+            if (empty($new))
+                $homepage['duration'] = $homepage['duration'] / 12;
             return api_response($request, $homepage, 200, ['homepage' => $homepage]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
