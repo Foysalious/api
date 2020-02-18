@@ -226,7 +226,7 @@ class Loan
     public function apply()
     {
         $this->validate();
-        if (isset($this->data['month']) && $this->data['month'])
+        if (!(isset($this->data['month']) && $this->data['month']))
             $this->data['duration'] = ((int)$this->data['duration'] * 12);
         return $this->create();
     }

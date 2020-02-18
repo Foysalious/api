@@ -137,6 +137,8 @@ class LoanController extends Controller
             $interest_rate           = constants('LOAN_CONFIG')['interest'];
             $amount                  = $request->has('amount') ? (double)$request->amount : 0;
             $duration                = $request->has('duration') ? (int)$request->duration : 1;
+            $month                   = $request->has('month') ? (int)$request->month : 0;
+            $duration                = $month ? $duration : $duration * 12;
             $interest_per_month      = emi_calculator($interest_rate, $amount, $duration);
             $total_instalment_amount = $interest_per_month * $duration;
             $bank_lists              = [

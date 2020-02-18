@@ -10,11 +10,13 @@ class Completion
     private $data;
     private $updatedStamps;
     private $flatten;
+    private $skipFields;
 
-    public function __construct(array $data, array $updated_stamps)
+    public function __construct(array $data, array $updated_stamps, array $skipFields = [])
     {
         $this->data          = $data;
         $this->updatedStamps = $updated_stamps;
+        $this->skipFields    = $skipFields;
     }
 
     public static function isApplicableForLoan(&$data)
@@ -40,13 +42,15 @@ class Completion
         $count  = 0;
         $filled = 0;
         foreach ($this->flatten as $key => $value) {
-            if (is_array($value) || $value === true || $value === false || $key == 'extra_images') {
+            if (is_array($value) || $value === true || $value === false) {
                 continue;
             }
-            if ($value !== null) {
-                $filled++;
+            if (!in_array($key, $this->skipFields)) {
+                if ($value !== null) {
+                    $filled++;
+                }
+                $count++;
             }
-            $count++;
         }
         return ($filled / $count) * 100;
     }

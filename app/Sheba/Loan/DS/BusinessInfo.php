@@ -8,6 +8,7 @@ use App\Models\Resource;
 use Carbon\Carbon;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Http\Request;
+use ReflectionException;
 use Sheba\Loan\Completion;
 use Sheba\ModificationFields;
 
@@ -57,7 +58,7 @@ class BusinessInfo implements Arrayable
 
     /**
      * @param Request $request
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function update(Request $request)
     {
@@ -94,7 +95,7 @@ class BusinessInfo implements Arrayable
 
     /**
      * @return array
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function completion()
     {
@@ -103,12 +104,20 @@ class BusinessInfo implements Arrayable
             $this->profile->updated_at,
             $this->partner->updated_at,
             $this->basic_information ? $this->basic_information->updated_at : null
+        ], [
+            'fixed_asset',
+            'security_check',
+            'business_category',
+            'sector',
+            'industry_and_business_nature',
+            'trade_license',
+            'trade_license_issue_date',
         ]))->get();
     }
 
     /**
      * @return array
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function toArray()
     {
@@ -116,7 +125,7 @@ class BusinessInfo implements Arrayable
     }
 
     /**
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     private function dataFromLoanRequest()
     {
@@ -192,7 +201,7 @@ class BusinessInfo implements Arrayable
 
     /**
      * @return array
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     private function dataFromProfile()
     {
