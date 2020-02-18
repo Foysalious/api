@@ -33,8 +33,8 @@ class NomineeGranterInfo implements Arrayable
 
     public function __construct(Partner $partner = null, Resource $resource = null, LoanRequestDetails $request = null)
     {
-        $this->partner            = $partner;
-        $this->resource           = $resource;
+        $this->partner     = $partner;
+        $this->resource    = $resource;
         $this->loanDetails = $request;
         if ($this->resource) {
             $this->profile = $resource->profile;
@@ -128,6 +128,11 @@ class NomineeGranterInfo implements Arrayable
             $this->profile->updated_at,
             $this->granter ? $this->granter->updated_at : null,
             $this->nominee ? $this->nominee->updated_at : null
+        ], [
+            'address',
+            'dob',
+            'occupation',
+            'net_worth'
         ]))->get();
     }
 
@@ -140,9 +145,9 @@ class NomineeGranterInfo implements Arrayable
         return $this->loanDetails ? $this->getDataFromLoanRequest() : $this->getDataFromProfile();
     }
 
-    private function getDataFromLoanRequest() {
+    private function getDataFromLoanRequest()
+    {
         $data = $this->loanDetails->getData();
-
         if (isset($data['nominee_granter'])) {
 
             $data = $data['nominee_granter'];
@@ -152,8 +157,8 @@ class NomineeGranterInfo implements Arrayable
             $data = [];
         }
         return [
-            'grantor'=> array_merge((new GranterInfo((array_key_exists('grantor', $data)?$data['grantor']:null)))->toArray(),['grantor_relation'=>(array_key_exists('grantor', $data)?$data['grantor']['grantor_relation']:null)]),
-            'nominee'=> array_merge((new GranterInfo((array_key_exists('nominee', $data)?$data['nominee']:null)))->toArray(),['nominee_relation'=>(array_key_exists('nominee', $data)?$data['nominee']['nominee_relation']:null)])
+            'grantor' => array_merge((new GranterInfo((array_key_exists('grantor', $data) ? $data['grantor'] : null)))->toArray(), ['grantor_relation' => (array_key_exists('grantor', $data) ? $data['grantor']['grantor_relation'] : null)]),
+            'nominee' => array_merge((new GranterInfo((array_key_exists('nominee', $data) ? $data['nominee'] : null)))->toArray(), ['nominee_relation' => (array_key_exists('nominee', $data) ? $data['nominee']['nominee_relation'] : null)])
         ];
     }
 

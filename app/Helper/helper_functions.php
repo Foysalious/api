@@ -766,6 +766,19 @@ if (!function_exists('asset_from')) {
         return app('url')->assetFrom($root, $path, $secure);
     }
 }
+
+if (!function_exists('calculateAge')) {
+    function calculateAge($dob){
+        if (!empty($dob)&&!is_null($dob)){
+            try{
+                return \Carbon\Carbon::parse($dob)->age;
+            }catch (Exception $e){
+                return 0;
+            }
+        }
+        return 0;
+    }
+}
 if (!function_exists('getCDNAssetsFolder')) {
     /**
      * @return string
