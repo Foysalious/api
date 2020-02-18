@@ -2,11 +2,11 @@
 
 use App\Models\Category;
 use App\Models\City;
-use App\Models\Location;
-use App\Sheba\Schema\CategorySchema;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-
+use Sheba\Schema\ServiceSchema;
+use Sheba\Schema\ShebaSchema;
+use Sheba\Schema\CategorySchema;
 class SchemaController extends Controller
 {
     public function getFaqSchema(Request $request)
@@ -336,24 +336,12 @@ class SchemaController extends Controller
         }
     }
 
-    public function getAllSchemas(Request $request, CategorySchema $category_schema)
+    public function getAllSchemas(Request $request, ServiceSchema $service_schema, CategorySchema $category_schema, ShebaSchema $sheba_schema)
     {
-        try {
-            $this->validate($request, [
-                'type' => 'required|string',
-                'type_id' => 'required|integer'
-            ]);
-            $schema_lists = $category_schema->setTypeID($request->type_id)->setType($request->type)->generate();
-            return api_response($request, true, 200, ['schema_lists' => $schema_lists]);
-        } catch (ValidationException $e) {
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all()]);
-            $sentry->captureException($e);
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $this->validate($request, ['type' => 'required|string|in:service,category', 'type_id' => 'required|numeric']);
+        if ($request->type == 'category') $schema = $category_schema->setCategoryId($request->type_id)->get();
+        else $schema = $service_schema->setServiceId($request->type_id)->get();
+        $sheba = $sheba_schema->get();
+        return api_response($request, true, 200, array_merge($sheba, $schema));
     }
 }

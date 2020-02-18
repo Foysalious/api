@@ -647,7 +647,8 @@ class CategoryController extends Controller
                 ->join('profiles', 'profiles.id', '=', 'customers.profile_id')
                 ->where('review_type', 'like', '%' . '\\Review')
                 ->where('review_question_answer.rate_answer_text', '<>', '')
-                ->whereIn('reviews.rating', [4, 5])
+                ->whereIn('reviews.rating', [5])
+                ->whereRaw("CHAR_LENGTH(rate_answer_text)>20")
                 ->where('reviews.category_id', $category->id)
                 ->skip($offset)->take($limit)
                 ->orderBy('id', 'desc')
@@ -664,7 +665,7 @@ class CategoryController extends Controller
                 ->where('reviews.category_id', $category->id)
                 ->groupBy("reviews.category_id")->first();
             $info = [
-                'avg_rating' => $review_stat && $review_stat->avg_rating ? round($review_stat->avg_rating,2) : 0,
+                'avg_rating' => $review_stat && $review_stat->avg_rating ? round($review_stat->avg_rating, 2) : 0,
                 'total_review_count' => 500,
                 'total_rating_count' => $review_stat && $review_stat->total_ratings ? $review_stat->total_ratings : 0
             ];
