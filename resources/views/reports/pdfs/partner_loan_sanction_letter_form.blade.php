@@ -44,6 +44,9 @@
             padding: 5px;
             text-align: left;
         }
+        .bangla-font{
+            font-family: Siyamrupali, sans-serif;
+        }
     </style>
 </head>
 <body>
@@ -61,9 +64,9 @@
             <p>{{$partner['profile']['name']}}</p>
             <p>Proprietor</p>
             <p>{{$partner['name']}}</p>
-            <p> {{$final_information_for_loan['personal']['present_address']['street']}},
+            <p class="bangla-font"> {{$final_information_for_loan['personal']['present_address']['street']}},
                 {{$final_information_for_loan['personal']['present_address']['thana']}}</p>
-            <p>{{$final_information_for_loan['personal']['present_address']['zilla']}}-
+            <p class="bangla-font">{{$final_information_for_loan['personal']['present_address']['zilla']}}-
                 {{$final_information_for_loan['personal']['present_address']['post_code']}}.</p>
         </div>
         <div class="cover-letter">
