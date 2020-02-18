@@ -5,12 +5,7 @@
     <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
           integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-
     <style>
-        .body {
-            font-family: Siyamrupali, sans-serif !important;
-        }
-
         .proposal-letter {
             font-size: 10px;
         }
@@ -46,13 +41,38 @@
             text-align: left;
             padding: 0 3px;
         }
-        .border-less-td{
+
+        ul {
+            list-style: none;
+            padding-left: 20px;
+            margin-bottom: 0;
+        }
+
+        ul li {
+            display: block;
+            line-height: 1;
+            position: relative;
+        }
+        ul li:before{
+            content: '•';
+            position: absolute;
+            width: 20px;
+            left: -20px;
+            height: 100%;
+
+        }
+        .border-less-td {
             border-bottom: none;
             border-left: none;
             border-top: none;
         }
-        .text-center{
+
+        .text-center {
             text-align: center;
+        }
+
+        .bangla-font{
+            font-family: Siyamrupali, sans-serif;
         }
     </style>
 </head>
@@ -60,9 +80,11 @@
 <?php $today = \Carbon\Carbon::today()->format('d-M-y')?>
 <?php $current_year = \Carbon\Carbon::today()->format('Y')?>
 
-<div class="proposal-letter">
+<div class="proposal-letter font-face">
     <div class="proposal-letter-table">
-        <div style="text-align: right">Management Memo No. <span style="padding-left: 50px">{{$final_information_for_loan['proposal_info']['management_memo_no']}}</span></div>
+        <div style="text-align: right">Management Memo No. <span
+                    style="padding-left: 50px">{{$final_information_for_loan['proposal_info']['management_memo_no']}}</span>
+        </div>
         <table cellpadding="0" cellspacing="0" width="100%">
             <col width="15%">
             <col width="15%">
@@ -73,12 +95,12 @@
             <col width="18%">
             <tr>
                 <td rowspan="2" width="16%">
-                    <span style="position: absolute;">
-                        •APPROVED <br>
-                        •CONDITIONALLY APPROVED<br>
-                        •DEFERRED <br>
-                        •DECLINED <br>
-                    </span>
+                    <ul style="list-style: disc">
+                        <li>APPROVED</li>
+                        <li>CONDITIONALLY APPROVED</li>
+                        <li>DEFERRED</li>
+                        <li>DECLINED</li>
+                    </ul>
                 </td>
                 <td style="text-align: center">APPROVER-1</td>
                 <td style="text-align: center">APPROVER-2</td>
@@ -115,7 +137,8 @@
                 <td>Company Name</td>
                 <td colspan="2">{{$partner['name']}}</td>
                 <td colspan="2">Establishment Date</td>
-                <td class="text-center" colspan="2">{{ date('d-M-y', strtotime($final_information_for_loan['business']['establishment_year'])) }}</td>
+                <td class="text-center"
+                    colspan="2">{{ date('d-M-y', strtotime($final_information_for_loan['business']['establishment_year'])) }}</td>
             </tr>
             <tr>
                 <td>Key Sponsor</td>
@@ -128,14 +151,14 @@
                 <td colspan="2">{{$final_information_for_loan['business']['trade_license']}}</td>
                 <td rowspan="3">Contact Details</td>
                 <td>Business Address:</td>
-                <td class="text-center" colspan="2">{{$final_information_for_loan['business']['location']}}
+                <td class="text-center bangla-font" colspan="2">{{$final_information_for_loan['business']['location']}}
                 </td>
             </tr>
             <tr>
                 <td>Legal Status</td>
-                <td colspan="2">{{$final_information_for_loan['business']['ownership_type']}} </td>
+                <td colspan="2" class="bangla-font">{{$final_information_for_loan['business']['ownership_type']}} </td>
                 <td>Residential Address:</td>
-                <td class="text-center" colspan="2">
+                <td class="text-center bangla-font" colspan="2">
                     {{$final_information_for_loan['personal']['present_address']['street']}},
                     {{$final_information_for_loan['personal']['present_address']['thana']}},
                     {{$final_information_for_loan['personal']['present_address']['zilla']}}-
@@ -146,7 +169,7 @@
                 <td>Industry & Business
                     Nature
                 </td>
-                <td colspan="2">{{$final_information_for_loan['business']['industry_and_business_nature']}}</td>
+                <td colspan="2" class="bangla-font">{{$final_information_for_loan['business']['industry_and_business_nature']}}</td>
                 <td>Contact No</td>
                 <td class="text-center" colspan="2">{{$partner['profile']['mobile']}}</td>
             </tr>
@@ -195,7 +218,8 @@
                 <td style="text-align: center">BDT 0.60 M</td>
                 <td style="text-align: center">BDT {{$final_information_for_loan['proposal_info']['outstanding']}}</td>
                 <td style="text-align: center">BDT {{$final_information_for_loan['proposal_info']['overdue']}}</td>
-                <td colspan="2" style="text-align: center">{{$final_information_for_loan['proposal_info']['remarks']}}</td>
+                <td colspan="2"
+                    style="text-align: center">{{$final_information_for_loan['proposal_info']['remarks']}}</td>
             </tr>
             <tr>
                 <td colspan="7" style="text-align: center">Conditions and Purpose of the Proposed Facility</td>
@@ -237,10 +261,12 @@
                 <td style="text-align: right">{{ $final_information_for_loan['proposal_info']['net_profit'] }}</td>
                 <td>{{ $final_information_for_loan['proposal_info']['profit_ratio'] }}%</td>
                 <td>Total Existing Monthly
-                    Debt Repayment</td>
+                    Debt Repayment
+                </td>
                 <td>{{ $final_information_for_loan['proposal_info']['existing_debt_repayment'] }} </td>
                 <td colspan="2">(Previous Liability Exposure with
-                    Brac Bank which has been setteled)</td>
+                    Brac Bank which has been setteled)
+                </td>
             </tr>
             <tr>
                 <td>Total Fixed Assets</td>
@@ -279,7 +305,8 @@
             <tr>
                 <td class="text-center">{{ $final_information_for_loan['finance']['acc_name'] }}</td>
                 <td class="text-center">{{ $final_information_for_loan['finance']['bank_name'] }} (A/C:
-                    {{ $final_information_for_loan['finance']['acc_no'] }} )</td>
+                    {{ $final_information_for_loan['finance']['acc_no'] }} )
+                </td>
                 <td class="text-center">{{ $final_information_for_loan['finance']['acc_type'] }}</td>
                 <td class="text-center">{{ $final_information_for_loan['finance']['period'] }} Months</td>
                 <td class="text-center">{{ $final_information_for_loan['finance']['debit_sum'] ?
@@ -308,7 +335,7 @@
                 <td class="text-center">Business</td>
                 <td class="text-center">BDT 00000</td>
                 <td class="text-center">Self</td>
-                <td class="text-center">{{$final_information_for_loan['personal']['present_address']['street']}},
+                <td class="text-center bangla-font">{{$final_information_for_loan['personal']['present_address']['street']}},
                     {{$final_information_for_loan['personal']['present_address']['thana']}},
                     {{$final_information_for_loan['personal']['present_address']['zilla']}}-
                     {{$final_information_for_loan['personal']['present_address']['post_code']}}</td>
@@ -319,7 +346,8 @@
                 <td class="text-center">{{calculateAge($final_information_for_loan['nominee_granter']['grantor']['dob'])}}
                 </td>
                 <td class="text-center">{{$final_information_for_loan['nominee_granter']['grantor']['occupation']}}</td>
-                <td class="text-center">BDT {{$final_information_for_loan['nominee_granter']['grantor']['net_worth']}}</td>
+                <td class="text-center">
+                    BDT {{$final_information_for_loan['nominee_granter']['grantor']['net_worth']}}</td>
                 <td class="text-center">{{$final_information_for_loan['nominee_granter']['grantor']['grantor_relation']}}</td>
                 <td class="text-center">{{$final_information_for_loan['nominee_granter']['grantor']['address']}}</td>
             </tr>
@@ -328,7 +356,8 @@
                 <td class="text-center">{{$final_information_for_loan['nominee_granter']['nominee']['name']}}</td>
                 <td class="text-center">{{calculateAge($final_information_for_loan['nominee_granter']['nominee']['dob'])}}</td>
                 <td class="text-center">{{$final_information_for_loan['nominee_granter']['nominee']['occupation']}}</td>
-                <td class="text-center">BDT {{$final_information_for_loan['nominee_granter']['nominee']['net_worth']}}</td>
+                <td class="text-center">
+                    BDT {{$final_information_for_loan['nominee_granter']['nominee']['net_worth']}}</td>
                 <td class="text-center">{{$final_information_for_loan['nominee_granter']['nominee']['nominee_relation']}}</td>
                 <td class="text-center">{{$final_information_for_loan['nominee_granter']['nominee']['address']}}</td>
             </tr>
@@ -358,12 +387,14 @@
                 <td colspan="3" rowspan="2">Single Borrower Exposure</td>
                 <td>Amount</td>
                 <td style="text-align: right"></td>
-                <td colspan="2" style="text-align: right">BDT {{$final_information_for_loan['finance']['disbursement_amount']}}</td>
+                <td colspan="2" style="text-align: right">
+                    BDT {{$final_information_for_loan['finance']['disbursement_amount']}}</td>
             </tr>
             <tr>
                 <td>% of IPDC equity</td>
                 <td style="text-align: right"></td>
-                <td colspan="2" style="text-align: right">{{$final_information_for_loan['proposal_info']['ipdc_equity'].'%'}}</td>
+                <td colspan="2"
+                    style="text-align: right">{{$final_information_for_loan['proposal_info']['ipdc_equity'].'%'}}</td>
             </tr>
             <tr>
                 <td colspan="3" rowspan="2">Group Exposure</td>
@@ -396,7 +427,9 @@
 
         <div style="page-break-before:always">&nbsp;</div>
 
-        <div style="text-align: right">Management Memo No. <span style="padding-left: 50px">{{$final_information_for_loan['proposal_info']['management_memo_no']}}</span></div>
+        <div style="text-align: right">Management Memo No. <span
+                    style="padding-left: 50px">{{$final_information_for_loan['proposal_info']['management_memo_no']}}</span>
+        </div>
 
         <table width="100%">
             <tr>
@@ -423,11 +456,14 @@
                 <td>Interest rate</td>
                 <td>{{$interest_rate}}% p.a.</td>
                 <td colspan="2" class="text-center">based on client profile and relevant risk parameters. IPDC will
-                    have the discretion to re-fix the interest rate.</td>
+                    have the discretion to re-fix the interest rate.
+                </td>
             </tr>
             <tr>
                 <td>Disbursement</td>
-                <td colspan="2" class="text-center">Disbursement will be made in single or multiple tranches directly to the</td>
+                <td colspan="2" class="text-center">Disbursement will be made in single or multiple tranches directly to
+                    the
+                </td>
                 <td>{{$final_information_for_loan['proposal_info']['disbursement_to']}}</td>
             </tr>
             <tr>
@@ -440,18 +476,23 @@
                 <td>{{$duration}}</td>
                 <td colspan="2" class="text-center">equal monthly installments. (IPDC reserves the right to review
                     and change this instalment amount during the loan period subject
-                    to adverse change in money market)</td>
+                    to adverse change in money market)
+                </td>
             </tr>
             <tr>
                 <td>Payment Modality</td>
-                <td colspan="3">Through assignment payment and submission of post-dated cheques for instalment payment and
+                <td colspan="3">Through assignment payment and submission of post-dated cheques for instalment payment
+                    and
                     another cheque for full principal amount along with submission of memorandum of deposit of
-                    cheques.</td>
+                    cheques.
+                </td>
             </tr>
             <tr>
                 <td>Penal Charge</td>
-                <td colspan="3">2.00% p.a. on and above the regular interest rate on all overdue amounts. IPDC will have sole
-                    discretion to change the rate of penal interest at any time during the loan tenure.</td>
+                <td colspan="3">2.00% p.a. on and above the regular interest rate on all overdue amounts. IPDC will have
+                    sole
+                    discretion to change the rate of penal interest at any time during the loan tenure.
+                </td>
             </tr>
             <tr>
                 <td>Security</td>
@@ -475,7 +516,7 @@
                     <div style="margin: 20px 0">
                         Based on the analysis laid down in this paper, approval is sought for a Term Loan facility up to
                         a limit of <span style="color: red">BDT 1.00 M</span> for <span style="color: red">30
-                        months</span>  in favor of <span style="color: red">INP Engineering</span>.
+                        months</span> in favor of <span style="color: red">INP Engineering</span>.
                     </div>
                     <div>
                         If approved, any disbursement of fund will be made subject to the following:
@@ -488,7 +529,7 @@
             </tr>
         </table>
 
-        <table class="margin-top-10" width="100%" >
+        <table class="margin-top-10" width="100%">
             <tr>
                 <td class="text-center">PREPARED BY</td>
                 <td class="text-center">PROPOSED BY</td>
