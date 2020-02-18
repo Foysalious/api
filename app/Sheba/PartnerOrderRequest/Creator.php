@@ -75,9 +75,9 @@ class Creator
                 'partner_order_id' => $this->partnerOrder->id,
                 'partner_id' => $partner_id
             ];
+            $this->sendOrderRequestPushNotificationToPartner($partner_id);
+            $this->sendOrderRequestSmsToPartner($partner_id);
         }
-        $this->sendOrderRequestPushNotificationToPartner($partner_id);
-        $this->sendOrderRequestSmsToPartner($partner_id);
         $this->partnerOrderRequestRepo->insert($data);
     }
 
