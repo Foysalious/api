@@ -302,7 +302,7 @@ class BusinessRoute
                     $api->get('/', 'B2b\InspectionController@individualInspection');
                 });
                 $api->group(['prefix' => 'supports'], function ($api) {
-                    $api->get('/', 'B2b\SupportContoller@index');
+                    $api->get('/', 'B2b\SupportController@index');
                     $api->group(['prefix' => '{support}'], function ($api) {
                         $api->post('resolve', 'B2b\SupportController@resolve');
                         $api->get('/', 'B2b\SupportController@show');
