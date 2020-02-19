@@ -134,11 +134,12 @@ class MemberController extends Controller
                 'remember_token' => $member->remember_token,
                 'is_super' => $member->businessMember ? $member->businessMember->is_super : null,
                 'access' => [
-                    'support' => $business ? ($business->id == 110 && $access_control->hasAccess('support.rw') ? 1 : 0) : 0,
-                    'expense' => $business ? ($business->id == 110 && $access_control->hasAccess('expense.rw') ? 1 : 0) : 0,
-                    'announcement' => $business ? ($business->id == 110 && $access_control->hasAccess('announcement.rw') ? 1 : 0) : 0
+                    'support' => $business ? (in_array($business->id, config('business.WHITELISTED_BUSINESS_IDS')) && $access_control->hasAccess('support.rw') ? 1 : 0) : 0,
+                    'expense' => $business ? (in_array($business->id, config('business.WHITELISTED_BUSINESS_IDS')) && $access_control->hasAccess('expense.rw') ? 1 : 0) : 0,
+                    'announcement' => $business ? (in_array($business->id, config('business.WHITELISTED_BUSINESS_IDS')) && $access_control->hasAccess('announcement.rw') ? 1 : 0) : 0
                 ]
             ];
+            ;
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);

@@ -76,7 +76,7 @@ class Documents implements Arrayable
             $this->partner->updated_at,
             $this->basic_information ? $this->basic_information->updated_at : null,
             $this->bank_information ? $this->bank_information->updated_at : null
-        ]))->get();
+        ],['extra_images']))->get();
     }
 
     /**
@@ -115,9 +115,9 @@ class Documents implements Arrayable
             } elseif ($key == 'business_document') {
                 if (array_key_exists($key, $data)) {
                     $output[$key] = [
-                        'tin_certificate'          => array_key_exists('picture', $data[$key]) ? $data[$key]['picture'] : null,
-                        'trade_license_attachment' => array_key_exists('picture', $data[$key]) ? $data[$key]['picture'] : null,
-                        'statement'                => array_key_exists('picture', $data[$key]) ? $data[$key]['picture'] : null,
+                        'tin_certificate'          => array_key_exists('tin_certificate', $data[$key]) ? $data[$key]['tin_certificate'] : null,
+                        'trade_license_attachment' => array_key_exists('trade_license_attachment', $data[$key]) ? $data[$key]['trade_license_attachment'] : null,
+                        'statement'                => array_key_exists('statement', $data[$key]) ? $data[$key]['statement'] : null,
                     ];
                 } else {
                     $output[$key] = [

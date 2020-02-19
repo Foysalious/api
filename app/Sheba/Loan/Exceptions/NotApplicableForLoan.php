@@ -4,12 +4,10 @@ namespace Sheba\Loan\Exceptions;
 
 use Throwable;
 
-class NotApplicableForLoan extends \Exception
+class NotApplicableForLoan extends LoanException
 {
-    public function __construct($message = "", $code = 0, Throwable $previous = null)
+    public function __construct($message = "You are not applicable for loan, Please fill out all the fields", $code = 0, Throwable $previous = null)
     {
-        if (empty($message))
-            $message = "You are not applicable for loan,Please fill out all the fields";
         parent::__construct($message, $code, $previous);
     }
 }

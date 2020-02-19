@@ -20,6 +20,7 @@ use Sheba\PaymentLink\Creator as PaymentLinkCreator;
 use Sheba\PaymentLink\PaymentLinkTransformer;
 use Sheba\Pos\Customer\Creator as PosCustomerCreator;
 use Sheba\Pos\Exceptions\InvalidPosOrder;
+use Sheba\Pos\Exceptions\PosExpenseCanNotBeDeleted;
 use Sheba\Pos\Jobs\OrderBillEmail;
 use Sheba\Pos\Jobs\OrderBillSms;
 use Sheba\Pos\Order\Creator;
@@ -86,6 +87,7 @@ class OrderController extends Controller
             if (!empty($status))
                 $final_orders = $final_orders->where('status', $status)->slice($offset)->take($limit);
             $final_orders     = $final_orders->groupBy('date')->toArray();
+
             $orders_formatted = [];
             $pos_orders_repo  = new PosOrderRepository();
             $pos_sales        = [];
@@ -243,11 +245,14 @@ class OrderController extends Controller
         try {
             $deleter->setPartner($request->partner)->setOrder($order)->delete();
             return api_response($request, true, 200);
+        }catch (PosExpenseCanNotBeDeleted $e){
+            app('sentry')->captureException($e);
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         } catch (InvalidPosOrder $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         } catch (Throwable $e) {
-            dd($e);
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -267,7 +272,7 @@ class OrderController extends Controller
             ]);
             $partner = $request->partner;
             $this->setModifier($request->manager_resource);
-            $order = $creator->setData($request->all())->create();
+            $order = $creator->setPartner($partner)->setData($request->all())->create();
             $order = $order->calculate();
             /**
              * TURNED OFF POS ORDER CREATE SMS BY SERVER END, HANDLED BY CLIENT SIDE
@@ -306,13 +311,14 @@ class OrderController extends Controller
         $this->setModifier($request->manager_resource);
         try {
             /** @var PosOrder $order */
+            $new           = 1;
             $order         = PosOrder::with('items')->find($request->order);
-            $is_returned   = ($this->isReturned($order, $request));
+            $is_returned   = ($this->isReturned($order, $request, $new));
             $refund_nature = $is_returned ? Natures::RETURNED : Natures::EXCHANGED;
             $return_nature = $is_returned ? $this->getReturnType($request, $order) : null;
             /** @var RefundNature $refund */
             $refund = NatureFactory::getRefundNature($order, $request->all(), $refund_nature, $return_nature);
-            $refund->update();
+            $refund->setNew($new)->update();
             $order->payment_status = $order->calculate()->getPaymentStatus();
             return api_response($request, null, 200, [
                 'msg'   => 'Order Updated Successfully',
@@ -327,11 +333,16 @@ class OrderController extends Controller
     /**
      * @param PosOrder $order
      * @param Request $request
+     * @param bool $new
      * @return bool
      */
-    private function isReturned(PosOrder $order, Request $request)
+    private function isReturned(PosOrder $order, Request $request, $new = false)
     {
-        $services         = $order->items->pluck('service_id')->toArray();
+        if ($new) {
+            $services = $order->items->pluck('id')->toArray();
+        } else {
+            $services = $order->items->pluck('service_id')->toArray();
+        }
         $request_services = collect(json_decode($request->services, true))->pluck('id')->toArray();
         return $services === $request_services;
     }

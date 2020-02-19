@@ -30,7 +30,10 @@ class ProxyCaller extends Caller
             'form_params' => [
                 'url' => $this->url,
                 'input' => $this->input
-            ]
+            ],
+            'timeout' => 60,
+            'read_timeout' => 60,
+            'connect_timeout' => 60
         ]);
         $proxy_response = $result->getBody()->getContents();
         if ($proxy_response && isset(json_decode($proxy_response)->endpoint_response)) {

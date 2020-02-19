@@ -3,6 +3,7 @@
 namespace App\Sheba\PartnerOrder;
 
 
+use App\Exceptions\HyperLocationNotFoundException;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\Profile;
@@ -23,13 +24,19 @@ class PartnerAsCustomer
     /**
      * @return Customer
      * @throws PartnerAddressNotFound
+     * @throws HyperLocationNotFoundException
      */
     public function getCustomerProfile()
     {
         $customer = Customer::where('profile_id', $this->resource->profile_id)->first();
         if (!$customer) $customer = $this->createCustomerProfile();
-        $address_count = $customer->delivery_addresses()->where('location_id', $this->partner->getHyperLocation()->location->id)->count();
-        if ($address_count == 0) $this->createCustomerDeliveryAddressFromPartnerAddress($customer);
+        $hyper= $this->partner->getHyperLocation();
+        if (!empty($hyper)&&!empty($hyper->location)){
+            $address_count = $customer->delivery_addresses()->where('location_id', $hyper->location->id)->count();
+            if ($address_count == 0) $this->createCustomerDeliveryAddressFromPartnerAddress($customer);
+        }else{
+            throw new HyperLocationNotFoundException();
+        }
         return $customer;
     }
 

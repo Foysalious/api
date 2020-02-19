@@ -56,7 +56,7 @@ class Creator
             'geolocation' => $this->geolocation
         ];
         $this->affiliate = $this->affiliateRepo->setModel(new Affiliate())->create($data);
-        $this->registrationBonus();
+        if (constants('AFFILIATION_REGISTRATION_BONUS') > 0) $this->registrationBonus();
         (new NotificationRepository())->forAffiliateRegistration($this->affiliate);
         $this->affiliateRepo->makeAmbassador($this->affiliate);
     }

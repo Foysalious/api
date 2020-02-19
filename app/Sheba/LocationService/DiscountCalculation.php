@@ -16,12 +16,14 @@ class DiscountCalculation
     private $cap;
     private $shebaContribution;
     private $partnerContribution;
+    private $quantity;
 
     public function __construct()
     {
         $this->shebaContribution = 0;
         $this->partnerContribution = 0;
         $this->discount = 0;
+        $this->quantity = 1;
     }
 
     /**
@@ -31,6 +33,12 @@ class DiscountCalculation
     public function setLocationService(LocationService $location_service)
     {
         $this->locationService = $location_service;
+        return $this;
+    }
+
+    public function setQuantity($quantity)
+    {
+        $this->quantity = $quantity;
         return $this;
     }
 
@@ -47,7 +55,7 @@ class DiscountCalculation
      */
     public function getDiscount()
     {
-        return $this->discount;
+        return (double)$this->discount;
     }
 
     /**
@@ -71,7 +79,7 @@ class DiscountCalculation
      */
     public function getOriginalPrice()
     {
-        return $this->originalPrice;
+        return (double)$this->originalPrice;
     }
 
     public function setOriginalPrice($original_price)
@@ -133,14 +141,23 @@ class DiscountCalculation
         $this->partnerContribution = $this->serviceDiscount->partner_contribution;
 
         if (!$this->serviceDiscount->isPercentage())
-            return $this->originalPrice - $this->discount;
+            return $this->originalPrice - ($this->discount * $this->quantity);
 
         return $this->originalPrice - (($this->originalPrice * $this->discount) / 100);
     }
 
     private function setDiscountedPriceUptoCap()
     {
-        $this->cap = $this->serviceDiscount->cap;
+        $this->cap = (double)$this->serviceDiscount->cap;
         $this->discountedPrice = ($this->cap && $this->discountedPrice > $this->cap) ? $this->cap : $this->discountedPrice;
+    }
+
+    public function getJobServiceDiscount()
+    {
+        if (!$this->serviceDiscount) return 0;
+        if (!$this->serviceDiscount->isPercentage()) return (double)$this->serviceDiscount->amount * $this->quantity;
+        $discount = ($this->originalPrice * $this->serviceDiscount->amount) / 100;
+        if ($this->serviceDiscount->cap && $discount > $this->serviceDiscount->cap) $discount = $this->serviceDiscount->cap;
+        return $discount;
     }
 }

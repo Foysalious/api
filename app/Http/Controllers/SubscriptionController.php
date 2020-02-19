@@ -85,7 +85,8 @@ class SubscriptionController extends Controller
                     $service = removeRelationsAndFields($service);
                     $subscription = $service->activeSubscription;
                     $subscription['offers'] = $subscription->getDiscountOffers();
-                    $price_range = $approximate_price_calculator->setSubscription($subscription)->getPriceRange();
+                    $location_service = LocationService::where([['location_id', $this->location], ['service_id', $service->id]])->first();
+                    $price_range = $approximate_price_calculator->setSubscription($subscription)->setLocationService($location_service)->getPriceRange();
                     $subscription = removeRelationsAndFields($subscription);
                     $subscription['max_price'] = $price_range['max_price'] > 0 ? $price_range['max_price'] : 0;
                     $subscription['min_price'] = $price_range['min_price'] > 0 ? $price_range['min_price'] : 0;
@@ -123,7 +124,6 @@ class SubscriptionController extends Controller
             return api_response($request, null, 500);
         }
     }
-
 
     public function all(Request $request, ApproximatePriceCalculator $approximatePriceCalculator)
     {
