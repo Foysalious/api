@@ -63,6 +63,7 @@ class ExpenseController extends Controller
                 $expenses->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
             }
             $expenses = $expenses->get();
+//            return $expenses;
             foreach ($expenses as $expense) {
                 $expense['employee_name'] = $expense->member->profile->name;
                 $expense['employee_department'] = $expense->member->businessMember->department() ? $expense->member->businessMember->department()->name : null;
@@ -125,5 +126,26 @@ class ExpenseController extends Controller
     {
         $business_member = BusinessMember::where('business_id', $request->business_member->business_id)->where('member_id', $request->member_id)->first();
         return $pdf->generate($business_member, $request->month, $request->year);
+    }
+
+    public function filterMonth(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'limit' => 'numeric', 'offset' => 'numeric', 'month' => 'numeric',
+            ]);
+            $business_member = $request->business_member;
+            if (!$business_member) return api_response($request, null, 401);
+            $month=$request->month;
+            $expenses=$this->expense_repo->filterMonth($month,$request);
+            $totalExpenseCount = $expenses->count();
+            $totalExpenseSum = $expenses->sum('amount');
+            return api_response($request, $expenses, 200, ['expenses' => $expenses, 'total_expenses_count' => $totalExpenseCount, 'total_expenses_sum' => $totalExpenseSum]);
+
+        } catch (Throwable $e){
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
     }
 }
