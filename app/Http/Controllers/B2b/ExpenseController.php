@@ -63,7 +63,6 @@ class ExpenseController extends Controller
                 $expenses->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
             }
             $expenses = $expenses->get();
-//            return $expenses;
             foreach ($expenses as $expense) {
                 $expense['employee_name'] = $expense->member->profile->name;
                 $expense['employee_department'] = $expense->member->businessMember->department() ? $expense->member->businessMember->department()->name : null;
