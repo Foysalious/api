@@ -1,27 +1,18 @@
 <?php namespace Sheba\Schema;
 
-
 use App\Models\Category;
 use App\Models\City;
 use App\Models\ReviewQuestionAnswer;
-use Illuminate\Contracts\Cache\Repository;
 use Sheba\Dal\MetaTag\MetaTagRepositoryInterface;
 use DB;
-use Cache;
 
 class CategorySchema
 {
-    private $categoryId;
-    private $type;
-    private $typeId;
     /** @var Category */
     private $category;
     private $metaTagRepository;
     private $metaTag;
-    private $redisNameSpace;
     private $categoryReview;
-    /** @var Repository $store */
-    private $store;
     const REVIEW_SCHEMA_NAME = 'review';
     const AGGREGATE_REVIEW_SCHEMA_NAME = 'aggregate_review';
     const FAQ_SCHEMA_NAME = 'faq';
@@ -31,10 +22,7 @@ class CategorySchema
     public function __construct(MetaTagRepositoryInterface $meta_tag_repository)
     {
         $this->metaTagRepository = $meta_tag_repository;
-        $this->redisNameSpace = 'schema';
-        $this->store = Cache::store('redis');
     }
-
 
     private function setCategoryReview($categoryReview)
     {
@@ -42,29 +30,10 @@ class CategorySchema
         return $this;
     }
 
-
-    public function setType($type)
-    {
-        $this->type = $type;
-        return $this;
-    }
-
-    public function setTypeId($typeId)
-    {
-        $this->typeId = $typeId;
-        return $this;
-    }
-
-    public function setCategoryId($category_id)
-    {
-        $this->categoryId = $category_id;
-        return $this;
-    }
-
-    private function setCategory(Category $category)
+    public function setCategory(Category $category)
     {
         $this->category = $category;
-        $this->metaTag = $this->metaTagRepository->builder()->select('meta_tag')->where('taggable_type', 'like', '%category')->where('taggable_id', $this->categoryId)->first();
+        $this->metaTag = $this->metaTagRepository->builder()->select('meta_tag')->where('taggable_type', 'like', '%category')->where('taggable_id', $this->category->id)->first();
         return $this;
     }
 
@@ -75,27 +44,18 @@ class CategorySchema
 
     public function get()
     {
-        $redis_cache_name = $this->redisNameSpace . '::category_' . $this->categoryId;
-        $data = $this->store->get($redis_cache_name);
-        if ($data) return json_decode($data, true);
-        else return $this->generate();
+        return $this->generate();
     }
 
     private function generate()
     {
-        $category = Category::find($this->categoryId);
-        if (!$category) return null;
-        $this->setCategory($category);
-        $cache_name = sprintf("%s::%s_%d", $this->redisNameSpace, 'category', $this->categoryId);
-        $data = [
+        return [
             self::AGGREGATE_REVIEW_SCHEMA_NAME => $this->getAggregateReviewSchema(),
             self::REVIEW_SCHEMA_NAME => $this->getReviewSchema(),
             self::CATEGORY_SCHEMA_NAME => $this->getCategorySchema(),
             self::FAQ_SCHEMA_NAME => $this->getFaqSchema(),
             self::BREADCRUMB_SCHEMA_NAME => $this->getBreadCrumbSchema(),
         ];
-        $this->store->forever($cache_name, json_encode($data));
-        return $data;
     }
 
     private function getAggregateReviewSchema()
@@ -179,7 +139,7 @@ class CategorySchema
             ->where('review_question_answer.rate_answer_text', '<>', '')
             ->whereRaw("CHAR_LENGTH(rate_answer_text)>20")
             ->whereIn('reviews.rating', [5])
-            ->where('reviews.category_id', $this->categoryId)
+            ->where('reviews.category_id', $this->category->id)
             ->take(10)
             ->orderBy('id', 'desc')
             ->groupBy('customer_id')

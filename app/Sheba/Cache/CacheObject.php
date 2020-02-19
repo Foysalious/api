@@ -7,7 +7,7 @@ interface CacheObject
 
     public function getRedisNamespace(): string;
 
-    public function getExpirationTimeInSeconds(): int;
-
     public function generate(): DataStoreObject;
+
+    public function getExpirationTimeInSeconds(): int;
 }

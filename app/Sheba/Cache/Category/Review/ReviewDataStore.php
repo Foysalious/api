@@ -10,6 +10,7 @@ class ReviewDataStore implements DataStoreObject
 {
     /** @var Category */
     private $category;
+    /** @var array */
     private $data;
 
     public function setCategory($category)
@@ -18,8 +19,14 @@ class ReviewDataStore implements DataStoreObject
         return $this;
     }
 
+    private function setData(array $data)
+    {
+        $this->data = $data;
+    }
+
     public function generateData()
     {
+        if (!$this->category) $this->setData(['code' => 404, 'message' => 'No reviews found']);
         $reviews = ReviewQuestionAnswer::select('reviews.category_id', 'customer_id', 'partner_id', 'reviews.rating', 'review_title')
             ->selectRaw("partners.name as partner_name,profiles.name as customer_name,rate_answer_text as review,review_id as id,pro_pic as customer_picture,jobs.created_at as order_created_at")
             ->join('reviews', 'reviews.id', '=', 'review_question_answer.review_id')
@@ -66,11 +73,12 @@ class ReviewDataStore implements DataStoreObject
             "4" => $review_stat && $review_stat->total_four_star_ratings ? $review_stat->total_four_star_ratings : null,
             "5" => $review_stat && $review_stat->total_five_star_ratings ? $review_stat->total_five_star_ratings : null,
         ];
-        $this->data = count($reviews) > 0 ? [
+        if (count($reviews) == 0) $this->setData(['code' => 404, 'message' => 'No reviews found']);
+        $this->setData([
             'reviews' => $reviews,
             'group_rating' => $group_rating,
             'info' => $info
-        ] : ['code' => 404, 'message' => 'No reviews found'];
+        ]);
     }
 
     public function get(): array
