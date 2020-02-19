@@ -2,15 +2,16 @@
 
 use App\Models\Category;
 use App\Models\City;
-use App\Models\Location;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Cache\CacheAside;
+use Sheba\Cache\Schema\SchemaCache;
+use Sheba\Schema\ServiceSchema;
+use Sheba\Schema\ShebaSchema;
+use Sheba\Schema\CategorySchema;
 
 class SchemaController extends Controller
 {
-    private $locations;
-    private $cities;
-
     public function getFaqSchema(Request $request)
     {
         try {
@@ -317,7 +318,7 @@ class SchemaController extends Controller
                 ],
                 "areaServed" => [
                     "@type" => "State",
-                    "name" => implode(', ',$selected_city_names)
+                    "name" => implode(', ', $selected_city_names)
                 ],
                 "hasOfferCatalog" => [
                     "@type" => "OfferCatalog",
@@ -338,5 +339,11 @@ class SchemaController extends Controller
         }
     }
 
-
+    public function getAllSchemas(Request $request, CacheAside $cache_aside, SchemaCache $schema_cache, ShebaSchema $sheba_schema)
+    {
+        $this->validate($request, ['type' => 'required|string|in:service,category', 'type_id' => 'required|numeric']);
+        $schema_cache->setType($request->type)->setTypeId($request->type_id);
+        $cache_aside->setCacheObject($schema_cache);
+        return api_response($request, true, 200, $cache_aside->getMyEntity());
+    }
 }

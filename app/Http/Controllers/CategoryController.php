@@ -6,20 +6,18 @@ use App\Models\CategoryPartner;
 use App\Models\HyperLocal;
 use App\Models\Location;
 use App\Models\LocationService;
-use App\Models\Partner;
-use App\Models\Review;
-use App\Models\ReviewQuestionAnswer;
 use App\Models\Service;
 use App\Models\ServiceSubscription;
 use App\Repositories\CategoryRepository;
 use App\Repositories\ServiceRepository;
 use Dingo\Api\Routing\Helpers;
 use Exception;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use DB;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
+use Sheba\Cache\CacheAside;
+use Sheba\Cache\Category\Review\ReviewCache;
 use Sheba\CategoryServiceGroup;
 use Sheba\Checkout\DeliveryCharge;
 use Sheba\Dal\Discount\Discount;
@@ -632,58 +630,11 @@ class CategoryController extends Controller
         return count($words) <= 5 ? "normal" : "slide";
     }
 
-    public function getReviews($category, Request $request)
+    public function getReviews($category, Request $request, CacheAside $cache_aside, ReviewCache $review_cache)
     {
-        try {
-            list($offset, $limit) = calculatePagination($request);
-            $category = Category::find($category);
-            if (!$category) return api_response($request, null, 404);
-            $reviews = ReviewQuestionAnswer::select('reviews.category_id', 'customer_id', 'partner_id', 'reviews.rating', 'review_title')
-                ->selectRaw("partners.name as partner_name,profiles.name as customer_name,rate_answer_text as review,review_id as id,pro_pic as customer_picture,jobs.created_at as order_created_at")
-                ->join('reviews', 'reviews.id', '=', 'review_question_answer.review_id')
-                ->join('partners', 'partners.id', '=', 'reviews.partner_id')
-                ->join('customers', 'customers.id', '=', 'reviews.customer_id')
-                ->join('jobs', 'jobs.id', '=', 'reviews.job_id')
-                ->join('profiles', 'profiles.id', '=', 'customers.profile_id')
-                ->where('review_type', 'like', '%' . '\\Review')
-                ->where('review_question_answer.rate_answer_text', '<>', '')
-                ->whereIn('reviews.rating', [4, 5])
-                ->where('reviews.category_id', $category->id)
-                ->skip($offset)->take($limit)
-                ->orderBy('id', 'desc')
-                ->groupBy('customer_id')
-                ->get();
-            $review_stat = Review::selectRaw("count(DISTINCT(reviews.id)) as total_ratings")
-                ->selectRaw("count(DISTINCT(case when rating=5 then reviews.id end)) as total_five_star_ratings")
-                ->selectRaw("count(DISTINCT(case when rating=4 then reviews.id end)) as total_four_star_ratings")
-                ->selectRaw("count(DISTINCT(case when rating=3 then reviews.id end)) as total_three_star_ratings")
-                ->selectRaw("count(DISTINCT(case when rating=2 then reviews.id end)) as total_two_star_ratings")
-                ->selectRaw("count(DISTINCT(case when rating=1 then reviews.id end)) as total_one_star_ratings")
-                ->selectRaw("avg(reviews.rating) as avg_rating")
-                ->selectRaw("reviews.category_id")
-                ->where('reviews.category_id', $category->id)
-                ->groupBy("reviews.category_id")->first();
-            $info = [
-                'avg_rating' => $review_stat && $review_stat->avg_rating ? round($review_stat->avg_rating,2) : 0,
-                'total_review_count' => 500,
-                'total_rating_count' => $review_stat && $review_stat->total_ratings ? $review_stat->total_ratings : 0
-            ];
-            $group_rating = [
-                "1" => $review_stat && $review_stat->total_one_star_ratings ? $review_stat->total_one_star_ratings : null,
-                "2" => $review_stat && $review_stat->total_two_star_ratings ? $review_stat->total_two_star_ratings : null,
-                "3" => $review_stat && $review_stat->total_three_star_ratings ? $review_stat->total_three_star_ratings : null,
-                "4" => $review_stat && $review_stat->total_four_star_ratings ? $review_stat->total_four_star_ratings : null,
-                "5" => $review_stat && $review_stat->total_five_star_ratings ? $review_stat->total_five_star_ratings : null,
-            ];
-            return count($reviews) > 0 ? api_response($request, $reviews, 200, [
-                'reviews' => $reviews,
-                'group_rating' => $group_rating,
-                'info' => $info
-            ]) : api_response($request, null, 404);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $review_cache->setCategoryId($category);
+        $data = $cache_aside->setCacheObject($review_cache)->getMyEntity();
+        return api_response($request, $data, 200, $data);
     }
 
     public function addCategories(Request $request)
