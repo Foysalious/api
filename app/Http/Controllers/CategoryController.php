@@ -240,7 +240,7 @@ class CategoryController extends Controller
     public function show($category, Request $request)
     {
         try {
-            $category = Category::select('id', 'name', 'short_description', 'is_auto_sp_enabled', 'long_description', 'thumb', 'video_link', 'banner', 'app_thumb', 'app_banner', 'publication_status', 'icon', 'questions')->published()->where('id', $category)->first();
+            $category = Category::select('id', 'parent_id', 'name', 'short_description', 'is_auto_sp_enabled', 'long_description', 'thumb', 'video_link', 'banner', 'app_thumb', 'app_banner', 'publication_status', 'icon', 'questions')->published()->where('id', $category)->first();
             if ($category == null) {
                 return api_response($request, null, 404);
             }
@@ -255,6 +255,19 @@ class CategoryController extends Controller
                     $query->verified();
                 });
             }]);
+            $parent_category_id = null;
+            $parent_category_name = null;
+            $parent_category_slug = null;
+            $parent_category = $category->parent;
+            $master_category = [];
+            if ($parent_category) {
+                $master_category = [
+                    'id' => $parent_category->id,
+                    'name' => $parent_category->name,
+                    'slug' => $parent_category->getSlug(),
+                ];
+            }
+            array_add($category, 'master_category', count($master_category) > 0 ? $master_category : null);
             array_add($category, 'total_partners', $category->partners->count());
             array_add($category, 'total_experts', $category->partnerResources->count());
             array_add($category, 'total_services', $category->services->count());
@@ -664,7 +677,7 @@ class CategoryController extends Controller
                 ->where('reviews.category_id', $category->id)
                 ->groupBy("reviews.category_id")->first();
             $info = [
-                'avg_rating' => $review_stat && $review_stat->avg_rating ? round($review_stat->avg_rating,2) : 0,
+                'avg_rating' => $review_stat && $review_stat->avg_rating ? round($review_stat->avg_rating, 2) : 0,
                 'total_review_count' => 500,
                 'total_rating_count' => $review_stat && $review_stat->total_ratings ? $review_stat->total_ratings : 0
             ];
