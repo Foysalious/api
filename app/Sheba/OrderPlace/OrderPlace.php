@@ -29,6 +29,7 @@ use Sheba\LocationService\DiscountCalculation;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\LocationService\UpsellCalculation;
 use Sheba\ModificationFields;
+use Sheba\OrderPlace\Exceptions\LocationIdNullException;
 use Sheba\PartnerList\Director;
 use Sheba\PartnerList\PartnerListBuilder;
 use Sheba\PartnerOrderRequest\Creator;
@@ -349,6 +350,7 @@ class OrderPlace
         $this->location = $location;
     }
 
+
     /**
      * @return null
      * @throws Exception
@@ -374,6 +376,7 @@ class OrderPlace
                     $this->partnerOrderRequestCreator->setPartnerOrder($partner_order)->setPartners($partners->pluck('id')->toArray())->create();
                 }
                 $this->updateVoucherInPromoList($order);
+                if (!$order->location_id) throw new LocationIdNullException("Order #" . $order->id . " has no location id");
             });
         } catch (QueryException $e) {
             throw $e;
