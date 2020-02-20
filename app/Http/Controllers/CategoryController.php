@@ -255,9 +255,7 @@ class CategoryController extends Controller
                     $query->verified();
                 });
             }]);
-            $parent_category_id = null;
-            $parent_category_name = null;
-            $parent_category_slug = null;
+
             $parent_category = $category->parent;
             $master_category = [];
             if ($parent_category) {
