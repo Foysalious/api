@@ -25,6 +25,7 @@ use App\Repositories\NotificationRepository;
 use App\Repositories\PartnerOrderRepository;
 use App\Repositories\PartnerRepository;
 use App\Repositories\PartnerServiceRepository;
+use App\Repositories\ProfileRepository;
 use App\Repositories\ResourceJobRepository;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
@@ -34,6 +35,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
 use Sheba\Checkout\Partners\LitePartnerList;
@@ -45,6 +47,7 @@ use Sheba\Partner\LeaveStatus;
 use Sheba\Partner\QRCode\AccountType;
 use Sheba\Reward\PartnerReward;
 use Throwable;
+use Tymon\JWTAuth\Facades\JWTAuth;
 use Validator;
 
 class PartnerController extends Controller
@@ -60,6 +63,7 @@ class PartnerController extends Controller
     private $rentCarCategoryIds;
     private $days;
     private $fileRepository;
+    private $profileRepo;
 
     const COMPLIMENT_QUESTION_ID = 2;
 
@@ -74,6 +78,7 @@ class PartnerController extends Controller
         $this->fileRepository      = new FileRepository();
         $this->rentCarCategoryIds = array_map('intval', explode(',', env('RENT_CAR_IDS')));
         $this->days = constants('WEEK_DAYS');
+        $this->profileRepo = new ProfileRepository();
     }
 
     public function index()
@@ -1364,6 +1369,55 @@ class PartnerController extends Controller
             return api_response($request, null, 500);
         }
 
+    }
+
+    public function dashboardByToken(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'access_token' => 'required',
+            ]);
+
+            $access_token = $request->access_token;
+            $partner_id = Redis::get($access_token);
+            Redis::del($access_token);
+
+            if(is_null($partner_id) || empty($partner_id))
+                return api_response($request, null, 400, ['message' => 'Invalid token']);
+
+            $partner = Partner::find((int)$partner_id);
+
+            if(is_null($partner) || empty($partner))
+                return api_response($request, null, 400, ['message' => 'Partner not found']);
+
+            $manager_resource = $partner->admins->first();
+            $profile = $manager_resource->profile;
+            $remember_token = $manager_resource->remember_token;
+            $token = $this->profileRepo->fetchJWTToken('resource', $manager_resource->id, $remember_token);
+
+            $data = [
+                'remember_token' => $remember_token,
+                'token' => $token,
+                'id' => $partner->id,
+                'name' => $partner->name,
+                'logo' => $partner->logo,
+                'logo_original' => $partner->logo_original,
+                'profile' => [
+                    'name' => $profile->name,
+                    'pro_pic' => $profile->pro_pic
+                ]
+            ];
+            return api_response($request, null, 200, ['data' => $data]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 }
 
