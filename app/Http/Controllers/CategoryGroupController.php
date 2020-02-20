@@ -7,6 +7,8 @@ use App\Models\ScreenSettingElement;
 use Carbon\Carbon;
 use Illuminate\Contracts\Validation\ValidationException;
 use Illuminate\Http\Request;
+use Sheba\Cache\CacheAside;
+use Sheba\Cache\CategoryGroup\CategoryGroupCache;
 use Sheba\Location\LocationSetter;
 use Sheba\Recommendations\HighlyDemands\Categories\Identifier;
 use Sheba\Recommendations\HighlyDemands\Categories\Recommender;
@@ -16,7 +18,7 @@ class CategoryGroupController extends Controller
 {
     use LocationSetter;
 
-    public function index(Request $request, Recommender $recommender)
+    public function index(Request $request, Recommender $recommender, CacheAside $cacheAside, CategoryGroupCache $category_group_cache)
     {
         try {
             $this->validate($request, [

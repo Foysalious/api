@@ -21,7 +21,10 @@ class ReviewDataStore extends DataStoreObject
 
     public function generateData()
     {
-        if (!$this->category) $this->setData(['code' => 404, 'message' => 'No reviews found']);
+        if (!$this->category) {
+            $this->setData(['code' => 404, 'message' => 'No reviews found']);
+            return;
+        }
         $reviews = ReviewQuestionAnswer::select('reviews.category_id', 'customer_id', 'partner_id', 'reviews.rating', 'review_title')
             ->selectRaw("partners.name as partner_name,profiles.name as customer_name,rate_answer_text as review,review_id as id,pro_pic as customer_picture,jobs.created_at as order_created_at")
             ->join('reviews', 'reviews.id', '=', 'review_question_answer.review_id')

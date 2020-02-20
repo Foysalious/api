@@ -16,5 +16,6 @@ abstract class DataStoreObject
         return $this->generatedData;
     }
 
+
     abstract public function generateData();
 }

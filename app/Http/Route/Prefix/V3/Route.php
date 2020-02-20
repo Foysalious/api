@@ -37,6 +37,9 @@ class Route
                     $api->get('secondaries', 'Category\CategoryController@getSecondaries');
                 });
             });
+            $api->group(['prefix' => 'category-groups'], function ($api) {
+                $api->get('/', 'CategoryGroup\CategoryGroupController@index');
+            });
             $api->group(['prefix' => 'services'], function ($api) {
                 $api->group(['prefix' => '{service}'], function ($api) {
                     $api->get('/', 'Service\ServiceController@show');
