@@ -1,8 +1,6 @@
 <?php namespace Sheba\Cache\CategoryGroup;
 
-
 use App\Models\CategoryGroup;
-use App\Models\ScreenSettingElement;
 use Sheba\Cache\DataStoreObject;
 
 class CategoryGroupDataStoreObject extends DataStoreObject

@@ -10,8 +10,6 @@ class ReviewDataStore extends DataStoreObject
 {
     /** @var Category */
     private $category;
-    /** @var array */
-    private $data;
 
     public function setCategory($category)
     {

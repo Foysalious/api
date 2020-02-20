@@ -7,6 +7,8 @@ use App\Models\HyperLocal;
 use App\Transformers\Category\CategoryTransformer;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
+use Sheba\Cache\CacheAside;
+use Sheba\Cache\Category\Tree\CategoryTreeCache;
 use Sheba\Dal\UniversalSlug\Model as UniversalSlugModel;
 use Sheba\Dal\UniversalSlug\SluggableType;
 use League\Fractal\Resource\Item;
@@ -53,5 +55,12 @@ class CategoryController extends Controller
         $category = collect($category)->only(['name', 'id', 'banner', 'app_banner', 'slug']);
         $category->put('secondaries', $children->values()->all());
         return api_response($request, $category, 200, ['category' => $category]);
+    }
+
+    public function getTree(Request $request, CacheAside $cacheAside, CategoryTreeCache $categoryTreeCache)
+    {
+        $this->validate($request, ['location_id' => 'required|numeric']);
+        $categoryTreeCache->setLocationId($request->location_id);
+        return api_response($request, 1, 200, $cacheAside->setCacheObject($categoryTreeCache)->getMyEntity());
     }
 }

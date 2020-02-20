@@ -22,6 +22,9 @@ class CacheAside
         return $this;
     }
 
+    /**
+     * @return array|mixed
+     */
     public function getMyEntity()
     {
         $cache = $this->store->get($this->cacheObject->getCacheName());
@@ -34,7 +37,7 @@ class CacheAside
     public function setEntity()
     {
         $data_store_object = $this->cacheObject->generate();
-        $this->store->forget($this->cacheObject->getCacheName());
+        $this->deleteEntity();
         $this->setOnCache($data_store_object);
     }
 
