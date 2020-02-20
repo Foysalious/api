@@ -189,7 +189,7 @@ class PartnerOrderRepository
                 $order = collect([
                     'customer_name' => $jobs[0]->partner_order->order->deliveryAddress->name,
                     'address' => $jobs[0]->partner_order->order->deliveryAddress->address,
-                    'location_name' => $jobs[0]->partner_order->order->location->name,
+                    'location_name' => $jobs[0]->partner_order->order->location ? $jobs[0]->partner_order->order->location->name : $jobs[0]->partner_order->order->deliveryAddress->address,
                     'created_at' => $jobs[0]->partner_order->created_at->timestamp,
                     'created_at_readable' => $jobs[0]->partner_order->created_at->diffForHumans(),
                     'created_date' => $jobs[0]->partner_order->created_at->format('Y-m-d'),
