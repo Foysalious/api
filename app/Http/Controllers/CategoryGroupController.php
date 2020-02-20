@@ -67,7 +67,9 @@ class CategoryGroupController extends Controller
                         });
                         $category_group->children = $category_group->categories;
                         unset($category_group->categories);
-                    });
+                    })->filter(function ($category_group) {
+                        return !$category_group->children->isEmpty();
+                    })->values();
                 }
             }
 
