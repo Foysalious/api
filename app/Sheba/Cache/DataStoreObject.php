@@ -1,9 +1,20 @@
 <?php namespace Sheba\Cache;
 
 
-interface DataStoreObject
+abstract class DataStoreObject
 {
-    public function get(): array;
+    /** @var array */
+    protected $generatedData;
 
-    public function generateData();
+    protected function setData(array $data)
+    {
+        $this->generatedData = $data;
+    }
+
+    public function get()
+    {
+        return $this->generatedData;
+    }
+
+    abstract public function generateData();
 }

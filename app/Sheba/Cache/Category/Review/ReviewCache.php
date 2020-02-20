@@ -7,6 +7,7 @@ use Sheba\Cache\DataStoreObject;
 class ReviewCache implements CacheObject
 {
     private $categoryId;
+    /** @var DataStoreObject */
     private $dataStoreObject;
 
     public function __construct(ReviewDataStore $data_store_object)

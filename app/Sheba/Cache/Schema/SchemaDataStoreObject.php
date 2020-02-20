@@ -6,13 +6,12 @@ use Sheba\Cache\DataStoreObject;
 use Sheba\Schema\CategorySchema;
 use Sheba\Schema\ServiceSchema;
 
-class SchemaDataStoreObject implements DataStoreObject
+class SchemaDataStoreObject extends DataStoreObject
 {
     private $serviceSchema;
     private $categorySchema;
     /** @var Category|Service */
     private $model;
-    private $data;
 
     public function __construct(ServiceSchema $service_schema, CategorySchema $category_schema)
     {
@@ -20,21 +19,9 @@ class SchemaDataStoreObject implements DataStoreObject
         $this->categorySchema = $category_schema;
     }
 
-
     public function setModel($model)
     {
         $this->model = $model;
-        return $this;
-    }
-
-    public function get(): array
-    {
-        return $this->data;
-    }
-
-    private function setData(array $data)
-    {
-        $this->data = $data;
         return $this;
     }
 

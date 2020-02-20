@@ -6,7 +6,7 @@ use App\Models\Review;
 use App\Models\ReviewQuestionAnswer;
 use Sheba\Cache\DataStoreObject;
 
-class ReviewDataStore implements DataStoreObject
+class ReviewDataStore extends DataStoreObject
 {
     /** @var Category */
     private $category;
@@ -17,11 +17,6 @@ class ReviewDataStore implements DataStoreObject
     {
         $this->category = $category;
         return $this;
-    }
-
-    private function setData(array $data)
-    {
-        $this->data = $data;
     }
 
     public function generateData()
@@ -79,10 +74,5 @@ class ReviewDataStore implements DataStoreObject
             'group_rating' => $group_rating,
             'info' => $info
         ]);
-    }
-
-    public function get(): array
-    {
-        return $this->data;
     }
 }

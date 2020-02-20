@@ -7,6 +7,7 @@ class SchemaCache implements CacheObject
 {
     private $type;
     private $typeId;
+    /** @var DataStoreObject */
     private $dataStoreObject;
 
     public function __construct(SchemaDataStoreObject $data_store_object)
