@@ -22,6 +22,7 @@ class Route
                 $api->get('/category', 'SchemaController@getCategorySchema');
                 $api->get('/category-schemas', 'SchemaController@getAllSchemas');
                 $api->get('/', 'SchemaController@getAllSchemas');
+                $api->get('breadcrumb', 'SchemaController@getBreadcrumb');
             });
 
             $api->get('partners/send-order-requests', 'Partner\PartnerListController@getPartners');

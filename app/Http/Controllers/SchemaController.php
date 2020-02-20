@@ -346,4 +346,9 @@ class SchemaController extends Controller
         $cache_aside->setCacheObject($schema_cache);
         return api_response($request, true, 200, $cache_aside->getMyEntity());
     }
+
+    public function getBreadcrumb()
+    {
+        
+    }
 }
