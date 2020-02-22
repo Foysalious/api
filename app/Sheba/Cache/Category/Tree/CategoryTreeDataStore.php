@@ -56,7 +56,11 @@ class CategoryTreeDataStore implements DataStoreObject
             ->select('id', 'name', 'parent_id', 'icon_png', 'icon_png_hover', 'icon_png_active', 'app_thumb', 'app_banner', 'is_auto_sp_enabled')
             ->parent()->orderBy('order')->get();
         $ids = [];
-        foreach ($categories as $master_category) {
+        foreach ($categories as $key => $master_category) {
+            if (count($master_category->children) == 0) {
+                array_forget($categories, $key);
+                continue;
+            }
             array_push($ids, $master_category->id);
             foreach ($master_category->children as $category) {
                 array_push($ids, $category->id);
@@ -73,6 +77,6 @@ class CategoryTreeDataStore implements DataStoreObject
                 array_forget($child, 'parent_id');
             }
         }
-        return count($categories) > 0 ? ['categories' => $categories] : null;
+        return count($categories) > 0 ? ['categories' => $categories->values()->all()] : null;
     }
 }
