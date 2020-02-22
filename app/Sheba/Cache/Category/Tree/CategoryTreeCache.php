@@ -35,6 +35,7 @@ class CategoryTreeCache implements CacheObject
 
     public function getAllKeysRegularExpression(): string
     {
-        // TODO: Implement getAllKeysRegularExpression() method.
+        $location_id = $this->categoryTreeCacheRequest->getLocationId();
+        return $this->getRedisNamespace() . "::location::" . ($location_id ? $location_id : "*");
     }
 }

@@ -33,6 +33,8 @@ class SchemaCache implements CacheObject
 
     public function getAllKeysRegularExpression(): string
     {
-        // TODO: Implement getAllKeysRegularExpression() method.
+        $type = $this->schemaCacheRequest->getType();
+        $type_id = $this->schemaCacheRequest->getTypeId();
+        return $this->getRedisNamespace() . '::' . ($type ? strtolower($type) : '*') . '::' . ($type_id ? $type_id : '*');
     }
 }

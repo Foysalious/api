@@ -32,6 +32,7 @@ class ReviewCache implements CacheObject
 
     public function getAllKeysRegularExpression(): string
     {
-        // TODO: Implement getAllKeysRegularExpression() method.
+        $category_id = $this->reviewCacheRequest->getCategoryId();
+        return $this->getRedisNamespace() . "::category::" . ($category_id ? $category_id : "*");
     }
 }

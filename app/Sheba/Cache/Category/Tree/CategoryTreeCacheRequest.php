@@ -13,7 +13,6 @@ class CategoryTreeCacheRequest implements CacheRequest
         return (int)$this->locationId;
     }
 
-
     public function setLocationId($locationId)
     {
         $this->locationId = $locationId;

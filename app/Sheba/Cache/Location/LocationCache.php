@@ -27,6 +27,6 @@ class LocationCache implements CacheObject
 
     public function getAllKeysRegularExpression(): string
     {
-        // TODO: Implement getAllKeysRegularExpression() method.
+        return $this->getRedisNamespace() . "::*";
     }
 }
