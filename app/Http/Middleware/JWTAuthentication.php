@@ -13,6 +13,9 @@ class JWTAuthentication
             $token = JWTAuth::getToken();
             $payload = JWTAuth::getPayload($token)->toArray();
         } catch (JWTException $e) {
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => request()->all(), 'token' => request()->headers, 'ip' => request()->ip()]);
+            $sentry->captureException($e);
             return api_response($request, null, 401);
         }
         if ($payload) {
@@ -21,6 +24,11 @@ class JWTAuthentication
                 if ($profile) $request->merge(['profile' => $profile, 'auth_info' => $payload]);
             }
             return $next($request);
-        } else return api_response($request, null, 403);
+        } else {
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => request()->all(), 'token' => request()->headers, 'ip' => request()->ip()]);
+            $sentry->captureException(new \Exception("Forbidden"));
+            return api_response($request, null, 403);
+        }
     }
 }
