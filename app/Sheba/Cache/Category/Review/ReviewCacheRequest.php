@@ -1,20 +1,26 @@
 <?php namespace Sheba\Cache\Category\Review;
 
 
-use Sheba\Cache\CacheObject;
-use Sheba\Cache\CacheRequestObject;
-use Sheba\Cache\DataStoreObject;
+use Sheba\Cache\CacheName;
+use Sheba\Cache\CacheRequest;
 
-class ReviewCacheRequest implements CacheRequestObject
+class ReviewCacheRequest implements CacheRequest
 {
+    private $categoryId;
 
-    public function getCacheObject(): CacheObject
+    public function setCategoryId($category_id)
     {
-        // TODO: Implement getCacheObject() method.
+        $this->categoryId = $category_id;
+        return $this;
     }
 
-    public function getDataStoreObject(): DataStoreObject
+    public function getCategoryId()
     {
-        // TODO: Implement getDataStoreObject() method.
+        return $this->categoryId;
+    }
+
+    public function getFactoryName()
+    {
+        return CacheName::CATEGORY_REVIEWS;
     }
 }

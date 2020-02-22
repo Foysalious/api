@@ -1,21 +1,10 @@
 <?php namespace Sheba\Cache;
 
 
-abstract class DataStoreObject
+interface DataStoreObject
 {
-    /** @var array */
-    protected $generatedData;
+    public function setCacheRequest(CacheRequest $request);
 
-    protected function setData(array $data)
-    {
-        $this->generatedData = $data;
-    }
+    public function generate(): array;
 
-    public function get()
-    {
-        return $this->generatedData;
-    }
-
-
-    abstract public function generateData();
 }

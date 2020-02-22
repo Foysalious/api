@@ -2,11 +2,18 @@
 
 
 use App\Models\Location;
+use Sheba\Cache\CacheRequest;
 use Sheba\Cache\DataStoreObject;
 
-class LocationDataStoreObject extends DataStoreObject
+class LocationDataStoreObject implements DataStoreObject
 {
-    public function generateData()
+
+    public function setCacheRequest(CacheRequest $request)
+    {
+        // TODO: Implement setCacheRequest() method.
+    }
+
+    public function generate(): array
     {
         $dhaka = Location::published()->where('city_id', 1)->select('id', 'city_id', 'name', 'geo_informations')->get();
         $chittagong = Location::published()->where('city_id', 2)->select('id', 'city_id', 'name', 'geo_informations')->get();
@@ -49,6 +56,6 @@ class LocationDataStoreObject extends DataStoreObject
                     return $location;
                 })->values()->all()
             ]];
-        $this->setData(['cities'=>$cities]);
+        return ['cities' => $cities];
     }
 }

@@ -1,29 +1,17 @@
 <?php namespace Sheba\Cache\Category\Review;
 
-use App\Models\Category;
+
 use Sheba\Cache\CacheObject;
-use Sheba\Cache\DataStoreObject;
+use Sheba\Cache\CacheRequest;
 
 class ReviewCache implements CacheObject
 {
-    private $categoryId;
-    /** @var DataStoreObject */
-    private $dataStoreObject;
-
-    public function __construct(ReviewDataStore $data_store_object)
-    {
-        $this->dataStoreObject = $data_store_object;
-    }
-
-    public function setCategoryId($category_id)
-    {
-        $this->categoryId = (int)$category_id;
-        return $this;
-    }
+    /** @var ReviewCacheRequest */
+    private $reviewCacheRequest;
 
     public function getCacheName(): string
     {
-        return sprintf("%s::%s_%d", $this->getRedisNamespace(), 'category', $this->categoryId);
+        return sprintf("%s::%s_%d", $this->getRedisNamespace(), 'category', $this->reviewCacheRequest->getCategoryId());
     }
 
     public function getRedisNamespace(): string
@@ -31,17 +19,14 @@ class ReviewCache implements CacheObject
         return 'reviews';
     }
 
-    public function generate(): DataStoreObject
-    {
-        $category = Category::find($this->categoryId);
-        $this->dataStoreObject->setCategory($category)->generateData();
-        return $this->dataStoreObject;
-    }
-
     public function getExpirationTimeInSeconds(): int
     {
-        return 24 * 60 * 60;
+        return 7 * 24 * 60 * 60;
     }
 
-
+    public function setCacheRequest(CacheRequest $cache_request)
+    {
+        $this->reviewCacheRequest = $cache_request;
+        return $this;
+    }
 }

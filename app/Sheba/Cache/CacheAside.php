@@ -1,6 +1,5 @@
 <?php namespace Sheba\Cache;
 
-
 use Illuminate\Contracts\Cache\Repository;
 use Cache;
 
@@ -12,21 +11,42 @@ class CacheAside
     private $dataStoreObject;
     /** @var Repository $store */
     private $store;
+    /** @var CacheFactory */
+    private $cacheFactory;
+    /** @var CacheRequest */
+    private $cacheRequest;
+    private $cacheFactoryConfigurator;
 
-    public function __construct()
+    public function __construct(CacheFactoryConfigurator $cacheFactoryConfigurator)
     {
         $this->store = Cache::store('redis');
+        $this->cacheFactoryConfigurator = $cacheFactoryConfigurator;
     }
 
-    public function setCacheObject(CacheObject $cache_object)
+    public function setCacheRequest($cacheRequest)
     {
-        $this->cacheObject = $cache_object;
+        $this->cacheRequest = $cacheRequest;
+        $this->setCacheFactory();
         return $this;
     }
 
-    public function setDataStoreObject(DataStoreObject $data_store_object)
+    private function setCacheFactory()
     {
-        $this->dataStoreObject = $data_store_object;
+        $this->cacheFactory = $this->cacheFactoryConfigurator->getFactory($this->cacheRequest->getFactoryName());
+        $this->setCacheObject($this->cacheFactory->getCacheObject($this->cacheRequest));
+        $this->setDataStoreObject($this->cacheFactory->getDataStoreObject($this->cacheRequest));
+        return $this;
+    }
+
+    private function setCacheObject(CacheObject $cacheObject)
+    {
+        $this->cacheObject = $cacheObject;
+        return $this;
+    }
+
+    private function setDataStoreObject(DataStoreObject $dataStoreObject)
+    {
+        $this->dataStoreObject = $dataStoreObject;
         return $this;
     }
 
@@ -37,16 +57,16 @@ class CacheAside
     {
         $cache = $this->store->get($this->cacheObject->getCacheName());
         if ($cache) return json_decode($cache, true);
-        $data_store_object = $this->cacheObject->generate();
-        $this->setOnCache($data_store_object);
-        return $data_store_object->get();
+        $data = $this->dataStoreObject->generate();
+        $this->setOnCache($data);
+        return $data;
     }
 
     public function setEntity()
     {
-        $data_store_object = $this->cacheObject->generate();
+        $data = $this->dataStoreObject->generate();
         $this->deleteEntity();
-        $this->setOnCache($data_store_object);
+        $this->setOnCache($data);
     }
 
     public function deleteEntity()
@@ -54,8 +74,8 @@ class CacheAside
         $this->store->forget($this->cacheObject->getCacheName());
     }
 
-    private function setOnCache(DataStoreObject $data_store_object)
+    private function setOnCache(array $data)
     {
-        $this->store->put($this->cacheObject->getCacheName(), json_encode($data_store_object->get()), $this->cacheObject->getExpirationTimeInSeconds());
+        $this->store->put($this->cacheObject->getCacheName(), json_encode($data), $this->cacheObject->getExpirationTimeInSeconds());
     }
 }

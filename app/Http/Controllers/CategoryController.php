@@ -18,6 +18,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use Sheba\Cache\CacheAside;
 use Sheba\Cache\Category\Review\ReviewCache;
+use Sheba\Cache\Category\Review\ReviewCacheRequest;
 use Sheba\CategoryServiceGroup;
 use Sheba\Checkout\DeliveryCharge;
 use Sheba\Dal\Discount\Discount;
@@ -630,10 +631,10 @@ class CategoryController extends Controller
         return count($words) <= 5 ? "normal" : "slide";
     }
 
-    public function getReviews($category, Request $request, CacheAside $cache_aside, ReviewCache $review_cache)
+    public function getReviews($category, Request $request, CacheAside $cache_aside, ReviewCacheRequest $review_cache_request)
     {
-        $review_cache->setCategoryId($category);
-        $data = $cache_aside->setCacheObject($review_cache)->getMyEntity();
+        $review_cache_request->setCategoryId($category);
+        $data = $cache_aside->setCacheRequest($review_cache_request)->getMyEntity();
         return api_response($request, $data, 200, $data);
     }
 

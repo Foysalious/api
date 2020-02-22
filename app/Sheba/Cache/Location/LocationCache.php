@@ -1,18 +1,10 @@
 <?php namespace Sheba\Cache\Location;
 
-
 use Sheba\Cache\CacheObject;
-use Sheba\Cache\DataStoreObject;
+use Sheba\Cache\CacheRequest;
 
 class LocationCache implements CacheObject
 {
-    private $dataStoreObject;
-
-    public function __construct(LocationDataStoreObject $data_store_object)
-    {
-        $this->dataStoreObject = $data_store_object;
-    }
-
     public function getCacheName(): string
     {
         return sprintf("%s::%s", $this->getRedisNamespace(), 'v3');
@@ -23,14 +15,13 @@ class LocationCache implements CacheObject
         return 'locations';
     }
 
-    public function generate(): DataStoreObject
-    {
-        $this->dataStoreObject->generateData();
-        return $this->dataStoreObject;
-    }
-
     public function getExpirationTimeInSeconds(): int
     {
         return 24 * 60 * 60;
+    }
+
+    public function setCacheRequest(CacheRequest $cache_request)
+    {
+        // TODO: Implement setCacheRequest() method.
     }
 }
