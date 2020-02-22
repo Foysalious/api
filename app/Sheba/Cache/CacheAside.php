@@ -8,6 +8,8 @@ class CacheAside
 {
     /** @var CacheObject */
     private $cacheObject;
+    /** @var DataStoreObject */
+    private $dataStoreObject;
     /** @var Repository $store */
     private $store;
 
@@ -19,6 +21,12 @@ class CacheAside
     public function setCacheObject(CacheObject $cache_object)
     {
         $this->cacheObject = $cache_object;
+        return $this;
+    }
+
+    public function setDataStoreObject(DataStoreObject $data_store_object)
+    {
+        $this->dataStoreObject = $data_store_object;
         return $this;
     }
 
