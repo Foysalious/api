@@ -3,6 +3,7 @@
 use App\Models\Profile;
 use Closure;
 use Tymon\JWTAuth\Exceptions\JWTException;
+use Tymon\JWTAuth\Exceptions\TokenExpiredException;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class JWTAuthentication
@@ -12,9 +13,14 @@ class JWTAuthentication
         try {
             $token = JWTAuth::getToken();
             $payload = JWTAuth::getPayload($token)->toArray();
+        } catch (TokenExpiredException $e) {
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => request()->all(), 'token' => request()->header('authorization'), 'ip' => request()->ip()]);
+            $sentry->captureException($e);
+            return api_response($request, null, 401);
         } catch (JWTException $e) {
             $sentry = app('sentry');
-            $sentry->user_context(['request' => request()->all(), 'token' => request()->headers, 'ip' => request()->ip()]);
+            $sentry->user_context(['request' => request()->all(), 'token' => request()->header('authorization'), 'ip' => request()->ip()]);
             $sentry->captureException($e);
             return api_response($request, null, 401);
         }
