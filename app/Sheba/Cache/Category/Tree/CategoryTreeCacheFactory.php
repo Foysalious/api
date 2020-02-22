@@ -7,7 +7,7 @@ use Sheba\Cache\CacheObject;
 use Sheba\Cache\CacheRequest;
 use Sheba\Cache\DataStoreObject;
 
-class CategoryTreeFactory implements CacheFactory
+class CategoryTreeCacheFactory implements CacheFactory
 {
 
     public function getCacheObject(CacheRequest $cacheRequest): CacheObject

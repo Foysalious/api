@@ -58,7 +58,7 @@ class CacheAside
         $cache = $this->store->get($this->cacheObject->getCacheName());
         if ($cache) return json_decode($cache, true);
         $data = $this->dataStoreObject->generate();
-        if ($data) $this->setOnCache($data);
+        $this->setOnCache($data);
         return $data;
     }
 
@@ -74,7 +74,7 @@ class CacheAside
         $this->store->forget($this->cacheObject->getCacheName());
     }
 
-    private function setOnCache(array $data)
+    private function setOnCache(array $data = null)
     {
         $this->store->put($this->cacheObject->getCacheName(), json_encode($data), $this->cacheObject->getExpirationTimeInSeconds());
     }

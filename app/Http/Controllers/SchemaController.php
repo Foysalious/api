@@ -13,6 +13,8 @@ class SchemaController extends Controller
         $this->validate($request, ['type' => 'required|string|in:service,category', 'type_id' => 'required|numeric']);
         $schema_cache->setType($request->type)->setTypeId($request->type_id);
         $cache_aside->setCacheRequest($schema_cache);
-        return api_response($request, true, 200, $cache_aside->getMyEntity());
+        $data = $cache_aside->getMyEntity();
+        if (!$data) return api_response($request, 1, 404);
+        return api_response($request, 1, 200, $data);
     }
 }

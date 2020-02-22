@@ -2,34 +2,17 @@
 
 
 use Sheba\Cache\CacheObject;
+use Sheba\Cache\CacheRequest;
 use Sheba\Cache\DataStoreObject;
 
 class CategoryGroupCache implements CacheObject
 {
-    private $dataStoreObject;
-    private $categoryGroupId;
-    private $locationId;
-
-    public function __construct(CategoryGroupDataStoreObject $data_store_object)
-    {
-        $this->dataStoreObject = $data_store_object;
-    }
-
-    public function setLocationId($location_id)
-    {
-        $this->locationId = $location_id;
-        return $this;
-    }
-
-    public function setCategoryGroupId($categoryGroupId)
-    {
-        $this->categoryGroupId = $categoryGroupId;
-        return $this;
-    }
+    /** @var CategoryGroupCacheRequest */
+    private $categoryGroupCacheRequest;
 
     public function getCacheName(): string
     {
-        return sprintf("%s::%d_%s_%d", $this->getRedisNamespace(), $this->categoryGroupId, 'location', $this->locationId);
+        return sprintf("%s::%d_%s_%d", $this->getRedisNamespace(), $this->categoryGroupCacheRequest->getCategoryGroupId(), 'location', $this->categoryGroupCacheRequest->getLocationId());
     }
 
     public function getRedisNamespace(): string
@@ -37,14 +20,14 @@ class CategoryGroupCache implements CacheObject
         return 'category_group';
     }
 
-    public function generate(): DataStoreObject
-    {
-        $this->dataStoreObject->setCategoryGroupId($this->categoryGroupId)->setLocationId($this->locationId)->generateData();
-        return $this->dataStoreObject;
-    }
-
     public function getExpirationTimeInSeconds(): int
     {
         return 30 * 24 * 60 * 60;
+    }
+
+    public function setCacheRequest(CacheRequest $cache_request)
+    {
+        $this->categoryGroupCacheRequest = $cache_request;
+        return $this;
     }
 }

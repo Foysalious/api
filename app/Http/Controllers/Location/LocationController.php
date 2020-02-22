@@ -10,7 +10,9 @@ class LocationController extends Controller
 {
     public function index(Request $request, CacheAside $cache_aside, LocationCacheRequest $location_cache_request)
     {
-        return api_response($request, true, 200, $cache_aside->setCacheRequest($location_cache_request)->getMyEntity());
+        $data = $cache_aside->setCacheRequest($location_cache_request)->getMyEntity();
+        if (!$data) return api_response($request, 1, 404);
+        return api_response($request, 1, 200, $data);
     }
 
 }

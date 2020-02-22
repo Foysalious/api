@@ -4,11 +4,7 @@
 interface DataStoreObject
 {
 
-    /**
-     * @param CacheRequest $request
-     * @return mixed
-     */
-    public function setCacheRequest(CacheRequest $request);
+    public function setCacheRequest(CacheRequest $cache_request);
 
     /**
      * @return array|null

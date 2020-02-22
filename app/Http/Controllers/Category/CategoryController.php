@@ -62,6 +62,8 @@ class CategoryController extends Controller
     {
         $this->validate($request, ['location_id' => 'required|numeric']);
         $categoryTreeCache->setLocationId($request->location_id);
-        return api_response($request, 1, 200, $cacheAside->setCacheRequest($categoryTreeCache)->getMyEntity());
+        $data = $cacheAside->setCacheRequest($categoryTreeCache)->getMyEntity();
+        if (!$data) return api_response($request, 1, 404);
+        return api_response($request, 1, 200, $data);
     }
 }

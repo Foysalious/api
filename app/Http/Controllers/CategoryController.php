@@ -635,7 +635,8 @@ class CategoryController extends Controller
     {
         $review_cache_request->setCategoryId($category);
         $data = $cache_aside->setCacheRequest($review_cache_request)->getMyEntity();
-        return api_response($request, $data, 200, $data);
+        if (!$data) return api_response($request, 1, 404);
+        return api_response($request, 1, 200, $data);
     }
 
     public function addCategories(Request $request)
