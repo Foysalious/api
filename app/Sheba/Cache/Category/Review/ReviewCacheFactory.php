@@ -17,7 +17,7 @@ class ReviewCacheFactory implements CacheFactory
 
     public function getDataStoreObject(CacheRequest $cacheRequest): DataStoreObject
     {
-        $review_data_store = new ReviewDataStoreObject();
+        $review_data_store = new ReviewDataStore();
         $review_data_store->setCacheRequest($cacheRequest);
         return $review_data_store;
     }

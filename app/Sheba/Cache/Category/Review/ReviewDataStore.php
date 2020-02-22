@@ -7,7 +7,7 @@ use App\Models\ReviewQuestionAnswer;
 use Sheba\Cache\CacheRequest;
 use Sheba\Cache\DataStoreObject;
 
-class ReviewDataStoreObject implements DataStoreObject
+class ReviewDataStore implements DataStoreObject
 {
     /** @var ReviewCacheRequest */
     private $reviewCacheRequest;
@@ -18,7 +18,7 @@ class ReviewDataStoreObject implements DataStoreObject
         return $this;
     }
 
-    public function generate(): array
+    public function generate()
     {
         $category = Category::find($this->reviewCacheRequest->getCategoryId());
         if (!$category) return ['code' => 404, 'message' => 'No reviews found'];
@@ -68,7 +68,7 @@ class ReviewDataStoreObject implements DataStoreObject
             "4" => $review_stat && $review_stat->total_four_star_ratings ? $review_stat->total_four_star_ratings : null,
             "5" => $review_stat && $review_stat->total_five_star_ratings ? $review_stat->total_five_star_ratings : null,
         ];
-        if (count($reviews) == 0) return ['code' => 404, 'message' => 'No reviews found'];
+        if (count($reviews) == 0) return null;
         return [
             'reviews' => $reviews,
             'group_rating' => $group_rating,

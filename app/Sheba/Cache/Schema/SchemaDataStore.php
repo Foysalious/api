@@ -27,9 +27,9 @@ class SchemaDataStore implements DataStoreObject
         return $this;
     }
 
-    public function generate(): array
+    public function generate()
     {
-        $data = ['code' => 404, 'message' => 'Not found'];
+        $data = null;
         $model = ("App\\Models\\" . ucfirst($this->schemaCacheRequest->getType()))::find($this->schemaCacheRequest->getTypeId());
         if (!$model) return $data;
         elseif ($model instanceof Category) $data = $this->categorySchema->setCategory($model)->get();

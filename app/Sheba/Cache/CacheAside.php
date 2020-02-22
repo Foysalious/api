@@ -51,14 +51,14 @@ class CacheAside
     }
 
     /**
-     * @return array|mixed
+     * @return array|null
      */
     public function getMyEntity()
     {
         $cache = $this->store->get($this->cacheObject->getCacheName());
         if ($cache) return json_decode($cache, true);
         $data = $this->dataStoreObject->generate();
-        $this->setOnCache($data);
+        if ($data) $this->setOnCache($data);
         return $data;
     }
 

@@ -15,6 +15,6 @@ class LocationCacheFactory implements CacheFactory
 
     public function getDataStoreObject(CacheRequest $cacheRequest): DataStoreObject
     {
-        return new LocationDataStoreObject();
+        return new LocationDataStore();
     }
 }

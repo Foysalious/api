@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use Sheba\Cache\CacheAside;
 use Sheba\Cache\Category\Tree\CategoryTreeCache;
+use Sheba\Cache\Category\Tree\CategoryTreeCacheRequest;
 use Sheba\Dal\UniversalSlug\Model as UniversalSlugModel;
 use Sheba\Dal\UniversalSlug\SluggableType;
 use League\Fractal\Resource\Item;
@@ -57,10 +58,10 @@ class CategoryController extends Controller
         return api_response($request, $category, 200, ['category' => $category]);
     }
 
-    public function getTree(Request $request, CacheAside $cacheAside, CategoryTreeCache $categoryTreeCache)
+    public function getTree(Request $request, CacheAside $cacheAside, CategoryTreeCacheRequest $categoryTreeCache)
     {
         $this->validate($request, ['location_id' => 'required|numeric']);
         $categoryTreeCache->setLocationId($request->location_id);
-        return api_response($request, 1, 200, $cacheAside->setCacheObject($categoryTreeCache)->getMyEntity());
+        return api_response($request, 1, 200, $cacheAside->setCacheRequest($categoryTreeCache)->getMyEntity());
     }
 }
