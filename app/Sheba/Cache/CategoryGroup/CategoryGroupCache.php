@@ -12,7 +12,7 @@ class CategoryGroupCache implements CacheObject
 
     public function getCacheName(): string
     {
-        return sprintf("%s::%d_%s_%d", $this->getRedisNamespace(), $this->categoryGroupCacheRequest->getCategoryGroupId(), 'location', $this->categoryGroupCacheRequest->getLocationId());
+        return sprintf("%s::%d::%s::%d", $this->getRedisNamespace(), $this->categoryGroupCacheRequest->getCategoryGroupId(), 'location', $this->categoryGroupCacheRequest->getLocationId());
     }
 
     public function getRedisNamespace(): string
@@ -29,5 +29,12 @@ class CategoryGroupCache implements CacheObject
     {
         $this->categoryGroupCacheRequest = $cache_request;
         return $this;
+    }
+
+    public function getAllKeysRegularExpression(): string
+    {
+        $category_group_id = $this->categoryGroupCacheRequest->getCategoryGroupId();
+        $location_id = $this->categoryGroupCacheRequest->getLocationId();
+        return "category_group::" . ($category_group_id ? $category_group_id : "*") . "::location::" . ($location_id ? $location_id : "*");
     }
 }

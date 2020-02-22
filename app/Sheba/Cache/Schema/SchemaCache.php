@@ -11,7 +11,7 @@ class SchemaCache implements CacheObject
 
     public function getCacheName(): string
     {
-        return sprintf("%s::%s_%d", $this->getRedisNamespace(), strtolower($this->schemaCacheRequest->getType()), $this->schemaCacheRequest->getTypeId());
+        return sprintf("%s::%s::%d", $this->getRedisNamespace(), strtolower($this->schemaCacheRequest->getType()), $this->schemaCacheRequest->getTypeId());
     }
 
     public function getRedisNamespace(): string
@@ -29,5 +29,10 @@ class SchemaCache implements CacheObject
     {
         $this->schemaCacheRequest = $cache_request;
         return $this;
+    }
+
+    public function getAllKeysRegularExpression(): string
+    {
+        // TODO: Implement getAllKeysRegularExpression() method.
     }
 }

@@ -140,6 +140,6 @@ return [
     'marketplace_not_accessible_packages_id' => explode(',', env('MARKETPLACE_NOT_ACCESSIBLE_PACKAGES_ID', '1,2')),
     'use_cdn_for_asset' => env('SHEBA_USE_CDN_FOR_ASSET', true),
     'category_groups' => [
-        'trending' => env('TRENDING_CATEGORY_GROUP', 1)
+        'trending' => env('TRENDING_CATEGORY_GROUP', 10)
     ]
 ];

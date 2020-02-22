@@ -11,7 +11,7 @@ class ReviewCache implements CacheObject
 
     public function getCacheName(): string
     {
-        return sprintf("%s::%s_%d", $this->getRedisNamespace(), 'category', $this->reviewCacheRequest->getCategoryId());
+        return sprintf("%s::%s::%d", $this->getRedisNamespace(), 'category', $this->reviewCacheRequest->getCategoryId());
     }
 
     public function getRedisNamespace(): string
@@ -28,5 +28,10 @@ class ReviewCache implements CacheObject
     {
         $this->reviewCacheRequest = $cache_request;
         return $this;
+    }
+
+    public function getAllKeysRegularExpression(): string
+    {
+        // TODO: Implement getAllKeysRegularExpression() method.
     }
 }

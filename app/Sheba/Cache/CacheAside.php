@@ -2,6 +2,7 @@
 
 use Illuminate\Contracts\Cache\Repository;
 use Cache;
+use Illuminate\Support\Facades\Redis;
 
 class CacheAside
 {
@@ -71,7 +72,12 @@ class CacheAside
 
     public function deleteEntity()
     {
-        $this->store->forget($this->cacheObject->getCacheName());
+        $regex = "laravel:" . $this->cacheObject->getAllKeysRegularExpression();
+        $keys = Redis::keys($regex);
+        foreach ($keys as $key) {
+            Redis::del($key);
+        }
+
     }
 
     private function setOnCache(array $data = null)

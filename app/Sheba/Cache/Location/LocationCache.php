@@ -24,4 +24,9 @@ class LocationCache implements CacheObject
     {
         // TODO: Implement setCacheRequest() method.
     }
+
+    public function getAllKeysRegularExpression(): string
+    {
+        // TODO: Implement getAllKeysRegularExpression() method.
+    }
 }

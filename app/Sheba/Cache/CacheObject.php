@@ -11,5 +11,5 @@ interface CacheObject
 
     public function getExpirationTimeInSeconds(): int;
 
-
+    public function getAllKeysRegularExpression(): string ;
 }

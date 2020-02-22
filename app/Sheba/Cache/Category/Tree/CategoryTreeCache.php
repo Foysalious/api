@@ -13,7 +13,7 @@ class CategoryTreeCache implements CacheObject
 
     public function getCacheName(): string
     {
-        return sprintf("%s::%s_%d", $this->getRedisNamespace(), 'location', $this->categoryTreeCacheRequest->getLocationId());
+        return sprintf("%s::%s::%d", $this->getRedisNamespace(), 'location', $this->categoryTreeCacheRequest->getLocationId());
     }
 
     public function getRedisNamespace(): string
@@ -30,5 +30,11 @@ class CategoryTreeCache implements CacheObject
     public function setCacheRequest(CacheRequest $cache_request)
     {
         $this->categoryTreeCacheRequest = $cache_request;
+    }
+
+
+    public function getAllKeysRegularExpression(): string
+    {
+        // TODO: Implement getAllKeysRegularExpression() method.
     }
 }

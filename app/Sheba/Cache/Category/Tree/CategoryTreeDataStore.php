@@ -3,6 +3,7 @@
 
 use App\Models\Category;
 use App\Models\CategoryGroupCategory;
+use App\Models\Location;
 use Sheba\Cache\CacheRequest;
 use Sheba\Cache\Category\Tree\CategoryTreeCacheRequest;
 use Sheba\Cache\DataStoreObject;
@@ -20,12 +21,13 @@ class CategoryTreeDataStore implements DataStoreObject
         return $this;
     }
 
-    public function generate(): array
+    public function generate()
     {
+        $location = Location::where('id', $this->categoryTreeRequest->getLocationId())->published()->hasGeoInformation()->first();
+        if (!$location || !$location->hyperLocal) return null;
         $best_deal_category_group_id = explode(',', config('sheba.best_deal_ids'));
         $best_deal_category_ids = CategoryGroupCategory::select('category_group_id', 'category_id')
             ->whereIn('category_group_id', $best_deal_category_group_id)->pluck('category_id')->toArray();
-
         $categories = Category::published()
             ->whereHas('locations', function ($q) {
                 $q->select('locations.id')->where('locations.id', $this->categoryTreeRequest->getLocationId());
