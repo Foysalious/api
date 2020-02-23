@@ -40,8 +40,6 @@ class ExpenseRepo
     public function store(Request $request, $member)
     {
         try {
-
-
             $expense = new Expense;
             $expense->amount = $request->amount;
             $expense->member_id = $member->id;

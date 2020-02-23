@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\BusinessMember;
+use App\Models\Member;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Sheba\Attachments\FilesAttachment;
 use Sheba\Dal\Expense\Expense;
@@ -9,6 +11,7 @@ use Sheba\Employee\ExpensePdf;
 use Sheba\ModificationFields;
 use Sheba\Employee\ExpenseRepo;
 use Throwable;
+use DB;
 
 class ExpenseController extends Controller
 {
@@ -34,12 +37,12 @@ class ExpenseController extends Controller
             list($offset, $limit) = calculatePagination($request);
             $business_member = $request->business_member;
             if (!$business_member) return api_response($request, null, 401);
-
             $members = $request->business->members()->get();
+
             if ($request->has('department_id')) {
                 $members = $members->filter(function ($member, $key) use ($request) {
-                    if($member->businessMember->role) {
-                        if($member->businessMember->department()) {
+                    if ($member->businessMember->role) {
+                        if ($member->businessMember->department()) {
                             return $member->businessMember->department()->id == $request->department_id;
                         }
                     } else {
@@ -47,14 +50,13 @@ class ExpenseController extends Controller
                     }
                 });
             }
-
             if ($request->has('employee_id')) $members = $members->filter(function ($value, $key) use ($request) {
                 return $value->id == $request->employee_id;
             });
 
-            $members = $members->pluck('id')->toArray();
-            $expenses = Expense::whereIn('member_id', $members)
-                ->select('id', 'member_id', 'amount', 'status', 'remarks', 'type', 'created_at')
+            $members_ids = $members->pluck('id')->toArray();
+            $expenses = Expense::whereIn('member_id', $members_ids)
+                ->select('id', 'member_id', 'amount', 'created_at')
                 ->orderBy('id', 'desc');
 
             $start_date = $request->has('start_date') ? $request->start_date : null;
@@ -63,20 +65,42 @@ class ExpenseController extends Controller
                 $expenses->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
             }
             $expenses = $expenses->get();
-            foreach ($expenses as $expense) {
-                $expense['employee_name'] = $expense->member->profile->name;
-                $expense['employee_department'] = $expense->member->businessMember->department() ? $expense->member->businessMember->department()->name : null;
-                $expense['attachment'] = $this->expense_repo->getAttachments($expense, $request) ? $this->expense_repo->getAttachments($expense, $request) : null;
-                unset($expense->member);
+
+            $expenses_group_by_month = $expenses->groupBy(function ($expense) {
+                return Carbon::parse($expense->created_at)->format('m-y');
+            });
+            $month_wise_expense_of_members = [];
+            foreach ($expenses_group_by_month as $month => $expenses) {
+                $expenses = $expenses->groupBy('member_id')->map(function ($expense) {
+                    return $expense->sum('amount');
+                });
+                foreach ($expenses as $member_id => $expense_amount) {
+                    array_push($month_wise_expense_of_members, [
+                        'month' => $month,
+                        'member_id' => $member_id,
+                        'total_amount' => $expense_amount
+                    ]);
+                }
             }
-            $totalExpenseCount = $expenses->count();
-            $totalExpenseSum = $expenses->sum('amount');
+            foreach ($month_wise_expense_of_members as $key => $month_wise_expense_of_member) {
+                $member = $this->getMember($month_wise_expense_of_member['member_id']);
+                $month_wise_expense_of_members[$key] ['employee_name'] = $member->getIdentityAttribute();
+                $month_wise_expense_of_members[$key] ['employee_department'] = $member->businessMember->department() ? $member->businessMember->department()->name : null;
+            }
+
+            $totalExpenseCount = count($month_wise_expense_of_members);
             if ($request->has('limit')) $expenses = $expenses->splice($offset, $limit);
-            return api_response($request, $expenses, 200, ['expenses' => $expenses, 'total_expenses_count' => $totalExpenseCount, 'total_expenses_sum' => $totalExpenseSum]);
+            return api_response($request, $expenses, 200, ['expenses' => $month_wise_expense_of_members, 'total_expenses_count' => $totalExpenseCount]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function getMember($member_id)
+    {
+        $member = Member::findOrFail($member_id);
+        return $member;
     }
 
     public function show($business, $expense, Request $request)
