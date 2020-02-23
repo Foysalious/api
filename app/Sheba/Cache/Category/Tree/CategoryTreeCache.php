@@ -1,10 +1,8 @@
 <?php namespace Sheba\Cache\Category\Tree;
 
 
-use App\Sheba\Cache\Category\Tree\CategoryTreeDataStore;
 use Sheba\Cache\CacheObject;
 use Sheba\Cache\CacheRequest;
-use Sheba\Cache\DataStoreObject;
 
 class CategoryTreeCache implements CacheObject
 {

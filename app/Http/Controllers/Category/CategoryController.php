@@ -8,6 +8,7 @@ use App\Transformers\Category\CategoryTransformer;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use Sheba\Cache\CacheAside;
+use Sheba\Cache\Category\Info\CategoryCacheRequest;
 use Sheba\Cache\Category\Tree\CategoryTreeCache;
 use Sheba\Cache\Category\Tree\CategoryTreeCacheRequest;
 use Sheba\Dal\UniversalSlug\Model as UniversalSlugModel;
@@ -16,13 +17,11 @@ use League\Fractal\Resource\Item;
 
 class CategoryController extends Controller
 {
-    public function show($category, Request $request)
+    public function show($category, Request $request, CacheAside $cacheAside, CategoryCacheRequest $cacheRequest)
     {
-        $category = Category::find($category);
-        if (!$category) return api_response($request, null, 404);
-        $fractal = new Manager();
-        $resource = new Item($category, new CategoryTransformer());
-        $data = $fractal->createData($resource)->toArray()['data'];
+        $cacheRequest->setCategoryId($category);
+        $data = $cacheAside->setCacheRequest($cacheRequest)->getMyEntity();
+        if (!$data) return api_response($request, null, 404);
         return api_response($request, $data, 200, ['category' => $data]);
     }
 

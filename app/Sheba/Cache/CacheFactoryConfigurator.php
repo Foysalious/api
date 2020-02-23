@@ -1,5 +1,6 @@
 <?php namespace Sheba\Cache;
 
+use Sheba\Cache\Category\Info\CategoryCacheFactory;
 use Sheba\Cache\Category\Review\ReviewCacheFactory;
 use Sheba\Cache\Category\Tree\CategoryTreeCacheFactory;
 use Sheba\Cache\CategoryGroup\CategoryGroupCacheFactory;
@@ -20,6 +21,7 @@ class CacheFactoryConfigurator
         elseif ($name == CacheName::SCHEMAS) return new SchemaCacheFactory();
         elseif ($name == CacheName::CATEGORY_TREE) return new CategoryTreeCacheFactory();
         elseif ($name == CacheName::CATEGORY_GROUP) return new CategoryGroupCacheFactory();
+        elseif ($name == CacheName::CATEGORY) return new CategoryCacheFactory();
     }
 
 }
