@@ -8,7 +8,6 @@ use Sheba\Cache\CacheRequest;
 use Sheba\Cache\Category\Tree\CategoryTreeCacheRequest;
 use Sheba\Cache\DataStoreObject;
 use Sheba\Dal\UniversalSlug\Model as UniversalSlugModel;
-use Sheba\Dal\UniversalSlug\SluggableType;
 
 class CategoryTreeDataStore implements DataStoreObject
 {
