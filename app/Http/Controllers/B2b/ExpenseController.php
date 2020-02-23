@@ -55,9 +55,18 @@ class ExpenseController extends Controller
             });
 
             $members_ids = $members->pluck('id')->toArray();
-            $expenses = Expense::whereIn('member_id', $members_ids)
-                ->select('id', 'member_id', 'amount', 'created_at', DB::raw('YEAR(created_at) year, MONTH(created_at) month'), DB::raw('SUM(amount) amount'))
-                ->groupby('year','month', 'member_id')
+            $expenses = Expense::whereIn('member_id', $members_ids)->with(['member' => function ($query) {
+                $query->select('members.id', 'members.profile_id')->with(['profile' => function ($query) {
+                    $query->select('profiles.id', 'profiles.name', 'profiles.email', 'profiles.mobile');
+                }, 'businessMember' => function ($q) {
+                    $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id')->with(['role' => function ($q) {
+                        $q->select('business_roles.id', 'business_department_id', 'name')->with(['businessDepartment' => function ($q) {
+                            $q->select('business_departments.id', 'business_id', 'name');
+                        }]);
+                    }]);
+                }]);
+            }])->select('id', 'member_id', 'amount', 'created_at', DB::raw('YEAR(created_at) year, MONTH(created_at) month'), DB::raw('SUM(amount) amount'))
+                ->groupby('year', 'month', 'member_id')
                 ->orderBy('created_at', 'desc');
 
             $start_date = $request->has('start_date') ? $request->start_date : null;
@@ -66,12 +75,15 @@ class ExpenseController extends Controller
                 $expenses->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
             }
             $expenses = $expenses->get();
+
             foreach ($expenses as $key => $expense) {
-                $member = $this->getMember($expense->member_id);
-                $expenses->employee_name = $member->getIdentityAttribute();
-                $expenses->employee_department = $member->businessMember->department() ? $member->businessMember->department()->name : null;
+                $member = $expense->member;
+                $expense['employee_name'] = $member->profile->name;
+                $expense['employee_department'] = $member->businessMember->department() ? $member->businessMember->department()->name : null;
+                #$expense['attachment'] = $this->expense_repo->getAttachments($expense, $request) ? $this->expense_repo->getAttachments($expense, $request) : null;
+                unset($expense->member);
             }
-            $totalExpenseCount = count($expenses);
+            $totalExpenseCount = $expenses->count();
             if ($request->has('limit')) $expenses = $expenses->splice($offset, $limit);
             return api_response($request, $expenses, 200, ['expenses' => $expenses, 'total_expenses_count' => $totalExpenseCount]);
         } catch (Throwable $e) {
