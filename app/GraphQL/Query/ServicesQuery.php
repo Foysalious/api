@@ -1,7 +1,4 @@
-<?php
-
-
-namespace App\graphQL\Query;
+<?php namespace App\graphQL\Query;
 
 use App\Models\Service;
 use GraphQL;
@@ -30,16 +27,10 @@ class ServicesQuery extends Query
     public function resolve($root, $args, $context, ResolveInfo $info)
     {
         $fields = $info->getFieldSelection(10);
-        if (isset($args['id'])) {
-            $services = Service::query();
-            foreach ($fields as $field => $keys) {
-                if ($field === 'category') {
-                    $services->with('category');
-                }
-            }
-            return $services->whereIn('id', $args['id'])->get();
-        } else {
-            return null;
-        }
+        if (!isset($args['id'])) return null;
+
+        $services = Service::query();
+        if (in_array('category', array_keys($fields))) $services->with('category');
+        return $services->whereIn('id', $args['id'])->get();
     }
 }

@@ -1,8 +1,5 @@
-<?php
+<?php namespace App\graphQL\Mutation;
 
-namespace App\graphQL\Mutation;
-
-use App\Models\Customer;
 use GraphQL;
 use GraphQL\Type\Definition\Type;
 use Folklore\GraphQL\Support\Mutation;
@@ -45,9 +42,8 @@ class UpdateProfileMutation extends Mutation
             ['id', $args['id']],
             ['remember_token', $args['remember_token']],
         ])->first();
-        if ($avatar) {
-            return true;
-        }
+
+        return (bool)$avatar;
     }
 
     public function resolve($root, $args)

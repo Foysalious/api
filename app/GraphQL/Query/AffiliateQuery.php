@@ -1,6 +1,4 @@
-<?php
-
-namespace App\GraphQL\Query;
+<?php namespace App\GraphQL\Query;
 
 use App\Models\Affiliate;
 use GraphQL;
@@ -29,10 +27,11 @@ class AffiliateQuery extends Query
 
     public function resolve($root, $args, $context, ResolveInfo $info)
     {
-        if (!isset($args['id']) || !isset($args['token'])) {
-            return null;
-        }
-        $affiliate = Affiliate::where([['id', $args['id']], ['remember_token', $args['token']]])->first();
+        if (!isset($args['id']) || !isset($args['token'])) return null;
+        $affiliate = Affiliate::where([
+            ['id', $args['id']],
+            ['remember_token', $args['token']]
+        ])->first();
         return $affiliate ? $affiliate : null;
     }
 }
