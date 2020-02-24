@@ -2,6 +2,7 @@
 
 use Carbon\Carbon;
 use Sheba\Business\AttendanceActionLog\Time;
+use Sheba\Business\AttendanceActionLog\TimeByBusiness;
 use Sheba\Dal\AttendanceActionLog\Actions;
 
 class CheckIn extends ActionChecker
@@ -29,7 +30,9 @@ class CheckIn extends ActionChecker
 
     protected function checkForLateAction()
     {
+        $time=new TimeByBusiness();
+        $last_checkin_time=$time->getOfficeStartTimeByBusiness();
         if (!$this->isSuccess()) return;
-        if (Carbon::now() > Carbon::parse(Time::LAST_CHECKIN_TIME)) $this->setResult(ActionResultCodes::LATE_TODAY, ActionResultCodeMessages::LATE_TODAY);
+        if (Carbon::now() > Carbon::parse($last_checkin_time)) $this->setResult(ActionResultCodes::LATE_TODAY, ActionResultCodeMessages::LATE_TODAY);
     }
 }
