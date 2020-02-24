@@ -17,7 +17,7 @@ use DB;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use Sheba\Cache\CacheAside;
-use Sheba\Cache\Category\Review\ReviewCache;
+use Sheba\Cache\Category\Children\Services\ServicesCacheRequest;
 use Sheba\Cache\Category\Review\ReviewCacheRequest;
 use Sheba\CategoryServiceGroup;
 use Sheba\Checkout\DeliveryCharge;
@@ -346,9 +346,7 @@ class CategoryController extends Controller
         }
     }
 
-    public function getServices($category, Request $request,
-                                PriceCalculation $price_calculation, DeliveryCharge $delivery_charge,
-                                JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, MinMaxPrice $min_max_price, ApproximatePriceCalculator $approximate_price_calculator)
+    public function getServices($category, Request $request, CacheAside $cacheAside, ServicesCacheRequest $cacheRequest)
     {
         ini_set('memory_limit', '2048M');
         try {
@@ -361,6 +359,11 @@ class CategoryController extends Controller
                     if (!is_null($hyperLocation)) $location = $hyperLocation->location->id; else return api_response($request, null, 404);
                 } else $location = 4;
             }
+            $cacheRequest->setLocationId($location)->setCategoryId($category)->setIsB2b($request->is_b2b)->setIsBusiness($request->is_business)
+                ->setIsDdn($request->is_ddn)->setScope($request->scope)->setIsForBackend($request->is_for_backend)->setServiceId($request->service_id);
+            $data = $cacheAside->setCacheRequest($cacheRequest)->getMyEntity();
+            if (!$data) return api_response($request, null, 404);
+            return api_response($request, 1, 200, $data);
 
             /** @var Category $cat */
             $cat = Category::where('id', $category)->whereHas('locations', function ($q) use ($location) {
@@ -371,6 +374,8 @@ class CategoryController extends Controller
                 $category = $cat->publishedForBusiness()->first();
             } elseif ((int)$request->is_b2b) {
                 $category = $cat->publishedForB2B()->first();
+            } elseif ((int)$request->is_ddn) {
+                $category = $cat->publishedForDdn()->first();
             } else {
                 $category = $cat->published()->first();
             }
@@ -388,13 +393,16 @@ class CategoryController extends Controller
                     } elseif ($request->is_b2b) {
                         $services = $this->categoryRepository->getServicesOfCategory(Category::where('parent_id', $category->id)->publishedForB2B()
                             ->orderBy('order')->get()->pluck('id')->toArray(), $location, $offset, $limit);
+                    } elseif ($request->is_ddn) {
+                        $services = $this->categoryRepository->getServicesOfCategory(Category::where('parent_id', $category->id)->publishedForDdn()
+                            ->orderBy('order')->get()->pluck('id')->toArray(), $location, $offset, $limit);
                     } else {
                         $services = $this->categoryRepository->getServicesOfCategory($category->children->sortBy('order')->pluck('id'), $location, $offset, $limit);
                     }
                     $services = $this->serviceRepository->addServiceInfo($services, $scope);
                 } else {
                     $category->load(['services' => function ($q) use ($offset, $limit, $location) {
-                        if (!(int)\request()->is_business) {
+                        if (!(int)\request()->is_business || !(int)\request()->is_ddn) {
                             $q->whereNotIn('id', $this->serviceGroupServiceIds());
 
                         }
@@ -410,6 +418,7 @@ class CategoryController extends Controller
                         if ((int)\request()->is_business) $q->publishedForBusiness();
                         elseif ((int)\request()->is_for_backend) $q->publishedForAll();
                         elseif ((int)\request()->is_b2b) $q->publishedForB2B();
+                        elseif ((int)\request()->is_ddn) $q->publishedForDdn();
                         else $q->published();
                     }]);
                     $services = $category->services;
@@ -429,12 +438,24 @@ class CategoryController extends Controller
 
                 $subscriptions = collect();
                 $final_services = collect();
+                $service_ids = $services->pluck('id')->toArray();
+                $slugs = UniversalSlugModel::where('sluggable_type', 'like', '%service')->whereIn('sluggable_id', $service_ids)->select('sluggable_id', 'slug')->get();
+                $location_service_ids = [];
+                foreach ($services->pluck('locationServices') as $location_service) {
+                    array_push($location_service_ids, $location_service->first() ? $location_service->first()->id : null);
+                }
+                $location_service_with_discounts = LocationService::whereIn('id', $location_service_ids)->select('id', 'location_id', 'service_id')
+                    ->whereHas('discounts', function ($q) {
+                        $q->running();
+                    })->with(['discounts' => function ($q) {
+                        $q->running();
+                    }])->get();
                 foreach ($services as $key => $service) {
                     /** @var LocationService $location_service */
                     $location_service = $service->locationServices->first();
-
+                    $location_service_with_discount = $location_service_with_discounts->where('id', $location_service->id)->first();
                     /** @var ServiceDiscount $discount */
-                    $discount = $location_service->discounts()->running()->first();
+                    $discount = $location_service_with_discount ? $location_service_with_discount->discounts->first() : null;
                     $prices = json_decode($location_service->prices);
                     if ($prices === null) continue;
                     $price_calculation->setService($service)->setLocationService($location_service);
@@ -457,7 +478,8 @@ class CategoryController extends Controller
                     $service['min_price'] = $min_max_price->getMin();
                     $service['terms_and_conditions'] = $service->terms_and_conditions ? json_decode($service->terms_and_conditions) : null;
                     $service['features'] = $service->features ? json_decode($service->features) : null;
-                    $service['slug'] = $service->getSlug();
+                    $slug = $slugs->where('sluggable_id', $service->id)->first();
+                    $service['slug'] = $slug ? $slug->slug : null;
 
                     /** @var ServiceSubscription $subscription */
                     if ($subscription = $service->activeSubscription) {
@@ -512,6 +534,7 @@ class CategoryController extends Controller
                     $job_discount_handler->setType(DiscountTypes::DELIVERY)->setCategory($category_model)->setCheckingParams($discount_checking_params)->calculate();
                     /** @var Discount $delivery_discount */
                     $delivery_discount = $job_discount_handler->getDiscount();
+
                     $category['delivery_discount'] = $delivery_discount ? [
                         'value' => (double)$delivery_discount->amount,
                         'is_percentage' => $delivery_discount->is_percentage,

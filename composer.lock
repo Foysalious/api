@@ -1371,7 +1371,7 @@
             "time": "2017-09-05T11:17:05+00:00"
         },
         {
-            "name": "jeremeamia/superclosure",
+            "name": "jeremeamia/SuperClosure",
             "version": "2.3.0",
             "source": {
                 "type": "git",
@@ -3102,7 +3102,7 @@
             "source": {
                 "type": "git",
                 "url": "https://mac_pasha@bitbucket.org/startern/sheba_dal.git",
-                "reference": "fa84a266b82363624efd8377b0435da9b03e2ebc"
+                "reference": "9dc5d768cf3db231fefe665b50d7ca398aa1f5e4"
             },
             "require": {
                 "php": ">=5.4"
@@ -3129,7 +3129,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2020-02-18T13:24:41+00:00"
+            "time": "2020-02-24T06:56:48+00:00"
         },
         {
             "name": "sheba/notification",
