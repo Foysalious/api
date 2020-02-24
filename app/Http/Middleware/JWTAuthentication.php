@@ -3,7 +3,6 @@
 use App\Models\Profile;
 use Closure;
 use Tymon\JWTAuth\Exceptions\JWTException;
-use Tymon\JWTAuth\Exceptions\TokenExpiredException;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class JWTAuthentication
@@ -13,15 +12,7 @@ class JWTAuthentication
         try {
             $token = JWTAuth::getToken();
             $payload = JWTAuth::getPayload($token)->toArray();
-        } catch (TokenExpiredException $e) {
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => request()->all(), 'token' => request()->header('authorization'), 'ip' => request()->ip()]);
-            $sentry->captureException($e);
-            return api_response($request, null, 401);
         } catch (JWTException $e) {
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => request()->all(), 'token' => request()->header('authorization'), 'ip' => request()->ip()]);
-            $sentry->captureException($e);
             return api_response($request, null, 401);
         }
         if ($payload) {
@@ -30,11 +21,6 @@ class JWTAuthentication
                 if ($profile) $request->merge(['profile' => $profile, 'auth_info' => $payload]);
             }
             return $next($request);
-        } else {
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => request()->all(), 'token' => request()->headers, 'ip' => request()->ip()]);
-            $sentry->captureException(new \Exception("Forbidden"));
-            return api_response($request, null, 403);
-        }
+        } else return api_response($request, null, 403);
     }
 }
