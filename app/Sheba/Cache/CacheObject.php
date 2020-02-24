@@ -3,11 +3,11 @@
 
 interface CacheObject
 {
+    public function setCacheRequest(CacheRequest $cache_request);
+
     public function getCacheName(): string;
-
-    public function getRedisNamespace(): string;
-
-    public function generate(): DataStoreObject;
-
+    
     public function getExpirationTimeInSeconds(): int;
+
+    public function getAllKeysRegularExpression(): string;
 }

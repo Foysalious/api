@@ -3,7 +3,11 @@
 
 interface DataStoreObject
 {
-    public function get(): array;
 
-    public function generateData();
+    public function setCacheRequest(CacheRequest $cache_request);
+
+    /**
+     * @return array|null
+     */
+    public function generate();
 }
