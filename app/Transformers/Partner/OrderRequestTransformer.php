@@ -22,28 +22,28 @@ class OrderRequestTransformer extends TransformerAbstract
         $job = $order->lastJob();
 
         return [
-            'id'                    => $request->id,
-            'job_id'                => $job->id,
-            'code'                  => $order->code(),
-            'partner_order_id'      => $request->partner_order_id,
-            'service_name'          => [
+            'id' => $request->id,
+            'job_id' => $job->id,
+            'code' => $order->code(),
+            'partner_order_id' => $request->partner_order_id,
+            'service_name' => [
                 'bn' => $category->bn_name ?: null,
                 'en' => $category->name
             ],
-            'address'               => $order->deliveryAddress->address,
-            'location_name'         => $order->location->name,
-            'created_at'            => $request->created_at->timestamp,
-            'created_at_readable'   => $request->created_at->diffForHumans(),
-            'created_date'          => $request->created_at->format('Y-m-d'),
-            'schedule_date'         => $job->schedule_date,
-            'schedule_time_start'   => $job->preferred_time_start,
-            'schedule_time_end'     => $job->preferred_time_end,
-            'schedule_at'           => Carbon::parse($job->schedule_date .' '. $job->preferred_time_end)->timestamp,
-            'created_time'          => $request->created_at->format('h:m:s A'),
-            'total_price'           => (double)$request->partnerOrder->calculate()->totalPrice,
-            'status'                => $request->status,
-            'number_of_order'       => 1,
-            'is_order_request'      => true,
+            'address' => $order->deliveryAddress->address,
+            'location_name' => $order->location_id ? $order->location->name : $order->deliveryAddress->address,
+            'created_at' => $request->created_at->timestamp,
+            'created_at_readable' => $request->created_at->diffForHumans(),
+            'created_date' => $request->created_at->format('Y-m-d'),
+            'schedule_date' => $job->schedule_date,
+            'schedule_time_start' => $job->preferred_time_start,
+            'schedule_time_end' => $job->preferred_time_end,
+            'schedule_at' => Carbon::parse($job->schedule_date . ' ' . $job->preferred_time_end)->timestamp,
+            'created_time' => $request->created_at->format('h:m:s A'),
+            'total_price' => (double)$request->partnerOrder->calculate()->totalPrice,
+            'status' => $request->status,
+            'number_of_order' => 1,
+            'is_order_request' => true,
             'is_subscription_order' => false
         ];
     }

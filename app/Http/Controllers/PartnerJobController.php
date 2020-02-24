@@ -50,7 +50,9 @@ class PartnerJobController extends Controller
                 'partnerOrders' => function ($q) use ($filter, $request) {
                     $q->$filter()->with([
                         'order' => function ($q) {
-                            $q->with('location', 'customer.profile');
+                            $q->with(['location', 'customer.profile', 'deliveryAddress' => function ($q) {
+                                $q->select('id', 'address');
+                            }]);
                         }
                     ])->with([
                         'jobs' => function ($q) use ($filter, $request) {
@@ -74,7 +76,7 @@ class PartnerJobController extends Controller
                         // $job['logistic'] = $job->getCurrentLogisticOrder()->formatForPartner();
                     }
                     if ($job->cancelRequests->where('status', 'Pending')->count() > 0) continue;
-                    $job['location'] = $partnerOrder->order->location->name;
+                    $job['location'] = $partnerOrder->order->location ? $partnerOrder->order->location->name : $partnerOrder->order->deliveryAddress->address;
                     $job['service_unit_price'] = (double)$job->service_unit_price;
                     $job['discount'] = (double)$job->discount;
                     $job['code'] = $partnerOrder->order->code();
@@ -168,7 +170,7 @@ class PartnerJobController extends Controller
             ]);
 
             $this->jobStatusChanger->acceptJobAndAssignResource($request);
-            if($this->jobStatusChanger->hasError()) {
+            if ($this->jobStatusChanger->hasError()) {
                 return api_response($request, null, $this->jobStatusChanger->getErrorCode(), [
                     'message' => $this->jobStatusChanger->getErrorMessage()
                 ]);
@@ -192,7 +194,7 @@ class PartnerJobController extends Controller
     {
         try {
             $this->jobStatusChanger->decline($request);
-            if($this->jobStatusChanger->hasError()) {
+            if ($this->jobStatusChanger->hasError()) {
                 return api_response($request, null, $this->jobStatusChanger->getErrorCode(), [
                     'message' => $this->jobStatusChanger->getErrorMessage()
                 ]);

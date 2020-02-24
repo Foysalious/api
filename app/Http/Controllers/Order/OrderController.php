@@ -21,6 +21,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Sheba\ModificationFields;
+use Sheba\OrderPlace\Exceptions\LocationIdNullException;
 use Sheba\OrderPlace\OrderPlace;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
 use Sheba\Payment\ShebaPayment;
@@ -114,6 +115,11 @@ class OrderController extends Controller
             }
 
             return api_response($request, null, 200, $order_with_response_data);
+        } catch (LocationIdNullException $e) {
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all()]);
+            $sentry->captureException($e);
+            return api_response($request, null, 500, ['message' => 'Location id was not for this order']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
