@@ -130,9 +130,9 @@ class JobController extends Controller
             $job_collection->put('category_name', $job->category ? $job->category->name : null);
             $job_collection->put('partner_id', $job->partnerOrder->partner ? $job->partnerOrder->partner->id : null);
             $job_collection->put('partner_name', $job->partnerOrder->partner ? $job->partnerOrder->partner->name : null);
-            $job_collection->put('partner_image', $job->partnerOrder->partner ? $job->partnerOrder->partner->name : null);
+            $job_collection->put('partner_image', $job->partnerOrder->partner ? $job->partnerOrder->partner->getContactResourceProPic() : null);
             $job_collection->put('partner_mobile', $job->partnerOrder->partner ? $job->partnerOrder->partner->getContactNumber() : null);
-            $job_collection->put('partner_address', $job->partnerOrder->partner ? $job->partnerOrder->partner->getContactResourceProPic() : null);
+            $job_collection->put('partner_address', $job->partnerOrder->partner ? $job->partnerOrder->partner->address : null);
             $job_collection->put('status', $job->status);
             $job_collection->put('rating', $job->review ? $job->review->rating : null);
             $job_collection->put('review', $job->review ? $job->review->calculated_review : null);
