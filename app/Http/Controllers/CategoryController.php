@@ -17,7 +17,6 @@ use DB;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use Sheba\Cache\CacheAside;
-use Sheba\Cache\Category\Review\ReviewCache;
 use Sheba\Cache\Category\Review\ReviewCacheRequest;
 use Sheba\CategoryServiceGroup;
 use Sheba\Checkout\DeliveryCharge;
@@ -429,12 +428,24 @@ class CategoryController extends Controller
 
                 $subscriptions = collect();
                 $final_services = collect();
+                $service_ids = $services->pluck('id')->toArray();
+                $slugs = UniversalSlugModel::where('sluggable_type', 'like', '%service')->whereIn('sluggable_id', $service_ids)->select('sluggable_id', 'slug')->get();
+                $location_service_ids = [];
+                foreach ($services->pluck('locationServices') as $location_service) {
+                    array_push($location_service_ids, $location_service->first() ? $location_service->first()->id : null);
+                }
+                $location_service_with_discounts = LocationService::whereIn('id', $location_service_ids)->select('id', 'location_id', 'service_id')
+                    ->whereHas('discounts', function ($q) {
+                        $q->running();
+                    })->with(['discounts' => function ($q) {
+                        $q->running();
+                    }])->get();
                 foreach ($services as $key => $service) {
                     /** @var LocationService $location_service */
                     $location_service = $service->locationServices->first();
-
+                    $location_service_with_discount = $location_service_with_discounts->where('id', $location_service->id)->first();
                     /** @var ServiceDiscount $discount */
-                    $discount = $location_service->discounts()->running()->first();
+                    $discount = $location_service_with_discount ? $location_service_with_discount->discounts->first() : null;
                     $prices = json_decode($location_service->prices);
                     if ($prices === null) continue;
                     $price_calculation->setService($service)->setLocationService($location_service);
@@ -457,7 +468,8 @@ class CategoryController extends Controller
                     $service['min_price'] = $min_max_price->getMin();
                     $service['terms_and_conditions'] = $service->terms_and_conditions ? json_decode($service->terms_and_conditions) : null;
                     $service['features'] = $service->features ? json_decode($service->features) : null;
-                    $service['slug'] = $service->getSlug();
+                    $slug = $slugs->where('sluggable_id', $service->id)->first();
+                    $service['slug'] = $slug ? $slug->slug : null;
 
                     /** @var ServiceSubscription $subscription */
                     if ($subscription = $service->activeSubscription) {
