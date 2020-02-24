@@ -35,12 +35,17 @@ class CategoryController extends Controller
         return api_response($request, 1, 200, $data);
     }
 
-    public function getTree(Request $request, CacheAside $cacheAside, CategoryTreeCacheRequest $categoryTreeCache)
+    public function getCategoryTree(Request $request, CacheAside $cacheAside, CategoryTreeCacheRequest $categoryTreeCache)
     {
         $this->validate($request, ['location_id' => 'required|numeric']);
         $categoryTreeCache->setLocationId($request->location_id);
         $data = $cacheAside->setCacheRequest($categoryTreeCache)->getMyEntity();
         if (!$data) return api_response($request, 1, 404);
         return api_response($request, 1, 200, $data);
+    }
+
+    public function getServicesOfChildren(Request $request, CacheAside $cacheAside){
+
+
     }
 }

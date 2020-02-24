@@ -24,7 +24,7 @@ class Route
                 $api->post('accountkit', 'AccountKit\AccountKitController@continueWithKit');
             });
             $api->group(['prefix' => 'categories'], function ($api) {
-                $api->get('tree', 'Category\CategoryController@getTree');
+                $api->get('tree', 'Category\CategoryController@getCategoryTree');
                 $api->group(['prefix' => '{category}'], function ($api) {
                     $api->get('/', 'Category\CategoryController@show');
                     $api->get('secondaries', 'Category\CategoryController@getSecondaries');

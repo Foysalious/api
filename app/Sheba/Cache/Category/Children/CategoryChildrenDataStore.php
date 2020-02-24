@@ -46,7 +46,7 @@ class CategoryChildrenDataStore implements DataStoreObject
         if (count($children) == 0) return null;
         $ids = array_merge($children->pluck('id')->toArray(), [$category->id]);
         $slugs = UniversalSlugModel::where('sluggable_type', 'like', '%category')->whereIn('sluggable_id', $ids)->select('sluggable_id', 'slug')->get();
-        $category['slug'] = $slugs->where('sluggable_id', $category->id)->first() ? $slugs->where('sluggable_id', 1)->first()->slug : null;
+        $category['slug'] = $slugs->where('sluggable_id', $category->id)->first() ? $slugs->where('sluggable_id', $category->id)->first()->slug : null;
         $children->map(function ($child) use ($slugs) {
             $slug = $slugs->where('sluggable_id', $child->id)->first();
             $child['slug'] = $slug ? $slug->slug : null;
