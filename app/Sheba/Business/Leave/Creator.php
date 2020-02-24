@@ -57,7 +57,7 @@ class Creator
     {
         $start_date = new \DateTime($this->startDate);
         $end_date = new \DateTime($this->endDate);
-        $total_days = $start_date->diff($end_date)->format("%r%a");
+        $total_days = $start_date->diff($end_date)->format("%r%a") + 1.0;
         $this->totalDays = $total_days;
         return $this;
     }

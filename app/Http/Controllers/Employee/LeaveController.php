@@ -59,6 +59,10 @@ class LeaveController extends Controller
     public function store(Request $request, LeaveCreator $leave_creator)
     {
         try {
+            $this->validate($request, [
+                'start_date' => 'required|before_or_equal:end_date',
+                'end_date' => 'required',
+            ]);
             $business_member = $this->getBusinessMember($request);
             if (!$business_member) return api_response($request, null, 404);
             $leave = $leave_creator->setTitle($request->title)
