@@ -130,6 +130,9 @@ class JobController extends Controller
             $job_collection->put('category_name', $job->category ? $job->category->name : null);
             $job_collection->put('partner_id', $job->partnerOrder->partner ? $job->partnerOrder->partner->id : null);
             $job_collection->put('partner_name', $job->partnerOrder->partner ? $job->partnerOrder->partner->name : null);
+            $job_collection->put('partner_image', $job->partnerOrder->partner ? $job->partnerOrder->partner->name : null);
+            $job_collection->put('partner_mobile', $job->partnerOrder->partner ? $job->partnerOrder->partner->getContactNumber() : null);
+            $job_collection->put('partner_address', $job->partnerOrder->partner ? $job->partnerOrder->partner->getContactResourceProPic() : null);
             $job_collection->put('status', $job->status);
             $job_collection->put('rating', $job->review ? $job->review->rating : null);
             $job_collection->put('review', $job->review ? $job->review->calculated_review : null);
@@ -141,7 +144,6 @@ class JobController extends Controller
             $job_collection->put('isRentCar', $job->isRentCar());
             $job_collection->put('is_on_premise', $job->isOnPremise());
             $job_collection->put('customer_favorite', $job->customerFavorite ? $job->customerFavorite->id : null);
-            $job_collection->put('partner_address', $job->partnerOrder->partner ? $job->partnerOrder->partner->address : null);
             $job_collection->put('order_code', $job->partnerOrder->order->code());
             $job_collection->put('pick_up_address', $job->carRentalJobDetail ? $job->carRentalJobDetail->pick_up_address : null);
             $job_collection->put('pick_up_address_geo', $job->carRentalJobDetail ? json_decode($job->carRentalJobDetail->pick_up_address_geo) : null);
@@ -157,7 +159,6 @@ class JobController extends Controller
 
             $manager = new Manager();
             $manager->setSerializer(new ArraySerializer());
-
             if (count($job->jobServices) == 0) {
                 $services = collect();
                 $variables = json_decode($job->service_variables);
@@ -173,7 +174,7 @@ class JobController extends Controller
                     'variables' => $variables,
                     'quantity' => $job->service_quantity,
                     'unit' => $job->service->unit,
-                    'option' => $job->service_option,
+                    'option' => json_decode($job->service_option, true),
                     'variable_type' => $job->service_variable_type,
                     'thumb' => $job->service->app_thumb,
                     'fixed_upsell_price' => $upsell_price
@@ -195,7 +196,6 @@ class JobController extends Controller
                         "option" => json_decode($jobService->option, true),
                         "variable_type" => $jobService->variable_type
                     ];
-
                     $resource = new Item($selected_service, new ServiceV2MinimalTransformer($location_service, $price_calculation));
                     $price_data = $manager->createData($resource)->toArray();
 
@@ -205,7 +205,7 @@ class JobController extends Controller
                         'variables' => $variables,
                         'unit' => $jobService->service->unit,
                         'quantity' => $jobService->quantity,
-                        'option' => $jobService->option,
+                        'option' => json_decode($jobService->option, true),
                         'variable_type' => $jobService->variable_type,
                         'thumb' => $jobService->service->app_thumb,
                         'upsell_price' => $upsell_price
