@@ -23,6 +23,7 @@ class HolidayController extends Controller
         $fractal = new Manager();
         $resource = new Collection($business_holidays, new HolidayListTransformer());
         $holidays = $fractal->createData($resource)->toArray()['data'];
+        $holidays = call_user_func_array('array_merge', $holidays);
         return api_response($request, null,200, ['holidays' => $holidays, 'weekends' => $weekend]);
     }
 

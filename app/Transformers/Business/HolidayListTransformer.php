@@ -6,10 +6,15 @@ class HolidayListTransformer extends TransformerAbstract
 {
     public function transform($holiday)
     {
-        return [
-            'title' => $holiday->title,
-            'start_date' => $holiday->start_date->format('Y-m-d'),
-            'end_date' => $holiday->end_date->format('Y-m-d')
-        ];
+        return $this->listAllDatesBetweenTwoDates($holiday->start_date, $holiday->end_date);
+    }
+
+    private function listAllDatesBetweenTwoDates($start_date, $end_date)
+    {
+        $dates = [];
+        for($d = $start_date; $d->lte($end_date); $d->addDay()) {
+            $dates[] = $d->format('Y-m-d');
+        }
+        return $dates;
     }
 }
