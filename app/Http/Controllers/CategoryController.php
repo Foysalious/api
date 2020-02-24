@@ -346,7 +346,9 @@ class CategoryController extends Controller
         }
     }
 
-    public function getServices($category, Request $request, CacheAside $cacheAside, ServicesCacheRequest $cacheRequest)
+    public function getServices($category, Request $request,
+                                PriceCalculation $price_calculation, DeliveryCharge $delivery_charge,
+                                JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, MinMaxPrice $min_max_price, ApproximatePriceCalculator $approximate_price_calculator)
     {
         ini_set('memory_limit', '2048M');
         try {
@@ -359,12 +361,6 @@ class CategoryController extends Controller
                     if (!is_null($hyperLocation)) $location = $hyperLocation->location->id; else return api_response($request, null, 404);
                 } else $location = 4;
             }
-            $cacheRequest->setLocationId($location)->setCategoryId($category)->setIsB2b($request->is_b2b)->setIsBusiness($request->is_business)
-                ->setIsDdn($request->is_ddn)->setScope($request->scope)->setIsForBackend($request->is_for_backend)->setServiceId($request->service_id);
-            $data = $cacheAside->setCacheRequest($cacheRequest)->getMyEntity();
-            if (!$data) return api_response($request, null, 404);
-            return api_response($request, 1, 200, $data);
-
             /** @var Category $cat */
             $cat = Category::where('id', $category)->whereHas('locations', function ($q) use ($location) {
                 $q->where('locations.id', $location);
