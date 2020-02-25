@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Transformers\Business\ArticleListTransformer;
 use App\Transformers\Business\ArticleTransformer;
 use App\Transformers\CustomSerializer;
 use Illuminate\Http\Request;
@@ -7,26 +8,26 @@ use Illuminate\Http\Request;
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
 use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use Sheba\Dal\ArticleType\Contract as ArticleTypeRepositoryInterface;
 use Sheba\Dal\Article\Contract as ArticleRepositoryInterface;
 
 class ArticleController extends Controller
 {
-    public function getArticleTypes(Request $request, ArticleTypeRepositoryInterface $article_type_repository, ArticleRepositoryInterface $article_repository)
+    public function getArticleTypes(Request $request, ArticleTypeRepositoryInterface $article_type_repository)
     {
         $article_types = $article_type_repository->getAllPublishedArticleTypes();
-        foreach ($article_types as $article_type) {
-            $article_type->count = $article_repository->getNumberofArticlesFilteredByArticleType($article_type->id);
-        }
         return api_response($request, null, 200, ['article_types' => $article_types]);
     }
 
-    public function getArticles(Request $request, ArticleRepositoryInterface $article_repository)
+    public function getArticles($type, Request $request, ArticleTypeRepositoryInterface $article_type_repository)
     {
-        $articles = $article_repository->getAllArticlesFilteredByArticleTypes();
-        if ($request->has('type')) $articles = $articles->where('article_type_id', $request->type);
-        $articles = $articles->get();
+        $articles = $article_type_repository->getAllPublishedArticlesFilteredByArticleType($type);
+        $fractal = new Manager();
+        $fractal->setSerializer(new CustomSerializer());
+        $resource = new Collection($articles, new ArticleListTransformer());
+        $articles = $fractal->createData($resource)->toArray()['data'];
         return api_response($request, null, 200, ['articles' => $articles]);
     }
 
