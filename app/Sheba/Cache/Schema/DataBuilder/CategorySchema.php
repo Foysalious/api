@@ -1,4 +1,5 @@
-<?php namespace Sheba\Schema;
+<?php namespace Sheba\Cache\Schema\DataBuilder;
+
 
 use App\Models\Category;
 use App\Models\City;
@@ -73,7 +74,7 @@ class CategorySchema
             "telephone" => "+8809678016516",
             "priceRange" => "৳৳৳",
             "description" => $this->metaTag && $this->metaTag->meta_tag ? json_decode($this->metaTag->meta_tag)->description : null,
-            "URL" => config('sheba.front_url') . '/' . $this->category->slug,
+            "URL" => config('sheba.front_url') . '/' . $this->category->getSlug(),
             "Image" => $this->category->thumb
         ];
         $review_rating = [
@@ -249,16 +250,16 @@ class CategorySchema
         if ($this->category->isParent()) {
             array_push($items, [
                 'name' => $this->category->name,
-                'url' => $marketplace_url . '/' . $this->category->slug,
+                'url' => $marketplace_url . '/' . $this->category->getSlug(),
             ]);
         } else {
             $master = Category::select('name')->where('id', (int)$this->category->parent_id)->first();
             array_push($items, [
                 'name' => $master->name,
-                'url' => $marketplace_url . '/' . $master->slug,
+                'url' => $marketplace_url . '/' . $master->getSlug(),
             ], [
                 'name' => $this->category->name,
-                'url' => $marketplace_url . '/' . $this->category->slug,
+                'url' => $marketplace_url . '/' . $this->category->getSlug(),
             ]);
         }
         $itemListElement = [];

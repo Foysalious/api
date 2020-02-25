@@ -42,7 +42,7 @@ class CategoryTreeDataStore implements DataStoreObject
                     });
             })
             ->with(['children' => function ($q) use ($best_deal_category_ids) {
-                $q->select('id', 'name', 'thumb', 'parent_id', 'app_thumb', 'icon_png', 'icon_png_hover', 'icon_png_active', 'icon', 'icon_hover', 'slug', 'is_auto_sp_enabled')
+                $q->select('id', 'name', 'thumb', 'parent_id', 'app_thumb', 'icon_png', 'icon_png_hover', 'icon_png_active', 'icon', 'icon_hover', 'is_auto_sp_enabled')
                     ->whereHas('locations', function ($q) {
                         $q->select('locations.id')->where('locations.id', $this->categoryTreeRequest->getLocationId());
                     })->whereHas('services', function ($q) {
@@ -68,11 +68,10 @@ class CategoryTreeDataStore implements DataStoreObject
         $slugs = UniversalSlugModel::where('sluggable_type', 'like', '%' . 'category')->select('slug', 'sluggable_id')->whereIn('sluggable_id', $ids)->get()
             ->pluck('slug', 'sluggable_id')->toArray();
         foreach ($categories as &$category) {
-            $category->slug = isset($slugs[$category->id]) ? $slugs[$category->id] : null;
+            $category['slug'] = isset($slugs[$category->id]) ? $slugs[$category->id] : null;
             array_forget($category, 'parent_id');
-
             foreach ($category->children as &$child) {
-                $category->slug = isset($slugs[$category->id]) ? $slugs[$category->id] : null;
+                $child['slug'] = isset($slugs[$child->id]) ? $slugs[$child->id] : null;
                 array_forget($child, 'parent_id');
             }
         }

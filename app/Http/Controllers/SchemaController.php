@@ -2,9 +2,7 @@
 
 use Illuminate\Http\Request;
 use Sheba\Cache\CacheAside;
-use Sheba\Cache\Schema\SchemaCache;
 use Sheba\Cache\Schema\SchemaCacheRequest;
-use Sheba\Schema\ShebaSchema;
 
 class SchemaController extends Controller
 {
