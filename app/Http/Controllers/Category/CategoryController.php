@@ -38,8 +38,10 @@ class CategoryController extends Controller
 
     public function getCategoryTree(Request $request, CacheAside $cacheAside, CategoryTreeCacheRequest $categoryTreeCache)
     {
-        $this->validate($request, ['location_id' => 'required|numeric']);
-        $categoryTreeCache->setLocationId($request->location_id);
+        $this->validate($request, ['location_id' => 'numeric', 'lat' => 'numeric', 'lng' => 'numeric']);
+        $location_id = $this->getLocation($request->location_id, $request->lat, $request->lng);
+        if (!$location_id) return api_response($request, 1, 404);
+        $categoryTreeCache->setLocationId($location_id);
         $data = $cacheAside->setCacheRequest($categoryTreeCache)->getMyEntity();
         if (!$data) return api_response($request, 1, 404);
         return api_response($request, 1, 200, $data);
@@ -48,16 +50,30 @@ class CategoryController extends Controller
     public function getServicesOfChildren($category, Request $request, CacheAside $cacheAside, ServicesCacheRequest $cacheRequest)
     {
         $this->validate($request, ['location_id' => 'numeric', 'lat' => 'numeric', 'lng' => 'numeric']);
-        $location = $request->has('location_id') ? $request->location_id : 4;
-        if ($request->has('lat') && $request->has('lng')) {
-            $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
-            if (!$hyperLocation) return api_response($request, null, 404);
-            $location = $hyperLocation->location->id;
-        }
-        $cacheRequest->setLocationId($location)->setCategoryId($category);
+        $location_id = $this->getLocation($request->location_id, $request->lat, $request->lng);
+        if (!$location_id) return api_response($request, 1, 404);
+        $cacheRequest->setLocationId($location_id)->setCategoryId($category);
         $data = $cacheAside->setCacheRequest($cacheRequest)->getMyEntity();
         if (!$data) return api_response($request, null, 404);
         return api_response($request, 1, 200, $data);
 
+    }
+
+    /**
+     * @param $location_id
+     * @param $lat
+     * @param $lng
+     * @return int|null
+     */
+    private function getLocation($location_id, $lat, $lng)
+    {
+        if ($lat && $lng) {
+            $hyperLocation = HyperLocal::insidePolygon((double)$lng, (double)$lng)->first();
+            if (!$hyperLocation) return null;
+            return $hyperLocation->lcoation_id;
+        } elseif ($location_id) {
+            return (int)$location_id;
+        }
+        return null;
     }
 }
