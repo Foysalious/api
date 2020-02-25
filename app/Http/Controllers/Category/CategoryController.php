@@ -64,7 +64,7 @@ class CategoryController extends Controller
         if ($location_id) {
             return (int)$location_id;
         } elseif ($lat && $lng) {
-            $hyperLocation = HyperLocal::insidePolygon((double)$lng, (double)$lng)->first();
+            $hyperLocation = HyperLocal::insidePolygon((double)$lat, (double)$lng)->first();
             if (!$hyperLocation) return null;
             return $hyperLocation->lcoation_id;
         }
