@@ -1,21 +1,13 @@
 <?php namespace App\Http\Controllers\Category;
 
 use App\Http\Controllers\Controller;
-use App\Models\Category;
-use App\Models\CategoryGroupCategory;
 use App\Models\HyperLocal;
-use App\Transformers\Category\CategoryTransformer;
 use Illuminate\Http\Request;
-use League\Fractal\Manager;
 use Sheba\Cache\CacheAside;
 use Sheba\Cache\Category\Children\CategoryChildrenCacheRequest;
 use Sheba\Cache\Category\Children\Services\ServicesCacheRequest;
 use Sheba\Cache\Category\Info\CategoryCacheRequest;
-use Sheba\Cache\Category\Tree\CategoryTreeCache;
 use Sheba\Cache\Category\Tree\CategoryTreeCacheRequest;
-use Sheba\Dal\UniversalSlug\Model as UniversalSlugModel;
-use Sheba\Dal\UniversalSlug\SluggableType;
-use League\Fractal\Resource\Item;
 
 class CategoryController extends Controller
 {
@@ -30,7 +22,9 @@ class CategoryController extends Controller
     public function getSecondaries($category, Request $request, CacheAside $cacheAside, CategoryChildrenCacheRequest $cacheRequest)
     {
         $this->validate($request, ['lat' => 'numeric', 'lng' => 'numeric', 'location_id' => 'required']);
-        $cacheRequest->setCategoryId($category)->setLocationId($request->location_id);
+        $location_id = $this->getLocation($request->location_id, $request->lat, $request->lng);
+        if (!$location_id) return api_response($request, 1, 404);
+        $cacheRequest->setCategoryId($category)->setLocationId($location_id);
         $data = $cacheAside->setCacheRequest($cacheRequest)->getMyEntity();
         if (!$data) return api_response($request, 1, 404);
         return api_response($request, 1, 200, $data);
@@ -67,12 +61,12 @@ class CategoryController extends Controller
      */
     private function getLocation($location_id, $lat, $lng)
     {
-        if ($lat && $lng) {
+        if ($location_id) {
+            return (int)$location_id;
+        } elseif ($lat && $lng) {
             $hyperLocation = HyperLocal::insidePolygon((double)$lng, (double)$lng)->first();
             if (!$hyperLocation) return null;
             return $hyperLocation->lcoation_id;
-        } elseif ($location_id) {
-            return (int)$location_id;
         }
         return null;
     }
