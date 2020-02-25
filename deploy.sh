@@ -14,14 +14,16 @@ reset="sudo git reset --hard origin/"
 reset_branch="$reset$branch_name"
 eval $reset_branch
 
-# Sentry release version create
-VERSION=$(sentry-cli releases propose-version)
-# Create a release
-sentry-cli releases new -p api $VERSION
-# Associate commits with the release
-sentry-cli releases set-commits --auto $VERSION
-# Finalize release
-sentry-cli releases finalize "$VERSION"
+if [ "$branch_name" = master ]; then
+    # Sentry release version create
+    VERSION=$(sentry-cli releases propose-version)
+    # Create a release
+    sentry-cli releases new -p api $VERSION
+    # Associate commits with the release
+    sentry-cli releases set-commits --auto $VERSION
+    # Finalize release
+    sentry-cli releases finalize $VERSION
+fi
 
 sudo composer install --ignore-platform-reqs --no-interaction
 sudo php artisan config:clear
