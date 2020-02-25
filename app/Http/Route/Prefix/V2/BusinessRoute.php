@@ -312,8 +312,8 @@ class BusinessRoute
         });
         $api->group(['prefix' => 'help'], function ($api) {
             $api->get('article-types', 'B2b\ArticleController@getArticleTypes');
+            $api->get('article-types/{type}/list', 'B2b\ArticleController@getArticles');
             $api->group(['prefix' => 'articles'], function ($api) {
-                $api->get('/', 'B2b\ArticleController@getArticles');
                 $api->group(['prefix' => '{article}'], function ($api) {
                     $api->get('/', 'B2b\ArticleController@show');
                 });
