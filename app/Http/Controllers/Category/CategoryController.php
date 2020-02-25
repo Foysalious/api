@@ -47,13 +47,12 @@ class CategoryController extends Controller
 
     public function getServicesOfChildren($category, Request $request, CacheAside $cacheAside, ServicesCacheRequest $cacheRequest)
     {
-        if ($request->has('location')) {
-            $location = $request->location != '' ? $request->location : 4;
-        } else {
-            if ($request->has('lat') && $request->has('lng')) {
-                $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
-                if (!is_null($hyperLocation)) $location = $hyperLocation->location->id; else return api_response($request, null, 404);
-            } else $location = 4;
+        $this->validate($request, ['location_id' => 'numeric', 'lat' => 'numeric', 'lng' => 'numeric']);
+        $location = $request->has('location_id') ? $request->location_id : 4;
+        if ($request->has('lat') && $request->has('lng')) {
+            $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+            if (!$hyperLocation) return api_response($request, null, 404);
+            $location = $hyperLocation->location->id;
         }
         $cacheRequest->setLocationId($location)->setCategoryId($category);
         $data = $cacheAside->setCacheRequest($cacheRequest)->getMyEntity();
