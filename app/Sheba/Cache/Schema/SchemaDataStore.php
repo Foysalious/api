@@ -4,8 +4,9 @@ use App\Models\Category;
 use App\Models\Service;
 use Sheba\Cache\CacheRequest;
 use Sheba\Cache\DataStoreObject;
-use Sheba\Schema\CategorySchema;
-use Sheba\Schema\ServiceSchema;
+use Sheba\Cache\Schema\DataBuilder\CategorySchema;
+use Sheba\Cache\Schema\DataBuilder\ServiceSchema;
+
 
 class SchemaDataStore implements DataStoreObject
 {

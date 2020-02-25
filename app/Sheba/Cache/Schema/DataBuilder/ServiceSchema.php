@@ -1,4 +1,4 @@
-<?php namespace Sheba\Schema;
+<?php namespace Sheba\Cache\Schema\DataBuilder;
 
 
 use App\Models\Category;
@@ -53,13 +53,13 @@ class ServiceSchema
         $master = Category::select('id', 'name', 'slug')->where('id', $category->parent_id)->first();
         array_push($items, [
             'name' => $master->name,
-            'url' => $marketplace_url . '/' . $master->slug,
+            'url' => $marketplace_url . '/' . $master->getSlug(),
         ], [
             'name' => $category->name,
-            'url' => $marketplace_url . '/' . $category->slug,
+            'url' => $marketplace_url . '/' . $category->getSlug(),
         ], [
             'name' => $this->service->name,
-            'url' => $marketplace_url . '/' . $this->service->slug,
+            'url' => $marketplace_url . '/' . $this->service->getSlug(),
         ]);
 
         $itemListElement = [];
