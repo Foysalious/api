@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use Sheba\Cache\CacheAside;
 use Sheba\Cache\Category\Children\CategoryChildrenCacheRequest;
+use Sheba\Cache\Category\Children\Services\ServicesCacheRequest;
 use Sheba\Cache\Category\Info\CategoryCacheRequest;
 use Sheba\Cache\Category\Tree\CategoryTreeCache;
 use Sheba\Cache\Category\Tree\CategoryTreeCacheRequest;
@@ -44,8 +45,19 @@ class CategoryController extends Controller
         return api_response($request, 1, 200, $data);
     }
 
-    public function getServicesOfChildren(Request $request, CacheAside $cacheAside){
-
+    public function getServicesOfChildren($category, Request $request, CacheAside $cacheAside, ServicesCacheRequest $cacheRequest)
+    {
+        $this->validate($request, ['location_id' => 'numeric', 'lat' => 'numeric', 'lng' => 'numeric']);
+        $location = $request->has('location_id') ? $request->location_id : 4;
+        if ($request->has('lat') && $request->has('lng')) {
+            $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+            if (!$hyperLocation) return api_response($request, null, 404);
+            $location = $hyperLocation->location->id;
+        }
+        $cacheRequest->setLocationId($location)->setCategoryId($category);
+        $data = $cacheAside->setCacheRequest($cacheRequest)->getMyEntity();
+        if (!$data) return api_response($request, null, 404);
+        return api_response($request, 1, 200, $data);
 
     }
 }
