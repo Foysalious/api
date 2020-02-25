@@ -253,36 +253,32 @@ class ShebaController extends Controller
 
     public function checkTransactionStatus(Request $request, $transactionID, PdfHandler $pdfHandler)
     {
-        try {
-            $payment = Payment::where('transaction_id', $transactionID)->whereIn('status', ['failed', 'validated', 'completed'])->first();
-            if (!$payment) {
-                $payment = Payment::where('transaction_id', $transactionID)->first();
-                if ($payment->transaction_details && isset(json_decode($payment->transaction_details)->errorMessage)) {
-                    $message = 'Your payment has been failed due to ' . json_decode($payment->transaction_details)->errorMessage;
-                } else {
-                    $message = 'Payment Failed.';
-                }
-                return api_response($request, null, 404, ['message' => $message]);
-            }
-            $info = [
-                'amount' => $payment->payable->amount,
-                'method' => $payment->paymentDetails->last()->readable_method,
-                'description' => $payment->payable->description,
-                'created_at' => $payment->created_at->format('jS M, Y, h:i A'),
-                'invoice_link' => $payment->invoice_link,
-                'transaction_id' => $transactionID
-            ];
-            $info = array_merge($info, $this->getInfoForPaymentLink($payment->payable));
-            if ($payment->status == 'validated' || $payment->status == 'failed') {
-                $message = 'Your payment has been received but there was a system error. It will take some time to update your transaction. Call 16516 for support.';
+        $payment = Payment::where('transaction_id', $transactionID)->whereIn('status', ['failed', 'validated', 'completed'])->first();
+        if (!$payment) {
+            $payment = Payment::where('transaction_id', $transactionID)->first();
+            if (!$payment) return api_response($request, null, 404, ['message' => 'No Payment found']);
+            if ($payment->transaction_details && isset(json_decode($payment->transaction_details)->errorMessage)) {
+                $message = 'Your payment has been failed due to ' . json_decode($payment->transaction_details)->errorMessage;
             } else {
-                $message = 'Successful';
+                $message = 'Payment Failed.';
             }
-            return api_response($request, null, 200, ['info' => $info, 'message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+            return api_response($request, null, 404, ['message' => $message]);
         }
+        $info = [
+            'amount' => $payment->payable->amount,
+            'method' => $payment->paymentDetails->last()->readable_method,
+            'description' => $payment->payable->description,
+            'created_at' => $payment->created_at->format('jS M, Y, h:i A'),
+            'invoice_link' => $payment->invoice_link,
+            'transaction_id' => $transactionID
+        ];
+        $info = array_merge($info, $this->getInfoForPaymentLink($payment->payable));
+        if ($payment->status == 'validated' || $payment->status == 'failed') {
+            $message = 'Your payment has been received but there was a system error. It will take some time to update your transaction. Call 16516 for support.';
+        } else {
+            $message = 'Successful';
+        }
+        return api_response($request, null, 200, ['info' => $info, 'message' => $message]);
     }
 
     public function getInfoForPaymentLink(Payable $payable)
