@@ -174,7 +174,7 @@ class JobController extends Controller
                     'variables' => $variables,
                     'quantity' => $job->service_quantity,
                     'unit' => $job->service->unit,
-                    'option' => json_decode($job->service_option, true),
+                    'option' => $job->service_option,
                     'variable_type' => $job->service_variable_type,
                     'thumb' => $job->service->app_thumb,
                     'fixed_upsell_price' => $upsell_price
@@ -205,7 +205,7 @@ class JobController extends Controller
                         'variables' => $variables,
                         'unit' => $jobService->service->unit,
                         'quantity' => $jobService->quantity,
-                        'option' => json_decode($jobService->option, true),
+                        'option' => $jobService->option,
                         'variable_type' => $jobService->variable_type,
                         'thumb' => $jobService->service->app_thumb,
                         'upsell_price' => $upsell_price
