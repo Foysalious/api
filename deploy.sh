@@ -7,6 +7,13 @@
 # git commit -m "Make deploy.sh executable."
 # git push
 
+# Sentry release version create
+VERSION=$(sentry-cli releases propose-version)
+# Create a release
+sentry-cli releases new -p api $VERSION
+# Associate commits with the release
+sentry-cli releases set-commits --auto $VERSION
+
 sudo git fetch origin
 branch_name="$(git symbolic-ref --short -q HEAD 2>/dev/null)"
 reset="sudo git reset --hard origin/"
