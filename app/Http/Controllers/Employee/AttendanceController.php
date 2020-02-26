@@ -85,12 +85,12 @@ class AttendanceController extends Controller
             $today=Carbon::now();
             if (!$business) return api_response($request, null, 404);
 
-            if (!$business_holiday_repo->isHolidayByBusiness($business, $today) && !$business_weekend_repo->isWeekendByBusiness($business, $today))
-            {
-                if ($request->action == Actions::CHECKOUT && $checkout->isNoteRequired()) {
-                    $validation_data += ['note' => 'string|required_if:action,' . Actions::CHECKOUT];
-                }
-            }
+//            if (!$business_holiday_repo->isHolidayByBusiness($business, $today) && !$business_weekend_repo->isWeekendByBusiness($business, $today))
+//            {
+//                if ($request->action == Actions::CHECKOUT && $checkout->isNoteRequired()) {
+//                    $validation_data += ['note' => 'string|required_if:action,' . Actions::CHECKOUT];
+//                }
+//            }
             $this->validate($request, $validation_data);
             $business_member = $this->getBusinessMember($request);
             $this->setModifier($business_member->member);
