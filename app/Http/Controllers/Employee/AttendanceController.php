@@ -1,7 +1,6 @@
 <?php namespace App\Http\Controllers\Employee;
 
 use App\Http\Controllers\Controller;
-use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Sheba\Business\Attendance\MonthlyStat;
 use Carbon\Carbon;
@@ -69,8 +68,7 @@ class AttendanceController extends Controller
      * @param ActionProcessor $action_processor
      * @return JsonResponse
      */
-    public function takeAction(Request $request, AttendanceAction $attendance_action, ActionProcessor $action_processor,
-                               BusinessHolidayRepoInterface $business_holiday_repo, BusinessWeekendRepoInterface $business_weekend_repo)
+    public function takeAction(Request $request, AttendanceAction $attendance_action, ActionProcessor $action_processor)
     {
         try {
             $validation_data = [
@@ -81,18 +79,13 @@ class AttendanceController extends Controller
                 'lng' => 'numeric'
             ];
             $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
-            $business = $this->getBusiness($request);
-            $today=Carbon::now();
-            if (!$business) return api_response($request, null, 404);
-
-            if (!$business_holiday_repo->isHolidayByBusiness($business, $today) && !$business_weekend_repo->isWeekendByBusiness($business, $today))
-            {
-                if ($request->action == Actions::CHECKOUT && $checkout->isNoteRequired()) {
-                    $validation_data += ['note' => 'string|required_if:action,' . Actions::CHECKOUT];
-                }
+            if ($request->action == Actions::CHECKOUT && $checkout->isNoteRequired()) {
+                $validation_data += ['note' => 'string|required_if:action,' . Actions::CHECKOUT];
             }
             $this->validate($request, $validation_data);
             $business_member = $this->getBusinessMember($request);
+            if (!$business_member) return api_response($request, null, 404);
+
             $this->setModifier($business_member->member);
             $attendance_action->setBusinessMember($business_member)->setAction($request->action)->setBusiness($business_member->business)
                 ->setNote($request->note)->setDeviceId($request->device_id)->setLat($request->lat)->setLng($request->lng);
@@ -150,11 +143,4 @@ class AttendanceController extends Controller
         return BusinessMember::find($business_member['id']);
     }
 
-    private function getBusiness(Request $request)
-    {
-        $auth_info = $request->auth_info;
-        $business_member = $auth_info['business_member'];
-        if (!isset($business_member['id'])) return null;
-        return Business::find($business_member['business_id']);
-    }
 }
