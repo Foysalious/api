@@ -3,11 +3,15 @@
 use App\Models\HyperLocal;
 use App\Models\LocationService;
 use App\Models\Service;
+use App\Sheba\Checkout\PartnerList;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\LocationService\DiscountCalculation;
 use Sheba\LocationService\PriceCalculation;
+use Sheba\Voucher\DTO\Params\CheckParamsForOrder;
 use Sheba\Voucher\PromotionList;
+use Sheba\Voucher\VoucherSuggester;
 use Throwable;
 
 class PromotionV3Controller extends Controller
@@ -54,6 +58,53 @@ class PromotionV3Controller extends Controller
     }
 
     /**
+     * @param $customer
+     * @param Request $request
+     * @param VoucherSuggester $voucherSuggester
+     * @param PartnerListRequest $partnerListRequest
+     * @param PriceCalculation $price_calculation
+     * @param DiscountCalculation $discount_calculation
+     * @return JsonResponse
+     */
+    public function autoApplyPromotion($customer, Request $request, VoucherSuggester $voucherSuggester, PartnerListRequest $partnerListRequest,
+                                       PriceCalculation $price_calculation, DiscountCalculation $discount_calculation)
+    {
+        try {
+            $partnerListRequest->setRequest($request)->prepareObject();
+            $location = $request->location;
+
+            if ($request->has('lat') && $request->has('lng')) {
+                $hyper_local = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+                $location = $hyper_local ? $hyper_local->location->id : $location;
+            }
+
+            $order_amount = $this->calculateOrderAmount($price_calculation, $discount_calculation, $request->services, $location);
+            if (!$order_amount) return api_response($request, null, 403, ['message' => 'No partner available at this combination']);
+
+            $order_params = (new CheckParamsForOrder($request->customer, $request->customer->profile))
+                ->setApplicant($request->customer)
+                ->setCategory($partnerListRequest->selectedCategory->id)
+                ->setPartner($request->partner)
+                ->setLocation((int)$location)
+                ->setOrderAmount($order_amount)
+                ->setSalesChannel($request->sales_channel);
+
+            $voucherSuggester->init($order_params);
+
+            if ($promo = $voucherSuggester->suggest()) {
+                $applied_voucher = array('amount' => (int)$promo['amount'], 'code' => $promo['voucher']->code, 'id' => $promo['voucher']->id);
+                $valid_promos = $this->sortPromotionsByWeight($voucherSuggester->validPromos);
+                return api_response($request, $promo, 200, ['voucher' => $applied_voucher, 'valid_promotions' => $valid_promos]);
+            } else {
+                return api_response($request, null, 404);
+            }
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
      * @param PriceCalculation $price_calculation
      * @param DiscountCalculation $discount_calculation
      * @param $services
@@ -73,5 +124,24 @@ class PromotionV3Controller extends Controller
             $order_amount += $discount_calculation->getDiscountedPrice();
         }
         return $order_amount;
+    }
+
+    /**
+     * @param $valid_promos
+     * @return mixed
+     */
+    private function sortPromotionsByWeight($valid_promos)
+    {
+        return $valid_promos->map(function ($promotion) {
+            $promo = [];
+            $promo['id'] = $promotion['voucher']->id;
+            $promo['title'] = $promotion['voucher']->title;
+            $promo['amount'] = (double)$promotion['amount'];
+            $promo['code'] = $promotion['voucher']->code;
+            $promo['priority'] = round($promotion['weight'], 4);
+            return $promo;
+        })->sortByDesc(function ($promotion) {
+            return $promotion['priority'];
+        })->values()->all();
     }
 }
