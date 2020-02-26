@@ -37,11 +37,6 @@ class CategoryRepository
             $services = $services->published()->get();
         }
 
-        $final_services = [];
-        foreach ($services as $service) {
-            array_push($final_services, $service);
-        }
-
-        return $final_services;
+        return $services;
     }
 }
