@@ -316,6 +316,7 @@ class BusinessRoute
             $api->group(['prefix' => 'articles'], function ($api) {
                 $api->group(['prefix' => '{article}'], function ($api) {
                     $api->get('/', 'B2b\ArticleController@show');
+                    $api->post('/like-dislike', 'B2b\ArticleController@articleLikeDislike');
                 });
             });
         });

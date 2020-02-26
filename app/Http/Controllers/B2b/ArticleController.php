@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Sheba\Business\Article\LikeDislike\Creator as ArticleLikeDislikeCreator;
 use App\Transformers\Business\ArticleListTransformer;
 use App\Transformers\Business\ArticleTransformer;
 use App\Transformers\CustomSerializer;
@@ -40,4 +41,22 @@ class ArticleController extends Controller
         $article = $fractal->createData($resource)->toArray()['data'];
         return api_response($request, null, 200, ['article' => $article]);
     }
+
+    public function articleLikeDislike($article, ArticleRepositoryInterface $article_repository, ArticleLikeDislikeCreator $articleLikeDislikeCreator, Request $request)
+    {
+        $this->validate($request, [
+            'is_like' => 'required|integer|between:0,1',
+        ]);
+        $article = $article_repository->find($article);
+        if($article) {
+            $articleLikeDislikeCreator->setArticleId($article->id)
+                ->setUserType($request->user_type)
+                ->setUserId($request->user_id)
+                ->setIsLike($request->is_like)
+                ->create();
+            return api_response($request, null, 200, ['message' => 'success']);
+        }
+        return api_response($request, null, 404, ["message" => "Article not found."]);
+    }
+
 }
