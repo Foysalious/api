@@ -128,6 +128,7 @@ class JobController extends Controller
             $job_collection->put('preferred_time', $job->readable_preferred_time);
             $job_collection->put('category_id', $job->category ? $job->category->id : null);
             $job_collection->put('category_name', $job->category ? $job->category->name : null);
+            $job_collection->put('category_image', $job->category ? $job->category->thumb : null);
             $job_collection->put('partner_id', $job->partnerOrder->partner ? $job->partnerOrder->partner->id : null);
             $job_collection->put('partner_name', $job->partnerOrder->partner ? $job->partnerOrder->partner->name : null);
             $job_collection->put('partner_image', $job->partnerOrder->partner ? $job->partnerOrder->partner->getContactResourceProPic() : null);

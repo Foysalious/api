@@ -44,7 +44,6 @@ class CustomerFavoriteController extends Controller
         $this->validate($request, [
             'location' => 'sometimes|numeric', 'lat' => 'sometimes|numeric', 'lng' => 'required_with:lat'
         ]);
-
         $customer = $request->customer;
         list($offset, $limit) = calculatePagination($request);
 
@@ -66,7 +65,7 @@ class CustomerFavoriteController extends Controller
                     'job', 'services', 'partner' => function ($q) {
                         $q->select('id', 'name', 'logo');
                     }, 'category' => function ($q) {
-                        if ($this->location) $q->select('id', 'parent_id', 'name', 'slug', 'icon_png', 'icon_color')->with('parent');
+                        if ($this->location) $q->select('id', 'parent_id', 'name', 'slug', 'icon_png', 'icon_color', 'delivery_charge')->with('parent');
                     }
                 ])->orderBy('id', 'desc')->skip($offset)->take($limit);
             }
