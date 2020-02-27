@@ -178,6 +178,7 @@ class OrderController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         } catch (Throwable $exception) {
+            dd($exception);
             DB::rollback();
             app('sentry')->captureException($exception);
             return api_response($request, null, 500);

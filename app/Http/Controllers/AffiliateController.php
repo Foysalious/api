@@ -1212,7 +1212,10 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
     public function getOrderDetails($affiliate,$order,Request $request)
     {
         try {
-            $partner_order = PartnerOrder::find($order);
+            /** @var Job $job */
+            $job = Job::find($order);
+            if (empty($job)) return api_response($request,null,404);
+            $partner_order=$job->partner_order;
             $partner_order->calculate(true);
             $partner_order['total_paid'] = (double)$partner_order->paid;
             $partner_order['total_due'] = (double)$partner_order->due;
