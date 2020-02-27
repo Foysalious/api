@@ -6,14 +6,14 @@ use Illuminate\Contracts\Cache\Repository;
 
 class CacheWrapper extends Recommender
 {
-    private $redisNameSpace = 'HighDemandCategory';
+    private $redisNameSpace = 'high_demand_category';
 
     protected function recommendation()
     {
         /** @var Repository $store */
         $store = Cache::store('redis');
 
-        $cache_name = sprintf("%s::%s_%d_data", $this->redisNameSpace, 'location', $this->locationId);
+        $cache_name = sprintf("%s::%s:%d", $this->redisNameSpace, 'location', $this->locationId);
 
         if ($store->has($cache_name)) {
             return $store->get($cache_name);
