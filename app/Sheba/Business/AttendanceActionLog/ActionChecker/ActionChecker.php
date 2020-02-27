@@ -172,6 +172,7 @@ abstract class ActionChecker
         $time=new TimeByBusiness();
         $weekendHoliday=new WeekendHolidayByBusiness();
         $checkout_time=$time->getOfficeEndTimeByBusiness();
+        if(is_null($checkout_time)) return 0;
         if (!$weekendHoliday->isWeekendByBusiness($date) && !$weekendHoliday->isHolidayByBusiness($date)){
             return Carbon::now()->lt(Carbon::parse($checkout_time)) ? 1 : 0;
         }

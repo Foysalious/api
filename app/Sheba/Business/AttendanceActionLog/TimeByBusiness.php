@@ -8,12 +8,16 @@ class TimeByBusiness
 {
     public function getOfficeStartTimeByBusiness()
     {
-        return Model::where('business_id',$this->getBusiness()->id)->first()->start_time;
+        $business_hour=Model::where('business_id',$this->getBusiness()->id)->first();
+        if(is_null($business_hour)) return null;
+        return $business_hour->start_time;
     }
 
     public function getOfficeEndTimeByBusiness()
     {
-        return Model::where('business_id',$this->getBusiness()->id)->first()->end_time;
+        $business_hour=Model::where('business_id',$this->getBusiness()->id)->first();
+        if(is_null($business_hour)) return null;
+        return $business_hour->end_time;
     }
 
     private function getBusiness()
