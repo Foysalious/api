@@ -28,11 +28,17 @@ class AttendanceTransformer extends TransformerAbstract
      */
     public function transform($attendances)
     {
+        $data=array();
         $weekend_day = $this->businessWeekend->pluck('weekday_name')->toArray();
-        $dates_of_holidays_formatted = $this->businessHoliday->map(function ($holiday) {
-            return $holiday->start_date->format('Y-m-d');
-        })->toArray();
+        foreach ($this->businessHoliday as $holiday){
+            $start_date=Carbon::parse($holiday->start_date);
+            $end_date=Carbon::parse($holiday->end_date);
+            for($d = $start_date; $d->lte($end_date); $d->addDay()) {
+                $data[]= $d->format('Y-m-d');
+            }
 
+        }
+        $dates_of_holidays_formatted=$data;
         $period = CarbonPeriod::create($this->timeFrame->start, $this->timeFrame->end);
         $statistics = [
             'working_days' => $this->timeFrame->start->daysInMonth,
@@ -103,4 +109,5 @@ class AttendanceTransformer extends TransformerAbstract
     {
         return in_array($date->format('Y-m-d'), $holidays);
     }
+
 }
