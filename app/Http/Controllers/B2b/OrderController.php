@@ -219,7 +219,7 @@ class OrderController extends Controller
             $request->merge(['customer' => $customer,
                 'address_id' => $address->id,
                 'name' => $business->name, 'payment_method' => 'cod', 'mobile' => $member->profile->mobile,
-                'business_id' => $business->id, 'sales_channel' => constants('SALES_CHANNELS')['B2B']['name'], 'voucher' => $request->voucher]);
+                'business_id' => $business->id, 'sales_channel' => $request->sales_channel?:constants('SALES_CHANNELS')['B2B']['name'], 'voucher' => $request->voucher]);
             $order = $order->placeOrder($request);
             if ($order) {
                 if ($request->has('issue_id')) {
