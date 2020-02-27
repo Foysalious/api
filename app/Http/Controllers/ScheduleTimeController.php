@@ -20,9 +20,9 @@ class ScheduleTimeController extends Controller
         try {
             $this->validate($request, [
                 'for' => 'sometimes|required|string|in:app,eshop',
-                'category' => 'sometimes|required|numeric',
-                'partner' => 'sometimes|required|numeric',
-                'limit' => 'sometimes|required|numeric:min:1'
+                'category' => 'sometimes|required|numeric|min:1',
+                'partner' => 'sometimes|required|numeric|min:1',
+                'limit' => 'sometimes|required|numeric|min:1'
             ]);
             if ($request->has('category') && $request->has('partner')) {
                 $dates = $partnerSchedule->setPartner($request->partner)->setCategory($request->category)->setFor($request->for);
