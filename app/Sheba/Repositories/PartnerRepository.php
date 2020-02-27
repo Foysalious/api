@@ -3,6 +3,7 @@
 use App\Models\Partner;
 use App\Models\PartnerStatusChangeLog;
 
+use App\Models\SliderPortal;
 use Exception;
 use Sheba\PushNotificationHandler;
 use Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
@@ -95,5 +96,30 @@ class PartnerRepository extends BaseRepository implements PartnerRepositoryInter
     {
         $new_reward_point = $partner->reward_point + $point;
         $this->update($partner, ['reward_point' => $new_reward_point]);
+    }
+
+    public function featureVideos($type = null)
+    {
+
+        if ($type != null)
+            $screens = [$type];
+        else
+            $screens = ['payment_link', 'pos', 'inventory', 'referral', 'due'];
+        $slides = [];
+        $details = [];
+        foreach ($screens as $screen) {
+            $slider_portals[$screen] = SliderPortal::with('slider.slides')
+                ->where('portal_name', 'manager-app')
+                ->where('screen', $screen)
+                ->get();
+            $slides[$screen] = !$slider_portals[$screen]->isEmpty() ? $slider_portals[$screen]->last()->slider->slides->last() : null;
+
+            if ($slides[$screen] && json_decode($slides[$screen]->video_info)) {
+                $details[$screen] = json_decode($slides[$screen]->video_info);
+            } else
+                $details[$screen] = null;
+        }
+
+        return $details;
     }
 }

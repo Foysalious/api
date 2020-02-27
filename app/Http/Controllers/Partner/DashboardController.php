@@ -6,11 +6,19 @@ use App\Http\Controllers\SpLoanInformationCompletion;
 use App\Models\Partner;
 use App\Models\PosOrder;
 use App\Models\SliderPortal;
+use App\Repositories\DiscountRepository;
+use App\Repositories\FileRepository;
+use App\Repositories\PartnerOrderRepository;
+use App\Repositories\PartnerServiceRepository;
+use App\Repositories\ProfileRepository;
+use App\Repositories\ResourceJobRepository;
 use App\Repositories\ReviewRepository;
+use App\Repositories\ServiceRepository;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Validation\ValidationException;
 use Sheba\Analysis\PartnerPerformance\PartnerPerformance;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
 use Sheba\Helpers\TimeFrame;
@@ -31,7 +39,6 @@ class DashboardController extends Controller
 {
     use ModificationFields, LocationSetter;
 
-    private $partnerRepo;
 
     public function get(Request $request, PartnerPerformance $performance, PartnerReward $partner_reward)
     {
@@ -59,21 +66,7 @@ class DashboardController extends Controller
                 }
             }
 
-            $screens = ['payment_link','pos','inventory','referral','due'];
-            $slides = [];
-            $details = [];
-            foreach ($screens as $screen) {
-                $slider_portals[$screen] = SliderPortal::with('slider.slides')
-                    ->where('portal_name', 'manager-app')
-                    ->where('screen', $screen)
-                    ->get();
-                $slides[$screen] = !$slider_portals[$screen]->isEmpty() ? $slider_portals[$screen]->last()->slider->slides->last() : null;
-
-                if ($slides[$screen] && json_decode($slides[$screen]->video_info)) {
-                    $details[$screen] = json_decode($slides[$screen]->video_info);
-                } else
-                    $details[$screen] = null;
-            }
+            $details = (new PartnerRepository($partner))->featureVideos();
 
             $performance->setPartner($partner)->setTimeFrame((new TimeFrame())->forCurrentWeek())->calculate();
             $performanceStats = $performance->getData();
@@ -222,6 +215,114 @@ class DashboardController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function getSubscriptionInfo(Request $request)
+    {
+        try {
+            $partner = $request->partner;
+            $upgradable_package = null;
+            $total_due_for_pos_orders = 0;
+            $has_pos_paid_order = 0;
+            PosOrder::with('items.service.discounts', 'customer', 'payments', 'logs', 'partner')->byPartner($partner->id)
+                ->each(function (PosOrder $pos_order) use (&$total_due_for_pos_orders, &$has_pos_paid_order) {
+                    $pos_order->calculate();
+                    $due = $pos_order->getDue();
+                    $total_due_for_pos_orders += $due > 0 ? $due : 0;
+                    if (!$has_pos_paid_order && ($pos_order->getPaymentStatus() == OrderPaymentStatuses::PAID))
+                        $has_pos_paid_order = 1;
+                });
+
+            $data = [
+                'current_subscription_package' => [
+                    'id' => $partner->subscription->id,
+                    'name' => $partner->subscription->name,
+                    'name_bn' => $partner->subscription->show_name_bn,
+                    'remaining_day' => $partner->last_billed_date ? $partner->periodicBillingHandler()->remainingDay() : 0,
+                    'billing_type' => $partner->billing_type,
+                    'rules' => $partner->subscription->getAccessRules(),
+                    'is_light' => $partner->subscription->id == (int)config('sheba.partner_lite_packages_id')
+                ],
+                'subscription_promotion' => $upgradable_package ? [
+                    'package' => $upgradable_package->name,
+                    'package_name_bn' => $upgradable_package->name_bn,
+                    'package_badge' => $upgradable_package->badge,
+                    'package_usp_bn' => json_decode($upgradable_package->usps, 1)['usp_bn']
+                ] : null,
+                'has_pos_inventory' => $partner->posServices->isEmpty() ? 0 : 1,
+                'has_kyc_profile_completed' => $this->getSpLoanInformationCompletion($partner, $request),
+                'has_pos_due_order' => $total_due_for_pos_orders > 0 ? 1 : 0,
+                'has_pos_paid_order' => $has_pos_paid_order,
+                'has_qr_code' => ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0
+
+            ];
+
+            return api_response($request, $data, 200, ['data' => $data]);
+
+
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getFeatureVideos(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'type' => 'sometimes|required|in:payment_link,pos,inventory,referral,due',
+            ]);
+
+            if ($request->has('type'))
+                $type = $request->type;
+            else
+                $type = null;
+
+            $details = (new PartnerRepository($request->partner))->featureVideos($type);
+
+            if ($request->has('type')) {
+                $video = [
+                    [
+                        'key' => $type,
+                        'details' => $details[$type]
+                    ]
+                ];
+                return api_response($request, $video, 200, ['feature_videos' => $video]);
+            }
+
+
+            $videos = [
+                [
+                    'key' => 'payment_link',
+                    'details' => $details['payment_link']
+                ],
+                [
+                    'key' => 'pos',
+                    'details' => $details['pos']
+                ],
+                [
+                    'key' => 'inventory',
+                    'details' => $details['inventory']
+                ],
+                [
+                    'key' => 'referral',
+                    'details' => $details['referral']
+                ],
+                [
+                    'key' => 'due',
+                    'details' => $details['due']
+                ]
+            ];
+
+            return api_response($request, $videos, 200, ['feature_videos' => $videos]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        }catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
     }
 
     private function newOrdersCount($partner, $request)

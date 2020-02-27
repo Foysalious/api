@@ -1385,6 +1385,7 @@ class PartnerController extends Controller
             if(is_null($partner_id) || empty($partner_id))
                 return api_response($request, null, 400, ['message' => 'Invalid token']);
 
+            /** @var Partner $partner */
             $partner = Partner::find((int)$partner_id);
 
             if(is_null($partner) || empty($partner))
@@ -1395,6 +1396,9 @@ class PartnerController extends Controller
             $remember_token = $manager_resource->remember_token;
             $token = $this->profileRepo->fetchJWTToken('resource', $manager_resource->id, $remember_token);
 
+            $rating = (new ReviewRepository)->getAvgRating($partner->reviews);
+            $rating = (string)(is_null($rating) ? 0 : $rating);
+
             $data = [
                 'remember_token' => $remember_token,
                 'token' => $token,
@@ -1403,9 +1407,23 @@ class PartnerController extends Controller
                 'logo' => $partner->logo,
                 'logo_original' => $partner->logo_original,
                 'profile' => [
+                    'id' => $profile->id,
                     'name' => $profile->name,
                     'pro_pic' => $profile->pro_pic
-                ]
+                ],
+                'badge' => $partner->resolveBadge(),
+                'rating' => $rating,
+                'status' => $partner->getStatusToCalculateAccess(),
+                'show_status' => constants('PARTNER_STATUSES_SHOW')[$partner['status']]['partner'],
+                'balance' => $partner->totalWalletAmount(),
+                'credit' => $partner->wallet,
+                'bonus' => round($partner->bonusWallet(), 2),
+                'is_credit_limit_exceed' => $partner->isCreditLimitExceed(),
+                'is_on_leave' => $partner->runningLeave() ? 1 : 0,
+                'bonus_credit' => $partner->bonusWallet(),
+                'reward_point' => $partner->reward_point,
+                'bkash_no' => $partner->bkash_no,
+                'is_nid_verified' => (int) $profile->nid_verified ? true : false,
             ];
             return api_response($request, null, 200, ['data' => $data]);
         } catch (ValidationException $e) {
