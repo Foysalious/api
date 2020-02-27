@@ -15,7 +15,6 @@ abstract class Recommender
     protected $next;
     /** @var TimeFrame $timeFrame */
     protected $timeFrame;
-    protected $cityId;
     protected $locationId;
 
     public function __construct(Recommender $next = null)
@@ -33,10 +32,9 @@ abstract class Recommender
         return $this;
     }
 
-    public function setCityId($city_id)
+    public function setLocationId($location_id)
     {
-        $this->cityId = $city_id;
-        $this->locationId = Location::where('city_id', $this->cityId)->pluck('id')->toArray();
+        $this->locationId = $location_id;
 
         return $this;
     }

@@ -20,7 +20,7 @@ class Basic extends Recommender
             ->join('orders', 'orders.id', '=', 'partner_orders.order_id')
             ->select('category_id', DB::raw('count(*) as total'))
             ->where('categories.publication_status', 1)
-            ->whereIn('orders.location_id', $this->locationId)
+            ->where('orders.location_id', $this->locationId)
             ->orderBy('total', 'desc')
             ->take($this->numberOfCategories)
             ->get()->each(function ($job) use ($secondaries_categories) {
