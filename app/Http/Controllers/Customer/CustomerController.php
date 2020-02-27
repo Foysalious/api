@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Job;
 use App\Models\LocationService;
 use App\Models\Review;
+use App\Models\Service;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use DB;
@@ -62,7 +63,9 @@ class CustomerController extends Controller
                 ] : null;
                 $all_services = [];
                 foreach ($review->job->jobServices as $job_service) {
+                    /** @var Service $service */
                     $service = clone $job_service->service;
+                    /** @var array $option */
                     $option = json_decode($job_service->option);
                     /** @var LocationService $location_service */
                     $location_service = LocationService::where('location_id', $review->job->partnerOrder->order->location_id)->where('service_id', $job_service->service_id)->first();
@@ -71,11 +74,13 @@ class CustomerController extends Controller
                     $discount = $location_service->discounts()->running()->first();
                     $price_calculation->setLocationService($location_service);
                     $upsell_calculation->setLocationService($location_service);
-                    if ($job_service->variable_type == 'Options') {
-                        $service['option_prices'] = ['option' => json_decode($job_service->option),
-                            'price' => $price_calculation->setOption(json_decode($job_service->option))->getUnitPrice(),
-                            'upsell_price' => $upsell_calculation->setOption(json_decode($job_service->option))->getAllUpsellWithMinMaxQuantity()
+                    if ($service->isOptions()) {
+                        if (count($option) == 0) continue;
+                        $service['option_prices'] = ['option' => $option,
+                            'price' => $price_calculation->setOption($option)->getUnitPrice(),
+                            'upsell_price' => $upsell_calculation->setOption($option)->getAllUpsellWithMinMaxQuantity()
                         ];
+                        if (!$service['option_prices']['price']) continue;
                     } else {
                         $service['fixed_price'] = $price_calculation->getUnitPrice();
                         $service['fixed_upsell_price'] = $upsell_calculation->getAllUpsellWithMinMaxQuantity();
@@ -89,7 +94,7 @@ class CustomerController extends Controller
                     $service['option'] = $option;
                     $service['question'] = count($option) > 0 ? $service_question->setService($job_service->service)->getQuestionForThisOption(json_decode($job_service->option)) : null;
                     $service['quantity'] = $job_service->quantity < $job_service->service->min_quantity ? $job_service->service->min_quantity : $job_service->quantity;
-                    $service['type'] = $job_service->variable_type;
+                    $service['type'] = $service->variable_type;
                     array_forget($service, ['variables', 'variable_type']);
                     array_push($all_services, $service);
                 }
