@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\Partner;
 use App\Models\ScheduleSlot;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -25,9 +26,11 @@ class ScheduleTimeController extends Controller
                 'limit' => 'sometimes|required|numeric|min:1'
             ]);
             if ($request->has('category') && $request->has('partner')) {
-                $dates = $partnerSchedule->setPartner($request->partner)->setCategory($request->category)->setFor($request->for);
-                $dates = $request->has('limit') ? $dates->get($request->limit) : $dates->get();
-                return api_response($request, $dates, 200, ['dates' => $dates]);
+                $partnerSchedule->setPartner($request->partner)->setCategory($request->category)->setFor($request->for);
+                $dates = $request->has('limit') ? $partnerSchedule->get($request->limit) : $partnerSchedule->get();
+                return $dates ? api_response($request, $dates, 200, ['dates' => $dates]) : api_response($request, null, 400, [
+                    'message' => $partnerSchedule->getErrorMessage()
+                ]);
             }
             $slots = ScheduleSlot::where([['start', '>=', DB::raw("CAST('" . self::SCHEDULE_START . "' As time)")], ['end', '<=', DB::raw("CAST('" . self::SCHEDULE_END . "' As time)")]])->get();
             $current_time = Carbon::now();

@@ -32,6 +32,7 @@ class PartnerScheduleSlot
     private $portalName;
     private $whitelistedPortals;
     private $for;
+    private $errorMessage;
 
     public function __construct()
     {
@@ -39,6 +40,19 @@ class PartnerScheduleSlot
         $this->whitelistedPortals = ['manager-app', 'manager-web', 'admin-portal'];
         $this->shebaSlots = $this->getShebaSlots();
         $this->today = Carbon::now()->addMinutes(15);
+    }
+
+
+    public function getErrorMessage()
+    {
+        return $this->errorMessage;
+    }
+
+
+    private function setErrorMessage($errorMessage)
+    {
+        $this->errorMessage = $errorMessage;
+        return $this;
     }
 
     private function getShebaSlots()
@@ -70,16 +84,21 @@ class PartnerScheduleSlot
         return $this;
     }
 
-    public function get($for_days = 14): array
+    public function get($for_days = 14)
     {
         $final = [];
+        $category_partner = $this->partner->categories->where('id', $this->category->id)->first();
+        if (!$category_partner) {
+            $this->setErrorMessage('Partner #' . $this->partner->id . ' doesn\'t serve category #' . $this->category->id);
+            return null;
+        }
         $last_day = $this->today->copy()->addDays($for_days);
         $start = $this->today->toDateString() . ' ' . $this->shebaSlots->first()->start;
         $end = $last_day->format('Y-m-d') . ' ' . $this->shebaSlots->last()->end;
         $this->resources = $this->getResources();
         $this->bookedSchedules = $this->getBookedSchedules($start, $end);
         $this->runningLeaves = $this->getLeavesBetween($start, $end);
-        $this->preparationTime = $this->partner->categories->where('id', $this->category->id)->first()->pivot->preparation_time_minutes;
+        $this->preparationTime = $category_partner->pivot->preparation_time_minutes;
         $day = $this->today->copy();
         while ($day < $last_day) {
             $this->addAvailabilityToShebaSlots($day);
