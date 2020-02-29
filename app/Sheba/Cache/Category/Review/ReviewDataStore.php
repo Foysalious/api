@@ -51,7 +51,7 @@ class ReviewDataStore implements DataStoreObject
         $review_count = ReviewQuestionAnswer::select('reviews.id')
             ->selectRaw("count(reviews.id) as total_reviews")
             ->join('reviews', 'reviews.id', '=', 'review_question_answer.review_id')
-            ->where('review_type', 'like', '%' . '\\Review')
+            ->where('review_type', 'like', '%' . 'Models\\\\Review')
             ->where('review_question_answer.rate_answer_text', '<>', '')
             ->where('reviews.category_id', $category->id)
             ->groupBy('category_id')
