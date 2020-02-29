@@ -31,8 +31,8 @@ class CategoryGroupController extends Controller
 
             $for = $this->getPublishedFor($request->for);
             if ($request->has('name') && $request->name == Identifier::HIGH_DEMAND) {
-                $city_id = Location::find($this->location)->city_id;
-                $secondaries = $recommender->setParams(Carbon::now())->setCityId($city_id)->get();
+                $location_id = $request->has('location_id') ? $request->location_id : $this->location;
+                $secondaries = $recommender->setParams(Carbon::now())->setLocationId($location_id)->get();
                 return api_response($request, null, 200, [
                     'category' => [
                         'name' => 'Current High Demand Services',
