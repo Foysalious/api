@@ -134,7 +134,7 @@ class PromotionV3Controller extends Controller
             if ($location_service->service->category->isRentACar())
                 $service_amount = $price_calculation->getTotalOriginalPrice();
 
-            $discount_calculation->setLocationService($location_service)->setOriginalPrice($service_amount)->calculate();
+            $discount_calculation->setLocationService($location_service)->setOriginalPrice($service_amount)->setQuantity($selected_service->quantity)->calculate();
             $order_amount += $discount_calculation->getDiscountedPrice();
         }
 
