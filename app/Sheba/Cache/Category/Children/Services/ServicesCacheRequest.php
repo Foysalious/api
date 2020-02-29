@@ -1,6 +1,5 @@
 <?php namespace Sheba\Cache\Category\Children\Services;
 
-
 use Sheba\Cache\CacheName;
 use Sheba\Cache\CacheRequest;
 
@@ -19,7 +18,6 @@ class ServicesCacheRequest implements CacheRequest
     private $scope;
     private $serviceId;
 
-
     public function getCategoryId()
     {
         return $this->categoryId;
@@ -30,7 +28,6 @@ class ServicesCacheRequest implements CacheRequest
         $this->categoryId = (int)$categoryId;
         return $this;
     }
-
 
     public function getLocationId()
     {
@@ -43,19 +40,16 @@ class ServicesCacheRequest implements CacheRequest
         return $this;
     }
 
-
     public function getLat()
     {
         return $this->lat;
     }
-
 
     public function setLat($lat)
     {
         $this->lat = $lat;
         return $this;
     }
-
 
     public function getLng()
     {
@@ -73,13 +67,11 @@ class ServicesCacheRequest implements CacheRequest
         return $this->isBusiness;
     }
 
-
     public function setIsBusiness($isBusiness)
     {
         $this->isBusiness = (int)$isBusiness;
         return $this;
     }
-
 
     public function getIsForBackend()
     {
@@ -92,12 +84,10 @@ class ServicesCacheRequest implements CacheRequest
         return $this;
     }
 
-
     public function getIsB2b()
     {
         return $this->isB2b;
     }
-
 
     public function setIsB2b($isB2b)
     {
@@ -110,19 +100,16 @@ class ServicesCacheRequest implements CacheRequest
         return $this->isDdn;
     }
 
-
     public function setIsDdn($isDdn)
     {
         $this->isDdn = (int)$isDdn;
         return $this;
     }
 
-
     public function getOffset()
     {
         return $this->offset;
     }
-
 
     public function setOffset($offset)
     {
@@ -141,12 +128,10 @@ class ServicesCacheRequest implements CacheRequest
         return $this;
     }
 
-
     public function getScope()
     {
         return $this->scope;
     }
-
 
     public function setScope($scope)
     {
@@ -154,19 +139,16 @@ class ServicesCacheRequest implements CacheRequest
         return $this;
     }
 
-
     public function getServiceId()
     {
         return $this->serviceId;
     }
-
 
     public function setServiceId($serviceId)
     {
         $this->serviceId = (int)$serviceId;
         return $this;
     }
-
 
     public function getFactoryName()
     {

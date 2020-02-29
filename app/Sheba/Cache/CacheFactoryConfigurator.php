@@ -2,6 +2,7 @@
 
 use Sheba\Cache\Category\Children\CategoryChildrenCacheFactory;
 use Sheba\Cache\Category\Children\Services\ServicesCacheFactory;
+use Sheba\Cache\Category\HighDemand\CategoryHighDemandCacheFactory;
 use Sheba\Cache\Category\Info\CategoryCacheFactory;
 use Sheba\Cache\Category\Review\ReviewCacheFactory;
 use Sheba\Cache\Category\Tree\CategoryTreeCacheFactory;
@@ -26,6 +27,6 @@ class CacheFactoryConfigurator
         elseif ($name == CacheName::CATEGORY) return new CategoryCacheFactory();
         elseif ($name == CacheName::CATEGORY_CHILDREN) return new CategoryChildrenCacheFactory();
         elseif ($name == CacheName::SECONDARY_CATEGORY_SERVICES) return new ServicesCacheFactory();
+        elseif ($name == CacheName::HIGH_DEMAND_CATEGORY) return new CategoryHighDemandCacheFactory();
     }
-
 }

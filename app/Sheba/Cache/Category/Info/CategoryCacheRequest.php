@@ -1,13 +1,11 @@
 <?php namespace Sheba\Cache\Category\Info;
 
-
 use Sheba\Cache\CacheName;
 use Sheba\Cache\CacheRequest;
 
 class CategoryCacheRequest implements CacheRequest
 {
     private $categoryId;
-
 
     public function getCategoryId()
     {

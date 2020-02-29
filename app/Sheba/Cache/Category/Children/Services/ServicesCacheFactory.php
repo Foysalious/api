@@ -1,6 +1,5 @@
 <?php namespace Sheba\Cache\Category\Children\Services;
 
-
 use Sheba\Cache\CacheFactory;
 use Sheba\Cache\CacheObject;
 use Sheba\Cache\CacheRequest;
@@ -8,7 +7,6 @@ use Sheba\Cache\DataStoreObject;
 
 class ServicesCacheFactory implements CacheFactory
 {
-
     public function getCacheObject(CacheRequest $cacheRequest): CacheObject
     {
         $cache = new ServicesCache();

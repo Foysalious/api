@@ -1,6 +1,5 @@
 <?php namespace Sheba\Cache\Category\Info;
 
-
 use App\Models\Category;
 use App\Models\Job;
 use App\Models\Service;
@@ -36,37 +35,13 @@ class CategoryDataStore implements DataStoreObject
         $master_category = [];
         if ($parent_category) {
             $master_category = [
-                'id' => $parent_category->id,
-                'name' => $parent_category->name,
-                'slug' => $parent_category->getSlug(),
+                'id' => $parent_category->id, 'name' => $parent_category->name, 'slug' => $parent_category->getSlug(),
             ];
         }
         $data = [
-            'id' => $category->id,
-            'name' => $category->name,
-            'slug' => $category->getSlug(),
-            'thumb' => $category->thumb,
-            'app_thumb' => $category->app_thumb,
-            'is_trending' => $category->is_trending ? ['last_week_order_count' => $this->getLastWeekOrderCount($category)] : null,
-            'master_category' => count($master_category) > 0 ? $master_category : null,
-            'service_title' => $category->service_title,
-            'popular_service_description' => $category->popular_service_description,
-            'other_service_description' => $category->other_service_description,
-            'is_auto_sp_enabled' => $category->is_auto_sp_enabled,
-            'avg_rating' => $reviews ? round($reviews->avg_rating, 2) : null,
-            'total_ratings' => $reviews ? $reviews->total_ratings : null,
-            'banner' => $category->banner,
-            'usp' => count($usps) > 0 ? $usps->pluck('name')->toArray() : null,
-            'overview' => $category->contents ? $category->contents : null,
-            'details' => $category->long_description,
-            'partnership' => $partnership ? [
-                'title' => $partnership->title,
-                'short_description' => $partnership->short_description,
-                'images' => count($partnership->slides) > 0 ? $partnership->slides->pluck('thumb') : []
-            ] : null,
-            'faqs' => $category->faqs ? json_decode($category->faqs) : null,
-            'gallery' => count($galleries) > 0 ? $galleries : null,
-            'blog' => count($blog_posts) > 0 ? $blog_posts : null,
+            'id' => $category->id, 'name' => $category->name, 'slug' => $category->getSlug(), 'thumb' => $category->thumb, 'app_thumb' => $category->app_thumb, 'is_trending' => $category->is_trending ? ['last_week_order_count' => $this->getLastWeekOrderCount($category)] : null, 'master_category' => count($master_category) > 0 ? $master_category : null, 'service_title' => $category->service_title, 'popular_service_description' => $category->popular_service_description, 'other_service_description' => $category->other_service_description, 'is_auto_sp_enabled' => $category->is_auto_sp_enabled, 'avg_rating' => $reviews ? round($reviews->avg_rating, 2) : null, 'total_ratings' => $reviews ? $reviews->total_ratings : null, 'banner' => $category->banner, 'usp' => count($usps) > 0 ? $usps->pluck('name')->toArray() : null, 'overview' => $category->contents ? $category->contents : null, 'details' => $category->long_description, 'partnership' => $partnership ? [
+                'title' => $partnership->title, 'short_description' => $partnership->short_description, 'images' => count($partnership->slides) > 0 ? $partnership->slides->pluck('thumb') : []
+            ] : null, 'faqs' => $category->faqs ? json_decode($category->faqs) : null, 'gallery' => count($galleries) > 0 ? $galleries : null, 'blog' => count($blog_posts) > 0 ? $blog_posts : null,
         ];
         return array_merge($data, $this->appendMasterCategoryTag($category));
     }
@@ -83,22 +58,17 @@ class CategoryDataStore implements DataStoreObject
         return $jobs->count();
     }
 
-
     private function appendMasterCategoryTag(Category $category)
     {
         if ($category->parent_id) {
-            return array(
-                'total_services' => !$category->parent_id ? $this->getJobs($category) : 200,
-                'total_resources' => 40,
-                'total_served_orders' => 1000
-            );
+            return [
+                'total_services' => !$category->parent_id ? $this->getJobs($category) : 200, 'total_resources' => 40, 'total_served_orders' => 1000
+            ];
         }
         $cats = $category->children()->published()->select('id', 'parent_id')->get()->pluck('id')->toArray();
-        return array(
-            'total_services' => $this->getTotalServices($cats),
-            'total_resources' => $this->getTotalResources($cats),
-            'total_served_orders' => $this->getTotalCompletedOrders($cats),
-        );
+        return [
+            'total_services' => $this->getTotalServices($cats), 'total_resources' => $this->getTotalResources($cats), 'total_served_orders' => $this->getTotalCompletedOrders($cats),
+        ];
 
     }
 
@@ -114,9 +84,11 @@ class CategoryDataStore implements DataStoreObject
 
     private function getTotalCompletedOrders(array $category_ids)
     {
-        $jobs = Job::selectRaw("count(case when status in ('Served')then status end) as total_completed_orders")->whereIn('category_id', $category_ids)
-            ->groupBy('jobs.category_id')->first();
+        $jobs = Job::selectRaw("count(case when status in ('Served')then status end) as total_completed_orders")
+            ->whereIn('category_id', $category_ids)
+            ->groupBy('jobs.category_id')
+            ->first();
+        
         return $jobs ? $jobs->total_completed_orders : 0;
-
     }
 }
