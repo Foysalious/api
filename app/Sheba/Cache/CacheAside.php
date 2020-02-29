@@ -28,6 +28,7 @@ class CacheAside
     {
         $this->cacheRequest = $cacheRequest;
         $this->setCacheFactory();
+
         return $this;
     }
 
@@ -36,6 +37,7 @@ class CacheAside
         $this->cacheFactory = $this->cacheFactoryConfigurator->getFactory($this->cacheRequest->getFactoryName());
         $this->setCacheObject($this->cacheFactory->getCacheObject($this->cacheRequest));
         $this->setDataStoreObject($this->cacheFactory->getDataStoreObject($this->cacheRequest));
+
         return $this;
     }
 
@@ -63,6 +65,11 @@ class CacheAside
         return $data;
     }
 
+    private function setOnCache(array $data = null)
+    {
+        $this->store->put($this->cacheObject->getCacheName(), json_encode($data), $this->cacheObject->getExpirationTimeInSeconds());
+    }
+
     public function setEntity()
     {
         $data = $this->dataStoreObject->generate();
@@ -77,11 +84,5 @@ class CacheAside
         foreach ($keys as $key) {
             Redis::del($key);
         }
-
-    }
-
-    private function setOnCache(array $data = null)
-    {
-        $this->store->put($this->cacheObject->getCacheName(), json_encode($data), $this->cacheObject->getExpirationTimeInSeconds());
     }
 }

@@ -1,6 +1,5 @@
 <?php namespace Sheba\Cache\Location;
 
-
 use Sheba\Cache\CacheName;
 use Sheba\Cache\CacheRequest;
 

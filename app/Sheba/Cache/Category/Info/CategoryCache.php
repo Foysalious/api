@@ -1,6 +1,5 @@
 <?php namespace Sheba\Cache\Category\Info;
 
-
 use Sheba\Cache\CacheObject;
 use Sheba\Cache\CacheRequest;
 

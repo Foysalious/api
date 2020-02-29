@@ -1,6 +1,5 @@
 <?php namespace App\Sheba\Cache\Category\Children;
 
-
 use Sheba\Cache\CacheObject;
 use Sheba\Cache\CacheRequest;
 use Sheba\Cache\Category\Children\CategoryChildrenCacheRequest;
@@ -30,6 +29,7 @@ class CategoryChildrenCache implements CacheObject
     {
         $category_id = $this->categoryChildrenCacheRequest->getCategoryId();
         $location_id = $this->categoryChildrenCacheRequest->getLocationId();
+
         return "category_children::" . ($category_id ? $category_id : "*") . "::location::" . ($location_id ? $location_id : "*");
     }
 }
