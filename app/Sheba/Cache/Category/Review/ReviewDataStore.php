@@ -29,7 +29,7 @@ class ReviewDataStore implements DataStoreObject
             ->join('customers', 'customers.id', '=', 'reviews.customer_id')
             ->join('jobs', 'jobs.id', '=', 'reviews.job_id')
             ->join('profiles', 'profiles.id', '=', 'customers.profile_id')
-            ->where('review_type', 'like', '%' . '\\Review')
+            ->where('review_type', 'like', '%' . 'Models\\\\Review')
             ->where('review_question_answer.rate_answer_text', '<>', '')
             ->whereIn('reviews.rating', [5])
             ->whereRaw("CHAR_LENGTH(rate_answer_text)>20")
