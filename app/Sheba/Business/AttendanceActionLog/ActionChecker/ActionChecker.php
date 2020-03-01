@@ -3,6 +3,8 @@
 use App\Models\Business;
 use Carbon\Carbon;
 use Sheba\Business\AttendanceActionLog\Time;
+use Sheba\Business\AttendanceActionLog\TimeByBusiness;
+use Sheba\Business\AttendanceActionLog\WeekendHolidayByBusiness;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Model as AttendanceActionLog;
 use Sheba\Location\Geo;
@@ -166,7 +168,16 @@ abstract class ActionChecker
 
     public function isNoteRequired()
     {
-        return Carbon::now()->lt(Carbon::parse(Time::OFFICE_END_TIME)) ? 1 : 0;
+        $date=Carbon::now();
+        $time=new TimeByBusiness();
+        $weekendHoliday=new WeekendHolidayByBusiness();
+        $checkout_time=$time->getOfficeEndTimeByBusiness();
+        if(is_null($checkout_time)) return 0;
+        if (!$weekendHoliday->isWeekendByBusiness($date) && !$weekendHoliday->isHolidayByBusiness($date)){
+            return Carbon::now()->lt(Carbon::parse($checkout_time)) ? 1 : 0;
+        }
+        return 0;
+
     }
 
     abstract protected function setSuccessfulResponseMessage();
