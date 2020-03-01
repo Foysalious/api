@@ -37,6 +37,30 @@ class ExpenseRepo
         }
     }
 
+    public function filterMonth($month,$request)
+    {
+        try {
+            $date = Carbon::createFromFormat('m', $month);
+            $start_date= $date->startOfMonth()->toDateTimeString();
+            $end_date=$date->endOfMonth()->toDateTimeString();
+            $expenses= Expense::where('member_id',$request->member_id)
+                ->whereBetween('created_at', [$start_date, $end_date])
+                ->select('id', 'member_id', 'amount', 'status', 'remarks', 'type', 'created_at')
+                ->orderBy('id', 'desc')
+                ->get();
+            foreach ($expenses as $expense) {
+                $expense['employee_name'] = $expense->member->profile->name;
+                $expense['employee_department'] = $expense->member->businessMember->department() ? $expense->member->businessMember->department()->name : null;
+                $expense['attachment'] = $this->getAttachments($expense, $request) ? $this->getAttachments($expense, $request) : null;
+                unset($expense->member);
+            }
+            return $expenses;
+        } catch (\Throwable $e){
+            return false;
+        }
+
+    }
+
     public function store(Request $request, $member)
     {
         try {
