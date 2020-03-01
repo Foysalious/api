@@ -7,6 +7,7 @@ use App\Models\Location;
 use App\Models\Partner;
 use App\Models\PartnerWorkingHour;
 use App\Models\Resource;
+use App\Models\SliderPortal;
 use App\Models\SubscriptionOrder;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
@@ -21,13 +22,16 @@ class PartnerRepository
 
     private $partner;
     private $serviceRepo;
-
+    private $features;
     public function __construct($partner)
     {
         $this->partner     = $partner instanceof Partner ? $partner : Partner::find($partner);
         $this->serviceRepo = new ServiceRepository();
+        $this->features=['payment_link', 'pos', 'inventory', 'referral', 'due'];
     }
-
+    public function getFeatures(){
+        return $this->features;
+    }
     /**
      * @param null $verify
      * @param null $category_id
@@ -276,26 +280,32 @@ class PartnerRepository
         }
     }
 
-    public function getDashboard(Resource $manager_resource)
+    public function getProfile(Resource $manager_resource)
     {
         $partner        = $this->partner;
         $profile        = $manager_resource->profile;
         $remember_token = $manager_resource->remember_token;
         $token          = (new ProfileRepository())->fetchJWTToken('resource', $manager_resource->id, $remember_token);
-        $rating = (new ReviewRepository)->getAvgRating($partner->reviews);
-        $rating = (string)(is_null($rating) ? 0 : $rating);
         return [
             'remember_token'         => $remember_token,
             'token'                  => $token,
             'id'                     => $partner->id,
             'name'                   => $partner->name,
-            'logo'                   => $partner->logo,
-            'logo_original'          => $partner->logo_original,
             'profile'                => [
                 'id'      => $profile->id,
                 'name'    => $profile->name,
                 'pro_pic' => $profile->pro_pic
-            ],
+            ]
+        ];
+    }
+    public function getDashboard(Resource $manager_resource){
+        $partner=$this->partner;
+        $profile        = $manager_resource->profile;
+        $rating = (new ReviewRepository)->getAvgRating($partner->reviews);
+        $rating = (string)(is_null($rating) ? 0 : $rating);
+        return [
+            'logo_original'          => $partner->logo_original,
+            'logo'                   => $partner->logo,
             'badge'                  => $partner->resolveBadge(),
             'rating'                 => $rating,
             'status'                 => $partner->getStatusToCalculateAccess(),
@@ -309,7 +319,56 @@ class PartnerRepository
             'reward_point'           => $partner->reward_point,
             'bkash_no'               => $partner->bkash_no,
             'is_nid_verified'        => (int)$profile->nid_verified ? true : false,
+            'current_subscription_package' => [
+                'id' => $partner->subscription->id,
+                'name' => $partner->subscription->name,
+                'name_bn' => $partner->subscription->show_name_bn,
+                'remaining_day' => $partner->last_billed_date ? $partner->periodicBillingHandler()->remainingDay() : 0,
+                'billing_type' => $partner->billing_type,
+                'rules' => $partner->subscription->getAccessRules(),
+                'is_light' => $partner->subscription->id == (int)config('sheba.partner_lite_packages_id')
+            ],
+            'has_pos_inventory' => $partner->posServices->isEmpty() ? 0 : 1,
+            /*'has_pos_due_order' => $total_due_for_pos_orders > 0 ? 1 : 0,
+            'has_pos_paid_order' => $has_pos_paid_order,*/
+            'has_qr_code' => ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0
         ];
+    }
+
+
+    public function featureVideos($type = null)
+    {
+
+        if ($type != null)
+            $screens = [$type];
+        else
+            $screens = $this->features;
+        $slides = [];
+        $details = [];
+        foreach ($screens as $screen) {
+            $slider_portals[$screen] = SliderPortal::with('slider.slides')
+                ->where('portal_name', 'manager-app')
+                ->where('screen', $screen)
+                ->get();
+            $slides[$screen] = !$slider_portals[$screen]->isEmpty() ? $slider_portals[$screen]->last()->slider->slides->last() : null;
+
+            if ($slides[$screen] && json_decode($slides[$screen]->video_info)) {
+                $details[$screen] = json_decode($slides[$screen]->video_info);
+            } else
+                $details[$screen] = null;
+        }
+
+        if ($type){
+            return [
+                [
+                    'key'     => $type,
+                    'details' => $details[$type]
+                ]
+            ];
+        }
+        return array_map(function($item)use($details){
+            return ['key'=>$item,'details'=>$details[$item]];
+        }, $screens);
     }
 }
 

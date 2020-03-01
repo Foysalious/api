@@ -1544,16 +1544,16 @@ class PartnerController extends Controller
             $partner      = Redis::get($access_token);
             if (is_null($partner) || empty($partner))
                 return api_response($request, null, 400, ['message' => 'Invalid token']);
-//            Redis::del($access_token);
             $partner = json_decode($partner);
             /** @var Partner $partner */
             if (is_null($partner) || empty($partner))
                 return api_response($request, null, 400, ['message' => 'Partner not found']);
+            Redis::del($access_token);
             $manager_resource = Resource::where('remember_token', $partner->remember_token)->first();
             if (empty($manager_resource))
                 return api_response($request, null, 400, ['message' => 'Invalid token']);
             $partner = Partner::find((int)$partner->partner_id);
-            $data    = (new PartnerRepository($partner))->getDashboard($manager_resource);
+            $data    = (new PartnerRepository($partner))->getProfile($manager_resource);
             return api_response($request, null, 200, ['data' => $data]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -1565,7 +1565,6 @@ class PartnerController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
