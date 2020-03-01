@@ -78,7 +78,7 @@ class ExpenseController extends Controller
                 $end_date = $request->has('end_date') ? $request->end_date : null;
             }
 
-            if ($start_date && $end_date) {
+            if (($start_date && $end_date) && !$request->has('key')) {
                 $expenses->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
             }
             $expenses = $expenses->get();
