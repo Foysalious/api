@@ -73,7 +73,7 @@ class AvailableMethods
     private static function bkash()
     {
         return [
-            'name' => 'bKash', 'is_published' => 1, 'description' => 'Get 10% cashback', 'asset' => 'bkash', 'method_name' => 'bkash'
+            'name' => 'bKash', 'is_published' => 1, 'description' => '', 'asset' => 'bkash', 'method_name' => 'bkash'
         ];
     }
 
