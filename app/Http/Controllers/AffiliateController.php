@@ -1222,7 +1222,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             $partner_order['total_price'] = (double)$partner_order->totalPrice;
             $partner_order['delivery_name'] = $partner_order->order->delivery_name;
             $partner_order['delivery_mobile'] = $partner_order->order->delivery_mobile;
-            $partner_order['delivery_address'] = $partner_order->order->delivery_address_id ? $partner_order->order->deliveryAddress->name : $partner_order->order->delivery_address;
+            $partner_order['delivery_address'] = $partner_order->order->delivery_address_id ? $partner_order->order->deliveryAddress->address : $partner_order->order->delivery_address;
             $final = collect();
             foreach ($partner_order->jobs as $job) {
                 $final->push($this->getJobInformation($job, $partner_order));
