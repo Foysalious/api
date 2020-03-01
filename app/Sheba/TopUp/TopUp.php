@@ -69,7 +69,6 @@ class TopUp
         if ($this->validator->setTopupOrder($topup_order)->validate()->hasError()) {
             $this->updateFailedTopOrder($topup_order, $this->validator->getError());
         } else {
-            dd($this->vendor);
             $this->response = $this->vendor->recharge($topup_order);
             if ($this->response->hasSuccess()) {
                 $response = $this->response->getSuccess();

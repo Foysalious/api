@@ -6,7 +6,7 @@ use Sheba\TopUp\Vendor\Internal\Ssl;
 class Airtel extends Vendor
 {
 //    // use Ssl;
-    use RobiAxiata;
+//    use RobiAxiata;
 
     private function getMid()
     {
