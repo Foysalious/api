@@ -1,7 +1,9 @@
 <?php namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
+use App\Models\HyperLocal;
 use App\Models\Job;
+use App\Models\Location;
 use App\Models\LocationService;
 use App\Models\Review;
 use App\Models\Service;
@@ -24,13 +26,17 @@ class CustomerController extends Controller
                                   JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, ServiceQuestion $service_question)
     {
         $customer = $request->customer;
+        if ($request->has('lat')) {
+            $hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+            if (!is_null($hyper_location)) $location = $hyper_location->location_id;
+        }
         $reviews = Review::where([['customer_id', $customer->id], ['rating', '>=', 4]])->select('id', 'category_id', 'job_id', 'rating', 'partner_id')
             ->with(['category' => function ($q) {
-                $q->select('id', 'name', 'thumb', 'app_thumb', 'banner', 'app_banner', 'frequency_in_days');
+                $q->select('id', 'name', 'thumb', 'app_thumb', 'banner', 'app_banner', 'frequency_in_days', 'publication_status', 'delivery_charge');
             }, 'job' => function ($q) {
                 $q->select('id', 'category_id', 'partner_order_id')->with('category')->with(['jobServices' => function ($q) {
                     $q->select('id', 'job_id', 'service_id', 'quantity', 'option', 'variable_type', 'created_at')->with(['service' => function ($q) {
-                        $q->select('id', 'name', 'min_quantity', 'thumb', 'app_thumb', 'banner', 'app_banner', 'variables', 'variable_type');
+                        $q->select('id', 'name', 'min_quantity', 'thumb', 'app_thumb', 'banner', 'app_banner', 'variables', 'variable_type', 'publication_status');
                     }]);
                 }, 'partnerOrder' => function ($q) {
                     $q->select('id', 'order_id', 'partner_id')->with(['partner' => function ($q) {
@@ -39,9 +45,26 @@ class CustomerController extends Controller
                         $q->select('id', 'location_id');
                     }]);
                 }]);
-            }])->where('created_at', '>=', Carbon::now()->subMonths(6)->toDateTimeString())->orderBy('id', 'desc');
-        if ($request->has('category_id')) $reviews = $reviews->where('category_id', $request->category_id);
+            }])->whereHas('category', function ($q) use ($location) {
+                $q->published()->select('id', 'publication_status')->whereHas('locations', function ($q) use ($location) {
+                    $q->where('locations.id', $location);
+                });
+            })->whereHas('job', function ($q) use ($location) {
+                $q->whereHas('jobServices', function ($q) use ($location) {
+                    $q->whereHas('service', function ($q) use ($location) {
+                        $q->published()->select('id', 'publication_status')
+                            ->whereHas('locations', function ($q) use ($location) {
+                                $q->where('locations.id', $location);
+                            });
+                    });
+                });
+            })->where('created_at', '>=', Carbon::now()->subMonths(6)->toDateTimeString())->orderBy('id', 'desc');
+
+        if ($request->has('category_id')) {
+            $reviews = $reviews->where('category_id', $request->category_id);
+        }
         $reviews = $reviews->get();
+
         if (count($reviews) == 0) return api_response($request, null, 404);
         $final = collect();
         foreach ($reviews->groupBy('category_id') as $key => $reviews) {

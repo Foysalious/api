@@ -1,13 +1,10 @@
-<?php
-
-namespace App\GraphQL\Query;
+<?php namespace App\GraphQL\Query;
 
 use App\Models\Job;
 use GraphQL;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use Folklore\GraphQL\Support\Query;
-
 
 class JobQuery extends Query
 {
@@ -31,15 +28,11 @@ class JobQuery extends Query
 
     public function resolve($root, $args, $context, ResolveInfo $info)
     {
-        if (!isset($args['id']) || !isset($args['token']) || !isset($args['customer_id'])) {
-            return null;
-        }
+        if (!isset($args['id']) || !isset($args['token']) || !isset($args['customer_id'])) return null;
+
         $job = Job::find($args['id']);
-        if ($job) {
-            if ($args['customer_id'] === $job->partnerOrder->order->customer_id) {
-                return $job;
-            }
-        }
-        return null;
+        if (!$job || $args['customer_id'] !== $job->partnerOrder->order->customer_id) return null;
+
+        return $job;
     }
 }

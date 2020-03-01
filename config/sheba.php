@@ -98,7 +98,7 @@ return [
         ['#5B247A', '#1BCEDF'],
         ['#00B8BA', '#00FFED']
     ],
-    'screen' => ['home', 'eshop','payment_link','pos','inventory','referral','due'],
+    'screen' => ['home', 'eshop', 'payment_link', 'pos', 'inventory', 'referral', 'due'],
     'partner_lite_packages_id' => env('LITE_PACKAGE_ID'),
     'rent_a_car' => [
         'inside_city' => [
@@ -139,4 +139,7 @@ return [
     'gift_card_validity_month' => 3,
     'marketplace_not_accessible_packages_id' => explode(',', env('MARKETPLACE_NOT_ACCESSIBLE_PACKAGES_ID', '1,2')),
     'use_cdn_for_asset' => env('SHEBA_USE_CDN_FOR_ASSET', true),
+    'category_groups' => [
+        'trending' => env('TRENDING_CATEGORY_GROUP', 10)
+    ]
 ];

@@ -502,138 +502,16 @@ class ShebaController extends Controller
 
     public function redirectUrl(Request $request)
     {
-        try {
-            $this->validate($request, ['url' => 'required']);
+        $this->validate($request, ['url' => 'required']);
 
-            $new_url = RedirectUrl::where('old_url', 'LIKE', $request->url)->first();
+        $new_url = RedirectUrl::where('old_url', 'LIKE', $request->url)->first();
 
-            if ($new_url) {
-                return api_response($request, true, 200, ['new_url' => $new_url->new_url]);
-            } else {
-                return api_response($request, true, 404, ['message' => 'Not Found']);
-            }
-
-
-        } catch (ValidationException $e) {
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all()]);
-            $sentry->captureException($e);
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
-    public function getBreadcrumb(Request $request)
-    {
-        try {
-            $this->validate($request, ['type' => 'required']);
-            $param = $request->param;
-            $type = $request->type;
-
-            $param_item = SluggableType::where('slug', $param)->first();
-
-            $items = $this->generateBreadcrumbItems($param_item, $type);
-
-
-            return api_response($request, true, 200, ['breadcrumb' => $this->generateBreadcrumb($items)]);
-
-        } catch (ValidationException $e) {
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all()]);
-            $sentry->captureException($e);
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
-    public function generateBreadcrumbItems($param, $type)
-    {
-        $marketplace_url = env('SHEBA_MARKETPLACE_URL');
-        $items = [
-            [
-                'name' => 'Sheba',
-                'url' => $marketplace_url
-            ]
-        ];
-        if ($param) {
-            if ($type === 'service') {
-                $service = Service::find($param->sluggable_id);
-                $category = $service ? Category::find($service->category_id) : null;
-                $master = $category ? Category::find($category->parent_id) : null;
-
-
-                if (!($service && $category && $master)) return $items;
-
-                array_push($items, [
-                    'name' => $master->name,
-                    'url' => $marketplace_url . '/' . $master->slug,
-                ], [
-                    'name' => $category->name,
-                    'url' => $marketplace_url . '/' . $category->slug,
-                ], [
-                    'name' => $service->name,
-                    'url' => $marketplace_url . '/' . $service->slug,
-                ]);
-            }
-            if ($type === 'secondary_category') {
-                $category = Category::find($param->sluggable_id);
-                $master = $category ? Category::find($category->parent_id) : null;
-
-
-                if (!($category && $master)) return $items;
-
-                array_push($items, [
-                    'name' => $master->name,
-                    'url' => $marketplace_url . '/' . $master->slug,
-                ], [
-                    'name' => $category->name,
-                    'url' => $marketplace_url . '/' . $category->slug,
-                ]);
-            }
-            if ($type === 'master_category') {
-                $master = Category::find($param->sluggable_id);
-
-                if (!$master) return $items;
-
-                array_push($items, [
-                    'name' => $master->name,
-                    'url' => $marketplace_url . '/' . $master->slug,
-                ]);
-            }
-            if ($type === 'static') {
-                array_push($items, [
-                    'name' => $param,
-                    'url' => $marketplace_url . '/' . $param,
-                ]);
-            }
+        if ($new_url) {
+            return api_response($request, true, 200, ['new_url' => $new_url->new_url]);
+        } else {
+            return api_response($request, true, 404, ['message' => 'Not Found']);
         }
 
-        return $items;
     }
 
-    public function generateBreadcrumb($items)
-    {
-        $itemListElement = [];
-
-        foreach ($items as $key => $value) {
-            array_push($itemListElement, [
-                "@type" => "ListItem",
-                "position" => (int)$key + 1,
-                "name" => $value['name'],
-                "item" => $value['url']
-            ]);
-        }
-
-        return [
-            "@context" => "https://schema.org",
-            "@type" => "BreadcrumbList",
-            "itemListElement" => $itemListElement
-        ];
-    }
 }

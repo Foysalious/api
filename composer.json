@@ -43,7 +43,8 @@
     "ext-mcrypt": "^7.0",
     "ext-redis": "*",
     "ext-mysql_xdevapi": "*",
-    "ext-intl": "*"
+    "ext-intl": "*",
+    "algolia/algoliasearch-laravel": "^1.7"
   },
   "require-dev": {
     "fzaninotto/faker": "~1.4",

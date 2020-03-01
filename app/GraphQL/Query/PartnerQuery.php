@@ -1,6 +1,4 @@
-<?php
-
-namespace App\GraphQL\Query;
+<?php namespace App\GraphQL\Query;
 
 use App\Models\Partner;
 use GraphQL;
@@ -28,10 +26,7 @@ class PartnerQuery extends Query
 
     public function resolve($root, $args, $context, ResolveInfo $info)
     {
-        if (!isset($args['id'])) {
-            return null;
-        }
-        $partner = Partner::where('id', $args['id'])->first();
-        return $partner;
+        if (!isset($args['id'])) return null;
+        return Partner::where('id', $args['id'])->first();
     }
 }

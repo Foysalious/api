@@ -218,6 +218,7 @@ class BusinessRoute
                 $api->group(['prefix' => 'expense'], function ($api) {
                     $api->get('/', 'B2b\ExpenseController@index');
                     $api->get('/download-pdf', 'B2b\ExpenseController@downloadPdf');
+                    $api->get('/filter-month', 'B2b\ExpenseController@filterMonth');
                     $api->group(['prefix' => '{expense}'], function ($api) {
                         $api->get('/', 'B2b\ExpenseController@show');
                         $api->post('/', 'B2b\ExpenseController@update');
@@ -307,6 +308,16 @@ class BusinessRoute
                         $api->post('resolve', 'B2b\SupportController@resolve');
                         $api->get('/', 'B2b\SupportController@show');
                     });
+                });
+            });
+        });
+        $api->group(['prefix' => 'help'], function ($api) {
+            $api->get('article-types', 'B2b\ArticleController@getArticleTypes');
+            $api->get('article-types/{type}/list', 'B2b\ArticleController@getArticles');
+            $api->group(['prefix' => 'articles'], function ($api) {
+                $api->group(['prefix' => '{article}'], function ($api) {
+                    $api->get('/', 'B2b\ArticleController@show');
+                    $api->post('/like-dislike', 'B2b\ArticleController@articleLikeDislike');
                 });
             });
         });
