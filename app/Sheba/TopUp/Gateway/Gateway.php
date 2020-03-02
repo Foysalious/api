@@ -9,4 +9,6 @@ interface Gateway
     public function recharge(TopUpOrder $topup_order): TopUpResponse;
 
     public function getInitialStatus();
+
+    public function getShebaCommission();
 }

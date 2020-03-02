@@ -5,6 +5,7 @@ use Sheba\TopUp\Gateway\Pretups\Pretups;
 
 class Banglalink extends Pretups
 {
+    CONST SHEBA_COMMISSION = 3.0;
 
     protected function getUrl()
     {
@@ -57,5 +58,10 @@ class Banglalink extends Pretups
     protected function getVPNServer()
     {
         return "https://api.sheba.xyz";
+    }
+
+    public function getShebaCommission()
+    {
+        return self::SHEBA_COMMISSION;
     }
 }

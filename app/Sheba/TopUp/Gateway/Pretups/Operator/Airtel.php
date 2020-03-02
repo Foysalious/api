@@ -6,6 +6,7 @@ use Sheba\TopUp\Gateway\Pretups\Pretups;
 class Airtel extends Pretups
 {
     use RobiAxiata;
+    CONST SHEBA_COMMISSION = 3.60;
 
     protected function getMid()
     {
@@ -15,5 +16,10 @@ class Airtel extends Pretups
     protected function getPin()
     {
         return config('topup.robi.airtel_pin');
+    }
+
+    public function getShebaCommission()
+    {
+        return self::SHEBA_COMMISSION;
     }
 }

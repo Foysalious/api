@@ -3,6 +3,7 @@
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use Sheba\ModificationFields;
+use Sheba\TopUp\Gateway\GatewayFactory;
 use Sheba\TopUp\Vendor\Vendor;
 
 class Creator
@@ -39,7 +40,11 @@ class Creator
         $top_up_order->bulk_request_id = $this->topUpRequest->getBulkId();
         $top_up_order->status = config('topup.status.initiated')['sheba'];
         $top_up_order->vendor_id = $model->id;
-        $top_up_order->sheba_commission = ($this->topUpRequest->getAmount() * $model->sheba_commission) / 100;
+        $top_up_order->gateway = $model->gateway;
+        $gateway_factory = new GatewayFactory();
+        $gateway_factory->setGatewayName($top_up_order->gateway)->setVendorId($top_up_order->vendor_id);
+        $gateway = $gateway_factory->get();
+        $top_up_order->sheba_commission = ($this->topUpRequest->getAmount() * $gateway->getShebaCommission()) / 100;
         $this->setModifier($agent);
         $this->withCreateModificationField($top_up_order);
         $top_up_order->save();

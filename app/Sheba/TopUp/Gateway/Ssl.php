@@ -8,12 +8,13 @@ use Sheba\TopUp\Vendor\Response\TopUpResponse;
 class Ssl implements Gateway
 {
     private $ssl;
+    CONST SHEBA_COMMISSION = 0.0;
 
     public function __construct(SslClient $ssl)
     {
         $this->ssl = $ssl;
     }
-    
+
     public function recharge(TopUpOrder $topup_order): TopUpResponse
     {
         return $this->ssl->recharge($topup_order);
@@ -22,5 +23,10 @@ class Ssl implements Gateway
     public function getInitialStatus()
     {
         return config('topup.status.pending')['sheba'];
+    }
+
+    public function getShebaCommission()
+    {
+        return self::SHEBA_COMMISSION;
     }
 }
