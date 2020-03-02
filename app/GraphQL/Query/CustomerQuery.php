@@ -1,6 +1,4 @@
-<?php
-
-namespace App\GraphQL\Query;
+<?php namespace App\GraphQL\Query;
 
 use App\Models\Customer;
 use GraphQL;
@@ -32,8 +30,10 @@ class CustomerQuery extends Query
         if (!isset($args['id']) || !isset($args['token'])) {
             return null;
         }
-        $customer = Customer::where([['id', $args['id']], ['remember_token', $args['token']]])->first();
-        return $customer ? $customer : null;
-    }
 
+        return Customer::where([
+            ['id', $args['id']],
+            ['remember_token', $args['token']]
+        ])->first();
+    }
 }

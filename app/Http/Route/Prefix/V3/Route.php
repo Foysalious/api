@@ -11,15 +11,9 @@ class Route
             $api->get('times', 'Schedule\ScheduleTimeController@index');
             $api->get('sluggable-type/{slug}', 'ShebaController@getSluggableType');
             $api->post('redirect-url', 'ShebaController@redirectUrl');
-            $api->post('breadcrumb', 'ShebaController@getBreadcrumb');
 
             $api->group(['prefix' => 'schema'], function ($api) {
-                $api->get('/faq', 'SchemaController@getFaqSchema');
-                $api->get('/website', 'SchemaController@getWebsiteSchema');
-                $api->get('/organisation', 'SchemaController@getOrganisationSchema');
-                $api->get('/review', 'SchemaController@getReviewSchema');
-                $api->get('/aggregate-review', 'SchemaController@getAggregateReviewSchema');
-                $api->get('/category', 'SchemaController@getCategorySchema');
+                $api->get('/', 'SchemaController@getAllSchemas');
             });
 
             $api->get('partners/send-order-requests', 'Partner\PartnerListController@getPartners');
@@ -30,10 +24,15 @@ class Route
                 $api->post('accountkit', 'AccountKit\AccountKitController@continueWithKit');
             });
             $api->group(['prefix' => 'categories'], function ($api) {
+                $api->get('tree', 'Category\CategoryController@getCategoryTree');
                 $api->group(['prefix' => '{category}'], function ($api) {
                     $api->get('/', 'Category\CategoryController@show');
                     $api->get('secondaries', 'Category\CategoryController@getSecondaries');
+                    $api->get('services', 'Category\CategoryController@getServicesOfChildren');
                 });
+            });
+            $api->group(['prefix' => 'category-groups'], function ($api) {
+                $api->get('/', 'CategoryGroup\CategoryGroupController@index');
             });
             $api->group(['prefix' => 'services'], function ($api) {
                 $api->group(['prefix' => '{service}'], function ($api) {

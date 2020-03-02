@@ -1,10 +1,6 @@
-<?php
-
-
-namespace App\GraphQL\Query;
+<?php namespace App\GraphQL\Query;
 
 use App\Models\CategoryGroup;
-use App\Models\HyperLocal;
 use GraphQL;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
@@ -12,6 +8,8 @@ use Folklore\GraphQL\Support\Query;
 
 class CategoryGroupsQuery extends Query
 {
+    use LocationFilter;
+
     protected $attributes = [
         'name' => 'categoryGroups'
     ];
@@ -35,36 +33,19 @@ class CategoryGroupsQuery extends Query
     public function resolve($root, $args, $context, ResolveInfo $info)
     {
         $category_group = CategoryGroup::query();
-        $where = function ($query) use ($args) {
 
-            if (isset($args['id'])) {
-                $query->whereIn('id', $args['id']);
-            }
+        $where = function ($query) use ($args) {
+            if (isset($args['id'])) $query->whereIn('id', $args['id']);
+
             if (isset($args['for'])) {
                 $for = 'publishedFor' . ucwords($args['for']);
                 $query->$for();
             }
 
-            if(isset($args['location'])) {
-                $location = $args['location'];
-
-                $query->whereHas('locations' , function($q) use ($location) {
-                    $q->where('locations.id', $location);
-                });
-            } else if(isset($args['lat']) && isset($args['lng']))  {
-                $lat = $args['lat'];
-                $lng = $args['lng'];
-                $query->whereHas('locations' , function($q) use ($lat, $lng) {
-                    $hyperLocation= HyperLocal::insidePolygon((double) $lat, (double) $lng)->with('location')->first();
-                    if(!is_null($hyperLocation)) {
-                        $location = $hyperLocation->location;
-                        $q->where('locations.id', $location->id);
-                    }
-                });
-            }
-
-
+            $location = $this->getLocationId($args);
+            if ($location) $this->filterLocation($query, $location);
         };
+
         $fields = $info->getFieldSelection(1);
         if (in_array('categories', $fields)) $category_group = $category_group->with('categories');
         $category_group = $category_group->where($where)->orderBy('order', 'asc')->get();

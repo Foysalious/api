@@ -29,6 +29,7 @@ use Sheba\LocationService\DiscountCalculation;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\LocationService\UpsellCalculation;
 use Sheba\ModificationFields;
+use Sheba\OrderPlace\Exceptions\LocationIdNullException;
 use Sheba\PartnerList\Director;
 use Sheba\PartnerList\PartnerListBuilder;
 use Sheba\PartnerOrderRequest\Creator;
@@ -349,6 +350,7 @@ class OrderPlace
         $this->location = $location;
     }
 
+
     /**
      * @return null
      * @throws Exception
@@ -356,6 +358,7 @@ class OrderPlace
     public function create()
     {
         try {
+            if (!$this->additionalInformation) $this->setAdditionalInformation('v4');
             $this->resolveAddress();
             $this->fetchPartner();
             $job_services = $this->createJobService();
@@ -374,6 +377,7 @@ class OrderPlace
                     $this->partnerOrderRequestCreator->setPartnerOrder($partner_order)->setPartners($partners->pluck('id')->toArray())->create();
                 }
                 $this->updateVoucherInPromoList($order);
+                if (!$order->location_id) throw new LocationIdNullException("Order #" . $order->id . " has no location id");
             });
         } catch (QueryException $e) {
             throw $e;
@@ -439,7 +443,7 @@ class OrderPlace
                 ->setQuantity($selected_service->getQuantity())->getUpsellUnitPriceForSpecificQuantity();
             $unit_price = $upsell_unit_price ? $upsell_unit_price : $this->priceCalculation->getUnitPrice();
             $total_original_price = $this->category->isRentACar() ? $this->priceCalculation->getTotalOriginalPrice() : $unit_price * $selected_service->getQuantity();
-            $this->discountCalculation->setLocationService($location_service)->setOriginalPrice($total_original_price)->calculate();
+            $this->discountCalculation->setLocationService($location_service)->setOriginalPrice($total_original_price)->setQuantity($selected_service->getQuantity())->calculate();
             $service_data = [
                 'service_id' => $service->id,
                 'quantity' => $selected_service->getQuantity(),

@@ -9,7 +9,7 @@ class PartnerJobRepository
     {
         $job->calculate(true);
         $job['total_cost'] = $job->totalCost;
-        $job['location'] = $job->partner_order->order->location->name;
+        $job['location'] = $job->partner_order->order->location ? $job->partner_order->order->location->name : '';
         $job['discount'] = (double)$job->discount;
         $job['resource_picture'] = $job->resource != null ? $job->resource->profile->pro_pic : null;
         $job['resource_name'] = $job->resource != null ? $job->resource->profile->name : null;

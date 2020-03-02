@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\BusinessMember;
+use App\Sheba\Business\Attendance\MonthlyStat;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionChecker;
@@ -10,6 +11,7 @@ use Sheba\Business\AttendanceActionLog\AttendanceAction;
 use Sheba\Dal\Attendance\EloquentImplementation;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
+use Sheba\Dal\TripRequestApprovalFlow\Model as TripRequestApprovalFlow;
 use Sheba\ModificationFields;
 
 use App\Transformers\Business\AttendanceTransformer;
@@ -80,10 +82,10 @@ class AttendanceController extends Controller
             if ($request->action == Actions::CHECKOUT && $checkout->isNoteRequired()) {
                 $validation_data += ['note' => 'string|required_if:action,' . Actions::CHECKOUT];
             }
-
             $this->validate($request, $validation_data);
             $business_member = $this->getBusinessMember($request);
             if (!$business_member) return api_response($request, null, 404);
+
             $this->setModifier($business_member->member);
             $attendance_action->setBusinessMember($business_member)->setAction($request->action)->setBusiness($business_member->business)
                 ->setNote($request->note)->setDeviceId($request->device_id)->setLat($request->lat)->setLng($request->lng);
@@ -140,4 +142,5 @@ class AttendanceController extends Controller
         if (!isset($business_member['id'])) return null;
         return BusinessMember::find($business_member['id']);
     }
+
 }

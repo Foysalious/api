@@ -118,3 +118,93 @@ if (!function_exists('currencyShortenFormat')) {
         return TakaFormatter::currencyShortenFormat($amount, $precision);
     }
 }
+
+if (!function_exists('trim_phone_number')) {
+    /**
+     * @param $number
+     * @param string $index_number
+     * @return string
+     */
+    function trim_phone_number($number, $index_number = '0')
+    {
+        return strstr($number, $index_number);
+    }
+}
+
+if (!function_exists('en2bnNumber')) {
+    /**
+     * @param  $number
+     * @return string
+     */
+    function en2bnNumber($number)
+    {
+        $search_array  = [ "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", ".", "," ];
+        $replace_array = [ "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯", "০", ".", "," ];
+        return str_replace($search_array, $replace_array, $number);
+    }
+}
+
+if (!function_exists('ordinal')) {
+    /**
+     * Ordinal numbers refer to a position in a series.
+     *
+     * @param $number = any natural number
+     * @return String
+     */
+    function ordinal($number)
+    {
+        $ends = [
+            'th',
+            'st',
+            'nd',
+            'rd',
+            'th',
+            'th',
+            'th',
+            'th',
+            'th',
+            'th'
+        ];
+        if ((($number % 100) >= 11) && (($number % 100) <= 13)) return $number . 'th';
+
+        return $number . $ends[$number % 10];
+    }
+}
+
+if (!function_exists('floatValFormat')) {
+    /**
+     * @param $value
+     * @return float
+     */
+    function floatValFormat($value)
+    {
+        return floatval(number_format($value, 2, '.', ''));
+    }
+}
+
+if (!function_exists('convertNumbersToBangla')) {
+    /**
+     * @param float $number
+     * @param bool $formatted
+     * @param int $decimal
+     * @return string
+     */
+    function convertNumbersToBangla(float $number, $formatted = true, $decimal = 2)
+    {
+        return en2bnNumber($formatted ? number_format($number, $decimal) : "$number");
+    }
+}
+
+if (!function_exists('isEmailValid')) {
+    /**
+     * Email formatting check.
+     *
+     * @param  $email
+     * @return bool
+     */
+    function isEmailValid($email)
+    {
+        $regex = '/^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,3})$/';
+        return preg_match($regex, $email);
+    }
+}

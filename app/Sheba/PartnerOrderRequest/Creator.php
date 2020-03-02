@@ -75,9 +75,9 @@ class Creator
                 'partner_order_id' => $this->partnerOrder->id,
                 'partner_id' => $partner_id
             ];
+            $this->sendOrderRequestPushNotificationToPartner($partner_id);
+            $this->sendOrderRequestSmsToPartner($partner_id);
         }
-        $this->sendOrderRequestPushNotificationToPartner($partner_id);
-        $this->sendOrderRequestSmsToPartner($partner_id);
         $this->partnerOrderRequestRepo->insert($data);
     }
 
@@ -95,7 +95,9 @@ class Creator
         $this->pushNotificationHandler->send([
             "title" => 'New Order',
             "message" => "প্রিয় $partner->name আপনার একটি নতুন অর্ডার রয়েছে, অনুগ্রহ করে ম্যানেজার অ্যাপ থেকে অর্ডারটি একসেপ্ট করুন",
-            "sound" => "notification_sound"
+            "sound" => "notification_sound",
+            "event_type" => 'PartnerOrder',
+            "link" => "new_order"
         ], $topic, $channel, $sound);
     }
 

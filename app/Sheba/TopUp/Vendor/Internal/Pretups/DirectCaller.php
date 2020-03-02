@@ -4,7 +4,6 @@ use Sheba\Logs\ErrorLog;
 
 class DirectCaller extends Caller
 {
-
     public function call()
     {
         $ch = curl_init();
@@ -12,7 +11,8 @@ class DirectCaller extends Caller
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: text/xml', 'Connection: close']);
         curl_setopt($ch, CURLOPT_POSTFIELDS, "xmlRequest=$this->input");
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 300);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 60);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 60);
         $data = curl_exec($ch);
         $err = curl_error($ch);
         if ($err) {

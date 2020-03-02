@@ -21,6 +21,7 @@ use Sheba\Checkout\DeliveryCharge;
 use Sheba\JobDiscount\JobDiscountHandler;
 use Sheba\Location\LocationSetter;
 use Sheba\LocationService\PriceCalculation;
+use Sheba\LocationService\UpsellCalculation;
 use Throwable;
 
 class CustomerFavoriteController extends Controller
@@ -33,16 +34,16 @@ class CustomerFavoriteController extends Controller
      * @param PriceCalculation $price_calculation
      * @param DeliveryCharge $delivery_charge
      * @param JobDiscountHandler $job_discount_handler
+     * @param UpsellCalculation $upsell_calculation
      * @return JsonResponse
      */
     public function index($customer, Request $request,
                           PriceCalculation $price_calculation, DeliveryCharge $delivery_charge,
-                          JobDiscountHandler $job_discount_handler)
+                          JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation)
     {
         $this->validate($request, [
             'location' => 'sometimes|numeric', 'lat' => 'sometimes|numeric', 'lng' => 'required_with:lat'
         ]);
-
         $customer = $request->customer;
         list($offset, $limit) = calculatePagination($request);
 
@@ -64,7 +65,7 @@ class CustomerFavoriteController extends Controller
                     'job', 'services', 'partner' => function ($q) {
                         $q->select('id', 'name', 'logo');
                     }, 'category' => function ($q) {
-                        if ($this->location) $q->select('id', 'parent_id', 'name', 'slug', 'icon_png', 'icon_color')->with('parent');
+                        if ($this->location) $q->select('id', 'parent_id', 'name', 'slug', 'icon_png', 'icon_color', 'delivery_charge')->with('parent');
                     }
                 ])->orderBy('id', 'desc')->skip($offset)->take($limit);
             }
@@ -74,7 +75,7 @@ class CustomerFavoriteController extends Controller
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
 
-        $favorites = $customer->favorites->each(function (&$favorite, $key) use ($manager, $price_calculation, $delivery_charge, $job_discount_handler) {
+        $favorites = $customer->favorites->each(function (&$favorite, $key) use ($manager, $price_calculation, $delivery_charge, $job_discount_handler, $upsell_calculation) {
             $services = [];
             $favorite['category_name']  = $favorite->category->name;
             $favorite['category_slug']  = $favorite->category->slug;
@@ -82,9 +83,15 @@ class CustomerFavoriteController extends Controller
             $favorite['icon_color']     = isset(config('sheba.category_colors')[$favorite->category->parent->id]) ? config('sheba.category_colors')[$favorite->category->parent->id] : null;
             $favorite['rating']         = $favorite->job->review ? $favorite->job->review->rating : 0.00;
 
-            $favorite->services->each(function ($service) use ($favorite, &$services, $manager, $price_calculation, $delivery_charge, $job_discount_handler) {
+            $favorite->services->each(function ($service) use ($favorite, &$services, $manager, $price_calculation, $delivery_charge, $job_discount_handler,$upsell_calculation) {
                 $location_service = LocationService::where('location_id', $this->location)->where('service_id', $service->id)->first();
                 $pivot = $service->pivot;
+                $upsell_calculation->setService($service)
+                    ->setLocationService($location_service)
+                    ->setOption(json_decode($pivot->option, true))
+                    ->setQuantity($pivot->quantity);
+                $upsell_price = $upsell_calculation->getAllUpsellWithMinMaxQuantity();
+
                 $selected_service = [
                     "option" => json_decode($pivot->option, true),
                     "variable_type" => $pivot->variable_type
@@ -98,6 +105,7 @@ class CustomerFavoriteController extends Controller
                 $pivot['min_quantity'] = $service->min_quantity;
                 $pivot['app_thumb'] = $service->app_thumb;
                 $pivot['publication_status'] = $service->publication_status;
+                $pivot['upsell_price'] = $upsell_price;
 
                 $service_data_with_price_and_discount = $pivot->toArray() + $price_data;
 

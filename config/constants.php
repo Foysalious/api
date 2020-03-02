@@ -1,5 +1,10 @@
 <?php
 return [
+    'BANK_LOAN_PDF_TYPES'                      => [
+        'SanctionLetter'   => 'sanctionLetter',
+        'Application' => 'application',
+        'ProposalLetter'  => 'proposalLetter'
+    ],
     'PARTNER_SHOWABLE_PACKAGE'                    => [
         1,
         2,
@@ -1030,7 +1035,9 @@ return [
         ],
     ],
     'LOAN_CONFIG'                                 => [
-        'interest' => 15,
+        'interest'         => 15,
+        'minimum_amount'   => 50000,
+        'minimum_duration' => 6
     ],
     'WEEKS'                                       => [
         'Saturday'  => 1,
