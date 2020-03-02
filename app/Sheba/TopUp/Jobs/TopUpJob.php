@@ -15,7 +15,7 @@ use Sheba\TopUp\Vendor\Vendor;
 use Sheba\TopUp\Vendor\VendorFactory;
 use Sheba\TopUp\TopUpCompletedEvent;
 
-class TopUpJob extends Job
+class TopUpJob extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
 
