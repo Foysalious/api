@@ -1,10 +1,12 @@
 <?php namespace Sheba\Payment\Complete;
 
+use App\Jobs\SendEmailToNotifyVendorBalance;
 use App\Models\MovieTicketOrder;
 use Illuminate\Database\QueryException;
 use DB;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\MovieTicket\MovieTicket;
+use Sheba\MovieTicket\MovieTicketManager;
 use Sheba\MovieTicket\MovieTicketRequest;
 use Sheba\MovieTicket\Response\BlockBusterFailResponse;
 use Sheba\MovieTicket\Vendor\VendorFactory;
@@ -52,6 +54,9 @@ class MovieTicketPurchaseComplete extends PaymentComplete
                 }
                 $this->completePayment();
             });
+            $balance = app(MovieTicketManager::class)->initVendor()->getVendorBalance();
+            if ($balance < config('ticket.balance_threshold'))
+                dispatch(new SendEmailToNotifyVendorBalance($balance, 'Blockbuster'));
         } catch (QueryException $e) {
             $movie_ticket_order = MovieTicketOrder::find($this->payment->payable->type_id);
             $movie_ticket_order->status = 'failed';

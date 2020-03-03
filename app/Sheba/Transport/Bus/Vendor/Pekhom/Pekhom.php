@@ -15,4 +15,9 @@ class Pekhom extends Vendor
     {
         // TODO: Implement confirmTicket() method.
     }
+
+    public function balance()
+    {
+
+    }
 }

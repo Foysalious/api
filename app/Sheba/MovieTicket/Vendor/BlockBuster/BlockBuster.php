@@ -80,6 +80,9 @@ class BlockBuster extends Vendor
             case Actions::UPDATE_MOVIE_SEAT_STATUS:
                 $api_url = $this->apiUrl . 'movie_ticket_confirm.php';
                 break;
+            case Actions::GET_VENDOR_BALANCE:
+                $api_url =  $this->apiUrl.'balance/balance.php';
+                break;
             default:
                 throw new Exception('Invalid Action');
                 break;
@@ -192,6 +195,9 @@ class BlockBuster extends Vendor
             case Actions::UPDATE_MOVIE_SEAT_STATUS:
                 return $this->updateMovieTicketStatus($response);
                 break;
+            case Actions::GET_VENDOR_BALANCE:
+                return $this->getVendorBalance($response);
+                break;
             default:
                 throw new Exception('Invalid Action');
                 break;
@@ -300,6 +306,23 @@ class BlockBuster extends Vendor
                 return $response->api_response;
         }
         throw new Exception('Server error');
+    }
+
+    /**
+     * @param $response
+     * @return mixed
+     * @throws Exception
+     */
+    private function getVendorBalance($response)
+    {
+        if($response && $response->api_validation && $response->api_validation->status === "ok") {
+            if($response->api_response)
+                return $response->api_response->available_balance;
+            else
+                return $response->api_response;
+        }
+        throw new \Exception('Server error');
+
     }
 
     private function priceAfterShebaCommission($original_price)

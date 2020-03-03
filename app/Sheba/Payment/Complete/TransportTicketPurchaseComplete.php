@@ -1,5 +1,6 @@
 <?php namespace Sheba\Payment\Complete;
 
+use App\Jobs\SendEmailToNotifyVendorBalance;
 use App\Models\Payment;
 use App\Models\Transport\TransportTicketOrder;
 use App\Repositories\SmsHandler;
@@ -81,6 +82,11 @@ class TransportTicketPurchaseComplete extends PaymentComplete
                     ];
 
                     (new SmsHandler('transport_ticket_confirmed'))->send($transport_ticket_order->reserver_mobile, $sms_data);
+
+                    $balance = $vendor->balance();
+                    if ($balance < config('ticket.balance_threshold'))
+                        dispatch(new SendEmailToNotifyVendorBalance($balance, 'Bdtickets'));
+
                 } catch (\Exception $e) {}
             });
         } catch (QueryException $e) {
