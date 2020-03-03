@@ -172,28 +172,7 @@ class DashboardController extends Controller
                 'has_pos_due_order'            => $total_due_for_pos_orders > 0 ? 1 : 0,
                 'has_pos_paid_order'           => $has_pos_paid_order,
                 'home_videos'    => $videos ? $videos : null,
-                'feature_videos' => [
-                    [
-                        'key'     => 'payment_link',
-                        'details' => $details['payment_link']
-                    ],
-                    [
-                        'key'     => 'pos',
-                        'details' => $details['pos']
-                    ],
-                    [
-                        'key'     => 'inventory',
-                        'details' => $details['inventory']
-                    ],
-                    [
-                        'key'     => 'referral',
-                        'details' => $details['referral']
-                    ],
-                    [
-                        'key'     => 'due',
-                        'details' => $details['due']
-                    ]
-                ],
+                'feature_videos' => $details,
                 'has_qr_code'    => ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0
             ];
             if (request()->hasHeader('Portal-Name'))
