@@ -53,10 +53,8 @@ class MovieTicketPurchaseComplete extends PaymentComplete
                     $movie_ticket->processFailedMovieTicket($movie_ticket_order, $response);
                 }
                 $this->completePayment();
+                dispatch(new SendEmailToNotifyVendorBalance($vendor));
             });
-            $balance = app(MovieTicketManager::class)->initVendor()->getVendorBalance();
-            if ($balance < config('ticket.balance_threshold'))
-                dispatch(new SendEmailToNotifyVendorBalance($balance, 'Blockbuster'));
         } catch (QueryException $e) {
             $movie_ticket_order = MovieTicketOrder::find($this->payment->payable->type_id);
             $movie_ticket_order->status = 'failed';

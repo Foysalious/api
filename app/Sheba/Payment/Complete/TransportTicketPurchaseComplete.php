@@ -82,10 +82,7 @@ class TransportTicketPurchaseComplete extends PaymentComplete
                     ];
 
                     (new SmsHandler('transport_ticket_confirmed'))->send($transport_ticket_order->reserver_mobile, $sms_data);
-
-                    $balance = $vendor->balance();
-                    if ($balance < config('ticket.balance_threshold'))
-                        dispatch(new SendEmailToNotifyVendorBalance($balance, 'Bdtickets'));
+                    dispatch(new SendEmailToNotifyVendorBalance($vendor));
 
                 } catch (\Exception $e) {}
             });

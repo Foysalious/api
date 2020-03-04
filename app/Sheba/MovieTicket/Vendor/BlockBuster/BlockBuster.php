@@ -1,19 +1,15 @@
 <?php namespace Sheba\MovieTicket\Vendor\BlockBuster;
 
 use App\Models\MovieTicketVendor;
-use App\Models\MovieTicketVendorCommission;
 use Exception;
 use GuzzleHttp\Client;
-use Sheba\MovieTicket\Actions;
-use Sheba\MovieTicket\MovieTicket;
 use Sheba\MovieTicket\MovieTicketRequest;
 use Sheba\MovieTicket\Response\BlockBusterResponse;
 use Sheba\MovieTicket\Response\MovieResponse;
-use Sheba\MovieTicket\TransactionGenerator;
-use Sheba\MovieTicket\Vendor\BlockBuster\KeyEncryptor;
 use GuzzleHttp\Exception\GuzzleException;
 use Sheba\MovieTicket\Vendor\Vendor;
 use SimpleXMLElement;
+use Sheba\MovieTicket\Actions;
 
 class BlockBuster extends Vendor
 {
@@ -348,5 +344,19 @@ class BlockBuster extends Vendor
     public function parseMovieIdToBlockBusterFormat($id)
     {
         return str_pad($id, 5, '0', STR_PAD_LEFT);
+    }
+
+    public function balance()
+    {
+        try {
+            $this->init();
+            return $this->post(Actions::GET_VENDOR_BALANCE, []);
+        } catch (GuzzleException $e) {
+            throw $e;
+        } catch (Exception $e) {
+            throw $e;
+        }
+
+
     }
 }
