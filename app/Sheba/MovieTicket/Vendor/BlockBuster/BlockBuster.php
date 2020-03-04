@@ -346,6 +346,11 @@ class BlockBuster extends Vendor
         return str_pad($id, 5, '0', STR_PAD_LEFT);
     }
 
+    /**
+     * @return mixed
+     * @throws GuzzleException
+     * @throws Exception
+     */
     public function balance()
     {
         try {
