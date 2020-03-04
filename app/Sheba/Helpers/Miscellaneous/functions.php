@@ -203,3 +203,15 @@ if (!function_exists('emi_calculator')) {
         return $divisor > 0 ? round($accessor / $divisor) : round($amount / $duration);
     }
 }
+if (!function_exists('calculateAge')) {
+    function calculateAge($dob){
+        if (!empty($dob)&&!is_null($dob)){
+            try{
+                return \Carbon\Carbon::parse($dob)->age;
+            }catch (Exception $e){
+                return 0;
+            }
+        }
+        return 0;
+    }
+}
