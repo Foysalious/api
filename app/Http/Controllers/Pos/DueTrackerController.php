@@ -124,4 +124,28 @@ class DueTrackerController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    /**
+     * @param Request $request
+     * @param DueTrackerRepository $dueTrackerRepository
+     * @param $partner
+     * @param $customer_id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function sendSMS(Request $request, DueTrackerRepository $dueTrackerRepository, $partner, $customer_id)
+    {
+       try{
+           $request->merge(['customer_id' => $customer_id]);
+           $this->validate($request, ['type' => 'required|in:due,deposit','amount' => 'required','payment_link' => 'required_if:type,due']);
+           $dueTrackerRepository->sendSMS($request);
+           return api_response($request, true, 200);
+
+       } catch (ValidationException $e) {
+           $message = getValidationErrorMessage($e->validator->errors()->all());
+           return api_response($request, $message, 400, ['message' => $message]);
+       } catch (\Throwable $e) {
+           app('sentry')->captureException($e);
+           return api_response($request, null, 500);
+       }
+    }
 }

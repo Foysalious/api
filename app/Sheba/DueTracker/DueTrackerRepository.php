@@ -2,6 +2,8 @@
 
 namespace Sheba\DueTracker;
 
+use App\Jobs\PartnerRenewalSMS;
+use App\Jobs\SendToCustomerToInformDueDepositSMS;
 use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
 use App\Models\PosCustomer;
@@ -247,5 +249,31 @@ class DueTrackerRepository extends BaseRepository
         $url        = "accounts/$this->accountId/remove/$profile_id";
         $this->client->delete($url);
 
+    }
+
+
+    /**
+     * @param Request $request
+     * @return mixed
+     * @throws InvalidPartnerPosCustomer
+     */
+    public function sendSMS(Request $request)
+    {
+        $partner_pos_customer = PartnerPosCustomer::byPartner($request->partner->id)->where('customer_id', $request->customer_id)->with(['customer'])->first();
+        if (empty($partner_pos_customer))
+            throw new InvalidPartnerPosCustomer();
+        /** @var PosCustomer $customer */
+        $customer = $partner_pos_customer->customer;
+        $data = [
+            'type' => $request->type,
+            'partner_name' => $request->partner->name,
+            'customer_name' => $customer->profile->name,
+            'mobile' => $customer->profile->mobile,
+            'amount' => $request->amount,
+        ];
+        if ($request->type == 'due') {
+            $data['payment_link'] = $request->payment_link;
+        }
+        return dispatch((new SendToCustomerToInformDueDepositSMS($data)));
     }
 }
