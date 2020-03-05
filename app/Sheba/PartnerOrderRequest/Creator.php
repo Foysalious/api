@@ -4,6 +4,7 @@ use App\Models\Partner;
 use App\Models\PartnerOrder;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
 use Illuminate\Support\Collection;
+use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequest;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequestRepositoryInterface;
 use Sheba\PartnerOrderRequest\Validators\CreateValidator;
 use Sheba\PushNotificationHandler;
@@ -22,6 +23,8 @@ class Creator
     private $partners;
     /** @var PushNotificationHandler $pushNotificationHandler */
     private $pushNotificationHandler;
+    /** @var PartnerOrderRequest $partnerOrderRequestId */
+    private $partnerOrderRequestId;
 
     /**
      * Creator constructor.
@@ -75,10 +78,10 @@ class Creator
                 'partner_order_id' => $this->partnerOrder->id,
                 'partner_id' => $partner_id
             ];
+            $this->partnerOrderRequestId = $this->partnerOrderRequestRepo->create($data);
             $this->sendOrderRequestPushNotificationToPartner($partner_id);
             $this->sendOrderRequestSmsToPartner($partner_id);
         }
-        $this->partnerOrderRequestRepo->insert($data);
     }
 
     /**
@@ -91,13 +94,13 @@ class Creator
         $topic = config('sheba.push_notification_topic_name.manager') . $partner->id;
         $channel = config('sheba.push_notification_channel_name.manager');
         $sound = config('sheba.push_notification_sound.manager');
-
         $this->pushNotificationHandler->send([
             "title" => 'New Order',
             "message" => "প্রিয় $partner->name আপনার একটি নতুন অর্ডার রয়েছে, অনুগ্রহ করে ম্যানেজার অ্যাপ থেকে অর্ডারটি একসেপ্ট করুন",
             "sound" => "notification_sound",
             "event_type" => 'PartnerOrder',
-            "link" => "new_order"
+            "event_id" => $this->partnerOrderRequestId,
+            "link" => "new_order_request"
         ], $topic, $channel, $sound);
     }
 
