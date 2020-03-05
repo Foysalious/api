@@ -68,7 +68,7 @@ class CustomerAddressController extends Controller
                 'landmark' => $address->landmark,
             ]]);
         } catch (HyperLocationNotFoundException $e) {
-            return api_response($request, null, 402, ['message' => 'Your are out of service area.']);
+            return response()->json(['message' => 'Your are out of service area.', 'code' => 402]);
         }
     }
 
