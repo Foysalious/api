@@ -43,7 +43,7 @@ class ServiceTransformer extends TransformerAbstract
     {
         /** @var Category $category */
         $category = $service->category;
-        $usps = $category->usps()->select('name')->get();
+        $usps = $service->usps()->select('name')->get();
         $partnership = $service->partnership;
         $galleries = $service->galleries()->select('id', DB::Raw('thumb as image'))->get();
         $blog_posts = $service->blogPosts()->select('id', 'title', 'short_description', DB::Raw('thumb as image'), 'target_link')->get();
