@@ -51,10 +51,10 @@ class CategorySchema
     private function generate()
     {
         return [
-            self::AGGREGATE_REVIEW_SCHEMA_NAME => !$this->category->isParent() ? $this->getAggregateReviewSchema() : null,
             self::REVIEW_SCHEMA_NAME => !$this->category->isParent() ? $this->getReviewSchema() : null,
+            self::FAQ_SCHEMA_NAME => !$this->category->isParent() ? $this->getFaqSchema() : null,
+            self::AGGREGATE_REVIEW_SCHEMA_NAME => $this->getAggregateReviewSchema(),
             self::CATEGORY_SCHEMA_NAME => $this->getCategorySchema(),
-            self::FAQ_SCHEMA_NAME => $this->getFaqSchema(),
             self::BREADCRUMB_SCHEMA_NAME => $this->getBreadCrumbSchema(),
         ];
     }
@@ -219,7 +219,6 @@ class CategorySchema
 
     private function getFaqSchema()
     {
-        if ($this->category->isParent()) return null;
         $faqs = $this->category->faqs ? json_decode($this->category->faqs, true) : [];
         $lists = [];
         foreach ($faqs as $key => $faq) {
