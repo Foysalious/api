@@ -59,5 +59,9 @@ return [
             'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/partner_assets/assets/images/home_v3/qr_banner_01.jpg',
             'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/partner_assets/assets/images/home_v3/qr_banner_02.jpg'
         ]
+    ],
+    'order' => [
+        'request_accept_timer' => 90,
+        'is_auto_sp_assign' => 0
     ]
 ];
