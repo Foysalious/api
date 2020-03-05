@@ -38,11 +38,11 @@ class ServiceSchema
                 ]
             ]);
         }
-        return [
+        return count($lists) > 0 ? [
             "@context" => "https://schema.org",
             "@type" => "FAQPage",
             "mainEntity" => $lists
-        ];
+        ] : null;
     }
 
     private function getBreadcrumb()

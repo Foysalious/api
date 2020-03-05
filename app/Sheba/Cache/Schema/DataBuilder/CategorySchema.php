@@ -61,6 +61,7 @@ class CategorySchema
 
     private function getAggregateReviewSchema()
     {
+        if ($this->category->isParent()) return null;
         $reviews = $this->category->reviews()->selectRaw("count(reviews.id) as total_ratings")->selectRaw("avg(reviews.rating) as avg_rating")->first();
         $this->setCategoryReview($reviews);
         $item_reviewed = [
@@ -81,7 +82,7 @@ class CategorySchema
             "@type" => "AggregateRating",
             "bestRating" => "5",
             "worstRating" => "1",
-            "ratingCount" => $reviews->total_ratings ? (int)$reviews->total_ratings : 0,
+            "ratingCount" => $reviews->total_ratings ? (int)$reviews->total_ratings : 1,
             "ratingValue" => $reviews->avg_rating ? round($reviews->avg_rating, 2) : 5,
             "itemReviewed" => [
                 "@type" => "Thing",
@@ -122,7 +123,7 @@ class CategorySchema
             "aggregateRating" => [
                 "@type" => "AggregateRating",
                 "ratingValue" => $this->categoryReview->avg_rating ? round($this->categoryReview->avg_rating, 2) : 5,
-                "reviewCount" => $this->categoryReview->total_ratings ? $this->categoryReview->total_ratings : 0
+                "reviewCount" => $this->categoryReview->total_ratings ? $this->categoryReview->total_ratings : 1
             ],
             "review" => $lists
         ];
@@ -136,7 +137,7 @@ class CategorySchema
             ->join('customers', 'customers.id', '=', 'reviews.customer_id')
             ->join('jobs', 'jobs.id', '=', 'reviews.job_id')
             ->join('profiles', 'profiles.id', '=', 'customers.profile_id')
-            ->where('review_type', 'like', '%' . '\\Review')
+            ->where('review_type', 'like', '%' . 'Models\\\\Review')
             ->where('review_question_answer.rate_answer_text', '<>', '')
             ->whereRaw("CHAR_LENGTH(rate_answer_text)>20")
             ->whereIn('reviews.rating', [5])
@@ -219,6 +220,7 @@ class CategorySchema
 
     private function getFaqSchema()
     {
+        if ($this->category->isParent()) return null;
         $faqs = $this->category->faqs ? json_decode($this->category->faqs, true) : [];
         $lists = [];
         foreach ($faqs as $key => $faq) {
@@ -231,11 +233,11 @@ class CategorySchema
                 ]
             ]);
         }
-        return [
+        return count($lists) > 0 ? [
             "@context" => "https://schema.org",
             "@type" => "FAQPage",
             "mainEntity" => $lists
-        ];
+        ] : null;
     }
 
     private function getBreadCrumbSchema()
