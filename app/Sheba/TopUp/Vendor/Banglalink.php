@@ -5,7 +5,8 @@ use Sheba\TopUp\Vendor\Internal\Ssl;
 
 class Banglalink extends Vendor
 {
-    use Ssl;
+    // use Ssl;
+    use Pretups;
 
     private function getUrl()
     {
