@@ -2,7 +2,6 @@
 
 use App\Models\Partner;
 use App\Models\PartnerStatusChangeLog;
-
 use Exception;
 use Sheba\PushNotificationHandler;
 use Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;

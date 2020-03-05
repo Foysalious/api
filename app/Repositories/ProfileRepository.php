@@ -126,6 +126,13 @@ class ProfileRepository
         return $res["token"];
     }
 
+    public function fetchJWTToken($type,$type_id,$remember_token){
+        
+        $res = (new Accounts())->getJWTToken($type,$type_id,$remember_token);
+        return $res["token"];
+
+    }
+
     public function registerFacebook($info)
     {
         $profile = new Profile();
