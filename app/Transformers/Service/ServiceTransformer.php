@@ -78,6 +78,7 @@ class ServiceTransformer extends TransformerAbstract
             'slug' => $service->getSlug(),
             'thumb' => $service->thumb,
             'app_thumb' => $service->app_thumb,
+            'app_banner' => $service->app_banner,
             'banner' => $service->banner,
             'variable_type' => $service->variable_type,
             'questions' => $this->serviceQuestion->get(),
