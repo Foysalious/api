@@ -99,7 +99,8 @@ class OrderPlace
     private $jobDiscountHandler;
     /** @var float */
     private $orderAmount;
-
+    /** @var float */
+    private $orderAmountWithoutDeliveryCharge;
 
     public function __construct(Creator $creator, PriceCalculation $priceCalculation, DiscountCalculation $discountCalculation, OrderVoucherData $orderVoucherData,
                                 PartnerListBuilder $partnerListBuilder, Director $director, ServiceRequest $serviceRequest,
@@ -350,7 +351,6 @@ class OrderPlace
         $this->location = $location;
     }
 
-
     /**
      * @return null
      * @throws Exception
@@ -435,7 +435,6 @@ class OrderPlace
     {
         $job_services = collect();
         foreach ($this->serviceRequestObject as $selected_service) {
-            /** @var ServiceRequestObject $selected_service */
             $service = $selected_service->getService();
             $location_service = LocationService::where([['service_id', $service->id], ['location_id', $this->location->id]])->first();
             $this->priceCalculation->setService($service)->setLocationService($location_service)->setOption($selected_service->getOption())->setQuantity($selected_service->getQuantity());
@@ -465,13 +464,12 @@ class OrderPlace
     }
 
     /**
-     * @param $job_services
      * @throws Exception
      */
     private function setVoucherData()
     {
         if ($this->voucherId) {
-            $result = voucher($this->voucherId)->check($this->category->id, null, $this->location->id, $this->customer->id, $this->orderAmount, $this->salesChannel)->reveal();
+            $result = voucher($this->voucherId)->check($this->category->id, null, $this->location->id, $this->customer->id, $this->orderAmountWithoutDeliveryCharge, $this->salesChannel)->reveal();
             $this->orderVoucherData->setVoucherRevealData($result);
         }
     }
@@ -563,6 +561,7 @@ class OrderPlace
             $job_data['sheba_contribution'] = $this->orderVoucherData->getShebaContribution();
             $job_data['partner_contribution'] = $this->orderVoucherData->getPartnerContribution();
             $job_data['discount_percentage'] = $this->orderVoucherData->getDiscountPercentage();
+            $job_data['original_discount_amount'] = $this->orderVoucherData->getOriginalDiscountAmount();
         }
         $this->handleDelivery($job_data);
         $job_data = $this->withCreateModificationField($job_data);
@@ -655,9 +654,9 @@ class OrderPlace
      */
     private function calculateOrderAmount($job_services)
     {
-        $this->orderAmount = $job_services->map(function ($job_service) {
-                return $job_service->unit_price * $job_service->quantity;
-            })->sum() + (double)$this->category->delivery_charge;
+        $this->orderAmountWithoutDeliveryCharge = $job_services->map(function ($job_service) {
+            return $job_service->unit_price * $job_service->quantity;
+        })->sum();
+        $this->orderAmount = $this->orderAmountWithoutDeliveryCharge + (double)$this->category->delivery_charge;
     }
-
 }

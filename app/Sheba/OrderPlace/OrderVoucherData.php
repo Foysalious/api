@@ -1,6 +1,5 @@
 <?php namespace Sheba\OrderPlace;
 
-
 class OrderVoucherData
 {
     private $result;
@@ -26,10 +25,9 @@ class OrderVoucherData
         return (double)$this->result['voucher']['partner_contribution'];
     }
 
-
     public function getDiscountPercentage()
     {
-        return (double)$this->result['voucher']['amount'];
+        return ($this->result['voucher']['is_amount_percentage']) ? (double)$this->result['voucher']['amount'] : 0.00;
     }
 
     public function getVoucherId()
@@ -49,5 +47,4 @@ class OrderVoucherData
     {
         return $this->result && $this->result['is_valid'];
     }
-
 }
