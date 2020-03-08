@@ -80,7 +80,6 @@ class Updater
             $order_data['customer_id'] = $this->data['customer_id'];
         /** @var PosOrder $order */
         $order = $this->orderRepo->update($this->order, $order_data);
-        $this->updateIncome($order);
         return $order;
     }
 
@@ -105,14 +104,5 @@ class Updater
         }
     }
 
-    /**
-     * @param PosOrder $order
-     */
-    private function updateIncome(PosOrder $order)
-    {
-        /** @var AutomaticEntryRepository $entry */
-        $entry  = app(AutomaticEntryRepository::class);
-        $amount = (double)$order->calculate()->getNetBill();
-        $entry->setPartner($order->partner)->setAmount($amount)->setAmountCleared($order->getPaid())->setHead(AutomaticIncomes::POS)->setSourceType(class_basename($order))->setSourceId($order->id)->updateFromSrc();
-    }
+
 }
