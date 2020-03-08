@@ -144,14 +144,17 @@ class CustomerDeliveryAddressController extends Controller
                 });
             }
             if ($request->has('category')) {
-                $category = array_map('intval', json_decode($request->category));
-                $category_location = CategoryLocation::whereIn('category_id', $category)->select('location_id')->get();
-                $location_ids = count($category_location) > 0 ? $category_location->pluck('location_id')->toArray() : [];
-                $customer_delivery_addresses->map(function ($address) use ($location_ids) {
-                    if (!$address['is_valid']) return $address;
-                    $address['is_valid'] = in_array($address->location_id, $location_ids) ? 1 : 0;
-                    return $address;
-                });
+                $category = json_decode($request->category);
+                if ($category) {
+                    $category = array_map('intval', json_decode($request->category));
+                    $category_location = CategoryLocation::whereIn('category_id', $category)->select('location_id')->get();
+                    $location_ids = count($category_location) > 0 ? $category_location->pluck('location_id')->toArray() : [];
+                    $customer_delivery_addresses->map(function ($address) use ($location_ids) {
+                        if (!$address['is_valid']) return $address;
+                        $address['is_valid'] = in_array($address->location_id, $location_ids) ? 1 : 0;
+                        return $address;
+                    });
+                }
             }
 
             $customer_delivery_addresses = $customer_delivery_addresses->sortByDesc('count')->sortByDesc('is_same')->values()->all();
@@ -165,6 +168,7 @@ class CustomerDeliveryAddressController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
