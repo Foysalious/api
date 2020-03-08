@@ -12,6 +12,7 @@ class DueTrackerRoute
             $api->get('/due-calender', 'Pos\\DueTrackerController@getDueCalender');
             $api->delete('/entries/{entry_id}', 'Pos\\DueTrackerController@delete');
             $api->post('/send-sms/{customer_id}', 'Pos\\DueTrackerController@sendSMS');
+            $api->get('/faqs', 'Pos\\DueTrackerController@getFaqs');
 
         });
         $api->delete('/customers/{customer}', 'Pos\\CustomerController@delete');

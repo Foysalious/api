@@ -97,7 +97,11 @@ class DueTrackerRepository extends BaseRepository
         $url      = "accounts/$this->accountId/entries/due-list/$customer->profile_id?";
         $url      = $this->updateRequestParam($request, $url);
         $result   = $this->client->get($url);
-        $list     = collect($result['data']['list']);
+        $list     = collect($result['data']['list'])->map(function ($item) {
+            $item['created_at']   = Carbon::parse($item['created_at'])->format('Y-m-d h:i A');
+            $item['entry_at'] = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
+            return $item;
+        });;
         list($offset, $limit) = calculatePagination($request);
         $list = $list->slice($offset)->take($limit);
         return [
@@ -276,4 +280,36 @@ class DueTrackerRepository extends BaseRepository
         }
         return dispatch((new SendToCustomerToInformDueDepositSMS($data)));
     }
+
+    public function getFaqs()
+    {
+        return [
+            [
+                'question' => 'বাকির খাতা কি?',
+                'answer' => 'বাকির খাতা হচ্ছে বাকি/জমার হিসেব রাখার ডিজিটাল প্রসেস। এখানে আপনি বাকি এবং জমার হিসেব রাখাতে পারবেন খুব সহজে।'
+            ],
+            [
+                'question' => 'কিভাবে বাকির খাতা ব্যবহার করব?',
+                'answer' => 'আপনি বাকির খাতায় গিয়ে কাস্টমার যোগ করে অথবা কাস্টমার লিস্ট থেকে কাস্টমার সিলেক্ট করে বাকি/জমার এন্টি দিতে পারবেন। আপনি বাকি/জমার টাকার পরিমান, নোট,তারিখ এবং ছবি যোগ করার মাধ্যমে এন্ট্রি যোগ করতে পারবেন।'
+            ],
+            [
+                'question' => 'মোট বাকি কি?',
+                'answer' => 'কাস্টমার এর কাছ থেকে মোট বাকির পরিমান।'
+            ],
+            [
+                'question' => 'মোট জমা কি?',
+                'answer' => 'কাস্টমার এর কাছ থেকে মোট জমার পরিমান।'
+            ],
+            [
+                'question' => 'বাকির রিমাইন্ডার কি?',
+                'answer' => 'বাকির রিমাইন্ডার থেকে কাস্টমার আপনাকে কবে বাকি পরিশোধ করবে তা দেখতে পারবেন।'
+            ],
+            [
+                'question' => 'POS থেকে বাকিতে সেল করলে সেটা বাকির খাতায় আসবে কি?',
+                'answer' => 'হ্যাঁ আসবে।'
+            ]
+
+        ];
+    }
+
 }

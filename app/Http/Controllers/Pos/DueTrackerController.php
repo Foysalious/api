@@ -147,4 +147,20 @@ class DueTrackerController extends Controller
            return api_response($request, null, 500);
        }
     }
+
+    /**
+     * @param Request $request
+     * @param DueTrackerRepository $dueTrackerRepository
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getFaqs(Request $request,DueTrackerRepository $dueTrackerRepository)
+    {
+        try{
+            $faqs = $dueTrackerRepository->getFaqs();
+            return api_response($request, $faqs, 200, ['faqs' => $faqs]);
+        }catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }
