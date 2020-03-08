@@ -62,7 +62,7 @@ class CategoryDataStore implements DataStoreObject
     {
         if ($category->parent_id) {
             return [
-                'total_services' => !$category->parent_id ? $this->getJobs($category) : 200, 'total_resources' => 40, 'total_served_orders' => 1000
+                'total_services' => $this->getTotalServices(array($category->id)), 'total_resources' => $this->getTotalResources(array($category->id)), 'total_served_orders' => $this->getTotalCompletedOrders(array($category->id))
             ];
         }
         $cats = $category->children()->published()->select('id', 'parent_id')->get()->pluck('id')->toArray();
@@ -79,7 +79,7 @@ class CategoryDataStore implements DataStoreObject
 
     private function getTotalResources(array $category_ids)
     {
-        return 40;
+        return $resource = DB::table("category_resource")->whereIn('category_id', $category_ids)->count();
     }
 
     private function getTotalCompletedOrders(array $category_ids)
