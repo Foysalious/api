@@ -25,13 +25,8 @@ class DueTrackerController extends Controller
     {
         try {
             $data = $dueTrackerRepository->setPartner($request->partner)->getDueList($request);
-<<<<<<< HEAD
-            if ($request->has('download_pdf'))
-                return (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile('due_tracker_due_list')->show();
-=======
             if (($request->has('download_pdf')) && ($request->download_pdf == 1))
                 return (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile('due_tracker_due_list')->download();
->>>>>>> c2f53b51c9686a935e227a6c55155ce762f9e34f
             return api_response($request, $data, 200, ['data' => $data]);
         } catch (InvalidPartnerPosCustomer $e) {
             $message = "Invalid pos customer for this partner";
