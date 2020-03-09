@@ -33,6 +33,7 @@ use Sheba\OrderPlace\Exceptions\LocationIdNullException;
 use Sheba\PartnerList\Director;
 use Sheba\PartnerList\PartnerListBuilder;
 use Sheba\PartnerOrderRequest\Creator;
+use Sheba\PartnerOrderRequest\Store;
 use Sheba\RequestIdentification;
 use DB;
 use Sheba\ServiceRequest\ServiceRequest;
@@ -91,6 +92,8 @@ class OrderPlace
     private $serviceRequestObject;
     /** @var Creator */
     private $partnerOrderRequestCreator;
+    /** @var Store */
+    private $orderRequestStore;
     /**
      * @var OrderRequestAlgorithm
      */
@@ -104,7 +107,7 @@ class OrderPlace
 
     public function __construct(Creator $creator, PriceCalculation $priceCalculation, DiscountCalculation $discountCalculation, OrderVoucherData $orderVoucherData,
                                 PartnerListBuilder $partnerListBuilder, Director $director, ServiceRequest $serviceRequest,
-                                OrderRequestAlgorithm $orderRequestAlgorithm, JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation)
+                                OrderRequestAlgorithm $orderRequestAlgorithm, JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, Store $order_request_store)
     {
         $this->priceCalculation = $priceCalculation;
         $this->discountCalculation = $discountCalculation;
@@ -116,6 +119,7 @@ class OrderPlace
         $this->orderRequestAlgorithm = $orderRequestAlgorithm;
         $this->jobDiscountHandler = $job_discount_handler;
         $this->upsellCalculation = $upsell_calculation;
+        $this->orderRequestStore = $order_request_store;
     }
 
 
@@ -358,7 +362,6 @@ class OrderPlace
     public function create()
     {
         try {
-            if (!$this->additionalInformation) $this->setAdditionalInformation('v4');
             $this->resolveAddress();
             $this->fetchPartner();
             $job_services = $this->createJobService();
@@ -374,7 +377,8 @@ class OrderPlace
                 if ($this->jobDiscountHandler->hasDiscount()) $this->jobDiscountHandler->create($job);
                 if ($this->canCreatePartnerOrderRequest()) {
                     $partners = $this->orderRequestAlgorithm->setCustomer($this->customer)->setPartners($this->partnersFromList)->getPartners();
-                    $this->partnerOrderRequestCreator->setPartnerOrder($partner_order)->setPartners($partners->first()->pluck('id')->toArray())->create();
+                    $this->orderRequestStore->setPartnerOrderId($partner_order->id)->setPartners($partners->pluck('id')->values()->all())->set();
+                    $this->partnerOrderRequestCreator->setPartnerOrder($partner_order)->setPartners([$partners->first()->id])->create();
                 }
                 $this->updateVoucherInPromoList($order);
                 if (!$order->location_id) throw new LocationIdNullException("Order #" . $order->id . " has no location id");
