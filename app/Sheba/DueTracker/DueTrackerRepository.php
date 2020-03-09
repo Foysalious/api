@@ -8,6 +8,7 @@ use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
 use App\Models\PosCustomer;
 use App\Models\Profile;
+use App\Repositories\FileRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -95,15 +96,19 @@ class DueTrackerRepository extends BaseRepository
             throw new InvalidPartnerPosCustomer();
         /** @var PosCustomer $customer */
         $customer = $partner_pos_customer->customer;
-        $url = "accounts/$this->accountId/entries/due-list/$customer->profile_id?";
-        $url = $this->updateRequestParam($request, $url);
-        $result = $this->client->get($url);
-        $list = collect($result['data']['list']);
-        $total_transactions = count($list);
+        $url      = "accounts/$this->accountId/entries/due-list/$customer->profile_id?";
+        $url      = $this->updateRequestParam($request, $url);
+        $result   = $this->client->get($url);
+        $list     = collect($result['data']['list'])->map(function ($item) {
+            $item['created_at']   = Carbon::parse($item['created_at'])->format('Y-m-d h:i A');
+            $item['entry_at'] = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
+            return $item;
+        });;
         list($offset, $limit) = calculatePagination($request);
         $list = $list->slice($offset)->take($limit);
         $total_credit = 0;
         $total_debit = 0;
+        $total_transactions = count($list);
         foreach ($list as $item) {
             if ($item['type'] === 'deposit')
             {
@@ -167,6 +172,36 @@ class DueTrackerRepository extends BaseRepository
         return $response['data'];
     }
 
+
+    /**
+     * @param Partner $partner
+     * @param Request $request
+     * @return mixed
+     * @throws ExpenseTrackingServerError
+     * @throws InvalidPartnerPosCustomer
+     */
+    public function update(Partner $partner, Request $request)
+    {
+        $partner_pos_customer = PartnerPosCustomer::byPartner($partner->id)->where('customer_id', $request->customer_id)->with(['customer'])->first();
+        if (empty($partner_pos_customer))
+            throw new InvalidPartnerPosCustomer();
+        $this->setModifier($partner);
+        if($request->has('amount'))
+            $data['amount'] = $request->amount;
+        if($request->has('note'))
+            $data['note'] = $request->note;
+        if($request->has('created_at'))
+            $data['created_at'] = $request->created_at;
+        if ($request->hasFile('attachments')){
+            $data['attachments'] = $this->updateAttachments($request);
+        }
+        $data['created_from']   = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
+        $data['updated_at']     = Carbon::now()->format('Y-m-d H:s:i');
+
+        $response = $this->client->post("accounts/$this->accountId/entries/update/$request->entry_id", $data);
+        return  $response['data'];
+    }
+
     private function createStoreData(Request $request)
     {
         $data['created_from'] = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
@@ -189,6 +224,41 @@ class DueTrackerRepository extends BaseRepository
             }
         }
         return json_encode($attachments);
+    }
+
+    /**
+     * @param Request $request
+     * @return false|string
+     */
+    private function updateAttachments(Request $request){
+        $attachments = [];
+
+        foreach ($request->file('attachments') as $key => $file) {
+            list($file, $filename) = $this->makeAttachment($file, '_attachments');
+            $attachments[] = $this->saveFileToCDN($file, getDueTrackerAttachmentsFolder(), $filename);;
+        }
+
+        $old_attachments = $request->old_attachments;
+        if($request->has('attachment_should_remove') && (!empty($request->attachment_should_remove))){
+            $this->deleteFromCDN($request->attachment_should_remove);
+            $old_attachments = array_diff($old_attachments,$request->attachment_should_remove);
+        }
+
+        $attachments = array_filter(array_merge($attachments,$old_attachments));
+        return json_encode($attachments);
+
+    }
+
+    /**
+     * @param $files
+     */
+    private function deleteFromCDN ($files)
+    {
+        foreach($files as $file)
+        {
+            $filename = substr($file, strlen(env('S3_URL')));
+            (new FileRepository())->deleteFileFromCDN($filename);
+        }
     }
 
     /**
@@ -310,4 +380,39 @@ class DueTrackerRepository extends BaseRepository
         }
         return dispatch((new SendToCustomerToInformDueDepositSMS($data)));
     }
+
+    /**
+     * @return array
+     */
+    public function getFaqs()
+    {
+        return [
+            [
+                'question' => 'বাকির খাতা কি?',
+                'answer' => 'বাকির খাতা হচ্ছে বাকি/জমার হিসেব রাখার ডিজিটাল প্রসেস। এখানে আপনি বাকি এবং জমার হিসেব রাখাতে পারবেন খুব সহজে।'
+            ],
+            [
+                'question' => 'কিভাবে বাকির খাতা ব্যবহার করব?',
+                'answer' => 'আপনি বাকির খাতায় গিয়ে কাস্টমার যোগ করে অথবা কাস্টমার লিস্ট থেকে কাস্টমার সিলেক্ট করে বাকি/জমার এন্টি দিতে পারবেন। আপনি বাকি/জমার টাকার পরিমান, নোট,তারিখ এবং ছবি যোগ করার মাধ্যমে এন্ট্রি যোগ করতে পারবেন।'
+            ],
+            [
+                'question' => 'মোট বাকি কি?',
+                'answer' => 'কাস্টমার এর কাছ থেকে মোট বাকির পরিমান।'
+            ],
+            [
+                'question' => 'মোট জমা কি?',
+                'answer' => 'কাস্টমার এর কাছ থেকে মোট জমার পরিমান।'
+            ],
+            [
+                'question' => 'বাকির রিমাইন্ডার কি?',
+                'answer' => 'বাকির রিমাইন্ডার থেকে কাস্টমার আপনাকে কবে বাকি পরিশোধ করবে তা দেখতে পারবেন।'
+            ],
+            [
+                'question' => 'POS থেকে বাকিতে সেল করলে সেটা বাকির খাতায় আসবে কি?',
+                'answer' => 'হ্যাঁ আসবে।'
+            ]
+
+        ];
+    }
+
 }
