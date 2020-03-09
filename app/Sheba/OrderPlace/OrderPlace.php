@@ -374,7 +374,7 @@ class OrderPlace
                 if ($this->jobDiscountHandler->hasDiscount()) $this->jobDiscountHandler->create($job);
                 if ($this->canCreatePartnerOrderRequest()) {
                     $partners = $this->orderRequestAlgorithm->setCustomer($this->customer)->setPartners($this->partnersFromList)->getPartners();
-                    $this->partnerOrderRequestCreator->setPartnerOrder($partner_order)->setPartners($partners->pluck('id')->toArray())->create();
+                    $this->partnerOrderRequestCreator->setPartnerOrder($partner_order)->setPartners($partners->first()->pluck('id')->toArray())->create();
                 }
                 $this->updateVoucherInPromoList($order);
                 if (!$order->location_id) throw new LocationIdNullException("Order #" . $order->id . " has no location id");

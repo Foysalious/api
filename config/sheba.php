@@ -60,12 +60,11 @@ return [
         ['package' => 'LSP', 'badge' => null],
     ],
     'weight_on_partner_list' => [
-        'impression' => 0.1,
-        'capacity' => 0.1,
+        'impression' => 0.2,
+        'capacity' => 0.15,
         'orders' => 0.05,
-        'price' => 0.2,
-        'avg_rating' => 0.5,
-        'total_ratings' => 0.05
+        'avg_rating' => 0.55,
+        'total_ratings' => 0.1
     ],
     'promo_applicable_sales_channels' => ['Web', 'App', 'App-iOS', 'E-Shop', 'Call-Center'],
     'category_colors' => [

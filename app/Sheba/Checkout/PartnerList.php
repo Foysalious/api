@@ -389,7 +389,7 @@ class PartnerList
 
     public function sortByShebaPartnerPriority()
     {
-        $this->partners = (new PartnerSort($this->partners))->get();
+        $this->partners = (new PartnerSort())->setPartners($this->partners)->getSortedPartners();
         if ($this->impressions->needsToDeduct()) $this->impressions->deduct($this->getPartnerIds());
     }
 
