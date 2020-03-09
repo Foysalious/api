@@ -64,21 +64,22 @@ class MonthlyStat
                         'id' => $attendance->id,
                         'checkin_time' => $attendance->checkin_time,
                         'checkout_out' => $attendance->checkout_time,
-                        'staying_time_in_minutes' => $attendance->staying_time_in_minutes .' min',
+                        'staying_time_in_minutes' => $attendance->staying_time_in_minutes . ' min',
                         'status' => $is_weekend_or_holiday ? null : $attendance->status,
                         'note' => $attendance->hasEarlyCheckout() ? $attendance->checkoutAction()->note : null
                     ];
                 }
                 $statistics[$attendance->status]++;
             }
-            if (!$attendance && !$is_weekend_or_holiday) {
+
+            if (!$attendance && !$is_weekend_or_holiday && !$date->eq(Carbon::today())) {
                 if ($this->forOneEmployee) $breakdown_data['is_absent'] = 1;
                 $statistics[Statuses::ABSENT]++;
             }
 
             if ($this->forOneEmployee) $daily_breakdown[] = ['date' => $date->toDateString()] + $breakdown_data;
         }
-
+        
         $remain_days = CarbonPeriod::create($this->timeFrame->end->addDay(), $this->timeFrame->start->endOfMonth());
         foreach ($remain_days as $date) {
             $is_weekend_or_holiday = $this->isWeekend($date, $weekend_day) || $this->isHoliday($date, $dates_of_holidays_formatted) ? 1 : 0;
