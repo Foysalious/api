@@ -20,7 +20,6 @@ class OrderRequestTransformer extends TransformerAbstract
         $order = $request->partnerOrder->order;
         /** @var Job $job */
         $job = $order->lastJob();
-
         return [
             'id' => $request->id,
             'job_id' => $job->id,
@@ -39,7 +38,7 @@ class OrderRequestTransformer extends TransformerAbstract
             'schedule_time_start' => $job->preferred_time_start,
             'schedule_time_end' => $job->preferred_time_end,
             'schedule_at' => Carbon::parse($job->schedule_date . ' ' . $job->preferred_time_end)->timestamp,
-            'created_time' => $request->created_at->format('h:m:s A'),
+            'created_time' => $request->created_at->format('g:i:s A'),
             'total_price' => (double)$request->partnerOrder->calculate()->totalPrice,
             'status' => $request->status,
             'number_of_order' => 1,
