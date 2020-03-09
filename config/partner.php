@@ -61,7 +61,7 @@ return [
         ]
     ],
     'order' => [
-        'request_accept_timer' => 90,
+        'request_accept_time_limit_in_seconds' => 90,
         'show_resource_list' => 0
     ]
 ];
