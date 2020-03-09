@@ -126,8 +126,8 @@ class PartnerOrderRepository
             $schedule_time = explode('-', $schedules->first()->time);
             $subscription = collect([
                 'id' => $subscription_order->id,
-                'customer_name' => $subscription_order->customer->profile->name,
-                'address' => $subscription_order->deliveryAddress->address,
+                'customer_name' => $subscription_order->customer ? $subscription_order->customer->profile->name : '',
+                'address' => $subscription_order->deliveryAddress ? $subscription_order->deliveryAddress->address : '',
                 'location_name' => $subscription_order->location->name,
                 'billing_cycle' => $subscription_order->billing_cycle,
                 'total_orders' => $subscription_order->orders->count(),
