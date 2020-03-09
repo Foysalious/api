@@ -10,6 +10,7 @@ use Sheba\Helpers\HasErrorCodeAndMessage;
 use Sheba\PushNotificationHandler;
 use Sheba\Resource\ResourceTypes;
 use Throwable;
+use App\Repositories\PartnerRepository;
 
 class StatusChanger
 {
@@ -36,7 +37,7 @@ class StatusChanger
     public function checkForError(Request $request)
     {
         $job = $request->job;
-        if (!$request->partner->hasThisResource((int)$request->resource_id, ResourceTypes::HANDYMAN)) {
+        if ($request->resource_id && !$request->partner->hasThisResource((int)$request->resource_id, ResourceTypes::HANDYMAN)) {
             $this->setError(403, "Resource doesn't work for you");
             return;
         }
@@ -56,10 +57,26 @@ class StatusChanger
         $this->checkForError($request);
         if ($this->hasError()) return;
 
+        $partnerRepo = new PartnerRepository($request->partner);
         $job = $request->job;
+        $category_id    = $job->category_id;
+        $date           = $job->schedule_date;
+        $preferred_time = $job->preferred_time;
+        $resources = $partnerRepo->resources(1, $category_id, $date, $preferred_time, $job);
+        if (count($resources) > 0) {
+            $selected_resource = $resources->where('booked_jobs',[])->values()->first();
+            if ($selected_resource == null) {
+                $this->setError(403, "No Available Resource Found");
+                return;
+            }
+        } else {
+            $this->setError(403, "No Available Resource Found");
+            return;
+        }
+        $selected_resource = $selected_resource['id'];
         $this->changeStatus($job, $request, JobStatuses::ACCEPTED);
         if ($this->hasError()) return;
-        $this->changedJob = $this->assignResource($job, $request->resource_id, $request->manager_resource);
+        $this->changedJob = $this->assignResource($job, $selected_resource, $request->manager_resource);
     }
 
     private function assignResource(Job $job, $resource_id, Resource $manager_resource)

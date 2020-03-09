@@ -166,7 +166,7 @@ class PartnerJobController extends Controller
     {
         try {
             $this->validate($request, [
-                'resource_id' => 'required|int'
+                'resource_id' => 'int'
             ]);
 
             $this->jobStatusChanger->acceptJobAndAssignResource($request);
