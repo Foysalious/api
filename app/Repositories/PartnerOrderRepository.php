@@ -152,7 +152,7 @@ class PartnerOrderRepository
                 'schedule_at' => Carbon::parse($schedules->first()->date . ' ' . explode('-', $schedules->first()->time)[0])->timestamp,
                 'schedules' => $subscription_order->getScheduleDates(),
                 'request_accept_timer' => config('partner.order.request_accept_timer'),
-                'is_auto_sp_assign' => config('partner.order.is_auto_sp_assign')
+                'show_resource_list' => config('partner.order.show_resource_list')
             ]);
             $all_partner_orders->push($subscription);
         }
@@ -216,7 +216,7 @@ class PartnerOrderRepository
                     'schedule_time_end' => $job_preferred_time[1],
                     'schedule_at' => Carbon::parse($jobs[0]->schedule_date . ' ' . $job_preferred_time[0])->timestamp,
                     'request_accept_timer' => config('partner.order.request_accept_timer'),
-                    'is_auto_sp_assign' => config('partner.order.is_auto_sp_assign')
+                    'show_resource_list' => config('partner.order.show_resource_list')
                 ]);
 
                 $all_partner_orders->push($order);

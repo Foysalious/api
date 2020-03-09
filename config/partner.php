@@ -62,6 +62,6 @@ return [
     ],
     'order' => [
         'request_accept_timer' => 90,
-        'is_auto_sp_assign' => 0
+        'show_resource_list' => 0
     ]
 ];
