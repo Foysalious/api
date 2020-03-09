@@ -63,5 +63,5 @@ return [
     'order' => [
         'request_accept_timer' => 90,
         'show_resource_list' => 0
-     ]
+    ]
 ];
