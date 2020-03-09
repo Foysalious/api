@@ -37,11 +37,15 @@ class Store
         $store->put($this->getCacheName(), json_encode($this->partners), $this->getExpirationTimeInSeconds());
     }
 
+    /**
+     * @return array|null
+     */
     public function get()
     {
         /** @var Repository $store */
         $store = Cache::store('redis');
-        return $store->get($this->getCacheName());
+        $data = $store->get($this->getCacheName());
+        return $data ? json_decode($data) : null;
     }
 
 
