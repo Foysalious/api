@@ -1,5 +1,6 @@
 <?php namespace Sheba\PartnerList;
 
+use App\Models\Category;
 use App\Models\Partner;
 use App\Sheba\Partner\PartnerAvailable;
 use Carbon\Carbon;
@@ -27,10 +28,24 @@ class PartnerListBuilder implements Builder
     private $partnerIdsToIgnore;
     /** @var Geo */
     private $geo;
+    /** @var array */
+    private $categoryIdsOfMasterCategory;
 
     public function __construct()
     {
         $this->partnerQuery = Partner::query();
+    }
+
+    private function setCategoryIdsOfMasterCategory()
+    {
+        if (count($this->categoryIdsOfMasterCategory) > 0) return;
+        $this->categoryIdsOfMasterCategory = Category::where('parent_id', $this->getCategory()->parent_id)->pluck('id')->toArray();
+    }
+
+    private function getCategoryIdsOfMasterCategory()
+    {
+        $this->setCategoryIdsOfMasterCategory();
+        return $this->categoryIdsOfMasterCategory;
     }
 
     public function checkCategory()
@@ -93,7 +108,7 @@ class PartnerListBuilder implements Builder
             'reviews' => function ($q) {
                 $q->selectRaw("AVG(reviews.rating) as avg_rating")
                     ->selectRaw("count(reviews.id) as total_ratings")
-                    ->selectRaw("reviews.partner_id")->where('reviews.category_id', $this->getCategoryId())->groupBy('reviews.partner_id');
+                    ->selectRaw("reviews.partner_id")->whereIn('reviews.category_id', $this->getCategoryIdsOfMasterCategory())->groupBy('reviews.partner_id');
             }
         ]);
     }
@@ -103,7 +118,8 @@ class PartnerListBuilder implements Builder
     {
         $this->partnerQuery = $this->partnerQuery->with([
             'jobs' => function ($q) {
-                $q->selectRaw("count(case when status in ('Served') and category_id in(" . implode([$this->getCategoryId()], ',') . ") then status end) as total_completed_orders")->groupBy('partner_id');
+                $q->selectRaw("count(case when status in ('Served') and category_id in(" . implode($this->getCategoryIdsOfMasterCategory(), ',') . ") then status end) as total_completed_orders")
+                    ->groupBy('partner_id');
             }
         ]);
     }
@@ -344,7 +360,7 @@ class PartnerListBuilder implements Builder
         $this->partners = $this->partners->map(function ($partner) {
             $partner['total_completed_orders'] = $partner->jobs->first() ? $partner->jobs->first()->total_completed_orders : 0;
             $partner['total_ratings'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_ratings : 0;
-            $partner['avg_rating'] = $partner->reviews->first() ? (int)$partner->reviews->first()->avg_rating : 0;
+            $partner['rating'] = $partner->reviews->first() ? (double)$partner->reviews->first()->avg_rating : 0;
             $partner['total_experts'] = $partner->handymanResources->first() ? (int)$partner->handymanResources->first()->total_experts : 0;
             return $partner;
         });
