@@ -26,10 +26,10 @@ class DueTrackerRepository extends BaseRepository
 
     public function getDueList(Request $request, $paginate = true)
     {
-        $url      = "accounts/$this->accountId/entries/due-list?";
-        $url      = $this->updateRequestParam($request, $url);
+        $url = "accounts/$this->accountId/entries/due-list?";
+        $url = $this->updateRequestParam($request, $url);
         $order_by = $request->order_by;
-        $result   = $this->client->get($url);
+        $result = $this->client->get($url);
         /** @var Collection $list */
         $list = $this->attachProfile(collect($result['data']['list']));
         if ($request->has('balance_type') && in_array($request->balance_type, [
@@ -41,15 +41,16 @@ class DueTrackerRepository extends BaseRepository
         }
         if (!empty($order_by) && $order_by == "name") {
             $order = $request->order == 'desc' ? 'sortBy' : 'sortByDesc';
-            $list  = $list->$order('customer_name')->values();
+            $list = $list->$order('customer_name')->values();
         }
         if ($paginate) {
             list($offset, $limit) = calculatePagination($request);
             $list = $list->slice($offset)->take($limit);
         }
         return [
-            'list'  => $list,
-            'stats' => $result['data']['totals']
+            'list' => $list,
+            'stats' => $result['data']['totals'],
+            'partner' => $this->getPartnerInfo($request->partner)
         ];
     }
 
@@ -58,7 +59,7 @@ class DueTrackerRepository extends BaseRepository
         $order_by = $request->order_by;
         if (!empty($order_by) && $order_by != "name") {
             $order = !empty($request->order) ? strtolower($request->order) : 'desc';
-            $url   .= "&order_by=$order_by&order=$order";
+            $url .= "&order_by=$order_by&order=$order";
         }
         if ($request->has('start_date') && $request->has('end_date')) {
             $url .= "&start=$request->start_date&end=$request->end_date";
@@ -70,11 +71,11 @@ class DueTrackerRepository extends BaseRepository
     {
         $list = $list->map(function ($item) {
             /** @var Profile $profile */
-            $profile                 = Profile::select('name', 'mobile', 'id', 'pro_pic')->find($item['profile_id']);
-            $item['customer_name']   = $profile ? $profile->name : "Unknown";
+            $profile = Profile::select('name', 'mobile', 'id', 'pro_pic')->find($item['profile_id']);
+            $item['customer_name'] = $profile ? $profile->name : "Unknown";
             $item['customer_mobile'] = $profile ? $profile->mobile : null;
-            $item['avatar']          = $profile ? $profile->pro_pic : null;
-            $item['customer_id']     = $profile ? $profile->posCustomer ? $profile->posCustomer->id : null : null;
+            $item['avatar'] = $profile ? $profile->pro_pic : null;
+            $item['customer_id'] = $profile ? $profile->posCustomer ? $profile->posCustomer->id : null : null;
             return $item;
         });
         return $list;
@@ -94,24 +95,56 @@ class DueTrackerRepository extends BaseRepository
             throw new InvalidPartnerPosCustomer();
         /** @var PosCustomer $customer */
         $customer = $partner_pos_customer->customer;
-        $url      = "accounts/$this->accountId/entries/due-list/$customer->profile_id?";
-        $url      = $this->updateRequestParam($request, $url);
-        $result   = $this->client->get($url);
-        $list     = collect($result['data']['list']);
+        $url = "accounts/$this->accountId/entries/due-list/$customer->profile_id?";
+        $url = $this->updateRequestParam($request, $url);
+        $result = $this->client->get($url);
+        $list = collect($result['data']['list']);
+        $total_transactions = count($list);
         list($offset, $limit) = calculatePagination($request);
         $list = $list->slice($offset)->take($limit);
+        $total_credit = 0;
+        $total_debit = 0;
+        foreach ($list as $item) {
+            if ($item['type'] === 'deposit')
+            {
+                $total_debit += $item['amount'];
+            } else {
+                $total_credit += $item['amount'];
+            }
+        }
+
         return [
-            'list'     => $list,
-            'stats'    => $result['data']['totals'],
+            'list' => $list,
+            'stats' => $result['data']['totals'],
             'customer' => [
-                'id'                => $customer->id,
-                'name'              => $customer->profile->name,
-                'mobile'            => $customer->profile->mobile,
-                'avatar'            => $customer->profile->pro_pic,
+                'id' => $customer->id,
+                'name' => $customer->profile->name,
+                'mobile' => $customer->profile->mobile,
+                'avatar' => $customer->profile->pro_pic,
                 'due_date_reminder' => $partner_pos_customer->due_date_reminder
+            ],
+            'partner' => $this->getPartnerInfo($partner),
+            'other_info' => [
+                'total_transactions' => $total_transactions,
+                'total_credit' => $total_credit,
+                'total_debit' => $total_debit,
             ]
         ];
     }
+
+    /**
+     * @param $partner
+     * @return array
+     */
+    private function getPartnerInfo($partner)
+    {
+        return [
+            'name' => $partner->name,
+            'avatar' => $partner->logo,
+            'mobile' => $partner->mobile,
+        ];
+    }
+
 
     /**
      * @param Partner $partner
@@ -129,20 +162,20 @@ class DueTrackerRepository extends BaseRepository
         /** @var PosCustomer $customer */
         $customer = $partner_pos_customer->customer;
         $this->setModifier($partner);
-        $data     = $this->createStoreData($request);
+        $data = $this->createStoreData($request);
         $response = $this->client->post("accounts/$this->accountId/entries/due-store/$customer->profile_id", $data);
         return $response['data'];
     }
 
     private function createStoreData(Request $request)
     {
-        $data['created_from']   = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
-        $data['amount']         = (double)$request->amount;
-        $data['note']           = $request->note;
+        $data['created_from'] = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
+        $data['amount'] = (double)$request->amount;
+        $data['note'] = $request->note;
         $data['amount_cleared'] = $request->type == "due" ? 0 : (double)$request['amount'];
-        $data['head_name']      = AutomaticIncomes::DUE_TRACKER;
-        $data['created_at']     = $request->created_at ?: Carbon::now()->format('Y-m-d H:s:i');
-        $data['attachments']    = $this->uploadAttachments($request);
+        $data['head_name'] = AutomaticIncomes::DUE_TRACKER;
+        $data['created_at'] = $request->created_at ?: Carbon::now()->format('Y-m-d H:s:i');
+        $data['attachments'] = $this->uploadAttachments($request);
         return $data;
     }
 
@@ -165,18 +198,18 @@ class DueTrackerRepository extends BaseRepository
      */
     public function generateDueReminders(array $list, Partner $partner)
     {
-        $response['today']    = [];
+        $response['today'] = [];
         $response['previous'] = [];
-        $response['next']     = [];
+        $response['next'] = [];
         foreach ($list['list'] as $item) {
             $partner_pos_customer = PartnerPosCustomer::byPartnerAndCustomer($partner->id, $item['customer_id'])->first();
-            $due_date_reminder    = $partner_pos_customer['due_date_reminder'];
+            $due_date_reminder = $partner_pos_customer['due_date_reminder'];
             if ($partner_pos_customer && $due_date_reminder) {
-                $temp['customer_name']     = $item['customer_name'];
-                $temp['customer_id']       = $item['customer_id'];
-                $temp['profile_id']        = $item['profile_id'];
-                $temp['phone']             = $partner_pos_customer->details()['phone'];
-                $temp['balance']           = $item['balance'];
+                $temp['customer_name'] = $item['customer_name'];
+                $temp['customer_id'] = $item['customer_id'];
+                $temp['profile_id'] = $item['profile_id'];
+                $temp['phone'] = $partner_pos_customer->details()['phone'];
+                $temp['balance'] = $item['balance'];
                 $temp['due_date_reminder'] = $due_date_reminder;
                 if (Carbon::parse($due_date_reminder)->format('d-m-Y') == Carbon::parse(Carbon::today())->format('d-m-Y')) {
                     array_push($response['today'], $temp);
@@ -230,6 +263,7 @@ class DueTrackerRepository extends BaseRepository
         }
         return $response;
     }
+
     /**
      * @param $entry_id
      * @return mixed
@@ -244,9 +278,9 @@ class DueTrackerRepository extends BaseRepository
      * @param $profile_id
      * @throws ExpenseTrackingServerError
      */
-    public function removeCustomer( $profile_id)
+    public function removeCustomer($profile_id)
     {
-        $url        = "accounts/$this->accountId/remove/$profile_id";
+        $url = "accounts/$this->accountId/remove/$profile_id";
         $this->client->delete($url);
 
     }

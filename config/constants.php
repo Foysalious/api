@@ -1,5 +1,6 @@
 <?php
 return [
+    'smanager_logo' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner_assets/assets/images/logo/smanager-44-44-px.png',
     'PARTNER_SHOWABLE_PACKAGE' => [1, 2, 3, 4],
     'AFFILIATE_VIDEO_LINK'                        => '',
     'STARTING_YEAR'                               => '2017',

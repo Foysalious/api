@@ -48,8 +48,9 @@
             font-family: 'Mukti','Roboto',sans-serif;
         }
 
-        th {
-            padding: 10px;
+        .table td {
+            text-align: center;
+            padding: 0px 10px;
         }
 
         .table-head {
@@ -60,6 +61,8 @@
         .table-head th {
             font-family: 'Mukti','Roboto',sans-serif;
             font-weight: normal;
+            padding: 0px 10px;
+            text-align: center;
         }
         @page {
             margin: 40px;
@@ -108,43 +111,88 @@
             line-height: 1.5cm;
             width: 120px;
         }
+        .timeline {
+            text-align: center;
+            padding: 10px;
+            background-color: #F5F5F5;
+            margin: 5px 0;
+        }
     </style>
 </head>
 <body align="center">
+<?php $today = \Carbon\Carbon::today()->format('h:i A');?>
 <div>
     <table style="width: 100%">
         <tr>
-            <td style="width: 50%">Name: {{ $customer["name"]}}</td>
-            <td style="width: 50%">Mobile Number: {{ $customer["mobile"]}}</td>
+            <td style="width: 50%;text-align: left">
+                <img style="width: auto;height: 50px" src="{{ $partner["avatar"] }}" alt="log">
+                <p><i class="fa fa-phone" aria-hidden="true"></i>{{$partner["mobile"]}}</p>
+            </td>
+            <td style="width: 50%;text-align: right">
+                <img src={{ config('constants.smanager_logo') }} alt="">
+                <p style="color: white"><i class="fa fa-phone" aria-hidden="true"></i>{{$partner["mobile"]}}</p>
+            </td>
+
         </tr>
     </table>
+    @if($start_date && $end_date)
     <table style="width: 100%">
         <tr>
-            <td>Total Due: {{ $stats["due"]}} TK</td>
+            <td>
+                <div class="timeline">
+                   <p style="margin-bottom: 0;">Transaction deadline: {{ date('d-m-Y', strtotime($start_date)) }} -- {{ date('d-m-Y', strtotime($end_date))}}</p>
+                </div>
+            </td>
+        </tr>
+    </table>
+    @endif
+    <table style="width: 100%;line-height: 1">
+        <tr>
+            <td style="width: 70%"> Customer name: {{ $customer["name"]}}</td>
+            <td style="width: 30%">Number of Transactions: {{$other_info["total_transactions"]}}</td>
+        </tr>
+    </table>
+    <table style="width: 100%;line-height: 1">
+        <tr>
+            <td style="width: 70%">Total credits: <span style="color: #219653">{{$other_info["total_credit"]}} tk</span></td>
+            <td style="width: 30%">Total debits: <span style="color: #DC1E1E">{{$other_info["total_debit"]}} tk</span></td>
+        </tr>
+    </table>
+    <table style="width: 100%;line-height: 1">
+        <tr>
+            <td style="width: 70%">Date: {{ date("d-m-Y, h:i:s a") }}</td>
         </tr>
     </table>
     <table class="table table-bordered">
         <thead>
         <tr class="table-head">
-            <th>Due</th>
-            <th>Cleared</th>
-            <th>Original</th>
-            <th>Head</th>
-            <th>transaction Type</th>
-            <th>Type</th>
+            <th>No</th>
+            <th>Date</th>
+            <th>Description</th>
+            <th>Credit</th>
+            <th>Debit</th>
         </tr>
         </thead>
         <tbody>
-        @foreach($list as $item)
+            @foreach($list as $key=>$item)
             <tr>
-                <td>{{number_format((float)$item['amount'],2)}} TK</td>
-                <td>{{number_format((float)$item['amount_cleared'],2)}} TK</td>
-                <td>{{number_format((float)$item['original_amount'],2)}} TK</td>
+                <td>{{++$key}}</td>
+                <td>{{date('d-m-Y', strtotime($item['created_at'])) }}</td>
                 <td>{{$item['head']}}</td>
-                <td>{{$item['transaction_type']}}</td>
-                <td>{{$item['type']}}</td>
+                @if($item['type'] === 'deposit')
+                    <td style="color: #219653">0</td>
+                    <td style="color: #DC1E1E">{{$item['amount'] }}</td>
+                    @else
+                    <td style="color: #219653">{{$item['amount'] }}</td>
+                    <td style="color: #DC1E1E">0</td>
+                @endif
             </tr>
         @endforeach
+            <tr>
+                <td style="text-align: right" colspan="3">Total</td>
+                <td style="color: #219653">{{$other_info["total_credit"]}}</td>
+                <td style="color: #DC1E1E">{{$other_info["total_debit"]}}</td>
+            </tr>
         </tbody>
     </table>
 </div>
