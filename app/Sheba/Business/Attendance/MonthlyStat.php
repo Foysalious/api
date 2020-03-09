@@ -64,6 +64,7 @@ class MonthlyStat
                         'id' => $attendance->id,
                         'checkin_time' => $attendance->checkin_time,
                         'checkout_out' => $attendance->checkout_time,
+                        'staying_time_in_minutes' => $attendance->staying_time_in_minutes .' min',
                         'status' => $is_weekend_or_holiday ? null : $attendance->status,
                         'note' => $attendance->hasEarlyCheckout() ? $attendance->checkoutAction()->note : null
                     ];
