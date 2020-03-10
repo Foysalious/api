@@ -45,8 +45,18 @@ class AnnouncementController extends Controller
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
         $announcements = new Collection($announcements, new AnnouncementTransformer());
-        $announcements = $manager->createData($announcements)->toArray()['data'];
-        return api_response($request, $announcements, 200, ['announcements' => $announcements]);
+        $announcements = collect($manager->createData($announcements)->toArray()['data']);
+        if ($request->has('status')) {
+            $announcements = $announcements->filter(function ($announcement) use ($request) {
+                return $announcement['status'] == $request->status;
+            });
+        }
+        $totalAnnouncements = $announcements->count();
+        #if ($request->has('limit')) $announcements = $announcements->splice($offset, $limit);
+        return api_response($request, $announcements, 200, [
+            'announcements' => $announcements,
+            'totalAnnouncements' => $totalAnnouncements
+        ]);
     }
 
     public function store($business, Request $request, Creator $creator, AccessControl $access_control)
@@ -59,7 +69,7 @@ class AnnouncementController extends Controller
         ]);
         $this->setModifier($request->business_member);
         if (!$access_control->setBusinessMember($request->business_member)->hasAccess('announcement.rw')) return api_response($request, null, 403);
-        $announcement = $creator->setBusiness($request->business)->setTitle($request->title)->setEndDate(Carbon::parse($request->end_date.' 23:59:59')->toDateTimeString())
+        $announcement = $creator->setBusiness($request->business)->setTitle($request->title)->setEndDate(Carbon::parse($request->end_date . ' 23:59:59')->toDateTimeString())
             ->setShortDescription($request->description)->setType($request->type)
             ->create();
         return api_response($request, $announcement, 200, ['id' => $announcement->id]);
