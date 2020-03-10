@@ -19,13 +19,13 @@ class ScheduleTimeController extends Controller
     {
         try {
             $this->validate($request, [
-                'for' => 'sometimes|required|string|in:app',
+                'for' => 'sometimes|required|string|in:app,eshop',
                 'category' => 'sometimes|required|numeric',
                 'partner' => 'sometimes|required|numeric',
                 'limit' => 'sometimes|required|numeric:min:1'
             ]);
             if ($request->has('category') && $request->has('partner')) {
-                $dates = $partnerSchedule->setPartner($request->partner)->setCategory($request->category);
+                $dates = $partnerSchedule->setPartner($request->partner)->setCategory($request->category)->setFor($request->for);
                 $dates = $request->has('limit') ? $dates->get($request->limit) : $dates->get();
                 return api_response($request, $dates, 200, ['dates' => $dates]);
             }

@@ -53,10 +53,8 @@ class AvailableMethods
     private static function getRegularPayments($version_code, $platform_name)
     {
         return [
-            self::shebaCredit(),
-            self::bkash(),
-            self::cbl($version_code, $platform_name),
-            self::ssl()
+
+            self::shebaCredit(), self::bkash(), self::cbl($version_code, $platform_name), self::ssl()
         ];
     }
 
@@ -66,11 +64,9 @@ class AvailableMethods
     private static function shebaCredit()
     {
         return [
-            'name'         => 'Sheba Credit',
-            'is_published' => 1,
-            'description'  => '',
-            'asset'        => 'sheba_credit',
-            'method_name'  => 'wallet'
+
+            'name' => 'Sheba Credit', 'is_published' => 1, 'description' => '', 'asset' => 'sheba_credit', 'method_name' => 'wallet'
+
         ];
     }
 
@@ -80,11 +76,9 @@ class AvailableMethods
     private static function bkash()
     {
         return [
-            'name'         => 'bKash',
-            'is_published' => 1,
-            'description'  => '',
-            'asset'        => 'bkash',
-            'method_name'  => 'bkash'
+
+            'name' => 'bKash', 'is_published' => 1, 'description' => 'Get 10% cashback', 'asset' => 'bkash', 'method_name' => 'bkash'
+
         ];
     }
 
@@ -96,18 +90,15 @@ class AvailableMethods
     private static function cbl($version_code, $platform_name)
     {
         return [
-            'name'         => 'City Bank',
-            'is_published' => self::getCblStatus($version_code, $platform_name),
-            'description'  => '',
-            'asset'        => 'cbl',
-            'method_name'  => 'cbl'
+            'name' => 'City Bank', 'is_published' => self::getCblStatus($version_code, $platform_name), 'description' => '', 'asset' => 'cbl', 'method_name' => 'cbl'
         ];
     }
 
+
     private static function getCblStatus($version_code, $platform_name)
     {
-        if (!$version_code)
-            return 1;
+        if (!$version_code) return 1;
+
         return $platform_name && $platform_name == 'ios' ? 1 : ($version_code > 30112 ? 1 : 0);
     }
 
@@ -117,78 +108,21 @@ class AvailableMethods
     private static function ssl()
     {
         return [
-            'name'         => 'Other Debit/Credit',
-            'is_published' => 1,
-            'description'  => '',
-            'asset'        => 'ssl',
-            'method_name'  => 'online'
+            'name' => 'Other Debit/Credit', 'is_published' => 1, 'description' => '', 'asset' => 'ssl', 'method_name' => 'online'
         ];
     }
 
     private static function getSubscriptionPayments($version_code, $platform_name)
     {
         return [
-            self::shebaCredit(),
-            self::cbl($version_code, $platform_name),
-            self::bkash(),
-            self::ssl()
+            self::shebaCredit(), self::cbl($version_code, $platform_name), self::bkash(), self::ssl()
         ];
     }
 
     private static function getVoucherPayments($version_code, $platform_name)
     {
         return [
-            self::cbl($version_code, $platform_name),
-            self::ssl()
-        ];
-    }
-
-    private static function getTicketsPayments($version_code, $platform_name)
-    {
-        if (isset(\request()->type) && \request()->type === 'customer') {
-            return [
-                self::shebaCredit(),
-                self::cbl($version_code, $platform_name),
-                self::bkash(),
-                self::ssl()
-            ];
-        } else if (isset(\request()->type) && \request()->type !== 'customer') {
-            return [self::shebaCredit()];
-        } else {
-            return [
-                self::shebaCredit(),
-                self::cbl($version_code, $platform_name),
-                self::bkash(),
-                self::ssl()
-            ];
-        }
-    }
-
-    private static function getBusinessPayments($version_code, $platform_name)
-    {
-        return [
-            self::bkash(),
-            self::cbl($version_code, $platform_name),
-            self::ssl()
-        ];
-    }
-
-    private static function getUtilityPayments($version_code, $platform_name)
-    {
-        return [
-            self::shebaCredit(),
-            self::bkash(),
-            self::cbl($version_code, $platform_name),
-            self::ssl()
-        ];
-    }
-
-    private static function getPaymentLinkPayments($version_code, $platform_name)
-    {
-        return [
-            self::bkash(),
-            self::cbl($version_code, $platform_name),
-            self::ssl()
+            self::cbl($version_code, $platform_name), self::ssl()
         ];
     }
 
@@ -202,14 +136,51 @@ class AvailableMethods
         ];
     }
 
+
+    private static function getTicketsPayments($version_code, $platform_name)
+    {
+        if (isset(\request()->type) && \request()->type === 'customer') {
+            return [
+                self::shebaCredit(), self::cbl($version_code, $platform_name), self::bkash(), self::ssl()
+            ];
+        } else if (isset(\request()->type) && \request()->type !== 'customer') {
+            return [self::shebaCredit()];
+        } else {
+            return [
+                self::shebaCredit(), self::cbl($version_code, $platform_name), self::bkash(), self::ssl()
+            ];
+        }
+    }
+
+    private static function getBusinessPayments($version_code, $platform_name)
+    {
+        return [
+            self::bkash(), self::cbl($version_code, $platform_name), self::ssl()
+        ];
+    }
+
+    private static function getUtilityPayments($version_code, $platform_name)
+    {
+        return [
+            self::shebaCredit(), self::bkash(), self::cbl($version_code, $platform_name), self::ssl()
+        ];
+    }
+
+    private static function getPaymentLinkPayments($version_code, $platform_name)
+    {
+        return [
+            self::bkash(), self::cbl($version_code, $platform_name), self::ssl()
+        ];
+    }
+
     private static function okWallet()
     {
         return [
-            'name'         => 'Ok Wallet',
+            'name' => 'Ok Wallet',
             'is_published' => 1,
-            'description'  => '',
-            'asset'        => 'ok_wallet',
-            'method_name'  => 'ok_wallet'
+            'description' => '',
+            'asset' => 'ok_wallet',
+            'method_name' => 'ok_wallet'
         ];
     }
 }

@@ -101,13 +101,13 @@ class OrderAdapter extends BaseAdapter implements PayableAdapter
     private function getSuccessUrl()
     {
         if ($this->userType == "App\\Models\\Business") return config('sheba.business_url') . "/dashboard/orders/" . $this->partnerOrder->id;
-        else return config('sheba.front_url') . '/orders/' . $this->partnerOrder->getActiveJob()->id;
+        else return config('sheba.front_url') . '/orders/' . $this->partnerOrder->order_id . '/payment';
     }
 
     private function getFailUrl()
     {
         if ($this->userType == "App\\Models\\Business") return config('sheba.business_url');
-        else return config('sheba.front_url');
+        else return config('sheba.front_url') . '/orders/' . $this->partnerOrder->order_id . '/payment';
     }
 
     private function resolveEmiMonth(Payable $payable)

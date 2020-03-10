@@ -30,6 +30,7 @@ use Sheba\Transport\Bus\Repositories\TransportTicketOrdersRepository;
 use Sheba\Transport\Bus\Response\BusTicketResponse;
 use Sheba\Transport\Bus\Vendor\VendorFactory;
 use Sheba\Transport\Exception\TransportException;
+use Sheba\Transport\TransportAgent;
 use Sheba\Voucher\DTO\Params\CheckParamsForTransport;
 use Sheba\Voucher\PromotionList;
 use Sheba\Voucher\VoucherSuggester;
@@ -353,20 +354,22 @@ class BusTicketController extends Controller
     public function pay(Request $request, TransportTicketOrdersRepository $ticket_order_repo)
     {
         try {
-            $this->validate($request, ['payment_method' => 'required|string|in:online,bkash,wallet,cbl', 'order_id' => 'required']);
+            $this->validate($request, [
+                'payment_method' => 'required|string|in:online,bkash,wallet,cbl',
+                'order_id' => 'required'
+            ]);
+
+            /** @var TransportAgent $agent */
             $agent = $this->getAgent($request);
             $this->setModifier($agent);
 
-            if ($request->payment_method == "wallet" && $agent->wallet < (double)$request->amount) {
+            if ($request->payment_method == "wallet" && $agent->shebaCredit() < (double)$request->amount) {
                 return api_response($request, null, 403, ['message' => "You don't have sufficient balance to buy this ticket."]);
             }
 
             $order = $ticket_order_repo->findById($request->order_id)->calculate();
             $payment = $this->getPayment($request->payment_method, $order);
-            if ($payment) {
-                // $link = $payment->redirect_url;
-                $payment = $payment->getFormattedPayment();
-            }
+            if ($payment) $payment = $payment->getFormattedPayment();
 
             return api_response($request, null, 200, ['payment' => $payment]);
         } catch (ValidationException $e) {

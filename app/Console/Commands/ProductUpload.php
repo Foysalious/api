@@ -1,21 +1,13 @@
-<?php
-
-namespace App\Console\Commands;
+<?php namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-
 use App\Models\Service;
 use Excel;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 
 class ProductUpload extends Command
 {
-
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
     /**
      * The name and signature of the console command.
      *
@@ -32,50 +24,61 @@ class ProductUpload extends Command
 
     /**
      * Execute the console command.
-     *
-     * @return mixed
      */
     public function handle()
     {
-        $services = Service::where('publication_status', 1)->get();
-        foreach ($services as $service) {
-            $calculated_service = Service::with(['partners' => function ($q) {
-                $q->where([
-                    ['is_published', 1],
-                    ['is_verified', 1]
-                ])->whereHas('locations', function ($query) {
-                    $query->where('id', 4);
-                });
-            }])->where('id', $service->id)->first();
+        $services = $this->getServices()->map(function (Service $service) {
+            return $this->addStartPriceToService($service);
+        });
 
-            $partners = $calculated_service->partners;
-            if (count($partners) > 0) {
-                if ($service->variable_type == 'Options') {
-                    $price = array();
-                    foreach ($partners as $partner) {
-                        $min = min((array)json_decode($partner->pivot->prices));
-                        array_push($price, (float)$min);
-                    }
-                    array_add($service, 'start_price', min($price));
-                } elseif ($service->variable_type == 'Fixed') {
-                    $price = array();
-                    foreach ($partners as $partner) {
-                        array_push($price, (float)$partner->pivot->prices);
-                    }
-                    array_add($service, 'start_price', min($price));
-                }
-                array_forget($service, 'partners');
+        $filename = 'products.csv';
+        Storage::disk('s3')->put("uploads/product_feeds/$filename", $this->makeCsv($services, $filename), 'public');
+    }
+
+    /**
+     * @return Collection
+     */
+    private function getServices()
+    {
+        return Service::published()->with(['partners' => function ($q) {
+            $q->where([
+                ['is_published', 1],
+                ['is_verified', 1]
+            ])->whereHas('locations', function ($query) {
+                $query->where('id', 4);
+            });
+        }])->get();
+    }
+
+    private function addStartPriceToService(Service $service)
+    {
+        $partners = $service->partners;
+        if (count($partners) == 0) return $service;
+
+        $partner_prices = [];
+        if ($service->isOptions()) {
+            foreach ($partners as $partner) {
+                $partner_prices[] = (float)min(json_decode($partner->pivot->prices, true));
+            }
+        } elseif ($service->isFixed()) {
+            foreach ($partners as $partner) {
+                $partner_prices[] = (float)$partner->pivot->prices;
             }
         }
-        $filename = 'products.csv';
-        $a = Excel::create($filename, function ($excel) use ($services, $filename) {
+
+        $service->start_price = min($partner_prices);
+        unset($service->partners);
+        return $service;
+    }
+
+    private function makeCsv($services, $filename)
+    {
+        return Excel::create($filename, function ($excel) use ($services, $filename) {
             $excel->setTitle($filename);
             $excel->setCreator('Sheba')->setCompany('Sheba');
             $excel->sheet('Order', function ($sheet) use ($services) {
                 $sheet->loadView('excels.products')->with('services', $services);
             });
         })->string('csv');
-        $s3 = Storage::disk('s3');
-        $s3->put('uploads/product_feeds/' . $filename, $a, 'public');
     }
 }

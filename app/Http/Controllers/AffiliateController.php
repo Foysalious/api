@@ -272,14 +272,15 @@ class AffiliateController extends Controller
             $sort_order = $request->get('sort_order');
 
             list($offset, $limit) = calculatePagination($request);
-//            if (empty($range)) {
-//                $query[] = $this->allAgents($request->affiliate);
-//            }
+            /**
+             * if (empty($range)) {
+                $query[] = $this->allAgents($request->affiliate);
+            }
 
-//            $query[] = Affiliate::agentsWithFilter($request, 'affiliations')->get()->toArray();
-//            $query[] = Affiliate::agentsWithFilter($request, 'partner_affiliations')->get()->toArray();
-//
-//            $agents = $this->mapAgents($query)->where('ambassador_id', $affiliate->id);
+            $query[] = Affiliate::agentsWithFilter($request, 'affiliations')->get()->toArray();
+            $query[] = Affiliate::agentsWithFilter($request, 'partner_affiliations')->get()->toArray();
+
+            $agents = $this->mapAgents($query)->where('ambassador_id', $affiliate->id);*/
 
             $agents = collect(DB::select('SELECT 
     affiliates.id,
@@ -797,6 +798,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             $details                 = $manager->createData($resource)->toArray()['data'];
             $details['is_verified']  = $is_verified;
             $details['member_since'] = $member_since;
+//            $details['since'] = timeAgo($affiliate->created_at);
             return api_response($request, null, 200, ['data' => $details]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);

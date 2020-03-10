@@ -41,7 +41,7 @@ class PaymentByBonusAndWallet
         $this->payFromWallet = $amount - $this->payFromBonus;
 
         $bonus_deduction_log = "$this->payFromBonus CREDIT has been deducted for subscription package change";
-        if ($this->payFromBonus) $this->bonus->deduct($this->payFromBonus, $bonus_deduction_log);
+        if ($this->payFromBonus) $this->bonus->setLog($bonus_deduction_log)->deduct($this->payFromBonus);
         if ($this->payFromWallet) {
             $log = str_replace("%d", $this->payFromWallet, $log);
             $partner_order = $this->spentOn instanceof PartnerOrder ? $this->spentOn : null;

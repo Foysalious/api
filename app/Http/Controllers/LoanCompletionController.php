@@ -53,6 +53,7 @@ class LoanCompletionController extends Controller
 
             return api_response($request, $completion, 200, ['completion' => $completion]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

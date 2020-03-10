@@ -22,6 +22,8 @@ class Auth
 
     public function authenticate()
     {
-        return $this->authentication->setAuthenticateRequest($this->request)->authenticate();
+        /** @var Authentication $authentication */
+        $authentication = $this->authentication->setAuthenticateRequest($this->request);
+        return $authentication->authenticate();
     }
 }

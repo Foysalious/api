@@ -208,14 +208,15 @@ class ProcurementController extends Controller
             $this->validate($request, [
                 'partners' => 'required|string',
             ]);
+
             $partners = Partner::whereIn('id', json_decode($request->partners))->get();
             $business = $request->business;
             $procurement = $procurementRepository->find($procurement);
             $this->setModifier($request->business_member);
             foreach ($partners as $partner) {
                 /** @var Partner $partner */
-                $sms->shoot($partner->getManagerMobile(), "You have been invited to serve" . $business->name);
-                $creator->setProcurement($procurement)->setPartner($partner)->create();
+                $procurement_invitation = $creator->setProcurement($procurement)->setPartner($partner)->create();
+                $sms->shoot($partner->getManagerMobile(), "You have been invited to serve $business->name. Now go to this link-" . config('sheba.partners_url') . "/v3/rfq-invitations/$procurement_invitation->id");
             }
             return api_response($request, null, 200);
         } catch (ValidationException $e) {
@@ -398,11 +399,9 @@ class ProcurementController extends Controller
             'company_evaluation' => $company_evaluation ? $company_evaluation->fields ? $company_evaluation->fields : null : null,
         ];
 
-        // dd($procurement_details);
-        // return view('pdfs.procurement_details', compact('procurement_details'));
 
         return App::make('dompdf.wrapper')
             ->loadView('pdfs.procurement_details', compact('procurement_details'))
-                ->download("procurement_details.pdf");
+            ->download("procurement_details.pdf");
     }
 }

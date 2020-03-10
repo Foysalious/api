@@ -1,16 +1,13 @@
 <?php
 
-
 namespace Sheba\Loan\Exceptions;
-
 
 use Throwable;
 
-class InvalidStatusTransaction extends \Exception
+class InvalidStatusTransaction extends LoanException
 {
-        public function __construct($message = "", $code = 0, Throwable $previous = null)
-        {
-            if (empty($message)) $message="You can not transact to this status from here";
-            parent::__construct($message, $code, $previous);
-        }
+    public function __construct($message = "You can not transact to this status from here", $code = 0, Throwable $previous = null)
+    {
+        parent::__construct($message, $code, $previous);
+    }
 }

@@ -30,9 +30,10 @@ class Creator
 
     public function create()
     {
-        $this->procurementInvitationRepository->create([
+        $procurement_invitation = $this->procurementInvitationRepository->create([
             'partner_id' => $this->partner->id,
             'procurement_id' => $this->procurement->id,
         ]);
+        return $procurement_invitation;
     }
 }

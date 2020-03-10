@@ -1,7 +1,4 @@
-<?php
-
-namespace App\Jobs;
-
+<?php namespace App\Jobs;
 
 use App\Models\Partner;
 use Illuminate\Contracts\Queue\ShouldQueue;

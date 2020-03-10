@@ -105,7 +105,7 @@ class Route
             $api->get('settings/car', 'HomePageSettingController@getCar');
             $api->get('home-grids', 'HomeGridController@index');
             $api->group(['prefix' => 'category-groups'], function ($api) {
-                $api->get('', 'CategoryGroupController@index');
+                $api->get('/', 'CategoryGroupController@index');
                 $api->group(['prefix' => '{id}'], function ($api) {
                     $api->get('', 'CategoryGroupController@show');
                 });
@@ -123,14 +123,6 @@ class Route
                 });
             });
             (new BusinessRoute())->set($api);
-            $api->group(['prefix' => 'categories'], function ($api) {
-                $api->group(['prefix' => '{id}'], function ($api) {
-                    $api->get('', 'CategoryController@show');
-                    $api->get('services', 'CategoryController@getServices');
-                    $api->get('reviews', 'CategoryController@getReviews');
-                    $api->get('locations/{location}/partners', 'CategoryController@getPartnersOfLocation');
-                });
-            });
             $api->group(['prefix' => 'services'], function ($api) {
                 $api->get('', 'ServiceController@index');
             });

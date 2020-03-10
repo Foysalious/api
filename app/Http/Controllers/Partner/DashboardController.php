@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Redis;
 use Sheba\Analysis\PartnerPerformance\PartnerPerformance;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
 use Sheba\Helpers\TimeFrame;
+use Sheba\Location\LocationSetter;
 use Sheba\Manager\JobList;
 use Sheba\ModificationFields;
 use Sheba\Partner\HomePageSetting\CacheManager;
@@ -28,7 +29,7 @@ use Throwable;
 
 class DashboardController extends Controller
 {
-    use ModificationFields;
+    use ModificationFields, LocationSetter;
 
     private $partnerRepo;
 
@@ -44,7 +45,36 @@ class DashboardController extends Controller
                 ->where('portal_name', 'manager-app')
                 ->where('screen', 'home')
                 ->get();
-            $slide = !$slider_portal->isEmpty() ? $slider_portal->last()->slider->slides->last() : null;
+
+            $slides_query = !$slider_portal->isEmpty() ? $slider_portal->last()->slider->slides()->where('location_id', $this->location)->orderBy('id', 'desc') : null;
+            $slide = null;
+            $all_slides = $slides_query ? $slides_query->get() : null;
+            $videos = [];
+            if($all_slides && !$all_slides->isEmpty()) {
+                foreach ($all_slides as $key => $item) {
+                    if ($item && json_decode($item->video_info)) {
+                        if ($key == 0) $slide = $item;
+                        array_push($videos, json_decode($item->video_info));
+                    }
+                }
+            }
+
+            $screens = ['payment_link','pos','inventory','referral','due'];
+            $slides = [];
+            $details = [];
+            foreach ($screens as $screen) {
+                $slider_portals[$screen] = SliderPortal::with('slider.slides')
+                    ->where('portal_name', 'manager-app')
+                    ->where('screen', $screen)
+                    ->get();
+                $slides[$screen] = !$slider_portals[$screen]->isEmpty() ? $slider_portals[$screen]->last()->slider->slides->last() : null;
+
+                if ($slides[$screen] && json_decode($slides[$screen]->video_info)) {
+                    $details[$screen] = json_decode($slides[$screen]->video_info);
+                } else
+                    $details[$screen] = null;
+            }
+
             $performance->setPartner($partner)->setTimeFrame((new TimeFrame())->forCurrentWeek())->calculate();
             $performanceStats = $performance->getData();
 
@@ -157,6 +187,31 @@ class DashboardController extends Controller
                 'has_kyc_profile_completed' => $this->getSpLoanInformationCompletion($partner, $request),
                 'has_pos_due_order' => $total_due_for_pos_orders > 0 ? 1 : 0,
                 'has_pos_paid_order' => $has_pos_paid_order,
+
+                'home_videos' => $videos ? $videos : null,
+                'feature_videos' => [
+                    [
+                        'key' => 'payment_link',
+                        'details' => $details['payment_link']
+                    ],
+                    [
+                        'key' => 'pos',
+                        'details' => $details['pos']
+                    ],
+                    [
+                        'key' => 'inventory',
+                        'details' => $details['inventory']
+                    ],
+                    [
+                        'key' => 'referral',
+                        'details' => $details['referral']
+                    ],
+                    [
+                        'key' => 'due',
+                        'details' => $details['due']
+                    ]
+                ],
+                'has_qr_code' => ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0
             ];
 
             if (request()->hasHeader('Portal-Name'))

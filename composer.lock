@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "da81118c5d894c9e7c4b64ca9f4763b5",
+    "content-hash": "cde5dd8fa49396c20c1b5294bc20ade4",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -818,6 +818,7 @@
                 "laravel",
                 "react"
             ],
+            "abandoned": true,
             "time": "2018-02-01T20:14:01+00:00"
         },
         {
@@ -2007,6 +2008,7 @@
                 "cron",
                 "schedule"
             ],
+            "abandoned": "dragonmantank/cron-expression",
             "time": "2017-01-23T04:29:33+00:00"
         },
         {
@@ -3099,8 +3101,8 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
-                "reference": "5d4bdd67b536bc1d42997c6f384ea9041b9c7c6a"
+                "url": "https://mac_pasha@bitbucket.org/startern/sheba_dal.git",
+                "reference": "fa84a266b82363624efd8377b0435da9b03e2ebc"
             },
             "require": {
                 "php": ">=5.4"
@@ -3127,15 +3129,15 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2020-01-06T06:10:16+00:00"
+            "time": "2020-02-18T13:24:41+00:00"
         },
         {
             "name": "sheba/notification",
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_notification.git",
-                "reference": "dc29747984b6a69e6959e5de551d37a43105922d"
+                "url": "https://mac_pasha@bitbucket.org/startern/sheba_notification.git",
+                "reference": "7ced22baac9f0a7cda1f3f20c726885d33982d4a"
             },
             "require": {
                 "php": ">=5.4"
@@ -3159,14 +3161,14 @@
                 }
             ],
             "description": "Sheba notifications.",
-            "time": "2019-11-18T06:00:36+00:00"
+            "time": "2020-02-13T09:08:21+00:00"
         },
         {
             "name": "sheba/report",
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_report.git",
+                "url": "https://mac_pasha@bitbucket.org/startern/sheba_report.git",
                 "reference": "548e3494488c089f2a5b6e0b43ccbb0882a70f7d"
             },
             "require": {
@@ -3195,7 +3197,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_sms.git",
+                "url": "https://mac_pasha@bitbucket.org/startern/sheba_sms.git",
                 "reference": "78a5bcc7f9f19bbbae0422fc9bf9016715d8edd6"
             },
             "require": {
@@ -3224,7 +3226,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_voucher.git",
+                "url": "https://mac_pasha@bitbucket.org/startern/sheba_voucher.git",
                 "reference": "35da8856f9d4918614ce686df316fee6c176a1e2"
             },
             "require": {

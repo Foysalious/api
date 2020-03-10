@@ -6,17 +6,26 @@ use App\Models\Business;
 use App\Models\BusinessTrip;
 use App\Models\BusinessTripRequest;
 use App\Repositories\CommentRepository;
+use App\Sheba\Business\ACL\AccessControl;
 use App\Sheba\Business\BusinessTripSms;
+use App\Sheba\Business\TripRequest\Creator;
+use FontLib\Table\Type\name;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\Scheduler\TripScheduler;
 use DB;
+use Sheba\Location\Geo;
+use Sheba\ModificationFields;
 use Sheba\Notification\B2b\TripRequests;
 use Illuminate\Support\Facades\DB as DBTransaction;
+use Throwable;
 
 class TripRequestController extends Controller
 {
+    use ModificationFields;
+
     public function getTripRequests(Request $request)
     {
         try {
@@ -127,7 +136,14 @@ class TripRequestController extends Controller
         }
     }
 
-    public function tripRequestInfo($member, $trip_request, Request $request)
+    /**
+     * @param $member
+     * @param AccessControl $access_control
+     * @param $trip_request
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function tripRequestInfo($member, AccessControl $access_control, $trip_request, Request $request)
     {
         try {
             $trip_request = BusinessTripRequest::find((int)$trip_request);
@@ -143,6 +159,28 @@ class TripRequestController extends Controller
                     'created_at' => $comment->created_at->toDateTimeString()
                 ]);
             }
+            $trip_request_approvers = [];
+            $can_approve = false;
+            $can_take_action = $access_control->setBusinessMember($request->business_member)->hasAccess('trip_request.rw');
+            if ($request_approvals = $trip_request->tripRequestApprovals->load('businessMember')) {
+                foreach ($request_approvals as $trip_request_approval) {
+                    $business_member = $trip_request_approval->businessMember;
+                    $member = $business_member->member;
+                    $profile = $member->profile;
+                    if ($business_member->id === $request->business_member->id) $can_approve = true;
+                    array_push($trip_request_approvers, [
+                        'trip_request_approval_id' => $trip_request_approval->id,
+                        'member_id' => $member->id,
+                        'name' => $profile->name ? $profile->name : null,
+                        'pro_pic' => $profile->pro_pic ? $profile->pro_pic : null,
+                        'designation' => $business_member->role ? $business_member->role->name : '',
+                        'department' => $business_member->role && $business_member->role->businessDepartment ? $business_member->role->businessDepartment->name : null,
+                        'status' => $trip_request_approval->status,
+                        'mobile' => $profile->mobile ? $profile->mobile : null,
+                    ]);
+                }
+            }
+
             $info = [
                 'id' => $trip_request->id,
                 'reason' => $trip_request->reason,
@@ -152,6 +190,8 @@ class TripRequestController extends Controller
                     "designation" => $trip_request->member->businessMember->role ? $trip_request->member->businessMember->role->name : ''
                 ],
                 'status' => $trip_request->status,
+                'can_approve' => $can_approve ? 1 : 0,
+                'can_take_action' => $can_take_action ? 1 : 0,
                 'comments' => $comments,
                 'vehicle_type' => ucfirst($trip_request->vehicle_type),
                 'trip_type' => $trip_request->trip_readable_type,
@@ -161,6 +201,7 @@ class TripRequestController extends Controller
                 'end_date' => $trip_request->end_date,
                 'no_of_seats' => $trip_request->no_of_seats,
                 'created_at' => $trip_request->created_at->toDateTimeString(),
+                'trip_request_approvers' => $trip_request_approvers
             ];
 
             return api_response($request, $info, 200, ['info' => $info]);
@@ -223,7 +264,7 @@ class TripRequestController extends Controller
         }
     }
 
-    public function createTrip(Request $request, BusinessTripSms $businessTripSms)
+    public function createTrip(Request $request, BusinessTripSms $businessTripSms, Creator $trip_request_creator)
     {
         try {
             $business_member = $request->business_member;
@@ -233,7 +274,14 @@ class TripRequestController extends Controller
                 $business_trip_request = BusinessTripRequest::find((int)$request->trip_request_id);
                 if ($business_trip_request->status != 'pending' && !$will_auto_assign) return api_response($request, null, 403);
             } else {
-                $business_trip_request = $this->storeTripRequest($request);
+                $trip_request_creator->setBusinessMember($business_member)->setDriverId($request->driver_id)->setVehicleId($request->vehicle_id)
+                    ->setPickupAddress($request->pickup_address)->setDropoffAddress($request->dropoff_address)->setStartDate($request->start_date)
+                    ->setEndDate($request->end_date)->setTripType($request->trip_type)->setVehicleType($request->vehicle_type)->setReason($request->reason)
+                    ->setDetails($request->details)->setNoOfSeats($request->no_of_seats);
+                if ($request->has('pickup_lat')) $trip_request_creator->setPickupGeo((new Geo())->setLat($request->pickup_lat)->setLng($request->pickup_lng));
+                if ($request->has('dropoff_lat')) $trip_request_creator->setPickupGeo((new Geo())->setLat($request->dropoff_lat)->setLng($request->dropoff_lng));
+                /** @var BusinessTripRequest $business_trip_request */
+                $business_trip_request = $trip_request_creator->create();
             }
             DBTransaction::beginTransaction();
             $super_admins = Business::find((int)$business_trip_request->business_id)->superAdmins;
@@ -281,20 +329,27 @@ class TripRequestController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             DBTransaction::rollback();
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
-    public function createTripRequests(Request $request, TripScheduler $vehicleScheduler, BusinessTripSms $businessTripSms)
+    public function createTripRequests(Request $request, TripScheduler $vehicleScheduler, BusinessTripSms $businessTripSms, Creator $trip_request_creator)
     {
         try {
             $business_member = $request->business_member;
             $business_trip_request = null;
-            DB::transaction(function () use ($request, $business_member, $vehicleScheduler, $businessTripSms, &$business_trip_request) {
-                $business_trip_request = $this->storeTripRequest($request);
+            $this->setModifier($request->member);
+            DB::transaction(function () use ($request, $business_member, $vehicleScheduler, $businessTripSms, $trip_request_creator, &$business_trip_request) {
+                $trip_request_creator->setBusinessMember($business_member)->setDriverId($request->driver_id)->setVehicleId($request->vehicle_id)
+                    ->setPickupAddress($request->pickup_address)->setDropoffAddress($request->dropoff_address)->setStartDate($request->start_date)
+                    ->setEndDate($request->end_date)->setTripType($request->trip_type)->setVehicleType($request->vehicle_type)->setReason($request->reason)
+                    ->setDetails($request->details)->setNoOfSeats($request->no_of_seats);
+                if ($request->has('pickup_lat')) $trip_request_creator->setPickupGeo((new Geo())->setLat($request->pickup_lat)->setLng($request->pickup_lng));
+                if ($request->has('dropoff_lat')) $trip_request_creator->setPickupGeo((new Geo())->setLat($request->dropoff_lat)->setLng($request->dropoff_lng));
+                /** @var BusinessTripRequest $business_trip_request */
+                $business_trip_request = $trip_request_creator->create();
                 $super_admins = Business::find((int)$business_trip_request->business_id)->superAdmins;
                 $trip_requests = new TripRequests();
                 $trip_requests->setMember($request->member)
@@ -393,28 +448,4 @@ class TripRequestController extends Controller
         $business_trip->save();
         return $business_trip;
     }
-
-    private function storeTripRequest(Request $request)
-    {
-        $business_trip_request = new BusinessTripRequest();
-        $business_trip_request->member_id = $request->member_id;
-        $business_trip_request->business_id = $request->business->id;
-        $business_trip_request->driver_id = $request->has('driver_id') ? $request->driver_id : null;
-        $business_trip_request->vehicle_id = $request->has('vehicle_id') ? $request->vehicle_id : null;
-        $business_trip_request->pickup_geo = $request->has('pickup_lat') ? json_encode(['lat' => $request->pickup_lat, 'lng' => $request->pickup_lng]) : null;
-        $business_trip_request->dropoff_geo = $request->has('dropoff_lat') ? json_encode(['lat' => $request->dropoff_lat, 'lng' => $request->dropoff_lng]) : null;
-        $business_trip_request->pickup_address = $request->pickup_address;
-        $business_trip_request->dropoff_address = $request->dropoff_address;
-        $business_trip_request->start_date = $request->start_date;
-        $business_trip_request->end_date = $request->end_date;
-        $business_trip_request->trip_type = $request->trip_type;
-        $business_trip_request->vehicle_type = $request->vehicle_type;
-        $business_trip_request->reason = $request->reason;
-        $business_trip_request->details = $request->details;
-        $business_trip_request->no_of_seats = $request->no_of_seats;
-        $business_trip_request->save();
-        return $business_trip_request;
-    }
-
-
 }

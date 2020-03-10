@@ -2,6 +2,7 @@
 
 namespace Sheba\Checkout\Services;
 
+use App\Models\Category;
 use App\Models\Service;
 use stdClass;
 
@@ -72,5 +73,26 @@ class ServiceObject
             $this->quantity = $quantity >= $min_quantity ? $quantity : $min_quantity;
         } else
             $this->quantity = (double)$this->serviceModel->min_quantity;
+    }
+
+    /**
+     * @return Service
+     */
+    public function getService()
+    {
+        return $this->serviceModel;
+    }
+
+    public function getOption()
+    {
+        return $this->option;
+    }
+
+    /**
+     * @return Category
+     */
+    public function getCategory()
+    {
+        return $this->serviceModel->category;
     }
 }

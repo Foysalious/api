@@ -1,5 +1,6 @@
 <?php namespace Sheba\TopUp;
 
+use Sheba\Affiliate\VerificationStatus;
 use Sheba\TopUp\Vendor\Vendor;
 use Sheba\TopUp\Vendor\VendorFactory;
 
@@ -40,15 +41,15 @@ class TopUpRequest
         return $this;
     }
 
+    public function getAgent()
+    {
+        return $this->agent;
+    }
+
     public function setAgent(TopUpAgent $agent)
     {
         $this->agent = $agent;
         return $this;
-    }
-
-    public function getAgent()
-    {
-        return $this->agent;
     }
 
     public function setVendorId($vendor_id)
@@ -85,6 +86,16 @@ class TopUpRequest
     }
 
     /**
+     * @param mixed $mobile
+     * @return TopUpRequest
+     */
+    public function setMobile($mobile)
+    {
+        $this->mobile = formatMobile($mobile);
+        return $this;
+    }
+
+    /**
      * @return Vendor
      */
     public function getVendor()
@@ -100,16 +111,6 @@ class TopUpRequest
         return getOriginalMobileNumber($this->mobile);
     }
 
-    /**
-     * @param mixed $mobile
-     * @return TopUpRequest
-     */
-    public function setMobile($mobile)
-    {
-        $this->mobile = formatMobile($mobile);
-        return $this;
-    }
-
     public function hasError()
     {
         if ($this->agent->wallet < $this->amount) {
@@ -120,6 +121,11 @@ class TopUpRequest
             $this->errorMessage = "Sorry, we don't support this operator at this moment.";
             return 1;
         }
+        if (get_class($this->agent) == "App\Models\Partner") {
+            $this->errorMessage = "Temporary turned off.";
+            return 1;
+        }
+        
         return 0;
     }
 
