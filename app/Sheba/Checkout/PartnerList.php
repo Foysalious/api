@@ -513,7 +513,6 @@ class PartnerList
             array_forget($partner, 'geo_informations');
             array_forget($partner, 'discounts');
             array_forget($partner, 'surcharges');
-            array_forget($partner, 'score');
             array_forget($partner, 'distance');
             array_forget($partner, 'order_limit');
             removeRelationsAndFields($partner);

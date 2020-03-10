@@ -20,7 +20,7 @@ class OrderRequestTransformer extends TransformerAbstract
         $order = $request->partnerOrder->order;
         /** @var Job $job */
         $job = $order->lastJob();
-        $diff_in_seconds = Carbon::now()->diffInSeconds($request->created_at);
+        $diff_in_seconds = (Carbon::now()->diffInSeconds($request->created_at)) - 5;
         return [
             'id' => $request->id,
             'job_id' => $job->id,
