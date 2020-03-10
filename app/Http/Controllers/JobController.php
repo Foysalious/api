@@ -26,6 +26,7 @@ use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Dal\JobService\JobService;
 use Sheba\JobDiscount\JobDiscountHandler;
 use Sheba\LocationService\PriceCalculation;
+use Sheba\LocationService\UpsellCalculation;
 use Sheba\Logistics\Repository\OrderRepository;
 use Sheba\Logs\Customer\JobLogs;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
@@ -81,9 +82,10 @@ class JobController extends Controller
      * @param PriceCalculation $price_calculation
      * @param DeliveryCharge $delivery_charge
      * @param JobDiscountHandler $job_discount_handler
+     * @param UpsellCalculation $upsell_calculation
      * @return JsonResponse
      */
-    public function show($customer, $job, Request $request, PriceCalculation $price_calculation, DeliveryCharge $delivery_charge, JobDiscountHandler $job_discount_handler)
+    public function show($customer, $job, Request $request, PriceCalculation $price_calculation, DeliveryCharge $delivery_charge, JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation)
     {
         try {
             $customer = $request->customer;
@@ -159,39 +161,54 @@ class JobController extends Controller
             if (count($job->jobServices) == 0) {
                 $services = collect();
                 $variables = json_decode($job->service_variables);
+                $location_service = $job->service->locationServices->first();
+                $upsell_calculation->setService($job->service)
+                    ->setLocationService($location_service)
+                    ->setOption(json_decode($job->service_option, true))
+                    ->setQuantity($job->service_quantity);
+                $upsell_price = $upsell_calculation->getAllUpsellWithMinMaxQuantity();
                 $services->push([
-                        'service_id'    => $job->service->id,
-                        'name'          => $job->service_name,
-                        'variables'     => $variables,
-                        'quantity'      => $job->service_quantity,
-                        'unit'          => $job->service->unit,
-                        'option'        => $job->service_option,
-                        'variable_type' => $job->service_variable_type,
-                        'thumb'         => $job->service->app_thumb
-                    ]);
+                    'service_id' => $job->service->id,
+                    'name' => $job->service_name,
+                    'variables' => $variables,
+                    'quantity' => $job->service_quantity,
+                    'unit' => $job->service->unit,
+                    'option' => $job->service_option,
+                    'variable_type' => $job->service_variable_type,
+                    'thumb' => $job->service->app_thumb,
+                    'fixed_upsell_price' => $upsell_price
+                ]);
             } else {
                 $services = collect();
                 foreach ($job->jobServices as $jobService) {
                     /** @var JobService $jobService */
                     $variables = json_decode($jobService->variables);
+                    $location_service = $jobService->service->locationServices->first();
+                    $upsell_calculation->setService($jobService->service)
+                        ->setLocationService($location_service)
+                        ->setOption(json_decode($jobService->option, true))
+                        ->setQuantity($jobService->quantity);
+                    $upsell_price = $upsell_calculation->getAllUpsellWithMinMaxQuantity();
 
                     $location_service = LocationService::where('location_id', $job->partnerOrder->order->location_id)->where('service_id', $jobService->service->id)->first();
                     $selected_service = [
                         "option" => json_decode($jobService->option, true),
                         "variable_type" => $jobService->variable_type
                     ];
+
                     $resource = new Item($selected_service, new ServiceV2MinimalTransformer($location_service, $price_calculation));
-                    $price_data  = $manager->createData($resource)->toArray();
+                    $price_data = $manager->createData($resource)->toArray();
 
                     $service_data = [
-                        'service_id'    => $jobService->service->id,
-                        'name'          => $jobService->formatServiceName($job),
-                        'variables'     => $variables,
-                        'unit'          => $jobService->service->unit,
-                        'quantity'      => $jobService->quantity,
-                        'option'        => $jobService->option,
+                        'service_id' => $jobService->service->id,
+                        'name' => $jobService->formatServiceName($job),
+                        'variables' => $variables,
+                        'unit' => $jobService->service->unit,
+                        'quantity' => $jobService->quantity,
+                        'option' => $jobService->option,
                         'variable_type' => $jobService->variable_type,
-                        'thumb'         => $jobService->service->app_thumb
+                        'thumb' => $jobService->service->app_thumb,
+                        'upsell_price' => $upsell_price
                     ];
                     $service_data += $price_data;
                     $services->push($service_data);
@@ -550,7 +567,7 @@ class JobController extends Controller
     {
         try {
             $job = $request->job;
-            $logs = (new JobLogs($job))->getorderStatusLogs();
+            $logs = (new JobLogs($job))->getOrderStatusLogs();
             return api_response($request, $logs, 200, ['logs' => $logs]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);

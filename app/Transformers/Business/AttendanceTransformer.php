@@ -5,6 +5,7 @@ use Carbon\CarbonPeriod;
 use Illuminate\Support\Collection;
 use League\Fractal\TransformerAbstract;
 use Sheba\Dal\Attendance\Model as Attendance;
+use Sheba\Dal\Attendance\Statuses;
 use Sheba\Helpers\TimeFrame;
 
 class AttendanceTransformer extends TransformerAbstract
@@ -35,18 +36,15 @@ class AttendanceTransformer extends TransformerAbstract
         $period = CarbonPeriod::create($this->timeFrame->start, $this->timeFrame->end);
         $statistics = [
             'working_days' => $this->timeFrame->start->daysInMonth,
-            'on_time' => 0,
-            'late' => 0,
-            'left_early' => 0,
-            'absent' => 0
+            Statuses::ON_TIME => 0,
+            Statuses::LATE => 0,
+            Statuses::LEFT_EARLY => 0,
+            Statuses::ABSENT => 0
         ];
-
         $daily_breakdown = [];
         foreach ($period as $date) {
             $breakdown_data = [];
             $is_weekend_or_holiday = $this->isWeekend($date, $weekend_day) || $this->isHoliday($date, $dates_of_holidays_formatted) ? 1 : 0;
-
-            // $breakdown_data['is_weekend_or_holiday'] = $is_weekend_or_holiday;
             $breakdown_data['weekend_or_holiday_tag'] = null;
             if ($is_weekend_or_holiday) {
                 $breakdown_data['weekend_or_holiday_tag'] = $this->isWeekend($date, $weekend_day) ? 'Weekend' : 'Holiday';
@@ -54,6 +52,7 @@ class AttendanceTransformer extends TransformerAbstract
             }
             $breakdown_data['show_attendance'] = 0;
             $breakdown_data['attendance'] = null;
+            $breakdown_data['is_absent'] = 0;
 
             /** @var Attendance $attendance */
             $attendance = $attendances->where('date', $date->toDateString())->first();
@@ -68,8 +67,18 @@ class AttendanceTransformer extends TransformerAbstract
                 ];
                 $statistics[$attendance->status]++;
             }
+            if (!$attendance && !$is_weekend_or_holiday) {
+                $breakdown_data['is_absent'] = 1;
+                $statistics[Statuses::ABSENT]++;
+            }
 
             $daily_breakdown[] = ['date' => $date->toDateString()] + $breakdown_data;
+        }
+
+        $remain_days = CarbonPeriod::create($this->timeFrame->end->addDay(), $this->timeFrame->start->endOfMonth());
+        foreach ($remain_days as $date) {
+            $is_weekend_or_holiday = $this->isWeekend($date, $weekend_day) || $this->isHoliday($date, $dates_of_holidays_formatted) ? 1 : 0;
+            if ($is_weekend_or_holiday) $statistics['working_days']--;
         }
 
         return ['statistics' => $statistics, 'daily_breakdown' => $daily_breakdown];
@@ -77,7 +86,7 @@ class AttendanceTransformer extends TransformerAbstract
 
     /**
      * @param Carbon $date
-     * @param Collection $weekend_day
+     * @param $weekend_day
      * @return bool
      */
     private function isWeekend(Carbon $date, $weekend_day)
@@ -87,7 +96,7 @@ class AttendanceTransformer extends TransformerAbstract
 
     /**
      * @param Carbon $date
-     * @param Collection $holidays
+     * @param $holidays
      * @return bool
      */
     private function isHoliday(Carbon $date, $holidays)

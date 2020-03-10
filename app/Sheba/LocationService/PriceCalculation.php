@@ -7,6 +7,7 @@ class PriceCalculation
 {
     private $option;
     private $quantity;
+    private $minPrice;
     /** @var LocationService $locationService */
     private $locationService;
     /** @var Service */
@@ -54,20 +55,38 @@ class PriceCalculation
         return $this;
     }
 
+    private function setMinPrice($price)
+    {
+        $this->minPrice = $price;
+        return $this;
+    }
+
+    public function getMinPrice()
+    {
+        $this->getTotalOriginalPrice();
+        return $this->minPrice;
+    }
 
     public function getTotalOriginalPrice()
     {
         $unit_price = $this->getUnitPrice();
-        $min_price = $this->getMinPrice();
+        $min_price = $this->getMinPriceFromDB();
+        $this->setMinPrice($min_price);
         $service = $this->getService();
+        $rent_a_car_price_applied = 0;
         if ($service->category->isRentACar() && ($this->locationService->base_prices && $this->locationService->base_quantity)) {
             $base_quantity = $this->getBaseQuantity();
             $extra_price_after_base_quantity = ($this->quantity > $base_quantity) ? ($unit_price * ($this->quantity - $base_quantity)) : 0;
             $original_price = $this->getBasePrice() + $extra_price_after_base_quantity;
+            $rent_a_car_price_applied = 1;
         } else {
             $original_price = $unit_price * $this->quantity;
         }
-        if ($original_price < $min_price) $original_price = $min_price;
+        if ($original_price < $min_price) {
+            $original_price = $min_price;
+        } elseif ($rent_a_car_price_applied) {
+            $this->setMinPrice($original_price);
+        }
         return $original_price;
 
     }
@@ -91,10 +110,10 @@ class PriceCalculation
         return null;
     }
 
-    public function getMinPrice()
+    public function getMinPriceFromDB()
     {
         $service = $this->getService();
-        if (!$this->locationService->min_prices) return null;
+        if (!$this->locationService->min_prices) return 0;
         if ($service->isFixed()) return (double)$this->locationService->min_prices;
         return $this->getOptionPrice($this->locationService->min_prices);
     }

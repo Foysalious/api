@@ -1,6 +1,8 @@
 <?php namespace Sheba\Business\AttendanceActionLog\ActionChecker;
 
 use App\Models\Business;
+use Carbon\Carbon;
+use Sheba\Business\AttendanceActionLog\Time;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Model as AttendanceActionLog;
 use Sheba\Location\Geo;
@@ -145,7 +147,7 @@ abstract class ActionChecker
     protected function checkIp()
     {
         if (!$this->isSuccess()) return;
-        if ($this->business->offices()->count() > 0 && $this->business->offices()->where('ip', $this->ip)->first()) {
+        if ($this->business->offices()->count() > 0 && !in_array($this->ip, $this->business->offices()->select('ip')->get()->pluck('ip')->toArray())) {
             $this->setResult(ActionResultCodes::OUT_OF_WIFI_AREA, ActionResultCodeMessages::OUT_OF_WIFI_AREA);
         } else {
             $this->setSuccessfulResponseMessage();
@@ -157,15 +159,17 @@ abstract class ActionChecker
         $this->setResultCode($result_code)->setResultMessage($result_message);
     }
 
-    protected function setSuccessfulResponseMessage()
-    {
-        $this->setResult(ActionResultCodes::SUCCESSFUL, ActionResultCodeMessages::SUCCESSFUL);
-    }
-
     public function isSuccess()
     {
-        return $this->resultCode ? $this->resultCode == 200 : true;
+        return $this->resultCode ? in_array($this->resultCode, [ActionResultCodes::SUCCESSFUL, ActionResultCodes::LATE_TODAY]) : true;
     }
+
+    public function isNoteRequired()
+    {
+        return Carbon::now()->lt(Carbon::parse(Time::OFFICE_END_TIME)) ? 1 : 0;
+    }
+
+    abstract protected function setSuccessfulResponseMessage();
 
     abstract protected function setAlreadyHasActionForTodayResponse();
 

@@ -37,7 +37,9 @@ class OrderRequestResend
             $partner_order->update();
             $old_status = $job->status;
             if ($partner_order->partner_searched_count == 2 && $partner_order->partnerOrderRequests()->count() == 0) {
-                (new JobLogsCreator(new Job()))->statusChangeLog($old_status, JobStatuses::NOT_RESPONDED);
+                $job->status = JobStatuses::NOT_RESPONDED;
+                (new JobLogsCreator($job))->statusChangeLog($old_status, JobStatuses::NOT_RESPONDED);
+                $job->update();
             }
         }
     }

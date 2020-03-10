@@ -20,7 +20,7 @@ class BonusCredit
         $this->logRepo = $log_repo;
     }
 
-    public function setUser(HasWallet $user)
+    public function setUser($user)
     {
         $this->user = $user;
         return $this;
@@ -77,7 +77,6 @@ class BonusCredit
         $data['valid_till'] = null;
         $this->logRepo->storeDebitLog($data);
     }
-
 
     private function getSpentInfo()
     {

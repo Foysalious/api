@@ -798,6 +798,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             $details                 = $manager->createData($resource)->toArray()['data'];
             $details['is_verified']  = $is_verified;
             $details['member_since'] = $member_since;
+//            $details['since'] = timeAgo($affiliate->created_at);
             return api_response($request, null, 200, ['data' => $details]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);

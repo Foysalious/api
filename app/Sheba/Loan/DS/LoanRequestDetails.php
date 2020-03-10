@@ -3,6 +3,7 @@
 namespace Sheba\Loan\DS;
 
 use Illuminate\Contracts\Support\Arrayable;
+use ReflectionException;
 use Sheba\ModificationFields;
 
 class LoanRequestDetails implements Arrayable
@@ -32,7 +33,7 @@ class LoanRequestDetails implements Arrayable
 
     public function setData()
     {
-        $this->data = json_decode($this->partnerLoanRequest->partnerBankLoan->final_information_for_loan,true);
+        $this->data = json_decode($this->partnerLoanRequest->partnerBankLoan->final_information_for_loan, true);
 
     }
 
@@ -76,16 +77,18 @@ class LoanRequestDetails implements Arrayable
      * Get the instance as an array.
      *
      * @return array
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function toArray()
     {
         return [
-            'document'       => $this->getDocuments(),
-            'finance'         => $this->getFinanceInfo(),
-            'business'        => $this->getBusinessInfo(),
-            'personal'        => $this->getPersonalInfo(),
-            'nominee_granter' => $this->getNomineeGranterInfo()
+            'document'             => $this->getDocuments(),
+            'finance'              => $this->getFinanceInfo(),
+            'business'             => $this->getBusinessInfo(),
+            'personal'             => $this->getPersonalInfo(),
+            'nominee_granter'      => $this->getNomineeGranterInfo(),
+            'proposal_info'        => $this->getProposalInfo(),
+            'sanction_letter_info' => $this->sanctionLetterInfo()
         ];
     }
 
@@ -99,7 +102,7 @@ class LoanRequestDetails implements Arrayable
 
     /**
      * @return array
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     private function getFinanceInfo()
     {
@@ -108,7 +111,7 @@ class LoanRequestDetails implements Arrayable
 
     /**
      * @return array
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     private function getBusinessInfo()
     {
@@ -117,7 +120,7 @@ class LoanRequestDetails implements Arrayable
 
     /**
      * @return array
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     private function getPersonalInfo()
     {
@@ -126,10 +129,28 @@ class LoanRequestDetails implements Arrayable
 
     /**
      * @return array|void
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     private function getNomineeGranterInfo()
     {
         return (new NomineeGranterInfo($this->partner, $this->resource, $this))->toArray();
+    }
+
+    /**
+     * @return array
+     * @throws ReflectionException
+     */
+    private function getProposalInfo()
+    {
+        return (new ProposalLetterInfo($this))->toArray();
+    }
+
+    /**
+     * @return array
+     * @throws ReflectionException
+     */
+    private function sanctionLetterInfo()
+    {
+        return (new SanctionLetterInfo($this))->toArray();
     }
 }

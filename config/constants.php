@@ -1,7 +1,17 @@
 <?php
 return [
-    'smanager_logo' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner_assets/assets/images/logo/smanager-44-44-px.png',
-    'PARTNER_SHOWABLE_PACKAGE' => [1, 2, 3, 4],
+    'BANK_LOAN_PDF_TYPES'                         => [
+        'SanctionLetter' => 'sanctionLetter',
+        'Application'    => 'application',
+        'ProposalLetter' => 'proposalLetter'
+    ],
+    'PARTNER_SHOWABLE_PACKAGE'                    => [
+        1,
+        2,
+        3,
+        4
+    ],
+    'smanager_logo'                               => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner_assets/assets/images/logo/smanager-44-44-px.png',
     'AFFILIATE_VIDEO_LINK'                        => '',
     'STARTING_YEAR'                               => '2017',
     'HOTLINE'                                     => '09639 - 444 000',
@@ -454,13 +464,13 @@ return [
         'WronglyCreateOrderTestOrder' => 'Wrongly Create Order/ Test Order',
         'ServiceChange'               => 'Service Change'
     ],
-    'NOTIFICATION_TYPES' => [
+    'NOTIFICATION_TYPES'                          => [
         'Info'    => 'Info',
         'Warning' => 'Warning',
         'Danger'  => 'Danger',
         'Success' => 'Success'
     ],
-    'NOTIFICATION_ICONS' => [
+    'NOTIFICATION_ICONS'                          => [
         'Info'    => 'sheba_xyz/png/notification/info.png',
         'Warning' => 'sheba_xyz/png/notification/warning.png',
         'Danger'  => 'sheba_xyz/png/notification/danger.png',
@@ -627,11 +637,10 @@ return [
         'Medium' => 'Medium',
         'High'   => 'High',
     ],
-    'REFERRAL_VALID_DAYS' => 90,
-    'AVATAR' => [
-        env('SHEBA_CUSTOMER_APP') => 'customer',
-        'customer-portal' => 'customer',
-
+    'REFERRAL_VALID_DAYS'                         => 90,
+    'AVATAR'                                      => [
+        env('SHEBA_CUSTOMER_APP')    => 'customer',
+        'customer-portal'            => 'customer',
         env('SHEBA_AFFILIATION_APP') => 'affiliate',
         env('SHEBA_RESOURCE_APP')    => 'resource',
         env('SHEBA_MANGER_APP')      => 'resource',
@@ -663,9 +672,9 @@ return [
         'Web' => 'Web',
         'App' => 'App'
     ],
-    'AFFILIATION_REWARD_MONEY'                    => 10,
+    'AFFILIATION_REWARD_MONEY'                    => 0,
     'AFFILIATION_REGISTRATION_BONUS'              => 0,
-    'AFFILIATION_ACQUISITION_MONEY'               => 2,
+    'AFFILIATION_ACQUISITION_MONEY'               => 0,
     'API_RESPONSE_CODES'                          => [
         200 => [
             'message' => 'Successful',
@@ -1027,7 +1036,9 @@ return [
         ],
     ],
     'LOAN_CONFIG'                                 => [
-        'interest' => 15,
+        'interest'         => 15,
+        'minimum_amount'   => 50000,
+        'minimum_duration' => 6
     ],
     'WEEKS'                                       => [
         'Saturday'  => 1,
@@ -1269,5 +1280,14 @@ return [
             'en'  => 'Proprietorship',
             'bn'  => 'প্রোপ্রাইটরশিপ'
         ],
+    ],
+    'PARTNER_BUSINESS_CATEGORIES'                 => [
+        'Small',
+        'Micro',
+        'Medium'
+    ],
+    'PARTNER_BUSINESS_SECTORS'                    => [
+        'Service',
+        'Non Service'
     ]
 ];

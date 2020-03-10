@@ -26,12 +26,6 @@ return [
             'rw' => 'announcement_rw',
         ],
         'support' => [
-            'rw' => 'announcement_rw',
-        ],
-        'expense' => [
-            'rw' => 'announcement_rw',
-        ],
-        'support' => [
             'rw' => 'support_rw',
         ],
         'expense' => [
@@ -44,5 +38,6 @@ return [
         'one_time' => 'One Time',
         'monthly' => 'Monthly',
         'weekly' => 'Weekly',
-    ]
+    ],
+    'WHITELISTED_BUSINESS_IDS' => [110, 364]
 ];

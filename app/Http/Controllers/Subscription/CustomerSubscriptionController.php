@@ -194,10 +194,10 @@ class CustomerSubscriptionController extends Controller
 
                 if ($partner = $subscription_order->partner) {
                     $orders_list["partner"] = [
-                        "id"        => $partner->id,
-                        "name"      => $partner->name,
-                        "mobile"    => $partner->mobile,
-                        "logo"      => $partner->logo
+                        "id" => $partner->id,
+                        "name" => $partner->name,
+                        "mobile" => $partner->mobile,
+                        "logo" => $partner->logo
                     ];
                 }
                 $subscription_orders_list->push($orders_list);
@@ -290,17 +290,17 @@ class CustomerSubscriptionController extends Controller
             $variables = collect();
             foreach ($service_details->breakdown as $breakdown) {
                 $selected_service = [
-                    "option"        => $breakdown->option,
+                    "option" => $breakdown->option,
                     "variable_type" => $service->variable_type
                 ];
                 $resource = new Item($selected_service, new ServiceV2MinimalTransformer($location_service, $price_calculation));
-                $price_discount_data  = $manager->createData($resource)->toArray();
+                $price_discount_data = $manager->createData($resource)->toArray();
 
                 $data = [
-                    'quantity'  => $breakdown->quantity,
+                    'quantity' => $breakdown->quantity,
                     'questions' => empty($breakdown->questions) ? null : $breakdown->questions,
-                    'options'   => $breakdown->option,
-                    'unit_price'=> $price_discount_data['unit_price']
+                    'options' => $breakdown->option,
+                    'unit_price' => $price_discount_data['unit_price']
                 ];
                 $variables->push($data);
             }
@@ -309,54 +309,54 @@ class CustomerSubscriptionController extends Controller
 
             $subscription_order_details = [
                 "subscription_code" => $subscription_order->code(),
-                "category_id"       => $service->category->id,
-                "category_name"     => $service->category->name,
-                'service_id'        => $service->id,
-                "service_name"      => $service->name,
-                "app_thumb"         => $service->app_thumb,
-                'description'       => $service->description,
-                "variables"         => $variables,
-                "total_quantity"    => $service_details->total_quantity,
-                'quantity'          => (double)$service_details_breakdown->quantity,
-                'is_weekly'         => $service_subscription->is_weekly,
-                'is_monthly'        => $service_subscription->is_monthly,
-                'min_weekly_qty'    => $service_subscription->min_weekly_qty,
-                'min_monthly_qty'   => $service_subscription->min_monthly_qty,
-                "partner_id"        => $subscription_order->partner_id,
-                "partner_name"      => $partner ? $partner->name : null,
-                "logo"              => $partner ? $partner->logo : null,
-                "contact_person"    => $partner ? $partner->getContactPerson() : null,
-                "partner_slug"      => $partner ? $partner->sub_domain : null,
-                "partner_mobile"    => $partner ? $partner->getContactNumber() : null,
-                "partner_address"   => $partner ? $partner->address : null,
-                "avg_rating"        => $partner ? (double)$partner->reviews()->avg('rating') : 0.00,
-                "total_rating"      => $partner ? $partner->reviews->count() : null,
-                'customer_name'     => $subscription_order->customer->profile->name,
-                'customer_mobile'   => $subscription_order->customer->profile->mobile,
-                'address_id'        => $delivery_address->id,
-                'address'           => $delivery_address->address,
-                'location_name'     => $subscription_order->location ? $subscription_order->location->name : "",
-                'ordered_for'       => $delivery_address->name,
-                "billing_cycle"     => $subscription_order->billing_cycle,
-                "total_orders"      => $subscription_order->orders->count(),
-                "completed_orders"  => $served_orders->count(),
-                "orders_left"       => $subscription_order->orders->count() - $served_orders->count(),
-                "preferred_time"    => $time->toReadableString(),
+                "category_id" => $service->category->id,
+                "category_name" => $service->category->name,
+                'service_id' => $service->id,
+                "service_name" => $service->name,
+                "app_thumb" => $service->app_thumb,
+                'description' => $service->description,
+                "variables" => $variables,
+                "total_quantity" => $service_details->total_quantity,
+                'quantity' => (double)$service_details_breakdown->quantity,
+                'is_weekly' => $service_subscription->is_weekly,
+                'is_monthly' => $service_subscription->is_monthly,
+                'min_weekly_qty' => $service_subscription->min_weekly_qty,
+                'min_monthly_qty' => $service_subscription->min_monthly_qty,
+                "partner_id" => $subscription_order->partner_id,
+                "partner_name" => $partner ? $partner->name : null,
+                "logo" => $partner ? $partner->logo : null,
+                "contact_person" => $partner ? $partner->getContactPerson() : null,
+                "partner_slug" => $partner ? $partner->sub_domain : null,
+                "partner_mobile" => $partner ? $partner->getContactNumber() : null,
+                "partner_address" => $partner ? $partner->address : null,
+                "avg_rating" => $partner ? (double)$partner->reviews()->avg('rating') : 0.00,
+                "total_rating" => $partner ? $partner->reviews->count() : null,
+                'customer_name' => $subscription_order->customer->profile->name,
+                'customer_mobile' => $subscription_order->customer->profile->mobile,
+                'address_id' => $delivery_address->id,
+                'address' => $delivery_address->address,
+                'location_name' => $subscription_order->location ? $subscription_order->location->name : "",
+                'ordered_for' => $delivery_address->name,
+                "billing_cycle" => $subscription_order->billing_cycle,
+                "total_orders" => $subscription_order->orders->count(),
+                "completed_orders" => $served_orders->count(),
+                "orders_left" => $subscription_order->orders->count() - $served_orders->count(),
+                "preferred_time" => $time->toReadableString(),
                 "preferred_time_structured" => (new PreferredTimeTransformer())->transform($time),
-                "next_order"        => empty($next_order) ? null : $next_order,
-                "days_left"         => Carbon::today()->diffInDays(Carbon::parse($subscription_order->billing_cycle_end)),
-                'original_price'    => $service_details->original_price,
-                'discount'          => $service_details->discount,
-                'total_price'       => $subscription_order->totalPrice,
-                "paid_on"           => $subscription_order->isPaid() ? $subscription_order->paid_at->format('M-j, Y') : null,
-                'is_paid'           => $subscription_order->isPaid(),
-                "orders"            => $format_partner_orders,
-                'schedule_dates'    => $schedule_dates,
-                'paid'              => $subscription_order->paid,
-                'due'               => $subscription_order->due,
-                "subscription_additional_info"  => $subscription_order->additional_info,
-                "subscription_status"           => $subscription_order->status,
-                "subscription_period"           => Carbon::parse($subscription_order->billing_cycle_start)->format('M j') . ' - ' . Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
+                "next_order" => empty($next_order) ? null : $next_order,
+                "days_left" => Carbon::today()->diffInDays(Carbon::parse($subscription_order->billing_cycle_end)),
+                'original_price' => $service_details->original_price,
+                'discount' => $service_details->discount,
+                'total_price' => $subscription_order->totalPrice,
+                "paid_on" => $subscription_order->isPaid() ? $subscription_order->paid_at->format('M-j, Y') : null,
+                'is_paid' => $subscription_order->isPaid(),
+                "orders" => $format_partner_orders,
+                'schedule_dates' => $schedule_dates,
+                'paid' => $subscription_order->paid,
+                'due' => $subscription_order->due,
+                "subscription_additional_info" => $subscription_order->additional_info,
+                "subscription_status" => $subscription_order->status,
+                "subscription_period" => Carbon::parse($subscription_order->billing_cycle_start)->format('M j') . ' - ' . Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
             ];
 
             /** @var $discount ServiceSubscriptionDiscount $weekly_discount */
@@ -367,12 +367,14 @@ class CustomerSubscriptionController extends Controller
             $subscription_order_details['weekly_discount'] = $weekly_discount ? [
                 'value' => (double)$weekly_discount->discount_amount,
                 'is_percentage' => $weekly_discount->isPercentage(),
-                'cap' => (double)$weekly_discount->cap
+                'cap' => (double)$weekly_discount->cap,
+                'min_discount_quantity' => $weekly_discount->min_discount_qty
             ] : null;
             $subscription_order_details['monthly_discount'] = $monthly_discount ? [
                 'value' => (double)$monthly_discount->discount_amount,
                 'is_percentage' => $monthly_discount->isPercentage(),
-                'cap' => (double)$monthly_discount->cap
+                'cap' => (double)$monthly_discount->cap,
+                'min_discount_quantity' => $monthly_discount->min_discount_qty
             ] : null;
 
             $resource = new Item($service->category, new ServiceV2DeliveryChargeTransformer($delivery_charge, $job_discount_handler));

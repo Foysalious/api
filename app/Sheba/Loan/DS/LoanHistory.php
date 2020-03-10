@@ -123,7 +123,7 @@ class LoanHistory
 
     private function installment_count()
     {
-        $installment = (int)$this->partnerBankLoan->duration * 12;
+        $installment = (int)$this->partnerBankLoan->duration;
         return [
             'field' => 'installment',
             'key'   => [

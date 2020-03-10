@@ -2,8 +2,12 @@
 
 use App\Models\Partner;
 use App\Models\PosOrder;
+use Exception;
+use Illuminate\Support\Facades\DB;
+use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\Pos\Exceptions\InvalidPosOrder;
+use Sheba\Pos\Exceptions\PosExpenseCanNotBeDeleted;
 
 class Deleter
 {
@@ -21,15 +25,22 @@ class Deleter
     }
 
     /**
-     * @throws \Exception
+     * @throws PosExpenseCanNotBeDeleted
+     * @throws Exception
      */
     public function delete()
     {
-        self::removePreviousOrder($this->order);
-        $this->removePreviousBy();
-        self::updateExpense($this->order);
-        $this->updateStock();
-        $this->order->delete();
+        DB::transaction(function () {
+            self::removePreviousOrder($this->order);
+            $this->removePreviousBy();
+            $expense = self::updateExpense($this->order,$this->partner);
+            if ($expense) {
+                $this->updateStock();
+                $this->order->delete();
+            } else {
+                throw new PosExpenseCanNotBeDeleted();
+            }
+        });
     }
 
     public static function removePreviousOrder(PosOrder $order)
@@ -45,15 +56,22 @@ class Deleter
         return null;
     }
 
-    public static function updateExpense($order)
+    /**
+     * @param $order
+     * @param Partner $partner
+     * @return bool
+     * @throws ExpenseTrackingServerError
+     */
+    public static function updateExpense($order, Partner $partner)
     {
         /** @var AutomaticEntryRepository $entry */
         $entry = app(AutomaticEntryRepository::class);
-        $entry->setSourceId($order->id)->setSourceType(class_basename($order))->delete();
+        return $entry->setPartner($partner)->setSourceId($order->id)->setSourceType(class_basename($order))->delete();
     }
 
     /**
      *
+     * @throws ExpenseTrackingServerError
      */
     public function removePreviousBy()
     {
@@ -63,7 +81,7 @@ class Deleter
         }
         $orders = PosOrder::whereIn('previous_order_id', $ids)->get();
         foreach ($orders as $order) {
-            self::updateExpense($order);
+            self::updateExpense($order,$this->partner);
             $order->delete();
         }
     }
