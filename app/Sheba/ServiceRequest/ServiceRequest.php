@@ -29,7 +29,7 @@ class ServiceRequest
         $final = [];
         foreach ($this->services as $service) {
             $serviceRequestObject = new ServiceRequestObject();
-            $serviceRequestObject->setServiceId($service['id'])->setQuantity($service['quantity'])->setOption(array_map('intval', $service['option']));
+            $serviceRequestObject->setServiceId($service['id'])->setQuantity($service['quantity']);
             if (isset($service['pick_up_location_geo'])) {
                 $geo = new Geo();
                 $serviceRequestObject->setPickUpGeo($geo->setLat($service['pick_up_location_geo']['lat'])->setLng($service['pick_up_location_geo']['lng']));
@@ -42,6 +42,7 @@ class ServiceRequest
             if (isset($service['destination_address'])) $serviceRequestObject->setDestinationAddress($service['destination_address']);
             if (isset($service['drop_off_date'])) $serviceRequestObject->setDropOffDate($service['drop_off_date']);
             if (isset($service['drop_off_time'])) $serviceRequestObject->setDropOffTime($service['drop_off_time']);
+            if (isset($service['option'])) $serviceRequestObject->setOption(array_map('intval', $service['option']));
             $serviceRequestObject->build();
             array_push($final, $serviceRequestObject);
         }
