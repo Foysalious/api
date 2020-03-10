@@ -77,8 +77,8 @@ class Creator
             $data['partner_order_id'] = $this->partnerOrder->id;
             $data['partner_id'] = $partner_id;
             $this->partnerOrderRequestId = $this->partnerOrderRequestRepo->create($data);
-            $this->sendOrderRequestPushNotificationToPartner($partner_id);
             $this->sendOrderRequestSmsToPartner($partner_id);
+            $this->sendOrderRequestPushNotificationToPartner($partner_id);
         }
     }
 

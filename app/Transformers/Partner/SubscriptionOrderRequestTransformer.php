@@ -22,8 +22,8 @@ class SubscriptionOrderRequestTransformer extends TransformerAbstract
 
         $schedules = json_decode($request->subscriptionOrder->schedules);
         $schedule_time = explode('-', $schedules[0]->time);
-        $diff_in_seconds = (Carbon::now()->diffInSeconds($request->created_at)) - 5;
-        
+        $diff_in_seconds = (Carbon::now()->diffInSeconds($request->created_at));
+
         return [
             'id' => $request->id,
             'subscription_order_id' => $subscription_order->id,
