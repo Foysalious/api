@@ -179,7 +179,8 @@ class BusinessInfo implements Arrayable
             'security_check',
             'business_category',
             'sector',
-            'industry_and_business_nature'
+            'industry_and_business_nature',
+            'date_of_establishment'
         ];
     }
 

@@ -71,15 +71,6 @@ class DashboardController extends Controller
             $sales_stats        = (new PartnerSalesStatistics($partner))->calculate();
             $upgradable_package = null;
             $new_order          = $this->newOrdersCount($partner, $request);
-            $total_due_for_pos_orders = 0;
-            $has_pos_paid_order       = 0;
-            PosOrder::with('items.service.discounts', 'customer', 'payments', 'logs', 'partner')->byPartner($partner->id)->each(function (PosOrder $pos_order) use (&$total_due_for_pos_orders, &$has_pos_paid_order) {
-                    $pos_order->calculate();
-                    $due                      = $pos_order->getDue();
-                    $total_due_for_pos_orders += $due > 0 ? $due : 0;
-                    if (!$has_pos_paid_order && ($pos_order->getPaymentStatus() == OrderPaymentStatuses::PAID))
-                        $has_pos_paid_order = 1;
-                });
             $dashboard = [
                 'name'                         => $partner->name,
                 'logo'                         => $partner->logo,
@@ -129,8 +120,7 @@ class DashboardController extends Controller
                         'timeline' => date("jS F", strtotime(Carbon::today()->startOfMonth())) . "-" . date("jS F", strtotime(Carbon::today())),
                         'amount'   => $sales_stats->month->orderTotalPrice + $sales_stats->month->posSale
                     ],
-                    'total_due_for_pos_orders' => $total_due_for_pos_orders,
-                    #'total_due_for_sheba_orders' => $total_due_for_sheba_orders,
+                    'total_due_for_pos_orders' => 0,
                 ],
                 'is_nid_verified'              => (int)$request->manager_resource->profile->nid_verified ? true : false,
                 'weekly_performance'           => [
@@ -169,8 +159,8 @@ class DashboardController extends Controller
                 'video'                        => $slide ? json_decode($slide->video_info) : null,
                 'has_pos_inventory'            => $partner->posServices->isEmpty() ? 0 : 1,
                 'has_kyc_profile_completed'    => $this->getSpLoanInformationCompletion($partner, $request),
-                'has_pos_due_order'            => $total_due_for_pos_orders > 0 ? 1 : 0,
-                'has_pos_paid_order'           => $has_pos_paid_order,
+                'has_pos_due_order'            => 0,
+                'has_pos_paid_order'           => 0,
                 'home_videos'    => $videos ? $videos : null,
                 'feature_videos' => $details,
                 'has_qr_code'    => ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0
