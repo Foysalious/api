@@ -57,23 +57,28 @@ class StatusChanger
         $this->checkForError($request);
         if ($this->hasError()) return;
 
-        $partnerRepo = new PartnerRepository($request->partner);
         $job = $request->job;
-        $category_id    = $job->category_id;
-        $date           = $job->schedule_date;
-        $preferred_time = $job->preferred_time;
-        $resources = $partnerRepo->resources(1, $category_id, $date, $preferred_time, $job);
-        if (count($resources) > 0) {
-            $selected_resource = $resources->where('booked_jobs',[])->values()->first();
-            if ($selected_resource == null) {
+        if ($request->has('resource_id')) {
+            $selected_resource = $request->resource_id;
+        }
+        else {
+            $partnerRepo = new PartnerRepository($request->partner);
+            $category_id    = $job->category_id;
+            $date           = $job->schedule_date;
+            $preferred_time = $job->preferred_time;
+            $resources = $partnerRepo->resources(1, $category_id, $date, $preferred_time, $job);
+            if (count($resources) > 0) {
+                $selected_resource = $resources->where('booked_jobs',[])->values()->first();
+                if ($selected_resource == null) {
+                    $this->setError(403, "No Available Resource Found");
+                    return;
+                }
+            } else {
                 $this->setError(403, "No Available Resource Found");
                 return;
             }
-        } else {
-            $this->setError(403, "No Available Resource Found");
-            return;
+            $selected_resource = $selected_resource['id'];
         }
-        $selected_resource = $selected_resource['id'];
         $this->changeStatus($job, $request, JobStatuses::ACCEPTED);
         if ($this->hasError()) return;
         $this->changedJob = $this->assignResource($job, $selected_resource, $request->manager_resource);

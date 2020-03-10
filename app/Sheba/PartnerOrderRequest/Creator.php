@@ -98,7 +98,7 @@ class Creator
             "sound" => "notification_sound",
             "event_type" => 'PartnerOrder',
             "event_id" => $this->partnerOrderRequestId,
-            "link" => "new_order_request"
+            "link" => "new_order"
         ], $topic, $channel, $sound);
     }
 
