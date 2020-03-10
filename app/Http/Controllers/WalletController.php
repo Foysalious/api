@@ -49,7 +49,6 @@ class WalletController extends Controller
      * @param Request $request
      * @param ShebaPayment $sheba_payment
      * @return JsonResponse
-     * @throws \ReflectionException
      */
     public function recharge(Request $request, ShebaPayment $sheba_payment)
     {
