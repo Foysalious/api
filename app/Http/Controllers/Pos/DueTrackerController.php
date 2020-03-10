@@ -25,13 +25,17 @@ class DueTrackerController extends Controller
     {
         try {
             $data = $dueTrackerRepository->setPartner($request->partner)->getDueList($request);
-            if (($request->has('download_pdf')) && ($request->download_pdf == 1))
+            if (($request->has('download_pdf')) && ($request->download_pdf == 1)){
+                $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
+                $data['end_date'] = $request->has("end_date") ? $request->end_date : null;
                 return (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile('due_tracker_due_list')->download();
+            }
             return api_response($request, $data, 200, ['data' => $data]);
         } catch (InvalidPartnerPosCustomer $e) {
             $message = "Invalid pos customer for this partner";
             return api_response($request, $message, 403, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -49,10 +53,11 @@ class DueTrackerController extends Controller
         try {
             $request->merge(['customer_id' => $customer_id]);
             $data = $dueTrackerRepository->setPartner($request->partner)->getDueListByProfile($request->partner, $request);
-            if (($request->has('download_pdf')) && ($request->download_pdf == 1))
-                $data['start_date'] = $request->has("start_date")? $request->start_date : null;
-                $data['end_date'] = $request->has("end_date")? $request->end_date : null;
+            if (($request->has('download_pdf')) && ($request->download_pdf == 1)) {
+                $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
+                $data['end_date'] = $request->has("end_date") ? $request->end_date : null;
                 return (new PdfHandler())->setName("due tracker by customer")->setData($data)->setViewFile('due_tracker_due_list_by_customer')->download();
+            }
             return api_response($request, $data, 200, ['data' => $data]);
         } catch (InvalidPartnerPosCustomer $e) {
             $message = "Invalid pos customer for this partner";
@@ -76,7 +81,7 @@ class DueTrackerController extends Controller
         try {
             $this->validate($request, [
                 'amount' => 'required',
-                'type'   => 'required|in:due,deposit'
+                'type' => 'required|in:due,deposit'
             ]);
             $request->merge(['customer_id' => $customer_id]);
             $response = $dueTrackerRepository->setPartner($request->partner)->store($request->partner, $request);
@@ -102,7 +107,7 @@ class DueTrackerController extends Controller
      */
     public function update(Request $request, DueTrackerRepository $dueTrackerRepository, $partner, $customer_id)
     {
-        try{
+        try {
 
             $this->validate($request, [
                 'entry_id' => 'required',
@@ -148,7 +153,7 @@ class DueTrackerController extends Controller
         } catch (InvalidPartnerPosCustomer $e) {
             $message = "Invalid pos customer for this partner";
             return api_response($request, $message, 403, ['message' => $message]);
-        }catch (\Throwable $e) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -165,7 +170,7 @@ class DueTrackerController extends Controller
 
         try {
             $request->merge(['balance_type' => 'due']);
-            $dueList  = $dueTrackerRepository->setPartner($request->partner)->getDueList($request, false);
+            $dueList = $dueTrackerRepository->setPartner($request->partner)->getDueList($request, false);
             $response = $dueTrackerRepository->generateDueReminders($dueList, $request->partner);
             return api_response($request, null, 200, ['data' => $response]);
         } catch (\Throwable $e) {
@@ -179,19 +184,19 @@ class DueTrackerController extends Controller
      * @param DueTrackerRepository $dueTrackerRepository
      * @return JsonResponse
      */
-    public function getDueCalender(Request $request, DueTrackerRepository $dueTrackerRepository){
+    public function getDueCalender(Request $request, DueTrackerRepository $dueTrackerRepository)
+    {
 
-        try{
-            $this->validate($request, ['month' => 'required','year' => 'required']);
+        try {
+            $this->validate($request, ['month' => 'required', 'year' => 'required']);
             $request->merge(['balance_type' => 'due']);
-            $dueList  = $dueTrackerRepository->setPartner($request->partner)->getDueList($request, false);
+            $dueList = $dueTrackerRepository->setPartner($request->partner)->getDueList($request, false);
             $response = $dueTrackerRepository->generateDueCalender($dueList, $request);
             return api_response($request, null, 200, ['data' => $response]);
-        }
-        catch (ValidationException $e) {
+        } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        }catch (\Throwable $e) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -228,22 +233,22 @@ class DueTrackerController extends Controller
      */
     public function sendSMS(Request $request, DueTrackerRepository $dueTrackerRepository, $partner, $customer_id)
     {
-       try{
-           $request->merge(['customer_id' => $customer_id]);
-           $this->validate($request, ['type' => 'required|in:due,deposit','amount' => 'required','payment_link' => 'required_if:type,due']);
-           $dueTrackerRepository->sendSMS($request);
-           return api_response($request, true, 200);
+        try {
+            $request->merge(['customer_id' => $customer_id]);
+            $this->validate($request, ['type' => 'required|in:due,deposit', 'amount' => 'required', 'payment_link' => 'required_if:type,due']);
+            $dueTrackerRepository->sendSMS($request);
+            return api_response($request, true, 200);
 
-       } catch (ValidationException $e) {
-           $message = getValidationErrorMessage($e->validator->errors()->all());
-           return api_response($request, $message, 400, ['message' => $message]);
-       } catch (InvalidPartnerPosCustomer $e) {
-           $message = "Invalid pos customer for this partner";
-           return api_response($request, $message, 403, ['message' => $message]);
-       } catch (\Throwable $e) {
-           app('sentry')->captureException($e);
-           return api_response($request, null, 500);
-       }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (InvalidPartnerPosCustomer $e) {
+            $message = "Invalid pos customer for this partner";
+            return api_response($request, $message, 403, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 
 
@@ -254,10 +259,10 @@ class DueTrackerController extends Controller
      */
     public function getFaqs(Request $request, DueTrackerRepository $dueTrackerRepository)
     {
-        try{
+        try {
             $faqs = $dueTrackerRepository->getFaqs();
             return api_response($request, $faqs, 200, ['faqs' => $faqs]);
-        }catch (\Throwable $e) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

@@ -50,8 +50,9 @@ class DueTrackerRepository extends BaseRepository
         }
         return [
             'list' => $list,
+            'total_transactions' => count($list),
             'stats' => $result['data']['totals'],
-            'partner' => $this->getPartnerInfo($request->partner)
+            'partner' => $this->getPartnerInfo($request->partner),
         ];
     }
 
@@ -103,7 +104,7 @@ class DueTrackerRepository extends BaseRepository
             $item['created_at']   = Carbon::parse($item['created_at'])->format('Y-m-d h:i A');
             $item['entry_at'] = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
             return $item;
-        });;
+        });
         list($offset, $limit) = calculatePagination($request);
         $list = $list->slice($offset)->take($limit);
         $total_credit = 0;
