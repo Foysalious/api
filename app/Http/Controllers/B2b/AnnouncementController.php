@@ -54,7 +54,7 @@ class AnnouncementController extends Controller
         $totalAnnouncements = $announcements->count();
         #if ($request->has('limit')) $announcements = $announcements->splice($offset, $limit);
         return api_response($request, $announcements, 200, [
-            'announcements' => $announcements,
+            'announcements' => $announcements->values(),
             'totalAnnouncements' => $totalAnnouncements
         ]);
     }
