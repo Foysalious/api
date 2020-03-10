@@ -187,33 +187,15 @@ class OrderRequestController extends Controller
             return api_response($request, null, 500);
         }
     }
-
-    /**
-     * @param $partner
-     * @param PartnerOrderRequest $partner_order_request
-     * @param Request $request
-     * @return JsonResponse
-     */
+    
     public function decline($partner, PartnerOrderRequest $partner_order_request, Request $request)
     {
-        try {
-            // $this->validate($request, ['resource_id' => 'required|int']);
-            $this->statusChanger->setPartnerOrderRequest($partner_order_request)->decline($request);
-            if ($this->statusChanger->hasError()) {
-                return api_response($request, null, $this->statusChanger->getErrorCode(), [
-                    'message' => $this->statusChanger->getErrorMessage()
-                ]);
-            }
-            return api_response($request, null, 200);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        $this->statusChanger->setPartnerOrderRequest($partner_order_request)->decline($request);
+        if ($this->statusChanger->hasError()) {
+            return api_response($request, null, $this->statusChanger->getErrorCode(), [
+                'message' => $this->statusChanger->getErrorMessage()
+            ]);
         }
+        return api_response($request, null, 200);
     }
 }

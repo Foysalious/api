@@ -23,12 +23,18 @@ class StatusChanger
 
     private $partnerOrderRequest;
     private $orderRequestResend;
+    /** @var Creator  */
+    private $creator;
+    /** @var Store  */
+    private $orderRequestStore;
 
-    public function __construct(JobStatusChanger $job_status_changer, PartnerOrderRequestRepositoryInterface $repo, OrderRequestResend $order_request_resend)
+    public function __construct(JobStatusChanger $job_status_changer, PartnerOrderRequestRepositoryInterface $repo, OrderRequestResend $order_request_resend, Store $order_request_store, Creator $creator)
     {
         $this->jobStatusChanger = $job_status_changer;
         $this->repo = $repo;
         $this->orderRequestResend = $order_request_resend;
+        $this->creator = $creator;
+        $this->orderRequestStore = $order_request_store;
     }
 
     public function setPartnerOrderRequest(PartnerOrderRequest $partner_order_request)
@@ -53,7 +59,7 @@ class StatusChanger
             return;
         }
 
-        if($this->partnerOrderRequest->created_at->addSeconds(config('partner.order.request_accept_time_limit_in_seconds')) < Carbon::now()){
+        if ($this->partnerOrderRequest->created_at->addSeconds(config('partner.order.request_accept_time_limit_in_seconds')) < Carbon::now()) {
             $msg = !empty($order_request_missed_msg) ? $order_request_missed_msg : "Time is over, you Missed it.";
             $this->setError(403, $msg);
             return;
@@ -90,12 +96,15 @@ class StatusChanger
     public function decline(Request $request)
     {
         $this->repo->update($this->partnerOrderRequest, ['status' => Statuses::DECLINED]);
-
-        if (!$this->repo->isAllRequestDeclinedOrNotResponded($this->partnerOrderRequest->partnerOrder)) return;
-        if ($this->partnerOrderRequest->partnerOrder->partner_searched_count == 1) {
-            $this->orderRequestResend->setOrder($this->partnerOrderRequest->partnerOrder->order)->send();
-            return;
+        if ($partner_ids = $this->orderRequestStore->setPartnerOrderId($this->partnerOrderRequest->partnerOrder->id)->get()) {
+            foreach ($partner_ids as $partner_id) {
+                $order_request = $this->partnerOrderRequest->partnerOrder->partnerOrderRequests->where('partner_id', $partner_id)->first();
+                if ($order_request) continue;
+                $this->creator->setPartnerOrder($this->partnerOrderRequest->partnerOrder)->setPartners([$partner_id])->create();
+                return;
+            }
         }
+        if (!$this->repo->isAllRequestDeclinedOrNotResponded($this->partnerOrderRequest->partnerOrder)) return;
         $request->merge(['job' => $this->partnerOrderRequest->partnerOrder->lastJob()]);
         $this->jobStatusChanger->notResponded($request);
         if ($this->jobStatusChanger->hasError()) {
