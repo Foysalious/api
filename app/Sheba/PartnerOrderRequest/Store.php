@@ -34,7 +34,7 @@ class Store
     {
         /** @var Repository $store */
         $store = Cache::store('redis');
-        $store->put($this->getCacheName(), json_encode($this->partners), $this->getExpirationTimeInSeconds());
+        $store->put($this->getCacheName(), json_encode($this->partners), $this->getExpirationTimeInSeconds() / 60);
     }
 
     /**
@@ -56,7 +56,7 @@ class Store
 
     private function getExpirationTimeInSeconds()
     {
-        return 20 * 60;
+        return 60 * 60;
     }
 
 }
