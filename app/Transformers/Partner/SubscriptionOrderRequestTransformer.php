@@ -47,7 +47,9 @@ class SubscriptionOrderRequestTransformer extends TransformerAbstract
             'is_order_request'      => true,
             'is_subscription_order' => true,
             'created_date_start'    => $schedules[0]->date,
-            'created_date_end'      => end($schedules)->date
+            'created_date_end'      => end($schedules)->date,
+            'request_accept_time_limit_in_seconds' => config('partner.order.request_accept_time_limit_in_seconds'),
+            'show_resource_list' => config('partner.order.show_resource_list')
         ];
     }
 }

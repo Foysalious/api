@@ -43,7 +43,9 @@ class OrderRequestTransformer extends TransformerAbstract
             'status' => $request->status,
             'number_of_order' => 1,
             'is_order_request' => true,
-            'is_subscription_order' => false
+            'is_subscription_order' => false,
+            'request_accept_time_limit_in_seconds' => config('partner.order.request_accept_time_limit_in_seconds'),
+            'show_resource_list' => config('partner.order.show_resource_list')
         ];
     }
 }
