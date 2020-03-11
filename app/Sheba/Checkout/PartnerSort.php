@@ -29,8 +29,8 @@ class PartnerSort
         $max_total_ratings = $this->partners->max('total_ratings');
         $rating_difference = $max_total_ratings - $min_total_ratings;
 
-        $min_current_impression = 10;
-        $max_current_impression = 1000;
+        $min_current_impression = $this->partners->min('current_impression');
+        $max_current_impression = $this->partners->max('current_impression');;
         $current_impression_difference = $max_current_impression - $min_current_impression;
 
         foreach ($this->partners as $partner) {
