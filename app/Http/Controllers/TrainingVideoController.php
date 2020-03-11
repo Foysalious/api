@@ -8,7 +8,6 @@ class TrainingVideoController extends Controller
         if($request->has('screen'))
         {
             $data=$video_repository->getByScreen($request->screen);
-
         }
         else
         {
