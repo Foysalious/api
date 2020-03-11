@@ -50,12 +50,12 @@ class Excel
 
     private function makeData()
     {
-        $date = null;
-        $checkin_time = null;
-        $checkout_time = null;
-        $active_hours = null;
-        $status = null;
         foreach ($this->monthlyData as $attendance) {
+            $date = null;
+            $checkin_time = null;
+            $checkout_time = null;
+            $active_hours = null;
+            $status = null;
             if (!$attendance['weekend_or_holiday_tag']) {
                 if ($attendance['show_attendance'] == 1) {
                     $date = $attendance['date'];
@@ -74,7 +74,7 @@ class Excel
                     }
                 }
             }
-            if ($attendance['weekend_or_holiday_tag'] == 'Weekend') {
+            if ($attendance['weekend_or_holiday_tag']) {
                 if ($attendance['show_attendance'] == 0) {
                     $date = $attendance['date'];
                     $status = $attendance['weekend_or_holiday_tag'];
