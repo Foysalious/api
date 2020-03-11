@@ -79,19 +79,19 @@ class ImpressionManager
         return $this;
     }
 
-    private function setServices(array $services)
+    public function setServices(array $services)
     {
         $this->services = $services;
         return $this;
     }
 
-    private function setPortalName($portal_name)
+    public function setPortalName($portal_name)
     {
         $this->portalName = $portal_name;
         return $this;
     }
 
-    public function deduct($partners)
+    public function deduct(array $partners)
     {
         $impression_deduction = new ImpressionDeduction();
         $impression_deduction->category_id = $this->categoryId;
