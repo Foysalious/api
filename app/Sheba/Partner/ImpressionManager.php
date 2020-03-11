@@ -21,6 +21,15 @@ class ImpressionManager
     private $serviceRequestObject;
     private $services;
     private $portalName;
+    private $impressionToDeduct = 1;
+
+
+    public function setImpressionToDeduct($impressionToDeduct)
+    {
+        $this->impressionToDeduct = $impressionToDeduct;
+        return $this;
+    }
+
 
     public function setCustomerId($customerId)
     {
@@ -104,7 +113,7 @@ class ImpressionManager
         $impression_deduction->created_at = Carbon::now();
         $impression_deduction->save();
         $impression_deduction->partners()->sync($partners);
-        dispatch(new DeductPartnerImpression($partners));
+        dispatch(new DeductPartnerImpression($partners, $this->impressionToDeduct));
     }
 
     public function needsToDeduct()

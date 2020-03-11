@@ -81,7 +81,7 @@ class Creator
             $job = $this->partnerOrder->jobs->first();
             $this->impressionManager->setLocationId($this->partnerOrder->order->location_id)->setCategoryId($job->category_id)
                 ->setCustomerId($this->partnerOrder->order->customer_id)->setPortalName(request()->header('portal-name'))
-                ->setServices($this->getServices($job))->deduct([$partner_id]);
+                ->setServices($this->getServices($job))->setImpressionToDeduct(10)->deduct([$partner_id]);
         }
     }
 
