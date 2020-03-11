@@ -32,7 +32,6 @@ class PartnerSort
 
         $min_current_impression = $this->partners->min('current_impression');
         $max_current_impression = $this->partners->max('current_impression');
-        dd($this->partners->pluck('current_impression'), $min_current_impression);
         $current_impression_difference = $max_current_impression - $min_current_impression;
 
         foreach ($this->partners as $partner) {
@@ -43,7 +42,6 @@ class PartnerSort
             $orders = ($partner->total_completed_orders > 0 && $order_difference > 0) ? $this->weights['orders'] * (($partner->total_completed_orders - $min_orders) / $order_difference) : 0;
             $impression = $partner->current_impression > 10 ? $this->weights['impression'] * (($partner->current_impression - $min_current_impression) / $current_impression_difference) : 0;
             $partner['score'] = $avg_rating + $orders + $total_experts + $total_ratings + $impression;
-            dump("$avg_rating + $orders + $total_experts + $total_ratings + $impression");
         }
         return $this->partners->sortByDesc('score');
     }
