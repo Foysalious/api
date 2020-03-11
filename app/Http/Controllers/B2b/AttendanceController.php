@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Sheba\Business\Attendance\AttendanceList;
 use Sheba\Business\Attendance\Monthly\Excel;
+use Sheba\Business\Attendance\Member\Excel as MemberMonthlyExcel;
 use Sheba\Business\Attendance\Monthly\Stat;
 use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
 use Sheba\Dal\Attendance\Statuses;
@@ -128,7 +129,7 @@ class AttendanceController extends Controller
     public function showStat($business, $member, Request $request, BusinessHolidayRepoInterface $business_holiday_repo,
                              BusinessWeekendRepoInterface $business_weekend_repo, AttendanceRepoInterface $attendance_repo,
                              BusinessMemberRepositoryInterface $business_member_repository,
-                             TimeFrame $time_frame, AttendanceList $list)
+                             TimeFrame $time_frame, AttendanceList $list, MemberMonthlyExcel $member_monthly_excel)
     {
         $this->validate($request, ['month' => 'numeric|min:1|max:12']);
         $business = $request->business;
@@ -142,7 +143,9 @@ class AttendanceController extends Controller
         $time_frame = $time_frame->forAMonth($month, date('Y'));
         $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
         $employee_attendance = (new MonthlyStat($time_frame, $business_holiday, $business_weekend))->transform($attendances);
-
+        if ($request->file == 'excel') {
+            return $member_monthly_excel->setMonthlyData($employee_attendance['daily_breakdown'])->get();
+        }
         return api_response($request, $list, 200, [
             'stat' => $employee_attendance['statistics'],
             'attendances' => $employee_attendance['daily_breakdown'],
@@ -154,34 +157,4 @@ class AttendanceController extends Controller
             ]
         ]);
     }
-
-//    public function showStat($business, $member, Request $request, Stat $monthly_stat, BusinessMemberRepositoryInterface $business_member_repository, TimeFrame $time_frame, AttendanceList $list)
-//    {
-//        $this->validate($request, ['month' => 'numeric|min:1|max:12']);
-//        $business = $request->business;
-//        /** @var BusinessMember $business_member */
-//        $business_member = $business_member_repository->where('business_id', $business->id)->where('member_id', $member)->first();
-//        $month = $request->has('month') ? $request->month : date('m');
-//        $time_frame = $time_frame->forAMonth($month, date('Y'));
-//        $monthly_stat->setBusiness($business)->setBusinessMember($business_member)->setTimeFrame($time_frame)->calculate();
-//        $list = $list->setStartDate($time_frame->start)->setEndDate($time_frame->end)->setBusinessMemberId($business_member->id)->get();
-//        return api_response($request, $list, 200, [
-//            'stat' => [
-//                'absent' => $monthly_stat->getAbsent(),
-//                'late' => $monthly_stat->getLate(),
-//                'left_early' => $monthly_stat->getLeftEarly(),
-//                'on_time' => $monthly_stat->getOnTime(),
-//                'present' => $monthly_stat->getPresent(),
-//                'working_day' => $monthly_stat->getWorkingDay(),
-//            ],
-//            'attendances' => count($list) ? $list : null,
-//            'employee' => [
-//                'id' => $business_member->member->id,
-//                'name' => $business_member->member->profile->name,
-//                'designation' => $business_member->role ? $business_member->role->name : null,
-//                'department' => $business_member->role && $business_member->role->businessDepartment ? $business_member->role->businessDepartment->name : null,
-//            ]
-//        ]);
-//    }
-
 }
