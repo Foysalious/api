@@ -13,6 +13,7 @@ class Route
             (new CustomerRoute())->set($api);
             (new AffiliateRoute())->set($api);
             (new PartnerRoute())->set($api);
+            (new ArticleRoute())->set($api);
             $api->post('training-status-update', 'ResourceController@trainingStatusUpdate');
             $api->post('profile-check', 'Profile\ProfileController@checkProfile');
             $api->post('newsletter', 'NewsletterController@create');
