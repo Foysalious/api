@@ -264,6 +264,7 @@ class PartnerListBuilder implements Builder
             if ($service->isOptions()) {
                 $this->partners = $this->partners->filter(function ($partner) use ($service, $selected_service) {
                     $service = $partner->services->where('id', $service->id)->first();
+                    if (empty($service->pivot->prices)) return 0;
                     return $this->hasThisOption($service->pivot->prices, implode(',', $selected_service->getOption()));
                 });
             }
