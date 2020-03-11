@@ -38,7 +38,7 @@ class AnnouncementController extends Controller
         $this->setModifier($business_member);
         if (!$business_member) return api_response($request, null, 401);
         list($offset, $limit) = calculatePagination($request);
-        $announcement_list->setBusinessId($business_member->business_id)->setOffset($offset)->setLimit($limit);
+        $announcement_list->setBusinessId($business_member->business_id);
         if ($request->type) $announcement_list->setType($request->type);
         $announcements = $announcement_list->get();
         if (count($announcements) == 0) return api_response($request, null, 404);
@@ -52,7 +52,7 @@ class AnnouncementController extends Controller
             });
         }
         $totalAnnouncements = $announcements->count();
-        #if ($request->has('limit')) $announcements = $announcements->splice($offset, $limit);
+        if ($request->has('limit')) $announcements = $announcements->splice($offset, $limit);
         return api_response($request, $announcements, 200, [
             'announcements' => $announcements->values(),
             'totalAnnouncements' => $totalAnnouncements
