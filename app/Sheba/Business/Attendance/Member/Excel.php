@@ -6,6 +6,8 @@ class Excel
 {
     private $monthlyData;
     private $designation;
+    private $department;
+    private $member;
     private $excelHandler;
     private $data;
 
@@ -18,7 +20,12 @@ class Excel
     public function setMonthlyData(array $monthly_data)
     {
         $this->monthlyData = $monthly_data;
-        dd($this->monthlyData);
+        return $this;
+    }
+
+    public function setMember($member)
+    {
+        $this->member = $member;
         return $this;
     }
 
@@ -28,6 +35,13 @@ class Excel
         return $this;
     }
 
+    public function setDepartment($department)
+    {
+        $this->department = $department;
+        return $this;
+    }
+
+
     public function get()
     {
         $this->makeData();
@@ -36,17 +50,53 @@ class Excel
 
     private function makeData()
     {
-        foreach ($this->monthlyData as $employee) {
+        $date = null;
+        $checkin_time = null;
+        $checkout_time = null;
+        $active_hours = null;
+        $status = null;
+        foreach ($this->monthlyData as $attendance) {
+            if (!$attendance['weekend_or_holiday_tag']) {
+                if ($attendance['show_attendance'] == 1) {
+                    $date = $attendance['date'];
+                    $checkin_time = $attendance['attendance']['checkin_time'];
+                    $checkout_time = $attendance['attendance']['checkout_time'];
+                    $active_hours = $attendance['attendance']['staying_time_in_minutes'];
+                    $status = $attendance['attendance']['status'];
+                }
+                if ($attendance['show_attendance'] == 0) {
+                    if ($attendance['is_absent'] == 1) {
+                        $date = $attendance['date'];
+                        $status = 'Absent';
+                    }
+                    if ($attendance['is_absent'] == 0) {
+                        $date = $attendance['date'];
+                    }
+                }
+            }
+            if ($attendance['weekend_or_holiday_tag'] == 'Weekend') {
+                if ($attendance['show_attendance'] == 0) {
+                    $date = $attendance['date'];
+                    $status = $attendance['weekend_or_holiday_tag'];
+                }
+                if ($attendance['show_attendance'] == 1) {
+                    $date = $attendance['date'];
+                    $checkin_time = $attendance['attendance']['checkin_time'];
+                    $checkout_time = $attendance['attendance']['checkout_time'];
+                    $active_hours = $attendance['attendance']['staying_time_in_minutes'];
+                    $status = $attendance['attendance']['status'];
+                }
+            }
             array_push($this->data, [
-                'member_id' => $employee['member']['id'],
-                'member_name' => $employee['member']['name'],
-                'dept_id' => $employee['department']['id'],
-                'dept_name' => $employee['department']['name'],
+                'member_id' => $this->member->id,
+                'member_name' => $this->member->profile->name,
+                'dept_name' => $this->department,
                 'designation' => $this->designation,
-                'date' => $employee['date'],
-                'checkin_time' => $employee['checkin_time'],
-                'checkout_time' => $employee['checkout_time'],
-                'status' => $employee['status']
+                'date' => $date,
+                'checkin_time' => $checkin_time,
+                'checkout_time' => $checkout_time,
+                'active_hours' => $active_hours,
+                'status' => $status
             ]);
         }
     }

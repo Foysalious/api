@@ -143,12 +143,22 @@ class AttendanceController extends Controller
         $time_frame = $time_frame->forAMonth($month, date('Y'));
         $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
         $employee_attendance = (new MonthlyStat($time_frame, $business_holiday, $business_weekend))->transform($attendances);
+        $daily_breakdowns = collect($employee_attendance['daily_breakdown']);
+        $daily_breakdowns = $daily_breakdowns->filter(function ($breakdown){
+            return Carbon::parse($breakdown['date'])->lessThanOrEqualTo(Carbon::today());
+        });
+
         if ($request->file == 'excel') {
-            return $member_monthly_excel->setMonthlyData($employee_attendance['daily_breakdown'])->get();
+            return $member_monthly_excel->setMonthlyData($daily_breakdowns->toArray())
+                ->setMember($business_member->member)
+                ->setDesignation($business_member->role ? $business_member->role->name : null)
+                ->setDepartment($business_member->role && $business_member->role->businessDepartment ? $business_member->role->businessDepartment->name : null)
+                ->get();
         }
+
         return api_response($request, $list, 200, [
             'stat' => $employee_attendance['statistics'],
-            'attendances' => $employee_attendance['daily_breakdown'],
+            'attendances' => $daily_breakdowns,
             'employee' => [
                 'id' => $business_member->member->id,
                 'name' => $business_member->member->profile->name,

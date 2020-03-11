@@ -62,9 +62,9 @@ class MonthlyStat
                     $breakdown_data['show_attendance'] = 1;
                     $breakdown_data['attendance'] = [
                         'id' => $attendance->id,
-                        'checkin_time' => $attendance->checkin_time,
-                        'checkout_out' => $attendance->checkout_time,
-                        'staying_time_in_minutes' => $attendance->staying_time_in_minutes . ' min',
+                        'checkin_time' => Carbon::parse($attendance->date . ' ' . $attendance->checkin_time)->format('g:i a'),
+                        'checkout_time' => $attendance->checkout_time ? Carbon::parse($attendance->date . ' ' . $attendance->checkout_time)->format('g:i a') : null,
+                        'staying_time_in_minutes' => $attendance->staying_time_in_minutes ? $this->formatMinute($attendance->staying_time_in_minutes) : null,
                         'status' => $is_weekend_or_holiday ? null : $attendance->status,
                         'note' => $attendance->hasEarlyCheckout() ? $attendance->checkoutAction()->note : null
                     ];
@@ -89,6 +89,16 @@ class MonthlyStat
         $statistics['present'] = $statistics['working_days'] - $statistics['absent'];
 
         return $this->forOneEmployee ? ['statistics' => $statistics, 'daily_breakdown' => $daily_breakdown] : ['statistics' => $statistics];
+    }
+
+    private function formatMinute($minute)
+    {
+        if ($minute < 60) return "$minute min";
+        $hour = $minute / 60;
+        $intval_hr = intval($hour);
+        $text = "$intval_hr hr ";
+        if ($hour > $intval_hr) $text .= ($minute - (60 * intval($hour))) . " min";
+        return $text;
     }
 
     /**
