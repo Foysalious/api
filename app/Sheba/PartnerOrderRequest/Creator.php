@@ -1,11 +1,13 @@
 <?php namespace Sheba\PartnerOrderRequest;
 
+use App\Models\Job;
 use App\Models\Partner;
 use App\Models\PartnerOrder;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
 use Illuminate\Support\Collection;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequest;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequestRepositoryInterface;
+use Sheba\Partner\ImpressionManager;
 use Sheba\PartnerOrderRequest\Validators\CreateValidator;
 use Sheba\PushNotificationHandler;
 
@@ -25,20 +27,17 @@ class Creator
     private $pushNotificationHandler;
     /** @var PartnerOrderRequest $partnerOrderRequestId */
     private $partnerOrderRequestId;
+    /** @var ImpressionManager ImpressionManager */
+    private $impressionManager;
 
-    /**
-     * Creator constructor.
-     * @param PartnerOrderRequestRepositoryInterface $partner_order_request_repo
-     * @param CreateValidator $create_validator
-     * @param PushNotificationHandler $push_notification_handler
-     */
     public function __construct(PartnerOrderRequestRepositoryInterface $partner_order_request_repo,
                                 CreateValidator $create_validator,
-                                PushNotificationHandler $push_notification_handler)
+                                PushNotificationHandler $push_notification_handler, ImpressionManager $impressionManager)
     {
         $this->partnerOrderRequestRepo = $partner_order_request_repo;
         $this->createValidator = $create_validator;
         $this->pushNotificationHandler = $push_notification_handler;
+        $this->impressionManager = $impressionManager;
     }
 
     /**
@@ -79,6 +78,10 @@ class Creator
             $this->partnerOrderRequestId = $this->partnerOrderRequestRepo->create($data);
             $this->sendOrderRequestSmsToPartner($partner_id);
             $this->sendOrderRequestPushNotificationToPartner($partner_id);
+            $job = $this->partnerOrder->jobs->first();
+            $this->impressionManager->setLocationId($this->partnerOrder->order->location_id)->setCategoryId($job->category_id)
+                ->setCustomerId($this->partnerOrder->order->customer_id)->setPortalName(request()->header('portal-name'))
+                ->setServices($this->getServices($job))->setImpressionToDeduct(10)->deduct([$partner_id]);
         }
     }
 
@@ -109,5 +112,18 @@ class Creator
         (new SmsHandlerRepo('partner-order-request'))->send($partner->getContactNumber(), [
             'partner_name' => $partner->name
         ]);
+    }
+
+    private function getServices(Job $job)
+    {
+        $serviceArray = [];
+        foreach ($job->jobServices as $jobService) {
+            array_push($serviceArray, [
+                'id' => $jobService->service_id,
+                'quantity' => $jobService->quantity,
+                'option' => $jobService->option
+            ]);
+        }
+        return $serviceArray;
     }
 }

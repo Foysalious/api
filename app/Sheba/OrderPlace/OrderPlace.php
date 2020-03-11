@@ -105,12 +105,10 @@ class OrderPlace
     private $orderAmount;
     /** @var float */
     private $orderAmountWithoutDeliveryCharge;
-    /** @var ImpressionManager */
-    private $impressionManager;
 
     public function __construct(Creator $creator, PriceCalculation $priceCalculation, DiscountCalculation $discountCalculation, OrderVoucherData $orderVoucherData,
                                 PartnerListBuilder $partnerListBuilder, Director $director, ServiceRequest $serviceRequest,
-                                OrderRequestAlgorithm $orderRequestAlgorithm, JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, Store $order_request_store, ImpressionManager $impressionManager)
+                                OrderRequestAlgorithm $orderRequestAlgorithm, JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, Store $order_request_store)
     {
         $this->priceCalculation = $priceCalculation;
         $this->discountCalculation = $discountCalculation;
@@ -123,7 +121,6 @@ class OrderPlace
         $this->jobDiscountHandler = $job_discount_handler;
         $this->upsellCalculation = $upsell_calculation;
         $this->orderRequestStore = $order_request_store;
-        $this->impressionManager = $impressionManager;
     }
 
 
@@ -384,10 +381,9 @@ class OrderPlace
                 if (!$order->location_id) throw new LocationIdNullException("Order #" . $order->id . " has no location id");
                 if ($this->canCreatePartnerOrderRequest()) {
                     $partners = $this->orderRequestAlgorithm->setCustomer($this->customer)->setPartners($this->partnersFromList)->getPartners();
-                    $this->impressionManager->setLocationId($this->location->id)->setCategoryId($this->category->id)->setCustomerId($this->customer->id)
-                        ->setServiceRequestObject($this->serviceRequestObject)->deduct($partners->pluck('id')->values()->all());
                     $this->orderRequestStore->setPartnerOrderId($partner_order->id)->setPartners($partners->pluck('id')->values()->all())->set();
-                    $this->partnerOrderRequestCreator->setPartnerOrder($partner_order)->setPartners([$partners->first()->id])->create();
+                    $first_partner_id = [$partners->first()->id];
+                    $this->partnerOrderRequestCreator->setPartnerOrder($partner_order)->setPartners($first_partner_id)->create();
                 }
             });
         } catch (QueryException $e) {
