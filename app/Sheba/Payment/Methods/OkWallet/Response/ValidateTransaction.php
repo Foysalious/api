@@ -15,6 +15,11 @@ class ValidateTransaction
     private $paymentRepository;
     private $payment;
     private $request;
+
+    /**
+     * ValidateTransaction constructor.
+     * @param PaymentRepository $payment_repository
+     */
     public function __construct(PaymentRepository $payment_repository)
     {
         $this->paymentRepository = $payment_repository;
@@ -33,6 +38,9 @@ class ValidateTransaction
         return $this;
     }
 
+    /**
+     * @return mixed
+     */
     public function initValidation()
     {
         $validation_response = new ValidationResponse();
@@ -48,6 +56,9 @@ class ValidateTransaction
         return $this->payment;
     }
 
+    /**
+     * @return mixed
+     */
     public function changeToFailed()
     {
         $this->paymentRepository->changeStatus([
@@ -59,9 +70,11 @@ class ValidateTransaction
         $this->payment->transaction_details = json_encode($this->request);
 
         return $this->payment;
-
     }
 
+    /**
+     * @param $success
+     */
     public function changeToValidated($success)
     {
 
@@ -72,9 +85,11 @@ class ValidateTransaction
         ]);
         $this->payment->status = Statuses::VALIDATED;
         $this->payment->transaction_details = json_encode($success->details);
-
     }
 
+    /**
+     * @param $error
+     */
     public function changeToValidationFailed($error)
     {
         $this->paymentRepository->changeStatus([
@@ -84,9 +99,12 @@ class ValidateTransaction
         ]);
         $this->payment->status = Statuses::VALIDATION_FAILED;
         $this->payment->transaction_details = json_encode($error->details);
-
     }
 
+    /**
+     * @param $transaction_id
+     * @return mixed
+     */
     private function validateOrder($transaction_id)
     {
         return  (new OkWalletClient())->validationRequest($transaction_id);

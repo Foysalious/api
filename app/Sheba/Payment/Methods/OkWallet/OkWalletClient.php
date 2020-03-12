@@ -86,6 +86,10 @@ class OkWalletClient
         return $options;
     }
 
+    /**
+     * @param $transaction_id
+     * @return mixed
+     */
     public function validationRequest($transaction_id)
     {
         $response = $this->client->post("$this->baseUrl/getTransaction/$this->apiKey/$transaction_id")->getBody()->getContents();
