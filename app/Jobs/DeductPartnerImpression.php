@@ -18,5 +18,4 @@ class DeductPartnerImpression extends Job implements ShouldQueue
     {
         Partner::whereIn('id', $this->partner_ids)->where('current_impression', '>', 10)->decrement('current_impression', $this->impressionToDeduct);
     }
-
 }
