@@ -1,5 +1,6 @@
 <?php namespace Sheba\Business\Attendance\Member;
 
+use App\Sheba\Business\Attendance\Member\StatusPresenter;
 use Sheba\Reports\ExcelHandler;
 
 class Excel
@@ -9,11 +10,13 @@ class Excel
     private $department;
     private $member;
     private $excelHandler;
+    private $statusPresenter;
     private $data;
 
-    public function __construct(ExcelHandler $excelHandler)
+    public function __construct(ExcelHandler $excelHandler, StatusPresenter $status_presenter)
     {
         $this->excelHandler = $excelHandler;
+        $this->statusPresenter = $status_presenter;
         $this->data = [];
     }
 
@@ -48,6 +51,12 @@ class Excel
         return $this->excelHandler->setName('Employee Monthly Attendance')->createReport($this->data)->download();
     }
 
+    private function isWeekendOrHoliday($attendance)
+    {
+        if ($attendance['weekend_or_holiday_tag']) return true;
+        return false;
+    }
+
     private function makeData()
     {
         foreach ($this->monthlyData as $attendance) {
@@ -67,7 +76,7 @@ class Excel
                 if ($attendance['show_attendance'] == 0) {
                     if ($attendance['is_absent'] == 1) {
                         $date = $attendance['date'];
-                        $status = 'Absent';
+                        $status = 'absent';
                     }
                     if ($attendance['is_absent'] == 0) {
                         $date = $attendance['date'];
@@ -96,7 +105,7 @@ class Excel
                 'checkin_time' => $checkin_time,
                 'checkout_time' => $checkout_time,
                 'active_hours' => $active_hours,
-                'status' => $status
+                'status' => $this->statusPresenter::statuses()[$status]
             ]);
         }
     }
