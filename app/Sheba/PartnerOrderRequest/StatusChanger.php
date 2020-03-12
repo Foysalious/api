@@ -20,7 +20,7 @@ class StatusChanger
     private $repo;
     /** @var JobStatusChanger */
     private $jobStatusChanger;
-
+    /** @var PartnerOrderRequest */
     private $partnerOrderRequest;
     private $orderRequestResend;
     /** @var Creator  */
