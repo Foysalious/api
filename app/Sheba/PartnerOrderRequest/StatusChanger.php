@@ -96,15 +96,12 @@ class StatusChanger
     public function decline(Request $request)
     {
         $this->repo->update($this->partnerOrderRequest, ['status' => Statuses::DECLINED]);
-        if ($partner_ids = $this->orderRequestStore->setPartnerOrderId($this->partnerOrderRequest->partnerOrder->id)->get()) {
-            foreach ($partner_ids as $partner_id) {
-                $order_request = $this->partnerOrderRequest->partnerOrder->partnerOrderRequests->where('partner_id', $partner_id)->first();
-                if ($order_request) continue;
-                $this->creator->setPartnerOrder($this->partnerOrderRequest->partnerOrder)->setPartners([$partner_id])->create();
-                return;
-            }
-        }
+
         if (!$this->repo->isAllRequestDeclinedOrNotResponded($this->partnerOrderRequest->partnerOrder)) return;
+        if ($this->partnerOrderRequest->partnerOrder->partner_searched_count == 1) {
+            $this->orderRequestResend->setOrder($this->partnerOrderRequest->partnerOrder->order)->send();
+            return;
+        }
         $request->merge(['job' => $this->partnerOrderRequest->partnerOrder->lastJob()]);
         $this->jobStatusChanger->notResponded($request);
         if ($this->jobStatusChanger->hasError()) {
