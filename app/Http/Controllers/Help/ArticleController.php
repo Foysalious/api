@@ -1,5 +1,6 @@
-<?php namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers\Help;
 
+use App\Http\Controllers\Controller;
 use App\Sheba\Business\Article\LikeDislike\Creator as ArticleLikeDislikeCreator;
 use App\Transformers\Business\ArticleListTransformer;
 use App\Transformers\Business\ArticleTransformer;
@@ -12,6 +13,8 @@ use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use Sheba\Dal\ArticleType\Contract as ArticleTypeRepositoryInterface;
 use Sheba\Dal\Article\Contract as ArticleRepositoryInterface;
+use Sheba\Help\Accessor;
+use Sheba\Help\UserPortalMapper;
 use Throwable;
 
 class ArticleController extends Controller
@@ -23,13 +26,11 @@ class ArticleController extends Controller
      */
     public function getArticleTypes(Request $request, ArticleTypeRepositoryInterface $article_type_repository)
     {
-        try {
-            $article_types = $article_type_repository->getAllPublishedArticleTypes();
-            return api_response($request, null, 200, ['article_types' => $article_types]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $this->validate($request, ['type' => 'required|in:' . implode(',', Accessor::get())]);
+        $user_type = UserPortalMapper::getPortalByUser($request->type);
+
+        $article_types = $article_type_repository->getAllPublishedArticleTypesByUserType($user_type);
+        return api_response($request, null, 200, ['article_types' => $article_types]);
     }
 
     /**
@@ -40,18 +41,16 @@ class ArticleController extends Controller
      */
     public function getArticles($type, Request $request, ArticleTypeRepositoryInterface $article_type_repository)
     {
-        try {
-            $articles = $article_type_repository->getAllPublishedArticlesFilteredByArticleType($type);
-            $fractal = new Manager();
-            $fractal->setSerializer(new CustomSerializer());
-            $resource = new Collection($articles, new ArticleListTransformer());
-            $articles = $fractal->createData($resource)->toArray()['data'];
+        $this->validate($request, ['type' => 'required|in:' . implode(',', Accessor::get())]);
 
-            return api_response($request, null, 200, ['articles' => $articles]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $articles = $article_type_repository->getAllPublishedArticlesFilteredByArticleType($type);
+
+        $fractal = new Manager();
+        $fractal->setSerializer(new CustomSerializer());
+        $resource = new Collection($articles, new ArticleListTransformer());
+        $articles = $fractal->createData($resource)->toArray()['data'];
+
+        return api_response($request, null, 200, ['articles' => $articles]);
     }
 
     /**
@@ -62,22 +61,18 @@ class ArticleController extends Controller
      */
     public function show($article, ArticleRepositoryInterface $article_repository, Request $request)
     {
-        try {
-            $article = $article_repository->find($article);
+        $this->validate($request, ['type' => 'required|in:' . implode(',', Accessor::get())]);
+        $user_type = UserPortalMapper::getPortalByUser($request->type);
 
-            $article = $article_repository->find($article);
-            if (!$article) return api_response($request, null, 404, ["message" => "Article not found."]);
+        $article = $article_repository->findByUserType($article, $user_type);
+        if (!$article) return api_response($request, null, 404, ["message" => "Article not found."]);
 
-            $fractal = new Manager();
-            $fractal->setSerializer(new CustomSerializer());
-            $resource = new Item($article, new ArticleTransformer());
-            $article = $fractal->createData($resource)->toArray()['data'];
+        $fractal = new Manager();
+        $fractal->setSerializer(new CustomSerializer());
+        $resource = new Item($article, new ArticleTransformer());
+        $article = $fractal->createData($resource)->toArray()['data'];
 
-            return api_response($request, null, 200, ['article' => $article]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        return api_response($request, null, 200, ['article' => $article]);
     }
 
     /**
