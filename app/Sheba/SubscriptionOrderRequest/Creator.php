@@ -1,5 +1,6 @@
 <?php namespace Sheba\SubscriptionOrderRequest;
 
+use App\Http\Requests\Request;
 use App\Models\Partner;
 use App\Models\SubscriptionOrder;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
@@ -14,6 +15,7 @@ class Creator
     private $repo;
     /** @var SubscriptionOrder */
     private $subscriptionOrder;
+    private $partner_id;
     /** @var Partner $partner */
     private $partner;
     /** @var ImpressionManager ImpressionManager */
@@ -50,9 +52,10 @@ class Creator
      * @param Partner $partner
      * @return $this
      */
-    public function setPartner(Partner $partner)
+    public function setPartner($partner_id)
     {
-        $this->partner = $partner;
+        $this->partner_id = $partner_id;
+        $this->partner = Partner::where('id', $partner_id)->first();
         return $this;
     }
 
@@ -69,7 +72,7 @@ class Creator
         $this->sendOrderRequestPushNotificationToPartner($this->partner);
         $this->impressionManager->setLocationId($this->subscriptionOrder->location_id)->setCategoryId($this->subscriptionOrder->category_id)
             ->setCustomerId($this->subscriptionOrder->customer_id)->setPortalName(request()->header('portal-name'))
-            ->setServices($this->subscriptionOrder->service_details->toArray())->deduct([$this->partner->id]);
+            ->setServices(array(request()->services))->setImpressionToDeduct(10)->deduct([$this->partner->id]);
     }
 
     /**
