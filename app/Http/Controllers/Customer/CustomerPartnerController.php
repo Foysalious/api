@@ -14,7 +14,6 @@ class CustomerPartnerController extends Controller
             'services' => 'required|string',
             'lat' => 'required|numeric', 'lng' => 'required|numeric'
         ]);
-        return api_response($request, null, 404);
         $services = json_decode($request->services, 1);
         if (empty($services)) return api_response($request, null, 400);
         $service_request_object = $service_request->setServices($services)->get();

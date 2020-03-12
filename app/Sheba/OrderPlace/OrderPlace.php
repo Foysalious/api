@@ -363,7 +363,6 @@ class OrderPlace
     public function create()
     {
         try {
-            $this->setAdditionalInformation('v4');
             $this->resolveAddress();
             $this->fetchPartner();
             $job_services = $this->createJobService();
@@ -381,9 +380,7 @@ class OrderPlace
                 if (!$order->location_id) throw new LocationIdNullException("Order #" . $order->id . " has no location id");
                 if ($this->canCreatePartnerOrderRequest()) {
                     $partners = $this->orderRequestAlgorithm->setCustomer($this->customer)->setPartners($this->partnersFromList)->getPartners();
-                    $this->orderRequestStore->setPartnerOrderId($partner_order->id)->setPartners($partners->pluck('id')->values()->all())->set();
-                    $first_partner_id = [$partners->first()->id];
-                    $this->partnerOrderRequestCreator->setPartnerOrder($partner_order)->setPartners($first_partner_id)->create();
+                    $this->partnerOrderRequestCreator->setPartnerOrder($partner_order)->setPartners($partners->pluck('id')->values()->all())->create();
                 }
             });
         } catch (QueryException $e) {
