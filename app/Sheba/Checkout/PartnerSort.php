@@ -35,12 +35,18 @@ class PartnerSort
         $current_impression_difference = $max_current_impression - $min_current_impression;
 
         foreach ($this->partners as $partner) {
+            $impression = 0;
             $expert_difference = $partner->subscription->resource_cap - 1;
             $avg_rating = $partner->rating > 0 ? $this->weights['avg_rating'] * (($partner->rating - 1) / 4) : 0;
             $total_ratings = ($partner->total_ratings > 0 && $rating_difference > 0) ? $this->weights['total_ratings'] * (($partner->total_ratings - $min_total_ratings) / $rating_difference) : 0;
             $total_experts = ($partner->total_experts > 0 && $expert_difference > 0) ? $this->weights['capacity'] * (($partner->total_experts - 1) / $expert_difference) : 0;
             $orders = ($partner->total_completed_orders > 0 && $order_difference > 0) ? $this->weights['orders'] * (($partner->total_completed_orders - $min_orders) / $order_difference) : 0;
-            $impression = $partner->current_impression > 10 ? $this->weights['impression'] * (($partner->current_impression - $min_current_impression) / $current_impression_difference) : 0;
+
+            if ($current_impression_difference)
+                $impression = $partner->current_impression > 10 ?
+                    $this->weights['impression'] * (($partner->current_impression - $min_current_impression) / $current_impression_difference) :
+                    0;
+
             $partner['score'] = $avg_rating + $orders + $total_experts + $total_ratings + $impression;
         }
         return $this->partners->sortByDesc('score');
