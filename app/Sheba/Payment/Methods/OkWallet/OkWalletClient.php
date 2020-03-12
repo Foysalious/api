@@ -85,4 +85,11 @@ class OkWalletClient
         $options['form_params'] = $data;
         return $options;
     }
+
+    public function validationRequest($transaction_id)
+    {
+        $response = $this->client->post("$this->baseUrl/getTransaction/$this->apiKey/$transaction_id")->getBody()->getContents();
+        return json_decode($response,true);
+
+    }
 }
