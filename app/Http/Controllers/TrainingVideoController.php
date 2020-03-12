@@ -20,7 +20,9 @@ class TrainingVideoController extends Controller
                 'screen'=>$item->screen,
                 'title'=>$item->title,
                 'description'=>$item->description,
-                'publication_status'=>1
+                'publication_status'=>1,
+                'title_bn'=>$item->title_bn,
+                'description_bn'=>$item->description_bn
             ];
         });
         return api_response($request,$link,200,['data'=>$link]);
