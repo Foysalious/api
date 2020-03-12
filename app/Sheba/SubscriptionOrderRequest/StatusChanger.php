@@ -59,6 +59,7 @@ class StatusChanger
     {
         DB::transaction(function () {
             $this->repo->update($this->subscriptionOrderRequest, ['status' => Statuses::DECLINED]);
+
             if ($this->repo->isAllRequestDeclinedOrNotResponded($this->subscriptionOrderRequest->subscriptionOrder)) {
                 $this->subscriptionOrderStatusChanger
                     ->setSubscriptionOrder($this->subscriptionOrderRequest->subscriptionOrder)
