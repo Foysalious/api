@@ -87,7 +87,7 @@ class Creator
             "title" => 'New Order',
             "message" => "প্রিয় $partner->name আপনার একটি নতুন অর্ডার রয়েছে, অনুগ্রহ করে ম্যানেজার অ্যাপ থেকে অর্ডারটি একসেপ্ট করুন",
             "sound" => "notification_sound",
-            "event_type" => 'SubscriptionOrder', //TODO: Need to check if this will serve the purpose or not
+            "event_type" => 'PartnerOrder',
             "event_id" => $this->subscriptionOrderRequestId,
             "link" => "new_order"
         ], $topic, $channel, $sound);
