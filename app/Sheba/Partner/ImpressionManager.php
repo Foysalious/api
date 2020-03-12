@@ -37,19 +37,6 @@ class ImpressionManager
         return $this;
     }
 
-    public function setLocationId($location_id)
-    {
-        $this->locationId = $location_id;
-        return $this;
-    }
-
-
-    public function setCategoryId($category_id)
-    {
-        $this->categoryId = $category_id;
-        return $this;
-    }
-
     /**
      * @param ServiceRequestObject[] $serviceRequestObject
      * @return ImpressionManager
@@ -60,31 +47,11 @@ class ImpressionManager
         $serviceArray = [];
         foreach ($this->serviceRequestObject as $selected_service) {
             array_push($serviceArray, [
-                'id' => $selected_service->getServiceId(),
-                'quantity' => $selected_service->getQuantity(),
-                'option' => $selected_service->getOption()
+                'id' => $selected_service->getServiceId(), 'quantity' => $selected_service->getQuantity(), 'option' => $selected_service->getOption()
             ]);
         }
         $this->setServices($serviceArray);
         $this->setPortalName(request()->header('portal-name'));
-        return $this;
-    }
-
-    public function setPartnerListRequest(PartnerListRequest $request)
-    {
-        $this->request = $request;
-        $this->setCategoryId($this->request->selectedCategory->id);
-        $this->setLocationId($this->request->location);
-        $serviceArray = [];
-        foreach ($this->request->selectedServices as $service) {
-            array_push($serviceArray, [
-                'id' => $service->id,
-                'quantity' => $service->quantity,
-                'option' => $service->option
-            ]);
-        }
-        $this->setServices($serviceArray);
-        $this->setPortalName($this->request->portalName);
         return $this;
     }
 
@@ -100,11 +67,39 @@ class ImpressionManager
         return $this;
     }
 
+    public function setPartnerListRequest(PartnerListRequest $request)
+    {
+        $this->request = $request;
+        $this->setCategoryId($this->request->selectedCategory->id);
+        $this->setLocationId($this->request->location);
+        $serviceArray = [];
+        foreach ($this->request->selectedServices as $service) {
+            array_push($serviceArray, [
+                'id' => $service->id, 'quantity' => $service->quantity, 'option' => $service->option
+            ]);
+        }
+        $this->setServices($serviceArray);
+        $this->setPortalName($this->request->portalName);
+        return $this;
+    }
+
+    public function setCategoryId($category_id)
+    {
+        $this->categoryId = $category_id;
+        return $this;
+    }
+
+    public function setLocationId($location_id)
+    {
+        $this->locationId = $location_id;
+        return $this;
+    }
+
     public function deduct(array $partners)
     {
         $impression_deduction = new ImpressionDeduction();
-        $impression_deduction->category_id = $this->categoryId;
-        $impression_deduction->location_id = $this->locationId;
+        $impression_deduction->category_id = $this->categoryId ? $this->categoryId : null;
+        $impression_deduction->location_id = $this->locationId ? $this->locationId : null;
         $impression_deduction->order_details = json_encode(['services' => $this->services]);
         $impression_deduction->customer_id = $this->customerId ? $this->customerId : null;
         $impression_deduction->portal_name = $this->portalName;
@@ -118,9 +113,7 @@ class ImpressionManager
 
     public function needsToDeduct()
     {
-        return request()->has('screen') &&
-            request()->get('screen') == 'partner_list' &&
-            in_array(request()->header('Portal-Name'), $this->targetPortals());
+        return request()->has('screen') && request()->get('screen') == 'partner_list' && in_array(request()->header('Portal-Name'), $this->targetPortals());
     }
 
     private function targetPortals()
