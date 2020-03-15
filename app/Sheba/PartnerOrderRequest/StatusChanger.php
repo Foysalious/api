@@ -58,11 +58,11 @@ class StatusChanger
             return;
         }
 
-        if ($this->partnerOrderRequest->created_at->addSeconds(config('partner.order.request_accept_time_limit_in_seconds')) < Carbon::now()) {
-            $msg = !empty($order_request_missed_msg) ? $order_request_missed_msg : "Time is over, you Missed it.";
-            $this->setError(403, $msg);
-            return;
-        }
+//        if ($this->partnerOrderRequest->created_at->addSeconds(config('partner.order.request_accept_time_limit_in_seconds')) < Carbon::now()) {
+//            $msg = !empty($order_request_missed_msg) ? $order_request_missed_msg : "Time is over, you Missed it.";
+//            $this->setError(403, $msg);
+//            return;
+//        }
 
         if ($this->repo->hasAnyAcceptedRequest($partner_order)) {
             $msg = !empty($order_request_missed_msg) ? $order_request_missed_msg : "Someone already did it.";

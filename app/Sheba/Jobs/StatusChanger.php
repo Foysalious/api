@@ -78,6 +78,8 @@ class StatusChanger
             }
             $selected_resource = $selected_resource['id'];
         }
+        $this->setError(403, "adfa");
+        return;
         $this->changeStatus($job, $request, JobStatuses::ACCEPTED);
         if ($this->hasError()) return;
         $this->changedJob = $this->assignResource($job, $selected_resource, $request->manager_resource);
