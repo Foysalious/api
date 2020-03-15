@@ -363,7 +363,6 @@ class OrderPlace
     public function create()
     {
         try {
-            $this->setAdditionalInformation('v4');
             $this->resolveAddress();
             $this->fetchPartner();
             $job_services = $this->createJobService();
