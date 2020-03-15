@@ -40,7 +40,8 @@ class MonthlyStat
             Statuses::ON_TIME => 0,
             Statuses::LATE => 0,
             Statuses::LEFT_EARLY => 0,
-            Statuses::ABSENT => 0
+            Statuses::ABSENT => 0,
+            'present' => 0
         ];
         $daily_breakdown = [];
         foreach ($period as $date) {
@@ -62,31 +63,42 @@ class MonthlyStat
                     $breakdown_data['show_attendance'] = 1;
                     $breakdown_data['attendance'] = [
                         'id' => $attendance->id,
-                        'checkin_time' => $attendance->checkin_time,
-                        'checkout_out' => $attendance->checkout_time,
+                        'checkin_time' => Carbon::parse($attendance->date . ' ' . $attendance->checkin_time)->format('g:i a'),
+                        'checkout_time' => $attendance->checkout_time ? Carbon::parse($attendance->date . ' ' . $attendance->checkout_time)->format('g:i a') : null,
+                        'staying_time_in_minutes' => $attendance->staying_time_in_minutes ? $this->formatMinute($attendance->staying_time_in_minutes) : null,
                         'status' => $is_weekend_or_holiday ? null : $attendance->status,
                         'note' => $attendance->hasEarlyCheckout() ? $attendance->checkoutAction()->note : null
                     ];
                 }
+                $statistics['present']++;
                 $statistics[$attendance->status]++;
             }
-            if (!$attendance && !$is_weekend_or_holiday) {
+
+            if (!$attendance && !$is_weekend_or_holiday && !$date->eq(Carbon::today())) {
                 if ($this->forOneEmployee) $breakdown_data['is_absent'] = 1;
                 $statistics[Statuses::ABSENT]++;
             }
 
             if ($this->forOneEmployee) $daily_breakdown[] = ['date' => $date->toDateString()] + $breakdown_data;
         }
-
+        
         $remain_days = CarbonPeriod::create($this->timeFrame->end->addDay(), $this->timeFrame->start->endOfMonth());
         foreach ($remain_days as $date) {
             $is_weekend_or_holiday = $this->isWeekend($date, $weekend_day) || $this->isHoliday($date, $dates_of_holidays_formatted) ? 1 : 0;
             if ($is_weekend_or_holiday) $statistics['working_days']--;
         }
 
-        $statistics['present'] = $statistics['working_days'] - $statistics['absent'];
-
         return $this->forOneEmployee ? ['statistics' => $statistics, 'daily_breakdown' => $daily_breakdown] : ['statistics' => $statistics];
+    }
+
+    private function formatMinute($minute)
+    {
+        if ($minute < 60) return "$minute min";
+        $hour = $minute / 60;
+        $intval_hr = intval($hour);
+        $text = "$intval_hr hr ";
+        if ($hour > $intval_hr) $text .= ($minute - (60 * intval($hour))) . " min";
+        return $text;
     }
 
     /**
