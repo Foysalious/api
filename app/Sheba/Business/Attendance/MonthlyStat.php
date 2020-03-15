@@ -40,7 +40,8 @@ class MonthlyStat
             Statuses::ON_TIME => 0,
             Statuses::LATE => 0,
             Statuses::LEFT_EARLY => 0,
-            Statuses::ABSENT => 0
+            Statuses::ABSENT => 0,
+            'present' => 0
         ];
         $daily_breakdown = [];
         foreach ($period as $date) {
@@ -69,6 +70,7 @@ class MonthlyStat
                         'note' => $attendance->hasEarlyCheckout() ? $attendance->checkoutAction()->note : null
                     ];
                 }
+                $statistics['present']++;
                 $statistics[$attendance->status]++;
             }
 
@@ -85,8 +87,6 @@ class MonthlyStat
             $is_weekend_or_holiday = $this->isWeekend($date, $weekend_day) || $this->isHoliday($date, $dates_of_holidays_formatted) ? 1 : 0;
             if ($is_weekend_or_holiday) $statistics['working_days']--;
         }
-
-        $statistics['present'] = $statistics['working_days'] - $statistics['absent'];
 
         return $this->forOneEmployee ? ['statistics' => $statistics, 'daily_breakdown' => $daily_breakdown] : ['statistics' => $statistics];
     }
