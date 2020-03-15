@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\Payment;
+use App\Sheba\Payment\Methods\OkWallet\Request\InitRequest;
 use Illuminate\Http\Request;
 use Sheba\Payment\ShebaPayment;
 
@@ -15,9 +16,11 @@ class OkWalletController extends Controller
      */
     public function validatePayment(Request $request, ShebaPayment $sheba_payment)
     {
+
         $redirect_url = config('sheba.front_url');
         try {
-            $payment = Payment::where('gateway_transaction_id', $request->SESSIONKEY)->first();
+            $request = (new InitRequest(json_decode($request->data,true)));
+            $payment = Payment::where('gateway_transaction_id', $request->getSessionKey())->first();
             if ($payment) {
                 $redirect_url = $payment->payable->success_url . '?invoice_id=' . $payment->transaction_id;
 

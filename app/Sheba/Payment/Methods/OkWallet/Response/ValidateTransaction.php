@@ -6,6 +6,7 @@ namespace App\Sheba\Payment\Methods\OkWallet\Response;
 
 use App\Models\Payment;
 use App\Repositories\PaymentRepository;
+use App\Sheba\Payment\Methods\OkWallet\Request\InitRequest;
 use Sheba\Payment\Methods\OkWallet\OkWalletClient;
 use Sheba\Payment\Methods\OkWallet\Response\ValidationResponse;
 use Sheba\Payment\Statuses;
@@ -23,7 +24,7 @@ class ValidateTransaction
     public function __construct(PaymentRepository $payment_repository)
     {
         $this->paymentRepository = $payment_repository;
-        $this->request = request()->all();
+        $this->request = json_decode(request()->all()['data'],true);
 
     }
 
@@ -44,7 +45,7 @@ class ValidateTransaction
     public function initValidation()
     {
         $validation_response = new ValidationResponse();
-        $validation_response->setResponse($this->validateOrder($this->request['OKTRXID']));
+        $validation_response->setResponse($this->validateOrder((new InitRequest($this->request))->getOkTrxId()));
         $validation_response->setPayment($this->payment);
 
         if ($validation_response->hasSuccess()) {

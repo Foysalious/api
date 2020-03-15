@@ -5,6 +5,7 @@ namespace Sheba\Payment\Methods\OkWallet;
 use App\Models\Payable;
 use App\Models\Payment;
 use App\Models\PaymentDetail;
+use App\Sheba\Payment\Methods\OkWallet\Request\InitRequest;
 use App\Sheba\Payment\Methods\OkWallet\Response\ValidateTransaction;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -72,9 +73,12 @@ class OkWallet extends PaymentMethod
     public function validate(Payment $payment)
     {
         $request = request()->all();
+
+        $request = (new InitRequest(json_decode($request['data'],true)));
+
         $validate_transaction = (new ValidateTransaction($this->paymentRepository))->setPayment($payment);
 
-        if ($request['RESCODE'] != 2000) {
+        if ($request->getRescode() != 2000) {
             $payment = $validate_transaction->changeToFailed();
 
         } else {
