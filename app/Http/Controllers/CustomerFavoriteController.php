@@ -28,18 +28,9 @@ class CustomerFavoriteController extends Controller
 {
     use LocationSetter;
 
-    /**
-     * @param $customer
-     * @param Request $request
-     * @param PriceCalculation $price_calculation
-     * @param DeliveryCharge $delivery_charge
-     * @param JobDiscountHandler $job_discount_handler
-     * @param UpsellCalculation $upsell_calculation
-     * @return JsonResponse
-     */
     public function index($customer, Request $request,
                           PriceCalculation $price_calculation, DeliveryCharge $delivery_charge,
-                          JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation)
+                          JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, ServiceV2MinimalTransformer $service_transformer)
     {
         $this->validate($request, [
             'location' => 'sometimes|numeric', 'lat' => 'sometimes|numeric', 'lng' => 'required_with:lat'
@@ -75,15 +66,15 @@ class CustomerFavoriteController extends Controller
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
 
-        $favorites = $customer->favorites->each(function (&$favorite, $key) use ($manager, $price_calculation, $delivery_charge, $job_discount_handler, $upsell_calculation) {
+        $favorites = $customer->favorites->each(function (&$favorite, $key) use ($manager, $price_calculation, $delivery_charge, $job_discount_handler, $upsell_calculation, $service_transformer) {
             $services = [];
-            $favorite['category_name']  = $favorite->category->name;
-            $favorite['category_slug']  = $favorite->category->slug;
-            $favorite['category_icon']  = $favorite->category->icon_png;
-            $favorite['icon_color']     = isset(config('sheba.category_colors')[$favorite->category->parent->id]) ? config('sheba.category_colors')[$favorite->category->parent->id] : null;
-            $favorite['rating']         = $favorite->job->review ? $favorite->job->review->rating : 0.00;
+            $favorite['category_name'] = $favorite->category->name;
+            $favorite['category_slug'] = $favorite->category->slug;
+            $favorite['category_icon'] = $favorite->category->icon_png;
+            $favorite['icon_color'] = isset(config('sheba.category_colors')[$favorite->category->parent->id]) ? config('sheba.category_colors')[$favorite->category->parent->id] : null;
+            $favorite['rating'] = $favorite->job->review ? $favorite->job->review->rating : 0.00;
 
-            $favorite->services->each(function ($service) use ($favorite, &$services, $manager, $price_calculation, $delivery_charge, $job_discount_handler,$upsell_calculation) {
+            $favorite->services->each(function ($service) use ($favorite, &$services, $manager, $price_calculation, $delivery_charge, $job_discount_handler, $upsell_calculation, $service_transformer) {
                 $location_service = LocationService::where('location_id', $this->location)->where('service_id', $service->id)->first();
                 $pivot = $service->pivot;
                 $upsell_calculation->setService($service)
@@ -96,8 +87,9 @@ class CustomerFavoriteController extends Controller
                     "option" => json_decode($pivot->option, true),
                     "variable_type" => $pivot->variable_type
                 ];
-                $resource = new Item($selected_service, new ServiceV2MinimalTransformer($location_service, $price_calculation));
-                $price_data  = $manager->createData($resource)->toArray();
+                if ($location_service) $service_transformer->setLocationService($location_service);
+                $resource = new Item($selected_service, new ServiceV2MinimalTransformer($price_calculation));
+                $price_data = $manager->createData($resource)->toArray();
 
                 $pivot['variables'] = json_decode($pivot['variables']);
                 $pivot['picture'] = $service->thumb;
@@ -113,10 +105,10 @@ class CustomerFavoriteController extends Controller
             });
 
             $partner = $favorite->partner;
-            $favorite['total_price']    = $favorite->total_price;
-            $favorite['partner_id']     = $partner ? $partner->id : null;
-            $favorite['partner_name']   = $partner ? $partner->name : null;
-            $favorite['partner_logo']   = $partner ? $partner->logo : null;
+            $favorite['total_price'] = $favorite->total_price;
+            $favorite['partner_id'] = $partner ? $partner->id : null;
+            $favorite['partner_name'] = $partner ? $partner->name : null;
+            $favorite['partner_logo'] = $partner ? $partner->logo : null;
 
             $resource = new Item($favorite->category, new ServiceV2DeliveryChargeTransformer($delivery_charge, $job_discount_handler));
             $delivery_charge_discount_data = $manager->createData($resource)->toArray();
@@ -133,7 +125,7 @@ class CustomerFavoriteController extends Controller
             return api_response($request, null, 404);
         }
     }
-    
+
     public function store($customer, Request $request)
     {
         try {
