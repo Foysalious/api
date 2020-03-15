@@ -6,6 +6,7 @@ use Sheba\Checkout\Services\SubscriptionServicePricingAndBreakdown;
 use Sheba\Checkout\SubscriptionOrderInterface;
 use Sheba\Dal\SubscriptionOrder\Cycles;
 use Sheba\Dal\SubscriptionOrder\Statuses;
+use Sheba\Dal\SubscriptionOrderRequest\SubscriptionOrderRequest;
 use Sheba\Payment\PayableType;
 use Sheba\Dal\SubscriptionOrderPayment\Model as SubscriptionOrderPayment;
 use Sheba\ServiceRequest\ServiceRequestObject;
@@ -84,6 +85,11 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface, Pay
     public function scopeAccepted($query)
     {
         return $query->status(Statuses::ACCEPTED);
+    }
+
+    public function subscriptionOrderRequests()
+    {
+        return $this->hasMany(SubscriptionOrderRequest::class);
     }
 
     public function channelCode()

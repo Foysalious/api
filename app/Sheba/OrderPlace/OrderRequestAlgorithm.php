@@ -35,6 +35,8 @@ class OrderRequestAlgorithm
 
     public function getPartners()
     {
+        return $this->partners->splice(0, self::NUMBER_OF_PARTNERS);
+
         $this->setOrderCount();
         if ($this->orderCount > 10) return $this->partners;
         if (3 >= $this->orderCount) return $this->filterPartnersForFirstUserGroup();
