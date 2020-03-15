@@ -91,6 +91,7 @@ class AnnouncementController extends Controller
         if (!$announcement || $announcement->business_id != $business || !$access_control->setBusinessMember($business_member)->hasAccess('announcement.rw')) return api_response($request, null, 403);
         $updater->setAnnouncement($announcement);
         if ($request->has('title')) $updater->setTitle($request->title);
+        if ($request->has('type')) $updater->setType($request->type);
         if ($request->has('description')) $updater->setShortDescription($request->description);
         if ($request->has('end_date')) $updater->setEndDate(Carbon::parse($request->end_date));
         $updater->update();
