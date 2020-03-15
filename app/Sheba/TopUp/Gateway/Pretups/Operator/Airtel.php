@@ -1,9 +1,10 @@
 <?php namespace Sheba\TopUp\Gateway\Pretups\Operator;
 
 
+use Sheba\TopUp\Gateway\Gateway;
 use Sheba\TopUp\Gateway\Pretups\Pretups;
 
-class Airtel extends Pretups
+class Airtel extends Pretups implements Gateway
 {
     use RobiAxiata;
     CONST SHEBA_COMMISSION = 3.60;

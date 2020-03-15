@@ -2,11 +2,10 @@
 
 
 use App\Models\TopUpOrder;
-use Sheba\TopUp\Gateway\Gateway;
 use Sheba\TopUp\Vendor\Internal\Pretups\Client as PretupsClient;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
-abstract class Pretups implements Gateway
+abstract class Pretups
 {
     private $pretups;
 
