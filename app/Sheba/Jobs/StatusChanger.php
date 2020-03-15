@@ -58,17 +58,16 @@ class StatusChanger
         if ($this->hasError()) return;
 
         $job = $request->job;
-        if ($request->has('resource_id')) {
+        if ($request->resource_id) {
             $selected_resource = $request->resource_id;
-        }
-        else {
+        } else {
             $partnerRepo = new PartnerRepository($request->partner);
-            $category_id    = $job->category_id;
-            $date           = $job->schedule_date;
+            $category_id = $job->category_id;
+            $date = $job->schedule_date;
             $preferred_time = $job->preferred_time;
             $resources = $partnerRepo->resources(1, $category_id, $date, $preferred_time, $job);
             if (count($resources) > 0) {
-                $selected_resource = $resources->where('booked_jobs',[])->values()->first();
+                $selected_resource = $resources->where('booked_jobs', [])->values()->first();
                 if ($selected_resource == null) {
                     $this->setError(403, "No Available Resource Found");
                     return;
@@ -116,7 +115,7 @@ class StatusChanger
      */
     private function sendAssignResourcePushNotifications(Job $job)
     {
-        $topic   = config('sheba.push_notification_topic_name.customer') . $job->partner_order->order->customer->id;
+        $topic = config('sheba.push_notification_topic_name.customer') . $job->partner_order->order->customer->id;
         $channel = config('sheba.push_notification_channel_name.customer');
         (new PushNotificationHandler())->send([
             "title" => 'Resource has been assigned',
@@ -127,7 +126,7 @@ class StatusChanger
             "channel_id" => $channel
         ], $topic, $channel);
 
-        $topic   = config('sheba.push_notification_topic_name.resource') . $job->resource_id;
+        $topic = config('sheba.push_notification_topic_name.resource') . $job->resource_id;
         $channel = config('sheba.push_notification_channel_name.resource');
         (new PushNotificationHandler())->send([
             "title" => 'Assigned to a new job',
@@ -163,7 +162,7 @@ class StatusChanger
             $this->setError(500);
             return;
         }
-        if ($response->code != 200)  {
+        if ($response->code != 200) {
             $this->setError($response->code, $response->msg);
             return;
         }
