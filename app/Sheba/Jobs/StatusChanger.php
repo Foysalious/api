@@ -61,25 +61,14 @@ class StatusChanger
         if ($request->resource_id) {
             $selected_resource = $request->resource_id;
         } else {
-            $partnerRepo = new PartnerRepository($request->partner);
-            $category_id = $job->category_id;
-            $date = $job->schedule_date;
-            $preferred_time = $job->preferred_time;
-            $resources = $partnerRepo->resources(1, $category_id, $date, $preferred_time, $job);
-            if (count($resources) > 0) {
-                $selected_resource = $resources->where('booked_jobs', [])->values()->first();
-                if ($selected_resource == null) {
-                    $this->setError(403, "No Available Resource Found");
-                    return;
-                }
+            $available_resources = scheduler($request->partner)->isAvailable($job->schedule_date, $job->preferred_time_start, $job->category_id)->get('available_resources');
+            if (count($available_resources) > 0) {
+                $selected_resource = $available_resources[0];
             } else {
                 $this->setError(403, "No Available Resource Found");
                 return;
             }
-            $selected_resource = $selected_resource['id'];
         }
-        $this->setError(403, "adfa");
-        return;
         $this->changeStatus($job, $request, JobStatuses::ACCEPTED);
         if ($this->hasError()) return;
         $this->changedJob = $this->assignResource($job, $selected_resource, $request->manager_resource);

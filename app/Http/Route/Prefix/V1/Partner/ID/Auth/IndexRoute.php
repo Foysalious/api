@@ -8,7 +8,7 @@ class IndexRoute
             $api->group(['prefix' => 'order-requests'], function ($api) {
                 $api->get('/', 'Partner\OrderRequestController@lists');
                 $api->group(['prefix' => '{partner_order_request}'], function ($api) {
-                    $api->get('accept', 'Partner\OrderRequestController@accept');
+                    $api->post('accept', 'Partner\OrderRequestController@accept');
                     $api->post('decline', 'Partner\OrderRequestController@decline');
                 });
             });
