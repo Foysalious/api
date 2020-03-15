@@ -126,8 +126,8 @@ class PartnerOrderRepository
             $schedule_time = explode('-', $schedules->first()->time);
             $subscription = collect([
                 'id' => $subscription_order->id,
-                'customer_name' => $subscription_order->customer->profile->name,
-                'address' => $subscription_order->deliveryAddress->address,
+                'customer_name' => $subscription_order->customer ? $subscription_order->customer->profile->name : '',
+                'address' => $subscription_order->deliveryAddress ? $subscription_order->deliveryAddress->address : '',
                 'location_name' => $subscription_order->location->name,
                 'billing_cycle' => $subscription_order->billing_cycle,
                 'total_orders' => $subscription_order->orders->count(),
@@ -213,6 +213,8 @@ class PartnerOrderRepository
                     'schedule_time_start' => $job_preferred_time[0],
                     'schedule_time_end' => $job_preferred_time[1],
                     'schedule_at' => Carbon::parse($jobs[0]->schedule_date . ' ' . $job_preferred_time[0])->timestamp,
+                    'request_accept_time_limit_in_seconds' => config('partner.order.request_accept_time_limit_in_seconds'),
+                    'show_resource_list' => config('partner.order.show_resource_list')
                 ]);
 
                 $all_partner_orders->push($order);

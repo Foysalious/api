@@ -20,7 +20,7 @@ class OrderRequestTransformer extends TransformerAbstract
         $order = $request->partnerOrder->order;
         /** @var Job $job */
         $job = $order->lastJob();
-
+        $diff_in_seconds = (Carbon::now()->diffInSeconds($request->created_at));
         return [
             'id' => $request->id,
             'job_id' => $job->id,
@@ -39,12 +39,15 @@ class OrderRequestTransformer extends TransformerAbstract
             'schedule_time_start' => $job->preferred_time_start,
             'schedule_time_end' => $job->preferred_time_end,
             'schedule_at' => Carbon::parse($job->schedule_date . ' ' . $job->preferred_time_end)->timestamp,
-            'created_time' => $request->created_at->format('h:m:s A'),
+            'created_time' => $request->created_at->format('g:i:s A'),
             'total_price' => (double)$request->partnerOrder->calculate()->totalPrice,
             'status' => $request->status,
             'number_of_order' => 1,
             'is_order_request' => true,
-            'is_subscription_order' => false
+            'is_subscription_order' => false,
+            'request_accept_time_limit_in_seconds' => config('partner.order.request_accept_time_limit_in_seconds'),
+            'time_left_to_accept_in_seconds' => $diff_in_seconds <= config('partner.order.request_accept_time_limit_in_seconds') ? $diff_in_seconds : 0,
+            'show_resource_list' => config('partner.order.show_resource_list')
         ];
     }
 }

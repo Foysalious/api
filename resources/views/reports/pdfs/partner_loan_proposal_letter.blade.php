@@ -331,7 +331,7 @@
             <tr>
                 <td class="text-center">1</td>
                 <td class="text-center">{{$partner['profile']['name']}}</td>
-                <td class="text-center">{{calculateAge($partner['profile']['dob'])}}</td>
+                <td class="text-center">{{calculateAge($final_information_for_loan['personal']['birthday'])}}</td>
                 <td class="text-center">Business</td>
                 <td class="text-center">BDT 00000</td>
                 <td class="text-center">Self</td>

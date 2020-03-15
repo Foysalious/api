@@ -490,7 +490,7 @@ class ShebaController extends Controller
         if (!$type) return api_response($request, null, 404);
         if ($type->sluggable_type == 'service') $model = 'service';
         else $model = 'category';
-        $meta_tag = $meta_tag_repository->builder()->select('meta_tag', 'og_tag')->where('taggable_type', 'like', '%' . $model)->where('taggable_id', $type->id)->first();
+        $meta_tag = $meta_tag_repository->builder()->select('meta_tag', 'og_tag')->where('taggable_type', 'like', '%' . $model)->where('taggable_id', $type->sluggable_id)->first();
         $sluggable_type = [
             'type' => $type->sluggable_type,
             'id' => $type->sluggable_id,

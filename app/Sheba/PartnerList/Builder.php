@@ -37,7 +37,13 @@ interface Builder
 
     public function removeUnavailablePartners();
 
+    public function resolvePartnerSortingParameters();
+
+    public function sortPartners();
+
     public function withService();
+
+    public function withSubscriptionPackage();
 
     public function withResource();
 

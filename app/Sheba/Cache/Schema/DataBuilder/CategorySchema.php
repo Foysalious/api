@@ -52,10 +52,10 @@ class CategorySchema
     {
         return [
             self::AGGREGATE_REVIEW_SCHEMA_NAME => $this->getAggregateReviewSchema(),
-            self::REVIEW_SCHEMA_NAME => $this->getReviewSchema(),
+            self::REVIEW_SCHEMA_NAME => !$this->category->isParent() ? $this->getReviewSchema() : null,
+            self::FAQ_SCHEMA_NAME => !$this->category->isParent() ? $this->getFaqSchema() : null,
             self::CATEGORY_SCHEMA_NAME => $this->getCategorySchema(),
-            self::FAQ_SCHEMA_NAME => $this->getFaqSchema(),
-            self::BREADCRUMB_SCHEMA_NAME => $this->getBreadCrumbSchema(),
+            self::BREADCRUMB_SCHEMA_NAME => $this->getBreadCrumbSchema()
         ];
     }
 
@@ -81,7 +81,7 @@ class CategorySchema
             "@type" => "AggregateRating",
             "bestRating" => "5",
             "worstRating" => "1",
-            "ratingCount" => $reviews->total_ratings ? (int)$reviews->total_ratings : 0,
+            "ratingCount" => $reviews->total_ratings ? (int)$reviews->total_ratings : 1,
             "ratingValue" => $reviews->avg_rating ? round($reviews->avg_rating, 2) : 5,
             "itemReviewed" => [
                 "@type" => "Thing",
@@ -122,7 +122,7 @@ class CategorySchema
             "aggregateRating" => [
                 "@type" => "AggregateRating",
                 "ratingValue" => $this->categoryReview->avg_rating ? round($this->categoryReview->avg_rating, 2) : 5,
-                "reviewCount" => $this->categoryReview->total_ratings ? $this->categoryReview->total_ratings : 0
+                "reviewCount" => $this->categoryReview->total_ratings ? $this->categoryReview->total_ratings : 1
             ],
             "review" => $lists
         ];
@@ -136,7 +136,7 @@ class CategorySchema
             ->join('customers', 'customers.id', '=', 'reviews.customer_id')
             ->join('jobs', 'jobs.id', '=', 'reviews.job_id')
             ->join('profiles', 'profiles.id', '=', 'customers.profile_id')
-            ->where('review_type', 'like', '%' . '\\Review')
+            ->where('review_type', 'like', '%' . 'Models\\\\Review')
             ->where('review_question_answer.rate_answer_text', '<>', '')
             ->whereRaw("CHAR_LENGTH(rate_answer_text)>20")
             ->whereIn('reviews.rating', [5])
@@ -231,11 +231,11 @@ class CategorySchema
                 ]
             ]);
         }
-        return [
+        return count($lists) > 0 ? [
             "@context" => "https://schema.org",
             "@type" => "FAQPage",
             "mainEntity" => $lists
-        ];
+        ] : null;
     }
 
     private function getBreadCrumbSchema()

@@ -46,6 +46,11 @@ class Service extends Model
         return $this->category();
     }
 
+    public function usps()
+    {
+        return $this->belongsToMany(Usp::class)->withPivot(['value']);
+    }
+
     public function getParentCategoryAttribute()
     {
         return $this->category->parent->id;
