@@ -284,7 +284,7 @@ class CustomerSubscriptionController extends Controller
                     "variable_type" => $service->variable_type
                 ];
                 if ($location_service) $service_transformer->setLocationService($location_service);
-                $resource = new Item($selected_service, new ServiceV2MinimalTransformer($price_calculation));
+                $resource = new Item($selected_service, $service_transformer);
                 $price_discount_data = $manager->createData($resource)->toArray();
 
                 $data = [

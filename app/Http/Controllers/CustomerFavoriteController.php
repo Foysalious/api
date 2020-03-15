@@ -88,7 +88,7 @@ class CustomerFavoriteController extends Controller
                     "variable_type" => $pivot->variable_type
                 ];
                 if ($location_service) $service_transformer->setLocationService($location_service);
-                $resource = new Item($selected_service, new ServiceV2MinimalTransformer($price_calculation));
+                $resource = new Item($selected_service, $service_transformer);
                 $price_data = $manager->createData($resource)->toArray();
 
                 $pivot['variables'] = json_decode($pivot['variables']);
