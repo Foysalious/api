@@ -151,7 +151,7 @@ class JobLogs
             } else {
                 $partner = $this->job->partnerOrder->partner;
                 $category = $this->job->category;
-                $category_partner = CategoryPartner::where('category_id', $category->id)->where('partner_id', $partner->id)->first();
+                $category_partner = $partner ? CategoryPartner::where('category_id', $category->id)->where('partner_id', $partner->id)->first() : null;
                 if ($category_partner && $category_partner->uses_sheba_logistic) {
                     if ($this->job->rider) {
                         return [
