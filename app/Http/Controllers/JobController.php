@@ -75,17 +75,8 @@ class JobController extends Controller
         }
     }
 
-    /**
-     * @param $customer
-     * @param $job
-     * @param Request $request
-     * @param PriceCalculation $price_calculation
-     * @param DeliveryCharge $delivery_charge
-     * @param JobDiscountHandler $job_discount_handler
-     * @param UpsellCalculation $upsell_calculation
-     * @return JsonResponse
-     */
-    public function show($customer, $job, Request $request, PriceCalculation $price_calculation, DeliveryCharge $delivery_charge, JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation)
+
+    public function show($customer, $job, Request $request, PriceCalculation $price_calculation, DeliveryCharge $delivery_charge, JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, ServiceV2MinimalTransformer $service_transformer)
     {
         try {
             $customer = $request->customer;
@@ -197,7 +188,8 @@ class JobController extends Controller
                         "option" => json_decode($jobService->option, true),
                         "variable_type" => $jobService->variable_type
                     ];
-                    $resource = new Item($selected_service, new ServiceV2MinimalTransformer($location_service, $price_calculation));
+                    if ($location_service) $service_transformer->setLocationService($location_service);
+                    $resource = new Item($selected_service, $service_transformer);
                     $price_data = $manager->createData($resource)->toArray();
 
                     $service_data = [

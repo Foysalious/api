@@ -217,20 +217,10 @@ class CustomerSubscriptionController extends Controller
         }
     }
 
-    /**
-     * @param Request $request
-     * @param $customer
-     * @param $subscription
-     * @param ApproximatePriceCalculator $approximatePriceCalculator
-     * @param PriceCalculation $price_calculation
-     * @param DeliveryCharge $delivery_charge
-     * @param JobDiscountHandler $job_discount_handler
-     * @return JsonResponse
-     */
     public function show(Request $request, $customer, $subscription,
                          ApproximatePriceCalculator $approximatePriceCalculator,
                          PriceCalculation $price_calculation, DeliveryCharge $delivery_charge,
-                         JobDiscountHandler $job_discount_handler)
+                         JobDiscountHandler $job_discount_handler, ServiceV2MinimalTransformer $service_transformer)
     {
         try {
             $customer = $request->customer;
@@ -293,7 +283,8 @@ class CustomerSubscriptionController extends Controller
                     "option" => $breakdown->option,
                     "variable_type" => $service->variable_type
                 ];
-                $resource = new Item($selected_service, new ServiceV2MinimalTransformer($location_service, $price_calculation));
+                if ($location_service) $service_transformer->setLocationService($location_service);
+                $resource = new Item($selected_service, new ServiceV2MinimalTransformer($price_calculation));
                 $price_discount_data = $manager->createData($resource)->toArray();
 
                 $data = [
