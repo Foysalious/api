@@ -170,7 +170,7 @@ class OrderRequestController extends Controller
     public function accept($partner, PartnerOrderRequest $partner_order_request, Request $request)
     {
         try {
-            $this->validate($request, ['resource_id' => 'required|int|min:1']);
+            $this->validate($request, ['resource_id' => 'int|min:1']);
             $this->statusChanger->setPartnerOrderRequest($partner_order_request)->accept($request);
             if ($this->statusChanger->hasError()) return api_response($request, null, $this->statusChanger->getErrorCode(), [
                 'message' => $this->statusChanger->getErrorMessage()
