@@ -11,7 +11,7 @@ class StatusPresenter
             'left_early' => 'Left Early',
             'Holiday' => 'Holiday',
             'Weekend' => 'Weekend',
-            null => 'Weekend',
+            null => null,
         ];
     }
 }
