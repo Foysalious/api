@@ -18,7 +18,7 @@ class TopUpJob extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
 
-    const QUEUE_NAME = 'topup';
+    const QUEUE_NAME = 'topup:high';
 
     protected $agent;
     protected $vendorId;

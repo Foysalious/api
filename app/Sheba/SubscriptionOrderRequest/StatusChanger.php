@@ -1,5 +1,6 @@
 <?php namespace Sheba\SubscriptionOrderRequest;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Sheba\Checkout\Adapters\SubscriptionOrderAdapter;
@@ -20,11 +21,17 @@ class StatusChanger
     private $subscriptionOrderRequest;
     /** @var OrderStatusChanger */
     private $subscriptionOrderStatusChanger;
+    /** @var  Store*/
+    private $subscriptionOrderRequestStore;
+    /** @var Creator */
+    private $creator;
 
-    public function __construct(SubscriptionOrderRequestRepositoryInterface $repo, OrderStatusChanger $subscription_order_status_changer)
+    public function __construct(SubscriptionOrderRequestRepositoryInterface $repo, OrderStatusChanger $subscription_order_status_changer, Store $subscription_order_request_store, Creator $creator)
     {
         $this->repo = $repo;
         $this->subscriptionOrderStatusChanger = $subscription_order_status_changer;
+        $this->subscriptionOrderRequestStore = $subscription_order_request_store;
+        $this->creator = $creator;
     }
 
     public function setSubscriptionOrderRequest(SubscriptionOrderRequest $subscription_order_request)
@@ -44,6 +51,11 @@ class StatusChanger
             return;
         }
 
+        if ($this->subscriptionOrderRequest->created_at->addSeconds(config('partner.order.request_accept_time_limit_in_seconds')) < Carbon::now()) {
+            $this->setError(403, "Time is over, you Missed it.");
+            return;
+        }
+
         DB::transaction(function () use ($request) {
             $subscription_order = $this->subscriptionOrderRequest->subscriptionOrder;
             $subscription_order->update(['partner_id' => $request->partner->id]);
@@ -59,7 +71,15 @@ class StatusChanger
     {
         DB::transaction(function () {
             $this->repo->update($this->subscriptionOrderRequest, ['status' => Statuses::DECLINED]);
-
+            if ($partner_ids = $this->subscriptionOrderRequestStore->setSubscriptionOrderId($this->subscriptionOrderRequest->subscriptionOrder->id)->get()) {
+                $order_requests = $this->subscriptionOrderRequest->subscriptionOrder->subscriptionOrderRequests;
+                foreach ($partner_ids as $partner_id) {
+                    $order_request = $order_requests->where('partner_id', $partner_id)->first();
+                    if ($order_request) continue;
+                    $this->creator->setSubscriptionOrder($this->subscriptionOrderRequest->subscriptionOrder)->setPartner($partner_id)->create();
+                    return;
+                }
+            }
             if ($this->repo->isAllRequestDeclinedOrNotResponded($this->subscriptionOrderRequest->subscriptionOrder)) {
                 $this->subscriptionOrderStatusChanger
                     ->setSubscriptionOrder($this->subscriptionOrderRequest->subscriptionOrder)
