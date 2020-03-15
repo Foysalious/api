@@ -15,7 +15,7 @@ class ValidationResponse extends PaymentMethodResponse
     public function  getSuccess(): PaymentMethodSuccessResponse
     {
         $success = new PaymentMethodSuccessResponse();
-        $success->id = $this->response->tran_id;
+        $success->id = $this->response['TRXNNO'];
         $success->details = $this->response;
         return $success;
     }
@@ -23,7 +23,7 @@ class ValidationResponse extends PaymentMethodResponse
     public function getError(): PaymentMethodErrorResponse
     {
         $error = new PaymentMethodErrorResponse();
-        $error->id = isset($this->response->OKTRXNID) ? $this->response->OKTRXNID : null;
+        $error->id = isset($this->response['OKTRXNID']) ? $this->response['OKTRXNID'] : null;
         $error->details = $this->response;
         return $error;
     }
