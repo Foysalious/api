@@ -87,6 +87,7 @@ class AttendanceController extends Controller
                 $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
                 $employee_attendance = (new MonthlyStat($time_frame, $business_holiday, $business_weekend, false))->transform($attendances);
 
+
                 array_push($all_employee_attendance, [
                     'business_member_id' => $business_member->id,
                     'member' => [
@@ -141,6 +142,7 @@ class AttendanceController extends Controller
         $business_holiday = $business_holiday_repo->getAllByBusiness($business);
         $business_weekend = $business_weekend_repo->getAllByBusiness($business);
         $time_frame = $time_frame->forAMonth($month, date('Y'));
+        $time_frame->end = $this->isShowRunningMonthsAttendance(date('Y'), $month) ? Carbon::now() : $time_frame->end;
         $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
         $employee_attendance = (new MonthlyStat($time_frame, $business_holiday, $business_weekend))->transform($attendances);
         $daily_breakdowns = collect($employee_attendance['daily_breakdown']);
