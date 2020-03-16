@@ -210,7 +210,7 @@ class DueTrackerRepository extends BaseRepository
         $data['note'] = $request->note;
         $data['amount_cleared'] = $request->type == "due" ? 0 : (double)$request['amount'];
         $data['head_name'] = AutomaticIncomes::DUE_TRACKER;
-        $data['created_at'] = $request->created_at ?: Carbon::now()->format('Y-m-d H:s:i');
+        $data['created_at'] = $request->created_at ?: Carbon::now()->format('Y-m-d H:i:s');
         $data['attachments'] = $this->uploadAttachments($request);
         return $data;
     }
