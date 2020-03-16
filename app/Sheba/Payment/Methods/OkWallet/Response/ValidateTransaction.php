@@ -63,11 +63,11 @@ class ValidateTransaction
     public function changeToFailed()
     {
         $this->paymentRepository->changeStatus([
-            'to' => Statuses::FAILED,
+            'to' => Statuses::VALIDATION_FAILED,
             'from' => $this->payment->status,
             'transaction_details' => $this->payment->transaction_details
         ]);
-        $this->payment->status = Statuses::FAILED;
+        $this->payment->status = Statuses::VALIDATION_FAILED;
         $this->payment->transaction_details = json_encode($this->request);
 
         return $this->payment;
