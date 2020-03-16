@@ -2,6 +2,7 @@
 
 namespace App\Exceptions;
 
+use App\Sheba\Release\Release;
 use Exception;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -36,7 +37,9 @@ class Handler extends ExceptionHandler
     public function report(Exception $e)
     {
         if (app()->bound('sentry') && $this->shouldReport($e)) {
-            app('sentry')->captureException($e);
+            $sentry = app('sentry');
+            if ($version = (new Release())->get()) $sentry->setRelease($version);
+            $sentry->captureException($e);
         }
         parent::report($e);
     }

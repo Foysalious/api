@@ -23,6 +23,7 @@ if [ "$branch_name" = master ]; then
     sentry-cli releases set-commits --auto $VERSION
     # Finalize release
     sentry-cli releases finalize $VERSION
+    php artisan set-release-number --release=$VERSION
 fi
 
 sudo composer install --ignore-platform-reqs --no-interaction
