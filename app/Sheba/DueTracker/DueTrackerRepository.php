@@ -197,7 +197,7 @@ class DueTrackerRepository extends BaseRepository
             $data['attachments'] = $this->updateAttachments($request);
         }
         $data['created_from']   = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
-        $data['updated_at']     = Carbon::now()->format('Y-m-d H:s:i');
+        $data['updated_at']     = Carbon::now()->format('Y-m-d H:i:s');
 
         $response = $this->client->post("accounts/$this->accountId/entries/update/$request->entry_id", $data);
         return  $response['data'];
