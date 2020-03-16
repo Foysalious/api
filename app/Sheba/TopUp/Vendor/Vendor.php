@@ -70,9 +70,8 @@ abstract class Vendor
 
     private function resolveGateway(TopUpOrder $topUpOrder)
     {
-        $name = Names::PRETUPS;
         $gateway_factory = new GatewayFactory();
-        $gateway_factory->setGatewayName($name)->setVendorId($topUpOrder->vendor_id);
+        $gateway_factory->setGatewayName($topUpOrder->gateway);
         $this->setTopUpGateway($gateway_factory->get());
     }
 

@@ -42,8 +42,7 @@ class Creator
         $top_up_order->vendor_id = $model->id;
         $top_up_order->gateway = $model->gateway;
         $gateway_factory = new GatewayFactory();
-        $gateway_factory->setGatewayName($top_up_order->gateway)->setVendorId($top_up_order->vendor_id);
-        $gateway = $gateway_factory->get();
+        $gateway = $gateway_factory->setGatewayName($top_up_order->gateway)->get();
         $top_up_order->sheba_commission = ($this->topUpRequest->getAmount() * $gateway->getShebaCommission()) / 100;
         $this->setModifier($agent);
         $this->withCreateModificationField($top_up_order);
