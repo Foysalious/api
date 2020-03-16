@@ -56,7 +56,7 @@ class CustomerFavoriteController extends Controller
                     'job', 'services', 'partner' => function ($q) {
                         $q->select('id', 'name', 'logo');
                     }, 'category' => function ($q) {
-                        if ($this->location) $q->select('id', 'parent_id', 'name', 'slug', 'icon_png', 'icon_color', 'delivery_charge')->with('parent');
+                        if ($this->location) $q->select('id', 'parent_id', 'name', 'slug', 'icon_png', 'icon_color', 'delivery_charge', 'min_order_amount')->with('parent');
                     }
                 ])->orderBy('id', 'desc')->skip($offset)->take($limit);
             }
@@ -71,6 +71,7 @@ class CustomerFavoriteController extends Controller
             $favorite['category_name'] = $favorite->category->name;
             $favorite['category_slug'] = $favorite->category->slug;
             $favorite['category_icon'] = $favorite->category->icon_png;
+            $favorite['min_order_amount'] = $favorite->category->min_order_amount;
             $favorite['icon_color'] = isset(config('sheba.category_colors')[$favorite->category->parent->id]) ? config('sheba.category_colors')[$favorite->category->parent->id] : null;
             $favorite['rating'] = $favorite->job->review ? $favorite->job->review->rating : 0.00;
 
