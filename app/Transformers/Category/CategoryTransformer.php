@@ -39,6 +39,7 @@ class CategoryTransformer extends TransformerAbstract
             'popular_service_description' => $category->popular_service_description,
             'other_service_description' => $category->other_service_description,
             'is_auto_sp_enabled' => $category->is_auto_sp_enabled,
+            'min_order_amount' => $category->min_order_amount,
             'avg_rating' => $reviews ? round($reviews->avg_rating, 2) : null,
             'total_ratings' => $reviews ? $reviews->total_ratings : null,
             'banner' => $category->banner,
