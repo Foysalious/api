@@ -218,7 +218,7 @@ class PartnerList
             if ($selected_service->serviceModel->isOptions()) {
                 $this->partners = $this->partners->filter(function ($partner, $key) use ($selected_service) {
                     $service = $partner->services->where('id', $selected_service->id)->first();
-                    return $this->partnerServiceRepository->hasThisOption($service->pivot->prices, implode(',', $selected_service->option));
+                    return $service->pivot->prices && $this->partnerServiceRepository->hasThisOption($service->pivot->prices, implode(',', $selected_service->option));
                 });
             }
         }
