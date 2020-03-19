@@ -52,7 +52,7 @@ class CustomerRoute
                     $api->get('/', 'CustomerOrderController@index');
                     $api->get('valid', 'OrderController@checkOrderValidity');
                     $api->get('payment/valid', 'OrderController@checkInvoiceValidity');
-                    $api->get('promotions', 'PromotionV3Controller@autoApplyPromotion');
+                    $api->post('promotions', 'PromotionV3Controller@autoApplyPromotion');
                     $api->post('promotions/add', 'PromotionController@addPromotion');
                     $api->get('promotions/applicable', 'PromotionController@getAllApplicable');
                     $api->group(['prefix' => '{order}'], function ($api) {

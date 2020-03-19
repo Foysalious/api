@@ -29,6 +29,9 @@ class PromotionV3Controller extends Controller
                         DiscountCalculation $discount_calculation, UpsellCalculation $upsell_calculation)
     {
         try {
+            ini_set('memory_limit', '4096M');
+            ini_set('max_execution_time', 660);
+            
             $customer = $request->customer;
             $location = $request->location;
 
@@ -62,6 +65,9 @@ class PromotionV3Controller extends Controller
     public function autoApplyPromotion($customer, Request $request, VoucherSuggester $voucherSuggester, PartnerListRequest $partnerListRequest,
                                        PriceCalculation $price_calculation, DiscountCalculation $discount_calculation, UpsellCalculation $upsell_calculation)
     {
+        ini_set('memory_limit', '4096M');
+        ini_set('max_execution_time', 660);
+
         $this->validate($request, ['services' => 'string|required']);
         $partnerListRequest->setRequest($request)->prepareObject();
         $location = $request->location;

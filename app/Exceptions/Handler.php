@@ -36,7 +36,6 @@ class Handler extends ExceptionHandler
      */
     public function report(Exception $e)
     {
-        dd($e);
         if (app()->bound('sentry') && $this->shouldReport($e)) {
             $sentry = app('sentry');
             if ($version = (new Release())->get()) $sentry->setRelease($version);
