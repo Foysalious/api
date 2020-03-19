@@ -258,8 +258,6 @@
     </tr>
 </table>
 
-
-{{--<body style="margin: 50px 30px; font-family: Lato; ">--}}
 <table class="documentTitle">
     <tr>
         <td>Invoice</td>
