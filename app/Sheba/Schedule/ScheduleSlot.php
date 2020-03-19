@@ -82,6 +82,7 @@ class ScheduleSlot
         $start = $this->today->toDateString() . ' ' . $this->shebaSlots->first()->start;
         $end = $last_day->format('Y-m-d') . ' ' . $this->shebaSlots->last()->end;
         if ($this->partner) {
+            $this->resources = $this->getResources();
             $this->bookedSchedules = $this->getBookedSchedules($start, $end);
             $this->runningLeaves = $this->getLeavesBetween($start, $end);
             if ($this->category) $this->preparationTime = $this->partner->categories->where('id', $this->category->id)->first()->pivot->preparation_time_minutes;
