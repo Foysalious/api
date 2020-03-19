@@ -127,6 +127,7 @@ class EmployeeController extends Controller
      */
     public function index(Request $request)
     {
+        $test = test;
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
 
