@@ -10,7 +10,7 @@ class CustomerRoute
 
             $api->group(['prefix' => 'orders'], function ($api) {
                 $api->post('/', 'Order\OrderController@store');
-                $api->post('promotions', 'PromotionV3Controller@autoApplyPromotion');
+                $api->get('promotions', 'PromotionV3Controller@autoApplyPromotion');
                 $api->post('promotions/add', 'PromotionV3Controller@add');
             });
             $api->group(['prefix' => 'addresses'], function ($api) {
