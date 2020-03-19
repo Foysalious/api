@@ -1,12 +1,16 @@
 <?php namespace App\Http\Controllers\Employee;
 
 use App\Http\Controllers\Controller;
+use App\Models\Business;
 use App\Models\BusinessMember;
+use App\Transformers\BusinessEmployeesTransformer;
+use App\Transformers\CustomSerializer;
 use Illuminate\Http\JsonResponse;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Item;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionChecker;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
 use Sheba\Dal\Attendance\Model as Attendance;
-use Sheba\Dal\Attendance\Statuses;
 use Sheba\Dal\AttendanceActionLog\Actions;
 use Sheba\Repositories\ProfileRepository;
 use App\Transformers\Business\EmployeeTransformer;
@@ -115,5 +119,48 @@ class EmployeeController extends Controller
     {
         $auth_info = $request->auth_info;
         return $auth_info['business_member'];
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function index(Request $request)
+    {
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+
+        $business = Business::where('id', (int)$business_member['business_id'])->select('id', 'name', 'phone', 'email', 'type')->first();
+        $members = $business->members()->select('members.id', 'profile_id')->with(['profile' => function ($q) {
+            $q->select('profiles.id', 'name', 'mobile');
+        }, 'businessMember' => function ($q) {
+            $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id')->with(['role' => function ($q) {
+                $q->select('business_roles.id', 'business_department_id', 'name')->with(['businessDepartment' => function ($q) {
+                    $q->select('business_departments.id', 'business_id', 'name');
+                }]);
+            }]);
+        }])->get();
+
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Item($members, new BusinessEmployeesTransformer());
+        $employees_with_dept_data = $manager->createData($resource)->toArray()['data'];
+
+        return api_response($request, null, 200, [
+            'employees' => $employees_with_dept_data['employees'],
+            'departments' => $employees_with_dept_data['departments']
+        ]);
+    }
+
+    /**
+     * @param Request $request
+     * @param MemberRepositoryInterface $member_repository
+     * @return JsonResponse
+     */
+    public function show(Request $request, MemberRepositoryInterface $member_repository)
+    {
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+
     }
 }
