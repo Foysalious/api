@@ -37,23 +37,46 @@
             border: solid 1px #d1d7e6;
         }
         .invoiceInfo {
-
+            border: 0;
         }
         .addresses {
             width: 100%;
+            border: 0;
+            margin-top: 50px;
         }
         .addressRow {
             font-weight: bold;
+            height: 36px;
+            vertical-align: top;
         }
         .itemsTable {
             width: 100%;
+            margin-top: 30px;
+            border: 0;
         }
         .itemsSpec {
             font-weight: bold;
-            background: #f8f8fb;;
+            background: #f8f8fb;
+        }
+        .itemsSpecLabel {
+            border-top: solid 0.5px #bac0cc;
+            border-bottom: solid 0.5px #bac0cc;
+        }
+        .border-left {
+            border-left: solid 0.5px #bac0cc;
+        }
+        .padding-left {
+            padding-left: 15px;
+        }
+        .border-right {
+            border-right: solid 0.5px #bac0cc;
         }
         .itemsList {
-            border: solid 0.5px #bac0cc;
+            border-top: solid 0.5px #bac0cc;
+            border-bottom: solid 0.5px #bac0cc;
+        }
+        .total {
+            font-weight: bold;
         }
         /*invoice page end*/
 
@@ -233,14 +256,15 @@
         <td>21 Feb , 2020</td>
     </tr>
 </table>
+
 <table class="addresses">
     <tr class="addressRow">
-        <td>To Address</td>
-        <td>For Address</td>
+        <td style="margin-bottom: 16px">To Address</td>
+        <td style="margin-bottom: 16px">For Address</td>
     </tr>
     <tr>
         <td>
-            <table>
+            <table style="border: 0">
                 <tr>
                     <td>Name:</td>
                     <td>Fahim Razzaq</td>
@@ -257,7 +281,7 @@
             </table>
         </td>
         <td>
-            <table>
+            <table style="border: 0">
                 <tr>
                     <td>Name:</td>
                     <td>Fahim Razzaq</td>
@@ -278,25 +302,43 @@
 
 <table class="itemsTable">
     <tr class="itemsSpec">
-        <td>Item Name</td>
-        <td>Specification</td>
-        <td>Unit</td>
-        <td>Unit Price</td>
-        <td>Total Price</td>
+        <td class="itemsSpecLabel border-left padding-left ">Item Name</td>
+        <td class="itemsSpecLabel">Specification</td>
+        <td class="itemsSpecLabel">Unit</td>
+        <td class="itemsSpecLabel">Unit Price</td>
+        <td class="itemsSpecLabel border-right">Total Price</td>
     </tr>
     <tr class="itemsList">
-        <td>Keyboard</td>
-        <td>A4 Tech</td>
-        <td>10</td>
-        <td>৳500</td>
-        <td>৳5000</td>
+        <td class="itemsList border-left padding-left">Keyboard</td>
+        <td class="itemsList">A4 Tech</td>
+        <td class="itemsList">10</td>
+        <td class="itemsList">৳500</td>
+        <td class="itemsList border-right">৳5000</td>
     </tr>
     <tr class="itemsList">
-        <td>Keyboard</td>
-        <td>A4 Tech</td>
-        <td>10</td>
-        <td>৳500</td>
-        <td>৳5000</td>
+        <td class="itemsList border-left padding-left">Keyboard</td>
+        <td class="itemsList">A4 Tech</td>
+        <td class="itemsList">10</td>
+        <td class="itemsList">৳500</td>
+        <td class="itemsList border-right">৳5000</td>
+    </tr>
+    <tr class="total">
+        <td colspan="3"></td>
+        <td>Sub total</td>
+        <td>৳13545</td>
+    </tr>
+    <tr class="total">
+        <td colspan="3"></td>
+        <td>Due</td>
+        <td>0</td>
+    </tr>
+    <tr>
+        <td  colspan="5"><hr></td>
+    </tr>
+    <tr class="total">
+        <td colspan="3"></td>
+        <td>Grand Total</td>
+        <td>৳15000</td>
     </tr>
 </table>
 

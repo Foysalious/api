@@ -401,9 +401,12 @@ class ProcurementController extends Controller
             'company_evaluation' => $company_evaluation ? $company_evaluation->fields ? $company_evaluation->fields : null : null,
         ];
 
-        return view('pdfs.invoice', compact('procurement_details'));
+        //return view('pdfs.invoice', compact('procurement_details'));
         return App::make('dompdf.wrapper')
+            ->loadView('pdfs.invoice', compact('procurement_details'))
+            ->download("invoice.pdf");
+        /*return App::make('dompdf.wrapper')
             ->loadView('pdfs.procurement_details', compact('procurement_details'))
-            ->download("procurement_details.pdf");
+            ->download("procurement_details.pdf");*/
     }
 }
