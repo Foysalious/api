@@ -35,6 +35,8 @@ class SubscriptionOrderPlaceWithoutPartner extends SubscriptionOrderPlace
         DB::transaction(function () use (&$subscription_order) {
             $subscription_order = parent::place();
             $this->requestGenerator->setSubscriptionOrder($subscription_order)->generate();
+            $subscription_order = $subscription_order->fresh();
+            if ($subscription_order->subscriptionOrderRequests()->count() == 0) $this->setSubscriptionOrderStatusToNotResponded($subscription_order);
         });
 
         return $subscription_order;

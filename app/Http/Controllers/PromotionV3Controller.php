@@ -59,54 +59,40 @@ class PromotionV3Controller extends Controller
         }
     }
 
-    /**
-     * @param $customer
-     * @param Request $request
-     * @param VoucherSuggester $voucherSuggester
-     * @param PartnerListRequest $partnerListRequest
-     * @param PriceCalculation $price_calculation
-     * @param DiscountCalculation $discount_calculation
-     * @param UpsellCalculation $upsell_calculation
-     * @return JsonResponse
-     */
     public function autoApplyPromotion($customer, Request $request, VoucherSuggester $voucherSuggester, PartnerListRequest $partnerListRequest,
                                        PriceCalculation $price_calculation, DiscountCalculation $discount_calculation, UpsellCalculation $upsell_calculation)
     {
-        try {
-            $partnerListRequest->setRequest($request)->prepareObject();
-            $location = $request->location;
+        $this->validate($request, ['services' => 'string|required']);
+        $partnerListRequest->setRequest($request)->prepareObject();
+        $location = $request->location;
 
-            if ($request->has('lat') && $request->has('lng')) {
-                $hyper_local = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
-                $location = $hyper_local ? $hyper_local->location->id : $location;
-            }
+        if ($request->has('lat') && $request->has('lng')) {
+            $hyper_local = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+            $location = $hyper_local ? $hyper_local->location->id : $location;
+        }
 
-            $order_amount = $this->calculateOrderAmount($price_calculation, $discount_calculation, $upsell_calculation, $request->services, $location);
-            if (!$order_amount) return api_response($request, null, 403, ['message' => 'No partner available at this combination']);
-            $order_params = (new CheckParamsForOrder($request->customer, $request->customer->profile))
-                ->setApplicant($request->customer)
-                ->setCategory($partnerListRequest->selectedCategory->id)
-                ->setPartner($request->partner)
-                ->setLocation((int)$location)
-                ->setOrderAmount($order_amount)
-                ->setSalesChannel($request->sales_channel);
+        $order_amount = $this->calculateOrderAmount($price_calculation, $discount_calculation, $upsell_calculation, $request->services, $location);
+        if (!$order_amount) return api_response($request, null, 403, ['message' => 'No partner available at this combination']);
+        $order_params = (new CheckParamsForOrder($request->customer, $request->customer->profile))
+            ->setApplicant($request->customer)
+            ->setCategory($partnerListRequest->selectedCategory->id)
+            ->setPartner($request->partner)
+            ->setLocation((int)$location)
+            ->setOrderAmount($order_amount)
+            ->setSalesChannel($request->sales_channel);
 
-            $voucherSuggester->init($order_params);
+        $voucherSuggester->init($order_params);
 
-            if ($promo = $voucherSuggester->suggest()) {
-                $applied_voucher = [
-                    'amount' => (int)$promo['amount'],
-                    'code' => $promo['voucher']->code,
-                    'id' => $promo['voucher']->id
-                ];
-                $valid_promos = $this->sortPromotionsByWeight($voucherSuggester->validPromos);
-                return api_response($request, $promo, 200, ['voucher' => $applied_voucher, 'valid_promotions' => $valid_promos]);
-            } else {
-                return api_response($request, null, 404);
-            }
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        if ($promo = $voucherSuggester->suggest()) {
+            $applied_voucher = [
+                'amount' => (int)$promo['amount'],
+                'code' => $promo['voucher']->code,
+                'id' => $promo['voucher']->id
+            ];
+            $valid_promos = $this->sortPromotionsByWeight($voucherSuggester->validPromos);
+            return api_response($request, $promo, 200, ['voucher' => $applied_voucher, 'valid_promotions' => $valid_promos]);
+        } else {
+            return api_response($request, null, 404);
         }
     }
 

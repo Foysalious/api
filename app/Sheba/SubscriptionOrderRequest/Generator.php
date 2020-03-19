@@ -38,10 +38,8 @@ class Generator
     public function generate()
     {
         $partners = $this->fetchPartner();
+        if (count($partners) == 0) return;
         $partners = $this->algorithm->setCustomer($this->subscriptionOrder->customer)->setPartners($partners)->getPartners();
-        /* foreach ($partners as $partner) {
-            $this->creator->setPartner($partner)->create();
-        } */
         $this->subscriptionOrderRequestStore->setSubscriptionOrderId($this->subscriptionOrder->id)->setPartners($partners->pluck('id')->values()->all())->set();
         $first_partner_id = $partners->first()->id;
         $this->creator->setPartner($first_partner_id)->create();

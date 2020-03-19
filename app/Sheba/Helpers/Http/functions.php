@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Requests\ApiRequest;
+use Illuminate\Http\JsonResponse;
 
 if (!function_exists('api_response')) {
     /**
@@ -8,7 +9,7 @@ if (!function_exists('api_response')) {
      * @param $internal_response
      * @param $response_code
      * @param array|null $external_response
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     function api_response($request, $internal_response, $response_code, array $external_response = null)
     {

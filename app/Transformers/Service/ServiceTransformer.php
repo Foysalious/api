@@ -89,7 +89,8 @@ class ServiceTransformer extends TransformerAbstract
                 'cross_sale' => $cross_sale,
                 'delivery_discount' => $delivery_discount,
                 'delivery_charge' => $delivery_charge,
-                'is_auto_sp_enabled' => $category->is_auto_sp_enabled
+                'is_auto_sp_enabled' => $category->is_auto_sp_enabled,
+                'min_order_amount' => (double) $category->min_order_amount
             ],
             'fixed_price' => $service->isFixed() ? $this->priceCalculation->getUnitPrice() : null,
             'fixed_upsell_price' => $service->isFixed() ? $this->upsellCalculation->getAllUpsellWithMinMaxQuantity() : null,
