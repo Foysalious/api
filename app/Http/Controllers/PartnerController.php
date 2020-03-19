@@ -861,12 +861,16 @@ class PartnerController extends Controller
                         $services = $services->wherePivot('is_verified', 1);
                     }
                     $services = $services->get();
+                    $final_services = [];
                     if (count($services) > 0) {
-                        $services->each(function (&$service) {
+                        foreach ($services as $service) {
+                            if (!$service->pivot->prices) continue;
                             $variables = json_decode($service->variables);
                             if ($service->variable_type == 'Options') {
+                                $prices = json_decode($service->pivot->prices, 1);
+                                if (!is_array($prices)) continue;
                                 $service['questions'] = $this->formatServiceQuestions($variables->options);
-                                $service['option_prices'] = $service->pivot->price ? $this->formatOptionWithPrice(json_decode($service->pivot->prices)) : null;
+                                $service['option_prices'] = $this->formatOptionWithPrice(json_decode($service->pivot->prices));
                                 $service['fixed_price'] = null;
                             } else {
                                 $service['questions'] = $service['option_prices'] = [];
@@ -874,13 +878,14 @@ class PartnerController extends Controller
                             }
                             array_forget($service, 'variables');
                             removeRelationsAndFields($service);
-                        });
+                            array_push($final_services, $service);
+                        }
                     }
                     $categories->push([
                         'id' => $category->id,
                         'name' => $category->name,
                         'app_thumb' => $category->app_thumb,
-                        'services' => $services,
+                        'services' => $final_services,
                         'is_verified' => $category->pivot->is_verified
                     ]);
                 }
