@@ -222,7 +222,9 @@ class ScheduleSlot
                 $end_time = Carbon::parse($date_string . ' ' . $slot->end);
                 $slot['is_available_time'] = $start_time->diffInMinutes($end_time) >= $this->category->book_resource_minutes ? 1 : 0;
             }
-            $slot['is_available_time'] = $slot->is_available;
+            else {
+                $slot['is_available_time'] = $slot->is_available;
+            }
         });
     }
 
