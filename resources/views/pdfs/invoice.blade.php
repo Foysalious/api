@@ -179,7 +179,7 @@
             font-family: Lato;
             position: fixed;
             left: 0;
-            bottom: 4em;
+            bottom: 20px;
             border: none;
         }
 
@@ -196,6 +196,12 @@
             font-size: 10px;
             text-align: center;
             color: #000000;
+        }
+        .footerPrompt {
+            opacity: 0.6;
+            font-size: 10px;
+            font-family: Rubik;
+            height: 20px;
         }
 
 
@@ -235,6 +241,23 @@
 </head>
 
 <body style="margin-top: 55px; margin-bottom: 22px; font-family: Lato;">
+
+
+{{--footer--}}
+<table class="footer">
+    <tr>
+        <td colspan="2" class="footerPrompt">This is a digital version of W/O ,No signature is required here. </td>
+    </tr>
+    <tr>
+        <td style="font-size: 10px; opacity: 0.8; font-weight: normal; width: 70px; padding-bottom: 0px">
+            Powered by -
+        </td>
+        <td style="font-size: 10px;font-weight: normal;  padding-left: 10px; padding-bottom: 0px; padding-top: 5px">
+            <img src="{{public_path("images/sheba@3x.png")}}" style="height: 16px">
+        </td>
+    </tr>
+</table>
+
 
 {{--<body style="margin: 50px 30px; font-family: Lato; ">--}}
 <table class="documentTitle">
@@ -590,6 +613,18 @@
 {{--    </div>--}}
 
 {{--</div>--}}
+
+<script type="text/php">
+        if (isset($pdf))
+        {
+            $text = "Page {PAGE_NUM} of {PAGE_COUNT}";
+            $font = $fontMetrics->get_font("Lato", "regular");
+            $size = 7;
+            $y = $pdf->get_height() - 31;
+            $x = $pdf->get_width() - $fontMetrics->get_text_width($text, $font, $size) + 49;
+            $pdf->page_text($x, $y, $text, $font, $size);
+        }
+    </script>
 
 
 </body>
