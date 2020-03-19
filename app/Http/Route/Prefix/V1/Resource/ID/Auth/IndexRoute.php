@@ -8,6 +8,7 @@ class IndexRoute
         //TODO: Need to Add JWT Auth Middleware
         $api->group([], function ($api) {
             $api->get('profile', 'Resource\ResourceController@getProfile');
+            $api->get('schedules', 'Resource\ResourceController@getSchedules');
         });
     }
 }
