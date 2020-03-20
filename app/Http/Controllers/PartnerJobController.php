@@ -432,29 +432,33 @@ class PartnerJobController extends Controller
     public function cancelRequests($partner, Request $request)
     {
         try {
-            $partner = $request->partner->load(['partnerOrders' => function ($q) use ($request) {
+            $jobs = Job::whereHas('cancelRequests', function ($query) {
+                $query->where('status', 'Pending');
+            })->whereHas('partnerOrder', function ($q) use ($partner) {
+                $q->ongoing()->where('partner_id', $partner);
+            })->with(['category' => function ($q) {
+                $q->select('id', 'name');
+            }, 'partnerOrder' => function ($q) {
                 $q->with(['order' => function ($q) {
-                    $q->with('location', 'customer.profile');
-                }])->with(['jobs' => function ($q) use ($request) {
-                    $q->info()->whereHas('cancelRequests', function ($query) {
-                        $query->where('status', 'Pending');
-                    })->whereIn('status', (new PartnerOrderRepository())->getStatusFromRequest($request))->orderBy('id', 'desc')->with(['cancelRequests', 'category']);
+                    $q->select('id', 'customer_id', 'location_id', 'sales_channel')->with(['location' => function ($q) {
+                        $q->select('id', 'name');
+                    }, 'customer' => function ($q) {
+                        $q->select('id', 'profile_id')->with(['profile' => function ($q) {
+                            $q->select('id', 'name');
+                        }]);
+                    }]);
                 }]);
-            }]);
-            $jobs = collect();
-            foreach ($partner->partnerOrders as $partnerOrder) {
-                foreach ($partnerOrder->jobs as $job) {
-                    $job['is_on_premise'] = (int)$job->isOnPremise();
-                    $job['location'] = $partnerOrder->order->location->name;
-                    $job['code'] = $partnerOrder->order->code();
-                    $job['category_name'] = $job->category ? $job->category->name : null;
-                    $job['customer_name'] = $partnerOrder->order->customer ? $partnerOrder->order->customer->profile->name : null;
-                    $job['schedule_timestamp'] = $partnerOrder->getVersion() == 'v2' ? Carbon::parse($job->schedule_date . ' ' . explode('-', $job->preferred_time)[0])->timestamp : Carbon::parse($job->schedule_date)->timestamp;
-                    $job['preferred_time'] = humanReadableShebaTime($job->preferred_time);
-                    $job['version'] = $partnerOrder->order->getVersion();
-                    removeRelationsFromModel($job);
-                    $jobs->push($job);
-                }
+            }])->info()->orderBy('jobs.id', 'desc')->get();
+            foreach ($jobs as $job) {
+                $job['is_on_premise'] = (int)$job->isOnPremise();
+                $job['location'] = $job->partnerOrder->order->location->name;
+                $job['code'] = $job->partnerOrder->order->code();
+                $job['category_name'] = $job->category ? $job->category->name : null;
+                $job['customer_name'] = $job->partnerOrder->order->customer ? $job->partnerOrder->order->customer->profile->name : null;
+                $job['schedule_timestamp'] = $job->partnerOrder->getVersion() == 'v2' ? Carbon::parse($job->schedule_date . ' ' . explode('-', $job->preferred_time)[0])->timestamp : Carbon::parse($job->schedule_date)->timestamp;
+                $job['preferred_time'] = humanReadableShebaTime($job->preferred_time);
+                $job['version'] = $job->partnerOrder->order->getVersion();
+                removeRelationsFromModel($job);
             }
             return count($jobs) == 0 ? api_response($request, null, 404) : api_response($request, $jobs, 200, ['jobs' => $jobs]);
         } catch (Throwable $e) {
