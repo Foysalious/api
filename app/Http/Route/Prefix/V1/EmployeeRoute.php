@@ -42,8 +42,7 @@ class EmployeeRoute
                 $api->post('action', 'Employee\AttendanceController@takeAction');
                 $api->get('today', 'Employee\AttendanceController@getTodaysInfo');
             });
-
-            $api->group(['prefix' => 'leaves'], function ($api){
+            $api->group(['prefix' => 'leaves'], function ($api) {
                 $api->get('/', 'Employee\LeaveController@index');
                 $api->get('/types', 'Employee\LeaveController@getLeaveTypes');
                 $api->post('/', 'Employee\LeaveController@store');
@@ -52,8 +51,8 @@ class EmployeeRoute
                     $api->post('/', 'Employee\LeaveController@updateStatus');
                 });
             });
-            $api->group(['prefix' => 'holidays'], function ($api){
-               $api->get('/', 'Employee\HolidayController@getHolidays');
+            $api->group(['prefix' => 'holidays'], function ($api) {
+                $api->get('/', 'Employee\HolidayController@getHolidays');
             });
         });
     }

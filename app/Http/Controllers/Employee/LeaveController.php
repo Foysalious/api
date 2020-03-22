@@ -6,6 +6,7 @@ use App\Sheba\Business\Leave\Updater as LeaveUpdater;
 use App\Transformers\Business\LeaveListTransformer;
 use App\Transformers\Business\LeaveTransformer;
 use App\Transformers\CustomSerializer;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 use App\Http\Requests;
@@ -19,11 +20,19 @@ use Sheba\Dal\Leave\Contract as LeaveRepoInterface;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\ModificationFields;
+use Throwable;
 
 class LeaveController extends Controller
 {
     use ModificationFields;
 
+    /**
+     * @param Request $request
+     * @param LeaveTypesRepoInterface $leave_types_repo
+     * @param LeaveRepoInterface $leave_repo
+     * @param TimeFrame $time_frame
+     * @return JsonResponse
+     */
     public function getLeaveTypes(Request $request, LeaveTypesRepoInterface $leave_types_repo, LeaveRepoInterface $leave_repo, TimeFrame $time_frame)
     {
         try {
@@ -34,20 +43,23 @@ class LeaveController extends Controller
             $total_leaves_taken = $leave_repo->getTotalLeavesByBusinessMemberFilteredWithYear($business_member, $time_frame);
             foreach ($leave_types as $leave_type) {
                 foreach ($total_leaves_taken as $leave) {
-                    if($leave->leave_type_id == $leave_type->id) {
+                    if ($leave->leave_type_id == $leave_type->id) {
                         $leave_type->available_days = $leave_type->total_days - $leave->total_leaves_taken;
                     }
                 }
             }
             return api_response($request, null, 200, ['leave_types' => $leave_types]);
-        }
-        catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
 
     }
 
+    /**
+     * @param Request $request
+     * @return BusinessMember|null
+     */
     private function getBusinessMember(Request $request)
     {
         $auth_info = $request->auth_info;
@@ -56,30 +68,33 @@ class LeaveController extends Controller
         return BusinessMember::find($business_member['id']);
     }
 
+    /**
+     * @param Request $request
+     * @param LeaveCreator $leave_creator
+     * @return JsonResponse
+     */
     public function store(Request $request, LeaveCreator $leave_creator)
     {
         try {
             $this->validate($request, [
-                'start_date' => 'required|before_or_equal:end_date',
-                'end_date' => 'required',
+                'start_date' => 'required|before_or_equal:end_date', 'end_date' => 'required',
             ]);
             $business_member = $this->getBusinessMember($request);
             if (!$business_member) return api_response($request, null, 404);
-            $leave = $leave_creator->setTitle($request->title)
-                ->setBusinessMember($business_member)
-                ->setLeaveTypeId($request->leave_type_id)
-                ->setStartDate($request->start_date)
-                ->setEndDate($request->end_date)
-                ->setTotalDays()
-                ->create();
-            return api_response($request, null,200,['leave' => $leave->id]);
-        }
-        catch (\Throwable $e) {
+            $leave = $leave_creator->setTitle($request->title)->setBusinessMember($business_member)->setLeaveTypeId($request->leave_type_id)->setStartDate($request->start_date)->setEndDate($request->end_date)->setTotalDays()->create();
+            return api_response($request, null, 200, ['leave' => $leave->id]);
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
+    /**
+     * @param $leave
+     * @param Request $request
+     * @param LeaveRepoInterface $leave_repo
+     * @return JsonResponse
+     */
     public function show($leave, Request $request, LeaveRepoInterface $leave_repo)
     {
         try {
@@ -90,14 +105,18 @@ class LeaveController extends Controller
             $fractal->setSerializer(new CustomSerializer());
             $resource = new Item($leave, new LeaveTransformer());
             return api_response($request, $leave, 200, ['leave' => $fractal->createData($resource)->toArray()['data']]);
-        }
-        catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
 
     }
 
+    /**
+     * @param Request $request
+     * @param LeaveRepoInterface $leave_repo
+     * @return JsonResponse
+     */
     public function index(Request $request, LeaveRepoInterface $leave_repo)
     {
         try {
@@ -110,19 +129,25 @@ class LeaveController extends Controller
             $resource = new Collection($leaves, new LeaveListTransformer());
             $leaves = $fractal->createData($resource)->toArray()['data'];
             return api_response($request, null, 200, ['leaves' => $leaves]);
-        }
-        catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
+    /**
+     * @param $leave
+     * @param Request $request
+     * @param AccessControl $accessControl
+     * @param LeaveUpdater $leaveUpdater
+     * @return JsonResponse
+     */
     public function updateStatus($leave, Request $request, AccessControl $accessControl, LeaveUpdater $leaveUpdater)
     {
         $business_member = $this->getBusinessMember($request);
         $this->setModifier($business_member->member);
         $accessControl->setBusinessMember($business_member);
-        if(!$accessControl->hasAccess('leave.rw')) return api_response($request, null, 403);
+        if (!$accessControl->hasAccess('leave.rw')) return api_response($request, null, 403);
         $leave = Leave::findOrFail((int)$leave);
         $leaveUpdater->setLeave($leave)->setStatus($request->status)->updateStatus();
         return api_response($request, null, 200);
