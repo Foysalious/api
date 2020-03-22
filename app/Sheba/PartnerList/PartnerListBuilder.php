@@ -30,10 +30,20 @@ class PartnerListBuilder implements Builder
     private $geo;
     /** @var array */
     private $categoryIdsOfMasterCategory;
+    private $notFoundPartners;
 
     public function __construct()
     {
         $this->partnerQuery = Partner::query();
+        $this->notFoundPartners = [
+            'service' => [],
+            'location' => [],
+            'credit' => [],
+            'order_limit' => [],
+            'options' => [],
+            'handyman' => [],
+            'availability' => []
+        ];
     }
 
     private function setCategoryIdsOfMasterCategory()

@@ -46,15 +46,12 @@ class PartnerListController extends Controller
             'date' => 'date_format:Y-m-d',
             'time' => 'string',
             'lat' => 'required|numeric',
-            'lng' => 'required|numeric',
-            'partners' => 'string',
+            'lng' => 'required|numeric'
         ]);
-        $partners = json_decode($request->partners, 1);
         $geo->setLng($request->lng)->setLat($request->lat);
         $service_requestObject = $serviceRequest->setServices(json_decode($request->services, 1))->get();
         $partnerListBuilder->setGeo($geo)->setServiceRequestObjectArray($service_requestObject)
             ->setScheduleTime($request->time)->setScheduleDate($request->date);
-        if (count($partners) > 0) $partnerListBuilder->setPartnerIdsToIgnore($partners);
         $partnerListDirector->setBuilder($partnerListBuilder)->buildPartnerListForOrderPlacement();
         $partners = $partnerListBuilder->get();
         if (count($partners) == 0) return api_response($request, $partners, 404);
