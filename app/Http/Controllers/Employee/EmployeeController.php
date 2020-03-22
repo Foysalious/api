@@ -156,29 +156,35 @@ class EmployeeController extends Controller
 
     /**
      * @param Request $request
-     * @param $business_member
+     * @param $business_member_id
      * @return JsonResponse
      */
-    public function show(Request $request, $business_member_detail)
+    public function show(Request $request, $business_member_id)
     {
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
 
         $business = Business::where('id', (int)$business_member['business_id'])->select('id', 'name', 'phone', 'email', 'type')->first();
 
-        $business_member = $business->members()->where('members.id',$business_member_detail)->select('members.id', 'profile_id')->with(['profile' => function ($q) {
-            $q->select('profiles.id', 'name', 'mobile');
-        }, 'businessMember' => function ($q) {
-            $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id')->with(['role' => function ($q) {
-                $q->select('business_roles.id', 'business_department_id', 'name')->with(['businessDepartment' => function ($q) {
-                    $q->select('business_departments.id', 'business_id', 'name');
-                }]);
-            }]);
-        }])->get();
-        dd($business_member);
+        $business_member_with_details = $business->members()->where('business_member.id', $business_member_id)->select('members.id', 'profile_id')->with([
+            'profile' => function ($q) {
+                $q->select('profiles.id', 'name', 'mobile', 'email', 'pro_pic');
+            }, 'businessMember' => function ($q) {
+                $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id')->with([
+                    'role' => function ($q) {
+                        $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                            'businessDepartment' => function ($q) {
+                                $q->select('business_departments.id', 'business_id', 'name');
+                            }
+                        ]);
+                    }
+                ]);
+            }
+        ])->first();
+
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($business_member, new BusinessEmployeeDetailsTransformer());
+        $resource = new Item($business_member_with_details, new BusinessEmployeeDetailsTransformer());
         $employee_details = $manager->createData($resource)->toArray()['data'];
 
         return api_response($request, null, 200, ['details' => $employee_details]);
