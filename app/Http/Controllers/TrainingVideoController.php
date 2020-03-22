@@ -5,9 +5,9 @@ use Sheba\Dal\TrainingVideo\Contract as TrainingVideoRepository;
 class TrainingVideoController extends Controller
 {
     public function index(Request $request, TrainingVideoRepository $video_repository){
-        if($request->has('screen'))
+        if($request->has('key'))
         {
-            $data=$video_repository->getByScreen($request->screen);
+            $data=$video_repository->getByScreen($request->key);
         }
         else
         {
