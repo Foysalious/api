@@ -409,4 +409,52 @@ class ProcurementController extends Controller
             ->loadView('pdfs.procurement_details', compact('procurement_details'))
             ->download("procurement_details.pdf");*/
     }
+
+    public function workOrder(Request $request)
+    {
+
+        $to_address = [
+            'name' => "Fahim Razzaq",
+            'address' => "House no : 01, Road no : 01",
+            'mobile' => "01617000000"
+        ];
+
+        $from_address = [
+            'name' => "Fahim Razzaq",
+            'address' => "House no : 01, Road no : 01",
+            'mobile' => "01617000000"
+        ];
+
+        $data = [
+             [
+                "id" => 1,
+                "name" => "Keyboard",
+                "spec" => "A4 Tech",
+                "unit" => "10",
+                "unit_price" => "500",
+                "total_price" => "5000"
+            ],
+            [
+                "id" => 2,
+                "name" => "Mouse",
+                "spec" => "A4 Tech",
+                "unit" => 20,
+                "unit_price" => 500,
+                "total_price" => 10000
+            ]
+        ];
+
+        $api_data = [
+            "work_order_id" => "#0A4HA500",
+            "created_date" => "21 Feb 2020",
+            "to_address" => $to_address,
+            "from_address" => $from_address,
+            "items" => $data,
+            "sub_total" => 15000,
+            "due" => 0,
+            "grand_total" => 15000
+        ];
+
+        return $api_data;
+    }
 }
