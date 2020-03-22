@@ -181,6 +181,7 @@ class EmployeeController extends Controller
                 ]);
             }
         ])->first();
+        if (!$business_member_with_details) return api_response($request, null, 404);
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());

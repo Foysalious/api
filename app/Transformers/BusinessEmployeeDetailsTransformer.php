@@ -5,6 +5,10 @@ use League\Fractal\TransformerAbstract;
 
 class BusinessEmployeeDetailsTransformer extends TransformerAbstract
 {
+    /**
+     * @param Member $member
+     * @return array
+     */
     public function transform(Member $member)
     {
         $profile = $member->profile;
