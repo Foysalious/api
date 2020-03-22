@@ -19,7 +19,6 @@ abstract class Vendor
     public function setModel(TopUpVendor $model)
     {
         $this->model = $model;
-        $this->setTopUpGateway(app(Ssl::class));
         return $this;
     }
 
@@ -36,36 +35,7 @@ abstract class Vendor
     public function recharge(TopUpOrder $topup_order)
     {
         $this->resolveGateway($topup_order);
-
         return $this->topUpGateway->recharge($topup_order);
-    }
-
-
-    public function getTopUpInitialStatus()
-    {
-        return $this->topUpGateway->getInitialStatus();
-    }
-
-    protected function createNewRechargeHistory($amount, $vendor_id = null)
-    {
-        $recharge_history = new TopUpRechargeHistory();
-        $recharge_history->recharge_date = Carbon::now();
-        $recharge_history->vendor_id = $vendor_id ?: $this->model->id;
-        $recharge_history->amount = $amount;
-        $recharge_history->save();
-    }
-
-    public function deductAmount($amount)
-    {
-        $this->model->amount -= $amount;
-        $this->model->update();
-    }
-
-    public function refill($amount)
-    {
-        $this->model->amount += $amount;
-        $this->model->update();
-        // $this->createNewRechargeHistory($amount);
     }
 
     private function resolveGateway(TopUpOrder $topUpOrder)
@@ -78,6 +48,23 @@ abstract class Vendor
     private function setTopUpGateway(Gateway $topup_gateway)
     {
         $this->topUpGateway = $topup_gateway;
+        return $this;
     }
 
+    public function getTopUpInitialStatus()
+    {
+        return $this->topUpGateway->getInitialStatus();
+    }
+
+    public function deductAmount($amount)
+    {
+        $this->model->amount -= $amount;
+        $this->model->update();
+    }
+
+    public function refill($amount)
+    {
+        $this->model->amount += $amount;
+        $this->model->update();
+    }
 }

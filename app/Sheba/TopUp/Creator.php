@@ -2,6 +2,7 @@
 
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
+use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\ModificationFields;
 use Sheba\TopUp\Gateway\GatewayFactory;
 use Sheba\TopUp\Vendor\Vendor;
@@ -38,7 +39,7 @@ class Creator
         $top_up_order->amount = $this->topUpRequest->getAmount();
         $top_up_order->payee_name = $this->topUpRequest->getName();
         $top_up_order->bulk_request_id = $this->topUpRequest->getBulkId();
-        $top_up_order->status = config('topup.status.initiated')['sheba'];
+        $top_up_order->status = Statuses::INITIATED;
         $top_up_order->vendor_id = $model->id;
         $top_up_order->gateway = $model->gateway;
         $gateway_factory = new GatewayFactory();

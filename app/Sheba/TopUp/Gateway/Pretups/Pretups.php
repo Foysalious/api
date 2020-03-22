@@ -2,6 +2,7 @@
 
 
 use App\Models\TopUpOrder;
+use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\TopUp\Vendor\Internal\Pretups\Client as PretupsClient;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
@@ -37,7 +38,7 @@ abstract class Pretups
 
     public function getInitialStatus()
     {
-        return config('topup.status.successful')['sheba'];
+        return Statuses::SUCCESSFUL;
     }
 
     abstract protected function getPin();
