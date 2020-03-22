@@ -159,14 +159,14 @@ class EmployeeController extends Controller
      * @param $business_member
      * @return JsonResponse
      */
-    public function show(Request $request, $business_member)
+    public function show(Request $request, $business_member_detail)
     {
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
 
         $business = Business::where('id', (int)$business_member['business_id'])->select('id', 'name', 'phone', 'email', 'type')->first();
 
-        $business_member = $business->members()->where('business_member.id', $business_member)->select('members.id', 'profile_id')->with(['profile' => function ($q) {
+        $business_member = $business->members()->where('members.id',$business_member_detail)->select('members.id', 'profile_id')->with(['profile' => function ($q) {
             $q->select('profiles.id', 'name', 'mobile');
         }, 'businessMember' => function ($q) {
             $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id')->with(['role' => function ($q) {
@@ -175,7 +175,7 @@ class EmployeeController extends Controller
                 }]);
             }]);
         }])->get();
-
+        dd($business_member);
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
         $resource = new Item($business_member, new BusinessEmployeeDetailsTransformer());

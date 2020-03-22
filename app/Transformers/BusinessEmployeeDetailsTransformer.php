@@ -9,15 +9,20 @@ class BusinessEmployeeDetailsTransformer extends TransformerAbstract
      * @param $members
      * @return array
      */
-    public function transform($members)
+    public function transform($business_member)
     {
+        $profile = $business_member->profile;
+        $business_member1 = $business_member->businessMember;
+        $role = $business_member1 ? $business_member1->role : null;
+        $department = $role ? $role->businessDepartment : null;
+
         return [
-            'name' => "Nusrat Tabassum",
-            'designation' => "Executive Officer",
-            'mobile' => "+880 1678242900",
-            'email' => "sadat@sheba.xyz",
-            'profile_picture' => "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/profiles/pro_pic_1552910734_pro_pic_image_1.png",
-            'department' => "Sales",
+            'name' => $profile->name,
+            'designation' => $role ? $role->name : null,
+            'mobile' => $profile->mobile,
+            'email' => $profile->email,
+            'profile_picture' => $profile->pro_pic,
+            'department' => $department ? $department->name : null,
         ];
     }
 
