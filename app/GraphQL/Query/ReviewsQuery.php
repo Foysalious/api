@@ -1,6 +1,4 @@
-<?php
-
-namespace App\GraphQL\Query;
+<?php namespace App\GraphQL\Query;
 
 use App\Models\Review;
 use GraphQL;
@@ -36,10 +34,9 @@ class ReviewsQuery extends Query
                 $query->where('category_id', $args['category_id']);
             }
             if (isset($args['rating'])) {
-                $query->whereIN('rating', $args['rating']);
+                $query->whereIn('rating', $args['rating']);
             }
         };
         return $reviews->where($where)->orderBy('reviews.id', 'desc')->get();
     }
-
 }

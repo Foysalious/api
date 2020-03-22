@@ -6,19 +6,19 @@ use App\Models\CategoryPartner;
 use App\Models\HyperLocal;
 use App\Models\Location;
 use App\Models\LocationService;
-use App\Models\Partner;
-use App\Models\ReviewQuestionAnswer;
 use App\Models\Service;
 use App\Models\ServiceSubscription;
 use App\Repositories\CategoryRepository;
 use App\Repositories\ServiceRepository;
 use Dingo\Api\Routing\Helpers;
 use Exception;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use DB;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
+use Sheba\Cache\CacheAside;
+use Sheba\Cache\Category\Children\Services\ServicesCacheRequest;
+use Sheba\Cache\Category\Review\ReviewCacheRequest;
 use Sheba\CategoryServiceGroup;
 use Sheba\Checkout\DeliveryCharge;
 use Sheba\Dal\Discount\Discount;
@@ -98,7 +98,7 @@ class CategoryController extends Controller
                     });
                 });
             }
-            $categories = $categories->select('id', 'name', 'bn_name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id', 'is_auto_sp_enabled');
+            $categories = $categories->select('id', 'name', 'bn_name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id', 'is_auto_sp_enabled', 'min_order_amount');
             if ($request->has('with')) {
                 $with = $request->with;
                 if ($with == 'children') {
@@ -165,7 +165,9 @@ class CategoryController extends Controller
     {
         try {
             $this->validate($request, [
-                'lat' => 'required|numeric', 'lng' => 'required|numeric', 'with' => 'sometimes|string|in:children'
+                'lat' => 'required|numeric',
+                'lng' => 'required|numeric',
+                'with' => 'sometimes|string|in:children'
             ]);
             $with = $request->with;
             $hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->first();
@@ -189,12 +191,12 @@ class CategoryController extends Controller
                             });
                         })->whereNotIn('id', $best_deal_category_ids);
                 })
-                ->select('id', 'name', 'parent_id', 'icon_png', 'app_thumb', 'app_banner', 'slug', 'is_auto_sp_enabled')
+                ->select('id', 'name', 'parent_id', 'icon_png', 'icon_png_hover', 'icon_png_active', 'app_thumb', 'app_banner', 'slug', 'is_auto_sp_enabled')
                 ->parent()->orderBy('order');
 
             if ($with) {
                 $categories->with(['children' => function ($q) use ($location_id, $best_deal_category_ids) {
-                    $q->select('id', 'name', 'thumb', 'parent_id', 'app_thumb', 'icon_png', 'icon', 'slug', 'is_auto_sp_enabled')
+                    $q->select('id', 'name', 'thumb', 'parent_id', 'app_thumb', 'icon_png', 'icon_png_hover', 'icon_png_active', 'icon', 'icon_hover', 'slug', 'is_auto_sp_enabled')
                         ->whereHas('locations', function ($q) use ($location_id) {
                             $q->select('locations.id')->where('locations.id', $location_id);
                         })->whereHas('services', function ($q) use ($location_id) {
@@ -210,9 +212,13 @@ class CategoryController extends Controller
 
             $secondary_categories_slug = UniversalSlugModel::where('sluggable_type', SluggableType::SECONDARY_CATEGORY)->pluck('slug', 'sluggable_id')->toArray();
             foreach ($categories as &$category) {
+                if (is_null($category->children))
+                    app('sentry')->captureException(new Exception('Category null on ' . $category->id));
+
                 /** @var Category $category */
                 $category->slug = $category->getSlug();
                 array_forget($category, 'parent_id');
+
                 foreach ($category->children as &$child) {
                     /** @var Category $child */
                     $child->slug = array_key_exists($child->id, $secondary_categories_slug) ? $secondary_categories_slug[$child->id] : null;
@@ -220,10 +226,6 @@ class CategoryController extends Controller
                 }
             }
 
-            foreach ($categories as &$category) {
-                if (is_null($category->children))
-                    app('sentry')->captureException(new Exception('Category null on ' . $category->id));
-            }
             return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $categories]) : api_response($request, null, 404);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -237,7 +239,7 @@ class CategoryController extends Controller
     public function show($category, Request $request)
     {
         try {
-            $category = Category::select('id', 'name', 'short_description', 'is_auto_sp_enabled', 'long_description', 'thumb', 'video_link', 'banner', 'app_thumb', 'app_banner', 'publication_status', 'icon', 'questions')->published()->where('id', $category)->first();
+            $category = Category::select('id', 'parent_id', 'name', 'short_description', 'is_auto_sp_enabled', 'long_description', 'thumb', 'video_link', 'banner', 'app_thumb', 'app_banner', 'publication_status', 'icon', 'questions')->published()->where('id', $category)->first();
             if ($category == null) {
                 return api_response($request, null, 404);
             }
@@ -252,6 +254,17 @@ class CategoryController extends Controller
                     $query->verified();
                 });
             }]);
+
+            $parent_category = $category->parent;
+            $master_category = [];
+            if ($parent_category) {
+                $master_category = [
+                    'id' => $parent_category->id,
+                    'name' => $parent_category->name,
+                    'slug' => $parent_category->getSlug(),
+                ];
+            }
+            array_add($category, 'master_category', count($master_category) > 0 ? $master_category : null);
             array_add($category, 'total_partners', $category->partners->count());
             array_add($category, 'total_experts', $category->partnerResources->count());
             array_add($category, 'total_services', $category->services->count());
@@ -281,15 +294,17 @@ class CategoryController extends Controller
 
             $best_deal_categories_id = explode(',', config('sheba.best_deal_ids'));
             $best_deal_category = CategoryGroupCategory::whereIn('category_group_id', $best_deal_categories_id)->pluck('category_id')->toArray();
-            $category->load(['children' => function ($q) use ($best_deal_category, $location) {
+            $category->load(['children' => function ($q) use ($best_deal_category, $location, $request) {
                 $q->published()->whereNotIn('id', $best_deal_category);
                 if ($location) {
                     $q->whereHas('locations', function ($q) use ($location) {
                         $q->where('locations.id', $location->id);
                     });
                 }
-                $q->whereHas('services', function ($q) use ($location) {
-                    $q->published();
+                $q->whereHas('services', function ($q) use ($location, $request) {
+                    if ($request->has('portal') && $request->portal == 'admin-portal') $q->publishedForAll();
+                    else $q->published();
+
                     if ($location) {
                         $q->whereHas('locations', function ($q) use ($location) {
                             $q->where('locations.id', $location->id);
@@ -357,7 +372,6 @@ class CategoryController extends Controller
                     if (!is_null($hyperLocation)) $location = $hyperLocation->location->id; else return api_response($request, null, 404);
                 } else $location = 4;
             }
-
             /** @var Category $cat */
             $cat = Category::where('id', $category)->whereHas('locations', function ($q) use ($location) {
                 $q->where('locations.id', $location);
@@ -367,6 +381,8 @@ class CategoryController extends Controller
                 $category = $cat->publishedForBusiness()->first();
             } elseif ((int)$request->is_b2b) {
                 $category = $cat->publishedForB2B()->first();
+            } elseif ((int)$request->is_ddn) {
+                $category = $cat->publishedForDdn()->first();
             } else {
                 $category = $cat->published()->first();
             }
@@ -384,13 +400,16 @@ class CategoryController extends Controller
                     } elseif ($request->is_b2b) {
                         $services = $this->categoryRepository->getServicesOfCategory(Category::where('parent_id', $category->id)->publishedForB2B()
                             ->orderBy('order')->get()->pluck('id')->toArray(), $location, $offset, $limit);
+                    } elseif ($request->is_ddn) {
+                        $services = $this->categoryRepository->getServicesOfCategory(Category::where('parent_id', $category->id)->publishedForDdn()
+                            ->orderBy('order')->get()->pluck('id')->toArray(), $location, $offset, $limit);
                     } else {
                         $services = $this->categoryRepository->getServicesOfCategory($category->children->sortBy('order')->pluck('id'), $location, $offset, $limit);
                     }
                     $services = $this->serviceRepository->addServiceInfo($services, $scope);
                 } else {
                     $category->load(['services' => function ($q) use ($offset, $limit, $location) {
-                        if (!(int)\request()->is_business) {
+                        if (!(int)\request()->is_business || !(int)\request()->is_ddn) {
                             $q->whereNotIn('id', $this->serviceGroupServiceIds());
 
                         }
@@ -406,6 +425,7 @@ class CategoryController extends Controller
                         if ((int)\request()->is_business) $q->publishedForBusiness();
                         elseif ((int)\request()->is_for_backend) $q->publishedForAll();
                         elseif ((int)\request()->is_b2b) $q->publishedForB2B();
+                        elseif ((int)\request()->is_ddn) $q->publishedForDdn();
                         else $q->published();
                     }]);
                     $services = $category->services;
@@ -425,12 +445,24 @@ class CategoryController extends Controller
 
                 $subscriptions = collect();
                 $final_services = collect();
+                $service_ids = $services->pluck('id')->toArray();
+                $slugs = UniversalSlugModel::where('sluggable_type', 'like', '%service')->whereIn('sluggable_id', $service_ids)->select('sluggable_id', 'slug')->get();
+                $location_service_ids = [];
+                foreach ($services->pluck('locationServices') as $location_service) {
+                    array_push($location_service_ids, $location_service->first() ? $location_service->first()->id : null);
+                }
+                $location_service_with_discounts = LocationService::whereIn('id', $location_service_ids)->select('id', 'location_id', 'service_id')
+                    ->whereHas('discounts', function ($q) {
+                        $q->running();
+                    })->with(['discounts' => function ($q) {
+                        $q->running();
+                    }])->get();
                 foreach ($services as $key => $service) {
                     /** @var LocationService $location_service */
                     $location_service = $service->locationServices->first();
-
+                    $location_service_with_discount = $location_service_with_discounts->where('id', $location_service->id)->first();
                     /** @var ServiceDiscount $discount */
-                    $discount = $location_service->discounts()->running()->first();
+                    $discount = $location_service_with_discount ? $location_service_with_discount->discounts->first() : null;
                     $prices = json_decode($location_service->prices);
                     if ($prices === null) continue;
                     $price_calculation->setService($service)->setLocationService($location_service);
@@ -453,7 +485,8 @@ class CategoryController extends Controller
                     $service['min_price'] = $min_max_price->getMin();
                     $service['terms_and_conditions'] = $service->terms_and_conditions ? json_decode($service->terms_and_conditions) : null;
                     $service['features'] = $service->features ? json_decode($service->features) : null;
-                    $service['slug'] =$service->getSlug();
+                    $slug = $slugs->where('sluggable_id', $service->id)->first();
+                    $service['slug'] = $slug ? $slug->slug : null;
 
                     /** @var ServiceSubscription $subscription */
                     if ($subscription = $service->activeSubscription) {
@@ -483,7 +516,7 @@ class CategoryController extends Controller
                 if ($services->count() > 0) {
                     $parent_category = null;
                     if ($category->parent_id != null) $parent_category = $category->parent()->select('id', 'name', 'slug')->first();
-                    $category = collect($category)->only(['id', 'name', 'slug', 'banner', 'parent_id', 'app_banner', 'service_title', 'is_auto_sp_enabled']);
+                    $category = collect($category)->only(['id', 'name', 'slug', 'banner', 'parent_id', 'app_banner', 'service_title', 'is_auto_sp_enabled', 'min_order_amount']);
                     $version_code = (int)$request->header('Version-Code');
                     $services = $this->serviceQuestionSet($services);
                     if ($version_code && $version_code <= 30122 && $version_code <= 107) {
@@ -508,6 +541,7 @@ class CategoryController extends Controller
                     $job_discount_handler->setType(DiscountTypes::DELIVERY)->setCategory($category_model)->setCheckingParams($discount_checking_params)->calculate();
                     /** @var Discount $delivery_discount */
                     $delivery_discount = $job_discount_handler->getDiscount();
+
                     $category['delivery_discount'] = $delivery_discount ? [
                         'value' => (double)$delivery_discount->amount,
                         'is_percentage' => $delivery_discount->is_percentage,
@@ -627,44 +661,12 @@ class CategoryController extends Controller
         return count($words) <= 5 ? "normal" : "slide";
     }
 
-    public function getReviews($category, Request $request)
+    public function getReviews($category, Request $request, CacheAside $cache_aside, ReviewCacheRequest $review_cache_request)
     {
-        try {
-            list($offset, $limit) = calculatePagination($request);
-            $category = Category::find($category);
-            if (!$category) return api_response($request, null, 404);
-            $reviews = ReviewQuestionAnswer::select('reviews.category_id', 'customer_id', 'partner_id', 'reviews.rating', 'review_title')
-                ->selectRaw("partners.name as partner_name,profiles.name as customer_name,rate_answer_text as review,review_id as id,pro_pic as customer_picture,jobs.created_at as order_created_at")
-                ->join('reviews', 'reviews.id', '=', 'review_question_answer.review_id')
-                ->join('partners', 'partners.id', '=', 'reviews.partner_id')
-                ->join('customers', 'customers.id', '=', 'reviews.customer_id')
-                ->join('jobs', 'jobs.id', '=', 'reviews.job_id')
-                ->join('profiles', 'profiles.id', '=', 'customers.profile_id')
-                ->where('review_type', 'like', '%' . '\\Review')
-                ->where('review_question_answer.rate_answer_text', '<>', '')
-                ->whereIn('reviews.rating', [4, 5])
-                ->where('reviews.category_id', $category->id)
-                ->skip($offset)->take($limit)
-                ->orderBy('id', 'desc')
-                ->groupBy('customer_id')
-                ->get();
-            $group_rating = [
-                "1" => 10,
-                "2" => 5,
-                "3" => 15,
-                "4" => 150,
-                "5" => 500,
-            ];
-            $info = [
-                'avg_rating' => 4.5,
-                'total_review_count' => 500,
-                'total_rating_count' => 680
-            ];
-            return count($reviews) > 0 ? api_response($request, $reviews, 200, ['reviews' => $reviews, 'group_rating' => $group_rating, 'info' => $info]) : api_response($request, null, 404);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $review_cache_request->setCategoryId($category);
+        $data = $cache_aside->setCacheRequest($review_cache_request)->getMyEntity();
+        if (!$data) return api_response($request, 1, 404);
+        return api_response($request, 1, 200, $data);
     }
 
     public function addCategories(Request $request)

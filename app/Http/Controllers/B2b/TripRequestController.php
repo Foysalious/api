@@ -25,6 +25,7 @@ use Throwable;
 class TripRequestController extends Controller
 {
     use ModificationFields;
+
     public function getTripRequests(Request $request)
     {
         try {
@@ -166,9 +167,10 @@ class TripRequestController extends Controller
                     $business_member = $trip_request_approval->businessMember;
                     $member = $business_member->member;
                     $profile = $member->profile;
-                    if($business_member->id === $request->business_member->id) $can_approve = true;
+                    if ($business_member->id === $request->business_member->id) $can_approve = true;
                     array_push($trip_request_approvers, [
-                        'id' => $member->id,
+                        'trip_request_approval_id' => $trip_request_approval->id,
+                        'member_id' => $member->id,
                         'name' => $profile->name ? $profile->name : null,
                         'pro_pic' => $profile->pro_pic ? $profile->pro_pic : null,
                         'designation' => $business_member->role ? $business_member->role->name : '',

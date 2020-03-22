@@ -1,5 +1,6 @@
 <?php namespace Sheba\CustomerDeliveryAddress;
 
+use App\Exceptions\HyperLocationNotFoundException;
 use App\Models\Customer;
 use App\Models\HyperLocal;
 use Sheba\Location\Geo;
@@ -88,6 +89,10 @@ class Creator
         return $this;
     }
 
+    /**
+     * @return \Illuminate\Database\Eloquent\Model
+     * @throws HyperLocationNotFoundException
+     */
     public function create()
     {
         $this->makeData();
@@ -96,10 +101,13 @@ class Creator
         return $address;
     }
 
+    /**
+     * @throws HyperLocationNotFoundException
+     */
     private function makeData()
     {
         $hyper_local = HyperLocal::insidePolygon($this->geo->getLat(), $this->geo->getLng())->first();
-        if (!$hyper_local) return null;
+        if (!$hyper_local) throw new HyperLocationNotFoundException('Your are out of service area.');
         $this->data = [
             'customer_id' => $this->customer->id,
             'address' => $this->addressText,

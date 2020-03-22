@@ -1,7 +1,11 @@
 <?php namespace Sheba\Business\AttendanceActionLog\ActionChecker;
 
 use App\Models\Business;
+use App\Models\BusinessMember;
 use Carbon\Carbon;
+use Sheba\Business\AttendanceActionLog\Time;
+use Sheba\Business\AttendanceActionLog\TimeByBusiness;
+use Sheba\Business\AttendanceActionLog\WeekendHolidayByBusiness;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Model as AttendanceActionLog;
 use Sheba\Location\Geo;
@@ -20,6 +24,7 @@ abstract class ActionChecker
     protected $deviceId;
     protected $resultCode;
     protected $resultMessage;
+    const BUSINESS_OFFICE_HOUR = 9;
 
     /**
      * @param Business $business
@@ -80,7 +85,6 @@ abstract class ActionChecker
     {
         return $this->resultMessage;
     }
-
 
     public function check()
     {
@@ -163,9 +167,16 @@ abstract class ActionChecker
         return $this->resultCode ? in_array($this->resultCode, [ActionResultCodes::SUCCESSFUL, ActionResultCodes::LATE_TODAY]) : true;
     }
 
-    public function isNoteRequired()
+    public function isNoteRequired(BusinessMember $business_member)
     {
-        return Carbon::now()->lt(Carbon::parse('18:30:00')) ? 1 : 0;
+        $checkout_time = Carbon::now();
+        $weekendHoliday = new WeekendHolidayByBusiness();
+        if (!$weekendHoliday->isWeekendByBusiness($checkout_time) && !$weekendHoliday->isHolidayByBusiness($checkout_time)) {
+            $attendance_of_today = $business_member->attendanceOfToday();
+            return Carbon::parse($attendance_of_today->checkin_time)->diffinhours($checkout_time) >= self::BUSINESS_OFFICE_HOUR ? 0 : 1;
+        }
+        return 0;
+
     }
 
     abstract protected function setSuccessfulResponseMessage();

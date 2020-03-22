@@ -9,6 +9,9 @@ class IndexRoute
             $api->get('home-setting', 'Partner\DashboardController@getHomeSetting');
             $api->post('home-setting', 'Partner\DashboardController@updateHomeSetting');
             $api->get('wallet-balance', 'PartnerController@getWalletBalance');
+            $api->get('qr-code', 'PartnerController@getQRCode');
+            $api->post('qr-code', 'PartnerController@setQRCode');
+            $api->get('slider-details-and-account-types', 'PartnerController@getSliderDetailsAndAccountTypes');
             $api->group(['prefix' => 'e-shop'], function ($api) {
                 $api->group(['prefix' => 'order'], function ($api) {
                     $api->get('/', 'EShopOrderController@index');

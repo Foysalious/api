@@ -93,6 +93,8 @@ class Creator
 
             if (!$resource->firstPartner()) {
                 $this->partner = $this->partnerCreator->setPartnerCreateRequest($request)->create();
+                $this->partner->subscribe(config('sheba.partner_lite_packages_id'), 'monthly');
+
                 $this->partner->resources()->save($resource, ['resource_type' => 'Admin']);
             } else {
                 $this->partner = $resource->firstPartner();
@@ -114,7 +116,7 @@ class Creator
         return [
             'name' => $this->vendorCreateRequest->getResourceName(),
             'mobile' => $this->vendorCreateRequest->getResourceMobile(),
-            'nid_no' => $this->vendorCreateRequest->getResourceNidNumber() ? : null,
+            'nid_no' => $this->vendorCreateRequest->getResourceNidNumber() ?: null,
             'alternate_contact' => null,
             'nid_image' => $this->vendorCreateRequest->getResourceNidDocument()
         ];

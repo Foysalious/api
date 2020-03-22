@@ -128,17 +128,17 @@ class TimeFrame
     public function forAQuarter(Carbon $date, $previous = false)
     {
         $year = $date->year;
-        $currentMonth = $date->month;
-        $quarter = (int)(ceil($currentMonth / 3));
+        $current_month = $date->month;
+        $quarter = (int)(ceil($current_month / 3));
         if ($previous) $quarter -= 1;
         if ($quarter <= 0) {
             $year = $year - 1;
             $quarter = 4;
         }
-        $startMonth = (($quarter - 1) * 3) + 1;
-        $endMonth = $startMonth + 2;
-        $this->start = $date->copy()->month($startMonth)->year($year)->startOfMonth();
-        $this->end = $date->copy()->month($endMonth)->year($year)->endOfMonth();
+        $start_month = (($quarter - 1) * 3) + 1;
+        $end_month = $start_month + 2;
+        $this->start = $date->copy()->month($start_month)->year($year)->startOfMonth();
+        $this->end = $date->copy()->month($end_month)->year($year)->endOfMonth();
         return $this;
     }
 

@@ -7,6 +7,7 @@ use App\Models\PartnerBankInformation;
 use App\Models\Resource;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Http\Request;
+use ReflectionException;
 use Sheba\Loan\Completion;
 use Sheba\ModificationFields;
 
@@ -48,11 +49,11 @@ class FinanceInfo implements Arrayable
 
     /**
      * @param Request $request
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function update(Request $request)
     {
-        $bank_data    = (new BankInformation($request->all()))->toArray();
+        $bank_data    = (new BankInformation($request->all()))->noNullableArray();
         $partner_data = [
             'bkash_no'           => !empty($request->bkash_no) ? formatMobile($request->bkash_no) : null,
             'bkash_account_type' => $request->bkash_account_type
@@ -69,7 +70,7 @@ class FinanceInfo implements Arrayable
 
     /**
      * @return array
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function completion()
     {
@@ -78,12 +79,19 @@ class FinanceInfo implements Arrayable
             $this->profile->updated_at,
             $this->partner->updated_at,
             $this->bank_information ? $this->bank_information->updated_at : null
+        ], [
+            'routing_no',
+            'debit_sum',
+            'credit_sum',
+            'monthly_avg_credit_sum',
+            'disbursement_amount',
+            'period'
         ]))->get();
     }
 
     /**
      * @inheritDoc
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function toArray()
     {
@@ -92,7 +100,7 @@ class FinanceInfo implements Arrayable
 
     /**
      * @return array
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     private function getDataFromLoanRequest()
     {
@@ -126,7 +134,7 @@ class FinanceInfo implements Arrayable
 
     /**
      * @return array
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     private function getDataFromProfile()
     {

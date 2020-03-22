@@ -30,7 +30,6 @@ class PartnerController extends Controller
                 $resource = new Collection($partners, new PartnerListTransformer());
                 return response()->json($fractal->createData($resource)->toArray());
             } else {
-                app('sentry')->captureException(new \Exception('partner fetch wrong'));
                 return response()->json(['data' => null]);
             }
         } catch (\Throwable $e) {

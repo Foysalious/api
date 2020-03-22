@@ -5,9 +5,11 @@ use App\Models\Attachment;
 use App\Models\Bid;
 use App\Models\Partner;
 use App\Models\Procurement;
+use App\Sheba\Bitly\BitlyLinkShort;
 use App\Sheba\Business\ACL\AccessControl;
 use App\Transformers\AttachmentTransformer;
 use Carbon\Carbon;
+use GuzzleHttp\Client;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -202,7 +204,7 @@ class ProcurementController extends Controller
         }
     }
 
-    public function sendInvitation($business, $procurement, Request $request, Sms $sms, ErrorLog $errorLog, ProcurementInvitationCreator $creator, ProcurementRepositoryInterface $procurementRepository)
+    public function sendInvitation($business, $procurement, Request $request, Sms $sms, ErrorLog $errorLog, ProcurementInvitationCreator $creator, BitlyLinkShort $bitlyLinkShort, ProcurementRepositoryInterface $procurementRepository)
     {
         try {
             $this->validate($request, [
@@ -214,8 +216,9 @@ class ProcurementController extends Controller
             $this->setModifier($request->business_member);
             foreach ($partners as $partner) {
                 /** @var Partner $partner */
-                $sms->shoot($partner->getManagerMobile(), "You have been invited to serve" . $business->name);
-                $creator->setProcurement($procurement)->setPartner($partner)->create();
+                $procurement_invitation = $creator->setProcurement($procurement)->setPartner($partner)->create();
+                $url=config('sheba.partners_url') . "/v3/rfq-invitations/$procurement_invitation->id";
+                $sms->shoot($partner->getManagerMobile(), "You have been invited to serve $business->name. Now go to this link-" . $bitlyLinkShort->shortUrl($url));
             }
             return api_response($request, null, 200);
         } catch (ValidationException $e) {
@@ -401,6 +404,6 @@ class ProcurementController extends Controller
 
         return App::make('dompdf.wrapper')
             ->loadView('pdfs.procurement_details', compact('procurement_details'))
-                ->download("procurement_details.pdf");
+            ->download("procurement_details.pdf");
     }
 }

@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Models\BusinessMember;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Sheba\Business\ApprovalFlow\Updater;
 use Sheba\Dal\TripRequestApprovalFlow\Model as TripRequestApprovalFlow;
 use Illuminate\Validation\ValidationException;
@@ -39,11 +40,15 @@ class ApprovalFlowController extends Controller
         }
     }
 
-    public function index(Request $request)
+    public function index($business, Request $request)
     {
         try {
             list($offset, $limit) = calculatePagination($request);
-            $approvals_flows = TripRequestApprovalFlow::query()->orderBy('id', 'desc');
+            $approvals_flows = TripRequestApprovalFlow::whereHas('businessDepartment', function ($q) use ($business) {
+                $q->whereHas('business', function ($q) use ($business) {
+                    $q->where('businesses.id', (int)$business);
+                });
+            })->orderBy('id', 'desc');
             if ($request->has('business_department_id')) {
                 $approvals_flows = $approvals_flows->where('business_department_id', $request->business_department_id)->with('approvers');
             }
@@ -119,6 +124,8 @@ class ApprovalFlowController extends Controller
 
             if (count($approval) > 0) return api_response($request, $approval_flow_details, 200, ['approval_flow_details' => $approval_flow_details]);
             else  return api_response($request, null, 404);
+        } catch (ModelNotFoundException $e) {
+            return api_response($request, null, 404, ["message" => "Model Not found."]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

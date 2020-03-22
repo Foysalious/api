@@ -41,5 +41,6 @@ return [
         'one_time' => 'One Time',
         'monthly' => 'Monthly',
         'weekly' => 'Weekly',
-    ]
+    ],
+    'WHITELISTED_BUSINESS_IDS' => [110, 364]
 ];

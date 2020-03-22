@@ -175,7 +175,6 @@ class CoWorkerController extends Controller
             if (count($employee) > 0) return api_response($request, $employee, 200, ['employee' => $employee]);
             else  return api_response($request, null, 404);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

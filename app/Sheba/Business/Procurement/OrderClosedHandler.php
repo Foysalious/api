@@ -1,6 +1,7 @@
 <?php namespace Sheba\Business\Procurement;
 
 
+use App\Models\Bid;
 use App\Models\Partner;
 use App\Models\Procurement;
 use Carbon\Carbon;
@@ -35,16 +36,22 @@ class OrderClosedHandler
         if (!$this->procurement->isServed() || $this->procurement->isClosedAndPaid()) return;
         $this->procurement->calculate();
         if ($this->procurement->due != 0) return;
-        /** @var Partner $partner */
-        $partner = $this->procurement->getActiveBid()->bidder;
+        /** @var Bid $bid */
+        $bid = $this->procurement->getActiveBid();
         $price = $this->procurement->totalPrice;
-        $price_after_commission = $price - (($price * $partner->commission) / 100);
+        $price_after_commission = $price - (($price * $this->getCommission($bid)) / 100);
         $this->procurementRepository->update($this->procurement, ['closed_and_paid_at' => Carbon::now()]);
         if ($price_after_commission > 0) {
-            $this->walletTransactionHandler->setModel($partner)->setAmount($price_after_commission)
+            $this->walletTransactionHandler->setModel($bid->bidder)->setAmount($price_after_commission)
                 ->setSource(TransactionSources::SERVICE_PURCHASE)
                 ->setType('credit')->setLog("Credited for RFQ ID:" . $this->procurement->id)->dispatch();
         }
+    }
+
+    private function getCommission(Bid $bid)
+    {
+        if ($bid->commission_percentage) return $bid->commission_percentage;
+        return $bid->bidder->commission;
     }
 
 }

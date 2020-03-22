@@ -55,7 +55,7 @@ class DiscountCalculation
      */
     public function getDiscount()
     {
-        return $this->discount;
+        return (double)$this->discount;
     }
 
     /**
@@ -79,7 +79,7 @@ class DiscountCalculation
      */
     public function getOriginalPrice()
     {
-        return $this->originalPrice;
+        return (double)$this->originalPrice;
     }
 
     public function setOriginalPrice($original_price)
@@ -148,14 +148,14 @@ class DiscountCalculation
 
     private function setDiscountedPriceUptoCap()
     {
-        $this->cap = $this->serviceDiscount->cap;
+        $this->cap = (double)$this->serviceDiscount->cap;
         $this->discountedPrice = ($this->cap && $this->discountedPrice > $this->cap) ? $this->cap : $this->discountedPrice;
     }
 
     public function getJobServiceDiscount()
     {
         if (!$this->serviceDiscount) return 0;
-        if (!$this->serviceDiscount->isPercentage()) return $this->serviceDiscount->amount * $this->quantity;
+        if (!$this->serviceDiscount->isPercentage()) return (double)$this->serviceDiscount->amount * $this->quantity;
         $discount = ($this->originalPrice * $this->serviceDiscount->amount) / 100;
         if ($this->serviceDiscount->cap && $discount > $this->serviceDiscount->cap) $discount = $this->serviceDiscount->cap;
         return $discount;

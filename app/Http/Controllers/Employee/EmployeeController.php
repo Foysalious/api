@@ -94,6 +94,7 @@ class EmployeeController extends Controller
         $member = $this->repo->find($business_member['member_id']);
         /** @var BusinessMember $business_member */
         $business_member = BusinessMember::find($business_member['id']);
+        if (!$business_member) return api_response($request, null, 404);
         /** @var Attendance $attendance */
         $attendance = $business_member->attendanceOfToday();
         /** @var ActionChecker $checkout */
@@ -106,7 +107,7 @@ class EmployeeController extends Controller
                 'can_checkout' => $attendance && $attendance->canTakeThisAction(Actions::CHECKOUT) ? 1 : 0,
                 'is_note_required' => 0
             ]];
-        if ($data['attendance']['can_checkout']) $data['attendance']['is_note_required'] = $checkout->isNoteRequired();
+        if ($data['attendance']['can_checkout']) $data['attendance']['is_note_required'] = $checkout->isNoteRequired($business_member);
         if ($business_member) return api_response($request, $business_member, 200, ['info' => $data]);
     }
 

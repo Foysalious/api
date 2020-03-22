@@ -33,7 +33,7 @@ class Affiliate extends MovieTicketCommission
     private function storeAmbassadorWalletTransaction()
     {
 
-        $log = "{$this->agent->profile->name} gifted {$this->movieTicketOrder->ambassador_commission} Tk. for {$this->movieTicketOrder->amount} Tk. movie ticket purchase";;
+        $log = "{$this->agent->profile->name} gifted {$this->movieTicketOrder->ambassador_commission} point for {$this->movieTicketOrder->amount} Tk. movie ticket purchase";;
         /*
          * WALLET TRANSACTION NEED TO REMOVE
          * $this->agent->ambassador->creditWallet($this->movieTicketOrder->ambassador_commission);

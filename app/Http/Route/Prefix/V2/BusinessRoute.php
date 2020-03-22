@@ -29,6 +29,15 @@ class BusinessRoute
                 $api->post('/sms-templates/{sms}', 'B2b\BusinessSmsTemplateController@update');
                 $api->get('/sms-templates/{sms}', 'B2b\BusinessSmsTemplateController@show');
                 $api->post('/download-transactions', 'B2b\BusinessesController@downloadTransactionReport');
+                $api->group(['prefix' => 'members'], function ($api) {
+                    $api->group(['prefix' => '{member}'], function ($api) {
+                        $api->get('attendances', 'B2b\AttendanceController@showStat');
+                    });
+                });
+                $api->group(['prefix' => 'attendances'], function ($api) {
+                    $api->get('daily', 'B2b\AttendanceController@getDailyStats');
+                    $api->get('monthly', 'B2b\AttendanceController@getMonthlyStats');
+                });
                 $api->group(['prefix' => 'employees'], function ($api) {
                     $api->post('/', 'B2b\CoWorkerController@store');
                     $api->get('/', 'B2b\CoWorkerController@index');
@@ -209,6 +218,7 @@ class BusinessRoute
                 $api->group(['prefix' => 'expense'], function ($api) {
                     $api->get('/', 'B2b\ExpenseController@index');
                     $api->get('/download-pdf', 'B2b\ExpenseController@downloadPdf');
+                    $api->get('/filter-month', 'B2b\ExpenseController@filterMonth');
                     $api->group(['prefix' => '{expense}'], function ($api) {
                         $api->get('/', 'B2b\ExpenseController@show');
                         $api->post('/', 'B2b\ExpenseController@update');
@@ -293,7 +303,7 @@ class BusinessRoute
                     $api->get('/', 'B2b\InspectionController@individualInspection');
                 });
                 $api->group(['prefix' => 'supports'], function ($api) {
-                    $api->get('/', 'B2b\SupportContoller@index');
+                    $api->get('/', 'B2b\SupportController@index');
                     $api->group(['prefix' => '{support}'], function ($api) {
                         $api->post('resolve', 'B2b\SupportController@resolve');
                         $api->get('/', 'B2b\SupportController@show');
