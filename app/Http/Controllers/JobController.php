@@ -149,6 +149,7 @@ class JobController extends Controller
             $job_collection->put('can_take_review', $this->canTakeReview($job));
             $job_collection->put('can_pay', $this->canPay($job));
             $job_collection->put('can_add_promo', $this->canAddPromo($job));
+            $job_collection->put('is_same_service', 1);
 
             $manager = new Manager();
             $manager->setSerializer(new ArraySerializer());
@@ -161,6 +162,7 @@ class JobController extends Controller
                     ->setOption(json_decode($job->service_option, true))
                     ->setQuantity($job->service_quantity);
                 $upsell_price = $upsell_calculation->getAllUpsellWithMinMaxQuantity();
+                $job_collection->put('is_same_service', 0);
                 $services->push([
                     'service_id' => $job->service->id,
                     'name' => $job->service_name,
@@ -174,6 +176,7 @@ class JobController extends Controller
                 ]);
             } else {
                 $services = collect();
+                $notSame = 0;
                 foreach ($job->jobServices as $jobService) {
                     /** @var JobService $jobService */
                     $variables = json_decode($jobService->variables);
@@ -189,7 +192,10 @@ class JobController extends Controller
                         "option" => json_decode($jobService->option, true),
                         "variable_type" => $jobService->variable_type
                     ];
-                    if ($location_service) $service_transformer->setLocationService($location_service);
+                    if ($location_service) {
+                        $service_transformer->setLocationService($location_service);
+                        if ($jobService->variable_type != $location_service->service->variable_type) $notSame = 1;
+                    }
                     $resource = new Item($selected_service, $service_transformer);
                     $price_data = $manager->createData($resource)->toArray();
 
@@ -207,6 +213,7 @@ class JobController extends Controller
                     $service_data += $price_data;
                     $services->push($service_data);
                 }
+                if ($notSame) $job_collection->put('is_same_service', 0);
             }
 
             $job_collection->put('services', $services);
@@ -218,6 +225,7 @@ class JobController extends Controller
 
             return api_response($request, $job_collection, 200, ['job' => $job_collection]);
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

@@ -35,7 +35,6 @@ class ServiceV2MinimalTransformer extends TransformerAbstract
         $discount = $this->locationService ? $this->locationService->discounts()->running()->first() : null;
         if ($this->locationService) $this->priceCalculation->setLocationService($this->locationService);
         $data = [
-            'is_same_service' => 1,
             'discount' => $discount ? [
                 'value' => (double)$discount->amount,
                 'is_percentage' => $discount->isPercentage(),
@@ -43,20 +42,10 @@ class ServiceV2MinimalTransformer extends TransformerAbstract
             ] : null,
         ];
         if ($selected_service["variable_type"] == Type::FIXED) {
-            if ($this->locationService && $this->locationService->service->isFiexed()) {
-                $data['unit_price'] = $this->priceCalculation->getUnitPrice();
-            } else {
-                $data['unit_price'] = null;
-                $data['is_same_service'] = 0;
-            }
+            $data['unit_price'] = $this->locationService && $this->locationService->service->isFixed() ? $this->priceCalculation->getUnitPrice() : null;
         }
         if ($selected_service["variable_type"] == Type::OPTIONS) {
-            if ($this->locationService && $this->locationService->service->isOptions()) {
-                $data['unit_price'] = $this->priceCalculation->setOption($selected_service["option"])->getUnitPrice();
-            } else {
-                $data['unit_price'] = null;
-                $data['is_same_service'] = 0;
-            }
+            $data['unit_price'] = $this->locationService && $this->locationService->service->isOptions() ? $this->priceCalculation->setOption($selected_service["option"])->getUnitPrice() : null;
         }
 
         return $data;
