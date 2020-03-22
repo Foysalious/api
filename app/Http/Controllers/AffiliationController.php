@@ -165,7 +165,7 @@ class AffiliationController extends Controller
         $affiliate_transaction->affiliate_id = $affiliate->id;
         $affiliate_transaction->affiliation_id = $affiliation->id;
         $affiliate_transaction->type = "Credit";
-        $affiliate_transaction->log = "Earned $this->acquisitionMoney tk for giving reference id: $affiliation->id";
+        $affiliate_transaction->log = "Earned $this->acquisitionMoney point for giving reference id: $affiliation->id";
         $affiliate_transaction->amount = $this->acquisitionMoney;
         $affiliate_transaction->save();
     }

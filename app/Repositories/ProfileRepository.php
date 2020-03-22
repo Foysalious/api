@@ -307,7 +307,7 @@ class ProfileRepository
             AffiliateTransaction::create([
                 'affiliate_id' => $affiliate->id,
                 'type' => 'Credit',
-                'log' => "Affiliate earned $affiliate_bonus_amount tk for registration",
+                'log' => "Affiliate earned $affiliate_bonus_amount point for registration",
                 'amount' => $affiliate_bonus_amount
             ]);
         });
