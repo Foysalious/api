@@ -225,7 +225,6 @@ class JobController extends Controller
 
             return api_response($request, $job_collection, 200, ['job' => $job_collection]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
