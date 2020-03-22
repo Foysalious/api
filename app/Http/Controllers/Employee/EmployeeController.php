@@ -3,6 +3,8 @@
 use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
+use App\Models\Member;
+use App\Transformers\BusinessEmployeeDetailsTransformer;
 use App\Transformers\BusinessEmployeesTransformer;
 use App\Transformers\CustomSerializer;
 use Illuminate\Http\JsonResponse;
@@ -127,7 +129,6 @@ class EmployeeController extends Controller
      */
     public function index(Request $request)
     {
-        $test = test;
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
 
@@ -155,13 +156,31 @@ class EmployeeController extends Controller
 
     /**
      * @param Request $request
-     * @param MemberRepositoryInterface $member_repository
+     * @param $business_member
      * @return JsonResponse
      */
-    public function show(Request $request, MemberRepositoryInterface $member_repository)
+    public function show(Request $request, $business_member)
     {
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
 
+        $business = Business::where('id', (int)$business_member['business_id'])->select('id', 'name', 'phone', 'email', 'type')->first();
+
+        $business_member = $business->members()->where('business_member.id', $business_member)->select('members.id', 'profile_id')->with(['profile' => function ($q) {
+            $q->select('profiles.id', 'name', 'mobile');
+        }, 'businessMember' => function ($q) {
+            $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id')->with(['role' => function ($q) {
+                $q->select('business_roles.id', 'business_department_id', 'name')->with(['businessDepartment' => function ($q) {
+                    $q->select('business_departments.id', 'business_id', 'name');
+                }]);
+            }]);
+        }])->get();
+
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Item($business_member, new BusinessEmployeeDetailsTransformer());
+        $employee_details = $manager->createData($resource)->toArray()['data'];
+
+        return api_response($request, null, 200, ['details' => $employee_details]);
     }
 }

@@ -19,6 +19,7 @@ class BusinessEmployeesTransformer extends TransformerAbstract
 
             array_push($departments_name, $department_name);
             $employee_based_on_departments[$department_name][] = [
+                'id' => $member->businessMember->id,
                 'name' => $profile->name,
                 'designation' => $this->isMemberRolePresent($member) ? $member->businessMember->role->name : 'N/S',
                 'mobile' => $profile->mobile
