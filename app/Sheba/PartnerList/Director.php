@@ -98,9 +98,12 @@ class Director
         $this->builder->checkPartnerVerification();
         $this->builder->checkPartner();
         $this->builder->checkCanAccessMarketPlace();
+        $this->builder->withoutShebaHelpDesk();
         $this->builder->withResource();
         $this->builder->withAvgReview();
-        $this->builder->withoutShebaHelpDesk();
+        $this->builder->withService();
+        $this->builder->withSubscriptionPackage();
+        $this->builder->withTotalCompletedOrder();
     }
 
     private function filterBaseConditions()
@@ -127,9 +130,6 @@ class Director
     private function buildQueryForOrderPlace()
     {
         $this->buildBaseQuery();
-        $this->builder->withService();
-        $this->builder->withSubscriptionPackage();
-        $this->builder->withTotalCompletedOrder();
         $this->builder->checkPartnersToIgnore();
     }
 
