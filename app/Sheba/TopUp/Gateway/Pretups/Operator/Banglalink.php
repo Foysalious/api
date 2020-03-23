@@ -1,9 +1,14 @@
-<?php namespace Sheba\TopUp\Vendor;
+<?php namespace Sheba\TopUp\Gateway\Pretups\Operator;
 
 
-class Banglalink extends Vendor
+use Sheba\TopUp\Gateway\Gateway;
+use Sheba\TopUp\Gateway\Pretups\Pretups;
+
+class Banglalink extends Pretups implements Gateway
 {
-    private function getUrl()
+    CONST SHEBA_COMMISSION = 3.0;
+
+    protected function getUrl()
     {
         $base_url = config('topup.bl.url');
         $login = config('topup.bl.login_id');
@@ -14,45 +19,50 @@ class Banglalink extends Vendor
         return $url;
     }
 
-    private function getMid()
+    protected function getMid()
     {
         return config('topup.bl.mid');
     }
 
-    private function getPin()
+    protected function getPin()
     {
         return config('topup.bl.pin');
     }
 
-    private function getEXTNWCODE()
+    protected function getEXTNWCODE()
     {
         return "BD";
     }
 
-    private function getLanguage1()
+    protected function getLanguage1()
     {
         return "0";
     }
 
-    private function getLanguage2()
+    protected function getLanguage2()
     {
         return "1";
     }
 
-    private function getSelectors()
+    protected function getSelectors()
     {
         return [
             'prepaid' => '', 'postpaid' => '1'
         ];
     }
 
-    private function getAmountMultiplier()
+    protected function getAmountMultiplier()
     {
         return 100;
     }
 
-    private function getVPNServer()
+    protected function getVPNServer()
     {
         return "https://api.sheba.xyz";
+    }
+
+    public function getShebaCommission()
+    {
+        return self::SHEBA_COMMISSION;
     }
 }
