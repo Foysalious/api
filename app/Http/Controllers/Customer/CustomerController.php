@@ -26,10 +26,12 @@ class CustomerController extends Controller
                                   JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, ServiceQuestion $service_question)
     {
         $customer = $request->customer;
+        $location = null;
         if ($request->has('lat')) {
             $hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
             if (!is_null($hyper_location)) $location = $hyper_location->location_id;
         }
+        if (!$location) return api_response($request, null, 404);
         $reviews = Review::where([['customer_id', $customer->id], ['rating', '>=', 4]])->select('id', 'category_id', 'job_id', 'rating', 'partner_id')
             ->with(['category' => function ($q) {
                 $q->select('id', 'name', 'thumb', 'app_thumb', 'banner', 'app_banner', 'frequency_in_days', 'publication_status', 'delivery_charge', 'min_order_amount', 'is_auto_sp_enabled');
