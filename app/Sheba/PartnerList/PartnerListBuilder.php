@@ -118,8 +118,7 @@ class PartnerListBuilder implements Builder
     {
         $this->partnerQuery = $this->partnerQuery->with([
             'jobs' => function ($q) {
-                $q->selectRaw("count(case when status in ('Accepted', 'Schedule Due', 'Process', 'Serve Due') then status end) as ongoing_jobs")
-                    ->selectRaw("count(case when status in ('Served') and category_id in(" . implode($this->getCategoryIdsOfMasterCategory(), ',') . ") then status end) as total_completed_orders")
+                $q->selectRaw("count(case when status in ('Served') and category_id in(" . implode($this->getCategoryIdsOfMasterCategory(), ',') . ") then status end) as total_completed_orders")
                     ->groupBy('partner_id');
             }
         ]);
