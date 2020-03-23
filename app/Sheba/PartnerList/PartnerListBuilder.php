@@ -118,8 +118,18 @@ class PartnerListBuilder implements Builder
     {
         $this->partnerQuery = $this->partnerQuery->with([
             'jobs' => function ($q) {
-                $q->selectRaw("count(case when status in ('Served') and category_id in(" . implode($this->getCategoryIdsOfMasterCategory(), ',') . ") then status end) as total_completed_orders")
+                $q->selectRaw("count(case when status in ('Accepted', 'Schedule Due', 'Process', 'Serve Due') then status end) as ongoing_jobs")
+                    ->selectRaw("count(case when status in ('Served') and category_id in(" . implode($this->getCategoryIdsOfMasterCategory(), ',') . ") then status end) as total_completed_orders")
                     ->groupBy('partner_id');
+            }
+        ]);
+    }
+
+    public function withTotalOngoingJobs()
+    {
+        $this->partnerQuery = $this->partnerQuery->with([
+            'jobs' => function ($q) {
+                $q->selectRaw("count(case when status in ('Accepted', 'Schedule Due', 'Process', 'Serve Due') then status end) as ongoing_jobs")->groupBy('partner_id');
             }
         ]);
     }
@@ -370,6 +380,17 @@ class PartnerListBuilder implements Builder
             $partner['total_experts'] = $partner->handymanResources->first() ? (int)$partner->handymanResources->first()->total_experts : 0;
             return $partner;
         });
+    }
+
+    public function resolveInfoForAdminPortal()
+    {
+        $this->partners = $this->partners->map(function ($partner) {
+            $partner['contact_no'] = $partner->getContactNumber();
+            $partner['subscription_type'] = $partner->resolveSubscriptionType();
+            $partner['ongoing_jobs'] = $partner->jobs->first() ? $partner->jobs->first()->ongoing_jobs : 0;
+            return $partner;
+        });
+
     }
 
     public function sortPartners()

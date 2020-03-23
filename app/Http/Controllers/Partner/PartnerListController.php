@@ -54,9 +54,9 @@ class PartnerListController extends Controller
             ->setScheduleTime($request->time)->setScheduleDate($request->date);
         $partnerListDirector->setBuilder($partnerListBuilder);
         if ($request->date && $request->time) {
-            $partnerListDirector->buildPartnerListForOrderPlacement();
+            $partnerListDirector->buildPartnerListForOrderPlacementAdmin();
         } else {
-            $partnerListDirector->buildPartnerList();
+            $partnerListDirector->buildPartnerListForAdmin();
         }
         $partners = $partnerListBuilder->get()->each(function (&$partner) {
             removeRelationsAndFields($partner);

@@ -40,6 +40,8 @@ interface Builder
 
     public function resolvePartnerSortingParameters();
 
+    public function resolveInfoForAdminPortal();
+
     public function sortPartners();
 
     public function withService();
@@ -51,6 +53,8 @@ interface Builder
     public function withAvgReview();
 
     public function withTotalCompletedOrder();
+
+    public function withTotalOngoingJobs();
 
     public function withoutShebaHelpDesk();
 

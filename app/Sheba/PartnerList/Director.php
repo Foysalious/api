@@ -79,12 +79,35 @@ class Director
         $this->filterBaseConditions();
     }
 
+
     public function buildPartnerListForOrderPlacement()
     {
         $this->buildQueryForOrderPlace();
+        $this->buildQueryForPartnerScoring();
         $this->builder->runQuery();
         $this->filterForOrderPlace();
     }
+
+    public function buildPartnerListForAdmin()
+    {
+        $this->buildBaseQuery();
+        $this->builder->withTotalOngoingJobs();
+        $this->builder->runQuery();
+        $this->setPartnersAfterServiceCondition($this->getPartnerIds());
+        $this->filterBaseConditions();
+        $this->builder->resolveInfoForAdminPortal();
+    }
+
+    public function buildPartnerListForOrderPlacementAdmin()
+    {
+        $this->buildQueryForOrderPlace();
+        $this->buildQueryForPartnerScoring();
+        $this->builder->withTotalOngoingJobs();
+        $this->builder->runQuery();
+        $this->filterForOrderPlace();
+        $this->builder->resolveInfoForAdminPortal();
+    }
+
 
     private function buildBaseQuery()
     {
@@ -101,9 +124,6 @@ class Director
         $this->builder->withoutShebaHelpDesk();
         $this->builder->withResource();
         $this->builder->withAvgReview();
-        $this->builder->withService();
-        $this->builder->withSubscriptionPackage();
-        $this->builder->withTotalCompletedOrder();
     }
 
     private function filterBaseConditions()
@@ -130,7 +150,15 @@ class Director
     private function buildQueryForOrderPlace()
     {
         $this->buildBaseQuery();
+        $this->buildQueryForPartnerScoring();
         $this->builder->checkPartnersToIgnore();
+    }
+
+    private function buildQueryForPartnerScoring()
+    {
+        $this->builder->withService();
+        $this->builder->withSubscriptionPackage();
+        $this->builder->withTotalCompletedOrder();
     }
 
     private function filterForOrderPlace()
