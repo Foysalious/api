@@ -4,6 +4,7 @@ class IndexRoute
 {
     public function set($api)
     {
+
         $api->group(['prefix' => '{partner}', 'middleware' => ['manager.auth']], function ($api) {
             $api->get('dashboard', 'Partner\DashboardController@get');
             $api->get('home-setting', 'Partner\DashboardController@getHomeSetting');
@@ -57,7 +58,7 @@ class IndexRoute
                 });
             });
             $api->group(['prefix' => 'loans'], function ($api) {
-                $api->group(['prefix'=>'v2'],function($api){
+                $api->group(['prefix' => 'v2'], function ($api) {
                     $api->post('/', 'LoanController@store');
                     $api->get('/personal-info', 'LoanController@getPersonalInformation');
                     $api->post('/personal-info', 'LoanController@updatePersonalInformation');
@@ -80,24 +81,17 @@ class IndexRoute
                 $api->post('/', 'SpLoanController@store');
                 $api->get('/personal-info', 'SpLoanController@getPersonalInformation');
                 $api->post('/personal-info', 'SpLoanController@updatePersonalInformation');
-
                 $api->get('/business-info', 'SpLoanController@getBusinessInformation');
                 $api->post('/business-info', 'SpLoanController@updateBusinessInformation');
-
                 $api->get('/finance-info', 'SpLoanController@getFinanceInformation');
                 $api->post('/finance-info', 'SpLoanController@updateFinanceInformation');
-
                 $api->get('/nominee-info', 'SpLoanController@getNomineeInformation');
-
                 $api->post('/nominee-grantor-info', 'SpLoanController@updateNomineeGrantorInformation');
-
                 $api->get('/documents', 'SpLoanController@getDocuments');
                 $api->post('/documents', 'SpLoanController@updateDocuments');
-
                 $api->post('pictures', 'SpLoanController@updateProfilePictures');
                 $api->post('bank-statement', 'SpLoanController@updateBankStatement');
                 $api->post('trade-license', 'SpLoanController@updateTradeLicense');
-
                 $api->get('/information-completion', 'SpLoanInformationCompletion@getLoanInformationCompletion');
                 $api->get('/homepage', 'SpLoanController@getHomepage');
                 $api->get('/bank-interest', 'SpLoanController@getBankInterest');
@@ -190,8 +184,9 @@ class IndexRoute
             });
             $api->group(['prefix' => 'resources'], function ($api) {
                 $api->post('/', 'Resource\PersonalInformationController@store');
-                $api->group(['prefix'     => '{resource}',
-                             'middleware' => ['partner_resource.auth']
+                $api->group([
+                    'prefix'     => '{resource}',
+                    'middleware' => ['partner_resource.auth']
                 ], function ($api) {
                     $api->get('/', 'Resource\PersonalInformationController@index');
                     $api->post('/', 'Resource\PersonalInformationController@update');
@@ -203,6 +198,7 @@ class IndexRoute
             $api->get('training', 'PartnerTrainingController@redirect');
             $api->post('pay-sheba', 'PartnerTransactionController@payToSheba');
             $api->group(['prefix' => 'orders'], function ($api) {
+
                 $api->group(['prefix' => '{order}', 'middleware' => ['partner_order.auth']], function ($api) {
                     $api->get('/', 'PartnerOrderController@showV2');
                     $api->get('bills', 'PartnerOrderController@getBillsV2');
@@ -212,8 +208,9 @@ class IndexRoute
                 });
             });
             $api->group(['prefix' => 'jobs'], function ($api) {
-                $api->group(['prefix'     => '{job}',
-                             'middleware' => ['partner_job.auth']
+                $api->group([
+                    'prefix'     => '{job}',
+                    'middleware' => ['partner_job.auth']
                 ], function ($api) {
                     $api->put('/', 'PartnerJobController@update');
                     $api->group(['prefix' => 'materials'], function ($api) {
@@ -293,6 +290,7 @@ class IndexRoute
             $api->post('nid-validate', 'ShebaController@nidValidate');
             (new IncomeExpenseRoute())->set($api);
             (new BidRoute())->set($api);
+            (new DueTrackerRoute())->set($api);
         });
     }
 }
