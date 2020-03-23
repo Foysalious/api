@@ -1,7 +1,6 @@
 <?php namespace App\Http\Controllers\Employee;
 
 use App\Http\Controllers\Controller;
-use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Sheba\Business\Attendance\MonthlyStat;
 use Carbon\Carbon;
@@ -79,15 +78,16 @@ class AttendanceController extends Controller
                 'lat' => 'numeric',
                 'lng' => 'numeric'
             ];
-            $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
-            if ($request->action == Actions::CHECKOUT && $checkout->isNoteRequired()) {
-                $validation_data += ['note' => 'string|required_if:action,' . Actions::CHECKOUT];
-            }
-
-            $this->validate($request, $validation_data);
             $business_member = $this->getBusinessMember($request);
             if (!$business_member) return api_response($request, null, 404);
+
+            $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
+            if ($request->action == Actions::CHECKOUT && $checkout->isNoteRequired($business_member)) {
+                $validation_data += ['note' => 'string|required_if:action,' . Actions::CHECKOUT];
+            }
+            $this->validate($request, $validation_data);
             $this->setModifier($business_member->member);
+
             $attendance_action->setBusinessMember($business_member)->setAction($request->action)->setBusiness($business_member->business)
                 ->setNote($request->note)->setDeviceId($request->device_id)->setLat($request->lat)->setLng($request->lng);
             /** @var ActionChecker $action */
@@ -132,7 +132,7 @@ class AttendanceController extends Controller
             'checkin_time' => $attendance ? $attendance->checkin_time : null,
             'checkout_time' => $attendance ? $attendance->checkout_time : null,
         ];
-        if ($data['can_checkout']) $data['is_note_required'] = $checkout->isNoteRequired();
+        if ($data['can_checkout']) $data['is_note_required'] = $checkout->isNoteRequired($business_member);
         return api_response($request, null, 200, ['attendance' => $data]);
     }
 
@@ -143,4 +143,5 @@ class AttendanceController extends Controller
         if (!isset($business_member['id'])) return null;
         return BusinessMember::find($business_member['id']);
     }
+
 }

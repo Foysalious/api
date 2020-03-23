@@ -41,7 +41,7 @@ class Basic extends PartnerSale
         $pos_paid = $pos_orders->sum('paidAmount');
         $pos_due = $pos_orders->sum('dueAmount');
 
-        $data['sheba_sales'] = $orders->sum('totalPrice');
+        $data['sheba_sales'] = $orders->sum('gmv');
         $data['pos_sales'] = $pos_sales;
         $data['total_sales'] = $data['sheba_sales'] + $data['pos_sales'];
 

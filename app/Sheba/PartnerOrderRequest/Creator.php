@@ -1,10 +1,13 @@
 <?php namespace Sheba\PartnerOrderRequest;
 
+use App\Models\Job;
 use App\Models\Partner;
 use App\Models\PartnerOrder;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
 use Illuminate\Support\Collection;
+use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequest;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequestRepositoryInterface;
+use Sheba\Partner\ImpressionManager;
 use Sheba\PartnerOrderRequest\Validators\CreateValidator;
 use Sheba\PushNotificationHandler;
 
@@ -22,20 +25,19 @@ class Creator
     private $partners;
     /** @var PushNotificationHandler $pushNotificationHandler */
     private $pushNotificationHandler;
+    /** @var PartnerOrderRequest $partnerOrderRequestId */
+    private $partnerOrderRequestId;
+    /** @var ImpressionManager ImpressionManager */
+    private $impressionManager;
 
-    /**
-     * Creator constructor.
-     * @param PartnerOrderRequestRepositoryInterface $partner_order_request_repo
-     * @param CreateValidator $create_validator
-     * @param PushNotificationHandler $push_notification_handler
-     */
     public function __construct(PartnerOrderRequestRepositoryInterface $partner_order_request_repo,
                                 CreateValidator $create_validator,
-                                PushNotificationHandler $push_notification_handler)
+                                PushNotificationHandler $push_notification_handler, ImpressionManager $impressionManager)
     {
         $this->partnerOrderRequestRepo = $partner_order_request_repo;
         $this->createValidator = $create_validator;
         $this->pushNotificationHandler = $push_notification_handler;
+        $this->impressionManager = $impressionManager;
     }
 
     /**
@@ -71,14 +73,16 @@ class Creator
     {
         $data = [];
         foreach ($this->partnersId as $partner_id) {
-            $data[] = [
-                'partner_order_id' => $this->partnerOrder->id,
-                'partner_id' => $partner_id
-            ];
-            $this->sendOrderRequestPushNotificationToPartner($partner_id);
+            $data['partner_order_id'] = $this->partnerOrder->id;
+            $data['partner_id'] = $partner_id;
+            $this->partnerOrderRequestId = $this->partnerOrderRequestRepo->create($data);
             $this->sendOrderRequestSmsToPartner($partner_id);
+            $this->sendOrderRequestPushNotificationToPartner($partner_id);
+            $job = $this->partnerOrder->jobs->first();
+            $this->impressionManager->setLocationId($this->partnerOrder->order->location_id)->setCategoryId($job->category_id)
+                ->setCustomerId($this->partnerOrder->order->customer_id)->setPortalName(request()->header('portal-name'))
+                ->setServices($this->getServices($job))->setImpressionToDeduct(10)->deduct([$partner_id]);
         }
-        $this->partnerOrderRequestRepo->insert($data);
     }
 
     /**
@@ -91,11 +95,13 @@ class Creator
         $topic = config('sheba.push_notification_topic_name.manager') . $partner->id;
         $channel = config('sheba.push_notification_channel_name.manager');
         $sound = config('sheba.push_notification_sound.manager');
-
         $this->pushNotificationHandler->send([
             "title" => 'New Order',
             "message" => "প্রিয় $partner->name আপনার একটি নতুন অর্ডার রয়েছে, অনুগ্রহ করে ম্যানেজার অ্যাপ থেকে অর্ডারটি একসেপ্ট করুন",
-            "sound" => "notification_sound"
+            "sound" => "notification_sound",
+            "event_type" => 'PartnerOrder',
+            "event_id" => $this->partnerOrderRequestId,
+            "link" => "new_order"
         ], $topic, $channel, $sound);
     }
 
@@ -106,5 +112,18 @@ class Creator
         (new SmsHandlerRepo('partner-order-request'))->send($partner->getContactNumber(), [
             'partner_name' => $partner->name
         ]);
+    }
+
+    private function getServices(Job $job)
+    {
+        $serviceArray = [];
+        foreach ($job->jobServices as $jobService) {
+            array_push($serviceArray, [
+                'id' => $jobService->service_id,
+                'quantity' => $jobService->quantity,
+                'option' => $jobService->option
+            ]);
+        }
+        return $serviceArray;
     }
 }

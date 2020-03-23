@@ -9,7 +9,7 @@ use Sheba\Location\Geo;
 
 class AddressValidator
 {
-    CONST THRESHOLD_DISTANCE = 25;
+    CONST THRESHOLD_DISTANCE = 40;
 
     public function isAddressLocationExists($addresses, Coords $current)
     {

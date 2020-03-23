@@ -168,6 +168,7 @@ return [
         Intervention\Image\ImageServiceProvider::class,
         Maatwebsite\Excel\ExcelServiceProvider::class,
         Barryvdh\DomPDF\ServiceProvider::class,
+        AlgoliaSearch\Laravel\AlgoliaServiceProvider::class,
 
         Sheba\Dal\Providers\RepositoriesServiceProvider::class,
         Sheba\Notification\NotificationServiceProvider::class,

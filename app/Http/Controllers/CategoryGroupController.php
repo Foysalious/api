@@ -7,6 +7,8 @@ use App\Models\ScreenSettingElement;
 use Carbon\Carbon;
 use Illuminate\Contracts\Validation\ValidationException;
 use Illuminate\Http\Request;
+use Sheba\Cache\CacheAside;
+use Sheba\Cache\CategoryGroup\CategoryGroupCache;
 use Sheba\Location\LocationSetter;
 use Sheba\Recommendations\HighlyDemands\Categories\Identifier;
 use Sheba\Recommendations\HighlyDemands\Categories\Recommender;
@@ -16,7 +18,7 @@ class CategoryGroupController extends Controller
 {
     use LocationSetter;
 
-    public function index(Request $request, Recommender $recommender)
+    public function index(Request $request, Recommender $recommender, CacheAside $cacheAside, CategoryGroupCache $category_group_cache)
     {
         try {
             $this->validate($request, [
@@ -29,8 +31,8 @@ class CategoryGroupController extends Controller
 
             $for = $this->getPublishedFor($request->for);
             if ($request->has('name') && $request->name == Identifier::HIGH_DEMAND) {
-                $city_id = Location::find($this->location)->city_id;
-                $secondaries = $recommender->setParams(Carbon::now())->setCityId($city_id)->get();
+                $location_id = $request->has('location_id') ? $request->location_id : $this->location;
+                $secondaries = $recommender->setParams(Carbon::now())->setLocationId($location_id)->get();
                 return api_response($request, null, 200, [
                     'category' => [
                         'name' => 'Current High Demand Services',
@@ -67,7 +69,9 @@ class CategoryGroupController extends Controller
                         });
                         $category_group->children = $category_group->categories;
                         unset($category_group->categories);
-                    });
+                    })->filter(function ($category_group) {
+                        return !$category_group->children->isEmpty();
+                    })->values();
                 }
             }
 

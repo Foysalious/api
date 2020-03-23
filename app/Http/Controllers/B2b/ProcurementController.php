@@ -5,9 +5,11 @@ use App\Models\Attachment;
 use App\Models\Bid;
 use App\Models\Partner;
 use App\Models\Procurement;
+use App\Sheba\Bitly\BitlyLinkShort;
 use App\Sheba\Business\ACL\AccessControl;
 use App\Transformers\AttachmentTransformer;
 use Carbon\Carbon;
+use GuzzleHttp\Client;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -202,13 +204,12 @@ class ProcurementController extends Controller
         }
     }
 
-    public function sendInvitation($business, $procurement, Request $request, Sms $sms, ErrorLog $errorLog, ProcurementInvitationCreator $creator, ProcurementRepositoryInterface $procurementRepository)
+    public function sendInvitation($business, $procurement, Request $request, Sms $sms, ErrorLog $errorLog, ProcurementInvitationCreator $creator, BitlyLinkShort $bitlyLinkShort, ProcurementRepositoryInterface $procurementRepository)
     {
         try {
             $this->validate($request, [
                 'partners' => 'required|string',
             ]);
-
             $partners = Partner::whereIn('id', json_decode($request->partners))->get();
             $business = $request->business;
             $procurement = $procurementRepository->find($procurement);
@@ -216,7 +217,8 @@ class ProcurementController extends Controller
             foreach ($partners as $partner) {
                 /** @var Partner $partner */
                 $procurement_invitation = $creator->setProcurement($procurement)->setPartner($partner)->create();
-                $sms->shoot($partner->getManagerMobile(), "You have been invited to serve $business->name. Now go to this link-" . config('sheba.partners_url') . "/v3/rfq-invitations/$procurement_invitation->id");
+                $url=config('sheba.partners_url') . "/v3/rfq-invitations/$procurement_invitation->id";
+                $sms->shoot($partner->getManagerMobile(), "You have been invited to serve $business->name. Now go to this link-" . $bitlyLinkShort->shortUrl($url));
             }
             return api_response($request, null, 200);
         } catch (ValidationException $e) {

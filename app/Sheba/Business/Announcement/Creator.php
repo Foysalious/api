@@ -92,7 +92,7 @@ class Creator
             'business_id' => $this->business->id,
             'title' => $this->title,
             'short_description' => $this->shortDescription,
-            'end_date' => $this->endDate->toDateTimeString()
+            'end_date' => $this->endDate
         ];
         if ($this->type) $this->data['type'] = $this->type;
     }

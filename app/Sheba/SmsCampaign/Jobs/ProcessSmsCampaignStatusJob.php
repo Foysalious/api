@@ -29,10 +29,9 @@ class ProcessSmsCampaignStatusJob extends Job implements ShouldQueue
     public function __construct(SmsCampaignOrderReceiver $campaign_order_receiver)
     {
         $this->campaignOrderReceiver = $campaign_order_receiver;
-        $this->refund = new Refund();
-
+        $this->refund                = new Refund();
         $this->connection = 'sms_campaign';
-        $this->queue = 'sms_campaign';
+        $this->queue      = 'sms_campaign';
     }
 
     /**
@@ -44,6 +43,7 @@ class ProcessSmsCampaignStatusJob extends Job implements ShouldQueue
      */
     public function handle(SmsHandler $handler)
     {
+        $this->campaignOrderReceiver->reload();
         if ($this->attempts() < 2) {
             if ($this->isSuccessfullySent($handler)) {
                 $this->campaignOrderReceiver->status = constants('SMS_CAMPAIGN_RECEIVER_STATUSES.successful');
@@ -52,12 +52,11 @@ class ProcessSmsCampaignStatusJob extends Job implements ShouldQueue
                 if ($this->isPending($handler)) {
                     $this->campaignOrderReceiver->status = constants('SMS_CAMPAIGN_RECEIVER_STATUSES.pending');
                     $this->campaignOrderReceiver->save();
-                } else {
+                } elseif ($this->campaignOrderReceiver->status !== constants('SMS_CAMPAIGN_RECEIVER_STATUSES.failed')) {
                     $this->campaignOrderReceiver->status = constants('SMS_CAMPAIGN_RECEIVER_STATUSES.failed');
                     $this->campaignOrderReceiver->save();
-
                     $refund_receiver = $this->campaignOrderReceiver->smsCampaignOrder->partner;
-                    $sms_count = $this->campaignOrderReceiver->sms_count;
+                    $sms_count       = $this->campaignOrderReceiver->sms_count;
                     $this->refund->setRefundReceiver($refund_receiver)->setNumberOfSms($sms_count)->adjustWallet();
                     $this->deductLog($sms_count * constants('SMS_CAMPAIGN.rate_per_sms'));
                 }
@@ -65,32 +64,32 @@ class ProcessSmsCampaignStatusJob extends Job implements ShouldQueue
         }
     }
 
-    private function deductLog($amount)
+    private function isSuccessfullySent(SmsHandler $handler)
     {
-        /** @var AutomaticEntryRepository $entry */
-        $entry = app(AutomaticEntryRepository::class);
-        $entry->setAmount($amount)
-            ->setPartner($this->campaignOrderReceiver->smsCampaignOrder->partner)
-            ->setHead(AutomaticExpense::SMS)
-            ->setSourceType(class_basename($this->campaignOrderReceiver->smsCampaignOrder))
-            ->setSourceId($this->campaignOrderReceiver->smsCampaignOrder->id)->deduct();
+        if (strpos($this->getOrderStatus($handler), 'DELIVERED') !== false)
+            return true;
+        return false;
     }
+
     private function getOrderStatus(SmsHandler $sms_handler)
     {
         $response = $sms_handler->getSingleMessage($this->campaignOrderReceiver->message_id);
-        if ($response) return $response->status->name;
+        if ($response)
+            return $response->status->name;
         return 'PENDING';
-    }
-
-    private function isSuccessfullySent(SmsHandler $handler)
-    {
-        if (strpos($this->getOrderStatus($handler), 'DELIVERED') !== false) return true;
-        return false;
     }
 
     private function isPending(SmsHandler $handler)
     {
-        if (strpos($this->getOrderStatus($handler), 'PENDING') !== false) return true;
+        if (strpos($this->getOrderStatus($handler), 'PENDING') !== false)
+            return true;
         return false;
+    }
+
+    private function deductLog($amount)
+    {
+        /** @var AutomaticEntryRepository $entry */
+        $entry = app(AutomaticEntryRepository::class);
+        $entry->setAmount($amount)->setPartner($this->campaignOrderReceiver->smsCampaignOrder->partner)->setHead(AutomaticExpense::SMS)->setSourceType(class_basename($this->campaignOrderReceiver->smsCampaignOrder))->setSourceId($this->campaignOrderReceiver->smsCampaignOrder->id)->deduct();
     }
 }

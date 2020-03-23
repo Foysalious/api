@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Sheba\Business\Attendance\AttendanceList;
 use Sheba\Business\Attendance\Monthly\Excel;
+use Sheba\Business\Attendance\Member\Excel as MemberMonthlyExcel;
 use Sheba\Business\Attendance\Monthly\Stat;
 use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
 use Sheba\Dal\Attendance\Statuses;
@@ -86,6 +87,7 @@ class AttendanceController extends Controller
                 $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
                 $employee_attendance = (new MonthlyStat($time_frame, $business_holiday, $business_weekend, false))->transform($attendances);
 
+
                 array_push($all_employee_attendance, [
                     'business_member_id' => $business_member->id,
                     'member' => [
@@ -125,26 +127,40 @@ class AttendanceController extends Controller
         return (Carbon::now()->month == (int)$month && Carbon::now()->year == (int)$year);
     }
 
-    public function showStat($business, $member, Request $request, Stat $monthly_stat, BusinessMemberRepositoryInterface $business_member_repository, TimeFrame $time_frame, AttendanceList $list)
+    public function showStat($business, $member, Request $request, BusinessHolidayRepoInterface $business_holiday_repo,
+                             BusinessWeekendRepoInterface $business_weekend_repo, AttendanceRepoInterface $attendance_repo,
+                             BusinessMemberRepositoryInterface $business_member_repository,
+                             TimeFrame $time_frame, AttendanceList $list, MemberMonthlyExcel $member_monthly_excel)
     {
         $this->validate($request, ['month' => 'numeric|min:1|max:12']);
         $business = $request->business;
         /** @var BusinessMember $business_member */
         $business_member = $business_member_repository->where('business_id', $business->id)->where('member_id', $member)->first();
         $month = $request->has('month') ? $request->month : date('m');
+
+
+        $business_holiday = $business_holiday_repo->getAllByBusiness($business);
+        $business_weekend = $business_weekend_repo->getAllByBusiness($business);
         $time_frame = $time_frame->forAMonth($month, date('Y'));
-        $monthly_stat->setBusiness($business)->setBusinessMember($business_member)->setTimeFrame($time_frame)->calculate();
-        $list = $list->setStartDate($time_frame->start)->setEndDate($time_frame->end)->setBusinessMemberId($business_member->id)->get();
+        $time_frame->end = $this->isShowRunningMonthsAttendance(date('Y'), $month) ? Carbon::now() : $time_frame->end;
+        $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
+        $employee_attendance = (new MonthlyStat($time_frame, $business_holiday, $business_weekend))->transform($attendances);
+        $daily_breakdowns = collect($employee_attendance['daily_breakdown']);
+        $daily_breakdowns = $daily_breakdowns->filter(function ($breakdown){
+            return Carbon::parse($breakdown['date'])->lessThanOrEqualTo(Carbon::today());
+        });
+
+        if ($request->file == 'excel') {
+            return $member_monthly_excel->setMonthlyData($daily_breakdowns->toArray())
+                ->setMember($business_member->member)
+                ->setDesignation($business_member->role ? $business_member->role->name : null)
+                ->setDepartment($business_member->role && $business_member->role->businessDepartment ? $business_member->role->businessDepartment->name : null)
+                ->get();
+        }
+
         return api_response($request, $list, 200, [
-            'stat' => [
-                'absent' => $monthly_stat->getAbsent(),
-                'late' => $monthly_stat->getLate(),
-                'left_early' => $monthly_stat->getLeftEarly(),
-                'on_time' => $monthly_stat->getOnTime(),
-                'present' => $monthly_stat->getPresent(),
-                'working_day' => $monthly_stat->getWorkingDay(),
-            ],
-            'attendances' => count($list) ? $list : null,
+            'stat' => $employee_attendance['statistics'],
+            'attendances' => $daily_breakdowns,
             'employee' => [
                 'id' => $business_member->member->id,
                 'name' => $business_member->member->profile->name,
@@ -153,5 +169,4 @@ class AttendanceController extends Controller
             ]
         ]);
     }
-
 }

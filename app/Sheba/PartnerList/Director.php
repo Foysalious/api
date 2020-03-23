@@ -56,6 +56,7 @@ class Director
     {
         $this->buildBaseQuery();
         $this->builder->withService();
+        $this->builder->withSubscriptionPackage();
         $this->builder->withTotalCompletedOrder();
         $this->builder->checkPartnersToIgnore();
     }
@@ -65,5 +66,7 @@ class Director
         $this->filterBaseConditions();
         $this->builder->checkPartnerAvailability();
         $this->builder->removeUnavailablePartners();
+        $this->builder->resolvePartnerSortingParameters();
+        $this->builder->sortPartners();
     }
 }

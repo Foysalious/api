@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Models\BusinessMember;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Sheba\Business\ApprovalFlow\Updater;
 use Sheba\Dal\TripRequestApprovalFlow\Model as TripRequestApprovalFlow;
 use Illuminate\Validation\ValidationException;
@@ -123,6 +124,8 @@ class ApprovalFlowController extends Controller
 
             if (count($approval) > 0) return api_response($request, $approval_flow_details, 200, ['approval_flow_details' => $approval_flow_details]);
             else  return api_response($request, null, 404);
+        } catch (ModelNotFoundException $e) {
+            return api_response($request, null, 404, ["message" => "Model Not found."]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
