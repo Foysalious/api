@@ -25,6 +25,21 @@ class PaymentProcessor
         $this->method = $this->getMethod($method);
     }
 
+    public function method()
+    {
+        return $this->method;
+    }
+
+    /**
+     * @param $method
+     * @return bool
+     * @throws ReflectionException
+     */
+    private function isValidMethod($method)
+    {
+        return in_array($method, (new ReflectionClass(PaymentStrategy::class))->getStaticProperties());
+    }
+
     /**
      * @param $method
      * @return Bkash|Cbl|Cod|Ssl|Wallet|PartnerWallet|OkWallet
@@ -32,8 +47,8 @@ class PaymentProcessor
      */
     private function getMethod($method)
     {
-        if (!$this->isValidMethod($method))
-            throw new InvalidArgumentException('Invalid Method.');
+        if (!$this->isValidMethod($method)) throw new InvalidArgumentException('Invalid Method.');
+
         switch ($method) {
             case 'cod':
                 return new Cod();
@@ -49,21 +64,8 @@ class PaymentProcessor
                 return new PartnerWallet();
             case 'ok_wallet':
                 return new OkWallet();
+            case 'ssl_donation':
+                return (new Ssl())->setDonationConfig();
         }
-    }
-
-    /**
-     * @param $method
-     * @return bool
-     * @throws ReflectionException
-     */
-    private function isValidMethod($method)
-    {
-        return in_array($method, (new ReflectionClass(PaymentStrategy::class))->getStaticProperties());
-    }
-
-    public function method()
-    {
-        return $this->method;
     }
 }

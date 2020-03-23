@@ -36,7 +36,16 @@ class Ssl extends PaymentMethod
         $this->cancelUrl = config('ssl.cancel_url');
         $this->orderValidationUrl = config('ssl.order_validation_url');
     }
-
+    public function setDonationConfig(){
+        $this->storeId = config('ssl_donation.store_id');
+        $this->storePassword = config('ssl_donation.store_password');
+        $this->sessionUrl = config('ssl_donation.session_url');
+        $this->successUrl = config('ssl_donation.success_url');
+        $this->failUrl = config('ssl_donation.fail_url');
+        $this->cancelUrl = config('ssl_donation.cancel_url');
+        $this->orderValidationUrl = config('ssl_donation.order_validation_url');
+        return $this;
+    }
     public function init(Payable $payable): Payment
     {
         $invoice = "SHEBA_SSL_" . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . randomString(10, 1, 1);

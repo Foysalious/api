@@ -15,7 +15,7 @@ class PaymentLinkBillController extends Controller
     {
         try {
             $this->validate($request, [
-                'payment_method' => 'required|in:online,bkash,cbl',
+                'payment_method' => 'required|in:online,bkash,cbl,ssl_donation',
                 'amount' => 'numeric',
                 'purpose' => 'string',
                 'identifier' => 'required',
@@ -37,6 +37,7 @@ class PaymentLinkBillController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
