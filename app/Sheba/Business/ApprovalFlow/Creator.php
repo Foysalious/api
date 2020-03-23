@@ -1,12 +1,13 @@
 <?php namespace Sheba\Business\ApprovalFlow;
 
-use Illuminate\Support\Facades\DB;
-use Sheba\Dal\TripRequestApprovalFlow\TripRequestApprovalFlowRepositoryInterface;
+use DB;
+use Sheba\Dal\ApprovalFlow\Contract as ApprovalFlowRepositoryInterface;
 use Sheba\ModificationFields;
 
 class Creator
 {
     use ModificationFields;
+
     private $member;
     private $businessMembers;
     private $superAdmins;
@@ -15,8 +16,13 @@ class Creator
     private $businessMemberIds;
     private $data = [];
     private $approvalFlowRepo;
+    private $type;
 
-    public function __construct(TripRequestApprovalFlowRepositoryInterface $approval_flow_repo)
+    /**
+     * Creator constructor.
+     * @param ApprovalFlowRepositoryInterface $approval_flow_repo
+     */
+    public function __construct(ApprovalFlowRepositoryInterface $approval_flow_repo)
     {
         $this->approvalFlowRepo = $approval_flow_repo;
     }
@@ -33,24 +39,30 @@ class Creator
         return $this;
     }
 
+    public function setType($type)
+    {
+        $this->type = $type;
+        return $this;
+    }
+
+    /**
+     * @param $business_department_id
+     * @return $this
+     */
     public function setBusinessDepartmentId($business_department_id)
     {
         $this->businessDepartmentId = $business_department_id;
         return $this;
     }
 
+    /**
+     * @param array $business_member_ids
+     * @return $this
+     */
     public function setBusinessMemberIds(array $business_member_ids)
     {
         $this->businessMemberIds = $business_member_ids;
         return $this;
-    }
-
-    public function makeData()
-    {
-        $this->data = [
-            'title' => $this->title,
-            'business_department_id' => $this->businessDepartmentId
-        ];
     }
 
     public function store()
@@ -61,8 +73,16 @@ class Creator
         $approval_flow = $this->approvalFlowRepo->create($this->data);
         $approval_flow->approvers()->sync($this->businessMemberIds);
         DB::commit();
-        return $approval_flow;
 
+        return $approval_flow;
     }
 
+    public function makeData()
+    {
+        $this->data = [
+            'title' => $this->title,
+            'type' => $this->type,
+            'business_department_id' => $this->businessDepartmentId
+        ];
+    }
 }
