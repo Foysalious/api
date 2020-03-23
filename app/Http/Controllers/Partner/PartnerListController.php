@@ -52,9 +52,16 @@ class PartnerListController extends Controller
         $service_requestObject = $serviceRequest->setServices(json_decode($request->services, 1))->get();
         $partnerListBuilder->setGeo($geo)->setServiceRequestObjectArray($service_requestObject)
             ->setScheduleTime($request->time)->setScheduleDate($request->date);
-        $partnerListDirector->setBuilder($partnerListBuilder)->buildPartnerListForOrderPlacement();
-        $partners = $partnerListBuilder->get();
+        $partnerListDirector->setBuilder($partnerListBuilder);
+        if ($request->date && $request->time) {
+            $partnerListDirector->buildPartnerListForOrderPlacement();
+        } else {
+            $partnerListDirector->buildPartnerList();
+        }
+        $partners = $partnerListBuilder->get()->each(function (&$partner) {
+            removeRelationsAndFields($partner);
+        });
         if (count($partners) == 0) return api_response($request, $partners, 404);
-        return api_response($request, $partners, 200);
+        return api_response($request, $partners, 200, ['partners' => $partners->values()->all(), 'partners_after_conditions' => $partnerListDirector->getPartnerIdsAfterEachCondition()]);
     }
 }

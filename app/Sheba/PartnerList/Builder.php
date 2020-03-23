@@ -1,6 +1,7 @@
 <?php namespace Sheba\PartnerList;
 
 
+use Illuminate\Support\Collection;
 use Sheba\Location\Geo;
 
 interface Builder
@@ -51,6 +52,8 @@ interface Builder
 
     public function withTotalCompletedOrder();
 
+    public function withoutShebaHelpDesk();
+
     public function runQuery();
 
     public function setPartnerIds(array $partner_ids);
@@ -65,6 +68,7 @@ interface Builder
 
     public function setScheduleTime($time);
 
+    /** @var  Collection */
     public function get();
 
     public function first();

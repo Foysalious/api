@@ -5,6 +5,20 @@ class Director
     /** @var Builder */
     private $builder;
     private $baseQueryFunctions;
+    /** @var array */
+    private $partnersAfterServiceCondition;
+    /** @var array */
+    private $partnersAfterLocationCondition;
+    /** @var array */
+    private $partnersAfterOptionCondition;
+    /** @var array */
+    private $partnersAfterCreditCondition;
+    /** @var array */
+    private $partnersAfterOrderLimitCondition;
+    /** @var array */
+    private $partnersAfterResourceCondition;
+    /** @var array */
+    private $partnersAfterAvailabilityCondition;
 
     public function setBuilder(Builder $builder)
     {
@@ -12,10 +26,56 @@ class Director
         return $this;
     }
 
+    private function setPartnersAfterServiceCondition($partnersAfterServiceCondition)
+    {
+        $this->partnersAfterServiceCondition = $partnersAfterServiceCondition;
+        return $this;
+    }
+
+
+    private function setPartnersAfterLocationCondition($partnersAfterLocationCondition)
+    {
+        $this->partnersAfterLocationCondition = $partnersAfterLocationCondition;
+        return $this;
+    }
+
+    private function setPartnersAfterOptionCondition($partnersAfterOptionCondition)
+    {
+        $this->partnersAfterOptionCondition = $partnersAfterOptionCondition;
+        return $this;
+    }
+
+
+    private function setPartnersAfterCreditCondition($partnersAfterCreditCondition)
+    {
+        $this->partnersAfterCreditCondition = $partnersAfterCreditCondition;
+        return $this;
+    }
+
+
+    public function setPartnersAfterOrderLimitCondition($partnersAfterOrderLimitCondition)
+    {
+        $this->partnersAfterOrderLimitCondition = $partnersAfterOrderLimitCondition;
+        return $this;
+    }
+
+    private function setPartnersAfterResourceCondition($partnersAfterResourceCondition)
+    {
+        $this->partnersAfterResourceCondition = $partnersAfterResourceCondition;
+        return $this;
+    }
+
+    private function setPartnersAfterAvailabilityCondition($partnersAfterAvailabilityCondition)
+    {
+        $this->partnersAfterAvailabilityCondition = $partnersAfterAvailabilityCondition;
+        return $this;
+    }
+
     public function buildPartnerList()
     {
         $this->buildBaseQuery();
         $this->builder->runQuery();
+        $this->setPartnersAfterServiceCondition($this->getPartnerIds());
         $this->filterBaseConditions();
     }
 
@@ -40,16 +100,28 @@ class Director
         $this->builder->checkCanAccessMarketPlace();
         $this->builder->withResource();
         $this->builder->withAvgReview();
+        $this->builder->withoutShebaHelpDesk();
     }
 
     private function filterBaseConditions()
     {
         $this->builder->checkOption();
+        $this->setPartnersAfterOptionCondition($this->getPartnerIds());
+
         $this->builder->checkGeoWithinPartnerRadius();
+        $this->setPartnersAfterLocationCondition($this->getPartnerIds());
+
         $this->builder->checkPartnerCreditLimit();
+        $this->setPartnersAfterCreditCondition($this->getPartnerIds());
+
         $this->builder->checkPartnerDailyOrderLimit();
+        $this->setPartnersAfterOrderLimitCondition($this->getPartnerIds());
+
         $this->builder->checkPartnerHasResource();
-        $this->builder->removeShebaHelpDesk();
+        $this->setPartnersAfterResourceCondition($this->getPartnerIds());
+
+        $this->builder->resolvePartnerSortingParameters();
+        $this->builder->sortPartners();
     }
 
     private function buildQueryForOrderPlace()
@@ -66,7 +138,26 @@ class Director
         $this->filterBaseConditions();
         $this->builder->checkPartnerAvailability();
         $this->builder->removeUnavailablePartners();
-        $this->builder->resolvePartnerSortingParameters();
-        $this->builder->sortPartners();
+        $this->setPartnersAfterAvailabilityCondition($this->getPartnerIds());
+    }
+
+    public function getPartnerIdsAfterEachCondition()
+    {
+        return [
+            'services' => $this->partnersAfterServiceCondition ? $this->partnersAfterServiceCondition : [],
+            'location' => $this->partnersAfterLocationCondition ? $this->partnersAfterLocationCondition : [],
+            'option' => $this->partnersAfterOptionCondition ? $this->partnersAfterOptionCondition : [],
+            'credit' => $this->partnersAfterCreditCondition ? $this->partnersAfterCreditCondition : [],
+            'order_limit' => $this->partnersAfterOrderLimitCondition ? $this->partnersAfterOrderLimitCondition : [],
+            'resource' => $this->partnersAfterResourceCondition ? $this->partnersAfterResourceCondition : [],
+            'availability' => $this->partnersAfterAvailabilityCondition ? $this->partnersAfterAvailabilityCondition : [],
+        ];
+    }
+
+    private function getPartnerIds()
+    {
+        $partners = $this->builder->get();
+        if (count($partners) == 0) return [];
+        return $partners->pluck('id')->values()->all();
     }
 }

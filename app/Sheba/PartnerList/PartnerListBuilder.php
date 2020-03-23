@@ -30,20 +30,10 @@ class PartnerListBuilder implements Builder
     private $geo;
     /** @var array */
     private $categoryIdsOfMasterCategory;
-    private $notFoundPartners;
 
     public function __construct()
     {
         $this->partnerQuery = Partner::query();
-        $this->notFoundPartners = [
-            'service' => [],
-            'location' => [],
-            'credit' => [],
-            'order_limit' => [],
-            'options' => [],
-            'handyman' => [],
-            'availability' => []
-        ];
     }
 
     private function setCategoryIdsOfMasterCategory()
@@ -252,7 +242,7 @@ class PartnerListBuilder implements Builder
 
     public function runQuery()
     {
-        $this->partners = $this->partnerQuery->get();;
+        $this->partners = $this->partnerQuery->get();
     }
 
     public function get()
@@ -270,6 +260,11 @@ class PartnerListBuilder implements Builder
         $this->partners = $this->partners->filter(function ($partner) {
             return $partner->id != config('sheba.sheba_help_desk_id');
         });
+    }
+
+    public function withoutShebaHelpDesk()
+    {
+        $this->partnerQuery = $this->partnerQuery->where('partners.id', '<>', config('sheba.sheba_help_desk_id'));
     }
 
     public function removeUnavailablePartners()
