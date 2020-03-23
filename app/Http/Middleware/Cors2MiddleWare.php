@@ -91,7 +91,8 @@ class Cors2MiddleWare
             "http://stage.sheba.xyz",
             "https://stage.sheba.xyz",
             "https://admin.stage.sheba.xyz",
-            "http://103.97.44.39"
+            "http://103.97.44.39",
+            "https://okwalletmerchant.onebank.com.bd"
         ];
         // ALLOW OPTIONS METHOD
         $headers['Access-Control-Allow-Credentials'] = 'true';
