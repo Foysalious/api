@@ -11,10 +11,12 @@ use App\Transformers\AttachmentTransformer;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\Procurement\Creator;
+use Sheba\Business\Procurement\WorkOrderDataGenerator;
 use Sheba\Logs\ErrorLog;
 use Sheba\ModificationFields;
 use Sheba\Payment\Adapters\Payable\ProcurementAdapter;
@@ -23,6 +25,7 @@ use Sheba\Payment\ShebaPaymentValidator;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
 use Sheba\Sms\Sms;
 use Sheba\Business\ProcurementInvitation\Creator as ProcurementInvitationCreator;
+use Throwable;
 
 class ProcurementController extends Controller
 {
@@ -32,29 +35,13 @@ class ProcurementController extends Controller
     {
         try {
             $this->validate($request, [
-                'title' => 'required|string',
-                'number_of_participants' => 'required|numeric',
-                'last_date_of_submission' => 'required|date_format:Y-m-d',
-                'procurement_start_date' => 'required|date_format:Y-m-d',
-                'procurement_end_date' => 'required|date_format:Y-m-d',
-                'payment_options' => 'required|string',
-                'type' => 'required|string:in:basic,advanced',
-                'items' => 'sometimes|required|string',
-                'description' => 'sometimes|required|string',
-                'is_published' => 'sometimes|required|integer',
-                'attachments.*' => 'file'
+                'title' => 'required|string', 'number_of_participants' => 'required|numeric', 'last_date_of_submission' => 'required|date_format:Y-m-d', 'procurement_start_date' => 'required|date_format:Y-m-d', 'procurement_end_date' => 'required|date_format:Y-m-d', 'payment_options' => 'required|string', 'type' => 'required|string:in:basic,advanced', 'items' => 'sometimes|required|string', 'description' => 'sometimes|required|string', 'is_published' => 'sometimes|required|integer', 'attachments.*' => 'file'
             ]);
-            if (!$access_control->setBusinessMember($request->business_member)->hasAccess('procurement.rw'))
-                return api_response($request, null, 403);
+            if (!$access_control->setBusinessMember($request->business_member)->hasAccess('procurement.rw')) return api_response($request, null, 403);
 
             $this->setModifier($request->manager_member);
 
-            $creator->setType($request->type)->setOwner($request->business)->setTitle($request->title)->setPurchaseRequest($request->purchase_request_id)
-                ->setLongDescription($request->description)->setOrderStartDate($request->order_start_date)->setOrderEndDate($request->order_end_date)
-                ->setInterviewDate($request->interview_date)->setProcurementStartDate($request->procurement_start_date)->setProcurementEndDate($request->procurement_end_date)
-                ->setItems($request->items)->setQuestions($request->questions)->setNumberOfParticipants($request->number_of_participants)
-                ->setLastDateOfSubmission($request->last_date_of_submission)->setPaymentOptions($request->payment_options)->setIsPublished($request->is_published)
-                ->setLabels($request->labels)->setCreatedBy($request->manager_member);
+            $creator->setType($request->type)->setOwner($request->business)->setTitle($request->title)->setPurchaseRequest($request->purchase_request_id)->setLongDescription($request->description)->setOrderStartDate($request->order_start_date)->setOrderEndDate($request->order_end_date)->setInterviewDate($request->interview_date)->setProcurementStartDate($request->procurement_start_date)->setProcurementEndDate($request->procurement_end_date)->setItems($request->items)->setQuestions($request->questions)->setNumberOfParticipants($request->number_of_participants)->setLastDateOfSubmission($request->last_date_of_submission)->setPaymentOptions($request->payment_options)->setIsPublished($request->is_published)->setLabels($request->labels)->setCreatedBy($request->manager_member);
 
             if ($request->attachments && is_array($request->attachments)) $creator->setAttachments($request->attachments);
 
@@ -67,7 +54,7 @@ class ProcurementController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -104,26 +91,19 @@ class ProcurementController extends Controller
             $procurements_list = [];
             foreach ($procurements->get() as $procurement) {
                 array_push($procurements_list, [
-                    "id" => $procurement->id,
-                    "title" => $procurement->title,
-                    "status" => $procurement->status,
-                    "is_published" => $procurement->is_published,
-                    "last_date_of_submission" => Carbon::parse($procurement->last_date_of_submission)->format('d/m/y'),
-                    "bid_count" => $procurement->bids()->where('status', '<>', 'pending')->get()->count()
+                    "id" => $procurement->id, "title" => $procurement->title, "status" => $procurement->status, "is_published" => $procurement->is_published, "last_date_of_submission" => Carbon::parse($procurement->last_date_of_submission)->format('d/m/y'), "bid_count" => $procurement->bids()->where('status', '<>', 'pending')->get()->count()
                 ]);
             }
             if (count($procurements_list) > 0) return api_response($request, $procurements_list, 200, [
-                'procurements' => $procurements_list,
-                'total_procurement' => $total_procurement
-            ]);
-            else return api_response($request, null, 404);
+                'procurements' => $procurements_list, 'total_procurement' => $total_procurement
+            ]); else return api_response($request, null, 404);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -142,28 +122,13 @@ class ProcurementController extends Controller
                 $company_evaluation = $procurement->items->where('type', 'company_evaluation')->first();
 
                 $procurement_details = [
-                    'id' => $procurement->id,
-                    'title' => $procurement->title,
-                    'status' => $procurement->status,
-                    'long_description' => $procurement->long_description,
-                    'labels' => $procurement->getTagNamesAttribute()->toArray(),
-                    'start_date' => Carbon::parse($procurement->procurement_start_date)->format('d/m/y'),
-                    'published_at' => $procurement->is_published ? Carbon::parse($procurement->published_at)->format('d/m/y') : null,
-                    'end_date' => Carbon::parse($procurement->procurement_end_date)->format('d/m/y'),
-                    'number_of_participants' => $procurement->number_of_participants,
-                    'last_date_of_submission' => Carbon::parse($procurement->last_date_of_submission)->format('Y-m-d'),
-                    'payment_options' => $procurement->payment_options,
-                    'created_at' => Carbon::parse($procurement->created_at)->format('d/m/y'),
-                    'price_quotation' => $price_quotation ? $price_quotation->fields ? $price_quotation->fields->toArray() : null : null,
-                    'technical_evaluation' => $technical_evaluation ? $technical_evaluation->fields ? $technical_evaluation->fields->toArray() : null : null,
-                    'company_evaluation' => $company_evaluation ? $company_evaluation->fields ? $company_evaluation->fields->toArray() : null : null,
-                    'attachments' => $procurement->attachments->map(function (Attachment $attachment) {
+                    'id' => $procurement->id, 'title' => $procurement->title, 'status' => $procurement->status, 'long_description' => $procurement->long_description, 'labels' => $procurement->getTagNamesAttribute()->toArray(), 'start_date' => Carbon::parse($procurement->procurement_start_date)->format('d/m/y'), 'published_at' => $procurement->is_published ? Carbon::parse($procurement->published_at)->format('d/m/y') : null, 'end_date' => Carbon::parse($procurement->procurement_end_date)->format('d/m/y'), 'number_of_participants' => $procurement->number_of_participants, 'last_date_of_submission' => Carbon::parse($procurement->last_date_of_submission)->format('Y-m-d'), 'payment_options' => $procurement->payment_options, 'created_at' => Carbon::parse($procurement->created_at)->format('d/m/y'), 'price_quotation' => $price_quotation ? $price_quotation->fields ? $price_quotation->fields->toArray() : null : null, 'technical_evaluation' => $technical_evaluation ? $technical_evaluation->fields ? $technical_evaluation->fields->toArray() : null : null, 'company_evaluation' => $company_evaluation ? $company_evaluation->fields ? $company_evaluation->fields->toArray() : null : null, 'attachments' => $procurement->attachments->map(function (Attachment $attachment) {
                         return (new AttachmentTransformer())->transform($attachment);
                     })->toArray()
                 ];
                 return api_response($request, $procurement_details, 200, ['procurements' => $procurement_details]);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -173,10 +138,7 @@ class ProcurementController extends Controller
     {
         try {
             $this->validate($request, [
-                'number_of_participants' => 'required|numeric',
-                'last_date_of_submission' => 'required|date_format:Y-m-d',
-                'procurement_start_date' => 'date_format:Y-m-d',
-                'payment_options' => 'string'
+                'number_of_participants' => 'required|numeric', 'last_date_of_submission' => 'required|date_format:Y-m-d', 'procurement_start_date' => 'date_format:Y-m-d', 'payment_options' => 'string'
             ]);
 
             $procurement = Procurement::find($request->procurement);
@@ -198,7 +160,7 @@ class ProcurementController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -217,7 +179,7 @@ class ProcurementController extends Controller
             foreach ($partners as $partner) {
                 /** @var Partner $partner */
                 $procurement_invitation = $creator->setProcurement($procurement)->setPartner($partner)->create();
-                $url=config('sheba.partners_url') . "/v3/rfq-invitations/$procurement_invitation->id";
+                $url = config('sheba.partners_url') . "/v3/rfq-invitations/$procurement_invitation->id";
                 $sms->shoot($partner->getManagerMobile(), "You have been invited to serve $business->name. Now go to this link-" . $bitlyLinkShort->shortUrl($url));
             }
             return api_response($request, null, 200);
@@ -225,7 +187,7 @@ class ProcurementController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $errorLog->setException($e)->setRequest($request)->setErrorMessage($message)->send();
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -250,7 +212,7 @@ class ProcurementController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -260,8 +222,7 @@ class ProcurementController extends Controller
     {
         try {
             $this->validate($request, [
-                'payment_method' => 'required|in:online,wallet,bkash,cbl',
-                'emi_month' => 'numeric'
+                'payment_method' => 'required|in:online,wallet,bkash,cbl', 'emi_month' => 'numeric'
             ]);
             $payment_method = $request->payment_method;
             $procurement = $procurement_repository->find($procurement);
@@ -276,7 +237,7 @@ class ProcurementController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -290,19 +251,26 @@ class ProcurementController extends Controller
             return api_response($request, $order_timelines, 200, ['timelines' => $order_timelines]);
         } catch (ModelNotFoundException $e) {
             return api_response($request, null, 404, ["message" => "Model Not found."]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
+    /**
+     * @param $business
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function procurementOrders($business, Request $request)
     {
         try {
             list($offset, $limit) = calculatePagination($request);
-            $procurements = Procurement::order()->with(['bids' => function ($q) {
-                $q->select('id', 'procurement_id', 'bidder_id', 'bidder_type', 'status', 'price');
-            }])->where('owner_id', (int)$business)->orderBy('id', 'DESC');
+            $procurements = Procurement::order()->with([
+                'bids' => function ($q) {
+                    $q->select('id', 'procurement_id', 'bidder_id', 'bidder_type', 'status', 'price');
+                }
+            ])->where('owner_id', (int)$business)->orderBy('id', 'DESC');
 
             $total_procurement = $procurements->get()->count();
 
@@ -320,40 +288,40 @@ class ProcurementController extends Controller
             foreach ($procurements as $procurement) {
                 $bid = $procurement->getActiveBid() ? $procurement->getActiveBid() : null;
                 array_push($rfq_order_lists, [
-                    'procurement_id' => $procurement->id,
-                    'procurement_title' => $procurement->title,
-                    'procurement_status' => $procurement->status,
-                    'created_at' => $procurement->created_at->format('d/m/y'),
-                    'color' => constants('PROCUREMENT_ORDER_STATUSES_COLOR')[$procurement->status],
-                    'bid_id' => $bid ? $bid->id : null,
-                    'price' => $bid ? $bid->price : null,
-                    'vendor' => [
+                    'procurement_id' => $procurement->id, 'procurement_title' => $procurement->title, 'procurement_status' => $procurement->status, 'created_at' => $procurement->created_at->format('d/m/y'), 'color' => constants('PROCUREMENT_ORDER_STATUSES_COLOR')[$procurement->status], 'bid_id' => $bid ? $bid->id : null, 'price' => $bid ? $bid->price : null, 'vendor' => [
                         'name' => $bid ? $bid->bidder->name : null
                     ]
                 ]);
             }
 
             return api_response($request, $rfq_order_lists, 200, [
-                'rfq_order_lists' => $rfq_order_lists,
-                'total_procurement' => $total_procurement,
+                'rfq_order_lists' => $rfq_order_lists, 'total_procurement' => $total_procurement,
             ]);
         } catch (ModelNotFoundException $e) {
             return api_response($request, null, 404, ["message" => "Model Not found."]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
+    /**
+     * @param $business
+     * @param $procurement
+     * @param $bid
+     * @param Request $request
+     * @param Creator $creator
+     * @return JsonResponse
+     */
     public function showProcurementOrder($business, $procurement, $bid, Request $request, Creator $creator)
     {
         try {
             $bid = Bid::findOrFail((int)$bid);
             $rfq_order_details = $creator->getProcurement($procurement)->setBid($bid)->formatData();
-            return api_response($request, $rfq_order_details, 200, ['order_details' => $rfq_order_details]);
+            return api_response($request, null, 200, ['order_details' => $rfq_order_details]);
         } catch (ModelNotFoundException $e) {
             return api_response($request, null, 404, ["message" => "Model Not found."]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -370,7 +338,7 @@ class ProcurementController extends Controller
             return api_response($request, $rfq_order_bill, 200, ['rfq_order_bill' => $rfq_order_bill]);
         } catch (ModelNotFoundException $e) {
             return api_response($request, null, 404, ["message" => "Model Not found."]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -384,26 +352,36 @@ class ProcurementController extends Controller
         $company_evaluation = $procurement->items->where('type', 'company_evaluation')->first();
 
         $procurement_details = [
-            'id' => $procurement->id,
-            'title' => $procurement->title,
-            'status' => $procurement->status,
-            'long_description' => $procurement->long_description,
-            'labels' => $procurement->getTagNamesAttribute()->toArray(),
-            'start_date' => Carbon::parse($procurement->procurement_start_date)->format('d/m/y'),
-            'published_at' => $procurement->is_published ? Carbon::parse($procurement->published_at)->format('d/m/y') : null,
-            'end_date' => Carbon::parse($procurement->procurement_end_date)->format('d/m/y'),
-            'number_of_participants' => $procurement->number_of_participants,
-            'last_date_of_submission' => Carbon::parse($procurement->last_date_of_submission)->format('Y-m-d'),
-            'payment_options' => $procurement->payment_options,
-            'created_at' => Carbon::parse($procurement->created_at)->format('d/m/y'),
-            'price_quotation' => $price_quotation ? $price_quotation->fields ? $price_quotation->fields->toArray() : null : null,
-            'technical_evaluation' => $technical_evaluation ? $technical_evaluation->fields ? $technical_evaluation->fields : null : null,
-            'company_evaluation' => $company_evaluation ? $company_evaluation->fields ? $company_evaluation->fields : null : null,
+            'id' => $procurement->id, 'title' => $procurement->title, 'status' => $procurement->status, 'long_description' => $procurement->long_description, 'labels' => $procurement->getTagNamesAttribute()->toArray(), 'start_date' => Carbon::parse($procurement->procurement_start_date)->format('d/m/y'), 'published_at' => $procurement->is_published ? Carbon::parse($procurement->published_at)->format('d/m/y') : null, 'end_date' => Carbon::parse($procurement->procurement_end_date)->format('d/m/y'), 'number_of_participants' => $procurement->number_of_participants, 'last_date_of_submission' => Carbon::parse($procurement->last_date_of_submission)->format('Y-m-d'), 'payment_options' => $procurement->payment_options, 'created_at' => Carbon::parse($procurement->created_at)->format('d/m/y'), 'price_quotation' => $price_quotation ? $price_quotation->fields ? $price_quotation->fields->toArray() : null : null, 'technical_evaluation' => $technical_evaluation ? $technical_evaluation->fields ? $technical_evaluation->fields : null : null, 'company_evaluation' => $company_evaluation ? $company_evaluation->fields ? $company_evaluation->fields : null : null,
         ];
 
-
-        return App::make('dompdf.wrapper')
+        // return view('pdfs.invoice', compact('procurement_details'));
+        return App::make('dompdf.wrapper')->loadView('pdfs.invoice', compact('procurement_details'))->download("invoice.pdf");
+        /*return App::make('dompdf.wrapper')
             ->loadView('pdfs.procurement_details', compact('procurement_details'))
-            ->download("procurement_details.pdf");
+            ->download("procurement_details.pdf");*/
+    }
+
+    /**
+     * @param $business
+     * @param $procurement
+     * @param $bid
+     * @param Request $request
+     * @param WorkOrderDataGenerator $data_generator
+     * @return JsonResponse
+     */
+    public function workOrder($business, $procurement, $bid, Request $request, WorkOrderDataGenerator $data_generator)
+    {
+        try {
+            $business = $request->business;
+            $bid = Bid::findOrFail((int)$bid);
+            $work_order = $data_generator->setBusiness($business)->setProcurement($procurement)->setBid($bid)->get();
+            return api_response($request, null, 200, ['work_order' => $work_order]);
+        } catch (ModelNotFoundException $e) {
+            return api_response($request, null, 404, ["message" => "Model Not found."]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 }

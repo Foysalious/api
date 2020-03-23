@@ -113,6 +113,7 @@ class BusinessRoute
                             $api->get('/', 'B2b\BidController@index');
                             $api->group(['prefix' => '{bid}'], function ($api) {
                                 $api->get('/', 'B2b\ProcurementController@showProcurementOrder');
+                                $api->get('/work-order', 'B2b\ProcurementController@workOrder');
                                 $api->group(['prefix' => 'payment-requests'], function ($api) {
                                     $api->get('/', 'B2b\ProcurementPaymentRequestController@index');
                                     $api->post('/{request}', 'B2b\ProcurementPaymentRequestController@updatePaymentRequest');

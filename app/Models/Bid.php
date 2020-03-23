@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Business\Procurement\Type;
 use Sheba\Dal\BidStatusChangeLog\Model as BidStatusChangeLog;
 
 class Bid extends Model
@@ -35,7 +36,7 @@ class Bid extends Model
 
     public function isAdvanced()
     {
-        return $this->procurement->type == 'advanced';
+        return $this->procurement->type == Type::ADVANCED;
     }
 
     public function hasSentHireRequest()
@@ -50,8 +51,7 @@ class Bid extends Model
 
     public function canNotSendHireRequest()
     {
-        return $this->procurement->hasAccepted() || in_array($this->status, [config('b2b.BID_STATUSES')['accepted'], config('b2b.BID_STATUSES')['awarded']]);
+        return $this->procurement->hasAccepted() ||
+            in_array($this->status, [config('b2b.BID_STATUSES')['accepted'], config('b2b.BID_STATUSES')['awarded']]);
     }
-
-
 }
