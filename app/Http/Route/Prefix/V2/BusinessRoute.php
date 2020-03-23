@@ -103,7 +103,6 @@ class BusinessRoute
                             $api->get('/', 'AttachmentController@getAttachments');
                         });
                         $api->get('/bill', 'B2b\ProcurementController@orderBill');
-                        $api->get('/work-order', 'B2b\ProcurementController@workOrder');
                         $api->post('invitations', 'B2b\ProcurementController@sendInvitation');
                         $api->post('publish', 'B2b\ProcurementController@updateStatus');
                         $api->post('general', 'B2b\ProcurementController@updateGeneral');
@@ -114,6 +113,7 @@ class BusinessRoute
                             $api->get('/', 'B2b\BidController@index');
                             $api->group(['prefix' => '{bid}'], function ($api) {
                                 $api->get('/', 'B2b\ProcurementController@showProcurementOrder');
+                                $api->get('/work-order', 'B2b\ProcurementController@workOrder');
                                 $api->group(['prefix' => 'payment-requests'], function ($api) {
                                     $api->get('/', 'B2b\ProcurementPaymentRequestController@index');
                                     $api->post('/{request}', 'B2b\ProcurementPaymentRequestController@updatePaymentRequest');
