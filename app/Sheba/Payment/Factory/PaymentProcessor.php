@@ -6,6 +6,7 @@ use ReflectionException;
 use Sheba\Payment\Methods\Bkash\Bkash;
 use Sheba\Payment\Methods\Cbl\Cbl;
 use Sheba\Payment\Methods\Cod;
+use Sheba\Payment\Methods\OkWallet\OkWallet;
 use Sheba\Payment\Methods\PartnerWallet;
 use Sheba\Payment\Methods\Ssl\Ssl;
 use Sheba\Payment\Methods\Wallet;
@@ -24,30 +25,15 @@ class PaymentProcessor
         $this->method = $this->getMethod($method);
     }
 
-    public function method()
-    {
-        return $this->method;
-    }
-
     /**
      * @param $method
-     * @return bool
-     * @throws ReflectionException
-     */
-    private function isValidMethod($method)
-    {
-        return in_array($method, (new ReflectionClass(PaymentStrategy::class))->getStaticProperties());
-    }
-
-    /**
-     * @param $method
-     * @return Bkash|Cbl|Cod|Ssl|Wallet|PartnerWallet
+     * @return Bkash|Cbl|Cod|Ssl|Wallet|PartnerWallet|OkWallet
      * @throws ReflectionException
      */
     private function getMethod($method)
     {
-        if (!$this->isValidMethod($method)) throw new InvalidArgumentException('Invalid Method.');
-
+        if (!$this->isValidMethod($method))
+            throw new InvalidArgumentException('Invalid Method.');
         switch ($method) {
             case 'cod':
                 return new Cod();
@@ -61,6 +47,23 @@ class PaymentProcessor
                 return new Cbl();
             case 'partner_wallet':
                 return new PartnerWallet();
+            case 'ok_wallet':
+                return new OkWallet();
         }
+    }
+
+    /**
+     * @param $method
+     * @return bool
+     * @throws ReflectionException
+     */
+    private function isValidMethod($method)
+    {
+        return in_array($method, (new ReflectionClass(PaymentStrategy::class))->getStaticProperties());
+    }
+
+    public function method()
+    {
+        return $this->method;
     }
 }
