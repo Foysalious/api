@@ -5,8 +5,6 @@ class EmployeeRoute
     public function set($api)
     {
         $api->group(['prefix' => 'employee', 'middleware' => ['jwtAuth']], function ($api) {
-            $api->get('/','Employee\EmployeeController@index');
-            $api->get('/{employee}','Employee\EmployeeController@show');
             $api->get('me', 'Employee\EmployeeController@me');
             $api->post('me', 'Employee\EmployeeController@updateMe');
             $api->post('password', 'Employee\EmployeeController@updateMyPassword');
@@ -60,6 +58,8 @@ class EmployeeRoute
             $api->group(['prefix' => 'holidays'], function ($api) {
                 $api->get('/', 'Employee\HolidayController@getHolidays');
             });
+            $api->get('/','Employee\EmployeeController@index');
+            $api->get('/{employee}','Employee\EmployeeController@show');
         });
     }
 }
