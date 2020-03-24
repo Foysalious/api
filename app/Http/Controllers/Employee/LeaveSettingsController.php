@@ -42,10 +42,7 @@ class LeaveSettingsController extends Controller
      */
     public function store(Request $request, LeaveTypesRepoInterface $leave_types_repo)
     {
-        $this->validate($request, [
-            'title' => 'required',
-            'total_days' => 'required'
-        ]);
+        $this->validate($request, ['title' => 'required', 'total_days' => 'required']);
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
         $member = $this->getMember($request);
@@ -80,5 +77,14 @@ class LeaveSettingsController extends Controller
         $leave_types_repo->update($leave_setting, $this->withUpdateModificationField($data));
         $leave_setting = $leave_types_repo->find($leave_setting->id);
         return api_response($request, null, 200, ['leave_setting' => $leave_setting]);
+    }
+
+    public function delete($leave_setting , Request $request, LeaveTypesRepoInterface $leave_types_repo)
+    {
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $leave_setting = $leave_types_repo->find($leave_setting);
+        $leave_setting->delete();
+        return api_response($request, null, 200, ['msg' => "Deleted Successfully"]);
     }
 }
