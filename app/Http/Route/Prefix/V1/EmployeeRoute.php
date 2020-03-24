@@ -44,6 +44,7 @@ class EmployeeRoute
             });
             $api->group(['prefix' => 'leaves'], function ($api) {
                 $api->get('/', 'Employee\LeaveController@index');
+                $api->get('/mine', 'Employee\LeaveController@getMyLeaves');
                 $api->get('/types', 'Employee\LeaveController@getLeaveTypes');
                 $api->post('/', 'Employee\LeaveController@store');
                 $api->group(['prefix' => 'settings'], function ($api) {

@@ -1,6 +1,5 @@
 <?php namespace App\Http\Controllers\Employee;
 
-
 use App\Models\BusinessMember;
 use Carbon\Carbon;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestRepositoryInterface;
@@ -21,6 +20,7 @@ class ApprovalRequestController extends Controller
 {
     use BusinessBasicInformation;
     use ModificationFields;
+
     private $approvalRequestRepo;
 
     public function __construct(ApprovalRequestRepositoryInterface $approval_request_repo)
@@ -117,7 +117,6 @@ class ApprovalRequestController extends Controller
             return api_response($request, null, 500);
         }
     }
-
 
     public function updateStatus(Request $request, Updater $updater)
     {
