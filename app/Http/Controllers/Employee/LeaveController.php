@@ -2,6 +2,7 @@
 
 use App\Models\BusinessMember;
 use App\Sheba\Business\ACL\AccessControl;
+use App\Sheba\Business\BusinessBasicInformation;
 use App\Sheba\Business\Leave\Updater as LeaveUpdater;
 use App\Transformers\Business\LeaveListTransformer;
 use App\Transformers\Business\LeaveTransformer;
@@ -15,16 +16,19 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use Sheba\Dal\LeaveType\Contract as LeaveTypesRepoInterface;
+use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use App\Sheba\Business\Leave\Creator as LeaveCreator;
 use Sheba\Dal\Leave\Contract as LeaveRepoInterface;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\ModificationFields;
 use Throwable;
+use DB;
 
 class LeaveController extends Controller
 {
     use ModificationFields;
+    use BusinessBasicInformation;
 
     /**
      * @param Request $request
@@ -54,18 +58,6 @@ class LeaveController extends Controller
             return api_response($request, null, 500);
         }
 
-    }
-
-    /**
-     * @param Request $request
-     * @return BusinessMember|null
-     */
-    private function getBusinessMember(Request $request)
-    {
-        $auth_info = $request->auth_info;
-        $business_member = $auth_info['business_member'];
-        if (!isset($business_member['id'])) return null;
-        return BusinessMember::find($business_member['id']);
     }
 
     /**
@@ -151,5 +143,48 @@ class LeaveController extends Controller
         $leave = Leave::findOrFail((int)$leave);
         $leaveUpdater->setLeave($leave)->setStatus($request->status)->updateStatus();
         return api_response($request, null, 200);
+    }
+
+    private function getMyApprovalRequest(BusinessMember $business_member)
+    {
+        return ApprovalRequest::where('approver_id', $business_member->id)->where('status', 'pending')->count();
+    }
+
+    public function getMyLeaves(Request $request)
+    {
+        try {
+            $business_member = $this->getBusinessMember($request);
+            $member = $this->getMember($request);
+            list($offset, $limit) = calculatePagination($request);
+            $leaves = Leave::query()->select('id', 'business_member_id', 'leave_type_id', 'status', 'total_days', 'created_at', DB::raw('YEAR(created_at) year, MONTH(created_at) month'))
+                ->with('leaveType')->where('business_member_id', $business_member->id)->skip($offset)->take($limit)->groupby('created_at')->orderBy('created_at', 'desc');
+            if ($request->has('type')) {
+                $leaves = $leaves->where('leave_type_id', $request->type);
+            }
+            $all_leaves = [];
+            foreach ($leaves->get() as $leave) {
+                $leave_type = $leave->leaveType;
+                array_push($all_leaves, [
+                    'id' => $leave->id,
+                    'total_days' => $leave->total_days,
+                    'status' => $leave->status,
+                    'leave_type' => [
+                        'id' => $leave_type->id,
+                        'title' => $leave_type->title
+                    ],
+                    'created_at' => $leave_type->created_at ? $leave_type->created_at->format('M d, Y') : null,
+                    'month' => $leave->month,
+                    'year' => $leave->year,
+                ]);
+            }
+            $approval_requests = $this->getMyApprovalRequest($business_member);
+            return api_response($request, null, 200, [
+                'all_leaves' => $all_leaves,
+                'pending_approval_request' => $approval_requests
+            ]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 }
