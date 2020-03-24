@@ -213,6 +213,21 @@ class ScheduleSlot
         }
     }
 
+    private function isAvailableTime(Carbon $day)
+    {
+        $date_string = $day->toDateString();
+        $this->shebaSlots->each(function ($slot) use ($date_string) {
+            if ($slot->is_available) {
+                $start_time = Carbon::parse($date_string . ' ' . $slot->start);
+                $end_time = Carbon::parse($date_string . ' ' . $slot->end);
+                $slot['is_available_time'] = $start_time->diffInMinutes($end_time) >= $this->category->book_resource_minutes ? 1 : 0;
+            }
+            else {
+                $slot['is_available_time'] = $slot->is_available;
+            }
+        });
+    }
+
     private function formatSlots(Carbon $day, $slots)
     {
         $current_time = $this->today->copy();
@@ -231,5 +246,32 @@ class ScheduleSlot
 
         }
         return $slots;
+    }
+
+    public function getSchedulesByResource($resource)
+    {
+        $final = [];
+        $last_day = $this->today->copy()->addDays($this->limit);
+        $start = $this->today->toDateString() . ' ' . $this->shebaSlots->first()->start;
+        $end = $last_day->format('Y-m-d') . ' ' . $this->shebaSlots->last()->end;
+        if ($this->partner) {
+            $this->resources = $resource;
+            $this->bookedSchedules = $this->getBookedSchedules($start, $end);
+            $this->runningLeaves = $this->getLeavesBetween($start, $end);
+            if ($this->category) $this->preparationTime = $this->partner->categories->where('id', $this->category->id)->first()->pivot->preparation_time_minutes;
+        }
+        $day = $this->today->copy();
+        while ($day < $last_day) {
+            if ($this->partner) {
+                $this->addAvailabilityToShebaSlots($day);
+                $this->isAvailableTime($day);
+            }
+            array_push($final, [
+                'value' => $day->toDateString(),
+                'slots' => $this->formatSlots($day, $this->shebaSlots->toArray())
+            ]);
+            $day->addDay();
+        }
+        return $final;
     }
 }
