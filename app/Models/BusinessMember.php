@@ -3,6 +3,7 @@
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Dal\Attendance\Model as Attendance;
+use Sheba\Dal\Leave\Model as Leave;
 
 class BusinessMember extends Model
 {
@@ -48,5 +49,10 @@ class BusinessMember extends Model
     public function attendanceOfToday()
     {
         return $this->hasMany(Attendance::class)->where('date', (Carbon::now())->toDateString())->first();
+    }
+
+    public function leaves()
+    {
+        return $this->hasMany(Leave::class);
     }
 }
