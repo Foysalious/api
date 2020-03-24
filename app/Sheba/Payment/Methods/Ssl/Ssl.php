@@ -23,7 +23,7 @@ class Ssl extends PaymentMethod {
     private $cancelUrl;
     private $orderValidationUrl;
     CONST NAME        = 'ssl';
-    CONST NAME_DONATE = 'ssl_donate';
+    CONST NAME_DONATE = 'ssl_donation';
     private $is_donate = false;
 
     public function __construct() {
