@@ -194,6 +194,13 @@ class Ssl extends PaymentMethod
             'store_id' => $this->storeId,
             'store_passwd' => $this->storePassword,
         ]]);
-        return json_decode($result->getBody());
+        $response=json_decode($result->getBody()->getContents());
+        if (!$response){
+            $response=new \stdClass();
+            $response->status="ERROR";
+            $response->result=$result->getBody()->getContents();
+            return $response;
+        }
+        return json_decode($response);
     }
 }
