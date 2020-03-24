@@ -12,7 +12,6 @@ use Sheba\ModificationFields;
 class Updater
 {
     use ModificationFields;
-    use ConstGetter;
 
     private $approvalRequestRepo;
     private $approvalRequest;
@@ -25,25 +24,25 @@ class Updater
     public function __construct(ApprovalRequestRepositoryInterface $approval_request_repo, Status $statuses)
     {
         $this->approvalRequestRepo = $approval_request_repo;
-        #$this->statuses = $statuses;
+        $this->statuses = $statuses;
     }
 
     public function hasError()
     {
-        #if (!in_array($this->status, $this->statuses)) return "Invalid Status!";
+        if (!in_array($this->status, $this->statuses::get())) return "Invalid Status!";
         if ($this->approvalRequest->approver_id != $this->businessMember->id) return "You are not authorized to  change the Status!";
         return false;
     }
 
-    public function setMember($member)
+    public function setMember(Member $member)
     {
-        $this->member = Member::findOrFail((int)$member);
+        $this->member = $member;
         return $this;
     }
 
-    public function setBusinessMember($business_member)
+    public function setBusinessMember(BusinessMember $business_member)
     {
-        $this->businessMember = BusinessMember::findOrFail((int)$business_member);
+        $this->businessMember = $business_member;
         return $this;
     }
 

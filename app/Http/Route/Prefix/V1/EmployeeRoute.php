@@ -54,6 +54,7 @@ class EmployeeRoute
             $api->group(['prefix' => 'approval-requests'], function ($api) {
                 $api->post('/status', 'Employee\ApprovalRequestController@updateStatus');
                 $api->get('/{approval_request}', 'Employee\ApprovalRequestController@show');
+                $api->get('/', 'Employee\ApprovalRequestController@index');
             });
             $api->group(['prefix' => 'holidays'], function ($api) {
                 $api->get('/', 'Employee\HolidayController@getHolidays');

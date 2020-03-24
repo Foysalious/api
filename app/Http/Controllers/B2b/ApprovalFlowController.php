@@ -82,15 +82,23 @@ class ApprovalFlowController extends Controller
                     $member = $business_member->member;
                     $profile = $member->profile;
                     array_push($approvers, [
-                        'id' => $member->id, 'name' => $profile->name ? $profile->name : null, 'pro_pic' => $profile->pro_pic ? $profile->pro_pic : null, 'designation' => $business_member->role ? $business_member->role->name : '', 'department' => $business_member->role && $business_member->role->businessDepartment ? $business_member->role->businessDepartment->name : null,
+                        'id' => $member->id,
+                        'name' => $profile->name ? $profile->name : null,
+                        'pro_pic' => $profile->pro_pic ? $profile->pro_pic : null,
+                        'designation' => $business_member->role ? $business_member->role->name : '',
+                        'department' => $business_member->role && $business_member->role->businessDepartment ? $business_member->role->businessDepartment->name : null,
                     ]);
                 }
             }
 
             $approval_flow_details = [
-                'id' => $approval_flow->id, 'title' => $approval_flow->title, 'department' => [
-                    'id' => $business_department->id, 'name' => $business_department->name
-                ], 'request_approvers' => $approvers
+                'id' => $approval_flow->id,
+                'title' => $approval_flow->title,
+                'department' => [
+                    'id' => $business_department->id,
+                    'name' => $business_department->name
+                ],
+                'request_approvers' => $approvers
             ];
 
             if (count($approval) > 0) return api_response($request, $approval_flow_details, 200, ['approval_flow_details' => $approval_flow_details]); else  return api_response($request, null, 404);
