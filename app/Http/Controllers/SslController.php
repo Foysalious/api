@@ -14,7 +14,7 @@ class SslController extends Controller {
             $payment = Payment::where('gateway_transaction_id', $request->tran_id)->first();
             if ($payment) {
                 $redirect_url = $payment->payable->success_url . '?invoice_id=' . $payment->transaction_id;
-                if ($payment->isValid() && !$payment->isComplete()) $sheba_payment->setMethod($payment->paymentDetails->first()->method)->complete($payment);
+                if ($payment->isValid() && !$payment->isComplete()) $sheba_payment->setMethod($payment->paymentDetails->last()->method)->complete($payment);
             } else {
                 throw new \Exception('Payment not found to validate.');
             }
