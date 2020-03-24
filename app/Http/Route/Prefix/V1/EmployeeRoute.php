@@ -46,6 +46,11 @@ class EmployeeRoute
                 $api->get('/', 'Employee\LeaveController@index');
                 $api->get('/types', 'Employee\LeaveController@getLeaveTypes');
                 $api->post('/', 'Employee\LeaveController@store');
+                $api->group(['prefix' => 'settings'], function ($api) {
+                    $api->get('/', 'Employee\LeaveSettingsController@index');
+                    $api->post('/', 'Employee\LeaveSettingsController@store');
+                    $api->put('/{setting}','Employee\LeaveSettingsController@update');
+                });
                 $api->group(['prefix' => '{leave}'], function ($api) {
                     $api->get('/', 'Employee\LeaveController@show');
                     $api->post('/', 'Employee\LeaveController@updateStatus');
@@ -54,6 +59,7 @@ class EmployeeRoute
             $api->group(['prefix' => 'approval-requests'], function ($api) {
                 $api->post('/status', 'Employee\ApprovalRequestController@updateStatus');
                 $api->get('/{approval_request}', 'Employee\ApprovalRequestController@show');
+                $api->get('/', 'Employee\ApprovalRequestController@index');
             });
             $api->group(['prefix' => 'holidays'], function ($api) {
                 $api->get('/', 'Employee\HolidayController@getHolidays');
