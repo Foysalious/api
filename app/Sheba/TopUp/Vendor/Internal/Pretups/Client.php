@@ -141,12 +141,10 @@ class Client
         ]);
         $vpn_response = $result->getBody()->getContents();
 
-        if(!$vpn_response) throw new Exception("Vpn server not working.");
+        if (!$vpn_response) throw new Exception("Vpn server not working.");
         $vpn_response = json_decode($vpn_response);
-        if($vpn_response->code != 200) throw new Exception("Vpn server error: ". $vpn_response->code);
-
-        if(!isset($vpn_response->data->endpoint_response)) return null;
-
-        return json_decode(json_encode($vpn_response->data->endpoint_response));
+        if ($vpn_response->code != 200) throw new Exception("Vpn server error: ". $vpn_response->message);
+        if (!$vpn_response->data) return null;
+        return $vpn_response->data;
     }
 }
