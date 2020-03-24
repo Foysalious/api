@@ -220,8 +220,10 @@ class DueTrackerRepository extends BaseRepository
         $attachments = [];
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $key => $file) {
-                list($file, $filename) = $this->makeAttachment($file, '_attachments');
-                $attachments[] = $this->saveFileToCDN($file, getDueTrackerAttachmentsFolder(), $filename);;
+                if(!empty($file)) {
+                    list($file, $filename) = $this->makeAttachment($file, '_attachments');
+                    $attachments[] = $this->saveFileToCDN($file, getDueTrackerAttachmentsFolder(), $filename);
+                }
             }
         }
         return json_encode($attachments);
