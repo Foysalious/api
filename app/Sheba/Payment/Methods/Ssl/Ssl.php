@@ -199,8 +199,7 @@ class Ssl extends PaymentMethod
             $response=new \stdClass();
             $response->status="ERROR";
             $response->result=$result->getBody()->getContents();
-            return $response;
         }
-        return json_decode($response);
+        return $response;
     }
 }
