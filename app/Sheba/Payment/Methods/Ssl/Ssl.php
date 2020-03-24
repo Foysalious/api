@@ -145,6 +145,7 @@ class Ssl extends PaymentMethod {
         } else {
             $request           = request()->all();
             $request['status'] = 'HASH_VALIDATION_FAILED';
+            $this->paymentRepository->setPayment($payment);
             $this->paymentRepository->changeStatus([
                 'to'                  => Statuses::VALIDATION_FAILED,
                 'from'                => $payment->status,
