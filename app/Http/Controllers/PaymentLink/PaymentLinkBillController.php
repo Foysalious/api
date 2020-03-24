@@ -20,7 +20,7 @@ class PaymentLinkBillController extends Controller
                 'purpose' => 'string',
                 'identifier' => 'required',
                 'name' => 'required',
-                'mobile' => 'required|string|mobile:bd',
+                'mobile' => 'required|string',
             ]);
             $payment_method = $request->payment_method;
             $user = $customerCreator->setMobile($request->mobile)->setName($request->name)->create();
@@ -37,7 +37,6 @@ class PaymentLinkBillController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
