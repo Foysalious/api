@@ -189,16 +189,24 @@ class Ssl extends PaymentMethod
     private function validateOrder()
     {
         $client = new Client();
-        $result = $client->request('GET', $this->orderValidationUrl, ['query' => [
-            'val_id' => request('val_id'),
-            'store_id' => $this->storeId,
-            'store_passwd' => $this->storePassword,
-        ]]);
-        $response=json_decode($result->getBody()->getContents());
-        if (!$response){
-            $response=new \stdClass();
+        $response=new \stdClass();
+        try{
+            $result = $client->request('GET', $this->orderValidationUrl, ['query' => [
+                'val_id' => request('val_id'),
+                'store_id' => $this->storeId,
+                'store_passwd' => $this->storePassword,
+            ]]);
+            $response=json_decode($result->getBody()->getContents());
+            if (!$response){
+                $response->status="ERROR";
+                $response->result=$result->getBody()->getContents();
+                $response->code = 502;
+            }
+        }catch (\Throwable $e){
             $response->status="ERROR";
-            $response->result=$result->getBody()->getContents();
+            $response->result=$e->getMessage();
+            $response->code=$e->getCode();
+            $response->trace=$e->getTrace();
         }
         return $response;
     }
