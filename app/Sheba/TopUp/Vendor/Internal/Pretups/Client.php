@@ -1,26 +1,31 @@
 <?php namespace Sheba\TopUp\Vendor\Internal\Pretups;
 
 use App\Models\TopUpOrder;
+use Exception;
+use GuzzleHttp\Client as HttpClient;
+use GuzzleHttp\Exception\GuzzleException;
 use Sheba\TopUp\Vendor\Response\PretupsResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 use Carbon\Carbon;
 
 class Client
 {
-    /** @var Caller */
-    private $caller;
+    /** @var HttpClient */
+    private $httpClient;
 
     private $pin;
     private $mId;
+    private $url;
+    private $vpnUrl;
     private $EXTNWCODE;
     private $language1;
     private $language2;
     private $selectors;
     private $amountMultiplier;
 
-    public function __construct(DirectCaller $caller)
+    public function __construct(HttpClient $client)
     {
-        $this->caller = $caller;
+        $this->httpClient = $client;
     }
 
     public function setPin($pin)
@@ -67,28 +72,27 @@ class Client
 
     public function setUrl($url)
     {
-        $this->caller->setUrl($url);
+        $this->url = $url;
         return $this;
     }
 
-    public function setProxyUrl($url)
+    public function setVpnUrl($url)
     {
-        $this->caller = $this->caller->switchToProxy();
-        $this->caller->setProxyUrl($url);
+        $this->vpnUrl = $url;
         return $this;
     }
 
     /**
      * @param TopUpOrder $topup_order
      * @return TopUpResponse
-     * @throws \Exception
+     * @throws Exception
+     * @throws GuzzleException
      */
     public function recharge(TopUpOrder $topup_order): TopUpResponse
     {
-        $this->caller->setInput($this->makeInputString($topup_order));
-        $response = $this->caller->call();
+        $vpn_response = $this->call($this->makeInputString($topup_order));
         $rax_response = new PretupsResponse();
-        if ($response) $rax_response->setResponse($response);
+        if ($vpn_response) $rax_response->setResponse($vpn_response);
         return $rax_response;
     }
 
@@ -116,5 +120,33 @@ class Client
     private function getType($type)
     {
         return $type == 'prepaid' ? 'EXRCTRFREQ' : 'EXPPBREQ';
+    }
+
+    /**
+     * @param $input
+     * @return array
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    private function call($input)
+    {
+        $result = $this->httpClient->request('POST', $this->vpnUrl, [
+            'form_params' => [
+                'url' => $this->url,
+                'input' => $input
+            ],
+            'timeout' => 60,
+            'read_timeout' => 60,
+            'connect_timeout' => 60
+        ]);
+        $vpn_response = $result->getBody()->getContents();
+
+        if(!$vpn_response) throw new Exception("Vpn server not working.");
+        $vpn_response = json_decode($vpn_response);
+        if($vpn_response->code != 200) throw new Exception("Vpn server error: ". $vpn_response->code);
+
+        if(!isset($vpn_response->data->endpoint_response)) return null;
+
+        return json_decode(json_encode($vpn_response->data->endpoint_response));
     }
 }
