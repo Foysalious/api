@@ -173,8 +173,8 @@ class Director
     {
         return [
             'services' => $this->partnersAfterServiceCondition ? $this->partnersAfterServiceCondition : [],
-            'location' => $this->partnersAfterLocationCondition ? $this->partnersAfterLocationCondition : [],
             'option' => $this->partnersAfterOptionCondition ? $this->partnersAfterOptionCondition : [],
+            'location' => $this->partnersAfterLocationCondition ? $this->partnersAfterLocationCondition : [],
             'credit' => $this->partnersAfterCreditCondition ? $this->partnersAfterCreditCondition : [],
             'order_limit' => $this->partnersAfterOrderLimitCondition ? $this->partnersAfterOrderLimitCondition : [],
             'resource' => $this->partnersAfterResourceCondition ? $this->partnersAfterResourceCondition : [],
