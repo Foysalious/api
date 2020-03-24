@@ -16,6 +16,11 @@ trait BusinessBasicInformation
         return BusinessMember::findOrFail($business_member['id']);
     }
 
+    public function getBusinessMemberById($business_member)
+    {
+        return BusinessMember::findOrFail($business_member);
+    }
+
     public function getMember(Request $request)
     {
         $auth_info = $request->auth_info;

@@ -34,7 +34,8 @@ class ApprovalRequestController extends Controller
             $approval_request = $this->approvalRequestRepo->find($approval_request);
             $model = $approval_request->requestable_type;
             $model = $model::find($approval_request->requestable_id);
-            $leave_business_member = BusinessMember::findOrFAil($model->business_member_id);
+            $approvers = $this->getApprover($model);
+            $leave_business_member = $this->getBusinessMemberById($model->business_member_id);
             $member = $leave_business_member->member;
             $profile = $member->profile;
             $role = $leave_business_member->role;
@@ -45,7 +46,7 @@ class ApprovalRequestController extends Controller
                 'profile' => [
                     'name' => $profile->name,
                 ],
-                'leave' => [
+                'contents' => [
                     'id' => $model->id,
                     'title' => $model->title,
                     'requested_on' => $model->created_at->format('M d') . ' at ' . $model->created_at->format('h:i a'),
@@ -55,11 +56,7 @@ class ApprovalRequestController extends Controller
                     'period' => Carbon::parse($model->start_date)->format('M d') . ' - ' . Carbon::parse($model->end_date)->format('M d'),
                     'status' => $model->status,
                 ],
-                'approvers' => [
-                    'department_id' => $role ? $role->businessDepartment->id : null,
-                    'department' => $role ? $role->businessDepartment->name : null,
-                    'designation' => $role ? $role->name : null
-                ],
+                'approvers' => $approvers,
                 'department' => [
                     'department_id' => $role ? $role->businessDepartment->id : null,
                     'department' => $role ? $role->businessDepartment->name : null,
@@ -71,6 +68,21 @@ class ApprovalRequestController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function getApprover($model)
+    {
+        $approvers = [];
+        foreach ($model->requests as $approval_request) {
+            $business_member = $this->getBusinessMemberById($approval_request->approver_id);
+            $member = $business_member->member;
+            $profile = $member->profile;
+            array_push($approvers, [
+                'name' => $profile->name,
+                'status' => $approval_request->status,
+            ]);
+        }
+        return $approvers;
     }
 
     public function index(Request $request)
@@ -132,8 +144,8 @@ class ApprovalRequestController extends Controller
                     if ($rejected_approval_requests) {#Rejected Request
                         $model->update($this->withBothModificationFields(['status' => 'rejected']));
                     }
-                    $accepted_approval_requests = $model->requests->whereIn('status', ['pending','rejected']);#All Status Accepted
-                    if ($accepted_approval_requests->isEmpty()){
+                    $accepted_approval_requests = $model->requests->whereIn('status', ['pending', 'rejected']);#All Status Accepted
+                    if ($accepted_approval_requests->isEmpty()) {
                         $model->update($this->withBothModificationFields(['status' => 'accepted']));
                     }
                 }
