@@ -14,12 +14,14 @@ class AttendanceTransformer extends TransformerAbstract
     private $timeFrame;
     private $businessHoliday;
     private $businessWeekend;
+    private $businessMemberLeave;
 
-    public function __construct(TimeFrame $time_frame, $business_holiday, $business_weekend)
+    public function __construct(TimeFrame $time_frame, $business_holiday, $business_weekend, $business_member_leave)
     {
         $this->timeFrame = $time_frame;
         $this->businessHoliday = $business_holiday;
         $this->businessWeekend = $business_weekend;
+        $this->businessMemberLeave = $business_member_leave;
     }
 
     /**
@@ -28,15 +30,16 @@ class AttendanceTransformer extends TransformerAbstract
      */
     public function transform($attendances)
     {
-        $data = array();
+        $data = [];
         $weekend_day = $this->businessWeekend->pluck('weekday_name')->toArray();
+        $leaves = $this->formatLeaveAsDateArray();
+
         foreach ($this->businessHoliday as $holiday) {
             $start_date = Carbon::parse($holiday->start_date);
             $end_date = Carbon::parse($holiday->end_date);
             for ($d = $start_date; $d->lte($end_date); $d->addDay()) {
                 $data[] = $d->format('Y-m-d');
             }
-
         }
         $dates_of_holidays_formatted = $data;
         $period = CarbonPeriod::create($this->timeFrame->start, $this->timeFrame->end);
@@ -45,16 +48,21 @@ class AttendanceTransformer extends TransformerAbstract
             Statuses::ON_TIME => 0,
             Statuses::LATE => 0,
             Statuses::LEFT_EARLY => 0,
-            Statuses::ABSENT => 0
+            Statuses::ABSENT => 0,
+            'on_leave' => 0
         ];
         $daily_breakdown = [];
         foreach ($period as $date) {
             $breakdown_data = [];
-            $is_weekend_or_holiday = $this->isWeekend($date, $weekend_day) || $this->isHoliday($date, $dates_of_holidays_formatted) ? 1 : 0;
+            $is_weekend_or_holiday_or_leave = $this->isWeekend($date, $weekend_day) || $this->isHoliday($date, $dates_of_holidays_formatted) || $this->isLeave($date, $leaves) ? 1 : 0;
+
             $breakdown_data['weekend_or_holiday_tag'] = null;
-            if ($is_weekend_or_holiday) {
-                $breakdown_data['weekend_or_holiday_tag'] = $this->isWeekend($date, $weekend_day) ? 'Weekend' : 'Holiday';
+            if ($is_weekend_or_holiday_or_leave) {
+                $breakdown_data['weekend_or_holiday_tag'] = $this->isWeekend($date, $weekend_day) ?
+                    'Weekend' : ($this->isHoliday($date, $dates_of_holidays_formatted) ? 'Holiday' : 'On Leave');
+
                 $statistics['working_days']--;
+                if ($this->isLeave($date, $leaves)) $statistics['on_leave']++;
             }
             $breakdown_data['show_attendance'] = 0;
             $breakdown_data['attendance'] = null;
@@ -68,12 +76,12 @@ class AttendanceTransformer extends TransformerAbstract
                     'id' => $attendance->id,
                     'checkin_time' => $attendance->checkin_time,
                     'checkout_out' => $attendance->checkout_time,
-                    'status' => $is_weekend_or_holiday ? null : $attendance->status,
+                    'status' => $is_weekend_or_holiday_or_leave ? null : $attendance->status,
                     'note' => $attendance->hasEarlyCheckout() ? $attendance->checkoutAction()->note : null
                 ];
                 $statistics[$attendance->status]++;
             }
-            if (!$attendance && !$is_weekend_or_holiday && !$date->eq(Carbon::today())) {
+            if (!$attendance && !$is_weekend_or_holiday_or_leave && !$date->eq(Carbon::today())) {
                 $breakdown_data['is_absent'] = 1;
                 $statistics[Statuses::ABSENT]++;
             }
@@ -110,4 +118,24 @@ class AttendanceTransformer extends TransformerAbstract
         return in_array($date->format('Y-m-d'), $holidays);
     }
 
+    /**
+     * @return array
+     */
+    private function formatLeaveAsDateArray()
+    {
+        $business_member_leaves_date = [];
+        $this->businessMemberLeave->each(function ($leave) use (&$business_member_leaves_date) {
+            $leave_period = CarbonPeriod::create($leave->start_date, $leave->end_date);
+            foreach ($leave_period as $date) {
+                array_push($business_member_leaves_date, $date->toDateString());
+            }
+        });
+
+        return array_unique($business_member_leaves_date);
+    }
+
+    private function isLeave(Carbon $date, array $leaves)
+    {
+        return in_array($date->format('Y-m-d'), $leaves);
+    }
 }
