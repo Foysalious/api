@@ -70,7 +70,7 @@ class Creator
     private function storeBonusAmount()
     {
         DB::transaction(function () {
-            $log = "Affiliate earned $this->affiliateBonusAmount tk for registration";
+            $log = "Affiliate earned $this->affiliateBonusAmount point for registration";
             $this->walletTransactionHandler->setModel($this->affiliate)->setType('credit')->setAmount($this->affiliateBonusAmount)->setLog($log)->store();
             $this->affiliateRepo->update($this->affiliate, ['acquisition_cost' => $this->affiliateBonusAmount]);
         });
