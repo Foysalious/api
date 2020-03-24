@@ -46,10 +46,10 @@ class AttendanceController extends Controller
         if (!$business_member) return api_response($request, null, 404);
 
         $time_frame = $time_frame->forAMonth($month, $year);
+        $business_member_leave = $business_member->leaves()->accepted()->startDateBetween($time_frame)->endDateBetween($time_frame)->get();
         $time_frame->end = $this->isShowRunningMonthsAttendance($year, $month) ? Carbon::now() : $time_frame->end;
         $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
 
-        $business_member_leave = $business_member->leaves()->accepted()->startDateBetween($time_frame)->endDateBetween($time_frame)->get();
         $business_holiday = $business_holiday_repo->getAllByBusiness($business_member->business);
         $business_weekend = $business_weekend_repo->getAllByBusiness($business_member->business);
 
