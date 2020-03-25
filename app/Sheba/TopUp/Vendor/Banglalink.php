@@ -51,8 +51,8 @@ class Banglalink extends Vendor
         return 100;
     }
 
-    private function getVPNServer()
+    private function getVPNUrl()
     {
-        return "https://api.sheba.xyz";
+        return "https://bl-vpn.sheba.xyz";
     }
 }

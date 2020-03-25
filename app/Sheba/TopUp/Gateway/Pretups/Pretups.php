@@ -1,7 +1,8 @@
 <?php namespace Sheba\TopUp\Gateway\Pretups;
 
-
 use App\Models\TopUpOrder;
+use Exception;
+use GuzzleHttp\Exception\GuzzleException;
 use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\TopUp\Vendor\Internal\Pretups\Client as PretupsClient;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
@@ -18,22 +19,17 @@ abstract class Pretups
     /**
      * @param TopUpOrder $topup_order
      * @return TopUpResponse
-     * @throws \Exception
+     * @throws Exception
+     * @throws GuzzleException
      */
     public function recharge(TopUpOrder $topup_order): TopUpResponse
     {
         $pretups = $this->pretups->setPin($this->getPin())->setMId($this->getMid())->setUrl($this->getUrl())
             ->setEXTNWCODE($this->getEXTNWCODE())->setAmountMultiplier($this->getAmountMultiplier())
-            ->setLanguage1($this->getLanguage1())->setLanguage2($this->getLanguage2())->setSelectors($this->getSelectors());
-
-        if ($this->needsProxy()) $pretups->setProxyUrl($this->getVPNServer() . "/v2/proxy/top-up");
+            ->setLanguage1($this->getLanguage1())->setLanguage2($this->getLanguage2())
+            ->setSelectors($this->getSelectors())->setVpnUrl($this->getVPNUrl());
 
         return $pretups->recharge($topup_order);
-    }
-
-    private function needsProxy()
-    {
-        return config('app.url') != $this->getVPNServer();
     }
 
     public function getInitialStatus()
@@ -55,7 +51,7 @@ abstract class Pretups
 
     abstract protected function getSelectors();
 
-    abstract protected function getVPNServer();
+    abstract protected function getVPNUrl();
 
     abstract protected function getUrl();
 

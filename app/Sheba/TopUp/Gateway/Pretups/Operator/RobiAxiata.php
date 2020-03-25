@@ -14,9 +14,9 @@ trait RobiAxiata
         return $url;
     }
 
-    protected function getVPNServer()
+    protected function getVPNUrl()
     {
-        return "https://api.dev-sheba.xyz";
+        return "http://robi-vpn.dev-sheba.xyz";
     }
 
     protected function getEXTNWCODE()
