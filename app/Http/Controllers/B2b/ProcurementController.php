@@ -3,6 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Models\Attachment;
 use App\Models\Bid;
+use App\Models\Business;
 use App\Models\Partner;
 use App\Models\Procurement;
 use App\Sheba\Bitly\BitlyLinkShort;
@@ -17,13 +18,14 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\Procurement\Creator;
 use Sheba\Business\Procurement\WorkOrderDataGenerator;
+use Sheba\Dal\ProcurementInvitation\Model as ProcurementInvitation;
 use Sheba\Dal\ProcurementInvitation\ProcurementInvitationRepositoryInterface;
-use Sheba\Helpers\HasErrorCodeAndMessage;
 use Sheba\Logs\ErrorLog;
 use Sheba\ModificationFields;
 use Sheba\Payment\Adapters\Payable\ProcurementAdapter;
 use Sheba\Payment\ShebaPayment;
 use Sheba\Payment\ShebaPaymentValidator;
+use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
 use Sheba\Sms\Sms;
 use Sheba\Business\ProcurementInvitation\Creator as ProcurementInvitationCreator;
@@ -31,7 +33,7 @@ use Throwable;
 
 class ProcurementController extends Controller
 {
-    use ModificationFields, HasErrorCodeAndMessage;
+    use ModificationFields;
 
     public function store(Request $request, AccessControl $access_control, Creator $creator)
     {
@@ -168,7 +170,24 @@ class ProcurementController extends Controller
         }
     }
 
-    public function sendInvitation($business, $procurement, Request $request, Sms $sms, ErrorLog $errorLog, ProcurementInvitationCreator $creator, BitlyLinkShort $bitlyLinkShort, ProcurementRepositoryInterface $procurementRepository, ProcurementInvitationRepositoryInterface $procurement_invitation_repo)
+    /**
+     * @param $business
+     * @param $procurement
+     * @param Request $request
+     * @param Sms $sms
+     * @param ErrorLog $errorLog
+     * @param BitlyLinkShort $bitly_link
+     * @param ProcurementRepositoryInterface $procurementRepository
+     * @param ProcurementInvitationRepositoryInterface $procurement_invitation_repository
+     * @param BusinessMemberRepositoryInterface $business_member_repository
+     * @return bool|JsonResponse
+     */
+    public function sendInvitation($business, $procurement, Request $request, Sms $sms,
+                                   ErrorLog $errorLog,
+                                   BitlyLinkShort $bitly_link,
+                                   ProcurementRepositoryInterface $procurementRepository,
+                                   ProcurementInvitationRepositoryInterface $procurement_invitation_repository,
+                                   BusinessMemberRepositoryInterface $business_member_repository)
     {
         try {
             $this->validate($request, [
@@ -177,17 +196,23 @@ class ProcurementController extends Controller
             $partners = Partner::whereIn('id', json_decode($request->partners))->get();
             $business = $request->business;
             $procurement = $procurementRepository->find($procurement);
-            $this->setModifier($request->business_member);
+
             foreach ($partners as $partner) {
                 /** @var Partner $partner */
-                $procurement_invitation = $creator->setProcurement($procurement)->setPartner($partner)->checkDuplicateInvitationInsert();
-                if($procurement_invitation == true )
-                    $this->setError(403,"Partner Already Exists");
-                if($this->hasError() && $this->getErrorCode() == 403)
-                    return api_response($request, null, $this->getErrorCode(),['msg' => $this->getErrorMessage()]);
-                $url = config('sheba.partners_url') . "/v3/rfq-invitations/$procurement_invitation->id";
-                $sms->shoot($partner->getManagerMobile(), "You have been invited to serve $business->name. Now go to this link-" . $bitlyLinkShort->shortUrl($url));
+                $creator = new ProcurementInvitationCreator($procurement_invitation_repository);
+                $procurement_invitation = $creator->setBusinessMember($request->business_member)->setProcurement($procurement)->setPartner($partner);
+                if ($creator->hasError()) {
+                    if ($creator->getErrorCode() == 409) {
+                        $procurement_invitation = $procurement_invitation->getProcurementInvitation();
+                        $this->shootSmsForInvitation($business, $procurement_invitation, $bitly_link, $sms, $partner);
+                    }
+                    continue;
+                }
+
+                $procurement_invitation = $procurement_invitation->create();
+                $this->shootSmsForInvitation($business, $procurement_invitation, $bitly_link, $sms, $partner);
             }
+
             return api_response($request, null, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -401,5 +426,18 @@ class ProcurementController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    /**
+     * @param Business $business
+     * @param ProcurementInvitation $procurement_invitation
+     * @param BitlyLinkShort $bitly_link
+     * @param Sms $sms
+     * @param Partner $partner
+     */
+    private function shootSmsForInvitation(Business $business, ProcurementInvitation $procurement_invitation, BitlyLinkShort $bitly_link, Sms $sms, Partner $partner)
+    {
+        $url = config('sheba.partners_url') . "/v3/rfq-invitations/$procurement_invitation->id";
+        $sms->shoot($partner->getManagerMobile(), "You have been invited to serve $business->name. Now go to this link-" . $bitly_link->shortUrl($url));
     }
 }
