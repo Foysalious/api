@@ -135,7 +135,7 @@ return [
         'sms' => env('SEND_PAYMENT_LINK_SMS', 1)
     ],
     'min_order_amount_for_emi' => 5000,
-    'gift_card_validity_month' => 3,
+    'gift_card_validity_month' => 6,
     'marketplace_not_accessible_packages_id' => explode(',', env('MARKETPLACE_NOT_ACCESSIBLE_PACKAGES_ID', '1,2')),
     'use_cdn_for_asset' => env('SHEBA_USE_CDN_FOR_ASSET', true),
     'category_groups' => [
