@@ -11,6 +11,11 @@ class Creator
     private $paymentType;
     private $method;
     private $log;
+    private $checkNumber;
+    private $bankName;
+    private $attachment;
+    private $transactionId;
+    private $transactionDetail;
 
     public function __construct(ProcurementPaymentRepositoryInterface $payment_repository)
     {
@@ -47,14 +52,50 @@ class Creator
         return $this;
     }
 
+    public function setCheckNumber($check_number)
+    {
+        $this->checkNumber = $check_number;
+        return $this;
+    }
+
+    public function setBankName($bank_name)
+    {
+        $this->bankName = $bank_name;
+        return $this;
+    }
+
+    public function setAttachment($attachment)
+    {
+        $this->attachment = $attachment;
+        return $this;
+    }
+
+    public function setAttachmentId($transaction_id)
+    {
+        $this->transactionId = $transaction_id;
+        return $this;
+    }
+
+    private function formatTransactionDetail()
+    {
+        $this->transactionDetail = json_encode([
+            'check_number' => $this->checkNumber,
+            'bank_name' => $this->bankName,
+            'attachment' => $this->attachment,
+            'transaction_id' => $this->transactionId
+        ]);
+    }
+
     public function create()
     {
+        $this->formatTransactionDetail();
         return $this->paymentRepository->create([
             'amount' => $this->amount,
             'transaction_type' => $this->paymentType,
             'method' => $this->method,
             'procurement_id' => $this->procurement->id,
-            'log' => $this->log
+            'log' => $this->log,
+            'transaction_detail' => $this->transactionDetail
         ]);
     }
 }
