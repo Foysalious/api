@@ -56,9 +56,9 @@ class Banglalink extends Pretups implements Gateway
         return 100;
     }
 
-    protected function getVPNServer()
+    protected function getVPNUrl()
     {
-        return "https://api.sheba.xyz";
+        return "https://bl-vpn.sheba.xyz";
     }
 
     public function getShebaCommission()
