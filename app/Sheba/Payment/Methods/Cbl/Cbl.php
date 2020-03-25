@@ -4,6 +4,8 @@ use App\Models\Payable;
 use App\Models\Payment;
 use App\Models\PaymentDetail;
 use Carbon\Carbon;
+use Exception;
+use GuzzleHttp\Client as HttpClient;
 use Sheba\Payment\Methods\Cbl\Response\InitResponse;
 use Sheba\Payment\Methods\Cbl\Response\ValidateResponse;
 use Sheba\Payment\Methods\PaymentMethod;
@@ -12,21 +14,25 @@ use DB;
 
 class Cbl extends PaymentMethod
 {
-    private $tunnelHost;
-    private $tunnelPort;
+    /** @var HttpClient */
+    private $httpClient;
+
+    private $tunnelUrl;
     private $merchantId;
 
     private $acceptUrl;
     private $cancelUrl;
     private $declineUrl;
-    
+
     CONST NAME = 'cbl';
 
-    public function __construct()
+    public function __construct(HttpClient $client)
     {
         parent::__construct();
-        $this->tunnelHost = config('payment.cbl.tunnel_host');
-        $this->tunnelPort = config('payment.cbl.tunnel_port');
+
+        $this->httpClient = $client;
+
+        $this->tunnelUrl = config('payment.cbl.tunnel_url');
         $this->merchantId = config('payment.cbl.merchant_id');
 
         $this->acceptUrl = config('payment.cbl.urls.approve');
@@ -34,6 +40,12 @@ class Cbl extends PaymentMethod
         $this->declineUrl = config('payment.cbl.urls.decline');
     }
 
+    /**
+     * @param Payable $payable
+     * @return Payment
+     * @throws Exception
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
     public function init(Payable $payable): Payment
     {
         $payment = new Payment();
@@ -55,7 +67,7 @@ class Cbl extends PaymentMethod
             $payment_details->amount = $payable->amount;
             $payment_details->save();
         });
-        $response = $this->postQW($this->makeOrderCreateData($payable));
+        $response = $this->post($this->makeOrderCreateData($payable));
         $init_response = new InitResponse();
         $init_response->setResponse($response);
         if ($init_response->hasSuccess()) {
@@ -76,9 +88,14 @@ class Cbl extends PaymentMethod
     }
 
 
+    /**
+     * @param Payment $payment
+     * @return Payment
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
     public function validate(Payment $payment)
     {
-        $xml = $this->postQW($this->makeOrderInfoData($payment));
+        $xml = $this->post($this->makeOrderInfoData($payment));
         $validation_response = new ValidateResponse();
         $validation_response->setResponse($xml);
         $validation_response->setPayment($payment);
@@ -142,34 +159,26 @@ class Cbl extends PaymentMethod
 
     /**
      * @param $data
-     * @return \SimpleXMLElement
-     * @throws \Exception
+     * @return mixed
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws Exception
      */
-    private function postQW($data)
+    private function post($data)
     {
-        $path = '/Exec';
-        $content = '';
+        $response = $this->httpClient->request('POST', $this->tunnelUrl, [
+            'form_params' => [
+                'data' => $data
+            ],
+            'timeout' => 60,
+            'read_timeout' => 60,
+            'connect_timeout' => 60
+        ]);
+        $result = $response->getBody()->getContents();
 
-        $fp = fsockopen($this->tunnelHost, $this->tunnelPort, $err_no, $err_str, 30);
-        if (!$fp) throw new \Exception("$err_str ($err_no)");
+        if (!$result) throw new Exception("Vpn server not working.");
+        $result = json_decode($result);
+        if ($result->code != 200) throw new Exception("Vpn server error: ". $result->message);
 
-        $headers = 'POST ' . $path . " HTTP/1.0\r\n";
-        $headers .= 'Host: ' . $this->tunnelHost . "\r\n";
-        $headers .= "Content-type: text/xml\r\n";
-        $headers .= 'Content-Length: ' . strlen($data) . "\r\n\r\n";
-
-        fwrite($fp, $headers . $data);
-
-        while (!feof($fp)) {
-            $inStr = fgets($fp, 1024);
-            $content .= $inStr;
-        }
-        fclose($fp);
-
-        // Cut the HTTP response headers. The string can be commented out if it is necessary to parse the header
-        // In this case it is necessary to cut the response
-        $content = substr($content, strpos($content, "<TKKPG>"));
-
-        return simplexml_load_string($content);
+        return $result->data;
     }
 }
