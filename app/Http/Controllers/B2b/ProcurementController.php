@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\Procurement\Creator;
 use Sheba\Business\Procurement\WorkOrderDataGenerator;
+use Sheba\Dal\ProcurementInvitation\ProcurementInvitationRepositoryInterface;
+use Sheba\Helpers\HasErrorCodeAndMessage;
 use Sheba\Logs\ErrorLog;
 use Sheba\ModificationFields;
 use Sheba\Payment\Adapters\Payable\ProcurementAdapter;
@@ -29,7 +31,7 @@ use Throwable;
 
 class ProcurementController extends Controller
 {
-    use ModificationFields;
+    use ModificationFields, HasErrorCodeAndMessage;
 
     public function store(Request $request, AccessControl $access_control, Creator $creator)
     {
@@ -166,7 +168,7 @@ class ProcurementController extends Controller
         }
     }
 
-    public function sendInvitation($business, $procurement, Request $request, Sms $sms, ErrorLog $errorLog, ProcurementInvitationCreator $creator, BitlyLinkShort $bitlyLinkShort, ProcurementRepositoryInterface $procurementRepository)
+    public function sendInvitation($business, $procurement, Request $request, Sms $sms, ErrorLog $errorLog, ProcurementInvitationCreator $creator, BitlyLinkShort $bitlyLinkShort, ProcurementRepositoryInterface $procurementRepository, ProcurementInvitationRepositoryInterface $procurement_invitation_repo)
     {
         try {
             $this->validate($request, [
@@ -178,7 +180,11 @@ class ProcurementController extends Controller
             $this->setModifier($request->business_member);
             foreach ($partners as $partner) {
                 /** @var Partner $partner */
-                $procurement_invitation = $creator->setProcurement($procurement)->setPartner($partner)->create();
+                $procurement_invitation = $creator->setProcurement($procurement)->setPartner($partner)->checkDuplicateInvitationInsert();
+                if($procurement_invitation == true )
+                    $this->setError(403,"Partner Already Exists");
+                if($this->hasError() && $this->getErrorCode() == 403)
+                    return api_response($request, null, $this->getErrorCode(),['msg' => $this->getErrorMessage()]);
                 $url = config('sheba.partners_url') . "/v3/rfq-invitations/$procurement_invitation->id";
                 $sms->shoot($partner->getManagerMobile(), "You have been invited to serve $business->name. Now go to this link-" . $bitlyLinkShort->shortUrl($url));
             }
