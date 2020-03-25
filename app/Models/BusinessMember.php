@@ -55,4 +55,9 @@ class BusinessMember extends Model
     {
         return $this->hasMany(Leave::class);
     }
+
+    public function manager()
+    {
+        return $this->belongsTo(BusinessMember::class, 'manager_id');
+    }
 }

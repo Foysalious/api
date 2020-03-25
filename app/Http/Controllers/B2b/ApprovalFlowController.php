@@ -6,9 +6,6 @@ use Illuminate\Http\JsonResponse;
 use Sheba\Business\ApprovalFlow\Updater;
 
 use Sheba\Dal\ApprovalFlow\Contract as ApprovalFlowRepositoryInterface;
-use Sheba\Dal\ApprovalFlow\Model;
-
-use Sheba\Dal\TripRequestApprovalFlow\Model as TripRequestApprovalFlow;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\ApprovalFlow\Creator;
 use App\Http\Controllers\Controller;
