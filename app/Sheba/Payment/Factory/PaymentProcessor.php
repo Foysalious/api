@@ -51,21 +51,21 @@ class PaymentProcessor
 
         switch ($method) {
             case 'cod':
-                return new Cod();
+                return app(Cod::class);
             case 'bkash':
-                return new Bkash();
+                return app(Bkash::class);
             case 'online':
-                return new Ssl();
+                return app(Ssl::class);
             case 'wallet':
-                return new Wallet();
+                return app(Wallet::class);
             case 'cbl':
-                return new Cbl();
+                return app(Cbl::class);
             case 'partner_wallet':
-                return new PartnerWallet();
+                return app(PartnerWallet::class);
             case 'ok_wallet':
-                return new OkWallet();
+                return app(OkWallet::class);
             case 'ssl_donation':
-                return (new Ssl())->setDonationConfig();
+                return app(Ssl::class)->setDonationConfig();
         }
     }
 }
