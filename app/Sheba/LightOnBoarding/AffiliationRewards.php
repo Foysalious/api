@@ -97,7 +97,7 @@ class AffiliationRewards
     private function affiliationTransaction($ref)
     {
         if ($this->getAffiliationCost() > 0) {
-            $log = "Earned " . $this->getAffiliationCost() . " tk for giving reference partner id: $ref->id";
+            $log = "Earned " . $this->getAffiliationCost() . " point for giving reference partner id: $ref->id";
             $data = [
                 'affiliate_id' => $this->affiliate->id,
                 'affiliation_id' => $ref->id,
@@ -124,7 +124,7 @@ class AffiliationRewards
                 'type' => 'Credit',
                 'is_gifted' => 1,
                 'affiliate_id' => $this->ambassador->id,
-                'log' => $affiliate_identity . ' gifted ' . $this->getAmbassadorCost() . ' tk for reference a partner, id: ' . $ref->id . ' ',
+                'log' => $affiliate_identity . ' gifted ' . $this->getAmbassadorCost() . ' point for reference a partner, id: ' . $ref->id . ' ',
                 'amount' => $this->getAmbassadorCost()
             ];
             $affiliate_transaction = new AffiliateTransaction($this->withCreateModificationField($data));
@@ -142,7 +142,7 @@ class AffiliationRewards
             if ($status == 'accept') $statusText = 'accepting';
             else $statusText = 'rejecting';
 
-            $log = "Earned " . $this->getModerationCost() . "tk for $statusText  reference of partner id: $ref->id";
+            $log = "Earned " . $this->getModerationCost() . "point for $statusText  reference of partner id: $ref->id";
             $data = [
                 'affiliate_id' => $this->moderator->id,
                 'affiliation_id' => $ref->id,

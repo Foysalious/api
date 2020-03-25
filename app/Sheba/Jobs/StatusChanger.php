@@ -63,7 +63,7 @@ class StatusChanger
         } else {
             $available_resources = scheduler($request->partner)->isAvailable($job->schedule_date, $job->preferred_time_start, $job->category_id)->get('available_resources');
             if (count($available_resources) > 0) {
-                $selected_resource = $available_resources[0];
+                $selected_resource = reset($available_resources);
             } else {
                 $this->setError(403, "No Available Resource Found");
                 return;

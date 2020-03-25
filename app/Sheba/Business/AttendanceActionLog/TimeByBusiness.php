@@ -1,6 +1,5 @@
 <?php namespace Sheba\Business\AttendanceActionLog;
 
-
 use App\Models\Business;
 use Sheba\Dal\BusinessOfficeHours\Model;
 
@@ -8,15 +7,15 @@ class TimeByBusiness
 {
     public function getOfficeStartTimeByBusiness()
     {
-        $business_hour=Model::where('business_id',$this->getBusiness()->id)->first();
-        if(is_null($business_hour)) return null;
+        $business_hour = Model::where('business_id', $this->getBusiness()->id)->first();
+        if (is_null($business_hour)) return null;
         return $business_hour->start_time;
     }
 
     public function getOfficeEndTimeByBusiness()
     {
-        $business_hour=Model::where('business_id',$this->getBusiness()->id)->first();
-        if(is_null($business_hour)) return null;
+        $business_hour = Model::where('business_id', $this->getBusiness()->id)->first();
+        if (is_null($business_hour)) return null;
         return $business_hour->end_time;
     }
 

@@ -13,15 +13,16 @@ class ServiceV2MinimalTransformer extends TransformerAbstract
     /** @var PriceCalculation $priceCalculation */
     private $priceCalculation;
 
-    /**
-     * ServiceV2Transformer constructor.
-     * @param LocationService $location_service
-     * @param PriceCalculation $price_calculation
-     */
-    public function __construct(LocationService $location_service, PriceCalculation $price_calculation)
+
+    public function __construct(PriceCalculation $price_calculation)
+    {
+        $this->priceCalculation = $price_calculation;
+    }
+
+    public function setLocationService(LocationService $location_service)
     {
         $this->locationService = $location_service;
-        $this->priceCalculation = $price_calculation;
+        return $this;
     }
 
     /**
@@ -31,20 +32,19 @@ class ServiceV2MinimalTransformer extends TransformerAbstract
     public function transform(array $selected_service)
     {
         /** @var ServiceDiscount $discount */
-        $discount = $this->locationService->discounts()->running()->first();
-        $this->priceCalculation->setLocationService($this->locationService);
-
+        $discount = $this->locationService ? $this->locationService->discounts()->running()->first() : null;
+        if ($this->locationService) $this->priceCalculation->setLocationService($this->locationService);
         $data = [
-            'discount'      => $discount ? [
+            'discount' => $discount ? [
                 'value' => (double)$discount->amount,
                 'is_percentage' => $discount->isPercentage(),
                 'cap' => (double)$discount->cap
             ] : null,
         ];
         if ($selected_service["variable_type"] == Type::FIXED)
-            $data['unit_price'] = $this->priceCalculation->getUnitPrice();
+            $data['unit_price'] = $this->locationService ? $this->priceCalculation->getUnitPrice() : null;
         if ($selected_service["variable_type"] == Type::OPTIONS) {
-            $data['unit_price'] = $this->priceCalculation->setOption($selected_service["option"])->getUnitPrice();
+            $data['unit_price'] = $this->locationService ? $this->priceCalculation->setOption($selected_service["option"])->getUnitPrice() : null;
         }
 
         return $data;

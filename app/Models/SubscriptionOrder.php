@@ -57,7 +57,7 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface, Pay
     public function getScheduleDates()
     {
         $schedules = $this->schedules();
-        return array_map(function($schedule) {
+        return array_map(function ($schedule) {
             return $schedule->date;
         }, $schedules);
     }
@@ -77,6 +77,11 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface, Pay
         return $this->belongsTo(Location::class);
     }
 
+    public function subscriptionOrderRequests()
+    {
+        return $this->hasMany(SubscriptionOrderRequest::class);
+    }
+
     public function scopeStatus($query, $status)
     {
         return $query->where('status', $status);
@@ -87,10 +92,6 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface, Pay
         return $query->status(Statuses::ACCEPTED);
     }
 
-    public function subscriptionOrderRequests()
-    {
-        return $this->hasMany(SubscriptionOrderRequest::class);
-    }
 
     public function channelCode()
     {
@@ -148,7 +149,7 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface, Pay
      */
     public function getServiceRequestObjects()
     {
-        return array_map(function($service) {
+        return array_map(function ($service) {
             return (new ServiceRequestObject())->setServiceId($service['id'])
                 ->setQuantity($service['quantity'])->setOption($service['option'])->build();
         }, json_decode($this->service_details, true)['breakdown']);
