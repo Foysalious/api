@@ -13,6 +13,7 @@ class Creator
     private $log;
     private $checkNumber;
     private $bankName;
+    private $portalName;
     private $attachment;
     private $transactionId;
     private $transactionDetail;
@@ -64,6 +65,12 @@ class Creator
         return $this;
     }
 
+    public function setPortalName($portal_name)
+    {
+        $this->portalName = $portal_name;
+        return $this;
+    }
+
     public function setAttachment($attachment)
     {
         $this->attachment = $attachment;
@@ -95,6 +102,7 @@ class Creator
             'method' => $this->method,
             'procurement_id' => $this->procurement->id,
             'log' => $this->log,
+            'portal_name' => $this->portalName,
             'transaction_detail' => $this->transactionDetail
         ]);
     }
