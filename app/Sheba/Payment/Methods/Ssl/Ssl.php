@@ -188,7 +188,6 @@ class Ssl extends PaymentMethod {
 
     private function validateOrder() {
         $client   = new Client();
-        $response = new \stdClass();
         try {
             $result   = $client->request('GET', $this->orderValidationUrl, [
                 'query' => [
@@ -199,15 +198,20 @@ class Ssl extends PaymentMethod {
             ]);
             $response = json_decode($result->getBody()->getContents());
             if (!$response) {
-                $response->status = "ERROR";
-                $response->result = $result->getBody()->getContents();
-                $response->code   = 502;
+
+                $response = new \stdClass();
+                $response->status  = "ERROR";
+                $response->result  = $result->getBody()->getContents();
+                $response->code    = 502;
+                $response->tran_id = null;
             }
         } catch (\Throwable $e) {
-            $response->status = "ERROR";
-            $response->result = $e->getMessage();
-            $response->code   = $e->getCode();
-            $response->trace  = $e->getTrace();
+            $response = new \stdClass();
+            $response->status  = "ERROR";
+            $response->result  = $e->getMessage();
+            $response->code    = $e->getCode();
+            $response->trace   = $e->getTrace();
+            $response->tran_id = null;
         }
         return $response;
     }
