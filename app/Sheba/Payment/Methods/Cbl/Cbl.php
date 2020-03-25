@@ -6,11 +6,13 @@ use App\Models\PaymentDetail;
 use Carbon\Carbon;
 use Exception;
 use GuzzleHttp\Client as HttpClient;
+use GuzzleHttp\Exception\GuzzleException;
 use Sheba\Payment\Methods\Cbl\Response\InitResponse;
 use Sheba\Payment\Methods\Cbl\Response\ValidateResponse;
 use Sheba\Payment\Methods\PaymentMethod;
 use Sheba\RequestIdentification;
 use DB;
+use SimpleXMLElement;
 
 class Cbl extends PaymentMethod
 {
@@ -44,7 +46,7 @@ class Cbl extends PaymentMethod
      * @param Payable $payable
      * @return Payment
      * @throws Exception
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      */
     public function init(Payable $payable): Payment
     {
@@ -91,7 +93,7 @@ class Cbl extends PaymentMethod
     /**
      * @param Payment $payment
      * @return Payment
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      */
     public function validate(Payment $payment)
     {
@@ -159,8 +161,8 @@ class Cbl extends PaymentMethod
 
     /**
      * @param $data
-     * @return mixed
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @return SimpleXMLElement
+     * @throws GuzzleException
      * @throws Exception
      */
     private function post($data)
@@ -175,10 +177,9 @@ class Cbl extends PaymentMethod
         ]);
         $result = $response->getBody()->getContents();
 
-        if (!$result) throw new Exception("Vpn server not working.");
+        if (!$result) throw new Exception("Tunnel not working.");
         $result = json_decode($result);
-        if ($result->code != 200) throw new Exception("Vpn server error: ". $result->message);
-
-        return $result->data;
+        if ($result->code != 200) throw new Exception("Tunnel error: ". $result->message);
+        return simplexml_load_string($result->data);
     }
 }
