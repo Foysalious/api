@@ -33,6 +33,7 @@ class ProcurementPaymentController extends Controller
                 ->setProcurement($procurement)
                 ->setCheckNumber($request->check_number)
                 ->setBankName($request->bank_name)
+                ->setPortalName($request->portal_name)
                 ->setAttachment($request->attachment)
                 ->setAttachmentId($request->transaction_id)
                 ->create();
