@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 
 <html lang="en">
-
 <head>
     <!-- start: Meta -->
     <title>Invoice 1.1</title>
@@ -236,14 +235,11 @@
 
         /*new styles end*/
     </style>
-
-
 </head>
 
 <body style="margin-top: 55px; margin-bottom: 22px; font-family: Lato;">
 
-
-{{--footer--}}
+{{--FOOTER START--}}
 <table class="footer">
     <tr>
         <td colspan="2" class="footerPrompt">This is a digital version of W/O ,No signature is required here. </td>
@@ -257,10 +253,11 @@
         </td>
     </tr>
 </table>
+{{--FOOTER END--}}
 
 <table class="documentTitle">
     <tr>
-        <td>Invoice</td>
+        <td>Workorder</td>
     </tr>
     <tr>
         <td><hr></td>
@@ -269,13 +266,13 @@
 
 <table class="invoiceInfo">
     <tr>
-        <td>Invoice ID : </td>
-        <td>#0A4HA500</td>
+        <td>Work Order no: </td>
+        <td>{{ $work_order['code'] }}</td>
     </tr>
-    <tr>
+    {{--<tr>
         <td>Invoice Submitted Date :  </td>
         <td>21 Feb , 2020</td>
-    </tr>
+    </tr>--}}
 </table>
 
 <table class="addresses">
@@ -288,16 +285,15 @@
             <table style="border: 0">
                 <tr>
                     <td>Name:</td>
-                    <td>Fahim Razzaq</td>
+                    <td>{{ $work_order['to']['name'] }}</td>
                 </tr>
                 <tr>
                     <td>Address:</td>
-                    <td>House no : 01 ; Road no : 01;
-                        Mirpur ; Dhaka.</td>
+                    <td>{{ $work_order['to']['address'] }}</td>
                 </tr>
                 <tr>
                     <td>Mobile:</td>
-                    <td>01617000000</td>
+                    <td>{{ $work_order['to']['mobile'] }}</td>
                 </tr>
             </table>
         </td>
@@ -305,16 +301,15 @@
             <table style="border: 0">
                 <tr>
                     <td>Name:</td>
-                    <td>Fahim Razzaq</td>
+                    <td>{{ $work_order['from']['name'] }}</td>
                 </tr>
                 <tr>
                     <td>Address:</td>
-                    <td>House no : 01 ; Road no : 01;
-                        Mirpur ; Dhaka.</td>
+                    <td>{{ $work_order['from']['address'] }}</td>
                 </tr>
                 <tr>
                     <td>Mobile:</td>
-                    <td>01617000000</td>
+                    <td>{{ $work_order['from']['mobile'] }}</td>
                 </tr>
             </table>
         </td>
@@ -329,29 +324,26 @@
         <td class="itemsSpecLabel">Unit Price</td>
         <td class="itemsSpecLabel border-right">Total Price</td>
     </tr>
-    <tr class="itemsList">
-        <td class="itemsList border-left padding-left">Keyboard</td>
-        <td class="itemsList">A4 Tech</td>
-        <td class="itemsList">10</td>
-        <td class="itemsList">৳500</td>
-        <td class="itemsList border-right">৳5000</td>
-    </tr>
-    <tr class="itemsList">
-        <td class="itemsList border-left padding-left">Keyboard</td>
-        <td class="itemsList">A4 Tech</td>
-        <td class="itemsList">10</td>
-        <td class="itemsList">৳500</td>
-        <td class="itemsList border-right">৳5000</td>
-    </tr>
+
+    @foreach($work_order['items'] as $item)
+        <tr class="itemsList">
+            <td class="itemsList border-left padding-left">{{ $item['title'] }}</td>
+            <td class="itemsList">{{ $item['short_description'] }}</td>
+            <td class="itemsList">{{ $item['unit'] }}</td>
+            <td class="itemsList">৳ {{ $item['unit_price'] }}</td>
+            <td class="itemsList border-right">৳ {{ $item['total_price'] }}</td>
+        </tr>
+    @endforeach
+
     <tr class="total">
         <td colspan="3"></td>
         <td>Sub total</td>
-        <td>৳13545</td>
+        <td>৳ {{ $work_order['sub_total'] }}</td>
     </tr>
     <tr class="total">
         <td colspan="3"></td>
         <td>Due</td>
-        <td>0</td>
+        <td>৳ {{ $work_order['due'] }}</td>
     </tr>
     <tr>
         <td  colspan="5"><hr></td>
@@ -359,23 +351,19 @@
     <tr class="total">
         <td colspan="3"></td>
         <td>Grand Total</td>
-        <td>৳15000</td>
+        <td>৳ {{ $work_order['grand_total'] }}</td>
     </tr>
 </table>
 
 <script type="text/php">
-        if (isset($pdf))
-        {
-            $text = "Page {PAGE_NUM} of {PAGE_COUNT}";
-            $font = $fontMetrics->get_font("Lato", "regular");
-            $size = 7;
-            $y = $pdf->get_height() - 31;
-            $x = $pdf->get_width() - $fontMetrics->get_text_width($text, $font, $size) + 49;
-            $pdf->page_text($x, $y, $text, $font, $size);
-        }
-    </script>
-
-
+    if (isset($pdf)) {
+        $text = "Page {PAGE_NUM} of {PAGE_COUNT}";
+        $font = $fontMetrics->get_font("Lato", "regular");
+        $size = 7;
+        $y = $pdf->get_height() - 31;
+        $x = $pdf->get_width() - $fontMetrics->get_text_width($text, $font, $size) + 49;
+        $pdf->page_text($x, $y, $text, $font, $size);
+    }
+</script>
 </body>
-
 </html>

@@ -117,8 +117,11 @@ class BusinessRoute
                                 $api->get('/work-order/download', 'B2b\ProcurementController@downloadWorkOrder');
                                 $api->group(['prefix' => 'payment-requests'], function ($api) {
                                     $api->get('/', 'B2b\ProcurementPaymentRequestController@index');
-                                    $api->post('/{request}', 'B2b\ProcurementPaymentRequestController@updatePaymentRequest');
-                                    $api->get('/{request}', 'B2b\ProcurementPaymentRequestController@show');
+                                    $api->group(['prefix' => '{request}'], function ($api) {
+                                        $api->get('/', 'B2b\ProcurementPaymentRequestController@show');
+                                        $api->post('/', 'B2b\ProcurementPaymentRequestController@updatePaymentRequest');
+                                        $api->get('download', 'B2b\ProcurementPaymentRequestController@downloadPdf');
+                                    });
                                 });
                             });
                         });
