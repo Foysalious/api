@@ -8,8 +8,8 @@ use Sheba\Business\ApprovalRequest\Creator as ApprovalRequestCreator;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\Leave\EloquentImplementation as LeaveRepository;
 use Sheba\Helpers\HasErrorCodeAndMessage;
+use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
-use Sheba\PartnerOrderRequest\Validators\CreateValidator;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Dal\Leave\Model as Leave;
 
@@ -32,19 +32,24 @@ class Creator
     /** @var array $approvers */
     private $approvers;
     private $managers = [];
+    /** @var TimeFrame $timeFrame */
+    private $timeFrame;
 
     /**
      * Creator constructor.
      * @param LeaveRepository $leave_repo
      * @param BusinessMemberRepositoryInterface $business_member_repo
      * @param ApprovalRequestCreator $approval_request_creator
+     * @param TimeFrame $time_frame
      */
     public function __construct(LeaveRepository $leave_repo, BusinessMemberRepositoryInterface $business_member_repo,
-                                ApprovalRequestCreator $approval_request_creator)
+                                ApprovalRequestCreator $approval_request_creator,
+                                TimeFrame $time_frame)
     {
         $this->leaveRepository = $leave_repo;
         $this->businessMemberRepository = $business_member_repo;
         $this->approval_request_creator = $approval_request_creator;
+        $this->timeFrame = $time_frame;
     }
 
     public function setTitle($title)
@@ -120,7 +125,8 @@ class Creator
             'leave_type_id' => $this->leaveTypeId,
             'start_date' => $this->startDate,
             'end_date' => $this->endDate,
-            'total_days' => $this->setTotalDays()
+            'total_days' => $this->setTotalDays(),
+            'left_days' => $this->getLeftDays()
         ];
 
         $this->setModifier($this->businessMember->member);
@@ -181,6 +187,31 @@ class Creator
         $other_departments_approver = array_diff($approvers, $my_department_users);
 
         return array_diff($approver_within_my_manager + $other_departments_approver, [$this->businessMember->id]);
+    }
+
+    private function getLeftDays()
+    {
+        /**
+         * STATIC NOW, NEXT SPRINT COMES FROM DB
+         */
+        $business_fiscal_start_month = 7;
+        $leave_lefts = 0;
+        $this->timeFrame->forAFiscalYear(Carbon::now(), $business_fiscal_start_month);
+
+        $leaves = $this->businessMember->leaves()->accepted()->between($this->timeFrame)->with('leaveType')->whereHas('leaveType', function ($leave_type) use (&$leave_lefts) {
+            return $leave_type->where('id', $this->leaveTypeId);
+        })->get();
+
+        $business_total_leave_days_by_types = $leaves->first()->leaveType->total_days;
+
+        $leaves->each(function ($leave) use (&$leave_lefts) {
+            $start_date = $leave->start_date->lt($this->timeFrame->start) ? $this->timeFrame->start : $leave->start_date;
+            $end_date = $leave->end_date->gt($this->timeFrame->end) ? $this->timeFrame->end : $leave->end_date;
+
+            $leave_lefts += $end_date->diffInDays($start_date) + 1;
+        });
+
+        return $business_total_leave_days_by_types - $leave_lefts;
     }
 }
 
