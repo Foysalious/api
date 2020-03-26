@@ -51,7 +51,7 @@ class ApprovalRequestController extends Controller
                     'title' => $model->title,
                     'requested_on' => $model->created_at->format('M d') . ' at ' . $model->created_at->format('h:i a'),
                     'total_days' => $model->total_days,
-                    'left' => 3,
+                    'left' => $model->left_days,
                     'leave_type' => $leave_type->title,
                     'period' => Carbon::parse($model->start_date)->format('M d') . ' - ' . Carbon::parse($model->end_date)->format('M d'),
                     'status' => $model->status,
