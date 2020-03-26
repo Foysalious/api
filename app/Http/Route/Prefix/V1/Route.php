@@ -64,7 +64,7 @@ class Route
             $api->post('voucher-valid', 'CheckoutController@validateVoucher');
             $api->post('vouchers', 'CheckoutController@validateVoucher');
             $api->post('rating', 'ReviewController@giveRatingFromEmail');
-            $api->post('sms', 'SmsController@send');
+            $api->post('sms', 'SmsController@send')->middleware('throttle:2,60');
             $api->post('faq', 'ShebaController@sendFaq');
             $api->group(['prefix' => 'offers'], function ($api) {
                 $api->get('/', 'OfferController@index');
