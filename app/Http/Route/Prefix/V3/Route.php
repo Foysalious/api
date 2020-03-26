@@ -43,6 +43,7 @@ class Route
                 $api->post('/', 'ServiceRequest\ServiceRequestController@store');
             });
             $api->get('training-videos', 'TrainingVideoController@index');
+            $api->get('category/{category}/service/{service}/publication-status', 'ServicePartnerAvailabilityCheckController@publicationStatus');
         });
 
     }
