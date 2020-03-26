@@ -7,6 +7,7 @@ use App\Sheba\Business\Leave\Updater as LeaveUpdater;
 use App\Transformers\Business\LeaveListTransformer;
 use App\Transformers\Business\LeaveTransformer;
 use App\Transformers\CustomSerializer;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -64,21 +65,27 @@ class LeaveController extends Controller
      * @param Request $request
      * @param LeaveCreator $leave_creator
      * @return JsonResponse
+     * @throws Exception
      */
     public function store(Request $request, LeaveCreator $leave_creator)
     {
-        try {
-            $this->validate($request, [
-                'start_date' => 'required|before_or_equal:end_date', 'end_date' => 'required',
-            ]);
-            $business_member = $this->getBusinessMember($request);
-            if (!$business_member) return api_response($request, null, 404);
-            $leave = $leave_creator->setTitle($request->title)->setBusinessMember($business_member)->setLeaveTypeId($request->leave_type_id)->setStartDate($request->start_date)->setEndDate($request->end_date)->setTotalDays()->create();
-            return api_response($request, null, 200, ['leave' => $leave->id]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $this->validate($request, [
+            'start_date' => 'required|before_or_equal:end_date', 'end_date' => 'required',
+        ]);
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+
+        $leave = $leave_creator->setTitle($request->title)
+            ->setBusinessMember($business_member)
+            ->setLeaveTypeId($request->leave_type_id)
+            ->setStartDate($request->start_date)
+            ->setEndDate($request->end_date);
+
+        if ($leave_creator->hasError())
+            return api_response($request, null, $leave_creator->getErrorCode(), ['message' => $leave_creator->getErrorMessage()]);
+
+        $leave = $leave->create();
+        return api_response($request, null, 200, ['leave' => $leave->id]);
     }
 
     /**

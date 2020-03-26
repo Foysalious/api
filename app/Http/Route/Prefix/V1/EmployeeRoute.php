@@ -50,7 +50,8 @@ class EmployeeRoute
                 $api->group(['prefix' => 'settings'], function ($api) {
                     $api->get('/', 'Employee\LeaveSettingsController@index');
                     $api->post('/', 'Employee\LeaveSettingsController@store');
-                    $api->put('/{setting}','Employee\LeaveSettingsController@update');
+                    $api->post('/{setting}/update','Employee\LeaveSettingsController@update');
+                    $api->post('/{setting}/delete','Employee\LeaveSettingsController@delete');
                 });
                 $api->group(['prefix' => '{leave}'], function ($api) {
                     $api->get('/', 'Employee\LeaveController@show');

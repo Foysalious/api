@@ -55,4 +55,20 @@ class BusinessMember extends Model
     {
         return $this->hasMany(Leave::class);
     }
+
+    public function manager()
+    {
+        return $this->belongsTo(BusinessMember::class, 'manager_id');
+    }
+
+    /**
+     * @param Carbon $date
+     * @return bool
+     */
+    public function isOnLeaves(Carbon $date)
+    {
+        $date = $date->toDateString();
+        $leave = $this->leaves()->accepted()->whereRaw("('$date' BETWEEN start_date AND end_date)")->first();
+        return !!$leave;
+    }
 }
