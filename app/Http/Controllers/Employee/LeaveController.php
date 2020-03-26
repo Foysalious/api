@@ -120,7 +120,11 @@ class LeaveController extends Controller
             $fractal = new Manager();
             $resource = new Collection($leaves, new LeaveListTransformer());
             $leaves = $fractal->createData($resource)->toArray()['data'];
-            return api_response($request, null, 200, ['leaves' => $leaves]);
+            $approval_requests = $this->getMyApprovalRequest($business_member);
+            return api_response($request, null, 200, [
+                'leaves' => $leaves,
+                'pending_approval_request' => $approval_requests
+            ]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
