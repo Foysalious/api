@@ -50,16 +50,17 @@ class WorkOrderDataGenerator
         return [
             'code' => $this->procurement->workOrderCode(),
             'from' => [
-                'name' => $this->bid->bidder->name,
-                'mobile' => $this->bid->bidder->getContactPerson(),
-                'address' => $this->bid->bidder->address
-            ],
-            'to' => [
                 'name' => $this->business->name,
                 'address' => $this->business->address,
                 'mobile' => $this->business->getContactPerson()
             ],
+            'to' => [
+                'name' => $this->bid->bidder->name,
+                'mobile' => $this->bid->bidder->getContactPerson(),
+                'address' => $this->bid->bidder->address
+            ],
             'items' => $items,
+            'terms' => $this->bid->terms,
             "sub_total" => $this->procurement->totalPrice,
             "due" => $this->procurement->due,
             "grand_total" => $this->procurement->totalPrice

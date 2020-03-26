@@ -3,6 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Models\Attachment;
 use App\Models\Bid;
+use App\Models\Business;
 use App\Models\Partner;
 use App\Models\Procurement;
 use App\Sheba\Bitly\BitlyLinkShort;
@@ -17,11 +18,14 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\Procurement\Creator;
 use Sheba\Business\Procurement\WorkOrderDataGenerator;
+use Sheba\Dal\ProcurementInvitation\Model as ProcurementInvitation;
+use Sheba\Dal\ProcurementInvitation\ProcurementInvitationRepositoryInterface;
 use Sheba\Logs\ErrorLog;
 use Sheba\ModificationFields;
 use Sheba\Payment\Adapters\Payable\ProcurementAdapter;
 use Sheba\Payment\ShebaPayment;
 use Sheba\Payment\ShebaPaymentValidator;
+use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
 use Sheba\Sms\Sms;
 use Sheba\Business\ProcurementInvitation\Creator as ProcurementInvitationCreator;
@@ -166,7 +170,24 @@ class ProcurementController extends Controller
         }
     }
 
-    public function sendInvitation($business, $procurement, Request $request, Sms $sms, ErrorLog $errorLog, ProcurementInvitationCreator $creator, BitlyLinkShort $bitlyLinkShort, ProcurementRepositoryInterface $procurementRepository)
+    /**
+     * @param $business
+     * @param $procurement
+     * @param Request $request
+     * @param Sms $sms
+     * @param ErrorLog $errorLog
+     * @param BitlyLinkShort $bitly_link
+     * @param ProcurementRepositoryInterface $procurementRepository
+     * @param ProcurementInvitationRepositoryInterface $procurement_invitation_repository
+     * @param BusinessMemberRepositoryInterface $business_member_repository
+     * @return bool|JsonResponse
+     */
+    public function sendInvitation($business, $procurement, Request $request, Sms $sms,
+                                   ErrorLog $errorLog,
+                                   BitlyLinkShort $bitly_link,
+                                   ProcurementRepositoryInterface $procurementRepository,
+                                   ProcurementInvitationRepositoryInterface $procurement_invitation_repository,
+                                   BusinessMemberRepositoryInterface $business_member_repository)
     {
         try {
             $this->validate($request, [
@@ -175,13 +196,23 @@ class ProcurementController extends Controller
             $partners = Partner::whereIn('id', json_decode($request->partners))->get();
             $business = $request->business;
             $procurement = $procurementRepository->find($procurement);
-            $this->setModifier($request->business_member);
+
             foreach ($partners as $partner) {
                 /** @var Partner $partner */
-                $procurement_invitation = $creator->setProcurement($procurement)->setPartner($partner)->create();
-                $url = config('sheba.partners_url') . "/v3/rfq-invitations/$procurement_invitation->id";
-                $sms->shoot($partner->getManagerMobile(), "You have been invited to serve $business->name. Now go to this link-" . $bitlyLinkShort->shortUrl($url));
+                $creator = new ProcurementInvitationCreator($procurement_invitation_repository);
+                $procurement_invitation = $creator->setBusinessMember($request->business_member)->setProcurement($procurement)->setPartner($partner);
+                if ($creator->hasError()) {
+                    if ($creator->getErrorCode() == 409) {
+                        $procurement_invitation = $procurement_invitation->getProcurementInvitation();
+                        $this->shootSmsForInvitation($business, $procurement_invitation, $bitly_link, $sms, $partner);
+                    }
+                    continue;
+                }
+
+                $procurement_invitation = $procurement_invitation->create();
+                $this->shootSmsForInvitation($business, $procurement_invitation, $bitly_link, $sms, $partner);
             }
+
             return api_response($request, null, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -352,14 +383,26 @@ class ProcurementController extends Controller
         $company_evaluation = $procurement->items->where('type', 'company_evaluation')->first();
 
         $procurement_details = [
-            'id' => $procurement->id, 'title' => $procurement->title, 'status' => $procurement->status, 'long_description' => $procurement->long_description, 'labels' => $procurement->getTagNamesAttribute()->toArray(), 'start_date' => Carbon::parse($procurement->procurement_start_date)->format('d/m/y'), 'published_at' => $procurement->is_published ? Carbon::parse($procurement->published_at)->format('d/m/y') : null, 'end_date' => Carbon::parse($procurement->procurement_end_date)->format('d/m/y'), 'number_of_participants' => $procurement->number_of_participants, 'last_date_of_submission' => Carbon::parse($procurement->last_date_of_submission)->format('Y-m-d'), 'payment_options' => $procurement->payment_options, 'created_at' => Carbon::parse($procurement->created_at)->format('d/m/y'), 'price_quotation' => $price_quotation ? $price_quotation->fields ? $price_quotation->fields->toArray() : null : null, 'technical_evaluation' => $technical_evaluation ? $technical_evaluation->fields ? $technical_evaluation->fields : null : null, 'company_evaluation' => $company_evaluation ? $company_evaluation->fields ? $company_evaluation->fields : null : null,
+            'id' => $procurement->id,
+            'title' => $procurement->title,
+            'status' => $procurement->status,
+            'long_description' => $procurement->long_description,
+            'labels' => $procurement->getTagNamesAttribute()->toArray(),
+            'start_date' => Carbon::parse($procurement->procurement_start_date)->format('d/m/y'),
+            'published_at' => $procurement->is_published ? Carbon::parse($procurement->published_at)->format('d/m/y') : null,
+            'end_date' => Carbon::parse($procurement->procurement_end_date)->format('d/m/y'),
+            'number_of_participants' => $procurement->number_of_participants,
+            'last_date_of_submission' => Carbon::parse($procurement->last_date_of_submission)->format('Y-m-d'),
+            'payment_options' => $procurement->payment_options,
+            'created_at' => Carbon::parse($procurement->created_at)->format('d/m/y'),
+            'price_quotation' => $price_quotation ? $price_quotation->fields ? $price_quotation->fields->toArray() : null : null,
+            'technical_evaluation' => $technical_evaluation ? $technical_evaluation->fields ? $technical_evaluation->fields : null : null,
+            'company_evaluation' => $company_evaluation ? $company_evaluation->fields ? $company_evaluation->fields : null : null,
         ];
 
-        // return view('pdfs.invoice', compact('procurement_details'));
-        return App::make('dompdf.wrapper')->loadView('pdfs.invoice', compact('procurement_details'))->download("invoice.pdf");
-        /*return App::make('dompdf.wrapper')
+        return App::make('dompdf.wrapper')
             ->loadView('pdfs.procurement_details', compact('procurement_details'))
-            ->download("procurement_details.pdf");*/
+            ->download("procurement_details.pdf");
     }
 
     /**
@@ -383,5 +426,18 @@ class ProcurementController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    /**
+     * @param Business $business
+     * @param ProcurementInvitation $procurement_invitation
+     * @param BitlyLinkShort $bitly_link
+     * @param Sms $sms
+     * @param Partner $partner
+     */
+    private function shootSmsForInvitation(Business $business, ProcurementInvitation $procurement_invitation, BitlyLinkShort $bitly_link, Sms $sms, Partner $partner)
+    {
+        $url = config('sheba.partners_url') . "/v3/rfq-invitations/$procurement_invitation->id";
+        $sms->shoot($partner->getManagerMobile(), "You have been invited to serve $business->name. Now go to this link-" . $bitly_link->shortUrl($url));
     }
 }
