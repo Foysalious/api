@@ -16,6 +16,7 @@ use App\Http\Controllers\Controller;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
+use Sheba\Dal\ApprovalRequest\ApprovalRequestRepositoryInterface;
 use Sheba\Dal\LeaveType\Contract as LeaveTypesRepoInterface;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use App\Sheba\Business\Leave\Creator as LeaveCreator;
@@ -114,9 +115,10 @@ class LeaveController extends Controller
     /**
      * @param Request $request
      * @param LeaveRepoInterface $leave_repo
+     * @param ApprovalRequestRepositoryInterface $approval_request_repository
      * @return JsonResponse
      */
-    public function index(Request $request, LeaveRepoInterface $leave_repo)
+    public function index(Request $request, LeaveRepoInterface $leave_repo, ApprovalRequestRepositoryInterface $approval_request_repository)
     {
         try {
             $business_member = $this->getBusinessMember($request);
@@ -127,10 +129,10 @@ class LeaveController extends Controller
             $fractal = new Manager();
             $resource = new Collection($leaves, new LeaveListTransformer());
             $leaves = $fractal->createData($resource)->toArray()['data'];
-            $approval_requests = $this->getMyApprovalRequest($business_member);
+            $pending_approval_requests = $approval_request_repository->getPendingApprovalRequestByBusinessMember($business_member);
             return api_response($request, null, 200, [
                 'leaves' => $leaves,
-                'pending_approval_request' => $approval_requests
+                'pending_approval_request' => $pending_approval_requests
             ]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
@@ -154,48 +156,5 @@ class LeaveController extends Controller
         $leave = Leave::findOrFail((int)$leave);
         $leaveUpdater->setLeave($leave)->setStatus($request->status)->updateStatus();
         return api_response($request, null, 200);
-    }
-
-    private function getMyApprovalRequest(BusinessMember $business_member)
-    {
-        return ApprovalRequest::where('approver_id', $business_member->id)->where('status', 'pending')->count();
-    }
-
-    public function getMyLeaves(Request $request)
-    {
-        try {
-            $business_member = $this->getBusinessMember($request);
-            $member = $this->getMember($request);
-            list($offset, $limit) = calculatePagination($request);
-            $leaves = Leave::query()->select('id', 'business_member_id', 'leave_type_id', 'status', 'total_days', 'created_at', DB::raw('YEAR(created_at) year, MONTH(created_at) month'))
-                ->with('leaveType')->where('business_member_id', $business_member->id)->skip($offset)->take($limit)->groupby('created_at')->orderBy('created_at', 'desc');
-            if ($request->has('type')) {
-                $leaves = $leaves->where('leave_type_id', $request->type);
-            }
-            $all_leaves = [];
-            foreach ($leaves->get() as $leave) {
-                $leave_type = $leave->leaveType;
-                array_push($all_leaves, [
-                    'id' => $leave->id,
-                    'total_days' => $leave->total_days,
-                    'status' => $leave->status,
-                    'leave_type' => [
-                        'id' => $leave_type->id,
-                        'title' => $leave_type->title
-                    ],
-                    'created_at' => $leave_type->created_at ? $leave_type->created_at->format('M d, Y') : null,
-                    'month' => $leave->month,
-                    'year' => $leave->year,
-                ]);
-            }
-            $approval_requests = $this->getMyApprovalRequest($business_member);
-            return api_response($request, null, 200, [
-                'all_leaves' => $all_leaves,
-                'pending_approval_request' => $approval_requests
-            ]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
     }
 }
