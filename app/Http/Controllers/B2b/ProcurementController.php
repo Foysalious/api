@@ -429,6 +429,26 @@ class ProcurementController extends Controller
     }
 
     /**
+     * @param $business
+     * @param $procurement
+     * @param $bid
+     * @param Request $request
+     * @param WorkOrderDataGenerator $data_generator
+     * @return JsonResponse
+     */
+    public function downloadWorkOrder($business, $procurement, $bid, Request $request, WorkOrderDataGenerator $data_generator)
+    {
+        $business = $request->business;
+        $bid = Bid::findOrFail((int)$bid);
+        $work_order = $data_generator->setBusiness($business)->setProcurement($procurement)->setBid($bid)->get();
+
+        return App::make('dompdf.wrapper')
+            ->loadView('pdfs.work_order', compact('work_order'))
+            ->download('work_order.pdf');
+
+    }
+
+    /**
      * @param Business $business
      * @param ProcurementInvitation $procurement_invitation
      * @param BitlyLinkShort $bitly_link
