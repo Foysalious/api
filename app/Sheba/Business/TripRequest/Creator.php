@@ -1,12 +1,12 @@
 <?php namespace App\Sheba\Business\TripRequest;
 
-
 use App\Models\BusinessMember;
 use App\Models\BusinessTripRequest;
 use Sheba\Location\Geo;
 use Sheba\Repositories\Interfaces\Business\TripRequestRepositoryInterface;
 use Sheba\Business\TripRequestApproval\Creator as TripRequestApprovalCreator;
 use DB;
+
 class Creator
 {
     /** @var BusinessMember */
@@ -31,6 +31,11 @@ class Creator
     private $details;
     private $noOfSeats;
 
+    /**
+     * Creator constructor.
+     * @param TripRequestRepositoryInterface $trip_request_repository
+     * @param TripRequestApprovalCreator $creator
+     */
     public function __construct(TripRequestRepositoryInterface $trip_request_repository, TripRequestApprovalCreator $creator)
     {
         $this->tripRequestRepository = $trip_request_repository;
@@ -199,6 +204,7 @@ class Creator
             'no_of_seats' => $this->noOfSeats,
         ]);
         $this->tripRequestApprovalCreator->setTripRequest($trip_request)->create();
+
         return $trip_request;
     }
 }
