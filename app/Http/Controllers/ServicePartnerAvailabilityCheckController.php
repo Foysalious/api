@@ -25,6 +25,6 @@ class ServicePartnerAvailabilityCheckController extends Controller
         $partner_status['partner_service_verified'] = $partner_service->is_verified;
         $partner_status['wallet_amount'] = $partner->wallet;
         $partner_status['subscription'] = $partner->subscription->name;
-        return api_response($request, $partner_status, 200, ['publication_status' => $partner_status]);
+        return api_response($request, $partner_status, 200, ['partner_status' => $partner_status]);
     }
 }
