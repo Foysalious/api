@@ -54,11 +54,11 @@ class AttendanceTransformer extends TransformerAbstract
         $daily_breakdown = [];
         foreach ($period as $date) {
             $breakdown_data = [];
-            $is_weekend_or_holiday_or_leave = $this->isWeekend($date, $weekend_day) || $this->isHoliday($date, $dates_of_holidays_formatted) || $this->isLeave($date, $leaves) ? 1 : 0;
+            $is_weekend_or_holiday_or_leave = $this->isWeekendHolidayLeave($date, $weekend_day, $dates_of_holidays_formatted, $leaves);
 
             $breakdown_data['weekend_or_holiday_tag'] = null;
             if ($is_weekend_or_holiday_or_leave) {
-                $breakdown_data['weekend_or_holiday_tag'] = $this->isWeekendHolidayLeave($date, $leaves, $dates_of_holidays_formatted);
+                $breakdown_data['weekend_or_holiday_tag'] = $this->isWeekendHolidayLeaveTag($date, $leaves, $dates_of_holidays_formatted);
 
                 $statistics['working_days']--;
                 if ($this->isLeave($date, $leaves)) $statistics['on_leave']++;
@@ -90,8 +90,11 @@ class AttendanceTransformer extends TransformerAbstract
 
         $remain_days = CarbonPeriod::create($this->timeFrame->end->addDay(), $this->timeFrame->start->endOfMonth());
         foreach ($remain_days as $date) {
-            $is_weekend_or_holiday = $this->isWeekend($date, $weekend_day) || $this->isHoliday($date, $dates_of_holidays_formatted) || $this->isLeave($date, $leaves) ? 1 : 0;
-            if ($is_weekend_or_holiday) $statistics['working_days']--;
+            $is_weekend_or_holiday = $this->isWeekendHolidayLeave($date, $weekend_day, $dates_of_holidays_formatted, $leaves);
+            if ($is_weekend_or_holiday) {
+                $statistics['working_days']--;
+                if ($this->isLeave($date, $leaves)) $statistics['on_leave']++;
+            }
         }
 
         return ['statistics' => $statistics, 'daily_breakdown' => $daily_breakdown];
@@ -138,7 +141,16 @@ class AttendanceTransformer extends TransformerAbstract
         return in_array($date->format('Y-m-d'), $leaves);
     }
 
-    private function isWeekendHolidayLeave($date, $leaves, $dates_of_holidays_formatted) {
+    private function isWeekendHolidayLeave($date, $weekend_day, $dates_of_holidays_formatted, $leaves)
+    {
+        return $this->isWeekend($date, $weekend_day)
+        || $this->isHoliday($date, $dates_of_holidays_formatted)
+        || $this->isLeave($date, $leaves) ? 1 : 0;
+
+    }
+
+    private function isWeekendHolidayLeaveTag($date, $leaves, $dates_of_holidays_formatted)
+    {
         return $this->isLeave($date, $leaves) ?
             'On Leave' : ($this->isHoliday($date, $dates_of_holidays_formatted) ? 'Holiday' : 'Weekend');
     }
