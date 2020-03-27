@@ -8,6 +8,7 @@ class AuthRoute
         $api->group(['middleware' => 'resource.jwt.auth'], function ($api) {
             $api->get('profile', 'Resource\ResourceController@getProfile');
             $api->get('job/{job}/schedules', 'Resource\ResourceController@getSchedules');
+            $api->get('jobs', 'Resource\ResourceJobController@index');
         });
     }
 }
