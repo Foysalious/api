@@ -1,10 +1,9 @@
 <?php namespace App\Http\Middleware;
 
 use Closure;
-use Illuminate\Http\Request;
 use Sheba\Auth\Auth;
-use Sheba\Auth\AuthenticationFailedException;
 use Sheba\Auth\JWTAuth;
+use Sheba\Authentication\AuthenticationFailedException;
 use function request;
 
 class JWTAuthMiddleware
