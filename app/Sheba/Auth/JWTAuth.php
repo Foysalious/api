@@ -1,6 +1,8 @@
 <?php namespace Sheba\Auth;
 
 use Illuminate\Http\Request;
+use Sheba\Authentication\AuthenticationFailedException;
+use Sheba\Authentication\AuthUser;
 use Tymon\JWTAuth\Facades\JWTAuth as Auth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 
@@ -8,7 +10,7 @@ class JWTAuth implements Authentication
 {
     private $request;
 
-    public function authenticate()
+    public function authenticate(): AuthUser
     {
         try {
             $payload = [];
@@ -17,6 +19,10 @@ class JWTAuth implements Authentication
         } catch (JWTException $e) {
             return null;
         }
+        $auth_user = new AuthUser();
+        $auth_user->setPayload($payload);
+        if (!$auth_user->getProfile()) throw new AuthenticationFailedException("User not found");
+        return $auth_user;
         $user = $payload['avatar'];
         $model = "App\\Models\\" . ucfirst(camel_case($user['type']));
         return $model::find($user['type_id']);

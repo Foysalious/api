@@ -3,6 +3,7 @@
 use Closure;
 use Illuminate\Http\Request;
 use Sheba\Auth\Auth;
+use Sheba\Auth\AuthenticationFailedException;
 use Sheba\Auth\JWTAuth;
 use function request;
 
@@ -19,21 +20,20 @@ class JWTAuthMiddleware
         $this->auth->setStrategy($this->JWTAuth)->setRequest(request());
     }
 
-    /**
-     * Handle an incoming request.
-     *
-     * @param Request $request
-     * @param Closure $next
-     * @return mixed
-     */
     public function handle($request, Closure $next)
     {
-        if ($user = $this->auth->authenticate()) {
-            $type = strtolower(class_basename($user));
-            $request->merge([$type => $user, 'type' => $type, 'user' => $user]);
-            return $next($request);
-        } else {
+        try {
+            if ($auth_user = $this->auth->authenticate()) {
+                $user = $auth_user->getAvatar();
+                $type = strtolower(class_basename($user));
+                $request->merge([$type => $user, 'type' => $type, 'user' => $user]);
+                return $next($request);
+            } else {
+                return api_response($request, null, 403, ["message" => "You're not authorized to access this user."]);
+            }
+        } catch (AuthenticationFailedException $e) {
             return api_response($request, null, 403, ["message" => "You're not authorized to access this user."]);
         }
+
     }
 }
