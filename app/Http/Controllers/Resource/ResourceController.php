@@ -10,19 +10,22 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
+use Sheba\Authentication\AuthUser;
 use Sheba\Schedule\ScheduleSlot;
 
 class ResourceController extends Controller
 {
     public function getProfile(Request $request)
     {
-            $resource = Resource::find(1300); //TODO: Need to get resource_id from Auth Middleware
-            $fractal = new Manager();
-            $fractal->setSerializer(new CustomSerializer());
-            $resource = new Item($resource, new ResourceProfileTransformer());
-            $profile = $fractal->createData($resource)->toArray()['data'];
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+        $fractal = new Manager();
+        $fractal->setSerializer(new CustomSerializer());
+        $resource = new Item($resource, new ResourceProfileTransformer());
+        $profile = $fractal->createData($resource)->toArray()['data'];
 
-            return api_response($request, $profile, 200, ['profile' => $profile]);
+        return api_response($request, $profile, 200, ['profile' => $profile]);
     }
 
     public function getSchedules(Job $job, Request $request, ScheduleSlot $slot)

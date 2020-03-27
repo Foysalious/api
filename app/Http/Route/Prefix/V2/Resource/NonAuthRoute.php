@@ -3,5 +3,8 @@
 
 class NonAuthRoute
 {
+    public function set($api)
+    {
 
+    }
 }
