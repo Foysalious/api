@@ -1,7 +1,7 @@
-<?php namespace App\Http\Route\Prefix\V1\Resource;
+<?php namespace App\Http\Route\Prefix\V2\Resource;
 
-use App\Http\Route\Prefix\V1\Resource\ID\Auth\IndexRoute as IDAuthRoute;
-use App\Http\Route\Prefix\V1\Resource\ID\NonAuth\IndexRoute as IDNonAuthRoute;
+use App\Http\Route\Prefix\V2\Resource\ID\Auth\IndexRoute as IDAuthRoute;
+use App\Http\Route\Prefix\V2\Resource\ID\NonAuth\IndexRoute as IDNonAuthRoute;
 
 class ResourceRoute
 {

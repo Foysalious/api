@@ -1,4 +1,4 @@
-<?php namespace App\Http\Route\Prefix\V1\Resource\ID\NonAuth;
+<?php namespace App\Http\Route\Prefix\V2\Resource\ID\NonAuth;
 
 
 class IndexRoute

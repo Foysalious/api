@@ -1,4 +1,4 @@
-<?php namespace App\Http\Route\Prefix\V1\Resource\ID\Auth;
+<?php namespace App\Http\Route\Prefix\V2\Resource\ID\Auth;
 
 
 class IndexRoute
