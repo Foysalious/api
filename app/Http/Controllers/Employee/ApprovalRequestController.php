@@ -18,11 +18,14 @@ use Throwable;
 
 class ApprovalRequestController extends Controller
 {
-    use BusinessBasicInformation;
-    use ModificationFields;
+    use BusinessBasicInformation, ModificationFields;
 
     private $approvalRequestRepo;
 
+    /**
+     * ApprovalRequestController constructor.
+     * @param ApprovalRequestRepositoryInterface $approval_request_repo
+     */
     public function __construct(ApprovalRequestRepositoryInterface $approval_request_repo)
     {
         $this->approvalRequestRepo = $approval_request_repo;

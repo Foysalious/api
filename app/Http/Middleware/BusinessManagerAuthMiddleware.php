@@ -28,8 +28,11 @@ class BusinessManagerAuthMiddleware
 
         if ($member && $business) {
             $business_member = BusinessMember::where([['member_id', $member->id], ['business_id', $business->id]])
-                ->with(['actions', 'role.businessDepartment'])->first();
+                ->with(['actions', 'role.businessDepartment'])
+                ->first();
+
             $request->merge(['manager_member' => $member, 'business' => $business, 'business_member' => $business_member]);
+
             return $next($request);
         } else {
             return api_response($request, null, 404, ["message" => 'Business not found.']);

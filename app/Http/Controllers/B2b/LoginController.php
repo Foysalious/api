@@ -95,5 +95,4 @@ class LoginController extends Controller
             'business_id' => $business_member->business_id,
         ]);
     }
-
 }
