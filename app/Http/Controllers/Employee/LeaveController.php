@@ -29,8 +29,7 @@ use DB;
 
 class LeaveController extends Controller
 {
-    use ModificationFields;
-    use BusinessBasicInformation;
+    use ModificationFields, BusinessBasicInformation;
 
     /**
      * @param Request $request

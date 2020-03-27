@@ -232,6 +232,17 @@ class BusinessRoute
                     $api->get('{approval_flow}', 'B2b\ApprovalFlowController@show');
                     $api->post('{approval_flow}', 'B2b\ApprovalFlowController@update');
                 });
+                $api->group(['prefix' => 'leaves'], function ($api) {
+                    $api->group(['prefix' => 'settings'], function ($api) {
+                        $api->get('/', 'B2b\LeaveSettingsController@index');
+                        $api->post('/', 'B2b\LeaveSettingsController@store');
+
+                        $api->group(['prefix' => '{setting}'], function ($api) {
+                            $api->post('update','B2b\LeaveSettingsController@update');
+                            $api->delete('delete','B2b\LeaveSettingsController@delete');
+                        });
+                    });
+                });
             });
         });
         $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {

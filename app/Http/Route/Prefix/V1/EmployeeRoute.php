@@ -47,12 +47,6 @@ class EmployeeRoute
                 $api->get('/mine', 'Employee\LeaveController@getMyLeaves');
                 $api->get('/types', 'Employee\LeaveController@getLeaveTypes');
                 $api->post('/', 'Employee\LeaveController@store');
-                $api->group(['prefix' => 'settings'], function ($api) {
-                    $api->get('/', 'Employee\LeaveSettingsController@index');
-                    $api->post('/', 'Employee\LeaveSettingsController@store');
-                    $api->post('/{setting}/update','Employee\LeaveSettingsController@update');
-                    $api->post('/{setting}/delete','Employee\LeaveSettingsController@delete');
-                });
                 $api->group(['prefix' => '{leave}'], function ($api) {
                     $api->get('/', 'Employee\LeaveController@show');
                     $api->post('/', 'Employee\LeaveController@updateStatus');
