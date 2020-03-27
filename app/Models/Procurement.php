@@ -110,4 +110,14 @@ class Procurement extends Model implements PayableType
     {
         return $this->codeBuilder->workOrder($this);
     }
+
+    public function invoiceCode()
+    {
+        return $this->codeBuilder->invoice($this);
+    }
+
+    public function billCode()
+    {
+        return $this->codeBuilder->bill($this);
+    }
 }
