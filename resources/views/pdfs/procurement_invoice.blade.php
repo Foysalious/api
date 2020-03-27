@@ -1,9 +1,12 @@
+<?php
+    $formatted_type = ucwords($procurement_info['type'])
+?>
 <!DOCTYPE html>
 
 <html lang="en">
 <head>
     <!-- start: Meta -->
-    <title>Invoice 1.1</title>
+    <title>{{ $formatted_type }}</title>
     <meta name="description" content="">
     <meta name="author" content="Fazal Mahmud Niloy">
     <meta name="keyword" content="">
@@ -257,7 +260,7 @@
 
 <table class="documentTitle">
     <tr>
-        <td>Workorder</td>
+        <td>{{ $formatted_type }}</td>
     </tr>
     <tr>
         <td><hr></td>
@@ -266,13 +269,23 @@
 
 <table class="invoiceInfo">
     <tr>
-        <td>Work Order no: </td>
-        <td>{{ $work_order['code'] }}</td>
+        <td>{{ $formatted_type }} ID: </td>
+        <td>{{ $procurement_info['code'] }}</td>
     </tr>
-    {{--<tr>
-        <td>Invoice Submitted Date :  </td>
-        <td>21 Feb , 2020</td>
-    </tr>--}}
+    <tr>
+        <td>{{ $formatted_type }} Submitted Date : </td>
+        <td>{{ $procurement_info['submitted_date'] }}</td>
+    </tr>
+    @if ($procurement_info['type'] == 'bill')
+    <tr>
+        <td>{{ $formatted_type }} Payment Date : </td>
+        <td>{{ $procurement_info['payment_date'] }}</td>
+    </tr>
+    <tr>
+        <td>Payment Method : </td>
+        <td>{{ $procurement_info['payment_method'] }}</td>
+    </tr>
+    @endif
 </table>
 
 <table class="addresses">
@@ -285,15 +298,15 @@
             <table style="border: 0">
                 <tr>
                     <td>Name:</td>
-                    <td>{{ $work_order['to']['name'] }}</td>
+                    <td>{{ $procurement_info['to']['name'] }}</td>
                 </tr>
                 <tr>
                     <td>Address:</td>
-                    <td>{{ $work_order['to']['address'] }}</td>
+                    <td>{{ $procurement_info['to']['address'] }}</td>
                 </tr>
                 <tr>
                     <td>Mobile:</td>
-                    <td>{{ $work_order['to']['mobile'] }}</td>
+                    <td>{{ $procurement_info['to']['mobile'] }}</td>
                 </tr>
             </table>
         </td>
@@ -301,15 +314,15 @@
             <table style="border: 0">
                 <tr>
                     <td>Name:</td>
-                    <td>{{ $work_order['from']['name'] }}</td>
+                    <td>{{ $procurement_info['from']['name'] }}</td>
                 </tr>
                 <tr>
                     <td>Address:</td>
-                    <td>{{ $work_order['from']['address'] }}</td>
+                    <td>{{ $procurement_info['from']['address'] }}</td>
                 </tr>
                 <tr>
                     <td>Mobile:</td>
-                    <td>{{ $work_order['from']['mobile'] }}</td>
+                    <td>{{ $procurement_info['from']['mobile'] }}</td>
                 </tr>
             </table>
         </td>
@@ -325,7 +338,7 @@
         <td class="itemsSpecLabel border-right">Total Price</td>
     </tr>
 
-    @foreach($work_order['items'] as $item)
+    @foreach($procurement_info['items'] as $item)
         <tr class="itemsList">
             <td class="itemsList border-left padding-left">{{ $item['title'] }}</td>
             <td class="itemsList">{{ $item['short_description'] }}</td>
@@ -338,21 +351,42 @@
     <tr class="total">
         <td colspan="3"></td>
         <td>Sub total</td>
-        <td>৳ {{ $work_order['sub_total'] }}</td>
+        <td>৳ {{ $procurement_info['sub_total'] }}</td>
     </tr>
-    <tr class="total">
-        <td colspan="3"></td>
-        <td>Due</td>
-        <td>৳ {{ $work_order['due'] }}</td>
-    </tr>
-    <tr>
-        <td  colspan="5"><hr></td>
-    </tr>
+
     <tr class="total">
         <td colspan="3"></td>
         <td>Grand Total</td>
-        <td>৳ {{ $work_order['grand_total'] }}</td>
+        <td>৳ {{ $procurement_info['grand_total'] }}</td>
     </tr>
+
+    @if ($procurement_info['type'] == 'invoice')
+    <tr class="total">
+        <td colspan="3"></td>
+        <td>Amount to be paid</td>
+        <td>৳ {{ $procurement_info['amount_to_be_paid'] }}</td>
+    </tr>
+
+    <tr class="total">
+        <td colspan="3"></td>
+        <td>due</td>
+        <td>৳ {{ $procurement_info['due_after_amount_to_be_paid'] }}</td>
+    </tr>
+    @endif
+
+    @if ($procurement_info['type'] == 'bill')
+        <tr class="total">
+            <td colspan="3"></td>
+            <td>Paid</td>
+            <td>৳ {{ $procurement_info['paid'] }}</td>
+        </tr>
+
+        <tr class="total">
+            <td colspan="3"></td>
+            <td>due</td>
+            <td>৳ {{ $procurement_info['due'] }}</td>
+        </tr>
+    @endif
 </table>
 
 <script type="text/php">

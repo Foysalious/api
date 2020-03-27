@@ -3,7 +3,8 @@
 use App\Models\Bid;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
-use Sheba\Business\Procurement\WorkOrderDataGenerator;
+use Illuminate\Support\Facades\App;
+use Sheba\Business\Procurement\BillInvoiceDataGenerator;
 use Sheba\Business\ProcurementPaymentRequest\Creator;
 use Sheba\Business\ProcurementPaymentRequest\Updater;
 use App\Http\Controllers\Controller;
@@ -88,14 +89,23 @@ class ProcurementPaymentRequestController extends Controller
      * @param $bid
      * @param $payment_request
      * @param Request $request
-     * @param WorkOrderDataGenerator $data_generator
+     * @param BillInvoiceDataGenerator $data_generator
+     * @return mixed
      */
-    public function downloadPdf($business, $procurement, $bid, $payment_request, Request $request, WorkOrderDataGenerator $data_generator)
+    public function downloadPdf($business, $procurement, $bid, $payment_request, Request $request, BillInvoiceDataGenerator $data_generator)
     {
         $business = $request->business;
         $bid = Bid::findOrFail((int)$bid);
-        $work_order = $data_generator->setBusiness($business)->setProcurement($procurement)->setBid($bid)->get();
 
-        dd($work_order);
+        $procurement_info = $data_generator
+            ->setBusiness($business)
+            ->setProcurement($procurement)
+            ->setPaymentRequest($payment_request)
+            ->setBid($bid)
+            ->get();
+
+        return App::make('dompdf.wrapper')
+            ->loadView('pdfs.procurement_invoice', compact('procurement_info'))
+            ->download('invoice.pdf');
     }
 }
