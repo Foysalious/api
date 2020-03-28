@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d8715583683d9456eb1b327e77f031d3",
+    "content-hash": "a309b245ed0e701f0cb02ba0371e415b",
     "packages": [
         {
             "name": "algolia/algoliasearch-client-php",
@@ -1534,7 +1534,7 @@
             "time": "2017-09-05T11:17:05+00:00"
         },
         {
-            "name": "jeremeamia/superclosure",
+            "name": "jeremeamia/SuperClosure",
             "version": "2.3.0",
             "source": {
                 "type": "git",
@@ -3265,7 +3265,7 @@
             "source": {
                 "type": "git",
                 "url": "https://mac_pasha@bitbucket.org/startern/sheba_dal.git",
-                "reference": "10f59b6eed9318d6a13f3a0a79f01f84b945ca23"
+                "reference": "2adb71ff24792177e5a03d4b7ffd2bec1470e0f6"
             },
             "require": {
                 "php": ">=5.4"
@@ -3292,7 +3292,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2020-03-26T16:04:30+00:00"
+            "time": "2020-03-28T06:04:17+00:00"
         },
         {
             "name": "sheba/notification",

@@ -375,6 +375,11 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
         ]);
     }
 
+    public function scopeNotBadDebt($q)
+    {
+        return $q->where('payment_method', '<>', 'bad-debt');
+    }
+
     /**
      * @param Builder $query
      */
