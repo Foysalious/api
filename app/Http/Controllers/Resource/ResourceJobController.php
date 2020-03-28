@@ -14,7 +14,7 @@ class ResourceJobController extends Controller
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
         $resource = $auth_user->getResource();
-        $jobs = $job_repository->getOngoingJobsListForResourceApp($resource->id)->get();
+        $jobs = $job_repository->getOngoingJobsForResource($resource->id)->get();
         $jobs = collect($resource_job_repository->rearrange($jobs));
         return api_response($request, $jobs, 200, ['jobs' => $jobs]);
     }
