@@ -454,15 +454,17 @@ class OrderPlace
                 'quantity' => $selected_service->getQuantity(),
                 'unit_price' => $unit_price,
                 'min_price' => $this->priceCalculation->getMinPrice(),
-                'sheba_contribution' => $this->discountCalculation->getShebaContribution(),
-                'partner_contribution' => $this->discountCalculation->getPartnerContribution(),
-                'location_service_discount_id' => $this->discountCalculation->getDiscountId(),
-                'discount' => $this->discountCalculation->getJobServiceDiscount(),
-                'discount_percentage' => $this->discountCalculation->getIsDiscountPercentage() ? $this->discountCalculation->getDiscount() : 0,
                 'name' => $service->name,
                 'variable_type' => $service->variable_type,
                 'surcharge_percentage' => 0
             ];
+            if (!$this->orderVoucherData->isValid()) {
+                $service_data['sheba_contribution'] = $this->discountCalculation->getShebaContribution();
+                $service_data['partner_contribution'] = $this->discountCalculation->getPartnerContribution();
+                $service_data['location_service_discount_id'] = $this->discountCalculation->getDiscountId();
+                $service_data['discount'] = $this->discountCalculation->getJobServiceDiscount();
+                $service_data['discount_percentage'] = $this->discountCalculation->getIsDiscountPercentage() ? $this->discountCalculation->getDiscount() : 0;
+            }
             list($service_data['option'], $service_data['variables']) = $service->getVariableAndOption($selected_service->getOption());
             $job_services->push(new JobService($service_data));
         }
