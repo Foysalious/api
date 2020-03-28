@@ -95,13 +95,14 @@ class JobList
         if (!in_array($job->status, [JobStatuses::ACCEPTED, JobStatuses::PENDING, JobStatuses::CANCELLED])) {
             return "যে অর্ডার টি এখন চলছে";
         } else {
-            $different_in_minutes = Carbon::now()->diffInRealMinutes(Carbon::parse($job->schedule_date . ' ' . $job->preferred_time_start));
+            $job_start_time = Carbon::parse($job->schedule_date . ' ' . $job->preferred_time_start);
+            $different_in_minutes = Carbon::now()->diffInRealMinutes($job_start_time);
             $hour = floor($different_in_minutes / 60);
             $minute = $different_in_minutes > 60 ? $different_in_minutes % 60 : $different_in_minutes;
             $hr_message = $hour > 0 ? ($hour . ' ঘণ্টা') : '';
             $min_message = $minute > 0 ? ($minute . ' মিনিট') : '';
             if (!empty($min_message) && !empty($hr_message)) $hr_message .= ' ';
-            if (Carbon::now()->lt(Carbon::parse($job->schedule_date . ' ' . $job->preferred_time_start))) {
+            if (Carbon::now()->lt($job_start_time)) {
                 $message = "পরের অর্ডার";
             } else {
                 $message = "লেট";
