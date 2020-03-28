@@ -268,6 +268,11 @@ class JobController extends Controller
             $original_delivery_charge = $job->deliveryPrice;
             $delivery_discount = $job->deliveryDiscount;
 
+            $voucher = $partnerOrder->order->voucher ? [
+                'code' => $partnerOrder->order->voucher->code,
+                'amount' => $partnerOrder->order->voucher->amount
+            ] : null;
+
             $bill = collect();
             $bill['total'] = (double)($partnerOrder->totalPrice + $partnerOrder->totalLogisticCharge);
             $bill['total_without_logistic'] = (double)($partnerOrder->totalPrice);
@@ -288,7 +293,7 @@ class JobController extends Controller
             $bill['delivery_discount'] = $delivery_discount;
             $bill['invoice'] = $job->partnerOrder->invoice;
             $bill['version'] = $job->partnerOrder->getVersion();
-            $bill['voucher'] = $partnerOrder->order ? $partnerOrder->order->voucher : null;
+            $bill['voucher'] = $voucher;
 
             return api_response($request, $bill, 200, ['bill' => $bill]);
         } catch (Throwable $e) {
