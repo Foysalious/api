@@ -2,21 +2,20 @@
 
 
 use App\Http\Controllers\Controller;
-use App\Repositories\ResourceJobRepository;
 use Illuminate\Http\Request;
 use Sheba\Authentication\AuthUser;
-use Sheba\Dal\Job\JobRepositoryInterface;
+use Sheba\Resource\App\Jobs\JobList;
 
 class ResourceJobController extends Controller
 {
-    public function index(Request $request, JobRepositoryInterface $job_repository, ResourceJobRepository $resource_job_repository)
+    public function index(Request $request, JobList $job_list)
     {
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
         $resource = $auth_user->getResource();
-        $jobs = $job_repository->getOngoingJobsForResource($resource->id)->get();
-        $jobs = collect($resource_job_repository->rearrange($jobs));
-        return api_response($request, $jobs, 200, ['jobs' => $jobs]);
+        $jobs = $job_list->setResource($resource)->getOngoingJobs();
+        if (count($jobs) > 0) return api_response($request, $jobs, 200, ['orders' => $jobs]);
+        return api_response($request, $jobs, 404);
     }
 
 }
