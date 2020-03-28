@@ -18,11 +18,14 @@ use Throwable;
 
 class ApprovalRequestController extends Controller
 {
-    use BusinessBasicInformation;
-    use ModificationFields;
+    use BusinessBasicInformation, ModificationFields;
 
     private $approvalRequestRepo;
 
+    /**
+     * ApprovalRequestController constructor.
+     * @param ApprovalRequestRepositoryInterface $approval_request_repo
+     */
     public function __construct(ApprovalRequestRepositoryInterface $approval_request_repo)
     {
         $this->approvalRequestRepo = $approval_request_repo;
@@ -51,7 +54,7 @@ class ApprovalRequestController extends Controller
                     'title' => $model->title,
                     'requested_on' => $model->created_at->format('M d') . ' at ' . $model->created_at->format('h:i a'),
                     'total_days' => $model->total_days,
-                    'left' => 3,
+                    'left' => $model->left_days,
                     'leave_type' => $leave_type->title,
                     'period' => Carbon::parse($model->start_date)->format('M d') . ' - ' . Carbon::parse($model->end_date)->format('M d'),
                     'status' => $model->status,

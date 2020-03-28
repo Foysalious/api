@@ -31,11 +31,18 @@ class MonthlyStat
      */
     public function transform($attendances)
     {
+        $data = [];
         $weekend_day = $this->businessWeekend->pluck('weekday_name')->toArray();
         $leaves = $this->formatLeaveAsDateArray();
-        $dates_of_holidays_formatted = $this->businessHoliday->map(function ($holiday) {
-            return $holiday->start_date->format('Y-m-d');
-        })->toArray();
+
+        foreach ($this->businessHoliday as $holiday) {
+            $start_date = Carbon::parse($holiday->start_date);
+            $end_date = Carbon::parse($holiday->end_date);
+            for ($d = $start_date; $d->lte($end_date); $d->addDay()) {
+                $data[] = $d->format('Y-m-d');
+            }
+        }
+        $dates_of_holidays_formatted = $data;
 
         $period = CarbonPeriod::create($this->timeFrame->start, $this->timeFrame->end);
         $statistics = [
@@ -50,10 +57,10 @@ class MonthlyStat
         $daily_breakdown = [];
         foreach ($period as $date) {
             $breakdown_data = [];
-            $is_weekend_or_holiday_or_leave = $this->isWeekend($date, $weekend_day) || $this->isHoliday($date, $dates_of_holidays_formatted) || $this->isLeave($date, $leaves) ? 1 : 0;
+            $is_weekend_or_holiday_or_leave = $this->isWeekendHolidayLeave($date, $weekend_day, $dates_of_holidays_formatted, $leaves);
             $breakdown_data['weekend_or_holiday_tag'] = null;
             if ($is_weekend_or_holiday_or_leave) {
-                if ($this->forOneEmployee) $breakdown_data['weekend_or_holiday_tag'] = $this->isWeekendHolidayLeave($date, $leaves, $dates_of_holidays_formatted);
+                if ($this->forOneEmployee) $breakdown_data['weekend_or_holiday_tag'] = $this->isWeekendHolidayLeaveTag($date, $leaves, $dates_of_holidays_formatted);
                 $statistics['working_days']--;
                 if ($this->isLeave($date, $leaves)) $statistics['on_leave']++;
             }
@@ -89,8 +96,11 @@ class MonthlyStat
         
         $remain_days = CarbonPeriod::create($this->timeFrame->end->addDay(), $this->timeFrame->start->endOfMonth());
         foreach ($remain_days as $date) {
-            $is_weekend_or_holiday = $this->isWeekend($date, $weekend_day) || $this->isHoliday($date, $dates_of_holidays_formatted) || $this->isLeave($date, $leaves) ? 1 : 0;
-            if ($is_weekend_or_holiday) $statistics['working_days']--;
+            $is_weekend_or_holiday = $this->isWeekendHolidayLeave($date, $weekend_day, $dates_of_holidays_formatted, $leaves);
+            if ($is_weekend_or_holiday) {
+                $statistics['working_days']--;
+                if ($this->isLeave($date, $leaves)) $statistics['on_leave']++;
+            };
         }
 
         return $this->forOneEmployee ? ['statistics' => $statistics, 'daily_breakdown' => $daily_breakdown] : ['statistics' => $statistics];
@@ -147,7 +157,16 @@ class MonthlyStat
         return in_array($date->format('Y-m-d'), $leaves);
     }
 
-    private function isWeekendHolidayLeave($date, $leaves, $dates_of_holidays_formatted) {
+    private function isWeekendHolidayLeave($date, $weekend_day, $dates_of_holidays_formatted, $leaves)
+    {
+        return $this->isWeekend($date, $weekend_day)
+                || $this->isHoliday($date, $dates_of_holidays_formatted)
+                || $this->isLeave($date, $leaves) ? 1 : 0;
+
+    }
+
+    private function isWeekendHolidayLeaveTag($date, $leaves, $dates_of_holidays_formatted)
+    {
         return $this->isLeave($date, $leaves) ?
             'On Leave' : ($this->isHoliday($date, $dates_of_holidays_formatted) ? 'Holiday' : 'Weekend');
     }

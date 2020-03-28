@@ -87,7 +87,6 @@ class AttendanceController extends Controller
                 $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
                 $employee_attendance = (new MonthlyStat($time_frame, $business_holiday, $business_weekend, $business_member_leave,false))->transform($attendances);
 
-
                 array_push($all_employee_attendance, [
                     'business_member_id' => $business_member->id,
                     'member' => [

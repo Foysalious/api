@@ -10,9 +10,40 @@ class Builder extends Machine
      */
     public function workOrder(Procurement $procurement)
     {
-        return 'W' . self::SEPARATOR . $this->getProcurementFormat($procurement) . self::SEPARATOR . $this->getBidCodeByProcurement($procurement);
+        return 'W' . $this->baseCodeByProcurement($procurement);
     }
 
+    /**
+     * @param Procurement $procurement
+     * @return string
+     */
+    public function invoice(Procurement $procurement)
+    {
+        return 'I' . $this->baseCodeByProcurement($procurement);
+    }
+
+    /**
+     * @param Procurement $procurement
+     * @return string
+     */
+    public function bill(Procurement $procurement)
+    {
+        return 'B' . $this->baseCodeByProcurement($procurement);
+    }
+
+    /**
+     * @param Procurement $procurement
+     * @return string
+     */
+    private function baseCodeByProcurement(Procurement $procurement)
+    {
+        return self::SEPARATOR . $this->getProcurementFormat($procurement) . self::SEPARATOR . $this->getBidCodeByProcurement($procurement);
+    }
+
+    /**
+     * @param Procurement $procurement
+     * @return string
+     */
     private function getProcurementFormat(Procurement $procurement)
     {
         return str_pad($procurement->id, self::PROCUREMENT_CODE_LENGTH, self::PAD_STRING, STR_PAD_LEFT);
