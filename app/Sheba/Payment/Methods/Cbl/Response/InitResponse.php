@@ -1,7 +1,4 @@
-<?php
-
-namespace Sheba\Payment\Methods\Cbl\Response;
-
+<?php namespace Sheba\Payment\Methods\Cbl\Response;
 
 use Sheba\Payment\Methods\Response\PaymentMethodErrorResponse;
 use Sheba\Payment\Methods\Response\PaymentMethodResponse;

@@ -295,6 +295,7 @@ class JobController extends Controller
             $bill['delivery_discount'] = $delivery_discount;
             $bill['invoice'] = $job->partnerOrder->invoice;
             $bill['version'] = $job->partnerOrder->getVersion();
+            $bill['voucher'] = $partnerOrder->order ? $partnerOrder->order->voucher : null;
 
             return api_response($request, $bill, 200, ['bill' => $bill]);
         } catch (Throwable $e) {
