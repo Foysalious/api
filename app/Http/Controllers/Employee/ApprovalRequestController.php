@@ -2,6 +2,7 @@
 
 use App\Models\BusinessMember;
 use Carbon\Carbon;
+use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestRepositoryInterface;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use App\Sheba\Business\BusinessBasicInformation;
@@ -21,10 +22,12 @@ class ApprovalRequestController extends Controller
     use BusinessBasicInformation, ModificationFields;
 
     private $approvalRequestRepo;
+    private $type;
 
     /**
      * ApprovalRequestController constructor.
      * @param ApprovalRequestRepositoryInterface $approval_request_repo
+     * @param Type $type
      */
     public function __construct(ApprovalRequestRepositoryInterface $approval_request_repo)
     {
@@ -90,35 +93,36 @@ class ApprovalRequestController extends Controller
 
     public function index(Request $request)
     {
-        try {
-            $business_member = $this->getBusinessMember($request);
-            $approval_requests = ApprovalRequest::where('approver_id', $business_member->id)->get();
-            $approval_requests_list = [];
-            foreach ($approval_requests as $approval_request) {
-                $model = $approval_request->requestable_type;
-                $model = $model::find($approval_request->requestable_id);
-                $leave_business_member = BusinessMember::findOrFAil($model->business_member_id);
-                $member = $leave_business_member->member;
-                $profile = $member->profile;
-                $leave_type = $model->leaveType;
-                $request_list = [
-                    'id' => $approval_request->id,
-                    'leave' => [
-                        'name' => $profile->name,
-                        'total_days' => $model->total_days,
-                        'leave_type' => $leave_type->title,
-                    ],
-                    'status' => $approval_request->status,
-                    'created_at' => $approval_request->created_at->format('M d,Y'),
-                ];
-                array_push($approval_requests_list, $request_list);
-            }
-            if (count($approval_requests_list) > 0) return api_response($request, $approval_requests_list, 200, ['approval_requests_list' => $approval_requests_list]);
-            else  return api_response($request, null, 404);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        $business_member = $this->getBusinessMember($request);
+        $approval_requests = ApprovalRequest::where('approver_id', $business_member->id)->get();
+        $approval_requests_list = [];
+        foreach ($approval_requests as $approval_request) {
+            $model = $approval_request->requestable_type;
+            $model = $model::find($approval_request->requestable_id);
+            $leave_business_member = BusinessMember::findOrFAil($model->business_member_id);
+            $member = $leave_business_member->member;
+            $profile = $member->profile;
+
+            $leave_type = $model->leaveType()->withTrashed();
+            $request_list = [
+                'id' => $approval_request->id,
+                'type' => Type::LEAVE,
+                'leave' => [
+                    'name' => $profile->name,
+                    'total_days' => $model->total_days,
+                    'type' => $leave_type->title,
+                ],
+                'status' => $approval_request->status,
+                'created_at' => $approval_request->created_at->format('M d,Y'),
+            ];
+            array_push($approval_requests_list, $request_list);
         }
+        if (count($approval_requests_list) > 0) return api_response($request, $approval_requests_list, 200, [
+            'approval_list' => $approval_requests_list,
+            'type_list' => [Type::LEAVE]
+        ]);
+        else  return api_response($request, null, 404);
+
     }
 
     public function updateStatus(Request $request, Updater $updater)
