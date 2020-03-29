@@ -133,7 +133,7 @@ class BillInvoiceDataGenerator
 
     private function getType()
     {
-        if ($this->paymentRequest->status == Status::PAID) return self::BILL;
+        if ($this->paymentRequest->status == Status::APPROVED) return self::BILL;
         return self::INVOICE;
     }
 }
