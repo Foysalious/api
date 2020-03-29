@@ -1,13 +1,14 @@
-<?php namespace Sheba\Schedule;
+<?php namespace Sheba\Resource\Schedule;
 
 use App\Models\Category;
 use App\Models\Partner;
 use App\Models\ResourceSchedule;
+use App\Models\ScheduleSlot;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use DB;
 
-class ScheduleSlot
+class ResourceScheduleSlot
 {
     /** @var Category */
     private $category;
@@ -44,9 +45,9 @@ class ScheduleSlot
     private function getShebaSlots()
     {
         if ($this->portal && $this->portal == 'manager') $this->scheduleEnd = '24:00:00';
-        return \App\Models\ScheduleSlot::select('start', 'end')->where([
-                ['start', '>=', DB::raw("CAST('" . $this->scheduleStart . "' As time)")], ['end', '<=', DB::raw("CAST('" . $this->scheduleEnd . "' As time)")]
-            ])->get();
+        return ScheduleSlot::select('start', 'end')->where([
+            ['start', '>=', DB::raw("CAST('" . $this->scheduleStart . "' As time)")], ['end', '<=', DB::raw("CAST('" . $this->scheduleEnd . "' As time)")]
+        ])->get();
     }
 
     public function setCategory(Category $category)
@@ -75,35 +76,6 @@ class ScheduleSlot
         return $this;
     }
 
-    public function get()
-    {
-        $final = [];
-        $last_day = $this->today->copy()->addDays($this->limit);
-        $start = $this->today->toDateString() . ' ' . $this->shebaSlots->first()->start;
-        $end = $last_day->format('Y-m-d') . ' ' . $this->shebaSlots->last()->end;
-        if ($this->partner) {
-            $this->resources = $this->getResources();
-            $this->bookedSchedules = $this->getBookedSchedules($start, $end);
-            $this->runningLeaves = $this->getLeavesBetween($start, $end);
-            if ($this->category) $this->preparationTime = $this->partner->categories->where('id', $this->category->id)->first()->pivot->preparation_time_minutes;
-        }
-        $day = $this->today->copy();
-        while ($day < $last_day) {
-            if ($this->partner) $this->addAvailabilityToShebaSlots($day);
-            array_push($final, [
-                'value' => $day->toDateString(),
-                'slots' => $this->formatSlots($day, $this->shebaSlots->toArray())
-            ]);
-            $day->addDay();
-        }
-        return $final;
-    }
-
-    private function getResources()
-    {
-        return isset($this->category) ? $this->partner->resourcesInCategory($this->category->id) : $this->partner->handymanResources;
-    }
-
     private function getBookedSchedules($start, $end)
     {
         return ResourceSchedule::whereIn('resource_id', $this->resources->pluck('id')->unique()->toArray())->select('start', 'end', 'resource_id', DB::raw('Date(start) as schedule_date'))->where('start', '>=', $start)->where('end', '<=', $end)->get();
@@ -112,12 +84,12 @@ class ScheduleSlot
     private function getLeavesBetween($start, $end)
     {
         $leaves = $this->partner->leaves()->select('id', 'partner_id', 'start', 'end')->where(function ($q) use ($start, $end) {
-                $q->where(function ($q) use ($start, $end) {
-                    $q->whereBetween('start', [$start, $end]);
-                })->orWhere(function ($q) use ($start, $end) {
-                    $q->whereBetween('end', [$start, $end]);
-                })->orWhere('end', null);
-            })->get();
+            $q->where(function ($q) use ($start, $end) {
+                $q->whereBetween('start', [$start, $end]);
+            })->orWhere(function ($q) use ($start, $end) {
+                $q->whereBetween('end', [$start, $end]);
+            })->orWhere('end', null);
+        })->get();
         return $leaves->count() > 0 ? $leaves : null;
     }
 
@@ -138,16 +110,29 @@ class ScheduleSlot
             $isToday = $day->isToday();
             foreach ($this->shebaSlots as $slot) {
                 $slot_start_time = Carbon::parse($date_string . ' ' . $slot->start);
-                if (!($slot_start_time->gte($working_hour_start_time) && $slot_start_time->lte($working_hour_end_time)) || $this->isBetweenAnyLeave($slot_start_time) || ($isToday && ($slot_start_time < $day))) {
+                if (!($slot_start_time->gte($working_hour_start_time) && $slot_start_time->lte($working_hour_end_time)) || ($isToday && ($slot_start_time < $day))) {
                     $slot['is_available'] = 0;
+                    $slot['unavailable_reason'] = 'কাজের সময় নয়';
+                    if ($this->isBetweenAnyLeave($slot_start_time)) {
+                        $slot['is_available'] = 0;
+                        $slot['unavailable_reason'] = 'ছুটিতে';
+                    }
                 } else {
                     $is_available = ($working_hour_end_time->notEqualTo($slot_start_time) && $slot_start_time->between($working_hour_start_time, $working_hour_end_time, true));
-                    $slot['is_available'] = $is_available ? 1 : 0;
+                    if ($is_available) {
+                        $slot['is_available'] = 1;
+                        $slot['unavailable_reason'] = '';
+                    }
+                    else {
+                        $slot['is_available'] = 0;
+                        $slot['unavailable_reason'] = 'কাজের সময় নয়';
+                    }
                 }
             }
         } else {
             $this->shebaSlots->each(function ($slot) {
                 $slot['is_available'] = 0;
+                $slot['unavailable_reason'] = 'কাজের দিন নয়';
             });
         }
     }
@@ -188,6 +173,9 @@ class ScheduleSlot
                     if ($this->hasBookedSchedule($booked_schedule, $start_time, $end_time)) $booked_resources->push($booked_schedule->resource_id);
                 }
                 $is_available = (int)$total_resources > $booked_resources->unique()->count();
+                if ($is_available) {
+
+                }
                 $slot['is_available'] = $is_available ? 1 : 0;
             }
         }
@@ -213,6 +201,27 @@ class ScheduleSlot
         }
     }
 
+    private function isAvailableTime(Carbon $day)
+    {
+        $date_string = $day->toDateString();
+        $this->shebaSlots->each(function ($slot) use ($date_string) {
+            if ($slot->is_available) {
+                $start_time = Carbon::parse($date_string . ' ' . $slot->start);
+                $end_time = Carbon::parse($date_string . ' ' . $slot->end);
+                if ($start_time->diffInMinutes($end_time) >= $this->category->book_resource_minutes) {
+                    $slot['is_available'] = 1;
+                }
+                else {
+                    $slot['is_available'] = 0;
+                    $slot['reason'] = 'পর্যাপ্ত সময় নেই';
+                }
+            }
+            else {
+                $slot['is_available'] = $slot->is_available;
+            }
+        });
+    }
+
     private function formatSlots(Carbon $day, $slots)
     {
         $current_time = $this->today->copy();
@@ -231,5 +240,32 @@ class ScheduleSlot
 
         }
         return $slots;
+    }
+
+    public function getSchedulesByResource($resource)
+    {
+        $final = [];
+        $last_day = $this->today->copy()->addDays($this->limit);
+        $start = $this->today->toDateString() . ' ' . $this->shebaSlots->first()->start;
+        $end = $last_day->format('Y-m-d') . ' ' . $this->shebaSlots->last()->end;
+        if ($this->partner) {
+            $this->resources = $resource;
+            $this->bookedSchedules = $this->getBookedSchedules($start, $end);
+            $this->runningLeaves = $this->getLeavesBetween($start, $end);
+            if ($this->category) $this->preparationTime = $this->partner->categories->where('id', $this->category->id)->first()->pivot->preparation_time_minutes;
+        }
+        $day = $this->today->copy();
+        while ($day < $last_day) {
+            if ($this->partner) {
+                $this->addAvailabilityToShebaSlots($day);
+                $this->isAvailableTime($day);
+            }
+            array_push($final, [
+                'value' => $day->toDateString(),
+                'slots' => $this->formatSlots($day, $this->shebaSlots->toArray())
+            ]);
+            $day->addDay();
+        }
+        return $final;
     }
 }

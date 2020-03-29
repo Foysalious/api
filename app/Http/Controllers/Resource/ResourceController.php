@@ -11,7 +11,7 @@ use App\Http\Controllers\Controller;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Authentication\AuthUser;
-use Sheba\Schedule\ScheduleSlot;
+use Sheba\Resource\Schedule\ResourceScheduleSlot;
 
 class ResourceController extends Controller
 {
@@ -28,17 +28,14 @@ class ResourceController extends Controller
         return api_response($request, $profile, 200, ['profile' => $profile]);
     }
 
-    public function getSchedules(Job $job, Request $request, ScheduleSlot $slot)
+    public function getSchedules(Job $job, Request $request, ResourceScheduleSlot $slot)
     {
-        $this->validate($request, [
-            'limit' => 'sometimes|required|numeric:min:1'
-        ]);
-        //TODO: Need to get resource_id, category_id and partner_id from Auth Middleware
-        $resource = $job->resource_id;
-        $slot->setCategory(Category::find($job->category->id));
+        $resource = $request->auth_user->getResource();
+        $category = Category::find($job->category->id);
+        $slot->setCategory($category);
         $slot->setPartner(Partner::find($job->partner_order->partner_id));
-        $slot->setLimit($request->limit);
-        $dates = $slot->getSchedulesByResource(Resource::find($resource));
+        $slot->setLimit(7);
+        $dates = $slot->getSchedulesByResource($resource);
 
         return api_response($request, $dates, 200, ['dates' => $dates]);
 
