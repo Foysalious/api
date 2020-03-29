@@ -2,11 +2,9 @@
 
 use App\Models\BusinessMember;
 use App\Models\Member;
-use Sheba\Dal\ApprovalRequest\ApprovalRequestRepositoryInterface;
+use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use Sheba\Dal\ApprovalRequest\Status;
-use Illuminate\Support\Facades\DB;
-use Sheba\Helpers\ConstGetter;
 use Sheba\ModificationFields;
 
 class Updater
@@ -17,19 +15,21 @@ class Updater
     private $approvalRequest;
     private $member;
     private $businessMember;
-    private $statuses;
     private $status;
     private $data;
 
-    public function __construct(ApprovalRequestRepositoryInterface $approval_request_repo, Status $statuses)
+    /**
+     * Updater constructor.
+     * @param ApprovalRequestRepositoryInterface $approval_request_repo
+     */
+    public function __construct(ApprovalRequestRepositoryInterface $approval_request_repo)
     {
         $this->approvalRequestRepo = $approval_request_repo;
-        $this->statuses = $statuses;
     }
 
     public function hasError()
     {
-        if (!in_array($this->status, $this->statuses::get())) return "Invalid Status!";
+        if (!in_array($this->status, Status::get())) return "Invalid Status!";
         if ($this->approvalRequest->approver_id != $this->businessMember->id) return "You are not authorized to  change the Status!";
         return false;
     }

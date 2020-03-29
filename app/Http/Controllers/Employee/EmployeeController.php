@@ -12,8 +12,7 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionChecker;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
-use Sheba\Dal\ApprovalRequest\ApprovalRequestRepositoryInterface;
-use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
+use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
 use Sheba\Repositories\ProfileRepository;
@@ -26,6 +25,11 @@ class EmployeeController extends Controller
     private $repo;
     private $approvalRequestRepo;
 
+    /**
+     * EmployeeController constructor.
+     * @param MemberRepositoryInterface $member_repository
+     * @param ApprovalRequestRepositoryInterface $approval_request_repository
+     */
     public function __construct(MemberRepositoryInterface $member_repository, ApprovalRequestRepositoryInterface $approval_request_repository)
     {
         $this->repo = $member_repository;
@@ -109,8 +113,10 @@ class EmployeeController extends Controller
         $attendance = $business_member->attendanceOfToday();
         /** @var ActionChecker $checkout */
         $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
+
         $approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMember($business_member);
         $pending_approval_requests = $this->approvalRequestRepo->getPendingApprovalRequestByBusinessMember($business_member);
+
         $data = [
             'id' => $member->id,
             'notification_count' => $member->notifications()->unSeen()->count(),
@@ -120,9 +126,7 @@ class EmployeeController extends Controller
                 'is_note_required' => 0
             ],
             'is_approval_request_required' => $approval_requests->count() > 0 ? 1 : 0,
-            'approval_requests' => [
-                'pending_request' => $pending_approval_requests->count(),
-            ]
+            'approval_requests' => ['pending_request' => $pending_approval_requests->count()]
         ];
         if ($data['attendance']['can_checkout']) $data['attendance']['is_note_required'] = $checkout->isNoteRequired($business_member);
         if ($business_member) return api_response($request, $business_member, 200, ['info' => $data]);

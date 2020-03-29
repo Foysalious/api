@@ -1,18 +1,21 @@
 <?php namespace App\Http\Controllers\Employee;
 
-use App\Models\BusinessMember;
+use App\Models\Member;
+use App\Models\Profile;
+use App\Transformers\Business\ApprovalRequestTransformer;
+use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
-use Sheba\Dal\ApprovalRequest\ApprovalRequestRepositoryInterface;
-use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
+use Illuminate\Http\JsonResponse;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Item;
+use Sheba\Dal\ApprovalFlow\Type;
+use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use App\Sheba\Business\BusinessBasicInformation;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\ApprovalRequest\Updater;
-use League\Fractal\Resource\Collection;
-use App\Transformers\CustomSerializer;
 use App\Http\Controllers\Controller;
-use League\Fractal\Resource\Item;
 use Illuminate\Http\Request;
-use League\Fractal\Manager;
+use Sheba\Dal\Leave\Model as Leave;
 use Sheba\ModificationFields;
 use Throwable;
 
@@ -29,6 +32,45 @@ class ApprovalRequestController extends Controller
     public function __construct(ApprovalRequestRepositoryInterface $approval_request_repo)
     {
         $this->approvalRequestRepo = $approval_request_repo;
+    }
+
+    /**
+     * @param Request $request
+     * @param ApprovalRequestRepositoryInterface $approval_request_repo
+     * @return JsonResponse
+     */
+    public function index(Request $request, ApprovalRequestRepositoryInterface $approval_request_repo)
+    {
+        $this->validate($request, ['type' => 'sometimes|string|in:' . implode(',', Type::get())]);
+        $business_member = $this->getBusinessMember($request);
+        $approval_requests_list = [];
+
+        if ($request->has('type'))
+            $approval_requests = $approval_request_repo->getApprovalRequestByBusinessMemberFilterBy($business_member, $request->type);
+        else
+            $approval_requests = $approval_request_repo->getApprovalRequestByBusinessMember($business_member);
+
+        foreach ($approval_requests as $approval_request) {
+            /** @var Leave $requestable */
+            $requestable = $approval_request->requestable;
+            /** @var Member $member */
+            $member = $requestable->businessMember->member;
+            /** @var Profile $profile */
+            $profile = $member->profile;
+
+            $manager = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+            $resource = new Item($approval_request, new ApprovalRequestTransformer($profile));
+            $approval_request = $manager->createData($resource)->toArray()['data'];
+
+            array_push($approval_requests_list, $approval_request);
+        }
+
+        if (count($approval_requests_list) > 0) return api_response($request, $approval_requests_list, 200, [
+            'request_lists' => $approval_requests_list,
+            'type_lists' => [Type::LEAVE]
+        ]);
+        else return api_response($request, null, 404);
     }
 
     public function show($approval_request, Request $request)
@@ -88,39 +130,6 @@ class ApprovalRequestController extends Controller
         return $approvers;
     }
 
-    public function index(Request $request)
-    {
-        try {
-            $business_member = $this->getBusinessMember($request);
-            $approval_requests = ApprovalRequest::where('approver_id', $business_member->id)->get();
-            $approval_requests_list = [];
-            foreach ($approval_requests as $approval_request) {
-                $model = $approval_request->requestable_type;
-                $model = $model::find($approval_request->requestable_id);
-                $leave_business_member = BusinessMember::findOrFAil($model->business_member_id);
-                $member = $leave_business_member->member;
-                $profile = $member->profile;
-                $leave_type = $model->leaveType;
-                $request_list = [
-                    'id' => $approval_request->id,
-                    'leave' => [
-                        'name' => $profile->name,
-                        'total_days' => $model->total_days,
-                        'leave_type' => $leave_type->title,
-                    ],
-                    'status' => $approval_request->status,
-                    'created_at' => $approval_request->created_at->format('M d,Y'),
-                ];
-                array_push($approval_requests_list, $request_list);
-            }
-            if (count($approval_requests_list) > 0) return api_response($request, $approval_requests_list, 200, ['approval_requests_list' => $approval_requests_list]);
-            else  return api_response($request, null, 404);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
     public function updateStatus(Request $request, Updater $updater)
     {
         try {
@@ -159,7 +168,7 @@ class ApprovalRequestController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
