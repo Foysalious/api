@@ -1,6 +1,6 @@
 <?php namespace Sheba\Business\ApprovalRequest;
 
-use Sheba\Dal\ApprovalRequest\ApprovalRequestRepositoryInterface;
+use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use Sheba\Dal\ApprovalRequest\Status;
 use Sheba\ModificationFields;
