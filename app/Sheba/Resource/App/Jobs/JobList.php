@@ -1,10 +1,13 @@
 <?php namespace Sheba\Resource\App\Jobs;
 
 
+use App\Models\Job;
 use App\Models\Resource;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Sheba\BanglaConverter;
 use Sheba\Dal\Job\JobRepositoryInterface;
+use Sheba\Jobs\JobStatuses;
 
 class JobList
 {
@@ -62,6 +65,8 @@ class JobList
             $formatted_job->put('delivery_mobile', $job->partnerOrder->order->delivery_mobile);
             $formatted_job->put('start_time', Carbon::parse($job->preferred_time_start)->format('h:i A'));
             $formatted_job->put('services', $this->formatServices($job->jobServices));
+            $formatted_job->put('order_status_message', $this->getOrderStatusMessage($job));
+            $formatted_job->put('status', $job->status);
             $formatted_jobs->push($formatted_job);
         }
         return $formatted_jobs;
@@ -83,6 +88,27 @@ class JobList
             ]);
         }
         return $services;
+    }
+
+    private function getOrderStatusMessage(Job $job)
+    {
+        if (!in_array($job->status, [JobStatuses::ACCEPTED, JobStatuses::PENDING, JobStatuses::CANCELLED])) {
+            return "যে অর্ডার টি এখন চলছে";
+        } else {
+            $job_start_time = Carbon::parse($job->schedule_date . ' ' . $job->preferred_time_start);
+            $different_in_minutes = Carbon::now()->diffInRealMinutes($job_start_time);
+            $hour = floor($different_in_minutes / 60);
+            $minute = $different_in_minutes > 60 ? $different_in_minutes % 60 : $different_in_minutes;
+            $hr_message = $hour > 0 ? ($hour . ' ঘণ্টা') : '';
+            $min_message = $minute > 0 ? ($minute . ' মিনিট') : '';
+            if (!empty($min_message) && !empty($hr_message)) $hr_message .= ' ';
+            if (Carbon::now()->lt($job_start_time)) {
+                $message = "পরের অর্ডার";
+            } else {
+                $message = "লেট";
+            }
+            return BanglaConverter::en2bn($hr_message . $min_message) . ' ' . $message;
+        }
     }
 
 }
