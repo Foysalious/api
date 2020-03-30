@@ -102,7 +102,7 @@ class Creator
             'method' => $this->method,
             'procurement_id' => $this->procurement->id,
             'log' => $this->log,
-            'portal_name' => $this->portalName,
+            'portal_name' => $this->portalName ? $this->portalName : '',
             'transaction_detail' => $this->transactionDetail
         ]);
     }
