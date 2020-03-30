@@ -10,7 +10,8 @@ use Sheba\Payment\Methods\PartnerWallet;
 use Sheba\Payment\Methods\Ssl\Ssl;
 use Sheba\Payment\Methods\Wallet;
 
-class PaymentProcessor {
+class PaymentProcessor
+{
     private $method;
 
     /**
@@ -18,11 +19,13 @@ class PaymentProcessor {
      * @param $method
      * @throws ReflectionException
      */
-    public function __construct($method) {
+    public function __construct($method)
+    {
         $this->method = $this->getMethod($method);
     }
 
-    public function method() {
+    public function method()
+    {
         return $this->method;
     }
 
@@ -31,7 +34,8 @@ class PaymentProcessor {
      * @return bool
      * @throws ReflectionException
      */
-    private function isValidMethod($method) {
+    private function isValidMethod($method)
+    {
         return in_array($method, (new ReflectionClass(PaymentStrategy::class))->getStaticProperties());
     }
 
@@ -40,24 +44,25 @@ class PaymentProcessor {
      * @return Bkash|Cbl|Cod|Ssl|Wallet|PartnerWallet
      * @throws ReflectionException
      */
-    private function getMethod($method) {
+    private function getMethod($method)
+    {
         if (!$this->isValidMethod($method)) throw new InvalidArgumentException('Invalid Method.');
 
         switch ($method) {
             case 'cod':
-                return new Cod();
+                return app(Cod::class);
             case 'bkash':
-                return new Bkash();
+                return app(Bkash::class);
             case 'online':
-                return new Ssl();
+                return app(Ssl::class);
             case 'wallet':
-                return new Wallet();
+                return app(Wallet::class);
             case 'cbl':
-                return new Cbl();
+                return app(Cbl::class);
             case 'partner_wallet':
-                return new PartnerWallet();
+                return app(PartnerWallet::class);
             case 'ssl_donation':
-                return (new Ssl())->setDonationConfig();
+                return app(Ssl::class)->setDonationConfig();
         }
     }
 }
