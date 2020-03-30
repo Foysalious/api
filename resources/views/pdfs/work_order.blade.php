@@ -326,20 +326,20 @@
             <td class="itemsList border-left padding-left">{{ $item['title'] }}</td>
             <td class="itemsList">{{ $item['short_description'] }}</td>
             <td class="itemsList">{{ $item['unit'] }}</td>
-            <td class="itemsList">৳ {{ $item['unit_price'] }}</td>
-            <td class="itemsList border-right">৳ {{ $item['total_price'] }}</td>
+            <td class="itemsList">BDT {{ $item['unit_price'] }}</td>
+            <td class="itemsList border-right">BDT {{ $item['total_price'] }}</td>
         </tr>
     @endforeach
 
     <tr class="total">
         <td colspan="3"></td>
         <td>Sub total</td>
-        <td>৳ {{ $work_order['sub_total'] }}</td>
+        <td>BDT {{ $work_order['sub_total'] }}</td>
     </tr>
     <tr class="total">
         <td colspan="3"></td>
         <td>Due</td>
-        <td>৳ {{ $work_order['due'] }}</td>
+        <td>BDT {{ $work_order['due'] }}</td>
     </tr>
     <tr>
         <td  colspan="5"><hr></td>
@@ -347,7 +347,7 @@
     <tr class="total">
         <td colspan="3"></td>
         <td>Grand Total</td>
-        <td>৳ {{ $work_order['grand_total'] }}</td>
+        <td>BDT {{ $work_order['grand_total'] }}</td>
     </tr>
 </table>
 
