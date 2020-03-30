@@ -59,12 +59,10 @@ class ApprovalRequestController extends Controller
             $member = $requestable->businessMember->member;
             /** @var Profile $profile */
             $profile = $member->profile;
-            /** @var BusinessRole $role */
-            $role = $business_member->role;
 
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($approval_request, new ApprovalRequestTransformer($profile, $role));
+            $resource = new Item($approval_request, new ApprovalRequestTransformer($profile));
             $approval_request = $manager->createData($resource)->toArray()['data'];
 
             array_push($approval_requests_list, $approval_request);
@@ -88,13 +86,21 @@ class ApprovalRequestController extends Controller
         $member = $business_member->member;
         /** @var Profile $profile */
         $profile = $member->profile;
+        /** @var BusinessRole $role */
         $role = $business_member->role;
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($approval_request, new ApprovalRequestTransformer($profile, $role));
+        $resource = new Item($approval_request, new ApprovalRequestTransformer($profile));
         $approval_request = $manager->createData($resource)->toArray()['data'];
         $approvers = $this->getApprover($requestable);
-        $approval_request = $approval_request + ['approvers' => $approvers];
+        $approval_request = $approval_request + [
+                'approvers' => $approvers,
+                'department' => [
+                    'department_id' => $role ? $role->businessDepartment->id : null,
+                    'department' => $role ? $role->businessDepartment->name : null,
+                    'designation' => $role ? $role->name : null
+                ]
+            ];
         return api_response($request, null, 200, ['approval_details' => $approval_request]);
     }
 
