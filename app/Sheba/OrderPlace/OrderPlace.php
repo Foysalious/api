@@ -368,6 +368,7 @@ class OrderPlace
             $job_services = $this->createJobService();
             $this->calculateOrderAmount($job_services);
             $this->setVoucherData();
+            if ($this->orderVoucherData->isValid()) $job_services = $this->removeServiceDiscount($job_services);
             $order = null;
             DB::transaction(function () use ($job_services, &$order) {
                 $order = $this->createOrder();
@@ -478,6 +479,18 @@ class OrderPlace
             $result = voucher($this->voucherId)->check($this->category->id, null, $this->location->id, $this->customer->id, $this->orderAmountWithoutDeliveryCharge, $this->salesChannel)->reveal();
             $this->orderVoucherData->setVoucherRevealData($result);
         }
+    }
+
+    private function removeServiceDiscount($job_services)
+    {
+        foreach ($job_services as &$job_service) {
+            array_forget($job_service, 'sheba_contribution');
+            array_forget($job_service, 'partner_contribution');
+            array_forget($job_service, 'location_service_discount_id');
+            array_forget($job_service, 'discount');
+            array_forget($job_service, 'discount_percentage');
+        }
+        return $job_services;
     }
 
     /**

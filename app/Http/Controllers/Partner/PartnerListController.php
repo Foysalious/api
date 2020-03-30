@@ -38,4 +38,31 @@ class PartnerListController extends Controller
         }
         return api_response($request, $partners, 200);
     }
+
+    public function get(Request $request, Geo $geo, PartnerListBuilder $partnerListBuilder, Director $partnerListDirector, ServiceRequest $serviceRequest)
+    {
+        $this->validate($request, [
+            'services' => 'required|string',
+            'date' => 'date_format:Y-m-d',
+            'time' => 'string',
+            'lat' => 'required|numeric',
+            'lng' => 'required|numeric',
+            'partners' => 'string',
+        ]);
+        $geo->setLng($request->lng)->setLat($request->lat);
+        $partners = json_decode($request->partners, 1);
+        $service_requestObject = $serviceRequest->setServices(json_decode($request->services, 1))->get();
+        $partnerListBuilder->setGeo($geo)->setServiceRequestObjectArray($service_requestObject)->setScheduleTime($request->time)->setScheduleDate($request->date);
+        if ($partners) $partnerListBuilder->setPartnerIds($partners);
+        $partnerListDirector->setBuilder($partnerListBuilder);
+        if ($request->date && $request->time) {
+            $partnerListDirector->buildPartnerListForOrderPlacementAdmin();
+        } else {
+            $partnerListDirector->buildPartnerListForAdmin();
+        }
+        $partners = $partnerListBuilder->get()->each(function (&$partner) {
+            removeRelationsAndFields($partner);
+        });
+        return api_response($request, $partners, 200, ['partners' => $partners->values()->all(), 'partners_after_conditions' => $partnerListDirector->getPartnerIdsAfterEachCondition()]);
+    }
 }
