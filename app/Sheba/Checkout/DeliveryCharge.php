@@ -41,10 +41,14 @@ class DeliveryCharge
         return $this->category->needsLogistic();
     }
 
+    /**
+     *  Delivery charge will be calculated from category as per business decision
+     * @return float
+     */
     public function get()
     {
         return $this->doesUseShebaLogistic() ?
             (double)$this->shebaLogisticDeliveryCharge :
-            $this->categoryPartnerPivot ? (double)$this->categoryPartnerPivot->delivery_charge : (double)$this->category->delivery_charge;
+            (double)$this->category->delivery_charge;
     }
 }

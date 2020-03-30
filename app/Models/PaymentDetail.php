@@ -32,5 +32,7 @@ class PaymentDetail extends Model
             return 'Bkash';
         elseif ($this->method == 'cbl')
             return 'Cbl';
+        elseif ($this->method=='ssl_donation')
+            return 'SSL Commerz';
     }
 }
