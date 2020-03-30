@@ -14,10 +14,9 @@ class ApprovalRequestTransformer extends TransformerAbstract
     private $profile;
     private $role;
 
-    public function __construct(Profile $profile, BusinessRole $role)
+    public function __construct(Profile $profile)
     {
         $this->profile = $profile;
-        $this->role = $role;
     }
 
     /**
@@ -45,11 +44,6 @@ class ApprovalRequestTransformer extends TransformerAbstract
                 'left' => $requestable->left_days,
                 'period' => Carbon::parse($requestable->start_date)->format('M d') . ' - ' . Carbon::parse($requestable->end_date)->format('M d'),
                 'status' => $requestable->status,
-            ],
-            'department' => [
-                'department_id' => $this->role ? $this->role->businessDepartment->id : null,
-                'department' => $this->role ? $this->role->businessDepartment->name : null,
-                'designation' => $this->role ? $this->role->name : null
             ]
         ];
     }
