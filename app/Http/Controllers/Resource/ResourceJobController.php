@@ -32,7 +32,7 @@ class ResourceJobController extends Controller
             'customer_name' => 'Mehedi Hasan',
             'pro_pic' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/profiles/avatar/default.jpg',
             'delivery_name' => 'Mehedi Hasan',
-            'delivery_address' => ' Road#10, Avenue#9, House#1222&1223 Mirpur DOHS, Dhaka.',
+            'delivery_address' => 'Road#10, Avenue#9, House#1222&1223 Mirpur DOHS, Dhaka.',
             'delivery_mobile' => '+8801718741996',
             'geo_informations' => [
 
