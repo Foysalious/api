@@ -8,10 +8,8 @@ use Illuminate\Http\Request;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionChecker;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
 use Sheba\Business\AttendanceActionLog\AttendanceAction;
-use Sheba\Dal\Attendance\EloquentImplementation;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
-use Sheba\Dal\TripRequestApprovalFlow\Model as TripRequestApprovalFlow;
 use Sheba\ModificationFields;
 
 use App\Transformers\Business\AttendanceTransformer;
@@ -24,7 +22,6 @@ use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Helpers\TimeFrame;
-use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Throwable;
 
 class AttendanceController extends Controller
@@ -47,7 +44,9 @@ class AttendanceController extends Controller
         $month = $request->month;
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
+
         $time_frame = $time_frame->forAMonth($month, $year);
+        $business_member_leave = $business_member->leaves()->accepted()->startDateBetween($time_frame)->endDateBetween($time_frame)->get();
         $time_frame->end = $this->isShowRunningMonthsAttendance($year, $month) ? Carbon::now() : $time_frame->end;
         $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
 
@@ -56,7 +55,7 @@ class AttendanceController extends Controller
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($attendances, new AttendanceTransformer($time_frame, $business_holiday, $business_weekend));
+        $resource = new Item($attendances, new AttendanceTransformer($time_frame, $business_holiday, $business_weekend, $business_member_leave));
         $attendances_data = $manager->createData($resource)->toArray()['data'];
 
         return api_response($request, null, 200, ['attendance' => $attendances_data]);

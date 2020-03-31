@@ -20,7 +20,6 @@ use Throwable;
 
 class AttendanceController extends Controller
 {
-
     public function getDailyStats($business, Request $request, AttendanceList $stat)
     {
         $this->validate($request, [
@@ -83,10 +82,10 @@ class AttendanceController extends Controller
                 $department_id = $member_department ? $member_department->id : 'N/S';
 
                 $time_frame = $time_frame->forAMonth($month, $year);
+                $business_member_leave = $business_member->leaves()->accepted()->startDateBetween($time_frame)->endDateBetween($time_frame)->get();
                 $time_frame->end = $this->isShowRunningMonthsAttendance($year, $month) ? Carbon::now() : $time_frame->end;
                 $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
-                $employee_attendance = (new MonthlyStat($time_frame, $business_holiday, $business_weekend, false))->transform($attendances);
-
+                $employee_attendance = (new MonthlyStat($time_frame, $business_holiday, $business_weekend, $business_member_leave,false))->transform($attendances);
 
                 array_push($all_employee_attendance, [
                     'business_member_id' => $business_member->id,
@@ -138,13 +137,13 @@ class AttendanceController extends Controller
         $business_member = $business_member_repository->where('business_id', $business->id)->where('member_id', $member)->first();
         $month = $request->has('month') ? $request->month : date('m');
 
-
         $business_holiday = $business_holiday_repo->getAllByBusiness($business);
         $business_weekend = $business_weekend_repo->getAllByBusiness($business);
         $time_frame = $time_frame->forAMonth($month, date('Y'));
+        $business_member_leave = $business_member->leaves()->accepted()->startDateBetween($time_frame)->endDateBetween($time_frame)->get();
         $time_frame->end = $this->isShowRunningMonthsAttendance(date('Y'), $month) ? Carbon::now() : $time_frame->end;
         $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
-        $employee_attendance = (new MonthlyStat($time_frame, $business_holiday, $business_weekend))->transform($attendances);
+        $employee_attendance = (new MonthlyStat($time_frame, $business_holiday, $business_weekend, $business_member_leave))->transform($attendances);
         $daily_breakdowns = collect($employee_attendance['daily_breakdown']);
         $daily_breakdowns = $daily_breakdowns->filter(function ($breakdown){
             return Carbon::parse($breakdown['date'])->lessThanOrEqualTo(Carbon::today());
