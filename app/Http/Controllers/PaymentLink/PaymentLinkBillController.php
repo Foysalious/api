@@ -15,12 +15,12 @@ class PaymentLinkBillController extends Controller
     {
         try {
             $this->validate($request, [
-                'payment_method' => 'required|in:online,bkash,cbl',
+                'payment_method' => 'required|in:online,bkash,cbl,ssl_donation',
                 'amount' => 'numeric',
                 'purpose' => 'string',
                 'identifier' => 'required',
                 'name' => 'required',
-                'mobile' => 'required|string|mobile:bd',
+                'mobile' => 'required|string',
             ]);
             $payment_method = $request->payment_method;
             $user = $customerCreator->setMobile($request->mobile)->setName($request->name)->create();
