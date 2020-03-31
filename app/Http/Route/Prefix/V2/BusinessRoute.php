@@ -231,10 +231,22 @@ class BusinessRoute
                     });
                 });
                 $api->group(['prefix' => 'approval-flows'], function ($api) {
-                    $api->post('/', 'B2b\ApprovalFlowController@store');
                     $api->get('/', 'B2b\ApprovalFlowController@index');
+                    $api->post('/', 'B2b\ApprovalFlowController@store');
+                    $api->get('/types', 'B2b\ApprovalFlowController@getTypes');
                     $api->get('{approval_flow}', 'B2b\ApprovalFlowController@show');
                     $api->post('{approval_flow}', 'B2b\ApprovalFlowController@update');
+                });
+                $api->group(['prefix' => 'leaves'], function ($api) {
+                    $api->group(['prefix' => 'settings'], function ($api) {
+                        $api->get('/', 'B2b\LeaveSettingsController@index');
+                        $api->post('/', 'B2b\LeaveSettingsController@store');
+
+                        $api->group(['prefix' => '{setting}'], function ($api) {
+                            $api->post('update','B2b\LeaveSettingsController@update');
+                            $api->delete('delete','B2b\LeaveSettingsController@delete');
+                        });
+                    });
                 });
             });
         });
@@ -303,7 +315,6 @@ class BusinessRoute
                     $api->get('/', 'B2b\TripRequestApprovalController@index');
                     $api->post('{approval}/change-status', 'B2b\TripRequestApprovalController@statusUpdate');
                 });
-
                 $api->group(['prefix' => 'inspections'], function ($api) {
                     $api->get('/', 'B2b\InspectionController@individualInspection');
                 });
