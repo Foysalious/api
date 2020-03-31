@@ -5,6 +5,7 @@ use App\Models\Job;
 use App\Models\Partner;
 use App\Models\Resource;
 use App\Transformers\CustomSerializer;
+use App\Transformers\Resource\ResourceHomeTransformer;
 use App\Transformers\Resource\ResourceProfileTransformer;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -22,9 +23,8 @@ class ResourceController extends Controller
         $resource = $auth_user->getResource();
         $fractal = new Manager();
         $fractal->setSerializer(new CustomSerializer());
-        $resource = new Item($resource, new ResourceProfileTransformer());
-        $profile = $fractal->createData($resource)->toArray()['data'];
-
+        $data = new Item($resource, new ResourceProfileTransformer());
+        $profile = $fractal->createData($data)->toArray()['data'];
         return api_response($request, $profile, 200, ['profile' => $profile]);
     }
 
@@ -36,7 +36,6 @@ class ResourceController extends Controller
         $slot->setPartner(Partner::find($job->partner_order->partner_id));
         $slot->setLimit(7);
         $dates = $slot->getSchedulesByResource($resource);
-
         return api_response($request, $dates, 200, ['dates' => $dates]);
 
     }
@@ -46,13 +45,10 @@ class ResourceController extends Controller
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
         $resource = $auth_user->getResource();
-        $info = [
-            'name' => $resource->profile->name,
-            'picture' => $resource->profile->pro_pic,
-            'is_verified' => $resource->is_verified,
-            'rating' => 4.2,
-            'notification_count' => 2
-        ];
+        $fractal = new Manager();
+        $fractal->setSerializer(new CustomSerializer());
+        $data = new Item($resource, new ResourceHomeTransformer());
+        $info = $fractal->createData($data)->toArray()['data'];
         return api_response($request, $info, 200, ['home' => $info]);
     }
 }
