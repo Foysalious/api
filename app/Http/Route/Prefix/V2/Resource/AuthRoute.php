@@ -9,6 +9,8 @@ class AuthRoute
             $api->get('profile', 'Resource\ResourceController@getProfile');
             $api->get('job/{job}/schedules', 'Resource\ResourceController@getSchedules');
             $api->get('jobs', 'Resource\ResourceJobController@index');
+            $api->get('home', 'Resource\ResourceController@getHome');
+            $api->get('jobs/{job}', 'Resource\ResourceJobController@orderDetails');
         });
     }
 }

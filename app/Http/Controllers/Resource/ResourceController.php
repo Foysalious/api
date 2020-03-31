@@ -40,4 +40,19 @@ class ResourceController extends Controller
         return api_response($request, $dates, 200, ['dates' => $dates]);
 
     }
+
+    public function getHome(Request $request)
+    {
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+        $info = [
+            'name' => $resource->profile->name,
+            'picture' => $resource->profile->pro_pic,
+            'is_verified' => $resource->is_verified,
+            'rating' => 4.2,
+            'notification_count' => 2
+        ];
+        return api_response($request, $info, 200, ['home' => $info]);
+    }
 }

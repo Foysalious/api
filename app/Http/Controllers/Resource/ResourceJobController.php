@@ -18,4 +18,38 @@ class ResourceJobController extends Controller
         return api_response($request, $jobs, 404);
     }
 
+    public function orderDetails($job, Request $request)
+    {
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+        $job_info = [
+            'order_id' => 'D-030562',
+            'customer_id' => 102,
+            'customer_name' => 'Mehedi Hasan',
+            'pro_pic' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/profiles/avatar/default.jpg',
+            'delivery_name' => 'Mehedi Hasan',
+            'delivery_address' => ' Road#10, Avenue#9, House#1222&1223 Mirpur DOHS, Dhaka.',
+            'delivery_mobile' => '+8801718741996',
+            'geo_informations' => [
+                [
+                    "lat" => 23.7367689,
+                    "lng" => 90.3871961
+                ]
+            ],
+            'preferred_time' => '2:00 PM-3:00 PM',
+            "preferred_time_start" => "14:00:00",
+            "schedule_date" => "2019-06-16",
+            'services' => [
+                [
+                    'name' => 'Daily Budget Meal',
+                    'variables' => [],
+                    'unit' => 'person',
+                    'quantity' => 1
+                ]
+            ]
+        ];
+        return api_response($request, $job_info, 200, ['order_details' => $job_info]);
+    }
+
 }
