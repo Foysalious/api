@@ -124,6 +124,15 @@ class PartnerListBuilder implements Builder
         ]);
     }
 
+    public function withTotalOngoingJobs()
+    {
+        $this->partnerQuery = $this->partnerQuery->with([
+            'jobs' => function ($q) {
+                $q->selectRaw("count(case when status in ('Accepted', 'Schedule Due', 'Process', 'Serve Due') then status end) as ongoing_jobs")->groupBy('partner_id');
+            }
+        ]);
+    }
+
     public function withService()
     {
         $this->partnerQuery = $this->partnerQuery->with([
@@ -242,7 +251,7 @@ class PartnerListBuilder implements Builder
 
     public function runQuery()
     {
-        $this->partners = $this->partnerQuery->get();;
+        $this->partners = $this->partnerQuery->get();
     }
 
     public function get()
@@ -260,6 +269,11 @@ class PartnerListBuilder implements Builder
         $this->partners = $this->partners->filter(function ($partner) {
             return $partner->id != config('sheba.sheba_help_desk_id');
         });
+    }
+
+    public function withoutShebaHelpDesk()
+    {
+        $this->partnerQuery = $this->partnerQuery->where('partners.id', '<>', config('sheba.sheba_help_desk_id'));
     }
 
     public function removeUnavailablePartners()
@@ -365,6 +379,17 @@ class PartnerListBuilder implements Builder
             $partner['total_experts'] = $partner->handymanResources->first() ? (int)$partner->handymanResources->first()->total_experts : 0;
             return $partner;
         });
+    }
+
+    public function resolveInfoForAdminPortal()
+    {
+        $this->partners = $this->partners->map(function ($partner) {
+            $partner['contact_no'] = $partner->getContactNumber();
+            $partner['subscription_type'] = $partner->resolveSubscriptionType();
+            $partner['ongoing_jobs'] = $partner->jobs->first() ? $partner->jobs->first()->ongoing_jobs : 0;
+            return $partner;
+        });
+
     }
 
     public function sortPartners()

@@ -97,9 +97,7 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
 
     public function usedVouchers()
     {
-        return $this->orders()->where('voucher_id', '<>', null)->get()->map(function ($order) {
-            return $order->voucher;
-        })->unique();
+        return Voucher::join('orders', 'orders.voucher_id', '=', 'vouchers.id')->where('orders.customer_id', $this->id)->groupBy('vouchers.id')->select('vouchers.*')->get();
     }
 
     public function nthOrders(...$n)

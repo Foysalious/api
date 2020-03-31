@@ -22,15 +22,15 @@ class AffiliateEarning implements PartnerAffiliationEarning
         $ambassador_reward = floatval($reward) * (floatval(constants('PARTNER_AFFILIATION_AMBASSADOR_COMMISSION')) / 100);
         $affiliate_reward  = $reward - $ambassador_reward;
         if ($affiliate->isAmbassador() || !$affiliate->ambassador_id) {
-            $log = "Earned $affiliate_reward tk for sp reference: " . $affiliation->partner->name . " (#$affiliation->id)";
+            $log = "Earned $affiliate_reward point for sp reference: " . $affiliation->partner->name . " (#$affiliation->id)";
             $this->creditWalletForPartnerAffiliation($affiliation, $affiliate_reward, $affiliate, $log);
         } else {
             $ambassador = $affiliate->ambassador;
-            $log        = "Earned $ambassador_reward tk for sp reference by affiliate: " . $affiliate->name . " (#$affiliation->id)";
+            $log        = "Earned $ambassador_reward point for sp reference by affiliate: " . $affiliate->name . " (#$affiliation->id)";
             $is_gifted  = 1;
             $this->creditWalletForPartnerAffiliation($affiliation, $ambassador_reward, $ambassador, $log, $is_gifted);
 
-            $log = "Earned $affiliate_reward tk for sp reference: " . $affiliation->partner->name . " (#$affiliation->id)";
+            $log = "Earned $affiliate_reward point for sp reference: " . $affiliation->partner->name . " (#$affiliation->id)";
             $this->creditWalletForPartnerAffiliation($affiliation, $affiliate_reward, $affiliate, $log);
         }
     }
@@ -73,7 +73,7 @@ class AffiliateEarning implements PartnerAffiliationEarning
          * 'amount' => $amount
          * ];
          * $this->affiliateRepo->creditWallet($affiliate, $amount, $data);*/
-        $log = "Earned $amount tk for reference: $affiliation_id and order: $order_code";
+        $log = "Earned $amount point for reference: $affiliation_id and order: $order_code";
         (new WalletTransactionHandler())
             ->setModel($affiliate)
             ->setSource(TransactionSources::SHEBA_WALLET)
@@ -101,7 +101,7 @@ class AffiliateEarning implements PartnerAffiliationEarning
          * $this->affiliateRepo->creditWallet($ambassador, $amount, $data);*/
 
         $affiliate_identity = ($affiliate->name ?: $affiliate->mobile) ?: "#$affiliate->id";
-        $log                = "$affiliate_identity gifted $amount tk for reference: $affiliation_id and order: $order_code";
+        $log                = "$affiliate_identity gifted $amount point for reference: $affiliation_id and order: $order_code";
 
         (new WalletTransactionHandler())
             ->setModel($affiliate)
@@ -126,7 +126,7 @@ class AffiliateEarning implements PartnerAffiliationEarning
          * 'amount' => $amount
          * ];
          * $this->affiliateRepo->creditWallet($ambassador, $amount, $data);*/
-        $log = "Earned $amount tk for order: $order_code";
+        $log = "Earned $amount point for order: $order_code";
         (new WalletTransactionHandler())->setModel($ambassador)->setSource(TransactionSources::SHEBA_WALLET)->setType('credit')->setAmount($amount)->setLog($log)->dispatch();
     }
 }

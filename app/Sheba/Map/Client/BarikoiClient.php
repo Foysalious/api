@@ -18,7 +18,7 @@ class BarikoiClient implements Client
     {
         try {
             $client = new HTTPClient();
-            $response = $client->request('GET', 'https://barikoi.xyz/v1/api/search/reverse/' . $this->apiKey . '/geocode', [
+            $response = $client->request('GET', 'https://barikoi.xyz/v1/api/search/reverse/geocode/server/' . $this->apiKey . '/place', [
                 'query' => [
                     'latitude' => $geo->getLat(),
                     'longitude' => $geo->getLng(),

@@ -74,6 +74,7 @@ class CustomerFavoriteController extends Controller
             $favorite['min_order_amount'] = $favorite->category->min_order_amount;
             $favorite['icon_color'] = isset(config('sheba.category_colors')[$favorite->category->parent->id]) ? config('sheba.category_colors')[$favorite->category->parent->id] : null;
             $favorite['rating'] = $favorite->job->review ? $favorite->job->review->rating : 0.00;
+            $favorite['is_same_service'] = 1;
 
             $favorite->services->each(function ($service) use ($favorite, &$services, $manager, $price_calculation, $delivery_charge, $job_discount_handler, $upsell_calculation, $service_transformer) {
                 $location_service = LocationService::where('location_id', $this->location)->where('service_id', $service->id)->first();
@@ -88,7 +89,10 @@ class CustomerFavoriteController extends Controller
                     "option" => json_decode($pivot->option, true),
                     "variable_type" => $pivot->variable_type
                 ];
-                if ($location_service) $service_transformer->setLocationService($location_service);
+                if ($location_service) {
+                    $service_transformer->setLocationService($location_service);
+                    if ($pivot->variable_type != $location_service->service->variable_type) $favorite['is_same_service'] = 0;
+                }
                 $resource = new Item($selected_service, $service_transformer);
                 $price_data = $manager->createData($resource)->toArray();
 

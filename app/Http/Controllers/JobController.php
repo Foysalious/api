@@ -21,6 +21,7 @@ use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use League\Fractal\Serializer\ArraySerializer;
+use Sheba\CancelRequest\CancelRequestStatuses;
 use Sheba\Checkout\DeliveryCharge;
 use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Dal\JobService\JobService;
@@ -149,6 +150,7 @@ class JobController extends Controller
             $job_collection->put('can_take_review', $this->canTakeReview($job));
             $job_collection->put('can_pay', $this->canPay($job));
             $job_collection->put('can_add_promo', $this->canAddPromo($job));
+            $job_collection->put('is_same_service', 1);
 
             $manager = new Manager();
             $manager->setSerializer(new ArraySerializer());
@@ -161,6 +163,7 @@ class JobController extends Controller
                     ->setOption(json_decode($job->service_option, true))
                     ->setQuantity($job->service_quantity);
                 $upsell_price = $upsell_calculation->getAllUpsellWithMinMaxQuantity();
+                $job_collection->put('is_same_service', 0);
                 $services->push([
                     'service_id' => $job->service->id,
                     'name' => $job->service_name,
@@ -174,6 +177,7 @@ class JobController extends Controller
                 ]);
             } else {
                 $services = collect();
+                $notSame = 0;
                 foreach ($job->jobServices as $jobService) {
                     /** @var JobService $jobService */
                     $variables = json_decode($jobService->variables);
@@ -189,7 +193,10 @@ class JobController extends Controller
                         "option" => json_decode($jobService->option, true),
                         "variable_type" => $jobService->variable_type
                     ];
-                    if ($location_service) $service_transformer->setLocationService($location_service);
+                    if ($location_service) {
+                        $service_transformer->setLocationService($location_service);
+                        if ($jobService->variable_type != $location_service->service->variable_type) $notSame = 1;
+                    }
                     $resource = new Item($selected_service, $service_transformer);
                     $price_data = $manager->createData($resource)->toArray();
 
@@ -207,6 +214,7 @@ class JobController extends Controller
                     $service_data += $price_data;
                     $services->push($service_data);
                 }
+                if ($notSame) $job_collection->put('is_same_service', 0);
             }
 
             $job_collection->put('services', $services);
@@ -267,6 +275,11 @@ class JobController extends Controller
             $original_delivery_charge = $job->deliveryPrice;
             $delivery_discount = $job->deliveryDiscount;
 
+            $voucher = $partnerOrder->order->voucher ? [
+                'code' => $partnerOrder->order->voucher->code,
+                'amount' => $partnerOrder->order->voucher->amount
+            ] : null;
+
             $bill = collect();
             $bill['total'] = (double)($partnerOrder->totalPrice + $partnerOrder->totalLogisticCharge);
             $bill['total_without_logistic'] = (double)($partnerOrder->totalPrice);
@@ -287,6 +300,7 @@ class JobController extends Controller
             $bill['delivery_discount'] = $delivery_discount;
             $bill['invoice'] = $job->partnerOrder->invoice;
             $bill['version'] = $job->partnerOrder->getVersion();
+            $bill['voucher'] = $voucher;
 
             return api_response($request, $bill, 200, ['bill' => $bill]);
         } catch (Throwable $e) {
@@ -384,7 +398,7 @@ class JobController extends Controller
         $due = $job->partnerOrder->calculate(true)->due;
         $status = $job->status;
 
-        if (in_array($status, ['Declined', 'Cancelled']))
+        if (in_array($status, ['Declined', 'Cancelled']) || $job->cancelRequests()->where('status', CancelRequestStatuses::PENDING)->first())
             return false;
         else {
             return $due > 0;

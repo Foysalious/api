@@ -29,6 +29,9 @@ class PromotionV3Controller extends Controller
                         DiscountCalculation $discount_calculation, UpsellCalculation $upsell_calculation)
     {
         try {
+            ini_set('memory_limit', '4096M');
+            ini_set('max_execution_time', 660);
+            
             $customer = $request->customer;
             $location = $request->location;
 
@@ -62,6 +65,9 @@ class PromotionV3Controller extends Controller
     public function autoApplyPromotion($customer, Request $request, VoucherSuggester $voucherSuggester, PartnerListRequest $partnerListRequest,
                                        PriceCalculation $price_calculation, DiscountCalculation $discount_calculation, UpsellCalculation $upsell_calculation)
     {
+        ini_set('memory_limit', '4096M');
+        ini_set('max_execution_time', 660);
+
         $this->validate($request, ['services' => 'string|required']);
         $partnerListRequest->setRequest($request)->prepareObject();
         $location = $request->location;
@@ -73,6 +79,7 @@ class PromotionV3Controller extends Controller
 
         $order_amount = $this->calculateOrderAmount($price_calculation, $discount_calculation, $upsell_calculation, $request->services, $location);
         if (!$order_amount) return api_response($request, null, 403, ['message' => 'No partner available at this combination']);
+
         $order_params = (new CheckParamsForOrder($request->customer, $request->customer->profile))
             ->setApplicant($request->customer)
             ->setCategory($partnerListRequest->selectedCategory->id)
@@ -82,7 +89,6 @@ class PromotionV3Controller extends Controller
             ->setSalesChannel($request->sales_channel);
 
         $voucherSuggester->init($order_params);
-
         if ($promo = $voucherSuggester->suggest()) {
             $applied_voucher = [
                 'amount' => (int)$promo['amount'],
