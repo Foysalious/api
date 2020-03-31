@@ -42,12 +42,23 @@ class ResourceJobController extends Controller
             ],
             "status" => JobStatuses::PROCESS,
             'preferred_time' => '2:00 PM-3:00 PM',
-            "preferred_time_start" => "14:00:00",
+            "preferred_time_start" => "2:00 PM",
             "schedule_date" => "2019-06-16",
             'services' => [
                 [
                     'name' => 'Daily Budget Meal',
-                    'variables' => [],
+                    'variables' => [
+                        [
+                            "title" => "chicken",
+                            "question" => "chicken",
+                            "answer" => "chicken"
+                        ],
+                        [
+                            "title" => "hg",
+                            "question" => "g",
+                            "answer" => "g9"
+                        ]
+                    ],
                     'unit' => 'person',
                     'quantity' => 1
                 ]
