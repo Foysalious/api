@@ -35,10 +35,10 @@ class ResourceJobController extends Controller
             'delivery_address' => ' Road#10, Avenue#9, House#1222&1223 Mirpur DOHS, Dhaka.',
             'delivery_mobile' => '+8801718741996',
             'geo_informations' => [
-                [
+
                     "lat" => 23.7367689,
                     "lng" => 90.3871961
-                ]
+
             ],
             "status" => JobStatuses::PROCESS,
             'preferred_time' => '2:00 PM-3:00 PM',
