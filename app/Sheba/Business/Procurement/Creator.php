@@ -51,6 +51,7 @@ class Creator
     private $labels;
     /** @var UploadedFile[] */
     private $attachments = [];
+    /** @var Procurement $procurement */
     private $procurement;
     private $bid;
     private $createdBy;
@@ -384,9 +385,9 @@ class Creator
     public function formatData()
     {
         $bid_price_quotations = null;
-        if ($this->procurement->type == 'advanced')
+        if ($this->procurement->isAdvanced())
             $bid_price_quotations = $this->generateBidItemData();
-        $order_details = [
+        return [
             'procurement_id' => $this->procurement->id,
             'procurement_title' => $this->procurement->title,
             'procurement_status' => $this->procurement->status,
@@ -408,7 +409,6 @@ class Creator
             'bid_price' => $this->bid->price,
             'bid_price_quotations' => $bid_price_quotations
         ];
-        return $order_details;
     }
 
     private function generateBidItemData()
