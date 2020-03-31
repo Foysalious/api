@@ -4,6 +4,8 @@
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Sheba\Authentication\AuthUser;
+use Sheba\Jobs\JobStatuses;
+use Sheba\PartnerOrder\PartnerOrderStatuses;
 use Sheba\Resource\App\Jobs\JobList;
 
 class ResourceJobController extends Controller
@@ -24,7 +26,8 @@ class ResourceJobController extends Controller
         $auth_user = $request->auth_user;
         $resource = $auth_user->getResource();
         $job_info = [
-            'order_id' => 'D-030562',
+            'id' => 192408,
+            "code" => "D-160620-1751-00208408",
             'customer_id' => 102,
             'customer_name' => 'Mehedi Hasan',
             'pro_pic' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/profiles/avatar/default.jpg',
@@ -37,6 +40,7 @@ class ResourceJobController extends Controller
                     "lng" => 90.3871961
                 ]
             ],
+            "status" => JobStatuses::PROCESS,
             'preferred_time' => '2:00 PM-3:00 PM',
             "preferred_time_start" => "14:00:00",
             "schedule_date" => "2019-06-16",
