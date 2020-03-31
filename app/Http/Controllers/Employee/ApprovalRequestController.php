@@ -1,5 +1,7 @@
 <?php namespace App\Http\Controllers\Employee;
 
+use App\Models\BusinessMember;
+use App\Models\BusinessRole;
 use App\Models\Member;
 use App\Models\Profile;
 use App\Transformers\Business\ApprovalRequestTransformer;
@@ -75,50 +77,37 @@ class ApprovalRequestController extends Controller
 
     public function show($approval_request, Request $request)
     {
-        try {
-            $approval_request = $this->approvalRequestRepo->find($approval_request);
-            $model = $approval_request->requestable_type;
-            $model = $model::find($approval_request->requestable_id);
-            $approvers = $this->getApprover($model);
-            $leave_business_member = $this->getBusinessMemberById($model->business_member_id);
-            $member = $leave_business_member->member;
-            $profile = $member->profile;
-            $role = $leave_business_member->role;
-            $leave_type = $model->leaveType;
-            $approval_request_details = [
-                'id' => $approval_request->id,
-                'status' => $approval_request->status,
-                'profile' => [
-                    'name' => $profile->name,
-                ],
-                'contents' => [
-                    'id' => $model->id,
-                    'title' => $model->title,
-                    'requested_on' => $model->created_at->format('M d') . ' at ' . $model->created_at->format('h:i a'),
-                    'total_days' => $model->total_days,
-                    'left' => $model->left_days,
-                    'leave_type' => $leave_type->title,
-                    'period' => Carbon::parse($model->start_date)->format('M d') . ' - ' . Carbon::parse($model->end_date)->format('M d'),
-                    'status' => $model->status,
-                ],
+        $approval_request = $this->approvalRequestRepo->find($approval_request);
+        /** @var Leave $requestable */
+        $requestable = $approval_request->requestable;
+        /** @var BusinessMember $business_member */
+        $business_member = $requestable->businessMember;
+        /** @var Member $member */
+        $member = $business_member->member;
+        /** @var Profile $profile */
+        $profile = $member->profile;
+        /** @var BusinessRole $role */
+        $role = $business_member->role;
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Item($approval_request, new ApprovalRequestTransformer($profile));
+        $approval_request = $manager->createData($resource)->toArray()['data'];
+        $approvers = $this->getApprover($requestable);
+        $approval_request = $approval_request + [
                 'approvers' => $approvers,
                 'department' => [
                     'department_id' => $role ? $role->businessDepartment->id : null,
                     'department' => $role ? $role->businessDepartment->name : null,
                     'designation' => $role ? $role->name : null
-                ],
+                ]
             ];
-            return api_response($request, null, 200, ['approval_request_details' => $approval_request_details]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        return api_response($request, null, 200, ['approval_details' => $approval_request]);
     }
 
-    private function getApprover($model)
+    private function getApprover($requestable)
     {
         $approvers = [];
-        foreach ($model->requests as $approval_request) {
+        foreach ($requestable->requests as $approval_request) {
             $business_member = $this->getBusinessMemberById($approval_request->approver_id);
             $member = $business_member->member;
             $profile = $member->profile;
@@ -137,10 +126,10 @@ class ApprovalRequestController extends Controller
             $type_ids = json_decode($request->type_id);
             $business_member = $this->getBusinessMember($request);
             $member = $this->getMember($request);
-            $model = 'Sheba\\Dal\\' . ucfirst(camel_case($type)) . '\\Model';
-            $models = $model::whereIn('id', $type_ids)->get();
-            foreach ($models as $model) {
-                $approval_request = $model->requests->where('approver_id', $business_member->id)->first();
+            $requestable = 'Sheba\\Dal\\' . ucfirst(camel_case($type)) . '\\Model';
+            $requestables = $requestable::whereIn('id', $type_ids)->get();
+            foreach ($requestables as $requestable) {
+                $approval_request = $requestable->requests->where('approver_id', $business_member->id)->first();
                 if (!$approval_request)
                     continue;
                 $updater->setMember($member)
@@ -149,15 +138,15 @@ class ApprovalRequestController extends Controller
                 if ($error = $updater->hasError())
                     return api_response($request, $error, 400, ['message' => $error]);
                 $updater->setStatus($request->status)->change();
-                if ($model->status != 'rejected') {
+                if ($requestable->status != 'rejected') {
                     $this->setModifier($member);
-                    $rejected_approval_requests = $model->requests->where('status', 'rejected');
+                    $rejected_approval_requests = $requestable->requests->where('status', 'rejected');
                     if ($rejected_approval_requests) {#Rejected Request
-                        $model->update($this->withBothModificationFields(['status' => 'rejected']));
+                        $requestable->update($this->withBothModificationFields(['status' => 'rejected']));
                     }
-                    $accepted_approval_requests = $model->requests->whereIn('status', ['pending', 'rejected']);#All Status Accepted
+                    $accepted_approval_requests = $requestable->requests->whereIn('status', ['pending', 'rejected']);#All Status Accepted
                     if ($accepted_approval_requests->isEmpty()) {
-                        $model->update($this->withBothModificationFields(['status' => 'accepted']));
+                        $requestable->update($this->withBothModificationFields(['status' => 'accepted']));
                     }
                 }
             }
