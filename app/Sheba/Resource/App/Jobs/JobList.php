@@ -19,12 +19,14 @@ class JobList
     private $jobInfo;
     /** @var Job */
     private $firstJobFromList;
+    private $actionCalculator;
 
-    public function __construct(JobRepositoryInterface $job_repository, RearrangeJobList $rearrange, JobInfo $jobInfo)
+    public function __construct(JobRepositoryInterface $job_repository, RearrangeJobList $rearrange, JobInfo $jobInfo, ActionCalculator $actionCalculator)
     {
         $this->jobRepository = $job_repository;
         $this->rearrange = $rearrange;
         $this->jobInfo = $jobInfo;
+        $this->actionCalculator = $actionCalculator;
     }
 
     public function setResource(Resource $resource)
@@ -106,7 +108,7 @@ class JobList
             $formatted_job->put('can_serve', 0);
             $formatted_job->put('can_collect', 0);
             $formatted_job->put('due', 0);
-            if ($this->firstJobFromList && $this->firstJobFromList->id == $job->id) $formatted_job = $this->calculateActionsForThisJob($formatted_job, $job);
+            if ($this->firstJobFromList && $this->firstJobFromList->id == $job->id) $formatted_job = $this->actionCalculator->calculateActionsForThisJob($formatted_job, $job);
             $formatted_jobs->push($formatted_job);
         }
         return $formatted_jobs;
@@ -137,19 +139,10 @@ class JobList
     {
         $now = Carbon::now();
         $job_start_time = $this->getJobStartTime($job);
-        if ($now->gt($job_start_time) && $this->isStatusBeforeProcess($job->status)) return ['type' => 'late', 'value' => 'Late'];
+        if ($now->gt($job_start_time) && $this->actionCalculator->isStatusBeforeProcess($job->status)) return ['type' => 'late', 'value' => 'Late'];
         if ($this->isStatusAfterOrEqualToProcess($job->status)) return ['type' => 'process', 'value' => 'Process'];
         if ($job_start_time->gt($now) && $job_start_time->diffInHours($now) <= 24) return ['type' => 'time', 'value' => Carbon::parse($job->preferred_time_start)->format('H:i A')];
         return ['type' => 'date', 'value' => Carbon::parse($job->schedule_date)->format('j F')];
-    }
-
-    /**
-     * @param $status
-     * @return bool
-     */
-    private function isStatusBeforeProcess($status)
-    {
-        return constants('JOB_STATUS_SEQUENCE')[$status] < constants('JOB_STATUS_SEQUENCE')[JobStatuses::PROCESS];
     }
 
     /**
@@ -160,30 +153,6 @@ class JobList
     {
         return constants('JOB_STATUS_SEQUENCE')[$status] >= constants('JOB_STATUS_SEQUENCE')[JobStatuses::PROCESS];
     }
-
-    /**
-     * First process, collect then serve
-     * @param $formatted_job
-     * @param Job $job
-     * @return mixed
-     */
-    private function calculateActionsForThisJob($formatted_job, Job $job)
-    {
-        $partner_order = $job->partnerOrder;
-        $partner_order->calculate();
-        if (($job->status == JobStatuses::PROCESS || $job->status == JobStatuses::SERVE_DUE) && $partner_order->due > 0) {
-            $formatted_job->put('can_collect', 1);
-        } elseif (($job->status == JobStatuses::PROCESS || $job->status == JobStatuses::SERVE_DUE) && $partner_order->due == 0) {
-            $formatted_job->put('can_serve', 1);
-        } elseif ($job->status == JobStatuses::SERVED && $partner_order->due > 0) {
-            $formatted_job->put('can_collect', 1);
-        } elseif ($this->isStatusBeforeProcess($job->status)) {
-            $formatted_job->put('can_process', 1);
-        }
-        if (!$partner_order->isClosedAndPaidAt()) $formatted_job->put('due', (double)$partner_order->due);
-        return $formatted_job;
-    }
-
 
     /**
      * @param Job $job
