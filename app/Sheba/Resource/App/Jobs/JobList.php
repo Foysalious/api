@@ -50,7 +50,7 @@ class JobList
         if (count($jobs) > 0) $this->setFirstJobFromList($jobs->first());
         return $this->formatJobs($jobs);
     }
-    
+
     public function getTomorrowsJobs()
     {
         $jobs = $this->jobRepository->getOngoingJobsForResource($this->resource->id)->where('schedule_date', Carbon::tomorrow()->toDateString())->get();
@@ -98,7 +98,7 @@ class JobList
             $formatted_job->put('delivery_mobile', $job->partnerOrder->order->delivery_mobile);
             $formatted_job->put('start_time', Carbon::parse($job->preferred_time_start)->format('h:i A'));
             $formatted_job->put('services', $this->jobInfo->formatServices($job->jobServices));
-            $formatted_job->put('order_status_message', $this->getOrderStatusMessage($job));
+            $formatted_job->put('order_status', $this->getOrderStatusMessage($job));
             $formatted_job->put('tag', $this->calculateTag($job));
             $formatted_job->put('status', $job->status);
             $formatted_job->put('schedule_dat', $job->schedule_date);
@@ -115,7 +115,7 @@ class JobList
     private function getOrderStatusMessage(Job $job)
     {
         if ($this->isStatusAfterOrEqualToProcess($job->status)) {
-            return "যে অর্ডার টি এখন চলছে";
+            return ['message' => "যে অর্ডার টি এখন চলছে", 'tag' => 'process'];
         } else {
             $job_start_time = $this->getJobStartTime($job);
             $different_in_minutes = Carbon::now()->diffInRealMinutes($job_start_time);
@@ -125,9 +125,9 @@ class JobList
             $min_message = $minute > 0 ? ($minute . ' মিনিট') : '';
             if (!empty($min_message) && !empty($hr_message)) $hr_message .= ' ';
             if (Carbon::now()->lt($job_start_time)) {
-                $message = "পরের অর্ডার";
+                $message = ['message' => "পরের অর্ডার", 'tag' => 'future'];
             } else {
-                $message = "লেট";
+                $message = ['message' => "লেট", 'tag' => 'late'];
             }
             return BanglaConverter::en2bn($hr_message . $min_message) . ' ' . $message;
         }
