@@ -36,7 +36,7 @@ class JobList
     {
         $jobs = $this->jobRepository->getOngoingJobsForResource($this->resource->id)->tillNow()->get();
         $jobs->load(['partnerOrder' => function ($q) {
-            $q->select('id', 'partner_id', 'order_id')->with(['order' => function ($q) {
+            $q->with(['order' => function ($q) {
                 $q->select('id', 'sales_channel', 'delivery_address_id', 'delivery_mobile')->with(['deliveryAddress' => function ($q) {
                     $q->select('id', 'name', 'address');
                 }]);
@@ -57,6 +57,7 @@ class JobList
     private function formatJobs(Collection $jobs)
     {
         $formatted_jobs = collect();
+        $first_job = $jobs->first();
         foreach ($jobs as $job) {
             $formatted_job = collect();
             $formatted_job->put('id', $job->id);
@@ -66,7 +67,11 @@ class JobList
             $formatted_job->put('start_time', Carbon::parse($job->preferred_time_start)->format('h:i A'));
             $formatted_job->put('services', $this->formatServices($job->jobServices));
             $formatted_job->put('order_status_message', $this->getOrderStatusMessage($job));
-            $formatted_job->put('status', $job->status);
+            $formatted_job->put('can_process', 0);
+            $formatted_job->put('can_serve', 0);
+            $formatted_job->put('can_collect', 0);
+            $formatted_job->put('due', 0);
+            if ($first_job->id == $job->id) $formatted_job = $this->calculateActionsForThisJob($formatted_job, $job);
             $formatted_jobs->push($formatted_job);
         }
         return $formatted_jobs;
@@ -109,6 +114,29 @@ class JobList
             }
             return BanglaConverter::en2bn($hr_message . $min_message) . ' ' . $message;
         }
+    }
+
+    /**
+     * First process, collect then serve
+     * @param $formatted_job
+     * @param Job $job
+     * @return mixed
+     */
+    private function calculateActionsForThisJob($formatted_job, Job $job)
+    {
+        $partner_order = $job->partnerOrder;
+        $partner_order->calculate();
+        if (($job->status == JobStatuses::PROCESS || $job->status == JobStatuses::SERVE_DUE) && $partner_order->due > 0) {
+            $formatted_job->put('can_collect', 1);
+        } elseif (($job->status == JobStatuses::PROCESS || $job->status == JobStatuses::SERVE_DUE) && $partner_order->due == 0) {
+            $formatted_job->put('can_serve', 1);
+        } elseif ($job->status == JobStatuses::SERVED && $partner_order->due > 0) {
+            $formatted_job->put('can_collect', 1);
+        } elseif (constants('JOB_STATUS_SEQUENCE')[$job->status] < constants('JOB_STATUS_SEQUENCE')[JobStatuses::PROCESS]) {
+            $formatted_job->put('can_process', 1);
+        }
+        if (!$partner_order->isClosedAndPaidAt()) $formatted_job->put('due', (double)$partner_order->due);
+        return $formatted_job;
     }
 
 }
