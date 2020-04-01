@@ -12,12 +12,15 @@ class ResourceJobController extends Controller
 {
     public function index(Request $request, JobList $job_list)
     {
+        $this->validate($request, ['offset' => 'numeric|min:0', 'limit' => 'numeric|min:1']);
+        list($offset, $limit) = calculatePagination($request);
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
         $resource = $auth_user->getResource();
         $jobs = $job_list->setResource($resource)->getOngoingJobs();
-        if (count($jobs) > 0) return api_response($request, $jobs, 200, ['orders' => $jobs]);
-        return api_response($request, $jobs, 404);
+        if (count($jobs) == 0) return api_response($request, $jobs, 404);
+        return api_response($request, $jobs, 200, ['orders' => $jobs->splice($offset, $limit)]);
+
     }
 
     public function orderDetails($job, Request $request)
@@ -36,8 +39,8 @@ class ResourceJobController extends Controller
             'delivery_mobile' => '+8801718741996',
             'geo_informations' => [
 
-                    "lat" => 23.7367689,
-                    "lng" => 90.3871961
+                "lat" => 23.7367689,
+                "lng" => 90.3871961
 
             ],
             "status" => JobStatuses::PROCESS,
