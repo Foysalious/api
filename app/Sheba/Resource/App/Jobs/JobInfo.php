@@ -18,6 +18,7 @@ class JobInfo
                 'name' => $job_service->service->name,
                 'image' => $job_service->service->app_thumb,
                 'variables' => json_decode($job_service->variables),
+                'unit' => $job_service->service->unit,
                 'quantity' => $job_service->quantity
             ]);
         }

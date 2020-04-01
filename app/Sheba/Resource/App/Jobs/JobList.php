@@ -45,7 +45,7 @@ class JobList
             }]);
         }, 'jobServices' => function ($q) {
             $q->select('id', 'variables', 'quantity', 'job_id', 'service_id')->with(['service' => function ($q) {
-                $q->select('id', 'name', 'app_thumb');
+                $q->select('id', 'name', 'app_thumb', 'unit');
             }]);
         }]);
         $jobs = $this->rearrange->rearrange($jobs);
@@ -83,7 +83,7 @@ class JobList
 
     private function getOrderStatusMessage(Job $job)
     {
-        if (!in_array($job->status, [JobStatuses::ACCEPTED, JobStatuses::PENDING, JobStatuses::CANCELLED])) {
+        if ($this->isStatusAfterOrEqualToProcess($job->status)) {
             return "যে অর্ডার টি এখন চলছে";
         } else {
             $job_start_time = $this->getJobStartTime($job);
