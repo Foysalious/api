@@ -66,7 +66,7 @@ class JobInfo
         $formatted_job->put('delivery_address', $job->partnerOrder->order->deliveryAddress->address);
         $formatted_job->put('delivery_mobile', $job->partnerOrder->order->delivery_mobile);
         $formatted_job->put('geo_informations', json_decode($job->partnerOrder->order->deliveryAddress->geo_informations));
-        $formatted_job->put('preferred_time_start', Carbon::parse($job->preferred_time_start)->format('h:i A'));
+        $formatted_job->put('start_time', Carbon::parse($job->preferred_time_start)->format('h:i A'));
         $formatted_job->put('schedule_date', $job->schedule_date);
         $formatted_job->put('services', $this->formatServices($job->jobServices));
         $formatted_job->put('status', $job->status);
