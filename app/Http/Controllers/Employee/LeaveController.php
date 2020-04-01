@@ -69,6 +69,7 @@ class LeaveController extends Controller
     {
         $this->validate($request, [
             'start_date' => 'required|before_or_equal:end_date', 'end_date' => 'required',
+            /*'note' => 'required', 'attachments.*' => 'file'*/
         ]);
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
@@ -78,7 +79,7 @@ class LeaveController extends Controller
             ->setLeaveTypeId($request->leave_type_id)
             ->setStartDate($request->start_date)
             ->setEndDate($request->end_date);
-
+        #if ($request->attachments && is_array($request->attachments)) $leave_creator->setAttachments($request->attachments);
         if ($leave_creator->hasError())
             return api_response($request, null, $leave_creator->getErrorCode(), ['message' => $leave_creator->getErrorMessage()]);
 
