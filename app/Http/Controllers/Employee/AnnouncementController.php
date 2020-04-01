@@ -43,5 +43,4 @@ class AnnouncementController extends Controller
         $announcements = $manager->createData($announcements)->toArray()['data'];
         return api_response($request, $announcements, 200, ['announcements' => $announcements]);
     }
-
 }
