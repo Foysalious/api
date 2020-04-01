@@ -284,11 +284,12 @@ class DueTrackerRepository extends BaseRepository
                 $temp['phone'] = $partner_pos_customer->details()['phone'];
                 $temp['balance'] = $item['balance'];
                 $temp['due_date_reminder'] = $due_date_reminder;
-                if (Carbon::parse($due_date_reminder)->format('d-m-Y') == Carbon::parse(Carbon::today())->format('d-m-Y')) {
+
+                if (Carbon::parse($due_date_reminder) == Carbon::parse(Carbon::today())) {
                     array_push($response['today'], $temp);
-                } else if (Carbon::parse($due_date_reminder)->format('d-m-Y') < Carbon::parse(Carbon::today())->format('d-m-Y')) {
+                } else if (Carbon::parse($due_date_reminder) < (Carbon::today())) {
                     array_push($response['previous'], $temp);
-                } else if (Carbon::parse($due_date_reminder)->format('d-m-Y') > Carbon::parse(Carbon::today())->format('d-m-Y')) {
+                } else if ((Carbon::parse($due_date_reminder)) > (Carbon::today())) {
                     array_push($response['next'], $temp);
                 }
             }
