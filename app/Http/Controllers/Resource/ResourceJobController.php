@@ -22,7 +22,16 @@ class ResourceJobController extends Controller
         $jobs = $job_list->setResource($resource)->getOngoingJobs();
         if (count($jobs) == 0) return api_response($request, $jobs, 404);
         return api_response($request, $jobs, 200, ['orders' => $jobs->splice($offset, $limit)]);
+    }
 
+    public function getAllJobs(Request $request, JobList $job_list)
+    {
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+        $upto_todays_jobs = $job_list->setResource($resource)->getOngoingJobs();
+        $tomorrows_jobs = $job_list->setResource($resource)->getTomorrowsJobs();
+        $rest_jobs = $job_list->setResource($resource)->getRestJobs();
+        return api_response($request, $job_list, 200, ['today' => $upto_todays_jobs, 'tomorrow' => $tomorrows_jobs, 'rest' => $rest_jobs]);
     }
 
     public function jobDetails(Job $job, Request $request, JobInfo $jobInfo)

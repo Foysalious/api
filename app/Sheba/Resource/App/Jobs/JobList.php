@@ -17,6 +17,8 @@ class JobList
     private $jobRepository;
     private $rearrange;
     private $jobInfo;
+    /** @var Job */
+    private $firstJobFromList;
 
     public function __construct(JobRepositoryInterface $job_repository, RearrangeJobList $rearrange, JobInfo $jobInfo)
     {
@@ -31,12 +33,42 @@ class JobList
         return $this;
     }
 
+    private function setFirstJobFromList(Job $firstJobFromList)
+    {
+        $this->firstJobFromList = $firstJobFromList;
+        return $this;
+    }
+
     /**
      * @return Collection
      */
     public function getOngoingJobs()
     {
         $jobs = $this->jobRepository->getOngoingJobsForResource($this->resource->id)->tillNow()->get();
+        $jobs = $this->loadNecessaryRelations($jobs);
+        $jobs = $this->rearrange->rearrange($jobs);
+        if (count($jobs) > 0) $this->setFirstJobFromList($jobs->first());
+        return $this->formatJobs($jobs);
+    }
+    
+    public function getTomorrowsJobs()
+    {
+        $jobs = $this->jobRepository->getOngoingJobsForResource($this->resource->id)->where('schedule_date', Carbon::tomorrow()->toDateString())->get();
+        $jobs = $this->loadNecessaryRelations($jobs);
+        $jobs = $this->rearrange->rearrange($jobs);
+        return $this->formatJobs($jobs);
+    }
+
+    public function getRestJobs()
+    {
+        $jobs = $this->jobRepository->getOngoingJobsForResource($this->resource->id)->where('schedule_date', '>', Carbon::tomorrow()->toDateString())->get();
+        $jobs = $this->loadNecessaryRelations($jobs);
+        $jobs = $this->rearrange->rearrange($jobs);
+        return $this->formatJobs($jobs);
+    }
+
+    private function loadNecessaryRelations($jobs)
+    {
         $jobs->load(['partnerOrder' => function ($q) {
             $q->with(['order' => function ($q) {
                 $q->select('id', 'sales_channel', 'delivery_address_id', 'delivery_mobile')->with(['deliveryAddress' => function ($q) {
@@ -48,8 +80,7 @@ class JobList
                 $q->select('id', 'name', 'app_thumb', 'unit');
             }]);
         }]);
-        $jobs = $this->rearrange->rearrange($jobs);
-        return $this->formatJobs($jobs);
+        return $jobs;
     }
 
     /**
@@ -59,7 +90,6 @@ class JobList
     private function formatJobs(Collection $jobs)
     {
         $formatted_jobs = collect();
-        $first_job = $jobs->first();
         foreach ($jobs as $job) {
             $formatted_job = collect();
             $formatted_job->put('id', $job->id);
@@ -71,11 +101,12 @@ class JobList
             $formatted_job->put('order_status_message', $this->getOrderStatusMessage($job));
             $formatted_job->put('tag', $this->calculateTag($job));
             $formatted_job->put('status', $job->status);
+            $formatted_job->put('schedule_dat', $job->schedule_date);
             $formatted_job->put('can_process', 0);
             $formatted_job->put('can_serve', 0);
             $formatted_job->put('can_collect', 0);
             $formatted_job->put('due', 0);
-            if ($first_job->id == $job->id) $formatted_job = $this->calculateActionsForThisJob($formatted_job, $job);
+            if ($this->firstJobFromList && $this->firstJobFromList->id == $job->id) $formatted_job = $this->calculateActionsForThisJob($formatted_job, $job);
             $formatted_jobs->push($formatted_job);
         }
         return $formatted_jobs;
