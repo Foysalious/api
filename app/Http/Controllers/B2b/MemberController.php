@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use App\Models\Business;
 use App\Models\Member;
 use Carbon\Carbon;
+use App\Sheba\Business\LeaveType\Creator as LeaveTypeCreator;
 use DB;
 
 class MemberController extends Controller
@@ -22,7 +23,7 @@ class MemberController extends Controller
     use ModificationFields;
     use FilesAttachment;
 
-    public function updateBusinessInfo($member, Request $request)
+    public function updateBusinessInfo($member, Request $request, LeaveTypeCreator $leave_type_creator)
     {
         try {
             $this->validate($request, [
@@ -60,6 +61,7 @@ class MemberController extends Controller
                 ];
                 BusinessMember::create($this->withCreateModificationField($member_business_data));
                 $this->saveSmsTemplate($business);
+                $leave_type_creator->createDefaultLeaveType($member, $business->id);
             }
 
             return api_response($request, 1, 200, ['business_id' => $business->id]);
