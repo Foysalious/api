@@ -30,7 +30,7 @@ class ResourceJobController extends Controller
         $upto_todays_jobs = $job_list->setResource($resource)->getOngoingJobs();
         $tomorrows_jobs = $job_list->setResource($resource)->getTomorrowsJobs();
         $rest_jobs = $job_list->setResource($resource)->getRestJobs();
-        return api_response($request, $job_list, 200, ['today' => $upto_todays_jobs, 'tomorrow' => $tomorrows_jobs, 'rest' => $rest_jobs]);
+        return api_response($request, $job_list, 200, ['jobs' => [['title' => 'আজকে', 'jobs' => $upto_todays_jobs], ['title' => 'আগামীকালকে', 'jobs' => $tomorrows_jobs], ['title' => 'পরবর্তী', 'jobs' => $rest_jobs]]]);
     }
 
     public function jobDetails(Job $job, Request $request, JobInfo $jobInfo)
