@@ -1,47 +1,77 @@
-<?php namespace App\Sheba\Business\LeaveType;
+<?php namespace Sheba\Business\LeaveType;
 
+use App\Models\Business;
+use App\Models\Member;
 use Sheba\Dal\LeaveType\Contract as LeaveTypesRepoInterface;
 use Sheba\ModificationFields;
 
-class Creator {
+class Creator
+{
     use ModificationFields;
+
+    /** @var LeaveTypesRepoInterface $leaveTypeRepository */
     private $leaveTypeRepository;
-    const ANNUAL = 'Annual Leave';
-    const SICK = 'Sick Leave';
-    const ANNUAL_DAYS = 21;
-    const SICK_DAYS = 14;
+    /** @var Business $business */
+    private $business;
+    /** @var Member $member */
+    private $member;
+    private $title;
+    private $total_days;
 
     public function __construct(LeaveTypesRepoInterface $leave_type_repo)
     {
         $this->leaveTypeRepository = $leave_type_repo;
     }
 
+    /**
+     * @param Business $business
+     * @return $this
+     */
+    public function setBusiness(Business $business)
+    {
+        $this->business = $business;
+        return $this;
+    }
 
     /**
-     * @param $member
-     * @param $business_id
-     * @return array
+     * @param Member $member
+     * @return $this
      */
-    public function createDefaultLeaveType($member, $business_id)
+    public function setMember(Member $member)
     {
-        $this->setModifier($member);
-        $annual_leave_data = [
-            'business_id' => $business_id,
-            'title' => self::ANNUAL,
-            'total_days' => self::ANNUAL_DAYS
-        ];
-        $annual_leave = $this->leaveTypeRepository->create($this->withCreateModificationField($annual_leave_data));
-        $sick_leave_data = [
-            'business_id' => $business_id,
-            'title' => self::SICK,
-            'total_days' => self::SICK_DAYS
-        ];
-        $sick_leave = $this->leaveTypeRepository->create($this->withCreateModificationField($sick_leave_data));
+        $this->member = $member;
+        return $this;
+    }
+
+    /**
+     * @param $title
+     * @return $this
+     */
+    public function setTitle($title)
+    {
+        $this->title = $title;
+        return $this;
+    }
+
+    /**
+     * @param $total_days
+     * @return $this
+     */
+    public function setTotalDays($total_days)
+    {
+        $this->total_days = $total_days;
+        return $this;
+    }
+
+    public function create()
+    {
+        $this->setModifier($this->member);
         $data = [
-            'annual_leave' => $annual_leave,
-            'sick_leave' => $sick_leave
+            'business_id' => $this->business->id,
+            'title' => $this->title,
+            'total_days' => $this->total_days
         ];
 
-        return $data;
+        return $this->leaveTypeRepository->create($this->withCreateModificationField($data));
     }
 }
