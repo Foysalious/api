@@ -2,8 +2,10 @@
 
 use App\Models\BusinessDepartment;
 use App\Models\BusinessMember;
+use App\Sheba\Attachments\Attachments;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Http\UploadedFile;
 use Sheba\Business\ApprovalRequest\Creator as ApprovalRequestCreator;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\Leave\EloquentImplementation as LeaveRepository;
@@ -12,6 +14,7 @@ use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Dal\Leave\Model as Leave;
+use DB;
 
 class Creator
 {
@@ -21,6 +24,9 @@ class Creator
     private $businessMember;
     private $leaveTypeId;
     private $leaveRepository;
+    /** @var Attachments */
+    private $attachmentManager;
+
     /** @var Carbon $startDate */
     private $startDate;
     /** @var Carbon $endDate */
@@ -34,6 +40,10 @@ class Creator
     private $managers = [];
     /** @var TimeFrame $timeFrame */
     private $timeFrame;
+    private $note;
+    private $createdBy;
+    /** @var UploadedFile[] */
+    private $attachments = [];
 
     /**
      * Creator constructor.
@@ -41,15 +51,17 @@ class Creator
      * @param BusinessMemberRepositoryInterface $business_member_repo
      * @param ApprovalRequestCreator $approval_request_creator
      * @param TimeFrame $time_frame
+     * @param Attachments $attachment_manager
      */
     public function __construct(LeaveRepository $leave_repo, BusinessMemberRepositoryInterface $business_member_repo,
                                 ApprovalRequestCreator $approval_request_creator,
-                                TimeFrame $time_frame)
+                                TimeFrame $time_frame, Attachments $attachment_manager)
     {
         $this->leaveRepository = $leave_repo;
         $this->businessMemberRepository = $business_member_repo;
         $this->approval_request_creator = $approval_request_creator;
         $this->timeFrame = $time_frame;
+        $this->attachmentManager = $attachment_manager;
     }
 
     public function setTitle($title)
@@ -108,6 +120,29 @@ class Creator
         return $this;
     }
 
+    public function setNote($note)
+    {
+        $this->note = $note;
+        return $this;
+    }
+
+    public function setCreatedBy($created_by)
+    {
+        $this->createdBy = $created_by;
+        return $this;
+    }
+
+
+    /**
+     * @param $attachments UploadedFile[]
+     * @return $this
+     */
+    public function setAttachments($attachments)
+    {
+        $this->attachments = $attachments;
+        return $this;
+    }
+
     private function setTotalDays()
     {
         return $this->endDate->diffInDays($this->startDate) + 1;
@@ -121,6 +156,7 @@ class Creator
     {
         $data = [
             'title' => $this->title,
+            'note' => $this->note,
             'business_member_id' => $this->businessMember->id,
             'leave_type_id' => $this->leaveTypeId,
             'start_date' => $this->startDate,
@@ -128,17 +164,27 @@ class Creator
             'total_days' => $this->setTotalDays(),
             'left_days' => $this->getLeftDays()
         ];
+        DB::transaction(function () use ($data) {
+            $this->setModifier($this->businessMember->member);
+            $leave = $this->leaveRepository->create($this->withCreateModificationField($data));
+            $this->approval_request_creator->setBusinessMember($this->businessMember)
+                ->setApproverId($this->approvers)
+                ->setRequestable($leave)
+                ->create();
+            $this->createAttachments($leave);
+            $this->notifySuperAdmins($leave);
+            return $leave;
+        });
+    }
 
-        $this->setModifier($this->businessMember->member);
-        $leave = $this->leaveRepository->create($this->withCreateModificationField($data));
-        $this->approval_request_creator->setBusinessMember($this->businessMember)
-            ->setApproverId($this->approvers)
-            ->setRequestable($leave)
-            ->create();
-
-        $this->notifySuperAdmins($leave);
-
-        return $leave;
+    private function createAttachments(Leave $leave)
+    {
+        foreach ($this->attachments as $attachment) {
+            $this->attachmentManager->setAttachableModel($leave)
+                ->setCreatedBy($this->createdBy)
+                ->setFile($attachment)
+                ->store();
+        }
     }
 
     /**
