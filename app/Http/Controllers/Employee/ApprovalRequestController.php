@@ -101,8 +101,16 @@ class ApprovalRequestController extends Controller
         $manager->setSerializer(new CustomSerializer());
         $resource = new Item($approval_request, new ApprovalRequestTransformer($profile));
         $approval_request = $manager->createData($resource)->toArray()['data'];
+
         $approvers = $this->getApprover($requestable);
-        $approval_request = $approval_request + ['approvers' => $approvers];
+        $approval_request = $approval_request + [
+            'approvers' => $approvers,
+            'department' => [
+                'department_id' => $role ? $role->businessDepartment->id : null,
+                'department'    => $role ? $role->businessDepartment->name : null,
+                'designation'   => $role ? $role->name : null
+            ]
+        ];
 
         return api_response($request, null, 200, ['approval_details' => $approval_request]);
     }
