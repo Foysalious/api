@@ -1,9 +1,11 @@
 <?php namespace App\Http\Controllers\Employee;
 
+use App\Models\Attachment;
 use App\Models\BusinessMember;
 use App\Sheba\Business\ACL\AccessControl;
 use App\Sheba\Business\BusinessBasicInformation;
 use App\Sheba\Business\Leave\Updater as LeaveUpdater;
+use App\Transformers\AttachmentTransformer;
 use App\Transformers\Business\LeaveListTransformer;
 use App\Transformers\Business\LeaveTransformer;
 use App\Transformers\CustomSerializer;
@@ -99,19 +101,15 @@ class LeaveController extends Controller
      */
     public function show($leave, Request $request, LeaveRepoInterface $leave_repo)
     {
-        try {
-            $leave = $leave_repo->find($leave);
-            $business_member = $this->getBusinessMember($request);
-            if (!$leave || $leave->business_member_id != $business_member->id) return api_response($request, null, 403);
-            $fractal = new Manager();
-            $fractal->setSerializer(new CustomSerializer());
-            $resource = new Item($leave, new LeaveTransformer());
-            return api_response($request, $leave, 200, ['leave' => $fractal->createData($resource)->toArray()['data']]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
 
+        $leave = $leave_repo->find($leave);
+        $business_member = $this->getBusinessMember($request);
+        if (!$leave || $leave->business_member_id != $business_member->id) return api_response($request, null, 403);
+        $fractal = new Manager();
+        $fractal->setSerializer(new CustomSerializer());
+        $resource = new Item($leave, new LeaveTransformer());
+        $leave = $fractal->createData($resource)->toArray()['data'];
+        return api_response($request, $leave, 200, ['leave' => $leave]);
     }
 
     /**
