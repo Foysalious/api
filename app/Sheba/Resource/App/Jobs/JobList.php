@@ -16,11 +16,13 @@ class JobList
     /** @var JobRepositoryInterface */
     private $jobRepository;
     private $rearrange;
+    private $jobInfo;
 
-    public function __construct(JobRepositoryInterface $job_repository, RearrangeJobList $rearrange)
+    public function __construct(JobRepositoryInterface $job_repository, RearrangeJobList $rearrange, JobInfo $jobInfo)
     {
         $this->jobRepository = $job_repository;
         $this->rearrange = $rearrange;
+        $this->jobInfo = $jobInfo;
     }
 
     public function setResource(Resource $resource)
@@ -42,7 +44,7 @@ class JobList
                 }]);
             }]);
         }, 'jobServices' => function ($q) {
-            $q->select('id', 'job_id', 'service_id')->with(['service' => function ($q) {
+            $q->select('id', 'variables', 'quantity', 'job_id', 'service_id')->with(['service' => function ($q) {
                 $q->select('id', 'name', 'app_thumb');
             }]);
         }]);
@@ -59,13 +61,14 @@ class JobList
         $formatted_jobs = collect();
         $first_job = $jobs->first();
         foreach ($jobs as $job) {
+//            dd($job->jobServices);
             $formatted_job = collect();
             $formatted_job->put('id', $job->id);
             $formatted_job->put('order_code', $job->partnerOrder->order->code());
             $formatted_job->put('delivery_address', $job->partnerOrder->order->deliveryAddress->address);
             $formatted_job->put('delivery_mobile', $job->partnerOrder->order->delivery_mobile);
             $formatted_job->put('start_time', Carbon::parse($job->preferred_time_start)->format('h:i A'));
-            $formatted_job->put('services', $this->formatServices($job->jobServices));
+            $formatted_job->put('services', $this->jobInfo->formatServices($job->jobServices));
             $formatted_job->put('order_status_message', $this->getOrderStatusMessage($job));
             $formatted_job->put('tag', $this->calculateTag($job));
             $formatted_job->put('status', $job->status);
@@ -77,24 +80,6 @@ class JobList
             $formatted_jobs->push($formatted_job);
         }
         return $formatted_jobs;
-    }
-
-
-    /**
-     * @param $job_services
-     * @return Collection
-     */
-    private function formatServices($job_services)
-    {
-        $services = collect();
-        foreach ($job_services as $job_service) {
-            $services->push([
-                'id' => $job_service->service->id,
-                'name' => $job_service->service->name,
-                'image' => $job_service->service->app_thumb,
-            ]);
-        }
-        return $services;
     }
 
     private function getOrderStatusMessage(Job $job)
