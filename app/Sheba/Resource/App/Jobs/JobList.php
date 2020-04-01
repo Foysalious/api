@@ -61,7 +61,6 @@ class JobList
         $formatted_jobs = collect();
         $first_job = $jobs->first();
         foreach ($jobs as $job) {
-//            dd($job->jobServices);
             $formatted_job = collect();
             $formatted_job->put('id', $job->id);
             $formatted_job->put('order_code', $job->partnerOrder->order->code());
