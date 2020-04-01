@@ -13,14 +13,19 @@ class JobInfo
     private $jobRepository;
     private $rearrange;
     private $resource;
+    private $actionCalculator;
 
-    public function __construct(JobRepositoryInterface $job_repository, RearrangeJobList $rearrange)
+    public function __construct(JobRepositoryInterface $job_repository, RearrangeJobList $rearrange, ActionCalculator $actionCalculator)
     {
         $this->jobRepository = $job_repository;
         $this->rearrange = $rearrange;
+        $this->actionCalculator = $actionCalculator;
     }
 
-    public function setResource(Resource $resource)
+    /**
+     * @param Resource $resource
+     * @return $this
+     */public function setResource(Resource $resource)
     {
         $this->resource = $resource;
         return $this;
@@ -54,6 +59,10 @@ class JobInfo
 
     }
 
+    /**
+     * @param Job $job
+     * @return Collection
+     */
     public function getJobDetails(Job $job)
     {
         $formatted_job = collect();
@@ -74,39 +83,7 @@ class JobInfo
         $formatted_job->put('can_serve', 0);
         $formatted_job->put('can_collect', 0);
         $formatted_job->put('due', 0);
-        if ($this->getFirstJob()->id == $job->id) $this->calculateActionsForThisJob($formatted_job, $job);
-        return $formatted_job;
-    }
-
-    /**
-     * @param $status
-     * @return bool
-     */
-    private function isStatusBeforeProcess($status)
-    {
-        return constants('JOB_STATUS_SEQUENCE')[$status] < constants('JOB_STATUS_SEQUENCE')[JobStatuses::PROCESS];
-    }
-
-    /**
-     * First process, collect then serve
-     * @param $formatted_job
-     * @param Job $job
-     * @return mixed
-     */
-    public function calculateActionsForThisJob($formatted_job, Job $job)
-    {
-        $partner_order = $job->partnerOrder;
-        $partner_order->calculate();
-        if (($job->status == JobStatuses::PROCESS || $job->status == JobStatuses::SERVE_DUE) && $partner_order->due > 0) {
-            $formatted_job->put('can_collect', 1);
-        } elseif (($job->status == JobStatuses::PROCESS || $job->status == JobStatuses::SERVE_DUE) && $partner_order->due == 0) {
-            $formatted_job->put('can_serve', 1);
-        } elseif ($job->status == JobStatuses::SERVED && $partner_order->due > 0) {
-            $formatted_job->put('can_collect', 1);
-        } elseif ($this->isStatusBeforeProcess($job->status)) {
-            $formatted_job->put('can_process', 1);
-        }
-        if (!$partner_order->isClosedAndPaidAt()) $formatted_job->put('due', (double)$partner_order->due);
+        if ($this->getFirstJob()->id == $job->id) $this->actionCalculator->calculateActionsForThisJob($formatted_job, $job);
         return $formatted_job;
     }
 }
