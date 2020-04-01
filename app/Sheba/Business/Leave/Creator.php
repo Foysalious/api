@@ -92,7 +92,7 @@ class Creator
 
     public function setLeaveTypeId($leave_type_id)
     {
-        $this->leaveTypeId = $leave_type_id;
+        $this->leaveTypeId = (int)$leave_type_id;
         return $this;
     }
 
@@ -202,8 +202,7 @@ class Creator
             return $leave_type->where('id', $this->leaveTypeId);
         })->get();
 
-        $business_total_leave_days_by_types = $leaves->first()->leaveType->total_days;
-
+        $business_total_leave_days_by_types = $this->businessMember->business->leaveTypes->where('id', $this->leaveTypeId)->first()->total_days;
         $leaves->each(function ($leave) use (&$leave_lefts) {
             $start_date = $leave->start_date->lt($this->timeFrame->start) ? $this->timeFrame->start : $leave->start_date;
             $end_date = $leave->end_date->gt($this->timeFrame->end) ? $this->timeFrame->end : $leave->end_date;
