@@ -73,6 +73,7 @@ class LeaveController extends Controller
             'attachments.*' => 'file'
         ]);
         $business_member = $this->getBusinessMember($request);
+        $member = $this->getMember($request);
         if (!$business_member) return api_response($request, null, 404);
 
         $leave = $leave_creator->setTitle($request->title)
@@ -81,7 +82,7 @@ class LeaveController extends Controller
             ->setStartDate($request->start_date)
             ->setEndDate($request->end_date)
             ->setNote($request->note)
-            ->setCreatedBy($business_member);
+            ->setCreatedBy($member);
         if ($request->attachments && is_array($request->attachments)) $leave_creator->setAttachments($request->attachments);
         if ($leave_creator->hasError())
             return api_response($request, null, $leave_creator->getErrorCode(), ['message' => $leave_creator->getErrorMessage()]);

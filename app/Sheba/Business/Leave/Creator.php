@@ -164,7 +164,8 @@ class Creator
             'total_days' => $this->setTotalDays(),
             'left_days' => $this->getLeftDays()
         ];
-        DB::transaction(function () use ($data) {
+        $leave = null;
+        DB::transaction(function () use ($data, &$leave) {
             $this->setModifier($this->businessMember->member);
             $leave = $this->leaveRepository->create($this->withCreateModificationField($data));
             $this->approval_request_creator->setBusinessMember($this->businessMember)
@@ -173,8 +174,8 @@ class Creator
                 ->create();
             $this->createAttachments($leave);
             $this->notifySuperAdmins($leave);
-            return $leave;
         });
+        return $leave;
     }
 
     private function createAttachments(Leave $leave)
