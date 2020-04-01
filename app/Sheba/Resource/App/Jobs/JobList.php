@@ -67,6 +67,8 @@ class JobList
             $formatted_job->put('start_time', Carbon::parse($job->preferred_time_start)->format('h:i A'));
             $formatted_job->put('services', $this->formatServices($job->jobServices));
             $formatted_job->put('order_status_message', $this->getOrderStatusMessage($job));
+            $formatted_job->put('tag', $this->calculateTag($job));
+            $formatted_job->put('status', $job->status);
             $formatted_job->put('can_process', 0);
             $formatted_job->put('can_serve', 0);
             $formatted_job->put('can_collect', 0);
@@ -100,7 +102,7 @@ class JobList
         if (!in_array($job->status, [JobStatuses::ACCEPTED, JobStatuses::PENDING, JobStatuses::CANCELLED])) {
             return "যে অর্ডার টি এখন চলছে";
         } else {
-            $job_start_time = Carbon::parse($job->schedule_date . ' ' . $job->preferred_time_start);
+            $job_start_time = $this->getJobStartTime($job);
             $different_in_minutes = Carbon::now()->diffInRealMinutes($job_start_time);
             $hour = floor($different_in_minutes / 60);
             $minute = $different_in_minutes > 60 ? $different_in_minutes % 60 : $different_in_minutes;
@@ -114,6 +116,34 @@ class JobList
             }
             return BanglaConverter::en2bn($hr_message . $min_message) . ' ' . $message;
         }
+    }
+
+    private function calculateTag(Job $job)
+    {
+        $now = Carbon::now();
+        $job_start_time = $this->getJobStartTime($job);
+        if ($now->gt($job_start_time) && $this->isStatusBeforeProcess($job->status)) return ['type' => 'late', 'value' => 'Late'];
+        if ($this->isStatusAfterOrEqualToProcess($job->status)) return ['type' => 'process', 'value' => 'Process'];
+        if ($job_start_time->gt($now) && $job_start_time->diffInHours($now) <= 24) return ['type' => 'time', 'value' => Carbon::parse($job->preferred_time_start)->format('H:i A')];
+        return ['type' => 'date', 'value' => Carbon::parse($job->schedule_date)->format('j F')];
+    }
+
+    /**
+     * @param $status
+     * @return bool
+     */
+    private function isStatusBeforeProcess($status)
+    {
+        return constants('JOB_STATUS_SEQUENCE')[$status] < constants('JOB_STATUS_SEQUENCE')[JobStatuses::PROCESS];
+    }
+
+    /**
+     * @param $status
+     * @return bool
+     */
+    private function isStatusAfterOrEqualToProcess($status)
+    {
+        return constants('JOB_STATUS_SEQUENCE')[$status] >= constants('JOB_STATUS_SEQUENCE')[JobStatuses::PROCESS];
     }
 
     /**
@@ -132,11 +162,22 @@ class JobList
             $formatted_job->put('can_serve', 1);
         } elseif ($job->status == JobStatuses::SERVED && $partner_order->due > 0) {
             $formatted_job->put('can_collect', 1);
-        } elseif (constants('JOB_STATUS_SEQUENCE')[$job->status] < constants('JOB_STATUS_SEQUENCE')[JobStatuses::PROCESS]) {
+        } elseif ($this->isStatusBeforeProcess($job->status)) {
             $formatted_job->put('can_process', 1);
         }
         if (!$partner_order->isClosedAndPaidAt()) $formatted_job->put('due', (double)$partner_order->due);
         return $formatted_job;
     }
+
+
+    /**
+     * @param Job $job
+     * @return Carbon
+     */
+    private function getJobStartTime(Job $job)
+    {
+        return Carbon::parse($job->schedule_date . ' ' . $job->preferred_time_start);
+    }
+
 
 }
