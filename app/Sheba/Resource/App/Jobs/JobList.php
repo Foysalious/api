@@ -45,7 +45,7 @@ class JobList
             }]);
         }, 'jobServices' => function ($q) {
             $q->select('id', 'variables', 'quantity', 'job_id', 'service_id')->with(['service' => function ($q) {
-                $q->select('id', 'name', 'app_thumb');
+                $q->select('id', 'name', 'app_thumb', 'unit');
             }]);
         }]);
         $jobs = $this->rearrange->rearrange($jobs);
