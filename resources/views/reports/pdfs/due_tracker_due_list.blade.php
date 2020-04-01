@@ -157,7 +157,7 @@
     <table style="width: 100%;line-height: 1">
         <tr>
             <td style="width: 70%"> Number of Transactions: {{ $total_transactions }}</td>
-            <td style="width: 30%">Due: <span style="color: #219653">{{$stats["due"]}} tk</span> </td>
+            <td style="width: 30%">Due: <span style="color: red">{{$stats["due"]}} tk</span> </td>
         </tr>
     </table>
     <table style="width: 100%;line-height: 1">
