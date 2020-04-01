@@ -39,7 +39,7 @@ class ResourceJobController extends Controller
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
         $resource = $auth_user->getResource();
-        if ($resource->id !== $job->resource_id) return api_response($request, $job, 403);
+        if ($resource->id !== $job->resource_id) return api_response($request, $job, 403, ["message" => "You're not authorized to access this job."]);
         $job = $jobInfo->setResource($resource)->getJobDetails($job);
         return api_response($request, $job, 200, ['job_details' => $job]);
     }
