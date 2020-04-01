@@ -91,6 +91,7 @@ class JobList
     {
         $formatted_jobs = collect();
         foreach ($jobs as $job) {
+            $job->partnerOrder->calculate(1);
             $formatted_job = collect();
             $formatted_job->put('id', $job->id);
             $formatted_job->put('order_code', $job->partnerOrder->order->code());
@@ -101,7 +102,8 @@ class JobList
             $formatted_job->put('order_status', $this->getOrderStatusMessage($job));
             $formatted_job->put('tag', $this->calculateTag($job));
             $formatted_job->put('status', $job->status);
-            $formatted_job->put('schedule_dat', $job->schedule_date);
+            $formatted_job->put('schedule_date', $job->schedule_date);
+            $formatted_job->put('schedule_date_time', Carbon::parse($job->schedule_date . ' ' . $job->preferred_time_start)->toDateTimeString());
             $formatted_job->put('can_process', 0);
             $formatted_job->put('can_serve', 0);
             $formatted_job->put('can_collect', 0);
@@ -116,6 +118,8 @@ class JobList
     {
         if ($this->isStatusAfterOrEqualToProcess($job->status)) {
             return ['message' => "যে অর্ডার টি এখন চলছে", 'tag' => 'process'];
+        } elseif ($job->status == JobStatuses::SERVED && !$job->partnerOrder->closed_at) {
+            return ['message' => "বিল সংগ্রহ বাকি আছে", 'tag' => 'collection'];
         } else {
             $job_start_time = $this->getJobStartTime($job);
             $different_in_minutes = Carbon::now()->diffInRealMinutes($job_start_time);
@@ -129,7 +133,7 @@ class JobList
             } else {
                 $message = ['message' => "লেট", 'tag' => 'late'];
             }
-            return BanglaConverter::en2bn($hr_message . $min_message) . ' ' . $message;
+            return BanglaConverter::en2bn($hr_message . $min_message) . ' ' . $message['message'];
         }
     }
 
@@ -170,7 +174,6 @@ class JobList
     private function calculateActionsForThisJob($formatted_job, Job $job)
     {
         $partner_order = $job->partnerOrder;
-        $partner_order->calculate();
         if (($job->status == JobStatuses::PROCESS || $job->status == JobStatuses::SERVE_DUE) && $partner_order->due > 0) {
             $formatted_job->put('can_collect', 1);
         } elseif (($job->status == JobStatuses::PROCESS || $job->status == JobStatuses::SERVE_DUE) && $partner_order->due == 0) {
