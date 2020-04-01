@@ -52,7 +52,7 @@ class JobList
         if (count($jobs) > 0) $this->setFirstJobFromList($jobs->first());
         return $this->formatJobs($jobs);
     }
-    
+
     public function getTomorrowsJobs()
     {
         $jobs = $this->jobRepository->getOngoingJobsForResource($this->resource->id)->where('schedule_date', Carbon::tomorrow()->toDateString())->get();
@@ -74,7 +74,9 @@ class JobList
         $jobs->load(['partnerOrder' => function ($q) {
             $q->with(['order' => function ($q) {
                 $q->select('id', 'sales_channel', 'delivery_address_id', 'delivery_mobile')->with(['deliveryAddress' => function ($q) {
-                    $q->select('id', 'name', 'address');
+                    $q->select('id', 'name', 'address', 'location_id')->with(['location' => function ($q) {
+                        $q->select('id', 'name');
+                    }]);
                 }]);
             }]);
         }, 'jobServices' => function ($q) {
@@ -93,17 +95,20 @@ class JobList
     {
         $formatted_jobs = collect();
         foreach ($jobs as $job) {
+            $job->partnerOrder->calculate(1);
             $formatted_job = collect();
             $formatted_job->put('id', $job->id);
             $formatted_job->put('order_code', $job->partnerOrder->order->code());
             $formatted_job->put('delivery_address', $job->partnerOrder->order->deliveryAddress->address);
+            $formatted_job->put('location', $job->partnerOrder->order->deliveryAddress->location->name);
             $formatted_job->put('delivery_mobile', $job->partnerOrder->order->delivery_mobile);
             $formatted_job->put('start_time', Carbon::parse($job->preferred_time_start)->format('h:i A'));
             $formatted_job->put('services', $this->jobInfo->formatServices($job->jobServices));
-            $formatted_job->put('order_status_message', $this->getOrderStatusMessage($job));
+            $formatted_job->put('order_status', $this->getOrderStatusMessage($job));
             $formatted_job->put('tag', $this->calculateTag($job));
             $formatted_job->put('status', $job->status);
-            $formatted_job->put('schedule_dat', $job->schedule_date);
+            $formatted_job->put('schedule_date', $job->schedule_date);
+            $formatted_job->put('schedule_date_time', Carbon::parse($job->schedule_date . ' ' . $job->preferred_time_start)->toDateTimeString());
             $formatted_job->put('can_process', 0);
             $formatted_job->put('can_serve', 0);
             $formatted_job->put('can_collect', 0);
@@ -117,7 +122,9 @@ class JobList
     private function getOrderStatusMessage(Job $job)
     {
         if ($this->isStatusAfterOrEqualToProcess($job->status)) {
-            return "যে অর্ডার টি এখন চলছে";
+            return ['message' => "যে অর্ডার টি এখন চলছে", 'tag' => 'process'];
+        } elseif ($job->status == JobStatuses::SERVED && !$job->partnerOrder->closed_at) {
+            return ['message' => "বিল সংগ্রহ বাকি আছে", 'tag' => 'collection'];
         } else {
             $job_start_time = $this->getJobStartTime($job);
             $different_in_minutes = Carbon::now()->diffInRealMinutes($job_start_time);
@@ -127,11 +134,11 @@ class JobList
             $min_message = $minute > 0 ? ($minute . ' মিনিট') : '';
             if (!empty($min_message) && !empty($hr_message)) $hr_message .= ' ';
             if (Carbon::now()->lt($job_start_time)) {
-                $message = "পরের অর্ডার";
+                $message = ['message' => "পরের অর্ডার", 'tag' => 'future'];
             } else {
-                $message = "লেট";
+                $message = ['message' => "লেট", 'tag' => 'late'];
             }
-            return BanglaConverter::en2bn($hr_message . $min_message) . ' ' . $message;
+            return BanglaConverter::en2bn($hr_message . $min_message) . ' ' . $message['message'];
         }
     }
 
