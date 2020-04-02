@@ -1,6 +1,5 @@
 <?php namespace App\Transformers\Business;
 
-use App\Models\BusinessRole;
 use App\Models\Profile;
 use Carbon\Carbon;
 use League\Fractal\TransformerAbstract;
@@ -12,12 +11,10 @@ class ApprovalRequestTransformer extends TransformerAbstract
 {
     /** @var Profile Profile */
     private $profile;
-    private $role;
 
-    public function __construct(Profile $profile, BusinessRole $role)
+    public function __construct(Profile $profile)
     {
         $this->profile = $profile;
-        $this->role = $role;
     }
 
     /**
