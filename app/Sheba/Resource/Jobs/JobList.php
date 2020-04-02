@@ -183,5 +183,15 @@ class JobList
         return Carbon::parse($job->schedule_date . ' ' . $job->preferred_time_start);
     }
 
+    public function getNumberOfJobs()
+    {
+        $jobs_summary = [];
+        $jobs_summary['schedule_due_jobs'] = $this->jobRepository->getOngoingJobsForResource($this->resource->id)->tillNow()->where('status', JobStatuses::SCHEDULE_DUE)->count();
+        $jobs_summary['todays_jobs'] = $this->jobRepository->getOngoingJobsForResource($this->resource->id)->tillNow()->count();
+        $jobs_summary['tomorrows_jobs'] = $this->jobRepository->getOngoingJobsForResource($this->resource->id)->where('schedule_date', Carbon::tomorrow()->toDateString())->count();
+        $jobs_summary['rest_jobs'] = $this->jobRepository->getOngoingJobsForResource($this->resource->id)->where('schedule_date', '>', Carbon::tomorrow()->toDateString())->count();
+        return $jobs_summary;
+    }
+
 
 }
