@@ -45,6 +45,15 @@ class BusinessRoute
                     $api->post('/{employee}', 'B2b\CoWorkerController@update');
                     $api->get('/{employee}/expense/pdf', 'B2b\CoWorkerController@show');
                 });
+                $api->group(['prefix' => 'leaves'], function ($api) {
+                    $api->group(['prefix' => 'approval-requests'], function ($api) {
+                        $api->get('/lists', 'B2b\LeaveController@index');
+                        $api->group(['prefix' => '{approval_request}'], function ($api) {
+                            $api->get('/', 'B2b\LeaveController@show');
+                        });
+                        $api->post('/status', 'B2b\LeaveController@updateStatus');
+                    });
+                });
                 $api->group(['prefix' => 'orders'], function ($api) {
                     $api->get('/', 'B2b\OrderController@index');
                     $api->group(['prefix' => '{order}', 'middleware' => ['business_order.auth']], function ($api) {
@@ -243,8 +252,8 @@ class BusinessRoute
                         $api->post('/', 'B2b\LeaveSettingsController@store');
 
                         $api->group(['prefix' => '{setting}'], function ($api) {
-                            $api->post('update','B2b\LeaveSettingsController@update');
-                            $api->delete('delete','B2b\LeaveSettingsController@delete');
+                            $api->post('update', 'B2b\LeaveSettingsController@update');
+                            $api->delete('delete', 'B2b\LeaveSettingsController@delete');
                         });
                     });
                 });
