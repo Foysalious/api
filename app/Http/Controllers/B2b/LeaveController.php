@@ -7,6 +7,7 @@ use App\Models\Member;
 use App\Models\Profile;
 use App\Sheba\Business\BusinessBasicInformation;
 use App\Transformers\Business\ApprovalRequestTransformer;
+use App\Transformers\Business\LeaveRequestDetailsTransformer;
 use App\Transformers\CustomSerializer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -74,6 +75,39 @@ class LeaveController extends Controller
         else return api_response($request, null, 404);
     }
 
+    /**
+     * @param $business
+     * @param $approval_request
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function show($business, $approval_request, Request $request)
+    {
+        $approval_request = $this->approvalRequestRepo->find($approval_request);
+        /** @var Leave $requestable */
+        $requestable = $approval_request->requestable;
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if ($business_member->id != $approval_request->approver_id)
+            return api_response($request, null, 403, ['message' => 'You Are not authorized to show this request']);
+        $leave_requester_business_member = $this->getBusinessMemberById($requestable->business_member_id);
+        /** @var Member $member */
+        $member = $leave_requester_business_member->member;
+        /** @var Profile $profile */
+        $profile = $member->profile;
+        /** @var BusinessRole $role */
+        $role = $leave_requester_business_member->role;
+
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Item($approval_request, new LeaveRequestDetailsTransformer($profile, $role));
+        $approval_request = $manager->createData($resource)->toArray()['data'];
+
+        $approvers = $this->getApprover($requestable);
+        $approval_request = $approval_request + ['approvers' => $approvers];
+        return api_response($request, null, 200, ['approval_details' => $approval_request]);
+    }
+    
     private function filterWithDepartment($leave_approval_requests, Request $request)
     {
         return $leave_approval_requests->filter(function ($approval_request) use ($request) {
@@ -99,12 +133,26 @@ class LeaveController extends Controller
     }
 
     /**
-     * @param $approval_request
-     * @param Request $request
-     * @return void
+     * @param $requestable
+     * @return array
      */
-    public function show($approval_request, Request $request)
+    private function getApprover($requestable)
     {
-        dd($approval_request);
+        $approvers = [];
+        foreach ($requestable->requests as $approval_request) {
+            $business_member = $this->getBusinessMemberById($approval_request->approver_id);
+            $member = $business_member->member;
+            $profile = $member->profile;
+            $role = $business_member->role;
+            array_push($approvers, [
+                'name' => $profile->name,
+                'designation' => $role ? $role->name : null,
+                'department' => $role ? $role->businessDepartment->name : null,
+                'phone' => $profile->mobile,
+                'profile_pic' => $profile->pro_pic,
+                'status' => $approval_request->status,
+            ]);
+        }
+        return $approvers;
     }
 }
