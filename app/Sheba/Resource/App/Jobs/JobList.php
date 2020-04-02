@@ -53,6 +53,18 @@ class JobList
         return $this->formatJobs($jobs);
     }
 
+    /**
+     * @return Job|null
+     */
+    public function getNextJob()
+    {
+        $jobs = $this->jobRepository->getOngoingJobsForResource($this->resource->id)->whereIn('status', [JobStatuses::ACCEPTED, JobStatuses::SCHEDULE_DUE])
+            ->where('schedule_date', Carbon::now()->toDateString())
+            ->where('preferred_time_start', '=', Carbon::now()->addMinutes(15)->format('H:i'))->get();
+        $jobs = $this->formatJobs($jobs);
+        return $jobs->first();
+    }
+
     public function getTomorrowsJobs()
     {
         $jobs = $this->jobRepository->getOngoingJobsForResource($this->resource->id)->where('schedule_date', Carbon::tomorrow()->toDateString())->get();
@@ -121,19 +133,20 @@ class JobList
 
     private function getOrderStatusMessage(Job $job)
     {
+        $now = Carbon::now()->format('H:i');
         if ($this->isStatusAfterOrEqualToProcess($job->status)) {
             return ['message' => "যে অর্ডার টি এখন চলছে", 'tag' => 'process'];
-        } elseif ($job->status == JobStatuses::SERVED && !$job->partnerOrder->closed_at) {
+        } elseif ($job->status == JobStatuses::SERVED && !$job->partnerOrder->isClosedAndPaidAt()) {
             return ['message' => "বিল সংগ্রহ বাকি আছে", 'tag' => 'collection'];
         } else {
             $job_start_time = $this->getJobStartTime($job);
-            $different_in_minutes = Carbon::now()->diffInRealMinutes($job_start_time);
+            $different_in_minutes = Carbon::parse($now)->diffInMinutes($job_start_time);
             $hour = floor($different_in_minutes / 60);
             $minute = $different_in_minutes > 60 ? $different_in_minutes % 60 : $different_in_minutes;
             $hr_message = $hour > 0 ? ($hour . ' ঘণ্টা') : '';
             $min_message = $minute > 0 ? ($minute . ' মিনিট') : '';
             if (!empty($min_message) && !empty($hr_message)) $hr_message .= ' ';
-            if (Carbon::now()->lt($job_start_time)) {
+            if (Carbon::parse($now)->lt($job_start_time)) {
                 $message = ['message' => "পরের অর্ডার", 'tag' => 'future'];
             } else {
                 $message = ['message' => "লেট", 'tag' => 'late'];

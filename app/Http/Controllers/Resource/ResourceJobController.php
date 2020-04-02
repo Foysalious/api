@@ -53,4 +53,13 @@ class ResourceJobController extends Controller
         return api_response($request, $bill, 200, ['bill' => $bill]);
     }
 
+    public function getNextJob(Request $request, JobList $job_list)
+    {
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+        $job = $job_list->setResource($resource)->getNextJob();
+        if (!$job) return api_response($request, $job, 404);
+        return api_response($request, $job, 200, ['job' => $job]);
+    }
 }
