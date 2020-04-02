@@ -42,6 +42,7 @@ class ApprovalRequestTransformer extends TransformerAbstract
                 'left' => $requestable->left_days,
                 'period' => Carbon::parse($requestable->start_date)->format('M d') . ' - ' . Carbon::parse($requestable->end_date)->format('M d'),
                 'status' => $requestable->status,
+                'note' => $requestable->note,
             ]
         ];
     }

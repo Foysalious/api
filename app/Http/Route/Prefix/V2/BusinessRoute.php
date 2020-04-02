@@ -47,7 +47,7 @@ class BusinessRoute
                 });
                 $api->group(['prefix' => 'leaves'], function ($api) {
                     $api->group(['prefix' => 'approval-requests'], function ($api) {
-                        $api->get('/', 'B2b\LeaveController@index');
+                        $api->get('/lists', 'B2b\LeaveController@index');
                         $api->group(['prefix' => '{approval_request}'], function ($api) {
                             $api->get('/', 'B2b\LeaveController@show');
                         });

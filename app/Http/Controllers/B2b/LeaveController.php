@@ -39,10 +39,18 @@ class LeaveController extends Controller
      */
     public function index(Request $request, ApprovalRequestRepositoryInterface $approval_request_repo)
     {
-        $business_member = $this->getBusinessMember($request);
+        list($offset, $limit) = calculatePagination($request);
+        $business_member = $request->business_member;
         $leaves = [];
-        $approval_requests = $approval_request_repo->getApprovalRequestByBusinessMember($business_member);
-        foreach ($approval_requests as $approval_request) {
+        $leave_approval_requests = $approval_request_repo->getApprovalRequestByBusinessMemberFilterBy($business_member, Type::LEAVE);
+
+        if ($request->has('status')) $leave_approval_requests = $leave_approval_requests->where('status', $request->status);
+        if ($request->has('department')) $leave_approval_requests = $this->filterWithDepartment($leave_approval_requests, $request);
+        if ($request->has('employee')) $leave_approval_requests = $this->filterWithEmployee($leave_approval_requests, $request);
+        $total_leave_approval_requests = $leave_approval_requests->count();
+        if ($request->has('limit')) $leave_approval_requests = $leave_approval_requests->splice($offset, $limit);
+
+        foreach ($leave_approval_requests as $approval_request) {
             /** @var Leave $requestable */
             $requestable = $approval_request->requestable;
             /** @var Member $member */
@@ -60,8 +68,35 @@ class LeaveController extends Controller
             array_push($leaves, $approval_request);
         }
 
-        if (count($leaves) > 0) return api_response($request, $leaves, 200, ['leaves' => $leaves]);
+        if (count($leaves) > 0) return api_response($request, $leaves, 200, [
+            'leaves' => $leaves,
+            'total_leave_requests' => $total_leave_approval_requests,
+        ]);
         else return api_response($request, null, 404);
+    }
+
+    private function filterWithDepartment($leave_approval_requests, Request $request)
+    {
+        return $leave_approval_requests->filter(function ($approval_request) use ($request) {
+            /** @var Leave $requestable */
+            $requestable = $approval_request->requestable;
+            /** @var BusinessMember $business_member */
+            $business_member = $requestable->businessMember;
+            /** @var BusinessRole $role */
+            $role = $business_member->role;
+            if ($role) return $role->businessDepartment->id == $request->department;
+        });
+    }
+
+    private function filterWithEmployee($leave_approval_requests, Request $request)
+    {
+        return $leave_approval_requests->filter(function ($approval_request) use ($request) {
+            /** @var Leave $requestable */
+            $requestable = $approval_request->requestable;
+            /** @var Member $member */
+            $member = $requestable->businessMember->member;
+            return $member->id == $request->employee;
+        });
     }
 
     /**
