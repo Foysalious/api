@@ -1,9 +1,11 @@
 <?php namespace App\Http\Controllers\Employee;
 
+use App\Models\Attachment;
 use App\Models\BusinessMember;
 use App\Models\BusinessRole;
 use App\Models\Member;
 use App\Models\Profile;
+use App\Transformers\AttachmentTransformer;
 use App\Transformers\Business\ApprovalRequestTransformer;
 use App\Transformers\CustomSerializer;
 
@@ -105,14 +107,16 @@ class ApprovalRequestController extends Controller
         $approval_request = $manager->createData($resource)->toArray()['data'];
 
         $approvers = $this->getApprover($requestable);
+        $attachments = $this->getAttachments($requestable);
         $approval_request = $approval_request + [
-            'approvers' => $approvers,
-            'department' => [
-                'department_id' => $role ? $role->businessDepartment->id : null,
-                'department'    => $role ? $role->businessDepartment->name : null,
-                'designation'   => $role ? $role->name : null
-            ]
-        ];
+                'approvers' => $approvers,
+                'attachments' => $attachments,
+                'department' => [
+                    'department_id' => $role ? $role->businessDepartment->id : null,
+                    'department' => $role ? $role->businessDepartment->name : null,
+                    'designation' => $role ? $role->name : null
+                ]
+            ];
 
         return api_response($request, null, 200, ['approval_details' => $approval_request]);
     }
@@ -131,6 +135,17 @@ class ApprovalRequestController extends Controller
             array_push($approvers, ['name' => $profile->name, 'status' => $approval_request->status]);
         }
         return $approvers;
+    }
+
+    /**
+     * @param $requestable
+     * @return array
+     */
+    private function getAttachments($requestable)
+    {
+        return $requestable->attachments->map(function (Attachment $attachment) {
+            return (new AttachmentTransformer())->transform($attachment);
+        })->toArray();
     }
 
     /**
