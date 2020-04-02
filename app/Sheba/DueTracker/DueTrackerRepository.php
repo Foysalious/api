@@ -41,8 +41,8 @@ class DueTrackerRepository extends BaseRepository
             $list = $list->where('balance_type', $request->balance_type)->values();
         }
         if (!empty($order_by) && $order_by == "name") {
-            $order = $request->order == 'desc' ? 'sortBy' : 'sortByDesc';
-            $list = $list->$order('customer_name')->values();
+            $order = ($request->order == 'desc') ? 'sortByDesc' : 'sortBy';
+            $list = $list->$order('customer_name',SORT_NATURAL|SORT_FLAG_CASE)->values();
         }
         if ($paginate) {
             list($offset, $limit) = calculatePagination($request);
@@ -196,8 +196,9 @@ class DueTrackerRepository extends BaseRepository
         if ($request->hasFile('attachments')){
             $data['attachments'] = $this->updateAttachments($request);
         }
+        $data['amount_cleared'] = $request->has('amount_cleared') ? $request->amount_cleared : 0;
         $data['created_from']   = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
-        $data['updated_at']     = Carbon::now()->format('Y-m-d H:i:s');
+        $data['updated_at']     = $request->updated_at ?: Carbon::now()->format('Y-m-d H:i:s');
 
         $response = $this->client->post("accounts/$this->accountId/entries/update/$request->entry_id", $data);
         return  $response['data'];
