@@ -3,11 +3,14 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\Job;
+use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\Request;
 use Sheba\Authentication\AuthUser;
 use Sheba\Resource\Jobs\BillInfo;
 use Sheba\Resource\Jobs\JobInfo;
 use Sheba\Resource\Jobs\JobList;
+use Sheba\Resource\Jobs\Updater\StatusUpdater;
+use Sheba\UserAgentInformation;
 
 class ResourceJobController extends Controller
 {
@@ -63,14 +66,21 @@ class ResourceJobController extends Controller
         return api_response($request, $job, 200, ['job' => $job]);
     }
 
-    public function updateStatus(Job $job, Request $request)
+    public function updateStatus(Job $job, Request $request, StatusUpdater $status_updater, UserAgentInformation $user_agent_information)
     {
+        $this->validate($request, ['status' => 'string|in:process,served']);
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
         $resource = $auth_user->getResource();
         if ($resource->id !== $job->resource_id) return api_response($request, $job, 403, ["message" => "You're not authorized to access this job's bill."]);
-        $bill = $billInfo->getBill($job);
-        return api_response($request, $bill, 200, ['bill' => $bill]);
+        $user_agent_information->setRequest($request);
+        $status_updater->setResource($resource)->setJob($job)->setUserAgentInformation($user_agent_information)->setStatus($request->status);
+        try {
+            $response = $status_updater->update();
+        } catch (GuzzleException $e) {
+            return api_response($request, null, 500);
+        }
+        return api_response($request, $response, $response->getCode(), ['message' => $response->getMessage()]);
     }
 
 }
