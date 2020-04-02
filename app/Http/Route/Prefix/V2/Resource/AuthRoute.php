@@ -16,6 +16,7 @@ class AuthRoute
                     $api->get('schedules', 'Resource\ResourceController@getSchedules');
                     $api->get('/', 'Resource\ResourceJobController@jobDetails');
                     $api->post('status', 'Resource\ResourceJobController@updateStatus');
+                    $api->post('reschedule', 'Resource\ResourceJobController@rescheduleJob');
                     $api->get('bills', 'Resource\ResourceJobController@getBills');
                     $api->get('rates', 'Resource\ResourceJobRateController@index');
                     $api->post('rating', 'Resource\ResourceJobRateController@storeCustomerRating');

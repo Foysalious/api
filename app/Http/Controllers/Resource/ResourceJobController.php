@@ -9,6 +9,7 @@ use Sheba\Authentication\AuthUser;
 use Sheba\Resource\Jobs\BillInfo;
 use Sheba\Resource\Jobs\JobInfo;
 use Sheba\Resource\Jobs\JobList;
+use Sheba\Resource\Jobs\Reschedule\RescheduleJob;
 use Sheba\Resource\Jobs\Updater\StatusUpdater;
 use Sheba\UserAgentInformation;
 
@@ -77,6 +78,24 @@ class ResourceJobController extends Controller
         $status_updater->setResource($resource)->setJob($job)->setUserAgentInformation($user_agent_information)->setStatus($request->status);
         try {
             $response = $status_updater->update();
+        } catch (GuzzleException $e) {
+            return api_response($request, null, 500);
+        }
+        return api_response($request, $response, $response->getCode(), ['message' => $response->getMessage()]);
+    }
+
+    public function rescheduleJob(Job $job, Request $request, RescheduleJob $reschedule_job, UserAgentInformation $user_agent_information)
+    {
+        $this->validate($request, ['schedule_date' => 'string', 'schedule_time_slot' => 'string']);
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+        if ($resource->id !== $job->resource_id) return api_response($request, $job, 403, ["message" => "You're not authorized to access this job's bill."]);
+        $user_agent_information->setRequest($request);
+        $reschedule_job->setResource($resource)->setJob($job)->setUserAgentInformation($user_agent_information)->setScheduleDate($request->schedule_date)
+            ->setScheduleTimeSlot($request->schedule_time_slot);
+        try {
+            $response = $reschedule_job->reschedule();
         } catch (GuzzleException $e) {
             return api_response($request, null, 500);
         }
