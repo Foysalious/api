@@ -34,15 +34,14 @@ class LeaveController extends Controller
 
     /**
      * @param Request $request
-     * @param ApprovalRequestRepositoryInterface $approval_request_repo
      * @return JsonResponse
      */
-    public function index(Request $request, ApprovalRequestRepositoryInterface $approval_request_repo)
+    public function index(Request $request)
     {
         list($offset, $limit) = calculatePagination($request);
         $business_member = $request->business_member;
         $leaves = [];
-        $leave_approval_requests = $approval_request_repo->getApprovalRequestByBusinessMemberFilterBy($business_member, Type::LEAVE);
+        $leave_approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMemberFilterBy($business_member, Type::LEAVE);
 
         if ($request->has('status')) $leave_approval_requests = $leave_approval_requests->where('status', $request->status);
         if ($request->has('department')) $leave_approval_requests = $this->filterWithDepartment($leave_approval_requests, $request);
