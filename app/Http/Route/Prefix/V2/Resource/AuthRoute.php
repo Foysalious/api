@@ -15,6 +15,7 @@ class AuthRoute
                 $api->group(['prefix' => '{job}'], function ($api) {
                     $api->get('schedules', 'Resource\ResourceController@getSchedules');
                     $api->get('/', 'Resource\ResourceJobController@jobDetails');
+                    $api->post('status', 'Resource\ResourceJobController@updateStatus');
                     $api->get('bills', 'Resource\ResourceJobController@getBills');
                 });
             });
