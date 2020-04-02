@@ -53,6 +53,18 @@ class JobList
         return $this->formatJobs($jobs);
     }
 
+    /**
+     * @return Job|null
+     */
+    public function getNextJob()
+    {
+        $jobs = $this->jobRepository->getOngoingJobsForResource($this->resource->id)->whereIn('status', [JobStatuses::ACCEPTED, JobStatuses::SCHEDULE_DUE])
+            ->where('schedule_date', Carbon::now()->toDateString())
+            ->where('preferred_time_start', '=', Carbon::now()->addMinutes(15)->format('H:i'))->get();
+        $jobs = $this->formatJobs($jobs);
+        return $jobs->first();
+    }
+
     public function getTomorrowsJobs()
     {
         $jobs = $this->jobRepository->getOngoingJobsForResource($this->resource->id)->where('schedule_date', Carbon::tomorrow()->toDateString())->get();
@@ -123,7 +135,7 @@ class JobList
     {
         if ($this->isStatusAfterOrEqualToProcess($job->status)) {
             return ['message' => "যে অর্ডার টি এখন চলছে", 'tag' => 'process'];
-        } elseif ($job->status == JobStatuses::SERVED && !$job->partnerOrder->closed_at) {
+        } elseif ($job->status == JobStatuses::SERVED && !$job->partnerOrder->isClosedAndPaidAt()) {
             return ['message' => "বিল সংগ্রহ বাকি আছে", 'tag' => 'collection'];
         } else {
             $job_start_time = $this->getJobStartTime($job);
