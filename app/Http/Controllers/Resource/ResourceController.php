@@ -12,6 +12,7 @@ use App\Http\Controllers\Controller;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Authentication\AuthUser;
+use Sheba\Resource\Jobs\JobList;
 use Sheba\Resource\Schedule\ResourceScheduleSlot;
 
 class ResourceController extends Controller
@@ -50,5 +51,32 @@ class ResourceController extends Controller
         $data = new Item($resource, new ResourceHomeTransformer());
         $info = $fractal->createData($data)->toArray()['data'];
         return api_response($request, $info, 200, ['home' => $info]);
+    }
+
+    public function dashboard(Request $request, JobList $jobList)
+    {
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+        $jobs_summary = $jobList->setResource($resource)->getNumberOfJobs();
+        $jobs_summary = [
+            [
+                'title' => 'শিডিউল ডিউ অর্ডার',
+                'jobs_count' => $jobs_summary['schedule_due_jobs']
+            ],
+            [
+                'title' => 'আজকের অর্ডার',
+                'jobs_count' => $jobs_summary['todays_jobs']
+            ],
+            [
+                'title' => 'আগামীকালের অর্ডার',
+                'jobs_count' => $jobs_summary['tomorrows_jobs']
+            ],
+            [
+                'title' => 'পরবর্তী অর্ডার',
+                'jobs_count' => $jobs_summary['rest_jobs']
+            ]
+        ];
+        return api_response($request, $jobs_summary, 200, ['jobs_summary' => $jobs_summary]);
     }
 }
