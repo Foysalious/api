@@ -5,9 +5,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Job;
 use Illuminate\Http\Request;
 use Sheba\Authentication\AuthUser;
-use Sheba\Resource\App\Jobs\BillInfo;
-use Sheba\Resource\App\Jobs\JobInfo;
-use Sheba\Resource\App\Jobs\JobList;
+use Sheba\Resource\Jobs\BillInfo;
+use Sheba\Resource\Jobs\JobInfo;
+use Sheba\Resource\Jobs\JobList;
 
 class ResourceJobController extends Controller
 {
@@ -62,4 +62,15 @@ class ResourceJobController extends Controller
         if (!$job) return api_response($request, $job, 404);
         return api_response($request, $job, 200, ['job' => $job]);
     }
+
+    public function updateStatus(Job $job, Request $request)
+    {
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+        if ($resource->id !== $job->resource_id) return api_response($request, $job, 403, ["message" => "You're not authorized to access this job's bill."]);
+        $bill = $billInfo->getBill($job);
+        return api_response($request, $bill, 200, ['bill' => $bill]);
+    }
+
 }

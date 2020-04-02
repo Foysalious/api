@@ -1,4 +1,4 @@
-<?php namespace Sheba\Resource\App\Jobs;
+<?php namespace Sheba\Resource\Jobs;
 
 use App\Models\Job;
 use Carbon\Carbon;
