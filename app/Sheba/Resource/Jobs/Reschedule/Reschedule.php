@@ -3,15 +3,12 @@
 
 use App\Models\Job;
 use App\Models\Resource;
-use App\Sheba\UserRequestInformation;
 use GuzzleHttp\Client;
 use Sheba\Jobs\JobTime;
 use Sheba\Jobs\PreferredTime;
-use Sheba\Resource\Jobs\AdminClientResponse;
-use Sheba\Resource\Jobs\Updater\StatusUpdater;
 use Sheba\UserAgentInformation;
 
-class RescheduleJob
+class Reschedule
 {
     /** @var Resource */
     private $resource;
@@ -48,7 +45,7 @@ class RescheduleJob
 
     /**
      * @param mixed $scheduleDate
-     * @return RescheduleJob
+     * @return Reschedule
      */
     public function setScheduleDate($scheduleDate)
     {
@@ -58,7 +55,7 @@ class RescheduleJob
 
     /**
      * @param mixed $scheduleTime
-     * @return RescheduleJob
+     * @return Reschedule
      */
     public function setScheduleTimeSlot($scheduleTime)
     {
@@ -67,13 +64,13 @@ class RescheduleJob
     }
 
     /**
-     * @return RescheduleJobResponse
+     * @return RescheduleResponse
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function reschedule()
     {
         $job_time = new JobTime($this->scheduleDate, $this->scheduleTimeSlot);
-        $response = new RescheduleJobResponse();
+        $response = new RescheduleResponse();
         if (!$job_time->validate()) return $response->setResponse(['msg' => $job_time->error_message, 'code' => 400]);
         $preferred_time = new PreferredTime($this->scheduleTimeSlot);
         if (!scheduler($this->resource)->isAvailableForCategory($this->scheduleDate, $preferred_time->getStartString(), $this->job->category, $this->job)) {
