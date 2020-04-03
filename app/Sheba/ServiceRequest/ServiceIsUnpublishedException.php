@@ -1,6 +1,8 @@
 <?php namespace Sheba\ServiceRequest;
 
 
-class ServiceIsUnpublishedException extends \Exception
+use App\Exceptions\ApiValidationException;
+
+class ServiceIsUnpublishedException extends ApiValidationException
 {
 }
