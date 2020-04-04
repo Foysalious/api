@@ -799,12 +799,6 @@ class PartnerController extends Controller
                 'message' => 'Please try with inside city for this location.',
                 'code' => 702
             ]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['mesNbRousage' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
         }
     }
 
