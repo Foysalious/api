@@ -74,7 +74,7 @@ class Payable extends Model {
         }
     }
 
-    public function getProfile() {
+    public function getUserProfile() {
         if ($this->user instanceof Customer) {
             return $this->user->profile;
         } elseif ($this->user instanceof Business || $this->user instanceof Partner) {

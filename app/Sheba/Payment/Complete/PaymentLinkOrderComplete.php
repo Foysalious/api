@@ -77,10 +77,12 @@ class PaymentLinkOrderComplete extends PaymentComplete {
             $entry_repo->setSourceType(class_basename($target));
             $entry_repo->setSourceId($target->id);
         }
-        if ($payer = $this->paymentLink->getPayer() | $this->payment->payable->getProfile()) {
-            if ($payer instanceof Profile) {
-                $entry_repo->setParty($payer);
-            }
+        $payer = $this->paymentLink->getPayer();
+        if (empty($payer)) {
+            $payer = $this->payment->payable->getUserProfile();
+        }
+        if ($payer instanceof Profile) {
+            $entry_repo->setParty($payer);
         }
         $entry_repo->store();
         return $this->payment;
