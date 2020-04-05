@@ -67,7 +67,7 @@ class CacheAside
 
     private function setOnCache(array $data = null)
     {
-        $this->store->put($this->cacheObject->getCacheName(), json_encode($data), $this->cacheObject->getExpirationTimeInSeconds());
+        $this->store->put($this->cacheObject->getCacheName(), json_encode($data), $this->cacheObject->getExpirationTimeInSeconds() / 60);
     }
 
     public function setEntity()
