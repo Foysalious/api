@@ -55,7 +55,7 @@ class StatusUpdater
     public function update()
     {
         $status_update_response = new StatusUpdateResponse();
-        if ($this->hasError()) return $status_update_response->setResponse(['code' => 400, 'Bad Request']);
+        if ($this->hasError()) return $status_update_response->setResponse(['code' => 400, 'message' => 'Bad request']);
         $client = new Client();
         $res = $client->request('POST', config('sheba.admin_url') . '/api/job/' . $this->job->id . '/change-status',
             [
