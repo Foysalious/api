@@ -25,7 +25,7 @@ class ApprovalRequestTransformer extends TransformerAbstract
     {
         /** @var Leave $requestable */
         $requestable = $approval_request->requestable;
-        $leave_type = $requestable->leaveType()->withTrashed()->first();
+        $leave_type = $requestable->leaveType;
 
         return [
             'id' => $approval_request->id,
@@ -40,6 +40,7 @@ class ApprovalRequestTransformer extends TransformerAbstract
                 'type' => $leave_type->title,
                 'total_days' => $requestable->total_days,
                 'left' => $requestable->left_days,
+                'leave_days_exeeded' => $requestable->leaveDaysExeeded(),
                 'period' => $requestable->start_date->format('M d') . ' - ' . $requestable->end_date->format('M d'),
                 'status' => $requestable->status,
                 'note' => $requestable->note,

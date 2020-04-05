@@ -44,7 +44,7 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
                 'type' => $leave_type->title,
                 'total_days' => (int)$requestable->total_days,
                 'left' => $requestable->left_days,
-                'is_left_days_exeeded' => $requestable->isLeftDaysExeeded(),
+                'leave_days_exeeded' => $requestable->leaveDaysExeeded(),
                 'period' => $requestable->start_date->format('M d') . ' - ' . $requestable->end_date->format('M d'),
                 'note' => $requestable->note,
                 'status' => $requestable->status,
