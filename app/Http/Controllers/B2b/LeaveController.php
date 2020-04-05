@@ -15,6 +15,7 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
+use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\ModificationFields;
 
@@ -40,21 +41,48 @@ class LeaveController extends Controller
     public function index(Request $request)
     {
         list($offset, $limit) = calculatePagination($request);
-        $business_member = $request->business_member;
+        $business_member = $request->business_member;# for the time being i am working on the controller
+        $type = "Sheba\Dal\Leave\Model";
+        $leave_approval_requests = $this->approvalRequestRepo->builder()
+            ->with(['requestable' => function ($query) {
+                $query->with(['businessMember' => function ($query) {
+                    $query->with(['member' => function ($query) {
+                        $query->select('members.id', 'members.profile_id')->with(['profile' => function ($query) {
+                            $query->select('profiles.id', 'profiles.name');
+                        }]);
+                    }, 'role' => function ($query) {
+                        $query->select('business_roles.id', 'business_department_id', 'name')->with(['businessDepartment' => function ($query) {
+                            $query->select('business_departments.id', 'business_id', 'name');
+                        }]);
+                    }
+                    ]);
+                },'leaveType']);
+            }])->where('requestable_type', $type)->where('approver_id', $business_member->id);
+
+        if ($request->has('department_id')) {#this filter does bot working
+            $leave_approval_requests = $leave_approval_requests->whereHas('requestable', function ($q) use ($request) {
+                $q->whereHas('businessMember', function ($q) use ($request) {
+                    $q->whereHas('role', function ($q) use ($request) {
+                        $q->whereHas('businessDepartment', function ($q) use ($request) {
+                            $q->where('business_departments.id', $request->department_id);
+                        });
+                    });
+                });
+            });
+        }
+        #if ($request->has('status')) $leave_approval_requests = $leave_approval_requests->where('status', $request->status);
+        #if ($request->has('department')) $leave_approval_requests = $this->filterWithDepartment($leave_approval_requests, $request);
+        #if ($request->has('employee')) $leave_approval_requests = $this->filterWithEmployee($leave_approval_requests, $request);
+        /*$total_leave_approval_requests = $leave_approval_requests->count();
+        if ($request->has('limit')) $leave_approval_requests = $leave_approval_requests->splice($offset, $limit);*/
         $leaves = [];
-        $leave_approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMemberFilterBy($business_member, Type::LEAVE);
-
-        if ($request->has('status')) $leave_approval_requests = $leave_approval_requests->where('status', $request->status);
-        if ($request->has('department')) $leave_approval_requests = $this->filterWithDepartment($leave_approval_requests, $request);
-        if ($request->has('employee')) $leave_approval_requests = $this->filterWithEmployee($leave_approval_requests, $request);
-        $total_leave_approval_requests = $leave_approval_requests->count();
-        if ($request->has('limit')) $leave_approval_requests = $leave_approval_requests->splice($offset, $limit);
-
-        foreach ($leave_approval_requests as $approval_request) {
+        foreach ($leave_approval_requests->get() as $approval_request) {
             /** @var Leave $requestable */
             $requestable = $approval_request->requestable;
+            /** @var BusinessMember $business_member */
+            $business_member = $requestable->businessMember;
             /** @var Member $member */
-            $member = $requestable->businessMember->member;
+            $member = $business_member->member;
             /** @var Profile $profile */
             $profile = $member->profile;
             /** @var BusinessRole $role */
@@ -65,12 +93,18 @@ class LeaveController extends Controller
             $resource = new Item($approval_request, new ApprovalRequestTransformer($profile));
             $approval_request = $manager->createData($resource)->toArray()['data'];
 
-            array_push($leaves, $approval_request);
+            array_push($leaves, $approval_request + [
+                    'department' => [
+                        'department_id' => $role ? $role->businessDepartment->id : null,
+                        'department' => $role ? $role->businessDepartment->name : null,
+                        'designation' => $role ? $role->name : null
+                    ]
+                ]);
         }
 
         if (count($leaves) > 0) return api_response($request, $leaves, 200, [
             'leaves' => $leaves,
-            'total_leave_requests' => $total_leave_approval_requests,
+            'total_leave_requests' => 1,
         ]);
         else return api_response($request, null, 404);
     }
@@ -107,7 +141,7 @@ class LeaveController extends Controller
         $approval_request = $approval_request + ['approvers' => $approvers];
         return api_response($request, null, 200, ['approval_details' => $approval_request]);
     }
-    
+
     private function filterWithDepartment($leave_approval_requests, Request $request)
     {
         return $leave_approval_requests->filter(function ($approval_request) use ($request) {
