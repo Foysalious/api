@@ -13,6 +13,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
+use Sheba\Business\ApprovalRequest\Updater;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
@@ -56,7 +57,7 @@ class LeaveController extends Controller
                         }]);
                     }
                     ]);
-                },'leaveType']);
+                }, 'leaveType']);
             }])->where('requestable_type', $type)->where('approver_id', $business_member->id);
 
         if ($request->has('department_id')) {#this filter does bot working
@@ -140,6 +141,35 @@ class LeaveController extends Controller
         $approvers = $this->getApprover($requestable);
         $approval_request = $approval_request + ['approvers' => $approvers];
         return api_response($request, null, 200, ['approval_details' => $approval_request]);
+    }
+
+    /**
+     * @param Request $request
+     * @param Updater $updater
+     * @return JsonResponse
+     */
+    public function updateStatus(Request $request, Updater $updater)
+    {
+        $this->validate($request, [
+            'type_id' => 'required|string',
+            'status' => 'required|string',
+        ]);
+
+        /** type_id approval_request id*/
+        $type_ids = json_decode($request->type_id);
+
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+
+        $this->approvalRequestRepo->getApprovalRequestByIdAndType($type_ids, Type::LEAVE)
+            ->each(function ($approval_request) use ($business_member, $updater, $request) {
+                /** @var ApprovalRequest $approval_request */
+                if ($approval_request->approver_id != $business_member->id) return;
+                $updater->setBusinessMember($business_member)->setApprovalRequest($approval_request);
+                $updater->setStatus($request->status)->change();
+            });
+
+        return api_response($request, null, 200);
     }
 
     private function filterWithDepartment($leave_approval_requests, Request $request)
