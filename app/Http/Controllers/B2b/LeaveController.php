@@ -68,11 +68,29 @@ class LeaveController extends Controller
 
             array_push($leaves, $approval_request);
         }
+        if ($request->has('direction')) {
+            $leaves = $this->leaveOrderBy($leaves, $request->direction)->values();
+        }
+
         if (count($leaves) > 0) return api_response($request, $leaves, 200, [
             'leaves' => $leaves,
             'total_leave_requests' => $total_leave_approval_requests,
         ]);
         else return api_response($request, null, 404);
+    }
+
+    private function leaveOrderBy($leaves, $direction = 'asc')
+    {
+        if ($direction === 'asc') {
+            $leaves = collect($leaves)->sortBy(function ($leave, $key) {
+                return $leave['leave']['name'];
+            });
+        } elseif ($direction === 'desc') {
+            $leaves = collect($leaves)->sortByDesc(function ($leave, $key) {
+                return $leave['leave']['name'];
+            });
+        }
+        return $leaves;
     }
 
     /**
