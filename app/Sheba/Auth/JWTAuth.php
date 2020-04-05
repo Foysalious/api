@@ -17,7 +17,7 @@ class JWTAuth implements Authentication
             $token = Auth::getToken();
             $payload = Auth::getPayload($token)->toArray();
         } catch (JWTException $e) {
-            return null;
+            throw new AuthenticationFailedException("User not found");
         }
         $auth_user = new AuthUser();
         $auth_user->setPayload($payload);

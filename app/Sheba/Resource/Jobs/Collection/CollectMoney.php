@@ -1,22 +1,20 @@
-<?php namespace Sheba\Resource\Jobs\Updater;
+<?php namespace Sheba\Resource\Jobs\Collection;
 
 
 use App\Models\Job;
 use App\Models\Resource;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\ConnectException;
-use GuzzleHttp\Exception\RequestException;
 use Sheba\UserAgentInformation;
 
-class StatusUpdater
+class CollectMoney
 {
     /** @var Resource */
     private $resource;
     /** @var Job */
     private $job;
-    private $status;
     /** @var UserAgentInformation */
     private $userAgentInformation;
+    private $collectionAmount;
 
 
     public function setUserAgentInformation(UserAgentInformation $userAgentInformation)
@@ -27,17 +25,11 @@ class StatusUpdater
 
     /**
      * @param Job $job
-     * @return StatusUpdater
+     * @return $this
      */
     public function setJob(Job $job)
     {
         $this->job = $job;
-        return $this;
-    }
-
-    public function setStatus($status)
-    {
-        $this->status = ucfirst($status);
         return $this;
     }
 
@@ -47,34 +39,33 @@ class StatusUpdater
         return $this;
     }
 
+    public function setCollectionAmount($collection_amount)
+    {
+        $this->collectionAmount = $collection_amount;
+        return $this;
+    }
 
     /**
-     * @return StatusUpdateResponse
+     * @return CollectMoneyResponse
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function update()
+    public function collect()
     {
-        $status_update_response = new StatusUpdateResponse();
-        if ($this->hasError()) return $status_update_response->setResponse(['code' => 400, 'Bad Request']);
         $client = new Client();
-        $res = $client->request('POST', config('sheba.admin_url') . '/api/job/' . $this->job->id . '/change-status',
+        $res = $client->request('POST', config('sheba.admin_url') . '/api/partner-order/' . $this->job->partner_order_id . '/collect',
             [
                 'form_params' => [
                     'resource_id' => $this->resource->id,
                     'remember_token' => $this->resource->remember_token,
-                    'status' => $this->status,
-                    'created_by_type' => class_basename($this->resource),
-                    'partner_id' => $this->job->partnerOrder->partner_id,
+                    'partner_collection' => $this->collectionAmount,
+                    'created_by_type' => get_class($this->resource),
                     'portal_name' => $this->userAgentInformation->getPortalName(),
                     'user_agent' => $this->userAgentInformation->getUserAgent(),
                     'ip' => $this->userAgentInformation->getIp()
                 ]
             ]);
-        return (new StatusUpdateResponse())->setResponse(json_decode($res->getBody(), 1));
+        $collect_money_response = new CollectMoneyResponse();
+        return $collect_money_response->setResponse(json_decode($res->getBody(), 1));
     }
 
-    private function hasError()
-    {
-        return $this->status == $this->job->status;
-    }
 }
