@@ -11,4 +11,6 @@ return array(
 
     // Capture default user context
     'user_context' => true,
+
+    'project_name' => env('SENTRY_PROJECT_NAME', 'api')
 );
