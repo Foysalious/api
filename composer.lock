@@ -1419,6 +1419,7 @@
                     "homepage": "http://www.acci.cz"
                 }
             ],
+            "abandoned": "php-parallel-lint/php-console-color",
             "time": "2014-04-08T15:00:19+00:00"
         },
         {
@@ -1463,6 +1464,7 @@
                     "homepage": "http://www.acci.cz/"
                 }
             ],
+            "abandoned": "php-parallel-lint/php-console-highlighter",
             "time": "2015-04-20T18:58:01+00:00"
         },
         {
@@ -1589,6 +1591,7 @@
                 "serialize",
                 "tokenizer"
             ],
+            "abandoned": "opis/closure",
             "time": "2016-12-07T09:37:55+00:00"
         },
         {
@@ -3265,7 +3268,7 @@
             "source": {
                 "type": "git",
                 "url": "https://mac_pasha@bitbucket.org/startern/sheba_dal.git",
-                "reference": "e6e90cff86777b48d0778c2acc11089680a3cd26"
+                "reference": "d00dc75c17cbfbca4e36ca097a91737c1a5212bf"
             },
             "require": {
                 "php": ">=5.4"
@@ -3292,7 +3295,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2020-04-01T21:01:41+00:00"
+            "time": "2020-04-05T10:22:48+00:00"
         },
         {
             "name": "sheba/notification",

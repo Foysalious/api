@@ -21,12 +21,12 @@ class Creator
     use ModificationFields, HasErrorCodeAndMessage;
 
     private $title;
+    /** @var BusinessMember $businessMember */
     private $businessMember;
     private $leaveTypeId;
     private $leaveRepository;
     /** @var Attachments */
     private $attachmentManager;
-
     /** @var Carbon $startDate */
     private $startDate;
     /** @var Carbon $endDate */
@@ -238,26 +238,10 @@ class Creator
 
     private function getLeftDays()
     {
-        /**
-         * STATIC NOW, NEXT SPRINT COMES FROM DB
-         */
-        $business_fiscal_start_month = 7;
-        $leave_lefts = 0;
-        $this->timeFrame->forAFiscalYear(Carbon::now(), $business_fiscal_start_month);
-
-        $leaves = $this->businessMember->leaves()->accepted()->between($this->timeFrame)->with('leaveType')->whereHas('leaveType', function ($leave_type) use (&$leave_lefts) {
-            return $leave_type->where('id', $this->leaveTypeId);
-        })->get();
-
         $business_total_leave_days_by_types = $this->businessMember->business->leaveTypes->where('id', $this->leaveTypeId)->first()->total_days;
-        $leaves->each(function ($leave) use (&$leave_lefts) {
-            $start_date = $leave->start_date->lt($this->timeFrame->start) ? $this->timeFrame->start : $leave->start_date;
-            $end_date = $leave->end_date->gt($this->timeFrame->end) ? $this->timeFrame->end : $leave->end_date;
+        $used_days = $this->businessMember->getCountOfUsedLeaveDaysByTypeOnAFiscalYear($this->leaveTypeId);
 
-            $leave_lefts += $end_date->diffInDays($start_date) + 1;
-        });
-
-        return $business_total_leave_days_by_types - $leave_lefts;
+        return $business_total_leave_days_by_types - $used_days;
     }
 }
 
