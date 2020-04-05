@@ -3,6 +3,7 @@
 use App\Jobs\Partner\PaymentLink\SendPaymentLinkSms;
 use App\Models\Payment;
 use App\Models\PosOrder;
+use App\Models\Profile;
 use DB;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
@@ -21,8 +22,7 @@ use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
-class PaymentLinkOrderComplete extends PaymentComplete
-{
+class PaymentLinkOrderComplete extends PaymentComplete {
     use DispatchesJobs;
     use ModificationFields;
 
@@ -34,16 +34,14 @@ class PaymentLinkOrderComplete extends PaymentComplete
     /** @var InvoiceCreator $invoiceCreator */
     private $invoiceCreator;
 
-    public function __construct()
-    {
+    public function __construct() {
         parent::__construct();
         $this->paymentLinkRepository = app(PaymentLinkRepositoryInterface::class);
         $this->invoiceCreator        = app(InvoiceCreator::class);
         $this->paymentLinkCommission = 2.5;
     }
 
-    public function complete()
-    {
+    public function complete() {
         try {
             if ($this->payment->isComplete())
                 return $this->payment;
@@ -79,7 +77,11 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $entry_repo->setSourceType(class_basename($target));
             $entry_repo->setSourceId($target->id);
         }
-        if ($payer = $this->paymentLink->getPayer()) {
+        $payer = $this->paymentLink->getPayer();
+        if (empty($payer)) {
+            $payer = $this->payment->payable->getUserProfile();
+        }
+        if ($payer instanceof Profile) {
             $entry_repo->setParty($payer);
         }
         $entry_repo->store();
@@ -89,8 +91,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
     /**
      * @return PaymentLinkTransformer
      */
-    private function getPaymentLink()
-    {
+    private function getPaymentLink() {
         try {
             return $this->paymentLinkRepository->getPaymentLinkByLinkId($this->payment->payable->type_id);
         } catch (RequestException $e) {
@@ -101,8 +102,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
     /**
      * @param HasWalletTransaction $payment_receiver
      */
-    private function processTransactions(HasWalletTransaction $payment_receiver)
-    {
+    private function processTransactions(HasWalletTransaction $payment_receiver) {
         $walletTransactionHandler  = (new WalletTransactionHandler())->setModel($payment_receiver);
         $recharge_wallet_amount    = $this->payment->payable->amount;
         $formatted_recharge_amount = number_format($recharge_wallet_amount, 2);
@@ -116,13 +116,11 @@ class PaymentLinkOrderComplete extends PaymentComplete
 
     }
 
-    private function getPaymentLinkFee($amount)
-    {
+    private function getPaymentLinkFee($amount) {
         return ($amount * $this->paymentLinkCommission) / 100;
     }
 
-    private function clearPosOrder()
-    {
+    private function clearPosOrder() {
         $target = $this->paymentLink->getTarget();
         if ($target) {
             $payment_data    = [
@@ -136,8 +134,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
         }
     }
 
-    protected function saveInvoice()
-    {
+    protected function saveInvoice() {
         try {
             $this->payment->invoice_link = $this->invoiceCreator->setPaymentLink($this->paymentLink)->setPayment($this->payment)->save();
             $this->payment->update();
@@ -151,8 +148,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
      * @param Payment $payment
      * @param PaymentLinkTransformer $payment_link
      */
-    private function notifyManager(Payment $payment, PaymentLinkTransformer $payment_link)
-    {
+    private function notifyManager(Payment $payment, PaymentLinkTransformer $payment_link) {
         $partner          = $payment_link->getPaymentReceiver();
         $topic            = config('sheba.push_notification_topic_name.manager') . $partner->id;
         $channel          = config('sheba.push_notification_channel_name.manager');

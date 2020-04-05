@@ -23,6 +23,15 @@ class ServiceRequest
         return $this;
     }
 
+
+    /**
+     * @return  ServiceRequestObject[]
+     * @throws ServiceIsUnpublishedException
+     * @throws ValidationException
+     * @throws \App\Exceptions\RentACar\DestinationCitySameAsPickupException
+     * @throws \App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException
+     * @throws \App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException
+     */
     public function get()
     {
         $this->validate();

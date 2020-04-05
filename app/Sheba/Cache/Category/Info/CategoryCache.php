@@ -27,6 +27,6 @@ class CategoryCache implements CacheObject
     public function getAllKeysRegularExpression(): string
     {
         $category_id = $this->categoryCacheRequest->getCategoryId();
-        return "::category::" . ($category_id ? $category_id : "*");
+        return "category::" . ($category_id ? $category_id : "*");
     }
 }
