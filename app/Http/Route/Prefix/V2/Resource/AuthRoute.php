@@ -9,6 +9,7 @@ class AuthRoute
             $api->get('profile', 'Resource\ResourceController@getProfile');
             $api->get('home', 'Resource\ResourceController@getHome');
             $api->get('dashboard', 'Resource\ResourceController@dashboard');
+            $api->get('test-notification', 'Resource\ResourceNotificationController@test');
             $api->group(['prefix' => 'jobs'], function ($api) {
                 $api->get('/', 'Resource\ResourceJobController@index');
                 $api->get('all', 'Resource\ResourceJobController@getAllJobs');
