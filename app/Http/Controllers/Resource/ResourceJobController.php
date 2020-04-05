@@ -7,8 +7,10 @@ use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\Request;
 use Sheba\Authentication\AuthUser;
 use Sheba\Resource\Jobs\BillInfo;
+use Sheba\Resource\Jobs\Collection\CollectMoney;
 use Sheba\Resource\Jobs\JobInfo;
 use Sheba\Resource\Jobs\JobList;
+use Sheba\Resource\Jobs\Reschedule\Reschedule;
 use Sheba\Resource\Jobs\Updater\StatusUpdater;
 use Sheba\UserAgentInformation;
 
@@ -75,12 +77,34 @@ class ResourceJobController extends Controller
         if ($resource->id !== $job->resource_id) return api_response($request, $job, 403, ["message" => "You're not authorized to access this job's bill."]);
         $user_agent_information->setRequest($request);
         $status_updater->setResource($resource)->setJob($job)->setUserAgentInformation($user_agent_information)->setStatus($request->status);
-        try {
-            $response = $status_updater->update();
-        } catch (GuzzleException $e) {
-            return api_response($request, null, 500);
-        }
+        $response = $status_updater->update();
         return api_response($request, $response, $response->getCode(), ['message' => $response->getMessage()]);
     }
 
+    public function rescheduleJob(Job $job, Request $request, Reschedule $reschedule_job, UserAgentInformation $user_agent_information)
+    {
+        $this->validate($request, ['schedule_date' => 'string', 'schedule_time_slot' => 'string']);
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+        if ($resource->id !== $job->resource_id) return api_response($request, $job, 403, ["message" => "You're not authorized to access this job's bill."]);
+        $user_agent_information->setRequest($request);
+        $reschedule_job->setResource($resource)->setJob($job)->setUserAgentInformation($user_agent_information)->setScheduleDate($request->schedule_date)
+            ->setScheduleTimeSlot($request->schedule_time_slot);
+        $response = $reschedule_job->reschedule();
+        return api_response($request, $response, $response->getCode(), ['message' => $response->getMessage()]);
+    }
+
+    public function collectMoney(Job $job, Request $request, CollectMoney $collect_money, UserAgentInformation $user_agent_information)
+    {
+        $this->validate($request, ['amount' => 'required|numeric']);
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+        if ($resource->id !== $job->resource_id) return api_response($request, $job, 403, ["message" => "You're not authorized to access this job's bill."]);
+        $user_agent_information->setRequest($request);
+        $collect_money->setResource($resource)->setJob($job)->setUserAgentInformation($user_agent_information)->setCollectionAmount($request->amount);
+        $response = $collect_money->collect();
+        return api_response($request, $response, $response->getCode(), ['message' => $response->getMessage()]);
+    }
 }

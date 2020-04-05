@@ -21,9 +21,10 @@ class Auth
         return $this;
     }
 
+
     /**
      * @return AuthUser
-     * @throws AuthenticationFailedException
+     * @throws \Sheba\Authentication\AuthenticationFailedException
      */
     public function authenticate()
     {
