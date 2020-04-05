@@ -6,7 +6,7 @@ use Sheba\Cache\CacheRequest;
 
 class CategoryHighDemandCache implements CacheObject
 {
-    /** @var CategoryHighDemandCacheRequest $categoryHighDemandCacheRequest*/
+    /** @var CategoryHighDemandCacheRequest $categoryHighDemandCacheRequest */
     private $categoryHighDemandCacheRequest;
 
     public function setCacheRequest(CacheRequest $cache_request)
@@ -22,7 +22,7 @@ class CategoryHighDemandCache implements CacheObject
 
     public function getExpirationTimeInSeconds(): int
     {
-        // TODO: Implement getExpirationTimeInSeconds() method.
+        return 1 * 60 * 60;
     }
 
     public function getAllKeysRegularExpression(): string
