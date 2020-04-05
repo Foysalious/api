@@ -11,6 +11,7 @@ class AuthRoute
             $api->get('dashboard', 'Resource\ResourceController@dashboard');
             $api->get('test-notification', 'Resource\ResourceNotificationController@test');
             $api->get('notifications', 'Resource\ResourceNotificationController@index');
+            $api->post('notifications/seen', 'Resource\ResourceNotificationController@seen');
             $api->group(['prefix' => 'jobs'], function ($api) {
                 $api->get('/', 'Resource\ResourceJobController@index');
                 $api->get('all', 'Resource\ResourceJobController@getAllJobs');
