@@ -58,18 +58,19 @@ class LeaveController extends Controller
                     }
                     ]);
                 }, 'leaveType']);
-            }])->where('requestable_type', $type)->where('approver_id', $business_member->id);
+            }])->where('requestable_type', $type)/*->where('approver_id', $business_member->id)*/
+        ;
+        #dd($leave_approval_requests->orderBy('id', 'desc')->get());
 
         if ($request->has('department_id')) {#this filter does bot working
-            $leave_approval_requests = $leave_approval_requests->whereHas('requestable', function ($q) use ($request) {
-                $q->whereHas('businessMember', function ($q) use ($request) {
+            $leave_approval_requests = $leave_approval_requests->with('requestable')
+                ->whereHas('businessMember', function ($q) use ($request) {
                     $q->whereHas('role', function ($q) use ($request) {
                         $q->whereHas('businessDepartment', function ($q) use ($request) {
                             $q->where('business_departments.id', $request->department_id);
                         });
                     });
                 });
-            });
         }
         #if ($request->has('status')) $leave_approval_requests = $leave_approval_requests->where('status', $request->status);
         #if ($request->has('department')) $leave_approval_requests = $this->filterWithDepartment($leave_approval_requests, $request);
@@ -125,7 +126,7 @@ class LeaveController extends Controller
         $business_member = $request->business_member;
         if ($business_member->id != $approval_request->approver_id)
             return api_response($request, null, 403, ['message' => 'You Are not authorized to show this request']);
-        $leave_requester_business_member = $this->getBusinessMemberById($requestable->business_member_id);
+        $leave_requester_business_member = $requestable->businessMember;
         /** @var Member $member */
         $member = $leave_requester_business_member->member;
         /** @var Profile $profile */
