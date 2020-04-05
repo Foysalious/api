@@ -5,6 +5,7 @@ use Illuminate\Http\Request;
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
 use Sheba\Authentication\AuthUser;
+use Sheba\Notification\SeenBy;
 use Sheba\PushNotificationHandler;
 
 class ResourceNotificationController extends Controller
@@ -53,5 +54,15 @@ class ResourceNotificationController extends Controller
         });
         if (count($final) == 0) return api_response($request, null, 404);
         return api_response($request, null, 200, ['notifications' => $final]);
+    }
+
+    public function seen(Request $request, SeenBy $seenBy)
+    {
+        $this->validate($request, ['notifications' => 'required|string',]);
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+        $seenBy->setNotifications(json_decode($request->notifications))->setUser($resource)->seen();
+        return api_response($request, null, 200);
     }
 }
