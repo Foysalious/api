@@ -13,8 +13,10 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
+use Sheba\Business\ApprovalRequest\Updater;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
+use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\ModificationFields;
 
@@ -41,24 +43,23 @@ class LeaveController extends Controller
     {
         list($offset, $limit) = calculatePagination($request);
         $business_member = $request->business_member;
-        $leaves = [];
         $leave_approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMemberFilterBy($business_member, Type::LEAVE);
-
         if ($request->has('status')) $leave_approval_requests = $leave_approval_requests->where('status', $request->status);
         if ($request->has('department')) $leave_approval_requests = $this->filterWithDepartment($leave_approval_requests, $request);
         if ($request->has('employee')) $leave_approval_requests = $this->filterWithEmployee($leave_approval_requests, $request);
+        if ($request->has('search')) $leave_approval_requests = $this->searchWithEmployeeName($leave_approval_requests, $request);
         $total_leave_approval_requests = $leave_approval_requests->count();
         if ($request->has('limit')) $leave_approval_requests = $leave_approval_requests->splice($offset, $limit);
-
+        $leaves = [];
         foreach ($leave_approval_requests as $approval_request) {
             /** @var Leave $requestable */
             $requestable = $approval_request->requestable;
+            /** @var BusinessMember $business_member */
+            $business_member = $requestable->businessMember;
             /** @var Member $member */
-            $member = $requestable->businessMember->member;
+            $member = $business_member->member;
             /** @var Profile $profile */
             $profile = $member->profile;
-            /** @var BusinessRole $role */
-            $role = $business_member->role;
 
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
@@ -67,7 +68,6 @@ class LeaveController extends Controller
 
             array_push($leaves, $approval_request);
         }
-
         if (count($leaves) > 0) return api_response($request, $leaves, 200, [
             'leaves' => $leaves,
             'total_leave_requests' => $total_leave_approval_requests,
@@ -90,7 +90,7 @@ class LeaveController extends Controller
         $business_member = $request->business_member;
         if ($business_member->id != $approval_request->approver_id)
             return api_response($request, null, 403, ['message' => 'You Are not authorized to show this request']);
-        $leave_requester_business_member = $this->getBusinessMemberById($requestable->business_member_id);
+        $leave_requester_business_member = $requestable->businessMember;
         /** @var Member $member */
         $member = $leave_requester_business_member->member;
         /** @var Profile $profile */
@@ -107,7 +107,36 @@ class LeaveController extends Controller
         $approval_request = $approval_request + ['approvers' => $approvers];
         return api_response($request, null, 200, ['approval_details' => $approval_request]);
     }
-    
+
+    /**
+     * @param Request $request
+     * @param Updater $updater
+     * @return JsonResponse
+     */
+    public function updateStatus(Request $request, Updater $updater)
+    {
+        $this->validate($request, [
+            'type_id' => 'required|string',
+            'status' => 'required|string',
+        ]);
+
+        /** type_id approval_request id*/
+        $type_ids = json_decode($request->type_id);
+
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+
+        $this->approvalRequestRepo->getApprovalRequestByIdAndType($type_ids, Type::LEAVE)
+            ->each(function ($approval_request) use ($business_member, $updater, $request) {
+                /** @var ApprovalRequest $approval_request */
+                if ($approval_request->approver_id != $business_member->id) return;
+                $updater->setBusinessMember($business_member)->setApprovalRequest($approval_request);
+                $updater->setStatus($request->status)->change();
+            });
+
+        return api_response($request, null, 200);
+    }
+
     private function filterWithDepartment($leave_approval_requests, Request $request)
     {
         return $leave_approval_requests->filter(function ($approval_request) use ($request) {
@@ -118,6 +147,19 @@ class LeaveController extends Controller
             /** @var BusinessRole $role */
             $role = $business_member->role;
             if ($role) return $role->businessDepartment->id == $request->department;
+        });
+    }
+
+    private function searchWithEmployeeName($leave_approval_requests, Request $request)
+    {
+        return $leave_approval_requests->filter(function ($approval_request) use ($request) {
+            /** @var Leave $requestable */
+            $requestable = $approval_request->requestable;
+            /** @var Member $member */
+            $member = $requestable->businessMember->member;
+            /** @var Profile $profile */
+            $profile = $member->profile;
+            return starts_with($profile->name, $request->search);
         });
     }
 
