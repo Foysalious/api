@@ -31,4 +31,27 @@ class ResourceNotificationController extends Controller
             ], $topic, $channel);
         }
     }
+
+    public function index(Request $request)
+    {
+        $this->validate($request, ['limit' => 'numeric', 'offset' => 'numeric']);
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+        list($offset, $limit) = calculatePagination($request);
+        $notifications = $resource->notifications()->orderBy('id', 'desc')->skip($offset)->limit($limit)->get();
+        $final = [];
+        $notifications->each(function ($notification) use (&$final) {
+            array_push($final, [
+                'id' => $notification->id,
+                'message' => $notification->title,
+                'type' => $notification->getType(),
+                'type_id' => $notification->event_id,
+                'is_seen' => $notification->is_seen,
+                'created_at' => $notification->created_at->toDateTimeString()
+            ]);
+        });
+        if (count($final) == 0) return api_response($request, null, 404);
+        return api_response($request, null, 200, ['notifications' => $final]);
+    }
 }
