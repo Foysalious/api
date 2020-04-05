@@ -187,10 +187,12 @@ class ServiceRequestObject
      * @throws DestinationCitySameAsPickupException
      * @throws InsideCityPickUpAddressNotFoundException
      * @throws OutsideCityPickUpAddressNotFoundException
+     * @throws ServiceIsUnpublishedException
      */
     public function build()
     {
-        $this->service = Service::find($this->serviceId);
+        $this->service = Service::where('id', $this->serviceId)->publishedForAll()->first();
+        if (!$this->service) throw new ServiceIsUnpublishedException('Service #' . $this->serviceId . " is not available.", 400);
         $this->category = $this->service->category;
         $this->setPickupThana();
         $this->setDestinationThana();
