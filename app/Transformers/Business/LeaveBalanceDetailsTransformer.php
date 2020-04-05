@@ -20,12 +20,7 @@ class LeaveBalanceDetailsTransformer extends TransformerAbstract
         $leaves = $business_member->leaves;
 
         return [
-          'employee_name' => $profile->name,
-          'employee_id' => $member->id,
-          'designation' => $role ? $role->name : null,
-          'department' => $role ? $role->businessDepartment->name : null,
-          'leave_balance' => $this->calculate($leaves),
-          'leaves' => $this->fetchLeaves($leaves),
+            'employee_name' => $profile->name, 'employee_id' => $member->id, 'designation' => $role ? $role->name : null, 'department' => $role ? $role->businessDepartment->name : null, 'leave_balance' => $this->calculate($leaves), 'leaves' => $this->fetchLeaves($leaves),
         ];
     }
 
@@ -35,9 +30,7 @@ class LeaveBalanceDetailsTransformer extends TransformerAbstract
         foreach ($this->leave_types as $leave_type) {
             $total_leave = $leaves->where('leave_type_id', $leave_type['id'])->sum('total_days');
             array_push($single_employee_leave_balance, [
-                'title' => $leave_type['title'],
-                'total_used_leaves' => (int)$total_leave,
-                'allowed_leaves' => $leave_type['total_days']
+                'title' => $leave_type['title'], 'total_used_leaves' => (int)$total_leave, 'allowed_leaves' => $leave_type['total_days']
             ]);
         }
 
@@ -47,12 +40,11 @@ class LeaveBalanceDetailsTransformer extends TransformerAbstract
     private function fetchLeaves($leaves)
     {
         $all_leaves = [];
-        foreach ($leaves as $leave)
-        {
+        foreach ($leaves as $leave) {
             array_push($all_leaves, [
                 'date' => $leave->created_at->format('d/m/Y'),
                 'leave_type' => $this->getLeaveTypeTitle($leave),
-                'leave_days' =>(int)$leave->total_days,
+                'leave_days' => (int)$leave->total_days,
                 'status' => $leave->status
             ]);
         }

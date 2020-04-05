@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Http\Controllers\Controller;
+use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Models\BusinessRole;
 use App\Models\Member;
@@ -20,6 +21,7 @@ use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use Sheba\Dal\Leave\Model as Leave;
+use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 
 class LeaveController extends Controller
@@ -218,60 +220,51 @@ class LeaveController extends Controller
         return $approvers;
     }
 
-    public function allLeaveBalance(Request $request)
+    /**
+     * @param Request $request
+     * @param TimeFrame $time_frame
+     * @return JsonResponse
+     */
+    public function allLeaveBalance(Request $request, TimeFrame $time_frame)
     {
-       $business_member = $request->business_member;
-
-       $business = $business_member->business;
-       $leave_types = $business->leaveTypes()->withTrashed()->take(4)->get();
-       $leave_types_data = $this->getLeaveTypes($leave_types);
-       $members = $business->members()->select('members.id', 'profile_id')->with(['profile' => function ($q) {
-            $q->select('profiles.id', 'name', 'mobile');
-        }, 'businessMember' => function ($q) {
-            $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id');
-       }])->get();
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        /** @var Business $business */
+        $business = $business_member->business;
+        $leave_types = $business->leaveTypes()->withTrashed()->take(5)->select('id', 'title', 'total_days')->get()->toArray();
+        $members = $business->members()->select('members.id', 'profile_id')->with([
+            'profile' => function ($q) {
+                $q->select('profiles.id', 'name', 'mobile');
+            }, 'businessMember' => function ($q) {
+                $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id');
+            }
+        ])->get();
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($members, new LeaveBalanceTransformer($leave_types_data));
+        $resource = new Item($members, new LeaveBalanceTransformer($leave_types, $time_frame));
         $leave_balance = $manager->createData($resource)->toArray()['data'];
 
-        return api_response($request, null, 200, [
-            'employees_leave_balance' => $leave_balance['employees_leave_balance'],
-            'leave_types' => $leave_balance['leave_types']
-        ]);
+        return api_response($request, null, 200, ['leave_balances' => $leave_balance, 'leave_types' => $leave_types]);
     }
 
-    public function singleLeaveBalance($business_member_id, Request $request)
+    /**
+     * @param $business_id
+     * @param $business_member_id
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function leaveBalanceDetails($business_id, $business_member_id, Request $request)
     {
-       $business_member = $this->getBusinessMemberById($business_member_id);
-       $business = $business_member->business;
-       $leave_types = $business->leaveTypes()->withTrashed()->take(4)->get();
-       $leave_types_data = $this->getLeaveTypes($leave_types);
+        $business_member = $this->getBusinessMemberById($business_member_id);
+        $business = $business_member->business;
+        $leave_types = $business->leaveTypes()->withTrashed()->take(5)->select('id', 'title', 'total_days')->get()->toArray();
 
-       $manager = new Manager();
-       $manager->setSerializer(new CustomSerializer());
-       $resource = new Item($business_member, new LeaveBalanceDetailsTransformer($leave_types_data));
-       $leave_balance = $manager->createData($resource)->toArray()['data'];
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Item($business_member, new LeaveBalanceDetailsTransformer($leave_types));
+        $leave_balance = $manager->createData($resource)->toArray()['data'];
 
-        return api_response($request, null, 200, [
-            'leave_balance_details' => $leave_balance
-        ]);
-    }
-
-    private function getLeaveTypes($leave_types)
-    {
-        $leave_types_data = [];
-
-        foreach ($leave_types as $leave_type)
-        {
-            array_push($leave_types_data,[
-                'id' => $leave_type->id,
-                'title' => $leave_type->title,
-                'total_days' => $leave_type->total_days
-            ]);
-        }
-
-        return $leave_types_data;
+        return api_response($request, null, 200, ['leave_balance_details' => $leave_balance]);
     }
 }

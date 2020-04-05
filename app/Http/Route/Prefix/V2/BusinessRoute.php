@@ -55,7 +55,7 @@ class BusinessRoute
                     });
                     $api->group(['prefix' => 'balance'], function ($api) {
                         $api->get('/lists', 'B2b\LeaveController@allLeaveBalance');
-                        $api->get('/{balance}', 'B2b\LeaveController@singleLeaveBalance');
+                        $api->get('/{balance}', 'B2b\LeaveController@leaveBalanceDetails');
                     });
                 });
                 $api->group(['prefix' => 'orders'], function ($api) {
