@@ -79,4 +79,23 @@ class ResourceController extends Controller
         ];
         return api_response($request, $jobs_summary, 200, ['jobs_summary' => $jobs_summary]);
     }
+
+    public function help(Request $request)
+    {
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+        $fractal = new Manager();
+        $content = [
+            [
+                'title' => 'অ্যাপ কিভাবে ব্যবহার করতে হয়?',
+                'link' => 'https://www.youtube.com/watch?v=5xlGNrT8vlg&t=130s'
+            ],
+            [
+                'title' => 'অর্ডারের জন্য কিভাবে তৈরী হতে হয়?  ',
+                'link' => 'https://www.youtube.com/watch?v=OMW0BfVYSOI'
+            ]
+        ];
+        return api_response($request, $content, 200, ['help' => $content]);
+    }
 }
