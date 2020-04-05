@@ -7,6 +7,8 @@ use App\Models\Member;
 use App\Models\Profile;
 use App\Sheba\Business\BusinessBasicInformation;
 use App\Transformers\Business\ApprovalRequestTransformer;
+use App\Transformers\Business\LeaveBalanceDetailsTransformer;
+use App\Transformers\Business\LeaveBalanceTransformer;
 use App\Transformers\Business\LeaveRequestDetailsTransformer;
 use App\Transformers\CustomSerializer;
 use Illuminate\Http\JsonResponse;
@@ -214,5 +216,62 @@ class LeaveController extends Controller
             ]);
         }
         return $approvers;
+    }
+
+    public function allLeaveBalance(Request $request)
+    {
+       $business_member = $request->business_member;
+
+       $business = $business_member->business;
+       $leave_types = $business->leaveTypes()->withTrashed()->take(4)->get();
+       $leave_types_data = $this->getLeaveTypes($leave_types);
+       $members = $business->members()->select('members.id', 'profile_id')->with(['profile' => function ($q) {
+            $q->select('profiles.id', 'name', 'mobile');
+        }, 'businessMember' => function ($q) {
+            $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id');
+       }])->get();
+
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Item($members, new LeaveBalanceTransformer($leave_types_data));
+        $leave_balance = $manager->createData($resource)->toArray()['data'];
+
+        return api_response($request, null, 200, [
+            'employees_leave_balance' => $leave_balance['employees_leave_balance'],
+            'leave_types' => $leave_balance['leave_types']
+        ]);
+    }
+
+    public function singleLeaveBalance($business_member_id, Request $request)
+    {
+       $business_member = $this->getBusinessMemberById($business_member_id);
+       $business = $business_member->business;
+       $leave_types = $business->leaveTypes()->withTrashed()->take(4)->get();
+       $leave_types_data = $this->getLeaveTypes($leave_types);
+
+       $manager = new Manager();
+       $manager->setSerializer(new CustomSerializer());
+       $resource = new Item($business_member, new LeaveBalanceDetailsTransformer($leave_types_data));
+       $leave_balance = $manager->createData($resource)->toArray()['data'];
+
+        return api_response($request, null, 200, [
+            'leave_balance_details' => $leave_balance
+        ]);
+    }
+
+    private function getLeaveTypes($leave_types)
+    {
+        $leave_types_data = [];
+
+        foreach ($leave_types as $leave_type)
+        {
+            array_push($leave_types_data,[
+                'id' => $leave_type->id,
+                'title' => $leave_type->title,
+                'total_days' => $leave_type->total_days
+            ]);
+        }
+
+        return $leave_types_data;
     }
 }

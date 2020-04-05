@@ -53,6 +53,10 @@ class BusinessRoute
                         });
                         $api->post('/status', 'B2b\LeaveController@updateStatus');
                     });
+                    $api->group(['prefix' => 'balance'], function ($api) {
+                        $api->get('/lists', 'B2b\LeaveController@allLeaveBalance');
+                        $api->get('/{balance}', 'B2b\LeaveController@singleLeaveBalance');
+                    });
                 });
                 $api->group(['prefix' => 'orders'], function ($api) {
                     $api->get('/', 'B2b\OrderController@index');
