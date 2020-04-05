@@ -151,7 +151,7 @@ class JobList
             } else {
                 $message = ['message' => "লেট", 'tag' => 'late'];
             }
-            return BanglaConverter::en2bn($hr_message . $min_message) . ' ' . $message['message'];
+            return ['message' => BanglaConverter::en2bn($hr_message . $min_message) . ' ' . $message['message'], 'tag' => $message['tag']];
         }
     }
 
