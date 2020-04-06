@@ -241,9 +241,11 @@ class LeaveController extends Controller
                 $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id');
             }
         ])->get();
+
         if ($request->has('department')) $members = $this->filterMembersWithDepartment($members, $request);
         if ($request->has('search')) $members = $this->searchMemberWithEmployeeName($members, $request);
         if ($request->has('limit')) $members = $members->splice($offset, $limit);
+
         $total_records = $members->count();
 
         $manager = new Manager();
@@ -307,7 +309,7 @@ class LeaveController extends Controller
         return $members->filter(function ($member) use ($request) {
             /** @var Profile $profile */
             $profile = $member->profile;
-            return starts_with($profile->name, $request->search);
+            return str_contains(strtoupper($profile->name), strtoupper($request->search));
         });
     }
 
