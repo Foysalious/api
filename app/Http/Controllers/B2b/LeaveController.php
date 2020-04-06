@@ -45,6 +45,9 @@ class LeaveController extends Controller
      */
     public function index(Request $request)
     {
+        $this->validate($request, [
+            'sort' => 'sometimes|required|string|in:asc,desc'
+        ]);
         list($offset, $limit) = calculatePagination($request);
         $business_member = $request->business_member;
         $leave_approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMemberFilterBy($business_member, Type::LEAVE);
@@ -72,8 +75,8 @@ class LeaveController extends Controller
 
             array_push($leaves, $approval_request);
         }
-        if ($request->has('direction')) {
-            $leaves = $this->leaveOrderBy($leaves, $request->direction)->values();
+        if ($request->has('sort')) {
+            $leaves = $this->leaveOrderBy($leaves, $request->sort)->values();
         }
 
         if (count($leaves) > 0) return api_response($request, $leaves, 200, [
@@ -83,18 +86,12 @@ class LeaveController extends Controller
         else return api_response($request, null, 404);
     }
 
-    private function leaveOrderBy($leaves, $direction = 'asc')
+    private function leaveOrderBy($leaves, $sort = 'asc')
     {
-        if ($direction === 'asc') {
-            $leaves = collect($leaves)->sortBy(function ($leave, $key) {
-                return $leave['leave']['name'];
-            });
-        } elseif ($direction === 'desc') {
-            $leaves = collect($leaves)->sortByDesc(function ($leave, $key) {
-                return $leave['leave']['name'];
-            });
-        }
-        return $leaves;
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($leaves)->$sort_by(function ($leave, $key) {
+            return strtoupper($leave['leave']['name']);
+        });
     }
 
     /**
@@ -266,7 +263,7 @@ class LeaveController extends Controller
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($business_member, new LeaveBalanceDetailsTransformer($leave_types,$time_frame));
+        $resource = new Item($business_member, new LeaveBalanceDetailsTransformer($leave_types, $time_frame));
         $leave_balance = $manager->createData($resource)->toArray()['data'];
 
         return api_response($request, null, 200, ['leave_balance_details' => $leave_balance]);
