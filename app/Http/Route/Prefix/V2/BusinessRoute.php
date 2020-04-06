@@ -54,7 +54,6 @@ class BusinessRoute
                         $api->post('/status', 'B2b\LeaveController@updateStatus');
                     });
                     $api->group(['prefix' => 'balance'], function ($api) {
-                        $api->get('/pdf', 'B2b\LeaveController@downloadPdf');
                         $api->get('/lists', 'B2b\LeaveController@allLeaveBalance');
                         $api->get('/{balance}', 'B2b\LeaveController@leaveBalanceDetails');
                     });
