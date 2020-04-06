@@ -15,6 +15,7 @@ use App\Transformers\CustomSerializer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\App;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Business\ApprovalRequest\Updater;
@@ -270,6 +271,15 @@ class LeaveController extends Controller
         $leave_balance = $manager->createData($resource)->toArray()['data'];
 
         return api_response($request, null, 200, ['leave_balance_details' => $leave_balance]);
+    }
+
+
+    public function downloadPdf(Request $request)
+    {
+        #return view('pdfs.employee_leave_balance', compact('data'));
+        return App::make('dompdf.wrapper')
+            ->loadView('pdfs.employee_leave_balance', compact('data'))
+            ->download("employee_leave_balance.pdf");
     }
 
     /**
