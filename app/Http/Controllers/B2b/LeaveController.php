@@ -14,6 +14,8 @@ use App\Transformers\Business\LeaveRequestDetailsTransformer;
 use App\Transformers\CustomSerializer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\App;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Business\ApprovalRequest\Updater;
@@ -45,6 +47,9 @@ class LeaveController extends Controller
      */
     public function index(Request $request)
     {
+        $this->validate($request, [
+            'sort' => 'sometimes|required|string|in:asc,desc'
+        ]);
         list($offset, $limit) = calculatePagination($request);
         $business_member = $request->business_member;
         $leave_approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMemberFilterBy($business_member, Type::LEAVE);
@@ -72,8 +77,8 @@ class LeaveController extends Controller
 
             array_push($leaves, $approval_request);
         }
-        if ($request->has('direction')) {
-            $leaves = $this->leaveOrderBy($leaves, $request->direction)->values();
+        if ($request->has('sort')) {
+            $leaves = $this->leaveOrderBy($leaves, $request->sort)->values();
         }
 
         if (count($leaves) > 0) return api_response($request, $leaves, 200, [
@@ -81,20 +86,6 @@ class LeaveController extends Controller
             'total_leave_requests' => $total_leave_approval_requests,
         ]);
         else return api_response($request, null, 404);
-    }
-
-    private function leaveOrderBy($leaves, $direction = 'asc')
-    {
-        if ($direction === 'asc') {
-            $leaves = collect($leaves)->sortBy(function ($leave, $key) {
-                return $leave['leave']['name'];
-            });
-        } elseif ($direction === 'desc') {
-            $leaves = collect($leaves)->sortByDesc(function ($leave, $key) {
-                return $leave['leave']['name'];
-            });
-        }
-        return $leaves;
     }
 
     /**
@@ -181,7 +172,7 @@ class LeaveController extends Controller
             $member = $requestable->businessMember->member;
             /** @var Profile $profile */
             $profile = $member->profile;
-            return starts_with($profile->name, $request->search);
+            return str_contains(strtoupper($profile->name), strtoupper($request->search));
         });
     }
 
@@ -227,6 +218,10 @@ class LeaveController extends Controller
      */
     public function allLeaveBalance(Request $request, TimeFrame $time_frame)
     {
+        $this->validate($request, [
+            'sort' => 'sometimes|string|in:asc,desc'
+        ]);
+        list($offset, $limit) = calculatePagination($request);
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
         /** @var Business $business */
@@ -240,14 +235,21 @@ class LeaveController extends Controller
             }
         ])->get();
 
+        if ($request->has('department') || $request->has('search')) $members = $this->membersFilterByDeptSearchByName($members, $request);
+        if ($request->has('limit')) $members = $members->splice($offset, $limit);
+        $total_records = $members->count();
+
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
         $resource = new Item($members, new LeaveBalanceTransformer($leave_types, $time_frame));
-        $leave_balance = $manager->createData($resource)->toArray()['data'];
+        $leave_balances = $manager->createData($resource)->toArray()['data'];
 
-        return api_response($request, null, 200, ['leave_balances' => $leave_balance, 'leave_types' => $leave_types]);
+        if ($request->has('sort')) {
+            $leave_balances = $this->leaveBalanceOrderBy($leave_balances, $request->sort)->values();
+        }
+
+        return api_response($request, null, 200, ['leave_balances' => $leave_balances, 'total_records' => $total_records, 'leave_types' => $leave_types]);
     }
-
 
     /**
      * @param $business_id
@@ -266,9 +268,67 @@ class LeaveController extends Controller
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($business_member, new LeaveBalanceDetailsTransformer($leave_types,$time_frame));
+        $resource = new Item($business_member, new LeaveBalanceDetailsTransformer($leave_types, $time_frame));
         $leave_balance = $manager->createData($resource)->toArray()['data'];
-
+        if ($request->file == 'pdf') {
+            #return view('pdfs.employee_leave_balance', compact('leave_balance'));
+            return App::make('dompdf.wrapper')
+                ->loadView('pdfs.employee_leave_balance', compact('leave_balance'))
+                ->download("employee_leave_balance.pdf");
+        }
         return api_response($request, null, 200, ['leave_balance_details' => $leave_balance]);
+    }
+
+    /**
+     * @param $leave_balances
+     * @param string $sort
+     * @return Collection
+     */
+    private function leaveBalanceOrderBy($leave_balances, $sort = 'asc')
+    {
+        $sort_by = ($sort == 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($leave_balances)->$sort_by(function ($leave_balance, $key) {
+            return strtoupper($leave_balance['employee_name']);
+        });
+    }
+
+    /**
+     * @param $leaves
+     * @param string $sort
+     * @return mixed
+     */
+    private function leaveOrderBy($leaves, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($leaves)->$sort_by(function ($leave, $key) {
+            return strtoupper($leave['leave']['name']);
+        });
+    }
+
+    /**
+     * @param $members
+     * @param Request $request
+     * @return mixed
+     */
+    private function membersFilterByDeptSearchByName($members, Request $request)
+    {
+        return $members->filter(function ($member) use ($request) {
+            $deptStatus = false;
+            $nameStatus = false;
+            if ($request->has('department')) {
+                /** @var BusinessMember $business_member */
+                $business_member = $member->businessMember;
+                /** @var BusinessRole $role */
+                $role = $business_member->role;
+                if ($role) $deptStatus = $role->businessDepartment->id == $request->department;
+            }
+            if ($request->has('search')) {
+                /** @var Profile $profile */
+                $profile = $member->profile;
+                $nameStatus = str_contains(strtoupper($profile->name), strtoupper($request->search));
+            }
+            if ($request->has('department') && $request->has('search')) return ($deptStatus && $nameStatus) ? true : false;
+            if ($request->has('department') || $request->has('search')) return ($deptStatus || $nameStatus) ? true : false;
+        });
     }
 }
