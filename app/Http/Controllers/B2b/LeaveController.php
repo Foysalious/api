@@ -217,6 +217,9 @@ class LeaveController extends Controller
      */
     public function allLeaveBalance(Request $request, TimeFrame $time_frame)
     {
+        $this->validate($request, [
+            'sort' => 'sometimes|string|in:asc,desc'
+        ]);
         list($offset, $limit) = calculatePagination($request);
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
@@ -231,10 +234,8 @@ class LeaveController extends Controller
             }
         ])->get();
 
-        if ($request->has('department')) $members = $this->filterMembersWithDepartment($members, $request);
-        if ($request->has('search')) $members = $this->searchMemberWithEmployeeName($members, $request);
+        if ($request->has('department') || $request->has('search')) $members = $this->membersFilterByDeptSearchByName($members, $request);
         if ($request->has('limit')) $members = $members->splice($offset, $limit);
-
         $total_records = $members->count();
 
         $manager = new Manager();
@@ -273,36 +274,6 @@ class LeaveController extends Controller
     }
 
     /**
-     * @param $members
-     * @param Request $request
-     * @return mixed
-     */
-    private function filterMembersWithDepartment($members, Request $request)
-    {
-        return $members->filter(function ($member) use ($request) {
-            /** @var BusinessMember $business_member */
-            $business_member = $member->businessMember;
-            /** @var BusinessRole $role */
-            $role = $business_member->role;
-            if ($role) return $role->businessDepartment->id == $request->department;
-        });
-    }
-
-    /**
-     * @param $members
-     * @param Request $request
-     * @return mixed
-     */
-    private function searchMemberWithEmployeeName($members, Request $request)
-    {
-        return $members->filter(function ($member) use ($request) {
-            /** @var Profile $profile */
-            $profile = $member->profile;
-            return str_contains(strtoupper($profile->name), strtoupper($request->search));
-        });
-    }
-
-    /**
      * @param $leave_balances
      * @param string $sort
      * @return Collection
@@ -325,6 +296,33 @@ class LeaveController extends Controller
         $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
         return collect($leaves)->$sort_by(function ($leave, $key) {
             return strtoupper($leave['leave']['name']);
+        });
+    }
+
+    /**
+     * @param $members
+     * @param Request $request
+     * @return mixed
+     */
+    private function membersFilterByDeptSearchByName($members, Request $request)
+    {
+        return $members->filter(function ($member) use ($request) {
+            $deptStatus = false;
+            $nameStatus = false;
+            if ($request->has('department')) {
+                /** @var BusinessMember $business_member */
+                $business_member = $member->businessMember;
+                /** @var BusinessRole $role */
+                $role = $business_member->role;
+                if ($role) $deptStatus = $role->businessDepartment->id == $request->department;
+            }
+            if ($request->has('search')) {
+                /** @var Profile $profile */
+                $profile = $member->profile;
+                $nameStatus = str_contains(strtoupper($profile->name), strtoupper($request->search));
+            }
+            if ($request->has('department') && $request->has('search')) return ($deptStatus && $nameStatus) ? true : false;
+            if ($request->has('department') || $request->has('search')) return ($deptStatus || $nameStatus) ? true : false;
         });
     }
 }
