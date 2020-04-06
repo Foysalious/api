@@ -179,7 +179,7 @@ class LeaveController extends Controller
             $member = $requestable->businessMember->member;
             /** @var Profile $profile */
             $profile = $member->profile;
-            return starts_with($profile->name, $request->search);
+            return str_contains(strtoupper($profile->name), strtoupper($request->search));
         });
     }
 
