@@ -230,7 +230,7 @@ class DueTrackerRepository extends BaseRepository {
             $attachments[] = $this->saveFileToCDN($file, getDueTrackerAttachmentsFolder(), $filename);;
         }
 
-        $old_attachments = $request->old_attachments;
+        $old_attachments = $request->old_attachments ?: [];
         if ($request->has('attachment_should_remove') && (!empty($request->attachment_should_remove))) {
             $this->deleteFromCDN($request->attachment_should_remove);
             $old_attachments = array_diff($old_attachments, $request->attachment_should_remove);
