@@ -14,6 +14,7 @@ use App\Transformers\Business\LeaveRequestDetailsTransformer;
 use App\Transformers\CustomSerializer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Business\ApprovalRequest\Updater;
@@ -250,17 +251,12 @@ class LeaveController extends Controller
         $resource = new Item($members, new LeaveBalanceTransformer($leave_types, $time_frame));
         $leave_balances = $manager->createData($resource)->toArray()['data'];
 
-        if ($request->has('direction')) {
-            $leave_balances = $this->leaveBalanceOrderBy($leave_balances, $request->direction)->values();
+        if ($request->has('sort')) {
+            $leave_balances = $this->leaveBalanceOrderBy($leave_balances, $request->sort)->values();
         }
 
-        return api_response($request, $leave_balances, 200, [
-            'leave_balances' => $leave_balances,
-            'total_records' => $total_records,
-            'leave_types' => $leave_types
-        ]);
+        return api_response($request, null, 200, ['leave_balances' => $leave_balances, 'total_records' => $total_records, 'leave_types' => $leave_types]);
     }
-
 
     /**
      * @param $business_id
@@ -317,20 +313,14 @@ class LeaveController extends Controller
 
     /**
      * @param $leave_balances
-     * @param string $direction
-     * @return \Illuminate\Support\Collection
+     * @param string $sort
+     * @return Collection
      */
-    private function leaveBalanceOrderBy($leave_balances, $direction = 'asc')
+    private function leaveBalanceOrderBy($leave_balances, $sort = 'asc')
     {
-        if ($direction === 'asc') {
-            $leave_balances = collect($leave_balances)->sortBy(function ($leave_balance, $key) {
-                return $leave_balance['employee_name'];
-            });
-        } elseif ($direction === 'desc') {
-            $leave_balances = collect($leave_balances)->sortByDesc(function ($leave_balance, $key) {
-                return $leave_balance['employee_name'];
-            });
-        }
-        return $leave_balances;
+        $sort_by = ($sort == 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($leave_balances)->$sort_by(function ($leave_balance, $key) {
+            return strtoupper($leave_balance['employee_name']);
+        });
     }
 }
