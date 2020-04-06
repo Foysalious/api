@@ -20,13 +20,15 @@ class JobList
     /** @var Job */
     private $firstJobFromList;
     private $actionCalculator;
+    private $statusTagCalculator;
 
-    public function __construct(JobRepositoryInterface $job_repository, RearrangeJobList $rearrange, JobInfo $jobInfo, ActionCalculator $actionCalculator)
+    public function __construct(JobRepositoryInterface $job_repository, RearrangeJobList $rearrange, JobInfo $jobInfo, ActionCalculator $actionCalculator, StatusTagCalculator $statusTagCalculator)
     {
         $this->jobRepository = $job_repository;
         $this->rearrange = $rearrange;
         $this->jobInfo = $jobInfo;
         $this->actionCalculator = $actionCalculator;
+        $this->statusTagCalculator = $statusTagCalculator;
     }
 
     public function setResource(Resource $resource)
@@ -116,8 +118,8 @@ class JobList
             $formatted_job->put('delivery_mobile', $job->partnerOrder->order->delivery_mobile);
             $formatted_job->put('start_time', Carbon::parse($job->preferred_time_start)->format('h:i A'));
             $formatted_job->put('services', $this->jobInfo->formatServices($job->jobServices));
-            $formatted_job->put('order_status', $this->getOrderStatusMessage($job));
-            $formatted_job->put('tag', $this->calculateTag($job));
+            $formatted_job->put('order_status', $this->statusTagCalculator->getOrderStatusMessage($job));
+            $formatted_job->put('tag', $this->statusTagCalculator->calculateTag($job));
             $formatted_job->put('status', $job->status);
             $formatted_job->put('schedule_date', $job->schedule_date);
             $formatted_job->put('schedule_date_time', Carbon::parse($job->schedule_date . ' ' . $job->preferred_time_start)->toDateTimeString());
@@ -131,57 +133,8 @@ class JobList
         return $formatted_jobs;
     }
 
-    private function getOrderStatusMessage(Job $job)
-    {
-        $now = Carbon::now()->format('H:i');
-        if ($this->isStatusAfterOrEqualToProcess($job->status)) {
-            return ['message' => "যে অর্ডার টি এখন চলছে", 'tag' => 'process'];
-        } elseif ($job->status == JobStatuses::SERVED && !$job->partnerOrder->isClosedAndPaidAt()) {
-            return ['message' => "বিল সংগ্রহ বাকি আছে", 'tag' => 'collection'];
-        } else {
-            $job_start_time = $this->getJobStartTime($job);
-            $different_in_minutes = Carbon::parse($now)->diffInMinutes($job_start_time);
-            $hour = floor($different_in_minutes / 60);
-            $minute = $different_in_minutes > 60 ? $different_in_minutes % 60 : $different_in_minutes;
-            $hr_message = $hour > 0 ? ($hour . ' ঘণ্টা') : '';
-            $min_message = $minute > 0 ? ($minute . ' মিনিট') : '';
-            if (!empty($min_message) && !empty($hr_message)) $hr_message .= ' ';
-            if (Carbon::parse($now)->lt($job_start_time)) {
-                $message = ['message' => "পরের অর্ডার", 'tag' => 'future'];
-            } else {
-                $message = ['message' => "লেট", 'tag' => 'late'];
-            }
-            return ['message' => BanglaConverter::en2bn($hr_message . $min_message) . ' ' . $message['message'], 'tag' => $message['tag']];
-        }
-    }
 
-    private function calculateTag(Job $job)
-    {
-        $now = Carbon::now();
-        $job_start_time = $this->getJobStartTime($job);
-        if ($now->gt($job_start_time) && $this->actionCalculator->isStatusBeforeProcess($job->status)) return ['type' => 'late', 'value' => 'Late'];
-        if ($this->isStatusAfterOrEqualToProcess($job->status)) return ['type' => 'process', 'value' => 'Process'];
-        if ($job_start_time->gt($now) && $job_start_time->diffInHours($now) <= 24) return ['type' => 'time', 'value' => Carbon::parse($job->preferred_time_start)->format('H:i A')];
-        return ['type' => 'date', 'value' => Carbon::parse($job->schedule_date)->format('j F')];
-    }
 
-    /**
-     * @param $status
-     * @return bool
-     */
-    private function isStatusAfterOrEqualToProcess($status)
-    {
-        return constants('JOB_STATUS_SEQUENCE')[$status] >= constants('JOB_STATUS_SEQUENCE')[JobStatuses::PROCESS];
-    }
-
-    /**
-     * @param Job $job
-     * @return Carbon
-     */
-    private function getJobStartTime(Job $job)
-    {
-        return Carbon::parse($job->schedule_date . ' ' . $job->preferred_time_start);
-    }
 
     public function getNumberOfJobs()
     {

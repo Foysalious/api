@@ -14,12 +14,14 @@ class JobInfo
     private $rearrange;
     private $resource;
     private $actionCalculator;
+    private $statusTagCalculator;
 
-    public function __construct(JobRepositoryInterface $job_repository, RearrangeJobList $rearrange, ActionCalculator $actionCalculator)
+    public function __construct(JobRepositoryInterface $job_repository, RearrangeJobList $rearrange, ActionCalculator $actionCalculator, StatusTagCalculator $statusTagCalculator)
     {
         $this->jobRepository = $job_repository;
         $this->rearrange = $rearrange;
         $this->actionCalculator = $actionCalculator;
+        $this->statusTagCalculator = $statusTagCalculator;
     }
 
     /**
@@ -78,6 +80,7 @@ class JobInfo
         $formatted_job->put('start_time', Carbon::parse($job->preferred_time_start)->format('h:i A'));
         $formatted_job->put('schedule_date', $job->schedule_date);
         $formatted_job->put('services', $this->formatServices($job->jobServices));
+        $formatted_job->put('tag', $this->statusTagCalculator->calculateTag($job));
         $formatted_job->put('status', $job->status);
         $formatted_job->put('can_process', 0);
         $formatted_job->put('can_serve', 0);
