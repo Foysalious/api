@@ -95,6 +95,8 @@ class Director
         $this->builder->runQuery();
         $this->setPartnersAfterServiceCondition($this->getPartnerIds());
         $this->filterBaseConditions();
+        $this->builder->resolvePartnerSortingParameters();
+        $this->builder->sortPartners();
         $this->builder->resolveInfoForAdminPortal();
     }
 
@@ -142,9 +144,6 @@ class Director
 
         $this->builder->checkPartnerHasResource();
         $this->setPartnersAfterResourceCondition($this->getPartnerIds());
-
-        $this->builder->resolvePartnerSortingParameters();
-        $this->builder->sortPartners();
     }
 
     private function buildQueryForOrderPlace()
@@ -167,6 +166,8 @@ class Director
         $this->builder->checkPartnerAvailability();
         $this->builder->removeUnavailablePartners();
         $this->setPartnersAfterAvailabilityCondition($this->getPartnerIds());
+        $this->builder->resolvePartnerSortingParameters();
+        $this->builder->sortPartners();
     }
 
     public function getPartnerIdsAfterEachCondition()

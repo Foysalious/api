@@ -7,6 +7,7 @@ use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
 use App\Models\Category;
 use App\Models\Service;
 use App\Models\Thana;
+use Illuminate\Database\Eloquent\Collection;
 use Sheba\Google\MapClient;
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
@@ -29,6 +30,7 @@ class ServiceRequestObject
     private $dropOffTime;
     /** @var Thana */
     private $pickUpThana;
+    private $thanas;
 
 
     /** @var Thana */
@@ -194,6 +196,7 @@ class ServiceRequestObject
         $this->service = Service::where('id', $this->serviceId)->publishedForAll()->first();
         if (!$this->service) throw new ServiceIsUnpublishedException('Service #' . $this->serviceId . " is not available.", 400);
         $this->category = $this->service->category;
+        $this->setThanas();
         $this->setPickupThana();
         $this->setDestinationThana();
         if (in_array($this->service->id, $this->googleCalculatedCarService)) $this->quantity = $this->getDistanceCalculationResult();
@@ -268,6 +271,12 @@ class ServiceRequestObject
         return $this->destinationAddress;
     }
 
+    private function setThanas()
+    {
+        $this->thanas = Thana::all();
+        return $this;
+    }
+
     /**
      * @throws InsideCityPickUpAddressNotFoundException
      * @throws OutsideCityPickUpAddressNotFoundException
@@ -275,7 +284,7 @@ class ServiceRequestObject
     private function setPickupThana()
     {
         if (!$this->pickUpGeo) return;
-        $this->pickUpThana = $this->getThana($this->pickUpGeo->getLat(), $this->pickUpGeo->getLng(), Thana::all());
+        $this->pickUpThana = $this->getThana($this->pickUpGeo->getLat(), $this->pickUpGeo->getLng());
         if (!in_array($this->pickUpThana->district_id, config('sheba.rent_a_car_pickup_district_ids'))) {
             if (!in_array($this->getCategory()->id, $this->outsideCityCategoryId)) {
                 throw new InsideCityPickUpAddressNotFoundException("Got " . $this->pickUpThana->name . '(' . $this->pickUpThana->id . ') for pickup');
@@ -290,22 +299,22 @@ class ServiceRequestObject
     private function setDestinationThana()
     {
         if (!$this->destinationGeo || in_array($this->service->id, [1043, 1044])) return;
-        $this->destinationThana = $this->getThana($this->destinationGeo->getLat(), $this->destinationGeo->getLng(), Thana::all());
+        $this->destinationThana = $this->getThana($this->destinationGeo->getLat(), $this->destinationGeo->getLng());
         if ($this->pickUpThana->district_id == $this->destinationThana->district_id) {
             throw new DestinationCitySameAsPickupException("Got " . $this->destinationThana->name . '(' . $this->destinationThana->id . ') for destination');
         }
     }
 
-    private function getThana($lat, $lng, $models)
+    private function getThana($lat, $lng)
     {
         $current = new Coords($lat, $lng);
-        $to = $models->map(function ($model) {
+        $to = $this->thanas->map(function ($model) {
             return new Coords(floatval($model->lat), floatval($model->lng), $model->id);
         })->toArray();
         $distance = (new Distance(DistanceStrategy::$VINCENTY))->matrix();
         $results = $distance->from([$current])->to($to)->sortedDistance()[0];
         $result = array_keys($results)[0];
-        return $models->where('id', $result)->first();
+        return $this->thanas->where('id', $result)->first();
     }
 
     private function getDistanceCalculationResult()
