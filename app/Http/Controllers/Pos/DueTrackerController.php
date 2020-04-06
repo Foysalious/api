@@ -122,7 +122,6 @@ class DueTrackerController extends Controller
 
             $this->validate($request, [
                 'entry_id' => 'required',
-                'old_attachments' => 'required_with:attachments|array',
                 'attachment_should_remove' => 'sometimes|array'
             ]);
 
