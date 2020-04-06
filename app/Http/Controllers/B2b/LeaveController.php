@@ -87,14 +87,6 @@ class LeaveController extends Controller
         else return api_response($request, null, 404);
     }
 
-    private function leaveOrderBy($leaves, $sort = 'asc')
-    {
-        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
-        return collect($leaves)->$sort_by(function ($leave, $key) {
-            return strtoupper($leave['leave']['name']);
-        });
-    }
-
     /**
      * @param $business
      * @param $approval_request
@@ -320,6 +312,19 @@ class LeaveController extends Controller
         $sort_by = ($sort == 'asc') ? 'sortBy' : 'sortByDesc';
         return collect($leave_balances)->$sort_by(function ($leave_balance, $key) {
             return strtoupper($leave_balance['employee_name']);
+        });
+    }
+
+    /**
+     * @param $leaves
+     * @param string $sort
+     * @return mixed
+     */
+    private function leaveOrderBy($leaves, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($leaves)->$sort_by(function ($leave, $key) {
+            return strtoupper($leave['leave']['name']);
         });
     }
 }
