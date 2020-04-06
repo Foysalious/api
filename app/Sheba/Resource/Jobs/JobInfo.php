@@ -6,7 +6,6 @@ use App\Models\Resource;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Sheba\Dal\Job\JobRepositoryInterface;
-use Sheba\Jobs\JobStatuses;
 
 class JobInfo
 {
