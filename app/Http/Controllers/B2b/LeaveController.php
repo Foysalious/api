@@ -14,6 +14,7 @@ use App\Transformers\Business\LeaveRequestDetailsTransformer;
 use App\Transformers\CustomSerializer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Business\ApprovalRequest\Updater;
@@ -224,6 +225,7 @@ class LeaveController extends Controller
      */
     public function allLeaveBalance(Request $request, TimeFrame $time_frame)
     {
+        list($offset, $limit) = calculatePagination($request);
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
         /** @var Business $business */
@@ -236,15 +238,22 @@ class LeaveController extends Controller
                 $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id');
             }
         ])->get();
+        if ($request->has('department')) $members = $this->filterMembersWithDepartment($members, $request);
+        if ($request->has('search')) $members = $this->searchMemberWithEmployeeName($members, $request);
+        if ($request->has('limit')) $members = $members->splice($offset, $limit);
+        $total_records = $members->count();
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
         $resource = new Item($members, new LeaveBalanceTransformer($leave_types, $time_frame));
-        $leave_balance = $manager->createData($resource)->toArray()['data'];
+        $leave_balances = $manager->createData($resource)->toArray()['data'];
 
-        return api_response($request, null, 200, ['leave_balances' => $leave_balance, 'leave_types' => $leave_types]);
+        if ($request->has('sort')) {
+            $leave_balances = $this->leaveBalanceOrderBy($leave_balances, $request->sort)->values();
+        }
+
+        return api_response($request, null, 200, ['leave_balances' => $leave_balances, 'total_records' => $total_records, 'leave_types' => $leave_types]);
     }
-
 
     /**
      * @param $business_id
@@ -267,5 +276,48 @@ class LeaveController extends Controller
         $leave_balance = $manager->createData($resource)->toArray()['data'];
 
         return api_response($request, null, 200, ['leave_balance_details' => $leave_balance]);
+    }
+
+    /**
+     * @param $members
+     * @param Request $request
+     * @return mixed
+     */
+    private function filterMembersWithDepartment($members, Request $request)
+    {
+        return $members->filter(function ($member) use ($request) {
+            /** @var BusinessMember $business_member */
+            $business_member = $member->businessMember;
+            /** @var BusinessRole $role */
+            $role = $business_member->role;
+            if ($role) return $role->businessDepartment->id == $request->department;
+        });
+    }
+
+    /**
+     * @param $members
+     * @param Request $request
+     * @return mixed
+     */
+    private function searchMemberWithEmployeeName($members, Request $request)
+    {
+        return $members->filter(function ($member) use ($request) {
+            /** @var Profile $profile */
+            $profile = $member->profile;
+            return starts_with($profile->name, $request->search);
+        });
+    }
+
+    /**
+     * @param $leave_balances
+     * @param string $sort
+     * @return Collection
+     */
+    private function leaveBalanceOrderBy($leave_balances, $sort = 'asc')
+    {
+        $sort_by = ($sort == 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($leave_balances)->$sort_by(function ($leave_balance, $key) {
+            return strtoupper($leave_balance['employee_name']);
+        });
     }
 }
