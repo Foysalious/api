@@ -1,6 +1,7 @@
 <?php namespace Sheba\Business\Leave\Balance;
 
 use Sheba\Reports\ExcelHandler;
+use Sheba\Reports\Exceptions\NotAssociativeArray;
 
 class Excel
 {
@@ -15,36 +16,49 @@ class Excel
         $this->data = [];
     }
 
-    public function setBalanceData(array $leave_balances, array $leave_types)
+    /**
+     * @param array $leave_balances
+     * @return $this
+     */
+    public function setBalance(array $leave_balances)
     {
         $this->balanceData = $leave_balances;
-        $this->leave_types = $leave_types;
         return $this;
     }
 
+    /**
+     * @param array $leave_types
+     * @return $this
+     */
+    public function setLeaveType(array $leave_types)
+    {
+        $leave_type_array = [];
+        foreach ($leave_types as $leave_type) {
+            $leave_type_array[$leave_type['title']] = 0;
+        }
+
+        $this->leave_types = $leave_type_array;
+        return $this;
+    }
+
+    /**
+     * @return void
+     * @throws NotAssociativeArray
+     */
     public function get()
     {
         $this->makeData();
-        dd($this->data);
         return $this->excelHandler->setName('Leave Balance Report')->createReport($this->data)->download();
     }
 
     private function makeData()
     {
         foreach ($this->balanceData as $balance) {
-            $count = 0;
-            $balance_array = [];
-            foreach ($this->leave_types as $leave_type)
-            {
-                array_push($balance_array, [
-                    $leave_type['title'] => $balance['leave_balance'][$count]['used_leaves']. ' / ' .$balance['leave_balance'][$count]['allowed_leaves']
-                ]);
-                $count++;
+            foreach ($balance['leave_balance'] as $leave_type) {
+                $this->leave_types[$leave_type['title']] = $leave_type['allowed_leaves'] . '/' . $leave_type['used_leaves'];
             }
-            array_push($this->data, [
-                'employee_name' => $balance['employee_name'],
-                $balance_array
-            ]);
+            $data = ['employee_name' => $balance['employee_name']] + $this->leave_types;
+            array_push($this->data, $data);
         }
     }
 }
