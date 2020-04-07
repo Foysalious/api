@@ -36,6 +36,7 @@ class BillInfo
         $bill['total_material_price'] = (double)$job->materialPrice;
         $bill['total_service_price'] = (double)$job->servicePrice;
         $bill['discount'] = (double)$job->discount;
+        $bill['payment_method'] = $partnerOrder->payment_method=='cash-on-delivery' ? 'Cash On Delivery' : $partnerOrder->payment_method;
         $bill['services'] = $services;
         $bill['delivered_date'] = $job->delivered_date != null ? $job->delivered_date->format('Y-m-d') : null;
         $bill['delivered_date_timestamp'] = $job->delivered_date != null ? $job->delivered_date->timestamp : null;
