@@ -56,9 +56,14 @@ class LeaveController extends Controller
         $business_member = $request->business_member;
         $leave_approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMemberFilterBy($business_member, Type::LEAVE);
         if ($request->has('status')) $leave_approval_requests = $leave_approval_requests->where('status', $request->status);
+
+        /*if ($request->has('department') || $request->has('employee') || $request->has('search')) {
+            $leave_approval_requests = $this->filterWithDepartmentOrEmployeeOrSearchWithEmployee($leave_approval_requests, $request);
+        }*/
         if ($request->has('department')) $leave_approval_requests = $this->filterWithDepartment($leave_approval_requests, $request);
         if ($request->has('employee')) $leave_approval_requests = $this->filterWithEmployee($leave_approval_requests, $request);
         if ($request->has('search')) $leave_approval_requests = $this->searchWithEmployeeName($leave_approval_requests, $request);
+
         $total_leave_approval_requests = $leave_approval_requests->count();
         if ($request->has('limit')) $leave_approval_requests = $leave_approval_requests->splice($offset, $limit);
         $leaves = [];
@@ -186,6 +191,31 @@ class LeaveController extends Controller
             /** @var Member $member */
             $member = $requestable->businessMember->member;
             return $member->id == $request->employee;
+        });
+    }
+
+    /**
+     * @param $leave_approval_requests
+     * @param Request $request
+     * @return mixed
+     */
+    private function filterWithDepartmentOrEmployeeOrSearchWithEmployee($leave_approval_requests, Request $request)
+    {
+        return $leave_approval_requests->filter(function ($approval_request) use ($request) {
+            /** @var Leave $requestable */
+            $requestable = $approval_request->requestable;
+            /** @var BusinessMember $business_member */
+            $business_member = $requestable->businessMember;
+            /** @var Member $member */
+            $member = $business_member->member;
+            /** @var BusinessRole $role */
+            $role = $business_member->role;
+            /** @var Profile $profile */
+            $profile = $member->profile;
+
+            if ($request->has('department') && $role) return $role->businessDepartment->id == $request->department;
+            if ($request->has('employee')) return $member->id == $request->employee;
+            if ($request->has('search')) return str_contains(strtoupper($profile->name), strtoupper($request->search));
         });
     }
 
