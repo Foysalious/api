@@ -1,6 +1,9 @@
 <?php namespace Sheba\Pos\Order\RefundNatures;
 
 use App\Models\PosOrder;
+use Sheba\ExpenseTracker\AutomaticIncomes;
+use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
+use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\Pos\Log\Creator as LogCreator;
 use Sheba\Pos\Order\Updater;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
@@ -34,6 +37,11 @@ abstract class ReturnPosItem extends RefundNature
         $this->refundPayment();
         $this->generateDetails();
         $this->saveLog();
+        try {
+            $this->updateIncome($this->order);
+        } catch (ExpenseTrackingServerError $e) {
+            app('sentry')->captureException($e);
+        }
     }
 
     private function refundPayment()
@@ -69,5 +77,17 @@ abstract class ReturnPosItem extends RefundNature
         $details['items']['vat_amount']      = $this->oldOrder->getTotalVat();
         $details['items']['returned_amount'] = isset($this->data['paid_amount']) ? $this->data['paid_amount'] : 0.00;
         $this->details                       = json_encode($details);
+    }
+
+    /**
+     * @param PosOrder $order
+     * @throws ExpenseTrackingServerError
+     */
+    private function updateIncome(PosOrder $order)
+    {
+        /** @var AutomaticEntryRepository $entry */
+        $entry  = app(AutomaticEntryRepository::class);
+        $amount = (double)$order->calculate()->getNetBill();
+        $entry->setPartner($order->partner)->setAmount($amount)->setAmountCleared($order->getPaid())->setHead(AutomaticIncomes::POS)->setSourceType(class_basename($order))->setSourceId($order->id)->updateFromSrc();
     }
 }

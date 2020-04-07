@@ -1,6 +1,4 @@
-<?php
-
-namespace App\GraphQL\Query;
+<?php namespace App\GraphQL\Query;
 
 use App\Models\Customer;
 use GraphQL;
@@ -30,17 +28,17 @@ class OrderQuery extends Query
 
     public function resolve($root, $args, $context, ResolveInfo $info)
     {
-        if (!isset($args['id']) || !isset($args['token']) || !isset($args['customer_id'])) {
-            return null;
-        }
+        if (!isset($args['id']) || !isset($args['token']) || !isset($args['customer_id'])) return null;
+
         $customer = Customer::where([
             ['id', $args['customer_id']],
             ['remember_token', $args['token']],
         ])->with(['partnerOrders' => function ($q) use ($args) {
             return $q->where('partner_orders.id', $args['id']);
         }])->first();
-        if ($customer != null) {
-            return $customer->partnerOrders ? $customer->partnerOrders->first() : null;
-        }
+
+        if (!$customer) return null;
+
+        return $customer->partnerOrders ? $customer->partnerOrders->first() : null;
     }
 }

@@ -47,7 +47,6 @@ class UpsellCalculation
         return $this;
     }
 
-
     public function setQuantity($quantity)
     {
         $this->quantity = $quantity;
@@ -69,7 +68,6 @@ class UpsellCalculation
         foreach ($upsell_prices as $upsell_price) {
             if ($this->quantity >= $upsell_price['min'] && $this->quantity <= $upsell_price['max']) return $upsell_price['price'];
         }
-
     }
 
     private function getFixedServiceUpsell()

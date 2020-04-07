@@ -18,17 +18,28 @@ class CategoryTransformer extends TransformerAbstract
         $galleries = $category->galleries()->select('id', DB::Raw('thumb as image'))->get();
         $blog_posts = $category->blogPosts()->select('id', 'title', 'short_description', DB::Raw('thumb as image'), 'target_link')->get();
         $reviews = $category->reviews()->selectRaw("count(DISTINCT(reviews.id)) as total_ratings,avg(reviews.rating) as avg_rating")->groupBy('reviews.category_id')->first();
-        $data= [
+        $parent_category = $category->parent;
+        $master_category = [];
+        if ($parent_category) {
+            $master_category = [
+                'id' => $parent_category->id,
+                'name' => $parent_category->name,
+                'slug' => $parent_category->getSlug(),
+            ];
+        }
+        $data = [
             'id' => $category->id,
             'name' => $category->name,
             'slug' => $category->getSlug(),
             'thumb' => $category->thumb,
             'app_thumb' => $category->app_thumb,
             'is_trending' => $category->is_trending ? ['last_week_order_count' => $this->getLastWeekOrderCount($category)] : null,
+            'master_category' => count($master_category) > 0 ? $master_category : null,
             'service_title' => $category->service_title,
             'popular_service_description' => $category->popular_service_description,
             'other_service_description' => $category->other_service_description,
             'is_auto_sp_enabled' => $category->is_auto_sp_enabled,
+            'min_order_amount' => $category->min_order_amount,
             'avg_rating' => $reviews ? round($reviews->avg_rating, 2) : null,
             'total_ratings' => $reviews ? $reviews->total_ratings : null,
             'banner' => $category->banner,
@@ -44,7 +55,7 @@ class CategoryTransformer extends TransformerAbstract
             'gallery' => count($galleries) > 0 ? $galleries : null,
             'blog' => count($blog_posts) > 0 ? $blog_posts : null,
         ];
-        return array_merge($data,$this->appendMasterCategoryTag($category));
+        return array_merge($data, $this->appendMasterCategoryTag($category));
     }
 
     private function getLastWeekOrderCount($category)

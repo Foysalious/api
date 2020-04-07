@@ -218,7 +218,7 @@ class PartnerList
             if ($selected_service->serviceModel->isOptions()) {
                 $this->partners = $this->partners->filter(function ($partner, $key) use ($selected_service) {
                     $service = $partner->services->where('id', $selected_service->id)->first();
-                    return $this->partnerServiceRepository->hasThisOption($service->pivot->prices, implode(',', $selected_service->option));
+                    return $service->pivot->prices && $this->partnerServiceRepository->hasThisOption($service->pivot->prices, implode(',', $selected_service->option));
                 });
             }
         }
@@ -389,7 +389,7 @@ class PartnerList
 
     public function sortByShebaPartnerPriority()
     {
-        $this->partners = (new PartnerSort($this->partners))->get();
+        $this->partners = (new PartnerSort())->setPartners($this->partners)->getSortedPartners();
         if ($this->impressions->needsToDeduct()) $this->impressions->deduct($this->getPartnerIds());
     }
 
@@ -513,7 +513,6 @@ class PartnerList
             array_forget($partner, 'geo_informations');
             array_forget($partner, 'discounts');
             array_forget($partner, 'surcharges');
-            array_forget($partner, 'score');
             array_forget($partner, 'distance');
             array_forget($partner, 'order_limit');
             removeRelationsAndFields($partner);

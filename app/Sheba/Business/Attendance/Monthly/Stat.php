@@ -1,6 +1,5 @@
 <?php namespace Sheba\Business\Attendance\Monthly;
 
-
 use App\Models\Business;
 use App\Models\BusinessMember;
 use Carbon\Carbon;
@@ -11,6 +10,7 @@ use Sheba\Dal\BusinessHoliday\EloquentImplementation;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Dal\BusinessWeekend\EloquentImplementation as BusinessWeeklyRepositoryInterface;
 use Sheba\Dal\Attendance\EloquentImplementation as AttendRepositoryInterface;
+
 class Stat
 {
     private $present;

@@ -55,4 +55,10 @@ abstract class SubscriptionOrderPlace
         }
         return json_encode($schedules);
     }
+
+    protected function setSubscriptionOrderStatusToNotResponded(SubscriptionOrder $subscriptionOrder)
+    {
+        $subscriptionOrder->status = Statuses::NOT_RESPONDED;
+        $subscriptionOrder->update();
+    }
 }

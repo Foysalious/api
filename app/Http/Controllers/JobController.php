@@ -21,6 +21,7 @@ use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use League\Fractal\Serializer\ArraySerializer;
+use Sheba\CancelRequest\CancelRequestStatuses;
 use Sheba\Checkout\DeliveryCharge;
 use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Dal\JobService\JobService;
@@ -75,17 +76,8 @@ class JobController extends Controller
         }
     }
 
-    /**
-     * @param $customer
-     * @param $job
-     * @param Request $request
-     * @param PriceCalculation $price_calculation
-     * @param DeliveryCharge $delivery_charge
-     * @param JobDiscountHandler $job_discount_handler
-     * @param UpsellCalculation $upsell_calculation
-     * @return JsonResponse
-     */
-    public function show($customer, $job, Request $request, PriceCalculation $price_calculation, DeliveryCharge $delivery_charge, JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation)
+
+    public function show($customer, $job, Request $request, PriceCalculation $price_calculation, DeliveryCharge $delivery_charge, JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, ServiceV2MinimalTransformer $service_transformer)
     {
         try {
             $customer = $request->customer;
@@ -128,8 +120,13 @@ class JobController extends Controller
             $job_collection->put('preferred_time', $job->readable_preferred_time);
             $job_collection->put('category_id', $job->category ? $job->category->id : null);
             $job_collection->put('category_name', $job->category ? $job->category->name : null);
+            $job_collection->put('category_image', $job->category ? $job->category->thumb : null);
+            $job_collection->put('min_order_amount', $job->category ? $job->category->min_order_amount : null);
             $job_collection->put('partner_id', $job->partnerOrder->partner ? $job->partnerOrder->partner->id : null);
             $job_collection->put('partner_name', $job->partnerOrder->partner ? $job->partnerOrder->partner->name : null);
+            $job_collection->put('partner_image', $job->partnerOrder->partner ? $job->partnerOrder->partner->getContactResourceProPic() : null);
+            $job_collection->put('partner_mobile', $job->partnerOrder->partner ? $job->partnerOrder->partner->getContactNumber() : null);
+            $job_collection->put('partner_address', $job->partnerOrder->partner ? $job->partnerOrder->partner->address : null);
             $job_collection->put('status', $job->status);
             $job_collection->put('rating', $job->review ? $job->review->rating : null);
             $job_collection->put('review', $job->review ? $job->review->calculated_review : null);
@@ -141,7 +138,6 @@ class JobController extends Controller
             $job_collection->put('isRentCar', $job->isRentCar());
             $job_collection->put('is_on_premise', $job->isOnPremise());
             $job_collection->put('customer_favorite', $job->customerFavorite ? $job->customerFavorite->id : null);
-            $job_collection->put('partner_address', $job->partnerOrder->partner ? $job->partnerOrder->partner->address : null);
             $job_collection->put('order_code', $job->partnerOrder->order->code());
             $job_collection->put('pick_up_address', $job->carRentalJobDetail ? $job->carRentalJobDetail->pick_up_address : null);
             $job_collection->put('pick_up_address_geo', $job->carRentalJobDetail ? json_decode($job->carRentalJobDetail->pick_up_address_geo) : null);
@@ -154,10 +150,10 @@ class JobController extends Controller
             $job_collection->put('can_take_review', $this->canTakeReview($job));
             $job_collection->put('can_pay', $this->canPay($job));
             $job_collection->put('can_add_promo', $this->canAddPromo($job));
+            $job_collection->put('is_same_service', 1);
 
             $manager = new Manager();
             $manager->setSerializer(new ArraySerializer());
-
             if (count($job->jobServices) == 0) {
                 $services = collect();
                 $variables = json_decode($job->service_variables);
@@ -167,6 +163,7 @@ class JobController extends Controller
                     ->setOption(json_decode($job->service_option, true))
                     ->setQuantity($job->service_quantity);
                 $upsell_price = $upsell_calculation->getAllUpsellWithMinMaxQuantity();
+                $job_collection->put('is_same_service', 0);
                 $services->push([
                     'service_id' => $job->service->id,
                     'name' => $job->service_name,
@@ -180,6 +177,7 @@ class JobController extends Controller
                 ]);
             } else {
                 $services = collect();
+                $notSame = 0;
                 foreach ($job->jobServices as $jobService) {
                     /** @var JobService $jobService */
                     $variables = json_decode($jobService->variables);
@@ -195,8 +193,11 @@ class JobController extends Controller
                         "option" => json_decode($jobService->option, true),
                         "variable_type" => $jobService->variable_type
                     ];
-
-                    $resource = new Item($selected_service, new ServiceV2MinimalTransformer($location_service, $price_calculation));
+                    if ($location_service) {
+                        $service_transformer->setLocationService($location_service);
+                        if ($jobService->variable_type != $location_service->service->variable_type) $notSame = 1;
+                    }
+                    $resource = new Item($selected_service, $service_transformer);
                     $price_data = $manager->createData($resource)->toArray();
 
                     $service_data = [
@@ -213,6 +214,7 @@ class JobController extends Controller
                     $service_data += $price_data;
                     $services->push($service_data);
                 }
+                if ($notSame) $job_collection->put('is_same_service', 0);
             }
 
             $job_collection->put('services', $services);
@@ -273,6 +275,11 @@ class JobController extends Controller
             $original_delivery_charge = $job->deliveryPrice;
             $delivery_discount = $job->deliveryDiscount;
 
+            $voucher = $partnerOrder->order->voucher ? [
+                'code' => $partnerOrder->order->voucher->code,
+                'amount' => $partnerOrder->order->voucher->amount
+            ] : null;
+
             $bill = collect();
             $bill['total'] = (double)($partnerOrder->totalPrice + $partnerOrder->totalLogisticCharge);
             $bill['total_without_logistic'] = (double)($partnerOrder->totalPrice);
@@ -293,6 +300,7 @@ class JobController extends Controller
             $bill['delivery_discount'] = $delivery_discount;
             $bill['invoice'] = $job->partnerOrder->invoice;
             $bill['version'] = $job->partnerOrder->getVersion();
+            $bill['voucher'] = $voucher;
 
             return api_response($request, $bill, 200, ['bill' => $bill]);
         } catch (Throwable $e) {
@@ -390,7 +398,7 @@ class JobController extends Controller
         $due = $job->partnerOrder->calculate(true)->due;
         $status = $job->status;
 
-        if (in_array($status, ['Declined', 'Cancelled']))
+        if (in_array($status, ['Declined', 'Cancelled']) || $job->cancelRequests()->where('status', CancelRequestStatuses::PENDING)->first())
             return false;
         else {
             return $due > 0;

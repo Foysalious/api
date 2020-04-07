@@ -1,6 +1,5 @@
 <?php namespace Sheba\Business\Attendance;
 
-
 use App\Models\Business;
 use App\Models\BusinessDepartment;
 use App\Models\BusinessRole;

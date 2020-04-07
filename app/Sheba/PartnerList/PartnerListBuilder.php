@@ -1,11 +1,13 @@
 <?php namespace Sheba\PartnerList;
 
+use App\Models\Category;
 use App\Models\Partner;
 use App\Sheba\Partner\PartnerAvailable;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Support\Collection;
 use Sheba\Checkout\Partners\PartnerUnavailabilityReasons;
+use Sheba\Checkout\PartnerSort;
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
 use Sheba\Location\Distance\DistanceStrategy;
@@ -26,10 +28,24 @@ class PartnerListBuilder implements Builder
     private $partnerIdsToIgnore;
     /** @var Geo */
     private $geo;
+    /** @var array */
+    private $categoryIdsOfMasterCategory;
 
     public function __construct()
     {
         $this->partnerQuery = Partner::query();
+    }
+
+    private function setCategoryIdsOfMasterCategory()
+    {
+        if (count($this->categoryIdsOfMasterCategory) > 0) return;
+        $this->categoryIdsOfMasterCategory = Category::where('parent_id', $this->getCategory()->parent_id)->pluck('id')->toArray();
+    }
+
+    private function getCategoryIdsOfMasterCategory()
+    {
+        $this->setCategoryIdsOfMasterCategory();
+        return $this->categoryIdsOfMasterCategory;
     }
 
     public function checkCategory()
@@ -79,7 +95,9 @@ class PartnerListBuilder implements Builder
     {
         $this->partnerQuery = $this->partnerQuery->with([
             'handymanResources' => function ($q) {
-                $q->selectRaw('count(distinct resources.id) as total_experts, partner_id')->join('category_partner_resource', 'category_partner_resource.partner_resource_id', '=', 'partner_resource.id')->where('category_partner_resource.category_id', $this->getCategoryId())->groupBy('partner_id')->verified();
+                $q->selectRaw('count(distinct resources.id) as total_experts, partner_id')
+                    ->join('category_partner_resource', 'category_partner_resource.partner_resource_id', '=', 'partner_resource.id')
+                    ->where('category_partner_resource.category_id', $this->getCategoryId())->groupBy('partner_id')->verified();
             }
         ]);
     }
@@ -88,16 +106,29 @@ class PartnerListBuilder implements Builder
     {
         $this->partnerQuery = $this->partnerQuery->with([
             'reviews' => function ($q) {
-                $q->selectRaw("AVG(reviews.rating) as avg_rating")->selectRaw("reviews.partner_id")->where('reviews.category_id', $this->getCategoryId())->groupBy('reviews.partner_id');
+                $q->selectRaw("AVG(reviews.rating) as avg_rating")
+                    ->selectRaw("count(reviews.id) as total_ratings")
+                    ->selectRaw("reviews.partner_id")->whereIn('reviews.category_id', $this->getCategoryIdsOfMasterCategory())->groupBy('reviews.partner_id');
             }
         ]);
     }
+
 
     public function withTotalCompletedOrder()
     {
         $this->partnerQuery = $this->partnerQuery->with([
             'jobs' => function ($q) {
-                $q->selectRaw("count(case when status in ('Served') and category_id in(" . implode([$this->getCategoryId()], ',') . ") then status end) as total_completed_orders")->groupBy('partner_id');
+                $q->selectRaw("count(case when status in ('Served') and category_id in(" . implode($this->getCategoryIdsOfMasterCategory(), ',') . ") then status end) as total_completed_orders")
+                    ->groupBy('partner_id');
+            }
+        ]);
+    }
+
+    public function withTotalOngoingJobs()
+    {
+        $this->partnerQuery = $this->partnerQuery->with([
+            'jobs' => function ($q) {
+                $q->selectRaw("count(case when status in ('Accepted', 'Schedule Due', 'Process', 'Serve Due') then status end) as ongoing_jobs")->groupBy('partner_id');
             }
         ]);
     }
@@ -111,6 +142,11 @@ class PartnerListBuilder implements Builder
                 $q->where('categories.id', $this->getCategoryId());
             }
         ]);
+    }
+
+    public function withSubscriptionPackage()
+    {
+        $this->partnerQuery = $this->partnerQuery->with(['subscription']);
     }
 
     public function checkPartnerHasResource()
@@ -215,7 +251,7 @@ class PartnerListBuilder implements Builder
 
     public function runQuery()
     {
-        $this->partners = $this->partnerQuery->get();;
+        $this->partners = $this->partnerQuery->get();
     }
 
     public function get()
@@ -233,6 +269,11 @@ class PartnerListBuilder implements Builder
         $this->partners = $this->partners->filter(function ($partner) {
             return $partner->id != config('sheba.sheba_help_desk_id');
         });
+    }
+
+    public function withoutShebaHelpDesk()
+    {
+        $this->partnerQuery = $this->partnerQuery->where('partners.id', '<>', config('sheba.sheba_help_desk_id'));
     }
 
     public function removeUnavailablePartners()
@@ -264,6 +305,7 @@ class PartnerListBuilder implements Builder
             if ($service->isOptions()) {
                 $this->partners = $this->partners->filter(function ($partner) use ($service, $selected_service) {
                     $service = $partner->services->where('id', $service->id)->first();
+                    if (empty($service->pivot->prices)) return 0;
                     return $this->hasThisOption($service->pivot->prices, implode(',', $selected_service->getOption()));
                 });
             }
@@ -327,4 +369,32 @@ class PartnerListBuilder implements Builder
     {
         return $this->serviceRequestObject[0]->getCategory();
     }
+
+    public function resolvePartnerSortingParameters()
+    {
+        $this->partners = $this->partners->map(function ($partner) {
+            $partner['total_completed_orders'] = $partner->jobs->first() ? $partner->jobs->first()->total_completed_orders : 0;
+            $partner['total_ratings'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_ratings : 0;
+            $partner['rating'] = $partner->reviews->first() ? (double)$partner->reviews->first()->avg_rating : 0;
+            $partner['total_experts'] = $partner->handymanResources->first() ? (int)$partner->handymanResources->first()->total_experts : 0;
+            return $partner;
+        });
+    }
+
+    public function resolveInfoForAdminPortal()
+    {
+        $this->partners = $this->partners->map(function ($partner) {
+            $partner['contact_no'] = $partner->getContactNumber();
+            $partner['subscription_type'] = $partner->resolveSubscriptionType();
+            $partner['ongoing_jobs'] = $partner->jobs->first() ? $partner->jobs->first()->ongoing_jobs : 0;
+            return $partner;
+        });
+
+    }
+
+    public function sortPartners()
+    {
+        $this->partners = (new PartnerSort())->setPartners($this->partners)->getSortedPartners();
+    }
 }
+

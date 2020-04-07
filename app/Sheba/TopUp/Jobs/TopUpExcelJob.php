@@ -37,6 +37,7 @@ class TopUpExcelJob extends TopUpJob
         $this->totalRow = $total_row;
         $this->sms = new Sms();
         $this->bulk = $bulk;
+        $this->queue = 'topup:low';
     }
 
     /**

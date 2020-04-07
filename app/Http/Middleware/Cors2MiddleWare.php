@@ -90,7 +90,14 @@ class Cors2MiddleWare
             "https://banks.sheba.xyz",
             "http://stage.sheba.xyz",
             "https://stage.sheba.xyz",
-            "https://admin.stage.sheba.xyz"
+            "https://admin.stage.sheba.xyz",
+            "http://smanager.sheba.test",
+            "https://smanager.dev-sheba.xyz",
+            "https://new.sheba.xyz",
+            "https://help.sheba.xyz",
+            "https://help.dev-sheba.xyz",
+            "http://payment-link-web.sheba.test:3031",
+            "https://v3.sheba.xyz"
         ];
         // ALLOW OPTIONS METHOD
         $headers['Access-Control-Allow-Credentials'] = 'true';
@@ -106,8 +113,8 @@ class Cors2MiddleWare
         $headers['Access-Control-Allow-Headers'] = 'Content-Type, X-Auth-Token, Origin, Authorization, X-Requested-With, Portal-Name, User-Id';
         $response = $next($request);
         foreach ($headers as $key => $value) {
-            if ($response instanceof BinaryFileResponse){}
-            else $response->header($key, $value);
+            if ($response instanceof BinaryFileResponse) {
+            } else $response->header($key, $value);
         }
         return $response;
     }

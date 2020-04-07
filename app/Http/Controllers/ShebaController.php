@@ -253,36 +253,32 @@ class ShebaController extends Controller
 
     public function checkTransactionStatus(Request $request, $transactionID, PdfHandler $pdfHandler)
     {
-        try {
-            $payment = Payment::where('transaction_id', $transactionID)->whereIn('status', ['failed', 'validated', 'completed'])->first();
-            if (!$payment) {
-                $payment = Payment::where('transaction_id', $transactionID)->first();
-                if ($payment->transaction_details && isset(json_decode($payment->transaction_details)->errorMessage)) {
-                    $message = 'Your payment has been failed due to ' . json_decode($payment->transaction_details)->errorMessage;
-                } else {
-                    $message = 'Payment Failed.';
-                }
-                return api_response($request, null, 404, ['message' => $message]);
-            }
-            $info = [
-                'amount' => $payment->payable->amount,
-                'method' => $payment->paymentDetails->last()->readable_method,
-                'description' => $payment->payable->description,
-                'created_at' => $payment->created_at->format('jS M, Y, h:i A'),
-                'invoice_link' => $payment->invoice_link,
-                'transaction_id' => $transactionID
-            ];
-            $info = array_merge($info, $this->getInfoForPaymentLink($payment->payable));
-            if ($payment->status == 'validated' || $payment->status == 'failed') {
-                $message = 'Your payment has been received but there was a system error. It will take some time to update your transaction. Call 16516 for support.';
+        $payment = Payment::where('transaction_id', $transactionID)->whereIn('status', ['failed', 'validated', 'completed'])->first();
+        if (!$payment) {
+            $payment = Payment::where('transaction_id', $transactionID)->first();
+            if (!$payment) return api_response($request, null, 404, ['message' => 'No Payment found']);
+            if ($payment->transaction_details && isset(json_decode($payment->transaction_details)->errorMessage)) {
+                $message = 'Your payment has been failed due to ' . json_decode($payment->transaction_details)->errorMessage;
             } else {
-                $message = 'Successful';
+                $message = 'Payment Failed.';
             }
-            return api_response($request, null, 200, ['info' => $info, 'message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+            return api_response($request, null, 404, ['message' => $message]);
         }
+        $info = [
+            'amount' => $payment->payable->amount,
+            'method' => $payment->paymentDetails->last()->readable_method,
+            'description' => $payment->payable->description,
+            'created_at' => $payment->created_at->format('jS M, Y, h:i A'),
+            'invoice_link' => $payment->invoice_link,
+            'transaction_id' => $transactionID
+        ];
+        $info = array_merge($info, $this->getInfoForPaymentLink($payment->payable));
+        if ($payment->status == 'validated' || $payment->status == 'failed') {
+            $message = 'Your payment has been received but there was a system error. It will take some time to update your transaction. Call 16516 for support.';
+        } else {
+            $message = 'Successful';
+        }
+        return api_response($request, null, 200, ['info' => $info, 'message' => $message]);
     }
 
     public function getInfoForPaymentLink(Payable $payable)
@@ -494,7 +490,7 @@ class ShebaController extends Controller
         if (!$type) return api_response($request, null, 404);
         if ($type->sluggable_type == 'service') $model = 'service';
         else $model = 'category';
-        $meta_tag = $meta_tag_repository->builder()->select('meta_tag', 'og_tag')->where('taggable_type', 'like', '%' . $model)->where('taggable_id', $type->id)->first();
+        $meta_tag = $meta_tag_repository->builder()->select('meta_tag', 'og_tag')->where('taggable_type', 'like', '%' . $model)->where('taggable_id', $type->sluggable_id)->first();
         $sluggable_type = [
             'type' => $type->sluggable_type,
             'id' => $type->sluggable_id,
@@ -506,138 +502,16 @@ class ShebaController extends Controller
 
     public function redirectUrl(Request $request)
     {
-        try {
-            $this->validate($request, ['url' => 'required']);
+        $this->validate($request, ['url' => 'required']);
 
-            $new_url = RedirectUrl::where('old_url', 'LIKE', $request->url)->first();
+        $new_url = RedirectUrl::where('old_url', 'LIKE', $request->url)->first();
 
-            if ($new_url) {
-                return api_response($request, true, 200, ['new_url' => $new_url->new_url]);
-            } else {
-                return api_response($request, true, 404, ['message' => 'Not Found']);
-            }
-
-
-        } catch (ValidationException $e) {
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all()]);
-            $sentry->captureException($e);
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
-    public function getBreadcrumb(Request $request)
-    {
-        try {
-            $this->validate($request, ['type' => 'required']);
-            $param = $request->param;
-            $type = $request->type;
-
-            $param_item = SluggableType::where('slug', $param)->first();
-
-            $items = $this->generateBreadcrumbItems($param_item, $type);
-
-
-            return api_response($request, true, 200, ['breadcrumb' => $this->generateBreadcrumb($items)]);
-
-        } catch (ValidationException $e) {
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all()]);
-            $sentry->captureException($e);
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
-    public function generateBreadcrumbItems($param, $type)
-    {
-        $marketplace_url = env('SHEBA_MARKETPLACE_URL');
-        $items = [
-            [
-                'name' => 'Sheba',
-                'url' => $marketplace_url
-            ]
-        ];
-        if ($param) {
-            if ($type === 'service') {
-                $service = Service::find($param->sluggable_id);
-                $category = $service ? Category::find($service->category_id) : null;
-                $master = $category ? Category::find($category->parent_id) : null;
-
-
-                if (!($service && $category && $master)) return $items;
-
-                array_push($items, [
-                    'name' => $master->name,
-                    'url' => $marketplace_url . '/' . $master->slug,
-                ], [
-                    'name' => $category->name,
-                    'url' => $marketplace_url . '/' . $category->slug,
-                ], [
-                    'name' => $service->name,
-                    'url' => $marketplace_url . '/' . $service->slug,
-                ]);
-            }
-            if ($type === 'secondary_category') {
-                $category = Category::find($param->sluggable_id);
-                $master = $category ? Category::find($category->parent_id) : null;
-
-
-                if (!($category && $master)) return $items;
-
-                array_push($items, [
-                    'name' => $master->name,
-                    'url' => $marketplace_url . '/' . $master->slug,
-                ], [
-                    'name' => $category->name,
-                    'url' => $marketplace_url . '/' . $category->slug,
-                ]);
-            }
-            if ($type === 'master_category') {
-                $master = Category::find($param->sluggable_id);
-
-                if (!$master) return $items;
-
-                array_push($items, [
-                    'name' => $master->name,
-                    'url' => $marketplace_url . '/' . $master->slug,
-                ]);
-            }
-            if ($type === 'static') {
-                array_push($items, [
-                    'name' => $param,
-                    'url' => $marketplace_url . '/' . $param,
-                ]);
-            }
+        if ($new_url) {
+            return api_response($request, true, 200, ['new_url' => $new_url->new_url]);
+        } else {
+            return api_response($request, true, 404, ['message' => 'Not Found']);
         }
 
-        return $items;
     }
 
-    public function generateBreadcrumb($items)
-    {
-        $itemListElement = [];
-
-        foreach ($items as $key => $value) {
-            array_push($itemListElement, [
-                "@type" => "ListItem",
-                "position" => (int)$key + 1,
-                "name" => $value['name'],
-                "item" => $value['url']
-            ]);
-        }
-
-        return [
-            "@context" => "https://schema.org",
-            "@type" => "BreadcrumbList",
-            "itemListElement" => $itemListElement
-        ];
-    }
 }

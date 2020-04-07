@@ -146,7 +146,7 @@ class BusinessInfo implements Arrayable
                 $output[$key] = (new BusinessAdditionalInfo($set))->toArray();
             } elseif ($key == 'last_six_month_sales_information') {
                 $set          = array_key_exists($key, $data) ? $data[$key] : null;
-                $output[$key] = (new SalesInfo($this->sales_information))->toArray();
+                $output[$key] = (new SalesInfo($set))->toArray();
             } else {
                 $output[$key] = array_key_exists($key, $data) ? $data[$key] : null;
             }
@@ -179,7 +179,8 @@ class BusinessInfo implements Arrayable
             'security_check',
             'business_category',
             'sector',
-            'industry_and_business_nature'
+            'industry_and_business_nature',
+            'date_of_establishment'
         ];
     }
 

@@ -1,5 +1,9 @@
 <?php namespace Sheba\Pos\Order\RefundNatures;
 
+use App\Models\PosOrder;
+use Sheba\ExpenseTracker\AutomaticIncomes;
+use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
+use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\Pos\Log\Supported\Types;
 
 class PosItemQuantityIncrease extends ReturnPosItem
@@ -17,6 +21,11 @@ class PosItemQuantityIncrease extends ReturnPosItem
         $this->refundPayment();
         $this->generateDetails();
         $this->saveLog();
+        try {
+            $this->updateIncome($this->order);
+        } catch (ExpenseTrackingServerError $e) {
+            app('sentry')->captureException($e);
+        }
     }
 
     private function refundPayment()
@@ -37,5 +46,15 @@ class PosItemQuantityIncrease extends ReturnPosItem
         $this->logCreator->setOrder($this->order)->setType(Types::ITEM_QUANTITY_INCREASE)->setLog("Order item added, order id: {$this->order->id}")->setDetails($this->details)->create();
     }
 
-
+    /**
+     * @param PosOrder $order
+     * @throws ExpenseTrackingServerError
+     */
+    private function updateIncome(PosOrder $order)
+    {
+        /** @var AutomaticEntryRepository $entry */
+        $entry  = app(AutomaticEntryRepository::class);
+        $amount = (double)$order->calculate()->getNetBill();
+        $entry->setPartner($order->partner)->setAmount($amount)->setAmountCleared($order->getPaid())->setHead(AutomaticIncomes::POS)->setSourceType(class_basename($order))->setSourceId($order->id)->updateFromSrc();
+    }
 }

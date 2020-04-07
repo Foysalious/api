@@ -13,9 +13,11 @@ class Route
             (new CustomerRoute())->set($api);
             (new AffiliateRoute())->set($api);
             (new PartnerRoute())->set($api);
+            (new HelpRoute())->set($api);
             $api->post('training-status-update', 'ResourceController@trainingStatusUpdate');
             $api->post('profile-check', 'Profile\ProfileController@checkProfile');
             $api->post('newsletter', 'NewsletterController@create');
+            $api->get('partner/dashboard-by-token', 'PartnerController@dashboardByToken');
             $api->group(['prefix' => 'profile'], function ($api) {
                 $api->post('registration/partner', 'Auth\PartnerRegistrationController@registerByProfile')->middleware('jwtAuth');
                 $api->post('registration/affiliate', 'Auth\AffiliateRegistrationController@registerByProfile')->middleware('jwtAuth');
@@ -174,9 +176,6 @@ class Route
             $api->post('admin/payout', 'Bkash\\BkashPayoutController@pay');
             $api->post('admin/bkash-balance', 'Bkash\\BkashPayoutController@queryBalance');
             $api->post('forget-password', 'ProfileController@forgetPassword');
-            $api->group(['prefix' => 'proxy'], function ($api) {
-                $api->post('/top-up', 'ProxyController@pretupsTopUp');
-            });
             /** EMI INFO */
             $api->get('emi-info', 'ShebaController@getEmiInfo');
             $api->group(['prefix' => 'tickets', 'middleware' => 'jwtGlobalAuth'], function ($api) {

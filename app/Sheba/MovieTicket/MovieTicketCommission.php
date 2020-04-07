@@ -123,7 +123,7 @@ abstract class MovieTicketCommission
         $this->movieTicketOrder->agent_commission = $this->calculateMovieTicketCommission($this->amount);
         $this->movieTicketOrder->save();
         $transaction = (new MovieTicketTransaction())->setAmount($this->movieTicketOrder->agent_commission)
-            ->setLog(number_format($this->movieTicketOrder->agent_commission, 2) . " TK has been collected from Sheba for movie ticket sales commission. of user with mobile number: " . $this->movieTicketOrder->reserver_mobile)
+            ->setLog(number_format($this->movieTicketOrder->agent_commission, 2) . " point has been collected from Sheba for movie ticket sales commission. of user with mobile number: " . $this->movieTicketOrder->reserver_mobile)
             ->setMovieTicketOrder($this->movieTicketOrder);
         $this->agent->movieTicketTransactionNew($transaction);
     }

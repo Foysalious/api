@@ -15,24 +15,22 @@ use Sheba\PaymentLink\PaymentLinkClient;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
 
-class PaymentLinkController extends Controller
-{
+class PaymentLinkController extends Controller {
     use ModificationFields;
     private $paymentLinkClient;
     private $paymentLinkRepo;
     private $creator;
     private $paymentDetailTransformer;
 
-    public function __construct(PaymentLinkClient $payment_link_client, PaymentLinkRepository $payment_link_repo, Creator $creator)
-    {
+
+    public function __construct(PaymentLinkClient $payment_link_client, PaymentLinkRepository $payment_link_repo, Creator $creator) {
         $this->paymentLinkClient        = $payment_link_client;
         $this->paymentLinkRepo          = $payment_link_repo;
         $this->creator                  = $creator;
         $this->paymentDetailTransformer = new PaymentDetailTransformer();
     }
 
-    public function index(Request $request)
-    {
+    public function index(Request $request) {
         try {
             $payment_links_list = $this->paymentLinkRepo->getPaymentLinkList($request);
             if ($payment_links_list) {
@@ -54,8 +52,7 @@ class PaymentLinkController extends Controller
         }
     }
 
-    public function show($identifier, Request $request, PaymentLinkRepositoryInterface $paymentLinkRepository)
-    {
+    public function show($identifier, Request $request, PaymentLinkRepositoryInterface $paymentLinkRepository) {
         try {
             $link = $paymentLinkRepository->findByIdentifier($identifier);
             if ($link && (int)$link->getIsActive()) {
@@ -69,7 +66,8 @@ class PaymentLinkController extends Controller
                         'amount'           => $link->getAmount(),
                         'payment_receiver' => [
                             'name'  => $user->name,
-                            'image' => $user->logo
+                            'image' => $user->logo,
+                            'id'    => $user->id,
                         ],
                         'payer'            => $payer ? [
                             'name'   => $payer->name,
@@ -89,8 +87,7 @@ class PaymentLinkController extends Controller
         }
     }
 
-    public function store(Request $request)
-    {
+    public function store(Request $request) {
         try {
             $this->validate($request, [
                 'amount'  => 'required',
@@ -124,6 +121,7 @@ class PaymentLinkController extends Controller
             $payment_link_store = $this->creator->save();
             if ($payment_link_store) {
                 $payment_link = $this->creator->getPaymentLinkData();
+
                 return api_response($request, $payment_link, 200, ['payment_link' => $payment_link]);
             } else {
                 return api_response($request, null, 500);
@@ -137,8 +135,7 @@ class PaymentLinkController extends Controller
         }
     }
 
-    public function statusChange($link, Request $request)
-    {
+    public function statusChange($link, Request $request) {
         try {
             $this->validate($request, [
                 'status' => 'required'
@@ -159,8 +156,7 @@ class PaymentLinkController extends Controller
         }
     }
 
-    public function getDefaultLink(Request $request)
-    {
+    public function getDefaultLink(Request $request) {
         try {
             $default_payment_link = $this->paymentLinkClient->defaultPaymentLink($request);
             if ($default_payment_link) {
@@ -172,7 +168,13 @@ class PaymentLinkController extends Controller
                 return api_response($request, $default_payment_link, 200, ['default_payment_link' => $default_payment_link]);
             } else {
                 $request->merge(['isDefault' => 1]);
-                $this->creator->setIsDefault($request->isDefault)->setAmount($request->amount)->setReason($request->purpose)->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type);
+
+                $this->creator->setIsDefault($request->isDefault)
+                    ->setAmount($request->amount)
+                    ->setReason($request->purpose)
+                    ->setUserName($request->user->name)
+                    ->setUserId($request->user->id)
+                    ->setUserType($request->type);
                 $store_default_link   = $this->creator->save();
                 $default_payment_link = [
                     'link_id' => $store_default_link->linkId,
@@ -187,8 +189,7 @@ class PaymentLinkController extends Controller
         }
     }
 
-    public function getPaymentLinkPayments($link, Request $request)
-    {
+    public function getPaymentLinkPayments($link, Request $request) {
         try {
             $payment_link_details = $this->paymentLinkClient->paymentLinkDetails($link);
             if ($payment_link_details) {
@@ -226,8 +227,7 @@ class PaymentLinkController extends Controller
         }
     }
 
-    public function paymentLinkPaymentDetails($link, $payment, Request $request)
-    {
+    public function paymentLinkPaymentDetails($link, $payment, Request $request) {
         try {
             $payment_link_payment_details = $this->paymentLinkRepo->paymentLinkDetails($link);
             $payment                      = $this->paymentLinkRepo->payment($payment);

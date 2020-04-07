@@ -28,7 +28,7 @@ class VendorController extends Controller
             $this->validate($request, [
                 'vendor_name' => 'required',
                 'vendor_mobile' => 'required|string|mobile:bd',
-                'vendor_image' => 'sometimes|required|mimes:jpeg,png',
+                'vendor_image' => 'sometimes|required|image|mimes:jpeg,png',
                 'resource_name' => 'required',
                 'resource_mobile' => 'required|string|mobile:bd'
             ]);

@@ -4,6 +4,7 @@ namespace Sheba\Checkout\Services;
 
 use App\Models\Category;
 use App\Models\Service;
+use Sheba\ServiceRequest\ServiceIsUnpublishedException;
 use stdClass;
 
 class ServiceObject
@@ -63,6 +64,7 @@ class ServiceObject
     public function setService()
     {
         $this->serviceModel = Service::with('subscription')->where('id', $this->service->id)->publishedForAll()->first();
+        if (!$this->serviceModel) throw new ServiceIsUnpublishedException('Service #' . $this->service->id . " is not available.", 400);
     }
 
     protected function setQuantity()
