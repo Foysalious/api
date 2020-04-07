@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\App;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Business\ApprovalRequest\Updater;
+use Sheba\Business\Leave\Balance\Excel as BalanceExcel;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
@@ -216,7 +217,7 @@ class LeaveController extends Controller
      * @param TimeFrame $time_frame
      * @return JsonResponse
      */
-    public function allLeaveBalance(Request $request, TimeFrame $time_frame)
+    public function allLeaveBalance(Request $request, TimeFrame $time_frame, BalanceExcel $balance_excel)
     {
         $this->validate($request, [
             'sort' => 'sometimes|string|in:asc,desc'
@@ -246,6 +247,10 @@ class LeaveController extends Controller
 
         if ($request->has('sort')) {
             $leave_balances = $this->leaveBalanceOrderBy($leave_balances, $request->sort)->values();
+        }
+
+        if ($request->file == 'excel') {
+            return $balance_excel->setBalanceData($leave_balances, $leave_types)->get();
         }
 
         return api_response($request, null, 200, ['leave_balances' => $leave_balances, 'total_records' => $total_records, 'leave_types' => $leave_types]);
