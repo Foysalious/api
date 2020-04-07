@@ -73,7 +73,7 @@ class OrderController extends Controller
                     ]
                 ]);
             }
-            $orders       = empty($status) ? $orders_query->orderBy('created_at', 'desc')->skip($offset)->take($limit)->get() : $orders_query->orderBy('created_at', 'desc')->get();
+            $orders       = (empty($status) && $status === 'null') ? $orders_query->orderBy('created_at', 'desc')->skip($offset)->take($limit)->get() : $orders_query->orderBy('created_at', 'desc')->get();
             $final_orders = collect();
             foreach ($orders as $index => $order) {
                 $order->isRefundable();
@@ -84,7 +84,7 @@ class OrderController extends Controller
                 $order_formatted = $manager->createData($resource)->toArray()['data'];
                 $final_orders->push($order_formatted);
             }
-            if (!empty($status))
+            if (!empty($status) && $status !== 'null')
                 $final_orders = $final_orders->where('status', $status)->slice($offset)->take($limit);
             $final_orders     = $final_orders->groupBy('date')->toArray();
 
