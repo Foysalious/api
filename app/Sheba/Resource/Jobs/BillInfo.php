@@ -52,8 +52,11 @@ class BillInfo
 
     private function formatPaymentMethod($payment_method)
     {
-        if ($payment_method == 'Cash On Delivery' ||
-            $payment_method == 'cash-on-delivery') return 'cod';
-        return strtolower($payment_method);
+        $payment_method = strtolower($payment_method);
+        if ($payment_method=='cod') return 'Cash On Delivery';
+        if ($payment_method=='wallet') return 'Sheba Credit';
+        if ($payment_method=='cbl') return 'CBL';
+        if ($payment_method=='bkash') return 'bKash';
+        return ucwords(str_replace("-", " ", str_replace("_", " ", $payment_method)));
     }
 }
