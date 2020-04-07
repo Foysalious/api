@@ -3,6 +3,7 @@
 use App\Models\Affiliation;
 use App\Models\CarRentalJobDetail;
 use App\Models\Category;
+use App\Models\CategoryPartner;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;
@@ -612,9 +613,16 @@ class OrderPlace
         }
     }
 
+    /**
+     * @return DeliveryCharge
+     */
     private function buildDeliveryCharge()
     {
-        return (new DeliveryCharge())->setCategory($this->category);
+        $deliver_charge = new DeliveryCharge();
+        $deliver_charge->setCategory($this->category);
+        if ($this->selectedPartner) $deliver_charge->setCategoryPartnerPivot(CategoryPartner::where([['category_id', $this->category->id], ['partner_id', $this->selectedPartner->id]])
+            ->first());
+        return $deliver_charge;
     }
 
     /**

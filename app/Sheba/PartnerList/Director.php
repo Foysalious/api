@@ -85,6 +85,7 @@ class Director
         $this->buildQueryForOrderPlace();
         $this->buildQueryForPartnerScoring();
         $this->builder->runQuery();
+        $this->setPartnersAfterServiceCondition($this->getPartnerIds());
         $this->filterForOrderPlace();
     }
 
