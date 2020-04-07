@@ -223,7 +223,8 @@ class LeaveController extends Controller
     public function allLeaveBalance(Request $request, TimeFrame $time_frame, BalanceExcel $balance_excel)
     {
         $this->validate($request, [
-            'sort' => 'sometimes|string|in:asc,desc'
+            'sort' => 'sometimes|string|in:asc,desc',
+            'file' => 'sometimes|string|in:excel'
         ]);
         list($offset, $limit) = calculatePagination($request);
         /** @var BusinessMember $business_member */
