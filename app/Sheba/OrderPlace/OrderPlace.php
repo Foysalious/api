@@ -23,6 +23,7 @@ use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Dal\JobService\JobService;
 use Sheba\JobDiscount\JobDiscountCheckingParams;
 use Sheba\JobDiscount\JobDiscountHandler;
+use Sheba\Jobs\JobDeliveryChargeCalculator;
 use Sheba\Jobs\JobStatuses;
 use Sheba\Jobs\PreferredTime;
 use Sheba\Location\Geo;
@@ -106,10 +107,12 @@ class OrderPlace
     private $orderAmount;
     /** @var float */
     private $orderAmountWithoutDeliveryCharge;
+    /** @var JobDeliveryChargeCalculator */
+    private $jobDeliveryChargeCalculator;
 
     public function __construct(Creator $creator, PriceCalculation $priceCalculation, DiscountCalculation $discountCalculation, OrderVoucherData $orderVoucherData,
                                 PartnerListBuilder $partnerListBuilder, Director $director, ServiceRequest $serviceRequest,
-                                OrderRequestAlgorithm $orderRequestAlgorithm, JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, Store $order_request_store)
+                                OrderRequestAlgorithm $orderRequestAlgorithm, JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, Store $order_request_store, JobDeliveryChargeCalculator $jobDeliveryChargeCalculator)
     {
         $this->priceCalculation = $priceCalculation;
         $this->discountCalculation = $discountCalculation;
@@ -122,6 +125,7 @@ class OrderPlace
         $this->jobDiscountHandler = $job_discount_handler;
         $this->upsellCalculation = $upsell_calculation;
         $this->orderRequestStore = $order_request_store;
+        $this->jobDeliveryChargeCalculator = $jobDeliveryChargeCalculator;
     }
 
 
@@ -386,6 +390,12 @@ class OrderPlace
                     $first_partner_id = [$partners->first()->id];
                     $this->partnerOrderRequestCreator->setPartnerOrder($partner_order)->setPartners($first_partner_id)->create();
                 }
+                $job = $job->fresh();
+                $partner_order = $partner_order->fresh();
+                $partner_order->calculate(1);
+                if ($partner_order->partner_id) $this->jobDeliveryChargeCalculator->setPartner($partner_order->partner);
+                $job = $this->jobDeliveryChargeCalculator->setJob($job)->setPartnerOrder($partner_order)->getCalculatedJob();
+                $job->update();
             });
         } catch (QueryException $e) {
             throw $e;
