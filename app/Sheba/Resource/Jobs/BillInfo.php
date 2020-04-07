@@ -36,7 +36,7 @@ class BillInfo
         $bill['total_material_price'] = (double)$job->materialPrice;
         $bill['total_service_price'] = (double)$job->servicePrice;
         $bill['discount'] = (double)$job->discount;
-        $bill['payment_method'] = $partnerOrder->payment_method=='cash-on-delivery' ? 'Cash On Delivery' : $partnerOrder->payment_method;
+        $bill['payment_method'] = $this->formatPaymentMethod($partnerOrder->payment_method);
         $bill['services'] = $services;
         $bill['delivered_date'] = $job->delivered_date != null ? $job->delivered_date->format('Y-m-d') : null;
         $bill['delivered_date_timestamp'] = $job->delivered_date != null ? $job->delivered_date->timestamp : null;
@@ -48,5 +48,15 @@ class BillInfo
         $bill['isDue'] = $job->partnerOrder->closed_at_paid == null ? 1 : 0;
         $bill['job_code'] = $job->fullcode();
         return $bill;
+    }
+
+    private function formatPaymentMethod($payment_method)
+    {
+        if ($payment_method=='cod') {
+            return 'Cash On Delivery';
+        }
+        else {
+            return ucwords(str_replace("-", " ", str_replace("_", " ", $payment_method)));
+        }
     }
 }
