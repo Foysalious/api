@@ -270,7 +270,9 @@ class LeaveController extends Controller
             }
         ])->get();
 
-        if ($request->has('department') || $request->has('search')) $members = $this->membersFilterByDeptSearchByName($members, $request);
+        if ($request->has('department') || $request->has('search'))
+            $members = $this->membersFilterByDeptSearchByName($members, $request);
+
         if ($request->has('limit')) $members = $members->splice($offset, $limit);
         $total_records = $members->count();
 
@@ -352,22 +354,25 @@ class LeaveController extends Controller
     private function membersFilterByDeptSearchByName($members, Request $request)
     {
         return $members->filter(function ($member) use ($request) {
-            $deptStatus = false;
-            $nameStatus = false;
+            $is_dept_matched = false;
+            $is_name_matched = false;
+
             if ($request->has('department')) {
                 /** @var BusinessMember $business_member */
                 $business_member = $member->businessMember;
                 /** @var BusinessRole $role */
                 $role = $business_member->role;
-                if ($role) $deptStatus = $role->businessDepartment->id == $request->department;
+                if ($role) $is_dept_matched = $role->businessDepartment->id == $request->department;
             }
+
             if ($request->has('search')) {
                 /** @var Profile $profile */
                 $profile = $member->profile;
-                $nameStatus = str_contains(strtoupper($profile->name), strtoupper($request->search));
+                $is_name_matched = str_contains(strtoupper($profile->name), strtoupper($request->search));
             }
-            if ($request->has('department') && $request->has('search')) return ($deptStatus && $nameStatus) ? true : false;
-            if ($request->has('department') || $request->has('search')) return ($deptStatus || $nameStatus) ? true : false;
+
+            if ($request->has('department') && $request->has('search')) return $is_dept_matched && $is_name_matched;
+            if ($request->has('department') || $request->has('search')) return $is_dept_matched || $is_name_matched;
         });
     }
 }
