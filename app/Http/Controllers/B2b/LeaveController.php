@@ -19,12 +19,14 @@ use Illuminate\Support\Facades\App;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Business\ApprovalRequest\Updater;
+use Sheba\Business\Leave\Balance\Excel as BalanceExcel;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
+use Sheba\Reports\Exceptions\NotAssociativeArray;
 
 class LeaveController extends Controller
 {
@@ -244,12 +246,15 @@ class LeaveController extends Controller
     /**
      * @param Request $request
      * @param TimeFrame $time_frame
-     * @return JsonResponse
+     * @param BalanceExcel $balance_excel
+     * @return JsonResponse | void
+     * @throws NotAssociativeArray
      */
-    public function allLeaveBalance(Request $request, TimeFrame $time_frame)
+    public function allLeaveBalance(Request $request, TimeFrame $time_frame, BalanceExcel $balance_excel)
     {
         $this->validate($request, [
-            'sort' => 'sometimes|string|in:asc,desc'
+            'sort' => 'sometimes|string|in:asc,desc',
+            'file' => 'sometimes|string|in:excel'
         ]);
         list($offset, $limit) = calculatePagination($request);
         /** @var BusinessMember $business_member */
@@ -275,7 +280,11 @@ class LeaveController extends Controller
         $leave_balances = $manager->createData($resource)->toArray()['data'];
 
         if ($request->has('sort')) {
-            $leave_balances = $this->leaveBalanceOrderBy($leave_balances, $request->sort)->values();
+            $leave_balances = $this->leaveBalanceOrderBy($leave_balances, $request->sort)->values()->toArray();
+        }
+
+        if ($request->file == 'excel') {
+            return $balance_excel->setBalance($leave_balances)->setLeaveType($leave_types)->get();
         }
 
         return api_response($request, null, 200, ['leave_balances' => $leave_balances, 'total_records' => $total_records, 'leave_types' => $leave_types]);
