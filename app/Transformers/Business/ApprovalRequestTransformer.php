@@ -40,7 +40,7 @@ class ApprovalRequestTransformer extends TransformerAbstract
                 'type' => $leave_type->title,
                 'total_days' => $requestable->total_days,
                 'left' => $requestable->left_days < 0 ? abs($requestable->left_days) : $requestable->left_days,
-                'is_leave_days_exeeded' => $requestable->isLeaveDaysExeeded(),
+                'is_leave_days_exceeded' => $requestable->isLeaveDaysExceeded(),
                 'period' => $requestable->start_date->format('M d') . ' - ' . $requestable->end_date->format('M d'),
                 'status' => $requestable->status,
                 'note' => $requestable->note,
