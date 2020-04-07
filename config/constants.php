@@ -1,9 +1,9 @@
 <?php
 return [
-    'BANK_LOAN_PDF_TYPES'                      => [
-        'SanctionLetter'   => 'sanctionLetter',
-        'Application' => 'application',
-        'ProposalLetter'  => 'proposalLetter'
+    'BANK_LOAN_PDF_TYPES'                         => [
+        'SanctionLetter' => 'sanctionLetter',
+        'Application'    => 'application',
+        'ProposalLetter' => 'proposalLetter'
     ],
     'PARTNER_SHOWABLE_PACKAGE'                    => [
         1,
@@ -11,6 +11,7 @@ return [
         3,
         4
     ],
+    'smanager_logo'                               => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner_assets/assets/images/logo/smanager-44-44-px.png',
     'AFFILIATE_VIDEO_LINK'                        => '',
     'STARTING_YEAR'                               => '2017',
     'HOTLINE'                                     => '09639 - 444 000',
