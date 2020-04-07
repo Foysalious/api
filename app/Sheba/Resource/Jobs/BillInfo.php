@@ -52,11 +52,8 @@ class BillInfo
 
     private function formatPaymentMethod($payment_method)
     {
-        if ($payment_method=='cod') {
-            return 'Cash On Delivery';
-        }
-        else {
-            return ucwords(str_replace("-", " ", str_replace("_", " ", $payment_method)));
-        }
+        if ($payment_method == 'Cash On Delivery' ||
+            $payment_method == 'cash-on-delivery') return 'cod';
+        return strtolower($payment_method);
     }
 }
