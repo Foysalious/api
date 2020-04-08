@@ -21,7 +21,10 @@ class UpdatePriceHandler
         return $this;
     }
 
-
+    /**
+     * @throws Exceptions\LogisticServerError
+     * @throws \Exception
+     */
     public function update()
     {
         /** @var Job $job */
@@ -33,6 +36,7 @@ class UpdatePriceHandler
         $logistic_order_manager = app(LogisticOrderManager::class);
         $logistic_order_manager->setJob($job);
         $this->partnerOrder->calculate(1);
+        if ((double)$logistic_order->collectableAmount == (double)$this->partnerOrder->due) return;
         $logistic_order_manager->updateVendorCollectable($logistic_order, $this->partnerOrder->due);
     }
 
