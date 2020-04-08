@@ -124,7 +124,7 @@ return [
     'online_payment_discount_threshold_minutes' => null,
     'online_payment_discount_percentage' => env('ONLINE_PAYMENT_DISCOUNT_PERCENTAGE', 0),
     'car_rental' => [
-        'master_category_id' => env('RENT_A_CAR_CATEGORY_ID'),
+        'master_category_id' => (int)env('RENT_A_CAR_CATEGORY_ID', 221),
         'secondary_category_ids' => explode(',', env('RENT_CAR_IDS')),
         'one_way_id' => env('ONE_WAY_SERVICE_ID'),
         'round_trip_id' => env('ROUND_TRIP_SERVICE_ID'),
