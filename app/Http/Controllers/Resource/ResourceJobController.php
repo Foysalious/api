@@ -12,6 +12,7 @@ use Sheba\Resource\Jobs\JobInfo;
 use Sheba\Resource\Jobs\JobList;
 use Sheba\Resource\Jobs\Reschedule\Reschedule;
 use Sheba\Resource\Jobs\Updater\StatusUpdater;
+use Sheba\Resource\Schedule\Extend\ExtendTime;
 use Sheba\UserAgentInformation;
 
 class ResourceJobController extends Controller
@@ -105,6 +106,17 @@ class ResourceJobController extends Controller
         $user_agent_information->setRequest($request);
         $collect_money->setResource($resource)->setJob($job)->setUserAgentInformation($user_agent_information)->setCollectionAmount($request->amount);
         $response = $collect_money->collect();
+        return api_response($request, $response, $response->getCode(), ['message' => $response->getMessage()]);
+    }
+
+    public function extendTime(Job $job, Request $request, ExtendTime $extend_time)
+    {
+        $this->validate($request, ['time_in_minutes' => 'required|numeric']);
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+        if ($resource->id !== $job->resource_id) return api_response($request, $job, 403, ["message" => "You're not authorized to access this job."]);
+        $response = $extend_time->setJob($job)->setExtendedTimeInMinutes($request->time_in_minutes)->extend();
         return api_response($request, $response, $response->getCode(), ['message' => $response->getMessage()]);
     }
 }
