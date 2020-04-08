@@ -62,19 +62,23 @@ class ResourceController extends Controller
         $jobs_summary = [
             [
                 'title' => 'শিডিউল ডিউ অর্ডার',
-                'jobs_count' => $jobs_summary['schedule_due_jobs']
+                'jobs_count' => $jobs_summary['schedule_due_jobs'],
+                'value' => 'schedule_due_jobs'
             ],
             [
                 'title' => 'আজকের অর্ডার',
-                'jobs_count' => $jobs_summary['todays_jobs']
+                'jobs_count' => $jobs_summary['todays_jobs'],
+                'value' => 'todays_jobs'
             ],
             [
                 'title' => 'আগামীকালের অর্ডার',
-                'jobs_count' => $jobs_summary['tomorrows_jobs']
+                'jobs_count' => $jobs_summary['tomorrows_jobs'],
+                'value' => 'tomorrows_jobs'
             ],
             [
                 'title' => 'পরবর্তী অর্ডার',
-                'jobs_count' => $jobs_summary['rest_jobs']
+                'jobs_count' => $jobs_summary['rest_jobs'],
+                'value' => 'rest_jobs'
             ]
         ];
         return api_response($request, $jobs_summary, 200, ['jobs_summary' => $jobs_summary]);
