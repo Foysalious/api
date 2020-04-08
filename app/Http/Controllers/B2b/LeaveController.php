@@ -273,8 +273,8 @@ class LeaveController extends Controller
         if ($request->has('department') || $request->has('search'))
             $members = $this->membersFilterByDeptSearchByName($members, $request);
 
-        if ($request->has('limit')) $members = $members->splice($offset, $limit);
         $total_records = $members->count();
+        if ($request->has('limit')) $members = $members->splice($offset, $limit);
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
