@@ -1,6 +1,7 @@
 <?php namespace Sheba\TopUp;
 
 use App\Models\TopUpOrder;
+use App\Repositories\NotificationRepository;
 use Exception;
 use App\Models\TopUpVendor;
 use Sheba\ModificationFields;
@@ -127,6 +128,8 @@ class TopUp
     {
         $topup_order->status = config('topup.status.failed')['sheba'];
         $topup_order->transaction_details = json_encode(['code' => $response->errorCode, 'message' => $response->errorMessage, 'response' => $response->errorResponse]);
+        if($topup_order->agent == "App\\Models\\Affiliate")
+            ((new NotificationRepository())->pushNotificationToAffiliate('topup_failed',$topup_order));
         return $this->updateTopUpOrder($topup_order);
     }
 

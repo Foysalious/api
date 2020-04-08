@@ -2,6 +2,8 @@
 
 use App\Models\MovieTicketOrder;
 use App\Models\MovieTicketVendor;
+use App\Repositories\NotificationRepository;
+use App\Sheba\Affiliate\PushNotification\PushNotification;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Sheba\ModificationFields;
@@ -237,6 +239,8 @@ class MovieTicket
 
             $vendor->refill($movie_ticket_order->amount);
         });
+        if($movie_ticket_order->agent_type == 'App\\Models\\Affiliate') ((new NotificationRepository())->pushNotificationToAffiliate('purchase_movie_ticket_failed',$movie_ticket_order));
+
     }
 
     /**

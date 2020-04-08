@@ -1,11 +1,15 @@
 <?php namespace App\Repositories;
 
+use App\Models\Affiliate;
 use App\Models\Job;
 use App\Models\Notification;
 use App\Models\OfferShowcase;
 use App\Models\Order;
 use App\Models\Partner;
 use App\Models\PartnerOrder;
+use App\Sheba\Affiliate\PushNotification\MovieTicketPurchaseFailed;
+use App\Sheba\Affiliate\PushNotification\TopUpFailed;
+use App\Sheba\Affiliate\PushNotification\TransportTicketPurchaseFailed;
 use App\Sheba\Subscription\Partner\PartnerSubscriptionChange;
 use Sheba\PushNotificationHandler;
 use Sheba\Subscription\Partner\BillingType;
@@ -295,6 +299,18 @@ class NotificationRepository
             "sound"      => "notification_sound",
             "channel_id" => $channel
         ], $topic, $channel, $sound);
+    }
+
+    public function pushNotificationToAffiliate($type,$avatar)
+    {
+
+
+        switch ($type) {
+            case 'topup_failed': return new TopupFailed($avatar);
+            case 'purchase_movie_ticket_failed': return new MovieTicketPurchaseFailed($avatar);
+            case 'purchase_transport_ticket_failed': return new TransportTicketPurchaseFailed($avatar);
+        }
+
     }
 
     private function sendNotificationToCRM()
