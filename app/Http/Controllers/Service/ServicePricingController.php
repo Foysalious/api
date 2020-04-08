@@ -54,6 +54,15 @@ class ServicePricingController extends Controller
         $price = [];
         $price['total_price'] = $this->orderAmountWithoutDeliveryCharge;
         $price['total_discount'] = $this->orderTotalDiscount;
+        $price['breakdown'] = [];
+        foreach ($job_services as $key => $job_service) {
+            $price['breakdown'][$key]['id'] = $job_service->service_id;
+            $price['breakdown'][$key]['quantity'] = $job_service->quantity;
+            $price['breakdown'][$key]['unit_price'] = $job_service->unit_price;
+            $price['breakdown'][$key]['discount'] = $job_service->discount;
+            $price['breakdown'][$key]['option'] = json_decode($job_service->option);
+            $price['breakdown'][$key]['variables'] = json_decode($job_service->variables);
+        }
         return api_response($request, $price, 200, ['service_pricing' => $price]);
 
     }
