@@ -41,9 +41,9 @@ class Response
 
     public function getMessage()
     {
-        if (!$this->response) $this->setResponse('Something Went Wrong');
-        if ($this->response['code'] == 200) $this->setResponse('Successful');
-        $this->setResponse($this->response['msg'] ?? $this->response['message']);
+        if (!$this->response) $this->setMessage('Something Went Wrong');
+        if ($this->response['code'] == 200) $this->setMessage('Successful');
+        $this->setMessage($this->response['msg'] ?? $this->response['message']);
         return $this->message;
     }
 }
