@@ -301,6 +301,11 @@ class Category extends Model
         return in_array($this->id, array_map('intval', explode(',', env('RENT_CAR_IDS'))));
     }
 
+    public function isRentACarMasterCategory()
+    {
+        return $this->id == config('sheba.car_rental.master_category_id');
+    }
+
     public function getSlug()
     {
         $type = $this->isParent() ? 'master_category' : 'secondary_category';
