@@ -303,14 +303,11 @@ class NotificationRepository
 
     public function pushNotificationToAffiliate($type,$avatar)
     {
-
-
         switch ($type) {
             case 'topup_failed': return new TopupFailed($avatar);
             case 'purchase_movie_ticket_failed': return new MovieTicketPurchaseFailed($avatar);
             case 'purchase_transport_ticket_failed': return new TransportTicketPurchaseFailed($avatar);
         }
-
     }
 
     private function sendNotificationToCRM()

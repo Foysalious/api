@@ -116,7 +116,11 @@ class BdTickets extends Vendor
     public function confirmTicket($ticket_id)
     {
         $data = ['ticketId' => $ticket_id, 'accountType' => self::ACCOUNT_TYPE, 'applicationChannel' => self::APPLICATION_CHANNEL];
-        return $this->bdTicketClient->post('tickets/confirm', $data);
+        $response = $this->bdTicketClient->post('tickets/confirm', $data);
+        $bd_ticket_response = new BdTicketsResponse();
+        $bd_ticket_response->setResponse($response);
+
+        return $bd_ticket_response;
     }
 
     /**

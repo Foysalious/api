@@ -1,10 +1,5 @@
-<?php
+<?php namespace App\Sheba\Affiliate\PushNotification;
 
-
-namespace App\Sheba\Affiliate\PushNotification;
-
-
-use App\Models\Affiliate;
 use Sheba\PushNotificationHandler;
 
 class PushNotification
