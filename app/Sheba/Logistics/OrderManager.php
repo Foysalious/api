@@ -63,7 +63,7 @@ class OrderManager
             ->setFailureUrl($base_url . '/logistic-completed')
             ->setPayUrl($base_url . '/logistic-paid')
             ->setCollectionUrl($base_url . '/collect-by-logistic')
-            ->setRiderNotFoundUrl($base_url.'/rider-not-found');
+            ->setRiderNotFoundUrl($base_url . '/rider-not-found');
 
         $logistic_order = $this->repo->store($order->toArray());
 
@@ -133,4 +133,11 @@ class OrderManager
         $data = $order->setPickUp($new_pick_point)->getPickUpArray();
         $this->repo->update($order, $data);
     }
+
+    public function updateVendorCollectable(Order $order, $amount)
+    {
+        $order->setCollectableAmount($amount);
+        $this->repo->update($order, $order->getCollectableUpdateArray());
+    }
+
 }

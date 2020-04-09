@@ -359,4 +359,11 @@ class Order
             ]
         ];
     }
+
+    public function getCollectableUpdateArray()
+    {
+        return [
+            'vendor_collectable_amount' => $this->collectableAmount
+        ];
+    }
 }
