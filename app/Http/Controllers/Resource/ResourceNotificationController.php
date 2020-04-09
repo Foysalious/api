@@ -20,7 +20,7 @@ class ResourceNotificationController extends Controller
         $topic = config('sheba.push_notification_topic_name.resource') . $resource->id;
         $channel = config('sheba.push_notification_channel_name.resource');
 
-        if($request->has('job_id')) {
+        if ($request->has('job_id')) {
             $job = Job::find($request->job_id);
             $pushNotificationHandler->send([
                 "title" => 'কাজ আসাইন',
@@ -33,7 +33,7 @@ class ResourceNotificationController extends Controller
             ], $topic, $channel);
         }
 
-        if($request->has('payment')) {
+        if ($request->has('payment')) {
             $job = Job::find($request->job_id);
             $pushNotificationHandler->send([
                 "title" => 'Online Payment',
@@ -46,15 +46,27 @@ class ResourceNotificationController extends Controller
             ], $topic, $channel);
         }
 
-        if($request->has('job_alert')) {
+        if ($request->has('job_alert')) {
             $job = Job::find($request->job_id);
             $pushNotificationHandler->send([
-                "title"     => "তৈরি হয়ে নিন",
+                "title" => "তৈরি হয়ে নিন",
                 "message" => 'আপনার অর্ডার' . $job->partnerOrder->order->code() . 'টি আর ১৫ মিনিট এর মধ্যে শুরু হয়ে যাবে',
-                "event_type"=> "job_alert",
-                "event_id"  => $job->id,
-                "sound"     => 'notification_sound',
+                "event_type" => "job_alert",
+                "event_id" => $job->id,
+                "sound" => 'notification_sound',
                 "channel_id" => $channel,
+                "click_action" => "FLUTTER_NOTIFICATION_CLICK"
+            ], $topic, $channel);
+        }
+
+        if ($request->has('job_extend')) {
+            $job = Job::find($request->job_id);
+            $pushNotificationHandler->send([
+                "title" => 'Need Extra Time?',
+                "message" => 'Do you need extra time for Job ID: ' . $job->fullCode(),
+                "event_type" => 'job_extend',
+                "event_id" => $job->id,
+                "action" => 'time-extend',
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel);
         }
