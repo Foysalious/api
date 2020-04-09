@@ -1,12 +1,14 @@
 <?php namespace App\Http\Controllers\Resource;
 
 use App\Models\Job;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
 use Sheba\Authentication\AuthUser;
 use Sheba\Notification\SeenBy;
 use Sheba\PushNotificationHandler;
+use Sheba\Helpers\TimeFrame;
 
 class ResourceNotificationController extends Controller
 {
@@ -59,17 +61,23 @@ class ResourceNotificationController extends Controller
         }
     }
 
-    public function index(Request $request)
+    public function index(Request $request, TimeFrame $timeFrame)
     {
         $this->validate($request, ['limit' => 'numeric', 'offset' => 'numeric']);
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
         $resource = $auth_user->getResource();
         list($offset, $limit) = calculatePagination($request);
-        $notifications = $resource->notifications()->orderBy('id', 'desc')->skip($offset)->limit($limit)->get();
-        $final = [];
-        $notifications->each(function ($notification) use (&$final) {
-            array_push($final, [
+        $todays_notifications = $resource->notifications()->where('created_at', '>=', Carbon::today())->orderBy('id', 'desc')->skip($offset)->limit($limit)->get();
+        $week_start = Carbon::now()->startOfWeek(Carbon::SATURDAY);
+        $this_week_notifications = $resource->notifications()->where('created_at', '<', Carbon::today())->where('created_at', '>=', $week_start)->orderBy('id', 'desc')->skip($offset)->limit($limit)->get();
+        $firstDay = Carbon::now()->firstOfMonth();
+        $this_month_notifications = $resource->notifications()->where('created_at', '>=', $firstDay)->where('created_at', '<', $week_start)->orderBy('id', 'desc')->skip($offset)->limit($limit)->get();
+        $earlier_notifications = $resource->notifications()->where('created_at', '<', $firstDay)->orderBy('id', 'desc')->skip($offset)->limit($limit)->get();
+
+        $today_final = [];
+        $todays_notifications->each(function ($notification) use (&$today_final) {
+            array_push($today_final, [
                 'id' => $notification->id,
                 'message' => $notification->title,
                 'type' => $notification->getType(),
@@ -78,8 +86,41 @@ class ResourceNotificationController extends Controller
                 'created_at' => $notification->created_at->toDateTimeString()
             ]);
         });
-        if (count($final) == 0) return api_response($request, null, 404);
-        return api_response($request, null, 200, ['notifications' => $final]);
+        $this_week_final = [];
+        $this_week_notifications->each(function ($notification) use (&$this_week_final) {
+            array_push($this_week_final, [
+                'id' => $notification->id,
+                'message' => $notification->title,
+                'type' => $notification->getType(),
+                'type_id' => $notification->event_id,
+                'is_seen' => $notification->is_seen,
+                'created_at' => $notification->created_at->toDateTimeString()
+            ]);
+        });
+        $this_month_final = [];
+        $this_month_notifications->each(function ($notification) use (&$this_month_final) {
+            array_push($this_month_final, [
+                'id' => $notification->id,
+                'message' => $notification->title,
+                'type' => $notification->getType(),
+                'type_id' => $notification->event_id,
+                'is_seen' => $notification->is_seen,
+                'created_at' => $notification->created_at->toDateTimeString()
+            ]);
+        });
+        $earlier_final = [];
+        $earlier_notifications->each(function ($notification) use (&$earlier_final) {
+            array_push($earlier_final, [
+                'id' => $notification->id,
+                'message' => $notification->title,
+                'type' => $notification->getType(),
+                'type_id' => $notification->event_id,
+                'is_seen' => $notification->is_seen,
+                'created_at' => $notification->created_at->toDateTimeString()
+            ]);
+        });
+        $data = [['title' => 'Today', 'notification_data' => $today_final], ['title' => 'This Week', 'notification_data' => $this_week_final], ['title' => 'This Month', 'notification_data' => $this_month_final], ['title' => 'Earlier', 'notification_data' => $earlier_final]];
+        return api_response($request, null, 200, ['notifications' => $data]);
     }
 
     public function seen(Request $request, SeenBy $seenBy)
