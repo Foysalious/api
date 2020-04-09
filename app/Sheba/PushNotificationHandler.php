@@ -3,7 +3,7 @@
 use LaravelFCM\Message\OptionsBuilder;
 use LaravelFCM\Message\PayloadDataBuilder;
 use LaravelFCM\Message\PayloadNotificationBuilder;
-use LaravelFCM\Facades\FCM;
+use FCM;
 use LaravelFCM\Message\Topics;
 
 class PushNotificationHandler

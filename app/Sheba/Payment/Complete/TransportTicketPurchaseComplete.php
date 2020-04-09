@@ -91,7 +91,8 @@ class TransportTicketPurchaseComplete extends PaymentComplete
                     $this->failPayment();
                     $ticket_request = $this->transportTicketRequest->setShebaAmount($transport_ticket_order->vendor->sheba_amount)->setStatus(Status::FAILED);
                     $this->transportTicketUpdater->setOrder($transport_ticket_order)->setRequest($ticket_request)->update();
-                    ((new NotificationRepository())->pushNotificationToAffiliate('transport_ticket_failed', $transport_ticket_order));
+                    if($transport_ticket_order->agent_type == 'App\\Models\\Affiliate')
+                    ((new NotificationRepository())->pushNotificationToAffiliate('transport_ticket_failed', $transport_ticket_order->agent_id,$transport_ticket_order->reserver_number));
                 }
 
 

@@ -301,12 +301,12 @@ class NotificationRepository
         ], $topic, $channel, $sound);
     }
 
-    public function pushNotificationToAffiliate($type,$avatar)
+    public function pushNotificationToAffiliate($type,$agent_id,$mobile)
     {
         switch ($type) {
-            case 'topup_failed': return new TopupFailed($avatar);
-            case 'purchase_movie_ticket_failed': return new MovieTicketPurchaseFailed($avatar);
-            case 'purchase_transport_ticket_failed': return new TransportTicketPurchaseFailed($avatar);
+            case 'topup_failed': return new TopupFailed($agent_id,$mobile);
+            case 'purchase_movie_ticket_failed': return new MovieTicketPurchaseFailed($agent_id,$mobile);
+            case 'purchase_transport_ticket_failed': return new TransportTicketPurchaseFailed($agent_id,$mobile);
         }
     }
 
