@@ -30,6 +30,7 @@ class SendJobAssignNotificationToResource extends \App\Jobs\Job implements Shoul
             notify()->resource($this->resource_id)->send([
                 'title' => 'আপনাকে একটি অর্ডার ' . $this->job->partnerOrder->order->code() . ' এ এসাইন করা হয়েছে',
                 'type' => 'warning',
+                'description' => 'আপনাকে একটি অর্ডার ' . $this->job->partnerOrder->order->code() . ' এ এসাইন করা হয়েছে',
                 'event_type' => get_class($this->job),
                 'event_id' => $this->job->id
             ]);
