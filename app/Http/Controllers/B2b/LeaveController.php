@@ -311,12 +311,13 @@ class LeaveController extends Controller
         $manager->setSerializer(new CustomSerializer());
         $resource = new Item($business_member, new LeaveBalanceDetailsTransformer($leave_types, $time_frame));
         $leave_balance = $manager->createData($resource)->toArray()['data'];
+
         if ($request->file == 'pdf') {
-            #return view('pdfs.employee_leave_balance', compact('leave_balance'));
             return App::make('dompdf.wrapper')
                 ->loadView('pdfs.employee_leave_balance', compact('leave_balance'))
                 ->download("employee_leave_balance.pdf");
         }
+
         return api_response($request, null, 200, ['leave_balance_details' => $leave_balance]);
     }
 
