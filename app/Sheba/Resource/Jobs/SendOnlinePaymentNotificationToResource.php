@@ -26,8 +26,9 @@ class SendOnlinePaymentNotificationToResource
     {
         if ($this->attempts() <= 1) {
             notify()->resource($this->resource_id)->send([
-                'title' => 'আপনার অর্ডার ' . $this->job->partnerOrder->order->code() . ' টি Online Payment এর মাধ্যমে পরিশোধ করা হয়েছে ',
+                'title' => 'আপনার অর্ডার ' . $this->job->partnerOrder->order->code() . ' টি Online Payment এর মাধ্যমে পরিশোধ করা হয়েছে',
                 'type' => 'info',
+                'description' => 'আপনার অর্ডার ' . $this->job->partnerOrder->order->code() . ' টি Online Payment এর মাধ্যমে পরিশোধ করা হয়েছে',
                 'event_type' => get_class($this->job),
                 'event_id' => $this->job->id
             ]);
