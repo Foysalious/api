@@ -49,10 +49,12 @@ class LeaveBalanceTransformer extends TransformerAbstract
     {
         $single_employee_leave_balance = [];
         foreach ($this->leave_types as $leave_type) {
+            $used_leave_days = $this->businessMember->getCountOfUsedLeaveDaysByTypeOnAFiscalYear($leave_type['id']);
             array_push($single_employee_leave_balance, [
-                'title' => $leave_type['title'],
-                'allowed_leaves' => (int)$leave_type['total_days'],
-                'used_leaves' => $this->businessMember->getCountOfUsedLeaveDaysByTypeOnAFiscalYear($leave_type['id'])
+                'title'             => $leave_type['title'],
+                'allowed_leaves'    => (int)$leave_type['total_days'],
+                'used_leaves'       => $used_leave_days,
+                'is_leave_days_exceeded' => ($used_leave_days > (int)$leave_type['total_days'])
             ]);
         }
 
