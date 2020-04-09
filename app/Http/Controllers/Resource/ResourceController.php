@@ -93,11 +93,13 @@ class ResourceController extends Controller
         $content = [
             [
                 'title' => 'অ্যাপ কিভাবে ব্যবহার করতে হয়?',
-                'link' => 'https://www.youtube.com/watch?v=5xlGNrT8vlg&t=130s'
+                'link' => 'https://www.youtube.com/watch?v=5xlGNrT8vlg&t=130s',
+                'thumbnail' => 'https://img.youtube.com/vi/5xlGNrT8vlg/0.jpg'
             ],
             [
                 'title' => 'অর্ডারের জন্য কিভাবে তৈরী হতে হয়?  ',
-                'link' => 'https://www.youtube.com/watch?v=OMW0BfVYSOI'
+                'link' => 'https://www.youtube.com/watch?v=OMW0BfVYSOI',
+                'thumbnail' => 'https://img.youtube.com/vi/OMW0BfVYSOI/0.jpg'
             ]
         ];
         return api_response($request, $content, 200, ['help' => $content]);
