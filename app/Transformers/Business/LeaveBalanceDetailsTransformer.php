@@ -84,7 +84,7 @@ class LeaveBalanceDetailsTransformer extends TransformerAbstract
      */
     private function getLeaveTypeTitle($leave)
     {
-        $leave_type = LeaveType::findOrFail($leave->leave_type_id);
+        $leave_type = LeaveType::withTrashed()->findOrFail($leave->leave_type_id);
         return $leave_type->title;
     }
 }
