@@ -79,6 +79,7 @@ class ResourceNotificationController extends Controller
             array_push($today_final, [
                 'id' => $notification->id,
                 'message' => $notification->title,
+                'description' => $notification->description,
                 'type' => $notification->getType(),
                 'type_id' => $notification->event_id,
                 'is_seen' => $notification->is_seen,
@@ -90,6 +91,7 @@ class ResourceNotificationController extends Controller
             array_push($this_week_final, [
                 'id' => $notification->id,
                 'message' => $notification->title,
+                'description' => $notification->description,
                 'type' => $notification->getType(),
                 'type_id' => $notification->event_id,
                 'is_seen' => $notification->is_seen,
@@ -101,6 +103,7 @@ class ResourceNotificationController extends Controller
             array_push($this_month_final, [
                 'id' => $notification->id,
                 'message' => $notification->title,
+                'description' => $notification->description,
                 'type' => $notification->getType(),
                 'type_id' => $notification->event_id,
                 'is_seen' => $notification->is_seen,
@@ -112,6 +115,7 @@ class ResourceNotificationController extends Controller
             array_push($earlier_final, [
                 'id' => $notification->id,
                 'message' => $notification->title,
+                'description' => $notification->description,
                 'type' => $notification->getType(),
                 'type_id' => $notification->event_id,
                 'is_seen' => $notification->is_seen,
