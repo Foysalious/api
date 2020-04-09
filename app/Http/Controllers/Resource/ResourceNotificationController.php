@@ -8,7 +8,6 @@ use App\Http\Controllers\Controller;
 use Sheba\Authentication\AuthUser;
 use Sheba\Notification\SeenBy;
 use Sheba\PushNotificationHandler;
-use Sheba\Helpers\TimeFrame;
 
 class ResourceNotificationController extends Controller
 {
@@ -61,7 +60,7 @@ class ResourceNotificationController extends Controller
         }
     }
 
-    public function index(Request $request, TimeFrame $timeFrame)
+    public function index(Request $request)
     {
         $this->validate($request, ['limit' => 'numeric', 'offset' => 'numeric']);
         /** @var AuthUser $auth_user */
