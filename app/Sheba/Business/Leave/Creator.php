@@ -2,6 +2,7 @@
 
 use App\Models\BusinessDepartment;
 use App\Models\BusinessMember;
+use App\Models\BusinessRole;
 use App\Sheba\Attachments\Attachments;
 use Carbon\Carbon;
 use Exception;
@@ -132,7 +133,6 @@ class Creator
         return $this;
     }
 
-
     /**
      * @param $attachments UploadedFile[]
      * @return $this
@@ -230,7 +230,11 @@ class Creator
         $approvers = $approval_flow->approvers()->pluck('id')->toArray();
         $approver_within_my_manager = array_intersect($approvers, $this->managers);
 
-        $my_department_users = $department->businessRoles()->where('id', $this->businessMember->business_role_id)->first()->members()->pluck('id')->toArray();
+        $my_department_users = [];
+        BusinessRole::where('business_department_id', $department->id)->get()->each(function ($Business_role) use (&$my_department_users) {
+            $my_department_users = array_merge($my_department_users, $Business_role->members()->pluck('id')->toArray());
+        });
+        $my_department_users = array_unique($my_department_users);
         $other_departments_approver = array_diff($approvers, $my_department_users);
 
         return array_diff($approver_within_my_manager + $other_departments_approver, [$this->businessMember->id]);
