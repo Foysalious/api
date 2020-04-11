@@ -593,7 +593,6 @@ class OrderPlace
             $job_data['discount_percentage'] = $this->orderVoucherData->getDiscountPercentage();
             $job_data['original_discount_amount'] = $this->orderVoucherData->getOriginalDiscountAmount();
         }
-        $this->handleDelivery($job_data);
         $job_data = $this->withCreateModificationField($job_data);
 
         return Job::create($job_data);
