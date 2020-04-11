@@ -381,7 +381,6 @@ class OrderPlace
                 $job = $this->createJob($partner_order);
                 $this->createCarRentalDetail($job);
                 $job->jobServices()->saveMany($job_services);
-                if ($this->jobDiscountHandler->hasDiscount()) $this->jobDiscountHandler->create($job);
                 $this->updateVoucherInPromoList($order);
                 if (!$order->location_id) throw new LocationIdNullException("Order #" . $order->id . " has no location id");
                 if ($this->canCreatePartnerOrderRequest()) {
@@ -390,12 +389,9 @@ class OrderPlace
                     $first_partner_id = [$partners->first()->id];
                     $this->partnerOrderRequestCreator->setPartnerOrder($partner_order)->setPartners($first_partner_id)->create();
                 }
-                $job = $job->fresh();
                 $partner_order = $partner_order->fresh();
-                $partner_order->calculate(1);
                 if ($partner_order->partner_id) $this->jobDeliveryChargeCalculator->setPartner($partner_order->partner);
-                $job = $this->jobDeliveryChargeCalculator->setJob($job)->setPartnerOrder($partner_order)->getCalculatedJob();
-                $job->update();
+                $this->jobDeliveryChargeCalculator->setJob($job)->setPartnerOrder($partner_order)->getCalculatedJob();
             });
         } catch (QueryException $e) {
             throw $e;
@@ -598,29 +594,6 @@ class OrderPlace
         return Job::create($job_data);
     }
 
-    /**
-     * @param $job_data
-     * @throws InvalidDiscountType
-     */
-    private function handleDelivery(&$job_data)
-    {
-        $delivery_charge = $this->buildDeliveryCharge();
-        $charge = $delivery_charge->get();
-        $job_data['delivery_charge'] = $delivery_charge->doesUseShebaLogistic() ? 0 : $charge;
-        $job_data['logistic_charge'] = $delivery_charge->doesUseShebaLogistic() ? $charge : 0;
-        if ($delivery_charge->doesUseShebaLogistic()) {
-            $job_data['needs_logistic'] = 1;
-            $job_data['logistic_parcel_type'] = $this->category->logistic_parcel_type;
-            $job_data['logistic_nature'] = $this->category->logistic_nature;
-            $job_data['one_way_logistic_init_event'] = $this->category->one_way_logistic_init_event;
-        }
-        $discount_checking_params = (new JobDiscountCheckingParams())->setDiscountableAmount($charge)->setOrderAmount($this->orderAmount);
-        $this->jobDiscountHandler->setType(DiscountTypes::DELIVERY)->setCategory($this->category)->setCheckingParams($discount_checking_params)->calculate();
-
-        if ($this->jobDiscountHandler->hasDiscount()) {
-            $job_data['discount'] += $this->jobDiscountHandler->getApplicableAmount();
-        }
-    }
 
     /**
      * @return DeliveryCharge
