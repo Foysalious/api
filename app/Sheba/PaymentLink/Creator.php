@@ -1,6 +1,5 @@
 <?php namespace Sheba\PaymentLink;
 
-
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
 
@@ -18,6 +17,7 @@ class Creator
     private $targetId;
     private $targetType;
     private $data;
+    private $paymentLinkCreated;
 
     /**
      * Creator constructor.
@@ -26,8 +26,8 @@ class Creator
     public function __construct(PaymentLinkRepositoryInterface $payment_link_repository)
     {
         $this->paymentLinkRepo = $payment_link_repository;
-        $this->isDefault = 0;
-        $this->amount = null;
+        $this->isDefault       = 0;
+        $this->amount          = null;
     }
 
     public function setAmount($amount)
@@ -107,22 +107,37 @@ class Creator
     public function save()
     {
         $this->makeData();
-        return $this->paymentLinkRepo->create($this->data);
+        $this->paymentLinkCreated = $this->paymentLinkRepo->create($this->data);
+        return $this->paymentLinkCreated;
     }
 
     private function makeData()
     {
         $this->data = [
-            'amount' => $this->amount,
-            'reason' => $this->reason,
-            'isDefault' => $this->isDefault,
-            'userId' => $this->userId,
-            'userName' => $this->userName,
-            'userType' => $this->userType,
-            'targetId' => (int)$this->targetId,
+            'amount'     => $this->amount,
+            'reason'     => $this->reason,
+            'isDefault'  => $this->isDefault,
+            'userId'     => $this->userId,
+            'userName'   => $this->userName,
+            'userType'   => $this->userType,
+            'targetId'   => (int)$this->targetId,
             'targetType' => $this->targetType,
         ];
-        if ($this->isDefault) unset($this->data['reason']);
-        if (!$this->targetId) unset($this->data['targetId'], $this->data['targetType']);
+        if ($this->isDefault)
+            unset($this->data['reason']);
+        if (!$this->targetId)
+            unset($this->data['targetId'], $this->data['targetType']);
+    }
+
+    public function getPaymentLinkData()
+    {
+        return [
+            'link_id' => $this->paymentLinkCreated->linkId,
+            'reason'  => $this->paymentLinkCreated->reason,
+            'type'    => $this->paymentLinkCreated->type,
+            'status'  => $this->paymentLinkCreated->isActive == 1 ? 'active' : 'inactive',
+            'amount'  => $this->paymentLinkCreated->amount,
+            'link'    => $this->paymentLinkCreated->link,
+        ];
     }
 }

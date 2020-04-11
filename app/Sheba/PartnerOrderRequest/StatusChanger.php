@@ -10,6 +10,7 @@ use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequest;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequestRepositoryInterface;
 use Sheba\Dal\PartnerOrderRequest\Statuses;
 use Sheba\Helpers\HasErrorCodeAndMessage;
+use Sheba\Jobs\JobDeliveryChargeCalculator;
 use Sheba\Jobs\StatusChanger as JobStatusChanger;
 
 class StatusChanger
@@ -27,14 +28,17 @@ class StatusChanger
     private $creator;
     /** @var Store */
     private $orderRequestStore;
+    private $jobDeliveryChargeCalculator;
 
-    public function __construct(JobStatusChanger $job_status_changer, PartnerOrderRequestRepositoryInterface $repo, OrderRequestResend $order_request_resend, Store $order_request_store, Creator $creator)
+    public function __construct(JobStatusChanger $job_status_changer, PartnerOrderRequestRepositoryInterface $repo, OrderRequestResend $order_request_resend, Store $order_request_store, Creator $creator,
+                                JobDeliveryChargeCalculator $jobDeliveryChargeCalculator)
     {
         $this->jobStatusChanger = $job_status_changer;
         $this->repo = $repo;
         $this->orderRequestResend = $order_request_resend;
         $this->creator = $creator;
         $this->orderRequestStore = $order_request_store;
+        $this->jobDeliveryChargeCalculator = $jobDeliveryChargeCalculator;
     }
 
     public function setPartnerOrderRequest(PartnerOrderRequest $partner_order_request)
