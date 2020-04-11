@@ -7,6 +7,7 @@ use Sheba\Repositories\JobRepository;
 
 abstract class Requestor
 {
+    /** @var Job */
     protected $job;
     private $reason;
     private $cancelRequests;
@@ -21,6 +22,7 @@ abstract class Requestor
 
     public function hasError()
     {
+        $this->setJob($this->job->fresh());
         if ($this->job->isClosed()) return ['code' => 422, 'msg' => 'You are not authorized to send cancel request to this stage.'];
         if ($this->cancelRequests->isDuplicatedRequest($this->job)) return ['code' => 422, 'msg' => 'Already send a cancelled request'];
 
@@ -52,10 +54,10 @@ abstract class Requestor
     protected function saveToDB()
     {
         $data = [
-            'job_id'        => $this->job->id,
+            'job_id' => $this->job->id,
             'cancel_reason' => $this->reason,
-            'from_status'   => $this->job->status,
-            'is_escalated'  => $this->isEscalated
+            'from_status' => $this->job->status,
+            'is_escalated' => $this->isEscalated
         ];
         $this->cancelRequests->create($data);
     }
