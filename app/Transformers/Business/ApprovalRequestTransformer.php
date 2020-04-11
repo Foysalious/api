@@ -30,7 +30,7 @@ class ApprovalRequestTransformer extends TransformerAbstract
         return [
             'id' => $approval_request->id,
             'type' => Type::LEAVE,
-            'status' => $approval_request->status,
+            'status' => $requestable->status,
             'created_at' => $approval_request->created_at->format('M d, Y'),
             'leave' => [
                 'id' => $requestable->id,
