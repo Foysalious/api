@@ -1,0 +1,45 @@
+<?php
+
+
+namespace App\Http\Controllers;
+
+
+use Sheba\PushNotificationHandler;
+
+class TestController extends  Controller
+{
+    public function test()
+    {
+        (new PushNotificationHandler())->send([
+            'title'      => 'Top Up failed',
+            'message'    => 'দুঃখিত! আপনার মোবাইল রিচার্জ 01620011019 সফল হয় নি, পুনরায় চেষ্টা করুন',
+            'event_type' => 'topup_failed',
+            'event_id'   => '39169',
+            'link'       => 'topup_failed',
+            "sound"      => "notification_sound",
+            "channel_id" => 'affiliate_channel',
+        ],'affiliate_dev_39169', 'affiliate_channel', 'default');
+
+        (new PushNotificationHandler())->send([
+            'title'      => 'Movie Ticket purchase failed',
+            'message'    =>  'দুঃখিত বন্ধু! আপনার মুভি টিকেট সফল ভাবে কাটা হয় নি 01620011019, পুনরায় চেষ্টা করুন।',
+            'event_type' => 'movie_ticket_purchase_failed',
+            'event_id'   => '39169',
+            'link'       => 'movie_ticket_purchase_failed',
+            "sound"      => "notification_sound",
+            "channel_id" => 'affiliate_channel',
+        ],'affiliate_dev_39169', 'affiliate_channel', 'default');
+
+        (new PushNotificationHandler())->send([
+            'title'      => 'Transport Ticket purchase failed',
+            'message'    =>  'দুঃখিত বন্ধু! আপনার বাস টিকেট সফল ভাবে কাটা হয় নি 01620011019, পুনরায় চেষ্টা করুন। ।',
+            'event_type' => 'bus_ticket_purchase_failed',
+            'event_id'   => '39169',
+            'link'       => 'bus_ticket_purchase_failed',
+            "sound"      => "notification_sound",
+            "channel_id" => 'affiliate_channel',
+        ],'affiliate_dev_39169', 'affiliate_channel', 'default');
+        dd('success');
+    }
+
+}

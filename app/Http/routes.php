@@ -4,6 +4,8 @@ Route::get('/', function () {
     return ['code' => 200, 'message' => "Success. This project will hold the api's"];
 });
 
+Route::get('/test', 'TestController@test');
+
 $api = app('Dingo\Api\Routing\Router');
 
 /*
