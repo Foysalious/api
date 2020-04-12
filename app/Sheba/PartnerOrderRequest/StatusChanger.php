@@ -82,7 +82,6 @@ class StatusChanger
             $this->setError($this->jobStatusChanger->getErrorCode(), $this->jobStatusChanger->getErrorMessage());
             return;
         }
-        $job = $this->jobDeliveryChargeCalculator->setJob($job)->setPartnerOrder($job->partnerOrder)->setPartner($request->partner)->getCalculatedJob();
         $this->jobStatusChanger->acceptJobAndAssignResource($request);
         if ($this->jobStatusChanger->hasError()) {
             $this->setError($this->jobStatusChanger->getErrorCode(), $this->jobStatusChanger->getErrorMessage());
