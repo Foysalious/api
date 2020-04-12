@@ -56,8 +56,7 @@ class JobInfo
     {
         $jobs = $this->jobRepository->getOngoingJobsForResource($this->resource->id)->tillNow()->get();
         $jobs = $this->rearrange->rearrange($jobs);
-        return $jobs->first();
-
+        if (count($jobs) > 0) return $jobs->first();
     }
 
     /**
@@ -85,7 +84,7 @@ class JobInfo
         $formatted_job->put('can_serve', 0);
         $formatted_job->put('can_collect', 0);
         $formatted_job->put('due', 0);
-        if ($this->getFirstJob()->id == $job->id) $this->actionCalculator->calculateActionsForThisJob($formatted_job, $job);
+        if ($this->getFirstJob() && $this->getFirstJob()->id == $job->id) $this->actionCalculator->calculateActionsForThisJob($formatted_job, $job);
         return $formatted_job;
     }
 }
