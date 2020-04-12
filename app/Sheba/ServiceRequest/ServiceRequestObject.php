@@ -1,10 +1,12 @@
 <?php namespace Sheba\ServiceRequest;
 
 
+use App\Exceptions\HyperLocationNotFoundException;
 use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
 use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
 use App\Models\Category;
+use App\Models\HyperLocal;
 use App\Models\Service;
 use App\Models\Thana;
 use Illuminate\Database\Eloquent\Collection;
@@ -46,6 +48,8 @@ class ServiceRequestObject
     private $service;
     /** @var Category */
     private $category;
+    /** @var HyperLocal */
+    private $hyperLocal;
 
 
     public function __construct()
@@ -54,6 +58,24 @@ class ServiceRequestObject
         $this->outsideCityCategoryId = config('sheba.rent_a_car')['outside_city']['category'];
         $this->googleCalculatedCarService = array_map('intval', explode(',', env('RENT_CAR_SERVICE_IDS')));
         $this->mapClient = new MapClient();
+    }
+
+    /**
+     * @return HyperLocal
+     */
+    public function getHyperLocal()
+    {
+        return $this->hyperLocal;
+    }
+
+    /**
+     * @param HyperLocal $hyperLocal
+     * @return ServiceRequestObject
+     */
+    public function setHyperLocal($hyperLocal)
+    {
+        $this->hyperLocal = $hyperLocal;
+        return $this;
     }
 
     /**
@@ -190,6 +212,7 @@ class ServiceRequestObject
      * @throws InsideCityPickUpAddressNotFoundException
      * @throws OutsideCityPickUpAddressNotFoundException
      * @throws ServiceIsUnpublishedException
+     * @throws HyperLocationNotFoundException
      */
     public function build()
     {
@@ -280,10 +303,12 @@ class ServiceRequestObject
     /**
      * @throws InsideCityPickUpAddressNotFoundException
      * @throws OutsideCityPickUpAddressNotFoundException
+     * @throws HyperLocationNotFoundException
      */
     private function setPickupThana()
     {
         if (!$this->pickUpGeo) return;
+        $this->calculateHyperLocalFromPickUpGeo();
         $this->pickUpThana = $this->getThana($this->pickUpGeo->getLat(), $this->pickUpGeo->getLng());
         if (!in_array($this->pickUpThana->district_id, config('sheba.rent_a_car_pickup_district_ids'))) {
             if (!in_array($this->getCategory()->id, $this->outsideCityCategoryId)) {
@@ -291,6 +316,16 @@ class ServiceRequestObject
             }
             throw new OutsideCityPickUpAddressNotFoundException("Got " . $this->pickUpThana->name . '(' . $this->pickUpThana->id . ') for pickup');
         }
+    }
+
+    /**
+     * @throws HyperLocationNotFoundException
+     */
+    private function calculateHyperLocalFromPickUpGeo()
+    {
+        $hyper_local = HyperLocal::insidePolygon($this->pickUpGeo->getLat(), $this->pickUpGeo->getLng())->with('location')->first();
+        if (!$hyper_local || !$hyper_local->location || !$hyper_local->location->isPublished()) throw new HyperLocationNotFoundException('This pickup address is out of our service area', 400);
+        return $hyper_local;
     }
 
     /**
