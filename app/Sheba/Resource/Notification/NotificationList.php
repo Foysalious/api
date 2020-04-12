@@ -49,7 +49,7 @@ class NotificationList
                 'created_at' => $notification->created_at->toDateTimeString()
             ]);
         });
-        return $this_week_notifications;
+        return $this_week_final;
     }
 
     public function getThisMonthsNotifications()
