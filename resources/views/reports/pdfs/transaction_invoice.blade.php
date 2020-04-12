@@ -257,14 +257,14 @@
                     <td style="color: #383d46;">{{$created_at}}</td>
                 </tr>
                 <tr>
+                    <td>Payment Option</td>
+                    <td style="color: #383d46;">{{$method}}</td>
+                </tr>
+                <tr>
                     <td>Payment ID</td>
                     <td style="color: #383d46;font-weight: 500;">
                         @if(isset($payment_id)) #P-{{$payment_id}} @endif
                     </td>
-                </tr>
-                <tr>
-                    <td>Payment Option</td>
-                    <td style="color: #383d46;">{{$method}}</td>
                 </tr>
 
             </table>
