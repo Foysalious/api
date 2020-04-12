@@ -7,6 +7,8 @@ use App\Models\LocationService;
 use Illuminate\Support\Collection;
 use Sheba\Checkout\DeliveryCharge;
 use Sheba\Dal\Discount\Discount;
+use Sheba\Dal\Discount\DiscountTypes;
+use Sheba\JobDiscount\JobDiscountCheckingParams;
 use Sheba\JobDiscount\JobDiscountHandler;
 use Sheba\LocationService\DiscountCalculation;
 use Sheba\LocationService\PriceCalculation;
@@ -145,6 +147,9 @@ class ServicePriceCalculation
     {
         $category['delivery_charge'] = $this->delivery_charge->setCategory($this->category)->get();
         /** @var Discount $delivery_discount */
+        $delivery_discount = $this->job_discount_handler->getDiscount();
+        $discount_checking_params = (new JobDiscountCheckingParams())->setDiscountableAmount($category['delivery_charge']);
+        $this->job_discount_handler->setType(DiscountTypes::DELIVERY)->setCategory($this->category)->setCheckingParams($discount_checking_params)->calculate();
         $delivery_discount = $this->job_discount_handler->getDiscount();
         $category['delivery_discount'] = $delivery_discount ? [
             'value' => (double)$delivery_discount->amount,
