@@ -23,10 +23,15 @@ class DeliveryCharge
         return $this;
     }
 
+    /**
+     * Sheba Logistics delivery charge will be calculated if category
+     * has logistics enabled as per business decision
+     * @return $this
+     */
     private function setShebaLogisticDeliveryCharge()
     {
-        if (!$this->category || !$this->categoryPartnerPivot || !is_null($this->shebaLogisticDeliveryCharge)) return $this;
-        if ($this->category->needsLogistic() && $this->doesUseShebaLogistic()) {
+        if (!$this->category || !is_null($this->shebaLogisticDeliveryCharge)) return $this;
+        if ($this->doesUseShebaLogistic()) {
             $this->shebaLogisticDeliveryCharge = $this->category->getShebaLogisticsPrice();
         }
 
@@ -35,9 +40,6 @@ class DeliveryCharge
 
     public function doesUseShebaLogistic()
     {
-        if ($this->categoryPartnerPivot)
-            return (bool)$this->categoryPartnerPivot->uses_sheba_logistic;
-
         return $this->category->needsLogistic();
     }
 

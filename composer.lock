@@ -1419,6 +1419,7 @@
                     "homepage": "http://www.acci.cz"
                 }
             ],
+            "abandoned": "php-parallel-lint/php-console-color",
             "time": "2014-04-08T15:00:19+00:00"
         },
         {
@@ -1463,6 +1464,7 @@
                     "homepage": "http://www.acci.cz/"
                 }
             ],
+            "abandoned": "php-parallel-lint/php-console-highlighter",
             "time": "2015-04-20T18:58:01+00:00"
         },
         {
@@ -1534,7 +1536,7 @@
             "time": "2017-09-05T11:17:05+00:00"
         },
         {
-            "name": "jeremeamia/superclosure",
+            "name": "jeremeamia/SuperClosure",
             "version": "2.3.0",
             "source": {
                 "type": "git",
@@ -1589,6 +1591,7 @@
                 "serialize",
                 "tokenizer"
             ],
+            "abandoned": "opis/closure",
             "time": "2016-12-07T09:37:55+00:00"
         },
         {
@@ -3265,7 +3268,7 @@
             "source": {
                 "type": "git",
                 "url": "https://mac_pasha@bitbucket.org/startern/sheba_dal.git",
-                "reference": "3558dcca6f6ea5685d31ecc9ba716d2fed556865"
+                "reference": "eec5ac56d1ce6db0affe865381828728b7db8851"
             },
             "require": {
                 "php": ">=5.4"
@@ -3292,7 +3295,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2020-03-29T15:15:46+00:00"
+            "time": "2020-04-11T11:29:40+00:00"
         },
         {
             "name": "sheba/notification",

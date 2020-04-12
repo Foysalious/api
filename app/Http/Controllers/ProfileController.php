@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\Affiliate;
 use App\Models\Profile;
 use App\Repositories\FileRepository;
 use App\Repositories\ProfileRepository;
@@ -15,9 +16,12 @@ use JWTAuth;
 use JWTFactory;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
+use Sheba\Affiliate\VerificationStatus;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
+use Sheba\ModificationFields;
 use Sheba\NidInfo\ImageSide;
 use Sheba\Ocr\Repository\OcrRepository;
+use Sheba\Repositories\AffiliateRepository;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Sheba\Repositories\ProfileRepository as ShebaProfileRepository;
 use Sheba\Sms\Sms;
@@ -26,6 +30,8 @@ use Validator;
 
 class ProfileController extends Controller
 {
+    use ModificationFields;
+
     private $profileRepo;
     private $fileRepo;
 
@@ -278,6 +284,11 @@ class ProfileController extends Controller
             $resource        = new Item($profile, new NidInfoTransformer());
             $details         = $manager->createData($resource)->toArray()['data'];
             $details['name'] = "  ";
+
+            $affiliate = $profile->affiliate ?: null;
+            if(!empty($affiliate))
+                $this->updateVerificationStatus($affiliate);
+
             return api_response($request, null, 200, ['data' => $details]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -343,5 +354,30 @@ class ProfileController extends Controller
             return true;
 
         return false;
+    }
+
+    /**
+     * @param Affiliate $affiliate
+     * @return bool|void
+     */
+    private function updateVerificationStatus(Affiliate $affiliate)
+    {
+        $previous_status = $affiliate->verification_status;
+        $pending_status = VerificationStatus::PENDING;
+
+        if ($previous_status != $pending_status) {
+            $affiliate->update($this->withUpdateModificationField(['verification_status' => $pending_status]));
+
+            $log_data = [
+                'from' => $previous_status,
+                'to' => $pending_status,
+                'log' => null,
+                'reason' => 're-submitted NID',
+            ];
+
+            return (new AffiliateRepository())->saveStatusChangeLog($affiliate, $log_data);
+        }
+
+        return true;
     }
 }
