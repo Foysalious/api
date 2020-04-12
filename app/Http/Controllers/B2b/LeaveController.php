@@ -313,7 +313,6 @@ class LeaveController extends Controller
         $leave_balance = $manager->createData($resource)->toArray()['data'];
 
         if ($request->file == 'pdf') {
-            #return view('pdfs.employee_leave_balance', compact('leave_balance'));
             return App::make('dompdf.wrapper')
                 ->loadView('pdfs.employee_leave_balance', compact('leave_balance'))
                 ->download("employee_leave_balance.pdf");
