@@ -57,6 +57,10 @@ class Route
             $api->group(['prefix' => 'ssl'], function ($api) {
                 $api->post('validate', 'SslController@validatePayment');
             });
+            $api->group(['prefix' => 'ok-wallet/payments'], function ($api) {
+                $api->post('success', 'OkWalletController@validatePayment');
+                $api->post('fail', 'OkWalletController@validatePayment');
+            });
             $api->group(['prefix' => 'bkash'], function ($api) {
                 $api->post('validate', 'BkashController@validatePayment');
                 $api->group(['prefix' => 'tokenized'], function ($api) {
@@ -185,6 +189,7 @@ class Route
                 (new MovieTicketRoute())->set($api);
             });
             $api->get('refresh-token', 'ProfileController@refresh');
+            $api->get('service-price-calculate', 'Service\ServicePricingController@getCalculatedPrice');
         });
         return $api;
     }

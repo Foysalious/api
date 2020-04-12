@@ -34,11 +34,7 @@ class PartnerLocationController extends Controller
         $this->reviewRepository = new ReviewRepository();
     }
 
-    /**
-     * @param Request $request
-     * @param PartnerListRequest $partnerListRequest
-     * @return JsonResponse
-     */
+
     public function getPartners(Request $request, PartnerListRequest $partnerListRequest)
     {
         try {
@@ -75,12 +71,6 @@ class PartnerLocationController extends Controller
         } catch (HyperLocationNotFoundException $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 400, ['message' => 'Your are out of service area.']);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
         }
     }
 

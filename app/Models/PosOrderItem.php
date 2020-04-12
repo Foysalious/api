@@ -5,7 +5,7 @@ use Illuminate\Database\Eloquent\Model;
 class PosOrderItem extends Model
 {
     protected $guarded = ['id'];
-    protected $casts = ['vat_percentage' => 'double'];
+    protected $casts = ['vat_percentage' => 'double', 'quantity' => 'double'];
 
     /** @var number */
     private $vat;

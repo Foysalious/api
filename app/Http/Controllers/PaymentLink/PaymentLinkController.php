@@ -1,19 +1,19 @@
 <?php namespace App\Http\Controllers\PaymentLink;
 
-use App\Transformers\PaymentDetailTransformer;
-use Illuminate\Validation\ValidationException;
-use League\Fractal\Resource\Collection;
-use App\Transformers\PaymentLinkArrayTransform;
-use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
-use Sheba\Repositories\PaymentLinkRepository;
-use Sheba\PaymentLink\PaymentLinkClient;
 use App\Http\Controllers\Controller;
-use Sheba\PaymentLink\Creator;
-use Sheba\ModificationFields;
-use League\Fractal\Manager;
-use Illuminate\Http\Request;
+use App\Transformers\PaymentDetailTransformer;
+use App\Transformers\PaymentLinkArrayTransform;
 use Carbon\Carbon;
 use DB;
+use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
+use Sheba\ModificationFields;
+use Sheba\PaymentLink\Creator;
+use Sheba\PaymentLink\PaymentLinkClient;
+use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
+use Sheba\Repositories\PaymentLinkRepository;
 
 class PaymentLinkController extends Controller {
     use ModificationFields;
@@ -21,6 +21,7 @@ class PaymentLinkController extends Controller {
     private $paymentLinkRepo;
     private $creator;
     private $paymentDetailTransformer;
+
 
     public function __construct(PaymentLinkClient $payment_link_client, PaymentLinkRepository $payment_link_repo, Creator $creator) {
         $this->paymentLinkClient        = $payment_link_client;
@@ -92,25 +93,35 @@ class PaymentLinkController extends Controller {
                 'amount'  => 'required',
                 'purpose' => 'required',
             ]);
-            $this->creator->setIsDefault($request->isDefault)
-                ->setAmount($request->amount)
-                ->setReason($request->purpose)
-                ->setUserName($request->user->name)
-                ->setUserId($request->user->id)
-                ->setUserType($request->type)
-                ->setTargetId($request->pos_order_id)
-                ->setTargetType('pos_order');
-
+            $this->creator->setIsDefault($request->isDefault)->setAmount($request->amount)->setReason($request->purpose)->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type)->setTargetId($request->pos_order_id)->setTargetType('pos_order');
             $payment_link_store = $this->creator->save();
             if ($payment_link_store) {
-                $payment_link = [
-                    'link_id' => $payment_link_store->linkId,
-                    'reason'  => $payment_link_store->reason,
-                    'type'    => $payment_link_store->type,
-                    'status'  => $payment_link_store->isActive == 1 ? 'active' : 'inactive',
-                    'amount'  => $payment_link_store->amount,
-                    'link'    => $payment_link_store->link,
-                ];
+                $payment_link = $this->creator->getPaymentLinkData();
+                return api_response($request, $payment_link, 200, ['payment_link' => $payment_link]);
+            } else {
+                return api_response($request, null, 500);
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function createPaymentLinkForDueCollection(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'amount' => 'required',
+            ]);
+            $purpose = 'Due Collection';
+            $this->creator->setAmount($request->amount)->setReason($purpose)->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type);
+            $payment_link_store = $this->creator->save();
+            if ($payment_link_store) {
+                $payment_link = $this->creator->getPaymentLinkData();
+
                 return api_response($request, $payment_link, 200, ['payment_link' => $payment_link]);
             } else {
                 return api_response($request, null, 500);
@@ -157,13 +168,13 @@ class PaymentLinkController extends Controller {
                 return api_response($request, $default_payment_link, 200, ['default_payment_link' => $default_payment_link]);
             } else {
                 $request->merge(['isDefault' => 1]);
+
                 $this->creator->setIsDefault($request->isDefault)
                     ->setAmount($request->amount)
                     ->setReason($request->purpose)
                     ->setUserName($request->user->name)
                     ->setUserId($request->user->id)
                     ->setUserType($request->type);
-
                 $store_default_link   = $this->creator->save();
                 $default_payment_link = [
                     'link_id' => $store_default_link->linkId,
