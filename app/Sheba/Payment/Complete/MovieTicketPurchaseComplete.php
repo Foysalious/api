@@ -1,6 +1,7 @@
 <?php namespace Sheba\Payment\Complete;
 
 use App\Models\MovieTicketOrder;
+use App\Repositories\NotificationRepository;
 use Illuminate\Database\QueryException;
 use DB;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
@@ -49,6 +50,7 @@ class MovieTicketPurchaseComplete extends PaymentComplete
                 } else {
                     $response = (new BlockBusterFailResponse())->setResponse($response);
                     $movie_ticket->processFailedMovieTicket($movie_ticket_order, $response);
+                    if($movie_ticket_order->agent_type == 'App\\Models\\Affiliate') ((new NotificationRepository())->pushNotificationToAffiliate('purchase_movie_ticket_failed',$movie_ticket_order->agent_id,$movie_ticket_order->reserver_number));
                 }
                 $this->completePayment();
             });

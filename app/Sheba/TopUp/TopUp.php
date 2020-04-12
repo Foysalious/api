@@ -1,6 +1,7 @@
 <?php namespace Sheba\TopUp;
 
 use App\Models\TopUpOrder;
+use App\Repositories\NotificationRepository;
 use Exception;
 use App\Models\TopUpVendor;
 use Sheba\ModificationFields;
@@ -68,6 +69,8 @@ class TopUp
     {
         if ($this->validator->setTopupOrder($topup_order)->validate()->hasError()) {
             $this->updateFailedTopOrder($topup_order, $this->validator->getError());
+            if($topup_order->agent_type == "App\\Models\\Affiliate")
+                ((new NotificationRepository())->pushNotificationToAffiliate('topup_failed',$topup_order->agent_id,$topup_order->payee_mobile));
         } else {
             $this->response = $this->vendor->recharge($topup_order);
             if ($this->response->hasSuccess()) {
