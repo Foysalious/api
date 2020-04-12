@@ -9,6 +9,7 @@ use Illuminate\Contracts\Mail\Mailer;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Cache;
 
 class SendEmailToNotifyVendorBalance extends Job implements ShouldQueue
 {
@@ -16,6 +17,9 @@ class SendEmailToNotifyVendorBalance extends Job implements ShouldQueue
 
 
     private $vendor;
+    private $redisName = 'ticket_maintenance_configuration';
+    private $storage;
+    private $configuration;
 
     /**
      * SendEmailToNotifyVendorBalance constructor.
@@ -24,6 +28,7 @@ class SendEmailToNotifyVendorBalance extends Job implements ShouldQueue
     public function __construct($vendor)
     {
         $this->vendor = $vendor;
+        $this->storage = Cache::store('redis');
     }
 
     /**
@@ -35,8 +40,10 @@ class SendEmailToNotifyVendorBalance extends Job implements ShouldQueue
     public function handle(Mailer $mailer)
     {
         try {
+            $this->getConfiguration();
+            $balance_threshold = $this->configuration['balance_threshold'];
             $balance = $this->vendor->balance();
-            if ($balance < config('ticket.balance_threshold')) {
+            if ($balance < $balance_threshold) {
                 $users = $this->notifiableUsers();
                 foreach ($users as $user) {
 
@@ -54,6 +61,20 @@ class SendEmailToNotifyVendorBalance extends Job implements ShouldQueue
 
     private function notifiableUsers()
     {
-        return User::whereIn('id',config('ticket.notifiable_users'))->get();
+        return User::whereIn('id', $this->configuration['notifiable_users'])->get();
+    }
+
+    private function getConfiguration()
+    {
+        if ($this->storage->has($this->redisName)) {
+            $data = $this->storage->get($this->redisName);
+
+        } else {
+            $data = config('ticket');
+            $this->storage->forever($this->redisName, $data);
+        }
+
+        return $this->configuration = $data;
+
     }
 }
