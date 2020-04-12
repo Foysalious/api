@@ -25,7 +25,7 @@ class ApprovalRequestTransformer extends TransformerAbstract
     {
         /** @var Leave $requestable */
         $requestable = $approval_request->requestable;
-        $leave_type = $requestable->leaveType;
+        $leave_type = $requestable->leaveType()->withTrashed()->first();
 
         return [
             'id' => $approval_request->id,
