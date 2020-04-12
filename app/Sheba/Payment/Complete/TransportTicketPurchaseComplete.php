@@ -1,5 +1,6 @@
 <?php namespace Sheba\Payment\Complete;
 
+use App\Jobs\SendEmailToNotifyVendorBalance;
 use App\Models\Payment;
 use App\Models\Transport\TransportTicketOrder;
 use App\Repositories\NotificationRepository;
@@ -94,7 +95,6 @@ class TransportTicketPurchaseComplete extends PaymentComplete
                     if($transport_ticket_order->agent_type == 'App\\Models\\Affiliate')
                     ((new NotificationRepository())->pushNotificationToAffiliate('transport_ticket_failed', $transport_ticket_order->agent_id,$transport_ticket_order->reserver_number));
                 }
-
 
             });
         } catch (QueryException $e) {

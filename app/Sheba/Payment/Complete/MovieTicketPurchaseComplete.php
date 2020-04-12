@@ -1,11 +1,13 @@
 <?php namespace Sheba\Payment\Complete;
 
+use App\Jobs\SendEmailToNotifyVendorBalance;
 use App\Models\MovieTicketOrder;
 use App\Repositories\NotificationRepository;
 use Illuminate\Database\QueryException;
 use DB;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\MovieTicket\MovieTicket;
+use Sheba\MovieTicket\MovieTicketManager;
 use Sheba\MovieTicket\MovieTicketRequest;
 use Sheba\MovieTicket\Response\BlockBusterFailResponse;
 use Sheba\MovieTicket\Vendor\VendorFactory;
@@ -53,6 +55,7 @@ class MovieTicketPurchaseComplete extends PaymentComplete
                     if($movie_ticket_order->agent_type == 'App\\Models\\Affiliate') ((new NotificationRepository())->pushNotificationToAffiliate('purchase_movie_ticket_failed',$movie_ticket_order->agent_id,$movie_ticket_order->reserver_number));
                 }
                 $this->completePayment();
+                dispatch(new SendEmailToNotifyVendorBalance($vendor));
             });
         } catch (QueryException $e) {
             $movie_ticket_order = MovieTicketOrder::find($this->payment->payable->type_id);
