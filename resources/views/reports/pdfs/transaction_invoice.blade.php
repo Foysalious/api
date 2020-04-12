@@ -213,7 +213,7 @@
                     </td>
                     <td style="padding-right: 20px" align="right">
                         <div style="text-align: right">
-                            Date: <span style="color: #383D46;">{{\Carbon\Carbon::parse($created_at)->format('d M Y')}}</span>
+                            Date: <span style="color: #383D46;">{{$created_at_date}}</span>
                         </div>
                     </td>
                 </tr>
