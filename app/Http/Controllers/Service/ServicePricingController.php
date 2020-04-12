@@ -9,6 +9,9 @@ class ServicePricingController extends Controller
 {
     public function getCalculatedPrice(Request $request, ServicePriceCalculation $servicePriceCalculation)
     {
+        $this->validate($request, [
+            'services' => 'required|string', 'lat' => 'required|numeric', 'lng' => 'required|numeric',
+        ]);
         $price = $servicePriceCalculation->setLocation($request->lat, $request->lng)->setServices($request->services)->getCalculatedPrice();
         return api_response($request, $price, 200, ['service_pricing' => $price]);
     }
