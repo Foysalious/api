@@ -31,7 +31,6 @@ class OkWalletController extends Controller
             }
 
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
         }
         return redirect($redirect_url);

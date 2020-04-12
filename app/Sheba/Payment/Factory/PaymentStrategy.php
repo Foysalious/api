@@ -10,4 +10,5 @@ class PaymentStrategy
     public static $PARTNER_WALLET = "partner_wallet";
     public static $OK_WALLET='ok_wallet';
     public static $SSL_DONATION="ssl_donation";
+
 }
