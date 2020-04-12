@@ -85,7 +85,7 @@ class ResourceNotificationController extends Controller
         $earlier_final = $notificationList->setResource($resource)->getEarlierNotifications();
 
         $data = [['title' => 'Today', 'notification_data' => $today_final], ['title' => 'This Week', 'notification_data' => $this_week_final], ['title' => 'This Month', 'notification_data' => $this_month_final], ['title' => 'Earlier', 'notification_data' => $earlier_final]];
-        return api_response($request, null, 200, ['notifications' => $data]);
+        return api_response($request, $data, 200, ['notifications' => $data]);
     }
 
     public function seen(Request $request, SeenBy $seenBy)
