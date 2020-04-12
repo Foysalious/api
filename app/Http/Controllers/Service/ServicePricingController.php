@@ -52,7 +52,8 @@ class ServicePricingController extends Controller
         $this->calculateOrderAmount($job_services);
         $this->calculateTotalDiscount($job_services);
         $price = [];
-        $price['total_price'] = $this->orderAmountWithoutDeliveryCharge;
+        $price['total_original_price'] = $this->orderAmountWithoutDeliveryCharge;
+        $price['total_discounted_price'] = $this->orderAmountWithoutDeliveryCharge - $this->orderTotalDiscount;
         $price['total_discount'] = $this->orderTotalDiscount;
         $price['breakdown'] = [];
         foreach ($job_services as $key => $job_service) {
@@ -62,6 +63,8 @@ class ServicePricingController extends Controller
             $price['breakdown'][$key]['discount'] = $job_service->discount;
             $price['breakdown'][$key]['option'] = json_decode($job_service->option);
             $price['breakdown'][$key]['variables'] = json_decode($job_service->variables);
+            $price['breakdown'][$key]['original_price'] =$job_service->original_price;
+            $price['breakdown'][$key]['discounted_price'] = $job_service->discounted_price;
         }
         return api_response($request, $price, 200, ['service_pricing' => $price]);
 
@@ -99,6 +102,8 @@ class ServicePricingController extends Controller
                 'quantity' => $selected_service->getQuantity(),
                 'unit_price' => $unit_price,
                 'discount' => $this->discountCalculation->getJobServiceDiscount(),
+                'original_price' => $unit_price * $selected_service->getQuantity(),
+                'discounted_price' => ($unit_price * $selected_service->getQuantity()) - $this->discountCalculation->getJobServiceDiscount()
             ];
             list($service_data['option'], $service_data['variables']) = $service->getVariableAndOption($selected_service->getOption());
             $job_services->push(new JobService($service_data));
