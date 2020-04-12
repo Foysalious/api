@@ -185,7 +185,7 @@ class Route
                 (new MovieTicketRoute())->set($api);
             });
             $api->get('refresh-token', 'ProfileController@refresh');
-            $api->get('service-price-calculate', 'Service\ServicePricingController@getCalculatedPricing');
+            $api->get('service-price-calculate', 'Service\ServicePricingController@getCalculatedPrice');
         });
         return $api;
     }
