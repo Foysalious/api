@@ -211,8 +211,11 @@ class ResourceScheduleSlot
     private function isAvailableTime(Carbon $day)
     {
         $date_string = $day->toDateString();
-        $this->shebaSlots->each(function ($slot) use ($date_string) {
-            if ($slot->is_available) {
+        $collection = $this->shebaSlots->getIterator();
+        $this->shebaSlots->each(function ($slot) use ($date_string, $collection) {
+            $nextSlot = next($collection);
+            $prevSlot = prev($collection);
+            if ($slot->is_available && $nextSlot && !$nextSlot->is_available && $prevSlot && !$prevSlot->is_available) {
                 $start_time = Carbon::parse($date_string . ' ' . $slot->start);
                 $end_time = Carbon::parse($date_string . ' ' . $slot->end);
                 $slot['is_available'] = $start_time->diffInMinutes($end_time) >= $this->category->book_resource_minutes ? 1 : 0;
