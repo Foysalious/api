@@ -126,7 +126,8 @@
 <table class="tableHeadRegular header"
        style="width: 100%;  margin-bottom: 20px; padding: 0px; background-color: #fff;border: none ">
     <tr>
-        <td style="opacity: 0.8; font-family: Lato; font-size: 20px; font-weight: bold; color: #000000;">Employee Leave
+        <td style="opacity: 0.8; font-family: Lato; font-size: 20px; font-weight: bold; padding-top:20px;color: #000000;">
+            Employee Leave
             Balance
         </td>
         <td style="text-align: right">
@@ -218,15 +219,15 @@
 
                 <tbody>
                 @foreach($leave_balance['leave_balance'] as $balance)
-                <tr>
-                    <td style="font-size: 10px; font-weight: bold; width: 50%; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;">
-                        {{$balance['title']}}
-                    </td>
-                    <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;">
-                        {{$balance['used_leaves']}}/{{$balance['allowed_leaves']}}
+                    <tr>
+                        <td style="font-size: 10px; font-weight: bold; width: 50%; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;">
+                            {{$balance['title']}}
+                        </td>
+                        <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;">
+                            {{$balance['used_leaves']}}/{{$balance['allowed_leaves']}}
 
-                    </td>
-                </tr>
+                        </td>
+                    </tr>
                 @endforeach
                 {{--<tr>
                     <td style="font-size: 10px; font-weight: bold; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;">
@@ -253,31 +254,13 @@
     </tr>
 </table>
 
-<table style="width: 100%; border: none; padding-bottom: 40px">
+<table style="width: 100%; border: none; padding-bottom: 20px">
     <tr>
         <td style="width: 60%; border : none; ">
             <table style="width: 100%; border : none">
                 <tr>
-                    <td style="font-family: Lato; font-size: 10px; color: #000000; opacity: 0.8; padding-bottom: 13px; width: 36.5%;">
-
-                    </td>
-                    <td style="font-family: Lato; font-size: 10px; color: #000000; opacity: 0.8; padding-bottom: 13px; width: 2%">
-
-                    </td>
-                    <td style="padding-left: 10px;  padding-bottom: 13px; font-family: Lato; font-size: 14px; font-weight: bold; color: #000000; opacity: 0.8">
-
-                    </td>
-                </tr>
-
-                <tr>
                     <td style="opacity: 0.8; font-family: Lato; font-size: 14px; font-weight: bold; color: #000000;">
                         Leave Details
-                    </td>
-                    <td style="font-family: Lato; padding-bottom: 13px;  font-size: 10px; color: #000000; opacity: 0.8">
-
-                    </td>
-                    <td style="padding-left: 10px; padding-bottom: 13px; font-family: Lato; font-size: 10px; font-weight: bold; color: #000000; opacity: 0.8">
-
                     </td>
                 </tr>
             </table>
@@ -305,48 +288,48 @@
     </thead>
     <tbody>
     @foreach($leave_balance['leaves'] as $leaves)
-    <tr>
-        <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px 10px;border: solid 1px #d2d8e6;">
-            {{$leaves['date']}}
-        </td>
-        <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;">
-           {{$leaves['leave_type']}}
-        </td>
-        <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;">
-            {{$leaves['leave_days']}}
-        </td>
-        <td style="font-size: 10px; opacity: 0.8; padding: 5px 10px; font-family: Lato;border: solid 1px #d2d8e6; text-align: right; ">
-            {{$leaves['status']}}
-        </td>
-    </tr>
-{{--    <tr>
-        <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px 10px;border: solid 1px #d2d8e6;">
-            "01-12-19"
-        </td>
-        <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;">
-            "Sick"
-        </td>
-        <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;">
-            "1"
-        </td>
-        <td style="font-size: 10px; opacity: 0.8; padding: 5px 10px; font-family: Lato;border: solid 1px #d2d8e6; text-align: right; ">
-            "Rejected"
-        </td>
-    </tr>
-    <tr>
-        <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px 10px;border: solid 1px #d2d8e6;">
-            "01-12-19"
-        </td>
-        <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;">
-            "Casual"
-        </td>
-        <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;">
-            "1"
-        </td>
-        <td style="font-size: 10px; opacity: 0.8; padding: 5px 10px; font-family: Lato;border: solid 1px #d2d8e6; text-align: right; ">
-            "Approved"
-        </td>
-    </tr>--}}
+        <tr>
+            <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px 10px;border: solid 1px #d2d8e6;">
+                {{$leaves['date']}}
+            </td>
+            <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;">
+                {{$leaves['leave_type']}}
+            </td>
+            <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;">
+                {{$leaves['leave_days']}}
+            </td>
+            <td style="font-size: 10px; opacity: 0.8; padding: 5px 10px; font-family: Lato;border: solid 1px #d2d8e6; text-align: right; ">
+                {{$leaves['status']}}
+            </td>
+        </tr>
+        {{--    <tr>
+                <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px 10px;border: solid 1px #d2d8e6;">
+                    "01-12-19"
+                </td>
+                <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;">
+                    "Sick"
+                </td>
+                <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;">
+                    "1"
+                </td>
+                <td style="font-size: 10px; opacity: 0.8; padding: 5px 10px; font-family: Lato;border: solid 1px #d2d8e6; text-align: right; ">
+                    "Rejected"
+                </td>
+            </tr>
+            <tr>
+                <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px 10px;border: solid 1px #d2d8e6;">
+                    "01-12-19"
+                </td>
+                <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;">
+                    "Casual"
+                </td>
+                <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;">
+                    "1"
+                </td>
+                <td style="font-size: 10px; opacity: 0.8; padding: 5px 10px; font-family: Lato;border: solid 1px #d2d8e6; text-align: right; ">
+                    "Approved"
+                </td>
+            </tr>--}}
     @endforeach
     </tbody>
     <tfoot>
