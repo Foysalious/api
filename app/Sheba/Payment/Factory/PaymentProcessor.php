@@ -65,6 +65,8 @@ class PaymentProcessor
                 return app(Cbl::class);
             case 'partner_wallet':
                 return app(PartnerWallet::class);
+            case 'ok_wallet':
+                return app(OkWallet::class);
             case 'ssl_donation':
                 return app(Ssl::class)->setDonationConfig();
         }
