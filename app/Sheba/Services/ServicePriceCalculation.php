@@ -5,6 +5,9 @@ use App\Models\Category;
 use App\Models\HyperLocal;
 use App\Models\LocationService;
 use Illuminate\Support\Collection;
+use Sheba\Checkout\DeliveryCharge;
+use Sheba\Dal\Discount\Discount;
+use Sheba\JobDiscount\JobDiscountHandler;
 use Sheba\LocationService\DiscountCalculation;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\LocationService\UpsellCalculation;
@@ -31,13 +34,17 @@ class ServicePriceCalculation
     private $orderAmountWithoutDeliveryCharge;
     /** @var float */
     private $orderTotalDiscount;
+    private $delivery_charge;
+    private $job_discount_handler;
 
-    public function __construct(ServiceRequest $serviceRequest, PriceCalculation $priceCalculation, UpsellCalculation $upsell_calculation, DiscountCalculation $discountCalculation)
+    public function __construct(ServiceRequest $serviceRequest, PriceCalculation $priceCalculation, UpsellCalculation $upsell_calculation, DiscountCalculation $discountCalculation, DeliveryCharge $delivery_charge, JobDiscountHandler $job_discount_handler)
     {
         $this->serviceRequest = $serviceRequest;
         $this->priceCalculation = $priceCalculation;
         $this->discountCalculation = $discountCalculation;
         $this->upsellCalculation = $upsell_calculation;
+        $this->delivery_charge = $delivery_charge;
+        $this->job_discount_handler = $job_discount_handler;
     }
 
     public function setLocation($lat, $lng)
@@ -59,10 +66,13 @@ class ServicePriceCalculation
         $services_list = $this->createServiceList();
         $this->calculateOrderAmount($services_list);
         $this->calculateTotalDiscount($services_list);
+        $category = $this->calculateDeliveryCharge();
         $price = [];
         $price['total_original_price'] = $this->orderAmountWithoutDeliveryCharge;
         $price['total_discounted_price'] = $this->orderAmountWithoutDeliveryCharge - $this->orderTotalDiscount;
         $price['total_discount'] = $this->orderTotalDiscount;
+        $price['delivery_charge'] = $category['delivery_charge'];
+        $price['delivery_discount'] = $category['delivery_discount'];
         $price['breakdown'] = [];
         foreach ($services_list as $key => $service) {
             $price['breakdown'][$key]['id'] = $service['service_id'];
@@ -129,5 +139,19 @@ class ServicePriceCalculation
         $this->orderTotalDiscount = $services_list->map(function ($service) {
             return $service['discount'];
         })->sum();
+    }
+
+    private function calculateDeliveryCharge()
+    {
+        $category['delivery_charge'] = $this->delivery_charge->setCategory($this->category)->get();
+        /** @var Discount $delivery_discount */
+        $delivery_discount = $this->job_discount_handler->getDiscount();
+        $category['delivery_discount'] = $delivery_discount ? [
+            'value' => (double)$delivery_discount->amount,
+            'is_percentage' => $delivery_discount->is_percentage,
+            'cap' => (double)$delivery_discount->cap,
+            'min_order_amount' => (double)$delivery_discount->rules->getMinOrderAmount()
+        ] : null;
+        return $category;
     }
 }
