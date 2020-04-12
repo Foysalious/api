@@ -5,5 +5,6 @@ return [
     'api_key'    => env('OK_WALLET_API_KEY'),
     'api_secret' => env('OK_WALLET_API_SECRET'),
     'format'     => env('OK_WALLET_API_FORMAT', 'json'),
-    'key_path'   => env('OK_WALLET_KEY_PATH', 'assets/ok-wallet/public.key')
+    'key_path'   => env('OK_WALLET_KEY_PATH', 'assets/ok-wallet/public.key'),
+    'merchant'   => env('OK_WALLET_MERCHANT', 'sheba.xyz')
 ];
