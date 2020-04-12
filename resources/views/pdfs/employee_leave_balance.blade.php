@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <title>Quotation details 1.1</title>
     <meta name="description" content="">
@@ -123,20 +122,22 @@
 
 <body style="margin-top: 20px; font-family: Lato;">
 
-<table class="tableHeadRegular header"
-       style="width: 100%;  margin-bottom: 20px; padding: 0px; background-color: #fff;border: none ">
+<table class="tableHeadRegular header" style="width: 100%; margin-bottom: 20px; padding: 0px; background-color: #fff; border: none">
     <tr>
-        <td style="opacity: 0.8; font-family: Lato; font-size: 20px; font-weight: bold; padding-top:20px;color: #000000;">
-            Employee Leave
-            Balance
+        <td style="opacity: 0.8; font-family: Lato; font-size: 20px; font-weight: bold; color: #000000; padding-top: 20px">
+            Employee Leave Balance
         </td>
-        <td style="text-align: right">
-            <img src="https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/images/sheba_logo_blue.png" alt=""
-                 width="150px">
+        <td style="text-align: right;">
+                <span style="height: 89px; width: 160px">
+                    <p style="margin-bottom: -10px;">
+                        <img src="https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/images/sheba_logo_150_84.png"
+                             alt="">
+                    </p>
+                </span>
         </td>
     </tr>
     <tr>
-        <td>
+        <td colspan="2">
             <hr style=" color: #d1d7e6; width: 720px">
         </td>
     </tr>
@@ -205,10 +206,8 @@
                 </tr>
             </table>
         </td>
-
         <td style="width: 40%">
             <table class="tableHead" style="width: 100%; table-spacing: 0px; margin-bottom: 75px">
-
                 <thead>
                 <tr>
                     <th class="tableHeadRegular" colspan="2" style="text-align: center; background-color: #f8f8fb">
@@ -216,7 +215,6 @@
                     </th>
                 </tr>
                 </thead>
-
                 <tbody>
                 @foreach($leave_balance['leave_balance'] as $balance)
                     <tr>
@@ -248,7 +246,6 @@
 
                 </tr>--}}
                 </tbody>
-
             </table>
         </td>
     </tr>
@@ -268,74 +265,53 @@
     </tr>
 </table>
 
-{{-- Leave Balance Table --}}
+{{-- LEAVE BALANCE TABLE --}}
 <table class="tableHead" style="width: 100%; margin-bottom: 20px; position: relative">
     <thead>
     <tr class="tableHeadRegular" style="background-color: #f8f8fb">
-        <td style="font-size: 10px; opacity: 0.8; font-weight: bold; font-family: Lato; padding: 10px;border: solid 1px #d2d8e6;width:20%">
+        <td style="font-size: 10px; opacity: 0.8; font-weight: bold; font-family: Lato; padding: 10px; border: solid 1px #d2d8e6; width:20%">
             Created at
         </td>
-        <td style="font-size: 10px; opacity: 0.8; font-weight: bold; font-family: Lato; padding: 10px;border: solid 1px #d2d8e6;width: 20%">
+        <td style="font-size: 10px; opacity: 0.8; font-weight: bold; font-family: Lato; padding: 10px; border: solid 1px #d2d8e6;width: 20%">
             Leave Type
         </td>
-        <td style="font-size: 10px; opacity: 0.8; font-weight: bold; font-family: Lato; padding: 10px;border: solid 1px #d2d8e6;;width: 40%">
+        <td style="font-size: 10px; opacity: 0.8; font-weight: bold; font-family: Lato; padding: 10px; border: solid 1px #d2d8e6; width: 40%">
             Leave Days
         </td>
-        <td style="font-size: 10px; text-align: right; opacity: 0.8; font-weight: bold; font-family: Lato; padding: 10px;border: solid 1px #d2d8e6;">
+        <td style="font-size: 10px; opacity: 0.8; font-weight: bold; font-family: Lato; padding: 10px; border: solid 1px #d2d8e6;">
             Status
         </td>
     </tr>
     </thead>
     <tbody>
-    @foreach($leave_balance['leaves'] as $leaves)
+    @forelse($leave_balance['leaves'] as $leaves)
         <tr>
-            <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px 10px;border: solid 1px #d2d8e6;">
+            <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px 10px; border: solid 1px #d2d8e6;">
                 {{$leaves['date']}}
             </td>
-            <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;">
+            <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px; border: solid 1px #d2d8e6;">
                 {{$leaves['leave_type']}}
             </td>
-            <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;">
+            <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px; border: solid 1px #d2d8e6;">
                 {{$leaves['leave_days']}}
             </td>
-            <td style="font-size: 10px; opacity: 0.8; padding: 5px 10px; font-family: Lato;border: solid 1px #d2d8e6; text-align: right; ">
+            <td style="font-size: 10px; opacity: 0.8; padding: 5px 10px; font-family: Lato; border: solid 1px #d2d8e6;">
                 {{$leaves['status']}}
             </td>
         </tr>
-        {{--    <tr>
-                <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px 10px;border: solid 1px #d2d8e6;">
-                    "01-12-19"
-                </td>
-                <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;">
-                    "Sick"
-                </td>
-                <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;">
-                    "1"
-                </td>
-                <td style="font-size: 10px; opacity: 0.8; padding: 5px 10px; font-family: Lato;border: solid 1px #d2d8e6; text-align: right; ">
-                    "Rejected"
-                </td>
-            </tr>
-            <tr>
-                <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px 10px;border: solid 1px #d2d8e6;">
-                    "01-12-19"
-                </td>
-                <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;">
-                    "Casual"
-                </td>
-                <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;">
-                    "1"
-                </td>
-                <td style="font-size: 10px; opacity: 0.8; padding: 5px 10px; font-family: Lato;border: solid 1px #d2d8e6; text-align: right; ">
-                    "Approved"
-                </td>
-            </tr>--}}
-    @endforeach
+    @empty
+        <tr>
+            <td colspan="4"
+                style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px 10px;border: solid 1px #d2d8e6; text-align: center">
+                No Leave Found
+            </td>
+        </tr>
+    @endforelse
     </tbody>
-    <tfoot>
-    </tfoot>
+    <tfoot></tfoot>
 </table>
-<table class="footer">
-</table>
+{{-- END LEAVE BALANCE TABLE --}}
+<table class="footer"></table>
+
 </body>
 </html>
