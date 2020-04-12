@@ -77,10 +77,11 @@ class JobDeliveryChargeCalculator
         $this->partnerOrder->calculate(1);
         $discount_checking_params = (new JobDiscountCheckingParams())->setDiscountableAmount($charge)->setOrderAmount($this->partnerOrder->grossAmount);
         $this->jobDiscountHandler->setType(DiscountTypes::DELIVERY)->setCategory($this->job->category)->setCheckingParams($discount_checking_params)->calculate();
-
         if ($this->jobDiscountHandler->hasDiscount()) {
+            $this->jobDiscountHandler->create($this->job);
             $this->job->discount += $this->jobDiscountHandler->getApplicableAmount();
         }
+        $this->job->update();
         return $this->job;
     }
 
