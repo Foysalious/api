@@ -20,7 +20,7 @@ class OkWalletClient
         $this->apiSecret  = config('ok_wallet.api_secret');
         $this->format     = config('ok_wallet.format', 'json');
         $this->client     = new Client();
-        $this->public_key = file_get_contents(resource_path('assets/ok-wallet/public_uat.key'));
+        $this->public_key = file_get_contents(resource_path(config('ok_wallet.key_path')));
     }
 
     public static function getTransactionUrl($sessionKey)
