@@ -69,6 +69,11 @@ class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAg
         return $this->hasMany(AffiliateSuspension::class);
     }
 
+    public function statusChangeLogs()
+    {
+        return $this->hasMany(AffiliateStatusChangeLog::class);
+    }
+
     public function getBankingInfoAttribute($info)
     {
         return $info ? json_decode($info) : [];

@@ -3,6 +3,7 @@
 use App\Models\Affiliation;
 use App\Models\CarRentalJobDetail;
 use App\Models\Category;
+use App\Models\CategoryPartner;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;
@@ -22,6 +23,7 @@ use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Dal\JobService\JobService;
 use Sheba\JobDiscount\JobDiscountCheckingParams;
 use Sheba\JobDiscount\JobDiscountHandler;
+use Sheba\Jobs\JobDeliveryChargeCalculator;
 use Sheba\Jobs\JobStatuses;
 use Sheba\Jobs\PreferredTime;
 use Sheba\Location\Geo;
@@ -105,10 +107,12 @@ class OrderPlace
     private $orderAmount;
     /** @var float */
     private $orderAmountWithoutDeliveryCharge;
+    /** @var JobDeliveryChargeCalculator */
+    private $jobDeliveryChargeCalculator;
 
     public function __construct(Creator $creator, PriceCalculation $priceCalculation, DiscountCalculation $discountCalculation, OrderVoucherData $orderVoucherData,
                                 PartnerListBuilder $partnerListBuilder, Director $director, ServiceRequest $serviceRequest,
-                                OrderRequestAlgorithm $orderRequestAlgorithm, JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, Store $order_request_store)
+                                OrderRequestAlgorithm $orderRequestAlgorithm, JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, Store $order_request_store, JobDeliveryChargeCalculator $jobDeliveryChargeCalculator)
     {
         $this->priceCalculation = $priceCalculation;
         $this->discountCalculation = $discountCalculation;
@@ -121,6 +125,7 @@ class OrderPlace
         $this->jobDiscountHandler = $job_discount_handler;
         $this->upsellCalculation = $upsell_calculation;
         $this->orderRequestStore = $order_request_store;
+        $this->jobDeliveryChargeCalculator = $jobDeliveryChargeCalculator;
     }
 
 
@@ -368,6 +373,7 @@ class OrderPlace
             $job_services = $this->createJobService();
             $this->calculateOrderAmount($job_services);
             $this->setVoucherData();
+            if ($this->orderVoucherData->isValid()) $job_services = $this->removeServiceDiscount($job_services);
             $order = null;
             DB::transaction(function () use ($job_services, &$order) {
                 $order = $this->createOrder();
@@ -384,6 +390,12 @@ class OrderPlace
                     $first_partner_id = [$partners->first()->id];
                     $this->partnerOrderRequestCreator->setPartnerOrder($partner_order)->setPartners($first_partner_id)->create();
                 }
+                $job = $job->fresh();
+                $partner_order = $partner_order->fresh();
+                $partner_order->calculate(1);
+                if ($partner_order->partner_id) $this->jobDeliveryChargeCalculator->setPartner($partner_order->partner);
+                $job = $this->jobDeliveryChargeCalculator->setJob($job)->setPartnerOrder($partner_order)->getCalculatedJob();
+                $job->update();
             });
         } catch (QueryException $e) {
             throw $e;
@@ -478,6 +490,18 @@ class OrderPlace
             $result = voucher($this->voucherId)->check($this->category->id, null, $this->location->id, $this->customer->id, $this->orderAmountWithoutDeliveryCharge, $this->salesChannel)->reveal();
             $this->orderVoucherData->setVoucherRevealData($result);
         }
+    }
+
+    private function removeServiceDiscount($job_services)
+    {
+        foreach ($job_services as &$job_service) {
+            array_forget($job_service, 'sheba_contribution');
+            array_forget($job_service, 'partner_contribution');
+            array_forget($job_service, 'location_service_discount_id');
+            array_forget($job_service, 'discount');
+            array_forget($job_service, 'discount_percentage');
+        }
+        return $job_services;
     }
 
     /**
@@ -599,9 +623,16 @@ class OrderPlace
         }
     }
 
+    /**
+     * @return DeliveryCharge
+     */
     private function buildDeliveryCharge()
     {
-        return (new DeliveryCharge())->setCategory($this->category);
+        $deliver_charge = new DeliveryCharge();
+        $deliver_charge->setCategory($this->category);
+        if ($this->selectedPartner) $deliver_charge->setCategoryPartnerPivot(CategoryPartner::where([['category_id', $this->category->id], ['partner_id', $this->selectedPartner->id]])
+            ->first());
+        return $deliver_charge;
     }
 
     /**

@@ -1,8 +1,7 @@
 <?php namespace Sheba\Business\ApprovalFlow;
 
-use Sheba\Dal\TripRequestApprovalFlow\TripRequestApprovalFlowRepositoryInterface;
-use Sheba\Dal\TripRequestApprovalFlow\Model as TripRequestApprovalFlow;
-use Illuminate\Support\Facades\DB;
+use Sheba\Dal\ApprovalFlow\Contract as ApprovalFlowRepositoryInterface;
+use DB;
 use Sheba\ModificationFields;
 
 class Updater
@@ -18,7 +17,11 @@ class Updater
     private $data = [];
     private $approvalFlowRepo;
 
-    public function __construct(TripRequestApprovalFlowRepositoryInterface $approval_flow_repo)
+    /**
+     * Updater constructor.
+     * @param ApprovalFlowRepositoryInterface $approval_flow_repo
+     */
+    public function __construct(ApprovalFlowRepositoryInterface $approval_flow_repo)
     {
         $this->approvalFlowRepo = $approval_flow_repo;
     }
@@ -31,7 +34,7 @@ class Updater
 
     public function setApproval($approval)
     {
-        $this->approval = TripRequestApprovalFlow::find($approval);
+        $this->approval = $this->approvalFlowRepo->find($approval);
         return $this;
     }
 
@@ -49,9 +52,7 @@ class Updater
 
     public function makeData()
     {
-        $this->data = [
-            'title' => $this->title
-        ];
+        $this->data = ['title' => $this->title];
     }
 
     public function update()
@@ -62,7 +63,7 @@ class Updater
         $this->approvalFlowRepo->update($this->approval, $this->data);
         $this->approval->approvers()->sync($this->businessMemberIds);
         DB::commit();
-        return $this->approval;
 
+        return $this->approval;
     }
 }

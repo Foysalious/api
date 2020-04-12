@@ -37,7 +37,8 @@ class Excel
                 'on_time' => $employee['attendance']['on_time'],
                 'late' => $employee['attendance']['late'],
                 'left_early' => $employee['attendance']['left_early'],
-                'absent' => $employee['attendance']['absent']
+                'absent' => $employee['attendance']['absent'],
+                'leave' => $employee['attendance']['on_leave']
             ]);
         }
     }

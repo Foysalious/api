@@ -11,6 +11,7 @@ class StatusPresenter
             'left_early' => 'Left Early',
             'Holiday' => 'Holiday',
             'Weekend' => 'Weekend',
+            'On Leave' => 'On Leave',
             null => null,
         ];
     }

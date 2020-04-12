@@ -6,14 +6,12 @@ use Sheba\Payment\Complete\PaymentComplete;
 use Sheba\Payment\PayableType;
 use Sheba\Utility\UtilityOrder;
 
-class Payable extends Model
-{
-    protected $guarded = ['id'];
-    protected $casts = ['amount' => 'double'];
-    public $timestamps = false;
+class Payable extends Model {
+    protected $guarded    = ['id'];
+    protected $casts      = ['amount' => 'double'];
+    public    $timestamps = false;
 
-    public function getReadableTypeAttribute()
-    {
+    public function getReadableTypeAttribute() {
         if ($this->type == 'partner_order') {
             return 'order';
         } else if ($this->type == 'wallet_recharge') {
@@ -35,8 +33,7 @@ class Payable extends Model
         }
     }
 
-    public function getCompletionClass(): PaymentComplete
-    {
+    public function getCompletionClass(): PaymentComplete {
         $class_name = "Sheba\\Payment\\Complete\\";
         if ($this->completion_type == 'advanced_order') {
             $class_name .= 'AdvancedOrderComplete';
@@ -63,13 +60,11 @@ class Payable extends Model
         return app($class_name);
     }
 
-    public function user()
-    {
+    public function user() {
         return $this->morphTo();
     }
 
-    public function getMobile()
-    {
+    public function getMobile() {
         if ($this->user instanceof Customer) {
             return $this->user->profile->mobile;
         } elseif ($this->user instanceof Business) {
@@ -79,8 +74,17 @@ class Payable extends Model
         }
     }
 
-    public function getEmail()
-    {
+    public function getUserProfile() {
+        if ($this->user instanceof Customer) {
+            return $this->user->profile;
+        } elseif ($this->user instanceof Business || $this->user instanceof Partner) {
+            return $this->user->getAdmin()->profile;
+        } else {
+            return new Profile();
+        }
+    }
+
+    public function getEmail() {
         if ($this->user instanceof Customer) {
             return $this->user->profile->email;
         } elseif ($this->user instanceof Business) {
@@ -88,8 +92,7 @@ class Payable extends Model
         }
     }
 
-    public function getName()
-    {
+    public function getName() {
         if ($this->user instanceof Customer) {
             return $this->user->profile->name;
         } elseif ($this->user instanceof Business) {
@@ -100,8 +103,7 @@ class Payable extends Model
     }
 
 
-    public function getPayableModel()
-    {
+    public function getPayableModel() {
         $model = "App\\Models\\";
         if ($this->type == 'partner_order') {
             $model .= 'PartnerOrder';
@@ -120,16 +122,14 @@ class Payable extends Model
         return $model;
     }
 
-    public function payment()
-    {
+    public function payment() {
         return $this->hasOne(Payment::class);
     }
 
     /**
      * @return PayableType
      */
-    public function getPayableType()
-    {
+    public function getPayableType() {
         if ($this->type == 'utility_order') {
             return (new UtilityOrder())->setPayable($this);
         } elseif ($this->type == 'payment_link') {
