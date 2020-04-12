@@ -6,6 +6,7 @@ use ReflectionException;
 use Sheba\Payment\Methods\Bkash\Bkash;
 use Sheba\Payment\Methods\Cbl\Cbl;
 use Sheba\Payment\Methods\Cod;
+use Sheba\Payment\Methods\OkWallet\OkWallet;
 use Sheba\Payment\Methods\PartnerWallet;
 use Sheba\Payment\Methods\Ssl\Ssl;
 use Sheba\Payment\Methods\Wallet;
@@ -24,6 +25,7 @@ class PaymentProcessor
         $this->method = $this->getMethod($method);
     }
 
+
     public function method()
     {
         return $this->method;
@@ -39,11 +41,13 @@ class PaymentProcessor
         return in_array($method, (new ReflectionClass(PaymentStrategy::class))->getStaticProperties());
     }
 
+
     /**
      * @param $method
-     * @return Bkash|Cbl|Cod|Ssl|Wallet|PartnerWallet
+     * @return Bkash|Cbl|Cod|Ssl|Wallet|PartnerWallet|OkWallet
      * @throws ReflectionException
      */
+
     private function getMethod($method)
     {
         if (!$this->isValidMethod($method)) throw new InvalidArgumentException('Invalid Method.');
@@ -61,8 +65,11 @@ class PaymentProcessor
                 return app(Cbl::class);
             case 'partner_wallet':
                 return app(PartnerWallet::class);
+            case 'ok_wallet':
+                return app(OkWallet::class);
             case 'ssl_donation':
                 return app(Ssl::class)->setDonationConfig();
         }
     }
+
 }
