@@ -133,7 +133,7 @@ class ServicePricingController extends Controller
     private function calculateTotalDiscount($job_services)
     {
         $this->orderTotalDiscount = $job_services->map(function ($job_service) {
-            return $job_service->discount * $job_service->quantity;
+            return $job_service->discount;
         })->sum();
     }
 }
