@@ -48,23 +48,23 @@ class ServicePricingController extends Controller
     {
         $this->setLocation($request->lat, $request->lng);
         $this->setServices($request->services);
-        $job_services = $this->createJobService();
-        $this->calculateOrderAmount($job_services);
-        $this->calculateTotalDiscount($job_services);
+        $services_list = $this->createServiceList();
+        $this->calculateOrderAmount($services_list);
+        $this->calculateTotalDiscount($services_list);
         $price = [];
         $price['total_original_price'] = $this->orderAmountWithoutDeliveryCharge;
         $price['total_discounted_price'] = $this->orderAmountWithoutDeliveryCharge - $this->orderTotalDiscount;
         $price['total_discount'] = $this->orderTotalDiscount;
         $price['breakdown'] = [];
-        foreach ($job_services as $key => $job_service) {
-            $price['breakdown'][$key]['id'] = $job_service->service_id;
-            $price['breakdown'][$key]['quantity'] = $job_service->quantity;
-            $price['breakdown'][$key]['unit_price'] = $job_service->unit_price;
-            $price['breakdown'][$key]['discount'] = $job_service->discount;
-            $price['breakdown'][$key]['option'] = json_decode($job_service->option);
-            $price['breakdown'][$key]['variables'] = json_decode($job_service->variables);
-            $price['breakdown'][$key]['original_price'] =$job_service->original_price;
-            $price['breakdown'][$key]['discounted_price'] = $job_service->discounted_price;
+        foreach ($services_list as $key => $service) {
+            $price['breakdown'][$key]['id'] = $service['service_id'];
+            $price['breakdown'][$key]['quantity'] = $service['quantity'];
+            $price['breakdown'][$key]['unit_price'] = $service['unit_price'];
+            $price['breakdown'][$key]['discount'] = $service['discount'];
+            $price['breakdown'][$key]['option'] = json_decode($service['option']);
+            $price['breakdown'][$key]['variables'] = json_decode($service['variables']);
+            $price['breakdown'][$key]['original_price'] =$service['original_price'];
+            $price['breakdown'][$key]['discounted_price'] = $service['discounted_price'];
         }
         return api_response($request, $price, 200, ['service_pricing' => $price]);
 
@@ -85,9 +85,9 @@ class ServicePricingController extends Controller
         return $this->serviceRequestObject[0]->getCategory();
     }
 
-    private function createJobService()
+    private function createServiceList()
     {
-        $job_services = collect();
+        $services_list = collect();
         foreach ($this->serviceRequestObject as $selected_service) {
             $service = $selected_service->getService();
             $location_service = LocationService::where([['service_id', $service->id], ['location_id', $this->location->id]])->first();
@@ -106,9 +106,9 @@ class ServicePricingController extends Controller
                 'discounted_price' => ($unit_price * $selected_service->getQuantity()) - $this->discountCalculation->getJobServiceDiscount()
             ];
             list($service_data['option'], $service_data['variables']) = $service->getVariableAndOption($selected_service->getOption());
-            $job_services->push(new JobService($service_data));
+            $services_list->push($service_data);
         }
-        return $job_services;
+        return $services_list;
     }
 
     private function setLocation($lat, $lng)
@@ -118,22 +118,22 @@ class ServicePricingController extends Controller
     }
 
     /**
-     * @param $job_services
+     * @param $services_list
      */
-    private function calculateOrderAmount($job_services)
+    private function calculateOrderAmount($services_list)
     {
-        $this->orderAmountWithoutDeliveryCharge = $job_services->map(function ($job_service) {
-            return $job_service->unit_price * $job_service->quantity;
+        $this->orderAmountWithoutDeliveryCharge = $services_list->map(function ($service) {
+            return $service['unit_price'] * $service['quantity'];
         })->sum();
     }
 
     /**
-     * @param $job_services
+     * @param $services_list
      */
-    private function calculateTotalDiscount($job_services)
+    private function calculateTotalDiscount($services_list)
     {
-        $this->orderTotalDiscount = $job_services->map(function ($job_service) {
-            return $job_service->discount;
+        $this->orderTotalDiscount = $services_list->map(function ($service) {
+            return $service['discount'];
         })->sum();
     }
 }
