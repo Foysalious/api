@@ -132,7 +132,7 @@ class AvailableMethods
             self::bkash(),
             self::cbl($version_code, $platform_name),
             self::ssl(),
-            self::okWallet()
+//            self::okWallet()
         ];
     }
 
