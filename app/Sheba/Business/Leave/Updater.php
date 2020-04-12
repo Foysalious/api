@@ -1,21 +1,34 @@
 <?php namespace App\Sheba\Business\Leave;
 
+use App\Models\BusinessMember;
 use Sheba\Dal\Leave\Contract as LeaveRepository;
 use Sheba\Dal\Leave\Model as Leave;
 use DB;
 use App\Sheba\Business\LeaveStatusChangeLog\Creator as LeaveStatusChangeLogCreator;
+use Sheba\ModificationFields;
 use Sheba\PushNotificationHandler;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 
 class Updater
 {
+    use ModificationFields;
+
     private $leaveRepository;
     private $leave;
     private $status;
     private $leaveStatusLogCreator;
     private $businessMemberRepository;
     private $pushNotification;
+    private $member;
+    /**@var BusinessMember $businessMember */
+    private $businessMember;
 
+    /**
+     * Updater constructor.
+     * @param LeaveRepository $leave_repository
+     * @param LeaveStatusChangeLogCreator $leave_status_change_log_creator
+     * @param BusinessMemberRepositoryInterface $business_member_repo
+     */
     public function __construct(LeaveRepository $leave_repository, LeaveStatusChangeLogCreator $leave_status_change_log_creator, BusinessMemberRepositoryInterface $business_member_repo)
     {
         $this->leaveRepository = $leave_repository;
@@ -36,12 +49,26 @@ class Updater
         return $this;
     }
 
+    /**
+     * @param BusinessMember $business_member
+     * @return $this
+     */
+    public function setBusinessMember(BusinessMember $business_member)
+    {
+        $this->businessMember = $business_member;
+        $this->member = $business_member->member;
+        return $this;
+    }
+
     public function updateStatus()
     {
+        $this->setModifier($this->member);
         DB::transaction(function () {
             $previous_status = $this->leave->status;
-            $this->leaveRepository->update($this->leave, ['status' => $this->status]);
-            $this->leaveStatusLogCreator->setLeave($this->leave)->setPreviousStatus($previous_status)->setStatus($this->status)->create();
+            $this->leaveRepository->update($this->leave, $this->withUpdateModificationField(['status' => $this->status]));
+            $this->leaveStatusLogCreator->setLeave($this->leave)->setPreviousStatus($previous_status)->setStatus($this->status)
+                ->setBusinessMember($this->businessMember)
+                ->create();
         });
         if ($this->status == 'accepted') $this->sendLeaveAcceptedNotification();
         elseif ($this->status == 'rejected') $this->sendLeaveRejectedNotification();
