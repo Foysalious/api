@@ -8,23 +8,21 @@ use Sheba\Payment\Methods\OkWallet\Exception\FailedToInitiateException;
 use Sheba\Payment\Methods\OkWallet\Exception\KeyEncryptionFailed;
 use Sheba\Payment\Methods\OkWallet\Response\InitResponse;
 
-class OkWalletClient
-{
-    private $baseUrl, $account, $apiKey, $apiSecret, $format, $client, $public_key;
+class OkWalletClient {
+    private $baseUrl, $account, $apiKey, $apiSecret, $format, $client, $public_key, $merchant;
 
-    public function __construct()
-    {
+    public function __construct() {
         $this->baseUrl    = config('ok_wallet.base_url');
         $this->account    = config('ok_wallet.account');
         $this->apiKey     = config('ok_wallet.api_key');
         $this->apiSecret  = config('ok_wallet.api_secret');
         $this->format     = config('ok_wallet.format', 'json');
+        $this->merchant   = config('ok_wallet.merchant', 'sheba.xyz');
         $this->client     = new Client();
         $this->public_key = file_get_contents(resource_path(config('ok_wallet.key_path')));
     }
 
-    public static function getTransactionUrl($sessionKey)
-    {
+    public static function getTransactionUrl($sessionKey) {
         $cls = (new OkWalletClient());
         return "$cls->baseUrl/okTransaction/$sessionKey";
     }
@@ -36,8 +34,7 @@ class OkWalletClient
      * @throws FailedToInitiateException
      * @throws KeyEncryptionFailed
      */
-    public function createSession($amount, $trx_id)
-    {
+    public function createSession($amount, $trx_id) {
         try {
             $data     = [
                 'format' => $this->format,
@@ -47,7 +44,7 @@ class OkWalletClient
                 'json'   => json_encode([
                     'TRXNID'   => $trx_id,
                     'CHARGE'   => 0,
-                    'MERCHANT' => "sheba.xyz",
+                    'MERCHANT' => $this->merchant,
                     "AMOUNT"   => doubleval($amount),
                     'SECRET'   => $this->apiSecret,
                     'KEY'      => $this->apiKey,
@@ -66,8 +63,7 @@ class OkWalletClient
      * @return string
      * @throws KeyEncryptionFailed
      */
-    private function encrypt_value($value)
-    {
+    private function encrypt_value($value) {
         if (!$public = openssl_get_publickey($this->public_key)) {
             //Invalid x509 certificate;
             throw new KeyEncryptionFailed("Invalid Certificate for key encryption");
@@ -80,8 +76,7 @@ class OkWalletClient
         return $value;
     }
 
-    private function getOptions($data = null)
-    {
+    private function getOptions($data = null) {
         $options['form_params'] = $data;
         return $options;
     }
@@ -90,10 +85,9 @@ class OkWalletClient
      * @param $transaction_id
      * @return mixed
      */
-    public function validationRequest($transaction_id)
-    {
+    public function validationRequest($transaction_id) {
         $response = $this->client->post("$this->baseUrl/getTransaction/$this->apiKey/$transaction_id")->getBody()->getContents();
-        return json_decode($response,true);
+        return json_decode($response, true);
 
     }
 }
