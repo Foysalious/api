@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 
 use App\Jobs\SendEmailToNotifyVendorBalance;
+use App\Models\MovieTicketOrder;
 use Illuminate\Mail\Mailer;
 use Sheba\MovieTicket\Vendor\BlockBuster\BlockBuster;
 use Sheba\PushNotificationHandler;
@@ -54,7 +55,8 @@ class TestController extends  Controller
            $m->from('yourEmail@domain.com', 'Sheba.xyz');
            $m->to('shovan@sheba.xyz')->subject('Low Balance for testvendor');
        });*/
-        dispatch(new SendEmailToNotifyVendorBalance(new BlockBuster()));
+        $order = MovieTicketOrder::find(1);
+        dispatch(new SendEmailToNotifyVendorBalance($order));
         dd('success');
     }
 
