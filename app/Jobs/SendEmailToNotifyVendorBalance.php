@@ -5,11 +5,13 @@ namespace App\Jobs;
 use App\Jobs\Job;
 
 use App\Models\User;
+use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Contracts\Mail\Mailer;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Cache;
+use Sheba\MovieTicket\Vendor\BlockBuster\BlockBuster;
 use SuperClosure\SerializableClosure;
 
 class SendEmailToNotifyVendorBalance extends Job implements ShouldQueue
@@ -17,7 +19,7 @@ class SendEmailToNotifyVendorBalance extends Job implements ShouldQueue
     use InteractsWithQueue, SerializesModels;
 
 
-    private $order;
+    private $vendor;
     private $redisName = 'ticket_maintenance_configuration';
     private $storage;
     private $configuration;
@@ -26,31 +28,31 @@ class SendEmailToNotifyVendorBalance extends Job implements ShouldQueue
      * SendEmailToNotifyVendorBalance constructor.
      * @param $order
      */
-    public function __construct($order)
+    public function __construct()
     {
-        $this->order = $order;
+
+        $this->vendor  = new BlockBuster();
         $this->storage = Cache::store('redis');
     }
 
+
     /**
-     * Execute the job.
-     *
      * @param Mailer $mailer
-     * @return void
+     * @throws GuzzleException
      */
     public function handle(Mailer $mailer)
     {
         try {
             $this->getConfiguration();
             $balance_threshold = $this->configuration['balance_threshold'];
-            $balance = $this->order->vendor->balance();
+            $balance = $this->vendor->balance();
             if ($balance < $balance_threshold) {
                 $users = $this->notifiableUsers();
                 foreach ($users as $user) {
 
-                    $mailer->send('emails.notify-vendor-balance', ['current_balance' => $balance, 'vendor_name' => (new \ReflectionClass($this->order->vendor))->getShortName()], new SerializableClosure(function ($m) use ($user) {
+                    $mailer->send('emails.notify-vendor-balance', ['current_balance' => $balance, 'vendor_name' => (new \ReflectionClass($this->vendor))->getShortName()], new SerializableClosure(function ($m) use ($user) {
                         $m->from('yourEmail@domain.com', 'Sheba.xyz');
-                        $m->to($user->email)->subject('Low Balance for ' . (new \ReflectionClass($this->order->vendor))->getShortName());
+                        $m->to($user->email)->subject('Low Balance for ' . (new \ReflectionClass($this->vendor))->getShortName());
                     }));
                 }
             }
