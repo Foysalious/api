@@ -23,11 +23,11 @@ class SendEmailToNotifyVendorBalance extends Job implements ShouldQueue
 
     /**
      * SendEmailToNotifyVendorBalance constructor.
-     * @param $vendor
+     * @param $order
      */
-    public function __construct($vendor)
+    public function __construct($order)
     {
-        $this->vendor = $vendor;
+        $this->vendor = $order->vendor;
         $this->storage = Cache::store('redis');
     }
 

@@ -53,7 +53,7 @@ class MovieTicketPurchaseComplete extends PaymentComplete
                     $movie_ticket->processFailedMovieTicket($movie_ticket_order, $response);
                 }
                 $this->completePayment();
-                dispatch(new SendEmailToNotifyVendorBalance($vendor));
+                dispatch(new SendEmailToNotifyVendorBalance($movie_ticket_order));
             });
         } catch (QueryException $e) {
             $movie_ticket_order = MovieTicketOrder::find($this->payment->payable->type_id);
