@@ -16,7 +16,7 @@ class SendEmailToNotifyVendorBalance extends Job implements ShouldQueue
     use InteractsWithQueue, SerializesModels;
 
 
-    private $vendor;
+    private $order;
     private $redisName = 'ticket_maintenance_configuration';
     private $storage;
     private $configuration;
@@ -27,7 +27,7 @@ class SendEmailToNotifyVendorBalance extends Job implements ShouldQueue
      */
     public function __construct($order)
     {
-        $this->vendor = $order->vendor;
+        $this->order = $order;
         $this->storage = Cache::store('redis');
     }
 
@@ -42,14 +42,14 @@ class SendEmailToNotifyVendorBalance extends Job implements ShouldQueue
         try {
             $this->getConfiguration();
             $balance_threshold = $this->configuration['balance_threshold'];
-            $balance = $this->vendor->balance();
+            $balance = $this->order->vendor->balance();
             if ($balance < $balance_threshold) {
                 $users = $this->notifiableUsers();
                 foreach ($users as $user) {
 
-                    $mailer->send('emails.notify-vendor-balance', ['current_balance' => $balance, 'vendor_name' => (new \ReflectionClass($this->vendor))->getShortName()], function ($m) use ($user) {
+                    $mailer->send('emails.notify-vendor-balance', ['current_balance' => $balance, 'vendor_name' => (new \ReflectionClass($this->order->vendor))->getShortName()], function ($m) use ($user) {
                         $m->from('yourEmail@domain.com', 'Sheba.xyz');
-                        $m->to($user->email)->subject('Low Balance for ' . (new \ReflectionClass($this->vendor))->getShortName());
+                        $m->to($user->email)->subject('Low Balance for ' . (new \ReflectionClass($this->order->vendor))->getShortName());
                     });
                 }
             }
