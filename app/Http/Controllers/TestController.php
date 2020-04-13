@@ -4,13 +4,14 @@
 namespace App\Http\Controllers;
 
 
+use Illuminate\Mail\Mailer;
 use Sheba\PushNotificationHandler;
 
 class TestController extends  Controller
 {
-    public function test()
+    public function test(Mailer $mailer)
     {
-        (new PushNotificationHandler())->send([
+        /*(new PushNotificationHandler())->send([
             'title'      => 'Top Up failed',
             'message'    => 'দুঃখিত! আপনার মোবাইল রিচার্জ 01620011019 সফল হয় নি, পুনরায় চেষ্টা করুন',
             'event_type' => 'topup_failed',
@@ -39,7 +40,11 @@ class TestController extends  Controller
             "sound"      => "notification_sound",
             "channel_id" => 'affiliate_channel',
         ],'affiliate_dev_39169', 'affiliate_channel', 'default');
-        dd('success');
+        dd('success');*/
+        $mailer->send('emails.notify-vendor-balance', ['current_balance' => 100, 'vendor_name' => 'test'], function ($m)  {
+            $m->from('yourEmail@domain.com', 'Sheba.xyz');
+            $m->to('shovan@sheba.xyz')->subject('Low Balance for testvendor');
+        });
     }
 
 }
