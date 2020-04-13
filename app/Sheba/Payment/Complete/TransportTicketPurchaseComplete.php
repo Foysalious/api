@@ -55,6 +55,7 @@ class TransportTicketPurchaseComplete extends PaymentComplete
                 $vendor = $vendor->getById($transport_ticket_order->vendor_id);
                 /** @var BdTickets $vendor */
                 $ticket_confirm_response = $vendor->confirmTicket($transaction_details->id);
+
                 Redis::set('transport_ticket_' . $transaction_details->id, json_encode($ticket_confirm_response->getResponse()));
                 $this->payment->transaction_details = json_encode($ticket_confirm_response->getResponse());
 
@@ -85,6 +86,7 @@ class TransportTicketPurchaseComplete extends PaymentComplete
                         ];
 
                         (new SmsHandler('transport_ticket_confirmed'))->send($transport_ticket_order->reserver_mobile, $sms_data);
+                        dispatch(new SendEmailToNotifyVendorBalance($vendor));
                     } catch (\Exception $e) {
                     }
 
