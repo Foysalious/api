@@ -4,7 +4,9 @@
 namespace App\Http\Controllers;
 
 
+use App\Jobs\SendEmailToNotifyVendorBalance;
 use Illuminate\Mail\Mailer;
+use Sheba\MovieTicket\Vendor\BlockBuster\BlockBuster;
 use Sheba\PushNotificationHandler;
 
 class TestController extends  Controller
@@ -41,10 +43,12 @@ class TestController extends  Controller
             "channel_id" => 'affiliate_channel',
         ],'affiliate_dev_39169', 'affiliate_channel', 'default');
         dd('success');*/
-        $mailer->send('emails.notify-vendor-balance', ['current_balance' => 100, 'vendor_name' => 'test'], function ($m)  {
+        /*$mailer->send('emails.notify-vendor-balance', ['current_balance' => 100, 'vendor_name' => 'test'], function ($m)  {
             $m->from('yourEmail@domain.com', 'Sheba.xyz');
             $m->to('shovan@sheba.xyz')->subject('Low Balance for testvendor');
-        });
+        });*/
+        dispatch(new SendEmailToNotifyVendorBalance(new BlockBuster()));
+        dd('success');
     }
 
 }
