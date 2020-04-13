@@ -80,7 +80,6 @@ class TransportTicketPurchaseComplete extends PaymentComplete
                         'seats_number' => collect($trip->coachSeatList)->pluck('seatNo')->implode(','),
                         'fare_amount' => $transport_ticket_order->amount
                     ];
-
                     (new SmsHandler('transport_ticket_confirmed'))->send($transport_ticket_order->reserver_mobile, $sms_data);
                     dispatch(new SendEmailToNotifyVendorBalance($vendor));
 
