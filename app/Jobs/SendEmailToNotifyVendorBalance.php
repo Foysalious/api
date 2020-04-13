@@ -10,6 +10,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Cache;
+use SuperClosure\SerializableClosure;
 
 class SendEmailToNotifyVendorBalance extends Job implements ShouldQueue
 {
@@ -47,10 +48,10 @@ class SendEmailToNotifyVendorBalance extends Job implements ShouldQueue
                 $users = $this->notifiableUsers();
                 foreach ($users as $user) {
 
-                    $mailer->send('emails.notify-vendor-balance', ['current_balance' => $balance, 'vendor_name' => (new \ReflectionClass($this->order->vendor))->getShortName()], function ($m) use ($user) {
+                    $mailer->send('emails.notify-vendor-balance', ['current_balance' => $balance, 'vendor_name' => (new \ReflectionClass($this->order->vendor))->getShortName()], new SerializableClosure(function ($m) use ($user) {
                         $m->from('yourEmail@domain.com', 'Sheba.xyz');
                         $m->to($user->email)->subject('Low Balance for ' . (new \ReflectionClass($this->order->vendor))->getShortName());
-                    });
+                    }));
                 }
             }
         } catch (\Throwable $e) {
