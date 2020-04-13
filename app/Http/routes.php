@@ -5,6 +5,7 @@ Route::get('/', function () {
 });
 
 Route::get('/test', 'TestController@test');
+Route::get('/test-push-notification', 'TestController@testPushNotification');
 
 $api = app('Dingo\Api\Routing\Router');
 
