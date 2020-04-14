@@ -53,7 +53,8 @@ class MovieTicketPurchaseComplete extends PaymentComplete
                     $movie_ticket->processFailedMovieTicket($movie_ticket_order, $response);
                 }
                 $this->completePayment();
-                dispatch(new SendEmailToNotifyVendorBalance($vendor));
+                $this->dispatchJob($vendor);
+
             });
         } catch (QueryException $e) {
             $movie_ticket_order = MovieTicketOrder::find($this->payment->payable->type_id);
@@ -68,5 +69,15 @@ class MovieTicketPurchaseComplete extends PaymentComplete
     protected function saveInvoice()
     {
         // TODO: Implement saveInvoice() method.
+    }
+
+    private function dispatchJob($vendor)
+    {
+        try {
+            dispatch(new SendEmailToNotifyVendorBalance($vendor));
+        } catch(\Exception $e)
+        {
+
+        }
     }
 }

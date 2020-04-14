@@ -15,6 +15,8 @@ class SendEmailToNotifyVendorBalance extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
 
+    const QUEUE_NAME = 'ticket_vendor_balance_alert';
+
 
     private $vendor;
     private $redisName = 'ticket_maintenance_configuration';
@@ -28,6 +30,7 @@ class SendEmailToNotifyVendorBalance extends Job implements ShouldQueue
     public function __construct($vendor)
     {
         $this->vendor = $vendor;
+        $this->queue = self::QUEUE_NAME;
     }
 
     /**
