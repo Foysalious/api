@@ -55,7 +55,8 @@ class MovieTicketPurchaseComplete extends PaymentComplete
                     if($movie_ticket_order->agent_type == 'App\\Models\\Affiliate') ((new NotificationRepository())->pushNotificationToAffiliate('purchase_movie_ticket_failed',$movie_ticket_order->agent_id,$movie_ticket_order->reserver_number));
                 }
                 $this->completePayment();
-                dispatch(new SendEmailToNotifyVendorBalance($vendor));
+                $this->dispatchJob($vendor);
+
             });
         } catch (QueryException $e) {
             $movie_ticket_order = MovieTicketOrder::find($this->payment->payable->type_id);
@@ -70,5 +71,15 @@ class MovieTicketPurchaseComplete extends PaymentComplete
     protected function saveInvoice()
     {
         // TODO: Implement saveInvoice() method.
+    }
+
+    private function dispatchJob($vendor)
+    {
+        try {
+            dispatch(new SendEmailToNotifyVendorBalance($vendor));
+        } catch(\Exception $e)
+        {
+
+        }
     }
 }
