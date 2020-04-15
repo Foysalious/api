@@ -36,7 +36,6 @@ abstract class Vendor
     public function recharge(TopUpOrder $topup_order)
     {
         $this->resolveGateway($topup_order);
-
         return $this->topUpGateway->recharge($topup_order);
     }
 
@@ -70,9 +69,8 @@ abstract class Vendor
 
     private function resolveGateway(TopUpOrder $topUpOrder)
     {
-        $name = Names::PRETUPS;
         $gateway_factory = new GatewayFactory();
-        $gateway_factory->setGatewayName($name)->setVendorId($topUpOrder->vendor_id);
+        $gateway_factory->setGatewayName($topUpOrder->gateway)->setVendorId($topUpOrder->vendor_id);
         $this->setTopUpGateway($gateway_factory->get());
     }
 

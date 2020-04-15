@@ -29,12 +29,9 @@ class GatewayFactory
      */
     public function get()
     {
-        if ($this->gatewayName == Names::PRETUPS) {
-            $vendor_factory = new VendorFactory();
-            if ($this->vendorId == $vendor_factory::BANGLALINK) return app(Banglalink::class);
-            if ($this->vendorId == $vendor_factory::ROBI) return app(Robi::class);
-            if ($this->vendorId == $vendor_factory::AIRTEL) return app(Airtel::class);
-        }
-        return app(Ssl::class);
+        if ($this->gatewayName == Names::BANGLALINK) return app(Banglalink::class);
+        if ($this->gatewayName == Names::ROBI) return app(Robi::class);
+        if ($this->gatewayName == Names::AIRTEL) return app(Airtel::class);
+        else return app(Ssl::class);
     }
 }
