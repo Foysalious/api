@@ -17,7 +17,6 @@ class BaseRepository
     /**
      * BaseRepository constructor.
      * @param ExpenseTrackerClient $client
-     * @param EntryRepository $entry_repo
      */
     public function __construct(ExpenseTrackerClient $client)
     {

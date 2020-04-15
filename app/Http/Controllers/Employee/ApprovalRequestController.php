@@ -1,25 +1,26 @@
 <?php namespace App\Http\Controllers\Employee;
 
+use App\Models\Attachment;
 use App\Models\BusinessMember;
 use App\Models\BusinessRole;
 use App\Models\Member;
 use App\Models\Profile;
+use App\Transformers\AttachmentTransformer;
 use App\Transformers\Business\ApprovalRequestTransformer;
 use App\Transformers\CustomSerializer;
-use Carbon\Carbon;
+
 use Illuminate\Http\JsonResponse;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
+use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use App\Sheba\Business\BusinessBasicInformation;
-use Illuminate\Validation\ValidationException;
 use Sheba\Business\ApprovalRequest\Updater;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\ModificationFields;
-use Throwable;
 
 class ApprovalRequestController extends Controller
 {
@@ -64,7 +65,7 @@ class ApprovalRequestController extends Controller
 
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($approval_request, new ApprovalRequestTransformer($profile, $role));
+            $resource = new Item($approval_request, new ApprovalRequestTransformer($profile));
             $approval_request = $manager->createData($resource)->toArray()['data'];
 
             array_push($approval_requests_list, $approval_request);
@@ -77,28 +78,53 @@ class ApprovalRequestController extends Controller
         else return api_response($request, null, 404);
     }
 
+    /**
+     * @param $approval_request
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function show($approval_request, Request $request)
     {
         $approval_request = $this->approvalRequestRepo->find($approval_request);
         /** @var Leave $requestable */
         $requestable = $approval_request->requestable;
+
         /** @var BusinessMember $business_member */
-        $business_member = $requestable->businessMember;
+        $business_member = $this->getBusinessMember($request);
+        if ($business_member->id != $approval_request->approver_id)
+            return api_response($request, null, 403, ['message' => 'You Are not authorized to show this request']);
+
         /** @var Member $member */
         $member = $business_member->member;
         /** @var Profile $profile */
         $profile = $member->profile;
         /** @var BusinessRole $role */
         $role = $business_member->role;
+
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($approval_request, new ApprovalRequestTransformer($profile, $role));
+        $resource = new Item($approval_request, new ApprovalRequestTransformer($profile));
         $approval_request = $manager->createData($resource)->toArray()['data'];
+
         $approvers = $this->getApprover($requestable);
-        $approval_request = $approval_request + ['approvers' => $approvers];
+        $attachments = $this->getAttachments($requestable);
+        $approval_request = $approval_request + [
+                'approvers' => $approvers,
+                'attachments' => $attachments,
+                'department' => [
+                    'department_id' => $role ? $role->businessDepartment->id : null,
+                    'department' => $role ? $role->businessDepartment->name : null,
+                    'designation' => $role ? $role->name : null
+                ]
+            ];
+
         return api_response($request, null, 200, ['approval_details' => $approval_request]);
     }
 
+    /**
+     * @param $requestable
+     * @return array
+     */
     private function getApprover($requestable)
     {
         $approvers = [];
@@ -106,55 +132,53 @@ class ApprovalRequestController extends Controller
             $business_member = $this->getBusinessMemberById($approval_request->approver_id);
             $member = $business_member->member;
             $profile = $member->profile;
-            array_push($approvers, [
-                'name' => $profile->name,
-                'status' => $approval_request->status,
-            ]);
+            array_push($approvers, ['name' => $profile->name, 'status' => $approval_request->status]);
         }
         return $approvers;
     }
 
+    /**
+     * @param $requestable
+     * @return array
+     */
+    private function getAttachments($requestable)
+    {
+        return $requestable->attachments->map(function (Attachment $attachment) {
+            return (new AttachmentTransformer())->transform($attachment);
+        })->toArray();
+    }
+
+    /**
+     * @param Request $request
+     * @param Updater $updater
+     * @return JsonResponse
+     */
     public function updateStatus(Request $request, Updater $updater)
     {
-        try {
-            $type = $request->type;
-            $type_ids = json_decode($request->type_id);
-            $business_member = $this->getBusinessMember($request);
-            $member = $this->getMember($request);
-            $requestable = 'Sheba\\Dal\\' . ucfirst(camel_case($type)) . '\\Model';
-            $requestables = $requestable::whereIn('id', $type_ids)->get();
-            foreach ($requestables as $requestable) {
-                $approval_request = $requestable->requests->where('approver_id', $business_member->id)->first();
-                if (!$approval_request)
-                    continue;
-                $updater->setMember($member)
-                    ->setBusinessMember($business_member)
-                    ->setApprovalRequest($approval_request);
-                if ($error = $updater->hasError())
-                    return api_response($request, $error, 400, ['message' => $error]);
+        $this->validate($request, [
+            'type' => 'required|string',
+            'type_id' => 'required|string',
+            'status' => 'required|string',
+        ]);
+
+        $type = $request->type;
+        $type_ids = json_decode($request->type_id);
+
+        /** @var BusinessMember $business_member */
+        $business_member = $this->getBusinessMember($request);
+
+        $this->approvalRequestRepo->getApprovalRequestByIdAndType($type_ids, $type)
+            ->each(function ($approval_request) use ($business_member, $updater, $request) {
+                /** @var ApprovalRequest $approval_request */
+                if ($approval_request->approver_id != $business_member->id) return;
+                $updater->setBusinessMember($business_member)->setApprovalRequest($approval_request);
+
+                /*if ($error = $updater->hasError())
+                    return api_response($request, $error, 400, ['message' => $error]);*/
+
                 $updater->setStatus($request->status)->change();
-                if ($requestable->status != 'rejected') {
-                    $this->setModifier($member);
-                    $rejected_approval_requests = $requestable->requests->where('status', 'rejected');
-                    if ($rejected_approval_requests) {#Rejected Request
-                        $requestable->update($this->withBothModificationFields(['status' => 'rejected']));
-                    }
-                    $accepted_approval_requests = $requestable->requests->whereIn('status', ['pending', 'rejected']);#All Status Accepted
-                    if ($accepted_approval_requests->isEmpty()) {
-                        $requestable->update($this->withBothModificationFields(['status' => 'accepted']));
-                    }
-                }
-            }
-            return api_response($request, null, 200);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+            });
+
+        return api_response($request, null, 200);
     }
 }

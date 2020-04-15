@@ -10,6 +10,7 @@ use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\LocationService\DiscountCalculation;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\LocationService\UpsellCalculation;
+use Sheba\ServiceRequest\ServiceRequest;
 use Sheba\Voucher\DTO\Params\CheckParamsForOrder;
 use Sheba\Voucher\PromotionList;
 use Sheba\Voucher\VoucherSuggester;
@@ -31,7 +32,7 @@ class PromotionV3Controller extends Controller
         try {
             ini_set('memory_limit', '4096M');
             ini_set('max_execution_time', 660);
-            
+
             $customer = $request->customer;
             $location = $request->location;
 
@@ -62,14 +63,14 @@ class PromotionV3Controller extends Controller
         }
     }
 
-    public function autoApplyPromotion($customer, Request $request, VoucherSuggester $voucherSuggester, PartnerListRequest $partnerListRequest,
+    public function autoApplyPromotion($customer, Request $request, VoucherSuggester $voucherSuggester, ServiceRequest $serviceRequest,
                                        PriceCalculation $price_calculation, DiscountCalculation $discount_calculation, UpsellCalculation $upsell_calculation)
     {
         ini_set('memory_limit', '4096M');
         ini_set('max_execution_time', 660);
 
         $this->validate($request, ['services' => 'string|required']);
-        $partnerListRequest->setRequest($request)->prepareObject();
+        $service_requestObject = $serviceRequest->setServices(json_decode($request->services, 1))->get();
         $location = $request->location;
 
         if ($request->has('lat') && $request->has('lng')) {
@@ -82,7 +83,7 @@ class PromotionV3Controller extends Controller
 
         $order_params = (new CheckParamsForOrder($request->customer, $request->customer->profile))
             ->setApplicant($request->customer)
-            ->setCategory($partnerListRequest->selectedCategory->id)
+            ->setCategory($service_requestObject[0]->getCategory()->id)
             ->setPartner($request->partner)
             ->setLocation((int)$location)
             ->setOrderAmount($order_amount)

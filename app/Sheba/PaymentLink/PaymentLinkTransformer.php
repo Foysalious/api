@@ -1,11 +1,16 @@
 <?php namespace Sheba\PaymentLink;
 
-use Sheba\HasWallet;
+use Sheba\Transactions\Wallet\HasWalletTransaction;
 use stdClass;
 
 class PaymentLinkTransformer
 {
     private $response;
+
+    public function getResponse()
+    {
+        return $this->response;
+    }
 
     /**
      * @param stdClass $response
@@ -15,11 +20,6 @@ class PaymentLinkTransformer
     {
         $this->response = $response;
         return $this;
-    }
-
-    public function getResponse()
-    {
-        return $this->response;
     }
 
     public function getLinkID()
@@ -60,12 +60,21 @@ class PaymentLinkTransformer
     }
 
     /**
-     * @return HasWallet
+     * @return HasWalletTransaction
      */
     public function getPaymentReceiver()
     {
         $model_name = "App\\Models\\" . ucfirst($this->response->userType);
         return $model_name::find($this->response->userId);
+    }
+
+    /**
+     * @return null
+     */
+    public function getPayer()
+    {
+        $order = $this->getTarget();
+        return $order ? $order->customer->profile : null;
     }
 
     /**
@@ -80,18 +89,10 @@ class PaymentLinkTransformer
             return null;
     }
 
-    /**
-     * @return null
-     */
-    public function getPayer()
-    {
-        $order = $this->getTarget();
-        return $order ? $order->customer->profile : null;
-    }
-
     private function resolveTargetClass()
     {
         $model_name = "App\\Models\\";
-        if ($this->response->targetType == 'pos_order') return $model_name . 'PosOrder';
+        if ($this->response->targetType == 'pos_order')
+            return $model_name . 'PosOrder';
     }
 }
