@@ -112,8 +112,6 @@ class ExpenseController extends Controller
         try {
             $this->validate($request, [
                 'amount' => 'required|string',
-                'remarks' => 'string',
-                'type' => 'string',
             ]);
 
             $auth_info = $request->auth_info;
