@@ -23,7 +23,7 @@ class Wallet extends PaymentMethod
             $payment->transaction_id = $invoice;
             $payment->gateway_transaction_id = $invoice;
             $payment->status = 'initiated';
-            $payment->valid_till = Carbon::tomorrow();
+            $payment->valid_till = $this->getValidTill();
             $this->setModifier($payable->user);
             $payment->fill((new RequestIdentification())->get());
             $this->withCreateModificationField($payment);
