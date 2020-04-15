@@ -17,10 +17,14 @@ class CustomerOrderController extends Controller
         try {
             $this->validate($request, [
                 'filter' => 'sometimes|string|in:ongoing,history',
-                'for' => 'sometimes|required|string|in:eshop,business'
+                'for' => 'sometimes|required|string|in:eshop,business',
+                'status' => 'sometimes|string',
+                'search' => 'sometimes|string'
             ]);
             $filter = $request->filter;
             $for = $request->for;
+            $status = $request->status;
+            $search = $request->search;
             list($offset, $limit) = calculatePagination($request);
             $customer = $request->customer->load(['orders' => function ($q) use ($filter, $offset, $limit, $for) {
                 $q->select('id', 'customer_id', 'partner_id', 'location_id', 'sales_channel', 'delivery_name', 'delivery_mobile', 'delivery_address', 'subscription_order_id')->orderBy('id', 'desc')
@@ -66,7 +70,14 @@ class CustomerOrderController extends Controller
             } else {
                 $all_jobs = collect();
             }
-
+            if ($status) {
+                $all_jobs = $all_jobs->where('status', $status);
+            }
+            if ($search) {
+               $all_jobs = $all_jobs->filter(function ($job) use ($search) {
+                   return (false !== stristr($job['order_code'], $search) || false !== stristr($job['category_name'], $search));
+               });
+            }
             return count($all_jobs) > 0 ? api_response($request, $all_jobs, 200, ['orders' => $all_jobs->values()->all()]) : api_response($request, null, 404);
         } catch (ValidationException $e) {
             app('sentry')->captureException($e);
