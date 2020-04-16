@@ -1,11 +1,9 @@
 <?php namespace App\Http\Controllers\Employee;
 
-use App\Models\Attachment;
 use App\Models\BusinessMember;
 use App\Sheba\Business\ACL\AccessControl;
 use App\Sheba\Business\BusinessBasicInformation;
 use App\Sheba\Business\Leave\Updater as LeaveUpdater;
-use App\Transformers\AttachmentTransformer;
 use App\Transformers\Business\LeaveListTransformer;
 use App\Transformers\Business\LeaveTransformer;
 use App\Transformers\CustomSerializer;
@@ -21,6 +19,7 @@ use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\LeaveType\Contract as LeaveTypesRepoInterface;
 use App\Sheba\Business\Leave\Creator as LeaveCreator;
 use Sheba\Dal\Leave\Contract as LeaveRepoInterface;
+use Sheba\Dal\LeaveType\Model as LeaveType;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\ModificationFields;
@@ -138,24 +137,18 @@ class LeaveController extends Controller
      */
     public function getLeaveTypes(Request $request, LeaveTypesRepoInterface $leave_types_repo, LeaveRepoInterface $leave_repo, TimeFrame $time_frame)
     {
-        try {
-            $time_frame = $time_frame->forAYear(date('Y'));
-            $business_member = $this->getBusinessMember($request);
-            if (!$business_member) return api_response($request, null, 404);
+        /** @var BusinessMember $business_member */
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
 
-            $leave_types = $leave_types_repo->getAllLeaveTypesByBusiness($business_member->business);
-            $total_leaves_taken = $leave_repo->getTotalLeavesByBusinessMemberFilteredWithYear($business_member, $time_frame);
-            foreach ($leave_types as $leave_type) {
-                foreach ($total_leaves_taken as $leave) {
-                    if ($leave->leave_type_id == $leave_type->id) {
-                        $leave_type->available_days = $leave_type->total_days - $leave->total_leaves_taken;
-                    }
-                }
-            }
-            return api_response($request, null, 200, ['leave_types' => $leave_types]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        $leave_types = $leave_types_repo->getAllLeaveTypesByBusiness($business_member->business);
+
+        foreach ($leave_types as $leave_type) {
+            /** @var LeaveType $leaves_taken */
+            $leaves_taken = $business_member->getCountOfUsedLeaveDaysByTypeOnAFiscalYear($leave_type->id);
+            $leave_type->available_days = $leave_type->total_days - $leaves_taken;
         }
+
+        return api_response($request, null, 200, ['leave_types' => $leave_types]);
     }
 }
