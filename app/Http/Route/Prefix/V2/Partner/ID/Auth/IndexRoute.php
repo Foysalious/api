@@ -291,6 +291,7 @@ class IndexRoute
             (new IncomeExpenseRoute())->set($api);
             (new BidRoute())->set($api);
             (new DueTrackerRoute())->set($api);
+            (new EmiRoute())->set($api);
         });
     }
 }
