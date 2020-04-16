@@ -13,6 +13,7 @@ use Sheba\Resource\Jobs\JobList;
 use Sheba\Resource\Jobs\Reschedule\Reschedule;
 use Sheba\Resource\Jobs\Updater\StatusUpdater;
 use Sheba\Resource\Schedule\Extend\ExtendTime;
+use Sheba\Resource\Service\ServiceList;
 use Sheba\UserAgentInformation;
 
 class ResourceJobController extends Controller
@@ -118,5 +119,13 @@ class ResourceJobController extends Controller
         if ($resource->id !== $job->resource_id) return api_response($request, $job, 403, ["message" => "You're not authorized to access this job."]);
         $response = $extend_time->setJob($job)->setExtendedTimeInMinutes($request->time_in_minutes)->extend();
         return api_response($request, $response, $response->getCode(), ['message' => $response->getMessage()]);
+    }
+
+    public function getServices(Job $job, Request $request, ServiceList $serviceList)
+    {
+        // TODO: Check Partner Option Availability
+        $services = $serviceList->setJob($job)->getServicesList();
+        return api_response($request, null, 200, ['services' => $services]);
+
     }
 }

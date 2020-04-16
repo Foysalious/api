@@ -3,6 +3,8 @@
 
 class Names
 {
-    CONST SSL = 'ssl';
-    CONST PRETUPS = 'pretups';
+    const SSL = 'ssl';
+    const ROBI = 'robi';
+    const BANGLALINK = 'banglalink';
+    const AIRTEL = 'airtel';
 }

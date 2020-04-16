@@ -17,12 +17,16 @@ class CustomerOrderController extends Controller
         try {
             $this->validate($request, [
                 'filter' => 'sometimes|string|in:ongoing,history',
-                'for' => 'sometimes|required|string|in:eshop,business'
+                'for' => 'sometimes|required|string|in:eshop,business',
+                'status' => 'sometimes|string',
+                'search' => 'sometimes|string'
             ]);
             $filter = $request->filter;
             $for = $request->for;
+            $status = $request->status;
+            $search = $request->search;
             list($offset, $limit) = calculatePagination($request);
-            $customer = $request->customer->load(['orders' => function ($q) use ($filter, $offset, $limit, $for) {
+            $customer = $request->customer->load(['orders' => function ($q) use ($filter, $offset, $limit, $for, $status, $search) {
                 $q->select('id', 'customer_id', 'partner_id', 'location_id', 'sales_channel', 'delivery_name', 'delivery_mobile', 'delivery_address', 'subscription_order_id')->orderBy('id', 'desc')
                     ->skip($offset)->take($limit);
                 if ($for == 'eshop') {
@@ -37,10 +41,14 @@ class CustomerOrderController extends Controller
                         $q->$filter();
                     });
                 }
-                $q->with(['partnerOrders' => function ($q) use ($filter, $offset, $limit) {
-                    $q->with(['partner.resources.profile', 'order' => function ($q) {
+
+                $q->with(['partnerOrders' => function ($q) use ($filter, $offset, $limit, $status, $search) {
+                    $q->with(['partner.resources.profile', 'order' => function ($q) use ( $status, $search){
                         $q->select('id', 'sales_channel', 'subscription_order_id');
-                    }, 'jobs' => function ($q) {
+                    }, 'jobs' => function ($q) use ($status, $search){
+                        if ($status) {
+                            $q->where('status', $status);
+                        }
                         $q->with(['statusChangeLogs', 'resource.profile', 'jobServices', 'customerComplains', 'category', 'review' => function ($q) {
                             $q->select('id', 'rating', 'job_id');
                         }, 'usedMaterials']);
@@ -66,13 +74,18 @@ class CustomerOrderController extends Controller
             } else {
                 $all_jobs = collect();
             }
-
+            if ($search) {
+               $all_jobs = $all_jobs->filter(function ($job) use ($search) {
+                   return (false !== stristr($job['order_code'], $search) || false !== stristr($job['category_name'], $search));
+               });
+            }
             return count($all_jobs) > 0 ? api_response($request, $all_jobs, 200, ['orders' => $all_jobs->values()->all()]) : api_response($request, null, 404);
         } catch (ValidationException $e) {
             app('sentry')->captureException($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

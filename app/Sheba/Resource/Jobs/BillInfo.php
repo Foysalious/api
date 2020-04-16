@@ -44,8 +44,8 @@ class BillInfo
         $bill['closed_and_paid_at_timestamp'] = $partnerOrder->closed_and_paid_at != null ? $partnerOrder->closed_and_paid_at->timestamp : null;
         $bill['status'] = $job->status;
         $bill['materials'] = $job->usedMaterials;
-        $bill['isPaid'] = $job->partnerOrder->closed_at_paid ? 1 : 0;
-        $bill['isDue'] = $job->partnerOrder->closed_at_paid == null ? 1 : 0;
+        $bill['isPaid'] = $job->partnerOrder->closed_and_paid_at ? 1 : 0;
+        $bill['isDue'] = $job->partnerOrder->closed_and_paid_at == null ? 1 : 0;
         $bill['job_code'] = $job->fullcode();
         return $bill;
     }

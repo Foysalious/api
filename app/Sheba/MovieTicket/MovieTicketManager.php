@@ -35,6 +35,15 @@ class MovieTicketManager
     }
 
     /**
+     * @return mixed
+     * @throws GuzzleException
+     */
+    public function getVendorBalance(){
+
+        return  $this->vendorManager->post(Actions::GET_VENDOR_BALANCE);
+    }
+
+    /**
      * @param $movie_id
      * @param $request_date
      * @return array

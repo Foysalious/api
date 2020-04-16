@@ -157,4 +157,10 @@ class BdTickets extends Vendor
         $transport_ticket_order->save();
         return $this->bdTicketClient->post('tickets/cancel',["ticketId" => $transaction_id, "applicationChannel" => "REMOTE"]);
     }
+
+    public function balance()
+    {
+        $response =  $this->bdTicketClient->setBookingPort(config('bus_transport.bdticket.balance_check_port'))->post('accounts/checkBalance', ['accountType' => 'AGENT']);
+        return $response['data']['balance'];
+    }
 }
