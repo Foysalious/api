@@ -10,7 +10,6 @@ class MovieTicketPurchaseFailed extends PushNotification
 {
     public function __construct($affiliate_id,$reserver_mobile)
     {
-        parent::__construct();
         $this->affiliate_id =  $affiliate_id;
         $this->title = 'Movie Ticket Purchase Failed';
         $this->message = 'দুঃখিত বন্ধু! আপনার মুভি টিকেট সফল ভাবে কাটা হয় নি '. $reserver_mobile . ', পুনরায় চেষ্টা করুন। ';
