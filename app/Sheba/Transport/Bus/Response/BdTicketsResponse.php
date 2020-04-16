@@ -8,9 +8,6 @@ class BdTicketsResponse extends BusTicketResponse
     public function setResponse($response)
     {
         $this->response = $response;
-        $exception = (string) $response->getResponse()->getBody();
-        $this->exception = json_decode($exception);
-
         return $this;
     }
 
@@ -21,7 +18,7 @@ class BdTicketsResponse extends BusTicketResponse
 
     public function hasSuccess(): bool
     {
-        return is_null($this->exception->errors);
+        return is_null($this->response['errors']);
     }
 
     public function getSuccess(): BusTicketSuccessResponse

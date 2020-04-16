@@ -10,7 +10,15 @@ class ArticleTransformer extends TransformerAbstract
             'id' =>   $article->id,
             'title' => $article->title,
             'description' => $article->description,
-            'video_link' => $article->video_link
+            'video' => is_null($article->video_link) ? null : $this->getThumbnail($article)
         ];
+    }
+
+    private function getThumbnail($article)
+    {
+       $data = [];
+       $data['link'] = $article->video_link;
+       $data['thumbnail'] = $article->thumb;
+       return $data;
     }
 }

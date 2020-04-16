@@ -3,8 +3,8 @@
 use Sheba\TopUp\Gateway\Pretups\Operator\Airtel;
 use Sheba\TopUp\Gateway\Pretups\Operator\Robi;
 use Sheba\TopUp\Gateway\Pretups\Operator\Banglalink;
-use Sheba\Dal\TopupVendor\Gateway;
-use Sheba\TopUp\Gateway\Gateway as TopupGateway;
+use Sheba\TopUp\Vendor\VendorFactory;
+
 class GatewayFactory
 {
 
@@ -25,13 +25,13 @@ class GatewayFactory
     }
 
     /**
-     * @return TopupGateway
+     * @return Gateway
      */
     public function get()
     {
-        if ($this->gatewayName == Gateway::BANGLALINK) return app(Banglalink::class);
-        if ($this->gatewayName == Gateway::ROBI) return app(Robi::class);
-        if ($this->gatewayName == Gateway::AIRTEL) return app(Airtel::class);
+        if ($this->gatewayName == Names::BANGLALINK) return app(Banglalink::class);
+        if ($this->gatewayName == Names::ROBI) return app(Robi::class);
+        if ($this->gatewayName == Names::AIRTEL) return app(Airtel::class);
         else return app(Ssl::class);
     }
 }
