@@ -38,6 +38,12 @@ class DueTrackerRepository extends BaseRepository {
             ])) {
             $list = $list->where('balance_type', $request->balance_type)->values();
         }
+        if ($request->has('q') && !empty($request->q)) {
+            $query = $request->q;
+            $list  = $list->filter(function ($item) use ($query) {
+                return preg_match("/$query/", $item['customer_name']) || preg_match("/$query/", $item['customer_mobile']);
+            })->values();
+        }
         if (!empty($order_by) && $order_by == "name") {
             $order = ($request->order == 'desc') ? 'sortByDesc' : 'sortBy';
             $list  = $list->$order('customer_name', SORT_NATURAL | SORT_FLAG_CASE)->values();
@@ -211,7 +217,7 @@ class DueTrackerRepository extends BaseRepository {
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $key => $file) {
                 if (!empty($file)) {
-                    list($file, $filename) = $this->makeAttachment($file, '_'.getFileName($file).'_attachments');
+                    list($file, $filename) = $this->makeAttachment($file, '_' . getFileName($file) . '_attachments');
                     $attachments[] = $this->saveFileToCDN($file, getDueTrackerAttachmentsFolder(), $filename);
                 }
             }
@@ -226,7 +232,7 @@ class DueTrackerRepository extends BaseRepository {
     private function updateAttachments(Request $request) {
         $attachments = [];
         foreach ($request->file('attachments') as $key => $file) {
-            list($file, $filename) = $this->makeAttachment($file, '_'.getFileName($file).'_attachments');
+            list($file, $filename) = $this->makeAttachment($file, '_' . getFileName($file) . '_attachments');
             $attachments[] = $this->saveFileToCDN($file, getDueTrackerAttachmentsFolder(), $filename);;
         }
 
