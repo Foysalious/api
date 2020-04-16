@@ -41,7 +41,7 @@ class DueTrackerRepository extends BaseRepository {
         if ($request->has('q') && !empty($request->q)) {
             $query = $request->q;
             $list  = $list->filter(function ($item) use ($query) {
-                return preg_match("/$query/", $item['customer_name']) || preg_match("/$query/", $item['customer_mobile']);
+                return preg_match("/$query/i", $item['customer_name']) || preg_match("/$query/", $item['customer_mobile']);
             })->values();
         }
         if (!empty($order_by) && $order_by == "name") {
