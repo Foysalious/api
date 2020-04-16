@@ -4,6 +4,7 @@ use App\Models\Business;
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
+use App\Repositories\NotificationRepository;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\QueryException;
@@ -95,6 +96,8 @@ class TopUpController extends Controller
         } catch (ValidationException $e) {
             app('sentry')->captureException($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
+            if($request->affiliate)
+                ((new NotificationRepository())->pushNotificationToAffiliate('topup_failed',$request->affiliate->id,$request->mobile));
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
