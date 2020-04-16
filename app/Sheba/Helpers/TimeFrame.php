@@ -188,4 +188,29 @@ class TimeFrame
     {
         return $this->set(Carbon::parse($start . " 00:00:00"), Carbon::parse($end . " 23:59:59"));
     }
+
+    /**
+     * CALCULATING A FISCAL YEAR OF A COMPANY
+     * PASS THE START MONTH OF A COMPANY
+     *
+     * @param Carbon $date
+     * @param $start_month
+     * @return $this
+     */
+    public function forAFiscalYear(Carbon $date, $start_month)
+    {
+        $current_month = $date->month;
+        $for_start_calculation = clone $date;
+        $for_end_calculation = clone $date;
+
+        if ($date->month >= $start_month) {
+            $this->start = $for_start_calculation->addMonths($start_month - $current_month)->startOfMonth();
+            $this->end = $for_end_calculation->addYear()->addMonths($start_month - ($current_month + 1))->endOfMonth();
+        } else {
+            $this->start = $for_start_calculation->subYear()->addMonths($start_month - $current_month)->startOfMonth();
+            $this->end = $for_end_calculation->addMonths($start_month - ($current_month + 1))->endOfMonth();
+        }
+
+        return $this;
+    }
 }

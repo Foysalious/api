@@ -12,4 +12,9 @@ class BusinessRole extends Model
     {
         return $this->belongsTo(BusinessDepartment::class);
     }
+
+    public function members()
+    {
+        return $this->hasMany(BusinessMember::class, 'business_role_id');
+    }
 }

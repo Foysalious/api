@@ -41,10 +41,11 @@ class ServiceV2MinimalTransformer extends TransformerAbstract
                 'cap' => (double)$discount->cap
             ] : null,
         ];
-        if ($selected_service["variable_type"] == Type::FIXED)
-            $data['unit_price'] = $this->locationService ? $this->priceCalculation->getUnitPrice() : null;
+        if ($selected_service["variable_type"] == Type::FIXED) {
+            $data['unit_price'] = $this->locationService && $this->locationService->service->isFixed() ? $this->priceCalculation->getUnitPrice() : null;
+        }
         if ($selected_service["variable_type"] == Type::OPTIONS) {
-            $data['unit_price'] = $this->locationService ? $this->priceCalculation->setOption($selected_service["option"])->getUnitPrice() : null;
+            $data['unit_price'] = $this->locationService && $this->locationService->service->isOptions() ? $this->priceCalculation->setOption($selected_service["option"])->getUnitPrice() : null;
         }
 
         return $data;

@@ -3,8 +3,8 @@ class Route
 {
     public function set($api)
     {
-        $api->group(['prefix'    => 'v3',
-                     'namespace' => 'App\Http\Controllers'
+        $api->group(['prefix' => 'v3',
+            'namespace' => 'App\Http\Controllers'
         ], function ($api) {
             (new CustomerRoute())->set($api);
             (new AffiliateRoute())->set($api);
@@ -16,7 +16,11 @@ class Route
             $api->group(['prefix' => 'schema'], function ($api) {
                 $api->get('/', 'SchemaController@getAllSchemas');
             });
-            $api->get('partners/send-order-requests', 'Partner\PartnerListController@getPartners');
+            $api->group(['prefix' => 'partners'], function ($api) {
+                $api->get('send-order-requests', 'Partner\PartnerListController@getPartners');
+                $api->get('/', 'Partner\PartnerListController@get');
+            });
+
             $api->group(['prefix' => 'rent-a-car'], function ($api) {
                 $api->get('prices', 'RentACar\RentACarController@getPrices');
             });

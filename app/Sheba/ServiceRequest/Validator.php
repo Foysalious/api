@@ -6,6 +6,7 @@ class Validator
 {
     private $services;
     private $rules;
+    private $rentACarRules;
     /** @var LaravelValidator */
     private $errors;
 
@@ -16,6 +17,10 @@ class Validator
             'option' => 'array',
             'quantity' => 'required|numeric'
         ];
+        $this->rentACarRules = array_merge($this->rules, [
+            'pick_up_location_geo' => 'required',
+            'pick_up_address' => 'required'
+        ]);
     }
 
     public function setServices(array $services)
@@ -47,7 +52,8 @@ class Validator
     public function validate()
     {
         foreach ($this->services as $service) {
-            $validator = LaravelValidator::make($service, $this->rules);
+            $rules = in_array($service['id'], config('sheba.car_rental.service_ids')) ? $this->rentACarRules : $this->rules;
+            $validator = LaravelValidator::make($service, $rules);
             if (!$validator->passes()) $this->setErrors($validator);
         }
     }

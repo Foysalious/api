@@ -3,6 +3,8 @@
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Dal\Attendance\Model as Attendance;
+use Sheba\Dal\Leave\Model as Leave;
+use Sheba\Helpers\TimeFrame;
 
 class BusinessMember extends Model
 {
@@ -48,5 +50,54 @@ class BusinessMember extends Model
     public function attendanceOfToday()
     {
         return $this->hasMany(Attendance::class)->where('date', (Carbon::now())->toDateString())->first();
+    }
+
+    public function leaves()
+    {
+        return $this->hasMany(Leave::class);
+    }
+
+    public function manager()
+    {
+        return $this->belongsTo(BusinessMember::class, 'manager_id');
+    }
+
+    /**
+     * @param Carbon $date
+     * @return bool
+     */
+    public function isOnLeaves(Carbon $date)
+    {
+        $date = $date->toDateString();
+        $leave = $this->leaves()->accepted()->whereRaw("('$date' BETWEEN start_date AND end_date)")->first();
+        return !!$leave;
+    }
+
+    /**
+     * @param $leave_type_id
+     * @return int
+     */
+    public function getCountOfUsedLeaveDaysByTypeOnAFiscalYear($leave_type_id)
+    {
+        /**
+         * STATIC NOW, NEXT SPRINT COMES FROM DB
+         */
+        $business_fiscal_start_month = 7;
+        $used_days = 0;
+        $time_frame = new TimeFrame();
+        $time_frame->forAFiscalYear(Carbon::now(), $business_fiscal_start_month);
+
+        $leaves = $this->leaves()->accepted()->between($time_frame)->with('leaveType')->whereHas('leaveType', function ($leave_type) use ($leave_type_id) {
+            return $leave_type->where('id', $leave_type_id);
+        })->get();
+
+        $leaves->each(function ($leave) use (&$used_days, $time_frame) {
+            $start_date = $leave->start_date->lt($time_frame->start) ? $time_frame->start : $leave->start_date;
+            $end_date = $leave->end_date->gt($time_frame->end) ? $time_frame->end : $leave->end_date;
+
+            $used_days += $end_date->diffInDays($start_date) + 1;
+        });
+
+        return (int)$used_days;
     }
 }

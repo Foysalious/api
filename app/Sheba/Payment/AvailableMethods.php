@@ -53,6 +53,7 @@ class AvailableMethods
     private static function getRegularPayments($version_code, $platform_name)
     {
         return [
+
             self::shebaCredit(), self::bkash(), self::cbl($version_code, $platform_name), self::ssl()
         ];
     }
@@ -63,7 +64,9 @@ class AvailableMethods
     private static function shebaCredit()
     {
         return [
+
             'name' => 'Sheba Credit', 'is_published' => 1, 'description' => '', 'asset' => 'sheba_credit', 'method_name' => 'wallet'
+
         ];
     }
 
@@ -73,7 +76,9 @@ class AvailableMethods
     private static function bkash()
     {
         return [
+
             'name' => 'bKash', 'is_published' => 1, 'description' => '', 'asset' => 'bkash', 'method_name' => 'bkash'
+
         ];
     }
 
@@ -88,6 +93,7 @@ class AvailableMethods
             'name' => 'City Bank', 'is_published' => self::getCblStatus($version_code, $platform_name), 'description' => '', 'asset' => 'cbl', 'method_name' => 'cbl'
         ];
     }
+
 
     private static function getCblStatus($version_code, $platform_name)
     {
@@ -119,6 +125,17 @@ class AvailableMethods
             self::cbl($version_code, $platform_name), self::ssl()
         ];
     }
+
+    private static function getWalletRechargePayments($version_code, $platform_name)
+    {
+        return [
+            self::bkash(),
+            self::cbl($version_code, $platform_name),
+            self::ssl(),
+            self::okWallet()
+        ];
+    }
+
 
     private static function getTicketsPayments($version_code, $platform_name)
     {
@@ -156,10 +173,14 @@ class AvailableMethods
         ];
     }
 
-    private static function getWalletRechargePayments($version_code, $platform_name)
+    private static function okWallet()
     {
         return [
-            self::bkash(), self::cbl($version_code, $platform_name), self::ssl()
+            'name' => 'Ok Wallet',
+            'is_published' => 1,
+            'description' => '',
+            'asset' => 'ok_wallet',
+            'method_name' => 'ok_wallet'
         ];
     }
 }

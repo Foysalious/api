@@ -179,7 +179,8 @@ class BusinessesController extends Controller
                     'App\Models\Driver',
                     'App\Models\Vehicle',
                     'Sheba\Dal\Support\Model',
-                    'App\Models\BusinessTripRequest'
+                    'App\Models\BusinessTripRequest',
+                    'Sheba\Dal\Leave\Model',
                 ])
                 ->orderBy('id', 'DESC');
 

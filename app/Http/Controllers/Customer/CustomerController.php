@@ -26,10 +26,12 @@ class CustomerController extends Controller
                                   JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, ServiceQuestion $service_question)
     {
         $customer = $request->customer;
+        $location = null;
         if ($request->has('lat')) {
             $hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
             if (!is_null($hyper_location)) $location = $hyper_location->location_id;
         }
+        if (!$location) return api_response($request, null, 404);
         $reviews = Review::where([['customer_id', $customer->id], ['rating', '>=', 4]])->select('id', 'category_id', 'job_id', 'rating', 'partner_id')
             ->with(['category' => function ($q) {
                 $q->select('id', 'name', 'thumb', 'app_thumb', 'banner', 'app_banner', 'frequency_in_days', 'publication_status', 'delivery_charge', 'min_order_amount', 'is_auto_sp_enabled');
@@ -70,7 +72,7 @@ class CustomerController extends Controller
         foreach ($reviews->groupBy('category_id') as $key => $reviews) {
             foreach ($reviews as $review) {
                 if ($review->job->jobServices->count() == 0) continue;
-                if ($this->checkDuplicateServices($final, $review->job)) continue;
+                if ($this->canThisServiceAvailableForOrderAgain($final, $review->job)) continue;
                 $data = [];
                 $data['category'] = clone $review->category;
                 $data['category']['delivery_charge'] = $delivery_charge->setCategory($review->category)->get();
@@ -131,7 +133,7 @@ class CustomerController extends Controller
         return api_response($request, $final, 200, ['data' => $final]);
     }
 
-    private function checkDuplicateServices($final, Job $job)
+    private function canThisServiceAvailableForOrderAgain($final, Job $job)
     {
         if (count($final) == 0) return 0;
         $group_by_category = $final->groupBy('category.id');
@@ -145,10 +147,12 @@ class CustomerController extends Controller
                 $same = 0;
                 foreach ($job_services as $job_service) {
                     if ($job_service->variable_type == 'Fixed') {
+                        if (!$job_service->service->isFixed()) return 1;
                         foreach ($review_services as $service) {
                             if ($service->id == $job_service->service_id) $same++;
                         }
                     } else {
+                        if (!$job_service->service->isOptions()) return 1;
                         foreach ($review_services as $service) {
                             if ($service->id == $job_service->service_id) {
                             }
