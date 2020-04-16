@@ -140,6 +140,7 @@ class PaymentLinkOrderComplete extends PaymentComplete {
             $this->payment->update();
             return $this->payment;
         } catch (QueryException $e) {
+            dd($e);
             return null;
         }
     }

@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Dal\BaseModel;
+use Sheba\Dal\LeaveType\Model as LeaveTypeModel;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
 use Sheba\Payment\PayableUser;
@@ -177,5 +178,10 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
     public function comments()
     {
         return $this->morphMany(Comment::class, 'commentable');
+    }
+
+    public function leaveTypes()
+    {
+        return $this->hasMany(LeaveTypeModel::class);
     }
 }
