@@ -8,7 +8,6 @@ class TopUpFailed extends PushNotification
 {
     public function __construct($affiliate_id,$payee_mobile)
     {
-        parent::__construct();
         $this->affiliate_id =  $affiliate_id;
         $this->title = 'Top Up Failed';
         $this->message = 'দুঃখিত! আপনার মোবাইল রিচার্জ '.$payee_mobile.' সফল হয় নি, পুনরায় চেষ্টা করুন';

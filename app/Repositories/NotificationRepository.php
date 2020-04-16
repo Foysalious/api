@@ -304,9 +304,9 @@ class NotificationRepository
     public function pushNotificationToAffiliate($type,$agent_id,$mobile)
     {
         switch ($type) {
-            case 'topup_failed': return new TopupFailed($agent_id,$mobile);
-            case 'purchase_movie_ticket_failed': return new MovieTicketPurchaseFailed($agent_id,$mobile);
-            case 'purchase_transport_ticket_failed': return new TransportTicketPurchaseFailed($agent_id,$mobile);
+            case 'topup_failed': return (new TopupFailed($agent_id,$mobile))->send();
+            case 'purchase_movie_ticket_failed': return (new MovieTicketPurchaseFailed($agent_id,$mobile))->send();
+            case 'purchase_transport_ticket_failed': return (new TransportTicketPurchaseFailed($agent_id,$mobile))->send();
         }
     }
 
