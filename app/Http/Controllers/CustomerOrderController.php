@@ -27,8 +27,7 @@ class CustomerOrderController extends Controller
             $search = $request->search;
             list($offset, $limit) = calculatePagination($request);
             $customer = $request->customer->load(['orders' => function ($q) use ($filter, $offset, $limit, $for, $status, $search) {
-                $q->select('id', 'customer_id', 'partner_id', 'location_id', 'sales_channel', 'delivery_name', 'delivery_mobile', 'delivery_address', 'subscription_order_id')->orderBy('id', 'desc')
-                    ->skip($offset)->take($limit);
+                $q->select('id', 'customer_id', 'partner_id', 'location_id', 'sales_channel', 'delivery_name', 'delivery_mobile', 'delivery_address', 'subscription_order_id')->orderBy('id', 'desc');
                 if ($for == 'eshop') {
                     $q->whereNotNull('partner_id');
                 } else if ($for == "business") {
@@ -79,7 +78,7 @@ class CustomerOrderController extends Controller
                    return (false !== stristr($job['order_code'], $search) || false !== stristr($job['category_name'], $search));
                });
             }
-            return count($all_jobs) > 0 ? api_response($request, $all_jobs, 200, ['orders' => $all_jobs->values()->all()]) : api_response($request, null, 404);
+            return count($all_jobs) > 0 ? api_response($request, $all_jobs, 200, ['orders' => $all_jobs->values()->skip($offset)->take($limit)->all()]) : api_response($request, null, 404);
         } catch (ValidationException $e) {
             app('sentry')->captureException($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
