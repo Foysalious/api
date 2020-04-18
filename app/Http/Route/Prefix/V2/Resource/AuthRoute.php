@@ -29,6 +29,7 @@ class AuthRoute
                     $api->post('review', 'Resource\ResourceJobRateController@storeCustomerReview');
                     $api->post('extend-time', 'Resource\ResourceJobController@extendTime');
                     $api->get('services', 'Resource\ResourceJobController@getServices');
+                    $api->post('services', 'Resource\ResourceJobController@updateService');
                 });
             });
         });
