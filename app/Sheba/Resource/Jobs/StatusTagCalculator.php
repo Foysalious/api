@@ -18,10 +18,10 @@ class StatusTagCalculator
     public function getOrderStatusMessage(Job $job)
     {
         $now = Carbon::now()->format('H:i');
-        if ($this->isStatusAfterOrEqualToProcess($job->status)) {
-            return ['message' => "যে অর্ডার টি এখন চলছে", 'tag' => 'process'];
-        } elseif ($job->status == JobStatuses::SERVED && !$job->partnerOrder->isClosedAndPaidAt()) {
+        if ($job->status == JobStatuses::SERVED && !$job->partnerOrder->isClosedAndPaidAt()) {
             return ['message' => "বিল সংগ্রহ বাকি আছে", 'tag' => 'collection'];
+        } elseif ($this->isStatusAfterOrEqualToProcess($job->status)) {
+            return ['message' => "যে অর্ডার টি এখন চলছে", 'tag' => 'process'];
         } else {
             $job_start_time = $this->getJobStartTime($job);
             $different_in_minutes = Carbon::parse($now)->diffInMinutes($job_start_time);

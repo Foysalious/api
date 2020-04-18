@@ -11,6 +11,7 @@ use Sheba\Resource\Jobs\Collection\CollectMoney;
 use Sheba\Resource\Jobs\JobInfo;
 use Sheba\Resource\Jobs\JobList;
 use Sheba\Resource\Jobs\Reschedule\Reschedule;
+use Sheba\Resource\Jobs\Service\UpdateRequest;
 use Sheba\Resource\Jobs\Updater\StatusUpdater;
 use Sheba\Resource\Schedule\Extend\ExtendTime;
 use Sheba\Resource\Service\ServiceList;
@@ -127,5 +128,15 @@ class ResourceJobController extends Controller
         $services = $serviceList->setJob($job)->getServicesList();
         return api_response($request, null, 200, ['services' => $services]);
 
+    }
+
+    public function updateService(Job $job, Request $request, UpdateRequest $updateRequest)
+    {
+        $this->validate($request, ['services' => 'string', 'quantity' => 'string', 'material' => 'string']);
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+        if ($resource->id !== $job->resource_id) return api_response($request, $job, 403, ["message" => "You're not authorized to access this job."]);
+        $updateRequest->setServices($request->services)->update();
     }
 }
