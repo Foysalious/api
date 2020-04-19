@@ -23,7 +23,7 @@ class EmiController extends Controller {
             ),
             array(
                 'tag'          => 'how_to_emi',
-                'header_label' => 'কিস্তি (EMI) সুবিধা কিভাবে দেবেন-',
+                'header_label' => 'ককিস্তি (EMI) সুবিধা কিভাবে দিবেন-',
                 'how_to_emi'   => [
                     '১. POS. থেকে পণ্য সিলেক্ট করুন অথবা৷ EMI থেকে বিক্রির সমমূল্যের টাকা নির্ধারন করুন।',
                     '২. EMI এর লিংক কাস্টমার এর সাথে শেয়ার করুন।',
