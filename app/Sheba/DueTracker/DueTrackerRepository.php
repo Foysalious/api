@@ -50,7 +50,7 @@ class DueTrackerRepository extends BaseRepository {
         }
         if ($paginate) {
             list($offset, $limit) = calculatePagination($request);
-            $list = $list->slice($offset)->take($limit);
+            $list = $list->slice($offset)->take($limit)->values();
         }
         return [
             'list'               => $list,
