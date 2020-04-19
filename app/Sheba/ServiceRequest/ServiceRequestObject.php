@@ -52,7 +52,7 @@ class ServiceRequestObject
     {
         $this->insideCityCategoryId = config('sheba.rent_a_car')['inside_city']['category'];
         $this->outsideCityCategoryId = config('sheba.rent_a_car')['outside_city']['category'];
-        $this->googleCalculatedCarService = array_map('intval', explode(',', env('RENT_CAR_SERVICE_IDS')));
+        $this->googleCalculatedCarService = config('sheba.car_rental.destination_fields_service_ids');
         $this->mapClient = new MapClient();
     }
 
@@ -196,10 +196,12 @@ class ServiceRequestObject
         $this->service = Service::where('id', $this->serviceId)->publishedForAll()->first();
         if (!$this->service) throw new ServiceIsUnpublishedException('Service #' . $this->serviceId . " is not available.", 400);
         $this->category = $this->service->category;
-        $this->setThanas();
-        $this->setPickupThana();
-        $this->setDestinationThana();
-        if (in_array($this->service->id, $this->googleCalculatedCarService)) $this->quantity = $this->getDistanceCalculationResult();
+        if ($this->category->isRentACar()) {
+            $this->setThanas();
+            $this->setPickupThana();
+            $this->setDestinationThana();
+            if (in_array($this->service->id, $this->googleCalculatedCarService)) $this->quantity = $this->getDistanceCalculationResult();
+        }
         return $this;
     }
 
