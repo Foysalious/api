@@ -45,6 +45,20 @@ class BillUpdate
         return $bill;
     }
 
+    public function getUpdatedBillForQuantityUpdate(Job $job)
+    {
+        $quantity = json_decode(\request('quantity'),1);
+        $bill = $this->billInfo->getBill($job);
+        $services = $this->updateServicesQuantity($bill['services'], $quantity);
+        $updated_service_price = $this->calculateUpdatedTotalServicePrice($services);
+        $increased_amount = $this->calculateIncreasedAmount($updated_service_price, $job->servicePrice);
+        $bill['total'] = $bill['total'] + $increased_amount;
+        $bill['due'] = $bill['due'] + $increased_amount;
+        $bill['total_service_price'] = $updated_service_price;
+        $bill['services'] = $services;
+        return $bill;
+    }
+
     private function formatService($services)
     {
         $services = array_map(function($service) {
@@ -78,5 +92,33 @@ class BillUpdate
             $total_material_price += $material->price;
         }
         return $total_material_price;
+    }
+
+    private function updateServicesQuantity($services, $quantity)
+    {
+        $updated_services = $services;
+        foreach ($services as $key => $service) {
+            foreach ($quantity as $qty) {
+                if ($service['id'] == $qty['job_service_id']) {
+                    $updated_services[$key]['quantity'] = $qty['quantity'];
+                    $updated_services[$key]['price'] = $service['price'] / $service['quantity'] * $qty['quantity'];
+                }
+            }
+        }
+        return $updated_services;
+    }
+
+    private function calculateUpdatedTotalServicePrice($services)
+    {
+        $total_service_price = 0.00;
+        foreach ($services as $service) {
+            $total_service_price += $service['price'];
+        }
+        return $total_service_price;
+    }
+
+    private function calculateIncreasedAmount($updated, $previous)
+    {
+        return (double) $updated - $previous;
     }
 }

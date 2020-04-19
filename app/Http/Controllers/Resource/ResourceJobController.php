@@ -149,14 +149,21 @@ class ResourceJobController extends Controller
             'materials' => 'sometimes|required|string',
             'quantity' => 'sometimes|required|string',
         ]);
-        if ($request->has('services')) {
-            if ($request->services == '[]') return api_response($request, null, 403, ["message" => "You need to add a service"]);
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+        if ($resource->id !== $job->resource_id) return api_response($request, $job, 403, ["message" => "You're not authorized to access this job."]);
 
+        if ($request->has('services')) {
             $updatedBill = $billUpdate->getUpdatedBillForServiceAdd($job);
             return api_response($request, $updatedBill, 200, ['bill' => $updatedBill]);
         }
         if ($request->has('materials')) {
             $updatedBill = $billUpdate->getUpdatedBillForMaterialAdd($job);
+            return api_response($request, $updatedBill, 200, ['bill' => $updatedBill]);
+        }
+        if ($request->has('quantity')) {
+            $updatedBill = $billUpdate->getUpdatedBillForQuantityUpdate($job);
             return api_response($request, $updatedBill, 200, ['bill' => $updatedBill]);
         }
     }
