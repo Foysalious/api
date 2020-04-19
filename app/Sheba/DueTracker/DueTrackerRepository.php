@@ -198,7 +198,19 @@ class DueTrackerRepository extends BaseRepository {
         $data['updated_at']     = $request->updated_at ?: Carbon::now()->format('Y-m-d H:i:s');
 
         $response = $this->client->post("accounts/$this->accountId/entries/update/$request->entry_id", $data);
+
+        if( $data['amount_cleared'] > 1 && $response['data']['source_type'] == 'PosOrder' && !empty($response['data']['source_id']))
+        $this->createPosOrderPayment($data['amount_cleared'],$response['data']['source_id']);
+
         return $response['data'];
+    }
+
+    private function createPosOrderPayment($amount_cleared, $pos_order_id)
+    {
+        $payment_data['pos_order_id'] = $pos_order_id;
+        $payment_data['amount'] = $amount_cleared;
+        $payment_data['method'] = 'cod';
+        $this->paymentCreator->credit($payment_data);
     }
 
     private function createStoreData(Request $request) {
