@@ -382,7 +382,7 @@ class DueTrackerRepository extends BaseRepository {
         if ($request->type == 'due') {
             $data['payment_link'] = $request->payment_link;
         }
-        return dispatch((new SendToCustomerToInformDueDepositSMS($data)));
+        return dispatch((new SendToCustomerToInformDueDepositSMS($request->partner,$data)));
     }
 
     /**
