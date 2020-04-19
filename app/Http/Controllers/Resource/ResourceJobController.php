@@ -9,6 +9,7 @@ use Illuminate\Validation\ValidationException;
 use Sheba\Authentication\AuthUser;
 use Sheba\ModificationFields;
 use Sheba\Resource\Jobs\BillInfo;
+use Sheba\Resource\Jobs\BillUpdate;
 use Sheba\Resource\Jobs\Collection\CollectMoney;
 use Sheba\Resource\Jobs\JobInfo;
 use Sheba\Resource\Jobs\JobList;
@@ -139,6 +140,25 @@ class ResourceJobController extends Controller
         $services = $serviceList->setJob($job)->getServicesList();
         return api_response($request, null, 200, ['services' => $services]);
 
+    }
+
+    public function getUpdatedBill(Job $job, BillUpdate $billUpdate, Request $request)
+    {
+        $this->validate($request, [
+            'services' => 'sometimes|required|string',
+            'materials' => 'sometimes|required|string',
+            'quantity' => 'sometimes|required|string',
+        ]);
+        if ($request->has('services')) {
+            if ($request->services == '[]') return api_response($request, null, 403, ["message" => "You need to add a service"]);
+
+            $updatedBill = $billUpdate->getUpdatedBillForServiceAdd($job);
+            return api_response($request, $updatedBill, 200, ['bill' => $updatedBill]);
+        }
+        if ($request->has('materials')) {
+            $updatedBill = $billUpdate->getUpdatedBillForMaterialAdd($job);
+            return api_response($request, $updatedBill, 200, ['bill' => $updatedBill]);
+        }
     }
 
     public function updateService(Job $job, Request $request, ServiceUpdateRequest $updateRequest)
