@@ -180,6 +180,7 @@ class Route
             $api->get('{id}/get-jwt', 'ProfileController@getJWT')->middleware('profile.auth');
             $api->get('{id}/refresh-token', 'ProfileController@refresh');
             $api->post('admin/payout', 'Bkash\\BkashPayoutController@pay');
+            $api->post('admin/payout-balance', 'Bkash\\BkashPayoutController@queryPayoutBalance');
             $api->post('admin/bkash-balance', 'Bkash\\BkashPayoutController@queryBalance');
             $api->post('forget-password', 'ProfileController@forgetPassword');
             /** EMI INFO */
