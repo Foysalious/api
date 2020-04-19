@@ -37,7 +37,7 @@ class SendJobAssignNotificationToResource extends \App\Jobs\Job implements Shoul
             $topic = config('sheba.push_notification_topic_name.resource') . $this->resource_id;
             $channel = config('sheba.push_notification_channel_name.resource');
             $this->pushNotification->send([
-                "title" => 'কাজ আসাইন',
+                "title" => 'কাজ এসাইন',
                 "message" => 'আপনাকে একটি অর্ডার ' . $this->job->partnerOrder->order->code() . ' এ এসাইন করা হয়েছে',
                 "event_type" => 'job_assign',
                 "event_id" => $this->job->id,
