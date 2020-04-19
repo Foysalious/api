@@ -3,6 +3,7 @@
 use App\Models\Job;
 use Sheba\Dal\JobService\JobService;
 use Sheba\Resource\Jobs\Service\Creator;
+use Sheba\Resource\Jobs\Service\ServiceUpdateRequestPolicy;
 use Sheba\Resource\Jobs\Service\Updater;
 use Sheba\ServiceRequest\ServiceRequest;
 use Sheba\Resource\Jobs\Material\Creator as MaterialCreator;
@@ -22,13 +23,15 @@ class ServiceUpdateRequest
     private $createNewJobService;
     private $materialCreator;
     private $updater;
+    private $policy;
 
-    public function __construct(ServiceRequest $serviceRequest, Creator $create_new_job_service, MaterialCreator $material_creator, Updater $updater)
+    public function __construct(ServiceRequest $serviceRequest, Creator $create_new_job_service, MaterialCreator $material_creator, Updater $updater, ServiceUpdateRequestPolicy $policy)
     {
         $this->serviceRequest = $serviceRequest;
         $this->createNewJobService = $create_new_job_service;
         $this->materialCreator = $material_creator;
         $this->updater = $updater;
+        $this->policy = $policy;
     }
 
     /**
@@ -81,14 +84,15 @@ class ServiceUpdateRequest
 
     public function update()
     {
+        if(!$this->policy->setJob($this->job)->setPartner($this->job->partnerOrder->partner)->canUpdate()) return;
         DB::transaction(function () {
-//            if (count($this->newServices) > 0) $this->createNewJobService->setJob($this->job)->setServices($this->newServices)->create();
-//            if (count($this->materials) > 0) $this->materialCreator->setJob($this->job)->setMaterials($this->materials)->create();
+            if (count($this->newServices) > 0) $this->createNewJobService->setJob($this->job)->setServices($this->newServices)->create();
+            if (count($this->materials) > 0) $this->materialCreator->setJob($this->job)->setMaterials($this->materials)->create();
             foreach ($this->quantity as $quantity) {
                 $job_service = JobService::find($quantity['job_service_id']);
                 $this->updater->setJobService($job_service)->setQuantity($quantity['quantity'])->update();
             }
-        });
+        });;
 
     }
 

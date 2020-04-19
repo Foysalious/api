@@ -35,12 +35,14 @@ class Response
 
     public function getCode()
     {
+        if ($this->code) return $this->code;
         $this->setCode($this->response['code'] ?? 500);
         return $this->code;
     }
 
     public function getMessage()
     {
+        if ($this->message) return $this->message;
         if (!$this->response) $this->setUnsuccessfulMessage();
         if ($this->response['code'] == 200) $this->setSuccessfulMessage();
         else $this->setUnsuccessfulMessage();
