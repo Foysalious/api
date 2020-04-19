@@ -67,15 +67,16 @@ class CustomerController extends Controller
             $data['customer_since']           = $customer->created_at->format('Y-m-d');
             $data['customer_since_formatted'] = $customer->created_at->diffForHumans();
             $total_purchase_amount            = 0.00;
-            $total_due_amount                 = 0.00;
-            PosOrder::byPartner($partner)->byCustomer($customer->id)->get()->each(function ($order) use (&$total_purchase_amount, &$total_due_amount) {
+            $total_used_promo                 = 0;
+            PosOrder::byPartner($partner)->byCustomer($customer->id)->get()->each(function ($order) use (&$total_purchase_amount, &$total_used_promo) {
                 /** @var PosOrder $order */
                 $order                 = $order->calculate();
                 $total_purchase_amount += $order->getNetBill();
+                $total_used_promo += !empty($order->voucher_id) ? 1 : 0;
             });
             $data['total_purchase_amount'] = $total_purchase_amount;
             $data['total_due_amount']      = $this->getDueAmountFromDueTracker($dueTrackerRepository,$request->partner,$customer);
-            $data['total_used_promo']      = 0.00;
+            $data['total_used_promo']      = $total_used_promo;
             $data['total_payable_amount']  = $entry_repo->setPartner($request->partner)->getTotalPayableAmountByCustomer($customer->profile_id)['total_payables'];
             $data['is_customer_editable']  = $customer->isEditable();
             $data['note']                  = PartnerPosCustomer::where('customer_id', $customer->id)->where('partner_id', $partner)->first()->note;
