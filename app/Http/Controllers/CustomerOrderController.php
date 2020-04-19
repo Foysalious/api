@@ -28,6 +28,9 @@ class CustomerOrderController extends Controller
             list($offset, $limit) = calculatePagination($request);
             $customer = $request->customer->load(['orders' => function ($q) use ($filter, $offset, $limit, $for, $status, $search) {
                 $q->select('id', 'customer_id', 'partner_id', 'location_id', 'sales_channel', 'delivery_name', 'delivery_mobile', 'delivery_address', 'subscription_order_id')->orderBy('id', 'desc');
+                if (!$search && !$status) {
+                    $q->skip($offset)->take($limit);
+                }
                 if ($for == 'eshop') {
                     $q->whereNotNull('partner_id');
                 } else if ($for == "business") {
@@ -44,18 +47,12 @@ class CustomerOrderController extends Controller
                 $q->with(['partnerOrders' => function ($q) use ($filter, $status) {
                     $q->with(['partner.resources.profile', 'order' => function ($q) use ($status){
                         $q->select('id', 'sales_channel', 'subscription_order_id');
-                    }, 'jobs' => function ($q) use ($status){
-                        if ($status) {
-                            $q->where('status', $status);
-                        }
+                    }, 'jobs' => function ($q) {
                         $q->with(['statusChangeLogs', 'resource.profile', 'jobServices', 'customerComplains', 'category', 'review' => function ($q) {
                             $q->select('id', 'rating', 'job_id');
                         }, 'usedMaterials']);
                     }]);
                 }]);
-                if (!$search) {
-                    $q->skip($offset)->take($limit);
-                }
             }]);
             if (count($customer->orders) > 0) {
                 $all_jobs = $this->getInformation($customer->orders);
@@ -78,6 +75,11 @@ class CustomerOrderController extends Controller
                $all_jobs = $all_jobs->filter(function ($job) use ($search) {
                    return (false !== stristr($job['order_code'], $search) || false !== stristr($job['category_name'], $search));
                });
+            }
+            if ($status) {
+                $all_jobs = $all_jobs->where('status', $status);
+            }
+            if ($search || $status) {
                 $all_orders = $all_jobs->values()->splice($offset, $limit);
             } else {
                 $all_orders = $all_jobs->values()->all();
