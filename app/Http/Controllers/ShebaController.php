@@ -334,22 +334,31 @@ class ShebaController extends Controller
                 [
                     "number_of_months" => 3,
                     "interest" => "3%",
-                    "amount" => number_format(($amount + ($amount * 0.03)) / 3, 2, '.', '')
+                    "total_interest" =>number_format(ceil(($amount * 0.03))),
+                    "amount" => number_format(ceil(($amount + ($amount * 0.03)) / 3)),
+                    "total_amount" => number_format($amount+ceil(($amount * 0.03)))
                 ],
                 [
                     "number_of_months" => 6,
                     "interest" => "4.5%",
-                    "amount" => number_format(($amount + ($amount * 0.045)) / 6, 2, '.', '')
+                    "total_interest" =>number_format(ceil(($amount * 0.045))),
+                    "amount" => number_format(ceil(($amount + ($amount * 0.045)) / 6)),
+                    "total_amount" => number_format($amount+ceil(($amount * 0.045)))
                 ],
                 [
                     "number_of_months" => 9,
                     "interest" => "6.5%",
-                    "amount" => number_format(($amount + ($amount * 0.065)) / 9, 2, '.', '')
+                    "total_interest" =>number_format(ceil(($amount * 0.065))),
+                    "amount" => number_format(ceil(($amount + ($amount * 0.065)) / 9)),
+                    "total_amount" => number_format($amount+ceil(($amount * 0.065)))
+//                    "amount" => number_format(($amount + ($amount * 0.065)) / 9, 2, '.', '')
                 ],
                 [
                     "number_of_months" => 12,
                     "interest" => "8.5%",
-                    "amount" => number_format(($amount + ($amount * 0.085)) / 12, 2, '.', '')
+                    "total_interest" =>number_format(ceil(($amount * 0.085))),
+                    "amount" => number_format(ceil(($amount + ($amount * 0.085)) / 12)),
+                    "total_amount" => number_format($amount+ceil(($amount * 0.085)))
                 ]
             ];
 
@@ -446,7 +455,7 @@ class ShebaController extends Controller
                 "banks" => $banks
             ];
 
-            return api_response($request, null, 200, ['info' => $emi_data]);
+            return api_response($request, null, 200, ['price'=>$amount, 'info' => $emi_data]);
         } catch (Exception $e) {
             return api_response($request, null, 500);
         }
