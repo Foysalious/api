@@ -7,13 +7,14 @@ use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Authentication\AuthUser;
+use Sheba\ModificationFields;
 use Sheba\Resource\Jobs\BillInfo;
 use Sheba\Resource\Jobs\BillUpdate;
 use Sheba\Resource\Jobs\Collection\CollectMoney;
 use Sheba\Resource\Jobs\JobInfo;
 use Sheba\Resource\Jobs\JobList;
 use Sheba\Resource\Jobs\Reschedule\Reschedule;
-use Sheba\Resource\Jobs\Service\UpdateRequest;
+use Sheba\Resource\Jobs\ServiceUpdateRequest;
 use Sheba\Resource\Jobs\Updater\StatusUpdater;
 use Sheba\Resource\Schedule\Extend\ExtendTime;
 use Sheba\Resource\Service\ServiceList;
@@ -21,6 +22,8 @@ use Sheba\UserAgentInformation;
 
 class ResourceJobController extends Controller
 {
+    use ModificationFields;
+
     public function index(Request $request, JobList $job_list)
     {
         $this->validate($request, ['offset' => 'numeric|min:0', 'limit' => 'numeric|min:1']);
@@ -139,16 +142,6 @@ class ResourceJobController extends Controller
 
     }
 
-    public function updateService(Job $job, Request $request, UpdateRequest $updateRequest)
-    {
-        $this->validate($request, ['services' => 'string', 'quantity' => 'string', 'material' => 'string']);
-        /** @var AuthUser $auth_user */
-        $auth_user = $request->auth_user;
-        $resource = $auth_user->getResource();
-        if ($resource->id !== $job->resource_id) return api_response($request, $job, 403, ["message" => "You're not authorized to access this job."]);
-        $updateRequest->setServices($request->services)->update();
-    }
-
     public function getUpdatedBill(Job $job, BillUpdate $billUpdate, Request $request)
     {
         $this->validate($request, [
@@ -166,5 +159,18 @@ class ResourceJobController extends Controller
             $updatedBill = $billUpdate->getUpdatedBillForMaterialAdd($job);
             return api_response($request, $updatedBill, 200, ['bill' => $updatedBill]);
         }
+    }
+
+    public function updateService(Job $job, Request $request, ServiceUpdateRequest $updateRequest)
+    {
+        $this->validate($request, ['services' => 'string', 'quantity' => 'string', 'materials' => 'string']);
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+        $this->setModifier($resource);
+        if ($resource->id !== $job->resource_id) return api_response($request, $job, 403, ["message" => "You're not authorized to access this job."]);
+        $updateRequest->setMaterials(json_decode($request->materials, 1))->setServices(json_decode($request->services, 1))->setJob($job)
+            ->setQuantity(json_decode($request->quantity,1))->update();
+        return api_response($request, null, 200);
     }
 }

@@ -38,12 +38,6 @@ class SmsCampaignOrderController extends Controller
     public function create($partner_id, Request $request, SmsCampaign $campaign)
     {
         try {
-            return api_response($request, null, 200, [
-                'message' => 'SMS Marketing has been turned off temporarily',
-                'error_code' => 'temporarily_turned_off',
-                'code' => 200
-            ]);
-
             if ($request->has('customers') && $request->has('param_type')) {
                 $customers = json_decode(request()->customers, true);
                 $request['customers'] = $customers;

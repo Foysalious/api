@@ -98,8 +98,7 @@ class ResourceScheduleSlot
     {
         $this->addAvailabilityByWorkingInformation($day);
         $this->addAvailabilityByResource($day);
-        $this->addAvailabilityByPreparationTime($day);
-        $this->isAvailableTime($day);
+        $this->hasAvailableBookingTime($day);
     }
 
     private function addAvailabilityByWorkingInformation(Carbon $day)
@@ -114,23 +113,20 @@ class ResourceScheduleSlot
                 $slot_start_time = Carbon::parse($date_string . ' ' . $slot->start);
                 if (!($slot_start_time->gte($working_hour_start_time) && $slot_start_time->lte($working_hour_end_time)) || $this->isBetweenAnyLeave($slot_start_time) || ($isToday && ($slot_start_time < $day))) {
                     $slot['is_available'] = 0;
-                    $slot['unavailability_reason'] = $slot['is_available'] ? null : "working_hour";
-                    $slot['booked_order_id'] = $slot['booked_order_time'] = null;
-                    $slot['message'] = 'আপনি অন্য কোন কাজ করতে পারবেন না';
+                    $slot['unavailability_reason'] = "working_hour";
+                    $slot['message'] = 'আপনি যেই সময়টি সিলেক্ট করেছেন সেটি আপনার কাজের সময় এর সাথে মিলছে না';
                 } else {
                     $is_available = ($working_hour_end_time->notEqualTo($slot_start_time) && $slot_start_time->between($working_hour_start_time, $working_hour_end_time, true));
                     $slot['is_available'] = $is_available ? 1 : 0;
                     $slot['unavailability_reason'] = $slot['is_available'] ? null : "working_hour";
-                    $slot['booked_order_id'] = $slot['booked_order_time'] = null;
-                    $slot['message'] = $slot['is_available'] ? null : 'আপনি অন্য কোন কাজ করতে পারবেন না';
+                    $slot['message'] = $slot['is_available'] ? null : 'আপনি যেই সময়টি সিলেক্ট করেছেন সেটি আপনার কাজের সময় এর সাথে মিলছে না';
                 }
             }
         } else {
             $this->shebaSlots->each(function ($slot) {
                 $slot['is_available'] = 0;
-                $slot['unavailability_reason'] = $slot['is_available'] ? null : "working_day";
-                $slot['booked_order_id'] = $slot['booked_order_time'] = null;
-                $slot['message'] = 'আপনি অন্য কোন কাজ করতে পারবেন না';
+                $slot['unavailability_reason'] = "working_day";
+                $slot['message'] = 'আপনি যেই সময়টি সিলেক্ট করেছেন সেটি আপনার কাজের সময় এর সাথে মিলছে না';
             });
         }
     }
@@ -168,17 +164,14 @@ class ResourceScheduleSlot
                 foreach ($bookedSchedules as $booked_schedule) {
                     if ($this->hasBookedSchedule($booked_schedule, $start_time, $end_time)) {
                         $slot['is_available'] = 0;
-                        $slot['unavailability_reason'] = $slot['is_available'] ? null : "booked_schedule";
+                        $slot['unavailability_reason'] = "booked_schedule";
                         $job = Job::find($booked_schedule->job_id);
-                        $slot['booked_order_id'] = $job->partnerOrder->order->code();
-                        $slot['booked_order_time'] = $booked_schedule->start->format('H:i').'-'.$booked_schedule->end->format('H:i');
-                        $slot['message'] = $slot['is_available'] ? null : 'আপনি অন্য কোন কাজ করতে পারবেন না';
+                        $slot['message'] = 'আপনাকে ' . $booked_schedule->start->format('g:i A').'-'.$booked_schedule->end->format('g:i A') . ' পর্যন্ত আরেকটি কাজে (অর্ডার আইডি ' . $job->partnerOrder->order->code() .') অ্যাসাইন করা আছে, সে জন্যে ' . $start_time->format('g:i A') . '-' . $end_time->format('g:i A') . ' পর্যন্ত আপনি অন্য কোন কাজ করতে পারবেন না।';
                     }
                     else {
-                        $slot['is_available'] = 1;
-                        $slot['unavailability_reason'] = $slot['is_available'] ? null : "booked_schedule";
-                        $slot['booked_order_id'] = $slot['booked_order_time'] = null;
-                        $slot['message'] = $slot['is_available'] ? null : 'আপনি অন্য কোন কাজ করতে পারবেন না';
+                        $slot['is_available'] = $slot->is_available;
+                        $slot['unavailability_reason'] = $slot['is_available'] ? null : $slot->unavailability_reason;
+                        $slot['message'] = $slot['is_available'] ? null : $slot->message;
                     }
                 }
             }
@@ -190,25 +183,7 @@ class ResourceScheduleSlot
         return $booked_schedule->start->gt($start_time) && $booked_schedule->start->lt($end_time) || $booked_schedule->end->gt($start_time) && $booked_schedule->end->lt($end_time) || $booked_schedule->start->lt($start_time) && $booked_schedule->end->gt($start_time) || $booked_schedule->start->lt($end_time) && $booked_schedule->end->gt($end_time) || $booked_schedule->start->eq($start_time) && $booked_schedule->end->eq($end_time);
     }
 
-    private function addAvailabilityByPreparationTime(Carbon $day)
-    {
-        if ($this->preparationTime > 0) {
-            $date_string = $day->toDateString();
-            $this->shebaSlots->each(function ($slot) use ($date_string) {
-                if ($slot->is_available) {
-                    $start_time = Carbon::parse($date_string . ' ' . $slot->start);
-                    $end_time = Carbon::parse($date_string . ' ' . $slot->end);
-                    $preparation_time = Carbon::createFromTime(Carbon::now()->hour)->addMinute(61)->addMinute($this->preparationTime);
-                    $slot['is_available'] = $preparation_time->lte($start_time) || $preparation_time->between($start_time, $end_time) ? 1 : 0;
-                    $slot['unavailability_reason'] = $slot['is_available'] ? null : "preparation_time";
-                    $slot['booked_order_id'] = $slot['booked_order_time'] = null;
-                    $slot['message'] = $slot['is_available'] ? null : 'আপনি অন্য কোন কাজ করতে পারবেন না';
-                }
-            });
-        }
-    }
-
-    private function isAvailableTime(Carbon $day)
+    private function hasAvailableBookingTime(Carbon $day)
     {
         $date_string = $day->toDateString();
         $collection = $this->shebaSlots->getIterator();
@@ -219,9 +194,8 @@ class ResourceScheduleSlot
                 $start_time = Carbon::parse($date_string . ' ' . $slot->start);
                 $end_time = Carbon::parse($date_string . ' ' . $slot->end);
                 $slot['is_available'] = $start_time->diffInMinutes($end_time) >= $this->category->book_resource_minutes ? 1 : 0;
-                $slot['unavailability_reason'] = $slot['is_available'] ? $slot->unavailability_reason : 'available_time';
-                $slot['booked_order_id'] = $slot['booked_order_time'] = null;
-                $slot['message'] = $slot['is_available'] ? null : 'আপনি অন্য কোন কাজ করতে পারবেন না';
+                $slot['unavailability_reason'] = $slot['is_available'] ? $slot->unavailability_reason : 'booking_time';
+                $slot['message'] = $slot['is_available'] ? null : 'এই সময়ে কাজটি শেষ করার জন্য আপনার কাছে পর্যাপ্ত সময় নেই';
             }
         });
     }
@@ -242,8 +216,6 @@ class ResourceScheduleSlot
             $slot['is_valid'] = $start > $current_time ? 1 : 0;
             $slot['is_available'] = isset($slot['is_available']) ? $slot['is_available'] : $slot['is_valid'];
             $slot['unavailability_reason'] = $slot['is_valid'] ? $slot['unavailability_reason'] : null;
-            $slot['booked_order_id'] = $slot['is_valid'] ? $slot['booked_order_id'] : null;
-            $slot['booked_order_time'] = $slot['is_valid'] ? $slot['booked_order_time'] : null;
             $slot['message'] = $slot['is_valid'] ? $slot['message'] : null;
         }
         return $slots;

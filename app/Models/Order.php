@@ -222,4 +222,9 @@ class Order extends BaseModel implements ShebaOrderInterface, CanHaveVoucher
     {
         return $this->affiliation_id && $this->portal_name == Portals::ADMIN;
     }
+
+    public function hasVoucher()
+    {
+        return $this->voucher_id;
+    }
 }

@@ -71,10 +71,11 @@ class Reschedule
     {
         $job_time = new JobTime($this->scheduleDate, $this->scheduleTimeSlot);
         $response = new RescheduleResponse();
-        if (!$job_time->validate()) return $response->setResponse(['msg' => $job_time->error_message, 'code' => 400]);
+        if (!$job_time->validate()) return $response->setCode(400)->setMessage($job_time->error_message);
         $preferred_time = new PreferredTime($this->scheduleTimeSlot);
         if (!scheduler($this->resource)->isAvailableForCategory($this->scheduleDate, $preferred_time->getStartString(), $this->job->category, $this->job)) {
-            return $response->setResponse(['message' => 'Resource is not available at this time. Please select different date time or change the resource', 'code' => 403]);
+            return $response->setCode(403)
+                ->setMessage('Resource is not available at this time. Please select different date time or change the resource');
         }
         $client = new Client();
         $res = $client->request('POST', config('sheba.admin_url') . '/api/job/' . $this->job->id . '/reschedule',
