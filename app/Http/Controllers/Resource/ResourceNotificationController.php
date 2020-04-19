@@ -24,7 +24,7 @@ class ResourceNotificationController extends Controller
         if ($request->has('job_id')) {
             $job = Job::find($request->job_id);
             $pushNotificationHandler->send([
-                "title" => 'কাজ আসাইন',
+                "title" => 'কাজ এসাইন',
                 "message" => 'আপনাকে একটি অর্ডার ' . $job->partnerOrder->order->code() . ' এ এসাইন করা হয়েছে',
                 "event_type" => 'job_assign',
                 "event_id" => $request->job_id,
@@ -51,7 +51,7 @@ class ResourceNotificationController extends Controller
             $job = Job::find($request->job_id);
             $pushNotificationHandler->send([
                 "title" => "তৈরি হয়ে নিন",
-                "message" => 'আপনার অর্ডার' . $job->partnerOrder->order->code() . 'টি আর ১৫ মিনিট এর মধ্যে শুরু হয়ে যাবে',
+                "message" => 'আপনার অর্ডার ' . $job->partnerOrder->order->code() . ' টি আর ১৫ মিনিট এর মধ্যে শুরু হয়ে যাবে',
                 "event_type" => "job_alert",
                 "event_id" => $job->id,
                 "sound" => 'notification_sound',
