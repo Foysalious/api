@@ -330,35 +330,45 @@ class ShebaController extends Controller
                 return api_response($request, null, 400, ['message' => 'Amount missing']);
             }
 
+            if($amount<config('emi.minimum_emi_amount')){
+                return api_response($request, null, 400, ['message' => 'Amount is less than minimum emi amount']);
+            }
+
+            $bank_transaction_fee=ceil($amount*(config('emi.bank_fee_percentage')/100));
+
             $emi = [
                 [
                     "number_of_months" => 3,
                     "interest" => "3%",
                     "total_interest" =>number_format(ceil(($amount * 0.03))),
-                    "amount" => number_format(ceil(($amount + ($amount * 0.03)) / 3)),
-                    "total_amount" => number_format($amount+ceil(($amount * 0.03)))
+                    "bank_transaction_fee" =>$bank_transaction_fee,
+                    "amount" => number_format(ceil(($amount + ($amount * 0.03)+$bank_transaction_fee) / 3)),
+                    "total_amount" => number_format($amount+ceil(($amount * 0.03))+$bank_transaction_fee)
                 ],
                 [
                     "number_of_months" => 6,
                     "interest" => "4.5%",
                     "total_interest" =>number_format(ceil(($amount * 0.045))),
-                    "amount" => number_format(ceil(($amount + ($amount * 0.045)) / 6)),
-                    "total_amount" => number_format($amount+ceil(($amount * 0.045)))
+                    "bank_transaction_fee" =>$bank_transaction_fee,
+                    "amount" => number_format(ceil(($amount + ($amount * 0.045)+$bank_transaction_fee) / 6)),
+                    "total_amount" => number_format($amount+ceil(($amount * 0.045))+$bank_transaction_fee)
                 ],
                 [
                     "number_of_months" => 9,
                     "interest" => "6.5%",
                     "total_interest" =>number_format(ceil(($amount * 0.065))),
-                    "amount" => number_format(ceil(($amount + ($amount * 0.065)) / 9)),
-                    "total_amount" => number_format($amount+ceil(($amount * 0.065)))
+                    "bank_transaction_fee" =>$bank_transaction_fee,
+                    "amount" => number_format(ceil(($amount + ($amount * 0.065)+$bank_transaction_fee) / 9)),
+                    "total_amount" => number_format($amount+ceil(($amount * 0.065))+$bank_transaction_fee)
 //                    "amount" => number_format(($amount + ($amount * 0.065)) / 9, 2, '.', '')
                 ],
                 [
                     "number_of_months" => 12,
                     "interest" => "8.5%",
                     "total_interest" =>number_format(ceil(($amount * 0.085))),
-                    "amount" => number_format(ceil(($amount + ($amount * 0.085)) / 12)),
-                    "total_amount" => number_format($amount+ceil(($amount * 0.085)))
+                    "bank_transaction_fee" =>$bank_transaction_fee,
+                    "amount" => number_format(ceil(($amount + ($amount * 0.085)+$bank_transaction_fee) / 12)),
+                    "total_amount" => number_format($amount+ceil(($amount * 0.085))+$bank_transaction_fee)
                 ]
             ];
 
