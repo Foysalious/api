@@ -113,6 +113,7 @@ class JobList
             $formatted_job = collect();
             $formatted_job->put('id', $job->id);
             $formatted_job->put('order_code', $job->partnerOrder->order->code());
+            $formatted_job->put('category_id', $job->category_id);
             $formatted_job->put('delivery_address', $job->partnerOrder->order->deliveryAddress->address);
             $formatted_job->put('location', $job->partnerOrder->order->deliveryAddress->location->name);
             $formatted_job->put('delivery_mobile', $job->partnerOrder->order->delivery_mobile);
@@ -132,8 +133,6 @@ class JobList
         }
         return $formatted_jobs;
     }
-
-
 
 
     public function getNumberOfJobs()

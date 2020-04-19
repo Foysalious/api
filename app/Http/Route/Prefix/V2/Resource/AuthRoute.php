@@ -30,6 +30,7 @@ class AuthRoute
                     $api->post('extend-time', 'Resource\ResourceJobController@extendTime');
                     $api->get('services', 'Resource\ResourceJobController@getServices');
                     $api->get('updated-bill', 'Resource\ResourceJobController@getUpdatedBill');
+                    $api->post('services', 'Resource\ResourceJobController@updateService');
                 });
             });
         });

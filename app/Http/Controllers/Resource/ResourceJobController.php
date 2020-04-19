@@ -5,13 +5,16 @@ use App\Http\Controllers\Controller;
 use App\Models\Job;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Sheba\Authentication\AuthUser;
+use Sheba\ModificationFields;
 use Sheba\Resource\Jobs\BillInfo;
 use Sheba\Resource\Jobs\BillUpdate;
 use Sheba\Resource\Jobs\Collection\CollectMoney;
 use Sheba\Resource\Jobs\JobInfo;
 use Sheba\Resource\Jobs\JobList;
 use Sheba\Resource\Jobs\Reschedule\Reschedule;
+use Sheba\Resource\Jobs\ServiceUpdateRequest;
 use Sheba\Resource\Jobs\Updater\StatusUpdater;
 use Sheba\Resource\Schedule\Extend\ExtendTime;
 use Sheba\Resource\Service\ServiceList;
@@ -19,6 +22,8 @@ use Sheba\UserAgentInformation;
 
 class ResourceJobController extends Controller
 {
+    use ModificationFields;
+
     public function index(Request $request, JobList $job_list)
     {
         $this->validate($request, ['offset' => 'numeric|min:0', 'limit' => 'numeric|min:1']);
@@ -56,7 +61,7 @@ class ResourceJobController extends Controller
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
         $resource = $auth_user->getResource();
-        if ($resource->id !== $job->resource_id) return api_response($request, $job, 403, ["message" => "You're not authorized to access this job's bill."]);
+        if ($resource->id !== $job->resource_id) return api_response($request, $job, 403, ["message" => "You're not authorized to access this job."]);
         $bill = $billInfo->getBill($job);
         return api_response($request, $bill, 200, ['bill' => $bill]);
     }
@@ -77,7 +82,7 @@ class ResourceJobController extends Controller
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
         $resource = $auth_user->getResource();
-        if ($resource->id !== $job->resource_id) return api_response($request, $job, 403, ["message" => "You're not authorized to access this job's bill."]);
+        if ($resource->id !== $job->resource_id) return api_response($request, $job, 403, ["message" => "You're not authorized to access this job."]);
         $user_agent_information->setRequest($request);
         $status_updater->setResource($resource)->setJob($job)->setUserAgentInformation($user_agent_information)->setStatus($request->status);
         $response = $status_updater->update();
@@ -86,16 +91,23 @@ class ResourceJobController extends Controller
 
     public function rescheduleJob(Job $job, Request $request, Reschedule $reschedule_job, UserAgentInformation $user_agent_information)
     {
-        $this->validate($request, ['schedule_date' => 'string', 'schedule_time_slot' => 'string']);
-        /** @var AuthUser $auth_user */
-        $auth_user = $request->auth_user;
-        $resource = $auth_user->getResource();
-        if ($resource->id !== $job->resource_id) return api_response($request, $job, 403, ["message" => "You're not authorized to access this job's bill."]);
-        $user_agent_information->setRequest($request);
-        $reschedule_job->setResource($resource)->setJob($job)->setUserAgentInformation($user_agent_information)->setScheduleDate($request->schedule_date)
-            ->setScheduleTimeSlot($request->schedule_time_slot);
-        $response = $reschedule_job->reschedule();
-        return api_response($request, $response, $response->getCode(), ['message' => $response->getMessage()]);
+        try {
+            $this->validate($request, ['schedule_date' => 'string', 'schedule_time_slot' => 'string']);
+            /** @var AuthUser $auth_user */
+            $auth_user = $request->auth_user;
+            $resource = $auth_user->getResource();
+            if ($resource->id !== $job->resource_id) return api_response($request, $job, 403, ["message" => "You're not authorized to access this job."]);
+            $user_agent_information->setRequest($request);
+            $reschedule_job->setResource($resource)->setJob($job)->setUserAgentInformation($user_agent_information)->setScheduleDate($request->schedule_date)
+                ->setScheduleTimeSlot($request->schedule_time_slot);
+            $response = $reschedule_job->reschedule();
+            return api_response($request, $response, $response->getCode(), ['message' => $response->getMessage()]);
+        } catch (ValidationException $e) {
+            return api_response($request, null, 400, ['message' => 'আপনার শিডিউল পরিবর্তন টি সফল হয় নি।অন্য একটি দিন অথবা সময় নির্ধারিত করে পুনরায় চেষ্টা করুন।']);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500, ['message' => 'আপনার শিডিউল পরিবর্তন টি সফল হয় নি।অন্য একটি দিন অথবা সময় নির্ধারিত করে পুনরায় চেষ্টা করুন।']);
+        }
+
     }
 
     public function collectMoney(Job $job, Request $request, CollectMoney $collect_money, UserAgentInformation $user_agent_information)
@@ -147,5 +159,18 @@ class ResourceJobController extends Controller
             $updatedBill = $billUpdate->getUpdatedBillForMaterialAdd($job);
             return api_response($request, $updatedBill, 200, ['bill' => $updatedBill]);
         }
+    }
+
+    public function updateService(Job $job, Request $request, ServiceUpdateRequest $updateRequest)
+    {
+        $this->validate($request, ['services' => 'string', 'quantity' => 'string', 'materials' => 'string']);
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+        $this->setModifier($resource);
+        if ($resource->id !== $job->resource_id) return api_response($request, $job, 403, ["message" => "You're not authorized to access this job."]);
+        $updateRequest->setMaterials(json_decode($request->materials, 1))->setServices(json_decode($request->services, 1))->setJob($job)
+            ->setQuantity(json_decode($request->quantity,1))->update();
+        return api_response($request, null, 200);
     }
 }
