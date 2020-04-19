@@ -27,8 +27,7 @@ class CustomerOrderController extends Controller
             $search = $request->search;
             list($offset, $limit) = calculatePagination($request);
             $customer = $request->customer->load(['orders' => function ($q) use ($filter, $offset, $limit, $for, $status, $search) {
-                $q->select('id', 'customer_id', 'partner_id', 'location_id', 'sales_channel', 'delivery_name', 'delivery_mobile', 'delivery_address', 'subscription_order_id')->orderBy('id', 'desc')
-                    ->skip($offset)->take($limit);
+                $q->select('id', 'customer_id', 'partner_id', 'location_id', 'sales_channel', 'delivery_name', 'delivery_mobile', 'delivery_address', 'subscription_order_id')->orderBy('id', 'desc');
                 if ($for == 'eshop') {
                     $q->whereNotNull('partner_id');
                 } else if ($for == "business") {
@@ -42,10 +41,10 @@ class CustomerOrderController extends Controller
                     });
                 }
 
-                $q->with(['partnerOrders' => function ($q) use ($filter, $offset, $limit, $status, $search) {
-                    $q->with(['partner.resources.profile', 'order' => function ($q) use ( $status, $search){
+                $q->with(['partnerOrders' => function ($q) use ($filter, $status) {
+                    $q->with(['partner.resources.profile', 'order' => function ($q) use ($status){
                         $q->select('id', 'sales_channel', 'subscription_order_id');
-                    }, 'jobs' => function ($q) use ($status, $search){
+                    }, 'jobs' => function ($q) use ($status){
                         if ($status) {
                             $q->where('status', $status);
                         }
@@ -54,6 +53,9 @@ class CustomerOrderController extends Controller
                         }, 'usedMaterials']);
                     }]);
                 }]);
+                if (!$search) {
+                    $q->skip($offset)->take($limit);
+                }
             }]);
             if (count($customer->orders) > 0) {
                 $all_jobs = $this->getInformation($customer->orders);
@@ -69,8 +71,6 @@ class CustomerOrderController extends Controller
                     $job['can_take_review'] = $this->canTakeReview($order_job);
                     return $job;
                 });
-
-
             } else {
                 $all_jobs = collect();
             }
@@ -78,14 +78,17 @@ class CustomerOrderController extends Controller
                $all_jobs = $all_jobs->filter(function ($job) use ($search) {
                    return (false !== stristr($job['order_code'], $search) || false !== stristr($job['category_name'], $search));
                });
+                $all_orders = $all_jobs->values()->splice($offset, $limit);
+            } else {
+                $all_orders = $all_jobs->values()->all();
             }
-            return count($all_jobs) > 0 ? api_response($request, $all_jobs, 200, ['orders' => $all_jobs->values()->all()]) : api_response($request, null, 404);
+
+            return count($all_jobs) > 0 ? api_response($request, $all_jobs, 200, ['orders' => $all_orders]) : api_response($request, null, 404);
         } catch (ValidationException $e) {
             app('sentry')->captureException($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
