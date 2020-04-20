@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Attachment;
 use App\Models\Bid;
 use App\Models\Business;
+use App\Models\Category;
 use App\Models\Partner;
 use App\Models\Procurement;
 use App\Sheba\Bitly\BitlyLinkShort;
@@ -34,6 +35,27 @@ use Throwable;
 class ProcurementController extends Controller
 {
     use ModificationFields;
+
+    public function create(Request $request)
+    {
+        $all_categories= [];
+        $categories = Category::child()->published()->publishedForB2B()->select('id','name')->get()->map(function ($category)use(&$all_categories){
+            return array_push($all_categories, [
+                'id'=> $category->id,
+                'name'=> $category->name,
+            ]);
+        });
+        $sharing_to = config('b2b.SHARING_TO');
+        $payment_strategy = config('b2b.PAYMENT_STRATEGY');
+        $number_of_participants = config('b2b.NUMBER_OF_PARTICIPANTS');
+        $procurements = [
+            'sharing_to'=>array_values($sharing_to),
+            'payment_strategy'=> $payment_strategy,
+            'number_of_participants'=>$number_of_participants,
+            'categories'=> $all_categories
+        ];
+        return api_response($request, $procurements, 200, ['procurements' => $procurements]);
+    }
 
     public function store(Request $request, AccessControl $access_control, Creator $creator)
     {
