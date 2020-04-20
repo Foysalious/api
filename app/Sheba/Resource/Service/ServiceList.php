@@ -16,7 +16,10 @@ class ServiceList
 
     public function getServicesList()
     {
-        $services = $this->job->partnerOrder->partner->services()->select($this->getSelectColumnsOfService())->where('category_id', $this->job->category_id)->where(function ($q) {
+        $location = $this->job->partnerOrder->order->location->id;
+        $services = $this->job->partnerOrder->partner->services()->whereHas('locations', function($q) use ($location) {
+            $q->where('location_id', $location);
+        })->select($this->getSelectColumnsOfService())->where('category_id', $this->job->category_id)->where(function ($q) {
             $q->where('publication_status', 1);
             $q->orWhere('is_published_for_backend', 1);
         })->get();
