@@ -48,6 +48,7 @@ class DueTrackerRepository extends BaseRepository {
             $order = ($request->order == 'desc') ? 'sortByDesc' : 'sortBy';
             $list  = $list->$order('customer_name', SORT_NATURAL | SORT_FLAG_CASE)->values();
         }
+        $total = $list->count();
         if ($paginate) {
             list($offset, $limit) = calculatePagination($request);
             $list = $list->slice($offset)->take($limit)->values();
@@ -55,6 +56,7 @@ class DueTrackerRepository extends BaseRepository {
         return [
             'list'               => $list,
             'total_transactions' => count($list),
+            'total'              => $total,
             'stats'              => $result['data']['totals'],
             'partner'            => $this->getPartnerInfo($request->partner),
         ];
@@ -199,17 +201,16 @@ class DueTrackerRepository extends BaseRepository {
 
         $response = $this->client->post("accounts/$this->accountId/entries/update/$request->entry_id", $data);
 
-        if( $data['amount_cleared'] > 1 && $response['data']['source_type'] == 'PosOrder' && !empty($response['data']['source_id']))
-        $this->createPosOrderPayment($data['amount_cleared'],$response['data']['source_id']);
+        if ($data['amount_cleared'] > 1 && $response['data']['source_type'] == 'PosOrder' && !empty($response['data']['source_id']))
+            $this->createPosOrderPayment($data['amount_cleared'], $response['data']['source_id']);
 
         return $response['data'];
     }
 
-    private function createPosOrderPayment($amount_cleared, $pos_order_id)
-    {
+    private function createPosOrderPayment($amount_cleared, $pos_order_id) {
         $payment_data['pos_order_id'] = $pos_order_id;
-        $payment_data['amount'] = $amount_cleared;
-        $payment_data['method'] = 'cod';
+        $payment_data['amount']       = $amount_cleared;
+        $payment_data['method']       = 'cod';
         $this->paymentCreator->credit($payment_data);
     }
 
@@ -382,7 +383,7 @@ class DueTrackerRepository extends BaseRepository {
         if ($request->type == 'due') {
             $data['payment_link'] = $request->payment_link;
         }
-        return dispatch((new SendToCustomerToInformDueDepositSMS($request->partner,$data)));
+        return dispatch((new SendToCustomerToInformDueDepositSMS($request->partner, $data)));
     }
 
     /**
