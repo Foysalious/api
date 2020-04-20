@@ -25,11 +25,8 @@ class ServiceList
                 $variables = json_decode($service->variables);
                 if ($service->variable_type == 'Options') {
                     $service['questions'] = $this->formatServiceQuestions($variables->options);
-                    $service['option_prices'] = $this->formatOptionWithPrice(json_decode($service->pivot->prices));
-                    $service['fixed_price'] = null;
                 } else {
-                    $service['questions'] = $service['option_prices'] = [];
-                    $service['fixed_price'] = (double)$variables->price;
+                    $service['questions'] = [];
                 }
                 array_forget($service, 'variables');
                 removeRelationsAndFields($service);
@@ -63,19 +60,5 @@ class ServiceList
             ));
         }
         return $questions;
-    }
-
-    private function formatOptionWithPrice($prices)
-    {
-        $options = collect();
-        foreach ($prices as $key => $price) {
-            $options->push(array(
-                'option' => collect(explode(',', $key))->map(function ($key) {
-                    return (int)$key;
-                }),
-                'price' => (double)$price
-            ));
-        }
-        return $options;
     }
 }

@@ -21,6 +21,7 @@ class BillInfo
             $services = array();
             foreach ($job->jobServices as $jobService) {
                 array_push($services, array(
+                    'id' => $jobService->id,
                     'name' => $jobService->job->category ? $jobService->job->category->name : null,
                     'price' => (double)$jobService->unit_price * (double)$jobService->quantity,
                     'unit' => $jobService->service->unit, 'quantity' => $jobService->quantity
