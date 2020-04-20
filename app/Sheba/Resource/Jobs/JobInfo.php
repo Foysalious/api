@@ -40,7 +40,7 @@ class JobInfo
         $services = collect();
         foreach ($job_services as $job_service) {
             $services->push([
-                'id' => $job_service->service->id,
+                'id' => $job_service->id,
                 'name' => $job_service->service->name,
                 'image' => $job_service->service->app_thumb,
                 'variables' => json_decode($job_service->variables),
