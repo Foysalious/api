@@ -103,6 +103,7 @@ class BusinessRoute
                 $api->group(['prefix' => 'procurements'], function ($api) {
                     $api->post('/', 'B2b\ProcurementController@store');
                     $api->get('/create', 'B2b\ProcurementController@create');
+                    $api->get('/tags', 'B2b\ProcurementController@getTags');
                     $api->get('/orders', 'B2b\ProcurementController@procurementOrders');
                     $api->group(['prefix' => '{procurement}'], function ($api) {
                         $api->get('/', 'B2b\ProcurementController@show');
