@@ -433,7 +433,8 @@ class OrderController extends Controller
         try {
             $this->validate($request, [
                 'paid_amount'    => 'required|numeric',
-                'payment_method' => 'required|string|in:' . implode(',', config('pos.payment_method'))
+                'payment_method' => 'required|string|in:' . implode(',', config('pos.payment_method')),
+                'emi_month'      => 'required_if:payment_method,emi'
             ]);
             /** @var PosOrder $order */
             $order        = PosOrder::find($request->order);
@@ -442,10 +443,16 @@ class OrderController extends Controller
                 'amount'       => $request->paid_amount,
                 'method'       => $request->payment_method
             ];
+            if ($request->has('emi_month')) {
+                $payment_data['emi_month'] = $request->emi_month;
+                $emi_month = $request->emi_month;
+            } else
+                $emi_month = null;
+
             $payment_creator->credit($payment_data);
             $order                 = $order->calculate();
             $order->payment_status = $order->getPaymentStatus();
-            $this->updateIncome($order, $request->paid_amount);
+            $this->updateIncome($order, $request->paid_amount,$emi_month);
             return api_response($request, null, 200, [
                 'msg'   => 'Payment Collect Successfully',
                 'order' => $order
@@ -461,12 +468,12 @@ class OrderController extends Controller
      * @param $paid_amount
      * @throws ExpenseTrackingServerError
      */
-    private function updateIncome(PosOrder $order, $paid_amount)
+    private function updateIncome(PosOrder $order, $paid_amount,$emi_month)
     {
         /** @var AutomaticEntryRepository $entry */
         $entry  = app(AutomaticEntryRepository::class);
         $amount = (double)$order->getNetBill();
-        $entry->setPartner($order->partner)->setAmount($amount)->setAmountCleared($paid_amount)->setFor(EntryType::INCOME)->setSourceType(class_basename($order))->setSourceId($order->id)->setCreatedAt($order->created_at)->updateFromSrc();
+        $entry->setPartner($order->partner)->setAmount($amount)->setAmountCleared($paid_amount)->setFor(EntryType::INCOME)->setSourceType(class_basename($order))->setSourceId($order->id)->setCreatedAt($order->created_at)->setEmiMonth($emi_month)->updateFromSrc();
     }
 
     /**
