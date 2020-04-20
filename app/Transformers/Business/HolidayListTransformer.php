@@ -4,6 +4,14 @@ use League\Fractal\TransformerAbstract;
 
 class HolidayListTransformer extends TransformerAbstract
 {
+    private $firstDayofPreviousMonth;
+    private $lastDayofNextMonth;
+
+    public function __construct($firstDayofPreviousMonth,$lastDayofNextMonth)
+    {
+       $this->firstDayofPreviousMonth = $firstDayofPreviousMonth;
+       $this->lastDayofNextMonth = $lastDayofNextMonth;
+    }
     public function transform($holiday)
     {
         return $this->listAllDatesBetweenTwoDates($holiday->start_date, $holiday->end_date);
@@ -13,7 +21,10 @@ class HolidayListTransformer extends TransformerAbstract
     {
         $dates = [];
         for($d = $start_date; $d->lte($end_date); $d->addDay()) {
-            $dates[] = $d->format('Y-m-d');
+            if($start_date->between($this->firstDayofPreviousMonth,$this->lastDayofNextMonth))
+            {
+                $dates[] = $d->format('Y-m-d');
+            }
         }
         return $dates;
     }
