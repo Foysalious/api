@@ -172,7 +172,8 @@ class OrderController extends Controller
                 'nPos'              => 'numeric',
                 'discount'          => 'numeric',
                 'is_percentage'     => 'numeric',
-                'previous_order_id' => 'numeric'
+                'previous_order_id' => 'numeric',
+                'emi_month'         =>'required_if:payment_method,emi|numeric'
             ]);
             $link = null;
             if ($request->manager_resource) {
@@ -204,8 +205,9 @@ class OrderController extends Controller
             $order->payment_status      = $order->getPaymentStatus();
             $order->client_pos_order_id = $request->client_pos_order_id;
             $order->net_bill            = $order->getNetBill();
-            if ($request->payment_method == 'payment_link') {
-                $paymentLink = $paymentLinkCreator->setAmount($order->net_bill)->setReason("PosOrder ID: $order->id Due payment")->setUserName($partner->name)->setUserId($partner->id)->setUserType('partner')->setTargetId($order->id)->setTargetType('pos_order')->save();
+
+            if ($request->payment_method == 'payment_link' || $request->payment_method == 'emi') {
+                $paymentLink = $paymentLinkCreator->setAmount($order->net_bill)->setReason("PosOrder ID: $order->id Due payment")->setUserName($partner->name)->setUserId($partner->id)->setUserType('partner')->setTargetId($order->id)->setTargetType('pos_order')->setEmiMonth($request->emi_month)->save();
                 $transformer = new PaymentLinkTransformer();
                 $transformer->setResponse($paymentLink);
                 $link = ['link' => $transformer->getLink()];
@@ -445,14 +447,12 @@ class OrderController extends Controller
             ];
             if ($request->has('emi_month')) {
                 $payment_data['emi_month'] = $request->emi_month;
-                $emi_month = $request->emi_month;
-            } else
-                $emi_month = null;
+            }
 
             $payment_creator->credit($payment_data);
             $order                 = $order->calculate();
             $order->payment_status = $order->getPaymentStatus();
-            $this->updateIncome($order, $request->paid_amount,$emi_month);
+            $this->updateIncome($order, $request->paid_amount,$request->emi_month);
             return api_response($request, null, 200, [
                 'msg'   => 'Payment Collect Successfully',
                 'order' => $order
