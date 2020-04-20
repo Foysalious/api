@@ -70,5 +70,50 @@ return [
         'pending' => 'pending',
         'accepted' => 'accepted',
         'rejected' => 'rejected'
-    ]
+    ],
+    'SHARING_TO' => [
+        'public' => [
+            'key' => 'public',
+            'value' => 'Public',
+        ],
+        'verified' => [
+            'key' => 'verified',
+            'value' => 'Verified',
+        ],
+        'own_listed' => [
+            'key' => 'own_listed',
+            'value' => 'Listed/Own',
+        ]
+    ],
+    'PAYMENT_STRATEGY' => [
+        '100% Payment after Delivery',
+        '50% Advance Payment',
+        '100% Advance Payment'
+    ],
+    'NUMBER_OF_PARTICIPANTS' => [
+        0 => [
+            'key' => 0,
+            'value' => 'Unlimited',
+        ],
+        1 => [
+            'key' => 1,
+            'value' => 'One',
+        ],
+        2 => [
+            'key' => 2,
+            'value' => 'Two',
+        ],
+        3 => [
+            'key' => 3,
+            'value' => 'Three',
+        ],
+        4 => [
+            'key' => 4,
+            'value' => 'Four',
+        ],
+        5 => [
+            'key' => 5,
+            'value' => 'Five',
+        ],
+    ],
 ];

@@ -4,8 +4,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Attachment;
 use App\Models\Bid;
 use App\Models\Business;
+use App\Models\Category;
 use App\Models\Partner;
 use App\Models\Procurement;
+use App\Models\Tag;
 use App\Sheba\Bitly\BitlyLinkShort;
 use App\Sheba\Business\ACL\AccessControl;
 use App\Transformers\AttachmentTransformer;
@@ -34,6 +36,33 @@ use Throwable;
 class ProcurementController extends Controller
 {
     use ModificationFields;
+
+    public function create(Request $request)
+    {
+        $categories = Category::child()->published()->publishedForB2B()->select('id', 'name')->get()->toArray();
+        $sharing_to = config('b2b.SHARING_TO');
+        $payment_strategy = config('b2b.PAYMENT_STRATEGY');
+        $number_of_participants = config('b2b.NUMBER_OF_PARTICIPANTS');
+        $procurements = [
+            'sharing_to' => array_values($sharing_to),
+            'payment_strategy' => $payment_strategy,
+            'number_of_participants' => $number_of_participants,
+            'categories' => $categories
+        ];
+        return api_response($request, $procurements, 200, ['procurements' => $procurements]);
+    }
+
+    public function getTags(Request $request)
+    {
+        $tags = Tag::where('taggable_type', 'App\Models\Procurement')->select('id', 'name')->get();
+
+        if ($request->has('search')) {
+            $tags =  $tags->filter(function ($tag) use ($request) {
+                return str_contains(strtoupper($tag->name), strtoupper($request->search));
+            });
+        }
+        return api_response($request, $tags, 200, ['tags' => $tags->values()]);
+    }
 
     public function store(Request $request, AccessControl $access_control, Creator $creator)
     {
