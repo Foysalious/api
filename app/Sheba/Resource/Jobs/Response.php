@@ -49,14 +49,22 @@ class Response
         return $this->message;
     }
 
-    protected function setSuccessfulMessage()
+    public function setSuccessfulMessage()
     {
         $this->setMessage('Successful');
+        return $this;
     }
 
-    protected function setUnsuccessfulMessage()
+    public function setSuccessfulCode()
+    {
+        $this->setCode(200);
+        return $this;
+    }
+
+    public function setUnsuccessfulMessage()
     {
         $this->setMessage('Something Went Wrong');
+        return $this;
     }
 
 }
