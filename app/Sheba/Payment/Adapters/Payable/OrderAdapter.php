@@ -3,30 +3,55 @@
 use App\Models\Job;
 use App\Models\PartnerOrder;
 use App\Models\Payable;
+use App\Sheba\Payment\Policy\PaymentInitiate;
 use Carbon\Carbon;
 use Sheba\Dal\Discount\DiscountTypes;
+use Sheba\Dal\Payable\Types;
 use Sheba\JobDiscount\JobDiscountCheckingParams;
 use Sheba\JobDiscount\JobDiscountHandler;
+use Sheba\Payment\Adapters\Error\InitiateFailedException;
 
 class OrderAdapter extends BaseAdapter implements PayableAdapter
 {
     /** @var PartnerOrder $partnerOrder */
     private $partnerOrder;
     private $isAdvancedPayment;
+    private $paymentInitiate;
     private $userId;
     private $userType;
     /** @var Job $job */
     private $job;
     private $emiMonth;
 
-    public function __construct(PartnerOrder $partner_order, $is_advanced_payment = false)
+    public function __construct(PaymentInitiate $paymentInitiate)
     {
-        $this->partnerOrder = $partner_order;
-        $this->partnerOrder->calculate(true);
-        $this->isAdvancedPayment = $is_advanced_payment;
+        $this->isAdvancedPayment = 0;
         $this->emiMonth = null;
-        $this->setUser();
+        $this->paymentInitiate = $paymentInitiate;
     }
+
+    /**
+     * @param PartnerOrder $partnerOrder
+     * @return OrderAdapter
+     */
+    public function setPartnerOrder($partnerOrder)
+    {
+        $this->partnerOrder = $partnerOrder;
+        $this->partnerOrder->calculate(true);
+        $this->setUser();
+        return $this;
+    }
+
+    /**
+     * @param bool $isAdvancedPayment
+     * @return OrderAdapter
+     */
+    public function setIsAdvancedPayment($isAdvancedPayment)
+    {
+        $this->isAdvancedPayment = $isAdvancedPayment;
+        return $this;
+    }
+
 
     /**
      * @param $month |int
@@ -40,6 +65,7 @@ class OrderAdapter extends BaseAdapter implements PayableAdapter
 
     public function getPayable(): Payable
     {
+        if (!$this->paymentInitiate->setPayableType(Types::PARTNER_ORDER)->setPayableTypeId($this->partnerOrder->id)->canPossible()) throw new InitiateFailedException('Failed to initiate', 400);
         $this->job = $this->partnerOrder->getActiveJob();
         $payable = new Payable();
         $payable->type = 'partner_order';
