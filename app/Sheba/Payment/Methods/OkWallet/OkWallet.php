@@ -38,7 +38,7 @@ class OkWallet extends PaymentMethod {
             $payment->payable_id     = $payable->id;
             $payment->transaction_id = $invoice;
             $payment->status         = Statuses::INITIATED;
-            $payment->valid_till     = Carbon::now()->addMinutes(30);
+            $payment->valid_till     = $this->getValidTill();
             $this->setModifier($user);
             $payment->fill((new RequestIdentification())->get());
             $this->withCreateModificationField($payment);

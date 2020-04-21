@@ -78,7 +78,7 @@ class Ssl extends PaymentMethod {
             $payment->transaction_id         = $invoice;
             $payment->gateway_transaction_id = $invoice;
             $payment->status                 = Statuses::INITIATED;
-            $payment->valid_till             = Carbon::now()->addMinutes(30);
+            $payment->valid_till             = $this->getValidTill();
             $this->setModifier($user);
             $payment->fill((new RequestIdentification())->get());
             $this->withCreateModificationField($payment);
