@@ -15,7 +15,7 @@ use Sheba\Transport\Bus\Vendor\BdTickets\BdTickets;
 
 class TestController extends  Controller
 {
-    public function testPushNotification(Mailer $mailer)
+    public function testPushNotification1(Mailer $mailer)
     {
         (new PushNotificationHandler())->send([
             'title'      => 'Top Up failed',
@@ -27,6 +27,14 @@ class TestController extends  Controller
             "channel_id" => 'affiliate_channel',
         ],'affiliate_dev_39169', 'affiliate_channel', 'default');
 
+
+        dd('success');
+
+    }
+    public function testPushNotification2(Mailer $mailer)
+    {
+
+
         (new PushNotificationHandler())->send([
             'title'      => 'Movie Ticket purchase failed',
             'message'    =>  'দুঃখিত বন্ধু! আপনার মুভি টিকেট সফল ভাবে কাটা হয় নি 01620011019, পুনরায় চেষ্টা করুন।',
@@ -36,6 +44,13 @@ class TestController extends  Controller
             "sound"      => "notification_sound",
             "channel_id" => 'affiliate_channel',
         ],'affiliate_dev_39169', 'affiliate_channel', 'default');
+
+
+        dd('success');
+
+    }
+    public function testPushNotification3(Mailer $mailer)
+    {
 
         (new PushNotificationHandler())->send([
             'title'      => 'Transport Ticket purchase failed',
