@@ -18,6 +18,7 @@ class Creator
     private $targetType;
     private $data;
     private $paymentLinkCreated;
+    private $emiMonth;
 
     /**
      * Creator constructor.
@@ -91,6 +92,16 @@ class Creator
     }
 
     /**
+     * @param $emi_month
+     * @return $this
+     */
+    public function setEmiMonth($emi_month)
+    {
+        $this->emiMonth = $emi_month;
+        return $this;
+    }
+
+    /**
      * @method PaymentLinkRepository statusUpdate
      */
     public function editStatus()
@@ -123,6 +134,8 @@ class Creator
             'targetId'   => (int)$this->targetId,
             'targetType' => $this->targetType,
         ];
+        if(!is_null($this->emiMonth))
+            $this->data['emi_month'] = $this->emiMonth;
         if ($this->isDefault)
             unset($this->data['reason']);
         if (!$this->targetId)

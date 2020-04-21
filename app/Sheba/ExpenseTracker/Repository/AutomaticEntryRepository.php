@@ -21,7 +21,7 @@ class AutomaticEntryRepository extends BaseRepository
     private $sourceType;
     private $sourceId;
     private $createdAt;
-
+    private $emiMonth;
     /**
      * @param mixed $source_type
      * @return AutomaticEntryRepository
@@ -140,6 +140,17 @@ class AutomaticEntryRepository extends BaseRepository
         return $this;
     }
 
+
+    /**
+     * @param $emi_month
+     * @return $this
+     */
+    public function setEmiMonth($emi_month)
+    {
+        $this->emiMonth = $emi_month;
+        return $this;
+    }
+
     /**
      * @return bool
      */
@@ -183,6 +194,8 @@ class AutomaticEntryRepository extends BaseRepository
             $data['amount_cleared'] = $data['amount'];
         if ($this->profileId)
             $data['profile_id'] = $this->profileId;
+        if(!is_null($this->emiMonth))
+            $data['emi_month'] = $this->emiMonth;
         return $data;
     }
 
