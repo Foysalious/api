@@ -63,6 +63,7 @@ class BillUpdate
     {
         $services = array_map(function($service) {
             return array(
+                'id' => null,
                 'name' => $service['service_name'],
                 'price' => $service['original_price'],
                 'unit' => $service['unit'],
@@ -100,6 +101,7 @@ class BillUpdate
         foreach ($services as $key => $service) {
             foreach ($quantity as $qty) {
                 if ($service['id'] == $qty['job_service_id']) {
+                    $updated_services[$key]['id'] = null;
                     $updated_services[$key]['quantity'] = $qty['quantity'];
                     $updated_services[$key]['price'] = $service['price'] / $service['quantity'] * $qty['quantity'];
                 }
