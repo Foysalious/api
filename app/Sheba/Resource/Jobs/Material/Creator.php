@@ -2,7 +2,11 @@
 
 
 use App\Models\Job;
+use App\Models\Resource;
+use Carbon\Carbon;
 use Sheba\Dal\JobMaterial\JobMaterialRepositoryInterface;
+use Sheba\Dal\JobMaterialLog\JobMaterialLogRepositoryInterface;
+use Sheba\UserAgentInformation;
 
 class Creator
 {
@@ -11,10 +15,20 @@ class Creator
     /** @var array */
     private $materials;
     private $jobMaterialRepository;
+    private $jobMaterialLogRepository;
+    /** @var UserAgentInformation */
+    private $userAgentInformation;
 
-    public function __construct(JobMaterialRepositoryInterface $jobMaterialRepository)
+    public function __construct(JobMaterialRepositoryInterface $jobMaterialRepository, JobMaterialLogRepositoryInterface $jobMaterialLogRepository)
     {
         $this->jobMaterialRepository = $jobMaterialRepository;
+        $this->jobMaterialLogRepository = $jobMaterialLogRepository;
+    }
+
+    public function setUserAgentInformation(UserAgentInformation $userAgentInformation)
+    {
+        $this->userAgentInformation = $userAgentInformation;
+        return $this;
     }
 
     /**
@@ -44,6 +58,18 @@ class Creator
                 'material_name' => $material['name'],
                 'material_price' => $material['price'],
                 'job_id' => $this->job->id,
+            ]);
+            $this->jobMaterialLogRepository->create([
+                'job_id' => $this->job->id,
+                'log' => 'Job Material added at ' . Carbon::now()->toDateTimeString(),
+                'portal_name' => $this->userAgentInformation->getPortalName(),
+                'ip' => $this->userAgentInformation->getIp(),
+                'user_agent' => $this->userAgentInformation->getUserAgent(),
+                'created_by_type' => get_class(new Resource()),
+                'new_data' => json_encode([
+                    'material_name' => $material['name'],
+                    'material_price' => $material['price']
+                ])
             ]);
         }
     }

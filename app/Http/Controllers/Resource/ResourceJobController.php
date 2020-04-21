@@ -3,7 +3,6 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\Job;
-use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Authentication\AuthUser;
@@ -14,7 +13,7 @@ use Sheba\Resource\Jobs\Collection\CollectMoney;
 use Sheba\Resource\Jobs\JobInfo;
 use Sheba\Resource\Jobs\JobList;
 use Sheba\Resource\Jobs\Reschedule\Reschedule;
-use Sheba\Resource\Jobs\ServiceUpdateRequest;
+use Sheba\Resource\Jobs\Service\ServiceUpdateRequest;
 use Sheba\Resource\Jobs\Updater\StatusUpdater;
 use Sheba\Resource\Schedule\Extend\ExtendTime;
 use Sheba\Resource\Service\ServiceList;
@@ -168,16 +167,22 @@ class ResourceJobController extends Controller
         }
     }
 
-    public function updateService(Job $job, Request $request, ServiceUpdateRequest $updateRequest)
+    public function updateService(Job $job, Request $request, ServiceUpdateRequest $updateRequest, UserAgentInformation $user_agent_information)
     {
         $this->validate($request, ['services' => 'string', 'quantity' => 'string', 'materials' => 'string']);
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
         $resource = $auth_user->getResource();
         $this->setModifier($resource);
+        $user_agent_information->setRequest($request);
+        $services = json_decode($request->services, 1);
+        $quantity = json_decode($request->quantity, 1);
+        $materials = json_decode($request->materials, 1);
         if ($resource->id !== $job->resource_id) return api_response($request, $job, 403, ["message" => "You're not authorized to access this job."]);
-        $updateRequest->setMaterials(json_decode($request->materials, 1))->setServices(json_decode($request->services, 1))->setJob($job)
-            ->setQuantity(json_decode($request->quantity,1))->update();
-        return api_response($request, null, 200);
+        if (count($services) > 0) $updateRequest->setServices($services);
+        if (count($materials) > 0) $updateRequest->setMaterials($materials);
+        if (count($quantity) > 0) $updateRequest->setQuantity($quantity);
+        $response = $updateRequest->setJob($job)->setUserAgentInformation($user_agent_information)->update();
+        return api_response($request, null, $response->getCode(), ['message' => $response->getMessage()]);
     }
 }

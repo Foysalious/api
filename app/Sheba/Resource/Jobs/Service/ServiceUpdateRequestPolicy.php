@@ -14,6 +14,7 @@ class ServiceUpdateRequestPolicy
     private $job;
     /** @var Partner */
     private $partner;
+    private $errorMessage;
 
     /**
      * @param Partner $partner
@@ -35,11 +36,47 @@ class ServiceUpdateRequestPolicy
         return $this;
     }
 
+    /**
+     * @param mixed $errorMessage
+     * @return ServiceUpdateRequestPolicy
+     */
+    private function setErrorMessage($errorMessage)
+    {
+        $this->errorMessage = $errorMessage;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getErrorMessage()
+    {
+        return $this->errorMessage;
+    }
+
     public function canUpdate()
     {
-        if (!$this->partner->hasAppropriateCreditLimit()) return 0;
-        if (!$this->hasResource()) return 0;
-        if (!$this->isAvailable()) return 0;
+        if ($this->job->isServed()) {
+            $this->setErrorMessage('Order is served');
+            return 0;
+        }
+        if ($this->job->pendingCancelRequests->count() > 0){
+            $this->setErrorMessage('Order has pending cancel request');
+            return 0;
+        }
+        if (!$this->partner->hasAppropriateCreditLimit()){
+            $this->setErrorMessage('Partner has not appropriate credit limit');
+            return 0;
+        }
+        if (!$this->hasResource()) {
+            $this->setErrorMessage('Partner has no resource for this category');
+            return 0;
+        }
+        if (!$this->isAvailable()) {
+            $this->setErrorMessage('Partner is not available');
+            return 0;
+        }
+        return 1;
     }
 
     private function hasResource()
