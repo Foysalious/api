@@ -158,6 +158,7 @@ class AutomaticEntryRepository extends BaseRepository {
         return $this;
     }
 
+
     /**
      * @return bool
      */
