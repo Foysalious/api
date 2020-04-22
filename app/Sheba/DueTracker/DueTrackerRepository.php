@@ -38,17 +38,25 @@ class DueTrackerRepository extends BaseRepository {
             ])) {
             $list = $list->where('balance_type', $request->balance_type)->values();
         }
+        if ($request->has('q') && !empty($request->q)) {
+            $query = $request->q;
+            $list  = $list->filter(function ($item) use ($query) {
+                return preg_match("/$query/i", $item['customer_name']) || preg_match("/$query/", $item['customer_mobile']);
+            })->values();
+        }
         if (!empty($order_by) && $order_by == "name") {
             $order = ($request->order == 'desc') ? 'sortByDesc' : 'sortBy';
             $list  = $list->$order('customer_name', SORT_NATURAL | SORT_FLAG_CASE)->values();
         }
+        $total = $list->count();
         if ($paginate) {
             list($offset, $limit) = calculatePagination($request);
-            $list = $list->slice($offset)->take($limit);
+            $list = $list->slice($offset)->take($limit)->values();
         }
         return [
             'list'               => $list,
             'total_transactions' => count($list),
+            'total'              => $total,
             'stats'              => $result['data']['totals'],
             'partner'            => $this->getPartnerInfo($request->partner),
         ];
@@ -192,7 +200,18 @@ class DueTrackerRepository extends BaseRepository {
         $data['updated_at']     = $request->updated_at ?: Carbon::now()->format('Y-m-d H:i:s');
 
         $response = $this->client->post("accounts/$this->accountId/entries/update/$request->entry_id", $data);
+
+        if ($data['amount_cleared'] > 1 && $response['data']['source_type'] == 'PosOrder' && !empty($response['data']['source_id']))
+            $this->createPosOrderPayment($data['amount_cleared'], $response['data']['source_id']);
+
         return $response['data'];
+    }
+
+    private function createPosOrderPayment($amount_cleared, $pos_order_id) {
+        $payment_data['pos_order_id'] = $pos_order_id;
+        $payment_data['amount']       = $amount_cleared;
+        $payment_data['method']       = 'cod';
+        $this->paymentCreator->credit($payment_data);
     }
 
     private function createStoreData(Request $request) {
@@ -211,7 +230,7 @@ class DueTrackerRepository extends BaseRepository {
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $key => $file) {
                 if (!empty($file)) {
-                    list($file, $filename) = $this->makeAttachment($file, '_'.getFileName($file).'_attachments');
+                    list($file, $filename) = $this->makeAttachment($file, '_' . getFileName($file) . '_attachments');
                     $attachments[] = $this->saveFileToCDN($file, getDueTrackerAttachmentsFolder(), $filename);
                 }
             }
@@ -226,7 +245,7 @@ class DueTrackerRepository extends BaseRepository {
     private function updateAttachments(Request $request) {
         $attachments = [];
         foreach ($request->file('attachments') as $key => $file) {
-            list($file, $filename) = $this->makeAttachment($file, '_'.getFileName($file).'_attachments');
+            list($file, $filename) = $this->makeAttachment($file, '_' . getFileName($file) . '_attachments');
             $attachments[] = $this->saveFileToCDN($file, getDueTrackerAttachmentsFolder(), $filename);;
         }
 
@@ -364,7 +383,7 @@ class DueTrackerRepository extends BaseRepository {
         if ($request->type == 'due') {
             $data['payment_link'] = $request->payment_link;
         }
-        return dispatch((new SendToCustomerToInformDueDepositSMS($data)));
+        return dispatch((new SendToCustomerToInformDueDepositSMS($request->partner, $data)));
     }
 
     /**

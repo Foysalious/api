@@ -1,5 +1,6 @@
 <?php namespace Sheba\PaymentLink;
 
+use App\Models\PosCustomer;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
 
@@ -20,6 +21,7 @@ class Creator {
     private $emiMonth;
     private $payerId;
     private $payerType;
+
 
 
     /**
@@ -149,13 +151,38 @@ class Creator {
     }
 
     public function getPaymentLinkData() {
-        return [
+        $payer     = null;
+        $payerInfo = $this->getPayerInfo();
+        return array_merge([
             'link_id' => $this->paymentLinkCreated->linkId,
             'reason'  => $this->paymentLinkCreated->reason,
             'type'    => $this->paymentLinkCreated->type,
             'status'  => $this->paymentLinkCreated->isActive == 1 ? 'active' : 'inactive',
             'amount'  => $this->paymentLinkCreated->amount,
             'link'    => $this->paymentLinkCreated->link,
-        ];
+        ], $payerInfo);
+    }
+
+    private function getPayerInfo() {
+        $payerInfo = [];
+        if ($this->paymentLinkCreated->payerId) {
+            try {
+                /** @var PosCustomer $payer */
+                $payer   = app('App\\Models\\' . pamelCase($this->paymentLinkCreated->payerType))::find($this->paymentLinkCreated->payerId);
+                $details = $payer ? $payer->details() : null;
+                if ($details) {
+                    $payerInfo = [
+                        'payer' => [
+                            'id'     => $details['id'],
+                            'name'   => $details['name'],
+                            'mobile' => $details['mobile']
+                        ]
+                    ];
+                }
+            } catch (\Throwable $e) {
+                app('sentry')->captureException($e);
+            }
+        }
+        return $payerInfo;
     }
 }

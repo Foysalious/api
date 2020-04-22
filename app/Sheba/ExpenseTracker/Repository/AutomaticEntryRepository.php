@@ -25,15 +25,6 @@ class AutomaticEntryRepository extends BaseRepository {
     private $paymentId;
 
     /**
-     * @param mixed $emiMonth
-     * @return AutomaticEntryRepository
-     */
-    public function setEmiMonth($emiMonth) {
-        $this->emiMonth = $emiMonth;
-        return $this;
-    }
-
-    /**
      * @param mixed $paymentMethod
      * @return AutomaticEntryRepository
      */
@@ -160,6 +151,15 @@ class AutomaticEntryRepository extends BaseRepository {
 
 
     /**
+     * @param mixed $emiMonth
+     * @return AutomaticEntryRepository
+     */
+    public function setEmiMonth($emiMonth) {
+        $this->emiMonth = $emiMonth;
+        return $this;
+    }
+
+    /**
      * @return bool
      */
     public function store() {
@@ -216,6 +216,30 @@ class AutomaticEntryRepository extends BaseRepository {
                 throw new Exception('Source Type or Source id is not present');
             $this->result = $this->client->post('accounts/' . $this->accountId . '/entries/from-type', $data)['data'];
             return $this->result;
+        } catch (Throwable $e) {
+            $this->notifyBug($e);
+            return false;
+        }
+    }
+
+    /**
+     * @return bool|mixed
+     */
+    public function updatePartyFromSource()
+    {
+        try{
+            $data = [
+                'source_type'    => $this->sourceType,
+                'source_id'      => $this->sourceId,
+                'type'           => $this->for,
+                'profile_id'     => $this->profileId
+            ];
+            if (empty($data['source_type']) || empty($data['source_id']))
+                throw new Exception('Source Type or Source id is not present');
+
+            $this->result = $this->client->post('accounts/' . $this->accountId . '/entries/update-party/from-type', $data)['data'];
+            return $this->result;
+
         } catch (Throwable $e) {
             $this->notifyBug($e);
             return false;
