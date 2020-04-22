@@ -1,10 +1,10 @@
 <?php namespace Sheba\PaymentLink;
 
+use App\Models\PosCustomer;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
 
-class Creator
-{
+class Creator {
     private $paymentLinkRepo;
     private $amount;
     private $reason;
@@ -19,74 +19,65 @@ class Creator
     private $data;
     private $paymentLinkCreated;
     private $emiMonth;
+    private $payerId;
+    private $payerType;
 
     /**
      * Creator constructor.
      * @param PaymentLinkRepositoryInterface $payment_link_repository
      */
-    public function __construct(PaymentLinkRepositoryInterface $payment_link_repository)
-    {
+    public function __construct(PaymentLinkRepositoryInterface $payment_link_repository) {
         $this->paymentLinkRepo = $payment_link_repository;
         $this->isDefault       = 0;
         $this->amount          = null;
     }
 
-    public function setAmount($amount)
-    {
+    public function setAmount($amount) {
         $this->amount = $amount;
         return $this;
     }
 
-    public function setReason($reason)
-    {
+    public function setReason($reason) {
         $this->reason = $reason;
         return $this;
     }
 
-    public function setUserId($user_id)
-    {
+    public function setUserId($user_id) {
         $this->userId = $user_id;
         return $this;
     }
 
-    public function setUserName($user_name)
-    {
+    public function setUserName($user_name) {
         $this->userName = $user_name;
         return $this;
     }
 
-    public function setUserType($user_type)
-    {
+    public function setUserType($user_type) {
         $this->userType = $user_type;
         return $this;
     }
 
-    public function setIsDefault($is_default)
-    {
+    public function setIsDefault($is_default) {
         $this->isDefault = $is_default;
         return $this;
     }
 
-    public function setStatus($status)
-    {
+    public function setStatus($status) {
         $this->status = $status;
         return $this;
     }
 
-    public function setPaymentLinkId($link_id)
-    {
+    public function setPaymentLinkId($link_id) {
         $this->linkId = $link_id;
         return $this;
     }
 
-    public function setTargetId($target_id)
-    {
+    public function setTargetId($target_id) {
         $this->targetId = $target_id;
         return $this;
     }
 
-    public function setTargetType($target_type)
-    {
+    public function setTargetType($target_type) {
         $this->targetType = $target_type;
         return $this;
     }
@@ -95,17 +86,31 @@ class Creator
      * @param $emi_month
      * @return $this
      */
-    public function setEmiMonth($emi_month)
-    {
+    public function setEmiMonth($emi_month) {
         $this->emiMonth = $emi_month;
+        return $this;
+    }
+     /** @param mixed $payerId
+     * @return Creator
+     */
+    public function setPayerId($payerId) {
+        $this->payerId = $payerId;
+        return $this;
+    }
+
+    /**
+     * @param mixed $payerType
+     * @return Creator
+     */
+    public function setPayerType($payerType) {
+        $this->payerType = $payerType;
         return $this;
     }
 
     /**
      * @method PaymentLinkRepository statusUpdate
      */
-    public function editStatus()
-    {
+    public function editStatus() {
         if ($this->status == 'active') {
             $this->status = 1;
         } else {
@@ -115,15 +120,13 @@ class Creator
     }
 
 
-    public function save()
-    {
+    public function save() {
         $this->makeData();
         $this->paymentLinkCreated = $this->paymentLinkRepo->create($this->data);
         return $this->paymentLinkCreated;
     }
 
-    private function makeData()
-    {
+    private function makeData() {
         $this->data = [
             'amount'     => $this->amount,
             'reason'     => $this->reason,
@@ -133,6 +136,8 @@ class Creator
             'userType'   => $this->userType,
             'targetId'   => (int)$this->targetId,
             'targetType' => $this->targetType,
+            'payerId'    => $this->payerId,
+            'payerType'  => $this->payerType,
         ];
         if(!is_null($this->emiMonth))
             $this->data['emi_month'] = $this->emiMonth;
@@ -142,15 +147,39 @@ class Creator
             unset($this->data['targetId'], $this->data['targetType']);
     }
 
-    public function getPaymentLinkData()
-    {
-        return [
+    public function getPaymentLinkData() {
+        $payer     = null;
+        $payerInfo = $this->getPayerInfo();
+        return array_merge([
             'link_id' => $this->paymentLinkCreated->linkId,
             'reason'  => $this->paymentLinkCreated->reason,
             'type'    => $this->paymentLinkCreated->type,
             'status'  => $this->paymentLinkCreated->isActive == 1 ? 'active' : 'inactive',
             'amount'  => $this->paymentLinkCreated->amount,
             'link'    => $this->paymentLinkCreated->link,
-        ];
+        ], $payerInfo);
+    }
+
+    private function getPayerInfo() {
+        $payerInfo = [];
+        if ($this->paymentLinkCreated->payerId) {
+            try {
+                /** @var PosCustomer $payer */
+                $payer   = app('App\\Models\\' . pamelCase($this->paymentLinkCreated->payerType))::find($this->paymentLinkCreated->payerId);
+                $details = $payer ? $payer->details() : null;
+                if ($details) {
+                    $payerInfo = [
+                        'payer' => [
+                            'id'     => $details['id'],
+                            'name'   => $details['name'],
+                            'mobile' => $details['mobile']
+                        ]
+                    ];
+                }
+            } catch (\Throwable $e) {
+                app('sentry')->captureException($e);
+            }
+        }
+        return $payerInfo;
     }
 }

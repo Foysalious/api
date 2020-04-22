@@ -10,8 +10,7 @@ use Sheba\ExpenseTracker\Exceptions\InvalidHeadException;
 use Sheba\RequestIdentification;
 use Throwable;
 
-class AutomaticEntryRepository extends BaseRepository
-{
+class AutomaticEntryRepository extends BaseRepository {
     private $head;
     private $amount;
     private $result;
@@ -22,12 +21,32 @@ class AutomaticEntryRepository extends BaseRepository
     private $sourceId;
     private $createdAt;
     private $emiMonth;
+    private $paymentMethod;
+    private $paymentId;
+    
+    /**
+     * @param mixed $paymentMethod
+     * @return AutomaticEntryRepository
+     */
+    public function setPaymentMethod($paymentMethod) {
+        $this->paymentMethod = $paymentMethod;
+        return $this;
+    }
+
+    /**
+     * @param mixed $paymentId
+     * @return AutomaticEntryRepository
+     */
+    public function setPaymentId($paymentId) {
+        $this->paymentId = $paymentId;
+        return $this;
+    }
+
     /**
      * @param mixed $source_type
      * @return AutomaticEntryRepository
      */
-    public function setSourceType($source_type)
-    {
+    public function setSourceType($source_type) {
         $this->sourceType = $source_type;
         return $this;
     }
@@ -36,8 +55,7 @@ class AutomaticEntryRepository extends BaseRepository
      * @param mixed $source_id
      * @return AutomaticEntryRepository
      */
-    public function setSourceId($source_id)
-    {
+    public function setSourceId($source_id) {
         $this->sourceId = $source_id;
         return $this;
     }
@@ -46,8 +64,7 @@ class AutomaticEntryRepository extends BaseRepository
      * @param mixed $for
      * @return AutomaticEntryRepository
      */
-    public function setFor($for)
-    {
+    public function setFor($for) {
         $this->for = $for;
         return $this;
     }
@@ -56,8 +73,7 @@ class AutomaticEntryRepository extends BaseRepository
      * @param Profile $profile
      * @return AutomaticEntryRepository
      */
-    public function setParty(Profile $profile)
-    {
+    public function setParty(Profile $profile) {
         $this->profileId = $profile->id;
         return $this;
     }
@@ -66,8 +82,7 @@ class AutomaticEntryRepository extends BaseRepository
      * @param mixed $result
      * @return AutomaticEntryRepository
      */
-    public function setResult($result)
-    {
+    public function setResult($result) {
         $this->result = $result;
         return $this;
     }
@@ -76,8 +91,7 @@ class AutomaticEntryRepository extends BaseRepository
      * @param mixed $amount
      * @return AutomaticEntryRepository
      */
-    public function setAmount($amount)
-    {
+    public function setAmount($amount) {
         $this->amount = $amount;
         return $this;
     }
@@ -86,8 +100,7 @@ class AutomaticEntryRepository extends BaseRepository
      * @param $head
      * @return AutomaticEntryRepository
      */
-    public function setHead($head)
-    {
+    public function setHead($head) {
         try {
             $this->validateHead($head);
             $this->head = $head;
@@ -102,16 +115,14 @@ class AutomaticEntryRepository extends BaseRepository
      * @param $head
      * @throws InvalidHeadException
      */
-    private function validateHead($head)
-    {
+    private function validateHead($head) {
         if (!in_array($head, AutomaticIncomes::heads()) && !in_array($head, AutomaticExpense::heads()))
             throw new InvalidHeadException();
         if (in_array($head, AutomaticExpense::heads()))
             $this->for = EntryType::EXPENSE; else $this->for = EntryType::INCOME;
     }
 
-    private function notifyBug(Throwable $e)
-    {
+    private function notifyBug(Throwable $e) {
         app('sentry')->captureException($e);
     }
 
@@ -119,8 +130,7 @@ class AutomaticEntryRepository extends BaseRepository
      * @param Carbon $created_at
      * @return $this
      */
-    public function setCreatedAt(Carbon $created_at)
-    {
+    public function setCreatedAt(Carbon $created_at) {
         try {
             $this->createdAt = $created_at->format('Y-m-d H:s:i');
             return $this;
@@ -134,8 +144,7 @@ class AutomaticEntryRepository extends BaseRepository
      * @param mixed $amount_cleared
      * @return AutomaticEntryRepository
      */
-    public function setAmountCleared($amount_cleared)
-    {
+    public function setAmountCleared($amount_cleared) {
         $this->amountCleared = $amount_cleared;
         return $this;
     }
@@ -154,8 +163,7 @@ class AutomaticEntryRepository extends BaseRepository
     /**
      * @return bool
      */
-    public function store()
-    {
+    public function store() {
         try {
             $data = $this->getData();
             if (empty($data['head_name']))
@@ -172,12 +180,11 @@ class AutomaticEntryRepository extends BaseRepository
      * @return mixed
      * @throws Exception
      */
-    private function getData()
-    {
+    private function getData() {
         $created_from               = $this->withBothModificationFields((new RequestIdentification())->get());
         $created_from['created_at'] = $created_from['created_at']->format('Y-m-d H:s:i');
         $created_from['updated_at'] = $created_from['updated_at']->format('Y-m-d H:s:i');
-        $data = [
+        $data                       = [
             'created_at'     => $this->createdAt ?: Carbon::now()->format('Y-m-d H:s:i'),
             'created_from'   => json_encode($created_from),
             'amount'         => $this->amount,
@@ -186,7 +193,10 @@ class AutomaticEntryRepository extends BaseRepository
             'note'           => 'Automatically Placed from Sheba',
             'source_type'    => $this->sourceType,
             'source_id'      => $this->sourceId,
-            'type'           => $this->for
+            'type'           => $this->for,
+            'payment_method' => $this->paymentMethod,
+            'payment_id'     => $this->paymentId,
+            'emi_month'      => $this->emiMonth
         ];
         if (empty($data['amount']))
             $data['amount'] = 0;
@@ -199,12 +209,10 @@ class AutomaticEntryRepository extends BaseRepository
         return $data;
     }
 
-    public function update()
-    {
+    public function update() {
     }
 
-    public function updateFromSrc()
-    {
+    public function updateFromSrc() {
         try {
             $data = $this->getData();
             if (empty($data['source_type']) || empty($data['source_id']))
@@ -217,8 +225,7 @@ class AutomaticEntryRepository extends BaseRepository
         }
     }
 
-    public function deduct()
-    {
+    public function deduct() {
         try {
             $data = $this->getData();
             if (empty($data['source_type']) || empty($data['source_id']))
@@ -230,8 +237,7 @@ class AutomaticEntryRepository extends BaseRepository
         }
     }
 
-    public function delete()
-    {
+    public function delete() {
         try {
             $data = $this->getData();
             if (empty($data['source_type']) || empty($data['source_id']))
