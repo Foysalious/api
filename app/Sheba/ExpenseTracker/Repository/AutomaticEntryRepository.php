@@ -25,15 +25,6 @@ class AutomaticEntryRepository extends BaseRepository {
     private $paymentId;
 
     /**
-     * @param mixed $emiMonth
-     * @return AutomaticEntryRepository
-     */
-    public function setEmiMonth($emiMonth) {
-        $this->emiMonth = $emiMonth;
-        return $this;
-    }
-
-    /**
      * @param mixed $paymentMethod
      * @return AutomaticEntryRepository
      */
@@ -158,6 +149,14 @@ class AutomaticEntryRepository extends BaseRepository {
         return $this;
     }
 
+    /**
+     * @param mixed $emiMonth
+     * @return AutomaticEntryRepository
+     */
+    public function setEmiMonth($emiMonth) {
+        $this->emiMonth = $emiMonth;
+        return $this;
+    }
 
     /**
      * @return bool
