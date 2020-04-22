@@ -135,7 +135,6 @@ class ResourceJobController extends Controller
 
     public function getServices(Job $job, Request $request, ServiceList $serviceList)
     {
-        // TODO: Check Partner Option Availability
         $services = $serviceList->setJob($job)->getServicesList();
         return api_response($request, null, 200, ['services' => $services]);
 

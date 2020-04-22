@@ -34,6 +34,7 @@ class ServiceList
                 removeRelationsAndFields($service);
             });
         }
+        $services = $this->filterExistingServicesAndOptions($services);
         return $services;
     }
 
@@ -78,5 +79,40 @@ class ServiceList
         $answers_with_index['answers'] = $answers;
         $answers_with_index['answers_index'] = $answers_index;
         return $answers_with_index;
+    }
+
+    private function filterExistingServicesAndOptions($services)
+    {
+        $services = $services->filter(function ($service) {
+            if ($service->variable_type == 'Fixed') {
+                $jobService = $this->job->jobServices()->where('service_id',$service->id)->first();
+                if (count($jobService) > 0) {
+                    return $service->id !== $jobService->service_id;
+                }
+                else {
+                    return $service;
+                }
+            }
+            else {
+                $jobServices = $this->job->jobServices()->where('service_id', $service->id)->get()->toArray();
+                if (count($jobServices) > 0) {
+                    foreach ($jobServices as $jobService) {
+                        $existing_options = json_decode($jobService['option']);
+                        foreach ($existing_options as $key => $existing_option) {
+                            if (in_array($existing_option, $service->questions[$key]['answers_index']->toArray())) {
+                                $index_to_remove = array_search($existing_option, $service->questions[$key]['answers_index']->toArray(),true);
+                                $service->questions[$key]['answers_index']->forget($index_to_remove);
+                                $service->questions[$key]['answers']->forget($index_to_remove);
+                            }
+                        }
+                    }
+                    return $service;
+                }
+                else {
+                    return $service;
+                }
+            }
+        })->values();
+        return $services;
     }
 }
