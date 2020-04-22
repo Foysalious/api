@@ -12,7 +12,7 @@ class ServicePricingController extends Controller
         $this->validate($request, [
             'services' => 'required|string', 'lat' => 'required|numeric', 'lng' => 'required|numeric',
         ]);
-        if ($request->services == '[]')  return api_response($request, null, 403, ['message' => 'You need to add a service']);
+        if (empty(json_decode($request->services)))  return api_response($request, null, 403, ['message' => 'Your request is invalid' ]);
         $price = $servicePriceCalculation->setLocation($request->lat, $request->lng)->setServices($request->services)->getCalculatedPrice();
         return api_response($request, $price, 200, ['service_pricing' => $price]);
     }
