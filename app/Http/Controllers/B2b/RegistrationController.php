@@ -10,6 +10,7 @@ use App\Models\Profile;
 use JWTAuth;
 use JWTFactory;
 use Session;
+use DB;
 
 class RegistrationController extends Controller
 {
@@ -39,8 +40,8 @@ class RegistrationController extends Controller
                     'email' => $request->email,
                     'password' => bcrypt($request->password)
                 ];
+                DB::beginTransaction();
                 $profile = $this->profileRepository->store($data);
-
                 $member = $this->makeMember($profile);
                 $businesses = $member->businesses->first();
                 $info = [
@@ -48,6 +49,7 @@ class RegistrationController extends Controller
                     'member_id' => $member->id,
                     'business_id' => $businesses ? $businesses->id : null,
                 ];
+                DB::commit();
                 return api_response($request, $info, 200, ['info' => $info]);
             }
         } catch (ValidationException $e) {
@@ -57,6 +59,7 @@ class RegistrationController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            DB::rollback();
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
