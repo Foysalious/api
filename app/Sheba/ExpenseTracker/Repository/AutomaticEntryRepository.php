@@ -148,7 +148,7 @@ class AutomaticEntryRepository extends BaseRepository {
         $this->amountCleared = $amount_cleared;
         return $this;
     }
-    
+
     /**
      * @param mixed $emiMonth
      * @return AutomaticEntryRepository
