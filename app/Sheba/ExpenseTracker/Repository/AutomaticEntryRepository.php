@@ -223,6 +223,30 @@ class AutomaticEntryRepository extends BaseRepository {
         }
     }
 
+    /**
+     * @return bool|mixed
+     */
+    public function updatePartyFromSource()
+    {
+        try{
+            $data = [
+                'source_type'    => $this->sourceType,
+                'source_id'      => $this->sourceId,
+                'type'           => $this->for,
+                'profile_id'     => $this->profileId
+            ];
+            if (empty($data['source_type']) || empty($data['source_id']))
+                throw new Exception('Source Type or Source id is not present');
+
+            $this->result = $this->client->post('accounts/' . $this->accountId . '/entries/update-party/from-type', $data)['data'];
+            return $this->result;
+
+        } catch (Throwable $e) {
+            $this->notifyBug($e);
+            return false;
+        }
+    }
+
     public function deduct() {
         try {
             $data = $this->getData();
