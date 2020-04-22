@@ -122,10 +122,8 @@ class Creator
             ];
             if (!$this->order->hasVoucher()) {
                 $this->discountCalculation->setLocationService($location_service)->setOriginalPrice($total_original_price)->setQuantity($selected_service->getQuantity())->calculate();
-                $service_data = +[
-                    'discount' => $this->discountCalculation->getJobServiceDiscount(),
-                    'discount_percentage' => $this->discountCalculation->getIsDiscountPercentage() ? $this->discountCalculation->getDiscount() : 0,
-                ];
+                $service_data['discount'] = $this->discountCalculation->getJobServiceDiscount();
+                $service_data['discount_percentage'] = $this->discountCalculation->getIsDiscountPercentage() ? $this->discountCalculation->getDiscount() : 0;
             }
             list($service_data['option'], $service_data['variables']) = $service->getVariableAndOption($selected_service->getOption());
             $this->jobServiceRepository->create($service_data);
