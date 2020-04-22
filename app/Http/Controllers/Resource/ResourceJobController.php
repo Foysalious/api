@@ -186,7 +186,7 @@ class ResourceJobController extends Controller
             $response = $updateRequest->setJob($job)->setUserAgentInformation($user_agent_information)->update();
             return api_response($request, null, $response->getCode(), ['message' => $response->getMessage()]);
         } catch (\Throwable $e) {
-            return api_response($response, 500, ['message' => 'আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন']);
+            return api_response($request, null, 500, ['message' => 'আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন']);
         }
     }
 }
