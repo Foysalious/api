@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\PosCustomer;
+use App\Models\PosOrder;
 use App\Transformers\PaymentDetailTransformer;
 use App\Transformers\PaymentLinkArrayTransform;
 use Carbon\Carbon;
@@ -10,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
+use mysql_xdevapi\Exception;
 use Sheba\ModificationFields;
 use Sheba\PaymentLink\Creator;
 use Sheba\PaymentLink\PaymentLinkClient;
@@ -92,10 +94,20 @@ class PaymentLinkController extends Controller {
     public function store(Request $request) {
         try {
             $this->validate($request, [
-                'amount'  => 'required',
-                'purpose' => 'required',
+                'amount'      => 'required',
+                'purpose'     => 'required',
+                'customer_id' => 'sometimes|integer|exists:pos_customers,id',
+                'emi_month'   => 'sometimes|integer|in:' . implode(',', config('emi.valid_months'))
             ]);
-            $this->creator->setIsDefault($request->isDefault)->setAmount($request->amount)->setReason($request->purpose)->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type)->setTargetId($request->pos_order_id)->setTargetType('pos_order');
+            if ($request->has('emi_month') && (double)$request->amount < config('emi.minimum_emi_amount')) return api_response($request, null, 400, ['message' => 'Amount must be greater then or equal BDT ' . config('emi.minimum_emi_amount')]);
+            $this->creator->setIsDefault($request->isDefault)->setAmount($request->amount)->setReason($request->purpose)
+                ->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type)->setTargetId($request->pos_order_id)
+                ->setTargetType('pos_order');
+            if ($request->has('emi_month')) $this->creator->setEmiMonth((int)$request->emi_month);
+            if ($request->has('customer_id')) {
+                $customer = PosCustomer::find($request->customer_id);
+                if (!empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
+            }
             $payment_link_store = $this->creator->save();
             if ($payment_link_store) {
                 $payment_link = $this->creator->getPaymentLinkData();
@@ -116,7 +128,8 @@ class PaymentLinkController extends Controller {
         try {
             $this->validate($request, [
                 'amount'      => 'required',
-                'customer_id' => 'sometimes|integer|exists:pos_customers,id'
+                'customer_id' => 'sometimes|integer|exists:pos_customers,id',
+                'emi_month'   => 'sometimes|integer|in:' . implode(',', config('emi.valid_months'))
             ]);
             $purpose = 'Due Collection';
             if ($request->has('customer_id')) $customer = PosCustomer::find($request->customer_id);

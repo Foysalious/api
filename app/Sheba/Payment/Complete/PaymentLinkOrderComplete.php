@@ -71,7 +71,9 @@ class PaymentLinkOrderComplete extends PaymentComplete {
         $payable = $this->payment->payable;
         app(ActionRewardDispatcher::class)->run('payment_link_usage', $payment_receiver, $payment_receiver, $payable);
         /** @var AutomaticEntryRepository $entry_repo */
-        $entry_repo = app(AutomaticEntryRepository::class)->setPartner($payment_receiver)->setAmount($payable->amount)->setHead(AutomaticIncomes::PAYMENT_LINK)->setAmountCleared($payable->amount);
+        $entry_repo = app(AutomaticEntryRepository::class)->setPartner($payment_receiver)->setAmount($payable->amount)->setHead(AutomaticIncomes::PAYMENT_LINK)
+            ->setEmiMonth($payable->emi_month)->setAmountCleared($payable->amount);
+
         if ($target instanceof PosOrder) {
             $entry_repo->setCreatedAt($target->created_at);
             $entry_repo->setSourceType(class_basename($target));
@@ -145,7 +147,6 @@ class PaymentLinkOrderComplete extends PaymentComplete {
             $this->payment->update();
             return $this->payment;
         } catch (QueryException $e) {
-            dd($e);
             return null;
         }
     }

@@ -22,6 +22,7 @@ class Creator {
     private $payerId;
     private $payerType;
 
+
     /**
      * Creator constructor.
      * @param PaymentLinkRepositoryInterface $payment_link_repository
@@ -90,7 +91,10 @@ class Creator {
         $this->emiMonth = $emi_month;
         return $this;
     }
-     /** @param mixed $payerId
+
+
+    /**
+     * @param mixed $payerId
      * @return Creator
      */
     public function setPayerId($payerId) {
@@ -138,9 +142,8 @@ class Creator {
             'targetType' => $this->targetType,
             'payerId'    => $this->payerId,
             'payerType'  => $this->payerType,
+            'emiMonth'   => $this->emiMonth,
         ];
-        if(!is_null($this->emiMonth))
-            $this->data['emi_month'] = $this->emiMonth;
         if ($this->isDefault)
             unset($this->data['reason']);
         if (!$this->targetId)

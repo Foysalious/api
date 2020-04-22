@@ -207,7 +207,17 @@ class OrderController extends Controller
             $order->net_bill            = $order->getNetBill();
 
             if ($request->payment_method == 'payment_link' || $request->payment_method == 'emi') {
-                $paymentLink = $paymentLinkCreator->setAmount($order->net_bill)->setReason("PosOrder ID: $order->id Due payment")->setUserName($partner->name)->setUserId($partner->id)->setUserType('partner')->setTargetId($order->id)->setTargetType('pos_order')->setEmiMonth($request->emi_month)->save();
+                $paymentLink = $paymentLinkCreator->setAmount($order->net_bill)->setReason("PosOrder ID: $order->id Due payment")
+                    ->setUserName($partner->name)->setUserId($partner->id)
+                    ->setUserType('partner')
+                    ->setTargetId($order->id)
+                    ->setTargetType('pos_order')
+                    ->setEmiMonth($request->emi_month);
+                if ($order->customer){
+                    $paymentLink->setPayerId($order->customer->id)->setPayerType('pos_customer');
+                }
+                $paymentLink->save();
+
                 $transformer = new PaymentLinkTransformer();
                 $transformer->setResponse($paymentLink);
                 $link = ['link' => $transformer->getLink()];

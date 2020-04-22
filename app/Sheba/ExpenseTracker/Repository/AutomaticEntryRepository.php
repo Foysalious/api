@@ -148,7 +148,7 @@ class AutomaticEntryRepository extends BaseRepository {
         $this->amountCleared = $amount_cleared;
         return $this;
     }
-
+    
     /**
      * @param mixed $emiMonth
      * @return AutomaticEntryRepository
@@ -202,8 +202,6 @@ class AutomaticEntryRepository extends BaseRepository {
             $data['amount_cleared'] = $data['amount'];
         if ($this->profileId)
             $data['profile_id'] = $this->profileId;
-        if(!is_null($this->emiMonth))
-            $data['emi_month'] = $this->emiMonth;
         return $data;
     }
 
