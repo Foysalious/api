@@ -8,7 +8,7 @@ return [
     |
     */
 
-    'minimum_emi_amount' => env('MINIMUM_EMI_AMOUNT',15000),
+    'minimum_emi_amount' => env('MINIMUM_EMI_AMOUNT', 15000),
 
     /*
     |--------------------------------------------------------------------------
@@ -17,6 +17,7 @@ return [
     |
     */
 
-    'bank_fee_percentage' => env('BANK_FEE_PERCENTAGE',2.5),
+    'bank_fee_percentage' => env('BANK_FEE_PERCENTAGE', 2.5),
+    'valid_months'        => [3,6,9,12,18]
 
 ];

@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
+use mysql_xdevapi\Exception;
 use Sheba\ModificationFields;
 use Sheba\PaymentLink\Creator;
 use Sheba\PaymentLink\PaymentLinkClient;
@@ -94,12 +95,15 @@ class PaymentLinkController extends Controller {
             $this->validate($request, [
                 'amount'      => 'required',
                 'purpose'     => 'required',
-                'customer_id' => 'sometimes|integer|exists:pos_customers,id'
+                'customer_id' => 'sometimes|integer|exists:pos_customers,id',
+                'emi_month'   => 'sometimes|integer|in:' . implode(',', config('emi.valid_months'))
             ]);
+            if ($request->has('emi_month') && (double)$request->amount < config('emi.minimum_emi_amount')) return api_response($request, null, 400, ['message' => 'Amount must be greater then or equal BDT ' . config('emi.minimum_emi_amount')]);
             $this->creator->setIsDefault($request->isDefault)->setAmount($request->amount)->setReason($request->purpose)
                 ->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type)->setTargetId($request->pos_order_id)
                 ->setTargetType('pos_order');
-            if ($request->customer_id) {
+            if ($request->has('emi_month')) $this->creator->setEmiMonth((int)$request->emi_month);
+            if ($request->has('customer_id')) {
                 $customer = PosCustomer::find($request->customer_id);
                 if (!empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
             }
@@ -123,7 +127,8 @@ class PaymentLinkController extends Controller {
         try {
             $this->validate($request, [
                 'amount'      => 'required',
-                'customer_id' => 'sometimes|integer|exists:pos_customers,id'
+                'customer_id' => 'sometimes|integer|exists:pos_customers,id',
+                'emi_month'   => 'sometimes|integer|in:' . implode(',', config('emi.valid_months'))
             ]);
             $purpose = 'Due Collection';
             if ($request->has('customer_id')) $customer = PosCustomer::find($request->customer_id);
