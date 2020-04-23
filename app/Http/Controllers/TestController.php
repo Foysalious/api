@@ -8,7 +8,8 @@ use App\Jobs\SendEmailToNotifyVendorBalance;
 use App\Models\MovieTicketOrder;
 use Illuminate\Mail\Mailer;
 use Sheba\MovieTicket\Vendor\BlockBuster\BlockBuster;
-use Sheba\MovieTicket\Vendor\VendorFactory;
+use Sheba\Transport\Bus\Vendor\VendorFactory;
+//use Sheba\MovieTicket\Vendor\VendorFactory;
 use Sheba\PushNotificationHandler;
 use Sheba\Transport\Bus\ClientCalls\BdTickets as BdTicketsClientCall;
 use Sheba\Transport\Bus\Vendor\BdTickets\BdTickets;
@@ -49,7 +50,7 @@ class TestController extends  Controller
         dd('success');
 
     }
-    public function testPushNotification3(Mailer $mailer)
+    public function testPushNotification3test(Mailer $mailer)
     {
 
         (new PushNotificationHandler())->send([
@@ -65,18 +66,18 @@ class TestController extends  Controller
 
     }
 
-    public function test()
+    public function test(Mailer $mailer)
     {
         /*$mailer->send('emails.notify-vendor-balance', ['current_balance' => 100, 'vendor_name' => 'test'], function ($m)  {
            $m->from('yourEmail@domain.com', 'Sheba.xyz');
            $m->to('shovan@sheba.xyz')->subject('Low Balance for testvendor');
        });*/
-        $movie_ticket_order = MovieTicketOrder::find(1);
+       // $movie_ticket_order = MovieTicketOrder::find(1);
         $vendor = app(VendorFactory::class);
         $vendor = $vendor->getById(1);
-        $movie_ticket_order->vendor = $vendor;
-
-        dispatch(new SendEmailToNotifyVendorBalance($movie_ticket_order));
+       // $movie_ticket_order->vendor = $vendor;
+        //(new SendEmailToNotifyVendorBalance($vendor))->handle($mailer);
+        dispatch(new SendEmailToNotifyVendorBalance((new BlockBuster())));
         dd('success');
     }
 
