@@ -34,7 +34,7 @@ class ServiceList
                 removeRelationsAndFields($service);
             });
         }
-        $services = $this->filterExistingServicesAndOptions($services);
+        $services = $this->filterExistingServicesAndOptions($services); //For Now Only Fixed Services
         return $services;
     }
 
@@ -43,12 +43,10 @@ class ServiceList
         return [
             'services.id',
             'name',
-            'is_published_for_backend',
             'variable_type',
             'services.min_quantity',
+            'services.unit',
             'services.variables',
-            'is_verified',
-            'is_published',
             'app_thumb'
         ];
     }
@@ -94,23 +92,7 @@ class ServiceList
                 }
             }
             else {
-                $jobServices = $this->job->jobServices()->where('service_id', $service->id)->get()->toArray();
-                if (count($jobServices) > 0) {
-                    foreach ($jobServices as $jobService) {
-                        $existing_options = json_decode($jobService['option']);
-                        foreach ($existing_options as $key => $existing_option) {
-                            if (in_array($existing_option, $service->questions[$key]['answers_index']->toArray())) {
-                                $index_to_remove = array_search($existing_option, $service->questions[$key]['answers_index']->toArray(),true);
-                                $service->questions[$key]['answers_index']->forget($index_to_remove);
-                                $service->questions[$key]['answers']->forget($index_to_remove);
-                            }
-                        }
-                    }
-                    return $service;
-                }
-                else {
-                    return $service;
-                }
+                return $service;
             }
         })->values();
         return $services;
