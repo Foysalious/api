@@ -77,7 +77,7 @@ class TestController extends  Controller
         $vendor = $vendor->getById(1);
        // $movie_ticket_order->vendor = $vendor;
         //(new SendEmailToNotifyVendorBalance($vendor))->handle($mailer);
-        dispatch(new SendEmailToNotifyVendorBalance((new BlockBuster())));
+        dispatch(new SendEmailToNotifyVendorBalance($vendor));
         dd('success');
     }
 
