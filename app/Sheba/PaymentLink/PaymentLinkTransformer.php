@@ -51,14 +51,17 @@ class PaymentLinkTransformer {
     }
 
     public function getEmiMonth() {
-        return $this->response->emiMonth;
+        return isset($this->response->emiMonth) ? $this->response->emiMonth : null;
     }
-    public function getInterest(){
-        return $this->response->interest;
+
+    public function getInterest() {
+        return isset($this->response->interest) ? $this->response->interest : null;
     }
-    public function getBankTransactionCharge(){
-        return $this->response->bankTransactionCharge;
+
+    public function getBankTransactionCharge() {
+        return isset($this->response->bankTransactionCharge) ? $this->response->bankTransactionCharge : null;
     }
+
     /**
      * @return HasWalletTransaction
      */
