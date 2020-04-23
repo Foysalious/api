@@ -4,6 +4,7 @@ use App\Models\Payable;
 use App\Models\Payment;
 use App\Sheba\Payment\Policy\PaymentInitiate;
 use ReflectionException;
+use Sheba\Payment\Exceptions\InitiateFailedException;
 use Sheba\Payment\Factory\PaymentProcessor;
 use Sheba\Payment\Methods\PaymentMethod;
 
@@ -37,22 +38,21 @@ class ShebaPayment
     /**
      * @param $payable_type
      * @param $payable_type_id
-     * @return bool
-     * @throws Exceptions\InitiateFailedException
+     * @return bool true if can init
+     * @throws InitiateFailedException otherwise
      */
     public function canInit($payable_type, $payable_type_id)
     {
         /** @var PaymentInitiate $payment_initiate */
         $payment_initiate = app(PaymentInitiate::class);
-        $payment_initiate->setPaymentMethod($this->method)->setPayableType($payable_type)->setPayableTypeId($payable_type_id)->canPossible();
-        return true;
+        return $payment_initiate->setPaymentMethod($this->method)->setPayableType($payable_type)->setPayableTypeId($payable_type_id)->canPossible();
     }
 
 
     /**
      * @param Payable $payable
      * @return Payment
-     * @throws Exceptions\InitiateFailedException
+     * @throws InitiateFailedException otherwise
      */
     public function init(Payable $payable)
     {

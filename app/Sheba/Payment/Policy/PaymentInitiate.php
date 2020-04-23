@@ -53,18 +53,40 @@ class PaymentInitiate
     }
 
     /**
-     * @return int
-     * @throws InitiateFailedException
+     * @return bool true if possible
+     * @throws InitiateFailedException otherwise
      */
     public function canPossible()
     {
-        if ($this->paymentRepository->getOngoingPaymentsFor($this->payableType, $this->payableTypeId)->count() > 0) throw new InitiateFailedException($this->constructMessage(), 400);
-        if ($this->payableType == Types::PARTNER_ORDER && CURestriction::check(PartnerOrder::find($this->payableTypeId))) throw new InitiateFailedException('Your order is currently updating. Please try after some time.', 400);
-        return 1;
+        if ($this->hasOngoingPayment()) throw new InitiateFailedException($this->getErrorMessageForOngoingPayment(), 400);
+        if ($this->hasConcurrentUpdateRestriction()) throw new InitiateFailedException($this->getErrorMessageForConcurrentRestriction(), 400);
+        return true;
     }
 
-    private function constructMessage()
+    /**
+     * @return bool
+     */
+    private function hasOngoingPayment()
+    {
+        return $this->paymentRepository->getOngoingPaymentsFor($this->payableType, $this->payableTypeId)->count() > 0;
+    }
+
+    /**
+     * @return bool
+     */
+    private function hasConcurrentUpdateRestriction()
+    {
+        return $this->payableType == Types::PARTNER_ORDER && CURestriction::check(PartnerOrder::find($this->payableTypeId));
+    }
+
+    private function getErrorMessageForOngoingPayment()
     {
         return 'Please wait until your previous initiation of online payment expires within ' . $this->paymentMethod->getValidityInMinutes() . ' minutes.';
     }
+
+    private function getErrorMessageForConcurrentRestriction()
+    {
+        return 'Your order is currently updating. Please try after some time.';
+    }
+
 }
