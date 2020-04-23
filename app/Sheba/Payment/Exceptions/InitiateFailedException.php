@@ -1,4 +1,4 @@
-<?php namespace Sheba\Payment\Adapters\Error;
+<?php namespace Sheba\Payment\Exceptions;
 
 
 class InitiateFailedException extends \Exception

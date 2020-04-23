@@ -5,7 +5,7 @@ use App\Models\PartnerOrder;
 use Sheba\Dal\Payable\Types;
 use Sheba\Dal\Payment\PaymentRepositoryInterface;
 use Sheba\PartnerOrder\ConcurrentUpdateRestriction\ConcurrentUpdateRestriction as CURestriction;
-use Sheba\Payment\Adapters\Error\InitiateFailedException;
+use Sheba\Payment\Exceptions\InitiateFailedException;
 use Sheba\Payment\Methods\PaymentMethod;
 
 class PaymentInitiate
@@ -59,7 +59,7 @@ class PaymentInitiate
     public function canPossible()
     {
         if ($this->paymentRepository->getOngoingPaymentsFor($this->payableType, $this->payableTypeId)->count() > 0) throw new InitiateFailedException($this->constructMessage(), 400);
-        if ($this->payableType == Types::PARTNER_ORDER && CURestriction::check(PartnerOrder::find($this->payableTypeId))) throw new InitiateFailedException($this->constructMessage(), 400);
+        if ($this->payableType == Types::PARTNER_ORDER && CURestriction::check(PartnerOrder::find($this->payableTypeId))) throw new InitiateFailedException('Your order is currently updating. Please try after some time.', 400);
         return 1;
     }
 
