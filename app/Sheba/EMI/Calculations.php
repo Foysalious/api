@@ -6,7 +6,7 @@ namespace Sheba\EMI;
 
 class Calculations {
     public static function calculateEmiCharges($amount) {
-        $breakdowns = config('emi.manager.breakdowns');
+        $breakdowns = self::breakdowns();
         $emi        = [];
         foreach ($breakdowns as $item) {
             array_push($emi, self::calculateMonthWiseCharge($amount, $item['month'], $item['interest']));
@@ -14,30 +14,50 @@ class Calculations {
         return $emi;
     }
 
-    public static function calculateMonthWiseCharge($amount, $month, $interest) {
+    public static function calculateMonthWiseCharge($amount, $month, $interest, $format = true) {
         $rate                 = ($interest / 100);
-        $bank_transaction_fee = ceil($amount * (config('emi.manager.bank_fee_percentage') / 100));
-        return [
+        $bank_transaction_fee = self::getBankTransactionFee($amount);
+        return $format ? [
             "number_of_months"     => $month,
             "interest"             => "$interest%",
             "total_interest"       => number_format(ceil(($amount * $rate))),
             "bank_transaction_fee" => number_format($bank_transaction_fee),
             "amount"               => number_format(ceil((($amount + ($amount * $rate)) + $bank_transaction_fee) / $month)),
             "total_amount"         => number_format(($amount + ceil(($amount * $rate))) + $bank_transaction_fee)
+        ] : [
+            "number_of_months"     => $month,
+            "interest"             => $interest,
+            "total_interest"       => ceil(($amount * $rate)),
+            "bank_transaction_fee" => $bank_transaction_fee,
+            "amount"               => ceil((($amount + ($amount * $rate)) + $bank_transaction_fee) / $month),
+            "total_amount"         => ($amount + ceil(($amount * $rate))) + $bank_transaction_fee
         ];
     }
 
-    public static function getMonthData($amount, $month) {
-        $breakdowns = config('emi.manager.breakdowns');
-        $data       = array_values(array_filter($breakdowns, function ($item) use ($month) {
-            return $item['month'] == $month;
-        }));
+    public static function breakdowns() {
+        return config('emi.manager.breakdowns');
+    }
+
+    public static function getBankTransactionFee($amount) {
+        return ceil($amount * (config('emi.manager.bank_fee_percentage') / 100));
+    }
+
+    public static function getMonthData($amount, $month,$format=true) {
+
+        $data = self::getMonthInterest($month);
         if (!empty($data)) {
-            $data = $data[0];
-            return self::calculateMonthWiseCharge($amount, $data['month'], $data['interest']);
+            return self::calculateMonthWiseCharge($amount, $data['month'], $data['interest'],$format);
         } else {
             return [];
         }
+    }
+
+    public static function getMonthInterest($month) {
+        $breakdowns = self::breakdowns();
+        $data       = array_values(array_filter($breakdowns, function ($item) use ($month) {
+            return $item['month'] == $month;
+        }));
+        return !empty($data) ? $data[0] : [];
     }
 
     public static function BankDetails($icons_folder) {

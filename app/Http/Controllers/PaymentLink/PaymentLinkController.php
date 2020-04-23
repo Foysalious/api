@@ -12,6 +12,7 @@ use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use mysql_xdevapi\Exception;
+use Sheba\EMI\Calculations;
 use Sheba\ModificationFields;
 use Sheba\PaymentLink\Creator;
 use Sheba\PaymentLink\PaymentLinkClient;
@@ -67,6 +68,7 @@ class PaymentLinkController extends Controller {
                         'identifier'       => $link->getLinkIdentifier(),
                         'purpose'          => $link->getReason(),
                         'amount'           => $link->getAmount(),
+                        'emi_month'        => $link->getEmiMonth(),
                         'payment_receiver' => [
                             'name'  => $user->name,
                             'image' => $user->logo,
@@ -98,11 +100,14 @@ class PaymentLinkController extends Controller {
                 'customer_id' => 'sometimes|integer|exists:pos_customers,id',
                 'emi_month'   => 'sometimes|integer|in:' . implode(',', config('emi.valid_months'))
             ]);
-            if ($request->has('emi_month') && (double)$request->amount < config('emi.minimum_emi_amount')) return api_response($request, null, 400, ['message' => 'Amount must be greater then or equal BDT ' . config('emi.minimum_emi_amount')]);
+            if ($request->has('emi_month') && (double)$request->amount < config('emi.manager.minimum_emi_amount')) return api_response($request, null, 400, ['message' => 'Amount must be greater then or equal BDT ' . config('emi.manager.minimum_emi_amount')]);
             $this->creator->setIsDefault($request->isDefault)->setAmount($request->amount)->setReason($request->purpose)
                 ->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type)->setTargetId($request->pos_order_id)
                 ->setTargetType('pos_order');
-            if ($request->has('emi_month')) $this->creator->setEmiMonth((int)$request->emi_month);
+            if ($request->has('emi_month')) {
+                $data = Calculations::getMonthData($request->amount, $request->emi_month,false);
+                $this->creator->setEmiMonth((int)$request->emi_month)->setInterest($data['total_interest'])->setBankTransactionCharge($data['bank_transaction_fee'])->setAmount($data['total_amount']);
+            }
             if ($request->has('customer_id')) {
                 $customer = PosCustomer::find($request->customer_id);
                 if (!empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
