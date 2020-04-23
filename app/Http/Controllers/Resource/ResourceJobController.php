@@ -102,9 +102,9 @@ class ResourceJobController extends Controller
             $response = $reschedule_job->reschedule();
             return api_response($request, $response, $response->getCode(), ['message' => $response->getMessage()]);
         } catch (ValidationException $e) {
-            return api_response($request, null, 400, ['message' => 'আপনার শিডিউল পরিবর্তন টি সফল হয় নি।অন্য একটি দিন অথবা সময় নির্ধারিত করে পুনরায় চেষ্টা করুন।']);
+            throw new \Exception('আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন', 500);
         } catch (\Throwable $e) {
-            return api_response($request, null, 500, ['message' => 'আপনার শিডিউল পরিবর্তন টি সফল হয় নি।অন্য একটি দিন অথবা সময় নির্ধারিত করে পুনরায় চেষ্টা করুন।']);
+            throw new \Exception('আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন', 500);
         }
 
     }
@@ -117,7 +117,7 @@ class ResourceJobController extends Controller
         $resource = $auth_user->getResource();
         if ($resource->id !== $job->resource_id) return api_response($request, $job, 403, ["message" => "You're not authorized to access this job's bill."]);
         $user_agent_information->setRequest($request);
-        $collect_money->setResource($resource)->setJob($job)->setUserAgentInformation($user_agent_information)->setCollectionAmount($request->amount);
+        $collect_money->setResource($resource)->setPartnerOrder($job->partnerOrder)->setUserAgentInformation($user_agent_information)->setCollectionAmount($request->amount);
         $response = $collect_money->collect();
         return api_response($request, $response, $response->getCode(), ['message' => $response->getMessage()]);
     }
@@ -185,7 +185,7 @@ class ResourceJobController extends Controller
             $response = $updateRequest->setJob($job)->setUserAgentInformation($user_agent_information)->update();
             return api_response($request, null, $response->getCode(), ['message' => $response->getMessage()]);
         } catch (\Throwable $e) {
-            return api_response($request, null, 500, ['message' => 'আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন']);
+            throw new \Exception('আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন', 500);
         }
     }
 }
