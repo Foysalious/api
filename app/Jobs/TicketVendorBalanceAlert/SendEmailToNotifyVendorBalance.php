@@ -4,6 +4,8 @@ namespace App\Jobs;
 
 use App\Jobs\Job;
 
+use App\Jobs\TicketVendorBalanceAlert\Movie;
+use App\Jobs\TicketVendorBalanceAlert\Transport;
 use App\Models\User;
 use Illuminate\Contracts\Mail\Mailer;
 use Illuminate\Queue\SerializesModels;
@@ -18,20 +20,23 @@ class SendEmailToNotifyVendorBalance extends Job implements ShouldQueue
     const QUEUE_NAME = 'ticket_vendor_balance_alert';
 
 
-    private $vendor;
+    private $vendor_id;
     private $redisName = 'ticket_maintenance_configuration';
     private $storage;
     private $configuration;
+    private $type;
+    private $vendor;
 
     /**
      * SendEmailToNotifyVendorBalance constructor.
-     * @param $vendor
+     * @param $type
+     * @param $vendor_id
      */
-    public function __construct($vendor)
+    public function __construct($type,$vendor_id)
     {
-        $this->vendor = $vendor;
+        $this->vendor_id = $vendor_id;
+        $this->type = $type;
         $this->queue = self::QUEUE_NAME;
-        $this->connection = self::QUEUE_NAME;
     }
 
     /**
@@ -42,8 +47,9 @@ class SendEmailToNotifyVendorBalance extends Job implements ShouldQueue
      */
     public function handle(Mailer $mailer)
     {
-        $this->storage = Cache::store('redis');
         try {
+            $this->getVendor();
+            $this->storage = Cache::store('redis');
             $this->getConfiguration();
             $balance_threshold = $this->configuration['balance_threshold'];
             $balance = $this->vendor->balance();
@@ -58,9 +64,18 @@ class SendEmailToNotifyVendorBalance extends Job implements ShouldQueue
                 }
             }
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
         }
 
+    }
+
+    private function getVendor()
+    {
+        if($this->type == 'movie_ticket')
+            $this->vendor = (new Movie())->getVendor($this->vendor_id);
+        else if($this->type == 'movie_ticket')
+            $this->vendor = (new Transport())->getVendor($this->vendor_id);
     }
 
     private function notifiableUsers()
