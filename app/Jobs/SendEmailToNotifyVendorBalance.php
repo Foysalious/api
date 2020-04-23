@@ -31,6 +31,7 @@ class SendEmailToNotifyVendorBalance extends Job implements ShouldQueue
     {
         $this->vendor = $vendor;
         $this->queue = self::QUEUE_NAME;
+        $this->connection = self::QUEUE_NAME;
     }
 
     /**
