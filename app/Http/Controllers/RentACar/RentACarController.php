@@ -21,13 +21,13 @@ class RentACarController extends Controller
     {
         try {
             $this->validate($request, ['services' => 'required|string', 'lat' => 'required|numeric', 'lng' => 'required|numeric']);
-            $hyper_local = HyperLocal::insidePolygon($request->lat, $request->lng)->with('location')->first();
             $services = json_decode($request->services, 1);
-            if (!$services) return api_response($request, null, 400, ['message' => 'Service input is not ok.']);
             /** @var ServiceRequestObject[] $services */
             $services = $service_request_object = $service_request->setServices($services)->get();
+            /** @var ServiceRequestObject $service */
             $service = $services[0];
-            $location_service = LocationService::where([['location_id', $hyper_local->location->id], ['service_id', $service->getServiceId()]])->first();
+            $location_service = LocationService::where([['location_id', $service->getHyperLocal()->location_id], ['service_id', $service->getServiceId()]])->first();
+            if ($location_service) return api_response($request, null, 400, ['message' => 'Car rental service is not available at this location']);
             $price_calculation->setLocationService($location_service)->setOption($service->getOption())->setQuantity($service->getQuantity());
             $original_price = $price_calculation->getTotalOriginalPrice();
             $discount_calculation->setLocationService($location_service)->setOriginalPrice($original_price)->calculate();
