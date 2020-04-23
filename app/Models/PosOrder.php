@@ -52,6 +52,7 @@ class PosOrder extends Model {
         $this->netBill = $this->originalTotal + round((double)$this->interest, 2) + (double)round($this->bank_transaction_charge, 2);
         $this->_calculatePaidAmount();
         $this->paid = round($this->paid ?: 0, 2);
+
         $this->due  = ($this->netBill - $this->paid) > 0 ? ($this->netBill - $this->paid) : 0;
         $this->_setPaymentStatus();
         $this->isCalculated = true;

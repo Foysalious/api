@@ -205,6 +205,8 @@ class Creator {
             ->setInterest($order->interest)
             ->setSourceId($order->id)
             ->setEmiMonth($order->emi_month)
+            ->setInterest($order->interest)
+            ->setBankTransactionCharge($order->bank_transaction_charge)
             ->store();
     }
 
