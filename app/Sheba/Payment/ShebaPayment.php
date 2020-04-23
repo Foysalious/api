@@ -2,7 +2,7 @@
 
 use App\Models\Payable;
 use App\Models\Payment;
-use App\Sheba\Payment\Policy\PaymentInitiate;
+use Sheba\Payment\Policy\PaymentInitiate;
 use ReflectionException;
 use Sheba\Payment\Exceptions\InitiateFailedException;
 use Sheba\Payment\Factory\PaymentProcessor;

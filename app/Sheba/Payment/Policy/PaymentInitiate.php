@@ -1,4 +1,4 @@
-<?php namespace App\Sheba\Payment\Policy;
+<?php namespace Sheba\Payment\Policy;
 
 
 use App\Models\PartnerOrder;
