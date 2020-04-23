@@ -2,6 +2,7 @@
 
 use App\Models\Payable;
 use App\Models\Payment;
+use App\Sheba\Payment\Policy\PaymentInitiate;
 use ReflectionException;
 use Sheba\Payment\Factory\PaymentProcessor;
 use Sheba\Payment\Methods\PaymentMethod;
@@ -32,12 +33,17 @@ class ShebaPayment
         return $this->$name;
     }
 
+
     /**
      * @param Payable $payable
-     * @return mixed
+     * @return Payment
+     * @throws Adapters\Error\InitiateFailedException
      */
     public function init(Payable $payable)
     {
+        /** @var PaymentInitiate $payment_initiate */
+        $payment_initiate = app(PaymentInitiate::class);
+        $payment_initiate->setPaymentMethod($this->method)->setPayableType($payable->type)->setPayableTypeId($payable->type_id)->canPossible();
         return $this->method->init($payable);
     }
 
