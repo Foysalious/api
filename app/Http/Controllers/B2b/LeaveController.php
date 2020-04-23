@@ -270,6 +270,11 @@ class LeaveController extends Controller
             },
             'businessMember' => function ($q) use ($time_frame) {
                 $q->with([
+                    'role' => function ($query) {
+                        $query->select('business_roles.id', 'business_department_id', 'name')->with(['businessDepartment' => function ($query) {
+                            $query->select('business_departments.id', 'business_id', 'name');
+                        }]);
+                    },
                     'leaves' => function ($q) use ($time_frame) {
                         $q->accepted()->between($time_frame)->with([
                             'leaveType' => function ($query) {
