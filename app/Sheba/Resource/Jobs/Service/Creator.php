@@ -99,7 +99,7 @@ class Creator
     {
         /** @var ServiceRequestObject $selected_service */
         foreach ($this->services as $selected_service) {
-            if ($this->policy->existInJob($selected_service)) throw new ServiceExistsInOrderException('Service already added', 400);
+            if ($this->policy->existInJob($selected_service)) throw new ServiceExistsInOrderException('আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন', 400);
             $service = $selected_service->getService();
             $location_service = LocationService::where([['service_id', $service->id], ['location_id', $this->order->deliveryAddress->location_id]])->first();
             $this->priceCalculation->setService($service)->setLocationService($location_service)->setOption($selected_service->getOption())->setQuantity($selected_service->getQuantity());
