@@ -25,6 +25,7 @@ use Sheba\CancelRequest\CancelRequestStatuses;
 use Sheba\Checkout\DeliveryCharge;
 use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Dal\JobService\JobService;
+use Sheba\Dal\Payable\Types;
 use Sheba\JobDiscount\JobDiscountHandler;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\LocationService\UpsellCalculation;
@@ -544,15 +545,13 @@ class JobController extends Controller
         }
     }
 
-    public function clearBills($customer, $job, ShebaPaymentValidator $payment_validator, Request $request, ShebaPayment $payment, OrderAdapter $order_adapter)
+    public function clearBills($customer, $job, Request $request, ShebaPayment $payment, OrderAdapter $order_adapter)
     {
         $this->validate($request, [
             'payment_method' => 'sometimes|required|in:online,wallet,bkash,cbl,partner_wallet',
             'emi_month' => 'numeric'
         ]);
         $payment_method = $request->has('payment_method') ? $request->payment_method : 'online';
-        $payment_validator->setPayableType('partner_order')->setPayableTypeId($request->job->partnerOrder->id)->setPaymentMethod($payment_method);
-        if (!$payment_validator->canInitiatePayment()) return api_response($request, null, 500, ['message' => "Can't send multiple requests within 1 minute."]);
         $order_adapter->setPartnerOrder($request->job->partnerOrder)->setPaymentMethod($payment_method)->setEmiMonth($request->emi_month);
         $payment = $payment->setMethod($payment_method)->init($order_adapter->getPayable());
         return api_response($request, $payment, 200, ['link' => $payment->redirect_url, 'payment' => $payment->getFormattedPayment()]);
