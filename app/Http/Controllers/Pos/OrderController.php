@@ -173,7 +173,8 @@ class OrderController extends Controller
                 'discount'          => 'numeric',
                 'is_percentage'     => 'numeric',
                 'previous_order_id' => 'numeric',
-                'emi_month'         =>'required_if:payment_method,emi|numeric'
+                'emi_month'         =>'required_if:payment_method,emi|numeric',
+                'amount_without_charge' => 'required_if:payment_method,emi|min:' . config('pos.minimum_order_amount_for_emi')
             ]);
             $link = null;
             if ($request->manager_resource) {
