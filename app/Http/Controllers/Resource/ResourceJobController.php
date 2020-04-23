@@ -117,7 +117,7 @@ class ResourceJobController extends Controller
         $resource = $auth_user->getResource();
         if ($resource->id !== $job->resource_id) return api_response($request, $job, 403, ["message" => "You're not authorized to access this job's bill."]);
         $user_agent_information->setRequest($request);
-        $collect_money->setResource($resource)->setJob($job)->setUserAgentInformation($user_agent_information)->setCollectionAmount($request->amount);
+        $collect_money->setResource($resource)->setPartnerOrder($job->partnerOrder)->setUserAgentInformation($user_agent_information)->setCollectionAmount($request->amount);
         $response = $collect_money->collect();
         return api_response($request, $response, $response->getCode(), ['message' => $response->getMessage()]);
     }

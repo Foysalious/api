@@ -2,6 +2,7 @@
 
 
 use App\Models\Job;
+use App\Models\PartnerOrder;
 use App\Models\Resource;
 use GuzzleHttp\Client;
 use Sheba\UserAgentInformation;
@@ -10,11 +11,11 @@ class CollectMoney
 {
     /** @var Resource */
     private $resource;
-    /** @var Job */
-    private $job;
     /** @var UserAgentInformation */
     private $userAgentInformation;
     private $collectionAmount;
+    /** @var PartnerOrder */
+    private $partnerOrder;
 
 
     public function setUserAgentInformation(UserAgentInformation $userAgentInformation)
@@ -24,12 +25,12 @@ class CollectMoney
     }
 
     /**
-     * @param Job $job
-     * @return $this
+     * @param PartnerOrder $partnerOrder
+     * @return CollectMoney
      */
-    public function setJob(Job $job)
+    public function setPartnerOrder($partnerOrder)
     {
-        $this->job = $job;
+        $this->partnerOrder = $partnerOrder;
         return $this;
     }
 
@@ -52,7 +53,7 @@ class CollectMoney
     public function collect()
     {
         $client = new Client();
-        $res = $client->request('POST', config('sheba.admin_url') . '/api/partner-order/' . $this->job->partner_order_id . '/collect',
+        $res = $client->request('POST', config('sheba.admin_url') . '/api/partner-order/' . $this->partnerOrder->id . '/collect',
             [
                 'form_params' => [
                     'resource_id' => $this->resource->id,
