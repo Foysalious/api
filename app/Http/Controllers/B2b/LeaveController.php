@@ -12,6 +12,7 @@ use App\Transformers\Business\LeaveBalanceDetailsTransformer;
 use App\Transformers\Business\LeaveBalanceTransformer;
 use App\Transformers\Business\LeaveRequestDetailsTransformer;
 use App\Transformers\CustomSerializer;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -259,14 +260,23 @@ class LeaveController extends Controller
         list($offset, $limit) = calculatePagination($request);
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
+        $time_frame = $business_member->getBusinessFiscalPeriod();
         /** @var Business $business */
         $business = $business_member->business;
         $leave_types = $business->leaveTypes()->withTrashed()->take(5)->select('id', 'title', 'total_days')->get()->toArray();
         $members = $business->members()->select('members.id', 'profile_id')->with([
             'profile' => function ($q) {
                 $q->select('profiles.id', 'name', 'mobile');
-            }, 'businessMember' => function ($q) {
-                $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id');
+            },
+            'businessMember' => function ($q) use ($time_frame) {
+                $q->with([
+                    'leaves' => function ($q) use ($time_frame) {
+                        $q->accepted()->between($time_frame)->with([
+                            'leaveType' => function ($query) {
+                                $query->withTrashed()->select('id', 'business_id', 'title', 'total_days', 'deleted_at');
+                            }])->select('id', 'title', 'business_member_id', 'leave_type_id', 'start_date', 'end_date', 'note', 'total_days', 'left_days', 'status');
+                    }
+                ])->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id');
             }
         ])->get();
 
@@ -278,7 +288,7 @@ class LeaveController extends Controller
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($members, new LeaveBalanceTransformer($leave_types, $time_frame));
+        $resource = new Item($members, new LeaveBalanceTransformer($leave_types));
         $leave_balances = $manager->createData($resource)->toArray()['data'];
 
         if ($request->has('sort')) {
@@ -289,7 +299,11 @@ class LeaveController extends Controller
             return $balance_excel->setBalance($leave_balances)->setLeaveType($leave_types)->get();
         }
 
-        return api_response($request, null, 200, ['leave_balances' => $leave_balances, 'total_records' => $total_records, 'leave_types' => $leave_types]);
+        return api_response($request, null, 200, [
+            'leave_balances' => $leave_balances,
+            'total_records' => $total_records,
+            'leave_types' => $leave_types
+        ]);
     }
 
     /**
