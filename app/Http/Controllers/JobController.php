@@ -544,31 +544,18 @@ class JobController extends Controller
         }
     }
 
-    public function clearBills($customer, $job, ShebaPaymentValidator $payment_validator, Request $request, ShebaPayment $payment)
+    public function clearBills($customer, $job, ShebaPaymentValidator $payment_validator, Request $request, ShebaPayment $payment, OrderAdapter $order_adapter)
     {
-        try {
-            $this->validate($request, [
-                'payment_method' => 'sometimes|required|in:online,wallet,bkash,cbl,partner_wallet',
-                'emi_month' => 'numeric'
-            ]);
-            $payment_method = $request->has('payment_method') ? $request->payment_method : 'online';
-            $payment_validator->setPayableType('partner_order')->setPayableTypeId($request->job->partnerOrder->id)->setPaymentMethod($payment_method);
-            if (!$payment_validator->canInitiatePayment()) return api_response($request, null, 500, ['message' => "Can't send multiple requests within 1 minute."]);
-            $order_adapter = new OrderAdapter($request->job->partnerOrder);
-            $order_adapter->setPaymentMethod($payment_method);
-            $order_adapter->setEmiMonth($request->emi_month);
-            $payment = $payment->setMethod($payment_method)->init($order_adapter->getPayable());
-            return api_response($request, $payment, 200, ['link' => $payment->redirect_url, 'payment' => $payment->getFormattedPayment()]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $this->validate($request, [
+            'payment_method' => 'sometimes|required|in:online,wallet,bkash,cbl,partner_wallet',
+            'emi_month' => 'numeric'
+        ]);
+        $payment_method = $request->has('payment_method') ? $request->payment_method : 'online';
+        $payment_validator->setPayableType('partner_order')->setPayableTypeId($request->job->partnerOrder->id)->setPaymentMethod($payment_method);
+        if (!$payment_validator->canInitiatePayment()) return api_response($request, null, 500, ['message' => "Can't send multiple requests within 1 minute."]);
+        $order_adapter->setPartnerOrder($request->job->partnerOrder)->setPaymentMethod($payment_method)->setEmiMonth($request->emi_month);
+        $payment = $payment->setMethod($payment_method)->init($order_adapter->getPayable());
+        return api_response($request, $payment, 200, ['link' => $payment->redirect_url, 'payment' => $payment->getFormattedPayment()]);
     }
 
     public function getOrderLogs($customer, Request $request)
