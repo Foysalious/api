@@ -52,11 +52,12 @@ class ShebaPayment
     /**
      * @param Payable $payable
      * @return Payment
-     * @throws InitiateFailedException otherwise
+     * @throws InitiateFailedException
      */
     public function init(Payable $payable)
     {
-        if ($this->canInit($payable->type, $payable->type_id)) return $this->method->init($payable);
+        $this->canInit($payable->type, $payable->type_id);
+        return $this->method->init($payable);
     }
 
     /**
