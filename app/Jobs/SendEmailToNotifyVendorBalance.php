@@ -71,7 +71,9 @@ class SendEmailToNotifyVendorBalance extends Job implements ShouldQueue
     {
         if ($this->storage->has($this->redisName)) {
             $data = $this->storage->get($this->redisName);
-
+            if(empty($data['notifiable_users'])){
+                $data['notifiable_users'] = config('ticket')['notifiable_users'];
+            }
         } else {
             $data = config('ticket');
             $this->storage->forever($this->redisName, $data);
