@@ -173,7 +173,8 @@ class OrderController extends Controller
                 'discount'          => 'numeric',
                 'is_percentage'     => 'numeric',
                 'previous_order_id' => 'numeric',
-                'emi_month'         =>'required_if:payment_method,emi|numeric'
+                'emi_month'         =>'required_if:payment_method,emi|numeric',
+                'amount_without_charge' => 'required_if:payment_method,emi|min:' . config('pos.minimum_order_amount_for_emi')
             ]);
             $link = null;
             if ($request->manager_resource) {
@@ -213,10 +214,13 @@ class OrderController extends Controller
                     ->setTargetId($order->id)
                     ->setTargetType('pos_order')
                     ->setEmiMonth($request->emi_month);
+                if ($request->payment_method=='emi'){
+                    $paymentLink->setInterest($order->interest)->setBankTransactionCharge($order->bank_transaction_charge);
+                }
                 if ($order->customer){
                     $paymentLink->setPayerId($order->customer->id)->setPayerType('pos_customer');
                 }
-                $paymentLink->save();
+                $paymentLink=$paymentLink->save();
 
                 $transformer = new PaymentLinkTransformer();
                 $transformer->setResponse($paymentLink);

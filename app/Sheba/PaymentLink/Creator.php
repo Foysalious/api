@@ -21,7 +21,8 @@ class Creator {
     private $emiMonth;
     private $payerId;
     private $payerType;
-
+    private $interest;
+    private $bankTransactionCharge;
 
     /**
      * Creator constructor.
@@ -94,6 +95,24 @@ class Creator {
 
 
     /**
+     * @param mixed $interest
+     * @return Creator
+     */
+    public function setInterest($interest) {
+        $this->interest = $interest;
+        return $this;
+    }
+
+    /**
+     * @param mixed $bankTransactionCharge
+     * @return Creator
+     */
+    public function setBankTransactionCharge($bankTransactionCharge) {
+        $this->bankTransactionCharge = $bankTransactionCharge;
+        return $this;
+    }
+
+    /**
      * @param mixed $payerId
      * @return Creator
      */
@@ -132,17 +151,19 @@ class Creator {
 
     private function makeData() {
         $this->data = [
-            'amount'     => $this->amount,
-            'reason'     => $this->reason,
-            'isDefault'  => $this->isDefault,
-            'userId'     => $this->userId,
-            'userName'   => $this->userName,
-            'userType'   => $this->userType,
-            'targetId'   => (int)$this->targetId,
-            'targetType' => $this->targetType,
-            'payerId'    => $this->payerId,
-            'payerType'  => $this->payerType,
-            'emiMonth'   => $this->emiMonth,
+            'amount'                => $this->amount,
+            'reason'                => $this->reason,
+            'isDefault'             => $this->isDefault,
+            'userId'                => $this->userId,
+            'userName'              => $this->userName,
+            'userType'              => $this->userType,
+            'targetId'              => (int)$this->targetId,
+            'targetType'            => $this->targetType,
+            'payerId'               => $this->payerId,
+            'payerType'             => $this->payerType,
+            'emiMonth'              => $this->emiMonth,
+            'interest'              => $this->interest,
+            'bankTransactionCharge' => $this->bankTransactionCharge
         ];
         if ($this->isDefault)
             unset($this->data['reason']);
@@ -154,12 +175,15 @@ class Creator {
         $payer     = null;
         $payerInfo = $this->getPayerInfo();
         return array_merge([
-            'link_id' => $this->paymentLinkCreated->linkId,
-            'reason'  => $this->paymentLinkCreated->reason,
-            'type'    => $this->paymentLinkCreated->type,
-            'status'  => $this->paymentLinkCreated->isActive == 1 ? 'active' : 'inactive',
-            'amount'  => $this->paymentLinkCreated->amount,
-            'link'    => $this->paymentLinkCreated->link,
+            'link_id'                 => $this->paymentLinkCreated->linkId,
+            'reason'                  => $this->paymentLinkCreated->reason,
+            'type'                    => $this->paymentLinkCreated->type,
+            'status'                  => $this->paymentLinkCreated->isActive == 1 ? 'active' : 'inactive',
+            'amount'                  => $this->paymentLinkCreated->amount,
+            'link'                    => $this->paymentLinkCreated->link,
+            'emi_month'               => $this->paymentLinkCreated->emiMonth,
+            'interest'                => $this->paymentLinkCreated->interest,
+            'bank_transaction_charge' => $this->paymentLinkCreated->bankTransactionCharge
         ], $payerInfo);
     }
 
