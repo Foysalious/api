@@ -52,7 +52,7 @@ class ServiceRequestObject
     {
         $this->insideCityCategoryId = config('sheba.rent_a_car')['inside_city']['category'];
         $this->outsideCityCategoryId = config('sheba.rent_a_car')['outside_city']['category'];
-        $this->googleCalculatedCarService = array_map('intval', explode(',', env('RENT_CAR_SERVICE_IDS')));
+        $this->googleCalculatedCarService = config('sheba.car_rental')['destination_fields_service_ids'];
         $this->mapClient = new MapClient();
     }
 
