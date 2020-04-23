@@ -325,7 +325,7 @@ class ServiceRequestObject
     {
         $hyper_local = HyperLocal::insidePolygon($this->pickUpGeo->getLat(), $this->pickUpGeo->getLng())->with('location')->first();
         if (!$hyper_local || !$hyper_local->location || !$hyper_local->location->isPublished()) throw new HyperLocationNotFoundException('This pickup address is out of our service area', 400);
-        return $hyper_local;
+        $this->setHyperLocal($hyper_local);
     }
 
     /**
