@@ -3,11 +3,7 @@
 
 namespace App\Http\Controllers;
 
-
-
-
-
-use App\Jobs\TicketVendorBalanceAlert\SendEmailToNotifyVendorBalance;
+use App\Jobs\SendEmailToNotifyVendorBalance;
 use App\Models\MovieTicketOrder;
 use Illuminate\Mail\Mailer;
 use Sheba\MovieTicket\Vendor\BlockBuster\BlockBuster;
@@ -78,13 +74,14 @@ class TestController extends  Controller
        // $movie_ticket_order = MovieTicketOrder::find(1);
         //$vendor = $vendor->getById(1);
        // $movie_ticket_order->vendor = $vendor;
-        //(new SendEmailToNotifyVendorBalance($vendor))->handle($mailer);
-        try{
-            dispatch(new SendEmailToNotifyVendorBalance('movie_ticket',1));
+
+        //dispatch(new SendEmailToNotifyVendorBalance('transport_ticket',1));
+       try{
+           (new SendEmailToNotifyVendorBalance('transport_ticket',1))->handle($mailer);
+
             dd('success');
         }catch (\Exception $e)
-        {
-            dd($e);
+         {dd($e);
         }
 
     }

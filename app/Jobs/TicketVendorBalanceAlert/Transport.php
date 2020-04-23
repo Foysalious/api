@@ -5,7 +5,7 @@ namespace App\Jobs\TicketVendorBalanceAlert;
 
 use Sheba\Transport\Bus\Vendor\VendorFactory;
 
-class Transport extends Ticket
+class Transport
 {
     private $vendorId;
 

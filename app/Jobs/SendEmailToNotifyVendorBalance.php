@@ -47,12 +47,15 @@ class SendEmailToNotifyVendorBalance extends Job implements ShouldQueue
      */
     public function handle(Mailer $mailer)
     {
+
         try {
             $this->getVendor();
             $this->storage = Cache::store('redis');
             $this->getConfiguration();
             $balance_threshold = $this->configuration['balance_threshold'];
+
             $balance = $this->vendor->balance();
+
             if ($balance < $balance_threshold) {
                 $users = $this->notifiableUsers();
                 foreach ($users as $user) {
@@ -72,10 +75,20 @@ class SendEmailToNotifyVendorBalance extends Job implements ShouldQueue
 
     private function getVendor()
     {
-        if($this->type == 'movie_ticket')
-            $this->vendor = (new Movie())->getVendor($this->vendor_id);
-        else if($this->type == 'movie_ticket')
-            $this->vendor = (new Transport())->getVendor($this->vendor_id);
+
+        try{
+            if($this->type == 'movie_ticket')
+                $this->vendor = (new Movie())->getVendor($this->vendor_id);
+            else if($this->type == 'transport_ticket'){
+                $this->vendor = (new Transport())->getVendor($this->vendor_id);
+            }
+
+        }catch (\Exception $e){
+            dd($e);
+        }
+
+
+        return $this;
     }
 
     private function notifiableUsers()
