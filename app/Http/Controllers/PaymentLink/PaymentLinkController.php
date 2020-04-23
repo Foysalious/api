@@ -26,7 +26,6 @@ class PaymentLinkController extends Controller {
     private $creator;
     private $paymentDetailTransformer;
 
-
     public function __construct(PaymentLinkClient $payment_link_client, PaymentLinkRepository $payment_link_repo, Creator $creator) {
         $this->paymentLinkClient        = $payment_link_client;
         $this->paymentLinkRepo          = $payment_link_repo;
@@ -105,7 +104,7 @@ class PaymentLinkController extends Controller {
                 ->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type)->setTargetId($request->pos_order_id)
                 ->setTargetType('pos_order');
             if ($request->has('emi_month')) {
-                $data = Calculations::getMonthData($request->amount, $request->emi_month,false);
+                $data = Calculations::getMonthData($request->amount, $request->emi_month, false);
                 $this->creator->setEmiMonth((int)$request->emi_month)->setInterest($data['total_interest'])->setBankTransactionCharge($data['bank_transaction_fee'])->setAmount($data['total_amount']);
             }
             if ($request->has('customer_id')) {
@@ -131,14 +130,19 @@ class PaymentLinkController extends Controller {
     public function createPaymentLinkForDueCollection(Request $request) {
         try {
             $this->validate($request, [
-                'amount'      => 'required',
+                'amount'      => 'required|numeric',
                 'customer_id' => 'sometimes|integer|exists:pos_customers,id',
                 'emi_month'   => 'sometimes|integer|in:' . implode(',', config('emi.valid_months'))
             ]);
             $purpose = 'Due Collection';
             if ($request->has('customer_id')) $customer = PosCustomer::find($request->customer_id);
+
             $this->creator->setAmount($request->amount)->setReason($purpose)->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type);
             if (isset($customer) && !empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
+            if ($request->emi_month) {
+                $data = Calculations::getMonthData($request->amount, (int)$request->emi_month, false);
+                $this->creator->setAmount($data['total_amount'])->setInterest($data['total_interest'])->setBankTransactionCharge($data['bank_transaction_fee'])->setEmiMonth((int)$request->emi_month);
+            }
             $payment_link_store = $this->creator->save();
             if ($payment_link_store) {
                 $payment_link = $this->creator->getPaymentLinkData();
