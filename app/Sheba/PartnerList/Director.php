@@ -107,6 +107,7 @@ class Director
         $this->buildQueryForPartnerScoring();
         $this->builder->withTotalOngoingJobs();
         $this->builder->runQuery();
+        $this->setPartnersAfterServiceCondition($this->getPartnerIds());
         $this->filterForOrderPlace();
         $this->builder->resolveInfoForAdminPortal();
     }
