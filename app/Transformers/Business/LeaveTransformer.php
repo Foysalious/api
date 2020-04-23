@@ -1,10 +1,13 @@
 <?php namespace App\Transformers\Business;
 
+use App\Transformers\AttachmentTransformer;
 use League\Fractal\TransformerAbstract;
 use Sheba\Dal\Leave\Model as LeaveModel;
 
 class LeaveTransformer extends TransformerAbstract
 {
+    protected $defaultIncludes = ['attachments'];
+
     public function transform(LeaveModel $leave)
     {
         return [
@@ -14,7 +17,16 @@ class LeaveTransformer extends TransformerAbstract
             'end_date' => $leave->end_date,
             'total_days' => $leave->total_days,
             'status' => $leave->status,
-            'requested_on' => $leave->created_at
+            'requested_on' => $leave->created_at,
+            'note' => $leave->note,
         ];
+    }
+
+    public function includeAttachments($leave)
+    {
+        $collection = $this->collection($leave->attachments, new AttachmentTransformer());
+        return $collection->getData() ? $collection : $this->item(null, function () {
+            return [];
+        });
     }
 }

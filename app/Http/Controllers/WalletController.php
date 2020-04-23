@@ -44,6 +44,7 @@ class WalletController extends Controller
         }
     }
 
+
     /**
      * @param Request $request
      * @param ShebaPayment $sheba_payment
@@ -53,7 +54,14 @@ class WalletController extends Controller
     {
         try {
             $this->validate($request, [
-                'payment_method' => 'required|in:online,bkash,cbl', 'amount' => 'required|numeric|min:10|max:100000', 'user_id' => 'required', 'user_type' => 'required|in:customer,affiliate,partner', 'remember_token' => 'required'
+
+                'payment_method' => 'required|in:online,bkash,cbl,ok_wallet',
+                'amount' => 'required|numeric|min:10|max:100000',
+                'user_id' => 'required',
+                'user_type' => 'required|in:customer,affiliate,partner',
+                'remember_token' => 'required'
+
+
             ]);
 
             $class_name = "App\\Models\\" . ucwords($request->user_type);
@@ -74,6 +82,7 @@ class WalletController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
+
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

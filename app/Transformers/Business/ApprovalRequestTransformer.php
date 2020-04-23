@@ -1,6 +1,5 @@
 <?php namespace App\Transformers\Business;
 
-use App\Models\BusinessRole;
 use App\Models\Profile;
 use Carbon\Carbon;
 use League\Fractal\TransformerAbstract;
@@ -12,12 +11,10 @@ class ApprovalRequestTransformer extends TransformerAbstract
 {
     /** @var Profile Profile */
     private $profile;
-    private $role;
 
-    public function __construct(Profile $profile, BusinessRole $role)
+    public function __construct(Profile $profile)
     {
         $this->profile = $profile;
-        $this->role = $role;
     }
 
     /**
@@ -41,15 +38,12 @@ class ApprovalRequestTransformer extends TransformerAbstract
                 'requested_on' => $requestable->created_at->format('M d') . ' at ' . $requestable->created_at->format('h:i a'),
                 'name' => $this->profile->name,
                 'type' => $leave_type->title,
-                'total_days' => $requestable->total_days,
-                'left' => $requestable->left_days,
-                'period' => Carbon::parse($requestable->start_date)->format('M d') . ' - ' . Carbon::parse($requestable->end_date)->format('M d'),
+                'total_days' => (int)$requestable->total_days,
+                'left' => $requestable->left_days < 0 ? abs($requestable->left_days) : $requestable->left_days,
+                'is_leave_days_exceeded' => $requestable->isLeaveDaysExceeded(),
+                'period' => $requestable->start_date->format('M d') . ' - ' . $requestable->end_date->format('M d'),
                 'status' => $requestable->status,
-            ],
-            'department' => [
-                'department_id' => $this->role ? $this->role->businessDepartment->id : null,
-                'department' => $this->role ? $this->role->businessDepartment->name : null,
-                'designation' => $this->role ? $this->role->name : null
+                'note' => $requestable->note,
             ]
         ];
     }
