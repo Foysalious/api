@@ -25,6 +25,7 @@ class EmiController extends Controller {
                 'tag'          => 'how_to_emi',
                 'header_label' => 'কিস্তি (EMI) সুবিধা কিভাবে দিবেন-',
                 'how_to_emi'   => [
+
                     '১. POS. থেকে পণ্য সিলেক্ট করুন অথবা৷ EMI থেকে বিক্রির সমমূল্যের টাকা নির্ধারন করুন।',
                     '২. EMI এর লিংক কাস্টমার এর সাথে শেয়ার করুন।',
                     '৩. কাস্টমার প্রেমেন্ট নিশ্চিত করলে আপনার সেবা ক্রেডিট এ টাকা চেক করে পণ্য বুঝিয়ে দিন।'
@@ -38,21 +39,28 @@ class EmiController extends Controller {
     public function emiList(EmiRepository $repository) {
 
         $request = RequestFilter::get();
+
         try {
             if ($request->isRecent()) {
-                $data = $repository->getRecent();
+                $data = $repository->setPartner($request->getPartner())->getRecent();
             } else {
-                $data = $repository->get();
+                $data = $repository->setPartner($request->getPartner())->setOffset($request->getOffset())->setLimit($request->getLimit());
+                if ($request->hasQuery()) {
+                    $data = $data->setQuery($request->getQuery());
+                }
+                $data = $data->get();
             }
             return api_response($request->original(), null, 200, ['data' => $data]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request->original(), null, 500);
         }
     }
 
     public function details(Request $request, $partner_id, $id, EMIRepository $repository) {
-        $data = $repository->details((int)$id);
-        return api_response($request, $data, 200, ['data' => $data]);
+        $request=RequestFilter::get();
+        $data = $repository->setPartner($request->getPartner())->details((int)$id);
+        return api_response($request->original(), $data, 200, ['data' => $data]);
     }
 }

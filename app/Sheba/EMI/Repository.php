@@ -1,24 +1,81 @@
 <?php namespace Sheba\EMI;
 
 
+use App\Models\Partner;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 
 class Repository extends ClientRepository {
+    /** @var Partner */
     private $partner;
+    /** @var DataClient */
+    private $client;
+    private $offset;
+    private $limit;
+    private $query;
+
+    /**
+     * @param mixed $query
+     * @return Repository
+     */
+    public function setQuery($query) {
+        $this->query = $query;
+        return $this;
+    }
+
+    /**
+     * @param mixed $offset
+     * @return Repository
+     */
+    public function setOffset($offset) {
+        $this->offset = $offset;
+        return $this;
+    }
+
+    /**
+     * @param mixed $limit
+     * @return Repository
+     */
+    public function setLimit($limit) {
+        $this->limit = $limit;
+        return $this;
+    }
+
+    public function __construct() { }
+
+    /**
+     * @param mixed $partner
+     * @return Repository
+     */
+    public function setPartner(Partner $partner) {
+        $this->partner = $partner;
+        $this->client  = new DataClient($partner);
+        return $this;
+    }
+
 
     public function getRecent() {
-        return [
-            (new Item(['id' => 1]))->toDummy(),
-            (new Item(['id' => 2]))->toDummy(),
-            (new Item(['id' => 3]))->toDummy(),
-        ];
+        $list = collect($this->client->emiList(3));
+        $data = $list->map(function ($item) {
+            $nItem = new Item((array)$item);
+            return $nItem->toShort();
+        });
+        return $data;
     }
 
     public function get() {
-        $items  = collect();
         $dItems = collect();
-        foreach (range(1, 10) as $index) {
-            $items->push((new Item(['id' => $index]))->toDummy());
+        $list   = collect($this->client->emiList());
+
+        if ($this->query) {
+            $items = $this->getShortItems($list);
+            $items = $items->filter(function ($item) {
+                return preg_match("/{$this->query}/i", $item['customer_name']) || preg_match("/{$this->query}/i", $item['customer_mobile']);
+            })->values();
+            $items = $items->slice($this->offset)->take($this->limit)->values();
+        } else {
+            $list  = $list->slice($this->offset)->take($this->limit)->values();
+            $items = $this->getShortItems($list);
         }
         $dateWise = $items->groupBy('date')->toArray();
         foreach ($dateWise as $key => $dItem) {
@@ -27,23 +84,15 @@ class Repository extends ClientRepository {
         return $dItems;
     }
 
+    private function getShortItems(Collection $list) {
+        return $list->map(function ($item) {
+            $nItem = new Item((array)$item);
+            return $nItem->toShort();
+        });
+    }
+
     public function details($id) {
-        $type   = ['PosOrder', 'EMI'];
-        $iPayer = ['Customer', 'Partner'];
-        shuffle($type);
-        shuffle($iPayer);
-        return [
-            'id'                  => $id,
-            'status'              => 'paid',
-            'customer_name'       => 'George Di*****son',
-            'customer_mobile'     => '+8801717588445',
-            'method'              => 'online',
-            'amount'              => 4999.02,
-            'type'                => $type[0],
-            'interest_payer'      => $iPayer[0],
-            'interest_payer_name' => 'George Di*****son',
-            'created_at'          => Carbon::now()->format('Y-m-d H:s:i'),
-            'payment_id'          => $id
-        ];
+        $item = $this->client->getDetailEntry($id);
+        return (new Item((array)$item))->toDetails();
     }
 }

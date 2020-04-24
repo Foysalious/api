@@ -2,9 +2,10 @@
 
 
 use Illuminate\Http\Request;
+use Sheba\TopUp\Commission\Partner;
 
 class RequestFilter {
-    private $request, $limit, $offset, $recent;
+    private $request, $limit, $offset, $recent, $partner, $q;
 
     /**
      * @return mixed
@@ -54,10 +55,35 @@ class RequestFilter {
         return $this;
     }
 
+    /**
+     * @return Partner
+     */
+    public function getPartner() {
+        return $this->partner;
+    }
+
+    public function hasQuery() {
+        return $this->request->has('q') && !empty($this->request->q);
+    }
+
+    public function getQuery() {
+        return trim($this->request->q);
+    }
+
+    /**
+     * @param mixed $partner
+     * @return RequestFilter
+     */
+    public function setPartner($partner) {
+        $this->partner = $partner;
+        return $this;
+    }
+
     private function __init() {
-        list($limit, $offset) = calculatePagination($this->request);
+        list($offset, $limit) = calculatePagination($this->request);
         $this->setLimit($limit);
         $this->setOffset($offset);
+        $this->setPartner($this->request->partner);
         $this->setRecent($this->request->recent);
     }
 
@@ -72,5 +98,9 @@ class RequestFilter {
 
     public function original() {
         return $this->request;
+    }
+
+    public function hasLimitOffset() {
+        return $this->limit && $this->offset;
     }
 }

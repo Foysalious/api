@@ -3,6 +3,7 @@
 
 use App\Models\Partner;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ServerException;
 use Sheba\ExpenseTracker\Repository\ExpenseTrackerClient;
 
 class DataClient {
@@ -18,15 +19,25 @@ class DataClient {
         $this->baseUrl = 'accounts/' . $this->partner->expense_account_id;
     }
 
-    public function emiList() {
+    public function emiList($limit = null) {
         try {
             if ($this->partner->expense_account_id) {
-                return $this->client->get($this->baseUrl . "/entries/emi");
+                return $this->client->get($this->baseUrl . "/entries/emi" . ($limit ? "?limit=$limit" : ""))['data'];
             }
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return [];
         }
         return [];
+    }
+
+    public function getDetailEntry($id) {
+        try {
+            if ($this->partner->expense_account_id) {
+                return $this->client->get($this->baseUrl . "/entries/emi/$id")['data'];
+            }
+        }catch (\Throwable $e){
+            dd($e);
+        }
     }
 }
