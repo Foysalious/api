@@ -68,28 +68,25 @@ class TopUp
      */
     public function recharge(TopUpOrder $topup_order)
     {
-        if ($this->agent instanceof Affiliate && $this->agent->id == 24) {
-            if ($this->validator->setTopupOrder($topup_order)->validate()->hasError()) {
-                $this->updateFailedTopOrder($topup_order, $this->validator->getError());
+        if ($this->validator->setTopupOrder($topup_order)->validate()->hasError()) {
+            $this->updateFailedTopOrder($topup_order, $this->validator->getError());
+        } else {
+            $this->response = $this->vendor->recharge($topup_order);
+            if ($this->response->hasSuccess()) {
+                $response = $this->response->getSuccess();
+                DB::transaction(function () use ($response, $topup_order) {
+                    $this->setModifier($this->agent);
+                    $topup_order = $this->updateSuccessfulTopOrder($topup_order, $response);
+                    /** @var TopUpCommission $top_up_commission */
+                    $top_up_commission = $this->agent->getCommission();
+                    $top_up_commission->setTopUpOrder($topup_order)->disburse();
+                    $this->vendor->deductAmount($topup_order->amount);
+                    $this->isSuccessful = true;
+                });
             } else {
-                $this->response = $this->vendor->recharge($topup_order);
-                if ($this->response->hasSuccess()) {
-                    $response = $this->response->getSuccess();
-                    DB::transaction(function () use ($response, $topup_order) {
-                        $this->setModifier($this->agent);
-                        $topup_order = $this->updateSuccessfulTopOrder($topup_order, $response);
-                        /** @var TopUpCommission $top_up_commission */
-                        $top_up_commission = $this->agent->getCommission();
-                        $top_up_commission->setTopUpOrder($topup_order)->disburse();
-                        $this->vendor->deductAmount($topup_order->amount);
-                        $this->isSuccessful = true;
-                    });
-                } else {
-                    $this->updateFailedTopOrder($topup_order, $this->response->getError());
-                }
+                $this->updateFailedTopOrder($topup_order, $this->response->getError());
             }
         }
-
     }
 
     /**
