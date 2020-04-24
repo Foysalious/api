@@ -16,9 +16,9 @@ class EmiController extends Controller {
                 'tag'          => 'emi_benefits',
                 'header_label' => 'কিস্তি (EMI) এর সুবিধা কি কি-',
                 'emi_benefits' => [
-                     '১. ১৫ হাজার টাকার অধিক মূল্যের পণ্য কিস্তিতে বিক্রি করতে পারবেন। যা আপনার বিক্রি বাড়াবে।',
-                     '২. কিস্তির বকেয়া টাকা আপনাকে বহন করতে হবে না, ব্যাংক বহন করবে।',
-                     '৩. POS মেশিন ছাড়াই ক্রেডিট কার্ড এর মাধ্যমে EMI তে বিক্রি করতে পারবেন ।'
+                    '১. ১৫ হাজার টাকার অধিক মূল্যের পণ্য কিস্তিতে বিক্রি করতে পারবেন। যা আপনার বিক্রি বাড়াবে।',
+                    '২. কিস্তির বকেয়া টাকা আপনাকে বহন করতে হবে না, ব্যাংক বহন করবে।',
+                    '৩. POS মেশিন ছাড়াই ক্রেডিট কার্ড এর মাধ্যমে EMI তে বিক্রি করতে পারবেন ।'
                 ]
             ),
             array(
@@ -52,15 +52,19 @@ class EmiController extends Controller {
             }
             return api_response($request->original(), null, 200, ['data' => $data]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request->original(), null, 500);
         }
     }
 
     public function details(Request $request, $partner_id, $id, EMIRepository $repository) {
-        $request=RequestFilter::get();
-        $data = $repository->setPartner($request->getPartner())->details((int)$id);
-        return api_response($request->original(), $data, 200, ['data' => $data]);
+        try {
+            $request = RequestFilter::get();
+            $data    = $repository->setPartner($request->getPartner())->details((int)$id);
+            return api_response($request->original(), $data, 200, ['data' => $data]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request->original(), null, 500);
+        }
     }
 }
