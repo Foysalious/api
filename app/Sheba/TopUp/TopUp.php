@@ -1,7 +1,7 @@
 <?php namespace Sheba\TopUp;
 
+use App\Models\Affiliate;
 use App\Models\TopUpOrder;
-use App\Repositories\NotificationRepository;
 use Exception;
 use App\Models\TopUpVendor;
 use Sheba\ModificationFields;
@@ -18,6 +18,7 @@ use Sheba\TopUp\Vendor\VendorFactory;
 class TopUp
 {
     use ModificationFields;
+
     /** @var Vendor */
     private $vendor;
     /** @var TopUpVendor */
@@ -67,27 +68,28 @@ class TopUp
      */
     public function recharge(TopUpOrder $topup_order)
     {
-        if ($this->validator->setTopupOrder($topup_order)->validate()->hasError()) {
-            $this->updateFailedTopOrder($topup_order, $this->validator->getError());
-            if($topup_order->agent_type == "App\\Models\\Affiliate")
-                ((new NotificationRepository())->pushNotificationToAffiliate('topup_failed',$topup_order->agent_id,$topup_order->payee_mobile));
-        } else {
-            $this->response = $this->vendor->recharge($topup_order);
-            if ($this->response->hasSuccess()) {
-                $response = $this->response->getSuccess();
-                DB::transaction(function () use ($response, $topup_order) {
-                    $this->setModifier($this->agent);
-                    $topup_order = $this->updateSuccessfulTopOrder($topup_order, $response);
-                    /** @var TopUpCommission $top_up_commission */
-                    $top_up_commission = $this->agent->getCommission();
-                    $top_up_commission->setTopUpOrder($topup_order)->disburse();
-                    $this->vendor->deductAmount($topup_order->amount);
-                    $this->isSuccessful = true;
-                });
+        if ($this->agent instanceof Affiliate && $this->agent->id == 24) {
+            if ($this->validator->setTopupOrder($topup_order)->validate()->hasError()) {
+                $this->updateFailedTopOrder($topup_order, $this->validator->getError());
             } else {
-                $this->updateFailedTopOrder($topup_order, $this->response->getError());
+                $this->response = $this->vendor->recharge($topup_order);
+                if ($this->response->hasSuccess()) {
+                    $response = $this->response->getSuccess();
+                    DB::transaction(function () use ($response, $topup_order) {
+                        $this->setModifier($this->agent);
+                        $topup_order = $this->updateSuccessfulTopOrder($topup_order, $response);
+                        /** @var TopUpCommission $top_up_commission */
+                        $top_up_commission = $this->agent->getCommission();
+                        $top_up_commission->setTopUpOrder($topup_order)->disburse();
+                        $this->vendor->deductAmount($topup_order->amount);
+                        $this->isSuccessful = true;
+                    });
+                } else {
+                    $this->updateFailedTopOrder($topup_order, $this->response->getError());
+                }
             }
         }
+
     }
 
     /**
