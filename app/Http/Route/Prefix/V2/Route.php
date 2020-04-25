@@ -183,6 +183,8 @@ class Route
             $api->post('forget-password', 'ProfileController@forgetPassword');
             /** EMI INFO */
             $api->get('emi-info', 'ShebaController@getEmiInfo');
+            $api->get('emi-info/manager', 'ShebaController@emiInfoForManager');
+
             $api->group(['prefix' => 'tickets', 'middleware' => 'jwtGlobalAuth'], function ($api) {
                 $api->get('validate-token', 'ProfileController@validateJWT');
                 $api->get('payments', 'ShebaController@getPayments');

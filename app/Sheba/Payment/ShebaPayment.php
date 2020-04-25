@@ -47,6 +47,7 @@ class ShebaPayment
      */
     public function complete(Payment $payment)
     {
+        /** @var Payment $payment */
         $payment = $this->method->validate($payment);
         if ($payment->canComplete()) {
             /** @var Payable $payable */

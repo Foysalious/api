@@ -10,6 +10,7 @@ use App\Transformers\PosOrderTransformer;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
@@ -55,7 +56,7 @@ class CustomerController extends Controller
      * @param EntryRepository $entry_repo
      * @return JsonResponse
      */
-    public function show($partner, $customer, Request $request, EntryRepository $entry_repo)
+    public function show($partner, $customer, Request $request, EntryRepository $entry_repo,DueTrackerRepository $dueTrackerRepository)
     {
         try {
             /** @var PosCustomer $customer */
@@ -66,16 +67,16 @@ class CustomerController extends Controller
             $data['customer_since']           = $customer->created_at->format('Y-m-d');
             $data['customer_since_formatted'] = $customer->created_at->diffForHumans();
             $total_purchase_amount            = 0.00;
-            $total_due_amount                 = 0.00;
-            PosOrder::byPartner($partner)->byCustomer($customer->id)->get()->each(function ($order) use (&$total_purchase_amount, &$total_due_amount) {
+            $total_used_promo                 = 0;
+            PosOrder::byPartner($partner)->byCustomer($customer->id)->get()->each(function ($order) use (&$total_purchase_amount, &$total_used_promo) {
                 /** @var PosOrder $order */
                 $order                 = $order->calculate();
                 $total_purchase_amount += $order->getNetBill();
-                $total_due_amount      += $order->getDue();
+                $total_used_promo += !empty($order->voucher_id) ? 1 : 0;
             });
             $data['total_purchase_amount'] = $total_purchase_amount;
-            $data['total_due_amount']      = $total_due_amount;
-            $data['total_used_promo']      = 0.00;
+            $data['total_due_amount']      = $this->getDueAmountFromDueTracker($dueTrackerRepository,$request->partner,$customer);
+            $data['total_used_promo']      = $total_used_promo;
             $data['total_payable_amount']  = $entry_repo->setPartner($request->partner)->getTotalPayableAmountByCustomer($customer->profile_id)['total_payables'];
             $data['is_customer_editable']  = $customer->isEditable();
             $data['note']                  = PartnerPosCustomer::where('customer_id', $customer->id)->where('partner_id', $partner)->first()->note;
@@ -236,9 +237,20 @@ class CustomerController extends Controller
         } catch (InvalidPartnerPosCustomer $e) {
             return api_response($request, null, 500, ['message' => $e->getMessage()]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    /**
+     * @param $dueTrackerRepository
+     * @param Partner $partner
+     * @param PosCustomer $customer
+     * @return bool|int
+     */
+    private function getDueAmountFromDueTracker($dueTrackerRepository, Partner $partner, PosCustomer $customer){
+
+        $data = $dueTrackerRepository->setPartner($partner)->getDueListByProfile($partner,(new Request(['customer_id' => $customer->id])));
+        return $data['stats']['due'] > 0 ? $data['stats']['due'] : 0;
     }
 }

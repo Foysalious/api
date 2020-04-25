@@ -71,7 +71,9 @@ class PaymentLinkOrderComplete extends PaymentComplete {
         $payable = $this->payment->payable;
         app(ActionRewardDispatcher::class)->run('payment_link_usage', $payment_receiver, $payment_receiver, $payable);
         /** @var AutomaticEntryRepository $entry_repo */
-        $entry_repo = app(AutomaticEntryRepository::class)->setPartner($payment_receiver)->setAmount($payable->amount)->setHead(AutomaticIncomes::PAYMENT_LINK);
+        $entry_repo = app(AutomaticEntryRepository::class)->setPartner($payment_receiver)->setAmount($payable->amount)->setHead(AutomaticIncomes::PAYMENT_LINK)
+            ->setEmiMonth($payable->emi_month)->setAmountCleared($payable->amount);
+        $entry_repo->setInterest($this->paymentLink->getInterest())->setBankTransactionCharge($this->paymentLink->getBankTransactionCharge());
         if ($target instanceof PosOrder) {
             $entry_repo->setCreatedAt($target->created_at);
             $entry_repo->setSourceType(class_basename($target));
@@ -84,7 +86,12 @@ class PaymentLinkOrderComplete extends PaymentComplete {
         if ($payer instanceof Profile) {
             $entry_repo->setParty($payer);
         }
-        $entry_repo->store();
+        $entry_repo->setPaymentMethod($this->payment->paymentDetails->last()->readable_method)->setPaymentId($this->payment->id);
+        if ($target instanceof PosOrder) {
+            $entry_repo->updateFromSrc();
+        } else {
+            $entry_repo->store();
+        }
         return $this->payment;
     }
 
@@ -108,9 +115,15 @@ class PaymentLinkOrderComplete extends PaymentComplete {
         $formatted_recharge_amount = number_format($recharge_wallet_amount, 2);
         $recharge_log              = "$formatted_recharge_amount TK has been collected from {$this->payment->payable->getName()}, {$this->paymentLink->getReason()}";
         $recharge_transaction      = $walletTransactionHandler->setType('credit')->setAmount($recharge_wallet_amount)->setSource(TransactionSources::PAYMENT_LINK)->setTransactionDetails($this->payment->getShebaTransaction()->toArray())->setLog($recharge_log)->store();
-        $minus_wallet_amount       = $this->getPaymentLinkFee($recharge_wallet_amount);
-        $formatted_minus_amount    = number_format($minus_wallet_amount, 2);
-        $minus_log                 = "$formatted_minus_amount TK has been charged as link service fees against of Transc ID: {$recharge_transaction->id}, and Transc amount: $formatted_recharge_amount";
+        $interest                  = (double)$this->paymentLink->getInterest();
+        if ($interest > 0) {
+            $formatted_interest = number_format($interest, 2);
+            $log                = "$formatted_interest TK has been charged as emi interest fees against of Transc ID {$recharge_transaction->id}, and Transc amount $formatted_recharge_amount";
+            $walletTransactionHandler->setLog($log)->setType('debit')->setAmount($formatted_interest)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
+        }
+        $minus_wallet_amount    = $this->paymentLink->getEmiMonth() > 0 ? $this->paymentLink->getBankTransactionCharge() : $this->getPaymentLinkFee($recharge_wallet_amount);
+        $formatted_minus_amount = number_format($minus_wallet_amount, 2);
+        $minus_log              = "$formatted_minus_amount TK has been charged as link service fees against of Transc ID: {$recharge_transaction->id}, and Transc amount: $formatted_recharge_amount";
         $walletTransactionHandler->setLog($minus_log)->setType('debit')->setAmount($minus_wallet_amount)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
         /*$payment_receiver->minusWallet($minus_wallet_amount, ['log' => $minus_log]);*/
 
@@ -140,7 +153,6 @@ class PaymentLinkOrderComplete extends PaymentComplete {
             $this->payment->update();
             return $this->payment;
         } catch (QueryException $e) {
-            dd($e);
             return null;
         }
     }
