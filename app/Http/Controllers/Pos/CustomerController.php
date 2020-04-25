@@ -21,6 +21,7 @@ use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 use Sheba\Pos\Customer\Creator;
 use Sheba\Pos\Customer\Updater;
+use Sheba\Pos\Discount\DiscountTypes;
 use Sheba\Pos\Repositories\PosOrderRepository;
 use Throwable;
 
@@ -72,7 +73,7 @@ class CustomerController extends Controller
                 /** @var PosOrder $order */
                 $order                 = $order->calculate();
                 $total_purchase_amount += $order->getNetBill();
-                $total_used_promo += !empty($order->voucher_id) ? 1 : 0;
+                $total_used_promo += !empty($order->voucher_id) ? $this->getVoucherAmount($order) : 0;
             });
             $data['total_purchase_amount'] = $total_purchase_amount;
             $data['total_due_amount']      = $this->getDueAmountFromDueTracker($dueTrackerRepository,$request->partner,$customer);
@@ -252,5 +253,10 @@ class CustomerController extends Controller
 
         $data = $dueTrackerRepository->setPartner($partner)->getDueListByProfile($partner,(new Request(['customer_id' => $customer->id])));
         return $data['stats']['due'] > 0 ? $data['stats']['due'] : 0;
+    }
+
+    private function getVoucherAmount($order)
+    {
+        return $order->discounts()->where('type',DiscountTypes::VOUCHER)->sum('amount');
     }
 }
