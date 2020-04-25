@@ -36,8 +36,10 @@ class DataClient {
             if ($this->partner->expense_account_id) {
                 return $this->client->get($this->baseUrl . "/entries/emi/$id")['data'];
             }
+            return null;
         }catch (\Throwable $e){
-            dd($e);
+            app('sentry')->captureException($e);
+           return null;
         }
     }
 }

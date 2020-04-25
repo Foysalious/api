@@ -61,7 +61,9 @@ class EmiController extends Controller {
         try {
             $request = RequestFilter::get();
             $data    = $repository->setPartner($request->getPartner())->details((int)$id);
-            return api_response($request->original(), $data, 200, ['data' => $data]);
+            if ($data)
+                return api_response($request->original(), $data, 200, ['data' => $data]);
+            return api_response($request->original(), null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request->original(), null, 500);

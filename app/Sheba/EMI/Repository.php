@@ -93,6 +93,6 @@ class Repository extends ClientRepository {
 
     public function details($id) {
         $item = $this->client->getDetailEntry($id);
-        return (new Item((array)$item))->toDetails();
+        return $item?(new Item((array)$item))->toDetails():null;
     }
 }
