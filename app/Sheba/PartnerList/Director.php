@@ -104,9 +104,9 @@ class Director
     public function buildPartnerListForOrderPlacementAdmin()
     {
         $this->buildQueryForOrderPlace();
-        $this->buildQueryForPartnerScoring();
         $this->builder->withTotalOngoingJobs();
         $this->builder->runQuery();
+        $this->setPartnersAfterServiceCondition($this->getPartnerIds());
         $this->filterForOrderPlace();
         $this->builder->resolveInfoForAdminPortal();
     }
