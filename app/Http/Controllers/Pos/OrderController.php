@@ -187,8 +187,12 @@ class OrderController extends Controller
                 $creator->setCustomer($pos_customer);
             }
             $creator->setPartner($partner)->setData($request->all());
-            if ($error = $creator->hasError())
-                return $error;
+            /**
+             * POS ORDER CHECK IF STOCK LIMIT EXCEED
+             *
+             * if ($error = $creator->hasError())
+             *     return $error;
+             */
             $order = $creator->create();
             $order = $order->calculate();
             /**
@@ -308,6 +312,7 @@ class OrderController extends Controller
      */
     public function update(Request $request, Updater $updater)
     {
+//        return $request->all();
         $this->setModifier($request->manager_resource);
         try {
             /** @var PosOrder $order */
@@ -547,5 +552,37 @@ class OrderController extends Controller
     {
         if ($order->customer && $order->customer->profile->mobile)
             dispatch(new OrderBillSms($order));
+    }
+
+    /**
+     * @param Request $request
+     * @param Updater $updater
+     * @return JsonResponse
+     */
+    public function tagCustomer(Request $request, Updater $updater)
+    {
+        try {
+            $this->validate($request, [
+                'customer_id'          => 'required'
+            ]);
+            $this->setModifier($request->manager_resource);
+            /** @var PosOrder $order */
+            $order = PosOrder::find($request->order);
+            if (!$order)
+                return api_response($request, null, 404, ['msg' => 'Order not found']);
+            if($order->partner_id != $request->partner->id)
+                return api_response($request, null, 403, ['msg' => 'Order and Partner mismatch']);
+            $requested_customer = PosCustomer::find($request->customer_id);
+            if (!$requested_customer)
+                return api_response($request, null, 401, ['msg' => 'Customer not found']);
+            $updater->setOrder($order)->setData(['customer_id' => $requested_customer->id])->update();
+            $entry  = app(AutomaticEntryRepository::class);
+            $entry->setPartner($order->partner)->setFor(EntryType::INCOME)->setSourceType(class_basename($order))->setSourceId($order->id)->setParty($requested_customer->profile)->updatePartyFromSource();
+            return api_response($request, null, 200, ['msg' => 'Customer tagged Successfully']);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
     }
 }

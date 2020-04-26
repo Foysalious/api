@@ -39,7 +39,7 @@ class ServiceObject
     public function __construct(stdClass $service)
     {
         $this->service = $service;
-        $this->googleCalculatedCarService = array_map('intval', explode(',', env('RENT_CAR_SERVICE_IDS')));
+        $this->googleCalculatedCarService = config('sheba.car_rental')['destination_fields_service_ids'];
         $this->build();
         $this->setQuantity();
     }

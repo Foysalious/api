@@ -71,7 +71,7 @@ class PaymentLinkOrderComplete extends PaymentComplete {
         $payable = $this->payment->payable;
         app(ActionRewardDispatcher::class)->run('payment_link_usage', $payment_receiver, $payment_receiver, $payable);
         /** @var AutomaticEntryRepository $entry_repo */
-        $entry_repo = app(AutomaticEntryRepository::class)->setPartner($payment_receiver)->setAmount($payable->amount)->setHead(AutomaticIncomes::PAYMENT_LINK);
+        $entry_repo = app(AutomaticEntryRepository::class)->setPartner($payment_receiver)->setAmount($payable->amount)->setHead(AutomaticIncomes::PAYMENT_LINK)->setAmountCleared($payable->amount);
         if ($target instanceof PosOrder) {
             $entry_repo->setCreatedAt($target->created_at);
             $entry_repo->setSourceType(class_basename($target));
@@ -84,7 +84,12 @@ class PaymentLinkOrderComplete extends PaymentComplete {
         if ($payer instanceof Profile) {
             $entry_repo->setParty($payer);
         }
-        $entry_repo->store();
+        $entry_repo->setPaymentMethod($this->payment->paymentDetails->last()->readable_method)->setPaymentId($this->payment->id);
+        if ($target instanceof PosOrder) {
+            $entry_repo->updateFromSrc();
+        } else {
+            $entry_repo->store();
+        }
         return $this->payment;
     }
 
@@ -140,7 +145,6 @@ class PaymentLinkOrderComplete extends PaymentComplete {
             $this->payment->update();
             return $this->payment;
         } catch (QueryException $e) {
-            dd($e);
             return null;
         }
     }
