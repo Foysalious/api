@@ -71,6 +71,7 @@ class PaymentLinkClient
                 return $response->link;
             return null;
         } catch (\Throwable $e) {
+            dd($e);
             return null;
         }
     }
