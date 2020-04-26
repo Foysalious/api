@@ -16,12 +16,10 @@ class LeaveBalanceTransformer extends TransformerAbstract
     /**
      * LeaveBalanceTransformer constructor.
      * @param $leave_types
-     * @param TimeFrame $time_frame
      */
-    public function __construct($leave_types, TimeFrame $time_frame)
+    public function __construct($leave_types)
     {
         $this->leave_types = $leave_types;
-        $this->timeFrame = $time_frame;
     }
 
     /**
@@ -49,11 +47,12 @@ class LeaveBalanceTransformer extends TransformerAbstract
     {
         $single_employee_leave_balance = [];
         foreach ($this->leave_types as $leave_type) {
-            $used_leave_days = $this->businessMember->getCountOfUsedLeaveDaysByTypeOnAFiscalYear($leave_type['id']);
+            $leaves_filtered_by_type = $this->businessMember->leaves->where('leave_type_id', $leave_type['id']);
+            $used_leave_days = $this->businessMember->getCountOfUsedLeaveDaysByFiscalYear($leaves_filtered_by_type);
             array_push($single_employee_leave_balance, [
-                'title'             => $leave_type['title'],
-                'allowed_leaves'    => (int)$leave_type['total_days'],
-                'used_leaves'       => $used_leave_days,
+                'title' => $leave_type['title'],
+                'allowed_leaves' => (int)$leave_type['total_days'],
+                'used_leaves' => $used_leave_days,
                 'is_leave_days_exceeded' => ($used_leave_days > (int)$leave_type['total_days'])
             ]);
         }
