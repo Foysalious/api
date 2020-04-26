@@ -55,7 +55,7 @@ class MovieTicketPurchaseComplete extends PaymentComplete
                     if($movie_ticket_order->agent_type == 'App\\Models\\Affiliate') ((new NotificationRepository())->pushNotificationToAffiliate('purchase_movie_ticket_failed',$movie_ticket_order->agent_id,$movie_ticket_order->reserver_number));
                 }
                 $this->completePayment();
-                $this->dispatchJob($vendor);
+                $this->dispatchJob($movie_ticket_order->vendor_id);
 
             });
         } catch (QueryException $e) {
@@ -73,10 +73,10 @@ class MovieTicketPurchaseComplete extends PaymentComplete
         // TODO: Implement saveInvoice() method.
     }
 
-    private function dispatchJob($vendor)
+    private function dispatchJob($vendor_id)
     {
         try {
-            dispatch(new SendEmailToNotifyVendorBalance($vendor));
+            dispatch(new SendEmailToNotifyVendorBalance('movie_ticket',$vendor_id));
         } catch(\Exception $e)
         {
 

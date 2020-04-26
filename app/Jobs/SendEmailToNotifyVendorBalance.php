@@ -4,8 +4,11 @@ namespace App\Jobs;
 
 use App\Jobs\Job;
 
+use App\Jobs\TicketVendorBalanceAlert\Movie;
+use App\Jobs\TicketVendorBalanceAlert\Transport;
 use App\Models\User;
 use Illuminate\Contracts\Mail\Mailer;
+use Illuminate\Foundation\Application;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -18,20 +21,23 @@ class SendEmailToNotifyVendorBalance extends Job implements ShouldQueue
     const QUEUE_NAME = 'ticket_vendor_balance_alert';
 
 
-    private $vendor;
+    private $vendor_id;
     private $redisName = 'ticket_maintenance_configuration';
     private $storage;
     private $configuration;
+    private $type;
+    private $vendor;
 
     /**
      * SendEmailToNotifyVendorBalance constructor.
-     * @param $vendor
+     * @param $type
+     * @param $vendor_id
      */
-    public function __construct($vendor)
+    public function __construct($type,$vendor_id)
     {
-        $this->vendor = $vendor;
+        $this->vendor_id = $vendor_id;
+        $this->type = $type;
         $this->queue = self::QUEUE_NAME;
-        $this->connection = self::QUEUE_NAME;
     }
 
     /**
@@ -42,11 +48,15 @@ class SendEmailToNotifyVendorBalance extends Job implements ShouldQueue
      */
     public function handle(Mailer $mailer)
     {
-        $this->storage = Cache::store('redis');
+
         try {
+            $this->getVendor();
+            $this->storage = Cache::store('redis');
             $this->getConfiguration();
             $balance_threshold = $this->configuration['balance_threshold'];
+
             $balance = $this->vendor->balance();
+
             if ($balance < $balance_threshold) {
                 $users = $this->notifiableUsers();
                 foreach ($users as $user) {
@@ -63,11 +73,37 @@ class SendEmailToNotifyVendorBalance extends Job implements ShouldQueue
 
     }
 
+    /**
+     * @return $this
+     */
+    private function getVendor()
+    {
+
+        try{
+            if($this->type == 'movie_ticket')
+                $this->vendor = (new Movie())->getVendor($this->vendor_id);
+            else if($this->type == 'transport_ticket'){
+                $this->vendor = (new Transport())->getVendor($this->vendor_id);
+            }
+
+        }catch (\Exception $e){
+        }
+
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
     private function notifiableUsers()
     {
         return User::whereIn('id', $this->configuration['notifiable_users'])->get();
     }
 
+    /**
+     * @return Application|mixed
+     */
     private function getConfiguration()
     {
         if ($this->storage->has($this->redisName)) {

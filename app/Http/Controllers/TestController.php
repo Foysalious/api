@@ -2,8 +2,6 @@
 
 
 namespace App\Http\Controllers;
-
-
 use App\Jobs\SendEmailToNotifyVendorBalance;
 use App\Models\MovieTicketOrder;
 use Illuminate\Mail\Mailer;
@@ -73,12 +71,19 @@ class TestController extends  Controller
            $m->to('shovan@sheba.xyz')->subject('Low Balance for testvendor');
        });*/
        // $movie_ticket_order = MovieTicketOrder::find(1);
-        $vendor = app(VendorFactory::class);
-        $vendor = $vendor->getById(1);
+
+        //$vendor = $vendor->getById(1);
        // $movie_ticket_order->vendor = $vendor;
-        //(new SendEmailToNotifyVendorBalance($vendor))->handle($mailer);
-        dispatch(new SendEmailToNotifyVendorBalance($vendor));
-        dd('success');
+
+        //dispatch(new SendEmailToNotifyVendorBalance('transport_ticket',1));
+       try{
+           (new SendEmailToNotifyVendorBalance('transport_ticket',1))->handle($mailer);
+
+            dd('success');
+        }catch (\Exception $e)
+         {dd($e);
+        }
+
     }
 
 }

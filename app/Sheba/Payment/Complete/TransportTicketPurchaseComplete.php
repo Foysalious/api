@@ -86,7 +86,7 @@ class TransportTicketPurchaseComplete extends PaymentComplete
                         ];
 
                         (new SmsHandler('transport_ticket_confirmed'))->send($transport_ticket_order->reserver_mobile, $sms_data);
-                        dispatch(new SendEmailToNotifyVendorBalance($vendor));
+                        dispatch(new SendEmailToNotifyVendorBalance('transport_ticket',$transport_ticket_order->vendor_id));
                     } catch (\Exception $e) {
                     }
 
