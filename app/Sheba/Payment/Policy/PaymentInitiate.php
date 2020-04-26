@@ -68,7 +68,7 @@ class PaymentInitiate
      */
     private function hasOngoingPayment()
     {
-        return $this->paymentRepository->getOngoingPaymentsFor($this->payableType, $this->payableTypeId)->count() > 0;
+        return $this->payableType == Types::PARTNER_ORDER && $this->paymentRepository->getOngoingPaymentsFor($this->payableType, $this->payableTypeId)->count() > 0;
     }
 
     /**
