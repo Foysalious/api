@@ -1,6 +1,7 @@
 <?php namespace App\Http\Route\Prefix\V1;
 
 use App\Http\Route\Prefix\V1\Partner\PartnerRoute;
+use App\Http\Route\Prefix\V1\Resource\ResourceRoute;
 
 class Route
 {
