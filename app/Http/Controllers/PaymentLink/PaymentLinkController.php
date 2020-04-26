@@ -1,6 +1,8 @@
 <?php namespace App\Http\Controllers\PaymentLink;
 
 use App\Http\Controllers\Controller;
+use App\Models\PosCustomer;
+use App\Models\PosOrder;
 use App\Transformers\PaymentDetailTransformer;
 use App\Transformers\PaymentLinkArrayTransform;
 use Carbon\Carbon;
@@ -90,10 +92,17 @@ class PaymentLinkController extends Controller {
     public function store(Request $request) {
         try {
             $this->validate($request, [
-                'amount'  => 'required',
-                'purpose' => 'required',
+                'amount'      => 'required',
+                'purpose'     => 'required',
+                'customer_id' => 'sometimes|integer|exists:pos_customers,id'
             ]);
-            $this->creator->setIsDefault($request->isDefault)->setAmount($request->amount)->setReason($request->purpose)->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type)->setTargetId($request->pos_order_id)->setTargetType('pos_order');
+            $this->creator->setIsDefault($request->isDefault)->setAmount($request->amount)->setReason($request->purpose)
+                ->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type)->setTargetId($request->pos_order_id)
+                ->setTargetType('pos_order');
+            if ($request->customer_id) {
+                $customer = PosCustomer::find($request->customer_id);
+                if (!empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
+            }
             $payment_link_store = $this->creator->save();
             if ($payment_link_store) {
                 $payment_link = $this->creator->getPaymentLinkData();
@@ -110,14 +119,16 @@ class PaymentLinkController extends Controller {
         }
     }
 
-    public function createPaymentLinkForDueCollection(Request $request)
-    {
+    public function createPaymentLinkForDueCollection(Request $request) {
         try {
             $this->validate($request, [
-                'amount' => 'required',
+                'amount'      => 'required',
+                'customer_id' => 'sometimes|integer|exists:pos_customers,id'
             ]);
             $purpose = 'Due Collection';
+            if ($request->has('customer_id')) $customer = PosCustomer::find($request->customer_id);
             $this->creator->setAmount($request->amount)->setReason($purpose)->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type);
+            if (isset($customer) && !empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
             $payment_link_store = $this->creator->save();
             if ($payment_link_store) {
                 $payment_link = $this->creator->getPaymentLinkData();
