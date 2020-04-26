@@ -36,16 +36,15 @@ class ShebaPayment
 
 
     /**
-     * @param $payable_type
-     * @param $payable_type_id
+     * @param Payable $payable
      * @return bool true if can init
      * @throws InitiateFailedException otherwise
      */
-    public function canInit($payable_type, $payable_type_id)
+    private function canInit(Payable $payable)
     {
         /** @var PaymentInitiate $payment_initiate */
         $payment_initiate = app(PaymentInitiate::class);
-        return $payment_initiate->setPaymentMethod($this->method)->setPayableType($payable_type)->setPayableTypeId($payable_type_id)->canPossible();
+        return $payment_initiate->setPaymentMethod($this->method)->setPayable($payable)->canPossible();
     }
 
 
@@ -56,7 +55,7 @@ class ShebaPayment
      */
     public function init(Payable $payable)
     {
-        $this->canInit($payable->type, $payable->type_id);
+        $this->canInit($payable);
         $payment = $this->method->init($payable);
         if (!$payment->isInitiated()) throw new InitiateFailedException('Payment initiation failed!');
         return $payment;

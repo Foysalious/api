@@ -2,6 +2,7 @@
 
 
 use App\Models\PartnerOrder;
+use App\Models\Payable;
 use Sheba\Dal\Payable\Types;
 use Sheba\Dal\Payment\PaymentRepositoryInterface;
 use Sheba\PartnerOrder\ConcurrentUpdateRestriction\ConcurrentUpdateRestriction as CURestriction;
@@ -13,6 +14,8 @@ class PaymentInitiate
 
     private $payableType;
     private $payableTypeId;
+    /** @var Payable */
+    private $payable;
     private $paymentRepository;
     /** @var PaymentMethod */
     private $paymentMethod;
@@ -53,6 +56,16 @@ class PaymentInitiate
     }
 
     /**
+     * @param Payable $payable
+     * @return PaymentInitiate
+     */
+    public function setPayable($payable)
+    {
+        $this->payable = $payable;
+        return $this;
+    }
+
+    /**
      * @return bool true if possible
      * @throws InitiateFailedException otherwise
      */
@@ -68,7 +81,7 @@ class PaymentInitiate
      */
     private function hasOngoingPayment()
     {
-        return $this->payableType == Types::PARTNER_ORDER && $this->paymentRepository->getOngoingPaymentsFor($this->payableType, $this->payableTypeId)->count() > 0;
+        return $this->paymentRepository->getOngoingPaymentsFor($this->payable)->count() > 0;
     }
 
     /**
@@ -76,7 +89,7 @@ class PaymentInitiate
      */
     private function hasConcurrentUpdateRestriction()
     {
-        return $this->payableType == Types::PARTNER_ORDER && CURestriction::check(PartnerOrder::find($this->payableTypeId));
+        return $this->payable->type == Types::PARTNER_ORDER && CURestriction::check(PartnerOrder::find($this->payable->type_id));
     }
 
     private function getErrorMessageForOngoingPayment()
