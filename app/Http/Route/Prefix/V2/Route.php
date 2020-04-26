@@ -1,5 +1,6 @@
 <?php namespace App\Http\Route\Prefix\V2;
 
+use App\Http\Route\Prefix\V2\Resource\ResourceRoute;
 use App\Http\Route\Prefix\V2\Partner\PartnerRoute;
 
 class Route
@@ -14,6 +15,7 @@ class Route
             (new AffiliateRoute())->set($api);
             (new PartnerRoute())->set($api);
             (new HelpRoute())->set($api);
+            (new ResourceRoute())->set($api);
             $api->post('training-status-update', 'ResourceController@trainingStatusUpdate');
             $api->post('profile-check', 'Profile\ProfileController@checkProfile');
             $api->post('newsletter', 'NewsletterController@create');
@@ -178,6 +180,7 @@ class Route
             $api->get('{id}/get-jwt', 'ProfileController@getJWT')->middleware('profile.auth');
             $api->get('{id}/refresh-token', 'ProfileController@refresh');
             $api->post('admin/payout', 'Bkash\\BkashPayoutController@pay');
+            $api->post('admin/payout-balance', 'Bkash\\BkashPayoutController@queryPayoutBalance');
             $api->post('admin/bkash-balance', 'Bkash\\BkashPayoutController@queryBalance');
             $api->post('forget-password', 'ProfileController@forgetPassword');
             /** EMI INFO */

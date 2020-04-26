@@ -123,6 +123,7 @@ class IndexRoute
                         $api->delete('/','Pos\OrderController@delete');
                         $api->post('/collect-payment', 'Pos\OrderController@collectPayment');
                         $api->get('/send-sms', 'Pos\OrderController@sendSms');
+                        $api->post('/tag-customer', 'Pos\OrderController@tagCustomer');
                         $api->get('/send-email', 'Pos\OrderController@sendEmail');
                         $api->get('/download-invoice', 'Pos\OrderController@downloadInvoice');
                         $api->post('store-note', 'Pos\OrderController@storeNote');
@@ -208,10 +209,7 @@ class IndexRoute
                 });
             });
             $api->group(['prefix' => 'jobs'], function ($api) {
-                $api->group([
-                    'prefix'     => '{job}',
-                    'middleware' => ['partner_job.auth']
-                ], function ($api) {
+                $api->group(['prefix'     => '{job}', 'middleware' => ['partner_job.auth']], function ($api) {
                     $api->put('/', 'PartnerJobController@update');
                     $api->group(['prefix' => 'materials'], function ($api) {
                         $api->get('/', 'PartnerJobController@getMaterials');
