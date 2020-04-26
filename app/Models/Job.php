@@ -3,6 +3,7 @@
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Query\Builder;
+use Sheba\CancelRequest\CancelRequestStatuses;
 use Sheba\Comment\JobNotificationHandler;
 use Sheba\Comment\MorphCommentable;
 use Sheba\Comment\MorphComments;
@@ -216,6 +217,11 @@ class Job extends BaseModel implements MorphCommentable
     public function cancelRequest()
     {
         return $this->hasMany(JobCancelRequest::class);
+    }
+
+    public function pendingCancelRequests()
+    {
+        return $this->cancelRequest()->where('status', CancelRequestStatuses::PENDING);
     }
 
     public function partnerChangeLog()

@@ -20,12 +20,15 @@ use Illuminate\Http\Request;
 use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Logs\JobLogs;
 use Sheba\ModificationFields;
+use Sheba\Resource\Jobs\Collection\CollectMoney;
+use Sheba\UserAgentInformation;
 use Throwable;
 use Validator;
 
 class PartnerOrderController extends Controller
 {
     use ModificationFields;
+
     private $partnerOrderRepository;
     private $partnerJobRepository;
 
@@ -362,25 +365,14 @@ class PartnerOrderController extends Controller
         }
     }
 
-    public function collectMoney($partner, Request $request)
+    public function collectMoney($partner, Request $request, CollectMoney $collect_money, UserAgentInformation $user_agent_information)
     {
-        try {
-            $this->validate($request, ['amount' => 'required|numeric']);
-            $partner_order = $request->partner_order;
-            $request->merge(['resource' => $request->manager_resource]);
-            $response = (new ResourceJobRepository())->collectMoney($partner_order, $request);
-            if ($response) {
-                if ($response->code == 200) {
-                    return api_response($request, $response, 200, ['message' => $request->amount . 'Tk have been successfully collected.']);
-                } else {
-                    return api_response($request, $response, $response->code);
-                }
-            }
-            return api_response($request, null, 500);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $this->validate($request, ['amount' => 'required|numeric']);
+        $user_agent_information->setRequest($request);
+        $collect_money->setResource($request->manager_resource)->setPartnerOrder($request->partner_order)->setUserAgentInformation($user_agent_information)
+            ->setCollectionAmount($request->amount);
+        $response = $collect_money->collect();
+        return api_response($request, $response, $response->getCode(), ['message' => $response->getMessage()]);
     }
 
     /**

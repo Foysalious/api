@@ -11,6 +11,7 @@ abstract class PaymentMethod
     use ModificationFields;
 
     protected $paymentRepository;
+    const VALIDITY_IN_MINUTES = 3;
 
     public function __construct()
     {
@@ -26,6 +27,11 @@ abstract class PaymentMethod
      */
     protected function getValidTill()
     {
-        return Carbon::now()->addMinutes(10);
+        return Carbon::now()->addMinutes($this->getValidityInMinutes());
+    }
+
+    public function getValidityInMinutes()
+    {
+        return self::VALIDITY_IN_MINUTES;
     }
 }

@@ -3,6 +3,7 @@
 use App\Models\Partner;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ModificationFields;
+use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\TopUp\TopUpAgent;
 
 class BaseRepository
@@ -14,13 +15,16 @@ class BaseRepository
     /** @var int $accountId */
     protected $accountId;
 
+    protected $paymentCreator;
+
     /**
      * BaseRepository constructor.
      * @param ExpenseTrackerClient $client
      */
-    public function __construct(ExpenseTrackerClient $client)
+    public function __construct(ExpenseTrackerClient $client,PaymentCreator $payment_creator)
     {
         $this->client = $client;
+        $this->paymentCreator = $payment_creator;
     }
 
     /**
