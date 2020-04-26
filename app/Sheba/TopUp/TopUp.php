@@ -1,5 +1,6 @@
 <?php namespace Sheba\TopUp;
 
+use App\Models\Affiliate;
 use App\Models\TopUpOrder;
 use Exception;
 use App\Models\TopUpVendor;
@@ -17,6 +18,7 @@ use Sheba\TopUp\Vendor\VendorFactory;
 class TopUp
 {
     use ModificationFields;
+
     /** @var Vendor */
     private $vendor;
     /** @var TopUpVendor */
@@ -75,7 +77,9 @@ class TopUp
                 DB::transaction(function () use ($response, $topup_order) {
                     $this->setModifier($this->agent);
                     $topup_order = $this->updateSuccessfulTopOrder($topup_order, $response);
-                    $this->agent->getCommission()->setTopUpOrder($topup_order)->disburse();
+                    /** @var TopUpCommission $top_up_commission */
+                    $top_up_commission = $this->agent->getCommission();
+                    $top_up_commission->setTopUpOrder($topup_order)->disburse();
                     $this->vendor->deductAmount($topup_order->amount);
                     $this->isSuccessful = true;
                 });

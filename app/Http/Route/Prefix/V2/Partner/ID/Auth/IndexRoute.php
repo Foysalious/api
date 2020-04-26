@@ -123,6 +123,7 @@ class IndexRoute
                         $api->delete('/','Pos\OrderController@delete');
                         $api->post('/collect-payment', 'Pos\OrderController@collectPayment');
                         $api->get('/send-sms', 'Pos\OrderController@sendSms');
+                        $api->post('/tag-customer', 'Pos\OrderController@tagCustomer');
                         $api->get('/send-email', 'Pos\OrderController@sendEmail');
                         $api->get('/download-invoice', 'Pos\OrderController@downloadInvoice');
                         $api->post('store-note', 'Pos\OrderController@storeNote');
