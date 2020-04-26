@@ -8,6 +8,7 @@ use App\Jobs\TicketVendorBalanceAlert\Movie;
 use App\Jobs\TicketVendorBalanceAlert\Transport;
 use App\Models\User;
 use Illuminate\Contracts\Mail\Mailer;
+use Illuminate\Foundation\Application;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -67,12 +68,14 @@ class SendEmailToNotifyVendorBalance extends Job implements ShouldQueue
                 }
             }
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
         }
 
     }
 
+    /**
+     * @return $this
+     */
     private function getVendor()
     {
 
@@ -84,18 +87,23 @@ class SendEmailToNotifyVendorBalance extends Job implements ShouldQueue
             }
 
         }catch (\Exception $e){
-            dd($e);
         }
 
 
         return $this;
     }
 
+    /**
+     * @return mixed
+     */
     private function notifiableUsers()
     {
         return User::whereIn('id', $this->configuration['notifiable_users'])->get();
     }
 
+    /**
+     * @return Application|mixed
+     */
     private function getConfiguration()
     {
         if ($this->storage->has($this->redisName)) {
