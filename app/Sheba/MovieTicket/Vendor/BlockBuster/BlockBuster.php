@@ -20,6 +20,7 @@ class BlockBuster extends Vendor
 
     // API Urls
     private $apiUrl;
+    private $balanceApiUrl;
     private $imageServerUrl;
 
     private $httpClient;
@@ -49,6 +50,7 @@ class BlockBuster extends Vendor
         $this->secretCode = config('blockbuster.secret_code');
         $this->apiKey = config('blockbuster.api_key');
         $this->apiUrl = config('blockbuster.base_url');
+        $this->balanceApiUrl = config('blockbuster.balance_api_base_url');
         $this->httpClient = new Client();
 
     }
@@ -77,7 +79,7 @@ class BlockBuster extends Vendor
                 $api_url = $this->apiUrl . 'movie_ticket_confirm.php';
                 break;
             case Actions::GET_VENDOR_BALANCE:
-                $api_url =  $this->apiUrl.'balance/balance.php';
+                $api_url =  $this->balanceApiUrl.'balance/balance.php';
                 break;
             default:
                 throw new Exception('Invalid Action');
