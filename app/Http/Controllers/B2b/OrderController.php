@@ -112,7 +112,7 @@ class OrderController extends Controller
         }
     }
 
-    public function clearBills($business, $order, Request $request, ShebaPayment $payment)
+    public function clearBills($business, $order, Request $request, ShebaPayment $payment, OrderAdapter $order_adapter)
     {
         try {
             $this->validate($request, [
@@ -122,8 +122,7 @@ class OrderController extends Controller
             if ($payment_method == 'bkash' && $this->hasPreviousBkashTransaction($request->job->partner_order_id)) {
                 return api_response($request, null, 500, ['message' => "Can't send multiple requests within 1 minute."]);
             }
-            $order_adapter = new OrderAdapter($request->job->partnerOrder);
-            $order_adapter->setPaymentMethod($payment_method);
+            $order_adapter->setPartnerOrder($request->job->partnerOrder)->setPaymentMethod($payment_method);
             $payment = $payment->setMethod($payment_method)->init($order_adapter->getPayable());
             return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
         } catch (ValidationException $e) {
