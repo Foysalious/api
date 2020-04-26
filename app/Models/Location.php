@@ -52,4 +52,9 @@ class Location extends Model
     {
         return $this->hasMany(CustomerDeliveryAddress::class);
     }
+
+    public function isPublished()
+    {
+        return (int)$this->publication_status;
+    }
 }

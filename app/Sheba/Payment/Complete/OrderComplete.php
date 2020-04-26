@@ -12,6 +12,7 @@ use App\Models\Payment;
 use GuzzleHttp\Client;
 use Carbon\Carbon;
 use Exception;
+use Sheba\Resource\Jobs\SendOnlinePaymentNotificationToResource;
 use Throwable;
 
 class OrderComplete extends BaseOrderComplete
@@ -52,6 +53,11 @@ class OrderComplete extends BaseOrderComplete
             $this->completePayment();
             $payable_model->payment_method = strtolower($payment_detail->readable_method);
             $payable_model->update();
+            if ($payable_model instanceof PartnerOrder) {
+                $payable_model->fresh();
+                $payable_model->calculate();
+                if ($payable_model->due == 0) dispatch((new SendOnlinePaymentNotificationToResource($payable_model->lastJob()->resource_id, $payable_model->lastJob())));
+            }
         } catch (RequestException $e) {
             $this->failPayment();
             throw $e;

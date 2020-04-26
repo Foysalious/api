@@ -375,6 +375,11 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
         ]);
     }
 
+    public function scopeNotBadDebt($q)
+    {
+        return $q->where('payment_method', '<>', 'bad-debt');
+    }
+
     /**
      * @param Builder $query
      */
@@ -489,5 +494,10 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
     public function isPaidWithLogistic()
     {
         return $this->dueWithLogistic == 0.00;
+    }
+
+    public function isClosedAndPaidAt()
+    {
+        return $this->closed_and_paid_at ? 1 : 0;
     }
 }
