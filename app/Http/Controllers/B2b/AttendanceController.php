@@ -14,6 +14,7 @@ use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
 use Sheba\Dal\Attendance\Statuses;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
+use Sheba\Dal\BusinessOfficeHours\Contract as BusinessOfficeHoursRepoInterface;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Throwable;
@@ -167,5 +168,22 @@ class AttendanceController extends Controller
                 'department' => $business_member->role && $business_member->role->businessDepartment ? $business_member->role->businessDepartment->name : null,
             ]
         ]);
+    }
+
+    public function getOfficeTime($business, Request $request, BusinessWeekendRepoInterface $business_weekend_repo, BusinessOfficeHoursRepoInterface $office_hours)
+    {
+        $business = $request->business;
+        $weekends = $business_weekend_repo->getAllByBusiness($business);
+        $weekend_days = $weekends->pluck('weekday_name')->toArray();
+        $office_time = $office_hours->getOfficeTime($business);
+        $data = [
+          'office_hour_type' => 'Fixed Time', 'start_time' => Carbon::parse($office_time->start_time)->format('h:i a'), 'end_time' => Carbon::parse($office_time->end_time)->format('h:i a'), 'weekends' => $weekend_days
+        ];
+        return api_response($request, null, 200, ['office_timing' => $data]);
+    }
+
+    public function updateOfficeTime()
+    {
+
     }
 }

@@ -38,6 +38,12 @@ class BusinessRoute
                     $api->get('daily', 'B2b\AttendanceController@getDailyStats');
                     $api->get('monthly', 'B2b\AttendanceController@getMonthlyStats');
                 });
+
+                $api->group(['prefix' => 'office-time'], function ($api) {
+                    $api->get('/', 'B2b\AttendanceController@getOfficeTime');
+                    $api->post('/update', 'B2b\AttendanceController@updateOfficeTime');
+                });
+
                 $api->group(['prefix' => 'employees'], function ($api) {
                     $api->post('/', 'B2b\CoWorkerController@store');
                     $api->get('/', 'B2b\CoWorkerController@index');
