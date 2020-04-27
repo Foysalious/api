@@ -35,6 +35,7 @@ use Validator;
 
 class ShebaController extends Controller {
     use DispatchesJobs;
+
     private $serviceRepository;
     private $reviewRepository;
     private $paymentLinkrepository;
