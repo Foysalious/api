@@ -8,7 +8,6 @@ class Statuses
 
     const INITIATED = 'initiated';
     const INITIATION_FAILED = 'initiation_failed';
-    const PROCESSED = 'processed';
     const VALIDATED = 'validated';
     const COMPLETED = 'completed';
     const VALIDATION_FAILED = 'validation_failed';

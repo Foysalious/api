@@ -269,10 +269,10 @@ class Creator
         }
         $bid_status_change_log = $this->bid->statusChangeLogs()->where('to_status', 'awarded')->first();
         $data = [
-            'created_at' => $bid_status_change_log->created_at->toDateTimeString(),
-            'time' => $bid_status_change_log->created_at->format('h.i A'),
-            'date' => $bid_status_change_log->created_at->format('Y-m-d'),
-            'log' => 'Hired ' . $this->bid->bidder->name . ' and Status Updated From ' . $bid_status_change_log->from_status . ' To ' . $bid_status_change_log->to_status
+            'created_at' => $bid_status_change_log ? $bid_status_change_log->created_at->toDateTimeString() : 'n/s',
+            'time' => $bid_status_change_log ? $bid_status_change_log->created_at->format('h.i A') : 'n/s',
+            'date' => $bid_status_change_log ? $bid_status_change_log->created_at->format('Y-m-d') : 'n/s',
+            'log' => $bid_status_change_log ? 'Hired ' . $this->bid->bidder->name . ' and Status Updated From ' . $bid_status_change_log->from_status . ' To ' . $bid_status_change_log->to_status : 'n/s'
         ];
 
         $order_time_lines = collect(array_merge([$data], $requests, $request_logs))->sortByDesc('created_at')->groupBy('date');

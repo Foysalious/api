@@ -209,10 +209,7 @@ class IndexRoute
                 });
             });
             $api->group(['prefix' => 'jobs'], function ($api) {
-                $api->group([
-                    'prefix'     => '{job}',
-                    'middleware' => ['partner_job.auth']
-                ], function ($api) {
+                $api->group(['prefix'     => '{job}', 'middleware' => ['partner_job.auth']], function ($api) {
                     $api->put('/', 'PartnerJobController@update');
                     $api->group(['prefix' => 'materials'], function ($api) {
                         $api->get('/', 'PartnerJobController@getMaterials');

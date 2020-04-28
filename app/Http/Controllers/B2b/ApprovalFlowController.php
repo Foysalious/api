@@ -72,6 +72,8 @@ class ApprovalFlowController extends Controller
     {
         try {
             $approval_flow = $approval_flow_repo->find((int)$approval);
+            if (!$approval_flow) return api_response($request, null, 404);
+
             $business_department = $approval_flow->businessDepartment;
             $business_members = $approval_flow->approvers;
             $approvers = [];

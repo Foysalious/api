@@ -185,8 +185,12 @@ class OrderController extends Controller {
                 $creator->setCustomer($pos_customer);
             }
             $creator->setPartner($partner)->setData($request->all());
-            if ($error = $creator->hasError())
-                return $error;
+            /**
+             * POS ORDER CHECK IF STOCK LIMIT EXCEED
+             *
+             * if ($error = $creator->hasError())
+             *     return $error;
+             */
             $order = $creator->create();
             $order = $order->calculate();
             /**
@@ -315,6 +319,7 @@ class OrderController extends Controller {
      * @return JsonResponse
      */
     public function update(Request $request, Updater $updater) {
+
         $this->setModifier($request->manager_resource);
         try {
             /** @var PosOrder $order */

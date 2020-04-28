@@ -52,41 +52,26 @@ class WalletController extends Controller
      */
     public function recharge(Request $request, ShebaPayment $sheba_payment)
     {
-        try {
-            $this->validate($request, [
+        $this->validate($request, [
 
-                'payment_method' => 'required|in:online,bkash,cbl,ok_wallet',
-                'amount' => 'required|numeric|min:10|max:100000',
-                'user_id' => 'required',
-                'user_type' => 'required|in:customer,affiliate,partner',
-                'remember_token' => 'required'
-
-
-            ]);
-
-            $class_name = "App\\Models\\" . ucwords($request->user_type);
-            if ($request->user_type === 'partner') {
-                $user = (new PartnerRepository($request->user_id))->validatePartner($request->remember_token);
-            } else {
-                $user = $class_name::where([['id', (int)$request->user_id], ['remember_token', $request->remember_token]])->first();
-            }
-
-            if (!$user) return api_response($request, null, 404, ['message' => 'User Not found.']);
-            $recharge_adapter = new RechargeAdapter($user, $request->amount);
-
-            $payment = $sheba_payment->setMethod($request->payment_method)->init($recharge_adapter->getPayable());
-            return api_response($request, $payment, 200, ['link' => $payment['link'], 'payment' => $payment->getFormattedPayment()]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+            'payment_method' => 'required|in:online,bkash,cbl,ok_wallet',
+            'amount' => 'required|numeric|min:10|max:100000',
+            'user_id' => 'required',
+            'user_type' => 'required|in:customer,affiliate,partner',
+            'remember_token' => 'required'
+        ]);
+        $class_name = "App\\Models\\" . ucwords($request->user_type);
+        if ($request->user_type === 'partner') {
+            $user = (new PartnerRepository($request->user_id))->validatePartner($request->remember_token);
+        } else {
+            $user = $class_name::where([['id', (int)$request->user_id], ['remember_token', $request->remember_token]])->first();
         }
+
+        if (!$user) return api_response($request, null, 404, ['message' => 'User Not found.']);
+        $recharge_adapter = new RechargeAdapter($user, $request->amount);
+
+        $payment = $sheba_payment->setMethod($request->payment_method)->init($recharge_adapter->getPayable());
+        return api_response($request, $payment, 200, ['link' => $payment['link'], 'payment' => $payment->getFormattedPayment()]);
     }
 
     /**

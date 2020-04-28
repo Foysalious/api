@@ -2,38 +2,42 @@
 
 use App\Sheba\PaymentLink\PaymentLinkOrder;
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\Payable\Types;
 use Sheba\Payment\Complete\PaymentComplete;
 use Sheba\Payment\PayableType;
 use Sheba\Utility\UtilityOrder;
 
-class Payable extends Model {
-    protected $guarded    = ['id'];
-    protected $casts      = ['amount' => 'double'];
-    public    $timestamps = false;
+class Payable extends Model
+{
+    protected $guarded = ['id'];
+    protected $casts = ['amount' => 'double'];
+    public $timestamps = false;
 
-    public function getReadableTypeAttribute() {
-        if ($this->type == 'partner_order') {
+    public function getReadableTypeAttribute()
+    {
+        if ($this->type == Types::PARTNER_ORDER) {
             return 'order';
-        } else if ($this->type == 'wallet_recharge') {
+        } else if ($this->type == Types::WALLET_RECHARGE) {
             return 'recharge';
-        } else if ($this->type == 'subscription_order') {
+        } else if ($this->type == Types::SUBSCRIPTION_ORDER) {
             return 'subscription_order';
-        } else if ($this->type == 'gift_card_purchase') {
+        } else if ($this->type == Types::GIFT_CARD_PURCHASE) {
             return 'gift_card_purchase';
-        } else if ($this->type == 'movie_ticket_purchase') {
+        } else if ($this->type == Types::MOVIE_TICKET_PURCHASE) {
             return 'movie_ticket_purchase';
-        } else if ($this->type == 'transport_ticket_purchase') {
+        } else if ($this->type == Types::TRANSPORT_TICKET_PURCHASE) {
             return 'transport_ticket_purchase';
-        } else if ($this->type == 'utility_order') {
+        } else if ($this->type == Types::UTILITY_ORDER) {
             return 'utility_order';
-        } else if ($this->type == 'payment_link') {
+        } else if ($this->type == Types::PAYMENT_LINK) {
             return 'payment_link';
-        } else if ($this->type == 'procurement') {
+        } else if ($this->type == Types::PROCUREMENT) {
             return 'procurement';
         }
     }
 
-    public function getCompletionClass(): PaymentComplete {
+    public function getCompletionClass(): PaymentComplete
+    {
         $class_name = "Sheba\\Payment\\Complete\\";
         if ($this->completion_type == 'advanced_order') {
             $class_name .= 'AdvancedOrderComplete';
@@ -60,11 +64,13 @@ class Payable extends Model {
         return app($class_name);
     }
 
-    public function user() {
+    public function user()
+    {
         return $this->morphTo();
     }
 
-    public function getMobile() {
+    public function getMobile()
+    {
         if ($this->user instanceof Customer) {
             return $this->user->profile->mobile;
         } elseif ($this->user instanceof Business) {
@@ -74,7 +80,8 @@ class Payable extends Model {
         }
     }
 
-    public function getUserProfile() {
+    public function getUserProfile()
+    {
         if ($this->user instanceof Customer) {
             return $this->user->profile;
         } elseif ($this->user instanceof Business || $this->user instanceof Partner) {
@@ -84,7 +91,8 @@ class Payable extends Model {
         }
     }
 
-    public function getEmail() {
+    public function getEmail()
+    {
         if ($this->user instanceof Customer) {
             return $this->user->profile->email;
         } elseif ($this->user instanceof Business) {
@@ -92,7 +100,8 @@ class Payable extends Model {
         }
     }
 
-    public function getName() {
+    public function getName()
+    {
         if ($this->user instanceof Customer) {
             return $this->user->profile->name;
         } elseif ($this->user instanceof Business) {
@@ -103,36 +112,39 @@ class Payable extends Model {
     }
 
 
-    public function getPayableModel() {
+    public function getPayableModel()
+    {
         $model = "App\\Models\\";
-        if ($this->type == 'partner_order') {
+        if ($this->type == Types::PARTNER_ORDER) {
             $model .= 'PartnerOrder';
-        } elseif ($this->type == 'subscription_order') {
+        } elseif ($this->type == Types::SUBSCRIPTION_ORDER) {
             $model .= 'SubscriptionOrder';
-        } elseif ($this->type == 'gift_card_purchase') {
+        } elseif ($this->type == Types::GIFT_CARD_PURCHASE) {
             $model .= 'GiftCardPurchase';
-        } elseif ($this->type == 'movie_ticket_purchase') {
+        } elseif ($this->type == Types::MOVIE_TICKET_PURCHASE) {
             $model .= 'MovieTicketOrder';
-        } elseif ($this->type == 'transport_ticket_purchase') {
+        } elseif ($this->type == Types::TRANSPORT_TICKET_PURCHASE) {
             $model .= "Transport\\TransportTicketOrder";
-        } elseif ($this->type == 'procurement') {
+        } elseif ($this->type == Types::PROCUREMENT) {
             $model .= "Procurement";
         }
 
         return $model;
     }
 
-    public function payment() {
+    public function payment()
+    {
         return $this->hasOne(Payment::class);
     }
 
     /**
      * @return PayableType
      */
-    public function getPayableType() {
-        if ($this->type == 'utility_order') {
+    public function getPayableType()
+    {
+        if ($this->type == Types::UTILITY_ORDER) {
             return (new UtilityOrder())->setPayable($this);
-        } elseif ($this->type == 'payment_link') {
+        } elseif ($this->type == Types::PAYMENT_LINK) {
             return (new PaymentLinkOrder())->setPayable($this);
         } else {
             return ($this->getPayableModel())::find($this->type_id);

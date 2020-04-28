@@ -10,6 +10,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
+use Sheba\Authentication\AuthUser;
 use Sheba\ShebaAccountKit\Requests\AccessTokenRequest;
 use Sheba\ShebaAccountKit\ShebaAccountKit;
 use Validator;
@@ -142,7 +143,7 @@ class FacebookController extends Controller
         }
     }
 
-    public function continueWithKit(Request $request)
+    public function continueWithKit(Request $request, AuthUser $authUser)
     {
         try {
             $this->validate($request, [
@@ -166,10 +167,11 @@ class FacebookController extends Controller
                 $profile = Profile::find($profile->id);
             }
             $info = $this->profileRepository->getProfileInfo($from, $profile, $request);
-            if ($info != null) {
-                return api_response($request, $info, 200, ['info' => $info]);
-            }
-            return api_response($request, null, 404);
+            if (!$info) return api_response($request, null, 404);
+            $info['jwt']['token'] = $authUser->setProfile($profile)->generateToken();
+            return api_response($request, $info, 200, ['info' => $info]);
+
+
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');

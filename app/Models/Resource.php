@@ -41,6 +41,11 @@ class Resource extends Model
         return $this->hasMany(PartnerResource::class);
     }
 
+    public function notifications()
+    {
+        return $this->morphMany(Notification::class, 'notifiable');
+    }
+
     public function typeIn($partner)
     {
         $partner = $partner instanceof Partner ? $partner->id : $partner;
