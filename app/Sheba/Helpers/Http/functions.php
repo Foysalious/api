@@ -83,10 +83,11 @@ if (!function_exists('getValidationErrorMessage')) {
 if (!function_exists('decodeGuzzleResponse')) {
     /**
      * @param $response
+     * @param bool $assoc
      * @return array
      */
-    function decodeGuzzleResponse($response)
+    function decodeGuzzleResponse($response, $assoc = true)
     {
-        return json_decode($response->getBody()->getContents(), true);
+        return json_decode($response->getBody()->getContents(), $assoc);
     }
 }

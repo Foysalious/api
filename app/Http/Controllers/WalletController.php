@@ -3,7 +3,7 @@
 use App\Models\Customer;
 use App\Models\Payment;
 use App\Repositories\PartnerRepository;
-use App\Repositories\PaymentRepository;
+use App\Repositories\PaymentStatusChangeLogRepository;
 use DB;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -76,11 +76,11 @@ class WalletController extends Controller
 
     /**
      * @param Request $request
-     * @param PaymentRepository $paymentRepository
+     * @param PaymentStatusChangeLogRepository $paymentRepository
      * @param BonusCredit $bonus_credit
      * @return JsonResponse
      */
-    public function purchase(Request $request, PaymentRepository $paymentRepository, BonusCredit $bonus_credit)
+    public function purchase(Request $request, PaymentStatusChangeLogRepository $paymentRepository, BonusCredit $bonus_credit)
     {
         $this->validate($request, ['transaction_id' => 'required']);
 
@@ -95,7 +95,7 @@ class WalletController extends Controller
         $sheba_credit = $user->shebaCredit();
         $paymentRepository->setPayment($payment);
         if ($sheba_credit == 0) {
-            $paymentRepository->changeStatus(['to' => 'validation_failed', 'from' => $payment->status, 'transaction_details' => $payment->transaction_details, 'log' => "Insufficient balance. Purchase Amount: " . $payment->payable->amount . " & Sheba Credit: $sheba_credit"]);
+            $paymentRepository->create(['to' => 'validation_failed', 'from' => $payment->status, 'transaction_details' => $payment->transaction_details, 'log' => "Insufficient balance. Purchase Amount: " . $payment->payable->amount . " & Sheba Credit: $sheba_credit"]);
             $payment->status = 'validation_failed';
             $payment->update();
             return api_response($request, null, 400, ['message' => 'You don\'t have sufficient credit']);
@@ -134,7 +134,7 @@ class WalletController extends Controller
                 }
             });
 
-            $paymentRepository->changeStatus([
+            $paymentRepository->create([
                 'to' => 'validated',
                 'from' => $payment->status,
                 'transaction_details' => $payment->transaction_details
