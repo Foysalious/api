@@ -57,7 +57,7 @@ class ShebaPayment
     {
         $this->canInit($payable);
         $payment = $this->method->init($payable);
-        if (!$payment->isInitiated()) throw new InitiateFailedException('Payment initiation failed!');
+        if (!$payment->isInitiated()) throw new InitiateFailedException();
         return $payment;
     }
 

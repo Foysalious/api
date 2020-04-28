@@ -1,11 +1,8 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use Illuminate\Http\Request;
 use Sheba\Payment\ShebaPayment;
-
 
 class CblController extends Controller
 {
