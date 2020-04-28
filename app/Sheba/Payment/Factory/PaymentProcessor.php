@@ -56,7 +56,7 @@ class PaymentProcessor
         switch ($method) {
             case PaymentStrategy::$SSL: return app(Ssl::class);
             case PaymentStrategy::$BKASH: return app(Bkash::class);
-            case PaymentStrategy::$ONLINE: return app(Ssl::class);
+            case PaymentStrategy::$ONLINE: return app(PortWallet::class);
             case PaymentStrategy::$WALLET: return app(Wallet::class);
             case PaymentStrategy::$CBL: return app(Cbl::class);
             case PaymentStrategy::$PARTNER_WALLET: return app(PartnerWallet::class);
