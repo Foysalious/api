@@ -145,5 +145,7 @@ return [
     'category_groups' => [
         'trending' => env('TRENDING_CATEGORY_GROUP', 10)
     ],
-    'payout_token'=>env('SHEBA_PAYOUT_TOKEN','ShebaAdminPanelToken!@#$!@#')
+    'payout_token'=>env('SHEBA_PAYOUT_TOKEN','ShebaAdminPanelToken!@#$!@#'),
+    'address' => 'House #63 (1st Floor), Road #04, Block-C, Banani, Dhaka 1213',
+    'email' => 'info@sheba.xyz'
 ];

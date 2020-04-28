@@ -106,4 +106,9 @@ class Payment extends Model
 
         return $transaction;
     }
+
+    public function getValidityInSeconds()
+    {
+        return Carbon::now()->diffInSeconds($this->valid_till);
+    }
 }

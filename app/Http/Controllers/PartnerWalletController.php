@@ -3,7 +3,7 @@
 use App\Models\Partner;
 use App\Models\PartnerOrder;
 use App\Models\Payment;
-use App\Repositories\PaymentRepository;
+use App\Repositories\PaymentStatusChangeLogRepository;
 use DB;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -38,10 +38,10 @@ class PartnerWalletController extends Controller
 
     /**
      * @param Request $request
-     * @param PaymentRepository $paymentRepository
+     * @param PaymentStatusChangeLogRepository $paymentRepository
      * @return \Illuminate\Http\JsonResponse
      */
-    public function purchase(Request $request, PaymentRepository $paymentRepository)
+    public function purchase(Request $request, PaymentStatusChangeLogRepository $paymentRepository)
     {
         try {
             $this->validate($request, ['transaction_id' => 'required']);
@@ -57,7 +57,7 @@ class PartnerWalletController extends Controller
             $partner_credit = $user->wallet;
             $paymentRepository->setPayment($payment);
             if ($partner_credit < $payment->payable->amount) {
-                $paymentRepository->changeStatus([
+                $paymentRepository->create([
                     'to'                  => 'validation_failed',
                     'from'                => $payment->status,
                     'transaction_details' => $payment->transaction_details,
@@ -85,7 +85,7 @@ class PartnerWalletController extends Controller
                         $transaction = (new WalletTransactionHandler())->setModel($user)->setLog("Service Purchase (ORDER ID: {$partner_order->code()})")->setSource(TransactionSources::SERVICE_PURCHASE)->setType('debit')->setAmount($payment->payable->amount)->store(['partner_order_id' => $partner_order->id]);
                     }
                 });
-                $paymentRepository->changeStatus([
+                $paymentRepository->create([
                     'to'                  => 'validated',
                     'from'                => $payment->status,
                     'transaction_details' => $payment->transaction_details
