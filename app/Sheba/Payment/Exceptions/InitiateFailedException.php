@@ -1,7 +1,9 @@
 <?php namespace Sheba\Payment\Exceptions;
 
 
-class InitiateFailedException extends \Exception
+use App\Exceptions\ApiValidationException;
+
+class InitiateFailedException extends ApiValidationException
 {
 
 }
