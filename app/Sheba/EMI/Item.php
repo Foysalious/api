@@ -27,7 +27,7 @@ class Item implements Arrayable {
             'customer_mobile' => $this->customer_mobile,
             'date'            => $this->date,
             'created_at'      => $this->created_at,
-            'amount'          => number_format((double)$this->amount, 2),
+            'amount'          => round((double)$this->amount, 2),
             'status'          => $this->getStatus(),
             'head'            => $this->head,
             'entry_at'        => $this->entry_at
@@ -73,7 +73,7 @@ class Item implements Arrayable {
             'customer_name'       => $this->customer_name,
             'customer_mobile'     => $this->customer_mobile,
             'method'              => $this->payment_method,
-            'amount'              => number_format((double)$this->amount, 2),
+            'amount'              => round((double)$this->amount, 2),
             'type'                => $this->getType(),
             'interest_payer'      => "Customer",
             'interest_payer_name' => $this->customer_name,
