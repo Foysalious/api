@@ -1,11 +1,8 @@
-<?php
-
-namespace Sheba\Payment\Methods\Ssl;
+<?php namespace Sheba\Payment\Methods\Ssl;
 
 use App\Models\Payable;
 use App\Models\Payment;
 use App\Models\PaymentDetail;
-use Carbon\Carbon;
 use GuzzleHttp\Client;
 use Sheba\Payment\Methods\PaymentMethod;
 use Sheba\Payment\Methods\Ssl\Response\InitResponse;
@@ -14,7 +11,8 @@ use Sheba\Payment\Statuses;
 use Sheba\RequestIdentification;
 use DB;
 
-class Ssl extends PaymentMethod {
+class Ssl extends PaymentMethod
+{
     private $storeId;
     private $storePassword;
     private $sessionUrl;
@@ -26,7 +24,8 @@ class Ssl extends PaymentMethod {
     CONST NAME_DONATE = 'ssl_donation';
     private $is_donate = false;
 
-    public function __construct() {
+    public function __construct()
+    {
         parent::__construct();
         $this->storeId            = config('ssl.store_id');
         $this->storePassword      = config('ssl.store_password');
@@ -37,7 +36,8 @@ class Ssl extends PaymentMethod {
         $this->orderValidationUrl = config('ssl.order_validation_url');
     }
 
-    public function setDonationConfig() {
+    public function setDonationConfig()
+    {
         $this->storeId            = config('ssl_donation.store_id');
         $this->storePassword      = config('ssl_donation.store_password');
         $this->sessionUrl         = config('ssl_donation.session_url');
@@ -49,7 +49,8 @@ class Ssl extends PaymentMethod {
         return $this;
     }
 
-    public function init(Payable $payable): Payment {
+    public function init(Payable $payable): Payment
+    {
         $invoice              = "SHEBA_SSL_" . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . randomString(10, 1, 1);
         $data                 = array();
         $data['store_id']     = $this->storeId;
@@ -98,8 +99,8 @@ class Ssl extends PaymentMethod {
             $payment->redirect_url        = $success->redirect_url;
         } else {
             $error = $init_response->getError();
-            $this->paymentRepository->setPayment($payment);
-            $this->paymentRepository->changeStatus([
+            $this->paymentLogRepo->setPayment($payment);
+            $this->paymentLogRepo->create([
                 'to'                  => Statuses::INITIATION_FAILED,
                 'from'                => $payment->status,
                 'transaction_details' => json_encode($error->details)
@@ -111,21 +112,23 @@ class Ssl extends PaymentMethod {
         return $payment;
     }
 
-    public function getSslSession($data) {
+    public function getSslSession($data)
+    {
         $client = new Client();
         $result = $client->request('POST', $this->sessionUrl, ['form_params' => $data]);
         return json_decode($result->getBody());
     }
 
-    public function validate(Payment $payment) {
+    public function validate(Payment $payment)
+    {
         if ($this->sslIpnHashValidation()) {
             $validation_response = new ValidationResponse();
             $validation_response->setResponse($this->validateOrder());
             $validation_response->setPayment($payment);
-            $this->paymentRepository->setPayment($payment);
+            $this->paymentLogRepo->setPayment($payment);
             if ($validation_response->hasSuccess()) {
                 $success = $validation_response->getSuccess();
-                $this->paymentRepository->changeStatus([
+                $this->paymentLogRepo->create([
                     'to'                  => Statuses::VALIDATED,
                     'from'                => $payment->status,
                     'transaction_details' => $payment->transaction_details
@@ -134,7 +137,7 @@ class Ssl extends PaymentMethod {
                 $payment->transaction_details = json_encode($success->details);
             } else {
                 $error = $validation_response->getError();
-                $this->paymentRepository->changeStatus([
+                $this->paymentLogRepo->create([
                     'to'                  => Statuses::VALIDATION_FAILED,
                     'from'                => $payment->status,
                     'transaction_details' => $payment->transaction_details
@@ -145,8 +148,8 @@ class Ssl extends PaymentMethod {
         } else {
             $request           = request()->all();
             $request['status'] = 'HASH_VALIDATION_FAILED';
-            $this->paymentRepository->setPayment($payment);
-            $this->paymentRepository->changeStatus([
+            $this->paymentLogRepo->setPayment($payment);
+            $this->paymentLogRepo->create([
                 'to'                  => Statuses::VALIDATION_FAILED,
                 'from'                => $payment->status,
                 'transaction_details' => $payment->transaction_details
@@ -158,7 +161,8 @@ class Ssl extends PaymentMethod {
         return $payment;
     }
 
-    private function sslIpnHashValidation() {
+    private function sslIpnHashValidation()
+    {
         if (request()->has('verify_key') && request()->has('verify_sign')) {
             $pre_define_key = explode(',', request('verify_key'));
             $new_data       = array();
@@ -186,7 +190,8 @@ class Ssl extends PaymentMethod {
         }
     }
 
-    private function validateOrder() {
+    private function validateOrder()
+    {
         $client   = new Client();
         try {
             $result   = $client->request('GET', $this->orderValidationUrl, [
@@ -214,5 +219,10 @@ class Ssl extends PaymentMethod {
             $response->tran_id = null;
         }
         return $response;
+    }
+
+    public function getMethodName()
+    {
+        return $this->is_donate ? self::NAME_DONATE : self::NAME;
     }
 }

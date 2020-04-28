@@ -154,7 +154,7 @@ class Bkash extends PaymentMethod
             $res = $this->execute($payment);
         }
         $execute_response->setResponse($res);
-        $this->paymentRepository->setPayment($payment);
+        $this->paymentLogRepo->setPayment($payment);
         if ($execute_response->hasSuccess()) {
             $success = $execute_response->getSuccess();
             try {
@@ -170,7 +170,7 @@ class Bkash extends PaymentMethod
             $status = Statuses::VALIDATION_FAILED;
             $transaction_details = json_encode($error->details);
         }
-        $this->paymentRepository->changeStatus([
+        $this->paymentLogRepo->create([
             'to' => $status,
             'from' => $payment->status,
             'transaction_details' => $transaction_details
@@ -203,5 +203,10 @@ class Bkash extends PaymentMethod
         };
         curl_close($url);
         return $result_data;
+    }
+
+    public function getMethodName()
+    {
+        return self::NAME;
     }
 }
