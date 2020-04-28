@@ -33,6 +33,9 @@ class AuthRoute
                     $api->post('services', 'Resource\ResourceJobController@updateService');
                 });
             });
+            $api->group(['prefix' => 'transactions'], function ($api) {
+                $api->get('/', 'Resource\ResourceTransactionController@index');
+            });
         });
     }
 }
