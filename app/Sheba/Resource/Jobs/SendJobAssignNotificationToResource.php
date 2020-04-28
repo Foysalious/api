@@ -20,7 +20,7 @@ class SendJobAssignNotificationToResource extends \App\Jobs\Job implements Shoul
 
     public function __construct($resource_id, Job $job_model)
     {
-        $this->resource_id = $resource_id;
+        $this->resource_id = (int)$resource_id;
         $this->jobModel = $job_model;
         $this->pushNotification = new PushNotificationHandler();
     }
