@@ -6,8 +6,10 @@ use Illuminate\Validation\ValidationException;
 use Sheba\Payment\ShebaPayment;
 use Sheba\TopUp\Vendor\Internal\SslClient;
 
-class SslController extends Controller {
-    public function validatePayment(Request $request, ShebaPayment $sheba_payment) {
+class SslController extends Controller
+{
+    public function validatePayment(Request $request, ShebaPayment $sheba_payment)
+    {
         $redirect_url = config('sheba.front_url');
         try {
             /** @var Payment $payment */
@@ -26,7 +28,8 @@ class SslController extends Controller {
         return redirect($redirect_url);
     }
 
-    public function validateTopUp(Request $request) {
+    public function validateTopUp(Request $request)
+    {
         try {
             $this->validate($request, [
                 'vr_guid' => 'required',
@@ -44,7 +47,8 @@ class SslController extends Controller {
         }
     }
 
-    public function checkBalance(Request $request) {
+    public function checkBalance(Request $request)
+    {
         try {
             $ssl      = new SslClient();
             $response = $ssl->getBalance();

@@ -63,4 +63,9 @@ class PartnerWallet extends PaymentMethod
     {
         return $payment;
     }
+
+    public function getMethodName()
+    {
+        return "partner_wallet";
+    }
 }

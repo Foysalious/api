@@ -58,4 +58,9 @@ class Wallet extends PaymentMethod
     {
         return $payment;
     }
+
+    public function getMethodName()
+    {
+        return "credit";
+    }
 }
