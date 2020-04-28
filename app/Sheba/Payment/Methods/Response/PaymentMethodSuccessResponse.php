@@ -1,6 +1,4 @@
-<?php
-
-namespace Sheba\Payment\Methods\Response;
+<?php namespace Sheba\Payment\Methods\Response;
 
 
 class PaymentMethodSuccessResponse

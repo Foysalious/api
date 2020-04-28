@@ -25,7 +25,7 @@ trait ConstGetter
     {
         $result = [];
         foreach (static::get() as $item) {
-            $result[$item] = normalizeCases($item);
+            $result[$item] = normalizeStringCases($item);
         }
         return $result;
     }
