@@ -17,6 +17,7 @@ use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\BusinessOfficeHours\Contract as BusinessOfficeHoursRepoInterface;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
+use Sheba\Business\OfficeTiming\Updater as OfficeTimingUpdater;
 use Throwable;
 
 class AttendanceController extends Controller
@@ -182,8 +183,14 @@ class AttendanceController extends Controller
         return api_response($request, null, 200, ['office_timing' => $data]);
     }
 
-    public function updateOfficeTime()
+    public function updateOfficeTime(Request $request, OfficeTimingUpdater $updater)
     {
+        $this->validate($request, [
+            'office_hour_type' => 'required', 'start_time' => 'date_format:H:i:s', 'end_time' => 'date_format:H:i:s', 'weekends' => 'required|array'
+        ]);
+        $business_member = $request->business_member;
+        $office_timing = $updater->setBusiness($request->business)->setMember($business_member->member)->setOfficeHourType($request->office_hour_type)->setStartTime($request->start_time)->setEndTime($request->end_time)->setWeekends($request->weekends)->update();
 
+        if($office_timing) return api_response($request, null, 200, ['msg' => "Update Successful"]);
     }
 }
