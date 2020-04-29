@@ -20,6 +20,7 @@ use Sheba\Dal\BusinessOffice\Contract as BusinessOfficeRepoInterface;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Business\OfficeTiming\Updater as OfficeTimingUpdater;
+use Sheba\Business\Attendance\Setting\Updater as AttendanceSettingUpdater;
 use Sheba\Business\Attendance\Setting\AttendanceSettingTransformer;
 use Throwable;
 
@@ -232,10 +233,29 @@ class AttendanceController extends Controller
         ]);
     }
 
-    public function updateAttendanceSetting(Request $request)
+    public function updateAttendanceSetting(Request $request, BusinessOfficeRepoInterface $business_office_repo)
     {
         $attendance_types = json_decode($request->attendance_types);
         $business_offices = json_decode($request->business_offices);
+        $business_member = $request->business_member;
+
+        $updater = new AttendanceSettingUpdater($request->business, $business_office_repo, $business_member->member);
+        if(!is_null($attendance_types))
+        {
+           foreach ($attendance_types as $attendance_type)
+           {
+              $update_attendance_type = $updater->updateAttendanceType($attendance_type->id,$attendance_type->action);
+           }
+        }
+        if(!is_null($business_offices))
+        {
+            foreach ($business_offices as $business_office)
+            {
+                $office_id = isset($business_office->id) ? $business_office->id : "No ID";
+                $update_business_type = $updater->updateBusinessOffice($office_id, $business_office->name, $business_office->ip, $business_office->action);
+            }
+        }
+        return api_response($request, null, 200, ['msg' => "Update Successful"]);
     }
 
 }
