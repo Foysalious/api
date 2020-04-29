@@ -25,8 +25,8 @@ class ResourceTransactionController extends Controller
         $wallet = [
             'balance' => 1000,
             'max_withdrawal_limit' => 600,
-            'tag' => 'request_accepted',
-            'message' => 'আপনার সর্বশেষ টাকা উত্তোলনের রিকুয়েস্টটি অনুমোদন করা হয়নি। ২৪ ঘণ্টার মধ্যে নিম্নে দেয়া বিকাশ নাম্বারে টাকা রিচার্জ হয়ে যাবে'
+            'tag' => 'approval_pending',
+            'message' => 'আপনার সর্বশেষ ব্যালেন্স উত্তোলনের রিকুয়েস্ট এখনো অপেক্ষমাণ আছে, তাই আপনি এখন রিকুয়েস্ট করতে পারবেন না।'
         ];
         return api_response($request, $wallet, 200, ['wallet' => $wallet]);
     }
