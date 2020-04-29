@@ -17,6 +17,7 @@ use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 use Sheba\Wallet\WalletUpdateEvent;
 use Sheba\Dal\BusinessOffice\Model as BusinessOffice;
+use Sheba\Dal\BusinessAttendanceTypes\Model as BusinessAttendanceTypes;
 
 class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTransaction
 {
@@ -186,6 +187,11 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
     public function leaveTypes()
     {
         return $this->hasMany(LeaveTypeModel::class);
+    }
+
+    public function attendanceTypes()
+    {
+        return $this->hasMany(BusinessAttendanceTypes::class);
     }
 
     public function getBusinessFiscalPeriod()
