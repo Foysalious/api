@@ -277,4 +277,24 @@ class DueTrackerController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function createPosOrderPayment(Request $request, DueTrackerRepository $dueTrackerRepository)
+    {
+        try {
+            $this->validate($request, [
+                'amount' => 'required',
+                'pos_order_id' => 'required',
+                'payment_method'    => 'required|string|in:' . implode(',', config('pos.payment_method')),
+            ]);
+            $this->setModifier($request->manager_resource);
+            $dueTrackerRepository->createPosOrderPayment($request->amount, $request->pos_order_id,$request->payment_method);
+            return api_response($request, true, 200, ['message' => 'Pos Order Payment created successfully']);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        }  catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }

@@ -202,15 +202,15 @@ class DueTrackerRepository extends BaseRepository {
         $response = $this->client->post("accounts/$this->accountId/entries/update/$request->entry_id", $data);
 
         if ($data['amount_cleared'] > 1 && $response['data']['source_type'] == 'PosOrder' && !empty($response['data']['source_id']))
-            $this->createPosOrderPayment($data['amount_cleared'], $response['data']['source_id']);
+            $this->createPosOrderPayment($data['amount_cleared'], $response['data']['source_id'],'cod');
 
         return $response['data'];
     }
 
-    private function createPosOrderPayment($amount_cleared, $pos_order_id) {
+    public function createPosOrderPayment($amount_cleared, $pos_order_id,$payment_method) {
         $payment_data['pos_order_id'] = $pos_order_id;
         $payment_data['amount']       = $amount_cleared;
-        $payment_data['method']       = 'cod';
+        $payment_data['method']       = $payment_method;
         $this->paymentCreator->credit($payment_data);
     }
 
