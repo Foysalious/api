@@ -2,6 +2,7 @@
 
 use App\Models\Payment;
 use Sheba\Payment\Methods\PortWallet\Response\InitResponse;
+use Sheba\Payment\Methods\PortWallet\Response\RefundResponse;
 use Sheba\Payment\Methods\PortWallet\Response\ValidateResponse;
 use Sheba\Payment\Methods\Response\PaymentMethodResponse;
 
@@ -45,7 +46,7 @@ class Service
         }
 
         $res = $this->client->post('/invoice', $data);
-        return (new InitResponse())->setResponse($res);
+        return (new InitResponse())->setPayment($this->payment)->setResponse($res);
     }
 
     /**
@@ -54,6 +55,40 @@ class Service
     public function validate()
     {
         return $this->isIpnEnabled ? $this->validateIpn() : $this->retrieveInvoice();
+    }
+
+    /**
+     * @return ValidateResponse|PaymentMethodResponse
+     */
+    public function validateIpn()
+    {
+        $res = $this->client->get("/invoice/ipn/" . $this->payment->gateway_transaction_id . "/" . $this->payment->payable->amount);
+        return $this->createValidationResponse($res);
+    }
+
+    /**
+     * @return ValidateResponse|PaymentMethodResponse
+     */
+    public function retrieveInvoice()
+    {
+        $res = $this->client->get("/invoice/" . $this->payment->gateway_transaction_id);
+        return $this->createValidationResponse($res);
+    }
+
+    /**
+     * @param $amount
+     * @return RefundResponse|PaymentMethodResponse
+     */
+    public function refund($amount)
+    {
+        $res = $this->client->post('/invoice/refund/' . $this->payment->gateway_transaction_id, [
+            'refund' => [
+                'amount' => $amount,
+                'currency' => "BDT"
+            ]
+        ]);
+
+        return (new RefundResponse())->setPayment($this->payment)->setResponse($res);
     }
 
     private function makeCreateData()
@@ -96,18 +131,6 @@ class Service
         }
 
         return $data;
-    }
-
-    private function validateIpn()
-    {
-        $res = $this->client->get("/invoice/ipn/" . $this->payment->gateway_transaction_id . "/" . $this->payment->payable->amount);
-        return $this->createValidationResponse($res);
-    }
-
-    private function retrieveInvoice()
-    {
-        $res = $this->client->get("/invoice/" . $this->payment->gateway_transaction_id);
-        return $this->createValidationResponse($res);
     }
 
     private function createValidationResponse($res)
