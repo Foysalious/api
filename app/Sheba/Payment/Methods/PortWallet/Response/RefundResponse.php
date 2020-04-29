@@ -1,21 +1,21 @@
 <?php namespace Sheba\Payment\Methods\PortWallet\Response;
 
-
 use Sheba\Payment\Methods\Response\PaymentMethodErrorResponse;
 use Sheba\Payment\Methods\Response\PaymentMethodResponse;
 use Sheba\Payment\Methods\Response\PaymentMethodSuccessResponse;
 
-class ValidateResponse extends PaymentMethodResponse
+class RefundResponse extends PaymentMethodResponse
 {
     public function hasSuccess()
     {
-        return $this->getOrderStatus() == "ACCEPTED";
+        return strtoupper($this->response->result) == "SUCCESS";
     }
 
     public function getSuccess(): PaymentMethodSuccessResponse
     {
         $success = new PaymentMethodSuccessResponse();
-        $success->id = $this->payment->gateway_transaction_id;
+        $success->id = $this->response->data->order->invoice_id;
+        $success->refund_id = $this->response->data->order->invoice_id;
         $success->details = $this->response;
         return $success;
     }
@@ -23,13 +23,13 @@ class ValidateResponse extends PaymentMethodResponse
     public function getError(): PaymentMethodErrorResponse
     {
         $error = new PaymentMethodErrorResponse();
-        $error->id = $this->payment->gateway_transaction_id;
+        $error->id = $this->response->data->order->invoice_id;
         $error->details = $this->response;
         return $error;
     }
 
-    public function getOrderStatus()
+    public function getErrorReason()
     {
-        return $this->response->data->order->status;
+        return $this->response->error->explanation;
     }
 }
