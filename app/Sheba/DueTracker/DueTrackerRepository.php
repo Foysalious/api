@@ -218,7 +218,8 @@ class DueTrackerRepository extends BaseRepository {
         $data['created_from']   = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
         $data['amount']         = (double)$request->amount;
         $data['note']           = $request->note;
-        $data['amount_cleared'] = $request->type == "due" ? 0 : (double)$request->amount;
+        $data['amount_cleared'] = 0;
+        $data['type']           = $request->type;
         $data['head_name']      = AutomaticIncomes::DUE_TRACKER;
         $data['created_at']     = $request->created_at ?: Carbon::now()->format('Y-m-d H:i:s');
         $data['attachments']    = $this->uploadAttachments($request);
