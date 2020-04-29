@@ -44,6 +44,11 @@ class BusinessRoute
                     $api->post('/update', 'B2b\AttendanceController@updateOfficeTime');
                 });
 
+                $api->group(['prefix' => 'attendance-setting'], function ($api) {
+                    $api->get('/', 'B2b\AttendanceController@getAttendanceSetting');
+                    $api->post('/update', 'B2b\AttendanceController@updateAttendanceSetting');
+                });
+
                 $api->group(['prefix' => 'employees'], function ($api) {
                     $api->post('/', 'B2b\CoWorkerController@store');
                     $api->get('/', 'B2b\CoWorkerController@index');
