@@ -19,7 +19,8 @@ class ResourceHomeTransformer extends TransformerAbstract
             'picture' => $resource->profile->pro_pic,
             'is_verified' => $resource->is_verified,
             'rating' => $this->reviewRepository->getAvgRating($resource->reviews),
-            'notification_count' => $resource->notifications()->where('is_seen', 0)->count()
+            'notification_count' => $resource->notifications()->where('is_seen', 0)->count(),
+            'balance' => 1000
         ];
 
     }
