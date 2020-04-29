@@ -37,6 +37,7 @@ class AuthRoute
                 $api->get('/', 'Resource\ResourceTransactionController@index');
             });
             $api->get('wallet', 'Resource\ResourceTransactionController@getWallet');
+            $api->post('withdrawals', 'Resource\ResourceWithdrawalRequestController@store');
         });
     }
 }
