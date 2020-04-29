@@ -15,6 +15,8 @@ use Sheba\Dal\Attendance\Statuses;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\BusinessOfficeHours\Contract as BusinessOfficeHoursRepoInterface;
+use Sheba\Dal\BusinessAttendanceTypes\Contract as BusinessAttendanceTypesRepoInterface;
+use Sheba\Dal\BusinessOffice\Contract as BusinessOfficeRepoInterface;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Business\OfficeTiming\Updater as OfficeTimingUpdater;
@@ -192,5 +194,39 @@ class AttendanceController extends Controller
         $office_timing = $updater->setBusiness($request->business)->setMember($business_member->member)->setOfficeHourType($request->office_hour_type)->setStartTime($request->start_time)->setEndTime($request->end_time)->setWeekends($request->weekends)->update();
 
         if($office_timing) return api_response($request, null, 200, ['msg' => "Update Successful"]);
+    }
+
+    public function getAttendanceSetting($business, Request $request,
+                                         BusinessAttendanceTypesRepoInterface $attendance_types_repo,
+                                         BusinessOfficeRepoInterface $business_office_repo)
+    {
+        $business = $request->business;
+        $attendance_types = $attendance_types_repo->getAllByBusiness($business);
+        $attendance_type_names = $attendance_types->pluck('attendance_type')->toArray();
+        $business_offices = $business_office_repo->getAllByBusiness($business);
+        $business_office_names_with_ip = $this->getOfficeNamesWithIp($business_offices);
+
+        return api_response($request, null, 200, [
+            'attendance_types' => $attendance_type_names,
+            'business_offices' => $business_office_names_with_ip
+        ]);
+    }
+
+    public function updateAttendanceSetting()
+    {
+
+    }
+
+    private function getOfficeNamesWithIp($business_offices)
+    {
+        $office_names_with_ip = [];
+        foreach ($business_offices as $business_office)
+        {
+            array_push($office_names_with_ip,[
+                'office_name' => $business_office->name,
+                'ip' => $business_office->ip
+            ]);
+        }
+        return $office_names_with_ip;
     }
 }
