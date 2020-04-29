@@ -20,6 +20,7 @@ use Sheba\Dal\BusinessOffice\Contract as BusinessOfficeRepoInterface;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Business\OfficeTiming\Updater as OfficeTimingUpdater;
+use Sheba\Business\Attendance\Setting\AttendanceSettingTransformer;
 use Throwable;
 
 class AttendanceController extends Controller
@@ -89,7 +90,7 @@ class AttendanceController extends Controller
                 $business_member_leave = $business_member->leaves()->accepted()->startDateBetween($time_frame)->endDateBetween($time_frame)->get();
                 $time_frame->end = $this->isShowRunningMonthsAttendance($year, $month) ? Carbon::now() : $time_frame->end;
                 $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
-                $employee_attendance = (new MonthlyStat($time_frame, $business_holiday, $business_weekend, $business_member_leave,false))->transform($attendances);
+                $employee_attendance = (new MonthlyStat($time_frame, $business_holiday, $business_weekend, $business_member_leave, false))->transform($attendances);
 
                 array_push($all_employee_attendance, [
                     'business_member_id' => $business_member->id,
@@ -149,7 +150,7 @@ class AttendanceController extends Controller
         $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
         $employee_attendance = (new MonthlyStat($time_frame, $business_holiday, $business_weekend, $business_member_leave))->transform($attendances);
         $daily_breakdowns = collect($employee_attendance['daily_breakdown']);
-        $daily_breakdowns = $daily_breakdowns->filter(function ($breakdown){
+        $daily_breakdowns = $daily_breakdowns->filter(function ($breakdown) {
             return Carbon::parse($breakdown['date'])->lessThanOrEqualTo(Carbon::today());
         });
 
@@ -173,6 +174,13 @@ class AttendanceController extends Controller
         ]);
     }
 
+    /**
+     * @param $business
+     * @param Request $request
+     * @param BusinessWeekendRepoInterface $business_weekend_repo
+     * @param BusinessOfficeHoursRepoInterface $office_hours
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function getOfficeTime($business, Request $request, BusinessWeekendRepoInterface $business_weekend_repo, BusinessOfficeHoursRepoInterface $office_hours)
     {
         $business = $request->business;
@@ -180,11 +188,16 @@ class AttendanceController extends Controller
         $weekend_days = $weekends->pluck('weekday_name')->toArray();
         $office_time = $office_hours->getOfficeTime($business);
         $data = [
-          'office_hour_type' => 'Fixed Time', 'start_time' => Carbon::parse($office_time->start_time)->format('h:i a'), 'end_time' => Carbon::parse($office_time->end_time)->format('h:i a'), 'weekends' => $weekend_days
+            'office_hour_type' => 'Fixed Time', 'start_time' => Carbon::parse($office_time->start_time)->format('h:i a'), 'end_time' => Carbon::parse($office_time->end_time)->format('h:i a'), 'weekends' => $weekend_days
         ];
         return api_response($request, null, 200, ['office_timing' => $data]);
     }
 
+    /**
+     * @param Request $request
+     * @param OfficeTimingUpdater $updater
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function updateOfficeTime(Request $request, OfficeTimingUpdater $updater)
     {
         $this->validate($request, [
@@ -193,40 +206,36 @@ class AttendanceController extends Controller
         $business_member = $request->business_member;
         $office_timing = $updater->setBusiness($request->business)->setMember($business_member->member)->setOfficeHourType($request->office_hour_type)->setStartTime($request->start_time)->setEndTime($request->end_time)->setWeekends($request->weekends)->update();
 
-        if($office_timing) return api_response($request, null, 200, ['msg' => "Update Successful"]);
+        if ($office_timing) return api_response($request, null, 200, ['msg' => "Update Successful"]);
     }
 
+    /**
+     * @param $business
+     * @param Request $request
+     * @param BusinessAttendanceTypesRepoInterface $attendance_types_repo
+     * @param BusinessOfficeRepoInterface $business_office_repo
+     * @param AttendanceSettingTransformer $transformer
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function getAttendanceSetting($business, Request $request,
                                          BusinessAttendanceTypesRepoInterface $attendance_types_repo,
-                                         BusinessOfficeRepoInterface $business_office_repo)
+                                         BusinessOfficeRepoInterface $business_office_repo, AttendanceSettingTransformer $transformer)
     {
         $business = $request->business;
         $attendance_types = $attendance_types_repo->getAllByBusiness($business);
-        $attendance_type_names = $attendance_types->pluck('attendance_type')->toArray();
         $business_offices = $business_office_repo->getAllByBusiness($business);
-        $business_office_names_with_ip = $this->getOfficeNamesWithIp($business_offices);
+        $attendance_setting_data = $transformer->getData($attendance_types, $business_offices);
 
         return api_response($request, null, 200, [
-            'attendance_types' => $attendance_type_names,
-            'business_offices' => $business_office_names_with_ip
+            'attendance_types' => $attendance_setting_data["attendance_types"],
+            'business_offices' => $attendance_setting_data["business_offices"]
         ]);
     }
 
-    public function updateAttendanceSetting()
+    public function updateAttendanceSetting(Request $request)
     {
-
+        $attendance_types = json_decode($request->attendance_types);
+        $business_offices = json_decode($request->business_offices);
     }
 
-    private function getOfficeNamesWithIp($business_offices)
-    {
-        $office_names_with_ip = [];
-        foreach ($business_offices as $business_office)
-        {
-            array_push($office_names_with_ip,[
-                'office_name' => $business_office->name,
-                'ip' => $business_office->ip
-            ]);
-        }
-        return $office_names_with_ip;
-    }
 }
