@@ -41,6 +41,7 @@ class Creator
     /** @var DiscountHandler $discountHandler */
     private $discountHandler;
     private $posServiceRepo;
+    private $paymentMethod;
 
     public function __construct(PosOrderRepository $order_repo, PosOrderItemRepository $item_repo,
                                 PaymentCreator $payment_creator, StockManager $stock_manager,
@@ -144,7 +145,7 @@ class Creator
         if ($this->discountHandler->hasDiscount()) $this->discountHandler->create($order);
 
         $this->voucherCalculation($order);
-
+        $this->resolvePaymentMethod();
         $this->storeIncome($order);
         return $order;
     }
@@ -156,6 +157,15 @@ class Creator
     {
         if ($this->customer) return $this->customer->id;
         else return (isset($this->data['customer_id']) && $this->data['customer_id']) ? $this->data['customer_id'] : null;
+    }
+
+    private function resolvePaymentMethod()
+    {
+        if(isset($this->data['payment_method']))
+            $this->paymentMethod = $this->data['payment_method'];
+        else
+            $this->paymentMethod = 'cod';
+
     }
 
     private function createPartnerWiseOrderId(Partner $partner)
@@ -215,6 +225,7 @@ class Creator
             ->setHead(AutomaticIncomes::POS)
             ->setSourceType(class_basename($order))
             ->setSourceId($order->id)
+            ->setPaymentMethod($this->paymentMethod)
             ->store();
     }
 
