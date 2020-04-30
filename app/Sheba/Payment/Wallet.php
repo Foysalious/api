@@ -17,26 +17,10 @@ trait Wallet
 {
     public function rechargeWallet($amount, $transaction_data)
     {
-        /** @var PartnerTransaction $transaction */
-        $transaction = null;
-        DB::transaction(function () use ($amount, $transaction_data, &$transaction) {
+        DB::transaction(function () use ($amount, $transaction_data) {
             $this->creditWallet($amount);
-            $transaction_data = array_merge($transaction_data, ['amount' => $amount, 'type' => 'Credit']);
-            $transaction = $this->walletTransaction($transaction_data);
+            $this->walletTransaction($transaction_data);
         });
-        return $transaction;
-    }
-
-    public function minusWallet($amount, $transaction_data)
-    {
-        /** @var PartnerTransaction $transaction */
-        $transaction = null;
-        DB::transaction(function () use ($amount, $transaction_data, &$transaction) {
-            $this->debitWallet($amount);
-            $transaction_data = array_merge($transaction_data, ['amount' => $amount, 'type' => 'Debit']);
-            $transaction = $this->walletTransaction($transaction_data);
-        });
-        return $transaction;
     }
 
     public function creditWallet($amount)
@@ -71,5 +55,11 @@ trait Wallet
         } else if ($this instanceof Business) {
             return new BusinessTransaction();
         }
+    }
+
+    public function getBalance()
+    {
+        return $this->transactions()->selectRaw('SUM(IF(type = "debit", -1, 1) * amount) as balance')
+            ->pluck('balance')->first();
     }
 }
