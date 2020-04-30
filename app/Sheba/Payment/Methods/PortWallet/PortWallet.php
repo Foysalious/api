@@ -42,6 +42,7 @@ class PortWallet extends PaymentMethod
             $sheba_payment = app(ShebaPayment::class);
             $payment = $sheba_payment->setMethod("ssl")->init($payable);
         }
+
         return $payment;
     }
 
