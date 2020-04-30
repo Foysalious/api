@@ -1,10 +1,12 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\ResourceTransaction\Model as ResourceTransaction;
 
 class Resource extends Model
 {
     protected $guarded = ['id'];
+    protected $casts = ['wallet' => 'double'];
 
     public function partners()
     {
@@ -24,6 +26,11 @@ class Resource extends Model
     public function jobs()
     {
         return $this->hasMany(Job::class);
+    }
+
+    public function transactions()
+    {
+        return $this->hasMany(ResourceTransaction::class);
     }
 
     public function associatePartners()
@@ -109,5 +116,10 @@ class Resource extends Model
         return $this->jobs->filter(function ($job) {
             return $job->status === 'Served';
         })->count();
+    }
+
+    public function totalWalletAmount()
+    {
+        return $this->wallet;
     }
 }

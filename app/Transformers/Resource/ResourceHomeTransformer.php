@@ -20,7 +20,7 @@ class ResourceHomeTransformer extends TransformerAbstract
             'is_verified' => $resource->is_verified,
             'rating' => $this->reviewRepository->getAvgRating($resource->reviews),
             'notification_count' => $resource->notifications()->where('is_seen', 0)->count(),
-            'balance' => 1000
+            'balance' => $resource->totalWalletAmount()
         ];
 
     }
