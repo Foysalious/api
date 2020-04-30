@@ -132,9 +132,9 @@ class Payable extends Model
         return $model;
     }
 
-    public function payment()
+    public function payments()
     {
-        return $this->hasOne(Payment::class);
+        return $this->hasMany(Payment::class);
     }
 
     /**
@@ -149,5 +149,10 @@ class Payable extends Model
         } else {
             return ($this->getPayableModel())::find($this->type_id);
         }
+    }
+
+    public function getPaymentAttribute()
+    {
+        return $this->payments->last();
     }
 }
