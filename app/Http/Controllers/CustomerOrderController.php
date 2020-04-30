@@ -84,8 +84,7 @@ class CustomerOrderController extends Controller
             } else {
                 $all_orders = $all_jobs->values()->all();
             }
-            $total_orders = $request->customer->orders()->count();
-            return count($all_jobs) > 0 ? api_response($request, $all_jobs, 200, ['orders' => $all_orders, 'total_orders' => $total_orders]) : api_response($request, null, 404);
+            return count($all_jobs) > 0 ? api_response($request, $all_jobs, 200, ['orders' => $all_orders]) : api_response($request, null, 404);
         } catch (ValidationException $e) {
             app('sentry')->captureException($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
