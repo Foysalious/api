@@ -52,8 +52,6 @@ class PortWalletController extends Controller
 
         if (!$payment) return redirect(config('sheba.front_url'));
 
-        dd($payment);
-
         return redirect($payment->payable->success_url . '?invoice_id=' . $payment->transaction_id);
     }
 
@@ -73,7 +71,6 @@ class PortWalletController extends Controller
         try {
             $payment = $this->shebaPayment->complete($payment);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
         }
         return $payment;
