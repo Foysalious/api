@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\ResourceTransaction\Model as ResourceTransaction;
 
 class Resource extends Model
 {
@@ -25,6 +26,11 @@ class Resource extends Model
     public function jobs()
     {
         return $this->hasMany(Job::class);
+    }
+
+    public function transactions()
+    {
+        return $this->hasMany(ResourceTransaction::class);
     }
 
     public function associatePartners()
