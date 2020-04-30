@@ -223,28 +223,34 @@ class AttendanceController extends Controller
                                          BusinessOfficeRepoInterface $business_office_repo, AttendanceSettingTransformer $transformer)
     {
         $business = $request->business;
-        $attendance_types = $attendance_types_repo->getAllByBusiness($business);
+        $attendance_types = $business->attendanceTypes()->withTrashed()->get();
         $business_offices = $business_office_repo->getAllByBusiness($business);
         $attendance_setting_data = $transformer->getData($attendance_types, $business_offices);
 
         return api_response($request, null, 200, [
-            'attendance_types' => $attendance_setting_data["attendance_types"],
+            'sheba_attendance_types' => $attendance_setting_data["sheba_attendance_types"],
+            'business_attendance_types' => $attendance_setting_data["attendance_types"],
             'business_offices' => $attendance_setting_data["business_offices"]
         ]);
     }
 
-    public function updateAttendanceSetting(Request $request, BusinessOfficeRepoInterface $business_office_repo)
+    public function updateAttendanceSetting(Request $request, BusinessOfficeRepoInterface $business_office_repo,
+                                            BusinessAttendanceTypesRepoInterface $attendance_type_repo)
     {
+        $this->validate($request, [
+            'attendance_types' => 'required|string', 'business_offices' => 'required|string'
+        ]);
         $attendance_types = json_decode($request->attendance_types);
         $business_offices = json_decode($request->business_offices);
         $business_member = $request->business_member;
 
-        $updater = new AttendanceSettingUpdater($request->business, $business_office_repo, $business_member->member);
+        $updater = new AttendanceSettingUpdater($request->business, $business_member->member, $business_office_repo, $attendance_type_repo);
         if(!is_null($attendance_types))
         {
            foreach ($attendance_types as $attendance_type)
            {
-              $update_attendance_type = $updater->updateAttendanceType($attendance_type->id,$attendance_type->action);
+              $attendance_type_id = isset($attendance_type->id) ? $attendance_type->id : "No ID";
+              $update_attendance_type = $updater->updateAttendanceType($attendance_type_id, $attendance_type->type, $attendance_type->action);
            }
         }
         if(!is_null($business_offices))
@@ -258,4 +264,8 @@ class AttendanceController extends Controller
         return api_response($request, null, 200, ['msg' => "Update Successful"]);
     }
 
+    public function getHolidays()
+    {
+
+    }
 }

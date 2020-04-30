@@ -6,6 +6,7 @@ class AttendanceSettingTransformer
     {
         $attendance_setting_info = [];
 
+        $attendance_setting_info['sheba_attendance_types'] = ['remote','ip_based'];
         $attendance_setting_info['attendance_types'] = $this->getAttendanceTypes($attendance_types);
         $attendance_setting_info['business_offices'] = $this->getOfficeNamesWithIp($business_offices);
 
@@ -19,7 +20,8 @@ class AttendanceSettingTransformer
         {
             array_push($attendance_types_data,[
                 'id' => $attendance_type->id,
-                'type' => $attendance_type->attendance_type
+                'type' => $attendance_type->attendance_type,
+                'status' => $attendance_type->trashed() ? 'deleted' : 'not_deleted'
             ]);
         }
 
@@ -37,6 +39,7 @@ class AttendanceSettingTransformer
                 'ip' => $business_office->ip
             ]);
         }
+
         return $office_names_with_ip;
     }
 }
