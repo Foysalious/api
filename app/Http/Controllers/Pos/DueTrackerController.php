@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\DueTracker\DueTrackerRepository;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
+use Sheba\DueTracker\Exceptions\UnauthorizedRequestFromExpenseTrackerException;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ModificationFields;
 use Sheba\Pos\Repositories\PartnerPosCustomerRepository;
@@ -285,14 +286,19 @@ class DueTrackerController extends Controller
                 'amount' => 'required',
                 'pos_order_id' => 'required',
                 'payment_method'    => 'required|string|in:' . implode(',', config('pos.payment_method')),
+                'api_key' => 'required'
             ]);
-            $this->setModifier($request->manager_resource);
+            if($request->api_key != config('expense_tracker.api_key'))
+                throw new UnauthorizedRequestFromExpenseTrackerException();
             $dueTrackerRepository->createPosOrderPayment($request->amount, $request->pos_order_id,$request->payment_method);
             return api_response($request, true, 200, ['message' => 'Pos Order Payment created successfully']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        }  catch (\Throwable $e) {
+        } catch (UnauthorizedRequestFromExpenseTrackerException $e) {
+            $message = "Unauthorized Request";
+            return api_response($request, $message, 401, ['message' => $message]);
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

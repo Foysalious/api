@@ -312,7 +312,6 @@ class OrderController extends Controller
      */
     public function update(Request $request, Updater $updater)
     {
-//        return $request->all();
         $this->setModifier($request->manager_resource);
         try {
             /** @var PosOrder $order */
