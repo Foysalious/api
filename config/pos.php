@@ -1,7 +1,8 @@
 <?php
 
 return [
-    'payment_method'               => ['cod', 'bkash', 'online', 'others', 'payment_link', 'qr_code', 'advance_balance'],
+
+    'payment_method'               => ['cod', 'bkash', 'online', 'others', 'payment_link', 'qr_code', 'emi', 'advance_balance'],
     'warranty_unit'                => [
         'day' => ['bn' => 'দিন', 'en' => 'day'], 'week' => ['bn' => 'সপ্তাহ', 'en' => 'week'], 'month' => ['bn' => 'মাস', 'en' => 'month'], 'year' => ['bn' => 'বছর', 'en' => 'year']
     ],
