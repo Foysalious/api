@@ -2,7 +2,6 @@
 
 use App\Models\Category;
 use App\Models\Job;
-use App\Models\Review;
 use App\Models\Service;
 use Carbon\Carbon;
 use Sheba\Cache\CacheRequest;
@@ -34,15 +33,19 @@ class CategoryDataStore implements DataStoreObject
         $reviews = $category->reviews()->selectRaw("count(DISTINCT(reviews.id)) as total_ratings,avg(reviews.rating) as avg_rating")->groupBy('reviews.category_id')->first();
         $parent_category = $category->parent;
         $master_category = [];
-        if ($category->isRentACarMasterCategory()) $reviews = Review::selectRaw("avg(reviews.rating) as avg_rating")->whereIn('id', config('sheba.car_rental.secondary_category_ids'))->first();
         if ($parent_category) {
             $master_category = [
                 'id' => $parent_category->id, 'name' => $parent_category->name, 'slug' => $parent_category->getSlug(),
             ];
         }
         $data = [
-            'id' => $category->id, 'name' => $category->name, 'slug' => $category->getSlug(), 'thumb' => $category->thumb, 'app_thumb' => $category->app_thumb,
-            'is_trending' => $category->is_trending ? ['last_week_order_count' => $this->getLastWeekOrderCount($category)] : null,
+            'id' => $category->id, 'name' => $category->name,
+            'slug' => $category->getSlug(),
+            'thumb' => $category->thumb,
+            'app_thumb' => $category->app_thumb,
+            'is_trending' => $category->is_trending ? [
+                'last_week_order_count' => $this->getLastWeekOrderCount($category)
+            ] : null,
             'master_category' => count($master_category) > 0 ? $master_category : null,
             'service_title' => $category->service_title,
             'popular_service_description' => $category->popular_service_description,
@@ -50,11 +53,17 @@ class CategoryDataStore implements DataStoreObject
             'is_auto_sp_enabled' => $category->is_auto_sp_enabled,
             'avg_rating' => $reviews ? round($reviews->avg_rating, 2) : null,
             'total_ratings' => $reviews ? $reviews->total_ratings : null,
-            'banner' => $category->banner, 'usp' => count($usps) > 0 ? $usps->pluck('name')->toArray() : null,
+            'banner' => $category->banner,
+            'usp' => count($usps) > 0 ? $usps->pluck('name')->toArray() : null,
             'overview' => $category->contents ? $category->contents : null,
-            'details' => $category->long_description, 'partnership' => $partnership ? [
-                'title' => $partnership->title, 'short_description' => $partnership->short_description, 'images' => count($partnership->slides) > 0 ? $partnership->slides->pluck('thumb') : []
-            ] : null, 'faqs' => $category->faqs ? json_decode($category->faqs) : null, 'gallery' => count($galleries) > 0 ? $galleries : null, 'blog' => count($blog_posts) > 0 ? $blog_posts : null,
+            'details' => $category->long_description,
+            'partnership' => $partnership ? [
+                'title' => $partnership->title, 'short_description' => $partnership->short_description,
+                'images' => count($partnership->slides) > 0 ? $partnership->slides->pluck('thumb') : []
+            ] : null,
+            'faqs' => $category->faqs ? json_decode($category->faqs) : null,
+            'gallery' => count($galleries) > 0 ? $galleries : null,
+            'blog' => count($blog_posts) > 0 ? $blog_posts : null,
         ];
         return array_merge($data, $this->appendMasterCategoryTag($category));
     }
