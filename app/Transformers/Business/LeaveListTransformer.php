@@ -1,6 +1,7 @@
 <?php namespace App\Transformers\Business;
 
 use League\Fractal\TransformerAbstract;
+use Sheba\Dal\Leave\Status as LeaveStatus;
 
 class LeaveListTransformer extends TransformerAbstract
 {
@@ -14,7 +15,7 @@ class LeaveListTransformer extends TransformerAbstract
             'leave_type' => $leave_type->title,
             'start_date' => $leave['start_date'],
             'end_date' => $leave['end_date'],
-            'status' => $leave['status']
+            'status' => LeaveStatus::getWithKeys()[strtoupper($leave['status'])]
         ];
     }
 }
