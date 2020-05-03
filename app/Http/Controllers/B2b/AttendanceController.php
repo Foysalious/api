@@ -22,6 +22,8 @@ use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Business\OfficeTiming\Updater as OfficeTimingUpdater;
 use Sheba\Business\Attendance\Setting\Updater as AttendanceSettingUpdater;
 use Sheba\Business\Attendance\Setting\AttendanceSettingTransformer;
+use Sheba\Business\Holiday\HolidayList;
+use Sheba\Dal\GovernmentHolidays\Contract as GovtHolidaysRepoInterface;
 use Throwable;
 
 class AttendanceController extends Controller
@@ -268,8 +270,13 @@ class AttendanceController extends Controller
         return api_response($request, null, 200, ['msg' => "Update Successful"]);
     }
 
-    public function getHolidays()
+    public function getHolidays(Request $request, GovtHolidaysRepoInterface $govt_holidays_repo)
     {
+        $holiday_list = new HolidayList($request->business,$govt_holidays_repo);
+        $get_holidays = $holiday_list->getHolidays($request);
 
+        return api_response($request, null, 200, [
+            'govt_holidays' => $get_holidays
+        ]);
     }
 }
