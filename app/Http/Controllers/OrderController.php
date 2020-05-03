@@ -115,17 +115,6 @@ class OrderController extends Controller
             return api_response($request, $order, 500);
         } catch (HyperLocationNotFoundException $e) {
             return api_response($request, null, 400, ['message' => "You're out of service area"]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all()]);
-            $sentry->captureException($e);
-            return api_response($request, null, 500);
         }
     }
 
@@ -251,18 +240,10 @@ class OrderController extends Controller
 
     private function getPayment($payment_method, Order $order, OrderAdapter $order_adapter)
     {
-        try {
-            $order_adapter->setPartnerOrder($order->partnerOrders[0])->setIsAdvancedPayment(1)->setEmiMonth(\request()->emi_month)->setPaymentMethod($payment_method);
-            $payment = new ShebaPayment();
-            $payment = $payment->setMethod($payment_method)->init($order_adapter->getPayable());
-            return $payment->isInitiated() ? $payment : null;
-        } catch (QueryException $e) {
-            app('sentry')->captureException($e);
-            return null;
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return null;
-        }
+        $order_adapter->setPartnerOrder($order->partnerOrders[0])->setIsAdvancedPayment(1)->setEmiMonth(\request()->emi_month)->setPaymentMethod($payment_method);
+        $payment = new ShebaPayment();
+        $payment = $payment->setMethod($payment_method)->init($order_adapter->getPayable());
+        return $payment->isInitiated() ? $payment : null;
     }
 
     /**
