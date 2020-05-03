@@ -20,6 +20,7 @@ use Sheba\Business\ApprovalRequest\Updater;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Sheba\Dal\Leave\Model as Leave;
+use Sheba\Dal\ApprovalRequest\Status as ApprovalRequestStatus;
 use Sheba\ModificationFields;
 
 class ApprovalRequestController extends Controller
@@ -137,7 +138,7 @@ class ApprovalRequestController extends Controller
             $member = $business_member->member;
             /** @var Profile $profile */
             $profile = $member->profile;
-            array_push($approvers, ['name' => $profile->name, 'status' => $approval_request->status]);
+            array_push($approvers, ['name' => $profile->name, 'status' => ApprovalRequestStatus::getWithKeys()[strtoupper($approval_request->status)]]);
         }
         return $approvers;
     }
