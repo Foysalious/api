@@ -77,25 +77,20 @@ class SubscriptionOrderController extends Controller
 
     public function clearPayment($business, $subscription_order, Request $request, ShebaPayment $sheba_payment)
     {
-        try {
-            $this->validate($request, ['payment_method' => 'required|string|in:bkash,wallet,cbl,online']);
-            $payment_method = $request->payment_method;
-            /** @var Business $business */
-            $business = $request->business;
-            $member = $request->manager_member;
-            /** @var SubscriptionOrder $subscription_order */
-            $subscription_order = SubscriptionOrder::find((int)$subscription_order);
-            $subscription_order->calculate();
-            if ($subscription_order->due <= 0) return api_response($request, null, 403, ['message' => 'Your order is already paid.']);
-            if ($payment_method == 'wallet' && $subscription_order->due > $business->wallet) return api_response($request, null, 403, ['message' => 'You don\'t have sufficient credit.']);
-            $order_adapter = new SubscriptionOrderAdapter();
-            $payable = $order_adapter->setModelForPayable($subscription_order)->setUser($business)->getPayable();
-            $payment = $sheba_payment->setMethod($payment_method)->init($payable);
-            return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $this->validate($request, ['payment_method' => 'required|string|in:bkash,wallet,cbl,online']);
+        $payment_method = $request->payment_method;
+        /** @var Business $business */
+        $business = $request->business;
+        $member = $request->manager_member;
+        /** @var SubscriptionOrder $subscription_order */
+        $subscription_order = SubscriptionOrder::find((int)$subscription_order);
+        $subscription_order->calculate();
+        if ($subscription_order->due <= 0) return api_response($request, null, 403, ['message' => 'Your order is already paid.']);
+        if ($payment_method == 'wallet' && $subscription_order->due > $business->wallet) return api_response($request, null, 403, ['message' => 'You don\'t have sufficient credit.']);
+        $order_adapter = new SubscriptionOrderAdapter();
+        $payable = $order_adapter->setModelForPayable($subscription_order)->setUser($business)->getPayable();
+        $payment = $sheba_payment->setMethod($payment_method)->init($payable);
+        return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
     }
 
     public function orderInvoice($businesses, $order, Request $request)

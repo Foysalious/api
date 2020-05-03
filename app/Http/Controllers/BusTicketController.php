@@ -353,35 +353,24 @@ class BusTicketController extends Controller
      */
     public function pay(Request $request, TransportTicketOrdersRepository $ticket_order_repo)
     {
-        try {
-            $this->validate($request, [
-                'payment_method' => 'required|string|in:online,bkash,wallet,cbl',
-                'order_id' => 'required'
-            ]);
+        $this->validate($request, [
+            'payment_method' => 'required|string|in:online,bkash,wallet,cbl',
+            'order_id' => 'required'
+        ]);
 
-            /** @var TransportAgent $agent */
-            $agent = $this->getAgent($request);
-            $this->setModifier($agent);
+        /** @var TransportAgent $agent */
+        $agent = $this->getAgent($request);
+        $this->setModifier($agent);
 
-            if ($request->payment_method == "wallet" && $agent->shebaCredit() < (double)$request->amount) {
-                return api_response($request, null, 403, ['message' => "You don't have sufficient balance to buy this ticket."]);
-            }
-
-            $order = $ticket_order_repo->findById($request->order_id)->calculate();
-            $payment = $this->getPayment($request->payment_method, $order);
-            if ($payment) $payment = $payment->getFormattedPayment();
-
-            return api_response($request, null, 200, ['payment' => $payment]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        if ($request->payment_method == "wallet" && $agent->shebaCredit() < (double)$request->amount) {
+            return api_response($request, null, 403, ['message' => "You don't have sufficient balance to buy this ticket."]);
         }
+
+        $order = $ticket_order_repo->findById($request->order_id)->calculate();
+        $payment = $this->getPayment($request->payment_method, $order);
+        if ($payment) $payment = $payment->getFormattedPayment();
+
+        return api_response($request, null, 200, ['payment' => $payment]);
     }
 
     /**
@@ -522,18 +511,10 @@ class BusTicketController extends Controller
      */
     private function getPayment($payment_method, $transport_ticket_order)
     {
-        try {
-            $transport_ticket_order_adapter = new TransportTicketPurchaseAdapter();
-            $payment = new ShebaPayment();
-            $payment = $payment->setMethod($payment_method)->init($transport_ticket_order_adapter->setModelForPayable($transport_ticket_order)->getPayable());
-            return $payment->isInitiated() ? $payment : null;
-        } catch (QueryException $e) {
-            app('sentry')->captureException($e);
-            return null;
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return null;
-        }
+        $transport_ticket_order_adapter = new TransportTicketPurchaseAdapter();
+        $payment = new ShebaPayment();
+        $payment = $payment->setMethod($payment_method)->init($transport_ticket_order_adapter->setModelForPayable($transport_ticket_order)->getPayable());
+        return $payment->isInitiated() ? $payment : null;
     }
 
     /**
