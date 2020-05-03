@@ -35,9 +35,9 @@ class ResourceAuthMiddleware
                 $request->merge(['auth_user' => $auth_user]);
                 return $next($request);
             }
-            return api_response($request, null, 403, ["message" => "You're not authorized to access this user."]);
+            return api_response($request, null, 401, ["message" => "Authentication failed."]);
         } catch (AuthenticationFailedException $e) {
-            return api_response($request, null, 403, ["message" => "You're not authorized to access this user."]);
+            return api_response($request, null, 401, ["message" => "Authentication failed."]);
         }
 
     }
