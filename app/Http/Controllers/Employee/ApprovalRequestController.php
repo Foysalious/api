@@ -61,8 +61,6 @@ class ApprovalRequestController extends Controller
             $member = $requestable->businessMember->member;
             /** @var Profile $profile */
             $profile = $member->profile;
-            /** @var BusinessRole $role */
-            $role = $business_member->role;
 
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
