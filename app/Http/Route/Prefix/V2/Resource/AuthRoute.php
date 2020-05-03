@@ -38,6 +38,13 @@ class AuthRoute
             });
             $api->get('wallet', 'Resource\ResourceWalletController@getWallet');
             $api->post('withdrawals', 'Resource\ResourceWithdrawalRequestController@store');
+            $api->group(['prefix' => 'rewards'], function ($api) {
+                $api->get('/', 'Resource\ResourceRewardController@index');
+                $api->get('history', 'Resource\ResourceRewardController@history');
+                $api->group(['prefix' => '{reward}'], function ($api) {
+                    $api->get('/', 'Resource\ResourceRewardController@show');
+                });
+            });
         });
     }
 }
