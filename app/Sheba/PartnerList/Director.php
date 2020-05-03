@@ -124,7 +124,6 @@ class Director
         $this->builder->checkPartnerVerification();
         $this->builder->checkPartner();
         $this->builder->checkCanAccessMarketPlace();
-        $this->builder->withoutShebaHelpDesk();
         $this->builder->withResource();
         $this->builder->withAvgReview();
     }
