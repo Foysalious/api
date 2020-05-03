@@ -10,6 +10,7 @@ use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessMember;
 use Sheba\Attachments\FilesAttachment;
+use Sheba\Business\BusinessCommonInformationCreator;
 use Sheba\Business\LeaveType\DefaultType;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
@@ -17,8 +18,8 @@ use App\Models\Business;
 use App\Models\Member;
 use Carbon\Carbon;
 use Sheba\Business\LeaveType\Creator as LeaveTypeCreator;
-use DB;
 use Throwable;
+use DB;
 
 class MemberController extends Controller
 {
@@ -28,9 +29,10 @@ class MemberController extends Controller
      * @param $member
      * @param Request $request
      * @param LeaveTypeCreator $leave_type_creator
+     * @param BusinessCommonInformationCreator $business_creator
      * @return JsonResponse
      */
-    public function updateBusinessInfo($member, Request $request, LeaveTypeCreator $leave_type_creator)
+    public function updateBusinessInfo($member, Request $request, LeaveTypeCreator $leave_type_creator, BusinessCommonInformationCreator $business_creator)
     {
         try {
             $this->validate($request, [
@@ -44,7 +46,6 @@ class MemberController extends Controller
 
             $member = Member::find($member);
             $this->setModifier($member);
-
             $business_data = [
                 'name' => $request->name,
                 'employee_size' => $request->no_employee,
@@ -52,7 +53,7 @@ class MemberController extends Controller
                 'address' => $request->address,
                 'phone' => $request->mobile,
             ];
-
+            DB::beginTransaction();
             if (count($member->businesses) > 0) {
                 $business = $member->businesses->first();
                 $business->update($this->withUpdateModificationField($business_data));
@@ -73,13 +74,15 @@ class MemberController extends Controller
                 foreach (DefaultType::getWithKeys() as $key => $value) {
                     $leave_type_creator->setBusiness($business)->setMember($member)->setTitle($value)->setTotalDays(DefaultType::getDays()[$key])->create();
                 }
+                $business_creator->create($business);
             }
-
+            DB::commit();
             return api_response($request, null, 200, ['business_id' => $business->id]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
+            DB::rollback();
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
