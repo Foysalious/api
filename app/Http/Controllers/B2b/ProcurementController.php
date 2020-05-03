@@ -68,13 +68,46 @@ class ProcurementController extends Controller
     {
         try {
             $this->validate($request, [
-                'title' => 'required|string', 'number_of_participants' => 'required|numeric', 'last_date_of_submission' => 'required|date_format:Y-m-d', 'procurement_start_date' => 'required|date_format:Y-m-d', 'procurement_end_date' => 'required|date_format:Y-m-d', 'payment_options' => 'required|string', 'type' => 'required|string:in:basic,advanced', 'items' => 'sometimes|required|string', 'description' => 'sometimes|required|string', 'is_published' => 'sometimes|required|integer', 'attachments.*' => 'file'
+                'description' => 'required|string',
+                'procurement_start_date' => 'required|date_format:Y-m-d',
+                'procurement_end_date' => 'required|date_format:Y-m-d',
+                'last_date_of_submission' => 'required|date_format:Y-m-d',
+                'number_of_participants' => 'required|numeric',
+                'type' => 'sometimes|required|string:in:basic,advanced',
+
+                'title' => 'sometimes|required|string',
+                'payment_options' => 'sometimes|required|string',
+                'items' => 'sometimes|required|string',
+                'is_published' => 'sometimes|required|integer',
+                'attachments.*' => 'file'
             ]);
             if (!$access_control->setBusinessMember($request->business_member)->hasAccess('procurement.rw')) return api_response($request, null, 403);
 
             $this->setModifier($request->manager_member);
 
-            $creator->setType($request->type)->setOwner($request->business)->setTitle($request->title)->setPurchaseRequest($request->purchase_request_id)->setLongDescription($request->description)->setOrderStartDate($request->order_start_date)->setOrderEndDate($request->order_end_date)->setInterviewDate($request->interview_date)->setProcurementStartDate($request->procurement_start_date)->setProcurementEndDate($request->procurement_end_date)->setItems($request->items)->setQuestions($request->questions)->setNumberOfParticipants($request->number_of_participants)->setLastDateOfSubmission($request->last_date_of_submission)->setPaymentOptions($request->payment_options)->setIsPublished($request->is_published)->setLabels($request->labels)->setCreatedBy($request->manager_member);
+            $creator->setLongDescription($request->description)
+                ->setProcurementStartDate($request->procurement_start_date)
+                ->setProcurementEndDate($request->procurement_end_date)
+                ->setLastDateOfSubmission($request->last_date_of_submission)
+                ->setNumberOfParticipants($request->number_of_participants)
+
+                ->setType($request->type)
+                ->setLabels($request->labels)
+
+                ->setTitle($request->title)
+                ->setItems($request->items)
+                ->setQuestions($request->questions)
+                ->setPaymentOptions($request->payment_options)
+                ->setIsPublished($request->is_published)
+
+                ->setOwner($request->business)
+                ->setCreatedBy($request->manager_member)
+
+                ->setPurchaseRequest($request->purchase_request_id)
+                ->setOrderStartDate($request->order_start_date)
+                ->setOrderEndDate($request->order_end_date)
+                ->setInterviewDate($request->interview_date);
+
 
             if ($request->attachments && is_array($request->attachments)) $creator->setAttachments($request->attachments);
 
