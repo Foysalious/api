@@ -6,7 +6,9 @@ use App\Transformers\AttachmentTransformer;
 use League\Fractal\TransformerAbstract;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
+use Sheba\Dal\ApprovalRequest\Status as ApprovalRequestStatus;
 use Sheba\Dal\Leave\Model as Leave;
+use Sheba\Dal\Leave\Status as LeaveStatus;
 
 class LeaveRequestDetailsTransformer extends TransformerAbstract
 {
@@ -34,7 +36,7 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
         return [
             'id' => $approval_request->id,
             'type' => Type::LEAVE,
-            'status' => $approval_request->status,
+            'status' => ApprovalRequestStatus::getWithKeys()[strtoupper($approval_request->status)],
             'created_at' => $approval_request->created_at->format('M d, Y'),
             'leave' => [
                 'id' => $requestable->id,
@@ -47,7 +49,7 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
                 'is_leave_days_exceeded' => $requestable->isLeaveDaysExceeded(),
                 'period' => $requestable->start_date->format('M d') . ' - ' . $requestable->end_date->format('M d'),
                 'note' => $requestable->note,
-                'status' => $requestable->status,
+                'status' => LeaveStatus::getWithKeys()[strtoupper($requestable->status)],
             ],
             'department' => [
                 'department_id' => $this->role ? $this->role->businessDepartment->id : null,

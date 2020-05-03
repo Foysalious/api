@@ -6,6 +6,7 @@ use App\Models\Member;
 use App\Models\Profile;
 use League\Fractal\TransformerAbstract;
 use Sheba\Dal\Leave\Model as Leave;
+use Sheba\Dal\Leave\Status as LeaveStatus;
 use Sheba\Helpers\TimeFrame;
 
 class LeaveBalanceDetailsTransformer extends TransformerAbstract
@@ -96,7 +97,7 @@ class LeaveBalanceDetailsTransformer extends TransformerAbstract
                 'date'      => $leave->created_at->format('d/m/Y'),
                 'leave_type'=> $leave->leaveType->title,
                 'leave_days'=> (int)$leave->total_days,
-                'status'    => $leave->status,
+                'status'    => LeaveStatus::getWithKeys()[strtoupper($leave->status)],
                 'request'   => [
                     'has_access' => $get_current_login_user_leave_request ? true : false,
                     'id' => $get_current_login_user_leave_request ? $get_current_login_user_leave_request->id : null

@@ -3,6 +3,7 @@
 use App\Transformers\AttachmentTransformer;
 use League\Fractal\TransformerAbstract;
 use Sheba\Dal\Leave\Model as LeaveModel;
+use Sheba\Dal\Leave\Status as LeaveStatus;
 
 class LeaveTransformer extends TransformerAbstract
 {
@@ -16,7 +17,7 @@ class LeaveTransformer extends TransformerAbstract
             'start_date' => $leave->start_date,
             'end_date' => $leave->end_date,
             'total_days' => $leave->total_days,
-            'status' => $leave->status,
+            'status' => LeaveStatus::getWithKeys()[strtoupper($leave->status)],
             'requested_on' => $leave->created_at,
             'note' => $leave->note,
         ];
