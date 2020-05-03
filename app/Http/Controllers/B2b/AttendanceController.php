@@ -245,6 +245,10 @@ class AttendanceController extends Controller
         $business_member = $request->business_member;
 
         $updater = new AttendanceSettingUpdater($request->business, $business_member->member, $business_office_repo, $attendance_type_repo);
+        $validate_office_ip = $updater->validateOfficeIp($business_offices);
+        if(array_key_exists("business_offices",$validate_office_ip)) $business_offices = $validate_office_ip['business_offices'];
+        if(array_key_exists("status",$validate_office_ip)) return api_response($request, null, 400, ['msg' => "Validation Error"]);
+
         if(!is_null($attendance_types))
         {
            foreach ($attendance_types as $attendance_type)
