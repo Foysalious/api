@@ -10,7 +10,7 @@ use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessMember;
 use Sheba\Attachments\FilesAttachment;
-use Sheba\Business\Creator;
+use Sheba\Business\BusinessCommonInformationCreator;
 use Sheba\Business\LeaveType\DefaultType;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
@@ -29,10 +29,10 @@ class MemberController extends Controller
      * @param $member
      * @param Request $request
      * @param LeaveTypeCreator $leave_type_creator
-     * @param Creator $business_creator
+     * @param BusinessCommonInformationCreator $business_creator
      * @return JsonResponse
      */
-    public function updateBusinessInfo($member, Request $request, LeaveTypeCreator $leave_type_creator, Creator $business_creator)
+    public function updateBusinessInfo($member, Request $request, LeaveTypeCreator $leave_type_creator, BusinessCommonInformationCreator $business_creator)
     {
         try {
             $this->validate($request, [
@@ -46,7 +46,6 @@ class MemberController extends Controller
 
             $member = Member::find($member);
             $this->setModifier($member);
-
             $business_data = [
                 'name' => $request->name,
                 'employee_size' => $request->no_employee,
@@ -75,7 +74,7 @@ class MemberController extends Controller
                 foreach (DefaultType::getWithKeys() as $key => $value) {
                     $leave_type_creator->setBusiness($business)->setMember($member)->setTitle($value)->setTotalDays(DefaultType::getDays()[$key])->create();
                 }
-                #$business_creator->setBusiness($business)->setMember($member)->create();
+                $business_creator->create($business);
             }
             DB::commit();
             return api_response($request, null, 200, ['business_id' => $business->id]);
