@@ -40,8 +40,10 @@ class AuthRoute
             $api->post('withdrawals', 'Resource\ResourceWithdrawalRequestController@store');
             $api->group(['prefix' => 'rewards'], function ($api) {
                 $api->get('/', 'Resource\ResourceRewardController@index');
-                $api->get('{reward}', 'Resource\ResourceRewardController@show');
                 $api->get('history', 'Resource\ResourceRewardController@history');
+                $api->group(['prefix' => '{reward}'], function ($api) {
+                    $api->get('/', 'Resource\ResourceRewardController@show');
+                });
             });
         });
     }
