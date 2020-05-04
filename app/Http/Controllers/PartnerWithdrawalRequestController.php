@@ -1,7 +1,7 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\Partner;
-use App\Models\PartnerWithdrawalRequest;
+use App\Models\WithdrawalRequest;
 use App\Sheba\UserRequestInformation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -92,7 +92,7 @@ class PartnerWithdrawalRequestController extends Controller
                 else $message = "You don't have sufficient balance";
                 return api_response($request, null, 403, ['message' => $message]);
             }
-            $new_withdrawal = PartnerWithdrawalRequest::create(array_merge((new UserRequestInformation($request))->getInformationArray(), [
+            $new_withdrawal = WithdrawalRequest::create(array_merge((new UserRequestInformation($request))->getInformationArray(), [
                 'partner_id' => $partner->id,
                 'amount' => $request->amount,
                 'payment_method' => $request->payment_method,
@@ -120,7 +120,7 @@ class PartnerWithdrawalRequestController extends Controller
         try {
             $this->validate($request, ['status' => 'required|in:cancelled']);
             $partner = $request->partner;
-            $partnerWithdrawalRequest = PartnerWithdrawalRequest::find($withdrawals);
+            $partnerWithdrawalRequest = WithdrawalRequest::find($withdrawals);
             if ($partner->id == $partnerWithdrawalRequest->partner_id && $partnerWithdrawalRequest->status == 'pending') {
                 $withdrawal_update = $partnerWithdrawalRequest->update([
                     'status' => $request->status,
@@ -160,7 +160,7 @@ class PartnerWithdrawalRequestController extends Controller
         try {
             // $this->validate($request, ['status' => 'required|in:cancelled']);
             $partner = $request->partner;
-            $partnerWithdrawalRequest = PartnerWithdrawalRequest::find($withdrawals);
+            $partnerWithdrawalRequest = WithdrawalRequest::find($withdrawals);
             if ($partner->id == $partnerWithdrawalRequest->partner_id && $partnerWithdrawalRequest->status == 'pending') {
                 $withdrawal_update = $partnerWithdrawalRequest->update([
                     'status' => 'cancelled',

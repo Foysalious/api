@@ -356,7 +356,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function withdrawalRequests()
     {
-        return $this->hasMany(PartnerWithdrawalRequest::class);
+        return $this->hasMany(WithdrawalRequest::class);
     }
 
     public function lastWeekWithdrawalRequest()
