@@ -77,11 +77,11 @@ class Creator
      */
     public function sendPushToApprover(ApprovalRequest $approval_request)
     {
-        $topic = config('sheba.push_notification_topic_name.employee') . (int)$this->member->id;
+        $topic = config('sheba.push_notification_topic_name.employee') . (int)$approval_request->approver_id;
         $channel = config('sheba.push_notification_channel_name.employee');
         $notification_data = [
             "title" => 'New Leave Request Arrived',
-            "message" => "Leave Request Arrived Message",
+            "message" => "A new leave Request Arrived",
             "event_type" => 'leave_request',
             "event_id" => $approval_request->id,
             "sound" => "notification_sound",
