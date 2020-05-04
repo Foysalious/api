@@ -1,31 +1,30 @@
 <?php namespace Sheba\Business\Holiday;
 
 use App\Models\Business;
-use Carbon\Carbon;
-use Sheba\Dal\GovernmentHolidays\Contract as GovtHolidaysRepoInterface;
+use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Illuminate\Http\Request;
 
 class HolidayList
 {
     private $business;
-    private $govt_holidays_repo;
+    private $business_holidays_repo;
 
-    public function __construct(Business $business, GovtHolidaysRepoInterface $govt_holidays_repo)
+    public function __construct(Business $business, BusinessHolidayRepoInterface $business_holidays_repo)
     {
         $this->business = $business;
-        $this->govt_holidays_repo = $govt_holidays_repo;
+        $this->business_holidays_repo = $business_holidays_repo;
     }
 
     public function getHolidays(Request $request)
     {
         $holiday_list = [];
-        $year_range = $this->getYearRange();
-        $govt_holidays = $this->govt_holidays_repo->getAllByBusinessForTwoYears($this->business, $year_range);
-        if($request->has('search')) $govt_holidays = $this->searchWithHolidayName($govt_holidays,$request);
-        if($request->has('sort')) $govt_holidays = $this->holidaySort($govt_holidays,$request->sort);
-        foreach ($govt_holidays as $holiday) {
+        $business_holidays = $this->business_holidays_repo->getAllByBusiness($this->business);
+        if($request->has('search')) $business_holidays = $this->searchWithHolidayName($business_holidays,$request);
+        if($request->has('sort')) $business_holidays = $this->holidaySort($business_holidays,$request->sort);
+        foreach ($business_holidays as $holiday) {
             $diff_in_days = $holiday->start_date->diffInDays($holiday->end_date);
             array_push($holiday_list, [
+                'id' => $holiday->id,
                 'date' => $diff_in_days === 0 ? $holiday->start_date->format('d M, Y') : $holiday->start_date->format('d M, Y') . ' - ' . $holiday->end_date->format('d M, Y'),
                 'total_days' => $diff_in_days === 0 ? ($diff_in_days + 1).' day' : ($diff_in_days + 1).' days',
                 'name' => $holiday->title
@@ -34,27 +33,18 @@ class HolidayList
         return $holiday_list;
     }
 
-    private function getYearRange()
+    private function searchWithHolidayName($business_holidays, Request $request)
     {
-        $time_range = [];
-        $first_date_of_current_year = Carbon::now()->startOfYear();
-        $last_date_of_next_year = Carbon::now()->addYear()->endOfYear();
-        $time_range = [$first_date_of_current_year, $last_date_of_next_year];
-        return $time_range;
-    }
-
-    private function searchWithHolidayName($govt_holidays, Request $request)
-    {
-        return $govt_holidays->filter(function ($govt_holiday) use ($request){
-            return str_contains(strtoupper($govt_holiday->title), strtoupper($request->search));
+        return $business_holidays->filter(function ($business_holiday) use ($request){
+            return str_contains(strtoupper($business_holiday->title), strtoupper($request->search));
         });
     }
 
-    private function holidaySort($govt_holidays, $sort = 'asc')
+    private function holidaySort($business_holidays, $sort = 'asc')
     {
         $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
-        return $govt_holidays->$sort_by(function ($govt_holiday) {
-            return strtoupper($govt_holiday->title);
+        return $business_holidays->$sort_by(function ($business_holiday) {
+            return strtoupper($business_holiday->title);
         });
     }
 }
