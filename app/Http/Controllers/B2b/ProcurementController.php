@@ -73,8 +73,9 @@ class ProcurementController extends Controller
                 'procurement_end_date' => 'required|date_format:Y-m-d',
                 'last_date_of_submission' => 'required|date_format:Y-m-d',
                 'number_of_participants' => 'required|numeric',
-                'type' => 'sometimes|required|string:in:basic,advanced',
+                'sharing_to' => 'required|string',
 
+                'type' => 'sometimes|required|string:in:basic,advanced',
                 'title' => 'sometimes|required|string',
                 'payment_options' => 'sometimes|required|string',
                 'items' => 'sometimes|required|string',
@@ -90,8 +91,8 @@ class ProcurementController extends Controller
                 ->setProcurementEndDate($request->procurement_end_date)
                 ->setLastDateOfSubmission($request->last_date_of_submission)
                 ->setNumberOfParticipants($request->number_of_participants)
+                ->setSharingTo($request->sharing_to)
 
-                ->setType($request->type)
                 ->setLabels($request->labels)
 
                 ->setTitle($request->title)
@@ -103,6 +104,7 @@ class ProcurementController extends Controller
                 ->setOwner($request->business)
                 ->setCreatedBy($request->manager_member)
 
+                ->setType($request->type)
                 ->setPurchaseRequest($request->purchase_request_id)
                 ->setOrderStartDate($request->order_start_date)
                 ->setOrderEndDate($request->order_end_date)

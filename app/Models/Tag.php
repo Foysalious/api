@@ -30,4 +30,18 @@ class Tag extends Model
     {
         return $query->where('taggable_type', get_class($taggable))->get()->pluck('name', 'id');
     }
+
+    public static function sync($tags, $taggable_type)
+    {
+        $tag_ids = [];
+        foreach ($tags as $tag) {
+            $existing_tag = Tag::select('id')->where('name', $tag)->where('taggable_type', $taggable_type)->first();
+            $tag_id = $existing_tag ? $existing_tag->id : Tag::insertGetId([
+                'name' => $tag,
+                'taggable_type' => $taggable_type
+            ]);
+            $tag_ids[] = $tag_id;
+        }
+        return $tag_ids;
+    }
 }
