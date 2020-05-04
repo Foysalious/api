@@ -532,7 +532,7 @@ class ShebaController extends Controller {
     public function redirectUrl(Request $request) {
         $this->validate($request, ['url' => 'required']);
 
-        $new_url = RedirectUrl::where('old_url', 'LIKE', $request->url)->first();
+        $new_url = RedirectUrl::where('old_url', 'LIKE', '%'.$request->url.'%')->first();
 
         if ($new_url) {
             return api_response($request, true, 200, ['new_url' => $new_url->new_url]);
