@@ -4,7 +4,7 @@ use App\Models\Transport\TransportTicketOrder;
 use App\Sheba\Payment\Rechargable;
 use Carbon\Carbon;
 use DB;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Sheba\Business\Bid\Bidder;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\Complain\Model as Complain;
@@ -293,14 +293,14 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function getContactNumber()
     {
         $resource = $this->getContactResource();
-        if(!$resource) return null;
+        if (!$resource) return null;
         return $resource->profile->mobile;
     }
 
     public function getContactResourceProPic()
     {
         $resource = $this->getContactResource();
-        if(!$resource) return null;
+        if (!$resource) return null;
         return $resource->profile->pro_pic;
     }
 
@@ -310,6 +310,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         if ($admin_resource = $this->admins()->first()) return $admin_resource->profile->nid_verified;
         return null;
     }
+
     public function updatedAt()
     {
         if ($operation_resource = $this->operationResources()->first()) return $operation_resource->profile->updated_at;
@@ -356,7 +357,8 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function withdrawalRequests()
     {
-        return $this->hasMany(PartnerWithdrawalRequest::class);
+        Relation::morphMap(['partner' => 'App\Models\Partner']);
+        return $this->morphMany(WithdrawalRequest::class, 'requester');
     }
 
     public function lastWeekWithdrawalRequest()
@@ -500,7 +502,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return (double)$this->subscription_rules->commission->value;
     }
 
-    public function canCreateResource(Array $types)
+    public function canCreateResource(array $types)
     {
         return $this->subscriber()->canCreateResource($types);
     }
@@ -720,18 +722,18 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function transportTicketTransaction(TransportTicketTransaction $transaction)
     {
-       /*
-        * WALLET TRANSACTION NEED TO REMOVE
-        * $this->creditWallet($transaction->getAmount());
-        $wallet_transaction = [
-            'amount' => $transaction->getAmount(),
-            'type' => 'Credit',
-            'log' => $transaction->getLog(),
-            'created_by_type' => get_class($this),
-            'created_by' => $this->id,
-            'created_by_name' => $this->name
-        ];
-        $this->walletTransaction($wallet_transaction);*/
+        /*
+         * WALLET TRANSACTION NEED TO REMOVE
+         * $this->creditWallet($transaction->getAmount());
+         $wallet_transaction = [
+             'amount' => $transaction->getAmount(),
+             'type' => 'Credit',
+             'log' => $transaction->getLog(),
+             'created_by_type' => get_class($this),
+             'created_by' => $this->id,
+             'created_by_name' => $this->name
+         ];
+         $this->walletTransaction($wallet_transaction);*/
         (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::TRANSPORT)->setType('credit')->setLog($transaction->getLog())->dispatch();
     }
 
@@ -742,18 +744,18 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function movieTicketTransaction(MovieTicketTransaction $transaction)
     {
-       /*
-        * WALLET TRANSACTION NEED TO REMOVE
-        * $this->debitWallet($transaction->getAmount());
-        $wallet_transaction = [
-            'amount' => $transaction->getAmount(),
-            'type' => 'Debit',
-            'log' => $transaction->getLog(),
-            'created_by_type' => get_class($this),
-            'created_by' => $this->id,
-            'created_by_name' => $this->name
-        ];
-        $this->walletTransaction($wallet_transaction);*/
+        /*
+         * WALLET TRANSACTION NEED TO REMOVE
+         * $this->debitWallet($transaction->getAmount());
+         $wallet_transaction = [
+             'amount' => $transaction->getAmount(),
+             'type' => 'Debit',
+             'log' => $transaction->getLog(),
+             'created_by_type' => get_class($this),
+             'created_by' => $this->id,
+             'created_by_name' => $this->name
+         ];
+         $this->walletTransaction($wallet_transaction);*/
         (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::MOVIE)->setType('debit')->setLog($transaction->getLog())->dispatch();
     }
 
