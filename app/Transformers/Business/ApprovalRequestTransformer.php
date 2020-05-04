@@ -6,8 +6,8 @@ use League\Fractal\TransformerAbstract;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use Sheba\Dal\Leave\Model as Leave;
-use Sheba\Dal\ApprovalRequest\Status as ApprovalRequestStatus;
-use Sheba\Dal\Leave\Status as LeaveStatus;
+use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
+use Sheba\Dal\Leave\LeaveStatusPresenter as LeaveStatusPresenter;
 
 class ApprovalRequestTransformer extends TransformerAbstract
 {
@@ -32,7 +32,7 @@ class ApprovalRequestTransformer extends TransformerAbstract
         return [
             'id' => $approval_request->id,
             'type' => Type::LEAVE,
-            'status' => ApprovalRequestStatus::getWithKeys()[strtoupper($approval_request->status)],
+            'status' => ApprovalRequestPresenter::statuses()[$approval_request->status],
             'created_at' => $approval_request->created_at->format('M d, Y'),
             'leave' => [
                 'id' => $requestable->id,
@@ -44,7 +44,7 @@ class ApprovalRequestTransformer extends TransformerAbstract
                 'left' => $requestable->left_days < 0 ? abs($requestable->left_days) : $requestable->left_days,
                 'is_leave_days_exceeded' => $requestable->isLeaveDaysExceeded(),
                 'period' => $requestable->start_date->format('M d') . ' - ' . $requestable->end_date->format('M d'),
-                'status' => LeaveStatus::getWithKeys()[strtoupper($requestable->status)],
+                'status' => LeaveStatusPresenter::statuses()[$requestable->status],
                 'note' => $requestable->note,
             ]
         ];
