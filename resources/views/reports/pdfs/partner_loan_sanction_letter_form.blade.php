@@ -56,7 +56,7 @@
 <div class="sanction-letter">
     <div style="padding: 5px">
         <div>
-            <p>{{$bank['name']}}/INPE/{{$current_year}}/{{$final_information_for_loan['sanction_letter_info']['reference_no']}}</p>
+            <p>{{$bank['name']}}/{{$final_information_for_loan['business']['short_name']}}/{{$current_year}}/{{$final_information_for_loan['sanction_letter_info']['reference_no']}}</p>
             <p>Date: <span> {{ $sanction_issue_date ? date('F d, Y', strtotime($sanction_issue_date)) : "N/A" }} </span></p>
         </div>
         <div class="bank-contact-info">
@@ -123,7 +123,7 @@
                     <p style="padding:0">The security package will include but is not limited to:</p>
                     <div>
                         <ul>
-                            <li>Assignment of payment from Sheba Platform Limited in favor of IPDC.</li>
+                            <li>Assignment of payment from {{$final_information_for_loan['business']['strategic_partner']}} in favor of IPDC.</li>
                             <li>Personal guarantee-
                                 <ul>
                                     <li>
