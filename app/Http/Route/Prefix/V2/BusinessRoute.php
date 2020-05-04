@@ -51,6 +51,7 @@ class BusinessRoute
 
                 $api->group(['prefix' => 'holidays'], function ($api) {
                     $api->get('/', 'B2b\AttendanceController@getHolidays');
+                    $api->post('/','B2b\AttendanceController@storeHoliday');
                 });
 
                 $api->group(['prefix' => 'employees'], function ($api) {

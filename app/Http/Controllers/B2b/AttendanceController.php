@@ -23,7 +23,7 @@ use Sheba\Business\OfficeTiming\Updater as OfficeTimingUpdater;
 use Sheba\Business\Attendance\Setting\Updater as AttendanceSettingUpdater;
 use Sheba\Business\Attendance\Setting\AttendanceSettingTransformer;
 use Sheba\Business\Holiday\HolidayList;
-use Sheba\Dal\GovernmentHolidays\Contract as GovtHolidaysRepoInterface;
+use Sheba\Business\Holiday\Creator as HolidayCreator;
 use Throwable;
 
 class AttendanceController extends Controller
@@ -270,13 +270,25 @@ class AttendanceController extends Controller
         return api_response($request, null, 200, ['msg' => "Update Successful"]);
     }
 
-    public function getHolidays(Request $request, GovtHolidaysRepoInterface $govt_holidays_repo)
+    public function getHolidays(Request $request, BusinessHolidayRepoInterface $business_holidays_repo)
     {
-        $holiday_list = new HolidayList($request->business,$govt_holidays_repo);
-        $get_holidays = $holiday_list->getHolidays($request);
+        $holiday_list = new HolidayList($request->business,$business_holidays_repo);
+        $holidays = $holiday_list->getHolidays($request);
 
         return api_response($request, null, 200, [
-            'govt_holidays' => $get_holidays
+            'business_holidays' => $holidays
         ]);
+    }
+
+    public function storeHoliday(Request $request, BusinessHolidayRepoInterface $business_holidays_repo, HolidayCreator $creator)
+    {
+        $this->validate($request, [
+            'start_date' => 'required|date_format:d/m/Y', 'end_date' => 'required|date_format:d/m/Y|after_or_equal:start_date', 'title' => 'required|string'
+        ]);
+        $business_member = $request->business_member;
+
+        $holiday = $creator->setBusiness($request->business)->setMember($business_member->member)->setHolidayRepo($business_holidays_repo)
+                   ->setStartDate($request->start_date)->setEndDate($request->end_date)->setHolidayName($request->title)->create();
+        return api_response($request, null, 200, ['holiday' => $holiday]);
     }
 }
