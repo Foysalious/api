@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Sanction Letter form</title>
+    <title>proposal Letter form</title>
     <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
           integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
@@ -310,11 +310,11 @@
                 <td class="text-center">{{ $final_information_for_loan['finance']['acc_type'] }}</td>
                 <td class="text-center">{{ $final_information_for_loan['finance']['period'] }} Months</td>
                 <td class="text-center">{{ $final_information_for_loan['finance']['debit_sum'] ?
-"BDT ".$final_information_for_loan['finance']['debit_sum']:"BDT 0.00"}}</td>
+$final_information_for_loan['finance']['debit_sum']:"0.00"}}</td>
                 <td class="text-center">{{ $final_information_for_loan['finance']['credit_sum'] ?
-"BDT ".$final_information_for_loan['finance']['credit_sum']:"BDT 0.00"}}</td>
+$final_information_for_loan['finance']['credit_sum']:"0.00"}}</td>
                 <td class="text-center">{{ $final_information_for_loan['finance']['monthly_avg_credit_sum'] ?
-"BDT ".$final_information_for_loan['finance']['monthly_avg_credit_sum']:"BDT 0.00"}}</td>
+$final_information_for_loan['finance']['monthly_avg_credit_sum']:"0.00"}}</td>
             </tr>
             <tr>
                 <td style="text-align: center" colspan="7">Personal Guarantor Details</td>
@@ -442,7 +442,7 @@
             </tr>
             <tr>
                 <td>Facility Amount</td>
-                <td colspan="3">BDT {{$final_information_for_loan['finance']['disbursement_amount']}}</td>
+                <td colspan="3">BDT {{$loan_amount}}</td>
             </tr>
             <tr>
                 <td>Purpose</td>
@@ -515,8 +515,8 @@
                 <td>
                     <div style="margin: 20px 0">
                         Based on the analysis laid down in this paper, approval is sought for a Term Loan facility up to
-                        a limit of <span style="color: red">BDT 1.00 M</span> for <span style="color: red">30
-                        months</span> in favor of <span style="color: red">INP Engineering</span>.
+                        a limit of <span style="color: red">BDT {{$loan_amount}}</span> for <span style="color: red">{{ $total_installment }}
+                        months</span> in favor of <span style="color: red">{{$partner['name']}}</span>.
                     </div>
                     <div>
                         If approved, any disbursement of fund will be made subject to the following:

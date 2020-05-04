@@ -156,13 +156,13 @@
                 <td style="width:40%">Disbursement</td>
                 <td style="width:60%" colspan="3">Subject to completion of documentation to the satisfaction of IPDC,
                     fund will be disbursed in single or multiple tranches directly to client/
-                    proprietor.</td>
+                    proprietor/vendor.</td>
             </tr>
             <tr>
                 <td style="width:40%">Restrictions</td>
                 <td style="width:60%" colspan="3">Except with prior written consent of IPDC you will not sell, lease,
                     transfer, let-out for hire, sub-let alienate, or otherwise dispose of any
-                    of your assets including assets of INP Engineering.</td>
+                    of your assets including assets of {{$partner['name']}}.</td>
             </tr>
             <tr>
                 <td style="width:40%">Payment Modality</td>
@@ -188,7 +188,7 @@
                         <li>If the project is not eligible for Bangladesh Bank Refinance Scheme
                             and accordingly does not approved by Bangladesh Bank at any point
                             of time during the loan period, the interest rate of the facility will
-                            be revised to 15.00% p. a. from the date of disbursement.</li>
+                            be revised to {{$interest_rate."%"}} p. a. from the date of disbursement.</li>
                         <li>IPDC will have sole discretion to change the rate of interest based
                             on market condition. In case of any change of interest rate during
                             the tenure of the facility, for repayment convenience, such rate
@@ -257,7 +257,7 @@
                             <span>_____________________________</span> <br>
                             {{$partner['profile']['name']}} <br>
                             Proprietor <br>
-                            {{$bank['name']}}
+                            {{$partner['name']}}
                         </div>
                     </td>
                 </tr>
