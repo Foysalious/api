@@ -443,12 +443,6 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
             constants('JOB_STATUSES')['Schedule_Due']
         ])->count();
     }
-
-    public function jobs()
-    {
-        return $this->hasManyThrough(Job::class, PartnerOrder::class);
-    }
-
     public function resourcesInCategory($category)
     {
         $category             = $category instanceof Category ? $category->id : $category;
@@ -798,15 +792,6 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->getContactNumber();
     }
 
-    public function getContactNumber()
-    {
-        if ($operation_resource = $this->operationResources()->first())
-            return $operation_resource->profile->mobile;
-        if ($admin_resource = $this->admins()->first())
-            return $admin_resource->profile->mobile;
-        return null;
-    }
-
     public function isAllowedToSendWithdrawalRequest()
     {
         return !($this->withdrawalRequests()->active()->count() > 0);
@@ -822,18 +807,6 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function transportTicketTransaction(TransportTicketTransaction $transaction)
     {
-        /*
-         * WALLET TRANSACTION NEED TO REMOVE
-         * $this->creditWallet($transaction->getAmount());
-         $wallet_transaction = [
-             'amount' => $transaction->getAmount(),
-             'type' => 'Credit',
-             'log' => $transaction->getLog(),
-             'created_by_type' => get_class($this),
-             'created_by' => $this->id,
-             'created_by_name' => $this->name
-         ];
-         $this->walletTransaction($wallet_transaction);*/
         (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::TRANSPORT)->setType('credit')->setLog($transaction->getLog())->dispatch();
     }
 
@@ -844,27 +817,11 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function movieTicketTransaction(MovieTicketTransaction $transaction)
     {
-        /*
-         * WALLET TRANSACTION NEED TO REMOVE
-         * $this->debitWallet($transaction->getAmount());
-         $wallet_transaction = [
-             'amount' => $transaction->getAmount(),
-             'type' => 'Debit',
-             'log' => $transaction->getLog(),
-             'created_by_type' => get_class($this),
-             'created_by' => $this->id,
-             'created_by_name' => $this->name
-         ];
-         $this->walletTransaction($wallet_transaction);*/
         (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::MOVIE)->setType('debit')->setLog($transaction->getLog())->dispatch();
     }
 
     public function movieTicketTransactionNew(MovieTicketTransaction $transaction)
     {
-        /*
-         * WALLET TRANSACTION NEED TO REMOVE
-         * $this->creditWallet($transaction->getAmount());
-        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Credit', 'log' => $transaction->getLog()]);*/
         (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::MOVIE)->setType('credit')->setLog($transaction->getLog())->dispatch();
     }
 
