@@ -42,7 +42,7 @@ class LeaveController extends Controller
             $business_member = $this->getBusinessMember($request);
             if (!$business_member) return api_response($request, null, 404);
 
-            $leaves = $leave_repo->getLeavesByBusinessMember($business_member);
+            $leaves = $leave_repo->getLeavesByBusinessMember($business_member)->orderBy('id', 'desc');
             if ($request->has('type')) $leaves = $leaves->where('leave_type_id', $request->type);
             $leaves = $leaves->get();
             $fractal = new Manager();

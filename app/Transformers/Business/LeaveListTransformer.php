@@ -15,7 +15,8 @@ class LeaveListTransformer extends TransformerAbstract
             'leave_type' => $leave_type->title,
             'start_date' => $leave['start_date'],
             'end_date' => $leave['end_date'],
-            'status' => LeaveStatusPresenter::statuses()[$leave['status']]
+            'status' => LeaveStatusPresenter::statuses()[$leave['status']],
+            'created_at' => $leave['created_at'],
         ];
     }
 }
