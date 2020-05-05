@@ -209,6 +209,17 @@ class Partner extends Referrer implements ReferrerInterface
     {
         $refers       = $this->attachSelect($this->init());
         $this->refers = $this->filterRefers($request, $refers)->get();
+        if ($request->has('q') && !empty($request->q)) {
+            $query = $request->q;
+            return $this->formatRefers()->filter(function ($item) use ($query) {
+                return preg_match("/$query/i", $item['name']) || preg_match("/$query/", $item['contact_number']);
+            })->values();
+        }
+        if ($request->has('limit') && !empty($request->limit)) {
+            list($offset, $limit) = calculatePagination($request);
+            return $this->formatRefers()->slice($offset)->take($limit)->values();
+        }
+
         return $this->formatRefers();
     }
 
