@@ -156,7 +156,7 @@
             </tr>
             <tr>
                 <td>Legal Status</td>
-                <td colspan="2" class="bangla-font">{{$final_information_for_loan['business']['ownership_type']}} </td>
+                <td colspan="2" class="bangla-font">{{$ownership_type}} </td>
                 <td>Residential Address:</td>
                 <td class="text-center bangla-font" colspan="2">
                     {{$final_information_for_loan['personal']['present_address']['street']}},
