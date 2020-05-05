@@ -12,12 +12,11 @@ class AnnouncementTransformer extends TransformerAbstract
             'id' => $announcement->id,
             'title' => $announcement->title,
             'type' => $announcement->type,
-            'description' => $announcement->short_description,
+            'short_description' => $announcement->short_description,
+            'description' => $announcement->long_description,
             'status' => $this->getStatus($announcement->end_date),
             'end_date' => $announcement->end_date->toDateTimeString(),
-            'created_at' => $announcement->created_at->toDateTimeString(),
-            /*'date' => $announcement->end_date->format('M d'),
-            'time' => $announcement->end_date->format('h:i A')*/
+            'created_at' => $announcement->created_at->toDateTimeString()
         ];
     }
 

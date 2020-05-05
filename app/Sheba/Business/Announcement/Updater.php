@@ -75,7 +75,7 @@ class Updater
         if ($this->title) $this->data['title'] = $this->title;
         if ($this->type) $this->data['type'] = $this->type;
         if ($this->shortDescription) $this->data['short_description'] = $this->shortDescription;
-        if ($this->longDescription) $this->data['long_description'] = $this->shortDescription;
+        if ($this->longDescription) $this->data['long_description'] = $this->longDescription;
         if ($this->endDate) $this->data['end_date'] = $this->endDate->toDateTimeString();
     }
 }
