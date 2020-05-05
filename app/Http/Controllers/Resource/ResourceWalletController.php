@@ -1,20 +1,19 @@
 <?php namespace App\Http\Controllers\Resource;
 
-use App\Models\WithdrawalRequest;
-use App\Sheba\Resource\WithdrawalRequest\WithdrawalRequestDenialMessage;
+use App\Sheba\Resource\WithdrawalRequest\LatestWithdrawalRequestUpdate;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Sheba\Authentication\AuthUser;
 
 class ResourceWalletController extends Controller
 {
-    public function getWallet(Request $request, WithdrawalRequestDenialMessage $message)
+    public function getWallet(Request $request, LatestWithdrawalRequestUpdate $message)
     {
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
         $resource = $auth_user->getResource();
         $last_withdrawal_request_status = $resource->withdrawalRequests()->latest()->first()->status;
-        $status = $message->setResource($resource)->setStatus($last_withdrawal_request_status)->getWithdrawalRequestDenialMessage();
+        $status = $message->setResource($resource)->setStatus($last_withdrawal_request_status)->getLatestWithdrawalRequestUpdate();
         $wallet = [
             'balance' => $resource->totalWalletAmount(),
             'max_withdrawal_limit' => config('sheba.resource_max_withdraw_limit'),

@@ -3,7 +3,7 @@
 use App\Models\Resource;
 use Sheba\Dal\WithdrawalRequest\Statuses;
 
-class WithdrawalRequestDenialMessage
+class LatestWithdrawalRequestUpdate
 {
     private $status;
     private $resource;
@@ -20,7 +20,7 @@ class WithdrawalRequestDenialMessage
         return $this;
     }
 
-    public function getWithdrawalRequestDenialMessage()
+    public function getLatestWithdrawalRequestUpdate()
     {
         $status = [];
 
