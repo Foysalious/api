@@ -53,6 +53,11 @@ class Resource extends Model
         return $this->morphMany(Notification::class, 'notifiable');
     }
 
+    public function withdrawalRequests()
+    {
+        return $this->morphMany(WithdrawalRequest::class, 'requester');
+    }
+
     public function typeIn($partner)
     {
         $partner = $partner instanceof Partner ? $partner->id : $partner;
