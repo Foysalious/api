@@ -33,6 +33,8 @@ class AuthRoute
                     $api->post('services', 'Resource\ResourceJobController@updateService');
                 });
             });
+            $api->get('wallet', 'Resource\ResourceWalletController@getWallet');
+            $api->post('withdrawals', 'Resource\ResourceWithdrawalRequestController@store');
         });
     }
 }
