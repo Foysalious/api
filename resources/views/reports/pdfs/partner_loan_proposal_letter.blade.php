@@ -379,8 +379,8 @@ $final_information_for_loan['finance']['monthly_avg_credit_sum']:"0.00"}}</td>
                 <td colspan="3" class="text-center">BDT {{$final_information_for_loan['proposal_info']['repayment_amount']}}</td>
             </tr>
             <tr>
-                <td colspan="2">{{$final_information_for_loan['proposal_info']['exposure_limit']}}</td>
-                <td colspan="2">{{$final_information_for_loan['proposal_info']['remark']}}</td>
+                <td colspan="2">Exposure limit: {{$final_information_for_loan['proposal_info']['exposure_limit']}}</td>
+                <td colspan="2">Remarks: {{$final_information_for_loan['proposal_info']['remark']}}</td>
                 <td class="text-center">Current</td>
                 <td colspan="2" class="text-center">Proposed</td>
             </tr>
