@@ -59,6 +59,14 @@ class TimeFrame
         return $this;
     }
 
+    public function forTodayAndYesterday()
+    {
+        $date = Carbon::today();
+        $this->start = $date->copy()->subDay()->startOfDay();
+        $this->end = $date->endOfDay();
+        return $this;
+    }
+
     public function forToday()
     {
         return $this->forADay(Carbon::today());
@@ -74,6 +82,13 @@ class TimeFrame
         $start_end_date = findStartEndDateOfAMonth(0, $year);
         $this->start = $start_end_date['start_time'];
         $this->end = $start_end_date['end_time'];
+        return $this;
+    }
+
+    public function forSixMonth(Carbon $date)
+    {
+        $this->start = $date->copy()->subMonths(6)->startOfMonth();
+        $this->end = $date->copy()->endOfMonth();
         return $this;
     }
 
@@ -113,17 +128,17 @@ class TimeFrame
     public function forAQuarter(Carbon $date, $previous = false)
     {
         $year = $date->year;
-        $currentMonth = $date->month;
-        $quarter = (int)(ceil($currentMonth / 3));
+        $current_month = $date->month;
+        $quarter = (int)(ceil($current_month / 3));
         if ($previous) $quarter -= 1;
         if ($quarter <= 0) {
             $year = $year - 1;
             $quarter = 4;
         }
-        $startMonth = (($quarter - 1) * 3) + 1;
-        $endMonth = $startMonth + 2;
-        $this->start = $date->copy()->month($startMonth)->year($year)->startOfMonth();
-        $this->end = $date->copy()->month($endMonth)->year($year)->endOfMonth();
+        $start_month = (($quarter - 1) * 3) + 1;
+        $end_month = $start_month + 2;
+        $this->start = $date->copy()->month($start_month)->year($year)->startOfMonth();
+        $this->end = $date->copy()->month($end_month)->year($year)->endOfMonth();
         return $this;
     }
 
@@ -172,5 +187,30 @@ class TimeFrame
     public function forTwoDates($start, $end)
     {
         return $this->set(Carbon::parse($start . " 00:00:00"), Carbon::parse($end . " 23:59:59"));
+    }
+
+    /**
+     * CALCULATING A FISCAL YEAR OF A COMPANY
+     * PASS THE START MONTH OF A COMPANY
+     *
+     * @param Carbon $date
+     * @param $start_month
+     * @return $this
+     */
+    public function forAFiscalYear(Carbon $date, $start_month)
+    {
+        $current_month = $date->month;
+        $for_start_calculation = clone $date;
+        $for_end_calculation = clone $date;
+
+        if ($date->month >= $start_month) {
+            $this->start = $for_start_calculation->addMonths($start_month - $current_month)->startOfMonth();
+            $this->end = $for_end_calculation->addYear()->addMonths($start_month - ($current_month + 1))->endOfMonth();
+        } else {
+            $this->start = $for_start_calculation->subYear()->addMonths($start_month - $current_month)->startOfMonth();
+            $this->end = $for_end_calculation->addMonths($start_month - ($current_month + 1))->endOfMonth();
+        }
+
+        return $this;
     }
 }

@@ -4,19 +4,16 @@ use Closure;
 use Illuminate\Http\Request;
 use Sheba\Auth\Auth;
 use Sheba\Auth\JWTAuth;
-use Sheba\Auth\RememberTokenAuth;
 
 class PaymentLinkAuthMiddleware
 {
     public $auth;
     public $request;
-    public $rememberTokenAuth;
     public $JWTAuth;
 
-    public function __construct(Auth $auth, RememberTokenAuth $remember_token_auth, JWTAuth $jwt_auth)
+    public function __construct(Auth $auth, JWTAuth $jwt_auth)
     {
         $this->auth = $auth;
-        $this->rememberTokenAuth = $remember_token_auth;
         $this->JWTAuth = $jwt_auth;
         $this->auth->setStrategy($this->JWTAuth)->setRequest(\request());
     }
@@ -24,14 +21,15 @@ class PaymentLinkAuthMiddleware
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request $request
-     * @param  \Closure $next
+     * @param Request $request
+     * @param Closure $next
      * @return mixed
      */
     public function handle($request, Closure $next)
     {
-        $user = $this->auth->authenticate();
-        if ($user) {
+
+        if ($auth_user = $this->auth->authenticate()) {
+            $user = $auth_user->getAvatar();
             $type = strtolower(class_basename($user));
             $request->merge([$type => $user, 'type' => $type, 'user' => $user]);
             return $next($request);

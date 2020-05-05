@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\Expense\Expense;
 
 class Member extends Model
 {
@@ -31,6 +32,11 @@ class Member extends Model
         return $this->morphMany(Notification::class, 'notifiable');
     }
 
+    public function expenses()
+    {
+        return $this->hasMany(Expense::class);
+    }
+
     public function typeIn($business)
     {
         $business = $business instanceof Business ? $business->id : $business;
@@ -54,5 +60,15 @@ class Member extends Model
     public function customer()
     {
         return $this->profile->customer();
+    }
+
+    public function getIdentityAttribute()
+    {
+        if ($this->profile->name != '') {
+            return $this->profile->name;
+        } elseif ($this->profile->mobile) {
+            return $this->profile->mobile;
+        }
+        return $this->profile->email;
     }
 }

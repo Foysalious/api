@@ -3,6 +3,7 @@
 use App\Models\Driver;
 use App\Models\Member;
 use App\Models\Vehicle;
+use App\Repositories\SmsHandler;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
 use Sheba\Notification\NotificationCreated;
@@ -82,41 +83,6 @@ class TripRequests
         return $this;
     }
 
-    public function getRequesterIdentity($comment = false, $admin = false)
-    {
-        if ($comment) {
-            if ($this->member->id == $this->businessTripRequest->member_id) {
-                $this->member = Member::find((int)$this->businessTripRequest->member_id);
-            } elseif ($this->member->id != $this->businessTripRequest->member_id) {
-                $this->member = $this->businessMember->member;
-            }
-        }
-        if ($admin) {
-            $this->member = $this->businessMember->member;
-        }
-        $identity = $this->member->profile->name;
-        if (!$identity) $identity = $this->member->profile->mobile;
-        if (!$identity) $identity = $this->member->profile->email;
-        if (!$identity) $identity = 'ID: ' . $this->member->profile->id;
-        return $identity;
-    }
-
-
-    private function getDriverProfile()
-    {
-        return $this->driver->profile;
-    }
-
-    private function getDriverPhoneNumber()
-    {
-        return $this->getDriverProfile()->mobile ? $this->getDriverProfile()->mobile : '';
-    }
-
-    private function getDriverName()
-    {
-        return $this->getDriverProfile()->name ? $this->getDriverProfile()->name : '';
-    }
-
     public function notifications($mail = false, $for = null, $comment = false, $co_worker = false)
     {
         if ($comment) {
@@ -135,27 +101,11 @@ class TripRequests
         }
     }
 
-    public function notify($mail, $for)
-    {
-        notify($this->member)->send([#Also Push Notifications
-            'title' => $this->notificationTitle,
-            'event_type' => get_class($this->businessTripRequest),
-            'event_id' => $this->businessTripRequest->id,
-            'link' => config('sheba.business_url') . "/dashboard/fleet-management/requests/{$this->businessTripRequest->id}/details"
-        ]);
-        if ($mail && $for === 'TripAccepted') {
-            $this->mailForTripCreateAccepted();
-        }
-    }
-
     public function notifySuperAdmins($mail, $for)
     {
         foreach ($this->superAdmins as $admin) {
             notify($admin)->send([#Also Push Notifications
-                'title' => $this->notificationTitle,
-                'event_type' => get_class($this->businessTripRequest),
-                'event_id' => $this->businessTripRequest->id,
-                'link' => config('sheba.business_url') . "/dashboard/fleet-management/requests/{$this->businessTripRequest->id}/details"
+                                  'title' => $this->notificationTitle, 'event_type' => get_class($this->businessTripRequest), 'event_id' => $this->businessTripRequest->id, 'link' => config('sheba.business_url') . "/dashboard/fleet-management/requests/{$this->businessTripRequest->id}/details"
             ]);
             if ($mail && $for === 'TripCreate') {
                 $this->mailForTripCreate($admin);
@@ -172,16 +122,41 @@ class TripRequests
         $trip_dropoff_address = $this->businessTripRequest->dropoff_address;
         $trip_request_created_at = $this->businessTripRequest->created_at->format('jS F, Y g:i A');
         Mail::send($this->template, [
-            'title' => $this->emailTitle,
-            'trip_requester' => $trip_requester,
-            'trip_pickup_address' => $trip_pickup_address,
-            'trip_dropoff_address' => $trip_dropoff_address,
-            'trip_request_created_at' => $trip_request_created_at,
-            'link' => $link
+            'title' => $this->emailTitle, 'trip_requester' => $trip_requester, 'trip_pickup_address' => $trip_pickup_address, 'trip_dropoff_address' => $trip_dropoff_address, 'trip_request_created_at' => $trip_request_created_at, 'link' => $link
         ], function ($m) use ($email) {
             $m->from('b2b@sheba.xyz', 'sBusiness.xyz');
             $m->to($email)->subject($this->emailSubject);
         });
+    }
+
+    public function getRequesterIdentity($comment = false, $admin = false)
+    {
+        if ($comment) {
+            if ($this->member->id == $this->businessTripRequest->member_id) {
+                $this->member = Member::find((int)$this->businessTripRequest->member_id);
+            } elseif ($this->member->id != $this->businessTripRequest->member_id) {
+                $this->member = $this->businessMember->member;
+            }
+        }
+        if ($admin) {
+            $this->member = $this->businessMember->member;
+        }
+        $identity = $this->member->profile->name;
+        if (!$identity) $identity = $this->member->profile->mobile;
+        if (!$identity) $identity = $this->member->profile->email;
+        if (!$identity) $identity = 'ID: ' . $this->member->profile->id;
+
+        return $identity;
+    }
+
+    public function notify($mail, $for)
+    {
+        notify($this->member)->send([
+            'title' => $this->notificationTitle, 'event_type' => get_class($this->businessTripRequest), 'event_id' => $this->businessTripRequest->id, 'link' => config('sheba.business_url') . "/dashboard/fleet-management/requests/{$this->businessTripRequest->id}/details"
+        ]);
+        if ($mail && $for === 'TripAccepted') {
+            $this->mailForTripCreateAccepted();
+        }
     }
 
     private function mailForTripCreateAccepted()
@@ -194,15 +169,25 @@ class TripRequests
         $driver_phone_number = $this->driver ? $this->getDriverPhoneNumber() : 'n/a';
 
         Mail::send($this->template, [
-            'title' => $this->emailTitle,
-            'driver_name' => $driver_name,
-            'vehicle_number' => $vehicle_number,
-            'driver_phone_number' => $driver_phone_number,
-            'trip_request_start_date' => $trip_request_start_date,
-            'link' => $link
+            'title' => $this->emailTitle, 'driver_name' => $driver_name, 'vehicle_number' => $vehicle_number, 'driver_phone_number' => $driver_phone_number, 'trip_request_start_date' => $trip_request_start_date, 'link' => $link
         ], function ($m) use ($email) {
             $m->from('b2b@sheba.xyz', 'sBusiness.xyz');
             $m->to($email)->subject($this->emailSubject);
         });
+    }
+
+    private function getDriverName()
+    {
+        return $this->getDriverProfile()->name ? $this->getDriverProfile()->name : '';
+    }
+
+    private function getDriverPhoneNumber()
+    {
+        return $this->getDriverProfile()->mobile ? $this->getDriverProfile()->mobile : '';
+    }
+
+    private function getDriverProfile()
+    {
+        return $this->driver->profile;
     }
 }

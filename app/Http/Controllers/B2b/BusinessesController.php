@@ -156,7 +156,7 @@ class BusinessesController extends Controller
                 "name" => $resource->profile->name,
                 "mobile" => $resource->profile->mobile,
                 "nid" => $resource->profile->nid_no,
-                "nid_image_front" => $resource->profile->nid_image_front ?: $resource->nid_image,
+                "nid_image_front" => $resource->profile->nid_image_front ? : $resource->nid_image,
                 "nid_image_back" => $resource->profile->nid_image_back
             ];
             return api_response($request, $resource, 200, ['vendor' => $resource]);
@@ -179,7 +179,8 @@ class BusinessesController extends Controller
                     'App\Models\Driver',
                     'App\Models\Vehicle',
                     'Sheba\Dal\Support\Model',
-                    'App\Models\BusinessTripRequest'
+                    'App\Models\BusinessTripRequest',
+                    'Sheba\Dal\Leave\Model',
                 ])
                 ->orderBy('id', 'DESC');
 

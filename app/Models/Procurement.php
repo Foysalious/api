@@ -1,15 +1,26 @@
 <?php namespace App\Models;
 
+use Sheba\Business\Procurement\Type;
 use Sheba\Dal\ProcurementPaymentRequest\Model as ProcurementPaymentRequest;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Payment\PayableType;
+use Sheba\Business\Procurement\Code\Builder as CodeBuilder;
 
 class Procurement extends Model implements PayableType
 {
     protected $guarded = ['id'];
+    protected $dates = ['closed_and_paid_at'];
     public $paid;
     public $due;
     public $totalPrice;
+    /** @var CodeBuilder $codeBuilder */
+    private $codeBuilder;
+
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->codeBuilder = new CodeBuilder();
+    }
 
     public function items()
     {
@@ -51,17 +62,18 @@ class Procurement extends Model implements PayableType
         return $query->whereIn('status', ['accepted', 'started', 'served', 'cancelled']);
     }
 
-    public function getActiveBid()
-    {
-        return $this->bids->where('status', config('b2b.BID_STATUSES')['accepted'])->first();
-    }
-
     public function calculate()
     {
+        if ($this->paid) return;
         $bid = $this->getActiveBid();
         $this->paid = $this->sheba_collection + $this->partner_collection;
         $this->due = $bid ? $bid->price - $this->paid : 0;
         $this->totalPrice = $bid ? $bid->price : null;
+    }
+
+    public function getActiveBid()
+    {
+        return $this->bids->where('status', config('b2b.BID_STATUSES')['accepted'])->first();
     }
 
     public function attachments()
@@ -77,5 +89,35 @@ class Procurement extends Model implements PayableType
     public function hasAccepted()
     {
         return $this->status == config('b2b.PROCUREMENT_STATUS')['accepted'];
+    }
+
+    public function isServed()
+    {
+        return $this->status == config('b2b.PROCUREMENT_STATUS')['served'];
+    }
+
+    public function isClosedAndPaid()
+    {
+        return $this->closed_and_paid_at != null;
+    }
+
+    public function isAdvanced()
+    {
+        return $this->type == Type::ADVANCED;
+    }
+
+    public function workOrderCode()
+    {
+        return $this->codeBuilder->workOrder($this);
+    }
+
+    public function invoiceCode()
+    {
+        return $this->codeBuilder->invoice($this);
+    }
+
+    public function billCode()
+    {
+        return $this->codeBuilder->bill($this);
     }
 }

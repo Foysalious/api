@@ -20,13 +20,12 @@ class PartnerRoute
             (new PosRoute())->set($api);
             (new ReferralRoute())->globals($api);
         });
-        $api->group(['prefix'=>'bank','middleware'=>'jwtGlobalAuth'],function($api){
+        $api->group(['prefix'=>'bank', 'middleware'=>'jwtGlobalAuth'],function($api){
             $api->post('/password/reset','Auth\PasswordController@resetPasswordForBank');
         });
-        $api->group(['prefix'     => 'loans',
-                     'middleware' => 'jwtGlobalAuth'
-        ], function ($api) {
+        $api->group(['prefix'=>'loans', 'middleware'=>'jwtGlobalAuth'], function ($api) {
             $api->get('/', 'LoanController@index');
+            $api->post('/from-portal','LoanController@storeFromPortals');
             $api->get('/{loan_id}/details','LoanController@show');
             $api->post('/{loan_id}','LoanController@update');
             $api->get('/{loan_id}/download-documents','LoanController@downloadDocuments');
@@ -38,8 +37,8 @@ class PartnerRoute
             $api->post('/{partner_bank_loan}/comments', 'LoanController@storeComment');
             $api->get('/{partner_bank_loan}/comments', 'LoanController@getComments');
             $api->post('/{partner_bank_loan}/status-change', 'LoanController@statusChange');
-            $api->get('/{loan_id}/generate-application','LoanController@generateApplication');
-
+            $api->get('/{loan_id}/generate-pdf','LoanController@generateApplication');
+            $api->get('/statuses','LoanController@getStatus');
         });
     }
 }

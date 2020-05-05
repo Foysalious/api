@@ -19,14 +19,34 @@ class OrderAdapter extends BaseAdapter implements PayableAdapter
     private $job;
     private $emiMonth;
 
-    public function __construct(PartnerOrder $partner_order, $is_advanced_payment = false)
+    public function __construct()
     {
-        $this->partnerOrder = $partner_order;
-        $this->partnerOrder->calculate(true);
-        $this->isAdvancedPayment = $is_advanced_payment;
+        $this->isAdvancedPayment = 0;
         $this->emiMonth = null;
-        $this->setUser();
     }
+
+    /**
+     * @param PartnerOrder $partnerOrder
+     * @return OrderAdapter
+     */
+    public function setPartnerOrder($partnerOrder)
+    {
+        $this->partnerOrder = $partnerOrder;
+        $this->partnerOrder->calculate(true);
+        $this->setUser();
+        return $this;
+    }
+
+    /**
+     * @param bool $isAdvancedPayment
+     * @return OrderAdapter
+     */
+    public function setIsAdvancedPayment($isAdvancedPayment)
+    {
+        $this->isAdvancedPayment = $isAdvancedPayment;
+        return $this;
+    }
+
 
     /**
      * @param $month |int
@@ -101,13 +121,13 @@ class OrderAdapter extends BaseAdapter implements PayableAdapter
     private function getSuccessUrl()
     {
         if ($this->userType == "App\\Models\\Business") return config('sheba.business_url') . "/dashboard/orders/" . $this->partnerOrder->id;
-        else return config('sheba.front_url') . '/orders/' . $this->partnerOrder->getActiveJob()->id;
+        else return config('sheba.front_url') . '/orders/' . $this->partnerOrder->getActiveJob()->id . '/payment';
     }
 
     private function getFailUrl()
     {
         if ($this->userType == "App\\Models\\Business") return config('sheba.business_url');
-        else return config('sheba.front_url');
+        else return config('sheba.front_url') . '/orders/' . $this->partnerOrder->getActiveJob()->id . '/payment';
     }
 
     private function resolveEmiMonth(Payable $payable)

@@ -4,6 +4,7 @@ namespace App\Http;
 
 use App\Http\Middleware\B2B\OrderMiddleware;
 use App\Http\Middleware\CheckForMaintenanceMode;
+use App\Http\Middleware\GeoAuthMiddleware;
 use App\Http\Middleware\PaymentLinkAuthMiddleware;
 use App\Http\Middleware\TopUpAuthMiddleware;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
@@ -63,6 +64,7 @@ class Kernel extends HttpKernel
         'affiliate.auth' => \App\Http\Middleware\AffiliateAuthMiddleware::class,
         'member.auth' => \App\Http\Middleware\MemberAuthMiddleware::class,
         'resource.auth' => \App\Http\Middleware\ResourceAuthMiddleware::class,
+        'resource.jwt.auth' => \App\Http\Middleware\JWT\ResourceAuthMiddleware::class,
         'manager.auth' => \App\Http\Middleware\ManagerAuthMiddleware::class,
         'business.auth' => \App\Http\Middleware\BusinessManagerAuthMiddleware::class,
         'partner_job.auth' => \App\Http\Middleware\PartnerJobAuthMiddleware::class,
@@ -74,6 +76,7 @@ class Kernel extends HttpKernel
         'jwtGlobalAuth' => \App\Http\Middleware\JWTAuthMiddleware::class,
         'business_order.auth' => OrderMiddleware::class,
         'topUp.auth' => TopUpAuthMiddleware::class,
-        'paymentLink.auth' => PaymentLinkAuthMiddleware::class
+        'paymentLink.auth' => PaymentLinkAuthMiddleware::class,
+        'geo.auth' => GeoAuthMiddleware::class
     ];
 }

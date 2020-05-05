@@ -22,6 +22,7 @@ use Sheba\Partner\BadgeResolver;
 use Sheba\Partner\PartnerStatuses;
 use Sheba\Payment\Wallet;
 use Sheba\Referral\HasReferrals;
+use Sheba\Resource\ResourceTypes;
 use Sheba\Reward\Rewardable;
 use Sheba\Subscription\Partner\PartnerSubscriber;
 use Sheba\TopUp\TopUpAgent;
@@ -168,6 +169,11 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->hasMany(PartnerOrder::class);
     }
 
+    public function jobs()
+    {
+        return $this->hasManyThrough(Job::class, PartnerOrder::class);
+    }
+
     public function complains()
     {
         return $this->hasMany(Complain::class);
@@ -298,7 +304,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function getFirstOperationResource()
     {
         if ($this->resources) {
-            return $this->resources->where('pivot.resource_type', $this->resourceTypes['Operation'])->first();
+            return $this->resources->where('pivot.resource_type', ResourceTypes::OPERATION)->first();
         } else {
             return $this->admins->first();
         }
@@ -307,7 +313,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function getFirstAdminResource()
     {
         if ($this->resources) {
-            return $this->resources->where('pivot.resource_type', $this->resourceTypes['Admin'])->first();
+            return $this->resources->where('pivot.resource_type', ResourceTypes::ADMIN)->first();
         } else {
             return $this->admins->first();
         }
@@ -320,17 +326,31 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function scopePublished($query)
     {
-        return $query->where('status', 'Verified');
+        return $query->where('status', PartnerStatuses::VERIFIED);
     }
 
     public function scopeVerified($query)
     {
-        return $query->where('status', 'Verified');
+        return $query->where('status', PartnerStatuses::VERIFIED);
     }
 
     public function isVerified()
     {
-        return $this->status === 'Verified';
+        return $this->status === PartnerStatuses::VERIFIED;
+    }
+
+    public function getContactNumber()
+    {
+        $resource = $this->getContactResource();
+        if(!$resource) return null;
+        return $resource->profile->mobile;
+    }
+
+    public function getContactResourceProPic()
+    {
+        $resource = $this->getContactResource();
+        if(!$resource) return null;
+        return $resource->profile->pro_pic;
     }
 
     public function isNIDVerified()
@@ -953,7 +973,9 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     {
         return $this->hasMany(PartnerUsageHistory::class, 'partner_id', 'id');
     }
-    public function referCode(){
-        return $this->id. str_random(8-(strlen($this->id)));
+
+    public function referCode()
+    {
+        return $this->id . str_random(8 - (strlen($this->id)));
     }
 }

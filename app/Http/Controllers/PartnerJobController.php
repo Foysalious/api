@@ -8,6 +8,7 @@ use App\Models\JobUpdateLog;
 use App\Models\Resource;
 use App\Repositories\PartnerOrderRepository;
 use App\Repositories\ResourceJobRepository;
+use Sheba\Jobs\JobStatuses;
 use Sheba\Jobs\JobTime;
 use App\Sheba\UserRequestInformation;
 use Carbon\Carbon;
@@ -15,6 +16,7 @@ use DB;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Jobs\StatusChanger;
 use Sheba\Logistics\DTO\Order;
 use Sheba\Logistics\OrderManager;
 use Sheba\PushNotificationHandler;
@@ -26,25 +28,31 @@ class PartnerJobController extends Controller
     private $resourceJobRepository;
     /** @var mixed $jobStatuses */
     private $jobStatuses;
+    /** @var StatusChanger $jobStatusChanger */
+    private $jobStatusChanger;
 
-    public function __construct()
+    public function __construct(StatusChanger $job_status_changer)
     {
         $this->resourceJobRepository = new ResourceJobRepository();
         $this->jobStatuses = constants('JOB_STATUSES');
+        $this->jobStatusChanger = $job_status_changer;
     }
 
     public function index($partner, Request $request)
     {
         try {
-            $this->validate($request, [
-                'filter' => 'required|string|in:new,ongoing,history'
-            ]);
+            ini_set('memory_limit', '4096M');
+            ini_set('max_execution_time', 660);
+
+            $this->validate($request, ['filter' => 'required|string|in:new,ongoing,history']);
             $filter = $request->filter;
             $partner = $request->partner->load([
                 'partnerOrders' => function ($q) use ($filter, $request) {
                     $q->$filter()->with([
                         'order' => function ($q) {
-                            $q->with('location', 'customer.profile');
+                            $q->with(['location', 'customer.profile', 'deliveryAddress' => function ($q) {
+                                $q->select('id', 'address');
+                            }]);
                         }
                     ])->with([
                         'jobs' => function ($q) use ($filter, $request) {
@@ -68,7 +76,7 @@ class PartnerJobController extends Controller
                         // $job['logistic'] = $job->getCurrentLogisticOrder()->formatForPartner();
                     }
                     if ($job->cancelRequests->where('status', 'Pending')->count() > 0) continue;
-                    $job['location'] = $partnerOrder->order->location->name;
+                    $job['location'] = $partnerOrder->order->location ? $partnerOrder->order->location->name : $partnerOrder->order->deliveryAddress->address;
                     $job['service_unit_price'] = (double)$job->service_unit_price;
                     $job['discount'] = (double)$job->discount;
                     $job['code'] = $partnerOrder->order->code();
@@ -157,26 +165,21 @@ class PartnerJobController extends Controller
     public function acceptJobAndAssignResource($partner, $job, Request $request)
     {
         try {
+            ini_set('memory_limit', '4096M');
+            ini_set('max_execution_time', 660);
             $this->validate($request, [
-                'resource_id' => 'required|int'
+                'resource_id' => 'int'
             ]);
-            $job = $request->job;
-            $hasThisResource = $request->partner->hasThisResource((int)$request->resource_id, 'Handyman');
-            $jobHasValidStatus = $job->hasStatus(['Pending', 'Not_Responded']);
-            if ($hasThisResource && $jobHasValidStatus) {
-                $request->merge(['remember_token' => $request->manager_resource->remember_token, 'status' => 'Accepted', 'resource' => $request->manager_resource]);
-                $response = $this->resourceJobRepository->changeStatus($job->id, $request);
-                if ($response) {
-                    if ($response->code == 200) {
-                        $job = $this->assignResource($job, $request->resource_id, $request->manager_resource);
-                        return api_response($request, $job, 200);
-                    }
-                    return api_response($request, $response, $response->code, ['message' => $response->msg]);
-                }
-                return api_response($request, null, 500);
+
+            $this->jobStatusChanger->acceptJobAndAssignResource($request);
+            if ($this->jobStatusChanger->hasError()) {
+                return api_response($request, null, $this->jobStatusChanger->getErrorCode(), [
+                    'message' => $this->jobStatusChanger->getErrorMessage()
+                ]);
             }
-            $message = !$hasThisResource ? "Resource doesn't work for you" : $job->status . "job cannot be accepted.";
-            return api_response($request, null, 403, ['message' => $message]);
+
+            return api_response($request, $this->jobStatusChanger->getChangedJob(), 200);
+
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
@@ -192,12 +195,13 @@ class PartnerJobController extends Controller
     public function declineJob($partner, $job, Request $request)
     {
         try {
-            $request->merge(['remember_token' => $request->manager_resource->remember_token, 'status' => 'Declined', 'resource' => $request->manager_resource]);
-            $response = $this->resourceJobRepository->changeStatus($request->job->id, $request);
-            if ($response) {
-                return api_response($request, $response, $response->code);
+            $this->jobStatusChanger->decline($request);
+            if ($this->jobStatusChanger->hasError()) {
+                return api_response($request, null, $this->jobStatusChanger->getErrorCode(), [
+                    'message' => $this->jobStatusChanger->getErrorMessage()
+                ]);
             }
-            return api_response($request, null, 500);
+            return api_response($request, null, 200);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -428,29 +432,33 @@ class PartnerJobController extends Controller
     public function cancelRequests($partner, Request $request)
     {
         try {
-            $partner = $request->partner->load(['partnerOrders' => function ($q) use ($request) {
+            $jobs = Job::whereHas('cancelRequests', function ($query) {
+                $query->where('status', 'Pending');
+            })->whereHas('partnerOrder', function ($q) use ($partner) {
+                $q->ongoing()->where('partner_id', $partner);
+            })->with(['category' => function ($q) {
+                $q->select('id', 'name');
+            }, 'partnerOrder' => function ($q) {
                 $q->with(['order' => function ($q) {
-                    $q->with('location', 'customer.profile');
-                }])->with(['jobs' => function ($q) use ($request) {
-                    $q->info()->whereHas('cancelRequests', function ($query) {
-                        $query->where('status', 'Pending');
-                    })->whereIn('status', (new PartnerOrderRepository())->getStatusFromRequest($request))->orderBy('id', 'desc')->with(['cancelRequests', 'category']);
+                    $q->select('id', 'customer_id', 'location_id', 'sales_channel')->with(['location' => function ($q) {
+                        $q->select('id', 'name');
+                    }, 'customer' => function ($q) {
+                        $q->select('id', 'profile_id')->with(['profile' => function ($q) {
+                            $q->select('id', 'name');
+                        }]);
+                    }]);
                 }]);
-            }]);
-            $jobs = collect();
-            foreach ($partner->partnerOrders as $partnerOrder) {
-                foreach ($partnerOrder->jobs as $job) {
-                    $job['is_on_premise'] = (int)$job->isOnPremise();
-                    $job['location'] = $partnerOrder->order->location->name;
-                    $job['code'] = $partnerOrder->order->code();
-                    $job['category_name'] = $job->category ? $job->category->name : null;
-                    $job['customer_name'] = $partnerOrder->order->customer ? $partnerOrder->order->customer->profile->name : null;
-                    $job['schedule_timestamp'] = $partnerOrder->getVersion() == 'v2' ? Carbon::parse($job->schedule_date . ' ' . explode('-', $job->preferred_time)[0])->timestamp : Carbon::parse($job->schedule_date)->timestamp;
-                    $job['preferred_time'] = humanReadableShebaTime($job->preferred_time);
-                    $job['version'] = $partnerOrder->order->getVersion();
-                    removeRelationsFromModel($job);
-                    $jobs->push($job);
-                }
+            }])->info()->orderBy('jobs.id', 'desc')->get();
+            foreach ($jobs as $job) {
+                $job['is_on_premise'] = (int)$job->isOnPremise();
+                $job['location'] = $job->partnerOrder->order->location->name;
+                $job['code'] = $job->partnerOrder->order->code();
+                $job['category_name'] = $job->category ? $job->category->name : null;
+                $job['customer_name'] = $job->partnerOrder->order->customer ? $job->partnerOrder->order->customer->profile->name : null;
+                $job['schedule_timestamp'] = $job->partnerOrder->getVersion() == 'v2' ? Carbon::parse($job->schedule_date . ' ' . explode('-', $job->preferred_time)[0])->timestamp : Carbon::parse($job->schedule_date)->timestamp;
+                $job['preferred_time'] = humanReadableShebaTime($job->preferred_time);
+                $job['version'] = $job->partnerOrder->order->getVersion();
+                removeRelationsFromModel($job);
             }
             return count($jobs) == 0 ? api_response($request, null, 404) : api_response($request, $jobs, 200, ['jobs' => $jobs]);
         } catch (Throwable $e) {

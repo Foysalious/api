@@ -1,6 +1,5 @@
 <?php namespace App\Http\Route\Prefix\V1;
 
-
 class EmployeeRoute
 {
     public function set($api)
@@ -21,12 +20,47 @@ class EmployeeRoute
                 });
                 $api->post('/', 'Employee\SupportController@store');
             });
+            $api->group(['prefix' => 'expense'], function ($api) {
+                $api->get('/', 'Employee\ExpenseController@index');
+                $api->get('/download-pdf', 'Employee\ExpenseController@downloadPdf');
+                $api->group(['prefix' => '{expense}'], function ($api) {
+                    $api->get('/', 'Employee\ExpenseController@show');
+                    $api->post('/', 'Employee\ExpenseController@update');
+                    $api->delete('/', 'Employee\ExpenseController@delete');
+                    $api->delete('attachments/{attachment}', 'Employee\ExpenseController@deleteAttachment');
+                });
+                $api->post('/', 'Employee\ExpenseController@store');
+            });
             $api->group(['prefix' => 'announcements'], function ($api) {
                 $api->get('/', 'Employee\AnnouncementController@index');
                 $api->group(['prefix' => '{announcement}'], function ($api) {
                     $api->get('/', 'Employee\AnnouncementController@show');
                 });
             });
+            $api->group(['prefix' => 'attendances'], function ($api) {
+                $api->get('/', 'Employee\AttendanceController@index');
+                $api->post('action', 'Employee\AttendanceController@takeAction');
+                $api->get('today', 'Employee\AttendanceController@getTodaysInfo');
+            });
+            $api->group(['prefix' => 'leaves'], function ($api) {
+                $api->get('/', 'Employee\LeaveController@index');
+                $api->get('/types', 'Employee\LeaveController@getLeaveTypes');
+                $api->post('/', 'Employee\LeaveController@store');
+                $api->group(['prefix' => '{leave}'], function ($api) {
+                    $api->get('/', 'Employee\LeaveController@show');
+                    $api->post('/', 'Employee\LeaveController@updateStatus');
+                });
+            });
+            $api->group(['prefix' => 'approval-requests'], function ($api) {
+                $api->get('/', 'Employee\ApprovalRequestController@index');
+                $api->get('/{approval_request}', 'Employee\ApprovalRequestController@show');
+                $api->post('/status', 'Employee\ApprovalRequestController@updateStatus');
+            });
+            $api->group(['prefix' => 'holidays'], function ($api) {
+                $api->get('/', 'Employee\HolidayController@getHolidays');
+            });
+            $api->get('/','Employee\EmployeeController@index');
+            $api->get('/{employee}','Employee\EmployeeController@show');
         });
     }
 }

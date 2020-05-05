@@ -42,7 +42,9 @@
     "ext-openssl": "^7.0",
     "ext-mcrypt": "^7.0",
     "ext-redis": "*",
-    "ext-mysql_xdevapi": "*"
+    "ext-mysql_xdevapi": "*",
+    "ext-intl": "*",
+    "algolia/algoliasearch-laravel": "^1.7"
   },
   "require-dev": {
     "fzaninotto/faker": "~1.4",
@@ -92,23 +94,23 @@
   "repositories": [
     {
       "type": "vcs",
-      "url": "https://shafiq_startern@bitbucket.org/startern/sheba_voucher.git"
+      "url": "https://mac_pasha@bitbucket.org/startern/sheba_voucher.git"
     },
     {
       "type": "vcs",
-      "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git"
+      "url": "https://mac_pasha@bitbucket.org/startern/sheba_dal.git"
     },
     {
       "type": "vcs",
-      "url": "https://shafiq_startern@bitbucket.org/startern/sheba_notification.git"
+      "url": "https://mac_pasha@bitbucket.org/startern/sheba_notification.git"
     },
     {
       "type": "vcs",
-      "url": "https://shafiq_startern@bitbucket.org/startern/sheba_sms.git"
+      "url": "https://mac_pasha@bitbucket.org/startern/sheba_sms.git"
     },
     {
       "type": "vcs",
-      "url": "https://shafiq_startern@bitbucket.org/startern/sheba_report.git"
+      "url": "https://mac_pasha@bitbucket.org/startern/sheba_report.git"
     }
   ]
 }

@@ -7,10 +7,14 @@ use App\Models\Location;
 use App\Models\Partner;
 use App\Models\PartnerWorkingHour;
 use App\Models\Resource;
+use App\Models\SliderPortal;
+use App\Models\SubscriptionOrder;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
+use Sheba\ResourceScheduler\ResourceHandler;
 
 class PartnerRepository
 {
@@ -18,24 +22,39 @@ class PartnerRepository
 
     private $partner;
     private $serviceRepo;
-
+    private $features;
     public function __construct($partner)
     {
-        $this->partner = $partner instanceof Partner ? $partner : Partner::find($partner);
+        $this->partner     = $partner instanceof Partner ? $partner : Partner::find($partner);
         $this->serviceRepo = new ServiceRepository();
+        $this->features=['payment_link', 'pos', 'inventory', 'referral', 'due'];
     }
-
-
-    public function resources($verify = null, $category_id = null, $date = null, $preferred_time = null, Job $job = null)
+    public function getFeatures(){
+        return $this->features;
+    }
+    /**
+     * @param null $verify
+     * @param null $category_id
+     * @param null $date
+     * @param null $preferred_time
+     * @param Job|null $job
+     * @param SubscriptionOrder|null $subscription_order
+     * @return Collection
+     */
+    public function resources($verify = null, $category_id = null, $date = null, $preferred_time = null, Job $job = null, SubscriptionOrder $subscription_order = null)
     {
         $resources = $this->partner->resources()->get()->unique();
-        $resources->load(['jobs' => function ($q) {
-            $q->where('status', '<>', constants('JOB_STATUSES')['Cancelled']);
-        }, 'profile' => function ($q) {
-            $q->select('id', 'name', 'mobile', 'pro_pic');
-        }, 'reviews' => function ($q) {
-            $q->select('id', 'rating', 'resource_id', 'category_id');
-        }]);
+        $resources->load([
+            'jobs'    => function ($q) {
+                $q->where('status', '<>', constants('JOB_STATUSES')['Cancelled']);
+            },
+            'profile' => function ($q) {
+                $q->select('id', 'name', 'mobile', 'pro_pic');
+            },
+            'reviews' => function ($q) {
+                $q->select('id', 'rating', 'resource_id', 'category_id');
+            }
+        ]);
         if ($verify !== null && !$this->partner->isLite()) {
             $resources = $resources->filter(function ($resource) use ($verify) {
                 return $resource->is_verified == $verify;
@@ -45,53 +64,57 @@ class PartnerRepository
         if ($category_id != null) {
             $resources = $resources->map(function ($resource) use ($category_id) {
                 $resource_categories = $resource->categoriesIn($this->partner->id);
-                $is_tagged = $resource_categories->pluck('id')->contains($category_id);
+                $is_tagged           = $resource_categories->pluck('id')->contains($category_id);
                 array_add($resource, 'is_tagged', $is_tagged ? 1 : 0);
                 array_add($resource, 'total_tagged_categories', count($resource_categories));
                 return $resource;
             });
         }
-
-        return $resources->map(function ($resource) use ($category_id, $date, $preferred_time, $job) {
-            $data = [];
-            $data['id'] = $resource->id;
-            $data['profile_id'] = $resource->profile_id;
-            $ongoing_jobs = $resource->jobs->whereIn('status', [constants('JOB_STATUSES')['Serve_Due'], constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Schedule_Due']]);
-            $data['ongoing'] = $ongoing_jobs->count();
-            $data['completed'] = $resource->jobs->where('status', constants('JOB_STATUSES')['Served'])->count();
-            $data['name'] = $resource->profile->name;
-            $data['mobile'] = $resource->profile->mobile;
-            $data['picture'] = $resource->profile->pro_pic;
-            $avg_rating = $resource->reviews->avg('rating');
-            $data['rating'] = $avg_rating != null ? round($avg_rating, 2) : null;
-            $data['joined_at'] = $resource->pivot->created_at->timestamp;
-            $data['resource_type'] = $resource->pivot->resource_type;
-            $data['is_verified'] = $resource->is_verified;
-            $data['is_available'] = $resource->is_tagged;
-            $data['booked_jobs'] = [];
-            $data['is_tagged'] = $resource->is_tagged;
+        return $resources->map(function ($resource) use ($category_id, $date, $preferred_time, $job, $subscription_order) {
+            $data                            = [];
+            $data['id']                      = $resource->id;
+            $data['profile_id']              = $resource->profile_id;
+            $ongoing_jobs                    = $resource->jobs->whereIn('status', [
+                constants('JOB_STATUSES')['Serve_Due'],
+                constants('JOB_STATUSES')['Accepted'],
+                constants('JOB_STATUSES')['Process'],
+                constants('JOB_STATUSES')['Schedule_Due']
+            ]);
+            $data['ongoing']                 = $ongoing_jobs->count();
+            $data['completed']               = $resource->jobs->where('status', constants('JOB_STATUSES')['Served'])->count();
+            $data['name']                    = $resource->profile->name;
+            $data['mobile']                  = $resource->profile->mobile;
+            $data['picture']                 = $resource->profile->pro_pic;
+            $avg_rating                      = $resource->reviews->avg('rating');
+            $data['rating']                  = $avg_rating != null ? round($avg_rating, 2) : null;
+            $data['joined_at']               = $resource->pivot->created_at->timestamp;
+            $data['resource_type']           = $resource->pivot->resource_type;
+            $data['is_verified']             = $resource->is_verified;
+            $data['is_available']            = $resource->is_tagged;
+            $data['booked_jobs']             = [];
+            $data['is_tagged']               = $resource->is_tagged;
             $data['total_tagged_categories'] = isset($resource->total_tagged_categories) ? count($resource->total_tagged_categories) : count($resource->categoriesIn($this->partner->id));
             if ($category_id) {
                 $category = Category::find($category_id);
                 if (in_array($category_id, array_map('intval', explode(',', env('RENT_CAR_IDS'))))) {
                     foreach ($ongoing_jobs->where('resource_id', $resource->id)->where('category_id', $category_id) as $job) {
-                        array_push($data['booked_jobs'], array(
-                            'job_id' => $job->id,
+                        array_push($data['booked_jobs'], [
+                            'job_id'           => $job->id,
                             'partner_order_id' => $job->partnerOrder->id,
-                            'code' => $job->partnerOrder->order->code()
-                        ));
+                            'code'             => $job->partnerOrder->order->code()
+                        ]);
                     }
                 } else {
                     $resource_scheduler = scheduler($resource);
-                    if (!$resource_scheduler->isAvailableForCategory($date, explode('-', $preferred_time)[0], $category, $job)) {
-                        $data['is_available'] = 0;
-                        foreach ($resource_scheduler->getBookedJobs() as $job) {
-                            array_push($data['booked_jobs'], array(
-                                'job_id' => $job->id,
-                                'partner_order_id' => $job->partnerOrder->id,
-                                'code' => $job->partnerOrder->order->code()
-                            ));
+                    if ($subscription_order) {
+                        foreach (json_decode($subscription_order->schedules) as $schedule) {
+                            $preferred_subscription_order_time = Carbon::parse(explode('-', $schedule->time)[0])->format('H:s:i');
+                            if (!$resource_scheduler->isAvailableForCategory($schedule->date, $preferred_subscription_order_time, $category)) {
+                                $data = $this->getBookedJobs($data, $resource_scheduler);
+                            }
                         }
+                    } elseif (!$resource_scheduler->isAvailableForCategory($date, explode('-', $preferred_time)[0], $category, $job)) {
+                        $data = $this->getBookedJobs($data, $resource_scheduler);
                     }
                 }
             }
@@ -99,26 +122,70 @@ class PartnerRepository
         });
     }
 
+    /**
+     * @param array $data
+     * @param ResourceHandler $resource_scheduler
+     * @return array
+     */
+    private function getBookedJobs(array &$data, ResourceHandler $resource_scheduler)
+    {
+        $data['is_available'] = 0;
+        foreach ($resource_scheduler->getBookedJobs() as $job) {
+            array_push($data['booked_jobs'], [
+                'job_id'           => $job->id,
+                'partner_order_id' => $job->partnerOrder->id,
+                'code'             => $job->partnerOrder->order->code()
+            ]);
+        }
+        return $data;
+    }
+
+    /**
+     * @param array $statuses
+     * @param $offset
+     * @param $limit
+     * @return mixed
+     */
     public function jobs(Array $statuses, $offset, $limit)
     {
-        $this->partner->load(['jobs' => function ($q) use ($statuses, $offset, $limit) {
-            $q->info()->status($statuses)->skip($offset)->take($limit)->orderBy('id', 'desc')->with(['jobServices.service', 'cancelRequests', 'category', 'usedMaterials' => function ($q) {
-                $q->select('id', 'job_id', 'material_name', 'material_price');
-            }, 'resource.profile', 'review', 'partner_order' => function ($q) {
-                $q->with(['order' => function ($q) {
-                    $q->with('location', 'customer.profile');
-                }]);
-            }]);
-        }]);
+        $this->partner->load([
+            'jobs' => function ($q) use ($statuses, $offset, $limit) {
+                $q->info()->status($statuses)->skip($offset)->take($limit)->orderBy('id', 'desc')->with([
+                    'jobServices.service',
+                    'cancelRequests',
+                    'category',
+                    'usedMaterials' => function ($q) {
+                        $q->select('id', 'job_id', 'material_name', 'material_price');
+                    },
+                    'resource.profile',
+                    'review',
+                    'partner_order' => function ($q) {
+                        $q->with([
+                            'order' => function ($q) {
+                                $q->with('location', 'customer.profile');
+                            }
+                        ]);
+                    }
+                ]);
+            }
+        ]);
         return $this->partner->jobs;
     }
 
     public function resolveStatus($status)
     {
         if ($status == 'new') {
-            return array(constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']);
+            return array(
+                constants('JOB_STATUSES')['Pending'],
+                constants('JOB_STATUSES')['Not_Responded']
+            );
         } elseif ($status == 'ongoing') {
-            return array(constants('JOB_STATUSES')['Serve_Due'], constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Process'], constants('JOB_STATUSES')['Schedule_Due']);
+            return array(
+                constants('JOB_STATUSES')['Serve_Due'],
+                constants('JOB_STATUSES')['Accepted'],
+                constants('JOB_STATUSES')['Process'],
+                constants('JOB_STATUSES')['Schedule_Due']
+            );
         } elseif ($status == 'history') {
             return array(constants('JOB_STATUSES')['Served']);
         }
@@ -134,10 +201,7 @@ class PartnerRepository
         if ($this->partner->geo_informations) {
             $geo_info = json_decode($this->partner->geo_informations);
             if ($geo_info) {
-                $hyper_locations = HyperLocal::insideCircle($geo_info)
-                    ->with('location')
-                    ->get()
-                    ->filter(function ($item) {
+                $hyper_locations = HyperLocal::insideCircle($geo_info)->with('location')->get()->filter(function ($item) {
                         return !empty($item->location);
                     })->pluck('location');
                 return $hyper_locations;
@@ -152,28 +216,29 @@ class PartnerRepository
 
     public function saveDefaultWorkingHours($by)
     {
-        $default_working_days = getDefaultWorkingDays();
+        $default_working_days  = getDefaultWorkingDays();
         $default_working_hours = getDefaultWorkingHours();
-
         foreach ($default_working_days as $day) {
             $this->partner->workingHours()->save(new PartnerWorkingHour(array_merge($by, [
-                'day' => $day,
+                'day'        => $day,
                 'start_time' => $default_working_hours->start_time,
-                'end_time' => $default_working_hours->end_time
+                'end_time'   => $default_working_hours->end_time
             ])));
         }
     }
 
     /**
-     * Save logo for partner to cdn.
+     * Update logo for partner.
      *
      * @param $request
      * @return string
      */
-    public function saveLogo($request)
+    public function updateLogo($request)
     {
-        list($logo, $logo_filename) = $this->makeThumb($request->file('logo'), $this->partner->name);
-        return $this->saveImageToCDN($logo, getPartnerLogoFolder(), $logo_filename);
+        $this->_deleteOldLogo();
+        $data['logo_original'] = $this->saveLogo($request);
+        $data['logo']          = $data['logo_original'];
+        return $this->partner->update($data);
     }
 
     /**
@@ -194,17 +259,15 @@ class PartnerRepository
     }
 
     /**
-     * Update logo for partner.
+     * Save logo for partner to cdn.
      *
      * @param $request
      * @return string
      */
-    public function updateLogo($request)
+    public function saveLogo($request)
     {
-        $this->_deleteOldLogo();
-        $data['logo_original'] = $this->saveLogo($request);
-        $data['logo'] = $data['logo_original'];
-        return $this->partner->update($data);
+        list($logo, $logo_filename) = $this->makeThumb($request->file('logo'), $this->partner->name);
+        return $this->saveImageToCDN($logo, getPartnerLogoFolder(), $logo_filename);
     }
 
     public function validatePartner($remember_token)
@@ -215,6 +278,97 @@ class PartnerRepository
         } else {
             return false;
         }
+    }
+
+    public function getProfile(Resource $manager_resource)
+    {
+        $partner        = $this->partner;
+        $profile        = $manager_resource->profile;
+        $remember_token = $manager_resource->remember_token;
+        $token          = (new ProfileRepository())->fetchJWTToken('resource', $manager_resource->id, $remember_token);
+        return [
+            'remember_token'         => $remember_token,
+            'token'                  => $token,
+            'id'                     => $partner->id,
+            'name'                   => $partner->name,
+            'profile'                => [
+                'id'      => $profile->id,
+                'name'    => $profile->name,
+                'pro_pic' => $profile->pro_pic
+            ]
+        ];
+    }
+    public function getDashboard(Resource $manager_resource){
+        $partner=$this->partner;
+        $profile        = $manager_resource->profile;
+        $rating = (new ReviewRepository)->getAvgRating($partner->reviews);
+        $rating = (string)(is_null($rating) ? 0 : $rating);
+        return [
+            'logo_original'          => $partner->logo_original,
+            'logo'                   => $partner->logo,
+            'badge'                  => $partner->resolveBadge(),
+            'rating'                 => $rating,
+            'status'                 => $partner->getStatusToCalculateAccess(),
+            'show_status'            => constants('PARTNER_STATUSES_SHOW')[$partner['status']]['partner'],
+            'balance'                => $partner->totalWalletAmount(),
+            'credit'                 => $partner->wallet,
+            'bonus'                  => round($partner->bonusWallet(), 2),
+            'is_credit_limit_exceed' => $partner->isCreditLimitExceed(),
+            'is_on_leave'            => $partner->runningLeave() ? 1 : 0,
+            'bonus_credit'           => $partner->bonusWallet(),
+            'reward_point'           => $partner->reward_point,
+            'bkash_no'               => $partner->bkash_no,
+            'is_nid_verified'        => (int)$profile->nid_verified ? true : false,
+            'current_subscription_package' => [
+                'id' => $partner->subscription->id,
+                'name' => $partner->subscription->name,
+                'name_bn' => $partner->subscription->show_name_bn,
+                'remaining_day' => $partner->last_billed_date ? $partner->periodicBillingHandler()->remainingDay() : 0,
+                'billing_type' => $partner->billing_type,
+                'rules' => $partner->subscription->getAccessRules(),
+                'is_light' => $partner->subscription->id == (int)config('sheba.partner_lite_packages_id')
+            ],
+            'has_pos_inventory' => $partner->posServices->isEmpty() ? 0 : 1,
+            /*'has_pos_due_order' => $total_due_for_pos_orders > 0 ? 1 : 0,
+            'has_pos_paid_order' => $has_pos_paid_order,*/
+            'has_qr_code' => ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0
+        ];
+    }
+
+
+    public function featureVideos($type = null)
+    {
+
+        if ($type != null)
+            $screens = [$type];
+        else
+            $screens = $this->features;
+        $slides = [];
+        $details = [];
+        foreach ($screens as $screen) {
+            $slider_portals[$screen] = SliderPortal::with('slider.slides')
+                ->where('portal_name', 'manager-app')
+                ->where('screen', $screen)
+                ->get();
+            $slides[$screen] = !$slider_portals[$screen]->isEmpty() ? $slider_portals[$screen]->last()->slider->slides->last() : null;
+
+            if ($slides[$screen] && json_decode($slides[$screen]->video_info)) {
+                $details[$screen] = json_decode($slides[$screen]->video_info);
+            } else
+                $details[$screen] = null;
+        }
+
+        if ($type){
+            return [
+                [
+                    'key'     => $type,
+                    'details' => $details[$type]
+                ]
+            ];
+        }
+        return array_map(function($item)use($details){
+            return ['key'=>$item,'details'=>$details[$item]];
+        }, $screens);
     }
 }
 

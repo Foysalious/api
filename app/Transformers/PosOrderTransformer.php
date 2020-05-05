@@ -17,22 +17,26 @@ class PosOrderTransformer extends TransformerAbstract
      */
     public function transform(PosOrder $order)
     {
+        $refundable=$order->isRefundable();
+        $refund_status=$order->getRefundStatus();
         $data = [
             'id' => $order->id,
             'previous_order_id' => $order->previous_order_id,
             'note' => $order->note,
             'created_by_name' => $order->created_by_name,
             'created_at' => $order->created_at->format('Y-m-d h:i A'),
+            'date'=>$order->created_at->format('Y-m-d'),
             'partner_name' => $order->partner->name,
             'price' => (double)$order->getNetBill(),
             'payment_status' => $order->getPaymentStatus(),
             'vat' => (double)$order->getTotalVat(),
             'discount_amount' => (double)$order->getTotalDiscount(),
             'paid' => $order->getPaid(),
+            'status'=>$order->getPaymentStatus(),
             'due' => $order->getDue(),
             'customer' => null,
-            'is_refundable' => $order->isRefundable(),
-            'refund_status' => $order->getRefundStatus(),
+            'is_refundable' =>$refundable&&empty($refund_status) ,
+            'refund_status' => $refund_status,
             'return_orders' => null,
             'partner_wise_order_id' => $order->partner_wise_order_id,
             'partner_wise_previous_order_id' => $order->previousOrder ? $order->previousOrder->partner_wise_order_id : null

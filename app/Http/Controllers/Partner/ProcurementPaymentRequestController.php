@@ -1,12 +1,16 @@
 <?php namespace App\Http\Controllers\Partner;
 
+use App\Models\Procurement;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Sheba\Business\ProcurementPaymentRequest\Creator;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use Sheba\Business\ProcurementPaymentRequest\Updater;
+use Sheba\Dal\ProcurementPaymentRequest\Model;
+use Sheba\Dal\ProcurementPaymentRequest\ProcurementPaymentRequestRepositoryInterface;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
+use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
 
 class ProcurementPaymentRequestController extends Controller
 {
@@ -26,35 +30,19 @@ class ProcurementPaymentRequestController extends Controller
         }
     }
 
-    public function paymentRequest($partner, $procurement, $bid, Request $request, Creator $creator)
+    public function paymentRequest($partner, $procurement, $bid, Request $request, Creator $creator, ProcurementRepositoryInterface $procurement_repository)
     {
-        try {
-            $this->validate($request, [
-                'amount' => 'required|numeric',
-                'short_description' => 'required|string'
-            ]);
-            $this->setModifier($request->manager_resource);
-            $creator->setProcurement($procurement)->setBid($bid);
-            $creator = $creator->setAmount($request->amount)
-                ->setShortDescription($request->short_description);
-            $payment_request_validation = $creator->isCapableForPaymentRequest();
-            if ($payment_request_validation) {
-                $payment_request = $creator->paymentRequestCreate();
-                return api_response($request, $payment_request, 200, ['id' => $payment_request->id]);
-            }
-            return api_response($request, null, 420, ["message" => "Your total requested amount exceeded the bidding price."]);
-        } catch (ModelNotFoundException $e) {
-            return api_response($request, null, 404, ["message" => "Model Not found."]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $this->validate($request, [
+            'amount' => 'required|numeric',
+            'short_description' => 'required|string'
+        ]);
+        $this->setModifier($request->manager_resource);
+        /** @var Procurement $procurement */
+        $procurement = $procurement_repository->find($procurement);
+        $procurement->calculate();
+        if ((double)$request->amount > $procurement->due) return api_response($request, null, 420, ["message" => "Your total requested amount exceeded the bidding price."]);
+        $payment_request = $creator->setProcurement($procurement)->setBid($bid)->setAmount($request->amount)->setShortDescription($request->short_description)->paymentRequestCreate();
+        return api_response($request, $payment_request, 200, ['id' => $payment_request->id]);
     }
 
     public function show($partner, $procurement, $bid, $payment_request, Request $request, Creator $creator)
@@ -71,14 +59,14 @@ class ProcurementPaymentRequestController extends Controller
         }
     }
 
-    public function updateStatus($partner, $procurement, $bid, $payment_request, Request $request, Updater $updater)
+    public function updateStatus($partner, $procurement, $bid, $payment_request, ProcurementPaymentRequestRepositoryInterface $procurement_payment_request_repository, Request $request, Updater $updater)
     {
         try {
             $this->validate($request, [
                 'status' => 'required|string'
             ]);
             $this->setModifier($request->manager_resource);
-            $updater->setProcurement($procurement)->setBid($bid)->setPaymentRequest($payment_request)->setStatus($request->status);
+            $updater->setProcurement($procurement)->setBid($bid)->setPaymentRequest($procurement_payment_request_repository->find($payment_request))->setStatus($request->status);
             $updater->updateStatus();
             return api_response($request, null, 200);
         } catch (ModelNotFoundException $e) {

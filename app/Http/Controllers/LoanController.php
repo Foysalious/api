@@ -24,6 +24,7 @@ use Sheba\Loan\Exceptions\AlreadyAssignToBank;
 use Sheba\Loan\Exceptions\AlreadyRequestedForLoan;
 use Sheba\Loan\Exceptions\EmailUsed;
 use Sheba\Loan\Exceptions\InvalidStatusTransaction;
+use Sheba\Loan\Exceptions\LoanException;
 use Sheba\Loan\Exceptions\NotAllowedToAccess;
 use Sheba\Loan\Exceptions\NotApplicableForLoan;
 use Sheba\Loan\Loan;
@@ -122,7 +123,10 @@ class LoanController extends Controller
         try {
             $partner  = $request->partner;
             $resource = $request->manager_resource;
+            $new      = $request->new;
             $homepage = $loan->setPartner($partner)->setResource($resource)->homepage();
+            if (empty($new))
+                $homepage['duration'] = $homepage['duration'] / 12;
             return api_response($request, $homepage, 200, ['homepage' => $homepage]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
@@ -135,7 +139,9 @@ class LoanController extends Controller
         try {
             $interest_rate           = constants('LOAN_CONFIG')['interest'];
             $amount                  = $request->has('amount') ? (double)$request->amount : 0;
-            $duration                = $request->has('duration') ? (int)$request->duration * 12 : 1;
+            $duration                = $request->has('duration') ? (int)$request->duration : 1;
+            $month                   = $request->has('month') ? (int)$request->month : 0;
+            $duration                = $month ? $duration : $duration * 12;
             $interest_per_month      = emi_calculator($interest_rate, $amount, $duration);
             $total_instalment_amount = $interest_per_month * $duration;
             $bank_lists              = [
@@ -165,6 +171,7 @@ class LoanController extends Controller
             $data     = [
                 'loan_amount' => $request->loan_amount,
                 'duration'    => $request->duration,
+                'month'       => $resource->month ?: 0
             ];
             $info     = $loan->setPartner($partner)->setResource($resource)->setData($data)->apply();
             return api_response($request, 1, 200, ['data' => $info]);
@@ -175,6 +182,24 @@ class LoanController extends Controller
             return api_response($request, $e->getMessage(), 400, ['message' => $e->getMessage()]);
         } catch (NotApplicableForLoan $e) {
             return api_response($request, $e->getMessage(), 400, ['message' => $e->getMessage()]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function storeFromPortals(Request $request, Loan $loan)
+    {
+        try {
+            $this->validate($request, ['mobile' => 'required|mobile:bd']);
+            $partnerBankLoan = $loan->createNew($request)->toArray();
+            unset($partnerBankLoan['final_information_for_loan']);
+            return api_response($request, $partnerBankLoan, 200, ['data' => $partnerBankLoan]);
+        } catch (LoanException $e) {
+            return api_response($request, null, $e->getCode() ?: 500, ['message' => $e->getMessage()]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -608,9 +633,10 @@ class LoanController extends Controller
         try {
             $this->validate($request, [
                 'picture' => 'required|mimes:jpg,jpeg,png,pdf',
-                'name'    => 'required'
+                'name'    => 'required',
+                'for'     => 'required|in:profile,nominee_document,grantor_document,business_document,extras'
             ]);
-            $loan->uploadDocument($loan_id, $request, $request->user);
+            $loan->uploadDocument($loan_id, $request);
             return api_response($request, true, 200);
         } catch (NotAllowedToAccess $e) {
             return api_response($request, null, 400, ['message' => $e->getMessage()]);
@@ -629,6 +655,15 @@ class LoanController extends Controller
             $data                  = $loan->show($loan_id);
             $pdf_handler           = new PdfHandler();
             $loan_application_name = 'loan_application_' . $loan_id;
+            if ($request->has('pdf_type') && $request->pdf_type == constants('BANK_LOAN_PDF_TYPES')['SanctionLetter']) {
+                $loan_application_name       = 'sanction_letter_' . $loan_id;
+                $data['sanction_issue_date'] = $loan->getSanctionIssueDate($loan_id);
+                return $pdf_handler->setData($data)->setName($loan_application_name)->setViewFile('partner_loan_sanction_letter_form')->download();
+            }
+            if ($request->has('pdf_type') && $request->pdf_type == constants('BANK_LOAN_PDF_TYPES')['ProposalLetter']) {
+                $loan_application_name = 'proposal_letter_' . $loan_id;
+                return $pdf_handler->setData($data)->setName($loan_application_name)->setViewFile('partner_loan_proposal_letter')->download();
+            }
             return $pdf_handler->setData($data)->setName($loan_application_name)->setViewFile('partner_loan_application_form')->download();
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -639,8 +674,6 @@ class LoanController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
-
-
     }
 
     public function downloadDocuments(Request $request, $loan_id, Loan $loan)
@@ -659,6 +692,22 @@ class LoanController extends Controller
                 return api_response($request, null, 500);
             }
             return api_response($request, $doc, 200, ['link' => $doc]);
+        } catch (NotAllowedToAccess $e) {
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getStatus(Request $request)
+    {
+        try {
+            $statuses = constants('LOAN_STATUS');
+            $statuses = array_map(function ($status) {
+                return ucfirst(preg_replace('/_/', ' ', $status));
+            }, $statuses);
+            return api_response($request, $statuses, 200, ['data' => $statuses]);
         } catch (NotAllowedToAccess $e) {
             return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (Throwable $e) {

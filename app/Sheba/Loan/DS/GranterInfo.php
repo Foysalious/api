@@ -12,6 +12,10 @@ class GranterInfo
     protected $pro_pic;
     protected $nid_image_back;
     protected $nid_image_front;
+    protected $dob;
+    protected $address;
+    protected $occupation;
+    protected $net_worth;
 
     /**
      * @param Partner $partner
@@ -21,8 +25,14 @@ class GranterInfo
     public function create(Partner $partner)
     {
         $this->setModifier($partner);
-        $data                    = $this->noNullableArray();
-        $data['mobile']          = formatMobile($data['mobile']);
+        $data = $this->noNullableArray();
+        if (isset($data['net_worth'])) {
+            unset($data['net_worth']);
+        }
+        $data['mobile'] = formatMobile($data['mobile']);
+        $profile        = Profile::where('mobile', $data['mobile'])->first();
+        if (!empty($profile))
+            return $profile;
         $profile                 = new Profile($data);
         $profile->remember_token = str_random(255);
         $this->withCreateModificationField($profile);

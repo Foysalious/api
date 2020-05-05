@@ -80,7 +80,15 @@
             width: 5px;
             color: #121212;
         }
-
+        
+        .empty_table {
+            border: 1px dashed black;
+            margin: 3px;
+            border-radius: 3px;
+        }
+        .bottom-letter {
+            font-size: 13px;
+        }
     </style>
 </head>
 <body>
@@ -94,7 +102,7 @@
                     <table>
                         <tr>
                             <td style="align-items: center;">
-                                <img class="sheba-logo" src="{{ assetLink('/assets/images/logo_35_135.jpg') }}" alt="">
+                                <img class="sheba-logo" src="{{ getCDNAssetsFolder() . 'partner_assets/assets/images/logo_35_135.jpg' }}" alt="">
                                 <span style="padding-bottom: 10px"> | </span>  <img class="bank-logo" src="{{ $bank['logo'] }}" alt="">
                             </td>
                         </tr>
@@ -116,7 +124,7 @@
         I request you to grant me/us the term loan facility of BDT <span>{{ $loan_amount }}</span> for a tenure
         of <span>{{ $total_installment }}</span> months for <span>{{ $purpose }}</span> purpose.To enable you to consider the proposal, my following information are given for your kind consideration.
     </div>
-    <div style="margin-top: 30px">
+    <div style="margin-top: 10px">
         <table>
             <tr>
                 <th width="45%" >
@@ -128,6 +136,14 @@
                                 <th style="width: 60%"><div class="form-control" >{{$final_information_for_loan['personal']['name']}}</div></th>
                             </tr>
                         </table>
+
+                        <table>
+                            <tr>
+                                <th style="width: 35%;padding-top: 5px;">Contact Number</th>
+                                <th style="width: 60%"><div class="form-control" >{{$partner['profile']['mobile']}}</div></th>
+                            </tr>
+                        </table>
+
                         <table>
                             <tr>
                                 <th style="width: 35%;padding-top: 5px;;">Gender</th>
@@ -251,6 +267,14 @@
                                 <th style="width: 60%"><div class="form-control" >{{$final_information_for_loan['business']['business_type']}}</div></th>
                             </tr>
                         </table>
+
+                        <table>
+                            <tr>
+                                <th style="width: 35%;padding-top: 5px;;">Trade License</th>
+                                <th style="width: 60%"><div class="form-control" >{{$final_information_for_loan['business']['trade_license']}}</div></th>
+                            </tr>
+                        </table>
+
                         <table>
                             <tr>
                                 <th style="width: 35%;padding-top: 5px;;">E-TIN number (company)</th>
@@ -393,6 +417,165 @@
                                 <th style="width: 60%"><div class="form-control" >{{$final_information_for_loan['personal']['permanent_address']['country']}}</div></th>
                             </tr>
                         </table>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div style="margin-top:40px">
+        <p style="font-size: 14px;">Liability Status of the Company</p>
+        <table>
+            <tr>
+                <td width="6%" style="padding-right: 5px">
+                    <div style="text-align: center">
+                        sl.
+                    </div>
+
+                    <div class="empty_table ">
+                        <div style="padding: 5px ;color: white">.</div>
+                    </div>
+                    <div class="empty_table ">
+                        <div style="padding: 5px ;color: white">.</div>
+                    </div>
+                    <div class="empty_table ">
+                        <div style="padding: 5px ;color: white">.</div>
+                    </div>
+                    <div class="empty_table ">
+                        <div style="padding: 5px ;color: white">.</div>
+                    </div>
+                </td>
+                <td width="26%" style="padding-right: 5px">
+
+                    <div style="text-align: center">
+                        Bank Name
+                    </div>
+                    <div class="empty_table ">
+                        <div style="padding: 5px ;color: white">.</div>
+                    </div>
+                    <div class="empty_table ">
+                        <div style="padding: 5px ;color: white">.</div>
+                    </div>
+                    <div class="empty_table ">
+                        <div style="padding: 5px ;color: white">.</div>
+                    </div>
+                    <div class="empty_table ">
+                        <div style="padding: 5px ;color: white">.</div>
+                    </div>
+
+                </td>
+                <td width="17%" style="padding-right: 5px">
+
+                    <div style="text-align: center">
+                        Facility Type
+                    </div>
+                    <div class="empty_table ">
+                        <div style="padding: 5px ;color: white">.</div>
+                    </div>
+                    <div class="empty_table ">
+                        <div style="padding: 5px ;color: white">.</div>
+                    </div>
+                    <div class="empty_table ">
+                        <div style="padding: 5px ;color: white">.</div>
+                    </div>
+                    <div class="empty_table ">
+                        <div style="padding: 5px ;color: white">.</div>
+                    </div>
+
+                </td>
+                <td width="17%" style="padding-right: 5px">
+
+                    <div style="text-align: center">
+                        Limit
+                    </div>
+                    <div class="empty_table ">
+                        <div style="padding: 5px ;color: white">.</div>
+                    </div>
+                    <div class="empty_table ">
+                        <div style="padding: 5px ;color: white">.</div>
+                    </div>
+                    <div class="empty_table ">
+                        <div style="padding: 5px ;color: white">.</div>
+                    </div>
+                    <div class="empty_table ">
+                        <div style="padding: 5px ;color: white">.</div>
+                    </div>
+
+                </td>
+                <td width="17%" style="padding-right: 5px">
+
+                    <div style="text-align: center">
+                        Outstanding
+                    </div>
+                    <div class="empty_table ">
+                        <div style="padding: 5px ;color: white">.</div>
+                    </div>
+                    <div class="empty_table ">
+                        <div style="padding: 5px ;color: white">.</div>
+                    </div>
+                    <div class="empty_table ">
+                        <div style="padding: 5px ;color: white">.</div>
+                    </div>
+                    <div class="empty_table ">
+                        <div style="padding: 5px ;color: white">.</div>
+                    </div>
+
+                </td >
+                <td width="17%">
+
+                    <div style="text-align: center">
+                        Security
+                    </div>
+                    <div class="empty_table ">
+                        <div style="padding: 5px ;color: white">.</div>
+                    </div>
+                    <div class="empty_table ">
+                        <div style="padding: 5px ;color: white">.</div>
+                    </div>
+                    <div class="empty_table ">
+                        <div style="padding: 5px ;color: white">.</div>
+                    </div>
+                    <div class="empty_table ">
+                        <div style="padding: 5px ;color: white">.</div>
+                    </div>
+
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div class="bottom-letter" style="margin-top: 40px">
+        I, hereby, declare that the information contained herein is correct. I/We shall also submit any additional accurate information/documents as and when
+        required. You are hereby authorized to obtain and/or verify whatsoever information from any source regarding our credit worthiness.
+    </div>
+
+    <div style="margin-top: 30px;">
+        <table>
+            <tr>
+                <td width="30%">
+                    <div style="margin-top: 30px;font-size: 14px">
+                        <span>___________________________</span><br>
+                        Authorized Signature
+                    </div>
+                    <div style="margin-top: 20px;font-size: 14px">
+                        <span>Name</span> <br>
+                    </div>
+
+                    <div style="margin-top: 10px;font-size: 14px">
+                        Date ______/______/______
+                    </div>
+
+                </td>
+                <td width="30%" style="margin-left: 50px">
+                    <div style="margin-top: 30px;font-size: 14px">
+                        <span >___________________________</span><br>
+                        Client Authorized Signature
+                    </div>
+                    <div style="margin-top: 20px;font-size: 14px">
+                        <span>Name</span> <br>
+                    </div>
+
+                    <div style="margin-top: 10px;font-size: 14px">
+                        Date ______/______/______
                     </div>
                 </td>
             </tr>

@@ -8,6 +8,7 @@ use App\Repositories\PartnerOrderRepository;
 use App\Repositories\ResourceJobRepository;
 use App\Sheba\Checkout\PartnerList;
 use Illuminate\Http\JsonResponse;
+use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequest;
 use Sheba\Jobs\Discount;
 use Sheba\Logistics\Exceptions\LogisticServerError;
 use Sheba\Logistics\Repository\OrderRepository;
@@ -19,12 +20,15 @@ use Illuminate\Http\Request;
 use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Logs\JobLogs;
 use Sheba\ModificationFields;
+use Sheba\Resource\Jobs\Collection\CollectMoney;
+use Sheba\UserAgentInformation;
 use Throwable;
 use Validator;
 
 class PartnerOrderController extends Controller
 {
     use ModificationFields;
+
     private $partnerOrderRepository;
     private $partnerJobRepository;
 
@@ -75,7 +79,10 @@ class PartnerOrderController extends Controller
     public function newOrders($partner, Request $request)
     {
         try {
-            $this->validate($request, ['sort' => 'sometimes|required|string|in:created_at,created_at:asc,created_at:desc,schedule_date,schedule_date:asc,schedule_date:desc', 'getCount' => 'sometimes|required|numeric|in:1']);
+            $this->validate($request, [
+                'sort' => 'sometimes|required|string|in:created_at,created_at:asc,created_at:desc,schedule_date,schedule_date:asc,schedule_date:desc',
+                'getCount' => 'sometimes|required|numeric|in:1'
+            ]);
             if ($request->has('getCount')) {
                 $partner = $request->partner->load(['jobs' => function ($q) {
                     $q->status(array(constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']))->select('jobs.id', 'jobs.partner_order_id')
@@ -87,11 +94,14 @@ class PartnerOrderController extends Controller
                             }]);
                         }]);
                 }]);
+                $order_request_count = PartnerOrderRequest::openRequest()->whereDoesntHave('partnerOrder', function ($q) {
+                    $q->cancelled();
+                })->where('partner_id', $partner->id)->count();
                 $total_new_orders = $partner->jobs->pluck('partnerOrder')->unique()->pluck('order')
-                    ->groupBy('subscription_order_id')
-                    ->map(function ($order, $key) {
-                        return !empty($key) ? 1 : $order->count();
-                    })->sum();
+                        ->groupBy('subscription_order_id')
+                        ->map(function ($order, $key) {
+                            return !empty($key) ? 1 : $order->count();
+                        })->sum() + $order_request_count;
                 return api_response($request, $total_new_orders, 200, ['total_new_orders' => $total_new_orders]);
             }
             $orders = $this->partnerOrderRepository->getNewOrdersWithJobs($request);
@@ -355,25 +365,14 @@ class PartnerOrderController extends Controller
         }
     }
 
-    public function collectMoney($partner, Request $request)
+    public function collectMoney($partner, Request $request, CollectMoney $collect_money, UserAgentInformation $user_agent_information)
     {
-        try {
-            $this->validate($request, ['amount' => 'required|numeric']);
-            $partner_order = $request->partner_order;
-            $request->merge(['resource' => $request->manager_resource]);
-            $response = (new ResourceJobRepository())->collectMoney($partner_order, $request);
-            if ($response) {
-                if ($response->code == 200) {
-                    return api_response($request, $response, 200, ['message' => $request->amount . 'Tk have been successfully collected.']);
-                } else {
-                    return api_response($request, $response, $response->code);
-                }
-            }
-            return api_response($request, null, 500);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $this->validate($request, ['amount' => 'required|numeric']);
+        $user_agent_information->setRequest($request);
+        $collect_money->setResource($request->manager_resource)->setPartnerOrder($request->partner_order)->setUserAgentInformation($user_agent_information)
+            ->setCollectionAmount($request->amount);
+        $response = $collect_money->collect();
+        return api_response($request, $response, $response->getCode(), ['message' => $response->getMessage()]);
     }
 
     /**

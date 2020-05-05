@@ -1,5 +1,7 @@
 <?php namespace App\Http\Route\Prefix\V1;
 
+use App\Http\Route\Prefix\V1\Partner\PartnerRoute;
+use App\Http\Route\Prefix\V1\Resource\ResourceRoute;
 
 class Route
 {
@@ -7,7 +9,8 @@ class Route
     {
         $api->group(['prefix' => 'v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
             (new EmployeeRoute())->set($api);
-            $api->group(['prefix' => 'geo'], function ($api) {
+            (new PartnerRoute())->set($api);
+            $api->group(['prefix' => 'geo', 'middleware' => 'geo.auth'], function ($api) {
                 $api->get('geocode/reverse', 'GeocodeController@reverseGeocode');
             });
             $api->group(['prefix' => 'vendors', 'middleware' => ['vendor.auth']], function ($api) {
@@ -22,7 +25,7 @@ class Route
                 $api->get('locations', 'Vendor\LocationController@index');
                 $api->group(['prefix' => 'topup'], function ($api) {
                     $api->post('/', 'Vendor\TopUpController@topUp');
-                    $api->get('', 'Vendor\TopUpController@history');
+                    $api->get('/', 'Vendor\TopUpController@history');
                     $api->get('{topup}', 'Vendor\TopUpController@historyDetails');
                 });
                 $api->get('balance', 'Vendor\ShebaController@getDetails');
@@ -48,6 +51,7 @@ class Route
             $api->get('images', 'ShebaController@getImages');
             $api->get('sliders', 'SliderController@index');
             $api->get('locations', 'LocationController@getAllLocations');
+            $api->get('divisions-with-districts', 'LocationController@getDivisionsWithDistrictsAndThana');
             $api->get('lead-reward', 'ShebaController@getLeadRewardAmount');
             $api->get('search', 'SearchController@searchService');
             $api->get('career', 'CareerController@getVacantPosts');
@@ -59,7 +63,7 @@ class Route
             $api->post('voucher-valid', 'CheckoutController@validateVoucher');
             $api->post('vouchers', 'CheckoutController@validateVoucher');
             $api->post('rating', 'ReviewController@giveRatingFromEmail');
-            $api->post('sms', 'SmsController@send');
+            $api->post('sms', 'SmsController@send')->middleware('throttle:2,60');
             $api->post('faq', 'ShebaController@sendFaq');
             $api->group(['prefix' => 'offers'], function ($api) {
                 $api->get('/', 'OfferController@index');
@@ -188,6 +192,7 @@ class Route
                 $api->get('reviews', 'PartnerController@getReviewInfo');
                 $api->get('info', 'PartnerController@getInfo');
                 $api->get('notifications', 'PartnerController@getNotifications');
+                $api->get('notifications/{notification}', 'PartnerController@getNotification');
 
                 $api->group(['prefix' => 'withdrawals'], function ($api) {
                     $api->get('/', 'PartnerWithdrawalRequestController@index');
@@ -199,14 +204,12 @@ class Route
                 $api->group(['prefix' => 'transactions'], function ($api) {
                     $api->get('/', 'PartnerTransactionController@index');
                 });
-
                 $api->group(['prefix' => 'graphs'], function ($api) {
                     $api->get('orders', 'GraphController@getOrdersGraph');
                     $api->get('sales', 'GraphController@getSalesGraph');
                 });
                 $api->group(['prefix' => 'resources'], function ($api) {
                     $api->get('/', 'PartnerController@getResources');
-
                     $api->group(['prefix' => '{resource}', 'middleware' => ['partner_resource.auth']], function ($api) {
                         $api->get('/', 'ResourceController@show');
                         $api->get('reviews', 'ResourceController@getReviews');

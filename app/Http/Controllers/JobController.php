@@ -3,22 +3,38 @@
 use App\Models\CustomerFavorite;
 use App\Models\Job;
 use App\Models\JobCancelReason;
+use App\Models\LocationService;
 use App\Models\Payable;
 use App\Models\Payment;
 use App\Sheba\UserRequestInformation;
+use App\Transformers\ServiceV2DeliveryChargeTransformer;
+use App\Transformers\ServiceV2MinimalTransformer;
+use App\Transformers\ServiceV2Transformer;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use DB;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Item;
+use League\Fractal\Serializer\ArraySerializer;
+use Sheba\CancelRequest\CancelRequestStatuses;
+use Sheba\Checkout\DeliveryCharge;
 use Sheba\Dal\Discount\DiscountTypes;
+use Sheba\Dal\JobService\JobService;
+use Sheba\Dal\Payable\Types;
+use Sheba\JobDiscount\JobDiscountHandler;
+use Sheba\LocationService\PriceCalculation;
+use Sheba\LocationService\UpsellCalculation;
 use Sheba\Logistics\Repository\OrderRepository;
 use Sheba\Logs\Customer\JobLogs;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
 use Sheba\Payment\ShebaPayment;
 use Sheba\Payment\ShebaPaymentValidator;
+use Throwable;
 
 class JobController extends Controller
 {
@@ -55,13 +71,14 @@ class JobController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
-    public function show($customer, $job, Request $request)
+
+    public function show($customer, $job, Request $request, PriceCalculation $price_calculation, DeliveryCharge $delivery_charge, JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, ServiceV2MinimalTransformer $service_transformer)
     {
         try {
             $customer = $request->customer;
@@ -93,6 +110,7 @@ class JobController extends Controller
             $job_collection->put('resource_name', $job->resource ? $job->resource->profile->name : null);
             $job_collection->put('resource_picture', $job->resource ? $job->resource->profile->pro_pic : null);
             $job_collection->put('resource_mobile', $job->resource ? $job->resource->profile->mobile : null);
+            $job_collection->put('customer_identity', $customer->getIdentityAttribute());
             $job_collection->put('delivery_address', $job->partnerOrder->order->deliveryAddress->address);
             $job_collection->put('delivery_name', $job->partnerOrder->order->deliveryAddress->name);
             $job_collection->put('delivery_mobile', $job->partnerOrder->order->deliveryAddress->mobile);
@@ -103,8 +121,13 @@ class JobController extends Controller
             $job_collection->put('preferred_time', $job->readable_preferred_time);
             $job_collection->put('category_id', $job->category ? $job->category->id : null);
             $job_collection->put('category_name', $job->category ? $job->category->name : null);
-            $job_collection->put('partner_id', $job->partnerOrder->partner->id);
-            $job_collection->put('partner_name', $job->partnerOrder->partner->name);
+            $job_collection->put('category_image', $job->category ? $job->category->thumb : null);
+            $job_collection->put('min_order_amount', $job->category ? $job->category->min_order_amount : null);
+            $job_collection->put('partner_id', $job->partnerOrder->partner ? $job->partnerOrder->partner->id : null);
+            $job_collection->put('partner_name', $job->partnerOrder->partner ? $job->partnerOrder->partner->name : null);
+            $job_collection->put('partner_image', $job->partnerOrder->partner ? $job->partnerOrder->partner->getContactResourceProPic() : null);
+            $job_collection->put('partner_mobile', $job->partnerOrder->partner ? $job->partnerOrder->partner->getContactNumber() : null);
+            $job_collection->put('partner_address', $job->partnerOrder->partner ? $job->partnerOrder->partner->address : null);
             $job_collection->put('status', $job->status);
             $job_collection->put('rating', $job->review ? $job->review->rating : null);
             $job_collection->put('review', $job->review ? $job->review->calculated_review : null);
@@ -116,7 +139,6 @@ class JobController extends Controller
             $job_collection->put('isRentCar', $job->isRentCar());
             $job_collection->put('is_on_premise', $job->isOnPremise());
             $job_collection->put('customer_favorite', $job->customerFavorite ? $job->customerFavorite->id : null);
-            $job_collection->put('partner_address', $job->partnerOrder->partner->address);
             $job_collection->put('order_code', $job->partnerOrder->order->code());
             $job_collection->put('pick_up_address', $job->carRentalJobDetail ? $job->carRentalJobDetail->pick_up_address : null);
             $job_collection->put('pick_up_address_geo', $job->carRentalJobDetail ? json_decode($job->carRentalJobDetail->pick_up_address_geo) : null);
@@ -129,43 +151,82 @@ class JobController extends Controller
             $job_collection->put('can_take_review', $this->canTakeReview($job));
             $job_collection->put('can_pay', $this->canPay($job));
             $job_collection->put('can_add_promo', $this->canAddPromo($job));
+            $job_collection->put('is_same_service', 1);
 
+            $manager = new Manager();
+            $manager->setSerializer(new ArraySerializer());
             if (count($job->jobServices) == 0) {
                 $services = collect();
                 $variables = json_decode($job->service_variables);
-                $services->push(
-                    array(
-                        'service_id' => $job->service->id,
-                        'name' => $job->service_name,
-                        'variables' => $variables,
-                        'quantity' => $job->service_quantity,
-                        'unit' => $job->service->unit,
-                        'option' => $job->service_option,
-                        'variable_type' => $job->service_variable_type,
-                        'thumb' => $job->service->app_thumb
-                    )
-                );
+                $location_service = $job->service->locationServices->first();
+                $upsell_calculation->setService($job->service)
+                    ->setLocationService($location_service)
+                    ->setOption(json_decode($job->service_option, true))
+                    ->setQuantity($job->service_quantity);
+                $upsell_price = $upsell_calculation->getAllUpsellWithMinMaxQuantity();
+                $job_collection->put('is_same_service', 0);
+                $services->push([
+                    'service_id' => $job->service->id,
+                    'name' => $job->service_name,
+                    'variables' => $variables,
+                    'quantity' => $job->service_quantity,
+                    'unit' => $job->service->unit,
+                    'option' => $job->service_option,
+                    'variable_type' => $job->service_variable_type,
+                    'thumb' => $job->service->app_thumb,
+                    'fixed_upsell_price' => $upsell_price
+                ]);
             } else {
                 $services = collect();
+                $notSame = 0;
                 foreach ($job->jobServices as $jobService) {
+                    /** @var JobService $jobService */
                     $variables = json_decode($jobService->variables);
-                    $services->push(
-                        array(
-                            'service_id' => $jobService->service->id,
-                            'name' => $jobService->formatServiceName($job),
-                            'variables' => $variables,
-                            'unit' => $jobService->service->unit,
-                            'quantity' => $jobService->quantity,
-                            'option' => $jobService->option,
-                            'variable_type' => $jobService->variable_type,
-                            'thumb' => $jobService->service->app_thumb
-                        )
-                    );
+                    $location_service = $jobService->service->locationServices->first();
+                    $upsell_calculation->setService($jobService->service)
+                        ->setLocationService($location_service)
+                        ->setOption(json_decode($jobService->option, true))
+                        ->setQuantity($jobService->quantity);
+                    $upsell_price = $upsell_calculation->getAllUpsellWithMinMaxQuantity();
+
+                    $location_service = LocationService::where('location_id', $job->partnerOrder->order->location_id)->where('service_id', $jobService->service->id)->first();
+                    $selected_service = [
+                        "option" => json_decode($jobService->option, true),
+                        "variable_type" => $jobService->variable_type
+                    ];
+                    if ($location_service) {
+                        $service_transformer->setLocationService($location_service);
+                        if ($jobService->variable_type != $location_service->service->variable_type) $notSame = 1;
+                    }
+                    $resource = new Item($selected_service, $service_transformer);
+                    $price_data = $manager->createData($resource)->toArray();
+
+                    $service_data = [
+                        'service_id' => $jobService->service->id,
+                        'name' => $jobService->formatServiceName($job),
+                        'variables' => $variables,
+                        'unit' => $jobService->service->unit,
+                        'quantity' => $jobService->quantity,
+                        'option' => $jobService->option,
+                        'variable_type' => $jobService->variable_type,
+                        'thumb' => $jobService->service->app_thumb,
+                        'upsell_price' => $upsell_price
+                    ];
+                    $service_data += $price_data;
+                    $services->push($service_data);
                 }
+                if ($notSame) $job_collection->put('is_same_service', 0);
             }
+
             $job_collection->put('services', $services);
+
+            $resource = new Item($job->category, new ServiceV2DeliveryChargeTransformer($delivery_charge, $job_discount_handler));
+            $delivery_charge_discount_data = $manager->createData($resource)->toArray();
+            $job_collection->put('delivery_charge', $delivery_charge_discount_data['delivery_charge']);
+            $job_collection->put('delivery_discount', $delivery_charge_discount_data['delivery_discount']);
+
             return api_response($request, $job_collection, 200, ['job' => $job_collection]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -215,6 +276,11 @@ class JobController extends Controller
             $original_delivery_charge = $job->deliveryPrice;
             $delivery_discount = $job->deliveryDiscount;
 
+            $voucher = $partnerOrder->order->voucher ? [
+                'code' => $partnerOrder->order->voucher->code,
+                'amount' => $partnerOrder->order->voucher->amount
+            ] : null;
+
             $bill = collect();
             $bill['total'] = (double)($partnerOrder->totalPrice + $partnerOrder->totalLogisticCharge);
             $bill['total_without_logistic'] = (double)($partnerOrder->totalPrice);
@@ -235,9 +301,10 @@ class JobController extends Controller
             $bill['delivery_discount'] = $delivery_discount;
             $bill['invoice'] = $job->partnerOrder->invoice;
             $bill['version'] = $job->partnerOrder->getVersion();
+            $bill['voucher'] = $voucher;
 
             return api_response($request, $bill, 200, ['bill' => $bill]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -259,7 +326,7 @@ class JobController extends Controller
                 return $item->get('timestamp');
             });
             return count($dates) > 0 ? api_response($request, $dates, 200, ['logs' => $dates->values()->all()]) : api_response($request, null, 404);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -332,7 +399,7 @@ class JobController extends Controller
         $due = $job->partnerOrder->calculate(true)->due;
         $status = $job->status;
 
-        if (in_array($status, ['Declined', 'Cancelled']))
+        if (in_array($status, ['Declined', 'Cancelled']) || $job->cancelRequests()->where('status', CancelRequestStatuses::PENDING)->first())
             return false;
         else {
             return $due > 0;
@@ -457,7 +524,7 @@ class JobController extends Controller
             $job = $request->job;
             try {
                 DB::transaction(function () use ($customer, $job) {
-                    $favorite = new CustomerFavorite(['category_id' => $job->category, 'name' => $job->category->name, 'additional_info' => $job->additional_info]);
+                    $favorite = new CustomerFavorite(['category_id' => $job->category_id, 'name' => $job->category->name, 'additional_info' => $job->additional_info]);
                     $customer->favorites()->save($favorite);
                     foreach ($job->jobServices as $jobService) {
                         $favorite->services()->attach($jobService->service_id, [
@@ -472,46 +539,31 @@ class JobController extends Controller
             } catch (QueryException $e) {
                 return api_response($request, null, 500);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
-    public function clearBills($customer, $job, ShebaPaymentValidator $payment_validator, Request $request, ShebaPayment $payment)
+    public function clearBills($customer, $job, Request $request, ShebaPayment $payment, OrderAdapter $order_adapter)
     {
-        try {
-            $this->validate($request, [
-                'payment_method' => 'sometimes|required|in:online,wallet,bkash,cbl,partner_wallet',
-                'emi_month' => 'numeric'
-            ]);
-            $payment_method = $request->has('payment_method') ? $request->payment_method : 'online';
-            $payment_validator->setPayableType('partner_order')->setPayableTypeId($request->job->partnerOrder->id)->setPaymentMethod($payment_method);
-            if (!$payment_validator->canInitiatePayment()) return api_response($request, null, 500, ['message' => "Can't send multiple requests within 1 minute."]);
-            $order_adapter = new OrderAdapter($request->job->partnerOrder);
-            $order_adapter->setPaymentMethod($payment_method);
-            $order_adapter->setEmiMonth($request->emi_month);
-            $payment = $payment->setMethod($payment_method)->init($order_adapter->getPayable());
-            return api_response($request, $payment, 200, ['link' => $payment->redirect_url, 'payment' => $payment->getFormattedPayment()]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $this->validate($request, [
+            'payment_method' => 'sometimes|required|in:online,wallet,bkash,cbl,partner_wallet',
+            'emi_month' => 'numeric'
+        ]);
+        $payment_method = $request->has('payment_method') ? $request->payment_method : 'online';
+        $order_adapter->setPartnerOrder($request->job->partnerOrder)->setPaymentMethod($payment_method)->setEmiMonth($request->emi_month);
+        $payment = $payment->setMethod($payment_method)->init($order_adapter->getPayable());
+        return api_response($request, $payment, 200, ['link' => $payment->redirect_url, 'payment' => $payment->getFormattedPayment()]);
     }
 
     public function getOrderLogs($customer, Request $request)
     {
         try {
             $job = $request->job;
-            $logs = (new JobLogs($job))->getorderStatusLogs();
+            $logs = (new JobLogs($job))->getOrderStatusLogs();
             return api_response($request, $logs, 200, ['logs' => $logs]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -614,7 +666,7 @@ class JobController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -625,7 +677,7 @@ class JobController extends Controller
         try {
             $job_cancel_reasons = JobCancelReason::ForCustomer()->select('id', 'name', 'key')->get();
             return api_response($request, $job_cancel_reasons, 200, ['cancel-reason' => $job_cancel_reasons]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

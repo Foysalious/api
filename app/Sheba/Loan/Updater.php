@@ -75,7 +75,8 @@ class Updater
         return [
             'is_same_address',
             'is_nid_verified',
-            'online_order'
+            'online_order',
+            'monthly_installment'
         ];
     }
 
@@ -85,7 +86,7 @@ class Updater
             $loan->partnerBankLoan->{$key} = array_key_exists($key, $this->new) ? $this->new[$key] : $loan->partnerBankLoan->{$key};
         }
         $amount                                            = (double)$loan->partnerBankLoan->loan_amount;
-        $duration                                          = (int)$loan->partnerBankLoan->duration * 12;
+        $duration                                          = (int)$loan->partnerBankLoan->duration;
         $loan->partnerBankLoan->monthly_installment        = emi_calculator($loan->partnerBankLoan->interest_rate, $amount, $duration);
         $loan->partnerBankLoan->final_information_for_loan = json_encode($this->new['final_information_for_loan']);
         $loan->partnerBankLoan->save();

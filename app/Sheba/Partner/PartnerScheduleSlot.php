@@ -9,7 +9,6 @@ use App\Models\ScheduleSlot;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Support\Collection;
-use phpDocumentor\Reflection\Types\Integer;
 
 class PartnerScheduleSlot
 {
@@ -30,18 +29,36 @@ class PartnerScheduleSlot
     const SCHEDULE_END = '21:00:00';
     private $resources;
     private $preparationTime;
+    private $portalName;
+    private $whitelistedPortals;
+    private $for;
+    private $errorMessage;
 
     public function __construct()
     {
+        $this->portalName = request()->header('portal-name');
+        $this->whitelistedPortals = ['manager-app', 'manager-web', 'admin-portal'];
         $this->shebaSlots = $this->getShebaSlots();
         $this->today = Carbon::now()->addMinutes(15);
     }
 
+
+    public function getErrorMessage()
+    {
+        return $this->errorMessage;
+    }
+
+
+    private function setErrorMessage($errorMessage)
+    {
+        $this->errorMessage = $errorMessage;
+        return $this;
+    }
+
     private function getShebaSlots()
     {
-        $portal_name = request()->header('portal-name');
         $end_time = self::SCHEDULE_END;
-        if ($portal_name == 'manager-app') $end_time = '24:00:00';
+        if ($this->isWhitelistedPortal()) $end_time = '24:00:00';
         return ScheduleSlot::select('start', 'end')
             ->where([
                 ['start', '>=', DB::raw("CAST('" . self::SCHEDULE_START . "' As time)")],
@@ -61,21 +78,30 @@ class PartnerScheduleSlot
         return $this;
     }
 
-    public function get($for_days = 14): array
+    public function setFor($for)
+    {
+        $this->for = $for;
+        return $this;
+    }
+
+    public function get($for_days = 14)
     {
         $final = [];
+        $category_partner = $this->partner->categories->where('id', $this->category->id)->first();
+        if (!$category_partner) {
+            $this->setErrorMessage('Partner #' . $this->partner->id . ' doesn\'t serve category #' . $this->category->id);
+            return null;
+        }
         $last_day = $this->today->copy()->addDays($for_days);
         $start = $this->today->toDateString() . ' ' . $this->shebaSlots->first()->start;
         $end = $last_day->format('Y-m-d') . ' ' . $this->shebaSlots->last()->end;
-        if ($this->partner) {
-            $this->resources = $this->getResources();
-            $this->bookedSchedules = $this->getBookedSchedules($start, $end);
-            $this->runningLeaves = $this->getLeavesBetween($start, $end);
-            $this->preparationTime = $this->partner->categories->where('id', $this->category->id)->first()->pivot->preparation_time_minutes;
-        }
+        $this->resources = $this->getResources();
+        $this->bookedSchedules = $this->getBookedSchedules($start, $end);
+        $this->runningLeaves = $this->getLeavesBetween($start, $end);
+        $this->preparationTime = $category_partner->pivot->preparation_time_minutes;
         $day = $this->today->copy();
         while ($day < $last_day) {
-            if ($this->partner) $this->addAvailabilityToShebaSlots($day);
+            $this->addAvailabilityToShebaSlots($day);
             array_push($final, ['value' => $day->toDateString(), 'slots' => $this->formatSlots($day, $this->shebaSlots->toArray())]);
             $day->addDay();
         }
@@ -116,15 +142,13 @@ class PartnerScheduleSlot
         $this->addAvailabilityByResource($day);
     }
 
-    private function getWorkingDay(Carbon $day)
-    {
-        return $this->partner->workingHours->where('day', $day->format('l'))->first();
-    }
-
     private function addAvailabilityByWorkingInformation(Carbon $day)
     {
-        $working_day = $this->getWorkingDay($day);
-        if ($working_day) {
+        if ($this->isWhitelistedPortal()) {
+            $this->shebaSlots->each(function ($slot) {
+                $slot['is_available'] = 1;
+            });
+        } elseif ($working_day = $this->getWorkingDay($day)) {
             $date_string = $day->toDateString();
             $working_hour_start_time = Carbon::parse($date_string . ' ' . $working_day->start_time);
             $working_hour_end_time = Carbon::parse($date_string . ' ' . $working_day->end_time);
@@ -143,6 +167,16 @@ class PartnerScheduleSlot
                 $slot['is_available'] = 0;
             });
         }
+    }
+
+    private function isWhitelistedPortal()
+    {
+        return in_array($this->portalName, $this->whitelistedPortals) && $this->for != 'eshop';
+    }
+
+    private function getWorkingDay(Carbon $day)
+    {
+        return $this->partner->workingHours->where('day', $day->format('l'))->first();
     }
 
     private function isBetweenAnyLeave(Carbon $time)

@@ -2,7 +2,6 @@
 
 use App\Models\PosOrder;
 use App\Models\PosOrderItem;
-use Sheba\ExpenseTracker\AutomaticExpense;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\Pos\Discount\Handler as DiscountHandler;
@@ -28,16 +27,25 @@ class Updater
     private $stockManager;
     /** @var DiscountHandler $discountHandler */
     private $discountHandler;
+    private $new;
 
-    public function __construct(PosOrderRepository $order_repo, PosOrderItemRepository $item_repo,
-                                PosServiceRepositoryInterface $service_repo, StockManager $stock_manager,
-                                DiscountHandler $discount_handler)
+    public function __construct(PosOrderRepository $order_repo, PosOrderItemRepository $item_repo, PosServiceRepositoryInterface $service_repo, StockManager $stock_manager, DiscountHandler $discount_handler)
     {
-        $this->orderRepo = $order_repo;
-        $this->itemRepo = $item_repo;
-        $this->serviceRepo = $service_repo;
-        $this->stockManager = $stock_manager;
+        $this->orderRepo       = $order_repo;
+        $this->itemRepo        = $item_repo;
+        $this->serviceRepo     = $service_repo;
+        $this->stockManager    = $stock_manager;
         $this->discountHandler = $discount_handler;
+    }
+
+    /**
+     * @param mixed $new
+     * @return Updater
+     */
+    public function setNew($new)
+    {
+        $this->new = $new;
+        return $this;
     }
 
     public function setOrder(PosOrder $order)
@@ -57,42 +65,22 @@ class Updater
         if (isset($this->data['services'])) {
             $services = json_decode($this->data['services'], true);
             foreach ($services as $service) {
-                $item = $this->itemRepo->findByService($this->order, $service['id']);
+                $item                     = $this->new ? $this->itemRepo->findFromOrder($this->order, $service['id']) : $this->itemRepo->findByService($this->order, $service['id']);
                 $service_data['quantity'] = $service['quantity'];
-
                 if ($item->discount && $item->quantity) {
                     $service_discount_data['amount'] = ($item->discount->amount / $item->quantity) * $service['quantity'];
                     $this->discountHandler->setDiscount($item->discount)->setServiceDiscountData($service_discount_data)->update();
                 }
-
-                $this->manageStock($item, $service['id'], $service['quantity']);
+                $this->manageStock($item, $item->service_id, $service['quantity']);
                 $this->itemRepo->update($item, $service_data);
             }
         }
-
         $order_data = [];
-        if (isset($this->data['customer_id'])) $order_data['customer_id'] = $this->data['customer_id'];
+        if (isset($this->data['customer_id']))
+            $order_data['customer_id'] = $this->data['customer_id'];
         /** @var PosOrder $order */
         $order = $this->orderRepo->update($this->order, $order_data);
-        $this->updateIncome($order);
         return $order;
-    }
-
-    /**
-     * @param PosOrder $order
-     */
-    private function updateIncome(PosOrder $order)
-    {
-        /** @var AutomaticEntryRepository $entry */
-        $entry = app(AutomaticEntryRepository::class);
-        $amount = (double)$order->calculate()->getNetBill();
-        $entry->setPartner($order->partner)
-            ->setAmount($amount)
-            ->setAmountCleared($order->getPaid())
-            ->setHead(AutomaticIncomes::POS)
-            ->setSourceType(class_basename($order))
-            ->setSourceId($order->id)
-            ->updateFromSrc();
     }
 
     /**
@@ -102,12 +90,19 @@ class Updater
      */
     public function manageStock(PosOrderItem $item, $service_id, $service_quantity)
     {
+        if (!$service_id)
+            return;
         $partner_pos_service = $this->serviceRepo->find($service_id);
+        if (empty($partner_pos_service))
+            return;
         $is_stock_maintainable = $this->stockManager->setPosService($partner_pos_service)->isStockMaintainable();
         if ($is_stock_maintainable) {
             $changed_quantity = abs($service_quantity - $item->quantity);
-            if ($item->quantity > $service_quantity) $this->stockManager->increase($changed_quantity);
-            elseif ($item->quantity < $service_quantity) $this->stockManager->decrease($changed_quantity);
+            if ($item->quantity > $service_quantity)
+                $this->stockManager->increase($changed_quantity); elseif ($item->quantity < $service_quantity)
+                $this->stockManager->decrease($changed_quantity);
         }
     }
+
+
 }

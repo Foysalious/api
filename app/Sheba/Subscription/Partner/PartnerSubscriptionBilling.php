@@ -129,7 +129,9 @@ class PartnerSubscriptionBilling
 
     private function getSubscribedPackageDiscountedPrice()
     {
-        $original_price = $this->partner->subscription->originalPrice($this->partner->billing_type);
+        /** @var PartnerSubscriptionPackage $partner_subscription */
+        $partner_subscription = PartnerSubscriptionPackage::find($this->partner->package_id);
+        $original_price = $partner_subscription->originalPrice($this->partner->billing_type);
         $discount = $this->calculateSubscribedPackageDiscount($this->runningCycleNumber, $original_price);
         return $original_price - $discount;
     }
@@ -206,7 +208,7 @@ class PartnerSubscriptionBilling
         $remaining_credit = ($this->partner->last_billed_amount ?: 0) - $used_credit;
         $alreadyCollectedSubscriptionFee = $this->partner->alreadyCollectedSubscriptionFee();
         $remaining_credit += $alreadyCollectedSubscriptionFee;
-        return $remaining_credit < 0 ? 0 : round($remaining_credit,2);
+        return $remaining_credit < 0 ? 0 : round($remaining_credit, 2);
     }
 
     /**

@@ -3,10 +3,12 @@
 namespace App\Sheba\PartnerOrder;
 
 
+use App\Exceptions\HyperLocationNotFoundException;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\Profile;
 use Illuminate\Http\Request;
+use Sheba\PartnerOrder\Exceptions\PartnerAddressNotFound;
 use Sheba\Voucher\Creator\Referral;
 
 class PartnerAsCustomer
@@ -19,15 +21,29 @@ class PartnerAsCustomer
         $this->resource = $request->manager_resource;
     }
 
+    /**
+     * @return Customer
+     * @throws PartnerAddressNotFound
+     * @throws HyperLocationNotFoundException
+     */
     public function getCustomerProfile()
     {
         $customer = Customer::where('profile_id', $this->resource->profile_id)->first();
         if (!$customer) $customer = $this->createCustomerProfile();
-        $address_count = $customer->delivery_addresses()->where('location_id', $this->partner->getHyperLocation()->location->id)->count();
-        if ($address_count == 0) $this->createCustomerDeliveryAddressFromPartnerAddress($customer);
+        $hyper= $this->partner->getHyperLocation();
+        if (!empty($hyper)&&!empty($hyper->location)){
+            $address_count = $customer->delivery_addresses()->where('location_id', $hyper->location->id)->count();
+            if ($address_count == 0) $this->createCustomerDeliveryAddressFromPartnerAddress($customer);
+        }else{
+            throw new HyperLocationNotFoundException();
+        }
         return $customer;
     }
 
+    /**
+     * @return Customer
+     * @throws PartnerAddressNotFound
+     */
     public function createCustomerProfile()
     {
         $profile = Profile::findOrFail($this->resource->profile_id);
@@ -38,8 +54,15 @@ class PartnerAsCustomer
         return $customer;
     }
 
+    /**
+     * @param Customer $customer
+     * @throws PartnerAddressNotFound
+     */
     private function createCustomerDeliveryAddressFromPartnerAddress(Customer $customer)
     {
+        if (empty($this->partner->address)){
+            throw new PartnerAddressNotFound();
+        }
         $geo = json_decode($this->partner->geo_informations);
         $delivery_address = new CustomerDeliveryAddress();
         $delivery_address->address = $this->partner->address;

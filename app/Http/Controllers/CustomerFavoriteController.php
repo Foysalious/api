@@ -1,79 +1,125 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Models\CustomerFavorite;
 use App\Models\HyperLocal;
 use App\Models\Job;
 use App\Models\Location;
+use App\Models\LocationService;
 use App\Models\Service;
+use App\Transformers\ServiceV2DeliveryChargeTransformer;
+use App\Transformers\ServiceV2MinimalTransformer;
+use App\Transformers\ServiceV2Transformer;
 use Illuminate\Database\QueryException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use DB;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Item;
+use League\Fractal\Serializer\ArraySerializer;
+use Sheba\Checkout\DeliveryCharge;
+use Sheba\JobDiscount\JobDiscountHandler;
+use Sheba\Location\LocationSetter;
+use Sheba\LocationService\PriceCalculation;
+use Sheba\LocationService\UpsellCalculation;
+use Throwable;
 
 class CustomerFavoriteController extends Controller
 {
-    public function index($customer, Request $request)
+    use LocationSetter;
+
+    public function index($customer, Request $request,
+                          PriceCalculation $price_calculation, DeliveryCharge $delivery_charge,
+                          JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, ServiceV2MinimalTransformer $service_transformer)
     {
-        $this->validate($request,[
-            'location' => 'sometimes|numeric',
-            'lat' => 'sometimes|numeric',
-            'lng' => 'required_with:lat'
+        $this->validate($request, [
+            'location' => 'sometimes|numeric', 'lat' => 'sometimes|numeric', 'lng' => 'required_with:lat'
         ]);
         $customer = $request->customer;
         list($offset, $limit) = calculatePagination($request);
 
-        $location = null;
-        if($request->has('location') ) {
-            $location = Location::find($request->location)->id;
-        } else if($request->has('lat')) {
-            $hyperLocation= HyperLocal::insidePolygon((double) $request->lat, (double)$request->lng)->with('location')->first();
-            if(!is_null($hyperLocation)) $location = $hyperLocation->location->id;
-        }
-
-        $customer->load(['favorites' => function ($q) use ($offset, $limit, $location) {
-            if($location) {
-                $q->whereHas('services', function($q) use ($location) {
-                    $q->whereHas('locations', function ($q) use ($location) {
-                        $q->where('locations.id', $location);
+        $customer->load([
+            'favorites' => function ($q) use ($offset, $limit) {
+                if ($this->location) {
+                    $q->whereHas('services', function ($q) {
+                        $q->whereHas('locations', function ($q) {
+                            $q->where('locations.id', $this->location);
+                        });
                     });
-                });
-                $q->whereHas('category', function($q) use ($location) {
-                    $q->whereHas('locations', function ($q) use ($location) {
-                        $q->where('locations.id', $location);
+                    $q->whereHas('category', function ($q) {
+                        $q->whereHas('locations', function ($q) {
+                            $q->where('locations.id', $this->location);
+                        });
                     });
-                });
+                }
+                $q->with([
+                    'job', 'services', 'partner' => function ($q) {
+                        $q->select('id', 'name', 'logo');
+                    }, 'category' => function ($q) {
+                        if ($this->location) $q->select('id', 'parent_id', 'name', 'slug', 'icon_png', 'icon_color', 'delivery_charge', 'min_order_amount')->with('parent');
+                    }
+                ])->orderBy('id', 'desc')->skip($offset)->take($limit);
             }
-            $q->with(['services', 'partner' => function ($q) use ($location){
-                $q->select('id', 'name', 'logo');
-            }, 'category' => function ($q) use ($location) {
-                if($location)
-                $q->select('id', 'parent_id', 'name', 'slug', 'icon_png', 'icon_color')->with('parent');
-            }])->orderBy('id', 'desc')->skip($offset)->take($limit);
-        }]);
+        ]);
 
-        $favorites = $customer->favorites->each(function (&$favorite, $key) {
+        /** @var Manager $manager */
+        $manager = new Manager();
+        $manager->setSerializer(new ArraySerializer());
+
+        $favorites = $customer->favorites->each(function (&$favorite, $key) use ($manager, $price_calculation, $delivery_charge, $job_discount_handler, $upsell_calculation, $service_transformer) {
             $services = [];
             $favorite['category_name'] = $favorite->category->name;
             $favorite['category_slug'] = $favorite->category->slug;
             $favorite['category_icon'] = $favorite->category->icon_png;
+            $favorite['min_order_amount'] = $favorite->category->min_order_amount;
             $favorite['icon_color'] = isset(config('sheba.category_colors')[$favorite->category->parent->id]) ? config('sheba.category_colors')[$favorite->category->parent->id] : null;
-            $favorite->services->each(function ($service) use ($favorite, &$services) {
+            $favorite['rating'] = $favorite->job->review ? $favorite->job->review->rating : 0.00;
+            $favorite['is_same_service'] = 1;
+
+            $favorite->services->each(function ($service) use ($favorite, &$services, $manager, $price_calculation, $delivery_charge, $job_discount_handler, $upsell_calculation, $service_transformer) {
+                $location_service = LocationService::where('location_id', $this->location)->where('service_id', $service->id)->first();
                 $pivot = $service->pivot;
+                $upsell_calculation->setService($service)
+                    ->setLocationService($location_service)
+                    ->setOption(json_decode($pivot->option, true))
+                    ->setQuantity($pivot->quantity);
+                $upsell_price = $upsell_calculation->getAllUpsellWithMinMaxQuantity();
+
+                $selected_service = [
+                    "option" => json_decode($pivot->option, true),
+                    "variable_type" => $pivot->variable_type
+                ];
+                if ($location_service) {
+                    $service_transformer->setLocationService($location_service);
+                    if ($pivot->variable_type != $location_service->service->variable_type) $favorite['is_same_service'] = 0;
+                }
+                $resource = new Item($selected_service, $service_transformer);
+                $price_data = $manager->createData($resource)->toArray();
+
                 $pivot['variables'] = json_decode($pivot['variables']);
                 $pivot['picture'] = $service->thumb;
                 $pivot['unit'] = $service->unit;
                 $pivot['min_quantity'] = $service->min_quantity;
                 $pivot['app_thumb'] = $service->app_thumb;
                 $pivot['publication_status'] = $service->publication_status;
-                array_push($services, $pivot);
+                $pivot['upsell_price'] = $upsell_price;
+
+                $service_data_with_price_and_discount = $pivot->toArray() + $price_data;
+
+                array_push($services, $service_data_with_price_and_discount);
             });
+
             $partner = $favorite->partner;
             $favorite['total_price'] = $favorite->total_price;
             $favorite['partner_id'] = $partner ? $partner->id : null;
             $favorite['partner_name'] = $partner ? $partner->name : null;
             $favorite['partner_logo'] = $partner ? $partner->logo : null;
+
+            $resource = new Item($favorite->category, new ServiceV2DeliveryChargeTransformer($delivery_charge, $job_discount_handler));
+            $delivery_charge_discount_data = $manager->createData($resource)->toArray();
+            $favorite['delivery_charge'] = $delivery_charge_discount_data['delivery_charge'];
+            $favorite['delivery_discount'] = $delivery_charge_discount_data['delivery_discount'];
+
             removeRelationsAndFields($favorite);
             $favorite['services'] = $services;
         });
@@ -112,7 +158,7 @@ class CustomerFavoriteController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return api_response($request, null, 500);
         }
     }
@@ -197,7 +243,7 @@ class CustomerFavoriteController extends Controller
             } else {
                 return api_response($request, null, 500);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return api_response($request, null, 500);
         }
     }
@@ -251,9 +297,8 @@ class CustomerFavoriteController extends Controller
                 $customer_favorite->delete();
                 return api_response($request, null, 200);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return api_response($request, null, 500);
         }
     }
-
 }

@@ -272,14 +272,15 @@ class AffiliateController extends Controller
             $sort_order = $request->get('sort_order');
 
             list($offset, $limit) = calculatePagination($request);
-//            if (empty($range)) {
-//                $query[] = $this->allAgents($request->affiliate);
-//            }
+            /**
+             * if (empty($range)) {
+                $query[] = $this->allAgents($request->affiliate);
+            }
 
-//            $query[] = Affiliate::agentsWithFilter($request, 'affiliations')->get()->toArray();
-//            $query[] = Affiliate::agentsWithFilter($request, 'partner_affiliations')->get()->toArray();
-//
-//            $agents = $this->mapAgents($query)->where('ambassador_id', $affiliate->id);
+            $query[] = Affiliate::agentsWithFilter($request, 'affiliations')->get()->toArray();
+            $query[] = Affiliate::agentsWithFilter($request, 'partner_affiliations')->get()->toArray();
+
+            $agents = $this->mapAgents($query)->where('ambassador_id', $affiliate->id);*/
 
             $agents = collect(DB::select('SELECT 
     affiliates.id,
@@ -507,14 +508,33 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         try {
             list($offset, $limit) = calculatePagination($request);
             $affiliate = $request->affiliate;
-            $affiliate->load(['transactions' => function ($q) use ($offset, $limit) {
-                $q->select('id', 'affiliate_id', 'affiliation_id', 'type', 'log', 'amount', DB::raw('DATE_FORMAT(created_at, "%M %d, %Y at %h:%i %p") as time'))->orderBy('id', 'desc');
-            }]);
-            if ($affiliate->transactions != null) {
-                $transactions = $affiliate->transactions;
-                $credit       = $transactions->where('type', 'Credit')->splice($offset, $limit)->values()->all();
-                $debit        = $transactions->where('type', 'Debit')->splice($offset, $limit)->values()->all();
-                return api_response($request, $affiliate->transactions, 200, ['credit' => $credit, 'debit' => $debit]);
+            $credit_affiliate = clone $affiliate;
+            $debit_affiliate = clone $affiliate;
+
+            $affiliate_credit_transactions  = $credit_affiliate->load([
+                'transactions' => function ($q) use ($offset, $limit) {
+                    $q->where('type', 'Credit')
+                        ->select('id', 'affiliate_id', 'affiliation_id', 'type', 'log', 'amount', DB::raw('DATE_FORMAT(created_at, "%M %d, %Y at %h:%i %p") as time'))
+                        ->orderBy('id', 'desc')
+                        ->skip($offset)
+                        ->take($limit);
+                },
+            ]);
+            $affiliate_debit_transactions = $debit_affiliate->load([
+                'transactions' => function ($q) use ($offset, $limit) {
+                    $q->where('type', 'Debit')
+                        ->select('id', 'affiliate_id', 'affiliation_id', 'type', 'log', 'amount', DB::raw('DATE_FORMAT(created_at, "%M %d, %Y at %h:%i %p") as time'))
+                        ->orderBy('id', 'desc')
+                        ->skip($offset)
+                        ->take($limit);
+                }
+            ]);
+
+            if ($affiliate->transactions()->count()) {
+                $credit       = $affiliate_credit_transactions->transactions->values()->all();
+                $debit        = $affiliate_debit_transactions->transactions->values()->all();
+                
+                return api_response($request, null, 200, ['credit' => $credit, 'debit' => $debit]);
             } else {
                 return api_response($request, null, 404);
             }
@@ -545,6 +565,11 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         }
     }
 
+    /**
+     * @param $affiliate
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function rechargeWallet($affiliate, Request $request)
     {
         try {
@@ -553,12 +578,14 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
                 'type'           => 'required|in:bkash',
             ]);
 
-            $affiliate   = $request->affiliate;
+            return api_response($request, null, 403, ['message' => 'Recharge system turned off']);
+
+            /*$affiliate   = $request->affiliate;
             $transaction = (new Registrar())->register($affiliate, $request->type, $request->transaction_id);
 
             $this->setModifier($affiliate);
             $this->recharge($affiliate, $transaction);
-            return api_response($request, null, 200, ['message' => "Moneybag refilled."]);
+            return api_response($request, null, 200, ['message' => "Moneybag refilled."]);*/
         } catch (InvalidTransaction $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 400, ['message' => $e->getMessage()]);
@@ -790,6 +817,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             $details                 = $manager->createData($resource)->toArray()['data'];
             $details['is_verified']  = $is_verified;
             $details['member_since'] = $member_since;
+//            $details['since'] = timeAgo($affiliate->created_at);
             return api_response($request, null, 200, ['data' => $details]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);

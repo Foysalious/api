@@ -2,6 +2,7 @@
 
 use App\Models\Procurement;
 use Illuminate\Database\QueryException;
+use Sheba\Business\Procurement\OrderClosedHandler;
 use Sheba\Business\ProcurementPayment\Creator;
 use DB;
 use Sheba\FraudDetection\TransactionSources;
@@ -30,14 +31,9 @@ class ProcurementComplete extends PaymentComplete
             });
             $this->payment->transaction_details = null;
             $this->completePayment();
-
-            $partner = $procurement->getActiveBid()->bidder;
-            $procurement->calculate();
-            if ($procurement->status == 'served' && $procurement->due == 0) {
-                $price = $procurement->totalPrice;
-                $price_after_commission = $price - (($price * $partner->commission) / 100);
-                if ($price_after_commission > 0) app(WalletTransactionHandler::class)->setModel($partner)->setAmount($price_after_commission)->setSource(TransactionSources::SERVICE_PURCHASE)->setType('credit')->setLog("Credited for RFQ ID:" . $procurement->id)->dispatch();
-            }
+            /** @var OrderClosedHandler $order_close_handler */
+            $order_close_handler = app(OrderClosedHandler::class);
+            $order_close_handler->setProcurement($procurement)->run();
         } catch (QueryException $e) {
             $this->failPayment();
             throw $e;

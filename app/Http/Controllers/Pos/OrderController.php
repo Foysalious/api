@@ -19,9 +19,12 @@ use Sheba\ModificationFields;
 use Sheba\PaymentLink\Creator as PaymentLinkCreator;
 use Sheba\PaymentLink\PaymentLinkTransformer;
 use Sheba\Pos\Customer\Creator as PosCustomerCreator;
+use Sheba\Pos\Exceptions\InvalidPosOrder;
+use Sheba\Pos\Exceptions\PosExpenseCanNotBeDeleted;
 use Sheba\Pos\Jobs\OrderBillEmail;
 use Sheba\Pos\Jobs\OrderBillSms;
 use Sheba\Pos\Order\Creator;
+use Sheba\Pos\Order\Deleter as PosOrderDeleter;
 use Sheba\Pos\Order\QuickCreator;
 use Sheba\Pos\Order\RefundNatures\NatureFactory;
 use Sheba\Pos\Order\RefundNatures\Natures;
@@ -44,16 +47,14 @@ class OrderController extends Controller
 
     public function index(Request $request)
     {
-        ini_set('memory_limit', '2096M');
+        ini_set('memory_limit', '4096M');
+        ini_set('max_execution_time', 120);
         try {
             $status  = $request->status;
             $partner = $request->partner;
             list($offset, $limit) = calculatePagination($request);
-
             /** @var PosOrder $orders */
-            $orders_query = PosOrder::with('items.service.discounts', 'customer.profile', 'payments', 'logs', 'partner')
-                ->byPartner($partner->id);
-
+            $orders_query = PosOrder::with('items.service.discounts', 'customer.profile', 'payments', 'logs', 'partner')->byPartner($partner->id);
             if ($request->has('q') && $request->q !== "null") {
                 $orders_query = $orders_query->whereHas('customer.profile', function ($query) use ($request) {
                     $query->orWhere('profiles.name', 'LIKE', '%' . $request->q . '%');
@@ -61,18 +62,19 @@ class OrderController extends Controller
                     $query->orWhere('profiles.mobile', 'LIKE', '%' . $request->q . '%');
                 });
                 $orders_query = $orders_query->orWhere([
-                    ['pos_orders.id', 'LIKE', '%' . $request->q . '%'],
-                    ['pos_orders.partner_id', $partner->id]
+                    [
+                        'pos_orders.id',
+                        'LIKE',
+                        '%' . $request->q . '%'
+                    ],
+                    [
+                        'pos_orders.partner_id',
+                        $partner->id
+                    ]
                 ]);
             }
-
-            $orders = $orders_query->orderBy('created_at', 'desc')
-                ->skip($offset)
-                ->take($limit)
-                ->get();
-
-            $final_orders = [];
-
+            $orders       = empty($status) ? $orders_query->orderBy('created_at', 'desc')->skip($offset)->take($limit)->get() : $orders_query->orderBy('created_at', 'desc')->get();
+            $final_orders = collect();
             foreach ($orders as $index => $order) {
                 $order->isRefundable();
                 $order_data = $order->calculate();
@@ -80,19 +82,15 @@ class OrderController extends Controller
                 $manager->setSerializer(new CustomSerializer());
                 $resource        = new Item($order_data, new PosOrderTransformer());
                 $order_formatted = $manager->createData($resource)->toArray()['data'];
-
-                $order_create_date = $order->created_at->format('Y-m-d');
-
-                if (!isset($final_orders[$order_create_date])) $final_orders[$order_create_date] = [];
-                if (($status == "null") || !$status || ($status && $order->getPaymentStatus() == $status)) {
-                    array_push($final_orders[$order_create_date], $order_formatted);
-                }
+                $final_orders->push($order_formatted);
             }
+            if (!empty($status))
+                $final_orders = $final_orders->where('status', $status)->slice($offset)->take($limit);
+            $final_orders     = $final_orders->groupBy('date')->toArray();
 
             $orders_formatted = [];
-
-            $pos_orders_repo = new PosOrderRepository();
-            $pos_sales       = [];
+            $pos_orders_repo  = new PosOrderRepository();
+            $pos_sales        = [];
             foreach (array_keys($final_orders) as $date) {
                 $timeFrame = new TimeFrame();
                 $timeFrame->forADay(Carbon::parse($date))->getArray();
@@ -109,7 +107,6 @@ class OrderController extends Controller
                     'total_due'  => $pos_orders->sum('due'),
                 ];
             }
-
             foreach ($final_orders as $key => $value) {
                 if (count($value) > 0) {
                     $order_list = [
@@ -122,7 +119,6 @@ class OrderController extends Controller
                     array_push($orders_formatted, $order_list);
                 }
             }
-
             return api_response($request, $orders_formatted, 200, ['orders' => $orders_formatted]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
@@ -139,14 +135,13 @@ class OrderController extends Controller
         try {
             /** @var PosOrder $order */
             $order = PosOrder::with('items.service.discounts', 'customer', 'payments', 'logs', 'partner')->find($request->order);
-            if (!$order) return api_response($request, null, 404, ['msg' => 'Order Not Found']);
+            if (!$order)
+                return api_response($request, null, 404, ['msg' => 'Order Not Found']);
             $order->calculate();
-
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
             $resource = new Item($order, new PosOrderTransformer());
             $order    = $manager->createData($resource)->toArray();
-
             return api_response($request, null, 200, ['order' => $order]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
@@ -192,19 +187,27 @@ class OrderController extends Controller
                 $creator->setCustomer($pos_customer);
             }
             $creator->setPartner($partner)->setData($request->all());
-            if ($error = $creator->hasError()) return $error;
+            if($error=$creator->hasDueError())
+                return $error;
+            /**
+             * POS ORDER CHECK IF STOCK LIMIT EXCEED
+             *
+             * if ($error = $creator->hasError())
+             *     return $error;
+             */
             $order = $creator->create();
             $order = $order->calculate();
-            if ($partner->wallet >= 1) $this->sendCustomerSms($order);
+            /**
+             * TURNED OFF POS ORDER CREATE SMS BY SERVER END, HANDLED BY CLIENT SIDE
+             *
+             * if ($partner->wallet >= 1) $this->sendCustomerSms($order);
+             */
             $this->sendCustomerEmail($order);
             $order->payment_status      = $order->getPaymentStatus();
             $order->client_pos_order_id = $request->client_pos_order_id;
             $order->net_bill            = $order->getNetBill();
             if ($request->payment_method == 'payment_link') {
-                $paymentLink = $paymentLinkCreator->setAmount($order->net_bill)->setReason("PosOrder ID: $order->id Due payment")->setUserName($partner->name)->setUserId($partner->id)
-                    ->setUserType('partner')
-                    ->setTargetId($order->id)
-                    ->setTargetType('pos_order')->save();
+                $paymentLink = $paymentLinkCreator->setAmount($order->net_bill)->setReason("PosOrder ID: $order->id Due payment")->setUserName($partner->name)->setUserId($partner->id)->setUserType('partner')->setTargetId($order->id)->setTargetType('pos_order')->save();
                 $transformer = new PaymentLinkTransformer();
                 $transformer->setResponse($paymentLink);
                 $link = ['link' => $transformer->getLink()];
@@ -216,14 +219,19 @@ class OrderController extends Controller
                 "client_pos_order_id"   => $request->has('client_pos_order_id') ? $request->client_pos_order_id : null,
                 'partner_wise_order_id' => $order->partner_wise_order_id
             ];
-            
-            app()->make(ActionRewardDispatcher::class)->run('pos_order_create', $partner, $partner, $order,(new RequestIdentification())->get()['portal_name']);
-
-            return api_response($request, null, 200, ['message' => 'Order Created Successfully', 'order' => $order, 'payment' => $link]);
+            app()->make(ActionRewardDispatcher::class)->run('pos_order_create', $partner, $partner, $order, (new RequestIdentification())->get()['portal_name']);
+            return api_response($request, null, 200, [
+                'message' => 'Order Created Successfully',
+                'order'   => $order,
+                'payment' => $link
+            ]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry  = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->user_context([
+                'request' => $request->all(),
+                'message' => $message
+            ]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
@@ -232,16 +240,27 @@ class OrderController extends Controller
         }
     }
 
-    private function sendCustomerSms(PosOrder $order)
-    {
-        if ($order->customer && $order->customer->profile->mobile)
-            dispatch(new OrderBillSms($order));
-    }
-
     private function sendCustomerEmail($order)
     {
         if ($order->customer && $order->customer->profile->email)
             dispatch(new OrderBillEmail($order));
+    }
+
+    public function delete($partner, $order, Request $request, PosOrderDeleter $deleter)
+    {
+        try {
+            $deleter->setPartner($request->partner)->setOrder($order)->delete();
+            return api_response($request, true, 200);
+        }catch (PosExpenseCanNotBeDeleted $e){
+            app('sentry')->captureException($e);
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
+        } catch (InvalidPosOrder $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 
     /**
@@ -259,13 +278,15 @@ class OrderController extends Controller
             ]);
             $partner = $request->partner;
             $this->setModifier($request->manager_resource);
-
-            $order = $creator->setData($request->all())->create();
+            $order = $creator->setPartner($partner)->setData($request->all())->create();
             $order = $order->calculate();
-            if ($partner->wallet >= 1) $this->sendCustomerSms($order);
+            /**
+             * TURNED OFF POS ORDER CREATE SMS BY SERVER END, HANDLED BY CLIENT SIDE
+             *
+             * if ($partner->wallet >= 1) $this->sendCustomerSms($order);
+             */
             $this->sendCustomerEmail($order);
-            $order->payment_status = $order->getPaymentStatus();
-
+            $order->payment_status        = $order->getPaymentStatus();
             $order["client_pos_order_id"] = $request->has('client_pos_order_id') ? $request->client_pos_order_id : null;
             return api_response($request, null, 200, [
                 'msg'   => 'Order Created Successfully',
@@ -274,7 +295,10 @@ class OrderController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry  = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->user_context([
+                'request' => $request->all(),
+                'message' => $message
+            ]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
@@ -291,20 +315,21 @@ class OrderController extends Controller
     public function update(Request $request, Updater $updater)
     {
         $this->setModifier($request->manager_resource);
-
         try {
             /** @var PosOrder $order */
+            $new           = 1;
             $order         = PosOrder::with('items')->find($request->order);
-            $is_returned   = ($this->isReturned($order, $request));
+            $is_returned   = ($this->isReturned($order, $request, $new));
             $refund_nature = $is_returned ? Natures::RETURNED : Natures::EXCHANGED;
             $return_nature = $is_returned ? $this->getReturnType($request, $order) : null;
-
             /** @var RefundNature $refund */
             $refund = NatureFactory::getRefundNature($order, $request->all(), $refund_nature, $return_nature);
-            $refund->update();
-
+            $refund->setNew($new)->update();
             $order->payment_status = $order->calculate()->getPaymentStatus();
-            return api_response($request, null, 200, ['msg' => 'Order Updated Successfully', 'order' => $order]);
+            return api_response($request, null, 200, [
+                'msg'   => 'Order Updated Successfully',
+                'order' => $order
+            ]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -314,26 +339,26 @@ class OrderController extends Controller
     /**
      * @param PosOrder $order
      * @param Request $request
+     * @param bool $new
      * @return bool
      */
-    private function isReturned(PosOrder $order, Request $request)
+    private function isReturned(PosOrder $order, Request $request, $new = false)
     {
-        $services         = $order->items->pluck('service_id')->toArray();
+        if ($new) {
+            $services = $order->items->pluck('id')->toArray();
+        } else {
+            $services = $order->items->pluck('service_id')->toArray();
+        }
         $request_services = collect(json_decode($request->services, true))->pluck('id')->toArray();
-
         return $services === $request_services;
     }
 
     private function getReturnType(Request $request, PosOrder $order)
     {
         $request_services_quantity = collect(json_decode($request->services, true))->pluck('quantity')->toArray();
-
-        $is_full_order_returned = (empty(array_filter($request_services_quantity)));
-        $is_item_added          = array_sum($request_services_quantity) > $order->items->sum('quantity');
-
-        return $is_full_order_returned ?
-            ReturnNatures::FULL_RETURN :
-            ($is_item_added ? ReturnNatures::QUANTITY_INCREASE : ReturnNatures::PARTIAL_RETURN);
+        $is_full_order_returned    = (empty(array_filter($request_services_quantity)));
+        $is_item_added             = array_sum($request_services_quantity) > $order->items->sum('quantity');
+        return $is_full_order_returned ? ReturnNatures::FULL_RETURN : ($is_item_added ? ReturnNatures::QUANTITY_INCREASE : ReturnNatures::PARTIAL_RETURN);
     }
 
     /**
@@ -350,16 +375,16 @@ class OrderController extends Controller
             $this->setModifier($request->manager_resource);
             /** @var PosOrder $order */
             $order = PosOrder::with('items')->find($request->order)->calculate();
-
             if ($request->has('customer_id') && is_null($order->customer_id)) {
                 $requested_customer = PosCustomer::find($request->customer_id);
                 $order              = $updater->setOrder($order)->setData(['customer_id' => $requested_customer->id])->update();
             }
-
-            if (!$order) return api_response($request, null, 404, ['msg' => 'Order not found']);
-            if (!$order->customer) return api_response($request, null, 404, ['msg' => 'Customer not found']);
-            if (!$order->customer->profile->mobile) return api_response($request, null, 404, ['msg' => 'Customer mobile not found']);
-
+            if (!$order)
+                return api_response($request, null, 404, ['msg' => 'Order not found']);
+            if (!$order->customer)
+                return api_response($request, null, 404, ['msg' => 'Customer not found']);
+            if (!$order->customer->profile->mobile)
+                return api_response($request, null, 404, ['msg' => 'Customer mobile not found']);
             if ($partner->wallet >= 1) {
                 dispatch(new OrderBillSms($order));
                 return api_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
@@ -385,16 +410,16 @@ class OrderController extends Controller
             $this->setModifier($request->manager_resource);
             /** @var PosOrder $order */
             $order = PosOrder::with('items')->find($request->order)->calculate();
-
             if ($request->has('customer_id') && is_null($order->customer_id)) {
                 $requested_customer = PosCustomer::find($request->customer_id);
                 $order              = $updater->setOrder($order)->setData(['customer_id' => $requested_customer->id])->update();
             }
-
-            if (!$order) return api_response($request, null, 404, ['msg' => 'Order not found']);
-            if (!$order->customer) return api_response($request, null, 404, ['msg' => 'Customer not found']);
-            if (!$order->customer->profile->email) return api_response($request, null, 404, ['msg' => 'Customer email not found']);
-
+            if (!$order)
+                return api_response($request, null, 404, ['msg' => 'Order not found']);
+            if (!$order->customer)
+                return api_response($request, null, 404, ['msg' => 'Customer not found']);
+            if (!$order->customer->profile->email)
+                return api_response($request, null, 404, ['msg' => 'Customer email not found']);
             dispatch(new OrderBillEmail($order));
             return api_response($request, null, 200, ['msg' => 'Email Send Successfully']);
         } catch (Throwable $e) {
@@ -411,7 +436,6 @@ class OrderController extends Controller
                 'paid_amount'    => 'required|numeric',
                 'payment_method' => 'required|string|in:' . implode(',', config('pos.payment_method'))
             ]);
-
             /** @var PosOrder $order */
             $order        = PosOrder::find($request->order);
             $payment_data = [
@@ -423,8 +447,10 @@ class OrderController extends Controller
             $order                 = $order->calculate();
             $order->payment_status = $order->getPaymentStatus();
             $this->updateIncome($order, $request->paid_amount);
-
-            return api_response($request, null, 200, ['msg' => 'Payment Collect Successfully', 'order' => $order]);
+            return api_response($request, null, 200, [
+                'msg'   => 'Payment Collect Successfully',
+                'order' => $order
+            ]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -441,14 +467,7 @@ class OrderController extends Controller
         /** @var AutomaticEntryRepository $entry */
         $entry  = app(AutomaticEntryRepository::class);
         $amount = (double)$order->getNetBill();
-        $entry->setPartner($order->partner)
-            ->setAmount($amount)
-            ->setAmountCleared($paid_amount)
-            ->setFor(EntryType::INCOME)
-            ->setSourceType(class_basename($order))
-            ->setSourceId($order->id)
-            ->setCreatedAt($order->created_at)
-            ->updateFromSrc();
+        $entry->setPartner($order->partner)->setAmount($amount)->setAmountCleared($paid_amount)->setFor(EntryType::INCOME)->setSourceType(class_basename($order))->setSourceId($order->id)->setCreatedAt($order->created_at)->updateFromSrc();
     }
 
     /**
@@ -482,7 +501,8 @@ class OrderController extends Controller
                     'paid'        => $pos_order->getPaid(),
                     'due'         => $pos_order->getDue(),
                     'status'      => $pos_order->getPaymentStatus(),
-                    'vat'         => $pos_order->getTotalVat()] : null
+                    'vat'         => $pos_order->getTotalVat()
+                ] : null
             ];
             if ($pos_order->customer) {
                 $customer     = $pos_order->customer->profile;
@@ -493,8 +513,10 @@ class OrderController extends Controller
             }
             $invoice_name = 'pos_order_invoice_' . $pos_order->id;
             $link         = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
-
-            return api_response($request, null, 200, ['message' => 'Successfully Download receipt', 'link' => $link]);
+            return api_response($request, null, 200, [
+                'message' => 'Successfully Download receipt',
+                'link'    => $link
+            ]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -514,8 +536,10 @@ class OrderController extends Controller
             $this->setModifier($request->manager_resource);
             $order->note = $request->note;
             $order->update();
-
-            return api_response($request, null, 200, ['msg' => 'Note created successfully', 'order' => $order]);
+            return api_response($request, null, 200, [
+                'msg'   => 'Note created successfully',
+                'order' => $order
+            ]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
@@ -523,5 +547,43 @@ class OrderController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function sendCustomerSms(PosOrder $order)
+    {
+        if ($order->customer && $order->customer->profile->mobile)
+            dispatch(new OrderBillSms($order));
+    }
+
+    /**
+     * @param Request $request
+     * @param Updater $updater
+     * @return JsonResponse
+     */
+    public function tagCustomer(Request $request, Updater $updater)
+    {
+        try {
+            $this->validate($request, [
+                'customer_id'          => 'required'
+            ]);
+            $this->setModifier($request->manager_resource);
+            /** @var PosOrder $order */
+            $order = PosOrder::find($request->order);
+            if (!$order)
+                return api_response($request, null, 404, ['msg' => 'Order not found']);
+            if($order->partner_id != $request->partner->id)
+                return api_response($request, null, 403, ['msg' => 'Order and Partner mismatch']);
+            $requested_customer = PosCustomer::find($request->customer_id);
+            if (!$requested_customer)
+                return api_response($request, null, 401, ['msg' => 'Customer not found']);
+            $updater->setOrder($order)->setData(['customer_id' => $requested_customer->id])->update();
+            $entry  = app(AutomaticEntryRepository::class);
+            $entry->setPartner($order->partner)->setFor(EntryType::INCOME)->setSourceType(class_basename($order))->setSourceId($order->id)->setParty($requested_customer->profile)->updatePartyFromSource();
+            return api_response($request, null, 200, ['msg' => 'Customer tagged Successfully']);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
     }
 }

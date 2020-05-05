@@ -1,7 +1,4 @@
-<?php
-
-namespace App\Repositories;
-
+<?php namespace App\Repositories;
 
 use App\Models\PartnerOrder;
 use App\Sheba\UserRequestInformation;
@@ -9,14 +6,19 @@ use Carbon\Carbon;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
+use Sheba\Jobs\JobStatuses;
 
 class ResourceJobRepository
 {
     private $created_by_type = 'App\Models\Resource';
 
+    /**
+     * @param $jobs
+     * @return array
+     */
     public function rearrange($jobs)
     {
-        $process_jobs = $jobs->whereIn('status', ['Process', 'Serve Due']);
+        $process_jobs = $jobs->whereIn('status', [JobStatuses::PROCESS, JobStatuses::SERVE_DUE]);
         $process_jobs = $process_jobs->map(function ($item) {
             if (in_array($item->preferred_time, constants('JOB_PREFERRED_TIMES'))) {
                 return array_add($item, 'preferred_time_priority', constants('JOB_PREFERRED_TIMES_PRIORITY')[$item->preferred_time]);
@@ -27,13 +29,9 @@ class ResourceJobRepository
         $process_jobs = $process_jobs->sortBy(function ($job) {
             return sprintf('%-12s%s', $job->schedule_date, $job->preferred_time_priority);
         })->values()->all();
-
-        $served_jobs = $this->_getLastServedJobOfPartnerOrder($jobs->where('status', 'Served')->values()->all());
-        $served_jobs = collect($served_jobs)->filter(function ($job) {
-            return $job->partner_order->payment_method != 'bad-debt';
-        })->values()->all();
+        $served_jobs = $jobs->where('status', JobStatuses::SERVED)->values()->all();
         $other_jobs = $jobs->filter(function ($job) {
-            return $job->status != 'Process' && $job->status != 'Served' && $job->status != 'Serve Due';
+            return !in_array($job->status, [JobStatuses::PROCESS, JobStatuses::SERVED, JobStatuses::SERVE_DUE]);
         });
         $other_jobs = $other_jobs->map(function ($item) {
             if (in_array($item->preferred_time, constants('JOB_PREFERRED_TIMES'))) {
@@ -52,7 +50,9 @@ class ResourceJobRepository
     public function getJobs($resource)
     {
         $resource->load(['jobs' => function ($q) {
-            $q->info()->validStatus()->tillNow()->with(['category', 'carRentalJobDetail', 'partner_order' => function ($q) {
+            $q->info()->whereHas('partnerOrder', function ($q) {
+                $q->ongoing()->notBadDebt();
+            })->tillNow()->with(['category', 'carRentalJobDetail', 'partner_order' => function ($q) {
                 $q->with(['order', 'jobs' => function ($q) {
                     $q->with('service', 'jobServices', 'usedMaterials');
                 }]);
@@ -151,7 +151,8 @@ class ResourceJobRepository
                         'resource_id' => $request->resource->id,
                         'remember_token' => $request->resource->remember_token,
                         'status' => $request->status,
-                        'created_by_type' => $this->created_by_type
+                        'created_by_type' => $this->created_by_type,
+                        'partner_id' => $request->partner->id
                     ])
                 ]);
             return json_decode($res->getBody());

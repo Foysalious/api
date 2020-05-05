@@ -1,6 +1,5 @@
 <?php namespace App\Http\Controllers\Employee;
 
-
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Sheba\Notification\SeenBy;
@@ -9,7 +8,6 @@ use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
 
 class NotificationController extends Controller
 {
-
     public function index(Request $request, MemberRepositoryInterface $member_repository)
     {
         try {
@@ -57,28 +55,67 @@ class NotificationController extends Controller
 
     public function test(Request $request, PushNotificationHandler $pushNotificationHandler)
     {
-        $this->validate($request, ['support_id' => 'numeric|required', 'announcement_id' => 'numeric|required']);
+        $this->validate($request, [
+            'support_id' => 'sometimes|required|numeric',
+            'announcement_id' => 'sometimes|required|numeric',
+            'attendance' => 'sometimes|required|numeric',
+            'leave_request_id' => 'sometimes|required|numeric'
+        ]);
+
         $auth_info = $request->auth_info;
         $business_member = $auth_info['business_member'];
         if (!$business_member) return api_response($request, null, 401);
+
         $topic = config('sheba.push_notification_topic_name.employee') . (int)$business_member['member_id'];
         $channel = config('sheba.push_notification_channel_name.employee');
-        $pushNotificationHandler->send([
-            "title" => 'New support created',
-            "message" => "Test support",
-            "event_type" => 'support',
-            "event_id" => $request->support_id,
-            "sound" => "notification_sound",
-            "channel_id" => $channel
-        ], $topic, $channel);
-        $pushNotificationHandler->send([
-            "title" => 'New announcement arrived',
-            "message" => "Test announcement",
-            "event_type" => 'announcement',
-            "event_id" => $request->announcement_id,
-            "sound" => "notification_sound",
-            "channel_id" => $channel
-        ], $topic, $channel);
+
+        if ($request->has('support_id')) {
+            $pushNotificationHandler->send([
+                "title" => 'New support created',
+                "message" => "Test support",
+                "event_type" => 'support',
+                "event_id" => $request->support_id,
+                "sound" => "notification_sound",
+                "channel_id" => $channel,
+                "click_action" => "FLUTTER_NOTIFICATION_CLICK"
+            ], $topic, $channel);
+        }
+
+        if ($request->has('announcement_id')) {
+            $pushNotificationHandler->send([
+                "title" => 'New announcement arrived',
+                "message" => "Test announcement",
+                "event_type" => 'announcement',
+                "event_id" => $request->announcement_id,
+                "sound" => "notification_sound",
+                "channel_id" => $channel,
+                "click_action" => "FLUTTER_NOTIFICATION_CLICK"
+            ], $topic, $channel);
+        }
+
+        if ($request->has('attendance')) {
+            $pushNotificationHandler->send([
+                "title" => 'Attendance Alert',
+                "message" => "Have you reached office yet?  You are 5 minutes behind from being late! Hurry up!",
+                "event_type" => 'attendance',
+                "sound" => "notification_sound",
+                "channel_id" => $channel,
+                "click_action" => "FLUTTER_NOTIFICATION_CLICK"
+            ], $topic, $channel);
+        }
+
+        if ($request->has('leave_request_id')) {
+            $pushNotificationHandler->send([
+                "title" => 'New Leave Request Arrived',
+                "message" => "Leave Request Arrived Message",
+                "event_type" => 'leave_request',
+                "event_id" => $request->leave_request,
+                "sound" => "notification_sound",
+                "channel_id" => $channel,
+                "click_action" => "FLUTTER_NOTIFICATION_CLICK"
+            ], $topic, $channel);
+        }
+
         return api_response($request, null, 200);
     }
 }

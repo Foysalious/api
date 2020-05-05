@@ -26,11 +26,14 @@ return [
             'rw' => 'announcement_rw',
         ],
         'support' => [
-            'rw' => 'announcement_rw',
+            'rw' => 'support_rw',
         ],
         'expense' => [
-            'rw' => 'announcement_rw',
+            'rw' => 'expense_rw',
         ],
+        'leave' => [
+            'rw' => 'leave_rw'
+        ]
     ],
     'DRIVER_CONTRACT_TYPES' => ['permanent', 'temporary'],
     'VEHICLE_TYPES' => ['hatchback', 'sedan', 'suv', 'passenger_van', 'others'],
@@ -38,5 +41,6 @@ return [
         'one_time' => 'One Time',
         'monthly' => 'Monthly',
         'weekly' => 'Weekly',
-    ]
+    ],
+    'WHITELISTED_BUSINESS_IDS' => [110, 364]
 ];

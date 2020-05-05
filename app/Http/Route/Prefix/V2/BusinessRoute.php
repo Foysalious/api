@@ -29,10 +29,34 @@ class BusinessRoute
                 $api->post('/sms-templates/{sms}', 'B2b\BusinessSmsTemplateController@update');
                 $api->get('/sms-templates/{sms}', 'B2b\BusinessSmsTemplateController@show');
                 $api->post('/download-transactions', 'B2b\BusinessesController@downloadTransactionReport');
+                $api->group(['prefix' => 'members'], function ($api) {
+                    $api->group(['prefix' => '{member}'], function ($api) {
+                        $api->get('attendances', 'B2b\AttendanceController@showStat');
+                    });
+                });
+                $api->group(['prefix' => 'attendances'], function ($api) {
+                    $api->get('daily', 'B2b\AttendanceController@getDailyStats');
+                    $api->get('monthly', 'B2b\AttendanceController@getMonthlyStats');
+                });
                 $api->group(['prefix' => 'employees'], function ($api) {
                     $api->post('/', 'B2b\CoWorkerController@store');
                     $api->get('/', 'B2b\CoWorkerController@index');
                     $api->get('/{employee}', 'B2b\CoWorkerController@show');
+                    $api->post('/{employee}', 'B2b\CoWorkerController@update');
+                    $api->get('/{employee}/expense/pdf', 'B2b\CoWorkerController@show');
+                });
+                $api->group(['prefix' => 'leaves'], function ($api) {
+                    $api->group(['prefix' => 'approval-requests'], function ($api) {
+                        $api->get('/lists', 'B2b\LeaveController@index');
+                        $api->group(['prefix' => '{approval_request}'], function ($api) {
+                            $api->get('/', 'B2b\LeaveController@show');
+                        });
+                        $api->post('/status', 'B2b\LeaveController@updateStatus');
+                    });
+                    $api->group(['prefix' => 'balance'], function ($api) {
+                        $api->get('/lists', 'B2b\LeaveController@allLeaveBalance');
+                        $api->get('/{balance}', 'B2b\LeaveController@leaveBalanceDetails');
+                    });
                 });
                 $api->group(['prefix' => 'orders'], function ($api) {
                     $api->get('/', 'B2b\OrderController@index');
@@ -82,6 +106,7 @@ class BusinessRoute
                     $api->group(['prefix' => '{procurement}'], function ($api) {
                         $api->get('/', 'B2b\ProcurementController@show');
                         $api->get('/download', 'B2b\ProcurementController@downloadPdf');
+                        $api->post('adjust-payment', 'B2b\ProcurementPaymentController@adjustPayment');
                         $api->group(['prefix' => 'comments'], function ($api) {
                             $api->post('/', 'CommentController@storeComments');
                             $api->get('/', 'CommentController@getComments');
@@ -101,10 +126,15 @@ class BusinessRoute
                             $api->get('/', 'B2b\BidController@index');
                             $api->group(['prefix' => '{bid}'], function ($api) {
                                 $api->get('/', 'B2b\ProcurementController@showProcurementOrder');
+                                $api->get('/work-order', 'B2b\ProcurementController@workOrder');
+                                $api->get('/work-order/download', 'B2b\ProcurementController@downloadWorkOrder');
                                 $api->group(['prefix' => 'payment-requests'], function ($api) {
                                     $api->get('/', 'B2b\ProcurementPaymentRequestController@index');
-                                    $api->post('/{request}', 'B2b\ProcurementPaymentRequestController@updatePaymentRequest');
-                                    $api->get('/{request}', 'B2b\ProcurementPaymentRequestController@show');
+                                    $api->group(['prefix' => '{request}'], function ($api) {
+                                        $api->get('/', 'B2b\ProcurementPaymentRequestController@show');
+                                        $api->post('/', 'B2b\ProcurementPaymentRequestController@updatePaymentRequest');
+                                        $api->get('download', 'B2b\ProcurementPaymentRequestController@downloadPdf');
+                                    });
                                 });
                             });
                         });
@@ -203,6 +233,34 @@ class BusinessRoute
                         $api->get('/', 'B2b\AnnouncementController@show');
                     });
                 });
+                $api->group(['prefix' => 'expense'], function ($api) {
+                    $api->get('/', 'B2b\ExpenseController@index');
+                    $api->get('/download-pdf', 'B2b\ExpenseController@downloadPdf');
+                    $api->get('/filter-month', 'B2b\ExpenseController@filterMonth');
+                    $api->group(['prefix' => '{expense}'], function ($api) {
+                        $api->get('/', 'B2b\ExpenseController@show');
+                        $api->post('/', 'B2b\ExpenseController@update');
+                        $api->delete('/', 'B2b\ExpenseController@delete');
+                    });
+                });
+                $api->group(['prefix' => 'approval-flows'], function ($api) {
+                    $api->get('/', 'B2b\ApprovalFlowController@index');
+                    $api->post('/', 'B2b\ApprovalFlowController@store');
+                    $api->get('/types', 'B2b\ApprovalFlowController@getTypes');
+                    $api->get('{approval_flow}', 'B2b\ApprovalFlowController@show');
+                    $api->post('{approval_flow}', 'B2b\ApprovalFlowController@update');
+                });
+                $api->group(['prefix' => 'leaves'], function ($api) {
+                    $api->group(['prefix' => 'settings'], function ($api) {
+                        $api->get('/', 'B2b\LeaveSettingsController@index');
+                        $api->post('/', 'B2b\LeaveSettingsController@store');
+
+                        $api->group(['prefix' => '{setting}'], function ($api) {
+                            $api->post('update', 'B2b\LeaveSettingsController@update');
+                            $api->delete('delete', 'B2b\LeaveSettingsController@delete');
+                        });
+                    });
+                });
             });
         });
         $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {
@@ -266,11 +324,15 @@ class BusinessRoute
                         $api->post('/comments', 'B2b\TripRequestController@commentOnTripRequest');
                     });
                 });
+                $api->group(['prefix' => 'trip-request-approval'], function ($api) {
+                    $api->get('/', 'B2b\TripRequestApprovalController@index');
+                    $api->post('{approval}/change-status', 'B2b\TripRequestApprovalController@statusUpdate');
+                });
                 $api->group(['prefix' => 'inspections'], function ($api) {
                     $api->get('/', 'B2b\InspectionController@individualInspection');
                 });
                 $api->group(['prefix' => 'supports'], function ($api) {
-                    $api->get('/', 'B2b\SupportContoller@index');
+                    $api->get('/', 'B2b\SupportController@index');
                     $api->group(['prefix' => '{support}'], function ($api) {
                         $api->post('resolve', 'B2b\SupportController@resolve');
                         $api->get('/', 'B2b\SupportController@show');

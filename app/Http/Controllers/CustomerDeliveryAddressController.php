@@ -1,20 +1,24 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\CategoryPartner;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;
 use App\Models\Location;
+use App\Models\LocationService;
 use App\Models\Partner;
 use App\Models\Profile;
-use App\Sheba\Geo;
+use App\Sheba\Address\AddressValidator;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Dal\CategoryLocation\CategoryLocation;
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
 use Sheba\Location\Distance\DistanceStrategy;
+use Sheba\Location\Geo;
 use Sheba\ModificationFields;
 use Throwable;
 
@@ -80,35 +84,35 @@ class CustomerDeliveryAddressController extends Controller
         }
     }
 
-    public function filterAddress($customer, Request $request)
+    public function filterAddress($customer, Request $request, AddressValidator $address_validator, Geo $geo)
     {
         try {
             $this->validate($request, [
                 'lat' => 'required|numeric',
                 'lng' => 'required|numeric',
                 'partner' => 'sometimes|numeric',
+                'service' => 'sometimes|string',
+                'category' => 'sometimes|string',
             ]);
             $customer = $request->customer;
             $location = null;
-            $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'location_id', 'address', 'name', 'geo_informations', 'flat_no')->get();
+            $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'location_id', 'address', 'name', 'geo_informations', 'flat_no', 'flat_no', 'road_no', 'house_no', 'block_no', 'sector_no', 'city', 'street_address', 'landmark')->get();
+            $hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->first();
+            if ($hyper_location) $location = $hyper_location->location;
 
-            /*$hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->first();
-            if ($hyper_location) $location = $hyper_location->location;*/
-
-            $location = Location::find(4);
             if ($location == null) return api_response($request, null, 404, ['message' => "No address at this location"]);
 
             $customer_order_addresses = $customer->orders()->selectRaw('delivery_address,count(*) as c')->groupBy('delivery_address')->orderBy('c', 'desc')->get();
             $target = new Coords((double)$request->lat, (double)$request->lng);
             $customer_delivery_addresses = $customer_delivery_addresses->reject(function ($address) {
                 return $address->geo_informations == null;
-            })->map(function ($customer_delivery_address) use ($customer_order_addresses, $target) {
+            })->map(function ($customer_delivery_address) use ($customer_order_addresses, $target, $address_validator, $geo) {
                 $customer_delivery_address['count'] = $this->getOrderCount($customer_order_addresses, $customer_delivery_address);
-                $geo = json_decode($customer_delivery_address['geo_informations']);
-                $customer_delivery_address['geo_informations'] = $geo ? array('lat' => (double)$geo->lat, 'lng' => (double)$geo->lng) : null;
+                $geo_info = json_decode($customer_delivery_address['geo_informations']);
+                $customer_delivery_address['geo_informations'] = $geo_info ? array('lat' => (double)$geo_info->lat, 'lng' => (double)$geo_info->lng) : null;
                 $customer_delivery_address['is_valid'] = 1;
-                $address = new Coords($customer_delivery_address['geo_informations']['lat'], $customer_delivery_address['geo_informations']['lng']);
-                $customer_delivery_address['is_same'] = $address->isSameTo($target);
+                $geo->setLat($customer_delivery_address['geo_informations']['lat'])->setLng($customer_delivery_address['geo_informations']['lng']);
+                $customer_delivery_address['is_same'] = $address_validator->isSameAddress($geo, $target);
 
                 return $customer_delivery_address;
             });
@@ -128,6 +132,29 @@ class CustomerDeliveryAddressController extends Controller
                     $customer_delivery_address['is_valid'] = $inside_radius;
                     return $customer_delivery_address;
                 });
+            }
+            if ($request->has('service')) {
+                $service = array_map('intval', json_decode($request->service));
+                $location_service = LocationService::whereIn('service_id', $service)->select('location_id')->get();
+                $location_ids = count($location_service) > 0 ? $location_service->pluck('location_id')->toArray() : [];
+                $customer_delivery_addresses->map(function ($address) use ($location_ids) {
+                    if (!$address['is_valid']) return $address;
+                    $address['is_valid'] = in_array($address->location_id, $location_ids) ? 1 : 0;
+                    return $address;
+                });
+            }
+            if ($request->has('category')) {
+                $category = json_decode($request->category);
+                if ($category) {
+                    $category = array_map('intval', json_decode($request->category));
+                    $category_location = CategoryLocation::whereIn('category_id', $category)->select('location_id')->get();
+                    $location_ids = count($category_location) > 0 ? $category_location->pluck('location_id')->toArray() : [];
+                    $customer_delivery_addresses->map(function ($address) use ($location_ids) {
+                        if (!$address['is_valid']) return $address;
+                        $address['is_valid'] = in_array($address->location_id, $location_ids) ? 1 : 0;
+                        return $address;
+                    });
+                }
             }
 
             $customer_delivery_addresses = $customer_delivery_addresses->sortByDesc('count')->sortByDesc('is_same')->values()->all();

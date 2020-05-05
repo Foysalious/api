@@ -1,6 +1,12 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
+use Sheba\Dal\BlogPost\BlogPost;
+use Sheba\Dal\CrosssaleService\Model as CrosssaleServiceModel;
+use Sheba\Dal\Gallery\Gallery;
+use Sheba\Dal\Partnership\Partnership;
+use Sheba\Dal\UniversalSlug\Model as UniversalSlugModel;
 use Sheba\Logistics\Literals\Natures as LogisticNatures;
 use Sheba\Logistics\Literals\OneWayInitEvents as OneWayLogisticInitEvents;
 use Sheba\Logistics\Repository\ParcelRepository;
@@ -8,35 +14,11 @@ use Sheba\Logistics\Repository\ParcelRepository;
 class Category extends Model
 {
     protected $guarded = ['id'];
+    protected $casts = ['is_auto_sp_enabled' => 'int', 'min_order_amount' => 'double'];
 
-    public function scopeParents($query)
-    {
-        $query->where([
-            ['parent_id', null],
-            ['publication_status', 1]
-        ]);
-    }
-
-    public function scopeParent($query)
-    {
-        return $query->where('parent_id', null);
-    }
-
-    public static function getRentACarSecondaries()
-    {
-        return config('sheba.car_rental.secondary_category_ids');
-    }
-
-    public function scopePublished($query)
-    {
-        return $query->where('categories.publication_status', 1);
-    }
-
-    public function scopeChild($query)
-    {
-        $query->where('parent_id', '<>', null);
-    }
-
+    /**
+     *  Relationships
+     */
     public function parent()
     {
         return $this->belongsTo(Category::class, 'parent_id');
@@ -77,11 +59,6 @@ class Category extends Model
         return $this->belongsToMany(PartnerResource::class);
     }
 
-    public function isParent()
-    {
-        return $this->parent_id == null;
-    }
-
     public function usps()
     {
         return $this->belongsToMany(Usp::class)->withPivot(['value']);
@@ -90,6 +67,86 @@ class Category extends Model
     public function jobs()
     {
         return $this->hasMany(Job::class);
+    }
+
+    public function locations()
+    {
+        return $this->belongsToMany(Location::class);
+    }
+
+    public function subCat()
+    {
+        return $this->hasMany(Category::class, 'parent_id')->published();
+    }
+
+    public function partnership()
+    {
+        return $this->morphOne(Partnership::class, 'owner');
+    }
+
+    public function galleries()
+    {
+        return $this->morphMany(Gallery::class, 'owner');
+    }
+
+    public function blogPosts()
+    {
+        return $this->morphMany(BlogPost::class, 'owner');
+    }
+
+    public function getMasterCategorySlug()
+    {
+        Relation::morphMap(['master_category' => 'App\Models\Category']);
+        return $this->morphOne(UniversalSlugModel::class, 'sluggable');
+    }
+
+    public function getSecondaryCategorySlug()
+    {
+        Relation::morphMap(['secondary_category' => 'App\Models\Category']);
+        return $this->morphOne(UniversalSlugModel::class, 'sluggable');
+    }
+
+    public function crossSaleService()
+    {
+        return $this->hasOne(CrosssaleServiceModel::class);
+    }
+
+    /**
+     *
+     * Other Methods
+     */
+
+    public function scopeParents($query)
+    {
+        $query->where([
+            ['parent_id', null],
+            ['publication_status', 1]
+        ]);
+    }
+
+    public function scopeParent($query)
+    {
+        return $query->where('parent_id', null);
+    }
+
+    public static function getRentACarSecondaries()
+    {
+        return config('sheba.car_rental.secondary_category_ids');
+    }
+
+    public function scopePublished($query)
+    {
+        return $query->where('categories.publication_status', 1);
+    }
+
+    public function scopeChild($query)
+    {
+        $query->where('parent_id', '<>', null);
+    }
+
+    public function isParent()
+    {
+        return $this->parent_id == null;
     }
 
     public function commission($partner_id)
@@ -147,15 +204,6 @@ class Category extends Model
         return in_array($this->id, array_map('intval', explode(',', env('RENT_CAR_IDS')))) ? 1 : 0;
     }
 
-    public function locations()
-    {
-        return $this->belongsToMany(Location::class);
-    }
-
-    public function subCat()
-    {
-        return $this->hasMany(Category::class, 'parent_id')->published();
-    }
 
     public function scopeLocationWise($query_, $hyper_locations)
     {
@@ -241,5 +289,33 @@ class Category extends Model
         if (!isset($parcel_details['price'])) return 0;
 
         return $this->needsTwoWayLogistic() ? $parcel_details['price'] * 2 : $parcel_details['price'];
+    }
+
+    public function isRentACarSecondary()
+    {
+        return in_array($this->id, self::getRentACarSecondaries());
+    }
+
+    public function isRentACar()
+    {
+        return in_array($this->id, array_map('intval', explode(',', env('RENT_CAR_IDS'))));
+    }
+
+    public function getSlug()
+    {
+        $type = $this->isParent() ? 'master_category' : 'secondary_category';
+        $universal_slug = UniversalSlugModel::where([['sluggable_type', $type], ['sluggable_id', $this->id]])->first();
+        return $universal_slug ? $universal_slug->slug : null;
+    }
+
+    public function getSlugObj()
+    {
+        if ($this->isParent()) return $this->getMasterCategorySlug()->first();
+        return $this->getSecondaryCategorySlug()->first();
+    }
+
+    public function getContentsAttribute()
+    {
+        return $this->structured_contents ? json_decode($this->structured_contents) : null;
     }
 }

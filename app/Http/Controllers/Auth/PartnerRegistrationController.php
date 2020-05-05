@@ -17,7 +17,7 @@ use App\Repositories\PartnerRepository;
 use App\Repositories\ProfileRepository;
 
 use Carbon\Carbon;
-use DB;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -190,19 +190,19 @@ class PartnerRegistrationController extends Controller
             "affiliation_id" => $this->partnerAffiliation($resource->profile->mobile),
             'referer_id'     => $this->partnerReferral($resource->profile->mobile)
         ]);
-        $by      = [
-            "created_by"      => $resource->id,
-            "created_by_name" => "Resource - " . $resource->profile->name
-        ];
+        $by = ["created_by" => $resource->id, "created_by_name" => "Resource - " . $resource->profile->name];
+
         $partner = new Partner();
         $partner = $this->store($resource, $data, $by, $partner);
         if ($partner) {
-            $this->sms->shoot($resource->profile->mobile, "You have successfully completed your registration at Sheba.xyz. Please complete your profile to start serving orders.");
+            $this->sms->shoot($resource->profile->mobile, "অভিনন্দন! sManager-এ আপনি সফল ভাবে রেজিস্ট্রেশন সম্পন্ন করেছেন। বিস্তারিত দেখুন: http://bit.ly/sManagerGettingStarted");
             $this->referrals::setReference($partner,$this->ref);
             $partner->refer_code = $partner->referCode();
             $partner->save();
         }
+
         app()->make(ActionRewardDispatcher::class)->run('partner_creation_bonus', $partner, $partner);
+
         $this->storeExpense($partner);
         return $partner;
     }
@@ -213,20 +213,19 @@ class PartnerRegistrationController extends Controller
      */
     private function guessSubDomain($name)
     {
-        $blacklist    = [
-            "google",
-            "facebook",
-            "microsoft",
-            "sheba",
-            "sheba.xyz"
-        ];
-        $base_name    = $name = preg_replace('/-$/', '', substr(strtolower(clean($name)), 0, 15));
-        $already_used = Partner::select('sub_domain')->lists('sub_domain')->toArray();
-        $counter      = 0;
+        $blacklist = ["google", "facebook", "microsoft", "sheba", "sheba.xyz"];
+
+        $is_unicode = (strlen($name) != strlen(utf8_decode($name)));
+        if ($is_unicode) $name = "Partner No Name";
+
+        $base_name = $name = preg_replace('/-$/', '', substr(strtolower(clean($name)), 0, 15));
+        $already_used = Partner::select('sub_domain')->where('sub_domain', 'like', $name . '%')->lists('sub_domain')->toArray();
+        $counter = 0;
         while (in_array($name, array_merge($blacklist, $already_used))) {
             $name = $base_name . $counter;
             $counter++;
         }
+
         return $name;
     }
 
@@ -240,14 +239,7 @@ class PartnerRegistrationController extends Controller
     private function partnerAffiliation($resource_mobile)
     {
         $partner_affiliation = PartnerAffiliation::where([
-            [
-                'resource_mobile',
-                $resource_mobile
-            ],
-            [
-                'status',
-                'pending'
-            ]
+            ['resource_mobile', $resource_mobile], ['status', 'pending']
         ])->first();
         if ($partner_affiliation)
             return $partner_affiliation->id; else return null;
@@ -312,11 +304,11 @@ class PartnerRegistrationController extends Controller
         try {
             $this->validate($request, [
                 'company_name' => 'required|string',
-                'from'         => 'string|in:' . implode(',', constants('FROM')),
-                'geo'          => 'string',
-                'name'         => 'string',
-                'number'       => 'string',
-                'address'      => 'string'
+                'from' => 'string|in:' . implode(',', constants('FROM')),
+                'geo' => 'string',
+                'name' => 'string',
+                'number' => 'string',
+                'address' => 'string'
             ]);
             $profile = $request->profile;
             if (!$profile->resource)
@@ -360,6 +352,7 @@ class PartnerRegistrationController extends Controller
                 'package_id'     => 'exists:partner_subscription_packages,id',
                 'billing_type'   => 'in:monthly,yearly'
             ]);
+
             $resource = Resource::find($request->resource_id);
             if (!($resource && $resource->remember_token == $request->remember_token)) {
                 return api_response($request, null, 403, ['message' => "Unauthorized."]);

@@ -1,6 +1,4 @@
-<?php
-
-namespace App\GraphQL\Query;
+<?php namespace App\GraphQL\Query;
 
 use App\Models\Customer;
 use GraphQL;
@@ -36,15 +34,14 @@ class ComplainQuery extends Query
         if (!isset($args['id']) || !isset($args['job_id']) || !isset($args['customer_id']) || !isset($args['token'])) {
             return null;
         }
-        $customer = Customer::where([['id', $args['customer_id']], ['remember_token', $args['token']]])->first();
-        $accessor = Accessor::where('model_name', get_class($customer))->first();
-        $complain = Complain::where(
-            [
-                ['id',$args['id']],
-                ['customer_id',$args['customer_id']],
-                ['accessor_id',$accessor->id],
-            ])->first();
-        return $complain;
+
+        $accessor = Accessor::where('model_name', Customer::class)->first();
+
+        return Complain::where([
+            ['id', $args['id']],
+            ['customer_id', $args['customer_id']],
+            ['accessor_id', $accessor->id],
+        ])->first();
     }
 
 }

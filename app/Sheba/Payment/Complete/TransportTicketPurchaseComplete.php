@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Database\QueryException;
 use DB;
+use Illuminate\Support\Facades\Redis;
 use Sheba\Transport\Bus\BusTicket;
 use Sheba\Transport\Bus\Order\Status;
 use Sheba\Transport\Bus\Order\TransportTicketRequest;
@@ -50,14 +51,13 @@ class TransportTicketPurchaseComplete extends PaymentComplete
                 $vendor = app(VendorFactory::class);
                 $vendor = $vendor->getById($transport_ticket_order->vendor_id);
                 /** @var BdTickets $vendor */
-                $vendor->confirmTicket($transaction_details->id);
+                $ticket_confirm_response = $vendor->confirmTicket($transaction_details->id);
+                Redis::set('transport_ticket_' . $transaction_details->id, json_encode($ticket_confirm_response));
+                $this->payment->transaction_details = json_encode($ticket_confirm_response);
 
                 $this->storeTicketTransaction($transport_ticket_order, $seat_count, $vendor, $this->payment->transaction_id);
 
-
                 $bus_ticket->setAgent($transport_ticket_order->agent)->setOrder($transport_ticket_order);
-                // $payment_method = $this->payment->paymentDetails()->first()->method;
-                // if ($payment_method == 'wallet') $bus_ticket->agentTransaction();
                 $bus_ticket->disburseCommissions();
 
                 $this->completePayment();

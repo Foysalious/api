@@ -21,6 +21,19 @@ class Creator
     /** @var WalletTransactionHandler $walletTransactionHandler */
     private $walletTransactionHandler;
 
+    private $geolocation;
+
+
+    /**
+     * @param $geolocation
+     * @return $this
+     */
+    public function setGeolocation($geolocation)
+    {
+        $this->geolocation = $geolocation;
+        return $this;
+    }
+
     public function __construct(AffiliateRepository $affiliate_repo, WalletTransactionHandler $wallet_transaction_handler)
     {
         $this->affiliateRepo            = $affiliate_repo;
@@ -39,11 +52,11 @@ class Creator
         $data = [
             'profile_id' => $this->profile->id,
             'remember_token' => randomString(255, 0, 1, 0),
-            'verification_status' => VerificationStatus::VERIFIED
+            'verification_status' => VerificationStatus::PENDING,
+            'geolocation' => $this->geolocation
         ];
-
         $this->affiliate = $this->affiliateRepo->setModel(new Affiliate())->create($data);
-        $this->registrationBonus();
+        if (constants('AFFILIATION_REGISTRATION_BONUS') > 0) $this->registrationBonus();
         (new NotificationRepository())->forAffiliateRegistration($this->affiliate);
         $this->affiliateRepo->makeAmbassador($this->affiliate);
     }
@@ -57,7 +70,7 @@ class Creator
     private function storeBonusAmount()
     {
         DB::transaction(function () {
-            $log = "Affiliate earned $this->affiliateBonusAmount tk for registration";
+            $log = "Affiliate earned $this->affiliateBonusAmount point for registration";
             $this->walletTransactionHandler->setModel($this->affiliate)->setType('credit')->setAmount($this->affiliateBonusAmount)->setLog($log)->store();
             $this->affiliateRepo->update($this->affiliate, ['acquisition_cost' => $this->affiliateBonusAmount]);
         });

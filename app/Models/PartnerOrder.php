@@ -15,6 +15,7 @@ use Sheba\PartnerOrder\StatusCalculator;
 use Sheba\Payment\PayableType;
 use Sheba\Report\Updater\PartnerOrder as ReportUpdater;
 use Sheba\Report\Updater\UpdatesReport;
+use  Sheba\Dal\PartnerOrderRequest\PartnerOrderRequest;
 
 class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
 {
@@ -22,6 +23,7 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
 
     protected $guarded = ['id'];
     protected $dates = ['closed_at', 'closed_and_paid_at', 'cancelled_at'];
+    protected $casts = ['partner_searched_count'];
 
     public $status;
     public $paymentStatus;
@@ -113,6 +115,11 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
     public function transactions()
     {
         return $this->hasMany(PartnerTransaction::class);
+    }
+
+    public function partnerOrderRequests()
+    {
+        return $this->hasMany(PartnerOrderRequest::class);
     }
 
     public function code()
@@ -368,6 +375,11 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
         ]);
     }
 
+    public function scopeNotBadDebt($q)
+    {
+        return $q->where('payment_method', '<>', 'bad-debt');
+    }
+
     /**
      * @param Builder $query
      */
@@ -379,6 +391,11 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
     public function scopeHistory($query)
     {
         return $query->where([['closed_and_paid_at', '<>', null], ['cancelled_at', null]]);
+    }
+
+    public function scopeCancelled($query)
+    {
+        $query->where('cancelled_at', '<>', null);
     }
 
     public function stageChangeLogs()
@@ -477,5 +494,10 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
     public function isPaidWithLogistic()
     {
         return $this->dueWithLogistic == 0.00;
+    }
+
+    public function isClosedAndPaidAt()
+    {
+        return $this->closed_and_paid_at ? 1 : 0;
     }
 }

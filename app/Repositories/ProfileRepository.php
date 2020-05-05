@@ -126,6 +126,13 @@ class ProfileRepository
         return $res["token"];
     }
 
+    public function fetchJWTToken($type,$type_id,$remember_token){
+        
+        $res = (new Accounts())->getJWTToken($type,$type_id,$remember_token);
+        return $res["token"];
+
+    }
+
     public function registerFacebook($info)
     {
         $profile = new Profile();
@@ -300,7 +307,7 @@ class ProfileRepository
             AffiliateTransaction::create([
                 'affiliate_id' => $affiliate->id,
                 'type' => 'Credit',
-                'log' => "Affiliate earned $affiliate_bonus_amount tk for registration",
+                'log' => "Affiliate earned $affiliate_bonus_amount point for registration",
                 'amount' => $affiliate_bonus_amount
             ]);
         });

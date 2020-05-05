@@ -10,16 +10,16 @@ abstract class RefundNature
     public $order;
     /** @var array $data */
     public $data;
+    /** @var Updater */
+    public    $updater;
     /** @var LogCreator $logCreator */
     protected $logCreator;
-    /** @var Updater */
-    public $updater;
     protected $services;
-
+    protected $new;
     public function __construct(LogCreator $log_creator, Updater $updater)
     {
         $this->logCreator = $log_creator;
-        $this->updater = $updater;
+        $this->updater    = $updater;
     }
 
     /**
@@ -38,9 +38,8 @@ abstract class RefundNature
      */
     public function setData(array $data)
     {
-        $this->data = $data;
+        $this->data     = $data;
         $this->services = $this->setServices();
-
         return $this;
     }
 
@@ -49,7 +48,13 @@ abstract class RefundNature
         return collect(json_decode($this->data['services']));
     }
 
-    protected abstract function saveLog();
-
     public abstract function update();
+
+    public function setNew($new){
+
+            $this->new = $new;
+            return $this;
+    }
+
+    protected abstract function saveLog();
 }

@@ -13,6 +13,9 @@ use App\Models\Resource;
 use App\Models\Service;
 use App\Models\Slider;
 use App\Models\SliderPortal;
+use Sheba\Dal\MetaTag\MetaTagRepositoryInterface;
+use Sheba\Dal\RedirectUrl\RedirectUrl;
+use Sheba\Dal\UniversalSlug\Model as SluggableType;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
 use Cache;
@@ -32,6 +35,7 @@ use Validator;
 class ShebaController extends Controller
 {
     use DispatchesJobs;
+
     private $serviceRepository;
     private $reviewRepository;
     private $paymentLinkrepository;
@@ -167,13 +171,13 @@ class ShebaController extends Controller
                     ->get();
 
                 $data = [
-                    'title'     => !$versions->isEmpty() ? $versions->last()->title : null,
-                    'body'      => !$versions->isEmpty() ? $versions->last()->body : null,
-                    'height'    => !$versions->isEmpty() ? $versions->last()->height : null,
-                    'width'     => !$versions->isEmpty() ? $versions->last()->width : null,
-                    'image_link'    => !$versions->isEmpty() ? $versions->last()->image_link : null,
-                    'has_update'    => count($versions) > 0 ? 1 : 0,
-                    'is_critical'   => count($versions->where('is_critical', 1)) > 0 ? 1 : 0
+                    'title' => !$versions->isEmpty() ? $versions->last()->title : null,
+                    'body' => !$versions->isEmpty() ? $versions->last()->body : null,
+                    'height' => !$versions->isEmpty() ? $versions->last()->height : null,
+                    'width' => !$versions->isEmpty() ? $versions->last()->width : null,
+                    'image_link' => !$versions->isEmpty() ? $versions->last()->image_link : null,
+                    'has_update' => count($versions) > 0 ? 1 : 0,
+                    'is_critical' => count($versions->where('is_critical', 1)) > 0 ? 1 : 0
                 ];
 
                 return api_response($request, $data, 200, ['data' => $data]);
@@ -250,35 +254,32 @@ class ShebaController extends Controller
 
     public function checkTransactionStatus(Request $request, $transactionID, PdfHandler $pdfHandler)
     {
-        try {
-            $payment = Payment::where('transaction_id', $transactionID)->whereIn('status', ['failed', 'validated', 'completed'])->first();
-            if (!$payment) {
-                $payment = Payment::where('transaction_id', $transactionID)->first();
-                if ($payment->transaction_details && isset(json_decode($payment->transaction_details)->errorMessage)) {
-                    $message = 'Your payment has been failed due to ' . json_decode($payment->transaction_details)->errorMessage;
-                } else {
-                    $message = 'Payment Failed.';
-                }
-                return api_response($request, null, 404, ['message' => $message]);
-            }
-            $info = [
-                'amount' => $payment->payable->amount,
-                'method' => $payment->paymentDetails->last()->readable_method,
-                'description' => $payment->payable->description,
-                'created_at' => $payment->created_at->format('jS M, Y, h:i A'),
-                'invoice_link' => $payment->invoice_link
-            ];
-            $info = array_merge($info, $this->getInfoForPaymentLink($payment->payable));
-            if ($payment->status == 'validated' || $payment->status == 'failed') {
-                $message = 'Your payment has been received but there was a system error. It will take some time to update your transaction. Call 16516 for support.';
+        $payment = Payment::where('transaction_id', $transactionID)->whereIn('status', ['failed', 'validated', 'completed'])->first();
+        if (!$payment) {
+            $payment = Payment::where('transaction_id', $transactionID)->first();
+            if (!$payment) return api_response($request, null, 404, ['message' => 'No Payment found']);
+            if ($payment->transaction_details && isset(json_decode($payment->transaction_details)->errorMessage)) {
+                $message = 'Your payment has been failed due to ' . json_decode($payment->transaction_details)->errorMessage;
             } else {
-                $message = 'Successful';
+                $message = 'Payment Failed.';
             }
-            return api_response($request, null, 200, ['info' => $info, 'message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+            return api_response($request, null, 404, ['message' => $message]);
         }
+        $info = [
+            'amount' => $payment->payable->amount,
+            'method' => $payment->paymentDetails->last()->readable_method,
+            'description' => $payment->payable->description,
+            'created_at' => $payment->created_at->format('jS M, Y, h:i A'),
+            'invoice_link' => $payment->invoice_link,
+            'transaction_id' => $transactionID
+        ];
+        $info = array_merge($info, $this->getInfoForPaymentLink($payment->payable));
+        if ($payment->status == 'validated' || $payment->status == 'failed') {
+            $message = 'Your payment has been received but there was a system error. It will take some time to update your transaction. Call 16516 for support.';
+        } else {
+            $message = 'Successful';
+        }
+        return api_response($request, null, 200, ['info' => $info, 'message' => $message]);
     }
 
     public function getInfoForPaymentLink(Payable $payable)
@@ -356,82 +357,82 @@ class ShebaController extends Controller
             $banks = [
                 [
                     "name" => "Midland Bank Ltd",
-                    "logo" => $icons_folder."midland_bank.png",
+                    "logo" => $icons_folder . "midland_bank.png",
                     "asset" => "midland_bank"
                 ],
                 [
                     "name" => "SBAC Bank",
-                    "logo" => $icons_folder."sbac_bank.jpg",
+                    "logo" => $icons_folder . "sbac_bank.jpg",
                     "asset" => "sbac_bank"
                 ],
                 [
                     "name" => "Meghna Bank Limited",
-                    "logo" => $icons_folder."meghna_bank.png",
+                    "logo" => $icons_folder . "meghna_bank.png",
                     "asset" => "meghna_bank"
                 ],
                 [
                     "name" => "NRB Bank Limited",
-                    "logo" => $icons_folder."nrb_bank.png",
+                    "logo" => $icons_folder . "nrb_bank.png",
                     "asset" => "nrb_bank"
                 ],
                 [
                     "name" => "STANDARD CHARTERED BANK",
-                    "logo" => $icons_folder."standard_chartered.png",
+                    "logo" => $icons_folder . "standard_chartered.png",
                     "asset" => "standard_chartered"
                 ],
                 [
                     "name" => "STANDARD BANK",
-                    "logo" => $icons_folder."standard_bank.png",
+                    "logo" => $icons_folder . "standard_bank.png",
                     "asset" => "standard_bank"
                 ],
                 [
                     "name" => "SOUTHEAST BANK",
-                    "logo" => $icons_folder."sebl_bank.png",
+                    "logo" => $icons_folder . "sebl_bank.png",
                     "asset" => "sebl_bank"
                 ],
                 [
                     "name" => "NCC BANK",
-                    "logo" => $icons_folder."ncc_bank.png",
+                    "logo" => $icons_folder . "ncc_bank.png",
                     "asset" => "ncc_bank"
                 ],
                 [
                     "name" => "MUTUAL TRUST BANK",
-                    "logo" => $icons_folder."mtb_bank.png",
+                    "logo" => $icons_folder . "mtb_bank.png",
                     "asset" => "mtb_bank"
                 ],
                 [
                     "name" => "JAMUNA BANK",
-                    "logo" => $icons_folder."jamuna_bank.png",
+                    "logo" => $icons_folder . "jamuna_bank.png",
                     "asset" => "jamuna_bank"
                 ],
                 [
                     "name" => "EASTERN BANK",
-                    "logo" => $icons_folder."ebl.png",
+                    "logo" => $icons_folder . "ebl.png",
                     "asset" => "ebl"
                 ],
                 [
                     "name" => "DUTCH BANGLA BANK",
-                    "logo" => $icons_folder."dbbl_bank.png",
+                    "logo" => $icons_folder . "dbbl_bank.png",
                     "asset" => "dbbl_bank"
                 ],
                 [
                     "name" => "DHAKA BANK LIMITED",
-                    "logo" => $icons_folder."dhaka_bank.png",
+                    "logo" => $icons_folder . "dhaka_bank.png",
                     "asset" => "dhaka_bank"
                 ],
                 [
                     "name" => "CITY BANK LIMITED",
-                    "logo" => $icons_folder."city_bank.png",
+                    "logo" => $icons_folder . "city_bank.png",
                     "asset" => "city_bank"
                 ],
                 [
                     "name" => "BRAC BANK LIMITED",
-                    "logo" => $icons_folder."brac_bank.png",
+                    "logo" => $icons_folder . "brac_bank.png",
                     "asset" => "brac_bank"
                 ],
                 [
                     "name" => "BANK ASIA LIMITED",
-                    "logo" => $icons_folder."bank_asia.png",
+                    "logo" => $icons_folder . "bank_asia.png",
                     "asset" => "bank_asia"
                 ],
 //                [
@@ -463,7 +464,7 @@ class ShebaController extends Controller
                     ->whereNotIn('id', [$request->manager_resource->profile->id])
                     ->first();
                 if (!empty($exists)) return api_response($request, null, 400, ['message' => 'Nid Number is used by another user']);
-                if ($request->manager_resource->profile->nid_verified==1) return api_response($request, null, 400, ['message' => 'NID is already verified']);
+                if ($request->manager_resource->profile->nid_verified == 1) return api_response($request, null, 400, ['message' => 'NID is already verified']);
                 $nidValidation->setProfile($request->manager_resource->profile);
             }
             $check = $nidValidation->validate($request->nid, $request->full_name, $request->dob);
@@ -482,6 +483,36 @@ class ShebaController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function getSluggableType(Request $request, $slug, MetaTagRepositoryInterface $meta_tag_repository)
+    {
+        $type = SluggableType::where('slug', $slug)->select('sluggable_type', 'sluggable_id')->first();
+        if (!$type) return api_response($request, null, 404);
+        if ($type->sluggable_type == 'service') $model = 'service';
+        else $model = 'category';
+        $meta_tag = $meta_tag_repository->builder()->select('meta_tag', 'og_tag')->where('taggable_type', 'like', '%' . $model)->where('taggable_id', $type->sluggable_id)->first();
+        $sluggable_type = [
+            'type' => $type->sluggable_type,
+            'id' => $type->sluggable_id,
+            'meta_tag' => $meta_tag && $meta_tag->meta_tag ? json_decode($meta_tag->meta_tag) : null,
+            'og_tag' => $meta_tag && $meta_tag->og_tag ? json_decode($meta_tag->og_tag) : null,
+        ];
+        return api_response($request, true, 200, ['sluggable_type' => $sluggable_type]);
+    }
+
+    public function redirectUrl(Request $request)
+    {
+        $this->validate($request, ['url' => 'required']);
+
+        $new_url = RedirectUrl::where('old_url', 'LIKE', $request->url)->first();
+
+        if ($new_url) {
+            return api_response($request, true, 200, ['new_url' => $new_url->new_url]);
+        } else {
+            return api_response($request, true, 404, ['message' => 'Not Found']);
+        }
+
     }
 
 }

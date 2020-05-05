@@ -275,30 +275,38 @@ class PartnerSubscriptionController extends Controller
     {
         try {
             $this->validate($request, [
-                'package_id' => 'required|numeric|exists:partner_subscription_packages,id', 'billing_type' => 'required|string|in:' . implode(',', [BillingType::MONTHLY, BillingType::YEARLY, BillingType::HALF_YEARLY])
+                'package_id' => 'required|numeric|exists:partner_subscription_packages,id',
+                'billing_type' => 'required|string|in:' . implode(',', [BillingType::MONTHLY, BillingType::YEARLY, BillingType::HALF_YEARLY])
             ]);
-            $currentPackage = $request->partner->subscription;
+
+            /** @var Partner $partner */
+            $partner = $request->partner;
+            $this->setModifier($request->manager_resource);
+
+            $currentPackage = $partner->subscription;
             $requestedPackage = PartnerSubscriptionPackage::find($request->package_id);
 
-            if ($request->partner->isAlreadyCollectedAdvanceSubscriptionFee()) {
-                return api_response($request, null, 400, ['message' => ' আপনার প্যকেজ এর জন্য অগ্রিম ফি নেয়া আছে আপনার বর্তমান প্যকেজ এর মেয়াদ শেষ হলে স্বয়ংক্রিয়  ভাবে নবায়ন হয়ে যাবে ']);
+            if ($partner->isAlreadyCollectedAdvanceSubscriptionFee()) {
+                return api_response($request, null, 400, ['message' => 'আপনার প্যকেজ এর জন্য অগ্রিম ফি নেয়া আছে আপনার বর্তমান প্যকেজ এর মেয়াদ শেষ হলে স্বয়ংক্রিয়  ভাবে নবায়ন হয়ে যাবে']);
             }
             if (empty($requestedPackage)) {
                 return api_response($request, null, 403, ['message' => 'আপনার অনুরধক্রিত প্যকেজটি পাওয়া যায় নাই']);
             }
-            $this->setModifier($request->manager_resource);
+
             if ($upgradeRequest = $this->createSubscriptionRequest($requestedPackage)) {
                 try {
-                    $grade = $request->partner->subscriber()->getBilling()->findGrade($requestedPackage, $currentPackage, $request->billing_type, $request->partner->billing_type);
-                    if ($grade == PartnerSubscriptionChange::DOWNGRADE && $request->partner->status != PartnerStatuses::INACTIVE) {
+                    $grade = $partner->subscriber()->getBilling()->findGrade($requestedPackage, $currentPackage, $request->billing_type, $partner->billing_type);
+                    if ($grade == PartnerSubscriptionChange::DOWNGRADE && $partner->status != PartnerStatuses::INACTIVE) {
                         return api_response($request, null, $inside ? 200 : 202, ['message' => " আপনার $requestedPackage->show_name_bd  প্যকেজে অবনমনের  অনুরোধ  গ্রহণ  করা  হয়েছে "]);
                     }
-                    $hasCredit = $request->partner->hasCreditForSubscription($requestedPackage, $request->billing_type);
+
+                    $hasCredit = $partner->hasCreditForSubscription($requestedPackage, $request->billing_type);
                     $balance = [
-                        'remaining_balance' => $request->partner->totalCreditForSubscription,
-                        'price' => $request->partner->totalPriceRequiredForSubscription,
-                        'breakdown' => $request->partner->creditBreakdown
+                        'remaining_balance' => $partner->totalCreditForSubscription,
+                        'price' => $partner->totalPriceRequiredForSubscription,
+                        'breakdown' => $partner->creditBreakdown
                     ];
+
                     if (!$hasCredit) {
                         $upgradeRequest->delete();
                         (new NotificationRepository())->sendInsufficientNotification($request->partner, $requestedPackage, $request->billing_type, $grade);
@@ -360,6 +368,7 @@ class PartnerSubscriptionController extends Controller
         $featured_package_id = config('partner.subscription_featured_package_id');
         $partner_subscription_packages = PartnerSubscriptionPackage::validDiscounts()
             ->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'rules', 'usps', 'badge', 'features')
+            ->whereIn('id', constants('PARTNER_SHOWABLE_PACKAGE'))
             ->get();
 
         foreach ($partner_subscription_packages as $package) {

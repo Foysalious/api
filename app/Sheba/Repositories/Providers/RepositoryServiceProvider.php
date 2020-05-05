@@ -1,7 +1,9 @@
 <?php namespace Sheba\Repositories\Providers;
 
 use App\Sheba\Repositories\Business\BidRepository;
+use App\Sheba\Repositories\PartnerWalletSettingRepository;
 use Illuminate\Support\ServiceProvider;
+use Sheba\Business\TripRequest\TripRequestRepository;
 use Sheba\Dal\ProcurementPaymentRequest\ProcurementPaymentRequestRepositoryInterface;
 use Sheba\Dal\ProcurementPaymentRequestStatusChangeLog\ProcurementPaymentRequestStatusChangeLogRepositoryInterface;
 use Sheba\Repositories\Business\BidItemFieldRepository;
@@ -29,11 +31,14 @@ use Sheba\Repositories\Business\PurchaseRequestItemRepository;
 use Sheba\Repositories\Business\PurchaseRequestQuestionRepository;
 use Sheba\Repositories\Business\PurchaseRequestRepository;
 use Sheba\Repositories\Business\VehicleRepository;
+use Sheba\Repositories\Customer\CustomerDeliveryAddressRepository;
 use Sheba\Repositories\CustomerRepository;
 use Sheba\Repositories\Interfaces\BidItemFieldRepositoryInterface;
 use Sheba\Repositories\Interfaces\BidItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\BidRepositoryInterface;
+use Sheba\Repositories\Interfaces\Business\TripRequestRepositoryInterface;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
+use Sheba\Repositories\Interfaces\Customer\CustomerDeliveryAddressInterface;
 use Sheba\Repositories\Interfaces\CustomerRepositoryInterface;
 use Sheba\Repositories\Interfaces\DriverRepositoryInterface;
 use Sheba\Repositories\Interfaces\FormTemplateItemRepositoryInterface;
@@ -49,6 +54,7 @@ use Sheba\Repositories\Interfaces\InspectionScheduleRepositoryInterface;
 use Sheba\Repositories\Interfaces\IssueRepositoryInterface;
 use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
 use Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
+use Sheba\Repositories\Interfaces\Partner\PartnerWalletSettingRepositoryInterface;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementItemFieldRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementItemRepositoryInterface;
@@ -100,10 +106,13 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(ProfileRepositoryInterface::class, ProfileRepository::class);
         $this->app->bind(CustomerRepositoryInterface::class, CustomerRepository::class);
         $this->app->bind(PartnerRepositoryInterface::class, PartnerRepository::class);
+        $this->app->bind(PartnerWalletSettingRepositoryInterface::class, PartnerWalletSettingRepository::class);
         $this->app->bind(BidItemRepositoryInterface::class, BidItemRepository::class);
         $this->app->bind(BidItemFieldRepositoryInterface::class, BidItemFieldRepository::class);
         $this->app->bind(BidRepositoryInterface::class, BidRepository::class);
         $this->app->bind(ProfileBankingRepositoryInterface::class, ProfileBankingRepository::class);
         $this->app->bind(ProfileMobileBankingRepositoryInterface::class, ProfileMobileBankingRepository::class);
+        $this->app->bind(CustomerDeliveryAddressInterface::class, CustomerDeliveryAddressRepository::class);
+        $this->app->bind(TripRequestRepositoryInterface::class, TripRequestRepository::class);
     }
 }

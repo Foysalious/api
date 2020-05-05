@@ -1,7 +1,15 @@
 <?php namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
+use Sheba\Dal\BlogPost\BlogPost;
+use Sheba\Dal\ComboService\ComboService;
+use Sheba\Dal\Gallery\Gallery;
+use Sheba\Dal\Partnership\Partnership;
+use Sheba\Dal\UniversalSlug\Model as UniversalSlugModel;
+use stdClass;
 
 class Service extends Model
 {
@@ -38,6 +46,11 @@ class Service extends Model
         return $this->category();
     }
 
+    public function usps()
+    {
+        return $this->belongsToMany(Usp::class)->withPivot(['value']);
+    }
+
     public function getParentCategoryAttribute()
     {
         return $this->category->parent->id;
@@ -66,6 +79,11 @@ class Service extends Model
     public function jobs()
     {
         return $this->hasMany(Job::class);
+    }
+
+    public function comboServices()
+    {
+        return $this->hasMany(ComboService::class);
     }
 
     public function commission($partner_id)
@@ -137,8 +155,8 @@ class Service extends Model
 
     /** Scope a query to only include published Service.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param Builder $query
+     * @return Builder
      */
     public function scopePublished($query)
     {
@@ -148,8 +166,8 @@ class Service extends Model
     /**
      * Scope a query to only include unpublished Service.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param Builder $query
+     * @return Builder
      */
     public function scopeUnpublished($query)
     {
@@ -159,8 +177,8 @@ class Service extends Model
     /**
      * Scope a query to only include published and backend published service.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param Builder $query
+     * @return Builder
      */
     public function scopePublishedForAll($query)
     {
@@ -178,8 +196,8 @@ class Service extends Model
     /**
      * Scope a query to only include backend published service.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @param Builder $query
+     * @return Builder
      */
     public function scopePublishedForBackendOnly($query)
     {
@@ -224,8 +242,9 @@ class Service extends Model
     public function getVariablesOfOptionsService(array $options)
     {
         $variables = [];
-        foreach ((array)(json_decode($this->variables))->options as $key => $service_option) {
+        foreach ($this->getOptions() as $key => $service_option) {
             array_push($variables, [
+                'title' => isset($service_option->title) ? $service_option->title : null,
                 'question' => $service_option->question,
                 'answer' => explode(',', $service_option->answers)[$options[$key]]
             ]);
@@ -238,10 +257,15 @@ class Service extends Model
         return json_decode($this->variables);
     }
 
+    public function getOptions()
+    {
+        return (array)$this->variable()->options;
+    }
+
     public function flashPrice()
     {
         $variable = $this->variable();
-        $defaultDiscount = (new \stdClass());
+        $defaultDiscount = (new stdClass());
         $defaultDiscount->value = 0;
         $defaultDiscount->is_percentage = 0;
         return [
@@ -264,5 +288,53 @@ class Service extends Model
     public function locations()
     {
         return $this->belongsToMany(Location::class);
+    }
+
+    public function locationServices()
+    {
+        return $this->hasMany(LocationService::class);
+    }
+
+    public function getVariableAndOption(array $options)
+    {
+        if ($this->isOptions()) {
+            $variables = $this->getVariablesOfOptionsService($options);
+            $options = '[' . implode(',', $options) . ']';
+        } else {
+            $options = '[]';
+            $variables = '[]';
+        }
+        return array($options, $variables);
+    }
+
+    public function getSlug()
+    {
+        $slug_obj = $this->getSlugObj()->first();
+        return $slug_obj ? $slug_obj->slug : null;
+    }
+
+    private function getSlugObj()
+    {
+        return $this->morphOne(UniversalSlugModel::class, 'sluggable');
+    }
+
+    public function partnership()
+    {
+        return $this->morphOne(Partnership::class, 'owner');
+    }
+
+    public function galleries()
+    {
+        return $this->morphMany(Gallery::class, 'owner');
+    }
+
+    public function blogPosts()
+    {
+        return $this->morphMany(BlogPost::class, 'owner');
+    }
+
+    public function getContentsAttribute()
+    {
+        return $this->structured_contents ? json_decode($this->structured_contents) : null;
     }
 }

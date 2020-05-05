@@ -1,5 +1,6 @@
 <?php namespace App\Http\Route\Prefix\V2;
 
+use App\Http\Route\Prefix\V2\Resource\ResourceRoute;
 use App\Http\Route\Prefix\V2\Partner\PartnerRoute;
 
 class Route
@@ -13,9 +14,12 @@ class Route
             (new CustomerRoute())->set($api);
             (new AffiliateRoute())->set($api);
             (new PartnerRoute())->set($api);
+            (new HelpRoute())->set($api);
+            (new ResourceRoute())->set($api);
             $api->post('training-status-update', 'ResourceController@trainingStatusUpdate');
             $api->post('profile-check', 'Profile\ProfileController@checkProfile');
             $api->post('newsletter', 'NewsletterController@create');
+            $api->get('partner/dashboard-by-token', 'PartnerController@dashboardByToken');
             $api->group(['prefix' => 'profile'], function ($api) {
                 $api->post('registration/partner', 'Auth\PartnerRegistrationController@registerByProfile')->middleware('jwtAuth');
                 $api->post('registration/affiliate', 'Auth\AffiliateRegistrationController@registerByProfile')->middleware('jwtAuth');
@@ -54,6 +58,10 @@ class Route
             });
             $api->group(['prefix' => 'ssl'], function ($api) {
                 $api->post('validate', 'SslController@validatePayment');
+            });
+            $api->group(['prefix' => 'ok-wallet/payments'], function ($api) {
+                $api->post('success', 'OkWalletController@validatePayment');
+                $api->post('fail', 'OkWalletController@validatePayment');
             });
             $api->group(['prefix' => 'bkash'], function ($api) {
                 $api->post('validate', 'BkashController@validatePayment');
@@ -105,7 +113,7 @@ class Route
             $api->get('settings/car', 'HomePageSettingController@getCar');
             $api->get('home-grids', 'HomeGridController@index');
             $api->group(['prefix' => 'category-groups'], function ($api) {
-                $api->get('', 'CategoryGroupController@index');
+                $api->get('/', 'CategoryGroupController@index');
                 $api->group(['prefix' => '{id}'], function ($api) {
                     $api->get('', 'CategoryGroupController@show');
                 });
@@ -123,14 +131,6 @@ class Route
                 });
             });
             (new BusinessRoute())->set($api);
-            $api->group(['prefix' => 'categories'], function ($api) {
-                $api->group(['prefix' => '{id}'], function ($api) {
-                    $api->get('', 'CategoryController@show');
-                    $api->get('services', 'CategoryController@getServices');
-                    $api->get('reviews', 'CategoryController@getReviews');
-                    $api->get('locations/{location}/partners', 'CategoryController@getPartnersOfLocation');
-                });
-            });
             $api->group(['prefix' => 'services'], function ($api) {
                 $api->get('', 'ServiceController@index');
             });
@@ -180,11 +180,9 @@ class Route
             $api->get('{id}/get-jwt', 'ProfileController@getJWT')->middleware('profile.auth');
             $api->get('{id}/refresh-token', 'ProfileController@refresh');
             $api->post('admin/payout', 'Bkash\\BkashPayoutController@pay');
+            $api->post('admin/payout-balance', 'Bkash\\BkashPayoutController@queryPayoutBalance');
             $api->post('admin/bkash-balance', 'Bkash\\BkashPayoutController@queryBalance');
             $api->post('forget-password', 'ProfileController@forgetPassword');
-            $api->group(['prefix' => 'proxy'], function ($api) {
-                $api->post('/top-up', 'ProxyController@pretupsTopUp');
-            });
             /** EMI INFO */
             $api->get('emi-info', 'ShebaController@getEmiInfo');
             $api->group(['prefix' => 'tickets', 'middleware' => 'jwtGlobalAuth'], function ($api) {
@@ -194,6 +192,8 @@ class Route
                 (new MovieTicketRoute())->set($api);
             });
             $api->get('refresh-token', 'ProfileController@refresh');
+            $api->get('service-price-calculate', 'Service\ServicePricingController@getCalculatedPrice');
+            $api->post('due-tracker/create-pos-order-payment', 'Pos\DueTrackerController@createPosOrderPayment');
         });
         return $api;
     }

@@ -3,6 +3,7 @@
 use App\Models\Partner;
 use App\Models\SmsCampaignOrder;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -14,6 +15,7 @@ use Sheba\UrlShortener\ShortenUrl;
 
 use DB;
 use Excel;
+use Throwable;
 use Sheba\Usage\Usage;
 
 class SmsCampaignOrderController extends Controller
@@ -22,12 +24,18 @@ class SmsCampaignOrderController extends Controller
     {
         try {
             return api_response($request, null, 200, ['settings' => constants('SMS_CAMPAIGN')]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
+    /**
+     * @param $partner_id
+     * @param Request $request
+     * @param SmsCampaign $campaign
+     * @return JsonResponse
+     */
     public function create($partner_id, Request $request, SmsCampaign $campaign)
     {
         try {
@@ -35,13 +43,9 @@ class SmsCampaignOrderController extends Controller
                 $customers = json_decode(request()->customers, true);
                 $request['customers'] = $customers;
             }
+
             $data = ['title' => 'required', 'message' => 'required'];
-            if ($request->has('customers')) {
-                $data += [
-                    'customers' => 'required|array',
-                    'customers.*.mobile' => 'required|mobile:bd'
-                ];
-            }
+            if ($request->has('customers')) $data += ['customers' => 'required|array', 'customers.*.mobile' => 'required|mobile:bd'];
             if ($request->hasFile('file')) $data += ['file' => 'required|file'];
             $this->validate($request, $data);
 
@@ -68,7 +72,7 @@ class SmsCampaignOrderController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             $code = $e->getCode();
             return api_response($request, null, 500, ['message' => $e->getMessage(), 'code' => $code ? $code : 500]);
@@ -100,7 +104,7 @@ class SmsCampaignOrderController extends Controller
     {
         try {
             $partner = Partner::find($partner);
-            $deep_link = config('sheba.front_url') . '/partners/' . $partner->sub_domain;;
+            $deep_link = config('sheba.front_url') . '/partners/' . $partner->sub_domain;
             $templates = config('sms_campaign_templates');
             foreach ($templates as $index => $template) {
                 $template = (object)$template;
@@ -108,7 +112,7 @@ class SmsCampaignOrderController extends Controller
                 $templates[$index] = $template;
             }
             return api_response($request, null, 200, ['templates' => $templates, 'deep_link' => $deep_link]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             $code = $e->getCode();
             return api_response($request, null, 500, ['message' => $e->getMessage(), 'code' => $code ? $code : 500]);
@@ -141,7 +145,7 @@ class SmsCampaignOrderController extends Controller
                 array_push($total_history, $current_history);
             }
             return api_response($request, null, 200, ['history' => $total_history]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             $code = $e->getCode();
             return api_response($request, null, 500, ['message' => $e->getMessage(), 'code' => $code ? $code : 500]);
@@ -166,7 +170,7 @@ class SmsCampaignOrderController extends Controller
                 'created_at' => $details->created_at->format('Y-m-d H:i:s')
             ];
             return api_response($request, null, 200, ['details' => $data]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             $code = $e->getCode();
             return api_response($request, null, 500, ['message' => $e->getMessage(), 'code' => $code ? $code : 500]);

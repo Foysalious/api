@@ -27,7 +27,7 @@ class Affiliate extends BusTicketCommission
 
     private function storeAmbassadorWalletTransaction()
     {
-        $log = "{$this->agent->profile->name} gifted {$this->transportTicketOrder->ambassador_amount} Tk. for {$this->transportTicketOrder->amount} Tk. transport ticket purchase";
+        $log = "{$this->agent->profile->name} gifted {$this->transportTicketOrder->ambassador_amount} point for {$this->transportTicketOrder->amount} Tk. transport ticket purchase";
         /*
          * WALLET TRANSACTION NEED TO REMOVE
          * $this->agent->ambassador->creditWallet($this->transportTicketOrder->ambassador_amount);
