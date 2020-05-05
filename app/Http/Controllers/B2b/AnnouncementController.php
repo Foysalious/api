@@ -1,9 +1,11 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Http\Controllers\Controller;
+use App\Models\BusinessMember;
 use App\Sheba\Business\ACL\AccessControl;
 use App\Transformers\Business\AnnouncementTransformer;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
@@ -59,6 +61,13 @@ class AnnouncementController extends Controller
         ]);
     }
 
+    /**
+     * @param $business
+     * @param Request $request
+     * @param Creator $creator
+     * @param AccessControl $access_control
+     * @return JsonResponse
+     */
     public function store($business, Request $request, Creator $creator, AccessControl $access_control)
     {
         $this->validate($request, [
@@ -67,27 +76,53 @@ class AnnouncementController extends Controller
             'end_date' => 'required|date|after:' . Carbon::yesterday()->format('Y-m-d'),
             'type' => 'required|string|in:' . implode(',', AnnouncementTypes::get())
         ]);
-        $this->setModifier($request->business_member);
-        if (!$access_control->setBusinessMember($request->business_member)->hasAccess('announcement.rw')) return api_response($request, null, 403);
-        $announcement = $creator->setBusiness($request->business)->setTitle($request->title)->setEndDate(Carbon::parse($request->end_date . ' 23:59:59')->toDateTimeString())
-            ->setShortDescription($request->description)->setType($request->type)
+
+        if (!$access_control->setBusinessMember($request->business_member)->hasAccess('announcement.rw'))
+            return api_response($request, null, 403);
+
+        $announcement = $creator->setBusiness($request->business)
+            ->setBusinessMember($request->business_member)
+            ->setTitle($request->title)
+            ->setEndDate(Carbon::parse($request->end_date . ' 23:59:59')->toDateTimeString())
+            ->setShortDescription($request->short_description)
+            ->setLongDescription($request->description)
+            ->setType($request->type)
             ->create();
+
         return api_response($request, $announcement, 200, ['id' => $announcement->id]);
     }
 
+    /**
+     * @param $business
+     * @param $announcement
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function show($business, $announcement, Request $request)
     {
         $announcement = $this->repo->find($announcement);
-        if (!$announcement || $announcement->business_id != $business) return api_response($request, null, 403);
-        return api_response($request, $announcement, 200, ['announcement' => [
+        if (!$announcement || $announcement->business_id != $business)
+            return api_response($request, null, 403);
+
+        $announcement = [
             'id' => $announcement->id,
             'title' => $announcement->title,
             'type' => $announcement->type,
-            'description' => $announcement->short_description,
+            'short_description' => $announcement->short_description,
+            'description' => $announcement->long_description,
             'end_date' => $announcement->end_date->toDateTimeString()
-        ]]);
+        ];
+        return api_response($request, $announcement, 200, ['announcement' => $announcement]);
     }
 
+    /**
+     * @param $business
+     * @param $announcement
+     * @param Request $request
+     * @param Updater $updater
+     * @param AccessControl $access_control
+     * @return JsonResponse
+     */
     public function update($business, $announcement, Request $request, Updater $updater, AccessControl $access_control)
     {
         $this->validate($request, [
@@ -95,16 +130,24 @@ class AnnouncementController extends Controller
             'description' => 'string',
             'end_date' => 'date|after:' . Carbon::yesterday()->format('Y-m-d')
         ]);
+        /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
-        $this->setModifier($business_member);
+        $this->setModifier($business_member->member);
+
         $announcement = $this->repo->find($announcement);
-        if (!$announcement || $announcement->business_id != $business || !$access_control->setBusinessMember($business_member)->hasAccess('announcement.rw')) return api_response($request, null, 403);
+        if (!$announcement || $announcement->business_id != $business || !$access_control->setBusinessMember($business_member)->hasAccess('announcement.rw'))
+            return api_response($request, null, 403);
+
         $updater->setAnnouncement($announcement);
+
         if ($request->has('title')) $updater->setTitle($request->title);
         if ($request->has('type')) $updater->setType($request->type);
-        if ($request->has('description')) $updater->setShortDescription($request->description);
+        if ($request->has('short_description')) $updater->setShortDescription($request->short_description);
+        if ($request->has('description')) $updater->setLongDescription($request->description);
         if ($request->has('end_date')) $updater->setEndDate(Carbon::parse($request->end_date));
+
         $updater->update();
+
         return api_response($request, $announcement, 200);
     }
 }
