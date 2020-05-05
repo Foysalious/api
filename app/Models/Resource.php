@@ -5,6 +5,7 @@ use Illuminate\Database\Eloquent\Model;
 class Resource extends Model
 {
     protected $guarded = ['id'];
+    protected $casts = ['wallet' => 'double'];
 
     public function partners()
     {
@@ -44,6 +45,11 @@ class Resource extends Model
     public function notifications()
     {
         return $this->morphMany(Notification::class, 'notifiable');
+    }
+
+    public function withdrawalRequests()
+    {
+        return $this->morphMany(WithdrawalRequest::class, 'requester');
     }
 
     public function typeIn($partner)
@@ -109,5 +115,10 @@ class Resource extends Model
         return $this->jobs->filter(function ($job) {
             return $job->status === 'Served';
         })->count();
+    }
+
+    public function totalWalletAmount()
+    {
+        return $this->wallet;
     }
 }
