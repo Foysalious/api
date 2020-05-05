@@ -36,8 +36,6 @@ class AuthRoute
             $api->group(['prefix' => 'transactions'], function ($api) {
                 $api->get('/', 'Resource\ResourceTransactionController@index');
             });
-            $api->get('wallet', 'Resource\ResourceWalletController@getWallet');
-            $api->post('withdrawals', 'Resource\ResourceWithdrawalRequestController@store');
             $api->group(['prefix' => 'rewards'], function ($api) {
                 $api->get('/', 'Resource\ResourceRewardController@index');
                 $api->get('history', 'Resource\ResourceRewardController@history');
