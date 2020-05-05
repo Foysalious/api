@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 
 class Resource extends Model
 {
@@ -49,6 +50,7 @@ class Resource extends Model
 
     public function withdrawalRequests()
     {
+        Relation::morphMap(['resource' => 'App\Models\Resource']);
         return $this->morphMany(WithdrawalRequest::class, 'requester');
     }
 
@@ -120,5 +122,10 @@ class Resource extends Model
     public function totalWalletAmount()
     {
         return $this->wallet;
+    }
+
+    public function isAllowedToSendWithdrawalRequest()
+    {
+        return !($this->withdrawalRequests()->active()->count() > 0);
     }
 }
