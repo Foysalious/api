@@ -1,5 +1,6 @@
 <?php namespace Sheba\Business\ApprovalRequest;
 
+use App\Models\BusinessMember;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use Sheba\Dal\ApprovalRequest\Status;
@@ -77,17 +78,22 @@ class Creator
      */
     public function sendPushToApprover(ApprovalRequest $approval_request)
     {
-        $topic = config('sheba.push_notification_topic_name.employee') . (int)$approval_request->approver_id;
+        /** @var BusinessMember $business_member */
+        $business_member = $approval_request->approver;
+        $leave_applicant = $this->member->profile->name;
+        $topic = config('sheba.push_notification_topic_name.employee') . (int)$business_member->member->id;
         $channel = config('sheba.push_notification_channel_name.employee');
+
         $notification_data = [
-            "title" => 'New Leave Request Arrived',
-            "message" => "A new leave Request Arrived",
+            "title" => 'Leave request',
+            "message" => "$leave_applicant requested for a leave which needs your approval",
             "event_type" => 'leave_request',
             "event_id" => $approval_request->id,
             "sound" => "notification_sound",
             "channel_id" => $channel,
             "click_action" => "FLUTTER_NOTIFICATION_CLICK"
         ];
+
         $this->pushNotificationHandler->send($notification_data, $topic, $channel);
     }
 }
