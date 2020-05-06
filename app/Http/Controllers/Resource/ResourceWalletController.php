@@ -12,8 +12,13 @@ class ResourceWalletController extends Controller
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
         $resource = $auth_user->getResource();
-        $last_withdrawal_request_status = $resource->withdrawalRequests()->latest()->first()->status;
-        $status = $message->setResource($resource)->setStatus($last_withdrawal_request_status)->getLatestWithdrawalRequestUpdate();
+        $last_withdrawal_request = $resource->withdrawalRequests()->latest()->first();
+        if ($last_withdrawal_request) {
+            $status = $message->setResource($resource)->setStatus($last_withdrawal_request->status)->getLatestWithdrawalRequestUpdate();
+        } else {
+            $status['tag'] = null;
+            $status['message'] = null;
+        }
         $wallet = [
             'balance' => $resource->totalWalletAmount(),
             'max_withdrawal_limit' => config('sheba.resource_max_withdraw_limit'),
