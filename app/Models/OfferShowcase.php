@@ -95,6 +95,11 @@ class OfferShowcase extends Model
         return $this->type() == 'category' ? 1 : 0;
     }
 
+    public function isService()
+    {
+        return $this->type() == 'service' ? 1 : 0;
+    }
+
     public function isCategoryGroup()
     {
         return $this->type() == 'category_group' ? 1 : 0;
