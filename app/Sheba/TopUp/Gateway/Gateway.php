@@ -1,6 +1,5 @@
 <?php namespace Sheba\TopUp\Gateway;
 
-
 use App\Models\TopUpOrder;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 

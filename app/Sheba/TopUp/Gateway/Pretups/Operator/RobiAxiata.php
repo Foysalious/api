@@ -1,6 +1,5 @@
 <?php namespace Sheba\TopUp\Gateway\Pretups\Operator;
 
-
 trait RobiAxiata
 {
     protected function getUrl()
