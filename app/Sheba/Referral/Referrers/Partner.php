@@ -167,7 +167,7 @@ class Partner extends Referrer implements ReferrerInterface
         return [
             'start'            => 0,
             'end'              => $config[0]['duration'],
-            'nid_verification' => true,
+            'nid_verification' => false,
             'future_earning'   => $config[0]['amount'],
             'current_step'     => 'পেন্ডিং',
             'future_step'      => $config[0]['step']
