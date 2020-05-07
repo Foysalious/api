@@ -30,37 +30,32 @@ class PromotionV3Controller extends Controller
     public function add($customer, Request $request, PriceCalculation $price_calculation,
                         DiscountCalculation $discount_calculation, UpsellCalculation $upsell_calculation)
     {
-        try {
-            ini_set('memory_limit', '4096M');
-            ini_set('max_execution_time', 660);
+        ini_set('memory_limit', '4096M');
+        ini_set('max_execution_time', 660);
 
-            $customer = $request->customer;
-            $location = $request->location;
+        $customer = $request->customer;
+        $location = $request->location;
 
-            if ($request->has('lat') && $request->has('lng')) {
-                $hyper_local = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
-                $location = $hyper_local ? $hyper_local->location->id : $location;
-            }
+        if ($request->has('lat') && $request->has('lng')) {
+            $hyper_local = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+            $location = $hyper_local ? $hyper_local->location->id : $location;
+        }
 
-            $order_amount = $this->calculateOrderAmount($price_calculation, $discount_calculation, $upsell_calculation, $request->services, $location);
-            if (!$order_amount) return api_response($request, null, 403);
-            $category = Service::find(json_decode($request->services)[0]->id)->category_id;
+        $order_amount = $this->calculateOrderAmount($price_calculation, $discount_calculation, $upsell_calculation, $request->services, $location);
+        if (!$order_amount) return api_response($request, null, 403);
+        $category = Service::find(json_decode($request->services)[0]->id)->category_id;
 
-            $result = voucher($request->code)->check($category, null, $location, $customer, $order_amount, $request->sales_channel)->reveal();
+        $result = voucher($request->code)->check($category, null, $location, $customer, $order_amount, $request->sales_channel)->reveal();
 
-            if ($result['is_valid']) {
-                $voucher = $result['voucher'];
-                $promotion = new PromotionList($request->customer);
-                list($promotion, $msg) = $promotion->add($result['voucher']);
-                $promo = array('amount' => (double)$result['amount'], 'code' => $voucher->code, 'id' => $voucher->id, 'title' => $voucher->title);
+        if ($result['is_valid']) {
+            $voucher = $result['voucher'];
+            $promotion = new PromotionList($request->customer);
+            list($promotion, $msg) = $promotion->add($result['voucher']);
+            $promo = array('amount' => (double)$result['amount'], 'code' => $voucher->code, 'id' => $voucher->id, 'title' => $voucher->title);
 
-                if ($promotion) return api_response($request, 1, 200, ['promotion' => $promo]); else return api_response($request, null, 403, ['message' => $msg]);
-            } else {
-                return api_response($request, null, 403, ['message' => 'Invalid Promo']);
-            }
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+            if ($promotion) return api_response($request, 1, 200, ['promotion' => $promo]); else return api_response($request, null, 403, ['message' => $msg]);
+        } else {
+            return api_response($request, null, 403, ['message' => 'Invalid Promo']);
         }
     }
 
@@ -120,7 +115,7 @@ class PromotionV3Controller extends Controller
         foreach (json_decode($services) as $selected_service) {
             $location_service = LocationService::where('service_id', $selected_service->id)->where('location_id', $location_id)->first();
             if (!$location_service) {
-                throw new LocationServiceNotFoundException('Service #'. $selected_service->id . ' is not available at this location', 403);
+                throw new LocationServiceNotFoundException('Service #' . $selected_service->id . ' is not available at this location', 403);
             }
             if ($location_service->service->isOptions()) $price_calculation->setLocationService($location_service);
 
