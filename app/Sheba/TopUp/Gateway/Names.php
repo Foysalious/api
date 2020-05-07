@@ -1,6 +1,5 @@
 <?php namespace Sheba\TopUp\Gateway;
 
-
 class Names
 {
     const SSL = 'ssl';
