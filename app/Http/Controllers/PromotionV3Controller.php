@@ -15,8 +15,7 @@ use Sheba\Voucher\DTO\Params\CheckParamsForOrder;
 use Sheba\Voucher\PromotionList;
 use Sheba\Voucher\VoucherSuggester;
 use Throwable;
-use App\Exceptions\ApiValidationException;
-
+use App\Exceptions\LocationServiceNotFoundException;
 class PromotionV3Controller extends Controller
 {
     /**
@@ -106,6 +105,7 @@ class PromotionV3Controller extends Controller
      * @param $services
      * @param $location_id
      * @return float|mixed
+     * @throws LocationServiceNotFoundException
      */
     private function calculateOrderAmount(PriceCalculation $price_calculation, DiscountCalculation $discount_calculation,
                                           UpsellCalculation $upsell_calculation, $services, $location_id)
@@ -114,7 +114,7 @@ class PromotionV3Controller extends Controller
         foreach (json_decode($services) as $selected_service) {
             $location_service = LocationService::where('service_id', $selected_service->id)->where('location_id', $location_id)->first();
             if (!$location_service) {
-                throw new ApiValidationException('Service #' . $selected_service->id . ' is not available at this location', 403);
+                throw new LocationServiceNotFoundException('Service #'. $selected_service->id . ' is not available at this location', 403);
             }
             if ($location_service->service->isOptions()) $price_calculation->setLocationService($location_service);
 
