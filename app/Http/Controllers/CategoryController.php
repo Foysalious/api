@@ -29,6 +29,7 @@ use Sheba\Dal\UniversalSlug\SluggableType;
 use Sheba\JobDiscount\JobDiscountCheckingParams;
 use Sheba\JobDiscount\JobDiscountHandler;
 use Sheba\Location\Coords;
+use Sheba\LocationService\CorruptedPriceStructureException;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\LocationService\UpsellCalculation;
 use Sheba\ModificationFields;
@@ -469,10 +470,10 @@ class CategoryController extends Controller
                 $upsell_calculation->setService($service)->setLocationService($location_service);
 
                 if ($service->variable_type == 'Options') {
-                    if (!$prices instanceof stdClass) continue;
+                    if (!$prices instanceof stdClass) throw new CorruptedPriceStructureException('Price mismatch in Service #' . $location_service->service_id . ' and location #' . $location_service->location_id, 400);
                     $service['option_prices'] = $this->formatOptionWithPrice($price_calculation, $prices, $upsell_calculation, $location_service);
                 } else {
-                    if ($prices instanceof stdClass) continue;
+                    if ($prices instanceof stdClass) throw new CorruptedPriceStructureException('Price mismatch in Service #' . $location_service->service_id . ' and location #' . $location_service->location_id, 400);
                     $service['fixed_price'] = $price_calculation->getUnitPrice();
                     $service['fixed_upsell_price'] = $upsell_calculation->getAllUpsellWithMinMaxQuantity();
                 }
