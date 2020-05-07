@@ -79,7 +79,7 @@ class PromotionV3Controller extends Controller
         }
 
         $order_amount = $this->calculateOrderAmount($price_calculation, $discount_calculation, $upsell_calculation, $request->services, $location);
-        if (!$order_amount) return api_response($request, null, 403, ['message' => 'No partner available at this combination']);
+        if (!$order_amount) return api_response($request, null, 403, ['message' => 'No partner or service available at this combination']);
 
         $order_params = (new CheckParamsForOrder($request->customer, $request->customer->profile))
             ->setApplicant($request->customer)
@@ -117,17 +117,19 @@ class PromotionV3Controller extends Controller
         $order_amount = 0.00;
         foreach (json_decode($services) as $selected_service) {
             $location_service = LocationService::where('service_id', $selected_service->id)->where('location_id', $location_id)->first();
-            if ($location_service->service->isOptions()) $price_calculation->setLocationService($location_service);
+            if ($location_service) {
+                if ($location_service->service->isOptions()) $price_calculation->setLocationService($location_service);
 
-            $price_calculation->setLocationService($location_service)->setOption($selected_service->option)->setQuantity($selected_service->quantity);
-            $upsell_unit_price = $upsell_calculation->setLocationService($location_service)->setOption($selected_service->option)->setQuantity($selected_service->quantity)->getUpsellUnitPriceForSpecificQuantity();
-            $service_amount = $upsell_unit_price ? ($upsell_unit_price * $selected_service->quantity) : $price_calculation->getTotalOriginalPrice();
+                $price_calculation->setLocationService($location_service)->setOption($selected_service->option)->setQuantity($selected_service->quantity);
+                $upsell_unit_price = $upsell_calculation->setLocationService($location_service)->setOption($selected_service->option)->setQuantity($selected_service->quantity)->getUpsellUnitPriceForSpecificQuantity();
+                $service_amount = $upsell_unit_price ? ($upsell_unit_price * $selected_service->quantity) : $price_calculation->getTotalOriginalPrice();
 
-            if ($location_service->service->category->isRentACar())
-                $service_amount = $price_calculation->getTotalOriginalPrice();
+                if ($location_service->service->category->isRentACar())
+                    $service_amount = $price_calculation->getTotalOriginalPrice();
 
-            $discount_calculation->setLocationService($location_service)->setOriginalPrice($service_amount)->setQuantity($selected_service->quantity)->calculate();
-            $order_amount += $discount_calculation->getDiscountedPrice();
+                $discount_calculation->setLocationService($location_service)->setOriginalPrice($service_amount)->setQuantity($selected_service->quantity)->calculate();
+                $order_amount += $discount_calculation->getDiscountedPrice();
+            }
         }
 
         return $order_amount;
