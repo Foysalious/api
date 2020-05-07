@@ -141,6 +141,31 @@ class Handler
         }
     }
 
+    public function getBeforeData()
+    {
+        $order_discount = null;
+        if ($this->type == DiscountTypes::ORDER) {
+            $order_discount = new Order();
+            $order_discount->setType($this->type)
+                ->setOriginalAmount($this->data['discount'])
+                ->setIsPercentage($this->data['is_percentage']);
+        } else if ($this->type == DiscountTypes::SERVICE) {
+            $order_discount = new Service();
+            $order_discount->setType($this->type)
+                ->setDiscount($this->partnerPosService->discount())
+                ->setAmount($this->partnerPosService->getDiscount() * $this->data['quantity']);
+            return $order_discount->getBeforeData();
+        } else if ($this->type == DiscountTypes::VOUCHER) {
+            $order_discount = new Voucher();
+            $order_discount->setType($this->type)
+                ->setVoucher($this->data['voucher'])
+                ->setAmount($this->data['amount']);
+        }
+
+        return $order_discount->getData();
+
+    }
+
     public function getData()
     {
         $order_discount = null;
