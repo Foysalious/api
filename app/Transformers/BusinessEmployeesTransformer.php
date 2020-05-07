@@ -39,7 +39,7 @@ class BusinessEmployeesTransformer extends TransformerAbstract
             array_push($departments, self::NO_DEPARTMENT_VALUE);
         }
 
-        return ['employees' => $employee_based_on_departments, 'departments' => $departments];
+        return ['employees' => $employee_based_on_departments, 'departments' => array_values($departments)];
     }
 
     /**
