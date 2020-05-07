@@ -26,7 +26,7 @@ class LatestWithdrawalRequestUpdate
 
         if (!$this->resource->is_verified) {
             $status['tag'] = 'not_verified';
-            $status['message'] = 'আপনি বর্তমানে আনভেরফাইড অবস্থায় আছেন, তাই আপনি এখন রিকুয়েস্ট করতে পারবেন না বিস্তারিত জানতে ১৬৫১৬ নম্বরে যোগাযোগ করুন।';
+            $status['message'] = 'আপনি বর্তমানে আনভেরিফায়েড অবস্থায় আছেন, তাই আপনি এখন রিকুয়েস্ট করতে পারবেন না বিস্তারিত জানতে ১৬৫১৬ নম্বরে যোগাযোগ করুন।';
         }
         elseif ($this->resource->totalWalletAmount() <= 0) {
             $status['tag'] = 'not_enough_balance';
