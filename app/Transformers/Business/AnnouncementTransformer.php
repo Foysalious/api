@@ -13,7 +13,7 @@ class AnnouncementTransformer extends TransformerAbstract
             'title' => $announcement->title,
             'type' => $announcement->type,
             'short_description' => $announcement->short_description,
-            'description' => $announcement->long_description,
+            'description' => $announcement->long_description ?: $announcement->short_description,
             'status' => $this->getStatus($announcement->end_date),
             'end_date' => $announcement->end_date->toDateTimeString(),
             'created_at' => $announcement->created_at->toDateTimeString()
