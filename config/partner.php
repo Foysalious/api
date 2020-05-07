@@ -36,6 +36,7 @@ return [
             'details' => 'আপনার বন্ধুকে sManager অ্যাপের মাধ্যমে NID ভেরিফিকেশন করতে হবে।'
         ],
     ],
+    'referral_base_link' => 'https://play.google.com/store/apps/details?id=xyz.sheba.managerapp&referrer=utm_source%3D',
 
     'qr_code' => [
         'account_types' => [
