@@ -1,6 +1,8 @@
 <?php namespace App\Sheba\Business\Leave;
 
 use App\Models\BusinessMember;
+use Exception;
+use Sheba\Dal\ApprovalRequest\Status;
 use Sheba\Dal\Leave\Contract as LeaveRepository;
 use Sheba\Dal\Leave\Model as Leave;
 use DB;
@@ -70,53 +72,39 @@ class Updater
                 ->setBusinessMember($this->businessMember)
                 ->create();
         });
-        if ($this->status == 'accepted') $this->sendLeaveAcceptedNotification();
-        elseif ($this->status == 'rejected') $this->sendLeaveRejectedNotification();
+
+        try {$this->sendNotification($this->status);}
+        catch (Exception $e) {}
     }
 
-    private function sendLeaveAcceptedNotification()
+    /**
+     * @param $status
+     * @throws Exception
+     */
+    public function sendNotification($status)
     {
         $business_member = $this->businessMemberRepository->where('id', $this->leave->business_member_id)->first();
-        notify()->member($business_member->member)->send([
-            'title' => 'Admin has accepted your leave request #' . $this->leave->id,
+        $sheba_notification_data = [
+            'title' => "Your leave request has been $status",
             'type' => 'Info',
             'event_type' => 'Sheba\Dal\Leave\Model',
             'event_id' => $this->leave->id,
             /*'link' => config('sheba.business_url') . '/dashboard/employee/leaves/'.$this->leave->id*/
-        ]);
+        ];
+        notify()->member($business_member->member)->send($sheba_notification_data);
+
         $topic = config('sheba.push_notification_topic_name.employee') . $business_member->member->id;
         $channel = config('sheba.push_notification_channel_name.employee');
-        $this->pushNotification->send([
-            "title" => 'New support created',
-            "message" => 'Admin has accepted your leave request #' . $this->leave->id,
+        $push_notification_data = [
+            "title" => 'Leave request update',
+            "message" => "Your leave request has been $status",
             "event_type" => 'leave',
             "event_id" => $this->leave->id,
             "sound" => "notification_sound",
             "channel_id" => $channel,
             "click_action" => "FLUTTER_NOTIFICATION_CLICK"
-        ], $topic, $channel);
-    }
+        ];
 
-    public function sendLeaveRejectedNotification()
-    {
-        $business_member = $this->businessMemberRepository->where('id', $this->leave->business_member_id)->first();
-        notify()->member($business_member->member)->send([
-            'title' => 'Admin has rejected your leave request #' . $this->leave->id,
-            'type' => 'Info',
-            'event_type' => 'Sheba\Dal\Leave\Model',
-            'event_id' => $this->leave->id,
-            /*'link' => config('sheba.business_url') . '/dashboard/employee/leaves/'.$this->leave->id*/
-        ]);
-        $topic = config('sheba.push_notification_topic_name.employee') . $business_member->member->id;
-        $channel = config('sheba.push_notification_channel_name.employee');
-        $this->pushNotification->send([
-            "title" => 'New support created',
-            "message" => 'Admin has rejected your leave request #' . $this->leave->id,
-            "event_type" => 'leave',
-            "event_id" => $this->leave->id,
-            "sound" => "notification_sound",
-            "channel_id" => $channel,
-            "click_action" => "FLUTTER_NOTIFICATION_CLICK"
-        ], $topic, $channel);
+        $this->pushNotification->send($push_notification_data, $topic, $channel);
     }
 }

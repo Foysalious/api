@@ -2,11 +2,14 @@
 
 use App\Models\Partner;
 use App\Models\PartnerWalletSetting;
+use App\Sheba\Repositories\PartnerBankInformationRepository;
 use App\Sheba\Repositories\PartnerWalletSettingRepository;
+use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
+use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
 use Sheba\Repositories\PartnerBasicInformationRepository;
 use Sheba\Repositories\PartnerRepository;
@@ -14,23 +17,28 @@ use DB;
 
 class Creator
 {
-    use FileManager, CdnFileManager;
-
+    use FileManager, CdnFileManager, ModificationFields;
     /** @var CreateRequest $partnerCreateRequest */
     private $partnerCreateRequest;
     /** @var PartnerRepository $partnerRepository */
     private $partnerRepository;
     /** @var PartnerBasicInformationRepository $partnerBasicInformationRepository */
     private $partnerBasicInformationRepository;
+    /** @var PartnerBankInformationRepository $partnerBasicInformationRepository */
+    private $partnerBankInformationRepository;
     /** @var Partner $partner */
     private $partner;
     /** @var PartnerWalletSettingRepository $partnerWalletSettingRepository */
     private $partnerWalletSettingRepository;
 
-    public function __construct(PartnerRepositoryInterface $partner_repository, PartnerBasicInformationRepository $basic_information_repository, PartnerWalletSettingRepository $wallet_setting_repository)
+    public function __construct(PartnerRepositoryInterface $partner_repository,
+                                PartnerBasicInformationRepository $basic_information_repository,
+                                PartnerBankInformationRepository $bank_information_repository,
+                                PartnerWalletSettingRepository $wallet_setting_repository)
     {
         $this->partnerRepository = $partner_repository;
         $this->partnerBasicInformationRepository = $basic_information_repository;
+        $this->partnerBankInformationRepository = $bank_information_repository;
         $this->partnerWalletSettingRepository = $wallet_setting_repository;
     }
 
@@ -47,9 +55,10 @@ class Creator
     public function create()
     {
         DB::transaction(function () {
-            $this->partner = $this->partnerRepository->create($this->formatPartnerGeneralSpecificData());
-            $this->partnerBasicInformationRepository->create($this->formatPartnerBasicSpecificData());
-            $this->partnerWalletSettingRepository->create($this->partnerWalletSettingsDefault());
+            $this->partner = $this->partnerRepository->create($this->withCreateModificationField($this->formatPartnerGeneralSpecificData()));
+            $this->partnerBasicInformationRepository->create($this->withCreateModificationField($this->formatPartnerBasicSpecificData()));
+            $this->partnerBankInformationRepository->create($this->withCreateModificationField($this->formatPartnerBankSpecificData()));
+            $this->partnerWalletSettingRepository->create($this->withCreateModificationField($this->partnerWalletSettingsDefault()));
         });
         return $this->partner;
     }
@@ -70,7 +79,10 @@ class Creator
             'sub_domain' => $this->partnerCreateRequest->getSubDomain(),
             'mobile' => $this->partnerCreateRequest->getMobile(),
             'email' => $this->partnerCreateRequest->getEmail(),
-            'address' => $this->partnerCreateRequest->getAddress()
+            'address' => $this->partnerCreateRequest->getAddress(),
+            "billing_start_date" => Carbon::today(),
+            "last_billed_date" => Carbon::today(),
+            "last_billed_amount" => 0.00,
         ];
 
         if ($this->hasFile($this->partnerCreateRequest->getLogo())) {
@@ -97,6 +109,15 @@ class Creator
             $data += ['vat_registration_attachment' => $this->saveVatRegistrationDocument()];
         }
 
+        return $data;
+    }
+
+    private function formatPartnerBankSpecificData()
+    {
+        $data = [
+            'partner_id' => $this->partner->id,
+            'is_verified' => 0,
+        ];
         return $data;
     }
 
