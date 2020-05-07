@@ -138,7 +138,9 @@ class PartnerReferralController extends Controller
                         'কিভাবে করবেন' => $item['details']
                     ];
                 });
-            return api_response($request, $stepDetails, 200, ['steps' => $stepDetails]);
+            $data['steps'] = $stepDetails;
+            $data['total_income'] = convertNumbersToBangla(collect(config('partner.referral_steps'))->sum('amount'),true,0);
+            return api_response($request, $stepDetails, 200, ['data' => $data]);
 
         }catch (\Throwable $e){
             app('sentry')->captureException($e);
