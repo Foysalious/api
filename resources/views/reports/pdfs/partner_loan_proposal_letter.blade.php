@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Sanction Letter form</title>
+    <title>proposal Letter form</title>
     <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
           integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
@@ -120,7 +120,7 @@
             </tr>
             <tr>
                 <td>Strategic Partner</td>
-                <td colspan="3">Sheba.xyz</td>
+                <td colspan="3">{{$final_information_for_loan['business']['strategic_partner']}}</td>
                 <td>Date:</td>
                 <td class="text-center" colspan="2">{{$today}}</td>
             </tr>
@@ -156,7 +156,7 @@
             </tr>
             <tr>
                 <td>Legal Status</td>
-                <td colspan="2" class="bangla-font">{{$final_information_for_loan['business']['ownership_type']}} </td>
+                <td colspan="2" class="bangla-font">{{$ownership_type}} </td>
                 <td>Residential Address:</td>
                 <td class="text-center bangla-font" colspan="2">
                     {{$final_information_for_loan['personal']['present_address']['street']}},
@@ -192,7 +192,7 @@
             <tr>
                 <td>Business Category</td>
                 <td colspan="2">{{$final_information_for_loan['business']['business_category']}}</td>
-                <td colspan="2">Supplier Category (As per Sheba.xyz)</td>
+                <td colspan="2">Supplier Category: {{$final_information_for_loan['proposal_info']['supplier_category']}}</td>
                 <td class="text-center" colspan="2">{{$partner['current_package']}}</td>
             </tr>
             <tr>
@@ -310,11 +310,11 @@
                 <td class="text-center">{{ $final_information_for_loan['finance']['acc_type'] }}</td>
                 <td class="text-center">{{ $final_information_for_loan['finance']['period'] }} Months</td>
                 <td class="text-center">{{ $final_information_for_loan['finance']['debit_sum'] ?
-"BDT ".$final_information_for_loan['finance']['debit_sum']:"BDT 0.00"}}</td>
+$final_information_for_loan['finance']['debit_sum']:"0.00"}}</td>
                 <td class="text-center">{{ $final_information_for_loan['finance']['credit_sum'] ?
-"BDT ".$final_information_for_loan['finance']['credit_sum']:"BDT 0.00"}}</td>
+$final_information_for_loan['finance']['credit_sum']:"0.00"}}</td>
                 <td class="text-center">{{ $final_information_for_loan['finance']['monthly_avg_credit_sum'] ?
-"BDT ".$final_information_for_loan['finance']['monthly_avg_credit_sum']:"BDT 0.00"}}</td>
+$final_information_for_loan['finance']['monthly_avg_credit_sum']:"0.00"}}</td>
             </tr>
             <tr>
                 <td style="text-align: center" colspan="7">Personal Guarantor Details</td>
@@ -362,7 +362,7 @@
                 <td class="text-center">{{$final_information_for_loan['nominee_granter']['nominee']['address']}}</td>
             </tr>
             <tr>
-                <td style="text-align: center" colspan="7">SHEBA.XYZ Performance With IPDC</td>
+                <td style="text-align: center" colspan="7">{{$final_information_for_loan['proposal_info']['performance_with_IPDC']}} Performance With IPDC</td>
             </tr>
             <tr>
                 <td class="text-center">No. of Client</td>
@@ -372,14 +372,15 @@
                 <td colspan="3" class="text-center">Repayment Amount</td>
             </tr>
             <tr>
-                <td>29</td>
-                <td class="text-center">BDT {{$loan_amount}}</td>
-                <td class="text-center">BDT {{$final_information_for_loan['finance']['disbursement_amount']}}</td>
-                <td class="text-center"></td>
-                <td colspan="3" class="text-center">BDT {{$monthly_installment}}</td>
+                <td>{{$final_information_for_loan['proposal_info']['no_of_client']}}</td>
+                <td class="text-center">BDT {{$final_information_for_loan['proposal_info']['approved_amount']}}</td></td>
+                <td class="text-center">BDT {{$final_information_for_loan['proposal_info']['disbursement_amount']}}</td>
+                <td class="text-center">BDT {{$final_information_for_loan['proposal_info']['overdue']}}</td>
+                <td colspan="3" class="text-center">BDT {{$final_information_for_loan['proposal_info']['repayment_amount']}}</td>
             </tr>
             <tr>
-                <td colspan="4">Exposure Limit</td>
+                <td colspan="2">Exposure limit: {{$final_information_for_loan['proposal_info']['exposure_limit']}}</td>
+                <td colspan="2">Remarks: {{$final_information_for_loan['proposal_info']['remark']}}</td>
                 <td class="text-center">Current</td>
                 <td colspan="2" class="text-center">Proposed</td>
             </tr>
@@ -442,7 +443,7 @@
             </tr>
             <tr>
                 <td>Facility Amount</td>
-                <td colspan="3">BDT {{$final_information_for_loan['finance']['disbursement_amount']}}</td>
+                <td colspan="3">BDT {{$loan_amount}}</td>
             </tr>
             <tr>
                 <td>Purpose</td>
@@ -515,8 +516,8 @@
                 <td>
                     <div style="margin: 20px 0">
                         Based on the analysis laid down in this paper, approval is sought for a Term Loan facility up to
-                        a limit of <span style="color: red">BDT 1.00 M</span> for <span style="color: red">30
-                        months</span> in favor of <span style="color: red">INP Engineering</span>.
+                        a limit of <span style="color: red">BDT {{$loan_amount}}</span> for <span style="color: red">{{ $total_installment }}
+                        months</span> in favor of <span style="color: red">{{$partner['name']}}</span>.
                     </div>
                     <div>
                         If approved, any disbursement of fund will be made subject to the following:

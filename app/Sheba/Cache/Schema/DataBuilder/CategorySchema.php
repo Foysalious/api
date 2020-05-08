@@ -68,14 +68,17 @@ class CategorySchema
             "address" => [
                 "@type" => "PostalAddress",
                 "addressLocality" => "Dhaka",
-                "addressRegion" => "Dhaka"
+                "addressRegion" => "Dhaka",
+                "postalCode" => "1213",
+                "streetAddress" => "House # 63, Road # 04, Block # C, Banani",
             ],
             "name" => $this->category->name . " in Dhaka",
-            "telephone" => "+8809678016516",
+            "telephone" => "09678-016516",
             "priceRange" => "৳৳৳",
             "description" => $this->metaTag && $this->metaTag->meta_tag ? json_decode($this->metaTag->meta_tag)->description : null,
-            "URL" => config('sheba.front_url') . '/' . $this->category->getSlug(),
-            "Image" => $this->category->thumb
+            "url" => config('sheba.front_url') . '/' . $this->category->getSlug(),
+            "Image" => $this->category->thumb,
+            "areaServed" => "Bangladesh"
         ];
         $review_rating = [
             "@type" => "AggregateRating",
@@ -117,6 +120,17 @@ class CategorySchema
         return [
             "@context" => "http://schema.org",
             "@type" => "LocalBusiness",
+            "address" => [
+                "@type" => "PostalAddress",
+                "addressLocality" => "Dhaka",
+                "addressRegion" => "Dhaka",
+                "postalCode" => "1213",
+                "streetAddress" => "House # 63, Road # 04, Block # C, Banani",
+            ],
+            "telephone" => "09678-016516",
+            "areaServed" => "Bangladesh",
+            "priceRange" => "৳৳৳",
+            "url" => config('sheba.front_url') . '/' . $this->category->getSlug(),
             "name" => $this->category->name,
             "image" => $this->category->thumb,
             "aggregateRating" => [
@@ -200,9 +214,17 @@ class CategorySchema
             "provider" => [
                 "@type" => "LocalBusiness",
                 "name" => "Sheba.xyz",
-                "address" => "113/A Gulshan 2, Dhaka",
+                "address" => [
+                    "@type" => "PostalAddress",
+                    "addressLocality" => "Dhaka",
+                    "addressRegion" => "Dhaka",
+                    "postalCode" => "1213",
+                    "streetAddress" => "House # 63, Road # 04, Block # C, Banani",
+                ],
                 "priceRange" => "৳৳৳",
-                "telephone" => "+8809678016516",
+                "telephone" => "09678-016516",
+                "areaServed" => "Bangladesh",
+                "url" => config('sheba.front_url') . '/' . $this->category->getSlug(),
                 "image" => "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/images/sheba_logo_blue.png"
             ],
             "areaServed" => [

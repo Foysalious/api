@@ -6,10 +6,11 @@ use Illuminate\Http\Request;
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
 use Sheba\Authentication\AuthUser;
+use Sheba\Resource\Transaction\TransactionList;
 
 class ResourceTransactionController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, TransactionList $transactionList)
     {
         $this->validate($request, [
             'year' => 'sometimes|required|numeric',
@@ -19,14 +20,12 @@ class ResourceTransactionController extends Controller
         $auth_user = $request->auth_user;
         $resource = $auth_user->getResource();
         list($offset, $limit) = calculatePagination($request);
-        $transactions = $resource->transactions()->select('id', 'type', 'amount', 'log', 'created_at')->orderBy('created_at', 'desc')->get();
-        if ($request->has('month') && $request->has('year')) {
-            $transactions = $transactions->filter(function ($transaction) use ($request) {
-                $created_at = Carbon::parse($transaction['created_at']);
-                return ($created_at->month == $request->month && $created_at->year == $request->year);
-            });
-        }
-        $transactions = $transactions->splice($offset, $limit);
+        $transactions = $transactionList->setResource($resource)
+            ->setMonth($request->month)
+            ->setYear($request->year)
+            ->setOffset($offset)
+            ->setLimit($limit)
+            ->get();
         return api_response($request, $transactions, 200, ['transactions' => $transactions]);
     }
 }

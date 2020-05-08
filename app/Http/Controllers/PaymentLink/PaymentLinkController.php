@@ -11,13 +11,13 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
-use mysql_xdevapi\Exception;
 use Sheba\EMI\Calculations;
 use Sheba\ModificationFields;
 use Sheba\PaymentLink\Creator;
 use Sheba\PaymentLink\PaymentLinkClient;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
+use Sheba\Usage\Usage;
 
 class PaymentLinkController extends Controller {
     use ModificationFields;
@@ -95,16 +95,12 @@ class PaymentLinkController extends Controller {
     public function store(Request $request) {
         try {
             $this->validate($request, [
-                'amount'      => 'required',
-                'purpose'     => 'required',
-                'customer_id' => 'sometimes|integer|exists:pos_customers,id',
+                'amount'  => 'required',
+                'purpose' => 'required','customer_id' => 'sometimes|integer|exists:pos_customers,id',
                 'emi_month'   => 'sometimes|integer|in:' . implode(',', config('emi.valid_months'))
             ]);
             if ($request->has('emi_month') && (double)$request->amount < config('emi.manager.minimum_emi_amount')) return api_response($request, null, 400, ['message' => 'Amount must be greater then or equal BDT ' . config('emi.manager.minimum_emi_amount')]);
-            $this->creator->setIsDefault($request->isDefault)->setAmount($request->amount)->setReason($request->purpose)
-                ->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type)->setTargetId($request->pos_order_id)
-                ->setTargetType('pos_order');
-            if ($request->has('emi_month')) {
+            $this->creator->setIsDefault($request->isDefault)->setAmount($request->amount)->setReason($request->purpose)->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type)->setTargetId($request->pos_order_id)->setTargetType('pos_order');if ($request->has('emi_month')) {
                 $data = Calculations::getMonthData($request->amount, $request->emi_month, false);
                 $this->creator->setEmiMonth((int)$request->emi_month)->setInterest($data['total_interest'])->setBankTransactionCharge($data['bank_transaction_fee'])->setAmount($data['total_amount']);
             }
@@ -193,12 +189,7 @@ class PaymentLinkController extends Controller {
                 return api_response($request, $default_payment_link, 200, ['default_payment_link' => $default_payment_link]);
             } else {
                 $request->merge(['isDefault' => 1]);
-                $this->creator->setIsDefault($request->isDefault)
-                    ->setAmount($request->amount)
-                    ->setReason($request->purpose)
-                    ->setUserName($request->user->name)
-                    ->setUserId($request->user->id)
-                    ->setUserType($request->type);
+                $this->creator->setIsDefault($request->isDefault)->setAmount($request->amount)->setReason($request->purpose)->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type);
                 $store_default_link   = $this->creator->save();
                 $default_payment_link = [
                     'link_id' => $store_default_link->linkId,

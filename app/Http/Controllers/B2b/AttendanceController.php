@@ -22,6 +22,8 @@ use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Business\OfficeTiming\Updater as OfficeTimingUpdater;
 use Sheba\Business\Attendance\Setting\Updater as AttendanceSettingUpdater;
 use Sheba\Business\Attendance\Setting\AttendanceSettingTransformer;
+use Sheba\Business\Holiday\HolidayList;
+use Sheba\Business\Holiday\Creator as HolidayCreator;
 use Throwable;
 
 class AttendanceController extends Controller
@@ -245,6 +247,10 @@ class AttendanceController extends Controller
         $business_member = $request->business_member;
 
         $updater = new AttendanceSettingUpdater($request->business, $business_member->member, $business_office_repo, $attendance_type_repo);
+        $validate_office_ip = $updater->validateOfficeIp($business_offices);
+        if(array_key_exists("business_offices",$validate_office_ip)) $business_offices = $validate_office_ip['business_offices'];
+        if(array_key_exists("status",$validate_office_ip)) return api_response($request, null, 400, ['msg' => "Validation Error"]);
+
         if(!is_null($attendance_types))
         {
            foreach ($attendance_types as $attendance_type)
@@ -264,8 +270,25 @@ class AttendanceController extends Controller
         return api_response($request, null, 200, ['msg' => "Update Successful"]);
     }
 
-    public function getHolidays()
+    public function getHolidays(Request $request, BusinessHolidayRepoInterface $business_holidays_repo)
     {
+        $holiday_list = new HolidayList($request->business,$business_holidays_repo);
+        $holidays = $holiday_list->getHolidays($request);
 
+        return api_response($request, null, 200, [
+            'business_holidays' => $holidays
+        ]);
+    }
+
+    public function storeHoliday(Request $request, BusinessHolidayRepoInterface $business_holidays_repo, HolidayCreator $creator)
+    {
+        $this->validate($request, [
+            'start_date' => 'required|date_format:d/m/Y', 'end_date' => 'required|date_format:d/m/Y|after_or_equal:start_date', 'title' => 'required|string'
+        ]);
+        $business_member = $request->business_member;
+
+        $holiday = $creator->setBusiness($request->business)->setMember($business_member->member)->setHolidayRepo($business_holidays_repo)
+                   ->setStartDate($request->start_date)->setEndDate($request->end_date)->setHolidayName($request->title)->create();
+        return api_response($request, null, 200, ['holiday' => $holiday]);
     }
 }

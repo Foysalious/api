@@ -2,6 +2,8 @@
 
 use App\Models\LocationService;
 use App\Models\Service;
+use phpDocumentor\Reflection\Types\Iterable_;
+use stdClass;
 
 class PriceCalculation
 {
@@ -91,23 +93,53 @@ class PriceCalculation
 
     }
 
+    /**
+     * @return float|null
+     * @throws CorruptedPriceStructureException
+     */
     public function getUnitPrice()
     {
         $service = $this->getService();
-        if ($service->isFixed()) return (double)$this->locationService->prices;
+        if ($service->isFixed()) return $this->getFixedPrice($this->locationService->prices);
         return $this->getOptionPrice($this->locationService->prices);
     }
 
+    /**
+     * @param $prices
+     * @return float
+     * @throws CorruptedPriceStructureException
+     */
+    private function getFixedPrice($prices)
+    {
+        if ($prices instanceof stdClass) $this->throwPriceStructureException();
+        return (double)$this->locationService->prices;
+    }
+
+
+    /**
+     * @param $prices
+     * @return float|null
+     * @throws CorruptedPriceStructureException
+     */
     private function getOptionPrice($prices)
     {
         $option = implode(',', $this->option);
         $prices = json_decode($prices);
+        if (!$prices instanceof stdClass) $this->throwPriceStructureException();
         foreach ($prices as $key => $price) {
             if ($key == $option) {
                 return (double)$price;
             }
         }
         return null;
+    }
+
+    /**
+     * @throws CorruptedPriceStructureException
+     */
+    private function throwPriceStructureException()
+    {
+        throw new CorruptedPriceStructureException('Price mismatch in Service #' . $this->locationService->service_id . ' and Location #' . $this->locationService->location_id, 400);
     }
 
     public function getMinPriceFromDB()
