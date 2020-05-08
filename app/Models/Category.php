@@ -74,6 +74,11 @@ class Category extends Model
         return $this->belongsToMany(Location::class);
     }
 
+    public function logisticEnabledLocations()
+    {
+        return $this->locations()->wherePivot('is_logistic_enabled', 1);
+    }
+
     public function subCat()
     {
         return $this->hasMany(Category::class, 'parent_id')->published();
@@ -231,6 +236,15 @@ class Category extends Model
     public function needsLogistic()
     {
         return (bool)$this->is_logistic_available;
+    }
+
+    /**
+     * @param Location $location
+     * @return bool
+     */
+    public function needsLogisticOn(Location $location)
+    {
+        return $this->logisticEnabledLocations()->where('lcoation_id', $location->id)->count() > 0;
     }
 
     /**
