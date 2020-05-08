@@ -126,7 +126,7 @@ class Service
         if ($payable->amount >= config('sheba.min_order_amount_for_emi') || $payable->emi_month) {
             $data['emi']['enable'] = 1;
             if ($payable->emi_month){
-                // $data['emi']['tenure'] = [(int)$payable->emi_month];
+                $data['emi']['tenure'] = [(int)$payable->emi_month];
             }
         }
 
