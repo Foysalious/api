@@ -22,6 +22,7 @@ class DeliveryCharge
     public function setLocation(Location $location)
     {
         $this->location = $location;
+        $this->setShebaLogisticDeliveryCharge();
         return $this;
     }
 
@@ -39,11 +40,11 @@ class DeliveryCharge
      */
     private function setShebaLogisticDeliveryCharge()
     {
-        if (!$this->category || !is_null($this->shebaLogisticDeliveryCharge)) return $this;
-        if ($this->doesUseShebaLogistic()) {
-            $this->shebaLogisticDeliveryCharge = $this->category->getShebaLogisticsPrice();
-        }
+        if (!$this->category || !$this->location) return $this;
+        if (!is_null($this->shebaLogisticDeliveryCharge)) return $this;
+        if (!$this->doesUseShebaLogistic()) return $this;
 
+        $this->shebaLogisticDeliveryCharge = $this->category->getShebaLogisticsPrice();
         return $this;
     }
 

@@ -539,7 +539,8 @@ class CategoryController extends Controller
                     'service_id' => $cross_sale_service->service_id
                 ] : null;
                 $category_model = Category::find($category['id']);
-                $category['delivery_charge'] = $delivery_charge->setCategory($category_model)->get();
+                $category['delivery_charge'] = $delivery_charge->setCategory($category_model)
+                    ->setLocation(Location::find($location))->get();
                 $discount_checking_params = (new JobDiscountCheckingParams())->setDiscountableAmount($category['delivery_charge']);
                 $job_discount_handler->setType(DiscountTypes::DELIVERY)->setCategory($category_model)->setCheckingParams($discount_checking_params)->calculate();
                 /** @var Discount $delivery_discount */
