@@ -244,7 +244,7 @@ class Category extends Model
      */
     public function needsLogisticOn(Location $location)
     {
-        return $this->logisticEnabledLocations()->where('lcoation_id', $location->id)->count() > 0;
+        return $this->logisticEnabledLocations()->where('location_id', $location->id)->count() > 0;
     }
 
     /**

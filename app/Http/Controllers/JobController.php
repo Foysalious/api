@@ -220,7 +220,9 @@ class JobController extends Controller
 
         $job_collection->put('services', $services);
 
-        $resource = new Item($job->category, new ServiceV2DeliveryChargeTransformer($delivery_charge, $job_discount_handler));
+        $resource = new Item($job->category,
+            new ServiceV2DeliveryChargeTransformer($delivery_charge, $job_discount_handler, $job->partnerOrder->order->location)
+        );
         $delivery_charge_discount_data = $manager->createData($resource)->toArray();
         $job_collection->put('delivery_charge', $delivery_charge_discount_data['delivery_charge']);
         $job_collection->put('delivery_discount', $delivery_charge_discount_data['delivery_discount']);

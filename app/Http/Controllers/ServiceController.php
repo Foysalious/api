@@ -2,6 +2,7 @@
 
 use App\Models\Category;
 use App\Models\HyperLocal;
+use App\Models\Location;
 use App\Models\LocationService;
 use App\Models\Service;
 use App\Repositories\ReviewRepository;
@@ -195,7 +196,8 @@ class ServiceController extends Controller
         ] : null;
         array_add($service, 'discount', $service_discount);
 
-        $category_delivery_charge = $delivery_charge->setCategory($service->category)->get();
+        $category_delivery_charge = $delivery_charge->setCategory($service->category)
+            ->setLocation(Location::find($location))->get();
         array_add($service, 'delivery_charge', $category_delivery_charge);
 
         $discount_checking_params = (new JobDiscountCheckingParams())->setDiscountableAmount($category_delivery_charge);

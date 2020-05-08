@@ -75,7 +75,8 @@ class CustomerController extends Controller
                 if ($this->canThisServiceAvailableForOrderAgain($final, $review->job)) continue;
                 $data = [];
                 $data['category'] = clone $review->category;
-                $data['category']['delivery_charge'] = $delivery_charge->setCategory($review->category)->get();
+                $data['category']['delivery_charge'] = $delivery_charge->setCategory($review->category)
+                    ->setLocation(Location::find($location))->get();
                 $discount_checking_params = (new JobDiscountCheckingParams())->setDiscountableAmount($data['category']['delivery_charge']);
                 $job_discount_handler->setType(DiscountTypes::DELIVERY)->setCategory($review->category)->setCheckingParams($discount_checking_params)->calculate();
                 /** @var Discount $delivery_discount */

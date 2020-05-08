@@ -2,6 +2,7 @@
 
 use App\Models\Category;
 use App\Models\HyperLocal;
+use App\Models\Location;
 use App\Models\Partner;
 use App\Models\Service;
 use Dingo\Api\Routing\Helpers;
@@ -232,5 +233,13 @@ class PartnerListRequest
 
         $hyper_local = HyperLocal::insidePolygon($this->lat, $this->lng)->first();
         return $hyper_local->location_id;
+    }
+
+    /**
+     * @return Location
+     */
+    public function getLocation()
+    {
+        return Location::find($this->getLocationId());
     }
 }

@@ -206,7 +206,7 @@ class Checkout
     private function buildDeliveryCharge()
     {
         return (new DeliveryCharge())->setCategory($this->category)
-            ->setLocation(Location::find($this->partnerListRequest->location))
+            ->setLocation($this->partnerListRequest->getLocation())
             ->setCategoryPartnerPivot($this->partner->categories->first()->pivot);
     }
 
