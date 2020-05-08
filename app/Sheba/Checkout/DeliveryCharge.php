@@ -1,11 +1,14 @@
 <?php namespace Sheba\Checkout;
 
 use App\Models\Category;
+use App\Models\Location;
 
 class DeliveryCharge
 {
     /** @var Category */
     private $category;
+    /** @var Location */
+    private $location;
     private $shebaLogisticDeliveryCharge;
     private $categoryPartnerPivot;
 
@@ -13,6 +16,12 @@ class DeliveryCharge
     {
         $this->category = $category;
         $this->setShebaLogisticDeliveryCharge();
+        return $this;
+    }
+
+    public function setLocation(Location $location)
+    {
+        $this->location = $location;
         return $this;
     }
 
@@ -40,7 +49,7 @@ class DeliveryCharge
 
     public function doesUseShebaLogistic()
     {
-        return $this->category->needsLogistic();
+        return $this->category->needsLogistic() && $this->category->needsLogisticOn($this->location);
     }
 
     /**
