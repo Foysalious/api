@@ -3,10 +3,8 @@
 use App\Models\HyperLocal;
 use App\Models\LocationService;
 use App\Models\Service;
-use App\Sheba\Checkout\PartnerList;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\LocationService\DiscountCalculation;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\LocationService\UpsellCalculation;
@@ -15,7 +13,7 @@ use Sheba\Voucher\DTO\Params\CheckParamsForOrder;
 use Sheba\Voucher\PromotionList;
 use Sheba\Voucher\VoucherSuggester;
 use Throwable;
-use App\Exceptions\LocationServiceNotFoundException;
+use App\Exceptions\LocationService\LocationServiceNotFoundException;
 
 class PromotionV3Controller extends Controller
 {
@@ -99,15 +97,6 @@ class PromotionV3Controller extends Controller
         }
     }
 
-    /**
-     * @param PriceCalculation $price_calculation
-     * @param DiscountCalculation $discount_calculation
-     * @param UpsellCalculation $upsell_calculation
-     * @param $services
-     * @param $location_id
-     * @return float|mixed
-     * @throws LocationServiceNotFoundException
-     */
     private function calculateOrderAmount(PriceCalculation $price_calculation, DiscountCalculation $discount_calculation,
                                           UpsellCalculation $upsell_calculation, $services, $location_id)
     {
