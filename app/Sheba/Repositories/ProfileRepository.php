@@ -19,7 +19,7 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
 
     public function findByMobile($mobile)
     {
-        return $this->model->where('mobile', 'like', '%' . formatMobile($mobile) . '%');
+        return $this->model->where('mobile', formatMobile($mobile));
     }
 
     /**
