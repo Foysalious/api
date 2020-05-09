@@ -47,7 +47,7 @@ class OrderController extends Controller
                 'time' => 'required|string',
                 'payment_method' => 'required|string|in:cod,online,wallet,bkash,cbl,partner_wallet',
                 'address' => 'required_without:address_id',
-                'address_id' => 'required_without:address|numeric|min:1',
+                'address_id' => 'required_without:address|numeric',
                 'partner' => 'sometimes|required',
                 'partner_id' => 'sometimes|required|numeric',
                 'affiliate_id' => 'sometimes|required|numeric',
