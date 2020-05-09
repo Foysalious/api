@@ -1,5 +1,6 @@
 <?php namespace Sheba\Authentication;
 
+use App\Models\BankUser;
 use App\Models\Member;
 use App\Models\Partner;
 use App\Models\Profile;
@@ -7,9 +8,13 @@ use App\Models\Resource;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Logistics\Exceptions\LogisticServerError;
 use Sheba\Logistics\Repository\UserRepository;
-use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
+/**
+ * Sync with Account if any update happens
+ * Class AuthUser
+ * @package Sheba\Authentication
+ */
 class AuthUser
 {
     /** @var Profile */
@@ -210,6 +215,8 @@ class AuthUser
         $user = $this->avatar;
         if ($user instanceof Resource) $user = $user->partners()->first();
         elseif ($user instanceof Member) $user = $user->businesses()->first();
+        elseif ($user instanceof BankUser) return ['type' => class_basename($user), 'type_id' => $user->id];
+        if (!$user) return null;
         return ['type' => strtolower(class_basename($user)), 'type_id' => $user->id];
     }
 }
