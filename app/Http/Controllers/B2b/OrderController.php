@@ -114,27 +114,16 @@ class OrderController extends Controller
 
     public function clearBills($business, $order, Request $request, ShebaPayment $payment, OrderAdapter $order_adapter)
     {
-        try {
-            $this->validate($request, [
-                'payment_method' => 'sometimes|required|in:online,wallet,bkash,cbl',
-            ]);
-            $payment_method = $request->has('payment_method') ? $request->payment_method : 'online';
-            if ($payment_method == 'bkash' && $this->hasPreviousBkashTransaction($request->job->partner_order_id)) {
-                return api_response($request, null, 500, ['message' => "Can't send multiple requests within 1 minute."]);
-            }
-            $order_adapter->setPartnerOrder($request->job->partnerOrder)->setPaymentMethod($payment_method);
-            $payment = $payment->setMethod($payment_method)->init($order_adapter->getPayable());
-            return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        $this->validate($request, [
+            'payment_method' => 'sometimes|required|in:online,wallet,bkash,cbl',
+        ]);
+        $payment_method = $request->has('payment_method') ? $request->payment_method : 'online';
+        if ($payment_method == 'bkash' && $this->hasPreviousBkashTransaction($request->job->partner_order_id)) {
+            return api_response($request, null, 500, ['message' => "Can't send multiple requests within 1 minute."]);
         }
+        $order_adapter->setPartnerOrder($request->job->partnerOrder)->setPaymentMethod($payment_method);
+        $payment = $payment->setMethod($payment_method)->init($order_adapter->getPayable());
+        return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
     }
 
     private function hasPreviousBkashTransaction($partner_order_id)

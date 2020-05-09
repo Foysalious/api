@@ -7,16 +7,14 @@ use Sheba\TopUp\Vendor\VendorFactory;
 
 class GatewayFactory
 {
-
     private $vendorId;
     private $gatewayName;
 
-    public function setVendorId($vednor_id)
+    public function setVendorId($vendor_id)
     {
-        $this->vendorId = $vednor_id;
+        $this->vendorId = $vendor_id;
         return $this;
     }
-
 
     public function setGatewayName($gatewayName)
     {

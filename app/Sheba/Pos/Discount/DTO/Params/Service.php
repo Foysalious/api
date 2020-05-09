@@ -37,6 +37,19 @@ class Service extends SetParams
         return $this;
     }
 
+    public function getBeforeData()
+    {
+        return [
+            'discount_id' => $this->discount->id,
+            'type' => $this->type,
+            'amount' => $this->amount,
+            'original_amount' => $this->discount->amount,
+            'is_percentage' => $this->discount->is_amount_percentage,
+            'cap' => $this->discount->cap,
+        ];
+
+    }
+
     public function getData()
     {
         return [

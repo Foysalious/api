@@ -1,8 +1,8 @@
 <?php namespace Sheba\Authentication;
 
-use Exception;
+use App\Exceptions\ApiValidationException;
 
-class AuthenticationFailedException extends Exception
+class AuthenticationFailedException extends ApiValidationException
 {
     public function report()
     {
