@@ -270,7 +270,7 @@ class Creator
 
         }
         $this->discountHandler->setType(DiscountTypes::ORDER)->setData($this->data);
-        if ($this->discountHandler->hasDiscount()) $order_discount=$this->discountHandler->getBeforeData();
+        if ($this->discountHandler->hasDiscount()) $order_discount=$this->discountHandler->setOrderAmount($total_price-$service_discount_amount)->getBeforeData();
         if (isset($order_discount)) $order_discount_amount=$this->getDiscountAmount($order_discount);
 
         if (isset($this->data['voucher_code']) && !empty($this->data['voucher_code'])) {
