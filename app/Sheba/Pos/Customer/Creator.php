@@ -104,7 +104,15 @@ class Creator
 
         return $partner_pos_customer;
     }
-
+    public function createFromProfile($profile){
+        $this->setProfile(Profile::find($profile));
+        $customer=$this->createPosCustomer();
+        $partner_pos_customer = $this->partnerPosCustomers->where('partner_id', $this->data['partner_id'])->where('customer_id', $customer->id)->first();
+        if (!$partner_pos_customer) {
+            $this->partnerPosCustomers->save($this->data + (new RequestIdentification())->get());
+        }
+        return $customer;
+    }
     private function saveImages()
     {
         if (!$this->profile && $this->hasFile('profile_image')) $this->data['profile_image'] = $this->saveProfileImage();

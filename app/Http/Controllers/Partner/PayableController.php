@@ -15,20 +15,19 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\ExpenseTracker\EntryType;
 use Sheba\ModificationFields;
+use Sheba\Pos\Customer\Creator;
 use Throwable;
 use Illuminate\Http\JsonResponse;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\EntryRepository;
 
-class PayableController extends Controller
-{
+class PayableController extends Controller {
     use ModificationFields;
 
     /** @var EntryRepository */
     private $entryRepo;
 
-    public function __construct(EntryRepository $entry_repo)
-    {
+    public function __construct(EntryRepository $entry_repo) {
         $this->entryRepo = $entry_repo;
     }
 
@@ -36,37 +35,36 @@ class PayableController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function index(Request $request)
-    {
+    public function index(Request $request, Creator $creator) {
         try {
             $this->validate($request, []);
             list($offset, $limit) = calculatePagination($request);
             $payables_generator = $this->entryRepo->setPartner($request->partner)->setOffset($offset)->setLimit($limit);
             if ($request->has('customer_id') && $request->customer_id) {
-                $profile_id = PosCustomer::find($request->customer_id)->profile_id;
+                $profile_id        = PosCustomer::find($request->customer_id)->profile_id;
                 $payables_response = $payables_generator->getAllPayablesByCustomer((int)$profile_id);
             } else {
                 $payables_response = $payables_generator->getAllPayables();
             }
 
-            $profiles_id = array_unique(array_column(array_column($payables_response['payables'], 'party'), 'profile_id'));
-            $profiles = Profile::whereIn('id', $profiles_id)->get()->pluckMultiple(['name', 'pro_pic'], 'id')->toArray();
+            $profiles_id   = array_unique(array_column(array_column($payables_response['payables'], 'party'), 'profile_id'));
+            $profiles      = Profile::whereIn('id', $profiles_id)->get()->pluckMultiple(['name', 'pro_pic'], 'id')->toArray();
             $pos_customers = PosCustomer::whereIn('profile_id', $profiles_id)->pluck('id', 'profile_id')->toArray();
 
-            $final_payables = [];
+            $final_payables     = [];
             $payables_formatted = [];
 
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
 
             foreach ($payables_response['payables'] as $payables) {
-                $resource = new Item($payables, new PayableTransformer());
+                $resource          = new Item($payables, new PayableTransformer());
                 $payable_formatted = $manager->createData($resource)->toArray()['data'];
 
-                $profile_id = $payable_formatted['profile_id'];
+                $profile_id                    = $payable_formatted['profile_id'];
                 $payable_formatted['customer'] = [
-                    'id' => $pos_customers[$profile_id],
-                    'name' => $profiles[$profile_id]['name'],
+                    'id'    => isset($pos_customers[$profile_id]) ? $pos_customers[$profile_id] : $creator->createFromProfile($profile_id)->id,
+                    'name'  => $profiles[$profile_id]['name'],
                     'image' => $profiles[$profile_id]['pro_pic']
                 ];
 
@@ -91,7 +89,7 @@ class PayableController extends Controller
             ]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
+            $sentry  = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
@@ -110,22 +108,21 @@ class PayableController extends Controller
      * @param $payable_id
      * @return JsonResponse
      */
-    public function show(Request $request, $partner_id, $payable_id)
-    {
+    public function show(Request $request, $partner_id, $payable_id) {
         try {
             $payable_generator = $this->entryRepo->setPartner($request->partner);
-            $profile_id = PosCustomer::find($request->customer_id)->profile_id;
+            $profile_id        = PosCustomer::find($request->customer_id)->profile_id;
 
             $payable = $payable_generator->getPayableById((int)$profile_id, $payable_id);
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($payable, new PayableItemTransformer());
+            $resource          = new Item($payable, new PayableItemTransformer());
             $payable_formatted = $manager->createData($resource)->toArray()['data'];
 
             return api_response($request, $payable_formatted, 200, ["payable" => $payable_formatted]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
+            $sentry  = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
@@ -144,16 +141,15 @@ class PayableController extends Controller
      * @param $payable_id
      * @return JsonResponse
      */
-    public function logs(Request $request, $partner_id, $payable_id)
-    {
+    public function logs(Request $request, $partner_id, $payable_id) {
         try {
-            $logs = [];
+            $logs         = [];
             $payable_logs = $this->entryRepo->setPartner($request->partner)->getAllPayableLogsBy($payable_id);
 
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
             foreach ($payable_logs as $payable_log) {
-                $resource = new Item($payable_log, new PayableLogTransformer());
+                $resource      = new Item($payable_log, new PayableLogTransformer());
                 $formatted_log = $manager->createData($resource)->toArray()['data'];
                 array_push($logs, $formatted_log);
             }
@@ -161,7 +157,7 @@ class PayableController extends Controller
             return api_response($request, null, 200, ['logs' => $logs]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
+            $sentry  = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
@@ -177,15 +173,14 @@ class PayableController extends Controller
      * @param $payable_id
      * @return JsonResponse
      */
-    public function pay(Request $request, $partner_id, $payable_id)
-    {
+    public function pay(Request $request, $partner_id, $payable_id) {
         try {
-            $this->validate($request, ['amount' => 'required|numeric', 'customer_id'=> 'required|numeric']);
+            $this->validate($request, ['amount' => 'required|numeric', 'customer_id' => 'required|numeric']);
 
-            $input = $request->only(['amount']);
+            $input               = $request->only(['amount']);
             $input['profile_id'] = PosCustomer::find($request->customer_id)->profile_id;
             $updater_information = [
-                'updated_by' => $request->manager_resource->id,
+                'updated_by'      => $request->manager_resource->id,
                 'updated_by_type' => get_class($request->manager_resource),
                 'updated_by_name' => $request->manager_resource->profile->name
             ];
@@ -194,11 +189,12 @@ class PayableController extends Controller
             return api_response($request, null, 200, ['payable' => $payable]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
+            $sentry  = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {;
+        } catch (Throwable $e) {
+            ;
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
