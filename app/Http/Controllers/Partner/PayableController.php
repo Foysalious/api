@@ -63,7 +63,7 @@ class PayableController extends Controller {
 
                 $profile_id                    = $payable_formatted['profile_id'];
                 $payable_formatted['customer'] = [
-                    'id'    => isset($pos_customers[$profile_id]) ? $pos_customers[$profile_id] : $creator->createFromProfile($profile_id)->id,
+                    'id'    => isset($pos_customers[$profile_id]) ? $pos_customers[$profile_id] : $creator->setPartner($request->partner)->createFromProfile($profile_id)->id,
                     'name'  => $profiles[$profile_id]['name'],
                     'image' => $profiles[$profile_id]['pro_pic']
                 ];

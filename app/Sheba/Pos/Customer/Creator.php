@@ -14,8 +14,7 @@ use Sheba\Repositories\ProfileRepository;
 use Sheba\RequestIdentification;
 use Sheba\Reward\ActionRewardDispatcher;
 
-class Creator
-{
+class Creator {
     use FileManager, CdnFileManager;
 
     private $data;
@@ -30,45 +29,39 @@ class Creator
     /** @var Partner */
     private $partner;
 
-    public function __construct(ProfileRepository $profile_repo, PartnerPosCustomerRepository $customer_repo, PosCustomerRepository $pos_customer_repo)
-    {
-        $this->profiles = $profile_repo;
+    public function __construct(ProfileRepository $profile_repo, PartnerPosCustomerRepository $customer_repo, PosCustomerRepository $pos_customer_repo) {
+        $this->profiles            = $profile_repo;
         $this->partnerPosCustomers = $customer_repo;
-        $this->posCustomers = $pos_customer_repo;
+        $this->posCustomers        = $pos_customer_repo;
     }
 
-    public function setData($data)
-    {
+    public function setData($data) {
         $this->data = $data;
         return $this;
     }
 
-    public function setProfile(Profile $profile)
-    {
+    public function setProfile(Profile $profile) {
         $this->profile = $profile;
         return $this;
     }
 
-    public function setPartner(Partner $partner)
-    {
+    public function setPartner(Partner $partner) {
         $this->partner = $partner;
         return $this;
     }
 
-    public function hasError()
-    {
+    public function hasError() {
         if ($error = $this->alreadyExistError()) {
             return [
-                'code' => 421,
-                'msg' => array_values($error)[0],
+                'code'  => 421,
+                'msg'   => array_values($error)[0],
                 'input' => array_keys($error)[0]
             ];
         }
         return false;
     }
 
-    private function alreadyExistError()
-    {
+    private function alreadyExistError() {
         $mobile_profile = $this->profiles->checkExistingMobile($this->data['mobile']);
         if ($mobile_profile && $mobile_profile->posCustomer) {
             if (PartnerPosCustomer::where('customer_id', $mobile_profile->posCustomer->id)->where('partner_id', $this->data['partner']->id)->exists())
@@ -88,15 +81,14 @@ class Creator
     /**
      * @return PartnerPosCustomer
      */
-    public function create()
-    {
+    public function create() {
         $this->saveImages();
         $this->format();
         $this->data['profile_id'] = $this->resolveProfileId();
-        $customer = $this->createPosCustomer();
+        $customer                 = $this->createPosCustomer();
         $this->data['partner_id'] = $this->partner ? $this->partner->id : $this->data['partner']->id;
-        $this->data = array_except($this->data, ['mobile', 'name', 'email', 'address', 'profile_image', 'partner', 'manager_resource', 'profile_id']);
-        $partner_pos_customer = $this->partnerPosCustomers->where('partner_id', $this->data['partner_id'])->where('customer_id', $customer->id)->first();
+        $this->data               = array_except($this->data, ['mobile', 'name', 'email', 'address', 'profile_image', 'partner', 'manager_resource', 'profile_id']);
+        $partner_pos_customer     = $this->partnerPosCustomers->where('partner_id', $this->data['partner_id'])->where('customer_id', $customer->id)->first();
         if (!$partner_pos_customer) {
             $partner_pos_customer = $this->partnerPosCustomers->save($this->data + (new RequestIdentification())->get());
             app()->make(ActionRewardDispatcher::class)->run('pos_customer_create', $this->partner, $this->partner, $partner_pos_customer);
@@ -104,17 +96,18 @@ class Creator
 
         return $partner_pos_customer;
     }
-    public function createFromProfile($profile){
+
+    public function createFromProfile($profile) {
         $this->setProfile(Profile::find($profile));
-        $customer=$this->createPosCustomer();
-        $partner_pos_customer = $this->partnerPosCustomers->where('partner_id', $this->data['partner_id'])->where('customer_id', $customer->id)->first();
+        $customer             = $this->createPosCustomer();
+        $partner_pos_customer = $this->partnerPosCustomers->where('partner_id', $this->partner->id)->where('customer_id', $customer->id)->first();
         if (!$partner_pos_customer) {
             $this->partnerPosCustomers->save($this->data + (new RequestIdentification())->get());
         }
         return $customer;
     }
-    private function saveImages()
-    {
+
+    private function saveImages() {
         if (!$this->profile && $this->hasFile('profile_image')) $this->data['profile_image'] = $this->saveProfileImage();
     }
 
@@ -123,14 +116,12 @@ class Creator
      *
      * @return string
      */
-    private function saveProfileImage()
-    {
+    private function saveProfileImage() {
         list($avatar, $avatar_filename) = $this->makeThumb($this->data['profile_image'], $this->data['name']);
         return $this->saveImageToCDN($avatar, getResourceAvatarFolder(), $avatar_filename);
     }
 
-    private function resolveProfileId()
-    {
+    private function resolveProfileId() {
         if (!$this->profile) {
             $profile = $this->profiles->checkExistingProfile($this->data['mobile'], isset($this->data['email']) ? $this->data['email'] : null);
             if (!($profile instanceof Profile)) $profile = $this->profiles->store($this->data);
@@ -139,8 +130,7 @@ class Creator
         return $this->profile->id;
     }
 
-    private function createPosCustomer()
-    {
+    private function createPosCustomer() {
         $customer_query = PosCustomer::where('profile_id', $this->profile->id);
         if ($customer_query->exists()) {
             $customer = $customer_query->first();
@@ -151,19 +141,17 @@ class Creator
         return $customer;
     }
 
-    private function format()
-    {
+    private function format() {
         $this->data['mobile'] = $this->profile ? $this->profile->mobile : formatMobileAux($this->data['mobile']);
-        $this->data['email'] = (isset($this->data['email']) && !empty($this->data['email'])) ? $this->data['email'] : null;
-        $this->data['note'] = isset($this->data['note']) ? $this->data['note'] : null;
+        $this->data['email']  = (isset($this->data['email']) && !empty($this->data['email'])) ? $this->data['email'] : null;
+        $this->data['note']   = isset($this->data['note']) ? $this->data['note'] : null;
     }
 
     /**
      * @param $filename
      * @return bool
      */
-    private function hasFile($filename)
-    {
+    private function hasFile($filename) {
         return array_key_exists($filename, $this->data) && ($this->data[$filename] instanceof Image || ($this->data[$filename] instanceof UploadedFile && $this->data[$filename]->getPath() != ''));
     }
 }
