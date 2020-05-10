@@ -223,10 +223,10 @@ class OrderController extends Controller
                 'partner_wise_order_id' => $order->partner_wise_order_id
             ];
             app()->make(ActionRewardDispatcher::class)->run('pos_order_create', $partner, $partner, $order, (new RequestIdentification())->get()['portal_name']);
-            /**
-             * USAGE LOG
-             */
-            (new Usage())->setUser($partner)->setType(Usage::Partner()::POS_ORDER_CREATE)->create($modifier);
+//            /**
+//             * USAGE LOG
+//             */
+//            (new Usage())->setUser($partner)->setType(Usage::Partner()::POS_ORDER_CREATE)->create($modifier);
             return api_response($request, null, 200, [
                 'message' => 'Order Created Successfully',
                 'order'   => $order,
@@ -454,10 +454,10 @@ class OrderController extends Controller
             $order                 = $order->calculate();
             $order->payment_status = $order->getPaymentStatus();
             $this->updateIncome($order, $request->paid_amount);
-            /**
-             * USAGE LOG
-             */
-            (new Usage())->setUser($request->partner)->setType(Usage::Partner()::POS_DUE_COLLECTION)->create($request->manager_resource);
+//            /**
+//             * USAGE LOG
+//             */
+//            (new Usage())->setUser($request->partner)->setType(Usage::Partner()::POS_DUE_COLLECTION)->create($request->manager_resource);
             return api_response($request, null, 200, [
                 'msg'   => 'Payment Collect Successfully',
                 'order' => $order
