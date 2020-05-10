@@ -56,7 +56,7 @@ class ServiceTransformer extends TransformerAbstract
             'category_id' => $cross_sale_service->category_id,
             'service_id' => $cross_sale_service->service_id
         ] : null;
-        $delivery_charge = $this->deliveryCharge->setCategory($category)->get();
+        $delivery_charge = $this->deliveryCharge->setCategory($category)->setLocation($this->locationService->location)->get();
         $discount_checking_params = (new JobDiscountCheckingParams())->setDiscountableAmount($delivery_charge);
         $this->jobDiscountHandler->setType(DiscountTypes::DELIVERY)->setCategory($category)->setCheckingParams($discount_checking_params)->calculate();
         /** @var Discount $delivery_discount */
