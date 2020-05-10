@@ -1,11 +1,10 @@
 <?php namespace App\Exceptions;
 
-use Exception;
 
-class HyperLocationNotFoundException extends Exception
+class HyperLocationNotFoundException extends ApiValidationException
 {
     public function report()
     {
-        \Log::debug('User not found');
+        \Log::debug('Location outside sheba service zone');
     }
 }

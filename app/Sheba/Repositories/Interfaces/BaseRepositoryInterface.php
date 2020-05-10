@@ -94,4 +94,6 @@ interface BaseRepositoryInterface
     public function paginate($limit);
 
     public function getByFieldOn($field, $data);
+
+    public function builder();
 }
