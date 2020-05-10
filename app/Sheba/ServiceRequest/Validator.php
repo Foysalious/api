@@ -52,7 +52,7 @@ class Validator
     public function validate()
     {
         foreach ($this->services as $service) {
-            $rules = in_array($service['id'], config('sheba.car_rental.service_ids')) ? $this->rentACarRules : $this->rules;
+            $rules = isset($service['id']) && in_array($service['id'], config('sheba.car_rental.service_ids')) ? $this->rentACarRules : $this->rules;
             $validator = LaravelValidator::make($service, $rules);
             if (!$validator->passes()) $this->setErrors($validator);
         }

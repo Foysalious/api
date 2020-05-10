@@ -4,7 +4,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Profile extends Model
 {
-    protected $guarded  = ['id'];
+    protected $guarded = ['id'];
     protected $fillable = [
         'name',
         'bn_name',
@@ -115,16 +115,21 @@ class Profile extends Model
 
     public function nominee()
     {
-        return $this->hasOne(Profile::class, 'id','nominee_id');
+        return $this->hasOne(Profile::class, 'id', 'nominee_id');
     }
 
     public function granter()
     {
-        return $this->hasOne(Profile::class, 'id','grantor_id');
+        return $this->hasOne(Profile::class, 'id', 'grantor_id');
     }
 
     public function bankUser()
     {
         return $this->hasOne(BankUser::class);
+    }
+
+    public function isBlackListed()
+    {
+        return (int)$this->is_blacklisted;
     }
 }

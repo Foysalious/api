@@ -45,6 +45,7 @@ use Sheba\ServiceRequest\ServiceRequestObject;
 class OrderPlace
 {
     use ModificationFields;
+
     private $deliveryAddressId;
     /** @var CustomerDeliveryAddress */
     private $deliveryAddress;
@@ -145,7 +146,7 @@ class OrderPlace
      */
     public function setDeliveryAddress($delivery_address)
     {
-        $this->address = $delivery_address;
+        $this->address = (int)$delivery_address;
         return $this;
     }
 

@@ -29,11 +29,13 @@ use Sheba\Dal\UniversalSlug\SluggableType;
 use Sheba\JobDiscount\JobDiscountCheckingParams;
 use Sheba\JobDiscount\JobDiscountHandler;
 use Sheba\Location\Coords;
+use Sheba\LocationService\CorruptedPriceStructureException;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\LocationService\UpsellCalculation;
 use Sheba\ModificationFields;
 use Sheba\Service\MinMaxPrice;
 use Sheba\Subscription\ApproximatePriceCalculator;
+use stdClass;
 use Throwable;
 
 class CategoryController extends Controller
@@ -362,206 +364,203 @@ class CategoryController extends Controller
                                 JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, MinMaxPrice $min_max_price, ApproximatePriceCalculator $approximate_price_calculator)
     {
         ini_set('memory_limit', '2048M');
-        try {
-            $subscription_faq = null;
-            if ($request->has('location')) {
-                $location = $request->location != '' ? $request->location : 4;
-            } else {
-                if ($request->has('lat') && $request->has('lng')) {
-                    $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
-                    if (!is_null($hyperLocation)) $location = $hyperLocation->location->id; else return api_response($request, null, 404);
-                } else $location = 4;
-            }
-            /** @var Category $cat */
-            $cat = Category::where('id', $category)->whereHas('locations', function ($q) use ($location) {
-                $q->where('locations.id', $location);
-            });
+        $subscription_faq = null;
+        if ($request->has('location')) {
+            $location = $request->location != '' ? $request->location : 4;
+        } else {
+            if ($request->has('lat') && $request->has('lng')) {
+                $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+                if (!is_null($hyperLocation)) $location = $hyperLocation->location->id; else return api_response($request, null, 404);
+            } else $location = 4;
+        }
+        /** @var Category $cat */
+        $cat = Category::where('id', $category)->whereHas('locations', function ($q) use ($location) {
+            $q->where('locations.id', $location);
+        });
 
-            if ((int)$request->is_business) {
-                $category = $cat->publishedForBusiness()->first();
-            } elseif ((int)$request->is_b2b) {
-                $category = $cat->publishedForB2B()->first();
-            } elseif ((int)$request->is_ddn) {
-                $category = $cat->publishedForDdn()->first();
-            } else {
-                $category = $cat->published()->first();
-            }
+        if ((int)$request->is_business) {
+            $category = $cat->publishedForBusiness()->first();
+        } elseif ((int)$request->is_b2b) {
+            $category = $cat->publishedForB2B()->first();
+        } elseif ((int)$request->is_ddn) {
+            $category = $cat->publishedForDdn()->first();
+        } else {
+            $category = $cat->published()->first();
+        }
 
-            if ($category != null) {
-                $category_slug = $category->getSlug();
-                $cross_sale_service = $category->crossSaleService;
-                list($offset, $limit) = calculatePagination($request);
-                $scope = [];
-                if ($request->has('scope')) $scope = $this->serviceRepository->getServiceScope($request->scope);
+        if ($category != null) {
+            $category_slug = $category->getSlug();
+            $cross_sale_service = $category->crossSaleService;
+            list($offset, $limit) = calculatePagination($request);
+            $scope = [];
+            if ($request->has('scope')) $scope = $this->serviceRepository->getServiceScope($request->scope);
 
-                if ($category->parent_id == null) {
-                    if ((int)$request->is_business) {
-                        $services = $this->categoryRepository->getServicesOfCategory((Category::where('parent_id', $category->id)->publishedForBusiness()->orderBy('order')->get())->pluck('id')->toArray(), $location, $offset, $limit);
-                    } elseif ($request->is_b2b) {
-                        $services = $this->categoryRepository->getServicesOfCategory(Category::where('parent_id', $category->id)->publishedForB2B()
-                            ->orderBy('order')->get()->pluck('id')->toArray(), $location, $offset, $limit);
-                    } elseif ($request->is_ddn) {
-                        $services = $this->categoryRepository->getServicesOfCategory(Category::where('parent_id', $category->id)->publishedForDdn()
-                            ->orderBy('order')->get()->pluck('id')->toArray(), $location, $offset, $limit);
-                    } else {
-                        $services = $this->categoryRepository->getServicesOfCategory($category->children->sortBy('order')->pluck('id'), $location, $offset, $limit);
-                    }
-                    $services = $this->serviceRepository->addServiceInfo($services, $scope);
+            if ($category->parent_id == null) {
+                if ((int)$request->is_business) {
+                    $services = $this->categoryRepository->getServicesOfCategory((Category::where('parent_id', $category->id)->publishedForBusiness()->orderBy('order')->get())->pluck('id')->toArray(), $location, $offset, $limit);
+                } elseif ($request->is_b2b) {
+                    $services = $this->categoryRepository->getServicesOfCategory(Category::where('parent_id', $category->id)->publishedForB2B()
+                        ->orderBy('order')->get()->pluck('id')->toArray(), $location, $offset, $limit);
+                } elseif ($request->is_ddn) {
+                    $services = $this->categoryRepository->getServicesOfCategory(Category::where('parent_id', $category->id)->publishedForDdn()
+                        ->orderBy('order')->get()->pluck('id')->toArray(), $location, $offset, $limit);
                 } else {
-                    $category->load(['services' => function ($q) use ($offset, $limit, $location) {
-                        if (!(int)\request()->is_business || !(int)\request()->is_ddn) {
-                            $q->whereNotIn('id', $this->serviceGroupServiceIds());
-
-                        }
-                        $q->whereHas('locations', function ($query) use ($location) {
-                            $query->where('locations.id', $location);
-                        })->select(
-                            'id', 'category_id', 'unit', 'name', 'bn_name', 'thumb',
-                            'app_thumb', 'app_banner', 'short_description', 'description',
-                            'banner', 'faqs', 'variables', 'variable_type', 'min_quantity', 'options_content',
-                            'terms_and_conditions', 'features'
-                        )->orderBy('order')->skip($offset)->take($limit);
-
-                        if ((int)\request()->is_business) $q->publishedForBusiness();
-                        elseif ((int)\request()->is_for_backend) $q->publishedForAll();
-                        elseif ((int)\request()->is_b2b) $q->publishedForB2B();
-                        elseif ((int)\request()->is_ddn) $q->publishedForDdn();
-                        else $q->published();
-                    }]);
-                    $services = $category->services;
+                    $services = $this->categoryRepository->getServicesOfCategory($category->children->sortBy('order')->pluck('id'), $location, $offset, $limit);
                 }
-
-                if ($location) {
-                    $services->load(['activeSubscription', 'locationServices' => function ($q) use ($location) {
-                        $q->where('location_id', $location);
-                    }]);
-                }
-
-                if ($request->has('service_id')) {
-                    $services = $services->filter(function ($service) use ($request) {
-                        return $request->service_id == $service->id;
-                    });
-                }
-
-                $subscriptions = collect();
-                $final_services = collect();
-                $service_ids = $services->pluck('id')->toArray();
-                $slugs = UniversalSlugModel::where('sluggable_type', 'like', '%service')->whereIn('sluggable_id', $service_ids)->select('sluggable_id', 'slug')->get();
-                $location_service_ids = [];
-                foreach ($services->pluck('locationServices') as $location_service) {
-                    array_push($location_service_ids, $location_service->first() ? $location_service->first()->id : null);
-                }
-                $location_service_with_discounts = LocationService::whereIn('id', $location_service_ids)->select('id', 'location_id', 'service_id')
-                    ->whereHas('discounts', function ($q) {
-                        $q->running();
-                    })->with(['discounts' => function ($q) {
-                        $q->running();
-                    }])->get();
-                foreach ($services as $key => $service) {
-                    /** @var LocationService $location_service */
-                    $location_service = $service->locationServices->first();
-                    $location_service_with_discount = $location_service_with_discounts->where('id', $location_service->id)->first();
-                    /** @var ServiceDiscount $discount */
-                    $discount = $location_service_with_discount ? $location_service_with_discount->discounts->first() : null;
-                    $prices = json_decode($location_service->prices);
-                    if ($prices === null) continue;
-                    $price_calculation->setService($service)->setLocationService($location_service);
-                    $upsell_calculation->setService($service)->setLocationService($location_service);
-
-                    if ($service->variable_type == 'Options') {
-                        $service['option_prices'] = $this->formatOptionWithPrice($price_calculation, $prices, $upsell_calculation, $location_service);
-                    } else {
-                        $service['fixed_price'] = $price_calculation->getUnitPrice();
-                        $service['fixed_upsell_price'] = $upsell_calculation->getAllUpsellWithMinMaxQuantity();
-                    }
-
-                    $service['discount'] = $discount ? [
-                        'value' => (double)$discount->amount,
-                        'is_percentage' => $discount->isPercentage(),
-                        'cap' => (double)$discount->cap
-                    ] : null;
-                    $min_max_price->setService($service)->setLocationService($location_service);
-                    $service['max_price'] = $min_max_price->getMax();
-                    $service['min_price'] = $min_max_price->getMin();
-                    $service['terms_and_conditions'] = $service->terms_and_conditions ? json_decode($service->terms_and_conditions) : null;
-                    $service['features'] = $service->features ? json_decode($service->features) : null;
-                    $slug = $slugs->where('sluggable_id', $service->id)->first();
-                    $service['slug'] = $slug ? $slug->slug : null;
-
-                    /** @var ServiceSubscription $subscription */
-                    if ($subscription = $service->activeSubscription) {
-                        $price_range = $approximate_price_calculator->setLocationService($location_service)->setSubscription($subscription)->getPriceRange();
-                        $subscription = removeRelationsAndFields($subscription);
-                        $subscription['max_price'] = $price_range['max_price'] > 0 ? $price_range['max_price'] : 0;
-                        $subscription['min_price'] = $price_range['min_price'] > 0 ? $price_range['min_price'] : 0;
-                        $subscription['thumb'] = $service['thumb'];
-                        $subscription['banner'] = $service['banner'];
-                        $subscription['offers'] = $subscription->getDiscountOffers();
-                        if ($subscription->faq) {
-                            $faq = json_decode($subscription->faq);
-                            if ($faq->title && $faq->description) {
-                                $subscription_faq = [
-                                    'title' => $faq->title,
-                                    'body' => $faq->description,
-                                    'image' => $faq->image_link ? $faq->image_link : "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/categories_images/thumbs/1564579810_subscription_image_link.png",
-                                ];
-                            }
-                        }
-                        $subscriptions->push($subscription);
-                    }
-                    removeRelationsAndFields($service);
-                    $final_services->push($service);
-                }
-                $services = $final_services;
-                if ($services->count() > 0) {
-                    $parent_category = null;
-                    if ($category->parent_id != null) $parent_category = $category->parent()->select('id', 'name', 'slug')->first();
-                    $category = collect($category)->only(['id', 'name', 'slug', 'banner', 'parent_id', 'app_banner', 'service_title', 'is_auto_sp_enabled', 'min_order_amount']);
-                    $version_code = (int)$request->header('Version-Code');
-                    $services = $this->serviceQuestionSet($services);
-                    if ($version_code && $version_code <= 30122 && $version_code <= 107) {
-                        $services = $services->reject(function ($service) use ($version_code) {
-                            return $service->subscription;
-                        })->values()->all();
-                    }
-                    $category['parent_name'] = $parent_category ? $parent_category->name : null;
-                    $category['parent_slug'] = $parent_category ? $parent_category->slug : null;
-                    $category['services'] = $services;
-                    $category['subscriptions'] = $subscriptions;
-                    $category['cross_sale'] = $cross_sale_service ? [
-                        'title' => $cross_sale_service->title,
-                        'description' => $cross_sale_service->description,
-                        'icon' => $cross_sale_service->icon,
-                        'category_id' => $cross_sale_service->category_id,
-                        'service_id' => $cross_sale_service->service_id
-                    ] : null;
-                    $category_model = Category::find($category['id']);
-                    $category['delivery_charge'] = $delivery_charge->setCategory($category_model)->get();
-                    $discount_checking_params = (new JobDiscountCheckingParams())->setDiscountableAmount($category['delivery_charge']);
-                    $job_discount_handler->setType(DiscountTypes::DELIVERY)->setCategory($category_model)->setCheckingParams($discount_checking_params)->calculate();
-                    /** @var Discount $delivery_discount */
-                    $delivery_discount = $job_discount_handler->getDiscount();
-
-                    $category['delivery_discount'] = $delivery_discount ? [
-                        'value' => (double)$delivery_discount->amount,
-                        'is_percentage' => $delivery_discount->is_percentage,
-                        'cap' => (double)$delivery_discount->cap,
-                        'min_order_amount' => (double)$delivery_discount->rules->getMinOrderAmount()
-                    ] : null;
-                    $category['slug'] = $category_slug;
-
-                    if ($subscriptions->count()) {
-                        $category['subscription_faq'] = $subscription_faq;
-                    }
-                    return api_response($request, $category, 200, ['category' => $category]);
-                } else
-                    return api_response($request, null, 404);
+                $services = $this->serviceRepository->addServiceInfo($services, $scope);
             } else {
-                return api_response($request, null, 404);
+                $category->load(['services' => function ($q) use ($offset, $limit, $location) {
+                    if (!(int)\request()->is_business || !(int)\request()->is_ddn) {
+                        $q->whereNotIn('id', $this->serviceGroupServiceIds());
+
+                    }
+                    $q->whereHas('locations', function ($query) use ($location) {
+                        $query->where('locations.id', $location);
+                    })->select(
+                        'id', 'category_id', 'unit', 'name', 'bn_name', 'thumb',
+                        'app_thumb', 'app_banner', 'short_description', 'description',
+                        'banner', 'faqs', 'variables', 'variable_type', 'min_quantity', 'options_content',
+                        'terms_and_conditions', 'features'
+                    )->orderBy('order')->skip($offset)->take($limit);
+
+                    if ((int)\request()->is_business) $q->publishedForBusiness();
+                    elseif ((int)\request()->is_for_backend) $q->publishedForAll();
+                    elseif ((int)\request()->is_b2b) $q->publishedForB2B();
+                    elseif ((int)\request()->is_ddn) $q->publishedForDdn();
+                    else $q->published();
+                }]);
+                $services = $category->services;
             }
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+
+            if ($location) {
+                $services->load(['activeSubscription', 'locationServices' => function ($q) use ($location) {
+                    $q->where('location_id', $location);
+                }]);
+            }
+
+            if ($request->has('service_id')) {
+                $services = $services->filter(function ($service) use ($request) {
+                    return $request->service_id == $service->id;
+                });
+            }
+
+            $subscriptions = collect();
+            $final_services = collect();
+            $service_ids = $services->pluck('id')->toArray();
+            $slugs = UniversalSlugModel::where('sluggable_type', 'like', '%service')->whereIn('sluggable_id', $service_ids)->select('sluggable_id', 'slug')->get();
+            $location_service_ids = [];
+            foreach ($services->pluck('locationServices') as $location_service) {
+                array_push($location_service_ids, $location_service->first() ? $location_service->first()->id : null);
+            }
+            $location_service_with_discounts = LocationService::whereIn('id', $location_service_ids)->select('id', 'location_id', 'service_id')
+                ->whereHas('discounts', function ($q) {
+                    $q->running();
+                })->with(['discounts' => function ($q) {
+                    $q->running();
+                }])->get();
+            foreach ($services as $key => $service) {
+                /** @var LocationService $location_service */
+                $location_service = $service->locationServices->first();
+                $location_service_with_discount = $location_service_with_discounts->where('id', $location_service->id)->first();
+                /** @var ServiceDiscount $discount */
+                $discount = $location_service_with_discount ? $location_service_with_discount->discounts->first() : null;
+                $prices = json_decode($location_service->prices);
+                if ($prices === null) continue;
+                $price_calculation->setService($service)->setLocationService($location_service);
+                $upsell_calculation->setService($service)->setLocationService($location_service);
+
+                if ($service->variable_type == 'Options') {
+                    if (!$prices instanceof stdClass) throw new CorruptedPriceStructureException('Price mismatch in Service #' . $location_service->service_id . ' and location #' . $location_service->location_id, 400);
+                    $service['option_prices'] = $this->formatOptionWithPrice($price_calculation, $prices, $upsell_calculation, $location_service);
+                } else {
+                    if ($prices instanceof stdClass) throw new CorruptedPriceStructureException('Price mismatch in Service #' . $location_service->service_id . ' and location #' . $location_service->location_id, 400);
+                    $service['fixed_price'] = $price_calculation->getUnitPrice();
+                    $service['fixed_upsell_price'] = $upsell_calculation->getAllUpsellWithMinMaxQuantity();
+                }
+
+                $service['discount'] = $discount ? [
+                    'value' => (double)$discount->amount,
+                    'is_percentage' => $discount->isPercentage(),
+                    'cap' => (double)$discount->cap
+                ] : null;
+                $min_max_price->setService($service)->setLocationService($location_service);
+                $service['max_price'] = $min_max_price->getMax();
+                $service['min_price'] = $min_max_price->getMin();
+                $service['terms_and_conditions'] = $service->terms_and_conditions ? json_decode($service->terms_and_conditions) : null;
+                $service['features'] = $service->features ? json_decode($service->features) : null;
+                $slug = $slugs->where('sluggable_id', $service->id)->first();
+                $service['slug'] = $slug ? $slug->slug : null;
+
+                /** @var ServiceSubscription $subscription */
+                if ($subscription = $service->activeSubscription) {
+                    $price_range = $approximate_price_calculator->setLocationService($location_service)->setSubscription($subscription)->getPriceRange();
+                    $subscription = removeRelationsAndFields($subscription);
+                    $subscription['max_price'] = $price_range['max_price'] > 0 ? $price_range['max_price'] : 0;
+                    $subscription['min_price'] = $price_range['min_price'] > 0 ? $price_range['min_price'] : 0;
+                    $subscription['thumb'] = $service['thumb'];
+                    $subscription['banner'] = $service['banner'];
+                    $subscription['offers'] = $subscription->getDiscountOffers();
+                    if ($subscription->faq) {
+                        $faq = json_decode($subscription->faq);
+                        if ($faq->title && $faq->description) {
+                            $subscription_faq = [
+                                'title' => $faq->title,
+                                'body' => $faq->description,
+                                'image' => $faq->image_link ? $faq->image_link : "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/categories_images/thumbs/1564579810_subscription_image_link.png",
+                            ];
+                        }
+                    }
+                    $subscriptions->push($subscription);
+                }
+                removeRelationsAndFields($service);
+                $final_services->push($service);
+            }
+            $services = $final_services;
+            if ($services->count() > 0) {
+                $parent_category = null;
+                if ($category->parent_id != null) $parent_category = $category->parent()->select('id', 'name', 'slug')->first();
+                $category = collect($category)->only(['id', 'name', 'slug', 'banner', 'parent_id', 'app_banner', 'service_title', 'is_auto_sp_enabled', 'min_order_amount']);
+                $version_code = (int)$request->header('Version-Code');
+                $services = $this->serviceQuestionSet($services);
+                if ($version_code && $version_code <= 30122 && $version_code <= 107) {
+                    $services = $services->reject(function ($service) use ($version_code) {
+                        return $service->subscription;
+                    })->values()->all();
+                }
+                $category['parent_name'] = $parent_category ? $parent_category->name : null;
+                $category['parent_slug'] = $parent_category ? $parent_category->slug : null;
+                $category['services'] = $services;
+                $category['subscriptions'] = $subscriptions;
+                $category['cross_sale'] = $cross_sale_service ? [
+                    'title' => $cross_sale_service->title,
+                    'description' => $cross_sale_service->description,
+                    'icon' => $cross_sale_service->icon,
+                    'category_id' => $cross_sale_service->category_id,
+                    'service_id' => $cross_sale_service->service_id
+                ] : null;
+                $category_model = Category::find($category['id']);
+                $category['delivery_charge'] = $delivery_charge->setCategory($category_model)->get();
+                $discount_checking_params = (new JobDiscountCheckingParams())->setDiscountableAmount($category['delivery_charge']);
+                $job_discount_handler->setType(DiscountTypes::DELIVERY)->setCategory($category_model)->setCheckingParams($discount_checking_params)->calculate();
+                /** @var Discount $delivery_discount */
+                $delivery_discount = $job_discount_handler->getDiscount();
+
+                $category['delivery_discount'] = $delivery_discount ? [
+                    'value' => (double)$delivery_discount->amount,
+                    'is_percentage' => $delivery_discount->is_percentage,
+                    'cap' => (double)$delivery_discount->cap,
+                    'min_order_amount' => (double)$delivery_discount->rules->getMinOrderAmount()
+                ] : null;
+                $category['slug'] = $category_slug;
+
+                if ($subscriptions->count()) {
+                    $category['subscription_faq'] = $subscription_faq;
+                }
+                return api_response($request, $category, 200, ['category' => $category]);
+            } else
+                return api_response($request, null, 404);
+        } else {
+            return api_response($request, null, 404);
         }
     }
 

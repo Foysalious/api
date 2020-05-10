@@ -32,20 +32,20 @@ abstract class Handler
 
     public function render()
     {
+
         $response = [
-            'code' => $this->getCode(),
+            'code' => $this->exception->getCode() ? $this->exception->getCode() : 500,
             'message' => $this->getMessage()
         ];
 
-        if($this->wantsTrace()) {
+        if ($this->wantsTrace()) {
             $response['exception'] = [
                 'message' => $this->exception->getMessage(),
                 'file' => $this->exception->getFile(),
-                'line' => $this->exception->getLine()
+                'line' => $this->exception->getLine(),
             ];
         }
-
-        return api_response($this->request, null, $this->getCode(), $response);
+        return api_response($this->request, null, 500, $response);
     }
 
     /**

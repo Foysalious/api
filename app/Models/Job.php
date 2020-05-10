@@ -1114,6 +1114,11 @@ class Job extends BaseModel implements MorphCommentable
         return !$this->review;
     }
 
+    public function hasResource()
+    {
+        return (int)$this->resource_id;
+    }
+
     /**
      * @inheritDoc
      */
