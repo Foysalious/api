@@ -1,6 +1,5 @@
 <?php namespace Sheba\TopUp\Gateway\Pretups\Operator;
 
-
 trait RobiAxiata
 {
     protected function getUrl()
@@ -16,7 +15,7 @@ trait RobiAxiata
 
     protected function getVPNUrl()
     {
-        return "http://robi-vpn.dev-sheba.xyz";
+        return "https://robi-vpn.sheba.xyz";
     }
 
     protected function getEXTNWCODE()

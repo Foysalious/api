@@ -188,7 +188,12 @@ class BaseRepository implements BaseRepositoryInterface
      */
     public function orWhere($column_name, $value)
     {
-        return $this->model->orWhere($column_name,$value);
+        return $this->model->orWhere($column_name, $value);
+    }
+
+    public function builder()
+    {
+        return $this->model->newQuery();
     }
 
 }
