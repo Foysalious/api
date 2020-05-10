@@ -210,67 +210,51 @@ class PartnerJobController extends Controller
 
     public function update($partner, $job, Request $request)
     {
-        try {
-            $job = $request->job;
-            $statuses = 'start,end';
-            foreach (constants('JOB_STATUSES') as $key => $value) {
-                $statuses .= ",$value";
-            }
-            $this->validate($request, [
-                'schedule_date' => 'sometimes|required|date|after:' . Carbon::yesterday(),
-                'preferred_time' => 'required_with:schedule_date|string',
-                'resource_id' => 'string',
-                'status' => 'sometimes|required|in:' . $statuses
-            ]);
-            if ($request->has('schedule_date') && $request->has('preferred_time')) {
-                $job_time = new JobTime($request->day, $request->time);
-                $job_time->validate();
-                if (!$job_time->isValid) {
-                    return api_response($request, null, 400, ['message' => $job_time->error_message]);
-                }
-                if (!scheduler(Resource::find((int)$job->resource_id))->isAvailableForCategory($request->schedule_date, explode('-', $request->preferred_time)[0], $job->category, $job)) {
-                    return api_response($request, null, 403, ['message' => 'Resource is not available at this time. Please select different date time or change the resource']);
-                }
-                $request->merge(['resource' => $request->manager_resource]);
-                $response = $this->resourceJobRepository->reschedule($job->id, $request);
-                return $response ? api_response($request, $response, $response->code) : api_response($request, null, 500);
-            }
-            if ($request->has('resource_id')) {
-                if ((int)$job->resource_id == (int)$request->resource_id) return api_response($request, null, 403, ['message' => 'অর্ডারটিতে এই রিসোর্স এসাইন করা রয়েছে']);
-                if (!scheduler(Resource::find((int)$request->resource_id))->isAvailableForCategory($job->schedule_date, explode('-', $job->preferred_time)[0], $job->category, $job)) {
-                    return api_response($request, null, 403, ['message' => 'Resource is not available at this time. Please select different date time or change the resource']);
-                }
-                if ($request->partner->hasThisResource((int)$request->resource_id, 'Handyman') && $job->hasStatus(['Accepted', 'Schedule_Due', 'Process', 'Serve_Due'])) {
-                    $job = $this->assignResource($job, $request->resource_id, $request->manager_resource);
-                    return api_response($request, $job, 200);
-                }
-                return api_response($request, null, 403);
-            }
-            if ($request->has('status')) {
-                $new_status = $request->status;
-                if ($new_status === 'start') $new_status = $this->jobStatuses['Process'];
-                elseif ($new_status === 'end') $new_status = $this->jobStatuses['Served'];
-                /**
-                 * $due = (double)$job->partnerOrder->calculate(true)->due;
-                 * if ($new_status == "Served" && ($due > 0 || $due < 0)) {
-                 * $action = $due > 0 ? "collect" : "refund";
-                 * return api_response($request, null, 403, ['message' => "Please " . $action . " money to end this job."]);
-                 * }*/
-                if ($response = (new \Sheba\Repositories\ResourceJobRepository($request->manager_resource))->changeJobStatus($job, $new_status)) {
-                    return api_response($request, $response, $response->code, ['message' => $response->msg]);
-                }
-            }
-            return api_response($request, null, 500);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        /** @var Job $job */
+        $job = $request->job;
+        $statuses = 'start,end';
+        foreach (constants('JOB_STATUSES') as $key => $value) {
+            $statuses .= ",$value";
         }
+        $this->validate($request, [
+            'schedule_date' => 'sometimes|required|date|after:' . Carbon::yesterday(),
+            'preferred_time' => 'required_with:schedule_date|string',
+            'resource_id' => 'string',
+            'status' => 'sometimes|required|in:' . $statuses
+        ]);
+        if ($request->has('schedule_date') && $request->has('preferred_time')) {
+            $job_time = new JobTime($request->day, $request->time);
+            $job_time->validate();
+            if (!$job_time->isValid) {
+                return api_response($request, null, 400, ['message' => $job_time->error_message]);
+            }
+            if ($job->hasResource() && !scheduler(Resource::find((int)$job->resource_id))->isAvailableForCategory($request->schedule_date, explode('-', $request->preferred_time)[0], $job->category, $job)) {
+                return api_response($request, null, 403, ['message' => 'Resource is not available at this time. Please select different date time or change the resource']);
+            }
+            $request->merge(['resource' => $request->manager_resource]);
+            $response = $this->resourceJobRepository->reschedule($job->id, $request);
+            return $response ? api_response($request, $response, $response->code) : api_response($request, null, 500);
+        }
+        if ($request->has('resource_id')) {
+            if ((int)$job->resource_id == (int)$request->resource_id) return api_response($request, null, 403, ['message' => 'অর্ডারটিতে এই রিসোর্স এসাইন করা রয়েছে']);
+            if (!scheduler(Resource::find((int)$request->resource_id))->isAvailableForCategory($job->schedule_date, explode('-', $job->preferred_time)[0], $job->category, $job)) {
+                return api_response($request, null, 403, ['message' => 'Resource is not available at this time. Please select different date time or change the resource']);
+            }
+            if ($request->partner->hasThisResource((int)$request->resource_id, 'Handyman') && $job->hasStatus(['Accepted', 'Schedule_Due', 'Process', 'Serve_Due'])) {
+                $job = $this->assignResource($job, $request->resource_id, $request->manager_resource);
+                return api_response($request, $job, 200);
+            }
+            return api_response($request, null, 403);
+        }
+        if ($request->has('status')) {
+            $new_status = $request->status;
+            if ($new_status === 'start') $new_status = $this->jobStatuses['Process'];
+            elseif ($new_status === 'end') $new_status = $this->jobStatuses['Served'];
+            if ($response = (new \Sheba\Repositories\ResourceJobRepository($request->manager_resource))->changeJobStatus($job, $new_status)) {
+                return api_response($request, $response, $response->code, ['message' => $response->msg]);
+            }
+        }
+        return api_response($request, null, 500);
     }
 
     public function getMaterials($partner, $job, Request $request)

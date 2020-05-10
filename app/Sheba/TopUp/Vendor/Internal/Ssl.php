@@ -1,6 +1,4 @@
-<?php
-
-namespace Sheba\TopUp\Vendor\Internal;
+<?php namespace Sheba\TopUp\Vendor\Internal;
 
 use App\Models\TopUpOrder;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;

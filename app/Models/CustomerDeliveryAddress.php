@@ -9,7 +9,7 @@ class CustomerDeliveryAddress extends Model
     use SoftDeletes;
 
     protected $table = 'customer_delivery_addresses';
-    protected $guarded=['id'];
+    protected $guarded = ['id'];
     protected $dates = ['deleted_at'];
 
     public function customer()
@@ -22,6 +22,11 @@ class CustomerDeliveryAddress extends Model
         return $this->belongsTo(Location::class);
     }
 
+    public function scopeHasGeo($query)
+    {
+        return $query->where('geo_informations', '<>', null);
+    }
+
     public function getGeoAttribute()
     {
         return $this->geo_informations ? json_decode($this->geo_informations) : null;
@@ -32,4 +37,5 @@ class CustomerDeliveryAddress extends Model
         $geo = $this->getGeoAttribute();
         return new Geo($geo->lat, $geo->lng);
     }
+
 }
