@@ -21,6 +21,7 @@ use Sheba\Repositories\PaymentLinkRepository;
 use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
+use Sheba\Usage\Usage;
 
 class PaymentLinkOrderComplete extends PaymentComplete {
     use DispatchesJobs;
@@ -55,6 +56,7 @@ class PaymentLinkOrderComplete extends PaymentComplete {
                 $this->completePayment();
                 $this->processTransactions($payment_receiver);
                 $this->clearPosOrder();
+                $this->createUsage($payment_receiver,$payable->user);
             });
         } catch (QueryException $e) {
             $this->failPayment();
@@ -137,6 +139,11 @@ class PaymentLinkOrderComplete extends PaymentComplete {
             $payment_creator->credit($payment_data);
             $this->paymentLinkRepository->statusUpdate($this->paymentLink->getLinkID(), 0);
         }
+    }
+
+    private function createUsage($payment_receiver,$modifier)
+    {
+        (new Usage())->setUser($payment_receiver)->setType(Usage::Partner()::PAYMENT_LINK)->create($modifier);
     }
 
     protected function saveInvoice() {

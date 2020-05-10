@@ -39,6 +39,7 @@ use Sheba\Repositories\PartnerRepository;
 use Sheba\RequestIdentification;
 use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Subscription\Partner\Access\AccessManager;
+use Sheba\Usage\Usage;
 use Throwable;
 
 class OrderController extends Controller
@@ -177,13 +178,15 @@ class OrderController extends Controller
             $link = null;
             if ($request->manager_resource) {
                 $partner = $request->partner;
-                $this->setModifier($request->manager_resource);
+                $modifier = $request->manager_resource;
+                $this->setModifier($modifier);
             } else {
                 $partner              = $partnerRepository->find((int)$partner);
                 $profile              = $profileCreator->setMobile($request->customer_mobile)->setName($request->customer_name)->create();
                 $partner_pos_customer = $posCustomerCreator->setProfile($profile)->setPartner($partner)->create();
                 $pos_customer         = $partner_pos_customer->customer;
-                $this->setModifier($profile->customer);
+                $modifier = $profile->customer;
+                $this->setModifier($modifier);
                 $creator->setCustomer($pos_customer);
             }
             $creator->setPartner($partner)->setData($request->all());
@@ -220,6 +223,10 @@ class OrderController extends Controller
                 'partner_wise_order_id' => $order->partner_wise_order_id
             ];
             app()->make(ActionRewardDispatcher::class)->run('pos_order_create', $partner, $partner, $order, (new RequestIdentification())->get()['portal_name']);
+            /**
+             * USAGE LOG
+             */
+            (new Usage())->setUser($partner)->setType(Usage::Partner()::POS_ORDER_CREATE)->create($modifier);
             return api_response($request, null, 200, [
                 'message' => 'Order Created Successfully',
                 'order'   => $order,
@@ -447,6 +454,10 @@ class OrderController extends Controller
             $order                 = $order->calculate();
             $order->payment_status = $order->getPaymentStatus();
             $this->updateIncome($order, $request->paid_amount);
+            /**
+             * USAGE LOG
+             */
+            (new Usage())->setUser($request->partner)->setType(Usage::Partner()::POS_DUE_COLLECTION)->create($request->manager_resource);
             return api_response($request, null, 200, [
                 'msg'   => 'Payment Collect Successfully',
                 'order' => $order
