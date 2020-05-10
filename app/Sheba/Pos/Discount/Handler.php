@@ -27,6 +27,7 @@ class Handler
     private $discount;
     /** @var array $updateData*/
     private $updateData;
+    private $orderAmount;
 
     public function __construct(PosDiscountRepositoryInterface $pos_discount_repo)
     {
@@ -40,6 +41,12 @@ class Handler
     public function setOrder(PosOrder $order)
     {
         $this->order = $order;
+        return $this;
+    }
+
+    public function setOrderAmount($orderAmount)
+    {
+        $this->orderAmount = (double)$orderAmount;
         return $this;
     }
 
@@ -147,8 +154,10 @@ class Handler
         if ($this->type == DiscountTypes::ORDER) {
             $order_discount = new Order();
             $order_discount->setType($this->type)
+                ->setOrderAmount($this->orderAmount)
                 ->setOriginalAmount($this->data['discount'])
                 ->setIsPercentage($this->data['is_percentage']);
+            return $order_discount->getBeforeData();
         } else if ($this->type == DiscountTypes::SERVICE) {
             $order_discount = new Service();
             $order_discount->setType($this->type)
