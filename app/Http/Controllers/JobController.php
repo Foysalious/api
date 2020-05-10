@@ -80,156 +80,152 @@ class JobController extends Controller
 
     public function show($customer, $job, Request $request, PriceCalculation $price_calculation, DeliveryCharge $delivery_charge, JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, ServiceV2MinimalTransformer $service_transformer)
     {
-        try {
-            $customer = $request->customer;
-            $job = $request->job->load(['resource.profile', 'carRentalJobDetail', 'category', 'review', 'jobServices', 'discounts', 'complains' => function ($q) use ($customer) {
-                $q->select('id', 'job_id', 'status', 'complain', 'complain_preset_id')
-                    ->whereHas('accessor', function ($query) use ($customer) {
-                        $query->where('accessors.model_name', get_class($customer));
-                    });
-            }]);
+        $customer = $request->customer;
+        $job = $request->job->load(['resource.profile', 'carRentalJobDetail', 'category', 'review', 'jobServices', 'discounts', 'complains' => function ($q) use ($customer) {
+            $q->select('id', 'job_id', 'status', 'complain', 'complain_preset_id')
+                ->whereHas('accessor', function ($query) use ($customer) {
+                    $query->where('accessors.model_name', get_class($customer));
+                });
+        }]);
 
-            $job->partnerOrder->calculate(true);
-            if (!$job->partnerOrder->order->deliveryAddress) {
-                $job->partnerOrder->order->deliveryAddress = $job->partnerOrder->order->getTempAddress();
-            }
-
-            $delivery_discount = 0;
-            $calculated_job = $job->calculate(true);
-            if (isset($calculated_job->otherDiscountsByType[DiscountTypes::DELIVERY]))
-                $delivery_discount = $calculated_job->otherDiscountsByType[DiscountTypes::DELIVERY];
-
-            $logistic_paid = $job->logistic_paid;
-            $logistic_charge = $job->logistic_charge;
-
-            if ($logistic_paid > $logistic_charge) $logistic_paid = $logistic_charge;
-            $logistic_due = ($logistic_charge - $logistic_paid);
-
-            $job_collection = collect();
-            $job_collection->put('id', $job->id);
-            $job_collection->put('resource_name', $job->resource ? $job->resource->profile->name : null);
-            $job_collection->put('resource_picture', $job->resource ? $job->resource->profile->pro_pic : null);
-            $job_collection->put('resource_mobile', $job->resource ? $job->resource->profile->mobile : null);
-            $job_collection->put('customer_identity', $customer->getIdentityAttribute());
-            $job_collection->put('delivery_address', $job->partnerOrder->order->deliveryAddress->address);
-            $job_collection->put('delivery_name', $job->partnerOrder->order->deliveryAddress->name);
-            $job_collection->put('delivery_mobile', $job->partnerOrder->order->deliveryAddress->mobile);
-            $job_collection->put('additional_information', $job->job_additional_info);
-            $job_collection->put('schedule_date', $job->schedule_date);
-            $job_collection->put('schedule_date_readable', (Carbon::parse($job->schedule_date))->format('jS F, Y'));
-            $job_collection->put('complains', $this->formatComplains($job->complains));
-            $job_collection->put('preferred_time', $job->readable_preferred_time);
-            $job_collection->put('category_id', $job->category ? $job->category->id : null);
-            $job_collection->put('category_name', $job->category ? $job->category->name : null);
-            $job_collection->put('category_image', $job->category ? $job->category->thumb : null);
-            $job_collection->put('min_order_amount', $job->category ? $job->category->min_order_amount : null);
-            $job_collection->put('partner_id', $job->partnerOrder->partner ? $job->partnerOrder->partner->id : null);
-            $job_collection->put('partner_name', $job->partnerOrder->partner ? $job->partnerOrder->partner->name : null);
-            $job_collection->put('partner_image', $job->partnerOrder->partner ? $job->partnerOrder->partner->getContactResourceProPic() : null);
-            $job_collection->put('partner_mobile', $job->partnerOrder->partner ? $job->partnerOrder->partner->getContactNumber() : null);
-            $job_collection->put('partner_address', $job->partnerOrder->partner ? $job->partnerOrder->partner->address : null);
-            $job_collection->put('status', $job->status);
-            $job_collection->put('rating', $job->review ? $job->review->rating : null);
-            $job_collection->put('review', $job->review ? $job->review->calculated_review : null);
-            $job_collection->put('original_price', (double)$job->partnerOrder->jobPricesWithLogistic);
-            $job_collection->put('discount', (double)$job->partnerOrder->totalDiscount);
-            $job_collection->put('payment_method', $this->formatPaymentMethod($job->partnerOrder->payment_method));
-            $job_collection->put('price', (double)$job->partnerOrder->grossAmountWithLogistic);
-            $job_collection->put('isDue', $job->partnerOrder->isDueWithLogistic() ? 1 : 0);
-            $job_collection->put('isRentCar', $job->isRentCar());
-            $job_collection->put('is_on_premise', $job->isOnPremise());
-            $job_collection->put('customer_favorite', $job->customerFavorite ? $job->customerFavorite->id : null);
-            $job_collection->put('order_code', $job->partnerOrder->order->code());
-            $job_collection->put('pick_up_address', $job->carRentalJobDetail ? $job->carRentalJobDetail->pick_up_address : null);
-            $job_collection->put('pick_up_address_geo', $job->carRentalJobDetail ? json_decode($job->carRentalJobDetail->pick_up_address_geo) : null);
-            $job_collection->put('destination_address', $job->carRentalJobDetail ? $job->carRentalJobDetail->destination_address : null);
-            $job_collection->put('destination_address_geo', $job->carRentalJobDetail ? json_decode($job->carRentalJobDetail->destination_address_geo) : null);
-            $job_collection->put('drop_off_date', $job->carRentalJobDetail ? (Carbon::parse($job->carRentalJobDetail->drop_off_date)->format('jS F, Y')) : null);
-            $job_collection->put('drop_off_time', $job->carRentalJobDetail ? (Carbon::parse($job->carRentalJobDetail->drop_off_time)->format('g:i A')) : null);
-            $job_collection->put('estimated_distance', $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_distance : null);
-            $job_collection->put('estimated_time', $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_time : null);
-            $job_collection->put('can_take_review', $this->canTakeReview($job));
-            $job_collection->put('can_pay', $this->canPay($job));
-            $job_collection->put('can_add_promo', $this->canAddPromo($job));
-            $job_collection->put('is_same_service', 1);
-
-            $manager = new Manager();
-            $manager->setSerializer(new ArraySerializer());
-            if (count($job->jobServices) == 0) {
-                $services = collect();
-                $variables = json_decode($job->service_variables);
-                $location_service = $job->service->locationServices->first();
-                $upsell_calculation->setService($job->service)
-                    ->setLocationService($location_service)
-                    ->setOption(json_decode($job->service_option, true))
-                    ->setQuantity($job->service_quantity);
-                $upsell_price = $upsell_calculation->getAllUpsellWithMinMaxQuantity();
-                $job_collection->put('is_same_service', 0);
-                $services->push([
-                    'service_id' => $job->service->id,
-                    'name' => $job->service_name,
-                    'variables' => $variables,
-                    'quantity' => $job->service_quantity,
-                    'unit' => $job->service->unit,
-                    'option' => $job->service_option,
-                    'variable_type' => $job->service_variable_type,
-                    'thumb' => $job->service->app_thumb,
-                    'fixed_upsell_price' => $upsell_price
-                ]);
-            } else {
-                $services = collect();
-                $notSame = 0;
-                foreach ($job->jobServices as $jobService) {
-                    /** @var JobService $jobService */
-                    $variables = json_decode($jobService->variables);
-                    $location_service = $jobService->service->locationServices->first();
-                    $upsell_calculation->setService($jobService->service)
-                        ->setLocationService($location_service)
-                        ->setOption(json_decode($jobService->option, true))
-                        ->setQuantity($jobService->quantity);
-                    $upsell_price = $upsell_calculation->getAllUpsellWithMinMaxQuantity();
-
-                    $location_service = LocationService::where('location_id', $job->partnerOrder->order->location_id)->where('service_id', $jobService->service->id)->first();
-                    $selected_service = [
-                        "option" => json_decode($jobService->option, true),
-                        "variable_type" => $jobService->variable_type
-                    ];
-                    if ($location_service) {
-                        $service_transformer->setLocationService($location_service);
-                        if ($jobService->variable_type != $location_service->service->variable_type) $notSame = 1;
-                    }
-                    $resource = new Item($selected_service, $service_transformer);
-                    $price_data = $manager->createData($resource)->toArray();
-
-                    $service_data = [
-                        'service_id' => $jobService->service->id,
-                        'name' => $jobService->formatServiceName($job),
-                        'variables' => $variables,
-                        'unit' => $jobService->service->unit,
-                        'quantity' => $jobService->quantity,
-                        'option' => $jobService->option,
-                        'variable_type' => $jobService->variable_type,
-                        'thumb' => $jobService->service->app_thumb,
-                        'upsell_price' => $upsell_price
-                    ];
-                    $service_data += $price_data;
-                    $services->push($service_data);
-                }
-                if ($notSame) $job_collection->put('is_same_service', 0);
-            }
-
-            $job_collection->put('services', $services);
-
-            $resource = new Item($job->category, new ServiceV2DeliveryChargeTransformer($delivery_charge, $job_discount_handler));
-            $delivery_charge_discount_data = $manager->createData($resource)->toArray();
-            $job_collection->put('delivery_charge', $delivery_charge_discount_data['delivery_charge']);
-            $job_collection->put('delivery_discount', $delivery_charge_discount_data['delivery_discount']);
-
-            return api_response($request, $job_collection, 200, ['job' => $job_collection]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        $job->partnerOrder->calculate(true);
+        if (!$job->partnerOrder->order->deliveryAddress) {
+            $job->partnerOrder->order->deliveryAddress = $job->partnerOrder->order->getTempAddress();
         }
+
+        $delivery_discount = 0;
+        $calculated_job = $job->calculate(true);
+        if (isset($calculated_job->otherDiscountsByType[DiscountTypes::DELIVERY]))
+            $delivery_discount = $calculated_job->otherDiscountsByType[DiscountTypes::DELIVERY];
+
+        $logistic_paid = $job->logistic_paid;
+        $logistic_charge = $job->logistic_charge;
+
+        if ($logistic_paid > $logistic_charge) $logistic_paid = $logistic_charge;
+        $logistic_due = ($logistic_charge - $logistic_paid);
+
+        $job_collection = collect();
+        $job_collection->put('id', $job->id);
+        $job_collection->put('resource_name', $job->resource ? $job->resource->profile->name : null);
+        $job_collection->put('resource_picture', $job->resource ? $job->resource->profile->pro_pic : null);
+        $job_collection->put('resource_mobile', $job->resource ? $job->resource->profile->mobile : null);
+        $job_collection->put('customer_identity', $customer->getIdentityAttribute());
+        $job_collection->put('delivery_address', $job->partnerOrder->order->deliveryAddress->address);
+        $job_collection->put('delivery_name', $job->partnerOrder->order->deliveryAddress->name);
+        $job_collection->put('delivery_mobile', $job->partnerOrder->order->deliveryAddress->mobile);
+        $job_collection->put('additional_information', $job->job_additional_info);
+        $job_collection->put('schedule_date', $job->schedule_date);
+        $job_collection->put('schedule_date_readable', (Carbon::parse($job->schedule_date))->format('jS F, Y'));
+        $job_collection->put('complains', $this->formatComplains($job->complains));
+        $job_collection->put('preferred_time', $job->readable_preferred_time);
+        $job_collection->put('category_id', $job->category ? $job->category->id : null);
+        $job_collection->put('category_name', $job->category ? $job->category->name : null);
+        $job_collection->put('category_image', $job->category ? $job->category->thumb : null);
+        $job_collection->put('min_order_amount', $job->category ? $job->category->min_order_amount : null);
+        $job_collection->put('partner_id', $job->partnerOrder->partner ? $job->partnerOrder->partner->id : null);
+        $job_collection->put('partner_name', $job->partnerOrder->partner ? $job->partnerOrder->partner->name : null);
+        $job_collection->put('partner_image', $job->partnerOrder->partner ? $job->partnerOrder->partner->getContactResourceProPic() : null);
+        $job_collection->put('partner_mobile', $job->partnerOrder->partner ? $job->partnerOrder->partner->getContactNumber() : null);
+        $job_collection->put('partner_address', $job->partnerOrder->partner ? $job->partnerOrder->partner->address : null);
+        $job_collection->put('status', $job->status);
+        $job_collection->put('rating', $job->review ? $job->review->rating : null);
+        $job_collection->put('review', $job->review ? $job->review->calculated_review : null);
+        $job_collection->put('original_price', (double)$job->partnerOrder->jobPricesWithLogistic);
+        $job_collection->put('discount', (double)$job->partnerOrder->totalDiscount);
+        $job_collection->put('payment_method', $this->formatPaymentMethod($job->partnerOrder->payment_method));
+        $job_collection->put('price', (double)$job->partnerOrder->grossAmountWithLogistic);
+        $job_collection->put('isDue', $job->partnerOrder->isDueWithLogistic() ? 1 : 0);
+        $job_collection->put('isRentCar', $job->isRentCar());
+        $job_collection->put('is_on_premise', $job->isOnPremise());
+        $job_collection->put('customer_favorite', $job->customerFavorite ? $job->customerFavorite->id : null);
+        $job_collection->put('order_code', $job->partnerOrder->order->code());
+        $job_collection->put('pick_up_address', $job->carRentalJobDetail ? $job->carRentalJobDetail->pick_up_address : null);
+        $job_collection->put('pick_up_address_geo', $job->carRentalJobDetail ? json_decode($job->carRentalJobDetail->pick_up_address_geo) : null);
+        $job_collection->put('destination_address', $job->carRentalJobDetail ? $job->carRentalJobDetail->destination_address : null);
+        $job_collection->put('destination_address_geo', $job->carRentalJobDetail ? json_decode($job->carRentalJobDetail->destination_address_geo) : null);
+        $job_collection->put('drop_off_date', $job->carRentalJobDetail ? (Carbon::parse($job->carRentalJobDetail->drop_off_date)->format('jS F, Y')) : null);
+        $job_collection->put('drop_off_time', $job->carRentalJobDetail ? (Carbon::parse($job->carRentalJobDetail->drop_off_time)->format('g:i A')) : null);
+        $job_collection->put('estimated_distance', $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_distance : null);
+        $job_collection->put('estimated_time', $job->carRentalJobDetail ? $job->carRentalJobDetail->estimated_time : null);
+        $job_collection->put('can_take_review', $this->canTakeReview($job));
+        $job_collection->put('can_pay', $this->canPay($job));
+        $job_collection->put('can_add_promo', $this->canAddPromo($job));
+        $job_collection->put('is_same_service', 1);
+
+        $manager = new Manager();
+        $manager->setSerializer(new ArraySerializer());
+        if (count($job->jobServices) == 0) {
+            $services = collect();
+            $variables = json_decode($job->service_variables);
+            $location_service = $job->service->locationServices->first();
+            $upsell_calculation->setService($job->service)
+                ->setLocationService($location_service)
+                ->setOption(json_decode($job->service_option, true))
+                ->setQuantity($job->service_quantity);
+            $upsell_price = $upsell_calculation->getAllUpsellWithMinMaxQuantity();
+            $job_collection->put('is_same_service', 0);
+            $services->push([
+                'service_id' => $job->service->id,
+                'name' => $job->service_name,
+                'variables' => $variables,
+                'quantity' => $job->service_quantity,
+                'unit' => $job->service->unit,
+                'option' => $job->service_option,
+                'variable_type' => $job->service_variable_type,
+                'thumb' => $job->service->app_thumb,
+                'fixed_upsell_price' => $upsell_price
+            ]);
+        } else {
+            $services = collect();
+            $notSame = 0;
+            foreach ($job->jobServices as $jobService) {
+                /** @var JobService $jobService */
+                $variables = json_decode($jobService->variables);
+                $location_service = $jobService->service->locationServices->first();
+                $option = json_decode($jobService->option, true);
+                $upsell_calculation->setService($jobService->service)
+                    ->setLocationService($location_service)
+                    ->setOption($option ? $option : [])
+                    ->setQuantity($jobService->quantity);
+                $upsell_price = $upsell_calculation->getAllUpsellWithMinMaxQuantity();
+
+                $location_service = LocationService::where('location_id', $job->partnerOrder->order->location_id)->where('service_id', $jobService->service->id)->first();
+                $selected_service = [
+                    "option" => json_decode($jobService->option, true),
+                    "variable_type" => $jobService->variable_type
+                ];
+                if ($location_service) {
+                    $service_transformer->setLocationService($location_service);
+                    if ($jobService->variable_type != $location_service->service->variable_type) $notSame = 1;
+                }
+                $resource = new Item($selected_service, $service_transformer);
+                $price_data = $manager->createData($resource)->toArray();
+
+                $service_data = [
+                    'service_id' => $jobService->service->id,
+                    'name' => $jobService->formatServiceName($job),
+                    'variables' => $variables,
+                    'unit' => $jobService->service->unit,
+                    'quantity' => $jobService->quantity,
+                    'option' => $jobService->option,
+                    'variable_type' => $jobService->variable_type,
+                    'thumb' => $jobService->service->app_thumb,
+                    'upsell_price' => $upsell_price
+                ];
+                $service_data += $price_data;
+                $services->push($service_data);
+            }
+            if ($notSame) $job_collection->put('is_same_service', 0);
+        }
+
+        $job_collection->put('services', $services);
+
+        $resource = new Item($job->category, new ServiceV2DeliveryChargeTransformer($delivery_charge, $job_discount_handler));
+        $delivery_charge_discount_data = $manager->createData($resource)->toArray();
+        $job_collection->put('delivery_charge', $delivery_charge_discount_data['delivery_charge']);
+        $job_collection->put('delivery_discount', $delivery_charge_discount_data['delivery_discount']);
+
+        return api_response($request, $job_collection, 200, ['job' => $job_collection]);
     }
 
     private function formatComplains($complains)

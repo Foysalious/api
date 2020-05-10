@@ -80,6 +80,11 @@ class Creator
         $this->businessMember = $business_member;
         $this->getManager($this->businessMember);
 
+        if (empty($this->managers)) {
+            $this->setError(422, 'Manager not set yet!');
+            return $this;
+        }
+
         /** @var BusinessDepartment $department */
         $department = $this->businessMember->department();
         if (!$department) {
@@ -89,12 +94,11 @@ class Creator
 
         $approval_flow = $department->approvalFlowBy(Type::LEAVE);
         if (!$approval_flow) {
-            $this->setError(422, 'No Approver set yet!');
+            $this->setError(422, 'Approval flow not set yet!');
             return $this;
         }
 
         $this->approvers = $this->calculateApprovers($approval_flow, $department);
-
         if (empty($this->approvers)) {
             $this->setError(422, 'No Approver set yet!');
             return $this;

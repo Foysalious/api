@@ -47,7 +47,7 @@ class OrderController extends Controller
                 'time' => 'required|string',
                 'payment_method' => 'required|string|in:cod,online,wallet,bkash,cbl,partner_wallet',
                 'address' => 'required_without:address_id',
-                'address_id' => 'required_without:address',
+                'address_id' => 'required_without:address|numeric',
                 'partner' => 'sometimes|required',
                 'partner_id' => 'sometimes|required|numeric',
                 'affiliate_id' => 'sometimes|required|numeric',
@@ -117,6 +117,9 @@ class OrderController extends Controller
             return api_response($request, null, 500, ['message' => 'Location id was not for this order']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             $sentry = app('sentry');
@@ -157,7 +160,7 @@ class OrderController extends Controller
             return null;
         }
     }
-    
+
     public function storeFromBondhu(OrderCreateFromBondhuRequest $request, $affiliate, BondhuAutoOrderV3 $bondhu_auto_order, OrderPlace $order_place, OrderAdapter $order_adapter)
     {
         try {
