@@ -1,11 +1,12 @@
 <?php namespace Sheba\Authentication;
 
 use App\Exceptions\ApiValidationException;
+use Throwable;
 
 class AuthenticationFailedException extends ApiValidationException
 {
-    public function report()
+    public function __construct($message = "Authentication failed.", $code = 401, Throwable $previous = null)
     {
-        \Log::debug('User not found');
+        parent::__construct($message, $code, $previous);
     }
 }
