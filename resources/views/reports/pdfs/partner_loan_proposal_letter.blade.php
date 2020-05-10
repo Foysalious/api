@@ -536,7 +536,7 @@ $final_information_for_loan['finance']['monthly_avg_credit_sum']:"0.00"}}</td>
             <tr>
                 <td class="text-center" style="padding: 5px 3px">Financial Analyst</td>
                 <td class="text-center" style="padding: 5px 3px">Relationship Manager</td>
-                <td class="text-center" style="padding: 5px 3px">Head of MME</td>
+                <td class="text-center" style="padding: 5px 3px">Head of SME</td>
                 <td class="text-center" style="padding: 5px 3px">In Charge of Corporate & SME - CRM</td>
             </tr>
             <tr>
