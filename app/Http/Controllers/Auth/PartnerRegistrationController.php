@@ -174,6 +174,8 @@ class PartnerRegistrationController extends Controller
             $geo->radius              = 5;
             $data['geo_informations'] = json_encode($geo);
         }
+        if ($request->has('refer_code'))
+            $data['refer_code'] = $request->refer_code;
         return $data;
     }
 
@@ -188,7 +190,7 @@ class PartnerRegistrationController extends Controller
         $data    = array_merge($data, [
             "sub_domain"     => $this->guessSubDomain($data['name']),
             "affiliation_id" => $this->partnerAffiliation($resource->profile->mobile),
-            'referer_id'     => $this->partnerReferral($resource->profile->mobile)
+            'referer_id'     => $this->partnerReferral($resource->profile->mobile,$data)
         ]);
         $by = ["created_by" => $resource->id, "created_by_name" => "Resource - " . $resource->profile->name];
 
@@ -245,14 +247,27 @@ class PartnerRegistrationController extends Controller
             return $partner_affiliation->id; else return null;
     }
 
-    private function partnerReferral($mobile)
+    private function partnerReferral($mobile, $data)
     {
+        if (array_key_exists('refer_code', $data)) {
+            $refer_code = $data['refer_code'];
+            unset($data['refer_code']);
+            return $this->setReferenceByCode($refer_code);
+        }
         $this->ref = $this->referrals::getReferenceByMobile($mobile);
         if (!empty($this->ref))
             return $this->ref->partner_id;
         return null;
     }
 
+    private function setReferenceByCode($refer_code)
+    {
+        $this->ref = $this->referrals::createReferenceByCode($refer_code);
+        if (!empty($this->ref))
+            return $this->ref->partner_id;
+        return null;
+
+    }
     private function store($resource, $data, $by, $partner)
     {
         try {
