@@ -143,7 +143,7 @@ class PaymentLinkOrderComplete extends PaymentComplete {
 
     private function createUsage($payment_receiver,$modifier)
     {
-//        (new Usage())->setUser($payment_receiver)->setType(Usage::Partner()::PAYMENT_LINK)->create($modifier);
+       (new Usage())->setUser($payment_receiver)->setType(Usage::Partner()::PAYMENT_LINK)->create($modifier);
     }
 
     protected function saveInvoice() {

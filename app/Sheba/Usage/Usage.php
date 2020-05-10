@@ -66,7 +66,9 @@ class Usage
             if ($level['nid_verification'] && !$this->user->isNIDVerified()){
                 return -1;
             }
-            if (($level['nid_verification'] && !!$this->user->isNIDVerified())) {
+
+            if (($level['nid_verification'] && !!$this->user->isNIDVerified()) && ((int)$this->user->refer_level == $index)) {
+
                 $this->upgradeLevel($index + 1, true);
             }
             if ($usage >= $level['duration'] && !$level['nid_verification']) {
@@ -80,7 +82,7 @@ class Usage
     {
         if ((is_null($this->user->refer_level)) || (int)$this->user->refer_level < $level) {
             $this->user->refer_level     = $level;
-            $amount                      = ($this->config[$level]['amount']);
+            $amount                      = ($this->config[$level-1]['amount']);
             $this->user->referrer_income += $amount;
             $this->user->save();
             (new WalletTransactionHandler())->setModel($this->user->referredBy)->setSource(TransactionSources::SHEBA_WALLET)->setType('credit')->setAmount($amount)->setLog("$amount BDT has been credited for partner referral from usage of name: " . $this->user->name . ', ID: ' . $this->user->id)->store();
