@@ -190,7 +190,7 @@ class PartnerRegistrationController extends Controller
         $data    = array_merge($data, [
             "sub_domain"     => $this->guessSubDomain($data['name']),
             "affiliation_id" => $this->partnerAffiliation($resource->profile->mobile),
-            'referer_id'     => $this->partnerReferral($resource->profile->mobile,$data)
+            'referrer_id'     => $this->partnerReferral($resource->profile->mobile,$data)
         ]);
         $by = ["created_by" => $resource->id, "created_by_name" => "Resource - " . $resource->profile->name];
 
