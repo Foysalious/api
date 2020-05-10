@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\Referral;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Referral\Exceptions\AlreadyExistProfile;
@@ -8,6 +9,7 @@ use Sheba\Referral\Exceptions\AlreadyReferred;
 use Sheba\Referral\Exceptions\InvalidFilter;
 use Sheba\Referral\Exceptions\ReferenceNotFound;
 use Sheba\Referral\Referrals;
+use Sheba\UrlShortener\ShortenUrl;
 use Throwable;
 
 class PartnerReferralController extends Controller
@@ -43,7 +45,24 @@ class PartnerReferralController extends Controller
 
     }
 
-    public function referLinkGenerate() { }
+    /**
+     * @param Request $request
+     * @param ShortenUrl $shortenUrl
+     * @return JsonResponse
+     */
+    public function referLinkGenerate(Request $request, ShortenUrl $shortenUrl)
+    {
+        try {
+            $partner_id = $request->partner->id;
+            $url_to_shorten = config('partner')['referral_base_link'] . $partner_id;
+            $deep_link = $shortenUrl->shorten('bit.ly', $url_to_shorten)['link'];
+            return api_response($request, $deep_link, 200, ['link' => $deep_link]);
+
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 
     public function home(Request $request, Referrals $referrals)
     {
@@ -138,7 +157,9 @@ class PartnerReferralController extends Controller
                         'কিভাবে করবেন' => $item['details']
                     ];
                 });
-            return api_response($request, $stepDetails, 200, ['steps' => $stepDetails]);
+            $data['steps'] = $stepDetails;
+            $data['total_income'] = convertNumbersToBangla(collect(config('partner.referral_steps'))->sum('amount'),true,0);
+            return api_response($request, $stepDetails, 200, ['data' => $data]);
 
         }catch (\Throwable $e){
             app('sentry')->captureException($e);
