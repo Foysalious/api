@@ -53,8 +53,8 @@ class PartnerReferralController extends Controller
     public function referLinkGenerate(Request $request, ShortenUrl $shortenUrl)
     {
         try {
-            $partner_id = $request->partner->id;
-            $url_to_shorten = config('partner')['referral_base_link'] . $partner_id;
+            $refer_code = $request->partner->refer_code;
+            $url_to_shorten = config('partner')['referral_base_link'] . $refer_code;
             $deep_link = $shortenUrl->shorten('bit.ly', $url_to_shorten)['link'];
             return api_response($request, $deep_link, 200, ['link' => $deep_link]);
 
