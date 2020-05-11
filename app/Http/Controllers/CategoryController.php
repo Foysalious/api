@@ -553,6 +553,8 @@ class CategoryController extends Controller
                     'min_order_amount' => (double)$delivery_discount->rules->getMinOrderAmount()
                 ] : null;
                 $category['slug'] = $category_slug;
+                $category['is_vat_applicable'] = 1;
+                $category['max_order_amount'] = 3000;
 
                 if ($subscriptions->count()) {
                     $category['subscription_faq'] = $subscription_faq;
