@@ -129,6 +129,8 @@ class CustomerController extends Controller
                 $data['category']['services'] = $all_services;
                 $data['rating'] = $review->rating;
                 $data['partner'] = $review->job->partnerOrder->partner;
+                $data['is_vat_applicable'] = 1;
+                $data['max_order_amount'] = 3000;
                 $final->push(collect($data));
             }
         }
