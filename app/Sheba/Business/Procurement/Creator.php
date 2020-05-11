@@ -208,6 +208,7 @@ class Creator
         $this->createdBy = $created_by;
         return $this;
     }
+
     public function setSharingTo($sharing_to)
     {
         $this->sharedTo = $sharing_to;
@@ -223,6 +224,7 @@ class Creator
     public function create()
     {
         $this->makeProcurementData();
+        dd(count($this->items));
         $procurement = null;
         try {
             DB::transaction(function () use (&$procurement) {
@@ -270,7 +272,7 @@ class Creator
             'published_at' => $this->isPublished ? Carbon::now() : '',
 
             'purchase_request_id' => $this->purchaseRequestId,
-            'type' => 'basic',
+            'type' => count($this->items) > 0 ? 'advanced' : 'basic',
             'estimated_price' => $this->estimatedPrice,
             'order_start_date' => $this->orderStartDate,
             'order_end_date' => $this->orderEndDate,
