@@ -300,6 +300,9 @@ class JobController extends Controller
             $bill['invoice'] = $job->partnerOrder->invoice;
             $bill['version'] = $job->partnerOrder->getVersion();
             $bill['voucher'] = $voucher;
+            $bill['is_vat_applicable'] = 1;
+            $bill['is_close'] = 0;
+            $bill['max_order_amount'] = 3000;
 
             return api_response($request, $bill, 200, ['bill' => $bill]);
         } catch (Throwable $e) {
