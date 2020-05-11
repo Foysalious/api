@@ -142,7 +142,7 @@ class ProcurementController extends Controller
         $filter_options = [
             'categories' => $categories,
             'post_type' => array_values($tender_post_type),
-            'tags' => collect($tag_lists)->sortByDesc('count')->take(10)->values(),
+            'popular_tags' => collect($tag_lists)->sortByDesc('count')->take(10)->values(),
         ];
         return api_response($request, $filter_options, 200, ['filter_options' => $filter_options]);
     }
