@@ -85,6 +85,16 @@ return [
             'value' => 'Listed/Own',
         ]
     ],
+    'TENDER_POST_TYPE' => [
+        'public' => [
+            'key' => 'public',
+            'value' => 'Public Posts',
+        ],
+        'verified' => [
+            'key' => 'verified',
+            'value' => 'Sheba Verified Posts',
+        ]
+    ],
     'PAYMENT_STRATEGY' => [
         '100% Payment after Delivery',
         '50% Advance Payment',

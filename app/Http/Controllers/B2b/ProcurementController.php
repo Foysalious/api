@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\Partner;
 use App\Models\Procurement;
 use App\Models\Tag;
+use App\Models\Taggable;
 use App\Sheba\Bitly\BitlyLinkShort;
 use App\Sheba\Business\ACL\AccessControl;
 use App\Transformers\AttachmentTransformer;
@@ -57,7 +58,7 @@ class ProcurementController extends Controller
         $tags = Tag::where('taggable_type', 'App\Models\Procurement')->select('id', 'name')->get();
 
         if ($request->has('search')) {
-            $tags =  $tags->filter(function ($tag) use ($request) {
+            $tags = $tags->filter(function ($tag) use ($request) {
                 return str_contains(strtoupper($tag->name), strtoupper($request->search));
             });
         }
@@ -92,18 +93,14 @@ class ProcurementController extends Controller
                 ->setLastDateOfSubmission($request->last_date_of_submission)
                 ->setNumberOfParticipants($request->number_of_participants)
                 ->setSharingTo($request->sharing_to)
-
                 ->setLabels($request->labels)
-
                 ->setTitle($request->title)
                 ->setItems($request->items)
                 ->setQuestions($request->questions)
                 ->setPaymentOptions($request->payment_options)
                 ->setIsPublished($request->is_published)
-
                 ->setOwner($request->business)
                 ->setCreatedBy($request->manager_member)
-
                 ->setType($request->type)
                 ->setPurchaseRequest($request->purchase_request_id)
                 ->setOrderStartDate($request->order_start_date)
@@ -126,6 +123,28 @@ class ProcurementController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function filterOptions(Request $request)
+    {
+        $categories = Category::child()->published()->publishedForB2B()->select('id', 'name')->get()->toArray();
+        $tags = Tag::with('taggables')->where('taggable_type', 'App\Models\Procurement')->select('id', 'name', 'taggable_type')->get();
+        $tag_lists = [];
+        foreach ($tags as $tag) {
+            $taggables_count = $tag->taggables->count();
+            array_push($tag_lists, [
+                'id' => $tag->id,
+                'name' => $tag->name,
+                'count' => $taggables_count
+            ]);
+        }
+        $tender_post_type = config('b2b.TENDER_POST_TYPE');
+        $filter_options = [
+            'categories' => $categories,
+            'post_type' => array_values($tender_post_type),
+            'tags' => collect($tag_lists)->sortByDesc('count')->take(10)->values(),
+        ];
+        return api_response($request, $filter_options, 200, ['filter_options' => $filter_options]);
     }
 
     public function index($business, Request $request, AccessControl $access_control, ProcurementRepositoryInterface $procurement_repository)

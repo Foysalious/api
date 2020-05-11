@@ -4,7 +4,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Tag extends Model
 {
-	protected $guarded = ['id'];
+    protected $guarded = ['id'];
 
     public function customers()
     {
@@ -24,6 +24,11 @@ class Tag extends Model
     public function procurements()
     {
         return $this->morphedByMany(Procurement::class, 'taggable');
+    }
+
+    public function taggables()
+    {
+        return $this->hasMany(Taggable::class);
     }
 
     public function scopeOf($query, $taggable)

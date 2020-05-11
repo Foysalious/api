@@ -9,6 +9,11 @@ class BusinessRoute
         $api->get('business/test-login', 'B2b\LoginController@generateDummyToken')->middleware('admin.auth');
         $api->get('business/test-push-notification', 'PushSubscriptionController@send');
         $api->post('business/register', 'B2b\RegistrationController@registerV2');
+
+        $api->group(['prefix' => 'businesses/tenders'], function ($api) {
+            $api->get('filter-options', 'B2b\ProcurementController@filterOptions');
+        });
+
         $api->group(['prefix' => 'businesses', 'middleware' => ['business.auth']], function ($api) {
             $api->group(['prefix' => '{business}'], function ($api) {
                 $api->get('members', 'B2b\MemberController@index');
