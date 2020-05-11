@@ -34,7 +34,7 @@ class CustomerController extends Controller
         if (!$location) return api_response($request, null, 404);
         $reviews = Review::where([['customer_id', $customer->id], ['rating', '>=', 4]])->select('id', 'category_id', 'job_id', 'rating', 'partner_id')
             ->with(['category' => function ($q) {
-                $q->select('id', 'name', 'thumb', 'app_thumb', 'banner', 'app_banner', 'frequency_in_days', 'publication_status', 'delivery_charge', 'min_order_amount', 'is_auto_sp_enabled');
+                $q->select('id', 'name', 'thumb', 'app_thumb', 'banner', 'app_banner', 'frequency_in_days', 'publication_status', 'delivery_charge', 'min_order_amount', 'is_auto_sp_enabled', 'max_order_amount', 'is_vat_applicable');
             }, 'job' => function ($q) {
                 $q->select('id', 'category_id', 'partner_order_id')->with('category')->with(['jobServices' => function ($q) {
                     $q->select('id', 'job_id', 'service_id', 'quantity', 'option', 'variable_type', 'created_at')->with(['service' => function ($q) {
@@ -129,8 +129,6 @@ class CustomerController extends Controller
                 $data['category']['services'] = $all_services;
                 $data['rating'] = $review->rating;
                 $data['partner'] = $review->job->partnerOrder->partner;
-                $data['is_vat_applicable'] = 1;
-                $data['max_order_amount'] = 3000;
                 $final->push(collect($data));
             }
         }
