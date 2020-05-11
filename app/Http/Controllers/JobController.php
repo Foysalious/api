@@ -151,6 +151,8 @@ class JobController extends Controller
         $job_collection->put('can_pay', $this->canPay($job));
         $job_collection->put('can_add_promo', $this->canAddPromo($job));
         $job_collection->put('is_same_service', 1);
+        $job_collection->put('is_vat_applicable', 1);
+        $job_collection->put('max_order_amount', 3000);
 
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
