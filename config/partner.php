@@ -8,34 +8,35 @@ return [
     ],
     'referral_steps'                   => [
         [
-            'step'             => '১ম',
+            'step'             => '১ম ধাপ',
             'amount'           => 100,
             'duration'         => 6,
             'nid_verification' => false,
             'details'          => 'আপনার রেফার করা বন্ধুকে sManager অ্যাপ ৬ দিন ব্যাবহার করতে হবে।'
         ],
         [
-            'step'             => '২য়',
+            'step'             => '২য় ধাপ',
             'amount'           => 100,
             'duration'         => 12,
             'nid_verification' => false,
             'details'          => 'আপনার রেফার করা বন্ধুকে sManager অ্যাপ ১২ দিন ব্যাবহার করতে হবে।'
         ],
         [
-            'step'             => '৩য়',
+            'step'             => '৩য় ধাপ',
             'amount'           => 100,
             'duration'         => 25,
             'nid_verification' => false,
             'details'          => 'আপনার রেফার করা বন্ধুকে sManager অ্যাপ ২৫ দিন ব্যাবহার করতে হবে।'
         ],
         [
-            'step'             => '৪র্থ',
+            'step'             => '৪র্থ ধাপ',
             'amount'           => 100,
             'duration'         => 999999999999999999999999999,
             'nid_verification' => true,
             'details' => 'আপনার বন্ধুকে sManager অ্যাপের মাধ্যমে NID ভেরিফিকেশন করতে হবে।'
         ],
     ],
+    'referral_base_link' => 'https://play.google.com/store/apps/details?id=xyz.sheba.managerapp&referrer=utm_source%3D',
 
     'qr_code' => [
         'account_types' => [

@@ -18,6 +18,7 @@ class ReferralRoute
             $api->get('/', "$this->namespace\\PartnerReferralController@index");
             $api->post('/', "$this->namespace\\PartnerReferralController@store");
             $api->get('/{referral}',"$this->namespace\\PartnerReferralController@show");
+            $api->get('/generate/refer-link',"$this->namespace\\PartnerReferralController@referLinkGenerate");
         });
     }
 }

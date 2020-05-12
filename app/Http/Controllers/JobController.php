@@ -151,6 +151,8 @@ class JobController extends Controller
         $job_collection->put('can_pay', $this->canPay($job));
         $job_collection->put('can_add_promo', $this->canAddPromo($job));
         $job_collection->put('is_same_service', 1);
+        $job_collection->put('is_vat_applicable', $job->category ? $job->category['is_vat_applicable'] : null);
+        $job_collection->put('max_order_amount', $job->category ? (double) $job->category['max_order_amount'] : null);
 
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
@@ -300,6 +302,9 @@ class JobController extends Controller
             $bill['invoice'] = $job->partnerOrder->invoice;
             $bill['version'] = $job->partnerOrder->getVersion();
             $bill['voucher'] = $voucher;
+            $bill['is_vat_applicable'] = $job->category ? $job->category['is_vat_applicable'] : null;
+            $bill['is_closed'] = $partnerOrder['closed_at'] ? 1 : 0;
+            $bill['max_order_amount'] = $job->category ? (double) $job->category['max_order_amount'] : null;
 
             return api_response($request, $bill, 200, ['bill' => $bill]);
         } catch (Throwable $e) {

@@ -199,7 +199,7 @@ class Creator {
                         'payer' => [
                             'id'     => $details['id'],
                             'name'   => $details['name'],
-                            'mobile' => $details['mobile']
+                            'mobile' => $details['phone']
                         ]
                     ];
                 }

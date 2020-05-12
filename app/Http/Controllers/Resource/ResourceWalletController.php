@@ -13,7 +13,14 @@ class ResourceWalletController extends Controller
         $auth_user = $request->auth_user;
         $resource = $auth_user->getResource();
         $last_withdrawal_request = $resource->withdrawalRequests()->latest()->first();
-        if ($last_withdrawal_request) {
+
+        if (!$resource->is_verified) {
+            $status['tag'] = 'not_verified';
+            $status['message'] = 'আপনি বর্তমানে আনভেরিফায়েড অবস্থায় আছেন, তাই আপনি এখন রিকুয়েস্ট করতে পারবেন না বিস্তারিত জানতে ১৬৫১৬ নম্বরে যোগাযোগ করুন।';
+        } elseif ($resource->totalWalletAmount() <= 0) {
+            $status['tag'] = 'not_enough_balance';
+            $status['message'] = 'আপনার অ্যাকাউন্টে পর্যাপ্ত ব্যালেন্স নেই, তাই আপনি এখন রিকুয়েস্ট করতে পারবেন না।';
+        } elseif ($last_withdrawal_request) {
             $status = $message->setResource($resource)->setStatus($last_withdrawal_request->status)->getLatestWithdrawalRequestUpdate();
         } else {
             $status['tag'] = null;

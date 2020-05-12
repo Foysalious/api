@@ -420,10 +420,6 @@ $final_information_for_loan['finance']['monthly_avg_credit_sum']:"0.00"}}</td>
                 <td style="text-align: right"></td>
                 <td colspan="2" style="text-align: right"></td>
             </tr>
-            <div>
-                *Client has low sales volume with Sheba.XYZ. However, client has
-                sufficient sales volume in offline transaction. DBR in offline transaction is 22.96%.
-            </div>
         </table>
 
         <div style="page-break-before:always">&nbsp;</div>
@@ -540,7 +536,7 @@ $final_information_for_loan['finance']['monthly_avg_credit_sum']:"0.00"}}</td>
             <tr>
                 <td class="text-center" style="padding: 5px 3px">Financial Analyst</td>
                 <td class="text-center" style="padding: 5px 3px">Relationship Manager</td>
-                <td class="text-center" style="padding: 5px 3px">Head of MME</td>
+                <td class="text-center" style="padding: 5px 3px">Head of SME</td>
                 <td class="text-center" style="padding: 5px 3px">In Charge of Corporate & SME - CRM</td>
             </tr>
             <tr>

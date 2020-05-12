@@ -2,22 +2,18 @@
 
 use App\Models\Job;
 use Sheba\Dal\Job\Events\JobSaved;
-use Sheba\Logistics\UpdatePriceHandler;
-use Sheba\Report\Listeners\BaseSavedListener;
+use Sheba\Logistics\Exceptions\LogisticServerError;
 
-class JobListener extends BaseSavedListener
+class JobListener extends BaseListener
 {
-    private $priceHandler;
-
-    public function __construct(UpdatePriceHandler $priceHandler)
-    {
-        $this->priceHandler = $priceHandler;
-    }
-
+    /**
+     * @param JobSaved $event
+     * @throws LogisticServerError
+     */
     public function handle(JobSaved $event)
     {
         /** @var Job $job */
         $job = $event->model;
-        $this->priceHandler->setPartnerOrder($job->partnerOrder)->update();
+        $this->update($job->partnerOrder);
     }
 }

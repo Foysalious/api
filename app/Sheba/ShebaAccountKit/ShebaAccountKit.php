@@ -1,19 +1,16 @@
 <?php namespace Sheba\ShebaAccountKit;
 
-
 use Namshi\JOSE\JWS;
 use Sheba\ShebaAccountKit\Requests\AccessTokenRequest;
 use Sheba\ShebaAccountKit\Requests\ApiTokenRequest;
-use Sheba\ShebaAccountKit\Requests\OtpSendRequest;
-use Sheba\ShebaAccountKit\Requests\OtpValidateRequest;
 
 class ShebaAccountKit
 {
     private $client;
 
-    public function __construct()
+    public function __construct(Client $client)
     {
-        $this->client = new Client();
+        $this->client = $client;
     }
 
     public function getToken(ApiTokenRequest $api_token_request)
@@ -27,7 +24,7 @@ class ShebaAccountKit
     private function getAccessToken(AccessTokenRequest $access_token_request)
     {
         $response = $this->client->getAccessToken($access_token_request);
-        $data = json_decode($response->getBody());;
+        $data = json_decode($response->getBody());
         if (!$data || !isset($data->access_token)) return null;
         return $data->access_token;
     }
