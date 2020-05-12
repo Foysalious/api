@@ -1,5 +1,7 @@
 <?php
 
+use Sheba\Logistics\Listeners\EventsProvider;
+
 return [
 
     /*
@@ -175,7 +177,8 @@ return [
         Sheba\Repositories\Providers\RepositoryServiceProvider::class,
         Sheba\Pos\Repositories\PosRepositoryServiceProvider::class,
         Sheba\Dal\Providers\DalEventsListenerProvider::class,
-        Sheba\Report\Listeners\ReportUpdateProvider::class
+        Sheba\Report\Listeners\ReportUpdateProvider::class,
+        Sheba\Logistics\Listeners\EventsProvider::class
     ],
 
     /*

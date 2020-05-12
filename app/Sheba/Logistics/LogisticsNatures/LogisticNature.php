@@ -39,13 +39,13 @@ abstract class LogisticNature
      */
     public function setJob(Job $job)
     {
-        $this->job                      = $job;
-        $this->partnerOrder             = $job->partnerOrder->isCalculated ? $job->partnerOrder : $job->partnerOrder->calculate(true);
-        $order                          = $this->partnerOrder->order;
-        $this->partner                  = $this->partnerOrder->partner;
-        $this->customer                 = $order->customer->profile;
-        $this->customerDeliveryAddress  = $order->deliveryAddress;
-        $this->deliveryCharge           = $job->category->getShebaLogisticsPrice();
+        $this->job = $job;
+        $this->partnerOrder = $job->partnerOrder->isCalculated ? $job->partnerOrder : $job->partnerOrder->calculate(true);
+        $order = $this->partnerOrder->order;
+        $this->partner = $this->partnerOrder->partner;
+        $this->customer = $order->customer->profile;
+        $this->customerDeliveryAddress = $order->deliveryAddress;
+        $this->deliveryCharge = $job->category->getShebaLogisticsPrice();
         return $this;
     }
 
@@ -56,7 +56,7 @@ abstract class LogisticNature
     {
         return $this->getPartnerPoint();
     }
-    
+
     /**
      * @return Point
      */
@@ -64,7 +64,7 @@ abstract class LogisticNature
     {
         return $this->getCustomerPoint();
     }
-    
+
     /**
      * @return Point
      */
@@ -85,17 +85,17 @@ abstract class LogisticNature
             ->setMobile($partner->getContactNumber())
             ->setCoordinate($partner->getCoordinate());
     }
-    
+
     /**
      * @return Point
      */
     protected function getCustomerPoint()
     {
-        return (new Point())->setName($this->customer->name)
-                ->setAddress($this->customerDeliveryAddress->address)
-                ->setImage($this->customer->pro_pic)
-                ->setMobile($this->customer->mobile)
-                ->setCoordinate($this->customerDeliveryAddress->getCoordinate());
+        return (new Point())->setName($this->customerDeliveryAddress->name ?? $this->partnerOrder->order->delivery_name)
+            ->setAddress($this->customerDeliveryAddress->address)
+            ->setImage($this->customer->pro_pic)
+            ->setMobile($this->customerDeliveryAddress->mobile ?: $this->customer->mobile)
+            ->setCoordinate($this->customerDeliveryAddress->getCoordinate());
     }
 
     /**
