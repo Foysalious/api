@@ -190,7 +190,7 @@ class PartnerOrderController extends Controller
             $partner_order->calculate(true);
             foreach ($partner_order->jobs as $job) {
                 $services = [];
-                $service_list = $formatServices->setJobServices($job->jobServices)->formatServices();
+                $service_list = [];
                 if (count($job->jobServices) == 0) {
                     array_push($services, [
                         'name' => $job->service_name,
@@ -198,7 +198,15 @@ class PartnerOrderController extends Controller
                         'unit' => $job->service->unit,
                         'price' => (double)$job->servicePrice
                     ]);
+                    array_push($service_list, [
+                        'name' => $job->service_name,
+                        'service_group' => [],
+                        'unit' => $job->service->unit,
+                        'quantity' => (double)$job->service_quantity,
+                        'price' => (double)$job->servicePrice
+                    ]);
                 } else {
+                    $service_list = $formatServices->setJobServices($job->jobServices)->formatServices();
                     foreach ($job->jobServices as $job_service) {
                         array_push($services, [
                             'name' => $job_service->service ? $job_service->service->name : null,

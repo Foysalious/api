@@ -264,7 +264,7 @@ class JobController extends Controller
                 array_push($service_list, [
                     'name' => $job->service != null ? $job->service->name : null,
                     'service_group' => [],
-                    'unit' => null,
+                    'unit' => $job->service->unit,
                     'quantity' => $job->service_quantity,
                     'price' => (double)$job->servicePrice
                 ]);
