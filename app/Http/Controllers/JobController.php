@@ -34,6 +34,7 @@ use Sheba\Logs\Customer\JobLogs;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
 use Sheba\Payment\ShebaPayment;
 use Sheba\Payment\ShebaPaymentValidator;
+use Sheba\Services\FormatServices;
 use Throwable;
 
 class JobController extends Controller
@@ -244,7 +245,7 @@ class JobController extends Controller
         return (double)$job->totalDiscount == 0 && !$partner_order->order->voucher_id && $partner_order->due != 0 && !$partner_order->cancelled_at && !$partner_order->closed_at ? 1 : 0;
     }
 
-    public function getBills($customer, $job, Request $request, OrderRepository $logistics_orderRepo)
+    public function getBills($customer, $job, Request $request, OrderRepository $logistics_orderRepo, FormatServices $formatServices)
     {
         try {
             $job = $request->job->load(['partnerOrder.order', 'category', 'service', 'jobServices' => function ($q) {
@@ -253,13 +254,22 @@ class JobController extends Controller
             $job->calculate(true);
             if (count($job->jobServices) == 0) {
                 $services = array();
+                $service_list = array();
                 array_push($services, [
                     'name' => $job->service != null ? $job->service->name : null,
                     'price' => (double)$job->servicePrice,
                     'min_price' => 0,
                     'is_min_price_applied' => 0
                 ]);
+                array_push($service_list, [
+                    'name' => $job->service != null ? $job->service->name : null,
+                    'service_group' => [],
+                    'unit' => null,
+                    'quantity' => $job->service_quantity,
+                    'price' => (double)$job->servicePrice
+                ]);
             } else {
+                $service_list = $formatServices->setJobServices($job->jobServices)->formatServices();
                 $services = array();
                 foreach ($job->jobServices as $jobService) {
                     $total = (double)$jobService->unit_price * (double)$jobService->quantity;
@@ -288,6 +298,7 @@ class JobController extends Controller
             $bill['material_price'] = (double)$job->materialPrice;
             $bill['discount'] = (double)$job->discountWithoutDeliveryDiscount;
             $bill['services'] = $services;
+            $bill['service_list'] = $service_list;
             $bill['delivered_date'] = $job->delivered_date != null ? $job->delivered_date->format('Y-m-d') : null;
             $bill['delivered_date_timestamp'] = $job->delivered_date != null ? $job->delivered_date->timestamp : null;
             $bill['closed_and_paid_at'] = $partnerOrder->closed_and_paid_at ? $partnerOrder->closed_and_paid_at->format('Y-m-d') : null;
