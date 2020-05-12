@@ -310,7 +310,8 @@ class ShebaController extends Controller
         try {
             $version_code = (int)$request->header('Version-Code');
             $platform_name = $request->header('Platform-Name');
-            $payments = AvailableMethods::get($request->payable_type, $version_code, $platform_name);
+            $user_type = $request->type;
+            $payments = AvailableMethods::getDetails($request->payable_type, $version_code, $platform_name, $user_type);
             return api_response($request, $payments, 200, [
                 'payments' => $payments,
                 'discount_message' => 'Pay online and stay relaxed!!!'
