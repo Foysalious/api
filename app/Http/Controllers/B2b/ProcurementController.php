@@ -8,9 +8,12 @@ use App\Models\Category;
 use App\Models\Partner;
 use App\Models\Procurement;
 use App\Models\Tag;
+use App\Models\Taggable;
 use App\Sheba\Bitly\BitlyLinkShort;
 use App\Sheba\Business\ACL\AccessControl;
 use App\Transformers\AttachmentTransformer;
+use App\Transformers\Business\TenderTransformer;
+use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -18,6 +21,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Validation\ValidationException;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
+use League\Fractal\Resource\Item;
 use Sheba\Business\Procurement\Creator;
 use Sheba\Business\Procurement\WorkOrderDataGenerator;
 use Sheba\Dal\ProcurementInvitation\Model as ProcurementInvitation;
@@ -27,6 +33,7 @@ use Sheba\ModificationFields;
 use Sheba\Payment\Adapters\Payable\ProcurementAdapter;
 use Sheba\Payment\ShebaPayment;
 use Sheba\Payment\ShebaPaymentValidator;
+use Sheba\Repositories\Business\ProcurementRepository;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
 use Sheba\Sms\Sms;
@@ -36,6 +43,13 @@ use Throwable;
 class ProcurementController extends Controller
 {
     use ModificationFields;
+    /** @var ProcurementRepositoryInterface $procurementRepository */
+    private $procurementRepository;
+
+    public function __construct(ProcurementRepositoryInterface $procurement_repository)
+    {
+        $this->procurementRepository = $procurement_repository;
+    }
 
     public function create(Request $request)
     {
@@ -57,7 +71,7 @@ class ProcurementController extends Controller
         $tags = Tag::where('taggable_type', 'App\Models\Procurement')->select('id', 'name')->get();
 
         if ($request->has('search')) {
-            $tags =  $tags->filter(function ($tag) use ($request) {
+            $tags = $tags->filter(function ($tag) use ($request) {
                 return str_contains(strtoupper($tag->name), strtoupper($request->search));
             });
         }
@@ -68,13 +82,47 @@ class ProcurementController extends Controller
     {
         try {
             $this->validate($request, [
-                'title' => 'required|string', 'number_of_participants' => 'required|numeric', 'last_date_of_submission' => 'required|date_format:Y-m-d', 'procurement_start_date' => 'required|date_format:Y-m-d', 'procurement_end_date' => 'required|date_format:Y-m-d', 'payment_options' => 'required|string', 'type' => 'required|string:in:basic,advanced', 'items' => 'sometimes|required|string', 'description' => 'sometimes|required|string', 'is_published' => 'sometimes|required|integer', 'attachments.*' => 'file'
+                'description' => 'required|string',
+                'procurement_start_date' => 'required|date_format:Y-m-d',
+                'procurement_end_date' => 'required|date_format:Y-m-d',
+                'last_date_of_submission' => 'required|date_format:Y-m-d',
+                'number_of_participants' => 'required|numeric',
+                'sharing_to' => 'required|string',
+
+                'estimated_price' => 'sometimes|required',
+                'type' => 'sometimes|required|string:in:basic,advanced',
+                'title' => 'sometimes|required|string',
+                'payment_options' => 'sometimes|required|string',
+                'items' => 'sometimes|required|string',
+                'is_published' => 'sometimes|required|integer',
+                'category' => 'sometimes|required|integer',
+                'attachments.*' => 'file'
             ]);
             if (!$access_control->setBusinessMember($request->business_member)->hasAccess('procurement.rw')) return api_response($request, null, 403);
 
             $this->setModifier($request->manager_member);
 
-            $creator->setType($request->type)->setOwner($request->business)->setTitle($request->title)->setPurchaseRequest($request->purchase_request_id)->setLongDescription($request->description)->setOrderStartDate($request->order_start_date)->setOrderEndDate($request->order_end_date)->setInterviewDate($request->interview_date)->setProcurementStartDate($request->procurement_start_date)->setProcurementEndDate($request->procurement_end_date)->setItems($request->items)->setQuestions($request->questions)->setNumberOfParticipants($request->number_of_participants)->setLastDateOfSubmission($request->last_date_of_submission)->setPaymentOptions($request->payment_options)->setIsPublished($request->is_published)->setLabels($request->labels)->setCreatedBy($request->manager_member);
+            $creator->setLongDescription($request->description)
+                ->setProcurementStartDate($request->procurement_start_date)
+                ->setProcurementEndDate($request->procurement_end_date)
+                ->setLastDateOfSubmission($request->last_date_of_submission)
+                ->setNumberOfParticipants($request->number_of_participants)
+                ->setSharingTo($request->sharing_to)
+                ->setLabels($request->labels)
+                ->setTitle($request->title)
+                ->setCategory($request->category)
+                ->setItems($request->items)
+                ->setQuestions($request->questions)
+                ->setPaymentOptions($request->payment_options)
+                ->setIsPublished($request->is_published)
+                ->setOwner($request->business)
+                ->setCreatedBy($request->manager_member)
+                ->setType($request->type)
+                ->setPurchaseRequest($request->purchase_request_id)
+                ->setOrderStartDate($request->order_start_date)
+                ->setOrderEndDate($request->order_end_date)
+                ->setInterviewDate($request->interview_date);
+
 
             if ($request->attachments && is_array($request->attachments)) $creator->setAttachments($request->attachments);
 
@@ -93,7 +141,29 @@ class ProcurementController extends Controller
         }
     }
 
-    public function index($business, Request $request, AccessControl $access_control, ProcurementRepositoryInterface $procurement_repository)
+    public function filterOptions(Request $request)
+    {
+        $categories = Category::child()->published()->publishedForB2B()->select('id', 'name')->get()->toArray();
+        $tags = Tag::with('taggables')->where('taggable_type', 'App\Models\Procurement')->select('id', 'name', 'taggable_type')->get();
+        $tag_lists = [];
+        foreach ($tags as $tag) {
+            $taggables_count = $tag->taggables->count();
+            array_push($tag_lists, [
+                'id' => $tag->id,
+                'name' => $tag->name,
+                'count' => $taggables_count
+            ]);
+        }
+        $tender_post_type = config('b2b.TENDER_POST_TYPE');
+        $filter_options = [
+            'categories' => $categories,
+            'post_type' => array_values($tender_post_type),
+            'popular_tags' => collect($tag_lists)->sortByDesc('count')->take(10)->values(),
+        ];
+        return api_response($request, $filter_options, 200, ['filter_options' => $filter_options]);
+    }
+
+    public function index($business, Request $request, AccessControl $access_control)
     {
         try {
             $this->validate($request, [
@@ -104,7 +174,7 @@ class ProcurementController extends Controller
             $this->setModifier($request->manager_member);
             $business = $request->business;
             list($offset, $limit) = calculatePagination($request);
-            $procurements = $procurement_repository->ofBusiness($business->id)->select(['id', 'title', 'status', 'last_date_of_submission', 'created_at', 'is_published'])->orderBy('id', 'desc');
+            $procurements = $this->procurementRepository->ofBusiness($business->id)->select(['id', 'title', 'status', 'last_date_of_submission', 'created_at', 'is_published'])->orderBy('id', 'desc');
             $total_procurement = $procurements->get()->count();
 
             if ($request->has('status') && $request->status != 'all') {
@@ -140,6 +210,25 @@ class ProcurementController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+
+    public function tenders(Request $request)
+    {
+        list($offset, $limit) = calculatePagination($request);
+        $procurements = $this->procurementRepository->builder()->limit(10)->orderBy('id', 'desc');
+        #$procurements = $procurements->skip($offset)->limit($limit);
+
+        $procurements = $procurements->get();
+        $total_records = $procurements->count();
+
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Collection($procurements, new TenderTransformer());
+        $procurements = $manager->createData($resource)->toArray()['data'];
+
+
+        return api_response($request, null, 200, ['tenders' => $procurements, 'total_records' => $total_records]);
     }
 
     public function show(Request $request)
