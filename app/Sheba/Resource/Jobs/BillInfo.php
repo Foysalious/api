@@ -19,15 +19,23 @@ class BillInfo
             $q->select('job_material.id', 'job_material.material_name', 'material_price', 'job_id');
         }]);
         $job->calculate(true);
-        $service_list = $this->formatServices->setJobServices($job->jobServices)->formatServices();
+        $service_list = [];
         if (count($job->jobServices) == 0) {
             $services = array();
             array_push($services, array('name' => $job->category ? $job->category->name : null,
                 'price' => (double)$job->servicePrice,
                 'unit' => $job->service->unit,
                 'quantity' => $job->service_quantity));
+
+            array_push($service_list, array(
+                'name' => $job->service != null ? $job->service->name : null,
+                'service_group' => [],
+                'price' => (double)$job->servicePrice,
+                'unit' => $job->service->unit,
+                'quantity' => $job->service_quantity));
         } else {
             $services = array();
+            $service_list = $this->formatServices->setJobServices($job->jobServices)->formatServices();
             foreach ($job->jobServices as $jobService) {
                 array_push($services, array(
                     'id' => $jobService->id,
