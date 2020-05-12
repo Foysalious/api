@@ -179,6 +179,7 @@ class OrderController extends Controller
             if ($request->manager_resource) {
                 $partner = $request->partner;
                 $modifier = $request->manager_resource;
+                $usage_type = Usage::Partner()::POS_ORDER_CREATE;
                 $this->setModifier($modifier);
             } else {
                 $partner              = $partnerRepository->find((int)$partner);
@@ -186,6 +187,7 @@ class OrderController extends Controller
                 $partner_pos_customer = $posCustomerCreator->setProfile($profile)->setPartner($partner)->create();
                 $pos_customer         = $partner_pos_customer->customer;
                 $modifier = $profile->customer;
+                $usage_type = Usage::Partner()::PRODUCT_LINK;
                 $this->setModifier($modifier);
                 $creator->setCustomer($pos_customer);
             }
@@ -226,7 +228,7 @@ class OrderController extends Controller
             /**
              * USAGE LOG
              */
-            (new Usage())->setUser($partner)->setType(Usage::Partner()::POS_ORDER_CREATE)->create($modifier);
+            (new Usage())->setUser($partner)->setType($usage_type)->create($modifier);
             return api_response($request, null, 200, [
                 'message' => 'Order Created Successfully',
                 'order'   => $order,
