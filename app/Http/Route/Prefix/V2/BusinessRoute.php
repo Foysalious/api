@@ -11,6 +11,7 @@ class BusinessRoute
         $api->post('business/register', 'B2b\RegistrationController@registerV2');
 
         $api->group(['prefix' => 'businesses/tenders'], function ($api) {
+            $api->get('/', 'B2b\ProcurementController@tenders');
             $api->get('filter-options', 'B2b\ProcurementController@filterOptions');
         });
 

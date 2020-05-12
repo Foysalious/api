@@ -12,6 +12,8 @@ use App\Models\Taggable;
 use App\Sheba\Bitly\BitlyLinkShort;
 use App\Sheba\Business\ACL\AccessControl;
 use App\Transformers\AttachmentTransformer;
+use App\Transformers\Business\TenderTransformer;
+use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -19,6 +21,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Validation\ValidationException;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
+use League\Fractal\Resource\Item;
 use Sheba\Business\Procurement\Creator;
 use Sheba\Business\Procurement\WorkOrderDataGenerator;
 use Sheba\Dal\ProcurementInvitation\Model as ProcurementInvitation;
@@ -28,6 +33,7 @@ use Sheba\ModificationFields;
 use Sheba\Payment\Adapters\Payable\ProcurementAdapter;
 use Sheba\Payment\ShebaPayment;
 use Sheba\Payment\ShebaPaymentValidator;
+use Sheba\Repositories\Business\ProcurementRepository;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
 use Sheba\Sms\Sms;
@@ -37,6 +43,13 @@ use Throwable;
 class ProcurementController extends Controller
 {
     use ModificationFields;
+    /** @var ProcurementRepositoryInterface $procurementRepository */
+    private $procurementRepository;
+
+    public function __construct(ProcurementRepositoryInterface $procurement_repository)
+    {
+        $this->procurementRepository = $procurement_repository;
+    }
 
     public function create(Request $request)
     {
@@ -76,11 +89,13 @@ class ProcurementController extends Controller
                 'number_of_participants' => 'required|numeric',
                 'sharing_to' => 'required|string',
 
+                'estimated_price' => 'sometimes|required',
                 'type' => 'sometimes|required|string:in:basic,advanced',
                 'title' => 'sometimes|required|string',
                 'payment_options' => 'sometimes|required|string',
                 'items' => 'sometimes|required|string',
                 'is_published' => 'sometimes|required|integer',
+                'category' => 'sometimes|required|integer',
                 'attachments.*' => 'file'
             ]);
             if (!$access_control->setBusinessMember($request->business_member)->hasAccess('procurement.rw')) return api_response($request, null, 403);
@@ -95,6 +110,7 @@ class ProcurementController extends Controller
                 ->setSharingTo($request->sharing_to)
                 ->setLabels($request->labels)
                 ->setTitle($request->title)
+                ->setCategory($request->category)
                 ->setItems($request->items)
                 ->setQuestions($request->questions)
                 ->setPaymentOptions($request->payment_options)
@@ -147,7 +163,7 @@ class ProcurementController extends Controller
         return api_response($request, $filter_options, 200, ['filter_options' => $filter_options]);
     }
 
-    public function index($business, Request $request, AccessControl $access_control, ProcurementRepositoryInterface $procurement_repository)
+    public function index($business, Request $request, AccessControl $access_control)
     {
         try {
             $this->validate($request, [
@@ -158,7 +174,7 @@ class ProcurementController extends Controller
             $this->setModifier($request->manager_member);
             $business = $request->business;
             list($offset, $limit) = calculatePagination($request);
-            $procurements = $procurement_repository->ofBusiness($business->id)->select(['id', 'title', 'status', 'last_date_of_submission', 'created_at', 'is_published'])->orderBy('id', 'desc');
+            $procurements = $this->procurementRepository->ofBusiness($business->id)->select(['id', 'title', 'status', 'last_date_of_submission', 'created_at', 'is_published'])->orderBy('id', 'desc');
             $total_procurement = $procurements->get()->count();
 
             if ($request->has('status') && $request->status != 'all') {
@@ -194,6 +210,25 @@ class ProcurementController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+
+    public function tenders(Request $request)
+    {
+        list($offset, $limit) = calculatePagination($request);
+        $procurements = $this->procurementRepository->builder()->limit(10)->orderBy('id', 'desc');
+        #$procurements = $procurements->skip($offset)->limit($limit);
+
+        $procurements = $procurements->get();
+        $total_records = $procurements->count();
+
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Collection($procurements, new TenderTransformer());
+        $procurements = $manager->createData($resource)->toArray()['data'];
+
+
+        return api_response($request, null, 200, ['tenders' => $procurements, 'total_records' => $total_records]);
     }
 
     public function show(Request $request)

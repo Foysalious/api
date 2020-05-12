@@ -31,6 +31,7 @@ class Creator
     private $purchaseRequestId;
     private $type;
     private $title;
+    private $category;
     private $estimatedPrice;
     private $longDescription;
     private $orderStartDate;
@@ -103,6 +104,11 @@ class Creator
     public function setTitle($title)
     {
         $this->title = $title;
+        return $this;
+    }
+    public function setCategory($category)
+    {
+        $this->category = $category;
         return $this;
     }
 
@@ -224,7 +230,6 @@ class Creator
     public function create()
     {
         $this->makeProcurementData();
-        dd(count($this->items));
         $procurement = null;
         try {
             DB::transaction(function () use (&$procurement) {
@@ -268,6 +273,7 @@ class Creator
             'payment_options' => $this->paymentOptions,
 
             'title' => $this->title,
+            'category_id' => $this->category,
             'is_published' => $this->isPublished ? (int)$this->isPublished : 0,
             'published_at' => $this->isPublished ? Carbon::now() : '',
 
