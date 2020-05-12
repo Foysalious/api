@@ -127,6 +127,7 @@ class CustomerController extends Controller
                 }
                 if (empty($all_services)) continue;
                 $data['category']['services'] = $all_services;
+                $data['category']['max_order_amount'] = $data['category']['max_order_amount'] ? (double) $data['category']['max_order_amount'] : null;
                 $data['rating'] = $review->rating;
                 $data['partner'] = $review->job->partnerOrder->partner;
                 $final->push(collect($data));
