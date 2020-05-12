@@ -13,11 +13,9 @@ class ShebaPayment
     /** @var PaymentMethod */
     private $method;
 
-
     /**
      * @param $enum
      * @return $this
-     * @throws ReflectionException
      */
     public function setMethod($enum)
     {
@@ -34,7 +32,6 @@ class ShebaPayment
         return $this->$name;
     }
 
-
     /**
      * @param Payable $payable
      * @return bool true if can init
@@ -46,7 +43,6 @@ class ShebaPayment
         $payment_initiate = app(PaymentInitiate::class);
         return $payment_initiate->setPaymentMethod($this->method)->setPayable($payable)->canPossible();
     }
-
 
     /**
      * @param Payable $payable
