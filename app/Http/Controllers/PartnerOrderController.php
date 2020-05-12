@@ -21,6 +21,7 @@ use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Logs\JobLogs;
 use Sheba\ModificationFields;
 use Sheba\Resource\Jobs\Collection\CollectMoney;
+use Sheba\Services\FormatServices;
 use Sheba\UserAgentInformation;
 use Throwable;
 use Validator;
@@ -182,13 +183,14 @@ class PartnerOrderController extends Controller
         }
     }
 
-    public function getBillsV2($partner, Request $request)
+    public function getBillsV2($partner, Request $request, FormatServices $formatServices)
     {
         try {
             $partner_order = $request->partner_order;
             $partner_order->calculate(true);
             foreach ($partner_order->jobs as $job) {
                 $services = [];
+                $service_list = $formatServices->setJobServices($job->jobServices)->formatServices();
                 if (count($job->jobServices) == 0) {
                     array_push($services, [
                         'name' => $job->service_name,
@@ -220,72 +222,7 @@ class PartnerOrderController extends Controller
                 'sheba_commission' => ramp((double)$partner_order->profit),
                 'partner_commission' => (double)$partner_order->totalCost,
                 'service' => $services,
-                'service_list' => array (
-                    0 =>
-                        array (
-                            'service_id' => 1086,
-                            'name' => 'Daily Budget Meal',
-                            'service_group' =>
-                                array (
-                                    0 =>
-                                        array (
-                                            'id' => 163930,
-                                            'variables' =>
-                                                array (
-                                                    0 =>
-                                                        array (
-                                                            'title' => 'chicken',
-                                                            'question' => 'chicken',
-                                                            'answer' => 'chicken',
-                                                        ),
-                                                    1 =>
-                                                        array (
-                                                            'title' => 'hg',
-                                                            'question' => 'g',
-                                                            'answer' => 'g',
-                                                        ),
-                                                ),
-                                            'price' => 120,
-                                            'quantity' => 1,
-                                        ),
-                                    1 =>
-                                        array (
-                                            'id' => 163931,
-                                            'variables' =>
-                                                array (
-                                                    0 =>
-                                                        array (
-                                                            'title' => 'chicken',
-                                                            'question' => 'chicken',
-                                                            'answer' => 'chicken',
-                                                        ),
-                                                    1 =>
-                                                        array (
-                                                            'title' => 'hg',
-                                                            'question' => 'g',
-                                                            'answer' => 'g9',
-                                                        ),
-                                                ),
-                                            'price' => 120,
-                                            'quantity' => 1,
-                                        ),
-                                ),
-                            'price' => 240,
-                            'unit' => 'meal',
-                            'quantity' => 2,
-                        ),
-                    1 =>
-                        array (
-                            'service_id' => 1051,
-                            'name' => 'Plain Rice with Beef, Veg, Daal, Salad',
-                            'service_group' =>
-                                array (
-                                ),
-                            'price' => 120,
-                            'unit' => 'meal',
-                            'quantity' => 5,
-                        ),
-                ),
+                'service_list' => $service_list,
                 'is_paid' => (double)$partner_order->due == 0,
                 'is_due' => (double)$partner_order->due > 0,
                 'is_closed' => $partner_order->closed_at != null,
