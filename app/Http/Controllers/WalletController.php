@@ -12,6 +12,7 @@ use Illuminate\Validation\ValidationException;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
 use Sheba\Payment\Adapters\Payable\RechargeAdapter;
+use Sheba\Payment\AvailableMethods;
 use Sheba\Payment\ShebaPayment;
 use Sheba\Reward\BonusCredit;
 use Sheba\Transactions\Wallet\TransactionGateways;
@@ -49,12 +50,13 @@ class WalletController extends Controller
      * @param Request $request
      * @param ShebaPayment $sheba_payment
      * @return JsonResponse
+     * @throws \Sheba\Payment\Exceptions\InitiateFailedException
      */
     public function recharge(Request $request, ShebaPayment $sheba_payment)
     {
+        $methods = implode(',', AvailableMethods::getWalletRechargePayments());
         $this->validate($request, [
-
-            'payment_method' => 'required|in:online,bkash,cbl,ok_wallet',
+            'payment_method' => 'required|in:' . $methods,
             'amount' => 'required|numeric|min:10|max:100000',
             'user_id' => 'required',
             'user_type' => 'required|in:customer,affiliate,partner',
