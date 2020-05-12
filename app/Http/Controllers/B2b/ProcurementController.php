@@ -89,13 +89,13 @@ class ProcurementController extends Controller
                 'number_of_participants' => 'required|numeric',
                 'sharing_to' => 'required|string',
 
-                'estimated_price' => 'sometimes|required',
+                #'estimated_price' => 'sometimes|required',
                 'type' => 'sometimes|required|string:in:basic,advanced',
                 'title' => 'sometimes|required|string',
                 'payment_options' => 'sometimes|required|string',
                 'items' => 'sometimes|required|string',
                 'is_published' => 'sometimes|required|integer',
-                'category' => 'sometimes|required|integer',
+                #'category' => 'sometimes|required',
                 'attachments.*' => 'file'
             ]);
             if (!$access_control->setBusinessMember($request->business_member)->hasAccess('procurement.rw')) return api_response($request, null, 403);
