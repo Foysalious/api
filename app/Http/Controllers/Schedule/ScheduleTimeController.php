@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\Schedule;
 
+use App\Exceptions\NotFoundException;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Partner;
@@ -16,8 +17,20 @@ class ScheduleTimeController extends Controller
             'partner' => 'sometimes|required|numeric',
             'limit' => 'sometimes|required|numeric:min:1'
         ]);
-        if ($request->has('category')) $slot->setCategory(Category::find($request->category));
-        if ($request->has('partner')) $slot->setPartner(Partner::find($request->partner));
+        if ($request->has('category')) {
+            $category = Category::find($request->category);
+            if (!$category) {
+                throw new NotFoundException('Category Does not exists', 404);
+            }
+            $slot->setCategory($category);
+        }
+        if ($request->has('partner')) {
+            $partner = Partner::find($request->partner);
+            if (!$partner) {
+                throw new NotFoundException('Partner Does not exists', 404);
+            }
+            $slot->setPartner($partner);
+        }
         if ($request->has('limit')) $slot->setLimit($request->limit);
         if ($request->has('for')) $slot->setPortal($request->for);
         $dates = $slot->get();
