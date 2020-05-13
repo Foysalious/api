@@ -210,40 +210,22 @@ class ProcurementController extends Controller
     public function tenders(Request $request)
     {
         list($offset, $limit) = calculatePagination($request);
-        $procurements = $this->procurementRepository->builder()->with('tags')->limit(10)->orderBy('id', 'desc');
+        $procurements = $this->procurementRepository->allProcurement();
         #$procurements = $procurements->skip($offset)->limit($limit);
-        
-        if ($request->has('tag')) {
-            $procurements = $procurements->whereHas('tags', function ($query) use ($request) {
-                $query->where('id', $request->tag);
-            });
-        }
-        if ($request->has('category') && $request->category != 'all') {
-            $procurements->where('category_id', $request->category);
-        }
-
-        if ($request->has('shared_to')) {
-            $procurements->where('shared_to', $request->shared_to);
-        }
-
+        if ($request->has('tag')) $procurements = $this->procurementRepository->filterWithTag($request->tag);
+        if ($request->has('category') && $request->category != 'all') $procurements = $this->procurementRepository->filterWithCategory($request->category);
+        if ($request->has('shared_to')) $procurements = $this->procurementRepository->filterWithSharedTo($request->shared_to);
+        if ($request->has('budget')) $procurements = $this->procurementRepository->filterWithBudget($request->budget);
         $start_date = $request->has('start_date') ? $request->start_date : null;
         $end_date = $request->has('end_date') ? $request->end_date : null;
-        if ($start_date && $end_date) {
-            $procurements->whereBetween('procurement_end_date', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
-        }
-
+        if ($start_date && $end_date) $procurements = $this->procurementRepository->filterWithEndDate($start_date, $end_date);
         $procurements = $procurements->get();
         $total_records = $procurements->count();
-
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
         $resource = new Collection($procurements, new TenderTransformer());
         $procurements = $manager->createData($resource)->toArray()['data'];
-
-        if ($request->has('sort')) {
-            $procurements = $this->procurementOrderBy($procurements, $request->sort)->values()->toArray();
-        }
-
+        if ($request->has('sort')) $procurements = $this->procurementOrderBy($procurements, $request->sort)->values()->toArray();
         return api_response($request, null, 200, ['tenders' => $procurements, 'total_records' => $total_records]);
     }
 
