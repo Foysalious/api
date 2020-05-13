@@ -189,6 +189,7 @@ class AttendanceController extends Controller
         $business = $request->business;
         $weekends = $business_weekend_repo->getAllByBusiness($business);
         $weekend_days = $weekends->pluck('weekday_name')->toArray();
+        $weekend_days = array_map('ucfirst', $weekend_days);
         $office_time = $office_hours->getOfficeTime($business);
         $data = [
             'office_hour_type' => 'Fixed Time', 'start_time' => Carbon::parse($office_time->start_time)->format('h:i a'), 'end_time' => Carbon::parse($office_time->end_time)->format('h:i a'), 'weekends' => $weekend_days
