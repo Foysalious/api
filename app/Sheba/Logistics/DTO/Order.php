@@ -1,14 +1,14 @@
 <?php namespace Sheba\Logistics\DTO;
 
 use Carbon\Carbon;
-use Exception;
 use Sheba\Helpers\BasicGetter;
+use Sheba\Logistics\Literals\LogisticOrderKeys;
 use Sheba\Logistics\Literals\Statuses;
 
-class Order 
+class Order
 {
     use BasicGetter;
-    
+
     private $id;
     /** @var Carbon */
     private $schedule;
@@ -34,6 +34,8 @@ class Order
     private $rider;
     private $status;
 
+    private $touched = [];
+
     /**
      * @param int $id
      *
@@ -53,6 +55,7 @@ class Order
     public function setSchedule(Carbon $schedule)
     {
         $this->schedule = $schedule;
+        $this->touched += $this->getDateTimeArray();
         return $this;
     }
 
@@ -64,6 +67,7 @@ class Order
     public function setPickUp(Point $pick_up)
     {
         $this->pickUp = $pick_up;
+        $this->touched += $this->getPickUpArray();
         return $this;
     }
 
@@ -75,6 +79,7 @@ class Order
     public function setDropOff($drop_off)
     {
         $this->dropOff = $drop_off;
+        $this->touched += $this->getDropOffArray();
         return $this;
     }
 
@@ -86,6 +91,7 @@ class Order
     public function setCustomerProfileId($customer_profile_id)
     {
         $this->customerProfileId = $customer_profile_id;
+        $this->touched[LogisticOrderKeys::CUSTOMER_PROFILE_ID] = $this->customerProfileId;
         return $this;
     }
 
@@ -97,6 +103,7 @@ class Order
     public function setParcelType($parcel_type)
     {
         $this->parcelType = $parcel_type;
+        $this->touched[LogisticOrderKeys::PARCEL_TYPE] = $this->parcelType;
         return $this;
     }
 
@@ -108,6 +115,7 @@ class Order
     public function setSuccessUrl($success_url)
     {
         $this->successUrl = $success_url;
+        $this->touched[LogisticOrderKeys::SUCCESS_URL] = $this->successUrl;
         return $this;
     }
 
@@ -119,6 +127,7 @@ class Order
     public function setPickedUrl($picked_url)
     {
         $this->pickedUrl = $picked_url;
+        $this->touched[LogisticOrderKeys::PICKED_URL] = $this->pickedUrl;
         return $this;
     }
 
@@ -130,6 +139,7 @@ class Order
     public function setFailureUrl($failure_url)
     {
         $this->failureUrl = $failure_url;
+        $this->touched[LogisticOrderKeys::FAILURE_URL] = $this->failureUrl;
         return $this;
     }
 
@@ -141,6 +151,7 @@ class Order
     public function setCollectionUrl($collection_url)
     {
         $this->collectionUrl = $collection_url;
+        $this->touched[LogisticOrderKeys::COLLECTION_URL] = $this->collectionUrl;
         return $this;
     }
 
@@ -159,6 +170,7 @@ class Order
     public function setRiderNotFoundUrl($rider_not_found_url)
     {
         $this->riderNotFoundUrl = $rider_not_found_url;
+        $this->touched[LogisticOrderKeys::RIDER_NOT_FOUND_URL] = $this->riderNotFoundUrl;
         return $this;
     }
 
@@ -170,6 +182,7 @@ class Order
     public function setVendorOrder(VendorOrder $vendor_order)
     {
         $this->vendorOrder = $vendor_order;
+        $this->touched[LogisticOrderKeys::VENDOR_ORDER_DETAIL] = $this->vendorOrder->toJson();
         return $this;
     }
 
@@ -181,6 +194,7 @@ class Order
     public function setPaidAmount($paid_amount)
     {
         $this->paidAmount = $paid_amount;
+        $this->touched[LogisticOrderKeys::PAID_AMOUNT] = $paid_amount;
         return $this;
     }
 
@@ -192,6 +206,7 @@ class Order
     public function setIsInstant($is_instant)
     {
         $this->isInstant = $is_instant;
+        $this->touched[LogisticOrderKeys::IS_INSTANT] = $is_instant;
         return $this;
     }
 
@@ -203,6 +218,7 @@ class Order
     public function setCollectableAmount($collectable_amount)
     {
         $this->collectableAmount = $collectable_amount;
+        $this->touched[LogisticOrderKeys::COLLECTABLE_AMOUNT] = $collectable_amount;
         return $this;
     }
 
@@ -214,9 +230,10 @@ class Order
     public function setDiscount($discount)
     {
         $this->discount = $discount;
+        $this->touched[LogisticOrderKeys::DISCOUNT] = $discount;
         return $this;
     }
-    
+
     /**
      * @param array $discount
      *
@@ -236,6 +253,7 @@ class Order
     public function setIsDiscountInPercentage($is_discount_in_percentage)
     {
         $this->isDiscountInPercentage = $is_discount_in_percentage;
+        $this->touched[LogisticOrderKeys::IS_PERCENTAGE] = $is_discount_in_percentage;
         return $this;
     }
 
@@ -246,6 +264,7 @@ class Order
     public function setPayUrl($pay_url)
     {
         $this->payUrl = $pay_url;
+        $this->touched[LogisticOrderKeys::PAY_URL] = $pay_url;
         return $this;
     }
 
@@ -255,7 +274,6 @@ class Order
      */
     public function setRider($rider)
     {
-        if (empty($rider)) $rider = null;
         $this->rider = $rider;
         return $this;
     }
@@ -280,7 +298,7 @@ class Order
 
     /**
      * @return string
-     * @throws Exception
+     * @throws \Exception
      */
     public function getReadableStatus()
     {
@@ -305,48 +323,65 @@ class Order
     public function getPickUpArray()
     {
         return [
-            'pickup_name'           => $this->pickUp->name,
-            'pickup_image'          => $this->pickUp->image,
-            'pickup_mobile'         => $this->pickUp->mobile,
-            'pickup_address'        => $this->pickUp->address,
-            'pickup_address_geo'    => $this->pickUp->coordinate->toJson()
+            LogisticOrderKeys::PICKUP_NAME           => $this->pickUp->name,
+            LogisticOrderKeys::PICKUP_IMAGE          => $this->pickUp->image,
+            LogisticOrderKeys::PICKUP_MOBILE         => $this->pickUp->mobile,
+            LogisticOrderKeys::PICKUP_ADDRESS        => $this->pickUp->address,
+            LogisticOrderKeys::PICKUP_ADDRESS_GEO    => $this->pickUp->coordinate->toJson()
+        ];
+    }
+
+    public function getDropOffArray()
+    {
+        return [
+            LogisticOrderKeys::DELIVERY_NAME         => $this->dropOff->name,
+            LogisticOrderKeys::DELIVERY_IMAGE        => $this->dropOff->image,
+            LogisticOrderKeys::DELIVERY_MOBILE       => $this->dropOff->mobile,
+            LogisticOrderKeys::DELIVERY_ADDRESS      => $this->dropOff->address,
+            LogisticOrderKeys::DELIVERY_ADDRESS_GEO  => $this->dropOff->coordinate->toJson(),
+        ];
+    }
+
+    public function getDateTimeArray()
+    {
+        return [
+            LogisticOrderKeys::DATE => $this->schedule->toDateString(),
+            LogisticOrderKeys::TIME => $this->schedule->toTimeString()
         ];
     }
 
     /**
      * @return array
      */
-    public function toArray() 
+    public function toArray()
     {
         return [
-            'customer_profile_id'   => $this->customerProfileId,
-            'date'                  => $this->schedule->toDateString(),
-            'time'                  => $this->schedule->toTimeString()
-        ] + $this->getPickUpArray() + [
-            'delivery_name'         => $this->dropOff->name,
-            'delivery_image'        => $this->dropOff->image,
-            'delivery_mobile'       => $this->dropOff->mobile,
-            'delivery_address'      => $this->dropOff->address,
-            'delivery_address_geo'  => $this->dropOff->coordinate->toJson(),
-            'parcel_type'           => $this->parcelType,
-            'success_url'           => $this->successUrl,
-            'picked_url'            => $this->pickedUrl,
-            'failure_url'           => $this->failureUrl,
-            'collection_url'        => $this->collectionUrl,
-            'pay_url'               => $this->payUrl,
-            'rider_not_found_url'   => $this->riderNotFoundUrl,
-            'vendor_order_detail'   => $this->vendorOrder->toJson(),
-            'paid_amount'           => $this->paidAmount,
-            'is_instant'            => $this->isInstant,
-            'collectable_amount'    => $this->collectableAmount,
-            'discount'              => $this->discount,
-            'is_percentage'         => $this->isDiscountInPercentage,
+            LogisticOrderKeys::CUSTOMER_PROFILE_ID   => $this->customerProfileId,
+        ] + $this->getDateTimeArray() + $this->getPickUpArray() + $this->getDropOffArray() + [
+            LogisticOrderKeys::PARCEL_TYPE           => $this->parcelType,
+            LogisticOrderKeys::SUCCESS_URL           => $this->successUrl,
+            LogisticOrderKeys::PICKED_URL            => $this->pickedUrl,
+            LogisticOrderKeys::FAILURE_URL           => $this->failureUrl,
+            LogisticOrderKeys::COLLECTION_URL        => $this->collectionUrl,
+            LogisticOrderKeys::PAY_URL               => $this->payUrl,
+            LogisticOrderKeys::RIDER_NOT_FOUND_URL   => $this->riderNotFoundUrl,
+            LogisticOrderKeys::VENDOR_ORDER_DETAIL   => $this->vendorOrder->toJson(),
+            LogisticOrderKeys::PAID_AMOUNT           => $this->paidAmount,
+            LogisticOrderKeys::IS_INSTANT            => $this->isInstant,
+            LogisticOrderKeys::COLLECTABLE_AMOUNT    => $this->collectableAmount,
+            LogisticOrderKeys::DISCOUNT              => $this->discount,
+            LogisticOrderKeys::IS_PERCENTAGE         => $this->isDiscountInPercentage,
         ];
+    }
+
+    public function getTouchedArray()
+    {
+        return $this->touched;
     }
 
     /**
      * @return array
-     * @throws Exception
+     * @throws \Exception
      */
     public function formatForPartner()
     {
