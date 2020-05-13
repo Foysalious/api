@@ -39,9 +39,9 @@ class DueTrackerRepository extends BaseRepository {
             $list = $list->where('balance_type', $request->balance_type)->values();
         }
         if ($request->has('q') && !empty($request->q)) {
-            $query = $request->q;
+            $query = preg_replace("\+", "", $request->q);
             $list  = $list->filter(function ($item) use ($query) {
-                return preg_match("/$query/i", $item['customer_name']) || preg_match("/$query/", $item['customer_mobile']);
+                return preg_match("%$query%i", $item['customer_name']) || preg_match("/$query/", $item['customer_mobile']);
             })->values();
         }
         if (!empty($order_by) && $order_by == "name") {
@@ -202,12 +202,12 @@ class DueTrackerRepository extends BaseRepository {
         $response = $this->client->post("accounts/$this->accountId/entries/update/$request->entry_id", $data);
 
         if ($data['amount_cleared'] > 1 && $response['data']['source_type'] == 'PosOrder' && !empty($response['data']['source_id']))
-            $this->createPosOrderPayment($data['amount_cleared'], $response['data']['source_id'],'cod');
+            $this->createPosOrderPayment($data['amount_cleared'], $response['data']['source_id'], 'cod');
 
         return $response['data'];
     }
 
-    public function createPosOrderPayment($amount_cleared, $pos_order_id,$payment_method) {
+    public function createPosOrderPayment($amount_cleared, $pos_order_id, $payment_method) {
         $payment_data['pos_order_id'] = $pos_order_id;
         $payment_data['amount']       = $amount_cleared;
         $payment_data['method']       = $payment_method;
