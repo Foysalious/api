@@ -141,28 +141,6 @@ class ProcurementController extends Controller
         }
     }
 
-    public function filterOptions(Request $request)
-    {
-        $categories = Category::child()->published()->publishedForB2B()->select('id', 'name')->get()->toArray();
-        $tags = Tag::with('taggables')->where('taggable_type', 'App\Models\Procurement')->select('id', 'name', 'taggable_type')->get();
-        $tag_lists = [];
-        foreach ($tags as $tag) {
-            $taggables_count = $tag->taggables->count();
-            array_push($tag_lists, [
-                'id' => $tag->id,
-                'name' => $tag->name,
-                'count' => $taggables_count
-            ]);
-        }
-        $tender_post_type = config('b2b.TENDER_POST_TYPE');
-        $filter_options = [
-            'categories' => $categories,
-            'post_type' => array_values($tender_post_type),
-            'popular_tags' => collect($tag_lists)->sortByDesc('count')->take(10)->values(),
-        ];
-        return api_response($request, $filter_options, 200, ['filter_options' => $filter_options]);
-    }
-
     public function index($business, Request $request, AccessControl $access_control)
     {
         try {
@@ -212,6 +190,27 @@ class ProcurementController extends Controller
         }
     }
 
+    public function filterOptions(Request $request)
+    {
+        $categories = Category::child()->published()->publishedForB2B()->select('id', 'name')->get()->toArray();
+        $tags = Tag::with('taggables')->where('taggable_type', 'App\Models\Procurement')->select('id', 'name', 'taggable_type')->get();
+        $tag_lists = [];
+        foreach ($tags as $tag) {
+            $taggables_count = $tag->taggables->count();
+            array_push($tag_lists, [
+                'id' => $tag->id,
+                'name' => $tag->name,
+                'count' => $taggables_count
+            ]);
+        }
+        $tender_post_type = config('b2b.TENDER_POST_TYPE');
+        $filter_options = [
+            'categories' => $categories,
+            'post_type' => array_values($tender_post_type),
+            'popular_tags' => collect($tag_lists)->sortByDesc('count')->take(10)->values(),
+        ];
+        return api_response($request, $filter_options, 200, ['filter_options' => $filter_options]);
+    }
 
     public function tenders(Request $request)
     {
