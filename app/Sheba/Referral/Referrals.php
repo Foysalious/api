@@ -45,8 +45,8 @@ class Referrals
 
     public static function createReferenceByCode($refer_code)
     {
-        $partner = Partner::where('refer_code',$refer_code)->first();
-        if(!$partner)
+        $partner = Partner::where('refer_code', $refer_code)->first();
+        if (!$partner)
             return null;
         return PartnerReferral::create(
             [
