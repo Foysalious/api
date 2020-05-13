@@ -82,6 +82,7 @@ class ServiceTransformer extends TransformerAbstract
             'banner' => $service->banner,
             'variable_type' => $service->variable_type,
             'min_quantity' => $service->min_quantity,
+            'unit' => $service->unit,
             'questions' => $this->serviceQuestion->get(),
             'category' => [
                 'id' => $category->id,
