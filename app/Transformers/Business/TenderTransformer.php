@@ -7,6 +7,10 @@ use Carbon\Carbon;
 class TenderTransformer extends TransformerAbstract
 {
 
+    /**
+     * @param $procurement
+     * @return array
+     */
     public function transform($procurement)
     {
         $start_date = Carbon::parse($procurement->procurement_start_date)->format('d/m/y');
@@ -51,6 +55,11 @@ class TenderTransformer extends TransformerAbstract
         ];
     }
 
+    /**
+     * @param $procurement
+     * @param $number_of_bids
+     * @return array
+     */
     private function getRemainingApplications($procurement, $number_of_bids)
     {
         $number_of_participants = $procurement->number_of_participants;
@@ -73,6 +82,10 @@ class TenderTransformer extends TransformerAbstract
         ];
     }
 
+    /**
+     * @param $last_date_of_submission
+     * @return array
+     */
     private function getRemainingDays($last_date_of_submission)
     {
         $today = Carbon::now();
