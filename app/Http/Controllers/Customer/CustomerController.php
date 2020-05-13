@@ -75,7 +75,8 @@ class CustomerController extends Controller
                 if ($this->canThisServiceAvailableForOrderAgain($final, $review->job)) continue;
                 $data = [];
                 $data['category'] = clone $review->category;
-                $data['category']['delivery_charge'] = $delivery_charge->setCategory($review->category)->get();
+                $data['category']['delivery_charge'] = $delivery_charge->setCategory($review->category)
+                    ->setLocation(Location::find($location))->get();
                 $discount_checking_params = (new JobDiscountCheckingParams())->setDiscountableAmount($data['category']['delivery_charge']);
                 $job_discount_handler->setType(DiscountTypes::DELIVERY)->setCategory($review->category)->setCheckingParams($discount_checking_params)->calculate();
                 /** @var Discount $delivery_discount */
@@ -117,6 +118,7 @@ class CustomerController extends Controller
                     ] : null;
                     $service['id'] = $job_service->service->id;
                     $service['option'] = $option;
+                    if ($job_service->variable_type !== $job_service->service->variable_type) continue;
                     $service['question'] = count($option) > 0 ? $service_question->setService($job_service->service)->getQuestionForThisOption(json_decode($job_service->option)) : null;
                     $service['quantity'] = $job_service->quantity < $job_service->service->min_quantity ? $job_service->service->min_quantity : $job_service->quantity;
                     $service['type'] = $service->variable_type;
@@ -130,7 +132,8 @@ class CustomerController extends Controller
                 $final->push(collect($data));
             }
         }
-        return api_response($request, $final, 200, ['data' => $final]);
+        if (count($final) > 0) return api_response($request, $final, 200, ['data' => $final]);
+        else return api_response($request, null, 404);
     }
 
     private function canThisServiceAvailableForOrderAgain($final, Job $job)

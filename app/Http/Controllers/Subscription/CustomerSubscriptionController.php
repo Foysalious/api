@@ -3,6 +3,7 @@
 use App\Exceptions\HyperLocationNotFoundException;
 use App\Http\Controllers\Controller;
 use App\Models\CustomerDeliveryAddress;
+use App\Models\Location;
 use App\Models\LocationService;
 use App\Models\Service;
 use App\Models\ServiceSubscription;
@@ -110,29 +111,21 @@ class CustomerSubscriptionController extends Controller
 
     public function clearPayment(Request $request, $customer, $subscription, ShebaPayment $sheba_payment)
     {
-        try {
-            $this->validate($request, [
-                'payment_method' => 'required|string|in:bkash,wallet,cbl,online',
-            ]);
-            $customer = $request->customer;
-            $payment_method = $request->payment_method;
-            /** @var SubscriptionOrder $subscription_order */
-            $subscription_order = SubscriptionOrder::find((int)$subscription);
-            $subscription_order->calculate();
-            if ($payment_method == 'wallet' && $subscription_order->due > $customer->shebaCredit()) {
-                return api_response($request, null, 403, ['message' => 'You don\'t have sufficient credit.']);
-            }
-            $order_adapter = new SubscriptionOrderAdapter();
-            $payable = $order_adapter->setModelForPayable($subscription_order)->setUser($customer)->getPayable();
-            $payment = $sheba_payment->setMethod($payment_method)->init($payable);
-            return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        $this->validate($request, [
+            'payment_method' => 'required|string|in:bkash,wallet,cbl,online',
+        ]);
+        $customer = $request->customer;
+        $payment_method = $request->payment_method;
+        /** @var SubscriptionOrder $subscription_order */
+        $subscription_order = SubscriptionOrder::find((int)$subscription);
+        $subscription_order->calculate();
+        if ($payment_method == 'wallet' && $subscription_order->due > $customer->shebaCredit()) {
+            return api_response($request, null, 403, ['message' => 'You don\'t have sufficient credit.']);
         }
+        $order_adapter = new SubscriptionOrderAdapter();
+        $payable = $order_adapter->setModelForPayable($subscription_order)->setUser($customer)->getPayable();
+        $payment = $sheba_payment->setMethod($payment_method)->init($payable);
+        return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
     }
 
     public function index(Request $request, $customer)
@@ -368,7 +361,9 @@ class CustomerSubscriptionController extends Controller
                 'min_discount_quantity' => $monthly_discount->min_discount_qty
             ] : null;
 
-            $resource = new Item($service->category, new ServiceV2DeliveryChargeTransformer($delivery_charge, $job_discount_handler));
+            $resource = new Item($service->category,
+                new ServiceV2DeliveryChargeTransformer($delivery_charge, $job_discount_handler, $subscription_order->location)
+            );
             $delivery_charge_discount_data = $manager->createData($resource)->toArray();
             $subscription_order_details += $delivery_charge_discount_data;
 

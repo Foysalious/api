@@ -77,7 +77,7 @@ class Repository extends ClientRepository {
             $list  = $list->slice($this->offset)->take($this->limit)->values();
             $items = $this->getShortItems($list);
         }
-        $dateWise = $items->groupBy('date')->toArray();
+        $dateWise = $items->sortByDesc()->groupBy('date')->toArray();
         foreach ($dateWise as $key => $dItem) {
             $dItems->push(['date' => $key, 'items' => $dItem]);
         }

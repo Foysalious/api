@@ -115,7 +115,9 @@ class CustomerFavoriteController extends Controller
             $favorite['partner_name'] = $partner ? $partner->name : null;
             $favorite['partner_logo'] = $partner ? $partner->logo : null;
 
-            $resource = new Item($favorite->category, new ServiceV2DeliveryChargeTransformer($delivery_charge, $job_discount_handler));
+            $resource = new Item($favorite->category,
+                new ServiceV2DeliveryChargeTransformer($delivery_charge, $job_discount_handler, Location::find($this->location))
+            );
             $delivery_charge_discount_data = $manager->createData($resource)->toArray();
             $favorite['delivery_charge'] = $delivery_charge_discount_data['delivery_charge'];
             $favorite['delivery_discount'] = $delivery_charge_discount_data['delivery_discount'];

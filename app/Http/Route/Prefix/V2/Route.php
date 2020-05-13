@@ -195,6 +195,7 @@ class Route
             });
             $api->get('refresh-token', 'ProfileController@refresh');
             $api->get('service-price-calculate', 'Service\ServicePricingController@getCalculatedPrice');
+            $api->post('due-tracker/create-pos-order-payment', 'Pos\DueTrackerController@createPosOrderPayment');
         });
         return $api;
     }

@@ -45,6 +45,7 @@ use Sheba\ServiceRequest\ServiceRequestObject;
 class OrderPlace
 {
     use ModificationFields;
+
     private $deliveryAddressId;
     /** @var CustomerDeliveryAddress */
     private $deliveryAddress;
@@ -112,7 +113,8 @@ class OrderPlace
 
     public function __construct(Creator $creator, PriceCalculation $priceCalculation, DiscountCalculation $discountCalculation, OrderVoucherData $orderVoucherData,
                                 PartnerListBuilder $partnerListBuilder, Director $director, ServiceRequest $serviceRequest,
-                                OrderRequestAlgorithm $orderRequestAlgorithm, JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, Store $order_request_store, JobDeliveryChargeCalculator $jobDeliveryChargeCalculator)
+                                OrderRequestAlgorithm $orderRequestAlgorithm, JobDiscountHandler $job_discount_handler,
+                                UpsellCalculation $upsell_calculation, Store $order_request_store, JobDeliveryChargeCalculator $jobDeliveryChargeCalculator)
     {
         $this->priceCalculation = $priceCalculation;
         $this->discountCalculation = $discountCalculation;
@@ -145,7 +147,7 @@ class OrderPlace
      */
     public function setDeliveryAddress($delivery_address)
     {
-        $this->address = $delivery_address;
+        $this->address = (int)$delivery_address;
         return $this;
     }
 
