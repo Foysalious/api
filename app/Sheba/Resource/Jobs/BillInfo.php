@@ -2,23 +2,40 @@
 
 
 use App\Models\Job;
+use Sheba\Services\FormatServices;
 
 class BillInfo
 {
+    private $formatServices;
+
+    public function __construct(FormatServices $formatServices)
+    {
+        $this->formatServices = $formatServices;
+    }
+
     public function getBill(Job $job)
     {
         $job = $job->load(['partnerOrder.order', 'category', 'jobServices', 'usedMaterials' => function ($q) {
             $q->select('job_material.id', 'job_material.material_name', 'material_price', 'job_id');
         }]);
         $job->calculate(true);
+        $service_list = [];
         if (count($job->jobServices) == 0) {
             $services = array();
             array_push($services, array('name' => $job->category ? $job->category->name : null,
                 'price' => (double)$job->servicePrice,
                 'unit' => $job->service->unit,
                 'quantity' => $job->service_quantity));
+
+            array_push($service_list, array(
+                'name' => $job->service != null ? $job->service->name : null,
+                'service_group' => [],
+                'price' => (double)$job->servicePrice,
+                'unit' => $job->service->unit,
+                'quantity' => $job->service_quantity));
         } else {
             $services = array();
+            $service_list = $this->formatServices->setJobServices($job->jobServices)->formatServices();
             foreach ($job->jobServices as $jobService) {
                 array_push($services, array(
                     'id' => $jobService->id,
@@ -39,6 +56,7 @@ class BillInfo
         $bill['discount'] = (double)$job->discount;
         $bill['payment_method'] = $this->formatPaymentMethod($partnerOrder->payment_method);
         $bill['services'] = $services;
+        $bill['service_list'] = $service_list;
         $bill['delivered_date'] = $job->delivered_date != null ? $job->delivered_date->format('Y-m-d') : null;
         $bill['delivered_date_timestamp'] = $job->delivered_date != null ? $job->delivered_date->timestamp : null;
         $bill['closed_and_paid_at'] = $partnerOrder->closed_and_paid_at ? $partnerOrder->closed_and_paid_at->format('Y-m-d') : null;
