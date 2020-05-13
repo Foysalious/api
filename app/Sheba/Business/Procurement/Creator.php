@@ -296,7 +296,7 @@ class Creator
             array_push($this->procurementItemFieldData, [
                 'title' => $field->title,
                 'short_description' => isset($field->short_description) ? $field->short_description : '',
-                'input_type' => $field->type,
+                'input_type' => isset($field->type) ? $field->type : null,
                 'result' => isset($field->result) ? $field->result : null,
                 'procurement_item_id' => $procurement_item->id,
                 'variables' => json_encode(['is_required' => $is_required, 'options' => $options, 'unit' => $unit])
