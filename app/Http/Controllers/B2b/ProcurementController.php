@@ -218,6 +218,21 @@ class ProcurementController extends Controller
         $procurements = $this->procurementRepository->builder()->limit(10)->orderBy('id', 'desc');
         #$procurements = $procurements->skip($offset)->limit($limit);
 
+
+        if ($request->has('category') && $request->category != 'all') {
+            $procurements->where('category_id', $request->category);
+        }
+
+        if ($request->has('shared_to')) {
+            $procurements->where('shared_to', $request->shared_to);
+        }
+
+        $start_date = $request->has('start_date') ? $request->start_date : null;
+        $end_date = $request->has('end_date') ? $request->end_date : null;
+        if ($start_date && $end_date) {
+            $procurements->whereBetween('procurement_end_date', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
+        }
+
         $procurements = $procurements->get();
         $total_records = $procurements->count();
 
@@ -226,10 +241,25 @@ class ProcurementController extends Controller
         $resource = new Collection($procurements, new TenderTransformer());
         $procurements = $manager->createData($resource)->toArray()['data'];
 
+        if ($request->has('sort')) {
+            $procurements = $this->procurementOrderBy($procurements, $request->sort)->values()->toArray();
+        }
 
         return api_response($request, null, 200, ['tenders' => $procurements, 'total_records' => $total_records]);
     }
 
+    /**
+     * @param $procurements
+     * @param string $sort
+     * @return \Illuminate\Support\Collection
+     */
+    private function procurementOrderBy($procurements, $sort = 'asc')
+    {
+        $sort_by = ($sort == 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($procurements)->$sort_by(function ($procurement, $key) {
+            return strtoupper($procurement['id']);
+        });
+    }
     public function show(Request $request)
     {
         try {
