@@ -24,10 +24,21 @@ use Sheba\Business\Attendance\Setting\Updater as AttendanceSettingUpdater;
 use Sheba\Business\Attendance\Setting\AttendanceSettingTransformer;
 use Sheba\Business\Holiday\HolidayList;
 use Sheba\Business\Holiday\Creator as HolidayCreator;
+use Sheba\Business\Holiday\Updater as HolidayUpdater;
+use Sheba\Business\Holiday\CreateRequest as HolidayCreatorRequest;
 use Throwable;
 
 class AttendanceController extends Controller
 {
+    /** @var BusinessHolidayRepoInterface $holidayRepository */
+    private $holidayRepository;
+
+    public function __construct(BusinessHolidayRepoInterface $business_holidays_repo)
+    {
+        $this->holidayRepository = $business_holidays_repo;
+        return $this;
+    }
+
     public function getDailyStats($business, Request $request, AttendanceList $stat)
     {
         $this->validate($request, [
@@ -189,6 +200,7 @@ class AttendanceController extends Controller
         $business = $request->business;
         $weekends = $business_weekend_repo->getAllByBusiness($business);
         $weekend_days = $weekends->pluck('weekday_name')->toArray();
+        $weekend_days = array_map('ucfirst', $weekend_days);
         $office_time = $office_hours->getOfficeTime($business);
         $data = [
             'office_hour_type' => 'Fixed Time', 'start_time' => Carbon::parse($office_time->start_time)->format('h:i a'), 'end_time' => Carbon::parse($office_time->end_time)->format('h:i a'), 'weekends' => $weekend_days
@@ -248,21 +260,17 @@ class AttendanceController extends Controller
 
         $updater = new AttendanceSettingUpdater($request->business, $business_member->member, $business_office_repo, $attendance_type_repo);
         $validate_office_ip = $updater->validateOfficeIp($business_offices);
-        if(array_key_exists("business_offices",$validate_office_ip)) $business_offices = $validate_office_ip['business_offices'];
-        if(array_key_exists("status",$validate_office_ip)) return api_response($request, null, 400, ['msg' => "Validation Error"]);
+        if (array_key_exists("business_offices", $validate_office_ip)) $business_offices = $validate_office_ip['business_offices'];
+        if (array_key_exists("status", $validate_office_ip)) return api_response($request, null, 400, ['msg' => "Validation Error"]);
 
-        if(!is_null($attendance_types))
-        {
-           foreach ($attendance_types as $attendance_type)
-           {
-              $attendance_type_id = isset($attendance_type->id) ? $attendance_type->id : "No ID";
-              $update_attendance_type = $updater->updateAttendanceType($attendance_type_id, $attendance_type->type, $attendance_type->action);
-           }
+        if (!is_null($attendance_types)) {
+            foreach ($attendance_types as $attendance_type) {
+                $attendance_type_id = isset($attendance_type->id) ? $attendance_type->id : "No ID";
+                $update_attendance_type = $updater->updateAttendanceType($attendance_type_id, $attendance_type->type, $attendance_type->action);
+            }
         }
-        if(!is_null($business_offices))
-        {
-            foreach ($business_offices as $business_office)
-            {
+        if (!is_null($business_offices)) {
+            foreach ($business_offices as $business_office) {
                 $office_id = isset($business_office->id) ? $business_office->id : "No ID";
                 $update_business_type = $updater->updateBusinessOffice($office_id, $business_office->name, $business_office->ip, $business_office->action);
             }
@@ -272,7 +280,7 @@ class AttendanceController extends Controller
 
     public function getHolidays(Request $request, BusinessHolidayRepoInterface $business_holidays_repo)
     {
-        $holiday_list = new HolidayList($request->business,$business_holidays_repo);
+        $holiday_list = new HolidayList($request->business, $business_holidays_repo);
         $holidays = $holiday_list->getHolidays($request);
 
         return api_response($request, null, 200, [
@@ -283,12 +291,36 @@ class AttendanceController extends Controller
     public function storeHoliday(Request $request, BusinessHolidayRepoInterface $business_holidays_repo, HolidayCreator $creator)
     {
         $this->validate($request, [
-            'start_date' => 'required|date_format:d/m/Y', 'end_date' => 'required|date_format:d/m/Y|after_or_equal:start_date', 'title' => 'required|string'
+            'start_date' => 'required|date_format:d/m/Y',
+            'end_date' => 'required|date_format:d/m/Y|after_or_equal:start_date',
+            'title' => 'required|string'
         ]);
         $business_member = $request->business_member;
 
-        $holiday = $creator->setBusiness($request->business)->setMember($business_member->member)->setHolidayRepo($business_holidays_repo)
-                   ->setStartDate($request->start_date)->setEndDate($request->end_date)->setHolidayName($request->title)->create();
+        $holiday = $creator->setBusiness($request->business)
+            ->setMember($business_member->member)
+            ->setHolidayRepo($business_holidays_repo)
+            ->setStartDate($request->start_date)
+            ->setEndDate($request->end_date)
+            ->setHolidayName($request->title)->create();
         return api_response($request, null, 200, ['holiday' => $holiday]);
+    }
+
+    public function update($business, $holiday, Request $request, HolidayCreatorRequest $creator_request, HolidayUpdater $updater)
+    {
+        $this->validate($request, [
+            'start_date' => 'required|date_format:Y-m-d|',
+            'end_date' => 'required|date_format:Y-m-d||after_or_equal:start_date',
+            'title' => 'required|string'
+        ]);
+        $manager_member = $request->manager_member;
+        $holiday = $this->holidayRepository->find((int)$holiday);
+        $updater_request = $creator_request->setBusiness($request->business)
+            ->setMember($manager_member)
+            ->setStartDate($request->start_date)
+            ->setEndDate($request->end_date)
+            ->setHolidayName($request->title);
+        $updater->setHoliday($holiday)->setBusinessHolidayCreatorRequest($updater_request)->update();
+        return api_response($request, null, 200);
     }
 }
