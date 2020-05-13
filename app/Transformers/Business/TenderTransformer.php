@@ -1,10 +1,8 @@
 <?php namespace App\Transformers\Business;
 
-use App\Models\Category;
-use App\Models\Procurement;
-use Carbon\Carbon;
-use Illuminate\Support\Collection;
 use League\Fractal\TransformerAbstract;
+use App\Models\Category;
+use Carbon\Carbon;
 
 class TenderTransformer extends TransformerAbstract
 {
