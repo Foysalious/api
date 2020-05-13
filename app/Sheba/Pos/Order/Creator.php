@@ -158,6 +158,9 @@ class Creator {
         else return (isset($this->data['customer_id']) && $this->data['customer_id']) ? $this->data['customer_id'] : null;
     }
 
+
+
+
     private function resolvePaymentMethod()
     {
         if(isset($this->data['payment_method']))
