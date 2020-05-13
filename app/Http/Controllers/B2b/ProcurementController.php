@@ -215,10 +215,14 @@ class ProcurementController extends Controller
     public function tenders(Request $request)
     {
         list($offset, $limit) = calculatePagination($request);
-        $procurements = $this->procurementRepository->builder()->limit(10)->orderBy('id', 'desc');
+        $procurements = $this->procurementRepository->builder()->with('tags')->limit(10)->orderBy('id', 'desc');
         #$procurements = $procurements->skip($offset)->limit($limit);
-
-
+        
+        if ($request->has('tag')) {
+            $procurements = $procurements->whereHas('tags', function ($query) use ($request) {
+                $query->where('id', $request->tag);
+            });
+        }
         if ($request->has('category') && $request->category != 'all') {
             $procurements->where('category_id', $request->category);
         }
@@ -260,6 +264,7 @@ class ProcurementController extends Controller
             return strtoupper($procurement['id']);
         });
     }
+
     public function show(Request $request)
     {
         try {
