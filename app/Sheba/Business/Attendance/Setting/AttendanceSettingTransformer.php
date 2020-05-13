@@ -6,7 +6,7 @@ class AttendanceSettingTransformer
     {
         $attendance_setting_info = [];
 
-        $attendance_setting_info['sheba_attendance_types'] = ['remote','ip_based'];
+        $attendance_setting_info['sheba_attendance_types'] = $this->getShebaAttendanceTypes();
         $attendance_setting_info['attendance_types'] = $this->getAttendanceTypes($attendance_types);
         $attendance_setting_info['business_offices'] = $this->getOfficeNamesWithIp($business_offices);
 
@@ -41,5 +41,13 @@ class AttendanceSettingTransformer
         }
 
         return $office_names_with_ip;
+    }
+
+    private function getShebaAttendanceTypes()
+    {
+        return [
+            [ 'value' => 'ip_based' , 'title' => 'IP based attendance', 'subtitle' => ' - from office Wi-Fi network only' ],
+            [ 'value' => 'remote', 'title' => 'Remote attendance', 'subtitle' => ' - from anywhere' ]
+        ];
     }
 }
