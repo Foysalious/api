@@ -141,28 +141,6 @@ class ProcurementController extends Controller
         }
     }
 
-    public function filterOptions(Request $request)
-    {
-        $categories = Category::child()->published()->publishedForB2B()->select('id', 'name')->get()->toArray();
-        $tags = Tag::with('taggables')->where('taggable_type', 'App\Models\Procurement')->select('id', 'name', 'taggable_type')->get();
-        $tag_lists = [];
-        foreach ($tags as $tag) {
-            $taggables_count = $tag->taggables->count();
-            array_push($tag_lists, [
-                'id' => $tag->id,
-                'name' => $tag->name,
-                'count' => $taggables_count
-            ]);
-        }
-        $tender_post_type = config('b2b.TENDER_POST_TYPE');
-        $filter_options = [
-            'categories' => $categories,
-            'post_type' => array_values($tender_post_type),
-            'popular_tags' => collect($tag_lists)->sortByDesc('count')->take(10)->values(),
-        ];
-        return api_response($request, $filter_options, 200, ['filter_options' => $filter_options]);
-    }
-
     public function index($business, Request $request, AccessControl $access_control)
     {
         try {
@@ -212,12 +190,48 @@ class ProcurementController extends Controller
         }
     }
 
+    public function filterOptions(Request $request)
+    {
+        $categories = Category::child()->published()->publishedForB2B()->select('id', 'name')->get()->toArray();
+        $tags = Tag::with('taggables')->where('taggable_type', 'App\Models\Procurement')->select('id', 'name', 'taggable_type')->get();
+        $tag_lists = [];
+        foreach ($tags as $tag) {
+            $taggables_count = $tag->taggables->count();
+            array_push($tag_lists, [
+                'id' => $tag->id,
+                'name' => $tag->name,
+                'count' => $taggables_count
+            ]);
+        }
+        $tender_post_type = config('b2b.TENDER_POST_TYPE');
+        $filter_options = [
+            'categories' => $categories,
+            'post_type' => array_values($tender_post_type),
+            'popular_tags' => collect($tag_lists)->sortByDesc('count')->take(10)->values(),
+        ];
+        return api_response($request, $filter_options, 200, ['filter_options' => $filter_options]);
+    }
 
     public function tenders(Request $request)
     {
         list($offset, $limit) = calculatePagination($request);
         $procurements = $this->procurementRepository->builder()->limit(10)->orderBy('id', 'desc');
         #$procurements = $procurements->skip($offset)->limit($limit);
+
+
+        if ($request->has('category') && $request->category != 'all') {
+            $procurements->where('category_id', $request->category);
+        }
+
+        if ($request->has('shared_to')) {
+            $procurements->where('shared_to', $request->shared_to);
+        }
+
+        $start_date = $request->has('start_date') ? $request->start_date : null;
+        $end_date = $request->has('end_date') ? $request->end_date : null;
+        if ($start_date && $end_date) {
+            $procurements->whereBetween('procurement_end_date', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
+        }
 
         $procurements = $procurements->get();
         $total_records = $procurements->count();
@@ -227,10 +241,25 @@ class ProcurementController extends Controller
         $resource = new Collection($procurements, new TenderTransformer());
         $procurements = $manager->createData($resource)->toArray()['data'];
 
+        if ($request->has('sort')) {
+            $procurements = $this->procurementOrderBy($procurements, $request->sort)->values()->toArray();
+        }
 
         return api_response($request, null, 200, ['tenders' => $procurements, 'total_records' => $total_records]);
     }
 
+    /**
+     * @param $procurements
+     * @param string $sort
+     * @return \Illuminate\Support\Collection
+     */
+    private function procurementOrderBy($procurements, $sort = 'asc')
+    {
+        $sort_by = ($sort == 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($procurements)->$sort_by(function ($procurement, $key) {
+            return strtoupper($procurement['id']);
+        });
+    }
     public function show(Request $request)
     {
         try {
