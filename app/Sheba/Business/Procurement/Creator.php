@@ -27,7 +27,6 @@ class Creator
     private $procurementItemFieldRepository;
     /** @var Attachments */
     private $attachmentManager;
-
     private $purchaseRequestId;
     private $type;
     private $title;
@@ -58,6 +57,14 @@ class Creator
     private $createdBy;
     private $sharedTo;
 
+    /**
+     * Creator constructor.
+     * @param ProcurementRepositoryInterface $procurement_repository
+     * @param ProcurementItemRepositoryInterface $procurement_item_repository
+     * @param ProcurementItemFieldRepositoryInterface $procurement_item_field_repository
+     * @param ProcurementQuestionRepositoryInterface $procurement_question_repository
+     * @param Attachments $attachment_manager
+     */
     public function __construct(ProcurementRepositoryInterface $procurement_repository,
                                 ProcurementItemRepositoryInterface $procurement_item_repository,
                                 ProcurementItemFieldRepositoryInterface $procurement_item_field_repository,
@@ -106,6 +113,7 @@ class Creator
         $this->title = $title;
         return $this;
     }
+
     public function setCategory($category)
     {
         $this->category = $category;
@@ -282,7 +290,7 @@ class Creator
             'estimated_price' => $this->estimatedPrice,
             'order_start_date' => $this->orderStartDate,
             'order_end_date' => $this->orderEndDate,
-            'interview_date' => $this->interviewDate,
+            'interview_date' => $this->interviewDate
         ];
     }
 
@@ -296,7 +304,7 @@ class Creator
             array_push($this->procurementItemFieldData, [
                 'title' => $field->title,
                 'short_description' => isset($field->short_description) ? $field->short_description : '',
-                'input_type' => $field->type,
+                'input_type' => isset($field->type) ? $field->type : null,
                 'result' => isset($field->result) ? $field->result : null,
                 'procurement_item_id' => $procurement_item->id,
                 'variables' => json_encode(['is_required' => $is_required, 'options' => $options, 'unit' => $unit])
@@ -380,11 +388,15 @@ class Creator
         return $order_time_line;
     }
 
+    /**
+     * @param Procurement $procurement
+     */
     public function changeStatus(Procurement $procurement)
     {
         $this->procurementData = [
-            'is_published' => $this->isPublished ? (int)$this->isPublished : 0,
-            'published_at' => $this->isPublished ? Carbon::now() : ''
+            'is_published'  => $this->isPublished ? (int)$this->isPublished : 0,
+            'published_at'  => $this->isPublished ? Carbon::now() : '',
+            'shared_to'     => $this->sharedTo
         ];
         $this->procurementRepository->update($procurement, $this->procurementData);
         if ($this->isPublished) $this->sendNotification($procurement);
@@ -395,6 +407,7 @@ class Creator
         $bid_price_quotations = null;
         if ($this->procurement->isAdvanced())
             $bid_price_quotations = $this->generateBidItemData();
+
         return [
             'procurement_id' => $this->procurement->id,
             'procurement_title' => $this->procurement->title,

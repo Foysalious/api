@@ -12,21 +12,21 @@ return [
             'amount'           => 100,
             'duration'         => 6,
             'nid_verification' => false,
-            'details'          => 'আপনার রেফার করা বন্ধুকে sManager অ্যাপ ৬ দিন ব্যাবহার করতে হবে।'
+            'details'          => 'আপনার রেফার করা বন্ধুকে sManager অ্যাপ ৬ দিন ব্যবহার করতে হবে।'
         ],
         [
             'step'             => '২য় ধাপ',
             'amount'           => 100,
             'duration'         => 12,
             'nid_verification' => false,
-            'details'          => 'আপনার রেফার করা বন্ধুকে sManager অ্যাপ ১২ দিন ব্যাবহার করতে হবে।'
+            'details'          => 'আপনার রেফার করা বন্ধুকে sManager অ্যাপ ১২ দিন ব্যবহার করতে হবে।'
         ],
         [
             'step'             => '৩য় ধাপ',
             'amount'           => 100,
             'duration'         => 25,
             'nid_verification' => false,
-            'details'          => 'আপনার রেফার করা বন্ধুকে sManager অ্যাপ ২৫ দিন ব্যাবহার করতে হবে।'
+            'details'          => 'আপনার রেফার করা বন্ধুকে sManager অ্যাপ ২৫ দিন ব্যবহার করতে হবে।'
         ],
         [
             'step'             => '৪র্থ ধাপ',

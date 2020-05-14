@@ -78,67 +78,62 @@ class ProcurementController extends Controller
         return api_response($request, $tags, 200, ['tags' => $tags->values()]);
     }
 
+    /**
+     * @param Request $request
+     * @param AccessControl $access_control
+     * @param Creator $creator
+     * @return JsonResponse
+     */
     public function store(Request $request, AccessControl $access_control, Creator $creator)
     {
-        try {
-            $this->validate($request, [
-                'description' => 'required|string',
-                'procurement_start_date' => 'required|date_format:Y-m-d',
-                'procurement_end_date' => 'required|date_format:Y-m-d',
-                'last_date_of_submission' => 'required|date_format:Y-m-d',
-                'number_of_participants' => 'required|numeric',
-                'sharing_to' => 'required|string',
+        $procurement_shared_to_options = implode(',', array_column(config('b2b.SHARING_TO'), 'key'));
+        $this->validate($request, [
+            'description' => 'required|string',
+            'procurement_start_date' => 'required|date_format:Y-m-d',
+            'procurement_end_date' => 'required|date_format:Y-m-d',
+            'last_date_of_submission' => 'required|date_format:Y-m-d',
+            'number_of_participants' => 'required|numeric',
+            'sharing_to' => 'required|required|in:'  . $procurement_shared_to_options,
+            'type' => 'sometimes|required|string:in:basic,advanced',
+            'title' => 'sometimes|required|string',
+            'payment_options' => 'sometimes|required|string',
+            'items' => 'sometimes|required|string',
+            'is_published' => 'sometimes|required|integer',
+            'attachments.*' => 'file'
+        ]);
 
-                #'estimated_price' => 'sometimes|required',
-                'type' => 'sometimes|required|string:in:basic,advanced',
-                'title' => 'sometimes|required|string',
-                'payment_options' => 'sometimes|required|string',
-                'items' => 'sometimes|required|string',
-                'is_published' => 'sometimes|required|integer',
-                #'category' => 'sometimes|required',
-                'attachments.*' => 'file'
-            ]);
-            if (!$access_control->setBusinessMember($request->business_member)->hasAccess('procurement.rw')) return api_response($request, null, 403);
+        if (!$access_control->setBusinessMember($request->business_member)->hasAccess('procurement.rw'))
+            return api_response($request, null, 403);
 
-            $this->setModifier($request->manager_member);
+        $this->setModifier($request->manager_member);
 
-            $creator->setLongDescription($request->description)
-                ->setProcurementStartDate($request->procurement_start_date)
-                ->setProcurementEndDate($request->procurement_end_date)
-                ->setLastDateOfSubmission($request->last_date_of_submission)
-                ->setNumberOfParticipants($request->number_of_participants)
-                ->setSharingTo($request->sharing_to)
-                ->setLabels($request->labels)
-                ->setTitle($request->title)
-                ->setCategory($request->category)
-                ->setItems($request->items)
-                ->setQuestions($request->questions)
-                ->setPaymentOptions($request->payment_options)
-                ->setIsPublished($request->is_published)
-                ->setOwner($request->business)
-                ->setCreatedBy($request->manager_member)
-                ->setType($request->type)
-                ->setPurchaseRequest($request->purchase_request_id)
-                ->setOrderStartDate($request->order_start_date)
-                ->setOrderEndDate($request->order_end_date)
-                ->setInterviewDate($request->interview_date);
+        $creator->setLongDescription($request->description)
+            ->setProcurementStartDate($request->procurement_start_date)
+            ->setProcurementEndDate($request->procurement_end_date)
+            ->setLastDateOfSubmission($request->last_date_of_submission)
+            ->setNumberOfParticipants($request->number_of_participants)
+            ->setSharingTo($request->sharing_to)
+            ->setLabels($request->labels)
+            ->setTitle($request->title)
+            ->setCategory($request->category)
+            ->setItems($request->items)
+            ->setQuestions($request->questions)
+            ->setPaymentOptions($request->payment_options)
+            ->setIsPublished($request->is_published)
+            ->setOwner($request->business)
+            ->setCreatedBy($request->manager_member)
+            ->setType($request->type)
+            ->setPurchaseRequest($request->purchase_request_id)
+            ->setOrderStartDate($request->order_start_date)
+            ->setOrderEndDate($request->order_end_date)
+            ->setInterviewDate($request->interview_date);
 
+        if ($request->attachments && is_array($request->attachments))
+            $creator->setAttachments($request->attachments);
 
-            if ($request->attachments && is_array($request->attachments)) $creator->setAttachments($request->attachments);
+        $procurement = $creator->create();
 
-            $procurement = $creator->create();
-
-            return api_response($request, $procurement, 200, ['id' => $procurement->id]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        return api_response($request, $procurement, 200, ['id' => $procurement->id]);
     }
 
     public function index($business, Request $request, AccessControl $access_control)
@@ -215,36 +210,22 @@ class ProcurementController extends Controller
     public function tenders(Request $request)
     {
         list($offset, $limit) = calculatePagination($request);
-        $procurements = $this->procurementRepository->builder()->limit(10)->orderBy('id', 'desc');
+        $procurements = $this->procurementRepository->allProcurement();
         #$procurements = $procurements->skip($offset)->limit($limit);
-
-
-        if ($request->has('category') && $request->category != 'all') {
-            $procurements->where('category_id', $request->category);
-        }
-
-        if ($request->has('shared_to')) {
-            $procurements->where('shared_to', $request->shared_to);
-        }
-
+        if ($request->has('tag')) $procurements = $this->procurementRepository->filterWithTag($request->tag);
+        if ($request->has('category') && $request->category != 'all') $procurements = $this->procurementRepository->filterWithCategory($request->category);
+        if ($request->has('shared_to')) $procurements = $this->procurementRepository->filterWithSharedTo($request->shared_to);
+        if ($request->has('budget')) $procurements = $this->procurementRepository->filterWithBudget($request->budget);
         $start_date = $request->has('start_date') ? $request->start_date : null;
         $end_date = $request->has('end_date') ? $request->end_date : null;
-        if ($start_date && $end_date) {
-            $procurements->whereBetween('procurement_end_date', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
-        }
-
+        if ($start_date && $end_date) $procurements = $this->procurementRepository->filterWithEndDate($start_date, $end_date);
         $procurements = $procurements->get();
         $total_records = $procurements->count();
-
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
         $resource = new Collection($procurements, new TenderTransformer());
         $procurements = $manager->createData($resource)->toArray()['data'];
-
-        if ($request->has('sort')) {
-            $procurements = $this->procurementOrderBy($procurements, $request->sort)->values()->toArray();
-        }
-
+        if ($request->has('sort')) $procurements = $this->procurementOrderBy($procurements, $request->sort)->values()->toArray();
         return api_response($request, null, 200, ['tenders' => $procurements, 'total_records' => $total_records]);
     }
 
@@ -260,6 +241,7 @@ class ProcurementController extends Controller
             return strtoupper($procurement['id']);
         });
     }
+
     public function show(Request $request)
     {
         try {
@@ -371,29 +353,28 @@ class ProcurementController extends Controller
         }
     }
 
+    /**
+     * @param $business
+     * @param $procurement
+     * @param Request $request
+     * @param Creator $creator
+     * @return JsonResponse
+     */
     public function updateStatus($business, $procurement, Request $request, Creator $creator)
     {
-        try {
-            $this->validate($request, [
-                'is_published' => 'required|integer:in:1,0',
-            ]);
-            $procurement = Procurement::find((int)$procurement);
-            if (!$procurement) {
-                return api_response($request, null, 404);
-            } else {
-                $creator->setIsPublished($request->is_published)->changeStatus($procurement);
-                return api_response($request, null, 200);
-            }
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $procurement_shared_to_options = implode(',', array_column(config('b2b.SHARING_TO'), 'key'));
+        $this->validate($request, [
+            'is_published'  => 'required|integer:in:1,0',
+            'sharing_to'    => 'sometimes|required|in:'  . $procurement_shared_to_options
+        ]);
+
+        $procurement = Procurement::find((int)$procurement);
+        if (!$procurement) return api_response($request, null, 404);
+
+        if ($request->has('sharing_to')) $creator->setSharingTo($request->sharing_to);
+        $creator->setIsPublished($request->is_published)->changeStatus($procurement);
+
+        return api_response($request, null, 200);
     }
 
     public function clearBills($business, $procurement, Request $request, ProcurementAdapter $procurement_adapter, ShebaPayment $payment, ShebaPaymentValidator $payment_validator, ProcurementRepositoryInterface $procurement_repository)

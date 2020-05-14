@@ -21,7 +21,7 @@ class PartnerReferralController extends Controller
             $partner       = $request->partner;
             $reference     = $referrals::getReference($partner);
             $refers        = $reference->getReferrals($request);
-            $income        = $reference->totalIncome($request);
+            $income        = $reference->totalIncome();
             $total_sms     = $reference->totalRefer();
             $total_success = $reference->totalSuccessfulRefer();
             return api_response($request, $reference->refers, 200, [
@@ -29,12 +29,14 @@ class PartnerReferralController extends Controller
                     'refers'        => $refers,
                     'total_income'  => $income,
                     'total_sms'     => $total_sms,
-                    'total_success' => $total_success
+                    'total_success' => $total_success,
+                    'total_step'    => count(config('partner.referral_steps'))
                 ]
             ]);
         } catch (InvalidFilter $e) {
             return api_response($request, null, 500, ['message' => $e->getMessage()]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -53,8 +55,8 @@ class PartnerReferralController extends Controller
     public function referLinkGenerate(Request $request, ShortenUrl $shortenUrl)
     {
         try {
-            $partner_id = $request->partner->id;
-            $url_to_shorten = config('partner')['referral_base_link'] . $partner_id;
+            $refer_code = $request->partner->refer_code;
+            $url_to_shorten = config('partner')['referral_base_link'] . $refer_code;
             $deep_link = $shortenUrl->shorten('bit.ly', $url_to_shorten)['link'];
             return api_response($request, $deep_link, 200, ['link' => $deep_link]);
 

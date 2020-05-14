@@ -177,6 +177,7 @@ class OrderController extends Controller {
             if ($request->manager_resource) {
                 $partner = $request->partner;
                 $modifier = $request->manager_resource;
+                $usage_type = Usage::Partner()::POS_ORDER_CREATE;
                 $this->setModifier($modifier);
             } else {
                 $partner              = $partnerRepository->find((int)$partner);
@@ -184,6 +185,7 @@ class OrderController extends Controller {
                 $partner_pos_customer = $posCustomerCreator->setProfile($profile)->setPartner($partner)->create();
                 $pos_customer         = $partner_pos_customer->customer;
                 $modifier = $profile->customer;
+                $usage_type = Usage::Partner()::PRODUCT_LINK;
                 $this->setModifier($modifier);
                 $creator->setCustomer($pos_customer);
             }
@@ -234,10 +236,10 @@ class OrderController extends Controller {
                 'partner_wise_order_id' => $order->partner_wise_order_id
             ];
             app()->make(ActionRewardDispatcher::class)->run('pos_order_create', $partner, $partner, $order, (new RequestIdentification())->get()['portal_name']);
-//            /**
-//             * USAGE LOG
-//             */
-//            (new Usage())->setUser($partner)->setType(Usage::Partner()::POS_ORDER_CREATE)->create($modifier);
+            /**
+             * USAGE LOG
+             */
+            (new Usage())->setUser($partner)->setType($usage_type)->create($modifier);
             return api_response($request, null, 200, [
                 'message' => 'Order Created Successfully',
                 'order'   => $order,
@@ -462,7 +464,14 @@ class OrderController extends Controller {
             $payment_creator->credit($payment_data);
             $order                 = $order->calculate();
             $order->payment_status = $order->getPaymentStatus();
+
             $this->updateIncome($order, $request->paid_amount, $request->emi_month);
+             /**
+             * USAGE LOG
+             */
+            (new Usage())->setUser($request->partner)->setType(Usage::Partner()::POS_DUE_COLLECTION)->create($request->manager_resource);
+
+
             return api_response($request, null, 200, [
                 'msg'   => 'Payment Collect Successfully',
                 'order' => $order

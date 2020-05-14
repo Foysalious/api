@@ -15,6 +15,7 @@ class ResourceHomeTransformer extends TransformerAbstract
     public function transform($resource)
     {
         return [
+            'id' => $resource->id,
             'name' => $resource->profile->name,
             'picture' => $resource->profile->pro_pic,
             'is_verified' => $resource->is_verified,
