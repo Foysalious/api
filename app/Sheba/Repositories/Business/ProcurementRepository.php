@@ -1,5 +1,6 @@
 <?php namespace Sheba\Repositories\Business;
 
+use Carbon\Carbon;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
 use Sheba\Repositories\BaseRepository;
 use App\Models\Procurement;
@@ -22,9 +23,11 @@ class ProcurementRepository extends BaseRepository implements ProcurementReposit
         return $this->model->newQuery();
     }
 
-    public function allProcurement()
+    public function getProcurementFilterByLastDateOfSubmission()
     {
-        return $this->model->with('tags')->limit(10)->orderBy('id', 'desc');
+        return $this->model->with('tags','bids')
+            ->where('last_date_of_submission', '>=', Carbon::now())
+            ->orderBy('id', 'desc');
     }
 
     public function filterWithTag($tag_id)
