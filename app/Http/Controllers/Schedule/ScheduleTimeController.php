@@ -19,16 +19,12 @@ class ScheduleTimeController extends Controller
         ]);
         if ($request->has('category')) {
             $category = Category::find($request->category);
-            if (!$category) {
-                throw new NotFoundException('Category Does not exists', 404);
-            }
+            if (!$category) throw new NotFoundException('Category does not exists', 404);
             $slot->setCategory($category);
         }
         if ($request->has('partner')) {
             $partner = Partner::find($request->partner);
-            if (!$partner) {
-                throw new NotFoundException('Partner Does not exists', 404);
-            }
+            if (!$partner) throw new NotFoundException('Partner does not exists', 404);
             $slot->setPartner($partner);
         }
         if ($request->has('limit')) $slot->setLimit($request->limit);
