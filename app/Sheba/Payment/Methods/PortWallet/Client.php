@@ -51,13 +51,23 @@ class Client
      */
     private function call($method, $uri, $options)
     {
+        $is_500 = false;
+
         try {
             $res = $this->httpClient->request(strtoupper($method), $this->makeUrl($uri), $options);
         } catch (GuzzleException $e) {
             $res = $e->getResponse();
+
+            if($res->getStatusCode() == 500) {
+                $is_500 = true;
+                $res = (object) [
+                    "result" => "failed",
+                    "message" => $e->getMessage()
+                ];
+            }
         }
 
-        return decodeGuzzleResponse($res, false);
+        return $is_500 ? $res : decodeGuzzleResponse($res, false);
     }
 
     /**
