@@ -35,7 +35,7 @@ class BillInfo
                 'quantity' => $job->service_quantity));
         } else {
             $services = array();
-            $service_list = $this->formatServices->setJobServices($job->jobServices)->formatServices();
+            $service_list = $this->formatServices->setJob($job)->formatServices();
             foreach ($job->jobServices as $jobService) {
                 array_push($services, array(
                     'id' => $jobService->id,

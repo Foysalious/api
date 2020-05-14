@@ -271,7 +271,7 @@ class JobController extends Controller
                     'price' => (double)$job->servicePrice
                 ]);
             } else {
-                $service_list = $formatServices->setJobServices($job->jobServices)->formatServices();
+                $service_list = $formatServices->setJob($job)->formatServices();
                 $services = array();
                 foreach ($job->jobServices as $jobService) {
                     $total = (double)$jobService->unit_price * (double)$jobService->quantity;
