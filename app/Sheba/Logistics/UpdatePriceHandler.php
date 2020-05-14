@@ -1,6 +1,5 @@
 <?php namespace Sheba\Logistics;
 
-
 use App\Models\Job;
 use App\Models\PartnerOrder;
 use Sheba\Dal\JobService\JobService;
