@@ -5,6 +5,7 @@ use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Sheba\Business\Attendance\MonthlyStat;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\Business\Attendance\AttendanceList;
 use Sheba\Business\Attendance\Monthly\Excel;
@@ -193,7 +194,7 @@ class AttendanceController extends Controller
      * @param Request $request
      * @param BusinessWeekendRepoInterface $business_weekend_repo
      * @param BusinessOfficeHoursRepoInterface $office_hours
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function getOfficeTime($business, Request $request, BusinessWeekendRepoInterface $business_weekend_repo, BusinessOfficeHoursRepoInterface $office_hours)
     {
@@ -211,7 +212,7 @@ class AttendanceController extends Controller
     /**
      * @param Request $request
      * @param OfficeTimingUpdater $updater
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function updateOfficeTime(Request $request, OfficeTimingUpdater $updater)
     {
@@ -230,7 +231,7 @@ class AttendanceController extends Controller
      * @param BusinessAttendanceTypesRepoInterface $attendance_types_repo
      * @param BusinessOfficeRepoInterface $business_office_repo
      * @param AttendanceSettingTransformer $transformer
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function getAttendanceSetting($business, Request $request,
                                          BusinessAttendanceTypesRepoInterface $attendance_types_repo,
@@ -306,6 +307,14 @@ class AttendanceController extends Controller
         return api_response($request, null, 200, ['holiday' => $holiday]);
     }
 
+    /**
+     * @param $business
+     * @param $holiday
+     * @param Request $request
+     * @param HolidayCreatorRequest $creator_request
+     * @param HolidayUpdater $updater
+     * @return JsonResponse
+     */
     public function update($business, $holiday, Request $request, HolidayCreatorRequest $creator_request, HolidayUpdater $updater)
     {
         $this->validate($request, [
@@ -321,6 +330,20 @@ class AttendanceController extends Controller
             ->setEndDate($request->end_date)
             ->setHolidayName($request->title);
         $updater->setHoliday($holiday)->setBusinessHolidayCreatorRequest($updater_request)->update();
+        return api_response($request, null, 200);
+    }
+
+    /**
+     * @param $business
+     * @param $holiday
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function destroy($business, $holiday, Request $request)
+    {
+        $holiday = $this->holidayRepository->find((int)$holiday);
+        if (!$holiday) return api_response($request, null, 404);
+        $this->holidayRepository->delete($holiday);
         return api_response($request, null, 200);
     }
 }
