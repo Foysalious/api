@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\HyperLocal;
 use App\Models\Job;
 use App\Models\OfferShowcase;
+use App\Models\Partner;
 use App\Models\Payable;
 use App\Models\Payment;
 use App\Models\Profile;
@@ -28,8 +29,10 @@ use Illuminate\Validation\ValidationException;
 use Sheba\EMI\Calculations;
 use Sheba\Partner\Validations\NidValidation;
 use Sheba\Payment\AvailableMethods;
+use Sheba\PaymentLink\PaymentLinkTransformer;
 use Sheba\Reports\PdfHandler;
 use Sheba\Repositories\PaymentLinkRepository;
+use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Throwable;
 use Validator;
 
@@ -38,15 +41,17 @@ class ShebaController extends Controller {
 
     private $serviceRepository;
     private $reviewRepository;
-    private $paymentLinkrepository;
+    private $paymentLinkRepo;
 
-    public function __construct(ServiceRepository $service_repo, ReviewRepository $review_repo, PaymentLinkRepository $paymentLinkRepository) {
+    public function __construct(ServiceRepository $service_repo, ReviewRepository $review_repo, PaymentLinkRepository $paymentLinkRepository)
+    {
         $this->serviceRepository     = $service_repo;
         $this->reviewRepository      = $review_repo;
-        $this->paymentLinkrepository = $paymentLinkRepository;
+        $this->paymentLinkRepo = $paymentLinkRepository;
     }
 
-    public function getInfo() {
+    public function getInfo()
+    {
         $job_count      = Job::all()->count() + 16000;
         $service_count  = Service::where('publication_status', 1)->get()->count();
         $resource_count = Resource::where('is_verified', 1)->get()->count();
@@ -245,7 +250,9 @@ class ShebaController extends Controller {
         }
     }
 
-    public function checkTransactionStatus(Request $request, $transactionID, PdfHandler $pdfHandler) {
+    public function checkTransactionStatus(Request $request, $transactionID)
+    {
+        /** @var Payment $payment */
         $payment = Payment::where('transaction_id', $transactionID)->whereIn('status', ['failed', 'validated', 'completed'])->first();
         if (!$payment) {
             $payment = Payment::where('transaction_id', $transactionID)->first();
@@ -257,43 +264,49 @@ class ShebaController extends Controller {
             }
             return api_response($request, null, 404, ['message' => $message]);
         }
+
+        /** @var Payable $payable */
+        $payable = $payment->payable;
         $info = [
-            'amount'         => $payment->payable->amount,
-            'method'         => $payment->paymentDetails->last()->readable_method,
-            'description'    => $payment->payable->description,
-            'created_at'     => $payment->created_at->format('jS M, Y, h:i A'),
-            'invoice_link'   => $payment->invoice_link,
+            'amount' => $payable->amount,
+            'method' => $payment->paymentDetails->last()->readable_method,
+            'description' => $payable->description,
+            'created_at' => $payment->created_at->format('jS M, Y, h:i A'),
+            'invoice_link' => $payment->invoice_link,
             'transaction_id' => $transactionID
         ];
-        $info = array_merge($info, $this->getInfoForPaymentLink($payment->payable));
-        if ($payment->status == 'validated' || $payment->status == 'failed') {
-            $message = 'Your payment has been received but there was a system error. It will take some time to update your transaction. Call 16516 for support.';
-        } else {
-            $message = 'Successful';
-        }
+
+        if ($payable->isPaymentLink()) $this->mergePaymentLinkInfo($info, $payable);
+
+        $message = $payment->isPassed() ?
+            'Your payment has been received but there was a system error. It will take some time to update your transaction. Call 16516 for support.' :
+            'Successful';
+
         return api_response($request, null, 200, ['info' => $info, 'message' => $message]);
     }
 
-    public function getInfoForPaymentLink(Payable $payable) {
-        $data = [];
-        if ($payable->type == 'payment_link') {
-            $payment_link = $this->paymentLinkrepository->getPaymentLinkByLinkId($payable->type_id);
-            $user         = $payment_link->getPaymentReceiver();
-            $data         = [
-                'payment_receiver' => [
-                    'name'    => $user->name,
-                    'image'   => $user->logo,
-                    'mobile'  => $user->getMobile(),
-                    'address' => $user->address
-                ],
-                'payer'            => [
-                    'name'   => $payable->user->profile->name,
-                    'mobile' => $payable->user->profile->mobile
-                ]
-            ];
-        }
-        return $data;
+    private function mergePaymentLinkInfo(&$info, Payable $payable)
+    {
+        $payment_link = $this->paymentLinkRepo->getPaymentLinkByLinkId($payable->type_id);
+        $receiver = $payment_link->getPaymentReceiver();
+        $payer = $payable->user->profile;
+        $info = array_merge($info, $this->getInfoForPaymentLink($payer, $receiver));
+    }
 
+    private function getInfoForPaymentLink(Profile $payer, HasWalletTransaction $receiver)
+    {
+        return [
+            'payment_receiver' => [
+                'name' => $receiver->name,
+                'image' => $receiver->logo,
+                'mobile' => $receiver->getMobile(),
+                'address' => $receiver->address
+            ],
+            'payer' => [
+                'name' => $payer->name,
+                'mobile' => $payer->mobile
+            ]
+        ];
     }
 
     public function getPayments(Request $request) {
@@ -457,7 +470,31 @@ class ShebaController extends Controller {
         }
     }
 
-    public function emiInfoForManager(Request $request) {
+    public function emiInfoForManager(Request $request)
+    {
+        try {
+            $this->validate($request, ['amount' => 'required|numeric|min:' . config('emi.manager.minimum_emi_amount')]);
+            $amount               = $request->amount;
+            $icons_folder         = getEmiBankIconsFolder(true);
+            $emi=Calculations::calculateEmiCharges($amount);
+            $banks=Calculations::BankDetails($icons_folder);
+            $emi_data = [
+                "emi"   => $emi,
+                "banks" => $banks
+            ];
+
+            return api_response($request, null, 200, ['price' => $amount, 'info' => $emi_data]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function nidValidate(Request $request)
+    {
         try {
             $this->validate($request, ['amount' => 'required|numeric|min:' . config('emi.manager.minimum_emi_amount')]);
             $amount               = $request->amount;
@@ -537,5 +574,4 @@ class ShebaController extends Controller {
         }
 
     }
-
 }
