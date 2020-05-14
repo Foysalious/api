@@ -177,7 +177,6 @@ class Creator
                 ->setRequestable($leave)
                 ->create();
             $this->createAttachments($leave);
-            $this->notifySuperAdmins($leave);
         });
         return $leave;
     }
@@ -189,28 +188,6 @@ class Creator
                 ->setCreatedBy($this->createdBy)
                 ->setFile($attachment)
                 ->store();
-        }
-    }
-
-    /**
-     * @param Leave $leave
-     * @throws Exception
-     */
-    private function notifySuperAdmins(Leave $leave)
-    {
-        $super_admins = $this->businessMemberRepository
-            ->where('is_super', 1)
-            ->where('business_id', $this->businessMember->business_id)
-            ->get();
-
-        foreach ($super_admins as $super_admin) {
-            $title = $this->businessMember->member->profile->name . ' #' . $this->businessMember->member->id . ' has created a Leave Request';
-            notify()->member($super_admin->member)->send([
-                'title' => $title,
-                'type' => 'Info',
-                'event_type' => 'Sheba\Dal\Leave\Model',
-                'event_id' => $leave->id
-            ]);
         }
     }
 
