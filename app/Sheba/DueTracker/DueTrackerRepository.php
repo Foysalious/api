@@ -39,7 +39,7 @@ class DueTrackerRepository extends BaseRepository {
             $list = $list->where('balance_type', $request->balance_type)->values();
         }
         if ($request->has('q') && !empty($request->q)) {
-            $query = preg_replace("\+", "", $request->q);
+            $query = preg_replace("/\+/", "", $request->q);
             $list  = $list->filter(function ($item) use ($query) {
                 return preg_match("%$query%i", $item['customer_name']) || preg_match("/$query/", $item['customer_mobile']);
             })->values();
