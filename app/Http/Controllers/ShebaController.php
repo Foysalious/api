@@ -26,6 +26,7 @@ use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
+use Sheba\EMI\Calculations;
 use Sheba\Partner\Validations\NidValidation;
 use Sheba\Payment\AvailableMethods;
 use Sheba\PaymentLink\PaymentLinkTransformer;
@@ -445,11 +446,7 @@ class ShebaController extends Controller
                     "logo" => $icons_folder . "bank_asia.png",
                     "asset" => "bank_asia"
                 ],
-//                [
-//                    "name" => "United Commercial Bank Ltd",
-//                    "logo" => $icons_folder."ucb.png",
-//                    "asset" => "ucb"
-//                ]
+
             ];
 
             $emi_data = [
