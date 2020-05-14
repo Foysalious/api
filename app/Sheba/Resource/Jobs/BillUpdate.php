@@ -2,6 +2,7 @@
 
 
 use App\Models\Job;
+use Sheba\Dal\JobService\JobService;
 use Sheba\Services\ServicePriceCalculation;
 
 class BillUpdate
@@ -29,6 +30,7 @@ class BillUpdate
         $bill['total_service_price'] += $price['total_original_price'];
         $bill['discount'] += $price['total_discount'];
         $bill['services'] = array_merge($bill['services'], $this->formatService($new_service));
+        $bill['service_list'] = $this->addNewServiceToServiceList($bill['service_list'], $new_service);
         return $bill;
     }
 
@@ -56,6 +58,7 @@ class BillUpdate
         $bill['due'] = $bill['due'] + $increased_amount;
         $bill['total_service_price'] = $updated_service_price;
         $bill['services'] = $services;
+        $bill['service_list'] = $this->updateServiceOfServiceList($bill['service_list'], $quantity);
         return $bill;
     }
 
@@ -122,5 +125,86 @@ class BillUpdate
     private function calculateIncreasedAmount($updated, $previous)
     {
         return (double) $updated - $previous;
+    }
+    private function addNewServiceToServiceList($services , $services_to_add)
+    {
+        foreach ($services_to_add as &$service_to_add) {
+            if ($service_to_add['variable_type'] == 'Fixed') {
+                $services->push($this->formatFixedService($service_to_add));
+            } else {
+                foreach ($services as &$service) {
+                    if ($service['id'] == $service_to_add['service_id']) {
+                        $service['service_group']->push($this->formatGroupedService($service_to_add));
+                        //TODO: Need to Update Quantity
+                    }
+                }
+            }
+        }
+        return $services;
+    }
+    private function updateServiceOfServiceList($services , $services_to_update)
+    {
+        $services = $services->toArray();
+        foreach ($services_to_update as $service_to_update) {
+            $job_service = JobService::find($service_to_update['job_service_id']);
+            foreach ($services as &$service) {
+                if ($service['id'] == $job_service->service_id) {
+                    if ($job_service->variable_type == 'Fixed') {
+                        $previous_qty = $service['quantity'];
+                        $service['id'] = null;
+                        $service['quantity'] = $service_to_update['quantity'];
+                        $service['price'] = $service['price'] / $previous_qty * $service_to_update['quantity'];
+                    } else {
+                        $service['service_group'] = $this->updateGroupedServices($service['service_group'], $service_to_update);
+                    }
+                }
+            }
+        }
+        return $services;
+    }
+    private function formatGroupedService($service)
+    {
+        return array(
+            'job_service_id' => null,
+            'variables' => json_decode($service['variables']),
+            'unit' => $service['unit'],
+            'quantity' => $service['quantity'],
+            'price' => $service['unit_price'] * $service['quantity']
+        );
+    }
+    private function formatFixedService($service)
+    {
+        return array(
+            'id' => null,
+            'name' => $service['service_name'],
+            'service_group' => [],
+            'unit' => $service['unit'],
+            'quantity' => $service['quantity'],
+            'price' => $service['unit_price'] * $service['quantity']
+        );
+    }
+    private function updateGroupedServices($services_group, $service)
+    {
+        $services_group = is_array($services_group) ? $services_group : $services_group->toArray();
+        $services_group = array_map(function($service_group) use ($service) {
+            if ($service_group['job_service_id'] == $service['job_service_id']) {
+                return array(
+                    'job_service_id' => null,
+                    'variables' => $service_group['variables'],
+                    'price' => $service_group['price'] / $service_group['quantity'] * $service['quantity'],
+                    'unit' => $service_group['unit'],
+                    'quantity' => $service['quantity']
+                );
+            } else {
+                return array(
+                    'job_service_id' => $service_group['job_service_id'],
+                    'variables' => $service_group['variables'],
+                    'price' => $service_group['price'],
+                    'unit' => $service_group['unit'],
+                    'quantity' => $service_group['quantity']
+                );
+            }
+        }, $services_group);
+        return $services_group;
     }
 }
