@@ -17,7 +17,6 @@ class SslController extends Controller
             if ($payment) {
                 $redirect_url = $payment->payable->success_url . '?invoice_id=' . $payment->transaction_id;
                 $method       = $payment->paymentDetails->last()->method;
-                if ($method != "ssl_donation") $method = "online";
                 if ($payment->isValid() && !$payment->isComplete()) $sheba_payment->setMethod($method)->complete($payment);
             } else {
                 throw new \Exception('Payment not found to validate.');
