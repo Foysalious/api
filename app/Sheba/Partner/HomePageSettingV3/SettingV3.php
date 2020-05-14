@@ -1,18 +1,18 @@
-<?php namespace Sheba\Partner\HomePageSetting;
+<?php namespace Sheba\Partner\HomePageSettingV3;
 
 use App\Models\Partner;
 use Illuminate\Support\Collection;
 
-abstract class Setting
+abstract class SettingV3
 {
-    /** @var Setting */
+    /** @var SettingV3 */
     protected $next;
     /** @var Partner $partner */
     protected $partner;
 
     protected $version;
 
-    public function __construct(Setting $next = null)
+    public function __construct(SettingV3 $next = null)
     {
         $this->next = $next;
     }
