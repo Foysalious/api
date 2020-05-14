@@ -93,7 +93,7 @@ class ProcurementController extends Controller
             'procurement_end_date' => 'required|date_format:Y-m-d',
             'last_date_of_submission' => 'required|date_format:Y-m-d',
             'number_of_participants' => 'required|numeric',
-            'sharing_to' => 'required|required|in:'  . $procurement_shared_to_options,
+            'sharing_to' => 'required|required|in:' . $procurement_shared_to_options,
             'type' => 'sometimes|required|string:in:basic,advanced',
             'title' => 'sometimes|required|string',
             'payment_options' => 'sometimes|required|string',
@@ -224,7 +224,7 @@ class ProcurementController extends Controller
     public function tenders(Request $request)
     {
         list($offset, $limit) = calculatePagination($request);
-        $procurements = $this->procurementRepository->allProcurement();
+        $procurements = $this->procurementRepository->getProcurementFilterByLastDateOfSubmission();
         #$procurements = $procurements->skip($offset)->limit($limit);
         if ($request->has('tag')) $procurements = $this->procurementRepository->filterWithTag($request->tag);
         if ($request->has('category') && $request->category != 'all') $procurements = $this->procurementRepository->filterWithCategory($request->category);
@@ -234,6 +234,15 @@ class ProcurementController extends Controller
         $end_date = $request->has('end_date') ? $request->end_date : null;
         if ($start_date && $end_date) $procurements = $this->procurementRepository->filterWithEndDate($start_date, $end_date);
         $procurements = $procurements->get();
+
+        /*$procurements = $procurements->filter(function ($procurement) {
+            $number_of_participants = $procurement->number_of_participants;
+            $number_of_bids = $procurement->bids()->count();
+            if (!$number_of_participants) return $number_of_participants != $number_of_bids;
+            return $procurement;
+        });
+        dd($procurements);*/
+        #number of participant and bid_count equal hole list a asbe na
         $total_records = $procurements->count();
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
@@ -386,8 +395,8 @@ class ProcurementController extends Controller
     {
         $procurement_shared_to_options = implode(',', array_column(config('b2b.SHARING_TO'), 'key'));
         $this->validate($request, [
-            'is_published'  => 'required|integer:in:1,0',
-            'sharing_to'    => 'sometimes|required|in:'  . $procurement_shared_to_options
+            'is_published' => 'required|integer:in:1,0',
+            'sharing_to' => 'sometimes|required|in:' . $procurement_shared_to_options
         ]);
 
         $procurement = Procurement::find((int)$procurement);

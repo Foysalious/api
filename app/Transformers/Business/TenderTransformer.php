@@ -6,6 +6,9 @@ use Carbon\Carbon;
 
 class TenderTransformer extends TransformerAbstract
 {
+    const ZERO = 0;
+    const ONE = 1;
+    const THRESHOLD = 5;
 
     /**
      * @param $procurement
@@ -17,6 +20,7 @@ class TenderTransformer extends TransformerAbstract
         $end_date = $procurement->procurement_end_date->format('d/m/y');
         $category = $procurement->category_id ? Category::findOrFail($procurement->category_id) : null;
         $number_of_bids = $procurement->bids()->count();
+        $number_of_participants = $procurement->number_of_participants;
         return [
             'id' => $procurement->id,
             'title' => $procurement->title,
@@ -45,9 +49,10 @@ class TenderTransformer extends TransformerAbstract
                 'icon' => config('sheba.s3_url') . 'business_assets/tender/icons/png/category.png',
             ] : null,
 
-            'number_of_participants' => $procurement->number_of_participants,
+            #'number_of_participants' => $procurement->number_of_participants,
             'remaining_days' => $this->getRemainingDays($procurement->last_date_of_submission),
-            #'number_of_applicants' => $this->getApplicants($procurement, $number_of_bids),
+            'number_of_applicants_or_applications' => !$number_of_participants ? $this->getApplicants($number_of_bids) :
+                $this->getRemainingApplications($number_of_participants, $number_of_bids),
             #'remaining_applications' => $this->getRemainingApplications($procurement, $number_of_bids),
             'created_at' => 'Posted ' . $procurement->created_at->diffForHumans(),
         ];
@@ -62,7 +67,7 @@ class TenderTransformer extends TransformerAbstract
         $today = Carbon::now();
         if ($last_date_of_submission->greaterThanOrEqualTo($today)) {
             $total_days = $last_date_of_submission->diffInDays($today) + 1;
-            if ($total_days == 1) return [
+            if ($total_days == self::ONE) return [
                 'days' => $last_date_of_submission->diffInHours($today) . ' hours remaining',
                 'color' => '#e75050',
                 'icon' => config('sheba.s3_url') . 'business_assets/tender/icons/png/time.png',
@@ -77,48 +82,36 @@ class TenderTransformer extends TransformerAbstract
     }
 
     /**
-     * @param $procurement
      * @param $bids
-     * @return array
+     * @return array|null
      */
-    public function getApplicants($procurement, $bids)
+    public function getApplicants($bids)
     {
-        $number_of_participants = $procurement->number_of_participants;
-        if ($number_of_participants && ($number_of_participants == $bids)) return [
-            'vendors' => $bids . ' vendors applied so far',
-            'color' => 'Blue',
-            'icon' => config('sheba.s3_url') . 'business_assets/tender/icons/png/user.png',
-        ];
-        if ($bids > 0) return [
-            'vendors' => $bids . ' vendors applied so far',
-            'color' => 'Red',
-            'icon' => config('sheba.s3_url') . 'business_assets/tender/icons/png/user.png',
-        ];
+        if ($bids == self::ZERO) return null;
         return [
             'vendors' => $bids . ' vendors applied so far',
-            'color' => 'yellow',
+            'color' => '#38c8e7',
             'icon' => config('sheba.s3_url') . 'business_assets/tender/icons/png/user.png',
         ];
     }
 
     /**
-     * @param $procurement
+     * @param $number_of_participants
      * @param $number_of_bids
-     * @return array
+     * @return array|null
      */
-    private function getRemainingApplications($procurement, $number_of_bids)
+    private function getRemainingApplications($number_of_participants, $number_of_bids)
     {
-        $number_of_participants = $procurement->number_of_participants;
-        if (!$number_of_participants) return null;
-
-        if (floor($number_of_participants / $number_of_bids) == $number_of_participants - $number_of_bids) return [
+        if (!$number_of_bids) return null;
+        $remaining_application = $number_of_participants - $number_of_bids;
+        if ($remaining_application < self::THRESHOLD) return [
             'applications' => $number_of_participants - $number_of_bids . ' applications remaining',
-            'color' => 'Red',
+            'color' => '#e75050',
             'icon' => config('sheba.s3_url') . 'business_assets/tender/icons/png/user.png',
         ];
         return [
             'applications' => $number_of_participants - $number_of_bids . ' applications remaining',
-            'color' => 'Red',
+            'color' => '#f5b861',
             'icon' => config('sheba.s3_url') . 'business_assets/tender/icons/png/user.png',
         ];
 

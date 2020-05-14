@@ -3,7 +3,7 @@
 interface ProcurementRepositoryInterface extends BaseRepositoryInterface
 {
     public function ofBusiness($business_id);
-    public function allProcurement();
+    public function getProcurementFilterByLastDateOfSubmission();
     public function builder();
     public function filterWithTag($tag_id);
     public function filterWithCategory($category_id);
