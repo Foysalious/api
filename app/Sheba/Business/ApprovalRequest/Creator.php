@@ -1,9 +1,12 @@
 <?php namespace Sheba\Business\ApprovalRequest;
 
 use App\Models\BusinessMember;
+use App\Models\Member;
+use Exception;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use Sheba\Dal\ApprovalRequest\Status;
+use Sheba\Dal\Leave\Model as Leave;
 use Sheba\ModificationFields;
 use Sheba\PushNotificationHandler;
 
@@ -69,7 +72,10 @@ class Creator
                 'approver_id' => $approver_id
             ]);
             $approval_request = $this->approvalRequestRepo->create($data);
-            $this->sendPushToApprover($approval_request);
+            try {
+                $this->sendPushToApprover($approval_request);
+                $this->sendShebaNotificationToApprover($approval_request);
+            } catch (Exception $e) {}
         }
     }
 
@@ -95,5 +101,26 @@ class Creator
         ];
 
         $this->pushNotificationHandler->send($notification_data, $topic, $channel);
+    }
+
+    /**
+     * @param ApprovalRequest $approval_request
+     * @throws Exception
+     */
+    private function sendShebaNotificationToApprover(ApprovalRequest $approval_request)
+    {
+        /** @var BusinessMember $business_member */
+        $business_member = $approval_request->approver;
+        /** @var Member $member */
+        $member = $business_member->member;
+        $leave_applicant = $this->member->profile->name;
+
+        $title = "$leave_applicant requested for a leave which needs your approval";
+        notify()->member($member)->send([
+            'title' => $title,
+            'type' => 'Info',
+            'event_type' => $this->requestableType,
+            'event_id' => $this->requestableId
+        ]);
     }
 }
