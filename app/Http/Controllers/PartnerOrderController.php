@@ -206,7 +206,7 @@ class PartnerOrderController extends Controller
                         'price' => (double)$job->servicePrice
                     ]);
                 } else {
-                    $service_list = $formatServices->setJobServices($job->jobServices)->formatServices();
+                    $service_list = $formatServices->setJob($job)->formatServices();
                     foreach ($job->jobServices as $job_service) {
                         array_push($services, [
                             'name' => $job_service->service ? $job_service->service->name : null,

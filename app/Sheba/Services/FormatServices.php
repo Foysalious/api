@@ -1,10 +1,11 @@
 <?php namespace Sheba\Services;
 
+use App\Models\Job;
 use Illuminate\Support\Collection;
 
 class FormatServices
 {
-    private $jobServices;
+    private $job;
     private $services;
     private $quantity;
     private $price;
@@ -20,19 +21,20 @@ class FormatServices
     }
 
     /**
-     * @param $jobServices
+     * @param Job $job
      * @return FormatServices
      */
-    public function setJobServices($jobServices)
+    public function setJob(Job $job)
     {
-        $this->jobServices = $jobServices->groupBy('service_id');
+        $this->job = $job;
         return $this;
     }
 
     public function formatServices()
     {
         $this->setServices(collect([]));
-        foreach ($this->jobServices as $groupedJobServices)
+        $jobServices = $this->job->jobServices->groupBy('service_id');
+        foreach ($jobServices as $groupedJobServices)
         {
             if ($groupedJobServices->first()->variable_type == 'Fixed') {
                 foreach ($groupedJobServices as $jobService) {
