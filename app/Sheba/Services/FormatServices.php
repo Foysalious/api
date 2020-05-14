@@ -37,6 +37,7 @@ class FormatServices
             if ($groupedJobServices->first()->variable_type == 'Fixed') {
                 foreach ($groupedJobServices as $jobService) {
                     $this->services->push([
+                        'id' => $jobService->service_id,
                         'name' => $jobService->name,
                         'service_group' => [],
                         'unit' => $jobService->service->unit,
@@ -47,6 +48,7 @@ class FormatServices
             }
             else {
                 $this->services->push([
+                    'id' => $groupedJobServices->first()->service_id,
                     'name' => $groupedJobServices->first()->name,
                     'service_group' => $this->formatGroupedJobServices($groupedJobServices),
                     'unit' => $groupedJobServices->first()->service->unit,
@@ -70,6 +72,7 @@ class FormatServices
         $this->price = 0;
         foreach ($jobServices as $jobService) {
             $services->push([
+                'job_service_id' => $jobService->id,
                 'variables' => json_decode($jobService->variables),
                 'unit' => $jobService->service->unit,
                 'quantity' => $jobService->quantity,
