@@ -46,15 +46,15 @@ class ShebaController extends Controller
 
     public function __construct(ServiceRepository $service_repo, ReviewRepository $review_repo, PaymentLinkRepository $paymentLinkRepository)
     {
-        $this->serviceRepository     = $service_repo;
-        $this->reviewRepository      = $review_repo;
+        $this->serviceRepository = $service_repo;
+        $this->reviewRepository = $review_repo;
         $this->paymentLinkRepo = $paymentLinkRepository;
     }
 
     public function getInfo()
     {
-        $job_count      = Job::all()->count() + 16000;
-        $service_count  = Service::where('publication_status', 1)->get()->count();
+        $job_count = Job::all()->count() + 16000;
+        $service_count = Service::where('publication_status', 1)->get()->count();
         $resource_count = Resource::where('is_verified', 1)->get()->count();
         return response()->json(['service' => $service_count, 'job' => $job_count,
             'resource' => $resource_count,
@@ -464,12 +464,12 @@ class ShebaController extends Controller
     {
         try {
             $this->validate($request, ['amount' => 'required|numeric|min:' . config('emi.manager.minimum_emi_amount')]);
-            $amount               = $request->amount;
-            $icons_folder         = getEmiBankIconsFolder(true);
-            $emi=Calculations::calculateEmiCharges($amount);
-            $banks=Calculations::BankDetails($icons_folder);
+            $amount = $request->amount;
+            $icons_folder = getEmiBankIconsFolder(true);
+            $emi = Calculations::calculateEmiCharges($amount);
+            $banks = Calculations::BankDetails($icons_folder);
             $emi_data = [
-                "emi"   => $emi,
+                "emi" => $emi,
                 "banks" => $banks
             ];
 
@@ -535,7 +535,7 @@ class ShebaController extends Controller
     {
         $this->validate($request, ['url' => 'required']);
 
-        $new_url = RedirectUrl::where('old_url', 'LIKE', $request->url)->first();
+        $new_url = RedirectUrl::where('old_url', $request->url)->first();
 
         if ($new_url) {
             return api_response($request, true, 200, ['new_url' => $new_url->new_url]);
