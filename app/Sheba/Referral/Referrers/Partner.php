@@ -20,6 +20,10 @@ class Partner extends Referrer implements ReferrerInterface
     use ModificationFields;
     private $config;
     private $orderFilters;
+    /**
+     * @var \App\Models\Partner
+     */
+    private $updatedRefer;
 
     public function __construct(HasReferrals $referrer)
     {
@@ -103,6 +107,10 @@ class Partner extends Referrer implements ReferrerInterface
         $ref_data              = $this->generateDetails($ref);
         $last_use              = $ref->refer->usage()->get()->last();
         $ref_data['last_used'] = !empty($last_use) ? $last_use->created_at->format('Y-m-d H:s:i') : null;
+        $ref_data['stepwise_income'] = collect(config('partner.referral_steps'))
+            ->map(function($item) {
+                return $item['amount'];
+            });
         return $ref_data;
     }
 
@@ -128,11 +136,12 @@ class Partner extends Referrer implements ReferrerInterface
         $reference['id']             = $refer->id;
         $reference['name']           = $refer->refer ? $refer->refer->name : $refer->resource_name;
         $reference['contact_number'] = $refer->refer ? $refer->refer->getContactNumber() : $refer->resource_mobile;
-        $reference['income']         = $refer->referrer_income ?: 0;
+        $reference['income']         = !empty($this->updatedRefer) ? ($this->updatedRefer->referrer_income ?: 0) : ($refer->referrer_income ?: 0) ;
         $reference['usage']          = $refer->usages;
-        $reference['step']           = $refer->refer_level;
+        $reference['step']           = !empty($this->updatedRefer) ? $this->updatedRefer->refer_level : $refer->refer_level;
         $reference['step_bn']        = $reference['milestone']['current_step'];
         $reference['created_at']     = $refer->created_at->format('Y-m-d H:s:i');
+        $this->updatedRefer = null;
         return $reference;
     }
 
@@ -148,12 +157,15 @@ class Partner extends Referrer implements ReferrerInterface
             foreach ($config as $key => $configuration) {
                 if ($configuration['nid_verification'])
                 {
-                   /* if($partner_referral->refer->isNIDVerified() && ($partner_referral->refer->refer_level != $key+1))
+                   if($partner_referral->refer->isNIDVerified() && ($partner_referral->refer->refer_level != $key+1))
                     {
                         $partner_referral->refer->refer_level = $key+1;
                         $partner_referral->refer->referrer_income = $earnings + $configuration['amount'];
                         $partner_referral->refer->update();
-                    }*/
+                        $partnerModel = 'App\Models\Partner';
+                        $this->updatedRefer = $partnerModel::find($partner_referral->refer->id);
+
+                    }
                     return [
                         'start'            => 0,
                         'end'              => 0,
