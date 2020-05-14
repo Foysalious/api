@@ -217,7 +217,9 @@ class AttendanceController extends Controller
     public function updateOfficeTime(Request $request, OfficeTimingUpdater $updater)
     {
         $this->validate($request, [
-            'office_hour_type' => 'required', 'start_time' => 'date_format:H:i:s', 'end_time' => 'date_format:H:i:s', 'weekends' => 'required|array'
+            'office_hour_type' => 'required', 'start_time' => 'date_format:H:i:s', 'end_time' => 'date_format:H:i:s|after_or_equal:start_time', 'weekends' => 'required|array'
+        ],[
+          'end_time.after_or_equal' => 'Start Time Must Be Less Than End Time'
         ]);
         $business_member = $request->business_member;
         $office_timing = $updater->setBusiness($request->business)->setMember($business_member->member)->setOfficeHourType($request->office_hour_type)->setStartTime($request->start_time)->setEndTime($request->end_time)->setWeekends($request->weekends)->update();
