@@ -13,25 +13,70 @@ class Payable extends Model
     protected $casts = ['amount' => 'double'];
     public $timestamps = false;
 
+    public function isPartnerOrder()
+    {
+        return $this->type == Types::PARTNER_ORDER;
+    }
+
+    public function isWalletRecharge()
+    {
+        return $this->type == Types::WALLET_RECHARGE;
+    }
+
+    public function isSubscriptionOrder()
+    {
+        return $this->type == Types::SUBSCRIPTION_ORDER;
+    }
+
+    public function isGiftCardPurchase()
+    {
+        return $this->type == Types::GIFT_CARD_PURCHASE;
+    }
+
+    public function isMovieTicketPurchase()
+    {
+        return $this->type == Types::MOVIE_TICKET_PURCHASE;
+    }
+
+    public function isTransportTicketPurchase()
+    {
+        return $this->type == Types::TRANSPORT_TICKET_PURCHASE;
+    }
+
+    public function isUtilityOrder()
+    {
+        return $this->type == Types::UTILITY_ORDER;
+    }
+
+    public function isPaymentLink()
+    {
+        return $this->type == Types::PAYMENT_LINK;
+    }
+
+    public function isProcurement()
+    {
+        return $this->type == Types::PROCUREMENT;
+    }
+
     public function getReadableTypeAttribute()
     {
-        if ($this->type == Types::PARTNER_ORDER) {
+        if ($this->isPartnerOrder()) {
             return 'order';
-        } else if ($this->type == Types::WALLET_RECHARGE) {
+        } else if ($this->isWalletRecharge()) {
             return 'recharge';
-        } else if ($this->type == Types::SUBSCRIPTION_ORDER) {
+        } else if ($this->isSubscriptionOrder()) {
             return 'subscription_order';
-        } else if ($this->type == Types::GIFT_CARD_PURCHASE) {
+        } else if ($this->isGiftCardPurchase()) {
             return 'gift_card_purchase';
-        } else if ($this->type == Types::MOVIE_TICKET_PURCHASE) {
+        } else if ($this->isMovieTicketPurchase()) {
             return 'movie_ticket_purchase';
-        } else if ($this->type == Types::TRANSPORT_TICKET_PURCHASE) {
+        } else if ($this->isTransportTicketPurchase()) {
             return 'transport_ticket_purchase';
-        } else if ($this->type == Types::UTILITY_ORDER) {
+        } else if ($this->isUtilityOrder()) {
             return 'utility_order';
-        } else if ($this->type == Types::PAYMENT_LINK) {
+        } else if ($this->isPaymentLink()) {
             return 'payment_link';
-        } else if ($this->type == Types::PROCUREMENT) {
+        } else if ($this->isProcurement()) {
             return 'procurement';
         }
     }
