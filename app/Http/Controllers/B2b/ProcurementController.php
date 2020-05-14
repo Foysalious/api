@@ -136,6 +136,12 @@ class ProcurementController extends Controller
         return api_response($request, $procurement, 200, ['id' => $procurement->id]);
     }
 
+    /**
+     * @param $business
+     * @param Request $request
+     * @param AccessControl $access_control
+     * @return JsonResponse
+     */
     public function index($business, Request $request, AccessControl $access_control)
     {
         try {
@@ -185,6 +191,10 @@ class ProcurementController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function filterOptions(Request $request)
     {
         $categories = Category::child()->published()->publishedForB2B()->select('id', 'name')->get()->toArray();
@@ -207,6 +217,10 @@ class ProcurementController extends Controller
         return api_response($request, $filter_options, 200, ['filter_options' => $filter_options]);
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function tenders(Request $request)
     {
         list($offset, $limit) = calculatePagination($request);
@@ -242,6 +256,10 @@ class ProcurementController extends Controller
         });
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function show(Request $request)
     {
         try {
@@ -267,6 +285,10 @@ class ProcurementController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function updateGeneral(Request $request)
     {
         try {
@@ -377,6 +399,16 @@ class ProcurementController extends Controller
         return api_response($request, null, 200);
     }
 
+    /**
+     * @param $business
+     * @param $procurement
+     * @param Request $request
+     * @param ProcurementAdapter $procurement_adapter
+     * @param ShebaPayment $payment
+     * @param ShebaPaymentValidator $payment_validator
+     * @param ProcurementRepositoryInterface $procurement_repository
+     * @return JsonResponse
+     */
     public function clearBills($business, $procurement, Request $request, ProcurementAdapter $procurement_adapter, ShebaPayment $payment, ShebaPaymentValidator $payment_validator, ProcurementRepositoryInterface $procurement_repository)
     {
         $this->validate($request, [
@@ -391,6 +423,13 @@ class ProcurementController extends Controller
         return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
     }
 
+    /**
+     * @param $business
+     * @param $procurement
+     * @param Request $request
+     * @param Creator $creator
+     * @return JsonResponse
+     */
     public function orderTimeline($business, $procurement, Request $request, Creator $creator)
     {
         try {
@@ -475,6 +514,13 @@ class ProcurementController extends Controller
         }
     }
 
+    /**
+     * @param $business
+     * @param $procurement
+     * @param Request $request
+     * @param Creator $creator
+     * @return JsonResponse
+     */
     public function orderBill($business, $procurement, Request $request, Creator $creator)
     {
         try {
@@ -492,6 +538,10 @@ class ProcurementController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @return mixed
+     */
     public function downloadPdf(Request $request)
     {
         $procurement = Procurement::find($request->procurement);
