@@ -443,11 +443,6 @@ class ShebaController extends Controller {
                     "logo"  => $icons_folder . "bank_asia.png",
                     "asset" => "bank_asia"
                 ],
-                //                [
-                //                    "name" => "United Commercial Bank Ltd",
-                //                    "logo" => $icons_folder."ucb.png",
-                //                    "asset" => "ucb"
-                //                ]
             ];
 
             $emi_data = [
