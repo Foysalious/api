@@ -5,6 +5,10 @@ use Sheba\Partner\HomePageSetting\Setting;
 
 class Basic extends Setting
 {
+    public function __construct(Setting $next = null)
+    {
+        parent::__construct($next);
+    }
     protected function setting()
     {
         return DefaultSetting::get();

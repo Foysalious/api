@@ -28,7 +28,9 @@ use Sheba\Location\LocationSetter;
 use Sheba\Manager\JobList;
 use Sheba\ModificationFields;
 use Sheba\Partner\HomePageSetting\CacheManager;
+use Sheba\Partner\HomePageSettingV3\CacheManagerV3;
 use Sheba\Partner\HomePageSetting\Setting;
+use Sheba\Partner\HomePageSettingV3\SettingV3;
 use Sheba\Partner\LeaveStatus;
 use Sheba\Pos\Order\OrderPaymentStatuses;
 use Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
@@ -271,9 +273,23 @@ class DashboardController extends Controller
     {
         try {
             $this->setModifier($request->partner);
-            $setting = $setting->setPartner($request->partner)->get();
+            $setting = $setting->setPartner($request->partner)->setVerSion($request->version)->get();
             return api_response($request, null, 200, ['data' => $setting]);
         } catch (Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getHomeSettingV3(Request $request, SettingV3 $setting)
+    {
+        try {
+            $this->setModifier($request->partner);
+            $setting = $setting->setPartner($request->partner)->setVerSion($request->version)->get();
+            return api_response($request, null, 200, ['data' => $setting]);
+        } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
