@@ -58,11 +58,14 @@ class Client
         } catch (GuzzleException $e) {
             $res = $e->getResponse();
 
-            if($res->getStatusCode() == 500) {
+            if($res->getStatusCode() >= 500) {
                 $is_500 = true;
                 $res = (object) [
                     "result" => "failed",
-                    "message" => $e->getMessage()
+                    "error" => [
+                        "message" => $e->getMessage(),
+                        "reason" => $res->getReasonPhrase()
+                    ]
                 ];
             }
         }
