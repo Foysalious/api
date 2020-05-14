@@ -107,6 +107,10 @@ class Partner extends Referrer implements ReferrerInterface
         $ref_data              = $this->generateDetails($ref);
         $last_use              = $ref->refer->usage()->get()->last();
         $ref_data['last_used'] = !empty($last_use) ? $last_use->created_at->format('Y-m-d H:s:i') : null;
+        $ref_data['stepwise_income'] = collect(config('partner.referral_steps'))
+            ->map(function($item) {
+                return $item['amount'];
+            });
         return $ref_data;
     }
 
