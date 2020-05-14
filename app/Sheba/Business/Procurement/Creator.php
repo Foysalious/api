@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\UploadedFile;
+use phpDocumentor\Reflection\DocBlock\Description;
 use Sheba\Notification\NotificationCreated;
 use Sheba\Repositories\Interfaces\ProcurementItemFieldRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementItemRepositoryInterface;
@@ -158,7 +159,7 @@ class Creator
 
     public function setProcurementEndDate($procurement_end_date)
     {
-        $this->procurementEndDate = $procurement_end_date ? $procurement_end_date : null;
+        $this->procurementEndDate = $procurement_end_date ? $procurement_end_date. ' 23:59:59' : null;
         return $this;
     }
 
@@ -170,7 +171,7 @@ class Creator
 
     public function setLastDateOfSubmission($last_date_of_submission)
     {
-        $this->lastDateOfSubmission = $last_date_of_submission;
+        $this->lastDateOfSubmission = $last_date_of_submission. ' 23:59:59';
         return $this;
     }
 
@@ -203,7 +204,7 @@ class Creator
     public function setLabels($labels)
     {
         $this->labels = $labels;
-        $this->labels = $this->labels ? explode(', ', $this->labels) : [];
+        $this->labels = $this->labels ? json_decode($this->labels, true) : [];
         return $this;
     }
 

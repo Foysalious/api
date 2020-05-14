@@ -9,7 +9,7 @@ use Sheba\Business\Procurement\Code\Builder as CodeBuilder;
 class Procurement extends Model implements PayableType
 {
     protected $guarded = ['id'];
-    protected $dates = ['closed_and_paid_at'];
+    protected $dates = ['closed_and_paid_at', 'procurement_start_date', 'procurement_end_date', 'last_date_of_submission'];
     public $paid;
     public $due;
     public $totalPrice;
