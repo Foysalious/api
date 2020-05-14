@@ -100,7 +100,7 @@ class CategoryController extends Controller
                     });
                 });
             }
-            $categories = $categories->select('id', 'name', 'bn_name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id', 'is_auto_sp_enabled', 'min_order_amount');
+            $categories = $categories->select('id', 'name', 'bn_name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id', 'is_auto_sp_enabled', 'min_order_amount', 'max_order_amount');
             if ($request->has('with')) {
                 $with = $request->with;
                 if ($with == 'children') {
@@ -150,6 +150,8 @@ class CategoryController extends Controller
                         removeRelationsAndFields($child);
                     });
                 }
+                $category['max_order_amount'] = $category['max_order_amount'] ? (double) $category['max_order_amount'] : null;
+
             }
 
             $categories_final = array();
@@ -158,6 +160,7 @@ class CategoryController extends Controller
             }
             return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $categories_final]) : api_response($request, null, 404);
         } catch (Throwable $e) {
+            dd($e->getMessage());
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
