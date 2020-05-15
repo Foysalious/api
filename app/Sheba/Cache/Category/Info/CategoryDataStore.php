@@ -25,7 +25,6 @@ class CategoryDataStore implements DataStoreObject
     public function generate()
     {
         $category = Category::find($this->categoryCacheRequest->getCategoryId());
-        dd($category);
         if (!$category) return null;
         $usps = $category->usps()->select('name')->get();
         $partnership = $category->partnership;
