@@ -217,9 +217,9 @@ class AttendanceController extends Controller
     public function updateOfficeTime(Request $request, OfficeTimingUpdater $updater)
     {
         $this->validate($request, [
-            'office_hour_type' => 'required', 'start_time' => 'date_format:H:i:s', 'end_time' => 'date_format:H:i:s|after_or_equal:start_time', 'weekends' => 'required|array'
+            'office_hour_type' => 'required', 'start_time' => 'date_format:H:i:s', 'end_time' => 'date_format:H:i:s|after:start_time', 'weekends' => 'required|array'
         ],[
-          'end_time.after_or_equal' => 'Start Time Must Be Less Than End Time'
+          'end_time.after' => 'Start Time Must Be Less Than End Time'
         ]);
         $business_member = $request->business_member;
         $office_timing = $updater->setBusiness($request->business)->setMember($business_member->member)->setOfficeHourType($request->office_hour_type)->setStartTime($request->start_time)->setEndTime($request->end_time)->setWeekends($request->weekends)->update();
@@ -281,9 +281,9 @@ class AttendanceController extends Controller
         return api_response($request, null, 200, ['msg' => "Update Successful"]);
     }
 
-    public function getHolidays(Request $request, BusinessHolidayRepoInterface $business_holidays_repo)
+    public function getHolidays(Request $request)
     {
-        $holiday_list = new HolidayList($request->business, $business_holidays_repo);
+        $holiday_list = new HolidayList($request->business, $this->holidayRepository);
         $holidays = $holiday_list->getHolidays($request);
 
         return api_response($request, null, 200, [
@@ -291,18 +291,18 @@ class AttendanceController extends Controller
         ]);
     }
 
-    public function storeHoliday(Request $request, BusinessHolidayRepoInterface $business_holidays_repo, HolidayCreator $creator)
+    public function storeHoliday(Request $request, HolidayCreator $creator)
     {
         $this->validate($request, [
-            'start_date' => 'required|date_format:d/m/Y',
-            'end_date' => 'required|date_format:d/m/Y|after_or_equal:start_date',
+            'start_date' => 'required|date_format:Y-m-d',
+            'end_date' => 'required|date_format:Y-m-d|after_or_equal:start_date',
             'title' => 'required|string'
         ]);
         $business_member = $request->business_member;
 
         $holiday = $creator->setBusiness($request->business)
             ->setMember($business_member->member)
-            ->setHolidayRepo($business_holidays_repo)
+            ->setHolidayRepo($this->holidayRepository)
             ->setStartDate($request->start_date)
             ->setEndDate($request->end_date)
             ->setHolidayName($request->title)->create();
