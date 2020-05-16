@@ -36,16 +36,16 @@ class Creator
 
     public function setStartDate($start_date)
     {
-        $start_date = explode('/', $start_date);
-        $start_date = $start_date[2] . '-' . $start_date[1] . '-' . $start_date[0];
+//        $start_date = explode('/', $start_date);
+//        $start_date = $start_date[2] . '-' . $start_date[1] . '-' . $start_date[0];
         $this->start_date = $start_date . ' ' . '00:00:00';
         return $this;
     }
 
     public function setEndDate($end_date)
     {
-        $end_date = explode('/', $end_date);
-        $end_date = $end_date[2] . '-' . $end_date[1] . '-' . $end_date[0];
+//        $end_date = explode('/', $end_date);
+//        $end_date = $end_date[2] . '-' . $end_date[1] . '-' . $end_date[0];
         $this->end_date = $end_date . ' ' . '23:59:59';
         return $this;
     }
