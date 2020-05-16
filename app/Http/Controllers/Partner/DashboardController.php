@@ -273,23 +273,9 @@ class DashboardController extends Controller
     {
         try {
             $this->setModifier($request->partner);
-            $setting = $setting->setPartner($request->partner)->setVerSion($request->version)->get();
+            $setting = $setting->setPartner($request->partner)->setVersion($request->version)->get();
             return api_response($request, null, 200, ['data' => $setting]);
         } catch (Throwable $e) {
-            dd($e);
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
-    public function getHomeSettingV3(Request $request, SettingV3 $setting)
-    {
-        try {
-            $this->setModifier($request->partner);
-            $setting = $setting->setPartner($request->partner)->setVerSion($request->version)->get();
-            return api_response($request, null, 200, ['data' => $setting]);
-        } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

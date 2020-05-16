@@ -5,12 +5,19 @@ use Sheba\Partner\HomePageSetting\Setting;
 
 class Basic extends Setting
 {
-    public function __construct(Setting $next = null)
-    {
-        parent::__construct($next);
-    }
+
     protected function setting()
     {
-        return DefaultSetting::get();
+        $default_setting = DefaultSetting::get();
+        $emi= [
+            "key" => "emi",
+            "name_en" => "EMI",
+            "name_bn" => "কিস্তি",
+            "is_on_homepage" => 0
+        ];
+        if(!empty($this->version) && ($this->version >= (int)config('partner.lowest_version_for_emi_in_home_setting')))
+            array_push($default_setting,$emi);
+
+        return $default_setting;
     }
 }
