@@ -56,5 +56,8 @@ return [
     'order' => [
         'request_accept_time_limit_in_seconds' => 90,
         'show_resource_list' => 0
-    ]
+
+    ],
+    'lowest_version_for_emi_in_home_setting' => 3
 ];
+
