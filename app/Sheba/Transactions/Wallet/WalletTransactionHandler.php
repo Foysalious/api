@@ -61,10 +61,11 @@ class WalletTransactionHandler extends WalletTransaction
             $typeMethod = sprintf("%sWallet", $this->type);
             $this->$typeMethod();
             $data = array_merge($data, [
-                'type'                => ucfirst($this->type),
-                'amount'              => $this->amount,
-                'log'                 => $this->log,
-                'created_at'          => Carbon::now(),
+                'type'      => ucfirst($this->type),
+                'amount'    => $this->amount,
+                'balance'   => $this->getCalculatedBalance(),
+                'log'       => $this->log,
+                'created_at'=> Carbon::now(),
                 'transaction_details' => $this->transaction_details ? $this->transaction_details->toString() : null
             ]);
 
@@ -218,5 +219,15 @@ class WalletTransactionHandler extends WalletTransaction
         /*$extras = $this->withCreateModificationField((new RequestIdentification())->set($extras));*/
         /*dispatch((new WalletTransactionJob($this))->setExtras($extras));*/
         $this->store($extras);
+    }
+
+    /**
+     * @return float
+     */
+    private function getCalculatedBalance()
+    {
+        $last_inserted_transaction = $this->model->transactions()->orderBy('id', 'desc')->first();
+        $last_inserted_balance = $last_inserted_transaction ? $last_inserted_transaction->balance : 0.00;
+        return strtolower($this->type) == 'credit' ? $last_inserted_balance + $this->amount : $last_inserted_balance - $this->amount;
     }
 }
