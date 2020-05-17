@@ -132,6 +132,7 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
 
     public function checkExistingNid($nid_no)
     {
+        if (!$nid_no) return null;
         return Profile::where('nid_no', $nid_no)->first();
     }
 
@@ -200,16 +201,21 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
             $profile_data['gender'] = $data['gender'];
         }
         if (isset($data['nid_image_front'])) {
-            /** @var UploadedFile $image */
             $image = $data['nid_image_front'];
-            $name = $image->getClientOriginalName() . '_' . ImageSide::FRONT;
-            $profile_data['nid_image_front'] = $this->_saveNIdImage($image, $name);
+            if ($image instanceof UploadedFile) {
+                $name = $image->getClientOriginalName() . '_' . ImageSide::FRONT;
+                $image = $this->_saveNIdImage($image, $name);
+            }
+
+            $profile_data['nid_image_front'] = $image;
         }
         if (isset($data['nid_image_back'])) {
-            /** @var UploadedFile $image */
             $image = $data['nid_image_back'];
-            $name = $image->getClientOriginalName() . '_' . ImageSide::BACK;
-            $profile_data['nid_image_back'] = $this->_saveNIdImage($image, $name);
+            if ($image instanceof UploadedFile) {
+                $name = $image->getClientOriginalName() . '_' . ImageSide::BACK;
+                $image = $this->_saveNIdImage($image, $name);
+            }
+            $profile_data['nid_image_back'] = $image;
         }
         return $profile_data;
     }
