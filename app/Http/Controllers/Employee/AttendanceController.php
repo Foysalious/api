@@ -22,6 +22,7 @@ use League\Fractal\Resource\Item;
 use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
+use Sheba\Dal\BusinessAttendanceTypes\AttendanceTypes;
 use Sheba\Helpers\TimeFrame;
 use Throwable;
 
@@ -74,18 +75,20 @@ class AttendanceController extends Controller
             $validation_data = [
                 'action' => 'required|string|in:' . implode(',', Actions::get()),
                 'device_id' => 'string',
-                'user_agent' => 'string',
-                'lat' => 'numeric',
-                'lng' => 'numeric'
+                'user_agent' => 'string'
             ];
             #dd($request->all());
             #($request->has('lat') && $request->has('lng'))
             $business_member = $this->getBusinessMember($request);
+            $businsess = $this->getBusiness($request);
             if (!$business_member) return api_response($request, null, 404);
 
             $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
             if ($request->action == Actions::CHECKOUT && $checkout->isNoteRequired($business_member)) {
                 $validation_data += ['note' => 'string|required_if:action,' . Actions::CHECKOUT];
+            }
+            if($this->isRemoteEnable($businsess)){
+                $validation_data += ['lat' => 'required|numeric', 'lng' => 'required|numeric'];
             }
             $this->validate($request, $validation_data);
             $this->setModifier($business_member->member);
@@ -132,15 +135,24 @@ class AttendanceController extends Controller
         $attendance = $business_member->attendanceOfToday();
         /** @var ActionChecker $checkout */
         $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
+        $business = $this->getBusiness($request);
+        $is_remote_enable = $this->isRemoteEnable($business);
         $data = [
             'can_checkin' => !$attendance ? 1 : ($attendance->canTakeThisAction(Actions::CHECKIN) ? 1 : 0),
             'can_checkout' => $attendance && $attendance->canTakeThisAction(Actions::CHECKOUT) ? 1 : 0,
             'is_note_required' => 0,
             'checkin_time' => $attendance ? $attendance->checkin_time : null,
             'checkout_time' => $attendance ? $attendance->checkout_time : null,
+            'is_remote_enable' => $is_remote_enable ? 1 : 0
         ];
         if ($data['can_checkout']) $data['is_note_required'] = $checkout->isNoteRequired($business_member);
         return api_response($request, null, 200, ['attendance' => $data]);
+    }
+
+    private function isRemoteEnable($business)
+    {
+        if (in_array(AttendanceTypes::REMOTE, $business->attendanceTypes->pluck('attendance_type')->toArray())) return true;
+        return false;
     }
 
     private function getBusinessMember(Request $request)
