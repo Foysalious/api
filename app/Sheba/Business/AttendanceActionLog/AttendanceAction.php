@@ -13,6 +13,7 @@ use Sheba\Business\AttendanceActionLog\Creator as AttendanceActionLogCreator;
 use Sheba\Business\Attendance\Creator as AttendanceCreator;
 use DB;
 use Sheba\Location\Geo;
+use Sheba\Map\Client\BarikoiClient;
 
 class AttendanceAction
 {
@@ -137,7 +138,10 @@ class AttendanceAction
                 ->setIp($this->getIp())
                 ->setDeviceId($this->deviceId)
                 ->setUserAgent($this->userAgent);
+
+            #dd((new BarikoiClient)->getAddressFromGeo($this->getGeo())->getAddress());
             if ($geo = $this->getGeo()) $this->attendanceActionLogCreator->setGeo($geo);
+            #if ($geo = $this->getGeo()) $this->attendanceActionLogCreator->setIsRemote(1);
             if ($this->action == Actions::CHECKOUT) $this->attendanceActionLogCreator->setNote($this->note);
             $attendance_action_log = $this->attendanceActionLogCreator->create();
             $this->updateAttendance($attendance_action_log);

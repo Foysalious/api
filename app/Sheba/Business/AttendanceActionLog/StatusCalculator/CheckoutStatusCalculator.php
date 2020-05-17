@@ -9,9 +9,9 @@ class CheckoutStatusCalculator extends StatusCalculator
 {
     public function calculate()
     {
-        $time=new TimeByBusiness();
-        $checkout_time=$time->getOfficeEndTimeByBusiness();
-        if(is_null($checkout_time)) return Statuses::ON_TIME;
+        $time = new TimeByBusiness();
+        $checkout_time = $time->getOfficeEndTimeByBusiness();
+        if (is_null($checkout_time)) return Statuses::ON_TIME;
         $todays_checkout_time = Carbon::now();
         $last_checkout_time = Carbon::parse($todays_checkout_time->toDateString() . ' ' . $checkout_time);
         if ($todays_checkout_time->lt($last_checkout_time))

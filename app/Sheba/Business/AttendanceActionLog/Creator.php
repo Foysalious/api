@@ -19,6 +19,7 @@ class Creator
     private $ip;
     private $userAgent;
     private $note;
+    private $isRemote;
     /** @var CheckinStatusCalculator $checkinStatusCalculator */
     private $checkinStatusCalculator;
     /** @var CheckoutStatusCalculator $checkoutStatusCalculator */
@@ -102,6 +103,12 @@ class Creator
         return $this;
     }
 
+    public function setIsRemote($is_remote)
+    {
+        $this->isRemote = $is_remote;
+        return $this;
+    }
+
     public function create()
     {
         if ($this->action == Actions::CHECKIN)
@@ -116,7 +123,8 @@ class Creator
             'ip' => $this->ip,
             'user_agent' => $this->userAgent,
             'device_id' => $this->deviceId,
-            'status' => $status
+            'status' => $status,
+            'is_remote' => $this->isRemote
         ];
         if ($this->geo) $attendance_log_data['location'] = json_encode(['lat' => $this->geo->getLat(), 'lng' => $this->geo->getLng()]);
         return $this->attendanceActionLogRepository->create($attendance_log_data);

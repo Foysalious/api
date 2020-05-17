@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\Employee;
 
 use App\Http\Controllers\Controller;
+use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Sheba\Business\Attendance\MonthlyStat;
 use Carbon\Carbon;
@@ -77,6 +78,8 @@ class AttendanceController extends Controller
                 'lat' => 'numeric',
                 'lng' => 'numeric'
             ];
+            #dd($request->all());
+            #($request->has('lat') && $request->has('lng'))
             $business_member = $this->getBusinessMember($request);
             if (!$business_member) return api_response($request, null, 404);
 
@@ -87,8 +90,13 @@ class AttendanceController extends Controller
             $this->validate($request, $validation_data);
             $this->setModifier($business_member->member);
 
-            $attendance_action->setBusinessMember($business_member)->setAction($request->action)->setBusiness($business_member->business)
-                ->setNote($request->note)->setDeviceId($request->device_id)->setLat($request->lat)->setLng($request->lng);
+            $attendance_action->setBusinessMember($business_member)
+                ->setAction($request->action)
+                ->setBusiness($business_member->business)
+                ->setNote($request->note)
+                ->setDeviceId($request->device_id)
+                ->setLat($request->lat)
+                ->setLng($request->lng);
             /** @var ActionChecker $action */
             $action = $attendance_action->doAction();
             return response()->json(['code' => $action->getResultCode(), 'message' => $action->getResultMessage()]);
@@ -141,6 +149,14 @@ class AttendanceController extends Controller
         $business_member = $auth_info['business_member'];
         if (!isset($business_member['id'])) return null;
         return BusinessMember::find($business_member['id']);
+    }
+
+    public function getBusiness(Request $request)
+    {
+        $auth_info = $request->auth_info;
+        $business_member = $auth_info['business_member'];
+        if (!isset($business_member['business_id'])) return null;
+        return Business::findOrFail($business_member['business_id']);
     }
 
 }

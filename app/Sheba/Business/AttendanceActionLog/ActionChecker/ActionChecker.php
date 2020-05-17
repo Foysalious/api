@@ -8,6 +8,7 @@ use Sheba\Business\AttendanceActionLog\TimeByBusiness;
 use Sheba\Business\AttendanceActionLog\WeekendHolidayByBusiness;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Model as AttendanceActionLog;
+use Sheba\Dal\BusinessAttendanceTypes\AttendanceTypes;
 use Sheba\Location\Geo;
 
 abstract class ActionChecker
@@ -24,6 +25,7 @@ abstract class ActionChecker
     protected $deviceId;
     protected $resultCode;
     protected $resultMessage;
+    protected $officeAttendanceType;
     const BUSINESS_OFFICE_HOUR = 9;
 
     /**
@@ -151,10 +153,17 @@ abstract class ActionChecker
     {
         if (!$this->isSuccess()) return;
         if ($this->business->offices()->count() > 0 && !in_array($this->ip, $this->business->offices()->select('ip')->get()->pluck('ip')->toArray())) {
+            if ($this->isRemoteAttendanceEnable()) $this->setSuccessfulResponseMessage();
             $this->setResult(ActionResultCodes::OUT_OF_WIFI_AREA, ActionResultCodeMessages::OUT_OF_WIFI_AREA);
         } else {
             $this->setSuccessfulResponseMessage();
         }
+    }
+
+    private function isRemoteAttendanceEnable()
+    {
+        if (in_array(AttendanceTypes::REMOTE, $this->business->attendanceTypes->pluck('attendance_type')->toArray())) return true;
+        return false;
     }
 
     protected function setResult($result_code, $result_message)

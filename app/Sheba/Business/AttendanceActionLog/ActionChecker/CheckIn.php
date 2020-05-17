@@ -30,8 +30,8 @@ class CheckIn extends ActionChecker
 
     protected function checkForLateAction()
     {
-        $time=new TimeByBusiness();
-        $last_checkin_time=$time->getOfficeStartTimeByBusiness();
+        $time = new TimeByBusiness();
+        $last_checkin_time = $time->getOfficeStartTimeByBusiness();
         if (is_null($last_checkin_time)) return;
         if (!$this->isSuccess()) return;
         if (Carbon::now() > Carbon::parse($last_checkin_time)) $this->setResult(ActionResultCodes::LATE_TODAY, ActionResultCodeMessages::LATE_TODAY);
