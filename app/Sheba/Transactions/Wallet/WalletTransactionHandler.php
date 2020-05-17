@@ -60,21 +60,24 @@ class WalletTransactionHandler extends WalletTransaction
         DB::transaction(function () use ($data, &$transaction) {
             $typeMethod = sprintf("%sWallet", $this->type);
             $this->$typeMethod();
-            $data             = array_merge($data, [
+            $data = array_merge($data, [
                 'type'                => ucfirst($this->type),
+                'amount'              => $this->amount,
                 'log'                 => $this->log,
                 'created_at'          => Carbon::now(),
-                'transaction_details' => $this->transaction_details ? $this->transaction_details->toString() : null,
-                'amount'              => $this->amount
+                'transaction_details' => $this->transaction_details ? $this->transaction_details->toString() : null
             ]);
+
             $transaction_data = $this->getTransactionClass()->fill($data);
             $transaction      = $this->model->transactions()->save($transaction_data);
+
             event(new WalletUpdateEvent([
                 'amount'    => $this->model->fresh()->wallet,
                 'user_type' => strtolower(class_basename($this->model)),
-                'user_id'   => $this->model->id,
+                'user_id'   => $this->model->id
             ]));
         });
+
         return $transaction;
     }
 
@@ -153,7 +156,6 @@ class WalletTransactionHandler extends WalletTransaction
      */
     public function recharge($data = [], $isJob = false)
     {
-
         try {
             if (empty($this->amount) || empty($this->model)) {
                 throw new InvalidWalletTransaction();
