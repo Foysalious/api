@@ -25,7 +25,7 @@ abstract class ActionChecker
     protected $deviceId;
     protected $resultCode;
     protected $resultMessage;
-    protected $officeAttendanceType;
+    protected $isRemote = 0;
     const BUSINESS_OFFICE_HOUR = 9;
 
     /**
@@ -88,11 +88,16 @@ abstract class ActionChecker
         return $this->resultMessage;
     }
 
+    public function getIsRemote()
+    {
+        return $this->isRemote;
+    }
+
     public function check()
     {
-        $this->setAttendanceActionLogsOfToday();
-        $this->checkAlreadyHasActionForToday();
-        $this->checkDeviceId();
+        #$this->setAttendanceActionLogsOfToday();
+        #$this->checkAlreadyHasActionForToday();
+        #$this->checkDeviceId();
         $this->checkIp();
     }
 
@@ -153,7 +158,10 @@ abstract class ActionChecker
     {
         if (!$this->isSuccess()) return;
         if ($this->business->offices()->count() > 0 && !in_array($this->ip, $this->business->offices()->select('ip')->get()->pluck('ip')->toArray())) {
-            if ($this->isRemoteAttendanceEnable()) $this->setSuccessfulResponseMessage();
+            if ($this->isRemoteAttendanceEnable()) {
+                $this->isRemote = 1;
+                $this->setSuccessfulResponseMessage();
+            }
             $this->setResult(ActionResultCodes::OUT_OF_WIFI_AREA, ActionResultCodeMessages::OUT_OF_WIFI_AREA);
         } else {
             $this->setSuccessfulResponseMessage();
