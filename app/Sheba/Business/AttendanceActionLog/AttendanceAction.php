@@ -35,6 +35,7 @@ class AttendanceAction
     private $userAgent;
     private $lat;
     private $lng;
+    private $isRemote;
 
     public function __construct(EloquentImplementation $attendance_repository, AttendanceCreator $attendance_creator, AttendanceActionLogCreator $attendance_action_log_creator)
     {
@@ -125,6 +126,7 @@ class AttendanceAction
         $action = $processor->setActionName($this->action)->getAction();
         $action->setAttendanceOfToday($this->attendance)->setIp($this->getIp())->setDeviceId($this->deviceId)->setBusiness($this->business);
         $action->check();
+        $this->isRemote = $action->getIsRemote();
         return $action;
     }
 
@@ -137,11 +139,9 @@ class AttendanceAction
                 ->setAttendance($this->attendance)
                 ->setIp($this->getIp())
                 ->setDeviceId($this->deviceId)
-                ->setUserAgent($this->userAgent);
-
-            #dd((new BarikoiClient)->getAddressFromGeo($this->getGeo())->getAddress());
+                ->setUserAgent($this->userAgent)
+                ->setIsRemote($this->isRemote);
             if ($geo = $this->getGeo()) $this->attendanceActionLogCreator->setGeo($geo);
-            #if ($geo = $this->getGeo()) $this->attendanceActionLogCreator->setIsRemote(1);
             if ($this->action == Actions::CHECKOUT) $this->attendanceActionLogCreator->setNote($this->note);
             $attendance_action_log = $this->attendanceActionLogCreator->create();
             $this->updateAttendance($attendance_action_log);
