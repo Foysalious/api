@@ -49,11 +49,9 @@ class TenderTransformer extends TransformerAbstract
                 'icon' => config('sheba.s3_url') . 'business_assets/tender/icons/png/category.png',
             ] : null,
 
-            #'number_of_participants' => $procurement->number_of_participants,
             'remaining_days' => $this->getRemainingDays($procurement->last_date_of_submission),
             'number_of_applicants_or_applications' => !$number_of_participants ? $this->getApplicants($number_of_bids) :
                 $this->getRemainingApplications($number_of_participants, $number_of_bids),
-            #'remaining_applications' => $this->getRemainingApplications($procurement, $number_of_bids),
             'created_at' => 'Posted ' . $procurement->created_at->diffForHumans(),
         ];
     }

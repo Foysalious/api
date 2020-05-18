@@ -235,13 +235,12 @@ class ProcurementController extends Controller
         if ($start_date && $end_date) $procurements = $this->procurementRepository->filterWithEndDate($start_date, $end_date);
         $procurements = $procurements->get();
 
-        /*$procurements = $procurements->filter(function ($procurement) {
+        $procurements = $procurements->filter(function ($procurement) {
             $number_of_participants = $procurement->number_of_participants;
             $number_of_bids = $procurement->bids()->count();
-            if (!$number_of_participants) return $number_of_participants != $number_of_bids;
+            if ($number_of_participants) return $number_of_participants != $number_of_bids;
             return $procurement;
         });
-        dd($procurements);*/
         #number of participant and bid_count equal hole list a asbe na
         $total_records = $procurements->count();
         $manager = new Manager();
