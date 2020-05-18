@@ -3,6 +3,7 @@
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Dal\BaseModel;
+use Sheba\Dal\BusinessAttendanceTypes\AttendanceTypes;
 use Sheba\Dal\LeaveType\Model as LeaveTypeModel;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Helpers\TimeFrame;
@@ -198,5 +199,11 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
     {
         $time_frame = new TimeFrame();
         return $time_frame->forAFiscalYear(Carbon::now(), Business::BUSINESS_FISCAL_START_MONTH);
+    }
+
+    public function isRemoteEnable()
+    {
+        if (in_array(AttendanceTypes::REMOTE, $this->attendanceTypes->pluck('attendance_type')->toArray())) return true;
+        return false;
     }
 }

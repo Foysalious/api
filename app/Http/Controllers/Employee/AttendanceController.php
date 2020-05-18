@@ -80,14 +80,14 @@ class AttendanceController extends Controller
             #dd($request->all());
             #($request->has('lat') && $request->has('lng'))
             $business_member = $this->getBusinessMember($request);
-            $businsess = $this->getBusiness($request);
+            $business = $this->getBusiness($request);
             if (!$business_member) return api_response($request, null, 404);
 
             $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
             if ($request->action == Actions::CHECKOUT && $checkout->isNoteRequired($business_member)) {
                 $validation_data += ['note' => 'string|required_if:action,' . Actions::CHECKOUT];
             }
-            if($this->isRemoteEnable($businsess)){
+            if($business->isRemoteEnable()){
                 $validation_data += ['lat' => 'required|numeric', 'lng' => 'required|numeric'];
             }
             $this->validate($request, $validation_data);
@@ -136,23 +136,17 @@ class AttendanceController extends Controller
         /** @var ActionChecker $checkout */
         $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
         $business = $this->getBusiness($request);
-        $is_remote_enable = $this->isRemoteEnable($business);
+        $is_remote_enable = $business->isRemoteEnable();
         $data = [
             'can_checkin' => !$attendance ? 1 : ($attendance->canTakeThisAction(Actions::CHECKIN) ? 1 : 0),
             'can_checkout' => $attendance && $attendance->canTakeThisAction(Actions::CHECKOUT) ? 1 : 0,
             'is_note_required' => 0,
             'checkin_time' => $attendance ? $attendance->checkin_time : null,
             'checkout_time' => $attendance ? $attendance->checkout_time : null,
-            'is_remote_enable' => $is_remote_enable ? 1 : 0
+            'is_geo_required' => $is_remote_enable ? 1 : 0
         ];
         if ($data['can_checkout']) $data['is_note_required'] = $checkout->isNoteRequired($business_member);
         return api_response($request, null, 200, ['attendance' => $data]);
-    }
-
-    private function isRemoteEnable($business)
-    {
-        if (in_array(AttendanceTypes::REMOTE, $business->attendanceTypes->pluck('attendance_type')->toArray())) return true;
-        return false;
     }
 
     private function getBusinessMember(Request $request)
