@@ -1,29 +1,26 @@
 <?php namespace App\Http\Controllers\Employee;
 
-use App\Http\Controllers\Controller;
-use App\Models\Business;
-use App\Models\BusinessMember;
-use App\Sheba\Business\Attendance\MonthlyStat;
-use Carbon\Carbon;
-use Illuminate\Http\Request;
-use Sheba\Business\AttendanceActionLog\ActionChecker\ActionChecker;
+use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
+use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
+use Sheba\Business\AttendanceActionLog\ActionChecker\ActionChecker;
+use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
 use Sheba\Business\AttendanceActionLog\AttendanceAction;
+use App\Transformers\Business\AttendanceTransformer;
+use Illuminate\Validation\ValidationException;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
-use Sheba\ModificationFields;
-
-use App\Transformers\Business\AttendanceTransformer;
 use App\Transformers\CustomSerializer;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Validation\ValidationException;
-use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
-use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
-use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
-use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
-use Sheba\Dal\BusinessAttendanceTypes\AttendanceTypes;
+use App\Models\BusinessMember;
+use Sheba\ModificationFields;
+use Illuminate\Http\Request;
 use Sheba\Helpers\TimeFrame;
+use League\Fractal\Manager;
+use App\Models\Business;
+use Carbon\Carbon;
 use Throwable;
 
 class AttendanceController extends Controller
@@ -87,7 +84,7 @@ class AttendanceController extends Controller
             if ($request->action == Actions::CHECKOUT && $checkout->isNoteRequired($business_member)) {
                 $validation_data += ['note' => 'string|required_if:action,' . Actions::CHECKOUT];
             }
-            if($business->isRemoteEnable()){
+            if ($business->isRemoteAttendanceEnable()) {
                 $validation_data += ['lat' => 'required|numeric', 'lng' => 'required|numeric'];
             }
             $this->validate($request, $validation_data);
@@ -136,7 +133,7 @@ class AttendanceController extends Controller
         /** @var ActionChecker $checkout */
         $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
         $business = $this->getBusiness($request);
-        $is_remote_enable = $business->isRemoteEnable();
+        $is_remote_enable = $business->isRemoteAttendanceEnable();
         $data = [
             'can_checkin' => !$attendance ? 1 : ($attendance->canTakeThisAction(Actions::CHECKIN) ? 1 : 0),
             'can_checkout' => $attendance && $attendance->canTakeThisAction(Actions::CHECKOUT) ? 1 : 0,

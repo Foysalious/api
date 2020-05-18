@@ -1,12 +1,12 @@
 <?php namespace Sheba\Business\AttendanceActionLog;
 
+use Sheba\Dal\AttendanceActionLog\EloquentImplementation as AttendanceActionLogRepositoryInterface;
 use Sheba\Business\AttendanceActionLog\StatusCalculator\CheckinStatusCalculator;
 use Sheba\Business\AttendanceActionLog\StatusCalculator\CheckoutStatusCalculator;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
-use Sheba\Dal\AttendanceActionLog\EloquentImplementation as AttendanceActionLogRepositoryInterface;
-use Sheba\Location\Geo;
 use Sheba\Map\Client\BarikoiClient;
+use Sheba\Location\Geo;
 
 class Creator
 {
@@ -21,7 +21,7 @@ class Creator
     private $userAgent;
     private $note;
     private $isRemote;
-    private $address = "";
+    private $address;
     /** @var CheckinStatusCalculator $checkinStatusCalculator */
     private $checkinStatusCalculator;
     /** @var CheckoutStatusCalculator $checkoutStatusCalculator */
@@ -139,7 +139,7 @@ class Creator
             'status' => $status,
             'is_remote' => $this->isRemote
         ];
-        $this->getAddress();
+        $this->address = $this->getAddress();
         if ($this->geo) $attendance_log_data['location'] = json_encode(['lat' => $this->geo->getLat(), 'lng' => $this->geo->getLng(), 'address' => $this->address]);
         return $this->attendanceActionLogRepository->create($attendance_log_data);
     }
@@ -150,7 +150,7 @@ class Creator
     public function getAddress()
     {
         try {
-            $this->address = (new BarikoiClient)->getAddressFromGeo($this->geo)->getAddress();
+            return (new BarikoiClient)->getAddressFromGeo($this->geo)->getAddress();
         } catch (\Throwable $exception) {
             return "";
         }

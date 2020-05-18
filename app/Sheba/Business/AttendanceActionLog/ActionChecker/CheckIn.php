@@ -1,9 +1,8 @@
 <?php namespace Sheba\Business\AttendanceActionLog\ActionChecker;
 
-use Carbon\Carbon;
-use Sheba\Business\AttendanceActionLog\Time;
 use Sheba\Business\AttendanceActionLog\TimeByBusiness;
 use Sheba\Dal\AttendanceActionLog\Actions;
+use Carbon\Carbon;
 
 class CheckIn extends ActionChecker
 {
