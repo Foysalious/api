@@ -60,7 +60,6 @@ class ResourceJobRateController extends Controller
     public function storeCustomerReview(Job $job, Request $request)
     {
         $review = $job->customerReview;
-//        dd($review);
         if ($review == null) return api_response($request, null, 403, ['message' => 'First you have to give a rating.']);
         if ($this->storeReviews($request, $review)) return api_response($request, 1, 200);
         else return api_response($request, null, 500);
