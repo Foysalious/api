@@ -141,7 +141,9 @@ class PaymentLinkOrderComplete extends PaymentComplete {
             $payment_data    = [
                 'pos_order_id' => $target->id,
                 'amount'       => $this->payment->payable->amount,
-                'method'       => $this->payment->payable->type
+                'method'       => $this->payment->payable->type,
+                'emi_month'    => $this->payment->payable->emi_month,
+                'interest'     => $this->paymentLink->getInterest(),
             ];
             $payment_creator = app(PaymentCreator::class);
             $payment_creator->credit($payment_data);
