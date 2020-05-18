@@ -60,6 +60,7 @@ class ResourceJobRateController extends Controller
     public function storeCustomerReview(Job $job, Request $request)
     {
         $review = $job->customerReview;
+//        dd($review);
         if ($review == null) return api_response($request, null, 403, ['message' => 'First you have to give a rating.']);
         if ($this->storeReviews($request, $review)) return api_response($request, 1, 200);
         else return api_response($request, null, 500);
@@ -77,7 +78,7 @@ class ResourceJobRateController extends Controller
 
     private function storeReviews(Request $request, $review)
     {
-        $data = json_decode($request->data);
+        $data = json_decode(preg_replace("/\r|\n/", " ", $request->data));
         try {
             DB::transaction(function () use ($data, $review, $request) {
                 $quesAns = $data->quesAns;
