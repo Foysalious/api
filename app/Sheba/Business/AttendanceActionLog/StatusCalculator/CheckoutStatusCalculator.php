@@ -11,12 +11,12 @@ class CheckoutStatusCalculator extends StatusCalculator
     {
         $time = new TimeByBusiness();
         $checkout_time = $time->getOfficeEndTimeByBusiness();
-        if (is_null($checkout_time)) return Statuses::ON_TIME;
-        $todays_checkout_time = Carbon::now();
-        $last_checkout_time = Carbon::parse($todays_checkout_time->toDateString() . ' ' . $checkout_time);
-        if ($todays_checkout_time->lt($last_checkout_time))
+        if (is_null($checkout_time)) return Statuses::LEFT_TIMELY;
+        $todays_checkout_date = Carbon::now();
+        $last_checkout_time = Carbon::parse($todays_checkout_date->toDateString() . ' ' . $checkout_time);
+        if ($todays_checkout_date->lt($last_checkout_time))
             return Statuses::LEFT_EARLY;
 
-        return Statuses::ON_TIME;
+        return Statuses::LEFT_TIMELY;
     }
 }
