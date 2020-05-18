@@ -156,7 +156,7 @@ abstract class ActionChecker
     {
         if (!$this->isSuccess()) return;
         if ($this->business->offices()->count() > 0 && !in_array($this->ip, $this->business->offices()->select('ip')->get()->pluck('ip')->toArray())) {
-            if ($this->isRemoteAttendanceEnable()) {
+            if ($this->business->isRemoteAttendanceEnable()) {
                 $this->isRemote = 1;
                 $this->setSuccessfulResponseMessage();
             } else {
@@ -165,12 +165,6 @@ abstract class ActionChecker
         } else {
             $this->setSuccessfulResponseMessage();
         }
-    }
-
-    private function isRemoteAttendanceEnable()
-    {
-        if (in_array(AttendanceTypes::REMOTE, $this->business->attendanceTypes->pluck('attendance_type')->toArray())) return true;
-        return false;
     }
 
     protected function setResult($result_code, $result_message)
