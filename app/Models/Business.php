@@ -3,6 +3,7 @@
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Dal\BaseModel;
+use Sheba\Dal\BusinessAttendanceTypes\AttendanceTypes;
 use Sheba\Dal\LeaveType\Model as LeaveTypeModel;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Helpers\TimeFrame;
@@ -14,10 +15,10 @@ use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
+use Sheba\Dal\BusinessAttendanceTypes\Model as BusinessAttendanceType;
 
 use Sheba\Wallet\WalletUpdateEvent;
 use Sheba\Dal\BusinessOffice\Model as BusinessOffice;
-use Sheba\Dal\BusinessAttendanceTypes\Model as BusinessAttendanceTypes;
 
 class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTransaction
 {
@@ -191,12 +192,18 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
 
     public function attendanceTypes()
     {
-        return $this->hasMany(BusinessAttendanceTypes::class);
+        return $this->hasMany(BusinessAttendanceType::class);
     }
 
     public function getBusinessFiscalPeriod()
     {
         $time_frame = new TimeFrame();
         return $time_frame->forAFiscalYear(Carbon::now(), Business::BUSINESS_FISCAL_START_MONTH);
+    }
+
+    public function isRemoteAttendanceEnable()
+    {
+        if (in_array(AttendanceTypes::REMOTE, $this->attendanceTypes->pluck('attendance_type')->toArray())) return true;
+        return false;
     }
 }

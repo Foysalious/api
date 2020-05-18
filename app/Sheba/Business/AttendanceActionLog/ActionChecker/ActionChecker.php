@@ -1,14 +1,13 @@
 <?php namespace Sheba\Business\AttendanceActionLog\ActionChecker;
 
-use App\Models\Business;
-use App\Models\BusinessMember;
-use Carbon\Carbon;
-use Sheba\Business\AttendanceActionLog\Time;
-use Sheba\Business\AttendanceActionLog\TimeByBusiness;
 use Sheba\Business\AttendanceActionLog\WeekendHolidayByBusiness;
-use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Model as AttendanceActionLog;
+use Sheba\Dal\BusinessAttendanceTypes\AttendanceTypes;
+use Sheba\Dal\Attendance\Model as Attendance;
+use App\Models\BusinessMember;
+use App\Models\Business;
 use Sheba\Location\Geo;
+use Carbon\Carbon;
 
 abstract class ActionChecker
 {
@@ -24,6 +23,7 @@ abstract class ActionChecker
     protected $deviceId;
     protected $resultCode;
     protected $resultMessage;
+    protected $isRemote = 0;
     const BUSINESS_OFFICE_HOUR = 9;
 
     /**
@@ -84,6 +84,11 @@ abstract class ActionChecker
     public function getResultMessage()
     {
         return $this->resultMessage;
+    }
+
+    public function getIsRemote()
+    {
+        return $this->isRemote;
     }
 
     public function check()
@@ -151,7 +156,12 @@ abstract class ActionChecker
     {
         if (!$this->isSuccess()) return;
         if ($this->business->offices()->count() > 0 && !in_array($this->ip, $this->business->offices()->select('ip')->get()->pluck('ip')->toArray())) {
-            $this->setResult(ActionResultCodes::OUT_OF_WIFI_AREA, ActionResultCodeMessages::OUT_OF_WIFI_AREA);
+            if ($this->business->isRemoteAttendanceEnable()) {
+                $this->isRemote = 1;
+                $this->setSuccessfulResponseMessage();
+            } else {
+                $this->setResult(ActionResultCodes::OUT_OF_WIFI_AREA, ActionResultCodeMessages::OUT_OF_WIFI_AREA);
+            }
         } else {
             $this->setSuccessfulResponseMessage();
         }
