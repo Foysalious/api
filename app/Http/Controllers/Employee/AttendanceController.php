@@ -74,14 +74,13 @@ class AttendanceController extends Controller
                 'device_id' => 'string',
                 'user_agent' => 'string'
             ];
-            #dd($request->all());
-            #($request->has('lat') && $request->has('lng'))
+
             $business_member = $this->getBusinessMember($request);
             $business = $this->getBusiness($request);
             if (!$business_member) return api_response($request, null, 404);
 
             $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
-            if ($request->action == Actions::CHECKOUT && $checkout->isNoteRequired($business_member)) {
+            if ($request->action == Actions::CHECKOUT && $checkout->isNoteRequired()) {
                 $validation_data += ['note' => 'string|required_if:action,' . Actions::CHECKOUT];
             }
             if ($business->isRemoteAttendanceEnable()) {
@@ -142,7 +141,7 @@ class AttendanceController extends Controller
             'checkout_time' => $attendance ? $attendance->checkout_time : null,
             'is_geo_required' => $is_remote_enable ? 1 : 0
         ];
-        if ($data['can_checkout']) $data['is_note_required'] = $checkout->isNoteRequired($business_member);
+        if ($data['can_checkout']) $data['is_note_required'] = $checkout->isNoteRequired();
         return api_response($request, null, 200, ['attendance' => $data]);
     }
 

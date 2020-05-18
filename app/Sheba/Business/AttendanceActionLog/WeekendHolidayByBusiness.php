@@ -9,7 +9,7 @@ class WeekendHolidayByBusiness
 {
     public function isHolidayByBusiness(Carbon $date)
     {
-        $date=$date->format('Y-m-d');
+        $date = $date->format('Y-m-d');
         $holidays = BusinessHolidayModel::where('business_id', $this->getBusiness()->id)->get();
         foreach ($holidays as $holiday) {
             if ($date >= Carbon::parse($holiday->start_date)->toDateString() && $date <= Carbon::parse($holiday->end_date)->toDateString()) {
@@ -21,8 +21,8 @@ class WeekendHolidayByBusiness
 
     public function isWeekendByBusiness(Carbon $date)
     {
-        $date=$date->format('l');
-        $weekend_day = BusinessWeekendModel::where('business_id',$this->getBusiness()->id)->pluck('weekday_name')->toArray();
+        $date = $date->format('l');
+        $weekend_day = BusinessWeekendModel::where('business_id', $this->getBusiness()->id)->pluck('weekday_name')->toArray();
         return in_array(strtolower($date), $weekend_day);
     }
 
