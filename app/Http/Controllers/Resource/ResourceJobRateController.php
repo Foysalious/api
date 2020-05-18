@@ -16,16 +16,14 @@ class ResourceJobRateController extends Controller
 {
     public function index($job, Request $request)
     {
-        $rates = Rate::where('type', 'review')->with(['questions' => function ($q) {
+        $rates = Rate::where('type', 'customer_review')->with(['questions' => function ($q) {
             $q->select('id', 'question', 'type')->with(['answers' => function ($q) {
-                $q->select('id', 'answer', 'asset', 'badge');
+                $q->select('id', 'answer', 'badge');
             }]);
         }])->select('id', 'name', 'icon', 'icon_off', 'value')->get();
         foreach ($rates as $rate) {
-            $rate['asset'] = 'star';
-            $rate['height'] = 30;
+            array_add($rate, 'height', 30);
             foreach ($rate->questions as $question) {
-                $question['is_compliment'] = ($rate->value == 5) ? 1 : 0;
                 array_forget($question, 'pivot');
                 foreach ($question->answers as $answer) {
                     array_forget($answer, 'pivot');
@@ -33,7 +31,6 @@ class ResourceJobRateController extends Controller
             }
         }
         $rates = $rates->sortBy('value')->values()->all();
-        Redis::set('customer-review-settings', json_encode($rates));
         return api_response($request, $rates, 200, ['rates' => $rates, 'rate_message' => 'Rate this job']);
     }
 
