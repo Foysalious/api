@@ -376,7 +376,7 @@ class PartnerOrderRepository
     public function getInfo($partner_order)
     {
         if ($partner_order->jobs->count() > 1) {
-            $job = $partner_order->jobs->whereIn('status', array_merge(JobStatuses::getAcceptable(), JobStatuses::getOngoing()))->first();
+            $job = $partner_order->lastJob();
         } else {
             $job = $partner_order->jobs->first();
         }
