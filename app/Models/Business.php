@@ -1,21 +1,24 @@
 <?php namespace App\Models;
 
-use Sheba\Dal\BusinessAttendanceTypes\Model as BusinessAttendanceType;
-use Sheba\Transactions\Wallet\WalletTransactionHandler;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\BaseModel;
 use Sheba\Dal\BusinessAttendanceTypes\AttendanceTypes;
-use Sheba\Dal\BusinessOffice\Model as BusinessOffice;
-use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Dal\LeaveType\Model as LeaveTypeModel;
 use Sheba\FraudDetection\TransactionSources;
-use Sheba\TopUp\TopUpTransaction;
-use Sheba\Payment\PayableUser;
-use Sheba\ModificationFields;
 use Sheba\Helpers\TimeFrame;
-use Sheba\TopUp\TopUpTrait;
-use Sheba\TopUp\TopUpAgent;
+use Sheba\ModificationFields;
+use Sheba\Payment\PayableUser;
 use Sheba\Payment\Wallet;
-use Sheba\Dal\BaseModel;
-use Carbon\Carbon;
+use Sheba\TopUp\TopUpAgent;
+use Sheba\TopUp\TopUpTrait;
+use Sheba\TopUp\TopUpTransaction;
+use Sheba\Transactions\Wallet\HasWalletTransaction;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
+use Sheba\Dal\BusinessAttendanceTypes\Model as BusinessAttendanceType;
+
+use Sheba\Wallet\WalletUpdateEvent;
+use Sheba\Dal\BusinessOffice\Model as BusinessOffice;
 
 class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTransaction
 {
