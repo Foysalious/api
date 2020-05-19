@@ -34,7 +34,7 @@ class TenderTransformer extends TransformerAbstract
                 'date_range' => $start_date . ' - ' . $end_date,
                 'icon' => config('sheba.s3_url') . 'business_assets/tender/icons/png/stopwatch.png',
             ],
-            'estimated_price' => $procurement->estimated_price ? (double)$procurement->estimated_price : 'Budget to be fixed',
+            'estimated_price' => $procurement->estimated_price ? (double)$procurement->estimated_price : null,
 
             'payment' => $procurement->payment_options ? [
                 'option' => $procurement->payment_options,
