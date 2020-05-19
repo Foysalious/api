@@ -93,7 +93,7 @@ class PaymentLinkOrderComplete extends PaymentComplete {
         if ($target instanceof PosOrder) {
             $entry_repo->updateFromSrc();
         } else {
-            $entry_repo->setHead(AutomaticExpense::PAYMENT_LINK)->setAmountCleared(0)->store();
+            $entry_repo->store();
         }
         return $this->payment;
     }
