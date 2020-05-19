@@ -133,7 +133,7 @@ class PaymentLinkOrderComplete extends PaymentComplete {
     }
 
     private function getPaymentLinkFee($amount) {
-        return ($amount * $this->paymentLinkCommission) / 100;
+        return round(($amount * $this->paymentLinkCommission) / 100, 2) + 3;
     }
 
     private function clearPosOrder() {
