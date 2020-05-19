@@ -34,7 +34,7 @@ class CustomerController extends Controller
         if (!$location) return api_response($request, null, 404);
         $reviews = Review::where([['customer_id', $customer->id], ['rating', '>=', 4]])->select('id', 'category_id', 'job_id', 'rating', 'partner_id')
             ->with(['category' => function ($q) {
-                $q->select('id', 'name', 'thumb', 'app_thumb', 'banner', 'app_banner', 'frequency_in_days', 'publication_status', 'delivery_charge', 'min_order_amount', 'is_auto_sp_enabled');
+                $q->select('id', 'name', 'thumb', 'app_thumb', 'banner', 'app_banner', 'frequency_in_days', 'publication_status', 'delivery_charge', 'min_order_amount', 'is_auto_sp_enabled', 'max_order_amount', 'is_vat_applicable');
             }, 'job' => function ($q) {
                 $q->select('id', 'category_id', 'partner_order_id')->with('category')->with(['jobServices' => function ($q) {
                     $q->select('id', 'job_id', 'service_id', 'quantity', 'option', 'variable_type', 'created_at')->with(['service' => function ($q) {
@@ -127,6 +127,7 @@ class CustomerController extends Controller
                 }
                 if (empty($all_services)) continue;
                 $data['category']['services'] = $all_services;
+                $data['category']['max_order_amount'] = $data['category']['max_order_amount'] ? (double) $data['category']['max_order_amount'] : null;
                 $data['rating'] = $review->rating;
                 $data['partner'] = $review->job->partnerOrder->partner;
                 $final->push(collect($data));

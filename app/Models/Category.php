@@ -14,7 +14,7 @@ use Sheba\Logistics\Repository\ParcelRepository;
 class Category extends Model
 {
     protected $guarded = ['id'];
-    protected $casts = ['is_auto_sp_enabled' => 'int', 'min_order_amount' => 'double'];
+    protected $casts = ['is_auto_sp_enabled' => 'int', 'min_order_amount' => 'double', 'max_order_amount' => 'double'];
 
     /**
      *  Relationships

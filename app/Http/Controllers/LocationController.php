@@ -24,7 +24,7 @@ class LocationController extends Controller
             $cities = City::whereHas('locations', function ($q) {
                 $q->published();
             })->with(['locations' => function ($q) {
-                $q->select('id', 'city_id', 'name', 'geo_informations')->published();
+                $q->select('id', 'city_id', 'name', 'geo_informations')->hasPolygon()->published();
             }])->select('id', 'name')->get();
             foreach ($cities as $city) {
                 foreach ($city->locations as &$location) {
