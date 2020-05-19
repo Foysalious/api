@@ -1,83 +1,53 @@
 <?php namespace App\Http\Controllers\Resource;
 
+use App\Models\Reward;
 use Illuminate\Http\Request;
 
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
+use Sheba\Authentication\AuthUser;
+use Sheba\Resource\Rewards\RewardList;
 
 class ResourceRewardController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, RewardList $rewardList)
     {
-        $campaigns = [
-            [
-                "id" => 2,
-                "name" => "সিডিউল মাস্টার",
-                "short_description" => "সিডিউল ডিউ ছাড়া সার্ভ করলেই ১৫,০০০ গিফ্‌ট পয়েন্ট",
-                "type" => "Point",
-                "amount" => 15000,
-                "start_time" => "2018-10-03 00:00:00",
-                "end_time" => "2018-10-09 23:59:59",
-                "created_at" => "2018-10-03 11:47:36",
-                "progress" => [
-                    "tag" => "order_serve",
-                    "is_completed" => 0,
-                    "target" => 5,
-                    "completed" => 2
-                ]
-            ],
-            [
-                "id" => 3,
-                "name" => "এক্সেপ্ট মাস্টার",
-                "short_description" => "২ মিনিটের মধ্যে অর্ডার এক্সেপ্ট করলেই ১০,০০০ গিফ্‌ট পয়েন্ট",
-                "type" => "Point",
-                "amount" => 10000,
-                "start_time" => "2018-10-03 00:00:00",
-                "end_time" => "2018-10-09 23:59:59",
-                "created_at" => "2018-10-03 11:49:59",
-                "progress" => [
-                    "tag" => "order_accept",
-                    "is_completed" => 0,
-                    "target" => 5,
-                    "completed" => 2
-                ]
-            ]
-        ];
-        $actions = [
-            [
-                "id" => 1,
-                "name" => "৫ স্টার বোনাস",
-                "short_description" => "৫ স্টার বোনাস",
-                "type" => "Point",
-                "amount" => 1000,
-                "start_time" => "2018-09-23 00:00:00",
-                "end_time" => "2018-10-31 23:59:59",
-                "created_at" => "2018-09-22 13:31:25",
-                "progress" => [
-                    "tag" => "rating",
-                    "is_completed" => 1,
-                    "target" => null,
-                    "completed" => null
-                ]
-            ],
-            [
-                "id" => 10,
-                "name" => "রিচার্জ বোনাস",
-                "short_description" => "রিচার্জ করলেই গিফট পয়েন্ট",
-                "type" => "Point",
-                "amount" => 1000,
-                "start_time" => "2018-10-23 00:00:00",
-                "end_time" => "2018-10-27 23:59:59",
-                "created_at" => "2018-10-23 11:30:21",
-                "progress" => [
-                    "tag" => "rating",
-                    "is_completed" => 1,
-                    "target" => null,
-                    "completed" => null
-                ]
-            ]
-        ];
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+
+        list($offset, $limit) = calculatePagination($request);
+
+        $rewards = $rewardList->setResource($resource)->get();
+
+        $campaigns = [];
+        $actions = [];
+        foreach ($rewards as $reward){
+            if($reward->isCampaign()) array_push($campaigns, $this->formatRewardForRewardList($reward));
+            else array_push($actions, $this->formatRewardForRewardList($reward));
+        }
+
         return api_response($request, null, 200, ['campaigns' => $campaigns, 'actions' => $actions]);
+    }
+
+    public function formatRewardForRewardList(Reward $reward)
+    {
+        return [
+            "id" => $reward['id'],
+            "name" => $reward['name'],
+            "short_description" => $reward['short_description'],
+            "type" => $reward['type'],
+            "amount" => $reward['amount'],
+            "start_time" => $reward['start_time']->format('Y-m-d H:i:s'),
+            "end_time" => $reward['end_time']->format('Y-m-d H:i:s'),
+            "created_at" => $reward['created_at']->format('Y-m-d H:i:s'),
+            "progress" => [
+                "tag" => "order_serve",
+                "is_completed" => 0,
+                "target" => 5,
+                "completed" => 2
+            ]
+        ];
     }
 
     public function history(Request $request)
