@@ -119,8 +119,8 @@ class Creator
         notify()->member($member)->send([
             'title' => $title,
             'type' => 'Info',
-            'event_type' => $this->requestableType,
-            'event_id' => $this->requestableId
+            'event_type' => get_class($approval_request),
+            'event_id' => $approval_request->id
         ]);
     }
 }

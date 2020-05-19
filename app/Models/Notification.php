@@ -44,5 +44,7 @@ class Notification extends Model
         elseif (stripos($type, 'procurement')) return 'procurement';
         elseif (stripos($type, 'bid')) return 'bid';
         elseif (stripos($type, 'businesstriprequest')) return 'businesstriprequest';
+        elseif (stripos($type, 'leave')) return 'leave';
+        elseif (stripos($type, 'approvalRequest')) return 'approval_request';
     }
 }
