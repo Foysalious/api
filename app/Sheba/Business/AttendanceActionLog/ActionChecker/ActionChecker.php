@@ -97,7 +97,7 @@ abstract class ActionChecker
         $this->setAttendanceActionLogsOfToday();
         $this->checkAlreadyHasActionForToday();
         $this->checkDeviceId();
-        $this->checkIp();
+        $this->checkIpOrRemote();
     }
 
     private function setAttendanceActionLogsOfToday()
@@ -153,19 +153,29 @@ abstract class ActionChecker
         return $attendances_count > 0 ? 1 : 0;
     }
 
-    protected function checkIp()
+    protected function checkIpOrRemote()
     {
         if (!$this->isSuccess()) return;
-        if ($this->business->offices()->count() > 0 && !in_array($this->ip, $this->business->offices()->select('ip')->get()->pluck('ip')->toArray())) {
-            if ($this->business->isRemoteAttendanceEnable()) {
-                $this->isRemote = 1;
-                $this->setSuccessfulResponseMessage();
-            } else {
-                $this->setResult(ActionResultCodes::OUT_OF_WIFI_AREA, ActionResultCodeMessages::OUT_OF_WIFI_AREA);
-            }
-        } else {
+        if ($this->business->isIpBasedAttendanceEnable()) {
+            if ($this->business->offices()->count() > 0 && !$this->isInWifiArea()) $this->remoteAttendance();
             $this->setSuccessfulResponseMessage();
         }
+        $this->remoteAttendance();
+    }
+
+    private function remoteAttendance()
+    {
+        if ($this->business->isRemoteAttendanceEnable()) {
+            $this->isRemote = 1;
+            $this->setSuccessfulResponseMessage();
+        } else {
+            $this->setResult(ActionResultCodes::OUT_OF_WIFI_AREA, ActionResultCodeMessages::OUT_OF_WIFI_AREA);
+        }
+    }
+
+    private function isInWifiArea()
+    {
+        return in_array($this->ip, $this->business->offices->pluck('ip')->toArray());
     }
 
     protected function setResult($result_code, $result_message)
