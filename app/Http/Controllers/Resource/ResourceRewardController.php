@@ -1,6 +1,8 @@
 <?php namespace App\Http\Controllers\Resource;
 
 use App\Models\Reward;
+use App\Models\RewardLog;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 use App\Http\Requests;
@@ -52,6 +54,9 @@ class ResourceRewardController extends Controller
 
     public function history(Request $request)
     {
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
         $history = [
             [
                 "id" => 37594,
