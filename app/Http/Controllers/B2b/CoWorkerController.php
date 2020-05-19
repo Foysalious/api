@@ -141,6 +141,7 @@ class CoWorkerController extends Controller
     {
         try {
             $business_member = BusinessMember::where([['business_id', $business], ['member_id', $employee]])->first();
+            if(!$business_member) return api_response($request, null, 404);
             $member = $business_member->member;
             $manager_member_detail = [];
             if ($business_member->manager_id) {
