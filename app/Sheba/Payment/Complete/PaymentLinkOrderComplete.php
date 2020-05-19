@@ -121,7 +121,7 @@ class PaymentLinkOrderComplete extends PaymentComplete {
             $log                = "$formatted_interest TK has been charged as emi interest fees against of Transc ID {$recharge_transaction->id}, and Transc amount $formatted_recharge_amount";
             $walletTransactionHandler->setLog($log)->setType('debit')->setAmount($formatted_interest)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
         }
-        $minus_wallet_amount    = $this->paymentLink->getEmiMonth() > 0 ? $this->paymentLink->getBankTransactionCharge() : $this->getPaymentLinkFee($recharge_wallet_amount);
+        $minus_wallet_amount    = $this->getPaymentLinkFee($recharge_wallet_amount);
         $formatted_minus_amount = number_format($minus_wallet_amount, 2);
         $minus_log              = "$formatted_minus_amount TK has been charged as link service fees against of Transc ID: {$recharge_transaction->id}, and Transc amount: $formatted_recharge_amount";
         $walletTransactionHandler->setLog($minus_log)->setType('debit')->setAmount($minus_wallet_amount)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
@@ -130,7 +130,7 @@ class PaymentLinkOrderComplete extends PaymentComplete {
     }
 
     private function getPaymentLinkFee($amount) {
-        return round(($amount * $this->paymentLinkCommission) / 100, 2) + 3;
+        return ($this->paymentLink->getEmiMonth() > 0 ? $this->paymentLink->getBankTransactionCharge() ?: 0 : round(($amount * $this->paymentLinkCommission) / 100, 2)) + 3;
     }
 
     private function clearPosOrder() {
