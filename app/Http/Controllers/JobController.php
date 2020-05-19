@@ -298,6 +298,7 @@ class JobController extends Controller
             $bill['paid'] = (double)$partnerOrder->paidWithLogistic;
             $bill['due'] = (double)$partnerOrder->dueWithLogistic;
             $bill['material_price'] = (double)$job->materialPrice;
+            $bill['total_service_price'] = (double)$job->servicePrice;
             $bill['discount'] = (double)$job->discountWithoutDeliveryDiscount;
             $bill['services'] = $services;
             $bill['service_list'] = $service_list;
