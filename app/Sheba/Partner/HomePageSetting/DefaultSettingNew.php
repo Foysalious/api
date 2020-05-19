@@ -1,6 +1,6 @@
-<?php namespace Sheba\Partner\HomePageSettingV3;
+<?php namespace Sheba\Partner\HomePageSetting;
 
-class DefaultSetting
+class DefaultSettingNew
 {
     public static function get()
     {
