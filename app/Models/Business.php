@@ -206,4 +206,10 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
         if (in_array(AttendanceTypes::REMOTE, $this->attendanceTypes->pluck('attendance_type')->toArray())) return true;
         return false;
     }
+
+    public function isIpBasedAttendanceEnable()
+    {
+        if (in_array(AttendanceTypes::IP_BASED, $this->attendanceTypes->pluck('attendance_type')->toArray())) return true;
+        return false;
+    }
 }
