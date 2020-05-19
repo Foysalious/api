@@ -8,6 +8,7 @@ use DB;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
+use Sheba\ExpenseTracker\AutomaticExpense;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\FraudDetection\TransactionSources;
@@ -88,7 +89,7 @@ class PaymentLinkOrderComplete extends PaymentComplete {
         if ($target instanceof PosOrder) {
             $entry_repo->updateFromSrc();
         } else {
-            $entry_repo->store();
+            $entry_repo->setHead(AutomaticExpense::PAYMENT_LINK)->setAmountCleared(0)->store();
         }
         return $this->payment;
     }
