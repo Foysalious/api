@@ -74,7 +74,6 @@ class TopUp
             $this->response = $this->vendor->recharge($topup_order);
             if ($this->response->hasSuccess()) {
                 $response = $this->response->getSuccess();
-                dd($response);
                 DB::transaction(function () use ($response, $topup_order) {
                     $this->setModifier($this->agent);
                     $topup_order = $this->updateSuccessfulTopOrder($topup_order, $response);
