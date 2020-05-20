@@ -60,6 +60,20 @@ class RewardHistory
         return [
             "id" => $log['id'],
             "log" => $reward ? $reward['short_description'] : 'N/A',
+            "created_at" => $log['created_at'],
+            "reward" => $reward ? [
+                "id" => $reward['id'],
+                "name" => $reward['name'],
+                "type" => $reward['type'],
+                "detail_type" => $reward['detail_type'],
+                "amount" => $reward['amount']
+            ] : null,
+            "progress" => [
+                "tag" => "rating",
+                "is_completed" => 0,
+                "target" => 5,
+                "completed" => 2
+            ]
         ];
     }
 

@@ -45,30 +45,7 @@ class ResourceRewardController extends Controller
 
         $logs = $this->rewardHistory->setResource($resource)->get();
 
-        dd($logs);
-
-        $history = [
-            [
-                "id" => 37594,
-                "reward_id" => 36,
-                "log" => "৫ টি সার্ভিসে ৫ স্টার",
-                "created_at" => "2019-03-04 14:45:33",
-                "reward" => [
-                    "id" => 36,
-                    "name" => "৫ স্টার বোনাস",
-                    "type" => "Cash",
-                    "detail_type" => 'Campaign',
-                    "amount" => 100
-                ],
-                "progress" => [
-                    "tag" => "rating",
-                    "is_completed" => 0,
-                    "target" => 5,
-                    "completed" => 2
-                ]
-            ]
-        ];
-        return api_response($request, null, 200, ['reward_history' => $history]);
+        return api_response($request, null, 200, ['reward_history' => $logs]);
     }
 
     public function show($reward, Request $request)
