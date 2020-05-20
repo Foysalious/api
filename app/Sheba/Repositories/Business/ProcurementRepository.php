@@ -25,9 +25,8 @@ class ProcurementRepository extends BaseRepository implements ProcurementReposit
 
     public function getProcurementFilterByLastDateOfSubmission()
     {
-        return $this->model->with('tags','bids')
-            ->where('last_date_of_submission', '>=', Carbon::now())
-            ->orderBy('id', 'desc');
+        return $this->model->with('tags', 'bids')
+            ->where('last_date_of_submission', '>=', Carbon::now());
     }
 
     public function filterWithTag($tag_id)
@@ -54,6 +53,6 @@ class ProcurementRepository extends BaseRepository implements ProcurementReposit
 
     public function filterWithBudget($budget)
     {
-        return $this->model->where('estimated_price', $budget);
+        return $this->model->where('estimated_price', '<=', $budget);
     }
 }

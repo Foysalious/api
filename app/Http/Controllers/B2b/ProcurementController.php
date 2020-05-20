@@ -115,7 +115,8 @@ class ProcurementController extends Controller
             ->setSharingTo($request->sharing_to)
             ->setLabels($request->labels)
             ->setTitle($request->title)
-            ->setCategory($request->category)
+            ->setCategory($request->category_id)
+            ->estimatedPrice($request->estimated_price)
             ->setItems($request->items)
             ->setQuestions($request->questions)
             ->setPaymentOptions($request->payment_options)
@@ -233,6 +234,7 @@ class ProcurementController extends Controller
         $start_date = $request->has('start_date') ? $request->start_date : null;
         $end_date = $request->has('end_date') ? $request->end_date : null;
         if ($start_date && $end_date) $procurements = $this->procurementRepository->filterWithEndDate($start_date, $end_date);
+        $procurements = $procurements->orderBy('id', 'desc');
         $procurements = $procurements->get();
 
         $procurements = $procurements->filter(function ($procurement) {
@@ -241,7 +243,6 @@ class ProcurementController extends Controller
             if ($number_of_participants) return $number_of_participants != $number_of_bids;
             return $procurement;
         });
-        #number of participant and bid_count equal hole list a asbe na
         $total_records = $procurements->count();
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
