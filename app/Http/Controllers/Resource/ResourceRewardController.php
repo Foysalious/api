@@ -8,8 +8,8 @@ use Illuminate\Http\Request;
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
 use Sheba\Authentication\AuthUser;
-use Sheba\Resource\Rewards\RewardHistory;
-use Sheba\Resource\Rewards\RewardList;
+use Sheba\Resource\Reward\RewardHistory;
+use Sheba\Resource\Reward\RewardList;
 
 class ResourceRewardController extends Controller
 {

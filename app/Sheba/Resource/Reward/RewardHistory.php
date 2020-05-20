@@ -1,4 +1,4 @@
-<?php namespace Sheba\Resource\Rewards;
+<?php namespace Sheba\Resource\Reward;
 
 use App\Models\Resource;
 use App\Models\Reward;
