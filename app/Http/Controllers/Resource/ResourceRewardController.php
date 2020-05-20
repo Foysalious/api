@@ -8,11 +8,23 @@ use Illuminate\Http\Request;
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
 use Sheba\Authentication\AuthUser;
+use Sheba\Resource\Rewards\RewardHistory;
 use Sheba\Resource\Rewards\RewardList;
 
 class ResourceRewardController extends Controller
 {
-    public function index(Request $request, RewardList $rewardList)
+    private $rewardList;
+    private $rewardHistory;
+    /**
+     * ResourceRewardController constructor.
+     */
+    public function __construct(RewardList $rewardList, RewardHistory $rewardHistory)
+    {
+        $this->rewardList = $rewardList;
+        $this->rewardHistory = $rewardHistory;
+    }
+
+    public function index(Request $request)
     {
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
@@ -20,7 +32,7 @@ class ResourceRewardController extends Controller
 
         list($offset, $limit) = calculatePagination($request);
 
-        $rewards = $rewardList->setResource($resource)->get();
+        $rewards = $this->rewardList->setResource($resource)->get();
 
         return api_response($request, null, 200, ['campaigns' => $rewards['campaigns'], 'actions' => $rewards['actions']]);
     }
@@ -30,6 +42,9 @@ class ResourceRewardController extends Controller
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
         $resource = $auth_user->getResource();
+
+        $rewards = $this->rewardHistory->setResource($resource)->get();
+
         $history = [
             [
                 "id" => 37594,
