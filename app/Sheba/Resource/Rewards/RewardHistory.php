@@ -3,6 +3,7 @@
 use App\Models\Resource;
 use App\Models\Reward;
 use Sheba\Dal\RewardCampaignLog\RewardCampaignLog;
+use Sheba\Dal\RewardCampaignLog\RewardCampaignLogRepository;
 
 class RewardHistory
 {
@@ -10,14 +11,17 @@ class RewardHistory
     private $offset;
     /** @var Resource */
     private $resource;
+    private $reward_log_repo;
 
     /**
      * RewardList constructor.
+     * @param  RewardCampaignLogRepository $reward_log_repository
      */
-    public function __construct()
+    public function __construct(RewardCampaignLogRepository $reward_log_repository)
     {
         $this->limit = 100;
         $this->offset = 0;
+        $this->reward_log_repo = $reward_log_repository;
     }
 
     /**
@@ -52,7 +56,7 @@ class RewardHistory
 
     public function get()
     {
-        $reward_logs = [];
+        $reward_logs = $this->reward_log_repo->getLogsForResource($this->resource->id);
 
         dd($reward_logs);
 
