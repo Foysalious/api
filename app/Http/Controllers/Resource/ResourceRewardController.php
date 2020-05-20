@@ -45,6 +45,8 @@ class ResourceRewardController extends Controller
 
         $logs = $this->rewardHistory->setResource($resource)->get();
 
+        dd($logs);
+
         $history = [
             [
                 "id" => 37594,
