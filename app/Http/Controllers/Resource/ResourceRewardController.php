@@ -43,7 +43,7 @@ class ResourceRewardController extends Controller
         $auth_user = $request->auth_user;
         $resource = $auth_user->getResource();
 
-        $rewards = $this->rewardHistory->setResource($resource)->get();
+        $logs = $this->rewardHistory->setResource($resource)->get();
 
         $history = [
             [

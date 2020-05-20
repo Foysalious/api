@@ -10,14 +10,16 @@ class RewardList
     private $offset;
     /** @var Resource */
     private $resource;
+    private $resource_reward;
 
     /**
      * RewardList constructor.
      */
-    public function __construct()
+    public function __construct(ResourceReward $resource_reward)
     {
         $this->limit = 100;
         $this->offset = 0;
+        $this->resource_reward = $resource_reward;
     }
 
     /**
@@ -36,7 +38,7 @@ class RewardList
      */
     public function setLimit($limit)
     {
-        $this->limit = $limit;
+        $this->offset = $limit;
         return $this;
     }
 
@@ -52,7 +54,7 @@ class RewardList
 
     public function get()
     {
-        $rewards = (new ResourceReward($this->resource))->upcoming();
+        $rewards = $this->resource_reward->upcoming($this->offset, $this->offset);
         $campaigns = [];
         $actions = [];
         foreach ($rewards as $reward){

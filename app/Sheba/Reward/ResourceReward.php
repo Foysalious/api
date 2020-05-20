@@ -44,7 +44,7 @@ class ResourceReward extends ShebaReward
         // TODO: Implement running() method.
     }
 
-    public function upcoming()
+    public function upcoming($offset, $limit)
     {
         $rewards = Reward::upcoming()->forResource()->with('constraints')->get();
         $final = [];
