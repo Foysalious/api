@@ -1,11 +1,15 @@
 <?php namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\BaseModel;
 use Sheba\Dal\ResourceTransaction\Model as ResourceTransaction;
+use Sheba\Payment\Wallet;
 use Sheba\Reward\Rewardable;
+use Sheba\Transactions\Wallet\HasWalletTransaction;
 
-class Resource extends Model implements Rewardable
+class Resource extends BaseModel implements Rewardable, HasWalletTransaction
 {
+    use Wallet;
+
     protected $guarded = ['id'];
     protected $casts = ['wallet' => 'double'];
 
