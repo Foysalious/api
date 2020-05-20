@@ -102,7 +102,16 @@ class CoWorkerController extends Controller
             $business = $request->business;
             $member = $request->manager_member;
             $this->setModifier($member);
-            $members = $business->members();
+
+            $members = $business->members()->select('members.id', 'profile_id')->with(['profile' => function ($q) {
+                $q->select('profiles.id', 'name', 'pro_pic', 'mobile', 'email');
+            }, 'businessMember' => function ($q) {
+                $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id')->with(['role' => function ($q) {
+                    $q->select('business_roles.id', 'business_department_id', 'name')->with(['businessDepartment' => function ($q) {
+                        $q->select('business_departments.id', 'business_id', 'name');
+                    }]);
+                }]);
+            }]);
 
             if ($request->has('department')) {
                 $members->where(function ($query) use ($request) {
