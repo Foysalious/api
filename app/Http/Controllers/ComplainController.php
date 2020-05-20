@@ -56,7 +56,9 @@ class ComplainController extends Controller
             foreach ($categories as $category) {
                 $final = collect($category)->only(['id', 'name']);
                 $final->put('presets', $final_presets->where('category_id', $category->id)->values()->all());
-                $final_complains->push($final);
+                if(!empty($final['presets'])) {
+                    $final_complains->push($final);
+                }
             }
             return api_response($request, null, 200, ['complains' => $final_complains, 'accessor_id' => $accessor->id]);
         } catch (ValidationException $e) {
