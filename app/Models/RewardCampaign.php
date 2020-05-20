@@ -11,6 +11,10 @@ class RewardCampaign extends Model
         return $this->morphOne('App\Models\Reward', 'detail', 'detail_type', 'detail_id');
     }
 
+    public function getEvents() {
+        return json_decode($this->events, true);
+    }
+
     public function getTimelineAttribute($value)
     {
         return json_decode($value);

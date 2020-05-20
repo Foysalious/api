@@ -8,6 +8,7 @@ class ResourceReward extends ShebaReward
     private $resource;
     private $limit;
     private $offset;
+    private $type;
 
     public function __construct(Resource $resource)
     {
@@ -23,6 +24,16 @@ class ResourceReward extends ShebaReward
     public function setLimit($limit)
     {
         $this->limit = $limit;
+        return $this;
+    }
+
+    /**
+     * @param int $type
+     * @return ResourceReward
+     */
+    public function setType($type)
+    {
+        $this->type = $type;
         return $this;
     }
 
@@ -60,7 +71,7 @@ class ResourceReward extends ShebaReward
 
     private function checkForPackage($package_constraints)
     {
-        return in_array($this->resource->package_id, $package_constraints->pluck('constraint_id')->unique()->toArray());
+        return in_array($this->resource->partners[0]->package_id, $package_constraints->pluck('constraint_id')->unique()->toArray());
     }
 
     public function running()
@@ -72,7 +83,10 @@ class ResourceReward extends ShebaReward
 
     public function upcoming()
     {
-        $rewards = Reward::upcoming()->forResource()->with('constraints')->skip($this->offset)->take($this->limit)->get();
+        $rewards = Reward::upcoming()->forResource()->with('constraints')->skip($this->offset)->take($this->limit);
+        if($this->type === 'campaign') $rewards = $rewards->typeCampaign();
+        if($this->type === 'action') $rewards = $rewards->typeAction();
+        $rewards = $rewards->get();
         $final = [];
         foreach ($rewards as $reward) {
             if ($this->isValidReward($reward)) array_push($final, $reward);

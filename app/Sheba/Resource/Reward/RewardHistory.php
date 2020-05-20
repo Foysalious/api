@@ -1,4 +1,4 @@
-<?php namespace Sheba\Resource\Rewards;
+<?php namespace Sheba\Resource\Reward;
 
 use App\Models\Resource;
 use App\Models\Reward;
@@ -57,22 +57,22 @@ class RewardHistory
     public function formatRewardLog(RewardCampaignLog $log)
     {
         $reward = $log->rewardCampaign->reward;
+        $events = $log->rewardCampaign->getEvents();
+        $target = reset($events)['target'];
         return [
-            "id" => $log['id'],
-            "log" => $reward ? $reward['short_description'] : 'N/A',
-            "created_at" => $log['created_at'],
+            "id" => $log->id,
+            "log" => $reward ? $reward->short_description : 'N/A',
+            "created_at" => $log->created_at,
             "reward" => $reward ? [
-                "id" => $reward['id'],
-                "name" => $reward['name'],
-                "type" => $reward['type'],
-                "detail_type" => $reward['detail_type'],
-                "amount" => $reward['amount']
+                "id" => $reward->id,
+                "name" => $reward->name,
+                "type" => $reward->type,
+                "amount" => $reward->amount
             ] : null,
             "progress" => [
-                "tag" => "rating",
-                "is_completed" => 0,
-                "target" => 5,
-                "completed" => 2
+                "is_completed" => $log->achieved >= $target,
+                "target" => $target,
+                "completed" => $log->achieved
             ]
         ];
     }
