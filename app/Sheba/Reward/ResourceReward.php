@@ -6,10 +6,34 @@ use App\Models\Reward;
 class ResourceReward extends ShebaReward
 {
     private $resource;
+    private $limit;
+    private $offset;
 
     public function __construct(Resource $resource)
     {
+        $this->limit = 100;
+        $this->offset = 0;
         $this->resource = $resource;
+    }
+
+    /**
+     * @param int $limit
+     * @return ResourceReward
+     */
+    public function setLimit($limit)
+    {
+        $this->limit = $limit;
+        return $this;
+    }
+
+    /**
+     * @param int $offset
+     * @return ResourceReward
+     */
+    public function setOffset($offset)
+    {
+        $this->offset = $offset;
+        return $this;
     }
 
     private function isValidReward($reward)
@@ -44,9 +68,11 @@ class ResourceReward extends ShebaReward
         // TODO: Implement running() method.
     }
 
-    public function upcoming($offset, $limit)
+
+
+    public function upcoming()
     {
-        $rewards = Reward::upcoming()->forResource()->with('constraints')->get();
+        $rewards = Reward::upcoming()->forResource()->with('constraints')->skip($this->offset)->take($this->limit)->get();
         $final = [];
         foreach ($rewards as $reward) {
             if ($this->isValidReward($reward)) array_push($final, $reward);

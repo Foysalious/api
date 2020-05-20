@@ -38,7 +38,7 @@ class RewardList
      */
     public function setLimit($limit)
     {
-        $this->offset = $limit;
+        $this->limit = $limit;
         return $this;
     }
 
@@ -54,7 +54,7 @@ class RewardList
 
     public function get()
     {
-        $rewards = $this->resource_reward->upcoming($this->offset, $this->offset);
+        $rewards = $this->resource_reward->setOffset($this->offset)->setLimit($this->limit)->upcoming();
         $campaigns = [];
         $actions = [];
         foreach ($rewards as $reward){
