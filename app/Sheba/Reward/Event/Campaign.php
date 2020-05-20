@@ -20,4 +20,10 @@ abstract class Campaign extends Event
     abstract function findRewardableUsers(Collection $users);
 
     abstract function checkProgress(Rewardable $rewardable);
+
+    /**
+     * @return ParticipatedCampaignUser[]|[]
+     */
+    abstract function getParticipatedUsers();
+
 }
