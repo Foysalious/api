@@ -56,22 +56,20 @@ class RewardHistory
 
     public function formatRewardLog(RewardCampaignLog $log)
     {
-        dd($log->get);
+        $reward = $log->rewardCampaign->reward;
         return [
             "id" => $log['id'],
-            "reward" => $log,
+            "log" => $reward ? $reward['short_description'] : 'N/A',
         ];
     }
 
     public function get()
     {
         $logs = $this->reward_log_repo->getLogsForResource($this->resource->id)->get();
-        dd($logs);
         $formatted_logs = [];
         foreach ($logs as $log){
             array_push($formatted_logs, $this->formatRewardLog($log));
         }
-        dd($formatted_logs);
         return $formatted_logs;
     }
 }
