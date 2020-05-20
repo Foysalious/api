@@ -2,6 +2,7 @@
 
 use App\Models\Resource;
 use App\Models\Reward;
+use Sheba\Reward\CampaignEventInitiator;
 use Sheba\Reward\ResourceReward;
 
 class RewardList
@@ -11,16 +12,17 @@ class RewardList
     /** @var Resource */
     private $resource;
     private $resource_reward;
+    private $eventInitiator;
 
-    /**
-     * RewardList constructor.
-     */
-    public function __construct(ResourceReward $resource_reward)
+
+    public function __construct(ResourceReward $resource_reward, CampaignEventInitiator $event_initiator)
     {
         $this->limit = 100;
         $this->offset = 0;
         $this->resource_reward = $resource_reward;
+        $this->eventInitiator = $event_initiator;
     }
+
 
     /**
      * @param Resource $resource
@@ -57,8 +59,8 @@ class RewardList
         $rewards = $this->resource_reward->setOffset($this->offset)->setLimit($this->limit)->upcoming();
         $campaigns = [];
         $actions = [];
-        foreach ($rewards as $reward){
-            if($reward->isCampaign()) array_push($campaigns, $this->formatRewardForRewardList($reward));
+        foreach ($rewards as $reward) {
+            if ($reward->isCampaign()) array_push($campaigns, $this->formatRewardForRewardList($reward));
             else array_push($actions, $this->formatRewardForRewardList($reward));
         }
         return [
@@ -76,7 +78,7 @@ class RewardList
             ->upcoming();
         $campaigns = [];
 
-        foreach ($rewards as $reward){
+        foreach ($rewards as $reward) {
             array_push($campaigns, $this->formatRewardForRewardList($reward, true));
         }
         return $campaigns;
@@ -91,7 +93,7 @@ class RewardList
             ->upcoming();
         $actions = [];
 
-        foreach ($rewards as $reward){
+        foreach ($rewards as $reward) {
             array_push($actions, $this->formatRewardForRewardList($reward));
         }
         return $actions;
@@ -99,7 +101,8 @@ class RewardList
 
     public function formatRewardForRewardList(Reward $reward, $has_progress = false)
     {
-        $formatted_reward = [
+        $progress = [];
+        $data = [
             "id" => $reward['id'],
             "name" => $reward['name'],
             "short_description" => $reward['short_description'],
@@ -109,13 +112,19 @@ class RewardList
             "end_time" => $reward['end_time']->format('Y-m-d H:i:s'),
             "created_at" => $reward['created_at']->format('Y-m-d H:i:s'),
         ];
-
-        if($has_progress) $formatted_reward["progress"] =   [
-            "tag" => "order_serve",
-            "is_completed" => 0,
-            "target" => 5,
-            "completed" => 2
-        ];
-        return $formatted_reward;
+        if ($reward->isCampaign()) {
+            foreach (json_decode($reward->detail->events) as $key => $event) {
+                $event = $this->eventInitiator->setReward($reward)->setName($key)->setRule($event)->initiate();
+                $target_progress = $event->checkProgress($this->resource);
+                array_push($progress, array(
+                    'tag' => $key,
+                    'target' => $target_progress->getTarget(),
+                    'completed' => $target_progress->getAchieved(),
+                    'is_completed' => $target_progress->hasAchieved() ? 1 : 0
+                ));
+            }
+        }
+        $data['progress'] = $progress;
+        return $data;
     }
 }
