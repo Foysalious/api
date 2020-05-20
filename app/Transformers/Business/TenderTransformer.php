@@ -32,7 +32,7 @@ class TenderTransformer extends TransformerAbstract
             ],
             'delivery_within' => [
                 'date_range' => $start_date . ' - ' . $end_date,
-                'icon' => config('sheba.s3_url') . 'business_assets/tender/icons/png/stopwatch.png',
+                'icon' => config('sheba.s3_url') . 'business_assets/tender/icons/png/time.png',
             ],
             'estimated_price' => $procurement->estimated_price ? (double)$procurement->estimated_price : null,
 
@@ -68,12 +68,12 @@ class TenderTransformer extends TransformerAbstract
             if ($total_days == self::ONE) return [
                 'days' => $last_date_of_submission->diffInHours($today) . ' hours remaining',
                 'color' => '#e75050',
-                'icon' => config('sheba.s3_url') . 'business_assets/tender/icons/png/time.png',
+                'icon' => config('sheba.s3_url') . 'business_assets/tender/icons/png/stopwatch.png',
             ];
             return [
                 'days' => $total_days . ' days remaining',
                 'color' => '#f5b861',
-                'icon' => config('sheba.s3_url') . 'business_assets/tender/icons/png/time.png',
+                'icon' => config('sheba.s3_url') . 'business_assets/tender/icons/png/stopwatch.png',
             ];
         }
         return null;
