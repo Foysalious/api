@@ -67,9 +67,39 @@ class RewardList
         ];
     }
 
-    public function formatRewardForRewardList(Reward $reward)
+    public function getCampaigns()
     {
-        return [
+        $rewards = $this->resource_reward
+            ->setOffset($this->offset)
+            ->setLimit($this->limit)
+            ->setType('campaign')
+            ->upcoming();
+        $campaigns = [];
+
+        foreach ($rewards as $reward){
+            array_push($campaigns, $this->formatRewardForRewardList($reward, true));
+        }
+        return $campaigns;
+    }
+
+    public function getActions()
+    {
+        $rewards = $this->resource_reward
+            ->setOffset($this->offset)
+            ->setLimit($this->limit)
+            ->setType('action')
+            ->upcoming();
+        $actions = [];
+
+        foreach ($rewards as $reward){
+            array_push($actions, $this->formatRewardForRewardList($reward));
+        }
+        return $actions;
+    }
+
+    public function formatRewardForRewardList(Reward $reward, $has_progress = false)
+    {
+        $formatted_reward = [
             "id" => $reward['id'],
             "name" => $reward['name'],
             "short_description" => $reward['short_description'],
@@ -78,12 +108,14 @@ class RewardList
             "start_time" => $reward['start_time']->format('Y-m-d H:i:s'),
             "end_time" => $reward['end_time']->format('Y-m-d H:i:s'),
             "created_at" => $reward['created_at']->format('Y-m-d H:i:s'),
-            "progress" => [
-                "tag" => "order_serve",
-                "is_completed" => 0,
-                "target" => 5,
-                "completed" => 2
-            ]
         ];
+
+        if($has_progress) $formatted_reward["progress"] =   [
+            "tag" => "order_serve",
+            "is_completed" => 0,
+            "target" => 5,
+            "completed" => 2
+        ];
+        return $formatted_reward;
     }
 }

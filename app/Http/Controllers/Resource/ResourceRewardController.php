@@ -32,9 +32,10 @@ class ResourceRewardController extends Controller
 
         list($offset, $limit) = calculatePagination($request);
 
-        $rewards = $this->rewardList->setResource($resource)->setOffset($offset)->setLimit($limit)->get();
+        $campaigns = $this->rewardList->setResource($resource)->setOffset($offset)->setLimit($limit)->getCampaigns();
+        $actions = $this->rewardList->setResource($resource)->setOffset($offset)->setLimit($limit)->getActions();
 
-        return api_response($request, null, 200, ['campaigns' => $rewards['campaigns'], 'actions' => $rewards['actions']]);
+        return api_response($request, null, 200, ['campaigns' => $campaigns, 'actions' => $actions]);
     }
 
     public function history(Request $request)
