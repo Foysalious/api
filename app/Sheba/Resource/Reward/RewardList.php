@@ -1,8 +1,7 @@
 <?php namespace Sheba\Resource\Reward;
 
 use App\Models\Resource;
-use App\Models\Reward;
-use Sheba\Reward\CampaignEventInitiator;
+use Sheba\Resource\Reward\Info\TypeFactory;
 use Sheba\Reward\ResourceReward;
 
 class RewardList
@@ -12,15 +11,15 @@ class RewardList
     /** @var Resource */
     private $resource;
     private $resource_reward;
-    private $eventInitiator;
+    private $typeFactory;
 
 
-    public function __construct(ResourceReward $resource_reward, CampaignEventInitiator $event_initiator)
+    public function __construct(ResourceReward $resource_reward, TypeFactory $typeFactory)
     {
         $this->limit = 100;
         $this->offset = 0;
         $this->resource_reward = $resource_reward;
-        $this->eventInitiator = $event_initiator;
+        $this->typeFactory = $typeFactory;
     }
 
 
@@ -54,77 +53,24 @@ class RewardList
         return $this;
     }
 
-    public function get()
-    {
-        $rewards = $this->resource_reward->setOffset($this->offset)->setLimit($this->limit)->upcoming();
-        $campaigns = [];
-        $actions = [];
-        foreach ($rewards as $reward) {
-            if ($reward->isCampaign()) array_push($campaigns, $this->formatRewardForRewardList($reward));
-            else array_push($actions, $this->formatRewardForRewardList($reward));
-        }
-        return [
-            'campaigns' => $campaigns,
-            'actions' => $actions
-        ];
-    }
-
     public function getCampaigns()
     {
-        $rewards = $this->resource_reward
-            ->setOffset($this->offset)
-            ->setLimit($this->limit)
-            ->setType('campaign')
-            ->upcoming();
-        $campaigns = [];
-
-        foreach ($rewards as $reward) {
-            array_push($campaigns, $this->formatRewardForRewardList($reward, true));
-        }
-        return $campaigns;
+        return $this->getByType('campaign');
     }
 
     public function getActions()
     {
-        $rewards = $this->resource_reward
-            ->setOffset($this->offset)
-            ->setLimit($this->limit)
-            ->setType('action')
-            ->upcoming();
-        $actions = [];
-
-        foreach ($rewards as $reward) {
-            array_push($actions, $this->formatRewardForRewardList($reward));
-        }
-        return $actions;
+        return $this->getByType('action');
     }
 
-    public function formatRewardForRewardList(Reward $reward, $has_progress = false)
+    private function getByType($type)
     {
-        $progress = [];
-        $data = [
-            "id" => $reward['id'],
-            "name" => $reward['name'],
-            "short_description" => $reward['short_description'],
-            "type" => $reward['type'],
-            "amount" => $reward['amount'],
-            "start_time" => $reward['start_time']->format('Y-m-d H:i:s'),
-            "end_time" => $reward['end_time']->format('Y-m-d H:i:s'),
-            "created_at" => $reward['created_at']->format('Y-m-d H:i:s'),
-        ];
-        if ($reward->isCampaign()) {
-            foreach (json_decode($reward->detail->events) as $key => $event) {
-                $event = $this->eventInitiator->setReward($reward)->setName($key)->setRule($event)->initiate();
-                $target_progress = $event->checkProgress($this->resource);
-                array_push($progress, array(
-                    'tag' => $key,
-                    'target' => $target_progress->getTarget(),
-                    'completed' => $target_progress->getAchieved(),
-                    'is_completed' => $target_progress->hasAchieved() ? 1 : 0
-                ));
-            }
+        $rewards = $this->resource_reward->setOffset($this->offset)->setLimit($this->limit)->setType($type)->upcoming();
+        $data = [];
+        foreach ($rewards as $reward) {
+            $type = $this->typeFactory->setReward($reward)->getType();
+            array_push($data, $type->setRewardable($this->resource)->getInfo());
         }
-        $data['progress'] = $progress;
         return $data;
     }
 }

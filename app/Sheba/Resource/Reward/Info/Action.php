@@ -3,8 +3,8 @@
 
 class Action extends Info
 {
-    public function get()
+    protected function getProgress()
     {
-        // TODO: Implement get() method.
+        return [];
     }
 }
