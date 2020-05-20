@@ -71,7 +71,7 @@ class ResourceReward extends ShebaReward
 
     private function checkForPackage($package_constraints)
     {
-        return in_array($this->resource->package_id, $package_constraints->pluck('constraint_id')->unique()->toArray());
+        return in_array($this->resource->partners[0]->package_id, $package_constraints->pluck('constraint_id')->unique()->toArray());
     }
 
     public function running()
