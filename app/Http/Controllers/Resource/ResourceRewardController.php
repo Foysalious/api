@@ -22,34 +22,7 @@ class ResourceRewardController extends Controller
 
         $rewards = $rewardList->setResource($resource)->get();
 
-        $campaigns = [];
-        $actions = [];
-        foreach ($rewards as $reward){
-            if($reward->isCampaign()) array_push($campaigns, $this->formatRewardForRewardList($reward));
-            else array_push($actions, $this->formatRewardForRewardList($reward));
-        }
-
-        return api_response($request, null, 200, ['campaigns' => $campaigns, 'actions' => $actions]);
-    }
-
-    public function formatRewardForRewardList(Reward $reward)
-    {
-        return [
-            "id" => $reward['id'],
-            "name" => $reward['name'],
-            "short_description" => $reward['short_description'],
-            "type" => $reward['type'],
-            "amount" => $reward['amount'],
-            "start_time" => $reward['start_time']->format('Y-m-d H:i:s'),
-            "end_time" => $reward['end_time']->format('Y-m-d H:i:s'),
-            "created_at" => $reward['created_at']->format('Y-m-d H:i:s'),
-            "progress" => [
-                "tag" => "order_serve",
-                "is_completed" => 0,
-                "target" => 5,
-                "completed" => 2
-            ]
-        ];
+        return api_response($request, null, 200, ['campaigns' => $rewards['campaigns'], 'actions' => $rewards['actions']]);
     }
 
     public function history(Request $request)

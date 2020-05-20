@@ -1,6 +1,7 @@
 <?php namespace Sheba\Resource\Rewards;
 
 use App\Models\Resource;
+use App\Models\Reward;
 use Sheba\Reward\ResourceReward;
 
 class RewardList
@@ -51,8 +52,36 @@ class RewardList
 
     public function get()
     {
-        $rewards = [];
         $rewards = (new ResourceReward($this->resource))->upcoming();
-        return $rewards;
+        $campaigns = [];
+        $actions = [];
+        foreach ($rewards as $reward){
+            if($reward->isCampaign()) array_push($campaigns, $this->formatRewardForRewardList($reward));
+            else array_push($actions, $this->formatRewardForRewardList($reward));
+        }
+        return [
+            'campaigns' => $campaigns,
+            'actions' => $actions
+        ];
+    }
+
+    public function formatRewardForRewardList(Reward $reward)
+    {
+        return [
+            "id" => $reward['id'],
+            "name" => $reward['name'],
+            "short_description" => $reward['short_description'],
+            "type" => $reward['type'],
+            "amount" => $reward['amount'],
+            "start_time" => $reward['start_time']->format('Y-m-d H:i:s'),
+            "end_time" => $reward['end_time']->format('Y-m-d H:i:s'),
+            "created_at" => $reward['created_at']->format('Y-m-d H:i:s'),
+            "progress" => [
+                "tag" => "order_serve",
+                "is_completed" => 0,
+                "target" => 5,
+                "completed" => 2
+            ]
+        ];
     }
 }
