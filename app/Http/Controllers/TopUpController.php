@@ -93,10 +93,12 @@ class TopUpController extends Controller
                 return api_response($request, null, 500);
             }
         } catch (ValidationException $e) {
+            dd($e);
             app('sentry')->captureException($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
