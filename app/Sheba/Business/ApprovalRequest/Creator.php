@@ -115,7 +115,7 @@ class Creator
         $member = $business_member->member;
         $leave_applicant = $this->member->profile->name;
 
-        $title = "$leave_applicant requested for a leave which needs your approval";
+        $title = "$leave_applicant requested for a leave";
         notify()->member($member)->send([
             'title' => $title,
             'type' => 'Info',
