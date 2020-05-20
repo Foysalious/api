@@ -500,4 +500,9 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
     {
         return $this->closed_and_paid_at ? 1 : 0;
     }
+
+    public function getCustomerPayable()
+    {
+        return $this->dueWithLogistic;
+    }
 }
