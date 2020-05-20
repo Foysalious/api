@@ -1,28 +1,27 @@
 <?php namespace App\Models;
 
-use Illuminate\Database\Eloquent\Builder;
-use Sheba\Dal\BaseModel;
-use Sheba\FraudDetection\TransactionSources;
-use Sheba\Payment\Wallet;
-use Sheba\ProfileTrait;
+use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\ResourceTransaction\Model as ResourceTransaction;
 use Sheba\Reward\Rewardable;
-use Sheba\TopUp\TopUpTransaction;
-use Sheba\Transactions\Wallet\HasWalletTransaction;
-use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
-class Resource extends BaseModel implements Rewardable, HasWalletTransaction
+class Resource extends Model implements Rewardable
 {
-    use ProfileTrait, Wallet;
-
     protected $guarded = ['id'];
-    protected $dates = ['verified_at'];
-    protected $with = ['profile'];
-    protected $casts = ['reward_point' => 'double', 'wallet' => 'double'];
-
+    protected $casts = ['wallet' => 'double'];
 
     public function partners()
     {
-        return $this->belongsToMany(Partner::class)->withPivot('resource_type');
+        return $this->belongsToMany(Partner::class);
+    }
+
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    public function profile()
+    {
+        return $this->belongsTo(Profile::class);
     }
 
     public function jobs()
@@ -30,45 +29,9 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
         return $this->hasMany(Job::class);
     }
 
-    public function partnerResources()
-    {
-        return $this->hasMany(PartnerResource::class);
-    }
-
-    public function categories()
-    {
-        return $this->belongsToMany(Category::class);
-    }
-
-    public function locations()
-    {
-        return $this->belongsToMany(Location::class);
-    }
-
-    public function employments()
-    {
-        return $this->hasMany(ResourceEmployment::class);
-    }
-
-    public function nocRequests()
-    {
-        return $this->hasMany(NocRequest::class);
-    }
-
     public function transactions()
     {
-        return $this->hasMany(PartnerTransaction::class);
-    }
-
-    public function topUpTransaction(TopUpTransaction $transaction)
-    {
-        /*
-         * WALLET TRANSACTION NEED TO REMOVE
-         * $this->debitWallet($transaction->getAmount());
-        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);*/
-        (new WalletTransactionHandler())->setModel($this)->setSource(TransactionSources::TOP_UP)
-            ->setType('debit')->setAmount($transaction->getAmount())->setLog($transaction->getLog())
-            ->dispatch();
+        return $this->hasMany(ResourceTransaction::class);
     }
 
     public function associatePartners()
@@ -76,11 +39,26 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
         return $this->partners->unique();
     }
 
+    public function firstPartner()
+    {
+        return $this->associatePartners()->first();
+    }
+
+    public function partnerResources()
+    {
+        return $this->hasMany(PartnerResource::class);
+    }
+
+    public function notifications()
+    {
+        return $this->morphMany(Notification::class, 'notifiable');
+    }
+
     public function typeIn($partner)
     {
         $partner = $partner instanceof Partner ? $partner->id : $partner;
         $types = [];
-        foreach ($this->partners()->where('partner_id', $partner)->get() as $unique_partner) {
+        foreach ($this->partners()->withPivot('resource_type')->where('partner_id', $partner)->get() as $unique_partner) {
             $types[] = $unique_partner->pivot->resource_type;
         }
         return $types;
@@ -93,7 +71,7 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
 
     public function isManager(Partner $partner)
     {
-        return $this->isOfTypesIn($partner, ["Admin", "Operation", "Owner"]);
+        return $this->isOfTypesIn($partner, ["Admin", "Operation", "Owner", "Management", "Finance", "Salesman"]);
     }
 
     public function isAdmin(Partner $partner)
@@ -101,31 +79,17 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
         return $this->isOfTypesIn($partner, ["Admin", "Owner"]);
     }
 
-    public function isHandyman(Partner $partner)
-    {
-        return $this->isOfTypesIn($partner, ["Handyman"]);
-    }
-
     public function categoriesIn($partner)
     {
         $partner = $partner instanceof Partner ? $partner->id : $partner;
-        $categories = [];
-        foreach ($this->partnerResources()->where('partner_id', $partner)->get() as $partner_resource) {
+        $categories = collect();
+        $partner_resources = ($this->partnerResources()->where('partner_id', $partner)->get())->load('categories');
+        foreach ($partner_resources as $partner_resource) {
             foreach ($partner_resource->categories as $item) {
-                array_push($categories, $item);
+                $categories->push($item);
             }
         }
-        return collect($categories)->unique('id');
-    }
-
-    public function reviews()
-    {
-        return $this->hasMany(Review::class);
-    }
-
-    public function rating()
-    {
-        return (!$this->reviews->isEmpty()) ? $this->reviews->avg('rating') : 0;
+        return $categories->unique('id');
     }
 
     public function scopeVerified($query)
@@ -133,36 +97,30 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
         return $query->where('resources.is_verified', 1);
     }
 
-    public function scopeUnverified($query)
+    public function scopeType($query, $type)
     {
-        return $query->where('resources.is_verified', 0);
+        return $query->where('resource_type', $type);
     }
 
-    public function profile()
-    {
-        return $this->belongsTo(Profile::class);
-    }
-
-    /**
-     * Scope a query to only include resource of a given status.
-     *
-     * @param Builder $query
-     * @param $status
-     * @return Builder
-     */
-    public function scopeTrainingStatus($query, $status)
-    {
-        $query->where('is_trained', $status);
-    }
-
-    public function schedules()
+    public function resourceSchedules()
     {
         return $this->hasMany(ResourceSchedule::class);
+    }
+
+    public function categories()
+    {
+        return $this->belongsToMany(Category::class);
+    }
+
+    public function totalServedJobs()
+    {
+        return $this->jobs->filter(function ($job) {
+            return $job->status === 'Served';
+        })->count();
     }
 
     public function totalWalletAmount()
     {
         return $this->wallet;
     }
-
 }
