@@ -29,16 +29,10 @@ class ResourceAuthMiddleware
      */
     public function handle($request, Closure $next)
     {
-        try {
-            $auth_user = $this->auth->authenticate();
-            if ($auth_user->getResource()) {
-                $request->merge(['auth_user' => $auth_user]);
-                return $next($request);
-            }
-            return api_response($request, null, 403, ["message" => "You're not authorized to access this user."]);
-        } catch (AuthenticationFailedException $e) {
-            return api_response($request, null, 403, ["message" => "You're not authorized to access this user."]);
-        }
-
+        $auth_user = $this->auth->authenticate();
+        $resource = $auth_user->getResource();
+        if (!$resource) throw new AuthenticationFailedException();
+        $request->merge(['auth_user' => $auth_user]);
+        return $next($request);
     }
 }

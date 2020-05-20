@@ -24,7 +24,7 @@ class LocationController extends Controller
             $cities = City::whereHas('locations', function ($q) {
                 $q->published();
             })->with(['locations' => function ($q) {
-                $q->select('id', 'city_id', 'name', 'geo_informations')->published();
+                $q->select('id', 'city_id', 'name', 'geo_informations')->hasPolygon()->published();
             }])->select('id', 'name')->get();
             foreach ($cities as $city) {
                 foreach ($city->locations as &$location) {
@@ -77,8 +77,11 @@ class LocationController extends Controller
                 'service' => 'string',
                 'category' => 'string',
             ]);
-            $hyper_local = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
-            if ($hyper_local) {
+            $hyper_locals = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->get()->filter(function ($hyper_local) {
+                return $hyper_local->location->isPublished();
+            });
+            if (count($hyper_locals) > 0) {
+                $hyper_local = $hyper_locals->first();
                 $location = $hyper_local->location;
                 return api_response($request, $location, 200,
                     [
@@ -94,9 +97,6 @@ class LocationController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
         }
     }
 

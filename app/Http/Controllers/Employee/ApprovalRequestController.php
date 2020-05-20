@@ -20,6 +20,7 @@ use Sheba\Business\ApprovalRequest\Updater;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Sheba\Dal\Leave\Model as Leave;
+use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
 use Sheba\ModificationFields;
 
 class ApprovalRequestController extends Controller
@@ -60,8 +61,6 @@ class ApprovalRequestController extends Controller
             $member = $requestable->businessMember->member;
             /** @var Profile $profile */
             $profile = $member->profile;
-            /** @var BusinessRole $role */
-            $role = $business_member->role;
 
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
@@ -137,7 +136,7 @@ class ApprovalRequestController extends Controller
             $member = $business_member->member;
             /** @var Profile $profile */
             $profile = $member->profile;
-            array_push($approvers, ['name' => $profile->name, 'status' => $approval_request->status]);
+            array_push($approvers, ['name' => $profile->name, 'status' => ApprovalRequestPresenter::statuses()[$approval_request->status]]);
         }
         return $approvers;
     }
