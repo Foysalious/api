@@ -12,7 +12,7 @@ class RewardCampaign extends Model
     }
 
     public function getEvents() {
-        return json_decode($this->events);
+        return json_decode($this->events, true);
     }
 
     public function getTimelineAttribute($value)
