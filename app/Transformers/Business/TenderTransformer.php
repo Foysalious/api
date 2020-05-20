@@ -89,7 +89,7 @@ class TenderTransformer extends TransformerAbstract
         return [
             'vendors' => $bids . ' vendors applied so far',
             'color' => '#38c8e7',
-            'icon' => config('sheba.s3_url') . 'business_assets/tender/icons/png/user.png',
+            'icon' => config('sheba.s3_url') . 'business_assets/tender/icons/png/users.png',
         ];
     }
 
@@ -105,12 +105,12 @@ class TenderTransformer extends TransformerAbstract
         if ($remaining_application < self::THRESHOLD) return [
             'applications' => $number_of_participants - $number_of_bids . ' applications remaining',
             'color' => '#e75050',
-            'icon' => config('sheba.s3_url') . 'business_assets/tender/icons/png/user.png',
+            'icon' => config('sheba.s3_url') . 'business_assets/tender/icons/png/users.png',
         ];
         return [
             'applications' => $number_of_participants - $number_of_bids . ' applications remaining',
             'color' => '#f5b861',
-            'icon' => config('sheba.s3_url') . 'business_assets/tender/icons/png/user.png',
+            'icon' => config('sheba.s3_url') . 'business_assets/tender/icons/png/users.png',
         ];
 
     }
