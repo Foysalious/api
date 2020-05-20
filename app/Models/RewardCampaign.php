@@ -8,7 +8,7 @@ class RewardCampaign extends Model
 
     public function reward()
     {
-        return $this->morphTo('App\Models\Reward', 'detail_type');
+        return $this->morphOne('App\Models\Reward', 'detail', 'detail_type', 'detail_id');
     }
 
     public function getTimelineAttribute($value)

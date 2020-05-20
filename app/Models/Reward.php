@@ -51,6 +51,11 @@ class Reward extends Model
         return $query->where('target_type', 'App\Models\Partner');
     }
 
+    public function scopeForResource($query)
+    {
+        return $query->where('target_type', 'App\Models\Resource');
+    }
+
     public function getAmount()
     {
         if ($this->isPercentageble()) {

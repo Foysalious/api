@@ -3,8 +3,9 @@
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Dal\ResourceTransaction\Model as ResourceTransaction;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Sheba\Reward\Rewardable;
 
-class Resource extends Model
+class Resource extends Model implements Rewardable
 {
     protected $guarded = ['id'];
     protected $casts = ['wallet' => 'double'];
