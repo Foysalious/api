@@ -56,7 +56,7 @@ class CustomerFavoriteController extends Controller
                     'job', 'services', 'partner' => function ($q) {
                         $q->select('id', 'name', 'logo');
                     }, 'category' => function ($q) {
-                        if ($this->location) $q->select('id', 'parent_id', 'name', 'slug', 'icon_png', 'icon_color', 'delivery_charge', 'min_order_amount')->with('parent');
+                        if ($this->location) $q->select('id', 'parent_id', 'name', 'slug', 'icon_png', 'icon_color', 'delivery_charge', 'min_order_amount', 'max_order_amount', 'is_vat_applicable')->with('parent');
                     }
                 ])->orderBy('id', 'desc')->skip($offset)->take($limit);
             }
@@ -75,6 +75,8 @@ class CustomerFavoriteController extends Controller
             $favorite['icon_color'] = isset(config('sheba.category_colors')[$favorite->category->parent->id]) ? config('sheba.category_colors')[$favorite->category->parent->id] : null;
             $favorite['rating'] = $favorite->job->review ? $favorite->job->review->rating : 0.00;
             $favorite['is_same_service'] = 1;
+            $favorite['is_vat_applicable'] = $favorite->category ? $favorite->category['is_vat_applicable'] : null;
+            $favorite['max_order_amount'] = $favorite->category ? (double) $favorite->category['max_order_amount'] : null;
 
             $favorite->services->each(function ($service) use ($favorite, &$services, $manager, $price_calculation, $delivery_charge, $job_discount_handler, $upsell_calculation, $service_transformer) {
                 $location_service = LocationService::where('location_id', $this->location)->where('service_id', $service->id)->first();
@@ -115,7 +117,9 @@ class CustomerFavoriteController extends Controller
             $favorite['partner_name'] = $partner ? $partner->name : null;
             $favorite['partner_logo'] = $partner ? $partner->logo : null;
 
-            $resource = new Item($favorite->category, new ServiceV2DeliveryChargeTransformer($delivery_charge, $job_discount_handler));
+            $resource = new Item($favorite->category,
+                new ServiceV2DeliveryChargeTransformer($delivery_charge, $job_discount_handler, Location::find($this->location))
+            );
             $delivery_charge_discount_data = $manager->createData($resource)->toArray();
             $favorite['delivery_charge'] = $delivery_charge_discount_data['delivery_charge'];
             $favorite['delivery_discount'] = $delivery_charge_discount_data['delivery_discount'];

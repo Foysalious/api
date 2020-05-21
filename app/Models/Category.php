@@ -14,7 +14,7 @@ use Sheba\Logistics\Repository\ParcelRepository;
 class Category extends Model
 {
     protected $guarded = ['id'];
-    protected $casts = ['is_auto_sp_enabled' => 'int', 'min_order_amount' => 'double'];
+    protected $casts = ['is_auto_sp_enabled' => 'int', 'min_order_amount' => 'double', 'max_order_amount' => 'double'];
 
     /**
      *  Relationships
@@ -72,6 +72,11 @@ class Category extends Model
     public function locations()
     {
         return $this->belongsToMany(Location::class);
+    }
+
+    public function logisticEnabledLocations()
+    {
+        return $this->locations()->wherePivot('is_logistic_enabled', 1);
     }
 
     public function subCat()
@@ -231,6 +236,15 @@ class Category extends Model
     public function needsLogistic()
     {
         return (bool)$this->is_logistic_available;
+    }
+
+    /**
+     * @param Location $location
+     * @return bool
+     */
+    public function needsLogisticOn(Location $location)
+    {
+        return $this->logisticEnabledLocations()->where('location_id', $location->id)->count() > 0;
     }
 
     /**

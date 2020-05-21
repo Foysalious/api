@@ -1281,6 +1281,11 @@ return [
             'bn'  => 'প্রোপ্রাইটরশিপ'
         ],
     ],
+    'ownership_type_en' => [
+        'লিমিটেড' => 'Limited',
+        'পার্টনারশিপ' => 'Partnership',
+        'প্রোপ্রাইটরশিপ' => 'Proprietorship'
+    ],
     'PARTNER_BUSINESS_CATEGORIES'                 => [
         'Small',
         'Micro',

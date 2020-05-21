@@ -1,21 +1,29 @@
 <?php namespace Sheba\Authentication;
 
+use App\Models\BankUser;
 use App\Models\Member;
 use App\Models\Partner;
 use App\Models\Profile;
 use App\Models\Resource;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Logistics\Exceptions\LogisticServerError;
 use Sheba\Logistics\Repository\UserRepository;
-use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
+/**
+ * Sync with Api if any update happens
+ * Class AuthUser
+ * @package Sheba\Authentication
+ */
 class AuthUser
 {
     /** @var Profile */
     private $profile;
     /** @var Resource */
     private $resource;
+    /** @var User */
+    private $user;
     /** @var Model */
     private $avatar;
     /** @var UserRepository */
@@ -49,6 +57,12 @@ class AuthUser
         return $this;
     }
 
+    public function setUser(User $user)
+    {
+        $this->user = $user;
+        return $this;
+    }
+
     /**
      * @param array $payload
      * @return AuthUser
@@ -56,15 +70,15 @@ class AuthUser
     public function setPayload($payload)
     {
         $this->payload = $payload;
-        $this->resolveProfile();
+        $this->resolveAuthUser();
         return $this;
     }
 
     public function generateToken()
     {
-        return JWTAuth::fromUser($this->profile, [
-            'name' => $this->profile->name,
-            'image' => $this->profile->pro_pic,
+        return JWTAuth::fromUser($this->getAuthUser(), [
+            'name' => $this->getAuthUser()->name,
+            'image' => $this->getAuthUser()->pro_pic,
             'profile' => $this->generateProfileInfo(),
             'customer' => $this->generateCustomerInfo(),
             'resource' => $this->generateResourceInfo(),
@@ -77,15 +91,36 @@ class AuthUser
         ]);
     }
 
+
+    public function getAuthUser()
+    {
+        return $this->profile ? $this->profile : $this->avatar;
+    }
+
+    public function resolveAuthUser()
+    {
+        $this->resolveProfile();
+        $this->resolveAvatar();
+    }
+
     /**
-     * @return Profile|null
+     * @return null
+     */
+    public function resolveAvatar()
+    {
+        if ($this->profile) return null;
+        $avatar = $this->getAvatar();
+        if ($avatar) $this->setAvatar($avatar);
+    }
+
+    /**
+     * @return null
      */
     public function resolveProfile()
     {
         if (!isset($this->payload['profile'])) return null;
         $profile = Profile::find($this->payload['profile']['id']);
         if ($profile) $this->setProfile($profile);
-
     }
 
     /**
@@ -101,6 +136,7 @@ class AuthUser
      */
     public function getResource()
     {
+        if (!$this->profile) return null;
         return $this->profile->resource;
     }
 
@@ -109,6 +145,7 @@ class AuthUser
      */
     public function getPartner()
     {
+        if (!$this->profile) return null;
         if (!$this->profile->resource) return null;
         return $this->profile->resource->partners->first();
     }
@@ -118,7 +155,6 @@ class AuthUser
      */
     public function getAvatar()
     {
-        if (!isset($this->payload['avatar'])) return null;
         $model = "App\\Models\\" . ucfirst(camel_case($this->payload['avatar']['type']));
         return $model::find($this->payload['avatar']['type_id']);
     }
@@ -131,6 +167,7 @@ class AuthUser
 
     private function generateCustomerInfo()
     {
+        if (!$this->profile) return null;
         if (!$this->profile->customer) return null;
         return ['id' => $this->profile->customer->id];
     }
@@ -155,6 +192,7 @@ class AuthUser
 
     private function generateBusinessMemberInfo()
     {
+        if (!$this->profile) return null;
         if (!$this->profile->member || !$this->profile->member->businessMember) return null;
         return [
             'id' => $this->profile->member->businessMember->id,
@@ -165,11 +203,13 @@ class AuthUser
 
     private function generateMemberInfo()
     {
+        if (!$this->profile) return null;
         return $this->profile->member ? ['id' => $this->profile->member->id] : null;
     }
 
     private function generateAffiliateInfo()
     {
+        if (!$this->profile) return null;
         return $this->profile->affiliate ? ['id' => $this->profile->affiliate->id] : null;
     }
 
@@ -201,6 +241,7 @@ class AuthUser
 
     private function generateBankUserInfo()
     {
+        if (!$this->profile) return null;
         return $this->profile->bankUser ? ['id' => $this->profile->bankUser->id] : null;
     }
 
@@ -210,6 +251,8 @@ class AuthUser
         $user = $this->avatar;
         if ($user instanceof Resource) $user = $user->partners()->first();
         elseif ($user instanceof Member) $user = $user->businesses()->first();
+        elseif ($user instanceof BankUser) return ['type' => class_basename($user), 'type_id' => $user->id];
+        if (!$user) return null;
         return ['type' => strtolower(class_basename($user)), 'type_id' => $user->id];
     }
 }
