@@ -30,6 +30,8 @@ class ResourceRewardController extends Controller
 
         $logs = $rewardHistory->setResource($resource)->get();
 
+        if(empty($logs)) return api_response($request, null, 404);
+
         return api_response($request, null, 200, ['reward_history' => $logs]);
     }
 }
