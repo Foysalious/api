@@ -125,4 +125,9 @@ class Reward extends Model
     {
         return $this->target_type == "App\\Models\\Customer";
     }
+
+    public function getTerms()
+    {
+        return $this->terms && json_decode($this->terms) > 0 ? json_decode($this->terms) : [];
+    }
 }
