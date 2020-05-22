@@ -25,6 +25,7 @@ class GeoCode
 
     /**
      * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \Map\MapClientErrorException
      */
     public function getGeo()
     {
