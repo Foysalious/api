@@ -11,9 +11,9 @@ class GeoCode
     /** @var Client */
     private $client;
 
-    public function __construct()
+    public function __construct(BarikoiClient $barikoiClient)
     {
-        $this->client = new BarikoiClient();
+        $this->client = $barikoiClient;
 
     }
 
@@ -26,7 +26,7 @@ class GeoCode
 
     /**
      * @throws GuzzleException
-     * @throws MapClientErrorException
+     * @throws MapClientNoResultException
      */
     public function getGeo()
     {
