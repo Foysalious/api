@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Sheba\ModificationFields;
 use Sheba\Payment\Adapters\Payable\GiftCardPurchaseAdapter;
 use Sheba\Payment\ShebaPayment;
+use Throwable;
 
 class GiftCardController extends Controller
 {
@@ -35,12 +36,12 @@ class GiftCardController extends Controller
                 ],
                 [
                     'question' => 'Pay with Voucher',
-                    'answer' => 'You can use Sheba bonus credit in mobile recharge and service purchase. In service purchase you can find Sheba Bonus Credit section from where you can select Sheba bonus credit for full or partial payment.'
+                    'answer' => 'You can use Sheba bonus credit in service purchase. In service purchase you can find Sheba Bonus Credit section from where you can select Sheba bonus credit for full or partial payment.'
                 ],
             ];
             $data = ['gift_cards' => $gift_cards, 'instructions' => $instructions];
             return api_response($request, $data, 200, ['data' => $data]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
