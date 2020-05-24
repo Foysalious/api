@@ -24,7 +24,6 @@ class RentACarController extends Controller
             $services = json_decode($request->services, 1);
             /** @var ServiceRequestObject[] $services */
             $services = $service_request_object = $service_request->setServices($services)->get();
-            /** @var ServiceRequestObject $service */
             $service = $services[0];
             $location_service = LocationService::where([['location_id', $service->getHyperLocal()->location_id], ['service_id', $service->getServiceId()]])->first();
             if (!$location_service) return api_response($request, null, 400, ['message' => 'This service isn\'t available at this location.', 'code' => 701]);

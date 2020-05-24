@@ -9,11 +9,13 @@ use App\Models\Category;
 use App\Models\HyperLocal;
 use App\Models\Service;
 use App\Models\Thana;
+use GuzzleHttp\Exception\GuzzleException;
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
 use Sheba\Location\Distance\DistanceStrategy;
 use Sheba\Location\Geo;
 use Sheba\Map\DistanceMatrix;
+use Sheba\Map\MapClientNoResultException;
 use Sheba\ServiceRequest\Exception\ServiceIsUnpublishedException;
 
 class ServiceRequestObject
@@ -79,12 +81,24 @@ class ServiceRequestObject
         return $this;
     }
 
+    private function setEstimatedDistance($distance)
+    {
+        $this->estimatedDistance = $distance;
+        return $this;
+    }
+
     /**
      * @return mixed
      */
     public function getEstimatedDistance()
     {
         return $this->estimatedDistance;
+    }
+
+    private function setEstimatedTime($time)
+    {
+        $this->estimatedTime = $time;
+        return $this;
     }
 
     /**
@@ -94,6 +108,7 @@ class ServiceRequestObject
     {
         return $this->estimatedTime;
     }
+
 
     /**
      * @return mixed
@@ -210,10 +225,12 @@ class ServiceRequestObject
     /**
      * @return $this
      * @throws DestinationCitySameAsPickupException
+     * @throws HyperLocationNotFoundException
      * @throws InsideCityPickUpAddressNotFoundException
      * @throws OutsideCityPickUpAddressNotFoundException
      * @throws ServiceIsUnpublishedException
-     * @throws HyperLocationNotFoundException
+     * @throws GuzzleException
+     * @throws MapClientNoResultException
      */
     public function build()
     {
@@ -223,7 +240,7 @@ class ServiceRequestObject
         $this->setThanas();
         $this->setPickupThana();
         $this->setDestinationThana();
-        if (in_array($this->service->id, $this->googleCalculatedCarService)) $this->getDistanceCalculationResult();
+        if (in_array($this->service->id, $this->googleCalculatedCarService)) $this->calculateDistanceResult();
         return $this;
     }
 
@@ -353,23 +370,15 @@ class ServiceRequestObject
         return $this->thanas->where('id', $result)->first();
     }
 
-    private function getDistanceCalculationResult()
+    /**
+     * @throws GuzzleException
+     * @throws MapClientNoResultException
+     */
+    private function calculateDistanceResult()
     {
         $distance = $this->distanceMatrix->getDistanceMatrix($this->pickUpGeo, $this->destinationGeo);
-        $this->setEstimatedTime($distance->getDuration());
-        $this->setEstimatedDistance($distance->getDistance());
-        $this->setQuantity($distance->getDistance());
-    }
-
-    private function setEstimatedTime($time)
-    {
-        $this->estimatedTime = $time;
-        return $this;
-    }
-
-    private function setEstimatedDistance($distance)
-    {
-        $this->estimatedDistance = $distance;
-        return $this;
+        $this->setEstimatedTime($distance->getDurationInMinutes());
+        $this->setEstimatedDistance($distance->getDistanceInKms());
+        $this->setQuantity($distance->getDistanceInKms());
     }
 }

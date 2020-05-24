@@ -3,42 +3,42 @@
 
 class Distance
 {
-    private $duration;
-    private $distance;
+    private $durationInMinutes;
+    private $distanceInKms;
 
     /**
      * @return mixed
      */
-    public function getDuration()
+    public function getDurationInMinutes()
     {
-        return $this->duration;
+        return $this->durationInMinutes;
     }
 
     /**
      * @param mixed $duration
      * @return Distance
      */
-    public function setDuration($duration)
+    public function setDurationInMinutes($duration)
     {
-        $this->duration = $duration;
+        $this->durationInMinutes = $duration;
         return $this;
     }
 
     /**
      * @return mixed
      */
-    public function getDistance()
+    public function getDistanceInKms()
     {
-        return $this->distance;
+        return $this->distanceInKms;
     }
 
     /**
      * @param mixed $distance
      * @return Distance
      */
-    public function setDistance($distance)
+    public function setDistanceInKms($distance)
     {
-        $this->distance = $distance;
+        $this->distanceInKms = $distance;
         return $this;
     }
 

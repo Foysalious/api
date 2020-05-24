@@ -10,7 +10,6 @@ use Sheba\Map\MapClientNoResultException;
 
 class Google implements Client
 {
-
     public function getAddressFromGeo(Geo $geo): Address
     {
         // TODO: Implement getAddressFromGeo() method.
@@ -43,8 +42,8 @@ class Google implements Client
         $data = json_decode($response->getBody());
         if ($data->rows[0]->elements[0]->status == 'ZERO_RESULTS') throw new MapClientNoResultException('Invalid Address');
         $distance = new Distance();
-        $distance->setDistance((double)($data->rows[0]->elements[0]->distance->value) / 1000)
-            ->setDuration((double)($data->rows[0]->elements[0]->duration->value) / 60);
+        $distance->setDistanceInKms((double)($data->rows[0]->elements[0]->distance->value) / 1000)
+            ->setDurationInMinutes((double)($data->rows[0]->elements[0]->duration->value) / 60);
         return $distance;
     }
 }
