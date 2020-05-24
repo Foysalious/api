@@ -1,5 +1,6 @@
 <?php namespace Sheba\Map;
 
+use GuzzleHttp\Exception\GuzzleException;
 use Sheba\Map\Client\BarikoiClient;
 use Sheba\Map\Client\Client;
 
@@ -24,10 +25,11 @@ class GeoCode
 
 
     /**
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
+     * @throws MapClientErrorException
      */
     public function getGeo()
     {
-       return $this->client->getGeoFromAddress($this->address);
+        return $this->client->getGeoFromAddress($this->address);
     }
 }
