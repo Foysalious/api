@@ -2,10 +2,8 @@
 
 
 use Illuminate\Validation\ValidationException;
-use Sheba\Location\Coords;
-use Sheba\Location\Distance\Distance;
-use Sheba\Location\Distance\DistanceStrategy;
 use Sheba\Location\Geo;
+use Sheba\ServiceRequest\Exception\ServiceIsUnpublishedException;
 
 class ServiceRequest
 {
@@ -37,7 +35,7 @@ class ServiceRequest
         $this->validate();
         $final = [];
         foreach ($this->services as $service) {
-            $serviceRequestObject = new ServiceRequestObject();
+            $serviceRequestObject = app(ServiceRequestObject::class);
             $serviceRequestObject->setServiceId($service['id'])->setQuantity($service['quantity']);
             if (isset($service['pick_up_location_geo'])) {
                 $geo = new Geo();

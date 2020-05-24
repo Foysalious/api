@@ -32,10 +32,9 @@ abstract class Handler
 
     public function render()
     {
-
         $response = [
             'code' => $this->exception->getCode() ? $this->exception->getCode() : 500,
-            'message' => $this->getMessage()
+            'message' => $this->getMessage() ? $this->getMessage() : 'Something went wrong'
         ];
 
         if ($this->wantsTrace()) {

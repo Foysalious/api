@@ -9,12 +9,12 @@ use App\Models\Category;
 use App\Models\HyperLocal;
 use App\Models\Service;
 use App\Models\Thana;
-use Illuminate\Database\Eloquent\Collection;
-use Sheba\Google\MapClient;
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
 use Sheba\Location\Distance\DistanceStrategy;
 use Sheba\Location\Geo;
+use Sheba\Map\DistanceMatrix;
+use Sheba\ServiceRequest\Exception\ServiceIsUnpublishedException;
 
 class ServiceRequestObject
 {
@@ -42,7 +42,8 @@ class ServiceRequestObject
     private $insideCityCategoryId;
     private $outsideCityCategoryId;
     private $googleCalculatedCarService;
-    private $mapClient;
+    /** @var DistanceMatrix */
+    private $distanceMatrix;
 
     /** @var Service */
     private $service;
@@ -52,12 +53,12 @@ class ServiceRequestObject
     private $hyperLocal;
 
 
-    public function __construct()
+    public function __construct(DistanceMatrix $distanceMatrix)
     {
         $this->insideCityCategoryId = config('sheba.rent_a_car')['inside_city']['category'];
         $this->outsideCityCategoryId = config('sheba.rent_a_car')['outside_city']['category'];
         $this->googleCalculatedCarService = config('sheba.car_rental')['destination_fields_service_ids'];
-        $this->mapClient = new MapClient();
+        $this->distanceMatrix = $distanceMatrix;
     }
 
     /**
@@ -222,7 +223,7 @@ class ServiceRequestObject
         $this->setThanas();
         $this->setPickupThana();
         $this->setDestinationThana();
-        if (in_array($this->service->id, $this->googleCalculatedCarService)) $this->quantity = $this->getDistanceCalculationResult();
+        if (in_array($this->service->id, $this->googleCalculatedCarService)) $this->getDistanceCalculationResult();
         return $this;
     }
 
@@ -354,9 +355,21 @@ class ServiceRequestObject
 
     private function getDistanceCalculationResult()
     {
-        $data = $this->mapClient->getDistanceBetweenTwoPints($this->pickUpGeo, $this->destinationGeo);
-        $this->estimatedTime = (double)($data->rows[0]->elements[0]->duration->value) / 60;
-        $this->estimatedDistance = $this->quantity;
-        return (double)($data->rows[0]->elements[0]->distance->value) / 1000;
+        $distance = $this->distanceMatrix->getDistanceMatrix($this->pickUpGeo, $this->destinationGeo);
+        $this->setEstimatedTime($distance->getDuration());
+        $this->setEstimatedDistance($distance->getDistance());
+        $this->setQuantity($distance->getDistance());
+    }
+
+    private function setEstimatedTime($time)
+    {
+        $this->estimatedTime = $time;
+        return $this;
+    }
+
+    private function setEstimatedDistance($distance)
+    {
+        $this->estimatedDistance = $distance;
+        return $this;
     }
 }

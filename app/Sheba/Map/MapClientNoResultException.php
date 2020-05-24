@@ -3,6 +3,6 @@
 
 use App\Exceptions\ApiValidationException;
 
-class MapClientErrorException extends ApiValidationException
+class MapClientNoResultException extends ApiValidationException
 {
 }
