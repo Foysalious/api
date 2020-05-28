@@ -73,6 +73,7 @@ class TopUp
             $this->updateFailedTopOrder($topup_order, $this->validator->getError());
         } else {
             $gateway = $this->getGatewayModel($topup_order->gateway);
+            dd($gateway);
             $this->response = $this->vendor->recharge($topup_order);
             $balance = $this->vendor->getBalance();
             dd($gateway);
