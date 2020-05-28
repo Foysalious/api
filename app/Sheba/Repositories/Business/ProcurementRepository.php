@@ -51,8 +51,8 @@ class ProcurementRepository extends BaseRepository implements ProcurementReposit
         return $this->model->whereBetween('procurement_end_date', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
     }
 
-    public function filterWithBudget($budget)
+    public function filterWithEstimatedPrice($min_price, $max_price)
     {
-        return $this->model->where('estimated_price', '<=', $budget);
+        return $this->model->whereBetween('estimated_price', [$min_price, $max_price]);
     }
 }

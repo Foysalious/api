@@ -9,5 +9,5 @@ interface ProcurementRepositoryInterface extends BaseRepositoryInterface
     public function filterWithCategory($category_id);
     public function filterWithSharedTo($shared_to);
     public function filterWithEndDate($start_date, $end_date);
-    public function filterWithBudget($budget);
+    public function filterWithEstimatedPrice($min_price, $max_price);
 }
