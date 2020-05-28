@@ -73,7 +73,7 @@ class TopUp
         } else {
             $this->response = $this->vendor->recharge($topup_order);
             $balance = $this->vendor->getBalance();
-            dd($balance->available_credit, $this->vendor->gateway);
+            dd($balance->available_credit, $this->vendor);
             if ($this->response->hasSuccess()) {
                 $response = $this->response->getSuccess();
                 DB::transaction(function () use ($response, $topup_order) {
