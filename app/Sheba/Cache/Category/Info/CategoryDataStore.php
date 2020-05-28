@@ -64,6 +64,8 @@ class CategoryDataStore implements DataStoreObject
             'faqs' => $category->faqs ? json_decode($category->faqs) : null,
             'gallery' => count($galleries) > 0 ? $galleries : null,
             'blog' => count($blog_posts) > 0 ? $blog_posts : null,
+            'max_order_amount' => $category->max_order_amount,
+            'min_order_amount' => $category->min_order_amount
         ];
         return array_merge($data, $this->appendMasterCategoryTag($category));
     }

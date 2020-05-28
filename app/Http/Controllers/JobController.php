@@ -136,6 +136,7 @@ class JobController extends Controller
         $job_collection->put('payment_method', $this->formatPaymentMethod($job->partnerOrder->payment_method));
         $job_collection->put('price', (double)$job->partnerOrder->grossAmountWithLogistic);
         $job_collection->put('isDue', $job->partnerOrder->isDueWithLogistic() ? 1 : 0);
+        $job_collection->put('due', $job->partnerOrder->getCustomerPayable());
         $job_collection->put('isRentCar', $job->isRentCar());
         $job_collection->put('is_on_premise', $job->isOnPremise());
         $job_collection->put('customer_favorite', $job->customerFavorite ? $job->customerFavorite->id : null);
@@ -152,6 +153,8 @@ class JobController extends Controller
         $job_collection->put('can_pay', $this->canPay($job));
         $job_collection->put('can_add_promo', $this->canAddPromo($job));
         $job_collection->put('is_same_service', 1);
+        $job_collection->put('is_vat_applicable', $job->category ? $job->category['is_vat_applicable'] : null);
+        $job_collection->put('max_order_amount', $job->category ? (double)$job->category['max_order_amount'] : null);
 
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
@@ -312,6 +315,9 @@ class JobController extends Controller
             $bill['invoice'] = $job->partnerOrder->invoice;
             $bill['version'] = $job->partnerOrder->getVersion();
             $bill['voucher'] = $voucher;
+            $bill['is_vat_applicable'] = $job->category ? $job->category['is_vat_applicable'] : null;
+            $bill['is_closed'] = $partnerOrder['closed_at'] ? 1 : 0;
+            $bill['max_order_amount'] = $job->category ? (double)$job->category['max_order_amount'] : null;
 
             return api_response($request, $bill, 200, ['bill' => $bill]);
         } catch (Throwable $e) {
@@ -406,13 +412,12 @@ class JobController extends Controller
 
     protected function canPay($job)
     {
-        $due = $job->partnerOrder->calculate(true)->due;
         $status = $job->status;
 
         if (in_array($status, ['Declined', 'Cancelled']) || $job->cancelRequests()->where('status', CancelRequestStatuses::PENDING)->first())
             return false;
         else {
-            return $due > 0;
+            return $job->partnerOrder->getCustomerPayable() > 0;
         }
     }
 

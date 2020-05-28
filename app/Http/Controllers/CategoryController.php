@@ -100,7 +100,7 @@ class CategoryController extends Controller
                     });
                 });
             }
-            $categories = $categories->select('id', 'name', 'bn_name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id', 'is_auto_sp_enabled', 'min_order_amount');
+            $categories = $categories->select('id', 'name', 'bn_name', 'slug', 'thumb', 'banner', 'icon_png', 'icon', 'order', 'parent_id', 'is_auto_sp_enabled', 'min_order_amount', 'max_order_amount');
             if ($request->has('with')) {
                 $with = $request->with;
                 if ($with == 'children') {
@@ -150,6 +150,8 @@ class CategoryController extends Controller
                         removeRelationsAndFields($child);
                     });
                 }
+                $category['max_order_amount'] = $category['max_order_amount'] ? (double) $category['max_order_amount'] : null;
+
             }
 
             $categories_final = array();
@@ -519,7 +521,7 @@ class CategoryController extends Controller
             if ($services->count() > 0) {
                 $parent_category = null;
                 if ($category->parent_id != null) $parent_category = $category->parent()->select('id', 'name', 'slug')->first();
-                $category = collect($category)->only(['id', 'name', 'slug', 'banner', 'parent_id', 'app_banner', 'service_title', 'is_auto_sp_enabled', 'min_order_amount']);
+                $category = collect($category)->only(['id', 'name', 'slug', 'banner', 'parent_id', 'app_banner', 'service_title', 'is_auto_sp_enabled', 'min_order_amount', 'max_order_amount', 'is_vat_applicable']);
                 $version_code = (int)$request->header('Version-Code');
                 $services = $this->serviceQuestionSet($services);
                 if ($version_code && $version_code <= 30122 && $version_code <= 107) {
@@ -553,6 +555,7 @@ class CategoryController extends Controller
                     'min_order_amount' => (double)$delivery_discount->rules->getMinOrderAmount()
                 ] : null;
                 $category['slug'] = $category_slug;
+                $category['max_order_amount'] = $category['max_order_amount'] ? (double)$category['max_order_amount'] : null;
 
                 if ($subscriptions->count()) {
                     $category['subscription_faq'] = $subscription_faq;

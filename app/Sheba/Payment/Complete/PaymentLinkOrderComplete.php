@@ -8,6 +8,7 @@ use DB;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
+use Sheba\ExpenseTracker\AutomaticExpense;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\FraudDetection\TransactionSources;
@@ -115,14 +116,14 @@ class PaymentLinkOrderComplete extends PaymentComplete {
         $recharge_transaction      = $walletTransactionHandler->setType('credit')->setAmount($recharge_wallet_amount)->setSource(TransactionSources::PAYMENT_LINK)->setTransactionDetails($this->payment->getShebaTransaction()->toArray())->setLog($recharge_log)->store();
         $minus_wallet_amount       = $this->getPaymentLinkFee($recharge_wallet_amount);
         $formatted_minus_amount    = number_format($minus_wallet_amount, 2);
-        $minus_log                 = "$formatted_minus_amount TK has been charged as link service fees against of Transc ID: {$recharge_transaction->id}, and Transc amount: $formatted_recharge_amount";
+        $minus_log                 = "(3TK + 2.5%) $formatted_minus_amount TK has been charged as link service fees against of Transc ID: {$recharge_transaction->id}, and Transc amount: $formatted_recharge_amount";
         $walletTransactionHandler->setLog($minus_log)->setType('debit')->setAmount($minus_wallet_amount)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
         /*$payment_receiver->minusWallet($minus_wallet_amount, ['log' => $minus_log]);*/
 
     }
 
     private function getPaymentLinkFee($amount) {
-        return ($amount * $this->paymentLinkCommission) / 100;
+        return round(($amount * $this->paymentLinkCommission) / 100, 2) + 3;
     }
 
     private function clearPosOrder() {
