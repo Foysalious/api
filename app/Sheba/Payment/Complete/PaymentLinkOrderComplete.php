@@ -122,7 +122,7 @@ class PaymentLinkOrderComplete extends PaymentComplete {
         if ($interest > 0) {
             $formatted_interest = number_format($interest, 2);
             $log                = "$formatted_interest TK has been charged as emi interest fees against of Transc ID {$recharge_transaction->id}, and Transc amount $formatted_recharge_amount";
-            $walletTransactionHandler->setLog($log)->setType('debit')->setAmount($formatted_interest)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
+            $walletTransactionHandler->setLog($log)->setType('debit')->setAmount($interest)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
         }
         $minus_wallet_amount       = $this->getPaymentLinkFee($recharge_wallet_amount);
         $formatted_minus_amount    = number_format($minus_wallet_amount, 2);
