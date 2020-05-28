@@ -70,7 +70,7 @@ class RewardHistory
                 "amount" => $reward->amount
             ] : null,
             "progress" => [
-                "is_completed" => $log->achieved >= $target,
+                "is_completed" => $log->achieved >= $target ? 1 : 0,
                 "target" => $target,
                 "completed" => $log->achieved
             ]
