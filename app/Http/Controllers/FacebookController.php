@@ -116,21 +116,30 @@ class FacebookController extends Controller
 
     private function resolveAccountKit($code)
     {
-        $version = (int)\request()->header('Version-Code');
+        if (!$this->isUsingShebaAccountKit()) return $this->fbKit->authenticateKit($code);
+
+        $access_token_request = new AccessTokenRequest();
+        $access_token_request->setAuthorizationCode($code);
+        $account_kit = app(ShebaAccountKit::class);
+        $mobile = $account_kit->getMobile($access_token_request);
+        if (!$mobile) return null;
+        return ['mobile' => $mobile];
+    }
+
+    /**
+     * @return bool
+     */
+    private function isUsingShebaAccountKit()
+    {
+        $version = convertSemverToInt(\request()->header('Version-Code'));
         $portal_name = \request()->header('portal-name');
         $platform_name = \request()->header('Platform-Name');
-        if ($portal_name == 'customer-portal' || ($version > 30211 && $portal_name == 'customer-app') || ($version > 12003 && $portal_name == 'bondhu-app') || ($version > 2145 && $portal_name == 'resource-app') ||
-            ($version > 126 && $portal_name == 'customer-app' && $platform_name == 'ios')) {
-            $access_token_request = new AccessTokenRequest();
-            $access_token_request->setAuthorizationCode($code);
-            $account_kit = app(ShebaAccountKit::class);
-            $kit = [];
-            $mobile = $account_kit->getMobile($access_token_request);
-            if (!$mobile) return null;
-            $kit['mobile'] = $mobile;
-            return $kit;
-        }
-        return $this->fbKit->authenticateKit($code);
+
+        return $portal_name == 'customer-portal' ||
+            ($version > 30211 && $portal_name == 'customer-app') ||
+            ($version > 12003 && $portal_name == 'bondhu-app') ||
+            ($version > 2145 && $portal_name == 'resource-app') ||
+            ($version > 126 && $portal_name == 'customer-app' && $platform_name == 'ios');
     }
 
     private function getFacebookProfileInfo($token)
@@ -217,5 +226,4 @@ class FacebookController extends Controller
         ], ['in' => 'from value is invalid!']);
         return $validator->fails() ? $validator->errors()->all()[0] : false;
     }
-
 }
