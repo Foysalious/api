@@ -1,10 +1,16 @@
 <?php namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\BaseModel;
+use Sheba\Dal\ResourceTransaction\Model as ResourceTransaction;
+use Sheba\Payment\Wallet;
+use Sheba\Reward\Rewardable;
+use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Illuminate\Database\Eloquent\Relations\Relation;
 
-class Resource extends Model
+class Resource extends BaseModel implements Rewardable, HasWalletTransaction
 {
+    use Wallet;
+
     protected $guarded = ['id'];
     protected $casts = ['wallet' => 'double'];
 
@@ -26,6 +32,11 @@ class Resource extends Model
     public function jobs()
     {
         return $this->hasMany(Job::class);
+    }
+
+    public function transactions()
+    {
+        return $this->hasMany(ResourceTransaction::class);
     }
 
     public function associatePartners()
