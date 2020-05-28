@@ -4,6 +4,7 @@ use App\Models\Affiliate;
 use App\Models\TopUpOrder;
 use Exception;
 use App\Models\TopUpVendor;
+use Sheba\Dal\TopUpGateway\Model as TopUpGateway;
 use Sheba\ModificationFields;
 use DB;
 use Sheba\TopUp\Vendor\Response\Ipn\SuccessResponse;
@@ -71,9 +72,10 @@ class TopUp
         if ($this->validator->setTopupOrder($topup_order)->validate()->hasError()) {
             $this->updateFailedTopOrder($topup_order, $this->validator->getError());
         } else {
+            $gateway = $this->getGatewayModel($topup_order->gateway);
             $this->response = $this->vendor->recharge($topup_order);
             $balance = $this->vendor->getBalance();
-            dd($balance->available_credit, $this->vendor);
+            dd($balance, $gateway);
             if ($this->response->hasSuccess()) {
                 $response = $this->response->getSuccess();
                 DB::transaction(function () use ($response, $topup_order) {
@@ -188,5 +190,10 @@ class TopUp
     public function refund(TopUpOrder $top_up_order)
     {
         $top_up_order->agent->getCommission()->setTopUpOrder($top_up_order)->refund();
+    }
+
+    public function getGatewayModel($gateway)
+    {
+        return TopUpGateway::where('name', $gateway)->first();
     }
 }
