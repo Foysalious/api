@@ -66,7 +66,7 @@ abstract class Vendor
         // $this->createNewRechargeHistory($amount);
     }
 
-    private function resolveGateway(TopUpOrder $topUpOrder)
+    public function resolveGateway(TopUpOrder $topUpOrder)
     {
         $gateway_factory = new GatewayFactory();
         $gateway_factory->setGatewayName($topUpOrder->gateway)->setVendorId($topUpOrder->vendor_id);
