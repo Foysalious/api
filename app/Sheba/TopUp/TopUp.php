@@ -37,12 +37,9 @@ class TopUp
     /** @var TopUpValidator */
     private $validator;
 
-    private $smsHandler;
-
-    public function __construct(TopUpValidator $validator, SmsHandler $smsHandler)
+    public function __construct(TopUpValidator $validator)
     {
         $this->validator = $validator;
-        $this->smsHandler = $smsHandler;
     }
 
     /**
@@ -81,7 +78,6 @@ class TopUp
             $balance = $this->vendor->getBalance();
 
             if($this->checkIfLessThanThreshold($gateway, $balance)) {
-                dd($gateway, $balance);
                 $this->sendSmsToGatewaySmsReceivers($gateway, $balance);
             }
 
@@ -219,9 +215,8 @@ class TopUp
     {
         $sms_receivers = $gateway->topupGatewaySmsReceivers;
         $message = "gateway balance ".$balance." which is less than threshold";
-        $sms_receivers->each(function ($sms_receiver, $key) {
-            dd($sms_receiver->phone);
-//            $this->smsHandler->send($assignee->mobile, $message_for_assignee);
+        $sms_receivers->each(function ($sms_receiver, $key) use ($message) {
+            (new SmsHandler(''))->send($sms_receiver->phone, $message);
         });
 
     }
