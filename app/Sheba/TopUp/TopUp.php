@@ -72,7 +72,8 @@ class TopUp
             $this->updateFailedTopOrder($topup_order, $this->validator->getError());
         } else {
             $this->response = $this->vendor->recharge($topup_order);
-            dd($this->response);
+            $balance = $this->vendor->getBalance();
+            dd($balance->available_credit);
             if ($this->response->hasSuccess()) {
                 $response = $this->response->getSuccess();
                 DB::transaction(function () use ($response, $topup_order) {
