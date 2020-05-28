@@ -7,6 +7,7 @@ use App\Models\CustomerDeliveryAddress;
 use App\Models\Partner;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Http\Request;
+use Map\MapClientErrorException;
 use Sheba\CustomerDeliveryAddress\AvailabilityChecker;
 use Sheba\CustomerDeliveryAddress\Creator;
 use Sheba\Location\Geo;
