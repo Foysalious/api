@@ -77,7 +77,7 @@ class TopUp
             $this->response = $this->vendor->recharge($topup_order);
             $balance = $this->vendor->getBalance();
             if ($this->response->hasSuccess()) {
-                dispatch((new TopUpBalanceUpdateJob($balance, $gateway)));
+                dispatch((new TopUpBalanceUpdateJob($balance->available_credit, $gateway)));
                 $response = $this->response->getSuccess();
                 DB::transaction(function () use ($response, $topup_order) {
                     $this->setModifier($this->agent);
