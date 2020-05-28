@@ -4,7 +4,7 @@ namespace Sheba\Checkout\Services;
 
 use App\Models\Category;
 use App\Models\Service;
-use Sheba\ServiceRequest\ServiceIsUnpublishedException;
+use Sheba\ServiceRequest\Exception\ServiceIsUnpublishedException;
 use stdClass;
 
 class ServiceObject

@@ -61,7 +61,7 @@ class ServiceUpdateRequest
      * @throws \App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException
      * @throws \App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException
      * @throws \Illuminate\Validation\ValidationException
-     * @throws \Sheba\ServiceRequest\ServiceIsUnpublishedException
+     * @throws \Sheba\ServiceRequest\Exception\ServiceIsUnpublishedException
      */
     public function setServices(array $services)
     {
