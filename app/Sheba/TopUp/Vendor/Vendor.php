@@ -77,4 +77,9 @@ abstract class Vendor
     {
         $this->topUpGateway = $topup_gateway;
     }
+
+    public function getBalance()
+    {
+        return $this->topUpGateway->getBalance();
+    }
 }
