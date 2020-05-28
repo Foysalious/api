@@ -7,6 +7,7 @@ use App\Models\TopUpVendor;
 use Sheba\Dal\TopUpGateway\Model as TopUpGateway;
 use Sheba\ModificationFields;
 use DB;
+use Sheba\TopUp\Jobs\TopUpBalanceUpdateJob;
 use Sheba\TopUp\Vendor\Response\Ipn\SuccessResponse;
 use Sheba\TopUp\Vendor\Response\TopUpErrorResponse;
 use Sheba\TopUp\Vendor\Response\TopUpFailResponse;
@@ -78,6 +79,7 @@ class TopUp
             $this->response = $this->vendor->recharge($topup_order);
 
             if ($this->response->hasSuccess()) {
+                dispatch((new TopUpBalanceUpdateJob($balance, $gateway)));
                 $response = $this->response->getSuccess();
                 DB::transaction(function () use ($response, $topup_order) {
                     $this->setModifier($this->agent);
