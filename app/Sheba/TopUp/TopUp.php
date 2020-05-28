@@ -2,6 +2,7 @@
 
 use App\Models\Affiliate;
 use App\Models\TopUpOrder;
+use App\Repositories\SmsHandler;
 use Exception;
 use App\Models\TopUpVendor;
 use Sheba\Dal\TopUpGateway\Model as TopUpGateway;
@@ -76,6 +77,7 @@ class TopUp
             $gateway = $this->getGatewayModel($topup_order->gateway);
             $balance = $this->vendor->getBalance();
             $this->checkThreshold($gateway, $balance);
+
             $this->response = $this->vendor->recharge($topup_order);
 
             if ($this->response->hasSuccess()) {
@@ -202,6 +204,12 @@ class TopUp
 
     public function checkThreshold($gateway, $balance)
     {
+        dd($gateway, $balance);
+    }
+
+    public function sendSmsToGatewaySmsReceivers($gateway)
+    {
         $sms_receivers = $gateway ? $gateway->topupGatewaySmsReceivers : [];
+        dd($sms_receivers);
     }
 }
