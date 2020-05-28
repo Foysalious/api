@@ -75,7 +75,7 @@ class TopUp
             $gateway = $this->getGatewayModel($topup_order->gateway);
             $this->response = $this->vendor->recharge($topup_order);
             $balance = $this->vendor->getBalance();
-            dd($balance, $gateway);
+            dd($gateway);
             if ($this->response->hasSuccess()) {
                 $response = $this->response->getSuccess();
                 DB::transaction(function () use ($response, $topup_order) {
