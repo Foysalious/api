@@ -73,10 +73,10 @@ class TopUp
             $this->updateFailedTopOrder($topup_order, $this->validator->getError());
         } else {
             $gateway = $this->getGatewayModel($topup_order->gateway);
-            dd($gateway);
-            $this->response = $this->vendor->recharge($topup_order);
             $balance = $this->vendor->getBalance();
-            dd($gateway);
+            $this->checkThreshold($gateway, $balance);
+            $this->response = $this->vendor->recharge($topup_order);
+
             if ($this->response->hasSuccess()) {
                 $response = $this->response->getSuccess();
                 DB::transaction(function () use ($response, $topup_order) {
@@ -196,5 +196,10 @@ class TopUp
     public function getGatewayModel($gateway)
     {
         return TopUpGateway::where('name', $gateway)->first();
+    }
+
+    public function checkThreshold($gateway, $balance)
+    {
+        $sms_receivers = $gateway ? $gateway->topupGatewaySmsReceivers : [];
     }
 }
