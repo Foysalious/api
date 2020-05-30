@@ -64,4 +64,9 @@ class Banglalink extends Pretups implements Gateway
     {
         return self::SHEBA_COMMISSION;
     }
+
+    public function getBalance()
+    {
+        // TODO: Implement getBalance() method.
+    }
 }
