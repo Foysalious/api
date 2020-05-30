@@ -76,6 +76,7 @@ class TopUp
         } else {
             $gateway = $this->getGatewayModel($topup_order->gateway);
             $balance = $this->vendor->getBalance();
+
             if($this->checkIfLessThanThreshold($gateway, $balance)) {
                 $this->sendSmsToGatewaySmsReceivers($gateway, $balance);
             }
@@ -207,7 +208,7 @@ class TopUp
     public function checkIfLessThanThreshold($gateway, $balance)
     {
         $threshold = $gateway->threshold;
-        return (double) $balance->available_credit < (double) $threshold;
+        return (double) $balance < (double) $threshold;
     }
 
     public function sendSmsToGatewaySmsReceivers($gateway, $balance)
