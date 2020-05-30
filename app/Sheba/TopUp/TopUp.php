@@ -74,7 +74,6 @@ class TopUp
         if ($this->validator->setTopupOrder($topup_order)->validate()->hasError()) {
             $this->updateFailedTopOrder($topup_order, $this->validator->getError());
         } else {
-            dd($topup_order->gateway);
             $gateway = $this->getGatewayModel($topup_order->gateway);
             $balance = $this->vendor->getBalance();
 
@@ -85,7 +84,7 @@ class TopUp
             $this->response = $this->vendor->recharge($topup_order);
 
             if ($this->response->hasSuccess()) {
-                dispatch((new TopUpBalanceUpdateJob($balance->available_credit, $gateway)));
+                dispatch((new TopUpBalanceUpdateJob($balance, $gateway)));
                 $response = $this->response->getSuccess();
                 DB::transaction(function () use ($response, $topup_order) {
                     $this->setModifier($this->agent);

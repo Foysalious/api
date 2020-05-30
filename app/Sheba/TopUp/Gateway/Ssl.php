@@ -31,6 +31,6 @@ class Ssl implements Gateway
 
     public function getBalance()
     {
-        return $this->ssl->getBalance();
+        return $this->ssl->getBalance()->available_credit;
     }
 }
