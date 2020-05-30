@@ -136,7 +136,7 @@ class Partner extends Referrer implements ReferrerInterface
         $reference['id']             = $refer->id;
         $reference['name']           = $refer->refer ? $refer->refer->name : $refer->resource_name;
         $reference['contact_number'] = $refer->refer ? $refer->refer->getContactNumber() : $refer->resource_mobile;
-        $reference['income']         = !empty($this->updatedRefer) ? ($this->updatedRefer->referrer_income ?: 0) : ($refer->referrer_income ?: 0) ;
+        $reference['income']         = !empty($this->updatedRefer) ? ($this->updatedRefer->referrer_income ?: 0) : ($refer->referrer_income ?: $this->config[0]['amount']) ;
         $reference['usage']          = $refer->usages;
         $reference['step']           = !empty($this->updatedRefer) ? $this->updatedRefer->refer_level : (int) $refer->refer_level;
         $reference['step_bn']        = $reference['milestone']['current_step'];
