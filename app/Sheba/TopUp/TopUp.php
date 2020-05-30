@@ -208,7 +208,7 @@ class TopUp
     public function checkIfLessThanThreshold($gateway, $balance)
     {
         $threshold = $gateway->threshold;
-        return $balance < $threshold;
+        return (double) $balance < (double) $threshold;
     }
 
     public function sendSmsToGatewaySmsReceivers($gateway, $balance)
