@@ -53,6 +53,4 @@ abstract class Pretups
     abstract protected function getVPNUrl();
 
     abstract protected function getUrl();
-
-    abstract public function getBalance();
 }
