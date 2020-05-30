@@ -3,6 +3,7 @@
 use App\Exceptions\HyperLocationNotFoundException;
 use App\Http\Controllers\Controller;
 use App\Models\CustomerDeliveryAddress;
+use App\Models\Location;
 use App\Models\LocationService;
 use App\Models\Service;
 use App\Models\ServiceSubscription;
@@ -360,7 +361,9 @@ class CustomerSubscriptionController extends Controller
                 'min_discount_quantity' => $monthly_discount->min_discount_qty
             ] : null;
 
-            $resource = new Item($service->category, new ServiceV2DeliveryChargeTransformer($delivery_charge, $job_discount_handler));
+            $resource = new Item($service->category,
+                new ServiceV2DeliveryChargeTransformer($delivery_charge, $job_discount_handler, $subscription_order->location)
+            );
             $delivery_charge_discount_data = $manager->createData($resource)->toArray();
             $subscription_order_details += $delivery_charge_discount_data;
 

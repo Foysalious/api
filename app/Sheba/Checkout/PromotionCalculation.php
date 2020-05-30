@@ -4,6 +4,7 @@
 namespace Sheba\Checkout;
 
 
+use App\Models\Location;
 use App\Sheba\Checkout\Discount;
 use App\Sheba\Checkout\PartnerList;
 use Carbon\Carbon;
@@ -20,7 +21,9 @@ class PromotionCalculation
         if ($partner_list->hasPartners) {
             $partner = $partner_list->partners->first();
             $order_amount = 0;
-            $delivery_charge = (new DeliveryCharge())->setCategory($request->selectedCategory)
+            $delivery_charge = (new DeliveryCharge())
+                ->setCategory($request->selectedCategory)
+                ->setLocation(Location::find($request->getLocation()))
                 ->setCategoryPartnerPivot($partner->categories->first()->pivot)
                 ->get(); //(double)$category_pivot->delivery_charge;
             foreach ($request->selectedServices as $selected_service) {

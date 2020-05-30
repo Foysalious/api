@@ -17,15 +17,12 @@ class JWTAuth implements Authentication
             $token = Auth::getToken();
             $payload = Auth::getPayload($token)->toArray();
         } catch (JWTException $e) {
-            throw new AuthenticationFailedException("User not found");
+            throw new AuthenticationFailedException();
         }
         $auth_user = new AuthUser();
         $auth_user->setPayload($payload);
-        if (!$auth_user->getProfile()) throw new AuthenticationFailedException("User not found");
+        if (!$auth_user->getAuthUser()) throw new AuthenticationFailedException();
         return $auth_user;
-        $user = $payload['avatar'];
-        $model = "App\\Models\\" . ucfirst(camel_case($user['type']));
-        return $model::find($user['type_id']);
 
     }
 

@@ -41,18 +41,24 @@ class ComplainController extends Controller
                 'for' => 'required|in:customer,partner'
             ]);
             $job = Job::find($job);
-            $accessor = $this->accessorRepo->findByNameWithPublishedCategoryAndPreset(ucwords($request->for));
+            if (!empty($job)) {
+                $accessor = $this->accessorRepo->findByNameWithPublishedCategoryAndPresetFilteredByCategoryAndStatus(ucwords($request->for), $job->category_id, $this->getJobStatus($job));
+            } else {
+                $accessor = $this->accessorRepo->findByNameWithPublishedCategoryAndPreset(ucwords($request->for));
+            }
             $final_complains = collect();
             $final_presets = collect();
-            $presets = $this->getCategoryWisePresets($job, $accessor);
+            $presets = $accessor->complainPresets;
             foreach ($presets as $preset) {
                 $final_presets->push(collect($preset)->only(['id', 'name', 'category_id']));
             }
-            $categories = $this->getJobWiseCategory($job, $accessor);
+            $categories = $accessor->complainCategories;
             foreach ($categories as $category) {
                 $final = collect($category)->only(['id', 'name']);
                 $final->put('presets', $final_presets->where('category_id', $category->id)->values()->all());
-                $final_complains->push($final);
+                if(!empty($final['presets'])) {
+                    $final_complains->push($final);
+                }
             }
             return api_response($request, null, 200, ['complains' => $final_complains, 'accessor_id' => $accessor->id]);
         } catch (ValidationException $e) {
@@ -67,7 +73,7 @@ class ComplainController extends Controller
         }
     }
 
-    private function getJobWiseCategory($job, $accessor)
+    /* private function getJobWiseCategory($job, $accessor)
     {
         if (!empty($job)) {
             $job_status = $this->getJobStatus($job);
@@ -84,7 +90,7 @@ class ComplainController extends Controller
                     return $job->category_id == $cat->id;
                 })->count() > 0;
         }) : $accessor->complainPresets;
-    }
+    } */
 
     private function getJobStatus($job)
     {

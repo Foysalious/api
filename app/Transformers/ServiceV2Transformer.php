@@ -12,6 +12,7 @@ use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Dal\ServiceDiscount\Model as ServiceDiscount;
 use Sheba\JobDiscount\JobDiscountCheckingParams;
 use Sheba\JobDiscount\JobDiscountHandler;
+use Sheba\LocationService\CorruptedPriceStructureException;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\Services\Type;
 
@@ -45,6 +46,7 @@ class ServiceV2Transformer extends TransformerAbstract
      * @param Service $service
      * @return array
      * @throws InvalidDiscountType
+     * @throws CorruptedPriceStructureException
      */
     public function transform(Service $service)
     {
@@ -53,7 +55,8 @@ class ServiceV2Transformer extends TransformerAbstract
         $discount = $this->locationService->discounts()->running()->first();
         $this->priceCalculation->setLocationService($this->locationService);
 
-        $original_delivery_charge = $this->deliveryCharge->setCategory($service->category)->get();
+        $original_delivery_charge = $this->deliveryCharge->setCategory($service->category)
+            ->setLocation($this->locationService->location)->get();
         $discount_checking_params = (new JobDiscountCheckingParams())->setDiscountableAmount($original_delivery_charge);
         $this->jobDiscountHandler->setType(DiscountTypes::DELIVERY)->setCategory($service->category)->setCheckingParams($discount_checking_params)->calculate();
         /** @var Discount $delivery_discount */
@@ -93,6 +96,7 @@ class ServiceV2Transformer extends TransformerAbstract
     /**
      * @param $prices
      * @return Collection
+     * @throws CorruptedPriceStructureException
      */
     private function formatOptionWithPrice($prices)
     {

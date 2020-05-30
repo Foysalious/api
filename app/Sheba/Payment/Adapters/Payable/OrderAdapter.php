@@ -66,7 +66,7 @@ class OrderAdapter extends BaseAdapter implements PayableAdapter
         $payable->type_id = $this->partnerOrder->id;
         $payable->user_id = $this->userId;
         $payable->user_type = $this->userType;
-        $due = (double)$this->partnerOrder->dueWithLogistic;
+        $due = (double)$this->partnerOrder->getCustomerPayable();
         $payable->amount = $this->calculateAmount($due);
         $payable->emi_month = $this->resolveEmiMonth($payable);
         $payable->completion_type = $this->isAdvancedPayment ? 'advanced_order' : "order";

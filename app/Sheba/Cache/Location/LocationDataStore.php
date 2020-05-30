@@ -15,8 +15,8 @@ class LocationDataStore implements DataStoreObject
 
     public function generate()
     {
-        $dhaka = Location::published()->where('city_id', 1)->select('id', 'city_id', 'name', 'geo_informations')->get();
-        $chittagong = Location::published()->where('city_id', 2)->select('id', 'city_id', 'name', 'geo_informations')->get();
+        $dhaka = Location::hasPolygon()->published()->where('city_id', 1)->select('id', 'city_id', 'name', 'geo_informations')->get();
+        $chittagong = Location::hasPolygon()->published()->where('city_id', 2)->select('id', 'city_id', 'name', 'geo_informations')->get();
         $cities = [
             [
                 'id' => 1,
