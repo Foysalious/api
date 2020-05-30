@@ -216,7 +216,9 @@ class TopUp
         $sms_receivers = $gateway->topupGatewaySmsReceivers;
         $message = "gateway balance ".$balance." which is less than threshold";
         $sms_receivers->each(function ($sms_receiver, $key) use ($message) {
-            (new SmsHandler(''))->send($sms_receiver->phone, $message);
+            (new SmsHandler('top_up_threshold_notify'))->send($sms_receiver->phone, [
+                'message' => $message
+            ]);
         });
 
     }
