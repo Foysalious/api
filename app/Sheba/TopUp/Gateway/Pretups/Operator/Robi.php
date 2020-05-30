@@ -26,6 +26,6 @@ class Robi extends Pretups implements Gateway
     public function getBalance()
     {
         // TODO: Implement getBalance() method.
-        return 0;
+        return 0.0;
     }
 }
