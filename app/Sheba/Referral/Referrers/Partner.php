@@ -319,8 +319,10 @@ class Partner extends Referrer implements ReferrerInterface
             $query = $query->orderBy($this->orderFilters[$orderBy], $order);
         }
         if ($request->has('step')) {
-            $query = $query->where('ref.refer_level', (int)$request->step);
-            if((int)$request->step == 0) $query = $query->orWhere('ref.refer_level', null);
+            if((int)$request->step == 0)
+                $query = $query->where('ref.refer_level', (int)$request->step)->orWhere('ref.refer_level', null);
+            else
+                $query = $query->where('ref.refer_level', (int)$request->step);
         }
         return $query;
     }
