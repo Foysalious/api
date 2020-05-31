@@ -11,12 +11,18 @@ class CacheManager
     /** @var string $cacheName */
     private $cacheName;
     private $storage;
+    private $version;
 
     public function __construct()
     {
         $this->storage = Cache::store('redis');
     }
 
+    public function setVersion($version)
+    {
+       $this->version =  $version;
+       return $this;
+    }
     public function setPartner(Partner $partner)
     {
         $this->partner = $partner;
@@ -27,7 +33,11 @@ class CacheManager
 
     private function generateName()
     {
-        $this->cacheName = sprintf("%s::%d", $this->redisNameSpace, $this->partner->id);
+        if(empty($version))
+            $this->cacheName = sprintf("%s::%d", $this->redisNameSpace, $this->partner->id);
+        else
+            $this->cacheName = sprintf("%s::%d::%d", $this->redisNameSpace, $this->partner->id,$this->version);
+
     }
 
     public function has()
