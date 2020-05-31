@@ -14,7 +14,7 @@ class CacheWrapper extends Setting
     {
         /** @var CacheManager $cache_manager */
         $cache_manager = new CacheManager();
-        $cache_manager->setPartner($this->partner);
+        $cache_manager->setVersion($this->version)->setPartner($this->partner);
         if ($cache_manager->has()) {
             return $cache_manager->get();
         } else {

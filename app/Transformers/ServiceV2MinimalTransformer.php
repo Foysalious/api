@@ -3,6 +3,7 @@
 use App\Models\LocationService;
 use League\Fractal\TransformerAbstract;
 use Sheba\Dal\ServiceDiscount\Model as ServiceDiscount;
+use Sheba\LocationService\CorruptedPriceStructureException;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\Services\Type;
 
@@ -28,6 +29,7 @@ class ServiceV2MinimalTransformer extends TransformerAbstract
     /**
      * @param array $selected_service
      * @return array
+     * @throws \Sheba\LocationService\CorruptedPriceStructureException
      */
     public function transform(array $selected_service)
     {
@@ -41,11 +43,15 @@ class ServiceV2MinimalTransformer extends TransformerAbstract
                 'cap' => (double)$discount->cap
             ] : null,
         ];
-        if ($selected_service["variable_type"] == Type::FIXED) {
-            $data['unit_price'] = $this->locationService && $this->locationService->service->isFixed() ? $this->priceCalculation->getUnitPrice() : null;
-        }
-        if ($selected_service["variable_type"] == Type::OPTIONS) {
-            $data['unit_price'] = $this->locationService && $this->locationService->service->isOptions() ? $this->priceCalculation->setOption($selected_service["option"])->getUnitPrice() : null;
+        try {
+            if ($selected_service["variable_type"] == Type::FIXED) {
+                $data['unit_price'] = $this->locationService && $this->locationService->service->isFixed() ? $this->priceCalculation->getUnitPrice() : null;
+            }
+            if ($selected_service["variable_type"] == Type::OPTIONS) {
+                $data['unit_price'] = $this->locationService && $this->locationService->service->isOptions() ? $this->priceCalculation->setOption($selected_service["option"])->getUnitPrice() : null;
+            }
+        }catch (CorruptedPriceStructureException $e) {
+            $data['unit_price'] = null;
         }
 
         return $data;
