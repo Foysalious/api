@@ -36,9 +36,9 @@ class TopUpBalanceUpdateAndNotifyJob extends Job implements ShouldQueue
             $this->topUpGateway->update([
                 'balance' => $this->balance
             ]);
-            /**  if($this->checkIfLessThanThreshold($this->topUpGateway, $this->balance)) {
+            if($this->checkIfLessThanThreshold($this->topUpGateway, $this->balance)) {
                 $this->sendSmsToGatewaySmsReceivers($this->topUpGateway, $this->balance);
-            } */
+            }
         }
     }
 

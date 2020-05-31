@@ -100,7 +100,6 @@ class TopUpController extends Controller
                 ((new NotificationRepository())->pushNotificationToAffiliate('topup_failed',$request->affiliate->id,$request->mobile));
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
