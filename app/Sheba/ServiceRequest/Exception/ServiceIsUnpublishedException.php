@@ -1,4 +1,4 @@
-<?php namespace Sheba\ServiceRequest;
+<?php namespace Sheba\ServiceRequest\Exception;
 
 
 use App\Exceptions\ApiValidationException;

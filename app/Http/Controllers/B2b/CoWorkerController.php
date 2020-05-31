@@ -10,12 +10,14 @@ use App\Models\Profile;
 use App\Repositories\FileRepository;
 use Carbon\Carbon;
 use DB;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
 use Sheba\Repositories\ProfileRepository;
+use Throwable;
 
 class CoWorkerController extends Controller
 {
@@ -90,7 +92,7 @@ class CoWorkerController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -131,7 +133,7 @@ class CoWorkerController extends Controller
             }
             if (count($employees) > 0) return api_response($request, $employees, 200, ['employees' => $employees]);
             else  return api_response($request, null, 404);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -174,7 +176,7 @@ class CoWorkerController extends Controller
 
             if (count($employee) > 0) return api_response($request, $employee, 200, ['employee' => $employee]);
             else  return api_response($request, null, 404);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -193,45 +195,35 @@ class CoWorkerController extends Controller
 
     public function departmentRole($business, Request $request)
     {
-        try {
-            $business = $request->business;
-            $business_depts = BusinessDepartment::with(['businessRoles' => function ($q) {
+        $business = $request->business;
+        $business_departments = BusinessDepartment::published()->with([
+            'businessRoles' => function ($q) {
                 $q->select('id', 'name', 'business_department_id');
-            }])->where('business_id', $business->id)->select('id', 'business_id', 'name')->get();
-            $departments = [];
-            foreach ($business_depts as $business_dept) {
-                $dept_role = collect();
-                foreach ($business_dept->businessRoles as $role) {
-                    $role = [
-                        'id' => $role->id,
-                        'name' => $role->name,
-                    ];
-                    $dept_role->push($role);
-                }
-
-                $department = [
-                    'id' => $business_dept->id,
-                    'name' => $business_dept->name,
-                    'roles' => $dept_role
-                ];
-                array_push($departments, $department);
             }
-            if (count($departments) > 0) return api_response($request, $departments, 200, ['departments' => $departments]);
-            else  return api_response($request, null, 404);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        ])->where('business_id', $business->id)->select('id', 'business_id', 'name')->get();
+        $departments = [];
+        foreach ($business_departments as $business_dept) {
+            $dept_role = collect();
+            foreach ($business_dept->businessRoles as $role) {
+                $role = ['id' => $role->id, 'name' => $role->name,];
+                $dept_role->push($role);
+            }
+
+            $department = [
+                'id' => $business_dept->id,
+                'name' => $business_dept->name,
+                'roles' => $dept_role
+            ];
+            array_push($departments, $department);
         }
+        if (count($departments) > 0) return api_response($request, $departments, 200, ['departments' => $departments]);
+        else return api_response($request, null, 404);
     }
 
     public function addBusinessDepartment($business, Request $request)
     {
         try {
-            $this->validate($request, [
-                'name' => 'required|string',
-                #'is_published' => 'required|boolean',
-
-            ]);
+            $this->validate($request, ['name' => 'required|string']);
             $business = $request->business;
             $member = $request->manager_member;
             $this->setModifier($member);
@@ -245,32 +237,36 @@ class CoWorkerController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
+    /**
+     * @param $business
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getBusinessDepartments($business, Request $request)
     {
-        try {
-            $business = $request->business;
-            $business_depts = BusinessDepartment::where('business_id', $business->id)->select('id', 'business_id', 'name', 'created_at')->orderBy('id', 'DESC')->get();
-            $departments = [];
-            foreach ($business_depts as $business_dept) {
-                $department = [
-                    'id' => $business_dept->id,
-                    'name' => $business_dept->name,
-                    'created_at' => $business_dept->created_at->format('d/m/y'),
-                ];
-                array_push($departments, $department);
-            }
-            if (count($departments) > 0) return api_response($request, $departments, 200, ['departments' => $departments]);
-            else  return api_response($request, null, 404);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        $business = $request->business;
+        $business_departments = BusinessDepartment::published()->where('business_id', $business->id)
+            ->select('id', 'business_id', 'name', 'created_at')
+            ->orderBy('id', 'DESC')
+            ->get();
+        $departments = [];
+        foreach ($business_departments as $business_department) {
+            $department = [
+                'id' => $business_department->id,
+                'name' => $business_department->name,
+                'created_at' => $business_department->created_at->format('d/m/y')
+            ];
+            array_push($departments, $department);
         }
+
+        if (count($departments) > 0) return api_response($request, $departments, 200, ['departments' => $departments]);
+        else return api_response($request, null, 404);
     }
 
     public function addBusinessRole($business, Request $request)
@@ -307,7 +303,7 @@ class CoWorkerController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

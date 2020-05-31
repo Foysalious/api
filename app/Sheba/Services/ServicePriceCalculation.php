@@ -112,6 +112,7 @@ class ServicePriceCalculation
             $service_data = [
                 'service_id' => $service->id,
                 'service_name' => $service->name,
+                'variable_type' => $service->variable_type,
                 'unit' => $service->unit,
                 'quantity' => $selected_service->getQuantity(),
                 'unit_price' => $unit_price,
