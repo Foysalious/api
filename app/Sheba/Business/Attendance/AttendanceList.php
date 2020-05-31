@@ -35,10 +35,16 @@ class AttendanceList
     /** @var BusinessMemberRepositoryInterface */
     private $businessMemberRepository;
     private $businessDepartmentId;
+    private $sort;
+    private $sortColumn;
     private $businessMemberId;
     private $status;
     /** @var BusinessDepartment[] */
     private $attendanceDepartments;
+
+    const CHECKIN_TIME = 'checkin_time';
+    const CHECKOUT_TIME = 'checkout_time';
+    const STAYING_TIME_IN_MINUTES = 'staying_time_in_minutes';
 
     public function __construct(EloquentImplementation $attend_repository,
                                 AttendanceRepositoryInterface $attendance_repository_interface,
@@ -93,6 +99,26 @@ class AttendanceList
     }
 
     /**
+     * @param $sort
+     * @return $this
+     */
+    public function setSortKey($sort)
+    {
+        $this->sort = $sort;
+        return $this;
+    }
+
+    /**
+     * @param $column
+     * @return $this
+     */
+    public function setSortColumn($column)
+    {
+        $this->sortColumn = $column;
+        return $this;
+    }
+
+    /**
      * @param $businessMemberId
      * @return AttendanceList
      */
@@ -124,7 +150,6 @@ class AttendanceList
 
     private function runAttendanceQueryV2()
     {
-        #dd($this->getStatus());
         $business_member_ids = [];
         if ($this->businessMemberId) $business_member_ids = [$this->businessMemberId];
         elseif ($this->business) $business_member_ids = $this->getBusinessMemberIds();
@@ -155,7 +180,20 @@ class AttendanceList
                 $q->whereIn('business_role_id', $role_ids);
             });
         }
-
+        if ($this->sort && $this->sortColumn) {
+            $sort_by = $this->sort === 'asc' ? 'ASC' : 'DESC';
+            if ($this->sortColumn == self::CHECKIN_TIME) {
+                $attendances = $attendances->orderByRaw("UNIX_TIMESTAMP(checkin_time) $sort_by");
+            }
+            if ($this->sortColumn == self::CHECKOUT_TIME) {
+                $attendances = $attendances->orderByRaw("UNIX_TIMESTAMP(checkout_time) $sort_by");
+            }
+            if ($this->sortColumn == self::STAYING_TIME_IN_MINUTES) {
+                $attendances = $attendances->orderByRaw("staying_time_in_minutes $sort_by");
+            }
+        } else {
+            $attendances = $attendances->orderByRaw('id desc');
+        }
         $this->attendances = $attendances->get();
     }
 
