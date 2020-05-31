@@ -320,6 +320,7 @@ class Partner extends Referrer implements ReferrerInterface
         }
         if ($request->has('step')) {
             $query = $query->where('ref.refer_level', (int)$request->step);
+            if((int)$request->step == 0) $query = $query->orWhere('ref.refer_level', null);
         }
         return $query;
     }
