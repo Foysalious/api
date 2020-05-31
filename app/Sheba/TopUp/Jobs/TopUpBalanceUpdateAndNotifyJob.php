@@ -12,6 +12,8 @@ class TopUpBalanceUpdateAndNotifyJob extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
 
+    const QUEUE_NAME = 'topup:high';
+
     /** @var TopUpGateway */
     protected $topUpGateway;
     protected $balance;
@@ -20,6 +22,8 @@ class TopUpBalanceUpdateAndNotifyJob extends Job implements ShouldQueue
     {
         $this->balance = $vendor->getBalance();
         $this->topUpGateway = $this->getGatewayModel($topup_order->gateway);
+        $this->connection = 'topup';
+        $this->queue = self::QUEUE_NAME;
     }
 
     public function handle()
