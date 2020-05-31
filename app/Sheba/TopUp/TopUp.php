@@ -73,9 +73,8 @@ class TopUp
             $this->updateFailedTopOrder($topup_order, $this->validator->getError());
         } else {
             $this->response = $this->vendor->recharge($topup_order);
-
             if ($this->response->hasSuccess()) {
-                dispatch((new TopUpBalanceUpdateAndNotifyJob($topup_order, $this->vendor)));
+                dispatch((new TopUpBalanceUpdateAndNotifyJob($topup_order)));
                 $response = $this->response->getSuccess();
                 DB::transaction(function () use ($response, $topup_order) {
                     $this->setModifier($this->agent);
