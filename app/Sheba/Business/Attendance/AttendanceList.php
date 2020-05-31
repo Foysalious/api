@@ -261,6 +261,7 @@ class AttendanceList
                 'check_out' => $checkout_data,
                 'active_hours' => $attendance->staying_time_in_minutes ? $this->formatMinute($attendance->staying_time_in_minutes) : null,
                 'is_absent' => $attendance->status == Statuses::ABSENT ? 1 : 0,
+                'is_on_leave' => 0,
                 'date' => $attendance->date,
             ]);
         }
@@ -297,6 +298,7 @@ class AttendanceList
                 'check_in' => null,
                 'check_out' => null,
                 'active_hours' => null,
+                'is_absent' => 0,
                 'is_on_leave' => 1,
                 'date' => null,
             ]);
