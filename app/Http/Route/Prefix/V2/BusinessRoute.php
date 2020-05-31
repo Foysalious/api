@@ -13,6 +13,7 @@ class BusinessRoute
         $api->group(['prefix' => 'businesses/tenders'], function ($api) {
             $api->get('/', 'B2b\ProcurementController@tenders');
             $api->get('filter-options', 'B2b\ProcurementController@filterOptions');
+            $api->get('/{tender}', 'B2b\ProcurementController@tenderShow');
         });
 
         $api->group(['prefix' => 'businesses', 'middleware' => ['business.auth']], function ($api) {

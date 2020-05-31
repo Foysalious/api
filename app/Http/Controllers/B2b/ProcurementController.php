@@ -12,6 +12,8 @@ use App\Models\Taggable;
 use App\Sheba\Bitly\BitlyLinkShort;
 use App\Sheba\Business\ACL\AccessControl;
 use App\Transformers\AttachmentTransformer;
+use App\Transformers\Business\LeaveTransformer;
+use App\Transformers\Business\TenderDetailsTransformer;
 use App\Transformers\Business\TenderTransformer;
 use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
@@ -226,7 +228,7 @@ class ProcurementController extends Controller
     {
         list($offset, $limit) = calculatePagination($request);
         $procurements = $this->procurementRepository->getProcurementFilterByLastDateOfSubmission();
-        #$procurements = $procurements->skip($offset)->limit($limit);
+        # $procurements = $procurements->skip($offset)->limit($limit);
         if ($request->has('tag')) $procurements = $this->procurementRepository->filterWithTag($request->tag);
         if ($request->has('category') && $request->category != 'all') $procurements = $this->procurementRepository->filterWithCategory($request->category);
         if ($request->has('shared_to')) $procurements = $this->procurementRepository->filterWithSharedTo($request->shared_to);
@@ -249,12 +251,34 @@ class ProcurementController extends Controller
             return $procurement;
         });
         $total_records = $procurements->count();
+
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
         $resource = new Collection($procurements, new TenderTransformer());
         $procurements = $manager->createData($resource)->toArray()['data'];
-        if ($request->has('sort')) $procurements = $this->procurementOrderBy($procurements, $request->sort)->values()->toArray();
+
+        if ($request->has('sort'))
+            $procurements = $this->procurementOrderBy($procurements, $request->sort)->values()->toArray();
+
         return api_response($request, null, 200, ['tenders' => $procurements, 'total_records' => $total_records]);
+    }
+
+    /**
+     * @param Request $request
+     * @param Procurement $tender
+     * @return JsonResponse
+     */
+    public function tenderShow(Request $request, $tender)
+    {
+        $procurement = $this->procurementRepository->find($tender);
+        if (!$procurement) return api_response($request, null, 404, ['message' => 'Tender not Found']);
+
+        $fractal = new Manager();
+        $fractal->setSerializer(new CustomSerializer());
+        $resource = new Item($procurement, new TenderDetailsTransformer());
+        $procurement = $fractal->createData($resource)->toArray()['data'];
+
+        return api_response($request, null, 200, ['tender' => $procurement]);
     }
 
     /**
