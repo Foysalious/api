@@ -10,8 +10,11 @@ use Sheba\Dal\Attendance\Contract as AttendanceRepositoryInterface;
 use Sheba\Dal\AttendanceActionLog\Actions;
 use Sheba\Dal\AttendanceActionLog\Contract as AttendanceActionLogRepositoryInterface;
 use Sheba\Dal\AttendanceActionLog\Model as AttendanceActionLog;
+use Sheba\Dal\Leave\Model as Leave;
+use Sheba\Dal\Leave\Contract as LeaveRepositoryInterface;
 use Sheba\Dal\Attendance\Model;
 use Sheba\Dal\Attendance\Statuses;
+use Sheba\Dal\Leave\Status;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 
 class AttendanceList
@@ -24,13 +27,13 @@ class AttendanceList
     private $endDate;
     /** @var Model[] */
     private $attendances;
-    /** @var EloquentImplementation */
-    private $attendRepository;
 
     /** @var AttendanceRepositoryInterface $attendanceRepositoryInterface */
     private $attendanceRepositoryInterface;
     /** @var AttendanceActionLogRepositoryInterface $attendanceActionLogRepositoryInterface */
     private $attendanceActionLogRepositoryInterface;
+    /** @var LeaveRepositoryInterface $leaveRepositoryInterface */
+    private $leaveRepositoryInterface;
 
     /** @var BusinessMemberRepositoryInterface */
     private $businessMemberRepository;
@@ -46,15 +49,15 @@ class AttendanceList
     const CHECKOUT_TIME = 'checkout_time';
     const STAYING_TIME = 'staying_time';
 
-    public function __construct(EloquentImplementation $attend_repository,
-                                AttendanceRepositoryInterface $attendance_repository_interface,
+    public function __construct(AttendanceRepositoryInterface $attendance_repository_interface,
                                 AttendanceActionLogRepositoryInterface $attendance_action_log_repository_interface,
-                                BusinessMemberRepositoryInterface $business_member_repository)
+                                BusinessMemberRepositoryInterface $business_member_repository,
+                                LeaveRepositoryInterface $leave_repository_interface)
     {
-        $this->attendRepository = $attend_repository;
         $this->attendanceRepositoryInterface = $attendance_repository_interface;
         $this->attendanceActionLogRepositoryInterface = $attendance_action_log_repository_interface;
         $this->businessMemberRepository = $business_member_repository;
+        $this->leaveRepositoryInterface = $leave_repository_interface;
         $this->attendanceDepartments = collect();
     }
 
@@ -147,13 +150,25 @@ class AttendanceList
         return $this->getDataV2();
     }
 
+    private function withMembers($query)
+    {
+        return $query->select('id', 'member_id', 'business_role_id')
+            ->with([
+                'member' => function ($q) {
+                    $q->select('id', 'profile_id')
+                        ->with([
+                            'profile' => function ($q) {
+                                $q->select('id', 'name');
+                            }]);
+                }]);
+    }
 
     private function runAttendanceQueryV2()
     {
         $business_member_ids = [];
         if ($this->businessMemberId) $business_member_ids = [$this->businessMemberId];
         elseif ($this->business) $business_member_ids = $this->getBusinessMemberIds();
-        $attendances = $this->attendRepository->builder()
+        $attendances = $this->attendanceRepositoryInterface->builder()
             ->select('id', 'business_member_id', 'checkin_time', 'checkout_time', 'staying_time_in_minutes', 'status', 'date')
             ->whereIn('business_member_id', $business_member_ids)
             ->where('date', '>=', $this->startDate->toDateString())
@@ -163,15 +178,7 @@ class AttendanceList
                     $q->select('id', 'attendance_id', 'note', 'action', 'status', 'is_remote', 'location', 'created_at');
                 },
                 'businessMember' => function ($q) {
-                    $q->select('id', 'member_id', 'business_role_id')
-                        ->with([
-                            'member' => function ($q) {
-                                $q->select('id', 'profile_id')
-                                    ->with([
-                                        'profile' => function ($q) {
-                                            $q->select('id', 'name');
-                                        }]);
-                            }]);
+                    $this->withMembers($q);
                 }]);
 
         if ($this->businessDepartmentId) {
@@ -197,49 +204,10 @@ class AttendanceList
         $this->attendances = $attendances->get();
     }
 
-    private function runAttendanceQueryV1()
-    {
-        $business_member_ids = [];
-        if ($this->businessMemberId) $business_member_ids = [$this->businessMemberId];
-        elseif ($this->business) $business_member_ids = $this->getBusinessMemberIds();
-        $attendances = $this->attendRepository->builder()
-            ->select('id', 'business_member_id', 'checkin_time', 'checkout_time', 'staying_time_in_minutes', 'status', 'date')
-            ->whereIn('business_member_id', $business_member_ids)
-            ->where('date', '>=', $this->startDate->toDateString())
-            ->where('date', '<=', $this->endDate->toDateString())
-            ->with(['actions' => function ($q) {
-                $q->select('id', 'attendance_id', 'note')->where('status', Statuses::LEFT_EARLY);
-            }, 'businessMember' => function ($q) {
-                $q->select('id', 'member_id', 'business_role_id')->with(['member' => function ($q) {
-                    $q->select('id', 'profile_id')->with(['profile' => function ($q) {
-                        $q->select('id', 'name');
-                    }]);
-                }]);
-            }])->whereIn('status', $this->getStatus());
-        if ($this->businessDepartmentId) {
-            $role_ids = $this->getBusinessRoleIds();
-            $attendances = $attendances->whereHas('businessMember', function ($q) use ($role_ids) {
-                $q->whereIn('business_role_id', $role_ids);
-            });
-        }
-
-        $this->attendances = $attendances->get();
-    }
-
     private function getBusinessMemberIds()
     {
         return $this->businessMemberRepository->where('business_id', $this->business->id)->pluck('id')->toArray();
     }
-
-    /**
-     * @return array
-     */
-    private function getStatusV1()
-    {
-        if ($this->status) return [$this->status];
-        return Statuses::get();
-    }
-
 
     /**
      * @return array|null
@@ -292,11 +260,101 @@ class AttendanceList
                 'check_in' => $checkin_data,
                 'check_out' => $checkout_data,
                 'active_hours' => $attendance->staying_time_in_minutes ? $this->formatMinute($attendance->staying_time_in_minutes) : null,
-                #'status' => $attendance->status,
+                'is_absent' => $attendance->status == Statuses::ABSENT ? 1 : 0,
                 'date' => $attendance->date,
             ]);
         }
+        $business_member_in_leave = $this->getBusinessMemberWhoAreOnLeave();
+        return $data + $business_member_in_leave;
+    }
+
+    private function getBusinessMemberWhoAreOnLeave()
+    {
+        $business_member_ids = [];
+        if ($this->businessMemberId) $business_member_ids = [$this->businessMemberId];
+        elseif ($this->business) $business_member_ids = $this->getBusinessMemberIds();
+        $leaves = $this->leaveRepositoryInterface->builder()
+            ->select('id', 'business_member_id', 'end_date', 'status')
+            ->whereIn('business_member_id', $business_member_ids)
+            ->where('status', Status::ACCEPTED)
+            ->where('end_date', '>=', Carbon::today())
+            ->with([
+                'businessMember' => function ($q) {
+                    $this->withMembers($q);
+                }])->get();
+        $data = [];
+        foreach ($leaves as $leave) {
+            array_push($data, [
+                'id' => $leave->id,
+                'member' => [
+                    'id' => $leave->businessMember->member->id,
+                    'name' => $leave->businessMember->member->profile->name
+                ],
+                'department' => $leave->businessMember->role ? [
+                    'id' => $leave->businessMember->role->business_department_id,
+                    'name' => $this->attendanceDepartments->where('id', $leave->businessMember->role->business_department_id)->first()->name
+                ] : null,
+                'check_in' => null,
+                'check_out' => null,
+                'active_hours' => null,
+                'is_on_leave' => 1,
+                'date' => null,
+            ]);
+        }
         return $data;
+    }
+
+    private function setDepartments()
+    {
+        $roles = $this->attendances->pluck('businessMember.business_role_id');
+        if (count($roles) == 0) return;
+        $department_ids = BusinessRole::whereIn('id', $roles->toArray())->select('id', 'business_department_id')->get()->pluck('business_department_id')->toArray();
+        $this->setAttendanceDepartments(BusinessDepartment::whereIn('id', $department_ids)->select('id', 'name')->get());
+    }
+
+    private function setAttendanceDepartments($departments)
+    {
+        $this->attendanceDepartments = $departments;
+        return $this;
+    }
+
+    private function formatMinute($minute)
+    {
+        if ($minute < 60) return "$minute min";
+        $hour = $minute / 60;
+        $intval_hr = intval($hour);
+        $text = "$intval_hr hr ";
+        if ($hour > $intval_hr) $text .= ($minute - (60 * intval($hour))) . " min";
+        return $text;
+    }
+
+    private function runAttendanceQueryV1()
+    {
+        $business_member_ids = [];
+        if ($this->businessMemberId) $business_member_ids = [$this->businessMemberId];
+        elseif ($this->business) $business_member_ids = $this->getBusinessMemberIds();
+        $attendances = $this->attendanceRepositoryInterface->builder()
+            ->select('id', 'business_member_id', 'checkin_time', 'checkout_time', 'staying_time_in_minutes', 'status', 'date')
+            ->whereIn('business_member_id', $business_member_ids)
+            ->where('date', '>=', $this->startDate->toDateString())
+            ->where('date', '<=', $this->endDate->toDateString())
+            ->with(['actions' => function ($q) {
+                $q->select('id', 'attendance_id', 'note')->where('status', Statuses::LEFT_EARLY);
+            }, 'businessMember' => function ($q) {
+                $q->select('id', 'member_id', 'business_role_id')->with(['member' => function ($q) {
+                    $q->select('id', 'profile_id')->with(['profile' => function ($q) {
+                        $q->select('id', 'name');
+                    }]);
+                }]);
+            }])->whereIn('status', $this->getStatus());
+        if ($this->businessDepartmentId) {
+            $role_ids = $this->getBusinessRoleIds();
+            $attendances = $attendances->whereHas('businessMember', function ($q) use ($role_ids) {
+                $q->whereIn('business_role_id', $role_ids);
+            });
+        }
+
+        $this->attendances = $attendances->get();
     }
 
     private function getDataV1()
@@ -331,27 +389,12 @@ class AttendanceList
         return $data;
     }
 
-    private function setDepartments()
+    /**
+     * @return array
+     */
+    private function getStatusV1()
     {
-        $roles = $this->attendances->pluck('businessMember.business_role_id');
-        if (count($roles) == 0) return;
-        $department_ids = BusinessRole::whereIn('id', $roles->toArray())->select('id', 'business_department_id')->get()->pluck('business_department_id')->toArray();
-        $this->setAttendanceDepartments(BusinessDepartment::whereIn('id', $department_ids)->select('id', 'name')->get());
-    }
-
-    private function setAttendanceDepartments($departments)
-    {
-        $this->attendanceDepartments = $departments;
-        return $this;
-    }
-
-    private function formatMinute($minute)
-    {
-        if ($minute < 60) return "$minute min";
-        $hour = $minute / 60;
-        $intval_hr = intval($hour);
-        $text = "$intval_hr hr ";
-        if ($hour > $intval_hr) $text .= ($minute - (60 * intval($hour))) . " min";
-        return $text;
+        if ($this->status) return [$this->status];
+        return Statuses::get();
     }
 }
