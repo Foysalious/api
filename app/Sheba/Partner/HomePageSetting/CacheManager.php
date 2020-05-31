@@ -33,7 +33,7 @@ class CacheManager
 
     private function generateName()
     {
-        if(empty($version))
+        if(empty($this->version))
             $this->cacheName = sprintf("%s::%d", $this->redisNameSpace, $this->partner->id);
         else
             $this->cacheName = sprintf("%s::%d::%d", $this->redisNameSpace, $this->partner->id,$this->version);
