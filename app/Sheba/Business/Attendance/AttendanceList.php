@@ -221,11 +221,11 @@ class AttendanceList
         $data = [];
         $this->setDepartments();
         foreach ($this->attendances as $attendance) {
-            $checkin_data = [];
-            $checkout_data = [];
+            $checkin_data = collect();
+            $checkout_data = collect();
             foreach ($attendance->actions as $action) {
                 if ($action->action == Actions::CHECKIN) {
-                    array_push($checkin_data, [
+                    $checkin_data->push([
                         'status' => $action->status,
                         'is_remote' => $action->is_remote,
                         'address' => $action->is_remote ? json_decode($action->location)->address : null,
@@ -233,7 +233,7 @@ class AttendanceList
                     ]);
                 }
                 if ($action->action == Actions::CHECKOUT) {
-                    array_push($checkout_data, [
+                    $checkout_data->push([
                         'status' => $action->status,
                         'note' => $action->note,
                         'is_remote' => $action->is_remote,
@@ -252,8 +252,8 @@ class AttendanceList
                     'id' => $attendance->businessMember->role->business_department_id,
                     'name' => $this->attendanceDepartments->where('id', $attendance->businessMember->role->business_department_id)->first()->name
                 ] : null,
-                'check_in' => $checkin_data,
-                'check_out' => $checkout_data,
+                'check_in' => $checkin_data->first(),
+                'check_out' => $checkout_data->first(),
                 'active_hours' => $attendance->staying_time_in_minutes ? $this->formatMinute($attendance->staying_time_in_minutes) : null,
                 #'status' => $attendance->status,
                 'date' => $attendance->date,
