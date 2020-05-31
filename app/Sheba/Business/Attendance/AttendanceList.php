@@ -44,7 +44,7 @@ class AttendanceList
 
     const CHECKIN_TIME = 'checkin_time';
     const CHECKOUT_TIME = 'checkout_time';
-    const STAYING_TIME_IN_MINUTES = 'staying_time_in_minutes';
+    const STAYING_TIME = 'staying_time';
 
     public function __construct(EloquentImplementation $attend_repository,
                                 AttendanceRepositoryInterface $attendance_repository_interface,
@@ -188,7 +188,7 @@ class AttendanceList
             if ($this->sortColumn == self::CHECKOUT_TIME) {
                 $attendances = $attendances->orderByRaw("UNIX_TIMESTAMP(checkout_time) $sort_by");
             }
-            if ($this->sortColumn == self::STAYING_TIME_IN_MINUTES) {
+            if ($this->sortColumn == self::STAYING_TIME) {
                 $attendances = $attendances->orderByRaw("staying_time_in_minutes $sort_by");
             }
         } else {
