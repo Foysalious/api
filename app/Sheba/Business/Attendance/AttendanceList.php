@@ -221,22 +221,21 @@ class AttendanceList
         $data = [];
         $this->setDepartments();
         foreach ($this->attendances as $attendance) {
-            $checkin_data = collect();
-            $checkout_data = collect();
+            $checkin_data = $checkout_data = null;
             foreach ($attendance->actions as $action) {
                 if ($action->action == Actions::CHECKIN) {
-                    $checkin_data->push([
+                    $checkin_data = collect([
                         'status' => $action->status,
-                        'is_remote' => $action->is_remote,
+                        'is_remote' => $action->is_remote ?: 0,
                         'address' => $action->is_remote ? json_decode($action->location)->address : null,
                         'checkin_time' => Carbon::parse($attendance->date . ' ' . $attendance->checkin_time)->format('g:i a'),
                     ]);
                 }
                 if ($action->action == Actions::CHECKOUT) {
-                    $checkout_data->push([
+                    $checkout_data = collect([
                         'status' => $action->status,
                         'note' => $action->note,
-                        'is_remote' => $action->is_remote,
+                        'is_remote' => $action->is_remote ?: 0,
                         'address' => $action->is_remote ? json_decode($action->location)->address : null,
                         'checkout_time' => $attendance->checkout_time ? Carbon::parse($attendance->date . ' ' . $attendance->checkout_time)->format('g:i a') : null,
                     ]);
@@ -252,8 +251,8 @@ class AttendanceList
                     'id' => $attendance->businessMember->role->business_department_id,
                     'name' => $this->attendanceDepartments->where('id', $attendance->businessMember->role->business_department_id)->first()->name
                 ] : null,
-                'check_in' => $checkin_data->first(),
-                'check_out' => $checkout_data->first(),
+                'check_in' => $checkin_data,
+                'check_out' => $checkout_data,
                 'active_hours' => $attendance->staying_time_in_minutes ? $this->formatMinute($attendance->staying_time_in_minutes) : null,
                 #'status' => $attendance->status,
                 'date' => $attendance->date,
