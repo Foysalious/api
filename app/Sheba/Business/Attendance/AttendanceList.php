@@ -6,6 +6,10 @@ use App\Models\BusinessRole;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Sheba\Dal\Attendance\EloquentImplementation;
+use Sheba\Dal\Attendance\Contract as AttendanceRepositoryInterface;
+use Sheba\Dal\AttendanceActionLog\Actions;
+use Sheba\Dal\AttendanceActionLog\Contract as AttendanceActionLogRepositoryInterface;
+use Sheba\Dal\AttendanceActionLog\Model as AttendanceActionLog;
 use Sheba\Dal\Attendance\Model;
 use Sheba\Dal\Attendance\Statuses;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
@@ -22,6 +26,12 @@ class AttendanceList
     private $attendances;
     /** @var EloquentImplementation */
     private $attendRepository;
+
+    /** @var AttendanceRepositoryInterface $attendanceRepositoryInterface */
+    private $attendanceRepositoryInterface;
+    /** @var AttendanceActionLogRepositoryInterface $attendanceActionLogRepositoryInterface */
+    private $attendanceActionLogRepositoryInterface;
+
     /** @var BusinessMemberRepositoryInterface */
     private $businessMemberRepository;
     private $businessDepartmentId;
@@ -30,9 +40,14 @@ class AttendanceList
     /** @var BusinessDepartment[] */
     private $attendanceDepartments;
 
-    public function __construct(EloquentImplementation $attend_repository, BusinessMemberRepositoryInterface $business_member_repository)
+    public function __construct(EloquentImplementation $attend_repository,
+                                AttendanceRepositoryInterface $attendance_repository_interface,
+                                AttendanceActionLogRepositoryInterface $attendance_action_log_repository_interface,
+                                BusinessMemberRepositoryInterface $business_member_repository)
     {
         $this->attendRepository = $attend_repository;
+        $this->attendanceRepositoryInterface = $attendance_repository_interface;
+        $this->attendanceActionLogRepositoryInterface = $attendance_action_log_repository_interface;
         $this->businessMemberRepository = $business_member_repository;
         $this->attendanceDepartments = collect();
     }
@@ -102,11 +117,49 @@ class AttendanceList
      */
     public function get()
     {
-        $this->runAttendanceQuery();
-        return $this->getData();
+        $this->runAttendanceQueryV2();
+        return $this->getDataV2();
     }
 
-    private function runAttendanceQuery()
+
+    private function runAttendanceQueryV2()
+    {
+        #dd($this->getStatus());
+        $business_member_ids = [];
+        if ($this->businessMemberId) $business_member_ids = [$this->businessMemberId];
+        elseif ($this->business) $business_member_ids = $this->getBusinessMemberIds();
+        $attendances = $this->attendRepository->builder()
+            ->select('id', 'business_member_id', 'checkin_time', 'checkout_time', 'staying_time_in_minutes', 'status', 'date')
+            ->whereIn('business_member_id', $business_member_ids)
+            ->where('date', '>=', $this->startDate->toDateString())
+            ->where('date', '<=', $this->endDate->toDateString())
+            ->with([
+                'actions' => function ($q) {
+                    $q->select('id', 'attendance_id', 'note', 'action', 'status', 'is_remote', 'location', 'created_at');
+                },
+                'businessMember' => function ($q) {
+                    $q->select('id', 'member_id', 'business_role_id')
+                        ->with([
+                            'member' => function ($q) {
+                                $q->select('id', 'profile_id')
+                                    ->with([
+                                        'profile' => function ($q) {
+                                            $q->select('id', 'name');
+                                        }]);
+                            }]);
+                }]);
+
+        if ($this->businessDepartmentId) {
+            $role_ids = $this->getBusinessRoleIds();
+            $attendances = $attendances->whereHas('businessMember', function ($q) use ($role_ids) {
+                $q->whereIn('business_role_id', $role_ids);
+            });
+        }
+
+        $this->attendances = $attendances->get();
+    }
+
+    private function runAttendanceQueryV1()
     {
         $business_member_ids = [];
         if ($this->businessMemberId) $business_member_ids = [$this->businessMemberId];
@@ -131,18 +184,19 @@ class AttendanceList
                 $q->whereIn('business_role_id', $role_ids);
             });
         }
+
         $this->attendances = $attendances->get();
     }
 
     private function getBusinessMemberIds()
     {
-        return $this->businessMemberRepository->where('business_id', $this->business->id)->select('id')->get()->pluck('id')->toArray();
+        return $this->businessMemberRepository->where('business_id', $this->business->id)->pluck('id')->toArray();
     }
 
     /**
      * @return array
      */
-    private function getStatus()
+    private function getStatusV1()
     {
         if ($this->status) return [$this->status];
         return Statuses::get();
@@ -161,7 +215,54 @@ class AttendanceList
         return count($role_ids) > 0 ? $role_ids->pluck('id')->toArray() : [];
     }
 
-    private function getData()
+    private function getDataV2()
+    {
+        if (count($this->attendances) == 0) return [];
+        $data = [];
+        $this->setDepartments();
+        foreach ($this->attendances as $attendance) {
+            $checkin_data = [];
+            $checkout_data = [];
+            foreach ($attendance->actions as $action) {
+                if ($action->action == Actions::CHECKIN) {
+                    array_push($checkin_data, [
+                        'status' => $action->status,
+                        'is_remote' => $action->is_remote,
+                        'address' => $action->is_remote ? json_decode($action->location)->address : null,
+                        'checkin_time' => Carbon::parse($attendance->date . ' ' . $attendance->checkin_time)->format('g:i a'),
+                    ]);
+                }
+                if ($action->action == Actions::CHECKOUT) {
+                    array_push($checkout_data, [
+                        'status' => $action->status,
+                        'note' => $action->note,
+                        'is_remote' => $action->is_remote,
+                        'address' => $action->is_remote ? json_decode($action->location)->address : null,
+                        'checkout_time' => $attendance->checkout_time ? Carbon::parse($attendance->date . ' ' . $attendance->checkout_time)->format('g:i a') : null,
+                    ]);
+                }
+            }
+            array_push($data, [
+                'id' => $attendance->id,
+                'member' => [
+                    'id' => $attendance->businessMember->member->id,
+                    'name' => $attendance->businessMember->member->profile->name
+                ],
+                'department' => $attendance->businessMember->role ? [
+                    'id' => $attendance->businessMember->role->business_department_id,
+                    'name' => $this->attendanceDepartments->where('id', $attendance->businessMember->role->business_department_id)->first()->name
+                ] : null,
+                'check_in' => $checkin_data,
+                'check_out' => $checkout_data,
+                'active_hours' => $attendance->staying_time_in_minutes ? $this->formatMinute($attendance->staying_time_in_minutes) : null,
+                #'status' => $attendance->status,
+                'date' => $attendance->date,
+            ]);
+        }
+        return $data;
+    }
+
+    private function getDataV1()
     {
         if (count($this->attendances) == 0) return [];
         $data = [];
