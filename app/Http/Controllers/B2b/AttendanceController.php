@@ -29,7 +29,7 @@ class AttendanceController extends Controller
         ]);
         $date = $request->has('date') ? Carbon::parse($request->date) : Carbon::now();
         $attendances = $stat->setBusiness($request->business)->setStartDate($date)->setEndDate($date)
-            ->setBusinessDepartment($request->department_id)->setStatus($request->status)->get();
+            ->setBusinessDepartment($request->department_id)->setStatus($request->status)->setSortKey($request->sort)->setSortColumn($request->sort_column)->get();
         $count = count($attendances);
         if ($count == 0) return api_response($request, null, 404);
         return api_response($request, null, 200, ['attendances' => $attendances, 'total' => $count]);
