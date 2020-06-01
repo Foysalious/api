@@ -76,7 +76,7 @@ class AttendanceTransformer extends TransformerAbstract
 
             /** @var Attendance $attendance */
             $attendance = $attendances->where('date', $date->toDateString())->first();
-            if ($attendance && $this->isNotAbsent($attendance)) {
+            if ($this->hasAttendanceButNotAbsent($attendance)) {
                 $attendance_checkin_action = $attendance->checkinAction();
                 $attendance_checkout_action = $attendance->checkoutAction();
 
@@ -195,22 +195,22 @@ class AttendanceTransformer extends TransformerAbstract
     }
 
     /**
-     * @param Attendance $attendance
+     * @param Attendance $attendance | null
      * @param $is_weekend_or_holiday_or_leave
      * @param Carbon $date
      * @return bool
      */
-    private function isAbsent(Attendance $attendance, $is_weekend_or_holiday_or_leave, Carbon $date)
+    private function isAbsent($attendance, $is_weekend_or_holiday_or_leave, Carbon $date)
     {
         return ($attendance && $attendance->status == Statuses::ABSENT) || (!$attendance && !$is_weekend_or_holiday_or_leave && !$date->eq(Carbon::today()));
     }
 
     /**
-     * @param Attendance $attendance
+     * @param Attendance $attendance | null
      * @return bool
      */
-    private function isNotAbsent(Attendance $attendance)
+    private function hasAttendanceButNotAbsent($attendance)
     {
-        return !($attendance->status == Statuses::ABSENT);
+        return $attendance && !($attendance->status == Statuses::ABSENT);
     }
 }
