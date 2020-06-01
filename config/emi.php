@@ -14,7 +14,7 @@ return [
     |
     */
 
-    'minimum_emi_amount' => env('MINIMUM_EMI_AMOUNT', 5000),
+    'minimum_emi_amount' => (double)env('MINIMUM_EMI_AMOUNT', 5000),
 
     /*
     |--------------------------------------------------------------------------
@@ -23,7 +23,7 @@ return [
     |
     */
 
-    'bank_fee_percentage' => env('BANK_FEE_PERCENTAGE', 2.5),
+    'bank_fee_percentage' => (double)env('BANK_FEE_PERCENTAGE', 2.5),
 
     'valid_months' => [3, 6, 9, 12, 18],
 
@@ -31,8 +31,8 @@ return [
      * EMI CONFIGURATION FOR MANAGER
      */
     'manager'      => [
-        'minimum_emi_amount'  => env('MANAGER_MINIMUM_EMI_AMOUNT', 5000),
-        'bank_fee_percentage' => env('MANAGER_BANK_FEE_PERCENTAGE', 2.5),
+        'minimum_emi_amount'  => (double)env('MANAGER_MINIMUM_EMI_AMOUNT', 5000),
+        'bank_fee_percentage' => (double)env('MANAGER_BANK_FEE_PERCENTAGE', 2.5),
         'breakdowns'          => $breakdowns,
         'valid_months'        => array_map(function ($item) { return $item['month']; }, $breakdowns)
     ]
