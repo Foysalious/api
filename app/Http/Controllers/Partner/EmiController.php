@@ -10,7 +10,7 @@ class EmiController extends Controller {
     }
 
     public function index(Request $request) {
-        $minimum_amount = config('emi.manager.minimum_emi_amount');
+        $minimum_amount = (double)config('emi.manager.minimum_emi_amount');
         $emi_home       = array(
             array(
                 'tag'          => 'emi_benefits',
