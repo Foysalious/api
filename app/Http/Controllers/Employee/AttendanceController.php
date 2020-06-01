@@ -68,48 +68,36 @@ class AttendanceController extends Controller
      */
     public function takeAction(Request $request, AttendanceAction $attendance_action, ActionProcessor $action_processor)
     {
-        try {
-            $validation_data = [
-                'action' => 'required|string|in:' . implode(',', Actions::get()),
-                'device_id' => 'string',
-                'user_agent' => 'string'
-            ];
+        $validation_data = [
+            'action' => 'required|string|in:' . implode(',', Actions::get()),
+            'device_id' => 'string',
+            'user_agent' => 'string'
+        ];
 
-            $business_member = $this->getBusinessMember($request);
-            $business = $this->getBusiness($request);
-            if (!$business_member) return api_response($request, null, 404);
+        $business_member = $this->getBusinessMember($request);
+        $business = $this->getBusiness($request);
+        if (!$business_member) return api_response($request, null, 404);
 
-            $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
-            if ($request->action == Actions::CHECKOUT && $checkout->isNoteRequired()) {
-                $validation_data += ['note' => 'string|required_if:action,' . Actions::CHECKOUT];
-            }
-            if ($business->isRemoteAttendanceEnable()) {
-                $validation_data += ['lat' => 'required|numeric', 'lng' => 'required|numeric'];
-            }
-            $this->validate($request, $validation_data);
-            $this->setModifier($business_member->member);
-
-            $attendance_action->setBusinessMember($business_member)
-                ->setAction($request->action)
-                ->setBusiness($business_member->business)
-                ->setNote($request->note)
-                ->setDeviceId($request->device_id)
-                ->setLat($request->lat)
-                ->setLng($request->lng);
-            /** @var ActionChecker $action */
-            $action = $attendance_action->doAction();
-            return response()->json(['code' => $action->getResultCode(), 'message' => $action->getResultMessage()]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500, ['message' => 'Something went wrong. Please try again!']);
+        $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
+        if ($request->action == Actions::CHECKOUT && $checkout->isNoteRequired()) {
+            $validation_data += ['note' => 'string|required_if:action,' . Actions::CHECKOUT];
         }
+        if ($business->isRemoteAttendanceEnable()) {
+            $validation_data += ['lat' => 'required|numeric', 'lng' => 'required|numeric'];
+        }
+        $this->validate($request, $validation_data);
+        $this->setModifier($business_member->member);
 
+        $attendance_action->setBusinessMember($business_member)
+            ->setAction($request->action)
+            ->setBusiness($business_member->business)
+            ->setNote($request->note)
+            ->setDeviceId($request->device_id)
+            ->setLat($request->lat)
+            ->setLng($request->lng);
+        $action = $attendance_action->doAction();
+
+        return response()->json(['code' => $action->getResultCode(), 'message' => $action->getResultMessage()]);
     }
 
     /**
