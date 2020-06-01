@@ -205,7 +205,7 @@ class CustomerOrderController extends Controller
             'contact_number' => $show_expert ? ($job->resource ? $job->resource->profile->mobile : null) : ($partnerOrder->partner ? $partnerOrder->partner->getManagerMobile() : null),
             'contact_person' => $show_expert ? 'expert' : 'partner',
             'rating' => $job->review != null ? $job->review->rating : null,
-            'price' => (double)$partnerOrder->getCustomerPayable(),
+            'price' => $partnerOrder->getCustomerPayable(),
             'order_code' => $partnerOrder->order->code(),
             'created_at' => $partnerOrder->created_at->format('Y-m-d'),
             'created_at_timestamp' => $partnerOrder->created_at->timestamp,
