@@ -20,6 +20,10 @@ class FavoriteService extends Orderable
 
     public function canOrder()
     {
-     dd($this->favoriteServices);
+        foreach ($this->favoriteServices as $service) {
+            if (!$service->isMarketPlacePublished()) return 0;
+            if ($service->variable_type != $service->pivot->variable_type) return 0;
+        }
+        return 1;
     }
 }

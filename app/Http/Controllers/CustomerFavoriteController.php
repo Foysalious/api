@@ -38,21 +38,19 @@ class CustomerFavoriteController extends Controller
         ]);
         $customer = $request->customer;
         list($offset, $limit) = calculatePagination($request);
-
+        if (!$this->location) $this->location = 4;
         $customer->load([
             'favorites' => function ($q) use ($offset, $limit) {
-                if ($this->location) {
-                    $q->whereHas('services', function ($q) {
-                        $q->whereHas('locations', function ($q) {
-                            $q->where('locations.id', $this->location);
-                        });
+                $q->whereHas('services', function ($q) {
+                    $q->published()->whereHas('locations', function ($q) {
+                        $q->where('locations.id', $this->location);
                     });
-                    $q->whereHas('category', function ($q) {
-                        $q->whereHas('locations', function ($q) {
-                            $q->where('locations.id', $this->location);
-                        });
+                });
+                $q->whereHas('category', function ($q) {
+                    $q->published()->whereHas('locations', function ($q) {
+                        $q->where('locations.id', $this->location);
                     });
-                }
+                });
                 $q->with([
                     'job', 'services', 'partner' => function ($q) {
                         $q->select('id', 'name', 'logo');
@@ -67,7 +65,7 @@ class CustomerFavoriteController extends Controller
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
 
-        $favorites = $customer->favorites->each(function (&$favorite, $key) use ($manager,$favoriteService, $price_calculation, $delivery_charge, $job_discount_handler, $upsell_calculation, $service_transformer) {
+        $favorites = $customer->favorites->each(function (&$favorite, $key) use ($manager, $favoriteService, $price_calculation, $delivery_charge, $job_discount_handler, $upsell_calculation, $service_transformer) {
             $services = [];
             $favorite['category_name'] = $favorite->category->name;
             $favorite['category_slug'] = $favorite->category->slug;
@@ -75,7 +73,6 @@ class CustomerFavoriteController extends Controller
             $favorite['min_order_amount'] = $favorite->category->min_order_amount;
             $favorite['icon_color'] = isset(config('sheba.category_colors')[$favorite->category->parent->id]) ? config('sheba.category_colors')[$favorite->category->parent->id] : null;
             $favorite['rating'] = $favorite->job->review ? $favorite->job->review->rating : 0.00;
-            $favorite['is_same_service'] = 0;
             $favorite['is_vat_applicable'] = $favorite->category ? $favorite->category['is_vat_applicable'] : null;
             $favorite['max_order_amount'] = $favorite->category ? (double)$favorite->category['max_order_amount'] : null;
             $location_services = LocationService::where('location_id', $this->location)
@@ -111,13 +108,13 @@ class CustomerFavoriteController extends Controller
                 $service_data_with_price_and_discount = $pivot->toArray() + $price_data;
 
                 array_push($services, $service_data_with_price_and_discount);
-            });
-            $favoriteService->setFavoriteServices($favorite->services)->canOrder();
+            });;
             $partner = $favorite->partner;
             $favorite['total_price'] = $favorite->total_price;
             $favorite['partner_id'] = $partner ? $partner->id : null;
             $favorite['partner_name'] = $partner ? $partner->name : null;
             $favorite['partner_logo'] = $partner ? $partner->logo : null;
+            $favorite['is_same_service'] = $favoriteService->setFavoriteServices($favorite->services)->canOrder();
 
             $resource = new Item($favorite->category,
                 new ServiceV2DeliveryChargeTransformer($delivery_charge, $job_discount_handler, Location::find($this->location))
