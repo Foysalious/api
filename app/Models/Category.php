@@ -337,4 +337,9 @@ class Category extends Model
     {
         return $this->structured_contents ? json_decode($this->structured_contents) : null;
     }
+
+    public function isMarketPlacePublished()
+    {
+        return $this->publication_status;
+    }
 }
