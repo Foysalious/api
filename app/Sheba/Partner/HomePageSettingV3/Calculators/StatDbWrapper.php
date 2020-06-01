@@ -1,12 +1,12 @@
-<?php namespace Sheba\Partner\HomePageSetting\Calculators;
+<?php namespace Sheba\Partner\HomePageSettingV3\Calculators;
 
 use Exception;
-use Sheba\Partner\HomePageSetting\Setting;
+use Sheba\Partner\HomePageSettingV3\SettingV3;
 use Sheba\Repositories\PartnerRepository;
 
-class StatDbWrapper extends Setting
+class StatDbWrapper extends SettingV3
 {
-    public function __construct(Setting $next = null)
+    public function __construct(SettingV3 $next = null)
     {
         parent::__construct($next);
     }
