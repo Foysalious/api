@@ -29,38 +29,24 @@ class AttendanceController extends Controller
         ]);
         $date = $request->has('date') ? Carbon::parse($request->date) : Carbon::now();
         $attendances = $stat->setBusiness($request->business)->setStartDate($date)->setEndDate($date)
-            ->setBusinessDepartment($request->department_id)->setStatus($request->status)->setSortKey($request->sort)->setSortColumn($request->sort_column)->get();
+            ->setBusinessDepartment($request->department_id)->setStatus($request->status)->setSearch($request->search)
+            ->setCheckinStatus($request->checkin_status)->setCheckoutStatus($request->checkout_status)
+            ->setSortKey($request->sort)->setSortColumn($request->sort_column)->get();
         $count = count($attendances);
         if ($count == 0) return api_response($request, null, 404);
         return api_response($request, null, 200, ['attendances' => $attendances, 'total' => $count]);
     }
 
-    public function getMonthlyStats($business, Request $request, AttendanceRepoInterface $attendance_repo, TimeFrame $time_frame, BusinessHolidayRepoInterface $business_holiday_repo,
+    public function getMonthlyStats($business, Request $request, AttendanceRepoInterface $attendance_repo,
+                                    TimeFrame $time_frame, BusinessHolidayRepoInterface $business_holiday_repo,
                                     BusinessWeekendRepoInterface $business_weekend_repo, Excel $monthly_excel)
     {
         try {
             $this->validate($request, ['file' => 'string|in:excel']);
             list($offset, $limit) = calculatePagination($request);
             $business = Business::where('id', (int)$business)->select('id', 'name', 'phone', 'email', 'type')->first();
-            $members = $business->members()->select('members.id', 'profile_id')->with(['profile' => function ($q) {
-                $q->select('profiles.id', 'name', 'mobile', 'email');
-            }, 'businessMember' => function ($q) {
-                $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id')->with(['role' => function ($q) {
-                    $q->select('business_roles.id', 'business_department_id', 'name')->with(['businessDepartment' => function ($q) {
-                        $q->select('business_departments.id', 'business_id', 'name');
-                    }]);
-                }]);
-            }]);
-
-            if ($request->has('department_id')) {
-                $members = $members->whereHas('businessMember', function ($q) use ($request) {
-                    $q->whereHas('role', function ($q) use ($request) {
-                        $q->whereHas('businessDepartment', function ($q) use ($request) {
-                            $q->where('business_departments.id', $request->department_id);
-                        });
-                    });
-                });
-            }
+            $members = $attendance_repo->getAllMembers($business);
+            if ($request->has('department_id')) $members = $attendance_repo->filterWithDepartment($members);
             $members = $members->get();
             $total_members = $members->count();
             if ($request->has('limit')) $members = $members->splice($offset, $limit);
@@ -73,9 +59,9 @@ class AttendanceController extends Controller
 
             $business_holiday = $business_holiday_repo->getAllByBusiness($business);
             $business_weekend = $business_weekend_repo->getAllByBusiness($business);
-
             foreach ($members as $member) {
                 $member_name = $member->getIdentityAttribute();
+                /** @var BusinessMember $business_member */
                 $business_member = $member->businessMember;
                 $member_department = $business_member->department() ? $business_member->department() : null;
                 $department_name = $member_department ? $member_department->name : 'N/S';
@@ -85,7 +71,8 @@ class AttendanceController extends Controller
                 $business_member_leave = $business_member->leaves()->accepted()->startDateBetween($time_frame)->endDateBetween($time_frame)->get();
                 $time_frame->end = $this->isShowRunningMonthsAttendance($year, $month) ? Carbon::now() : $time_frame->end;
                 $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
-                $employee_attendance = (new MonthlyStat($time_frame, $business_holiday, $business_weekend, $business_member_leave,false))->transform($attendances);
+                $employee_attendance = (new MonthlyStat($time_frame, $business_holiday, $business_weekend, $business_member_leave, false))
+                    ->transform($attendances);
 
                 array_push($all_employee_attendance, [
                     'business_member_id' => $business_member->id,
@@ -145,7 +132,7 @@ class AttendanceController extends Controller
         $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
         $employee_attendance = (new MonthlyStat($time_frame, $business_holiday, $business_weekend, $business_member_leave))->transform($attendances);
         $daily_breakdowns = collect($employee_attendance['daily_breakdown']);
-        $daily_breakdowns = $daily_breakdowns->filter(function ($breakdown){
+        $daily_breakdowns = $daily_breakdowns->filter(function ($breakdown) {
             return Carbon::parse($breakdown['date'])->lessThanOrEqualTo(Carbon::today());
         });
 
