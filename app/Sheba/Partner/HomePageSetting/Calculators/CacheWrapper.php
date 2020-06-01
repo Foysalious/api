@@ -14,11 +14,11 @@ class CacheWrapper extends Setting
     {
         /** @var CacheManager $cache_manager */
         $cache_manager = new CacheManager();
-        $cache_manager->setVersion($this->version)->setPartner($this->partner);
+        $cache_manager->setPartner($this->partner);
         if ($cache_manager->has()) {
             return $cache_manager->get();
         } else {
-            $data =  $this->next->setVersion($this->version)->get();;
+            $data =  $this->next->get();;
             $cache_manager->store($data);
             return $data;
         }
