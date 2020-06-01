@@ -3,7 +3,10 @@
 use App\Models\Business;
 use App\Models\BusinessDepartment;
 use App\Models\BusinessRole;
+use App\Models\Member;
+use App\Models\Profile;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Sheba\Dal\Attendance\EloquentImplementation;
 use Sheba\Dal\Attendance\Contract as AttendanceRepositoryInterface;
@@ -40,8 +43,11 @@ class AttendanceList
     private $businessDepartmentId;
     private $sort;
     private $sortColumn;
-    private $businessMemberId;
+    private $search;
+    private $checkinStatus;
+    private $checkoutStatus;
     private $status;
+    private $businessMemberId;
     /** @var BusinessDepartment[] */
     private $attendanceDepartments;
 
@@ -142,6 +148,36 @@ class AttendanceList
     }
 
     /**
+     * @param $search
+     * @return $this
+     */
+    public function setSearch($search)
+    {
+        $this->search = $search;
+        return $this;
+    }
+
+    /**
+     * @param $checkin_status
+     * @return $this
+     */
+    public function setCheckinStatus($checkin_status)
+    {
+        $this->checkinStatus = $checkin_status;
+        return $this;
+    }
+
+    /**
+     * @param $checkout_status
+     * @return $this
+     */
+    public function setCheckoutStatus($checkout_status)
+    {
+        $this->checkoutStatus = $checkout_status;
+        return $this;
+    }
+
+    /**
      * @return array
      */
     public function get()
@@ -187,6 +223,19 @@ class AttendanceList
                 $q->whereIn('business_role_id', $role_ids);
             });
         }
+
+        if ($this->checkinStatus) {
+            $attendances = $attendances->whereHas('actions', function ($q) {
+                $q->where('status', $this->checkinStatus);
+            });
+        }
+
+        if ($this->checkoutStatus) {
+            $attendances = $attendances->whereHas('actions', function ($q) {
+                $q->where('status', $this->checkoutStatus);
+            });
+        }
+
         if ($this->sort && $this->sortColumn) {
             $sort_by = $this->sort === 'asc' ? 'ASC' : 'DESC';
             if ($this->sortColumn == self::CHECKIN_TIME) {
@@ -265,8 +314,21 @@ class AttendanceList
                 'date' => $attendance->date,
             ]);
         }
-        $business_member_in_leave = $this->getBusinessMemberWhoAreOnLeave();
-        return $data + $business_member_in_leave;
+        $business_member_in_leave = [];
+        if (!$this->checkinStatus && !$this->checkoutStatus) {
+            $business_member_in_leave = $this->getBusinessMemberWhoAreOnLeave();
+        }
+        $final_data = $data + $business_member_in_leave;
+
+        if ($this->search) $final_data = $this->searchWithEmployeeName($final_data);
+        return $final_data;
+    }
+
+    private function searchWithEmployeeName($final_data)
+    {
+        return array_where($final_data, function ($key, $value) {
+            return str_contains(strtoupper($value['member']['name']), strtoupper($this->search));
+        });
     }
 
     private function getBusinessMemberWhoAreOnLeave()
