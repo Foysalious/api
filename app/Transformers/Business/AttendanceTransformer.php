@@ -2,7 +2,6 @@
 
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
-use Illuminate\Support\Collection;
 use League\Fractal\TransformerAbstract;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\Attendance\Statuses;
@@ -16,6 +15,13 @@ class AttendanceTransformer extends TransformerAbstract
     private $businessWeekend;
     private $businessMemberLeave;
 
+    /**
+     * AttendanceTransformer constructor.
+     * @param TimeFrame $time_frame
+     * @param $business_holiday
+     * @param $business_weekend
+     * @param $business_member_leave
+     */
     public function __construct(TimeFrame $time_frame, $business_holiday, $business_weekend, $business_member_leave)
     {
         $this->timeFrame = $time_frame;
@@ -49,6 +55,7 @@ class AttendanceTransformer extends TransformerAbstract
             Statuses::LATE => 0,
             Statuses::LEFT_EARLY => 0,
             Statuses::ABSENT => 0,
+            Statuses::LEFT_TIMELY => 0,
             'on_leave' => 0
         ];
         $daily_breakdown = [];
@@ -69,18 +76,32 @@ class AttendanceTransformer extends TransformerAbstract
 
             /** @var Attendance $attendance */
             $attendance = $attendances->where('date', $date->toDateString())->first();
-            if ($attendance) {
+            if ($this->hasAttendanceButNotAbsent($attendance)) {
+                $attendance_checkin_action = $attendance->checkinAction();
+                $attendance_checkout_action = $attendance->checkoutAction();
+
                 $breakdown_data['show_attendance'] = 1;
                 $breakdown_data['attendance'] = [
                     'id' => $attendance->id,
-                    'checkin_time' => $attendance->checkin_time,
-                    'checkout_out' => $attendance->checkout_time,
-                    'status' => $is_weekend_or_holiday_or_leave ? null : $attendance->status,
+                    'check_in' => $attendance_checkin_action ? [
+                        'status'    => $attendance_checkin_action->status,
+                        'time'      => $attendance->checkin_time,
+                        'is_remote' => $attendance_checkin_action->is_remote ?: 0,
+                        'address'   => $attendance_checkin_action->is_remote ? json_decode($attendance_checkin_action->location)->address : null
+                    ] : null,
+                    'check_out' => $attendance_checkout_action ? [
+                        'status'    => $attendance_checkout_action->status,
+                        'time'      => $attendance->checkout_time,
+                        'is_remote' => $attendance_checkout_action->is_remote ?: 0,
+                        'address'   => $attendance_checkout_action->is_remote ? json_decode($attendance_checkout_action->location)->address : null
+                    ] : null,
                     'note' => $attendance->hasEarlyCheckout() ? $attendance->checkoutAction()->note : null
                 ];
-                $statistics[$attendance->status]++;
+
+                if ($attendance_checkin_action) $statistics[$attendance_checkin_action->status]++;
+                if ($attendance_checkout_action) $statistics[$attendance_checkout_action->status]++;
             }
-            if (!$attendance && !$is_weekend_or_holiday_or_leave && !$date->eq(Carbon::today())) {
+            if ($this->isAbsent($attendance, $is_weekend_or_holiday_or_leave, $date)) {
                 $breakdown_data['is_absent'] = 1;
                 $statistics[Statuses::ABSENT]++;
             }
@@ -136,11 +157,23 @@ class AttendanceTransformer extends TransformerAbstract
         return array_unique($business_member_leaves_date);
     }
 
+    /**
+     * @param Carbon $date
+     * @param array $leaves
+     * @return bool
+     */
     private function isLeave(Carbon $date, array $leaves)
     {
         return in_array($date->format('Y-m-d'), $leaves);
     }
 
+    /**
+     * @param $date
+     * @param $weekend_day
+     * @param $dates_of_holidays_formatted
+     * @param $leaves
+     * @return int
+     */
     private function isWeekendHolidayLeave($date, $weekend_day, $dates_of_holidays_formatted, $leaves)
     {
         return $this->isWeekend($date, $weekend_day)
@@ -149,9 +182,35 @@ class AttendanceTransformer extends TransformerAbstract
 
     }
 
+    /**
+     * @param $date
+     * @param $leaves
+     * @param $dates_of_holidays_formatted
+     * @return string
+     */
     private function isWeekendHolidayLeaveTag($date, $leaves, $dates_of_holidays_formatted)
     {
         return $this->isLeave($date, $leaves) ?
             'On Leave' : ($this->isHoliday($date, $dates_of_holidays_formatted) ? 'Holiday' : 'Weekend');
+    }
+
+    /**
+     * @param Attendance $attendance
+     * @param $is_weekend_or_holiday_or_leave
+     * @param Carbon $date
+     * @return bool
+     */
+    private function isAbsent(Attendance $attendance, $is_weekend_or_holiday_or_leave, Carbon $date)
+    {
+        return ($attendance && $attendance->status == Statuses::ABSENT) || !$attendance && !$is_weekend_or_holiday_or_leave && !$date->eq(Carbon::today());
+    }
+
+    /**
+     * @param Attendance $attendance
+     * @return bool
+     */
+    private function hasAttendanceButNotAbsent(Attendance $attendance)
+    {
+        return $attendance && !($attendance->status == Statuses::ABSENT);
     }
 }
