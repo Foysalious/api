@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use Carbon\Carbon;
 use Sheba\Business\Procurement\Type;
 use Sheba\Dal\ProcurementPaymentRequest\Model as ProcurementPaymentRequest;
 use Illuminate\Database\Eloquent\Model;
@@ -119,5 +120,17 @@ class Procurement extends Model implements PayableType
     public function billCode()
     {
         return $this->codeBuilder->bill($this);
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    public function getRemainingDays()
+    {
+        $today = Carbon::now();
+        if (!$this->last_date_of_submission->greaterThanOrEqualTo($today)) return 0;
+        return $this->last_date_of_submission->diffInDays($today) + 1;
     }
 }

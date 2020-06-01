@@ -275,7 +275,7 @@ class ProcurementController extends Controller
 
         $fractal = new Manager();
         $fractal->setSerializer(new CustomSerializer());
-        $resource = new Item($procurement, new TenderDetailsTransformer());
+        $resource = new Item($procurement, new TenderDetailsTransformer(true));
         $procurement = $fractal->createData($resource)->toArray()['data'];
 
         return api_response($request, null, 200, ['tender' => $procurement]);
@@ -311,7 +311,22 @@ class ProcurementController extends Controller
                 $company_evaluation = $procurement->items->where('type', 'company_evaluation')->first();
 
                 $procurement_details = [
-                    'id' => $procurement->id, 'title' => $procurement->title, 'status' => $procurement->status, 'long_description' => $procurement->long_description, 'labels' => $procurement->getTagNamesAttribute()->toArray(), 'start_date' => Carbon::parse($procurement->procurement_start_date)->format('d/m/y'), 'published_at' => $procurement->is_published ? Carbon::parse($procurement->published_at)->format('d/m/y') : null, 'end_date' => Carbon::parse($procurement->procurement_end_date)->format('d/m/y'), 'number_of_participants' => $procurement->number_of_participants, 'last_date_of_submission' => Carbon::parse($procurement->last_date_of_submission)->format('Y-m-d'), 'payment_options' => $procurement->payment_options, 'created_at' => Carbon::parse($procurement->created_at)->format('d/m/y'), 'price_quotation' => $price_quotation ? $price_quotation->fields ? $price_quotation->fields->toArray() : null : null, 'technical_evaluation' => $technical_evaluation ? $technical_evaluation->fields ? $technical_evaluation->fields->toArray() : null : null, 'company_evaluation' => $company_evaluation ? $company_evaluation->fields ? $company_evaluation->fields->toArray() : null : null, 'attachments' => $procurement->attachments->map(function (Attachment $attachment) {
+                    'id' => $procurement->id,
+                    'title' => $procurement->title,
+                    'status' => $procurement->status,
+                    'long_description' => $procurement->long_description,
+                    'labels' => $procurement->getTagNamesAttribute()->toArray(),
+                    'start_date' => Carbon::parse($procurement->procurement_start_date)->format('d/m/y'),
+                    'published_at' => $procurement->is_published ? Carbon::parse($procurement->published_at)->format('d/m/y') : null,
+                    'end_date' => Carbon::parse($procurement->procurement_end_date)->format('d/m/y'),
+                    'number_of_participants' => $procurement->number_of_participants,
+                    'last_date_of_submission' => Carbon::parse($procurement->last_date_of_submission)->format('Y-m-d'),
+                    'payment_options' => $procurement->payment_options,
+                    'created_at' => Carbon::parse($procurement->created_at)->format('d/m/y'),
+                    'price_quotation' => $price_quotation ? $price_quotation->fields ? $price_quotation->fields->toArray() : null : null,
+                    'technical_evaluation' => $technical_evaluation ? $technical_evaluation->fields ? $technical_evaluation->fields->toArray() : null : null,
+                    'company_evaluation' => $company_evaluation ? $company_evaluation->fields ? $company_evaluation->fields->toArray() : null : null,
+                    'attachments' => $procurement->attachments->map(function (Attachment $attachment) {
                         return (new AttachmentTransformer())->transform($attachment);
                     })->toArray()
                 ];
