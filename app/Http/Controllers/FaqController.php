@@ -38,7 +38,6 @@ class FaqController extends Controller
                     array('question_bn' => 'টপ-আপ কিভাবে কাজ করে?', 'answer_bn' => 'বন্ধুতে আপনি যেকোনো মোবাইল অপারেটরে টপ-আপ করার সুযোগ পাচ্ছেন সহজেই। আপনি আপনার বন্ধুর মোবাইলে টপ-আপ করার পাশাপাশি রবি, এয়ারটেল, বাংলালিংকে পাচ্ছেন ২.৫% বোনাস বন্ধু পয়েন্ট এবং গ্রামীণফোনে ১% বোনাস বন্ধু পয়েন্ট।', 'question_en' => 'How TOP-UP works?', 'answer_en' => 'You can do TopUP/mobile recharge using your Bondhu Point, you will get 2.5 % bonus for Robi, Airtel, Banglalink and 1% for Grameenphone in your Bondhu balance for every TopUP. '),),),
                 array('group_label_bn' => 'মুভি টিকেট এবং পরিবহন টিকেট কিভাবে কাজ করে?', 'group_label_en' => 'How movie & transport ticket works?', 'group_name' => 'moderator', 'questions' => array(
                     array('question_bn' => 'মুভি টিকেট এবং পরিবহন টিকেট কিভাবে কাজ করে?', 'answer_bn' => ' আপনি আপনার বন্ধু পয়েন্ট ব্যবহার করে আপনার নিজের জন্য অথবা আপনার বন্ধুর জন্য মুভি এবং পরিবহন টিকেট কিনে বন্ধু পয়েন্টে বোনাস পেতে পারেন।', 'question_en' => 'How movie & transport ticket works?', 'answer_en' => 'You can buy movie and transport ticket using your Bondhu Point, as well as you can earn bonus in your Bondhu Point balance.'),
-
                 )));
 
             return api_response($request, $faqs, 200, ['faqs' => $faqs]);
