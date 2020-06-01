@@ -1,7 +1,9 @@
 <?php namespace App\Transformers\Business;
 
+use App\Models\Attachment;
+use App\Models\Procurement;
+use App\Transformers\AttachmentTransformer;
 use League\Fractal\TransformerAbstract;
-use App\Models\Category;
 use Carbon\Carbon;
 
 class TenderDetailsTransformer extends TransformerAbstract
@@ -9,19 +11,26 @@ class TenderDetailsTransformer extends TransformerAbstract
     const ZERO = 0;
     const ONE = 1;
     const THRESHOLD = 5;
+    /** @var bool $isForDetails */
+    private $isForDetails;
+
+    public function __construct($is_for_details = false)
+    {
+        $this->isForDetails = $is_for_details;
+    }
 
     /**
-     * @param $procurement
+     * @param Procurement $procurement
      * @return array
      */
-    public function transform($procurement)
+    public function transform(Procurement $procurement)
     {
         $start_date = $procurement->procurement_start_date->format('d/m/y');
         $end_date = $procurement->procurement_end_date->format('d/m/y');
-        $category = $procurement->category_id ? Category::findOrFail($procurement->category_id) : null;
+        $category = $procurement->category ? $procurement->category : null;
         $number_of_bids = $procurement->bids()->count();
         $number_of_participants = $procurement->number_of_participants;
-        return [
+        $data = [
             'id' => $procurement->id,
             'title' => $procurement->title,
             'description' => $procurement->long_description,
@@ -46,34 +55,43 @@ class TenderDetailsTransformer extends TransformerAbstract
                 'name' => $category->name,
                 'icon' => config('sheba.s3_url') . 'business_assets/tender/icons/png/category.png',
             ] : null,
-            'remaining_days' => $this->getRemainingDays($procurement->last_date_of_submission),
-            'number_of_applicants_or_applications' => !$number_of_participants ? $this->getApplicants($number_of_bids) :
+            'remaining_days' => $this->getRemainingDaysWithIconAndColor($procurement),
+            'number_of_applicants_or_applications' => !$number_of_participants ?
+                $this->getApplicants($number_of_bids) :
                 $this->getRemainingApplications($number_of_participants, $number_of_bids),
-            'created_at' => 'Posted ' . $procurement->created_at->diffForHumans(),
+            'created_at' => 'Posted ' . $procurement->created_at->diffForHumans()
         ];
+
+        if ($this->isForDetails) $data += [
+            'attachments' => $procurement->attachments->map(function (Attachment $attachment) {
+                return (new AttachmentTransformer())->transform($attachment);
+            })->toArray(),
+            'is_invited_vendor_only' => $procurement->shared_to == config('b2b.SHARING_TO.own_listed.key'),
+            'is_sheba_verified_vendor_only' => $procurement->shared_to == config('b2b.SHARING_TO.verified.key')
+        ];
+
+        return $data;
     }
 
     /**
-     * @param $last_date_of_submission
-     * @return array|null
+     * @param Procurement $procurement
+     * @return string[]|null
      */
-    private function getRemainingDays($last_date_of_submission)
+    private function getRemainingDaysWithIconAndColor(Procurement $procurement)
     {
-        $today = Carbon::now();
-        if ($last_date_of_submission->greaterThanOrEqualTo($today)) {
-            $total_days = $last_date_of_submission->diffInDays($today) + 1;
-            if ($total_days == self::ONE) return [
-                'days' => $last_date_of_submission->diffInHours($today) . ' hours remaining',
-                'color' => '#e75050',
-                'icon' => config('sheba.s3_url') . 'business_assets/tender/icons/png/stopwatch.png',
-            ];
-            return [
-                'days' => $total_days . ' days remaining',
-                'color' => '#f5b861',
-                'icon' => config('sheba.s3_url') . 'business_assets/tender/icons/png/stopwatch.png',
-            ];
-        }
-        return null;
+        $procurement_remaining_days = $procurement->getRemainingDays();
+
+        if ($procurement_remaining_days == self::ZERO) return null;
+        if ($procurement_remaining_days == self::ONE) return [
+            'days' => $procurement->last_date_of_submission->diffInHours(Carbon::today()) . ' hours remaining',
+            'color' => '#e75050',
+            'icon' => config('sheba.s3_url') . 'business_assets/tender/icons/png/stopwatch.png',
+        ];
+        return [
+            'days' => $procurement_remaining_days . ' days remaining',
+            'color' => '#f5b861',
+            'icon' => config('sheba.s3_url') . 'business_assets/tender/icons/png/stopwatch.png',
+        ];
     }
 
     /**
@@ -100,13 +118,13 @@ class TenderDetailsTransformer extends TransformerAbstract
         if (!$number_of_bids) return null;
         $remaining_application = $number_of_participants - $number_of_bids;
         if ($remaining_application < self::THRESHOLD) return [
-            'applications' => $number_of_participants - $number_of_bids . ' applications remaining',
+            'applications' => $remaining_application . ' applications remaining',
             'color' => '#e75050',
             'icon' => config('sheba.s3_url') . 'business_assets/tender/icons/png/users.png',
         ];
 
         return [
-            'applications' => $number_of_participants - $number_of_bids . ' applications remaining',
+            'applications' => $remaining_application . ' applications remaining',
             'color' => '#f5b861',
             'icon' => config('sheba.s3_url') . 'business_assets/tender/icons/png/users.png',
         ];
