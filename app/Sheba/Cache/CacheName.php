@@ -11,4 +11,5 @@ class CacheName
     const CATEGORY_CHILDREN = 'category_children';
     const SECONDARY_CATEGORY_SERVICES = 'secondary_category_services';
     const HIGH_DEMAND_CATEGORY = 'high_demand_category';
+    const SITEMAP = 'sitemap';
 }
