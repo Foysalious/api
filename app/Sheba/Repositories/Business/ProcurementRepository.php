@@ -38,7 +38,7 @@ class ProcurementRepository extends BaseRepository implements ProcurementReposit
 
     public function filterWithCategory($category_ids)
     {
-        return $this->model->whereIn('category_id', explode(',',$category_ids));
+        return $this->model->whereIn('category_id', json_decode($category_ids));
     }
 
     public function filterWithSharedTo($shared_to)
