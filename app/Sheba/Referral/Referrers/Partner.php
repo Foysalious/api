@@ -130,13 +130,12 @@ class Partner extends Referrer implements ReferrerInterface
 
     private function generateDetails($refer)
     {
-
         $reference                   = [];
         $reference['milestone']      = $this->getMilestoneForPartner($refer);
         $reference['id']             = $refer->id;
         $reference['name']           = $refer->refer ? $refer->refer->name : $refer->resource_name;
         $reference['contact_number'] = $refer->refer ? $refer->refer->getContactNumber() : $refer->resource_mobile;
-        $reference['income']         = !empty($this->updatedRefer) ? ($this->updatedRefer->referrer_income ?: 0) : ($refer->referrer_income ?: $this->config[0]['amount']) ;
+        $reference['income']         = !empty($this->updatedRefer) ? ($this->updatedRefer->referrer_income ?: 0) : ($refer->referrer_income ?: ((int)$refer->usages > 0 ? $this->config[0]['amount'] : 0)) ;
         $reference['usage']          = $refer->usages;
         $reference['step']           = !empty($this->updatedRefer) ? $this->updatedRefer->refer_level : (int) $refer->refer_level;
         $reference['step_bn']        = $reference['milestone']['current_step'];
