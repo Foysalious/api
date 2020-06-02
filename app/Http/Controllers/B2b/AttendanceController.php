@@ -203,17 +203,23 @@ class AttendanceController extends Controller
         $business_member = $business_member_repository->where('business_id', $business->id)->where('member_id', $member)->first();
         $month = $request->has('month') ? $request->month : date('m');
 
-        $business_holiday = $business_holiday_repo->getAllByBusiness($business);
-        $business_weekend = $business_weekend_repo->getAllByBusiness($business);
         $time_frame = $time_frame->forAMonth($month, date('Y'));
         $business_member_leave = $business_member->leaves()->accepted()->startDateBetween($time_frame)->endDateBetween($time_frame)->get();
         $time_frame->end = $this->isShowRunningMonthsAttendance(date('Y'), $month) ? Carbon::now() : $time_frame->end;
         $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
+
+        $business_holiday = $business_holiday_repo->getAllByBusiness($business);
+        $business_weekend = $business_weekend_repo->getAllByBusiness($business);
+
         $employee_attendance = (new MonthlyStat($time_frame, $business_holiday, $business_weekend, $business_member_leave))->transform($attendances);
         $daily_breakdowns = collect($employee_attendance['daily_breakdown']);
         $daily_breakdowns = $daily_breakdowns->filter(function ($breakdown) {
             return Carbon::parse($breakdown['date'])->lessThanOrEqualTo(Carbon::today());
         });
+
+        if ($request->has('sort_on_hour')) $daily_breakdowns = $this->attendanceSortOnHour($daily_breakdowns, $request->sort_on_hour);
+        if ($request->has('sort_on_checkin')) $daily_breakdowns = $this->attendanceSortOnCheckin($daily_breakdowns, $request->sort_on_checkin);
+        if ($request->has('sort_on_checkout')) $daily_breakdowns = $this->attendanceSortOnCheckout($daily_breakdowns, $request->sort_on_checkout);
 
         if ($request->file == 'excel') {
             return $member_monthly_excel->setMonthlyData($daily_breakdowns->toArray())
@@ -233,5 +239,27 @@ class AttendanceController extends Controller
                 'department' => $business_member->role && $business_member->role->businessDepartment ? $business_member->role->businessDepartment->name : null,
             ]
         ]);
+    }
+
+    private function attendanceSortOnHour($attendances, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return $attendances->$sort_by(function ($attendance, $key) {
+            return strtoupper($attendance['attendance']['active_hours']);
+        });
+    }
+    private function attendanceSortOnCheckin($attendances, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return $attendances->$sort_by(function ($attendance, $key) {
+            return strtoupper($attendance['attendance']['check_in']['time']);
+        });
+    }
+    private function attendanceSortOnCheckout($attendances, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return $attendances->$sort_by(function ($attendance, $key) {
+            return strtoupper($attendance['attendance']['check_out']['time']);
+        });
     }
 }
