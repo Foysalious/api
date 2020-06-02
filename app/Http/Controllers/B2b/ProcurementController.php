@@ -21,6 +21,7 @@ use GuzzleHttp\Client;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\App;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
@@ -226,9 +227,10 @@ class ProcurementController extends Controller
      */
     public function tenders(Request $request)
     {
-        list($offset, $limit) = calculatePagination($request);
         $procurements = $this->procurementRepository->getProcurementFilterByLastDateOfSubmission();
-        # $procurements = $procurements->skip($offset)->limit($limit);
+        // list($offset, $limit) = calculatePagination($request);
+        // $procurements = $procurements->skip($offset)->limit($limit);
+
         if ($request->has('tag')) $procurements = $this->procurementRepository->filterWithTag($request->tag);
         if ($request->has('category') && $request->category != 'all') $procurements = $this->procurementRepository->filterWithCategory($request->category);
         if ($request->has('shared_to')) $procurements = $this->procurementRepository->filterWithSharedTo($request->shared_to);
@@ -250,7 +252,6 @@ class ProcurementController extends Controller
             if ($number_of_participants) return $number_of_participants != $number_of_bids;
             return $procurement;
         });
-        $total_records = $procurements->count();
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
@@ -260,7 +261,38 @@ class ProcurementController extends Controller
         if ($request->has('sort'))
             $procurements = $this->procurementOrderBy($procurements, $request->sort)->values()->toArray();
 
-        return api_response($request, null, 200, ['tenders' => $procurements, 'total_records' => $total_records]);
+        $procurements_with_pagination_data = $this->paginateCollection(collect($procurements), 10);
+
+        return api_response($request, null, 200, ['tenders' => $procurements_with_pagination_data]);
+    }
+
+    /**
+     * CUSTOM PAGINATION FOR COLLECTION.
+     *
+     * @param $collection
+     * @param $perPage
+     * @param string $pageName
+     * @param null $fragment
+     * @return LengthAwarePaginator
+     */
+    private function paginateCollection($collection, $perPage, $pageName = 'page', $fragment = null)
+    {
+        $currentPage = LengthAwarePaginator::resolveCurrentPage($pageName);
+        $currentPageItems = $collection->slice(($currentPage - 1) * $perPage, $perPage);
+        parse_str(request()->getQueryString(), $query);
+        unset($query[$pageName]);
+        return new LengthAwarePaginator(
+            $currentPageItems,
+            $collection->count(),
+            $perPage,
+            $currentPage,
+            [
+                'pageName' => $pageName,
+                'path' => LengthAwarePaginator::resolveCurrentPath(),
+                'query' => $query,
+                'fragment' => $fragment
+            ]
+        );
     }
 
     /**
