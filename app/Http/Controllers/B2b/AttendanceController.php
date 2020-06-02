@@ -41,66 +41,61 @@ class AttendanceController extends Controller
                                     TimeFrame $time_frame, BusinessHolidayRepoInterface $business_holiday_repo,
                                     BusinessWeekendRepoInterface $business_weekend_repo, Excel $monthly_excel)
     {
-        try {
-            $this->validate($request, ['file' => 'string|in:excel']);
-            list($offset, $limit) = calculatePagination($request);
-            $business = Business::where('id', (int)$business)->select('id', 'name', 'phone', 'email', 'type')->first();
-            $members = $attendance_repo->getAllMembers($business);
-            if ($request->has('department_id')) $members = $attendance_repo->filterWithDepartment($members);
-            $members = $members->get();
-            $total_members = $members->count();
-            if ($request->has('limit')) $members = $members->splice($offset, $limit);
+        $this->validate($request, ['file' => 'string|in:excel']);
+        list($offset, $limit) = calculatePagination($request);
+        $business = Business::where('id', (int)$business)->select('id', 'name', 'phone', 'email', 'type')->first();
+        $members = $attendance_repo->getAllMembers($business);
+        if ($request->has('department_id')) $members = $attendance_repo->filterWithDepartment($members);
+        $members = $members->get();
+        $total_members = $members->count();
+        if ($request->has('limit')) $members = $members->splice($offset, $limit);
 
-            $all_employee_attendance = [];
+        $all_employee_attendance = [];
 
-            $year = (int)date('Y');
-            $month = (int)date('m');
-            if ($request->has('month')) $month = $request->month;
+        $year = (int)date('Y');
+        $month = (int)date('m');
+        if ($request->has('month')) $month = $request->month;
 
-            $business_holiday = $business_holiday_repo->getAllByBusiness($business);
-            $business_weekend = $business_weekend_repo->getAllByBusiness($business);
-            foreach ($members as $member) {
-                $member_name = $member->getIdentityAttribute();
-                /** @var BusinessMember $business_member */
-                $business_member = $member->businessMember;
-                $member_department = $business_member->department() ? $business_member->department() : null;
-                $department_name = $member_department ? $member_department->name : 'N/S';
-                $department_id = $member_department ? $member_department->id : 'N/S';
+        $business_holiday = $business_holiday_repo->getAllByBusiness($business);
+        $business_weekend = $business_weekend_repo->getAllByBusiness($business);
+        foreach ($members as $member) {
+            $member_name = $member->getIdentityAttribute();
+            /** @var BusinessMember $business_member */
+            $business_member = $member->businessMember;
+            $member_department = $business_member->department() ? $business_member->department() : null;
+            $department_name = $member_department ? $member_department->name : 'N/S';
+            $department_id = $member_department ? $member_department->id : 'N/S';
 
-                $time_frame = $time_frame->forAMonth($month, $year);
-                $business_member_leave = $business_member->leaves()->accepted()->startDateBetween($time_frame)->endDateBetween($time_frame)->get();
-                $time_frame->end = $this->isShowRunningMonthsAttendance($year, $month) ? Carbon::now() : $time_frame->end;
-                $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
-                $employee_attendance = (new MonthlyStat($time_frame, $business_holiday, $business_weekend, $business_member_leave, false))
-                    ->transform($attendances);
+            $time_frame = $time_frame->forAMonth($month, $year);
+            $business_member_leave = $business_member->leaves()->accepted()->startDateBetween($time_frame)->endDateBetween($time_frame)->get();
+            $time_frame->end = $this->isShowRunningMonthsAttendance($year, $month) ? Carbon::now() : $time_frame->end;
+            $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
+            $employee_attendance = (new MonthlyStat($time_frame, $business_holiday, $business_weekend, $business_member_leave, false))
+                ->transform($attendances);
 
-                array_push($all_employee_attendance, [
-                    'business_member_id' => $business_member->id,
-                    'member' => [
-                        'id' => $member->id,
-                        'name' => $member_name,
-                    ],
-                    'department' => [
-                        'id' => $department_id,
-                        'name' => $department_name,
-                    ],
-                    'attendance' => $employee_attendance['statistics']
-                ]);
-            }
-
-            if (count($all_employee_attendance) > 0) {
-                if ($request->file == 'excel') {
-                    return $monthly_excel->setMonthlyData($all_employee_attendance)->get();
-                }
-                return api_response($request, $all_employee_attendance, 200, [
-                    'all_employee_attendance' => $all_employee_attendance,
-                    'total_members' => $total_members,
-                ]);
-            } else  return api_response($request, null, 404);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+            array_push($all_employee_attendance, [
+                'business_member_id' => $business_member->id,
+                'member' => [
+                    'id' => $member->id,
+                    'name' => $member_name,
+                ],
+                'department' => [
+                    'id' => $department_id,
+                    'name' => $department_name,
+                ],
+                'attendance' => $employee_attendance
+            ]);
         }
+
+        if (count($all_employee_attendance) > 0) {
+            if ($request->file == 'excel') {
+                return $monthly_excel->setMonthlyData($all_employee_attendance)->get();
+            }
+            return api_response($request, $all_employee_attendance, 200, [
+                'all_employee_attendance' => $all_employee_attendance,
+                'total_members' => $total_members,
+            ]);
+        } else  return api_response($request, null, 404);
     }
 
     /**

@@ -101,6 +101,7 @@ class AttendanceTransformer extends TransformerAbstract
 
                 if (!$is_weekend_or_holiday_or_leave && $attendance_checkin_action) $statistics[$attendance_checkin_action->status]++;
                 if (!$is_weekend_or_holiday_or_leave && $attendance_checkout_action) $statistics[$attendance_checkout_action->status]++;
+                if (!$is_weekend_or_holiday_or_leave && $attendance_checkout_action) $statistics['present']++;
             }
 
             if ($this->isAbsent($attendance, $is_weekend_or_holiday_or_leave, $date)) {
