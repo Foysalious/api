@@ -59,19 +59,32 @@ class Excel
 
     private function makeData()
     {
+        dd($this->monthlyData);
         foreach ($this->monthlyData as $attendance) {
             $date = null;
             $checkin_time = null;
+            $checkin_status = null;
+            $checkin_address = null;
+
             $checkout_time = null;
+            $checkout_status = null;
+            $checkout_address = null;
+
             $active_hours = null;
             $status = null;
             if (!$attendance['weekend_or_holiday_tag']) {
                 if ($attendance['show_attendance'] == 1) {
                     $date = $attendance['date'];
-                    $checkin_time = $attendance['attendance']['checkin_time'];
-                    $checkout_time = $attendance['attendance']['checkout_time'];
-                    $active_hours = $attendance['attendance']['staying_time_in_minutes'];
-                    $status = $attendance['attendance']['status'];
+                    $checkin_time = $attendance['attendance']['check_in']['time'];
+                    $checkin_status = $attendance['attendance']['check_in']['status'];
+                    $checkin_address = $attendance['attendance']['check_in']['address'];
+
+                    $checkout_time = $attendance['attendance']['check_out']['time'];
+                    $checkout_status = $attendance['attendance']['check_out']['status'];
+                    $checkout_address = $attendance['attendance']['check_out']['address'];
+
+                    $active_hours = $attendance['attendance']['active_hours'];
+                    #$status = $attendance['attendance']['status'];
                 }
                 if ($attendance['show_attendance'] == 0) {
                     if ($attendance['is_absent'] == 1) {
@@ -102,6 +115,7 @@ class Excel
                 'dept_name' => $this->department,
                 'designation' => $this->designation,
                 'date' => $date,
+
                 'checkin_time' => $checkin_time,
                 'checkout_time' => $checkout_time,
                 'active_hours' => $active_hours,
