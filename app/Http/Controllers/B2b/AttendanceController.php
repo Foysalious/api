@@ -182,6 +182,7 @@ class AttendanceController extends Controller
             return strtoupper($attendance['attendance']['on_leave']);
         });
     }
+
     /**
      * @param $month
      * @param $year
@@ -235,6 +236,8 @@ class AttendanceController extends Controller
             'employee' => [
                 'id' => $business_member->member->id,
                 'name' => $business_member->member->profile->name,
+                'image' => $business_member->member->profile->pro_pic,
+                'mobile' => $business_member->member->profile->mobile ?: 'N/S',
                 'designation' => $business_member->role ? $business_member->role->name : null,
                 'department' => $business_member->role && $business_member->role->businessDepartment ? $business_member->role->businessDepartment->name : null,
             ]
@@ -248,6 +251,7 @@ class AttendanceController extends Controller
             return strtoupper($attendance['attendance']['active_hours']);
         });
     }
+
     private function attendanceSortOnCheckin($attendances, $sort = 'asc')
     {
         $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
@@ -255,6 +259,7 @@ class AttendanceController extends Controller
             return strtoupper($attendance['attendance']['check_in']['time']);
         });
     }
+
     private function attendanceSortOnCheckout($attendances, $sort = 'asc')
     {
         $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
