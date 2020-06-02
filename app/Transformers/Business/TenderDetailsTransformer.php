@@ -56,6 +56,7 @@ class TenderDetailsTransformer extends TransformerAbstract
                 'icon' => config('sheba.s3_url') . 'business_assets/tender/icons/png/category.png',
             ] : null,
             'remaining_days' => $this->getRemainingDaysWithIconAndColor($procurement),
+            'number_of_participants' => $number_of_participants ?: null,
             'number_of_applicants_or_applications' => !$number_of_participants ?
                 $this->getApplicants($number_of_bids) :
                 $this->getRemainingApplications($number_of_participants, $number_of_bids),
