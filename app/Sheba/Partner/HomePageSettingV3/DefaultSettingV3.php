@@ -39,7 +39,7 @@ class DefaultSettingV3
         $loan = [
             "key" => "loan",
             "name_en" => "Loan",
-            "name_bn" => "সহজ লোন",
+            "name_bn" => "ডিজিটাল লোন",
             "is_on_homepage" => 1
         ];
 
