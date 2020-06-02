@@ -29,10 +29,10 @@ class ProcurementRepository extends BaseRepository implements ProcurementReposit
             ->where('last_date_of_submission', '>=', Carbon::now());
     }
 
-    public function filterWithTag($tag_id)
+    public function filterWithTag($tag_ids)
     {
-        return $this->model->whereHas('tags', function ($query) use ($tag_id) {
-            $query->where('id', $tag_id);
+        return $this->model->whereHas('tags', function ($query) use ($tag_ids) {
+            $query->whereIn('id', json_decode($tag_ids));
         });
     }
 
