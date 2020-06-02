@@ -56,7 +56,8 @@ class AttendanceTransformer extends TransformerAbstract
             Statuses::LEFT_EARLY => 0,
             Statuses::ABSENT => 0,
             Statuses::LEFT_TIMELY => 0,
-            'on_leave' => 0
+            'on_leave' => 0,
+            'present' => 0
         ];
         $daily_breakdown = [];
         foreach ($period as $date) {
@@ -76,7 +77,7 @@ class AttendanceTransformer extends TransformerAbstract
 
             /** @var Attendance $attendance */
             $attendance = $attendances->where('date', $date->toDateString())->first();
-            if ($this->hasAttendanceButNotAbsent($attendance)) {
+            if ($attendance) {
                 $attendance_checkin_action = $attendance->checkinAction();
                 $attendance_checkout_action = $attendance->checkoutAction();
 
@@ -84,23 +85,24 @@ class AttendanceTransformer extends TransformerAbstract
                 $breakdown_data['attendance'] = [
                     'id' => $attendance->id,
                     'check_in' => $attendance_checkin_action ? [
-                        'status'    => $attendance_checkin_action->status,
+                        'status'    => $is_weekend_or_holiday_or_leave ? null : $attendance_checkin_action->status,
                         'time'      => $attendance->checkin_time,
                         'is_remote' => $attendance_checkin_action->is_remote ?: 0,
                         'address'   => $attendance_checkin_action->is_remote ? json_decode($attendance_checkin_action->location)->address : null
                     ] : null,
                     'check_out' => $attendance_checkout_action ? [
-                        'status'    => $attendance_checkout_action->status,
+                        'status'    => $is_weekend_or_holiday_or_leave ? null : $attendance_checkout_action->status,
                         'time'      => $attendance->checkout_time,
                         'is_remote' => $attendance_checkout_action->is_remote ?: 0,
                         'address'   => $attendance_checkout_action->is_remote ? json_decode($attendance_checkout_action->location)->address : null
                     ] : null,
-                    'note' => $attendance->hasEarlyCheckout() ? $attendance->checkoutAction()->note : null
+                    'note' => (!$is_weekend_or_holiday_or_leave && $attendance->hasEarlyCheckout()) ? $attendance->checkoutAction()->note : null
                 ];
 
-                if ($attendance_checkin_action) $statistics[$attendance_checkin_action->status]++;
-                if ($attendance_checkout_action) $statistics[$attendance_checkout_action->status]++;
+                if (!$is_weekend_or_holiday_or_leave && $attendance_checkin_action) $statistics[$attendance_checkin_action->status]++;
+                if (!$is_weekend_or_holiday_or_leave && $attendance_checkout_action) $statistics[$attendance_checkout_action->status]++;
             }
+
             if ($this->isAbsent($attendance, $is_weekend_or_holiday_or_leave, $date)) {
                 $breakdown_data['is_absent'] = 1;
                 $statistics[Statuses::ABSENT]++;
@@ -117,6 +119,7 @@ class AttendanceTransformer extends TransformerAbstract
                 if ($this->isLeave($date, $leaves)) $statistics['on_leave']++;
             }
         }
+        $statistics['present'] = $statistics[Statuses::ON_TIME] + $statistics[Statuses::LATE];
 
         return ['statistics' => $statistics, 'daily_breakdown' => $daily_breakdown];
     }
@@ -202,7 +205,7 @@ class AttendanceTransformer extends TransformerAbstract
      */
     private function isAbsent($attendance, $is_weekend_or_holiday_or_leave, Carbon $date)
     {
-        return ($attendance && $attendance->status == Statuses::ABSENT) || (!$attendance && !$is_weekend_or_holiday_or_leave && !$date->eq(Carbon::today()));
+        return !$attendance && !$is_weekend_or_holiday_or_leave && !$date->eq(Carbon::today());
     }
 
     /**
