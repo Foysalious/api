@@ -19,7 +19,6 @@ class Validator
         ];
         $this->rentACarRules = array_merge($this->rules, [
             'pick_up_location_geo' => 'required',
-            'pick_up_address' => 'required'
         ]);
     }
 
@@ -68,7 +67,6 @@ class Validator
     {
         return array_merge($this->rentACarRules, [
             'destination_location_geo' => 'required',
-            'destination_address' => 'required'
         ]);
     }
 
