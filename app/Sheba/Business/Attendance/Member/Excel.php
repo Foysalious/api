@@ -80,14 +80,12 @@ class Excel
 
                     $checkin_time = $attendance['attendance']['check_in']['time'];
                     $checkin_status = $attendance['attendance']['check_in']['status'];
-                    $checkin_address = 'hihih';
-                    #$checkin_address = $attendance['attendance']['check_in']['address'];
+                    $checkin_address = $attendance['attendance']['check_in']['address'];
                     $checkin_is_remote = $attendance['attendance']['check_in']['is_remote'];
 
                     $checkout_time = $attendance['attendance']['check_out']['time'];
                     $checkout_status = $attendance['attendance']['check_out']['status'];
-                    #$checkout_address = $attendance['attendance']['check_out']['address'];
-                    $checkout_address = "hihi";
+                    $checkout_address = $attendance['attendance']['check_out']['address'];
                     $checkout_is_remote = $attendance['attendance']['check_out']['is_remote'];
 
                     $active_hours = $attendance['attendance']['active_hours'];
@@ -112,14 +110,12 @@ class Excel
 
                     $checkin_time = $attendance['attendance']['check_in']['time'];
                     $checkin_status = $attendance['attendance']['check_in']['status'];
-                    #$checkin_address = $attendance['attendance']['check_in']['address'];
-                    $checkin_address = 'hello';
+                    $checkin_address = $attendance['attendance']['check_in']['address'];
                     $checkin_is_remote = $attendance['attendance']['check_in']['is_remote'];
 
                     $checkout_time = $attendance['attendance']['check_out']['time'];
                     $checkout_status = $attendance['attendance']['check_out']['status'];
-                    #$checkout_address = $attendance['attendance']['check_out']['address'];
-                    $checkout_address = 'hi';
+                    $checkout_address = $attendance['attendance']['check_out']['address'];
                     $checkout_is_remote = $attendance['attendance']['check_out']['is_remote'];
 
                     $active_hours = $attendance['attendance']['active_hours'];
