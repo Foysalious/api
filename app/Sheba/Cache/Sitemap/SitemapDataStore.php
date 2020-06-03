@@ -17,6 +17,6 @@ class SitemapDataStore implements DataStoreObject
 
     public function generate()
     {
-        // TODO: Implement generate() method.
+        return [];
     }
 }

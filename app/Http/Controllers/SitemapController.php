@@ -6,11 +6,11 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Sheba\Cache\CacheAside;
-use Sheba\Cache\Category\Info\CategoryCacheRequest;
+use Sheba\Cache\Sitemap\SitemapCacheRequest;
 
 class SitemapController extends Controller
 {
-    public function index(Request $request, CacheAside $cacheAside, CategoryCacheRequest $cacheRequest)
+    public function index(Request $request, CacheAside $cacheAside, SitemapCacheRequest $cacheRequest)
     {
 
         $data = [
@@ -194,6 +194,8 @@ class SitemapController extends Controller
                 ],
             ]
         ];
+        $data = $cacheAside->setCacheRequest($cacheRequest)->getMyEntity();
+        dd($data);
         if (!$data) return api_response($request, null, 404);
         return api_response($request, $data, 200, ['master_categories' => $data]);
     }
