@@ -73,6 +73,7 @@ class TopUp
             $this->updateFailedTopOrder($topup_order, $this->validator->getError());
         } else {
             $this->response = $this->vendor->recharge($topup_order);
+            dd($this->response);
             if ($this->response->hasSuccess()) {
                 dispatch((new TopUpBalanceUpdateAndNotifyJob($topup_order)));
                 $response = $this->response->getSuccess();
