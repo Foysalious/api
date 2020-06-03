@@ -83,13 +83,13 @@ class MonthlyStat
                         'id' => $attendance->id,
                         'check_in' => $attendance_checkin_action ? [
                             'status' => $is_weekend_or_holiday_or_leave ? null : $attendance_checkin_action->status,
-                            'time' => $attendance->checkin_time,
+                            'time' => Carbon::parse($attendance->checkin_time)->format('h:i a'),
                             'is_remote' => $attendance_checkin_action->is_remote ?: 0,
                             'address' => $attendance_checkin_action->is_remote ? json_decode($attendance_checkin_action->location)->address : null
                         ] : null,
                         'check_out' => $attendance_checkout_action ? [
                             'status' => $is_weekend_or_holiday_or_leave ? null : $attendance_checkout_action->status,
-                            'time' => $attendance->checkout_time,
+                            'time' => Carbon::parse($attendance->checkout_time)->format('h:i a'),
                             'is_remote' => $attendance_checkout_action->is_remote ?: 0,
                             'address' => $attendance_checkout_action->is_remote ? json_decode($attendance_checkout_action->location)->address : null
                         ] : null,
