@@ -106,7 +106,8 @@ class MonthlyStat
                 if ($this->forOneEmployee) $breakdown_data['is_absent'] = 1;
                 $statistics[Statuses::ABSENT]++;
             }
-            if ($this->forOneEmployee) $breakdown_data['date'] = $date->toDateString();
+
+            if ($this->forOneEmployee) $breakdown_data['date'] = $date->format('d/m/Y');
             if ($this->forOneEmployee) $daily_breakdown[] = $breakdown_data;
         }
 
