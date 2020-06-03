@@ -645,7 +645,8 @@ return [
         env('SHEBA_RESOURCE_APP')    => 'resource',
         env('SHEBA_MANGER_APP')      => 'resource',
         'user'                       => 'user',
-        'bank-loan-portal'           => 'bankUser'
+        'bank-loan-portal'           => 'bankUser',
+        'retailer-portal'            => 'RetailerMember'
     ],
     'MANAGER'                                     => [
         'Owner',
@@ -665,7 +666,8 @@ return [
         'bank-loan-portal',
         'customer-portal',
         'bank-loan-portal',
-        'employee-app'
+        'employee-app',
+        'retailer-portal'
     ],
     'PARTNER_ACQUISITION_CHANNEL'                 => [
         'PM'  => 'PM',
@@ -1065,7 +1067,8 @@ return [
         env('SHEBA_RESOURCE_APP')    => 'Resource',
         env('SHEBA_MANGER_APP')      => 'Partner',
         'user'                       => 'Profile',
-        'bank-loan-portal'           => 'BankUser'
+        'bank-loan-portal'           => 'BankUser',
+        'retailer-portal'            => 'RetailerMember'
     ],
     'PARTNER_PACKAGE_CHARGE_TYPES'                => [
         'Upgrade'   => 'upgrade',
@@ -1281,9 +1284,9 @@ return [
             'bn'  => 'প্রোপ্রাইটরশিপ'
         ],
     ],
-    'ownership_type_en' => [
-        'লিমিটেড' => 'Limited',
-        'পার্টনারশিপ' => 'Partnership',
+    'ownership_type_en'                           => [
+        'লিমিটেড'        => 'Limited',
+        'পার্টনারশিপ'    => 'Partnership',
         'প্রোপ্রাইটরশিপ' => 'Proprietorship'
     ],
     'PARTNER_BUSINESS_CATEGORIES'                 => [
