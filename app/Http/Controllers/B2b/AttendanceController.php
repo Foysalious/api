@@ -123,7 +123,7 @@ class AttendanceController extends Controller
 
         if (count($all_employee_attendance) > 0) {
             if ($request->file == 'excel') {
-                return $monthly_excel->setMonthlyData($all_employee_attendance)->get();
+                return $monthly_excel->setMonthlyData($all_employee_attendance->toArray())->get();
             }
             return api_response($request, $all_employee_attendance, 200, [
                 'all_employee_attendance' => $all_employee_attendance,
