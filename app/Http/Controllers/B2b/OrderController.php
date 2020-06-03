@@ -5,6 +5,7 @@ use App\Models\HyperLocal;
 use App\Models\InspectionItemIssue;
 use App\Models\Member;
 use App\Models\Payment;
+use App\Repositories\NotificationRepository;
 use App\Sheba\Address\AddressValidator;
 use App\Sheba\Checkout\Checkout;
 use Carbon\Carbon;
@@ -214,8 +215,12 @@ class OrderController extends Controller
                     $issue = InspectionItemIssue::find((int)$request->issue_id);
                     $issue->update($this->withBothModificationFields(['order_id' => $order->id, 'status' => 'closed']));
                 }
-                return api_response($request, $order, 200, ['job_id' => $order->jobs->first()->id, 'order_id' => $order->jobs->first()->partnerOrder->id,
-                    'order_code' => $order->code()]);
+                $this->sendNotifications($order);
+                return api_response($request, $order, 200, [
+                    'job_id' => $order->jobs->first()->id,
+                    'order_id' => $order->jobs->first()->partnerOrder->id,
+                    'order_code' => $order->code()
+                ]);
             } else {
                 return api_response($request, null, 500);
             }
@@ -252,6 +257,16 @@ class OrderController extends Controller
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
+        }
+    }
+
+    private function sendNotifications($order)
+    {
+        try {
+            (new NotificationRepository())->send($order);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return null;
         }
     }
 }
