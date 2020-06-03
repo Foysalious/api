@@ -10,6 +10,7 @@ use App\Models\Profile;
 use App\Models\User;
 use App\Repositories\CommentRepository;
 use App\Repositories\FileRepository;
+use App\Sheba\Loan\Exceptions\LoanNotFoundException;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -716,5 +717,21 @@ class LoanController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function showForAgent(Request $request,$loan_id,Loan $loan)
+    {
+        try {
+            $data = $loan->showForAgent($loan_id);
+            return api_response($request, $data, 200, ['data' => $data]);
+        } catch (NotAllowedToAccess $e) {
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
+        }  catch (LoanNotFoundException $e) {
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
     }
 }
