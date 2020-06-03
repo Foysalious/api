@@ -140,7 +140,7 @@ class Client
             'connect_timeout' => 60
         ]);
         $vpn_response = $result->getBody()->getContents();
-
+        dd($this->url);
         if (!$vpn_response) throw new Exception("Vpn server not working.");
         $vpn_response = json_decode($vpn_response);
         if ($vpn_response->code != 200) throw new Exception("Vpn server error: ". $vpn_response->message);
