@@ -218,6 +218,7 @@ class AttendanceController extends Controller
             return Carbon::parse($breakdown['date'])->lessThanOrEqualTo(Carbon::today());
         });
 
+        if ($request->has('sort_on_date')) $daily_breakdowns = $this->attendanceSortOnDate($daily_breakdowns, $request->sort_on_date)->values();
         if ($request->has('sort_on_hour')) $daily_breakdowns = $this->attendanceSortOnHour($daily_breakdowns, $request->sort_on_hour)->values();
         if ($request->has('sort_on_checkin')) $daily_breakdowns = $this->attendanceSortOnCheckin($daily_breakdowns, $request->sort_on_checkin)->values();
         if ($request->has('sort_on_checkout')) $daily_breakdowns = $this->attendanceSortOnCheckout($daily_breakdowns, $request->sort_on_checkout)->values();
@@ -242,6 +243,14 @@ class AttendanceController extends Controller
                 'department' => $business_member->role && $business_member->role->businessDepartment ? $business_member->role->businessDepartment->name : null,
             ]
         ]);
+    }
+
+    private function attendanceSortOnDate($attendances, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return $attendances->$sort_by(function ($attendance, $key) {
+            return strtoupper($attendance['date']);
+        });
     }
 
     private function attendanceSortOnHour($attendances, $sort = 'asc')
