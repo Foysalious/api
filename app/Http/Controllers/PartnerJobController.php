@@ -461,7 +461,7 @@ class PartnerJobController extends Controller
             $logistic_orders[$order->id] = $order->formatForPartner();
         }
         $jobs->whereIn('logistic_id', $logistic_ids)->each(function ($job) use ($logistic_orders) {
-            $job['logistic'] = $logistic_orders[$job->logistic_id];
+            $job['logistic'] = $logistic_orders[$job->logistic_id] ?? null;
         });
     }
 }
