@@ -93,7 +93,7 @@ class Client
         $vpn_response = $this->call($this->makeInputString($topup_order));
         $rax_response = new PretupsResponse();
         if ($vpn_response) $rax_response->setResponse($vpn_response);
-        return $rax_response;
+        dd($vpn_response, $rax_response);
     }
 
     private function makeInputString(TopUpOrder $topup_order)
