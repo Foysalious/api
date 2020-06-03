@@ -27,14 +27,11 @@ class ServiceController extends Controller
         if (!$service) return api_response($request, null, 404);
 
         $hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
-        $hyper_location_id = $hyper_location ? $hyper_location->location_id : 4;
 
-        $location_service = LocationService::where('location_id', $hyper_location_id)->where('service_id', $service->id)->first();
-        if (!$location_service)
-            return api_response($request, null, 404);
+        if($hyper_location) $location_service = LocationService::where('location_id', $hyper_location->location_id)->where('service_id', $service->id)->first();
 
         $fractal = new Manager();
-        $service_transformer->setLocationService($location_service);
+        if($location_service) $service_transformer->setLocationService($location_service);
         $resource = new Item($service, $service_transformer);
         $data = $fractal->createData($resource)->toArray()['data'];
 
