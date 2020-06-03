@@ -130,7 +130,7 @@ class Client
      */
     private function call($input)
     {
-        dd($this->url);
+        dd($this->vpnUrl, $this->url, $input);
         $result = $this->httpClient->request('POST', $this->vpnUrl, [
             'form_params' => [
                 'url' => $this->url,
