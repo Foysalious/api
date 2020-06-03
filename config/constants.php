@@ -575,6 +575,12 @@ return [
             'short_name' => 'TEL',
             'prefix'     => 'T',
             'department' => 'TEL'
+        ],
+        'DDN'        => [
+            'name'      => 'DDN',
+            'short_name'=> 'DDN',
+            'prefix'    =>  'D',
+            'department'=>  'AC'
         ]
     ],
     'SERVICE_UNITS'                               => [
