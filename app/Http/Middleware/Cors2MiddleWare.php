@@ -38,6 +38,7 @@ class Cors2MiddleWare
             "https://developer.sslcommerz.com",
             "https://www.sslcommerz.com",
             "http://dev-sheba.xyz",
+            "http://strategic-loan.sheba.test",
             "http://business.dev-sheba.xyz",
             "http://www.dev-sheba.xyz",
             "https://www.dev-sheba.xyz",

@@ -130,6 +130,16 @@ class DocumentUploader
 
     /**
      * @param $name
+     * @param $file
+     * @return array
+     */
+    private function uploadRetailerDocument($name, $file) {
+        $formatted_name = $this->formatName($name);
+        return $this->uploadDocument($file, $formatted_name);
+    }
+
+    /**
+     * @param $name
      * @return string
      */
     private function formatName($name)
