@@ -51,13 +51,13 @@ class AttendanceTransformer extends TransformerAbstract
         $period = CarbonPeriod::create($this->timeFrame->start, $this->timeFrame->end);
         $statistics = [
             'working_days' => $this->timeFrame->start->daysInMonth,
+            'present' => 0,
             Statuses::ON_TIME => 0,
             Statuses::LATE => 0,
-            Statuses::LEFT_EARLY => 0,
-            Statuses::ABSENT => 0,
             Statuses::LEFT_TIMELY => 0,
+            Statuses::LEFT_EARLY => 0,
             'on_leave' => 0,
-            'present' => 0
+            Statuses::ABSENT => 0
         ];
         $daily_breakdown = [];
         foreach ($period as $date) {
