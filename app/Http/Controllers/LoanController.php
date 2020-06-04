@@ -172,7 +172,8 @@ class LoanController extends Controller
             $data     = [
                 'loan_amount' => $request->loan_amount,
                 'duration'    => $request->duration,
-                'month'       => $resource->month ?: 0
+                'month'       => $resource->month ?: 0,
+                'type'        => $request->type ? $request->type : 0
             ];
             $info     = $loan->setPartner($partner)->setResource($resource)->setData($data)->apply();
             return api_response($request, 1, 200, ['data' => $info]);
