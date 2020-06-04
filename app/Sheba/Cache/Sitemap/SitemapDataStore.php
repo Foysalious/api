@@ -24,11 +24,12 @@ class SitemapDataStore implements DataStoreObject
 
     public function generateMasterCategoryTree()
     {
-        $master_categories = Category::select('id', 'name')->parents()->get();
+        $master_categories = Category::select('id', 'name')->parents()->has('subCat')->get();
+
 
         foreach ($master_categories as $master_category) {
             $master_category['slug'] = $master_category->getSlug();
-            $master_category['secondary_categories'] = $master_category->subCat()->select('id', 'name')->get();
+            $master_category['secondary_categories'] = $master_category->subCat()->select('id', 'name', 'parent_id')->has('publishedServices')->get();
 
             foreach ( $master_category['secondary_categories'] as $secondary_category) {
                 $secondary_category['slug'] = $secondary_category->getSlug();
@@ -38,11 +39,24 @@ class SitemapDataStore implements DataStoreObject
                     $service['slug'] = $service->getSlug();
                 }
 
+                $secondary_category['services'] = $secondary_category['services']->filter(function ($service, $key) {
+                    return  $service['slug'] != null;
+                });
+
                 $secondary_category['services'] = $secondary_category['services']->toArray();
             }
 
+            $master_category['secondary_categories'] = $master_category['secondary_categories']->filter(function ($cat, $key) {
+                return  $cat['slug'] != null;
+            });
+
             $master_category['secondary_categories'] =  $master_category['secondary_categories']->toArray();
         }
+
+        $master_categories = $master_categories->filter(function ($cat, $key) {
+            return  $cat['slug'] != null;
+        });
+
 
         return $master_categories->toArray();
     }
