@@ -26,17 +26,20 @@ class SitemapDataStore implements DataStoreObject
     {
         $master_categories = Category::select('id', 'name')->parents()->has('subCat')->get();
 
-
         foreach ($master_categories as $master_category) {
-            $master_category['slug'] = $master_category->getSlug();
+            $is_car_rental = $master_category->isRentMaster();
+            $car_rental_slug = config('sheba.car_rental.slug');
+
+            $master_category['slug'] = $is_car_rental ? $car_rental_slug : $master_category->getSlug();
             $master_category['secondary_categories'] = $master_category->subCat()->select('id', 'name', 'parent_id')->has('publishedServices')->get();
 
+
             foreach ( $master_category['secondary_categories'] as $secondary_category) {
-                $secondary_category['slug'] = $secondary_category->getSlug();
+                $secondary_category['slug'] = $is_car_rental ? $car_rental_slug : $secondary_category->getSlug();
                 $secondary_category['services'] = $secondary_category->publishedServices()->select('id', 'name')->get();
 
                 foreach ( $secondary_category['services'] as $service) {
-                    $service['slug'] = $service->getSlug();
+                    $service['slug'] = $is_car_rental ? $car_rental_slug : $service->getSlug();
                 }
 
                 $secondary_category['services'] = $secondary_category['services']->filter(function ($service, $key) {
