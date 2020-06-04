@@ -64,7 +64,7 @@ class DocumentsForAgents implements Arrayable
         }
         $output = [];
         foreach (self::getKeys() as $key) {
-            if ($key == 'dls_v2_documents') {
+            if ($key == 'retailer_document') {
                 if (array_key_exists($key, $data)) {
 
                     $output[$key] = [
