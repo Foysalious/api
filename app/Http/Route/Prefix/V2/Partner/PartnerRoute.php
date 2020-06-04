@@ -31,7 +31,7 @@ class PartnerRoute
             $api->get('/{loan_id}/details','LoanController@show');
             $api->post('/{loan_id}','LoanController@update');
             $api->get('/{loan_id}/download-documents','LoanController@downloadDocuments');
-            $api->post('/{loan_id}/upload-documents','LoanController@uploadDocuments');
+           /* $api->post('/{loan_id}/upload-documents','LoanController@uploadDocuments');*/
             $api->post('/{loan_id}/status','LoanController@statusChange');
             $api->get('/{loan_id}/banks/{bank_id}', 'LoanController@assignBank');
             $api->get('{partner_bank_loan}/logs', 'LoanController@getChangeLogs');
@@ -46,6 +46,7 @@ class PartnerRoute
         $api->group(['prefix'=>'loans'], function ($api) {
             $api->get('/{loan_id}/details-for-agents','LoanController@showForAgent');
             $api->get('{partner_bank_loan}/logs-for-agent', 'LoanController@getChangeLogsForAgent');
+            $api->post('/{loan_id}/upload-documents','LoanController@uploadDocuments');
         });
     }
 }
