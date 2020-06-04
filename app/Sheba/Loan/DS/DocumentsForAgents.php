@@ -68,15 +68,15 @@ class DocumentsForAgents implements Arrayable
                 if (array_key_exists($key, $data)) {
 
                     $output[$key] = [
-                        'application'         => array_key_exists('picture', $data[$key]) ? $data[$key]['picture'] : null,
-                        'charge_document' => array_key_exists('nid_front_image', $data[$key]) ? $data[$key]['nid_front_image'] : null,
-                        'credit_proposal'  => array_key_exists('nid_back_image', $data[$key]) ? $data[$key]['nid_back_image'] : null,
+                        'application' => array_key_exists('application', $data[$key]) ? $data[$key]['application'] : null,
+                        'charge_document' => array_key_exists('charge_document', $data[$key]) ? $data[$key]['charge_document'] : null,
+                        'credit_proposal' => array_key_exists('credit_proposal', $data[$key]) ? $data[$key]['credit_proposal'] : null,
                     ];
                 } else {
                     $output[$key] = [
-                        'application'         => null,
+                        'application' => null,
                         'charge_document' => null,
-                        'credit_proposal'  => null
+                        'credit_proposal' => null
                     ];
                 }
             }
