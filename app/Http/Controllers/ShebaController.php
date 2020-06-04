@@ -46,15 +46,15 @@ class ShebaController extends Controller
 
     public function __construct(ServiceRepository $service_repo, ReviewRepository $review_repo, PaymentLinkRepository $paymentLinkRepository)
     {
-        $this->serviceRepository = $service_repo;
-        $this->reviewRepository = $review_repo;
-        $this->paymentLinkRepo = $paymentLinkRepository;
+        $this->serviceRepository     = $service_repo;
+        $this->reviewRepository      = $review_repo;
+        $this->paymentLinkRepo       = $paymentLinkRepository;
     }
 
     public function getInfo()
     {
-        $job_count = Job::all()->count() + 16000;
-        $service_count = Service::where('publication_status', 1)->get()->count();
+        $job_count      = Job::all()->count() + 16000;
+        $service_count  = Service::where('publication_status', 1)->get()->count();
         $resource_count = Resource::where('is_verified', 1)->get()->count();
         return response()->json(['service' => $service_count, 'job' => $job_count,
             'resource' => $resource_count,
@@ -548,6 +548,5 @@ class ShebaController extends Controller
         } else {
             return api_response($request, true, 404, ['message' => 'Not Found']);
         }
-
     }
 }
