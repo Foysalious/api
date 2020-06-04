@@ -13,6 +13,8 @@ use Sheba\Dal\Attendance\Contract as AttendanceRepositoryInterface;
 use Sheba\Dal\AttendanceActionLog\Actions;
 use Sheba\Dal\AttendanceActionLog\Contract as AttendanceActionLogRepositoryInterface;
 use Sheba\Dal\AttendanceActionLog\Model as AttendanceActionLog;
+use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
+use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\Dal\Leave\Contract as LeaveRepositoryInterface;
 use Sheba\Dal\Attendance\Model;
@@ -48,17 +50,33 @@ class AttendanceList
     private $status;
     private $businessMemberId;
     private $usersWhoGiveAttendance;
+    private $usersWhoOnLeave;
     /** @var Collection $departments */
     private $departments;
+    /** @var BusinessHolidayRepoInterface $businessHoliday */
+    private $businessHoliday;
+    /** @var BusinessWeekendRepoInterface $businessWeekend */
+    private $businessWeekend;
 
     const CHECKIN_TIME = 'checkin_time';
     const CHECKOUT_TIME = 'checkout_time';
     const STAYING_TIME = 'staying_time';
 
+    /**
+     * AttendanceList constructor.
+     * @param AttendanceRepositoryInterface $attendance_repository_interface
+     * @param AttendanceActionLogRepositoryInterface $attendance_action_log_repository_interface
+     * @param BusinessMemberRepositoryInterface $business_member_repository
+     * @param LeaveRepositoryInterface $leave_repository_interface
+     * @param BusinessHolidayRepoInterface $business_holiday_repo
+     * @param BusinessWeekendRepoInterface $business_weekend_repo
+     */
     public function __construct(AttendanceRepositoryInterface $attendance_repository_interface,
                                 AttendanceActionLogRepositoryInterface $attendance_action_log_repository_interface,
                                 BusinessMemberRepositoryInterface $business_member_repository,
-                                LeaveRepositoryInterface $leave_repository_interface)
+                                LeaveRepositoryInterface $leave_repository_interface,
+                                BusinessHolidayRepoInterface $business_holiday_repo,
+                                BusinessWeekendRepoInterface $business_weekend_repo)
     {
         $this->attendanceRepositoryInterface = $attendance_repository_interface;
         $this->attendanceActionLogRepositoryInterface = $attendance_action_log_repository_interface;
@@ -66,6 +84,9 @@ class AttendanceList
         $this->leaveRepositoryInterface = $leave_repository_interface;
         $this->departments = collect();
         $this->usersWhoGiveAttendance = [];
+        $this->usersWhoOnLeave = [];
+        $this->businessHoliday = $business_holiday_repo;
+        $this->businessWeekend = $business_weekend_repo;
     }
 
     /**
@@ -268,28 +289,47 @@ class AttendanceList
         $data = [];
         $this->setDepartments();
 
+        $business_weekend = $this->businessWeekend->getAllByBusiness($this->business);
+        $business_holiday = $this->businessHoliday->getAllByBusiness($this->business);
+
+        $dates_of_holidays_formatted = [];
+        $weekend_day = $business_weekend->pluck('weekday_name')->toArray();
+        foreach ($business_holiday as $holiday) {
+            $start_date = Carbon::parse($holiday->start_date);
+            $end_date = Carbon::parse($holiday->end_date);
+            for ($d = $start_date; $d->lte($end_date); $d->addDay()) {
+                $dates_of_holidays_formatted[] = $d->format('Y-m-d');
+            }
+        }
+
+        $is_weekend_or_holiday = $this->isWeekendHolidayLeave($this->startDate, $weekend_day, $dates_of_holidays_formatted);
+        $business_members_in_leave = $this->getBusinessMemberWhoAreOnLeave();
+
         foreach ($this->attendances as $attendance) {
             $checkin_data = $checkout_data = null;
+            $is_on_leave = $this->isOnLeave($attendance->businessMember->member->id);
+            array_push($this->usersWhoGiveAttendance, $attendance->businessMember->member->id);
+            if ($is_on_leave && (!!$this->checkinStatus || !!$this->checkoutStatus)) continue;
+
             foreach ($attendance->actions as $action) {
                 if ($action->action == Actions::CHECKIN) {
                     $checkin_data = collect([
-                        'status' => $action->status,
+                        'status' => $is_weekend_or_holiday || $is_on_leave ? null : $action->status,
                         'is_remote' => $action->is_remote ?: 0,
                         'address' => $action->is_remote ? json_decode($action->location)->address : null,
-                        'checkin_time' => Carbon::parse($attendance->date . ' ' . $attendance->checkin_time)->format('g:i a'),
+                        'checkin_time' => Carbon::parse($attendance->date . ' ' . $attendance->checkin_time)->format('g:i a')
                     ]);
                 }
                 if ($action->action == Actions::CHECKOUT) {
                     $checkout_data = collect([
-                        'status' => $action->status,
-                        'note' => $action->note,
+                        'status' => $is_weekend_or_holiday || $is_on_leave ? null : $action->status,
                         'is_remote' => $action->is_remote ?: 0,
                         'address' => $action->is_remote ? json_decode($action->location)->address : null,
                         'checkout_time' => $attendance->checkout_time ? Carbon::parse($attendance->date . ' ' . $attendance->checkout_time)->format('g:i a') : null,
+                        'note' => $action->note
                     ]);
                 }
             }
-            array_push($this->usersWhoGiveAttendance, $attendance->businessMember->id);
             array_push($data, [
                 'id' => $attendance->id,
                 'member' => [
@@ -309,12 +349,13 @@ class AttendanceList
             ]);
         }
 
-        $business_member_in_leave = [];
-        if (!$this->checkinStatus && !$this->checkoutStatus) {
-            $business_member_in_leave = $this->getBusinessMemberWhoAreOnLeave();
+        foreach ($business_members_in_leave as $index => $business_member_in_leave) {
+            if (in_array($business_member_in_leave['member']['id'], $this->usersWhoGiveAttendance)) {
+                unset($business_members_in_leave[$index]);
+            }
         }
 
-        $final_data = array_merge($data, $business_member_in_leave);
+        $final_data = array_merge($data, $business_members_in_leave);
 
         if ($this->search)
             $final_data = collect($this->searchWithEmployeeName($final_data))->values();
@@ -345,7 +386,8 @@ class AttendanceList
         $data = [];
 
         foreach ($leaves as $leave) {
-            if (in_array($leave->businessMember->id, $this->usersWhoGiveAttendance)) continue;
+            array_push($this->usersWhoOnLeave, $leave->businessMember->member->id);
+            if (!!$this->checkinStatus || !!$this->checkoutStatus) continue;
             array_push($data, [
                 'id' => $leave->id,
                 'member' => [
@@ -383,5 +425,36 @@ class AttendanceList
         if ($hour > $intval_hr) $text .= ($minute - (60 * intval($hour))) . " min";
 
         return $text;
+    }
+
+    private function isWeekendHolidayLeave($date, $weekend_day, $dates_of_holidays_formatted)
+    {
+        return $this->isWeekend($date, $weekend_day)
+            || $this->isHoliday($date, $dates_of_holidays_formatted);
+    }
+
+    /**
+     * @param Carbon $date
+     * @param $weekend_day
+     * @return bool
+     */
+    private function isWeekend(Carbon $date, $weekend_day)
+    {
+        return in_array(strtolower($date->format('l')), $weekend_day);
+    }
+
+    /**
+     * @param Carbon $date
+     * @param $holidays
+     * @return bool
+     */
+    private function isHoliday(Carbon $date, $holidays)
+    {
+        return in_array($date->format('Y-m-d'), $holidays);
+    }
+
+    private function isOnLeave($member_id)
+    {
+        return in_array($member_id, $this->usersWhoOnLeave);
     }
 }
