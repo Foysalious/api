@@ -95,7 +95,7 @@ class DueTrackerRepository extends BaseRepository {
      * @throws ExpenseTrackingServerError
      * @throws InvalidPartnerPosCustomer
      */
-    public function getDueListByProfile(Partner $partner, Request $request, $paginate = true) {
+    public function getDueListByProfile(Partner $partner, Request $request) {
         $partner_pos_customer = PartnerPosCustomer::byPartner($partner->id)->where('customer_id', $request->customer_id)->with(['customer'])->first();
         if (empty($partner_pos_customer))
             throw new InvalidPartnerPosCustomer();
@@ -110,7 +110,7 @@ class DueTrackerRepository extends BaseRepository {
             return $item;
         });
         list($offset, $limit) = calculatePagination($request);
-        $list               = $list->slice($offset)->take($limit);
+        $list               = $list->slice($offset)->take($limit)->values();
         $total_credit       = 0;
         $total_debit        = 0;
         $total_transactions = count($list);
@@ -120,10 +120,6 @@ class DueTrackerRepository extends BaseRepository {
             } else {
                 $total_credit += $item['amount'];
             }
-        }
-        if ($paginate) {
-            list($offset, $limit) = calculatePagination($request);
-            $list = $list->slice($offset)->take($limit)->values();
         }
         return [
             'list'       => $list,
