@@ -246,8 +246,8 @@ class Loan
     {
         $this->validateAlreadyRequested();
         $applicable = $this->getCompletion()['is_applicable_for_loan'];
-        if (!$applicable)
-            throw new NotApplicableForLoan();
+//        if (!$applicable)
+//            throw new NotApplicableForLoan();
 
     }
 
