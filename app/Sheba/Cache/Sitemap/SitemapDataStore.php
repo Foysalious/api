@@ -32,8 +32,6 @@ class SitemapDataStore implements DataStoreObject
 
             $master_category['slug'] = $is_car_rental ? $car_rental_slug : $master_category->getSlug();
             $master_category['secondary_categories'] = $master_category->subCat()->select('id', 'name', 'parent_id')->has('publishedServices')->get();
-
-
             foreach ( $master_category['secondary_categories'] as $secondary_category) {
                 $secondary_category['slug'] = $is_car_rental ? $car_rental_slug : $secondary_category->getSlug();
                 $secondary_category['services'] = $secondary_category->publishedServices()->select('id', 'name')->get();
@@ -50,7 +48,7 @@ class SitemapDataStore implements DataStoreObject
             }
 
             $master_category['secondary_categories'] = $master_category['secondary_categories']->filter(function ($cat, $key) {
-                return  $cat['slug'] != null;
+                return  $cat['slug'] != null && !empty($cat['services']) ;
             });
 
             $master_category['secondary_categories'] =  array_values($master_category['secondary_categories']->toArray());
@@ -58,7 +56,7 @@ class SitemapDataStore implements DataStoreObject
         }
 
         $master_categories = $master_categories->filter(function ($cat, $key) {
-            return  $cat['slug'] != null;
+            return  $cat['slug'] != null && !empty($cat['secondary_categories']);
         });
         return array_values($master_categories->toArray());
     }
