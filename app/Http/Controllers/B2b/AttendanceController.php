@@ -5,6 +5,7 @@ use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Sheba\Business\Attendance\MonthlyStat;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\Business\Attendance\AttendanceList;
 use Sheba\Business\Attendance\Monthly\Excel;
@@ -20,7 +21,14 @@ use Throwable;
 
 class AttendanceController extends Controller
 {
-    public function getDailyStats($business, Request $request, AttendanceList $stat)
+    /**
+     * @param $business
+     * @param Request $request
+     * @param AttendanceList $stat
+     * @param TimeFrame $time_frame
+     * @return JsonResponse
+     */
+    public function getDailyStats($business, Request $request, AttendanceList $stat, TimeFrame $time_frame)
     {
         $this->validate($request, [
             'status' => 'string|in:' . implode(',', Statuses::get()),
@@ -28,12 +36,18 @@ class AttendanceController extends Controller
             'date' => 'date|date_format:Y-m-d',
         ]);
         $date = $request->has('date') ? Carbon::parse($request->date) : Carbon::now();
-        $attendances = $stat->setBusiness($request->business)->setStartDate($date)->setEndDate($date)
+        $selected_date = $time_frame->forADay($date);
+
+        $attendances = $stat->setBusiness($request->business)
+            ->setSelectedDate($selected_date)
             ->setBusinessDepartment($request->department_id)->setStatus($request->status)->setSearch($request->search)
             ->setCheckinStatus($request->checkin_status)->setCheckoutStatus($request->checkout_status)
-            ->setSortKey($request->sort)->setSortColumn($request->sort_column)->get();
+            ->setSortKey($request->sort)->setSortColumn($request->sort_column)
+            ->get();
+
         $count = count($attendances);
-        if ($count == 0) return api_response($request, null, 404);
+        if (!$count) return api_response($request, null, 404);
+
         return api_response($request, null, 200, ['attendances' => $attendances, 'total' => $count]);
     }
 

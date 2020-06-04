@@ -18,6 +18,7 @@ use Sheba\Dal\Leave\Contract as LeaveRepositoryInterface;
 use Sheba\Dal\Attendance\Model;
 use Sheba\Dal\Attendance\Statuses;
 use Sheba\Dal\Leave\Status;
+use Sheba\Helpers\TimeFrame;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 
 class AttendanceList
@@ -30,14 +31,12 @@ class AttendanceList
     private $endDate;
     /** @var Model[] */
     private $attendances;
-
     /** @var AttendanceRepositoryInterface $attendanceRepositoryInterface */
     private $attendanceRepositoryInterface;
     /** @var AttendanceActionLogRepositoryInterface $attendanceActionLogRepositoryInterface */
     private $attendanceActionLogRepositoryInterface;
     /** @var LeaveRepositoryInterface $leaveRepositoryInterface */
     private $leaveRepositoryInterface;
-
     /** @var BusinessMemberRepositoryInterface */
     private $businessMemberRepository;
     private $businessDepartmentId;
@@ -48,8 +47,9 @@ class AttendanceList
     private $checkoutStatus;
     private $status;
     private $businessMemberId;
-    /** @var BusinessDepartment[] */
-    private $attendanceDepartments;
+    private $usersWhoGiveAttendance;
+    /** @var Collection $departments */
+    private $departments;
 
     const CHECKIN_TIME = 'checkin_time';
     const CHECKOUT_TIME = 'checkout_time';
@@ -64,7 +64,8 @@ class AttendanceList
         $this->attendanceActionLogRepositoryInterface = $attendance_action_log_repository_interface;
         $this->businessMemberRepository = $business_member_repository;
         $this->leaveRepositoryInterface = $leave_repository_interface;
-        $this->attendanceDepartments = collect();
+        $this->departments = collect();
+        $this->usersWhoGiveAttendance = [];
     }
 
     /**
@@ -78,22 +79,13 @@ class AttendanceList
     }
 
     /**
-     * @param Carbon $date
+     * @param TimeFrame $selected_date
      * @return AttendanceList
      */
-    public function setStartDate(Carbon $date)
+    public function setSelectedDate(TimeFrame $selected_date)
     {
-        $this->startDate = $date;
-        return $this;
-    }
-
-    /**
-     * @param Carbon $date
-     * @return AttendanceList
-     */
-    public function setEndDate(Carbon $date)
-    {
-        $this->endDate = $date;
+        $this->startDate = $selected_date->start;
+        $this->endDate = $selected_date->end;
         return $this;
     }
 
@@ -250,6 +242,7 @@ class AttendanceList
         } else {
             $attendances = $attendances->orderByRaw('id desc');
         }
+
         $this->attendances = $attendances->get();
     }
 
@@ -272,9 +265,9 @@ class AttendanceList
 
     private function getDataV2()
     {
-        if (count($this->attendances) == 0) return [];
         $data = [];
         $this->setDepartments();
+
         foreach ($this->attendances as $attendance) {
             $checkin_data = $checkout_data = null;
             foreach ($attendance->actions as $action) {
@@ -296,6 +289,7 @@ class AttendanceList
                     ]);
                 }
             }
+            array_push($this->usersWhoGiveAttendance, $attendance->businessMember->id);
             array_push($data, [
                 'id' => $attendance->id,
                 'member' => [
@@ -304,23 +298,27 @@ class AttendanceList
                 ],
                 'department' => $attendance->businessMember->role ? [
                     'id' => $attendance->businessMember->role->business_department_id,
-                    'name' => $this->attendanceDepartments->where('id', $attendance->businessMember->role->business_department_id)->first()->name
+                    'name' => $this->departments->where('id', $attendance->businessMember->role->business_department_id)->first()->name
                 ] : null,
                 'check_in' => $checkin_data,
                 'check_out' => $checkout_data,
                 'active_hours' => $attendance->staying_time_in_minutes ? $this->formatMinute($attendance->staying_time_in_minutes) : null,
                 'is_absent' => $attendance->status == Statuses::ABSENT ? 1 : 0,
                 'is_on_leave' => 0,
-                'date' => $attendance->date,
+                'date' => $attendance->date
             ]);
         }
+
         $business_member_in_leave = [];
         if (!$this->checkinStatus && !$this->checkoutStatus) {
             $business_member_in_leave = $this->getBusinessMemberWhoAreOnLeave();
         }
-        $final_data = $data + $business_member_in_leave;
 
-        if ($this->search) $final_data = collect($this->searchWithEmployeeName($final_data))->values();
+        $final_data = array_merge($data, $business_member_in_leave);
+
+        if ($this->search)
+            $final_data = collect($this->searchWithEmployeeName($final_data))->values();
+
         return $final_data;
     }
 
@@ -339,14 +337,15 @@ class AttendanceList
         $leaves = $this->leaveRepositoryInterface->builder()
             ->select('id', 'business_member_id', 'end_date', 'status')
             ->whereIn('business_member_id', $business_member_ids)
-            ->where('status', Status::ACCEPTED)
-            ->where('end_date', '>=', Carbon::today())
-            ->with([
-                'businessMember' => function ($q) {
-                    $this->withMembers($q);
-                }])->get();
+            ->accepted()
+            ->where('start_date', '<=', $this->startDate->toDateString())->where('end_date', '>=', $this->endDate->toDateString())
+            ->with(['businessMember' => function ($q) {$this->withMembers($q);}])
+            ->get();
+
         $data = [];
+
         foreach ($leaves as $leave) {
+            if (in_array($leave->businessMember->id, $this->usersWhoGiveAttendance)) continue;
             array_push($data, [
                 'id' => $leave->id,
                 'member' => [
@@ -355,30 +354,23 @@ class AttendanceList
                 ],
                 'department' => $leave->businessMember->role ? [
                     'id' => $leave->businessMember->role->business_department_id,
-                    'name' => $this->attendanceDepartments->where('id', $leave->businessMember->role->business_department_id)->first()->name
+                    'name' => $this->departments->where('id', $leave->businessMember->role->business_department_id)->first()->name
                 ] : null,
                 'check_in' => null,
                 'check_out' => null,
                 'active_hours' => null,
                 'is_absent' => 0,
                 'is_on_leave' => 1,
-                'date' => null,
+                'date' => null
             ]);
         }
+
         return $data;
     }
 
     private function setDepartments()
     {
-        $roles = $this->attendances->pluck('businessMember.business_role_id');
-        if (count($roles) == 0) return;
-        $department_ids = BusinessRole::whereIn('id', $roles->toArray())->select('id', 'business_department_id')->get()->pluck('business_department_id')->toArray();
-        $this->setAttendanceDepartments(BusinessDepartment::whereIn('id', $department_ids)->select('id', 'name')->get());
-    }
-
-    private function setAttendanceDepartments($departments)
-    {
-        $this->attendanceDepartments = $departments;
+        $this->departments = BusinessDepartment::where('business_id', $this->business->id)->select('id', 'name')->get();
         return $this;
     }
 
@@ -389,6 +381,7 @@ class AttendanceList
         $intval_hr = intval($hour);
         $text = "$intval_hr hr ";
         if ($hour > $intval_hr) $text .= ($minute - (60 * intval($hour))) . " min";
+
         return $text;
     }
 }
