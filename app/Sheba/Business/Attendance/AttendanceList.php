@@ -320,7 +320,7 @@ class AttendanceList
         }
         $final_data = $data + $business_member_in_leave;
 
-        if ($this->search) $final_data = $this->searchWithEmployeeName($final_data);
+        if ($this->search) $final_data = collect($this->searchWithEmployeeName($final_data))->values();
         return $final_data;
     }
 
