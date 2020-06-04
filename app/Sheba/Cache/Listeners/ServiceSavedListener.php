@@ -3,7 +3,7 @@
 
 use Sheba\Cache\CacheAside;
 use Sheba\Cache\Sitemap\SitemapCacheRequest;
-use Sheba\Dal\Service\Listeners\ServiceSaved as ServiceSavedEvent;
+use Sheba\Dal\Service\Events\ServiceSaved as ServiceSavedEvent;
 use Sheba\Report\Listeners\BaseSavedListener;
 
 class ServiceSavedListener extends BaseSavedListener
