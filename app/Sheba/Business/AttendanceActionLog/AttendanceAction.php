@@ -36,6 +36,12 @@ class AttendanceAction
     private $lng;
     private $isRemote;
 
+    /**
+     * AttendanceAction constructor.
+     * @param EloquentImplementation $attendance_repository
+     * @param AttendanceCreator $attendance_creator
+     * @param Creator $attendance_action_log_creator
+     */
     public function __construct(EloquentImplementation $attendance_repository, AttendanceCreator $attendance_creator, AttendanceActionLogCreator $attendance_action_log_creator)
     {
         $this->today = Carbon::now();
@@ -109,7 +115,6 @@ class AttendanceAction
 
     public function doAction()
     {
-        /** @var ActionChecker\ActionChecker $action */
         $action = $this->checkTheAction();
         if ($action->isSuccess()) $this->doDatabaseTransaction();
         return $action;

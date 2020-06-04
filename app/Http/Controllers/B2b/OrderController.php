@@ -5,6 +5,7 @@ use App\Models\HyperLocal;
 use App\Models\InspectionItemIssue;
 use App\Models\Member;
 use App\Models\Payment;
+use App\Repositories\NotificationRepository;
 use App\Sheba\Address\AddressValidator;
 use App\Sheba\Checkout\Checkout;
 use Carbon\Carbon;
@@ -207,15 +208,19 @@ class OrderController extends Controller
             $request->merge(['customer' => $customer,
                 'address_id' => $address->id,
                 'name' => $business->name, 'payment_method' => 'cod', 'mobile' => $member->profile->mobile,
-                'business_id' => $business->id, 'sales_channel' => constants('SALES_CHANNELS')['B2B']['name'], 'voucher' => $request->voucher]);
+                'business_id' => $business->id, 'sales_channel' => $request->sales_channel?:constants('SALES_CHANNELS')['B2B']['name'], 'voucher' => $request->voucher]);
             $order = $order->placeOrder($request);
             if ($order) {
                 if ($request->has('issue_id')) {
                     $issue = InspectionItemIssue::find((int)$request->issue_id);
                     $issue->update($this->withBothModificationFields(['order_id' => $order->id, 'status' => 'closed']));
                 }
-                return api_response($request, $order, 200, ['job_id' => $order->jobs->first()->id, 'order_id' => $order->jobs->first()->partnerOrder->id,
-                    'order_code' => $order->code()]);
+                $this->sendNotifications($order);
+                return api_response($request, $order, 200, [
+                    'job_id' => $order->jobs->first()->id,
+                    'order_id' => $order->jobs->first()->partnerOrder->id,
+                    'order_code' => $order->code()
+                ]);
             } else {
                 return api_response($request, null, 500);
             }
@@ -252,6 +257,16 @@ class OrderController extends Controller
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
+        }
+    }
+
+    private function sendNotifications($order)
+    {
+        try {
+            (new NotificationRepository())->send($order);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return null;
         }
     }
 }

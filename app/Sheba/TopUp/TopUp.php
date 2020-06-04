@@ -2,13 +2,11 @@
 
 use App\Models\Affiliate;
 use App\Models\TopUpOrder;
-use App\Repositories\SmsHandler;
 use Exception;
 use App\Models\TopUpVendor;
-use Sheba\Dal\TopUpGateway\Model as TopUpGateway;
 use Sheba\ModificationFields;
 use DB;
-use Sheba\TopUp\Jobs\TopUpBalanceUpdateJob;
+use Sheba\TopUp\Jobs\TopUpBalanceUpdateAndNotifyJob;
 use Sheba\TopUp\Vendor\Response\Ipn\SuccessResponse;
 use Sheba\TopUp\Vendor\Response\TopUpErrorResponse;
 use Sheba\TopUp\Vendor\Response\TopUpFailResponse;
@@ -74,17 +72,10 @@ class TopUp
         if ($this->validator->setTopupOrder($topup_order)->validate()->hasError()) {
             $this->updateFailedTopOrder($topup_order, $this->validator->getError());
         } else {
-            $gateway = $this->getGatewayModel($topup_order->gateway);
-            $balance = $this->vendor->getBalance();
-
-            if($this->checkIfLessThanThreshold($gateway, $balance)) {
-                $this->sendSmsToGatewaySmsReceivers($gateway, $balance);
-            }
-
             $this->response = $this->vendor->recharge($topup_order);
-
+            dd($this->response);
             if ($this->response->hasSuccess()) {
-                dispatch((new TopUpBalanceUpdateJob($balance, $gateway)));
+                dispatch((new TopUpBalanceUpdateAndNotifyJob($topup_order)));
                 $response = $this->response->getSuccess();
                 DB::transaction(function () use ($response, $topup_order) {
                     $this->setModifier($this->agent);
@@ -198,28 +189,5 @@ class TopUp
     public function refund(TopUpOrder $top_up_order)
     {
         $top_up_order->agent->getCommission()->setTopUpOrder($top_up_order)->refund();
-    }
-
-    public function getGatewayModel($gateway)
-    {
-        return TopUpGateway::where('name', $gateway)->first();
-    }
-
-    public function checkIfLessThanThreshold($gateway, $balance)
-    {
-        $threshold = $gateway->threshold;
-        return (double) $balance < (double) $threshold;
-    }
-
-    public function sendSmsToGatewaySmsReceivers($gateway, $balance)
-    {
-        $sms_receivers = $gateway->topupGatewaySmsReceivers;
-        $message = "gateway balance ".$balance." which is less than threshold";
-        $sms_receivers->each(function ($sms_receiver, $key) use ($message) {
-            (new SmsHandler('top_up_threshold_notify'))->send($sms_receiver->phone, [
-                'message' => $message
-            ]);
-        });
-
     }
 }

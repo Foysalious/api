@@ -33,12 +33,14 @@ class Excel
             array_push($this->data, [
                 'name' => $employee['member']['name'],
                 'dept' => $employee['department']['name'],
-                'present' => $employee['attendance']['present'],
+                'working_days' => $employee['attendance']['working_days'],
                 'on_time' => $employee['attendance']['on_time'],
                 'late' => $employee['attendance']['late'],
                 'left_early' => $employee['attendance']['left_early'],
                 'absent' => $employee['attendance']['absent'],
-                'leave' => $employee['attendance']['on_leave']
+                'left_timely' => $employee['attendance']['left_timely'],
+                'on_leave' => $employee['attendance']['on_leave'],
+                'present' => $employee['attendance']['present']
             ]);
         }
     }

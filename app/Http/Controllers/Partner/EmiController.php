@@ -10,13 +10,13 @@ class EmiController extends Controller {
     }
 
     public function index(Request $request) {
-        $minimum_amount = config('emi.minimum_emi_amount');
+        $minimum_amount = config('emi.manager.minimum_emi_amount');
         $emi_home       = array(
             array(
                 'tag'          => 'emi_benefits',
                 'header_label' => 'কিস্তি (EMI) এর সুবিধা কি কি-',
                 'data' => [
-                     '১. ১৫ হাজার টাকার অধিক মূল্যের পণ্য কিস্তিতে বিক্রি করতে পারবেন। যা আপনার বিক্রি বাড়াবে।',
+                     '১. ৫ হাজার টাকার অধিক মূল্যের পণ্য কিস্তিতে বিক্রি করতে পারবেন। যা আপনার বিক্রি বাড়াবে।',
                      '২. কিস্তির বকেয়া টাকা আপনাকে বহন করতে হবে না, ব্যাংক বহন করবে।',
                      '৩. POS মেশিন ছাড়াই ক্রেডিট কার্ড এর মাধ্যমে EMI তে বিক্রি করতে পারবেন ।'
                     ]
@@ -31,8 +31,8 @@ class EmiController extends Controller {
                 ]
             )
         );
-        $data           = [$minimum_amount, $emi_home];
-        return api_response($request, $data, 200, ['minimum_amount' => 15000, 'emi_home' => $emi_home]);
+        $data           = ['minimum_amount' => $minimum_amount, 'emi_home' => $emi_home];
+        return api_response($request, $data, 200, $data);
     }
 
     public function emiList(EmiRepository $repository) {

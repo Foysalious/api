@@ -25,13 +25,6 @@ abstract class Setting
         return $this;
     }
 
-    public function setVersion($version)
-    {
-        $this->version = $version;
-
-        return $this;
-    }
-
     public function get()
     {
         return $this->setting();

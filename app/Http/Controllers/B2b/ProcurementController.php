@@ -12,6 +12,8 @@ use App\Models\Taggable;
 use App\Sheba\Bitly\BitlyLinkShort;
 use App\Sheba\Business\ACL\AccessControl;
 use App\Transformers\AttachmentTransformer;
+use App\Transformers\Business\LeaveTransformer;
+use App\Transformers\Business\TenderDetailsTransformer;
 use App\Transformers\Business\TenderTransformer;
 use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
@@ -19,6 +21,7 @@ use GuzzleHttp\Client;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\App;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
@@ -224,9 +227,10 @@ class ProcurementController extends Controller
      */
     public function tenders(Request $request)
     {
-        list($offset, $limit) = calculatePagination($request);
         $procurements = $this->procurementRepository->getProcurementFilterByLastDateOfSubmission();
-        #$procurements = $procurements->skip($offset)->limit($limit);
+        // list($offset, $limit) = calculatePagination($request);
+        // $procurements = $procurements->skip($offset)->limit($limit);
+
         if ($request->has('tag')) $procurements = $this->procurementRepository->filterWithTag($request->tag);
         if ($request->has('category') && $request->category != 'all') $procurements = $this->procurementRepository->filterWithCategory($request->category);
         if ($request->has('shared_to')) $procurements = $this->procurementRepository->filterWithSharedTo($request->shared_to);
@@ -248,13 +252,65 @@ class ProcurementController extends Controller
             if ($number_of_participants) return $number_of_participants != $number_of_bids;
             return $procurement;
         });
-        $total_records = $procurements->count();
+
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
         $resource = new Collection($procurements, new TenderTransformer());
         $procurements = $manager->createData($resource)->toArray()['data'];
-        if ($request->has('sort')) $procurements = $this->procurementOrderBy($procurements, $request->sort)->values()->toArray();
-        return api_response($request, null, 200, ['tenders' => $procurements, 'total_records' => $total_records]);
+
+        if ($request->has('sort'))
+            $procurements = $this->procurementOrderBy($procurements, $request->sort)->values()->toArray();
+
+        $procurements_with_pagination_data = $this->paginateCollection(collect($procurements), 10);
+
+        return api_response($request, null, 200, ['tenders' => $procurements_with_pagination_data]);
+    }
+
+    /**
+     * CUSTOM PAGINATION FOR COLLECTION.
+     *
+     * @param $collection
+     * @param $perPage
+     * @param string $pageName
+     * @param null $fragment
+     * @return LengthAwarePaginator
+     */
+    private function paginateCollection($collection, $perPage, $pageName = 'page', $fragment = null)
+    {
+        $currentPage = LengthAwarePaginator::resolveCurrentPage($pageName);
+        $currentPageItems = $collection->slice(($currentPage - 1) * $perPage, $perPage);
+        parse_str(request()->getQueryString(), $query);
+        unset($query[$pageName]);
+        return new LengthAwarePaginator(
+            $currentPageItems,
+            $collection->count(),
+            $perPage,
+            $currentPage,
+            [
+                'pageName' => $pageName,
+                'path' => LengthAwarePaginator::resolveCurrentPath(),
+                'query' => $query,
+                'fragment' => $fragment
+            ]
+        );
+    }
+
+    /**
+     * @param Request $request
+     * @param Procurement $tender
+     * @return JsonResponse
+     */
+    public function tenderShow(Request $request, $tender)
+    {
+        $procurement = $this->procurementRepository->find($tender);
+        if (!$procurement) return api_response($request, null, 404, ['message' => 'Tender not Found']);
+
+        $fractal = new Manager();
+        $fractal->setSerializer(new CustomSerializer());
+        $resource = new Item($procurement, new TenderDetailsTransformer(true));
+        $procurement = $fractal->createData($resource)->toArray()['data'];
+
+        return api_response($request, null, 200, ['tender' => $procurement]);
     }
 
     /**
@@ -287,7 +343,22 @@ class ProcurementController extends Controller
                 $company_evaluation = $procurement->items->where('type', 'company_evaluation')->first();
 
                 $procurement_details = [
-                    'id' => $procurement->id, 'title' => $procurement->title, 'status' => $procurement->status, 'long_description' => $procurement->long_description, 'labels' => $procurement->getTagNamesAttribute()->toArray(), 'start_date' => Carbon::parse($procurement->procurement_start_date)->format('d/m/y'), 'published_at' => $procurement->is_published ? Carbon::parse($procurement->published_at)->format('d/m/y') : null, 'end_date' => Carbon::parse($procurement->procurement_end_date)->format('d/m/y'), 'number_of_participants' => $procurement->number_of_participants, 'last_date_of_submission' => Carbon::parse($procurement->last_date_of_submission)->format('Y-m-d'), 'payment_options' => $procurement->payment_options, 'created_at' => Carbon::parse($procurement->created_at)->format('d/m/y'), 'price_quotation' => $price_quotation ? $price_quotation->fields ? $price_quotation->fields->toArray() : null : null, 'technical_evaluation' => $technical_evaluation ? $technical_evaluation->fields ? $technical_evaluation->fields->toArray() : null : null, 'company_evaluation' => $company_evaluation ? $company_evaluation->fields ? $company_evaluation->fields->toArray() : null : null, 'attachments' => $procurement->attachments->map(function (Attachment $attachment) {
+                    'id' => $procurement->id,
+                    'title' => $procurement->title,
+                    'status' => $procurement->status,
+                    'long_description' => $procurement->long_description,
+                    'labels' => $procurement->getTagNamesAttribute()->toArray(),
+                    'start_date' => Carbon::parse($procurement->procurement_start_date)->format('d/m/y'),
+                    'published_at' => $procurement->is_published ? Carbon::parse($procurement->published_at)->format('d/m/y') : null,
+                    'end_date' => Carbon::parse($procurement->procurement_end_date)->format('d/m/y'),
+                    'number_of_participants' => $procurement->number_of_participants,
+                    'last_date_of_submission' => Carbon::parse($procurement->last_date_of_submission)->format('Y-m-d'),
+                    'payment_options' => $procurement->payment_options,
+                    'created_at' => Carbon::parse($procurement->created_at)->format('d/m/y'),
+                    'price_quotation' => $price_quotation ? $price_quotation->fields ? $price_quotation->fields->toArray() : null : null,
+                    'technical_evaluation' => $technical_evaluation ? $technical_evaluation->fields ? $technical_evaluation->fields->toArray() : null : null,
+                    'company_evaluation' => $company_evaluation ? $company_evaluation->fields ? $company_evaluation->fields->toArray() : null : null,
+                    'attachments' => $procurement->attachments->map(function (Attachment $attachment) {
                         return (new AttachmentTransformer())->transform($attachment);
                     })->toArray()
                 ];
