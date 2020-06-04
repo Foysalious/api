@@ -198,7 +198,7 @@ class PartnerLoanRequest implements Arrayable
                 'status' => $this->partnerBankLoan->status
             ],
             'status_' => constants('LOAN_STATUS_BN')[$this->partnerBankLoan->status],
-            'document'             => $this->getDocuments(),
+            'document'             => $this->getDocumentsForAgents(),
 
         ];
     }
