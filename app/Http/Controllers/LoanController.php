@@ -740,4 +740,24 @@ class LoanController extends Controller
         }
 
     }
+
+    public function getChangeLogsForAgent(Request $request, PartnerBankLoan $partner_bank_loan)
+    {
+
+        try {
+            $user = $request->user;
+            if (!empty($user) && (!($user instanceof User) && ($user instanceof BankUser && $user->bank->id != $partner_bank_loan->bank_id))) {
+                throw new NotAllowedToAccess();
+            }
+            list($offset, $limit) = calculatePagination($request);
+            $partner_bank_loan_logs = $partner_bank_loan->changeLogs->slice($offset)->take($limit);
+            $output                 = $partner_bank_loan_logs->sortByDesc('id')->values();
+            return api_response($request, null, 200, ['logs' => $output]);
+        } catch (NotAllowedToAccess $e) {
+            return api_response($request, null, 400);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }
