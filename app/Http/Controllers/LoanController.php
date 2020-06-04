@@ -635,7 +635,7 @@ class LoanController extends Controller
             $this->validate($request, [
                 'picture' => 'required|mimes:jpg,jpeg,png,pdf',
                 'name'    => 'required',
-                'for'     => 'required|in:profile,nominee_document,grantor_document,business_document,extras'
+                'for'     => 'required|in:profile,nominee_document,grantor_document,business_document,extras,retailer_document'
             ]);
             $loan->uploadDocument($loan_id, $request);
             return api_response($request, true, 200);
