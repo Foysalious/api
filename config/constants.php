@@ -93,7 +93,8 @@ return [
         'Operation' => 'Operation',
         'Finance'   => 'Finance',
         'Handyman'  => 'Handyman',
-        'Salesman'  => 'Salesman'
+        'Salesman'  => 'Salesman',
+        'Owner'     => 'Owner'
     ],
     'JOB_STATUSES'                                => [
         'Pending'       => 'Pending',
