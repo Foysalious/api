@@ -29,6 +29,7 @@ class PartnerRoute
             $api->get('/', 'LoanController@index');
             $api->post('/from-portal','LoanController@storeFromPortals');
             $api->get('/{loan_id}/details','LoanController@show');
+            $api->get('/{loan_id}/details-for-agents','LoanController@showForAgent');
             $api->post('/{loan_id}','LoanController@update');
             $api->get('/{loan_id}/download-documents','LoanController@downloadDocuments');
             $api->post('/{loan_id}/upload-documents','LoanController@uploadDocuments');

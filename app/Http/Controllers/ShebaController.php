@@ -89,7 +89,13 @@ class ShebaController extends Controller
 
                 if (!$request->has('location')) $location = 4;
                 else $location = $request->location;
-            } else {
+            } else if ($request->has('is_ddn') && (int)$request->is_ddn) {
+                $portal_name = 'bondhu-app';
+                $screen = 'eshop';
+
+                if (!$request->has('location')) $location = 4;
+                else $location = $request->location;
+            }else {
                 if ($request->has('location')) {
                     $location = $request->location;
                 } else {

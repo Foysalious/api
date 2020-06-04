@@ -96,12 +96,19 @@ class AttendanceTransformer extends TransformerAbstract
                         'is_remote' => $attendance_checkout_action->is_remote ?: 0,
                         'address'   => $attendance_checkout_action->is_remote ? json_decode($attendance_checkout_action->location)->address : null
                     ] : null,
-                    'note' => (!$is_weekend_or_holiday_or_leave && $attendance->hasEarlyCheckout()) ? $attendance->checkoutAction()->note : null
+                    'note' => (!$is_weekend_or_holiday_or_leave && $attendance->hasEarlyCheckout()) ? $attendance->checkoutAction()->note : null,
+                    /**
+                     * ONLY THIS OPTION FOR OLD APP FAIL CHECK
+                     * REMOVE AFTER ALL APP UPDATED
+                     *
+                     */
+                    'checkin_time'  => $attendance->checkin_time,
+                    'checkout_out'  => $attendance->checkout_time,
+                    'status'        => $is_weekend_or_holiday_or_leave ? null : $attendance->status
                 ];
 
                 if (!$is_weekend_or_holiday_or_leave && $attendance_checkin_action) $statistics[$attendance_checkin_action->status]++;
                 if (!$is_weekend_or_holiday_or_leave && $attendance_checkout_action) $statistics[$attendance_checkout_action->status]++;
-                if (!$is_weekend_or_holiday_or_leave && $attendance_checkout_action) $statistics['present']++;
             }
 
             if ($this->isAbsent($attendance, $is_weekend_or_holiday_or_leave, $date)) {

@@ -329,4 +329,10 @@ class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAg
 
         return VoucherCodeGenerator::byName($this->profile->name);
     }
+
+    public function orders()
+    {
+        return $this->hasManyThrough(Order::class, Affiliation::class);
+
+    }
 }

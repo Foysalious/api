@@ -2,12 +2,14 @@
 
 namespace Sheba\Loan;
 
+use App\Exceptions\NotFoundException;
 use App\Models\BankUser;
 use App\Models\Partner;
 use App\Models\PartnerBankLoan;
 use App\Models\Profile;
 use App\Models\Resource;
 use App\Models\User;
+use App\Sheba\Loan\Exceptions\LoanNotFoundException;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -15,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 use RecursiveArrayIterator;
 use RecursiveIteratorIterator;
 use ReflectionException;
+use Sheba\Dal\RetailerMembers\RetailerMember;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\HZip;
@@ -28,6 +31,7 @@ use Sheba\Loan\DS\RunningApplication;
 use Sheba\Loan\Exceptions\AlreadyAssignToBank;
 use Sheba\Loan\Exceptions\AlreadyRequestedForLoan;
 use Sheba\Loan\Exceptions\InvalidStatusTransaction;
+use Sheba\Loan\Exceptions\LoanException;
 use Sheba\Loan\Exceptions\NotAllowedToAccess;
 use Sheba\Loan\Exceptions\NotApplicableForLoan;
 use Sheba\Loan\Exceptions\NotShebaPartner;
@@ -425,6 +429,28 @@ class Loan
         $loan                   = (new PartnerLoanRequest($request));
         $details                = $loan->details();
         $details['next_status'] = $loan->getNextStatus($loan_id);
+        return $details;
+    }
+
+    /**
+     * @param $loan_id
+     * @return array
+     * @throws NotAllowedToAccess
+     * @throws ReflectionException
+     * @throws LoanNotFoundException
+     */
+    public function showForAgent($loan_id)
+    {
+        /** @var PartnerBankLoan $request */
+        $request = $this->repo->find($loan_id);
+        if(empty($request))
+            throw new LoanNotFoundException();
+        $user    = $this->user;
+        if (!empty($user) && (!($user instanceof User) && ($user instanceof RetailerMember && $user->retailer_member->id != $request->retailer_member_id))) {
+            throw new NotAllowedToAccess();
+        }
+        $loan                   = (new PartnerLoanRequest($request));
+        $details                = $loan->detailsForAgent();
         return $details;
     }
 
