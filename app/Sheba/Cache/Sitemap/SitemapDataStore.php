@@ -46,21 +46,20 @@ class SitemapDataStore implements DataStoreObject
                     return  $service['slug'] != null;
                 });
 
-                $secondary_category['services'] = $secondary_category['services']->toArray();
+                $secondary_category['services'] = array_values($secondary_category['services']->toArray());
             }
 
             $master_category['secondary_categories'] = $master_category['secondary_categories']->filter(function ($cat, $key) {
                 return  $cat['slug'] != null;
             });
 
-            $master_category['secondary_categories'] =  $master_category['secondary_categories']->toArray();
+            $master_category['secondary_categories'] =  array_values($master_category['secondary_categories']->toArray());
+
         }
 
         $master_categories = $master_categories->filter(function ($cat, $key) {
             return  $cat['slug'] != null;
         });
-
-
-        return $master_categories->toArray();
+        return array_values($master_categories->toArray());
     }
 }
