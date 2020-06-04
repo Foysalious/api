@@ -209,7 +209,6 @@ class Category extends Model
         return in_array($this->id, array_map('intval', explode(',', env('RENT_CAR_IDS')))) ? 1 : 0;
     }
 
-
     public function scopeLocationWise($query_, $hyper_locations)
     {
         return $query_->select('id', 'icon_png', 'name')
@@ -331,5 +330,10 @@ class Category extends Model
     public function getContentsAttribute()
     {
         return $this->structured_contents ? json_decode($this->structured_contents) : null;
+    }
+
+    public function scopeHasChildren($query)
+    {
+
     }
 }

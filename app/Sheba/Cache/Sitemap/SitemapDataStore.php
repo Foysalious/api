@@ -24,7 +24,7 @@ class SitemapDataStore implements DataStoreObject
 
     public function generateMasterCategoryTree()
     {
-        $master_categories = Category::select('id', 'name')->parent()->get();
+        $master_categories = Category::select('id', 'name')->parents()->get();
 
         foreach ($master_categories as $master_category) {
             $master_category['slug'] = $master_category->getSlug();
