@@ -7,6 +7,7 @@ use App\Jobs\SendToCustomerToInformDueDepositSMS;
 use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
 use App\Models\PosCustomer;
+use App\Models\PosOrder;
 use App\Models\Profile;
 use App\Repositories\FileRepository;
 use Carbon\Carbon;
@@ -208,10 +209,15 @@ class DueTrackerRepository extends BaseRepository {
     }
 
     public function createPosOrderPayment($amount_cleared, $pos_order_id, $payment_method) {
-        $payment_data['pos_order_id'] = $pos_order_id;
-        $payment_data['amount']       = $amount_cleared;
-        $payment_data['method']       = $payment_method;
-        $this->paymentCreator->credit($payment_data);
+        /** @var PosOrder $order */
+        $order = PosOrder::find($pos_order_id);
+        $order->calculate();
+        if ($order->getDue() > 0) {
+            $payment_data['pos_order_id'] = $pos_order_id;
+            $payment_data['amount']       = $amount_cleared;
+            $payment_data['method']       = $payment_method;
+            $this->paymentCreator->credit($payment_data);
+        }
     }
 
     private function createStoreData(Request $request) {

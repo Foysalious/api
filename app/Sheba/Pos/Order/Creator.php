@@ -61,10 +61,9 @@ class Creator {
         return $this->createValidator->hasError();
     }
 
-    public function hasDueError()
-    {
-        if ($this->resolveCustomerId()!==null) return false;
-        if ($this->data['paid_amount']-$this->getNetPrice()>=0) return false;
+    public function hasDueError() {
+        if ($this->resolveCustomerId() !== null) return false;
+        if ($this->data['paid_amount'] - $this->getNetPrice() >= 0) return false;
         return ['code' => 421, 'msg' => 'Can not make due order with out customer'];
     }
 
@@ -75,7 +74,7 @@ class Creator {
     public function setData(array $data) {
         $this->data = $data;
         $this->createValidator->setServices(json_decode($this->data['services'], true));
-
+        if (!isset($this->data['payment_method'])) $this->data['payment_method'] = 'cod';
         return $this;
     }
 
@@ -136,7 +135,7 @@ class Creator {
         if (isset($this->data['paid_amount']) && $this->data['paid_amount'] > 0) {
             $payment_data['pos_order_id'] = $order->id;
             $payment_data['amount']       = $this->data['paid_amount'];
-            $payment_data['method']       = $this->data['payment_method'];
+            $payment_data['method']       = $this->data['payment_method'] ?: 'cod';
             $this->paymentCreator->credit($payment_data);
         }
 
@@ -159,18 +158,16 @@ class Creator {
     }
 
 
-    private function resolvePaymentMethod()
-    {
-        if(isset($this->data['payment_method']))
+    private function resolvePaymentMethod() {
+        if (isset($this->data['payment_method']))
             $this->paymentMethod = $this->data['payment_method'];
         else
             $this->paymentMethod = 'cod';
 
     }
 
-    private function createPartnerWiseOrderId(Partner $partner)
-    {
-        $lastOrder = $partner->posOrders()->orderBy('id', 'desc')->first();
+    private function createPartnerWiseOrderId(Partner $partner) {
+        $lastOrder    = $partner->posOrders()->orderBy('id', 'desc')->first();
         $lastOrder_id = $lastOrder ? $lastOrder->partner_wise_order_id : 0;
         return $lastOrder_id + 1;
     }
@@ -240,49 +237,48 @@ class Creator {
         return $is_service_discount_applied && (!$data['is_wholesale_applied'] || ($data['is_wholesale_applied'] && !$service_wholesale_applicable));
     }
 
-    private function getNetPrice()
-    {
-        $total_price=0;
-        $service_discount_amount=0;
-        $voucher_discount_amount=0;
-        $order_discount_amount=0;
-        $net_price=0;
-        $service_id=array();
-        $services = json_decode($this->data['services'], true);
+    private function getNetPrice() {
+        $total_price             = 0;
+        $service_discount_amount = 0;
+        $voucher_discount_amount = 0;
+        $order_discount_amount   = 0;
+        $net_price               = 0;
+        $service_id              = array();
+        $services                = json_decode($this->data['services'], true);
         foreach ($services as $service) {
             /** @var PartnerPosService $original_service */
-            $original_service = isset($service['id']) && !empty($service['id']) ? $this->posServiceRepo->find($service['id']) : $this->posServiceRepo->defaultInstance($service);
-            $service_id[]=isset($service['id']) && !empty($service['id']) ? $service['id'] : 0;
+            $original_service             = isset($service['id']) && !empty($service['id']) ? $this->posServiceRepo->find($service['id']) : $this->posServiceRepo->defaultInstance($service);
+            $service_id[]                 = isset($service['id']) && !empty($service['id']) ? $service['id'] : 0;
             $service_wholesale_applicable = $original_service->wholesale_price ? true : false;
-            $service['unit_price'] = (isset($service['updated_price']) && $service['updated_price']) ? $service['updated_price'] : ($this->isWholesalePriceApplicable($service_wholesale_applicable) ? $original_service->wholesale_price : $original_service->price);
-            $total_price +=($service['unit_price'] * $service['quantity']);
+            $service['unit_price']        = (isset($service['updated_price']) && $service['updated_price']) ? $service['updated_price'] : ($this->isWholesalePriceApplicable($service_wholesale_applicable) ? $original_service->wholesale_price : $original_service->price);
+            $total_price                  += ($service['unit_price'] * $service['quantity']);
 
             $this->discountHandler->setPosService($original_service)->setType(DiscountTypes::SERVICE)->setData($service);
-            if ($this->discountHandler->hasDiscount()) $service_discount=$this->discountHandler->getBeforeData();
-            if (isset($service_discount)) $service_discount_amount=$this->getDiscountAmount($service_discount);
+            if ($this->discountHandler->hasDiscount()) $service_discount = $this->discountHandler->getBeforeData();
+            if (isset($service_discount)) $service_discount_amount = $this->getDiscountAmount($service_discount);
 
         }
         $this->discountHandler->setType(DiscountTypes::ORDER)->setData($this->data);
-        if ($this->discountHandler->hasDiscount()) $order_discount=$this->discountHandler->setOrderAmount($total_price-$service_discount_amount)->getBeforeData();
-        if (isset($order_discount)) $order_discount_amount=$this->getDiscountAmount($order_discount);
+        if ($this->discountHandler->hasDiscount()) $order_discount = $this->discountHandler->setOrderAmount($total_price - $service_discount_amount)->getBeforeData();
+        if (isset($order_discount)) $order_discount_amount = $this->getDiscountAmount($order_discount);
 
         if (isset($this->data['voucher_code']) && !empty($this->data['voucher_code'])) {
-            $code = strtoupper($this->data['voucher_code']);
-            $customer_id = $this->resolveCustomerId();
-            $pos_customer = PosCustomer::find($customer_id) ?: new PosCustomer();
+            $code             = strtoupper($this->data['voucher_code']);
+            $customer_id      = $this->resolveCustomerId();
+            $pos_customer     = PosCustomer::find($customer_id) ?: new PosCustomer();
             $pos_order_params = (new CheckParamsForPosOrder());
-            $pos_services = $service_id;
-            $pos_order_params->setOrderAmount($total_price-$service_discount_amount)->setApplicant($pos_customer)->setPartnerPosService($pos_services);
+            $pos_services     = $service_id;
+            $pos_order_params->setOrderAmount($total_price - $service_discount_amount)->setApplicant($pos_customer)->setPartnerPosService($pos_services);
             $result = voucher($code)->checkForPosOrder($pos_order_params)->reveal();
             $this->discountHandler->setType(DiscountTypes::VOUCHER)->setData($result);
-            if ($this->discountHandler->hasDiscount()) $voucher_discount=$this->discountHandler->getBeforeData();
-            if(isset($voucher_discount)) $voucher_discount_amount=$this->getDiscountAmount($voucher_discount);
+            if ($this->discountHandler->hasDiscount()) $voucher_discount = $this->discountHandler->getBeforeData();
+            if (isset($voucher_discount)) $voucher_discount_amount = $this->getDiscountAmount($voucher_discount);
         }
-        $net_price=($total_price-$order_discount_amount-$voucher_discount_amount-$service_discount_amount);
+        $net_price = ($total_price - $order_discount_amount - $voucher_discount_amount - $service_discount_amount);
         return $net_price;
     }
 
-    private function getDiscountAmount($discount){
+    private function getDiscountAmount($discount) {
         return (isset($discount) && isset($discount['amount'])) ? $discount['amount'] : 0;
     }
 }
