@@ -95,7 +95,7 @@ class DocumentsForAgents implements Arrayable
             'grantor_document',
             'business_document',
             'extras',
-            'dls_v2_documents'
+            'retailer_document'
         ];
     }
 
