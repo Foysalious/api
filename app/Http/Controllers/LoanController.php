@@ -719,7 +719,13 @@ class LoanController extends Controller
         }
     }
 
-    public function showForAgent(Request $request,$loan_id,Loan $loan)
+    /**
+     * @param Request $request
+     * @param $loan_id
+     * @param Loan $loan
+     * @return JsonResponse
+     */
+    public function showForAgent(Request $request, $loan_id, Loan $loan)
     {
         try {
             $data = $loan->showForAgent($loan_id);
