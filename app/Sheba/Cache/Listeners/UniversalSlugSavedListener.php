@@ -3,7 +3,7 @@
 
 use Sheba\Cache\CacheAside;
 use Sheba\Cache\Sitemap\SitemapCacheRequest;
-use Sheba\Dal\UniversalSlug\Listeners\UniversalSlugSaved as UniversalSlugSavedEvent;
+use Sheba\Dal\UniversalSlug\Events\UniversalSlugSaved as UniversalSlugSavedEvent;
 use Sheba\Report\Listeners\BaseSavedListener;
 
 class UniversalSlugSavedListener extends BaseSavedListener
