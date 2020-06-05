@@ -219,7 +219,7 @@ class AttendanceController extends Controller
         $month = $request->has('month') ? $request->month : date('m');
 
         $time_frame = $time_frame->forAMonth($month, date('Y'));
-        $business_member_leave = $business_member->leaves()->accepted()->startDateBetween($time_frame)->endDateBetween($time_frame)->get();
+        $business_member_leave = $business_member->leaves()->accepted()->between($time_frame)->get();
         $time_frame->end = $this->isShowRunningMonthsAttendance(date('Y'), $month) ? Carbon::now() : $time_frame->end;
         $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
 
