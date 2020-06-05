@@ -160,7 +160,6 @@ class CategoryController extends Controller
             }
             return count($categories) > 0 ? api_response($request, $categories, 200, ['categories' => $categories_final]) : api_response($request, null, 404);
         } catch (Throwable $e) {
-            dd($e->getMessage());
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

@@ -38,7 +38,7 @@ class ProfileController extends Controller
     public function __construct(ProfileRepository $profile_repository, FileRepository $file_repository)
     {
         $this->profileRepo = $profile_repository;
-        $this->fileRepo    = $file_repository;
+        $this->fileRepo = $file_repository;
     }
 
     /**
@@ -50,13 +50,13 @@ class ProfileController extends Controller
         try {
             $this->validate($request, ['photo' => 'required|mimes:jpeg,png']);
             $profile = $request->profile;
-            $photo   = $request->file('photo');
+            $photo = $request->file('photo');
             if (basename($profile->pro_pic) != 'default.jpg') {
                 $filename = substr($profile->pro_pic, strlen(env('S3_URL')));
                 $this->fileRepo->deleteFileFromCDN($filename);
             }
 
-            $filename     = Carbon::now()->timestamp . '_profile_image_' . $profile->id . '.' . $photo->extension();
+            $filename = Carbon::now()->timestamp . '_profile_image_' . $profile->id . '.' . $photo->extension();
             $picture_link = $this->fileRepo->uploadToCDN($filename, $request->file('photo'), 'images/profiles/');
             if ($picture_link != false) {
                 $profile->pro_pic = $picture_link;
@@ -77,7 +77,7 @@ class ProfileController extends Controller
     public function getProfile(Request $request)
     {
         if ($request->has('mobile') && $request->has('name')) {
-            $mobile  = formatMobile($request->mobile);
+            $mobile = formatMobile($request->mobile);
             $profile = $this->profileRepo->getIfExist($mobile, 'mobile');
             if ($request->has('email')) {
                 $emailProfile = $this->profileRepo->getByEmail($request->email);
@@ -119,12 +119,16 @@ class ProfileController extends Controller
         return api_response($request, $profile, 200, ['info' => $profile]);
     }
 
+    /**
+     *
+     * Nid images can be file or image link
+     */
     public function updateProfileDocument(Request $request, $id, ShebaProfileRepository $repository)
     {
         try {
             $profile = $request->profile;
             if (!$profile) return api_response($request, null, 404, ['message' => 'Profile no found']);
-            $rules = ['pro_pic' => 'sometimes|string', 'nid_image_back' => 'sometimes|string', 'nid_image_front' => 'sometimes|string'];
+            $rules = ['pro_pic' => 'sometimes|string', 'nid_image_back' => 'sometimes', 'nid_image_front' => 'sometimes'];
             $this->validate($request, $rules);
             $data = $request->only(['email', 'name', 'password', 'pro_pic', 'nid_image_front', 'email', 'gender', 'dob', 'mobile', 'nid_no', 'address']);
             $data = array_filter($data, function ($item) {
@@ -183,11 +187,11 @@ class ProfileController extends Controller
         $rules = ['mobile' => 'required|mobile:bd'];
         try {
             $this->validate($request, $rules);
-            $mobile  = BDMobileFormatter::format($request->mobile);
+            $mobile = BDMobileFormatter::format($request->mobile);
             $profile = Profile::where('mobile', $mobile)->first();
             if (!$profile) return api_response($request, null, 404, ['message' => 'Profile not found with this number']);
             $password = str_random(6);
-            $smsSent  = $sms->shoot($mobile, "Your password is reset to $password . Please use this password to login");
+            $smsSent = $sms->shoot($mobile, "Your password is reset to $password . Please use this password to login");
             $profile->update(['password' => bcrypt($password)]);
             return api_response($request, true, 200, ['message' => 'Your password is sent to your mobile number. Please use that password to login']);
         } catch (ValidationException $e) {
@@ -201,8 +205,8 @@ class ProfileController extends Controller
     public function getProfileInfoByMobile(Request $request)
     {
         try {
-            $mobile  = BDMobileFormatter::format($request->mobile);
-            $profile = $this->profileRepo->getIfExist($mobile, 'mobile');;
+            $mobile = BDMobileFormatter::format($request->mobile);
+            $profile = $this->profileRepo->getIfExist($mobile, 'mobile');
             if (!$profile) return api_response($request, null, 404, ['message' => 'Profile not found with this number']);
             return api_response($request, true, 200, ['message' => 'Profile found', 'profile' => $profile]);
         } catch (ValidationException $e) {
@@ -230,8 +234,8 @@ class ProfileController extends Controller
      */
     private function generateUtilityToken(Profile $profile)
     {
-        $from         = \request()->get('from');
-        $id           = \request()->id;
+        $from = \request()->get('from');
+        $id = \request()->id;
         $customClaims = [
             'profile_id' => $profile->id, 'customer_id' => $profile->customer ? $profile->customer->id : null, 'affiliate_id' => $profile->affiliate ? $profile->affiliate->id : null, 'from' => constants('AVATAR_FROM_CLASS')[$from], 'user_id' => $id
         ];
@@ -273,20 +277,20 @@ class ProfileController extends Controller
     {
         try {
             $this->validate($request, ['nid_image' => 'required|file|mimes:jpeg,png,jpg', 'side' => 'required']);
-            $profile              = $request->profile;
-            $input                = $request->except('profile', 'remember_token');
-            $data                 = [];
-            $nid_image_key        = "nid_image_" . $input["side"];
+            $profile = $request->profile;
+            $input = $request->except('profile', 'remember_token');
+            $data = [];
+            $nid_image_key = "nid_image_" . $input["side"];
             $data[$nid_image_key] = $input['nid_image'];
             $profile_repo->update($profile, $data);
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
-            $resource        = new Item($profile, new NidInfoTransformer());
-            $details         = $manager->createData($resource)->toArray()['data'];
+            $resource = new Item($profile, new NidInfoTransformer());
+            $details = $manager->createData($resource)->toArray()['data'];
             $details['name'] = "  ";
 
             $affiliate = $profile->affiliate ?: null;
-            if(!empty($affiliate))
+            if (!empty($affiliate))
                 $this->updateVerificationStatus($affiliate);
 
             return api_response($request, null, 200, ['data' => $details]);
@@ -329,7 +333,7 @@ class ProfileController extends Controller
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
             $resource = new Item($profile, new ProfileDetailPersonalInfoTransformer());
-            $details  = $manager->createData($resource)->toArray()['data'];
+            $details = $manager->createData($resource)->toArray()['data'];
 
             return api_response($request, null, 200, ['data' => $details]);
         } catch (Throwable $e) {

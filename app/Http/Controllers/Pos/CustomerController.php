@@ -64,6 +64,11 @@ class CustomerController extends Controller
             $customer = PosCustomer::find((int)$customer);
             if (!$customer)
                 return api_response($request, null, 404, ['message' => 'Customer Not Found.']);
+
+            $partner_pos_customer = PartnerPosCustomer::byPartner($partner)->where('customer_id', $customer->id)->first();
+            if (empty($partner_pos_customer))
+                return api_response($request, null, 404, ['message' => 'Customer Not Found.']);
+
             $data                             = $customer->details();
             $data['customer_since']           = $customer->created_at->format('Y-m-d');
             $data['customer_since_formatted'] = $customer->created_at->diffForHumans();

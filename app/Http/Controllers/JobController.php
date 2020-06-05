@@ -34,6 +34,7 @@ use Sheba\Logs\Customer\JobLogs;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
 use Sheba\Payment\ShebaPayment;
 use Sheba\Payment\ShebaPaymentValidator;
+use Sheba\Services\FormatServices;
 use Throwable;
 
 class JobController extends Controller
@@ -135,6 +136,7 @@ class JobController extends Controller
         $job_collection->put('payment_method', $this->formatPaymentMethod($job->partnerOrder->payment_method));
         $job_collection->put('price', (double)$job->partnerOrder->grossAmountWithLogistic);
         $job_collection->put('isDue', $job->partnerOrder->isDueWithLogistic() ? 1 : 0);
+        $job_collection->put('due', $job->partnerOrder->getCustomerPayable());
         $job_collection->put('isRentCar', $job->isRentCar());
         $job_collection->put('is_on_premise', $job->isOnPremise());
         $job_collection->put('customer_favorite', $job->customerFavorite ? $job->customerFavorite->id : null);
@@ -152,7 +154,7 @@ class JobController extends Controller
         $job_collection->put('can_add_promo', $this->canAddPromo($job));
         $job_collection->put('is_same_service', 1);
         $job_collection->put('is_vat_applicable', $job->category ? $job->category['is_vat_applicable'] : null);
-        $job_collection->put('max_order_amount', $job->category ? (double) $job->category['max_order_amount'] : null);
+        $job_collection->put('max_order_amount', $job->category ? (double)$job->category['max_order_amount'] : null);
 
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
@@ -246,7 +248,7 @@ class JobController extends Controller
         return (double)$job->totalDiscount == 0 && !$partner_order->order->voucher_id && $partner_order->due != 0 && !$partner_order->cancelled_at && !$partner_order->closed_at ? 1 : 0;
     }
 
-    public function getBills($customer, $job, Request $request, OrderRepository $logistics_orderRepo)
+    public function getBills($customer, $job, Request $request, OrderRepository $logistics_orderRepo, FormatServices $formatServices)
     {
         try {
             $job = $request->job->load(['partnerOrder.order', 'category', 'service', 'jobServices' => function ($q) {
@@ -255,13 +257,22 @@ class JobController extends Controller
             $job->calculate(true);
             if (count($job->jobServices) == 0) {
                 $services = array();
+                $service_list = array();
                 array_push($services, [
                     'name' => $job->service != null ? $job->service->name : null,
                     'price' => (double)$job->servicePrice,
                     'min_price' => 0,
                     'is_min_price_applied' => 0
                 ]);
+                array_push($service_list, [
+                    'name' => $job->service != null ? $job->service->name : null,
+                    'service_group' => [],
+                    'unit' => $job->service->unit,
+                    'quantity' => $job->service_quantity,
+                    'price' => (double)$job->servicePrice
+                ]);
             } else {
+                $service_list = $formatServices->setJob($job)->formatServices();
                 $services = array();
                 foreach ($job->jobServices as $jobService) {
                     $total = (double)$jobService->unit_price * (double)$jobService->quantity;
@@ -288,8 +299,10 @@ class JobController extends Controller
             $bill['paid'] = (double)$partnerOrder->paidWithLogistic;
             $bill['due'] = (double)$partnerOrder->dueWithLogistic;
             $bill['material_price'] = (double)$job->materialPrice;
+            $bill['total_service_price'] = (double)$job->servicePrice;
             $bill['discount'] = (double)$job->discountWithoutDeliveryDiscount;
             $bill['services'] = $services;
+            $bill['service_list'] = $service_list;
             $bill['delivered_date'] = $job->delivered_date != null ? $job->delivered_date->format('Y-m-d') : null;
             $bill['delivered_date_timestamp'] = $job->delivered_date != null ? $job->delivered_date->timestamp : null;
             $bill['closed_and_paid_at'] = $partnerOrder->closed_and_paid_at ? $partnerOrder->closed_and_paid_at->format('Y-m-d') : null;
@@ -304,7 +317,7 @@ class JobController extends Controller
             $bill['voucher'] = $voucher;
             $bill['is_vat_applicable'] = $job->category ? $job->category['is_vat_applicable'] : null;
             $bill['is_closed'] = $partnerOrder['closed_at'] ? 1 : 0;
-            $bill['max_order_amount'] = $job->category ? (double) $job->category['max_order_amount'] : null;
+            $bill['max_order_amount'] = $job->category ? (double)$job->category['max_order_amount'] : null;
 
             return api_response($request, $bill, 200, ['bill' => $bill]);
         } catch (Throwable $e) {
@@ -399,13 +412,12 @@ class JobController extends Controller
 
     protected function canPay($job)
     {
-        $due = $job->partnerOrder->calculate(true)->due;
         $status = $job->status;
 
         if (in_array($status, ['Declined', 'Cancelled']) || $job->cancelRequests()->where('status', CancelRequestStatuses::PENDING)->first())
             return false;
         else {
-            return $due > 0;
+            return $job->partnerOrder->getCustomerPayable() > 0;
         }
     }
 

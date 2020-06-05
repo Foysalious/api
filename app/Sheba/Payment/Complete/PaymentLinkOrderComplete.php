@@ -8,6 +8,7 @@ use DB;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
+use Sheba\ExpenseTracker\AutomaticExpense;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\FraudDetection\TransactionSources;
@@ -71,7 +72,9 @@ class PaymentLinkOrderComplete extends PaymentComplete {
         $payable = $this->payment->payable;
         app(ActionRewardDispatcher::class)->run('payment_link_usage', $payment_receiver, $payment_receiver, $payable);
         /** @var AutomaticEntryRepository $entry_repo */
-        $entry_repo = app(AutomaticEntryRepository::class)->setPartner($payment_receiver)->setAmount($payable->amount)->setHead(AutomaticIncomes::PAYMENT_LINK)->setAmountCleared($payable->amount);
+        $entry_repo = app(AutomaticEntryRepository::class)->setPartner($payment_receiver)->setAmount($payable->amount)->setHead(AutomaticIncomes::PAYMENT_LINK)
+            ->setEmiMonth($payable->emi_month)->setAmountCleared($payable->amount);
+        $entry_repo->setInterest($this->paymentLink->getInterest())->setBankTransactionCharge($this->paymentLink->getBankTransactionCharge());
         if ($target instanceof PosOrder) {
             $entry_repo->setCreatedAt($target->created_at);
             $entry_repo->setSourceType(class_basename($target));
@@ -113,16 +116,22 @@ class PaymentLinkOrderComplete extends PaymentComplete {
         $formatted_recharge_amount = number_format($recharge_wallet_amount, 2);
         $recharge_log              = "$formatted_recharge_amount TK has been collected from {$this->payment->payable->getName()}, {$this->paymentLink->getReason()}";
         $recharge_transaction      = $walletTransactionHandler->setType('credit')->setAmount($recharge_wallet_amount)->setSource(TransactionSources::PAYMENT_LINK)->setTransactionDetails($this->payment->getShebaTransaction()->toArray())->setLog($recharge_log)->store();
+        $interest                  = (double)$this->paymentLink->getInterest();
+        if ($interest > 0) {
+            $formatted_interest = number_format($interest, 2);
+            $log                = "$formatted_interest TK has been charged as emi interest fees against of Transc ID {$recharge_transaction->id}, and Transc amount $formatted_recharge_amount";
+            $walletTransactionHandler->setLog($log)->setType('debit')->setAmount($interest)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
+        }
         $minus_wallet_amount       = $this->getPaymentLinkFee($recharge_wallet_amount);
         $formatted_minus_amount    = number_format($minus_wallet_amount, 2);
-        $minus_log                 = "$formatted_minus_amount TK has been charged as link service fees against of Transc ID: {$recharge_transaction->id}, and Transc amount: $formatted_recharge_amount";
+        $minus_log                 = "(3TK + 2.5%) $formatted_minus_amount TK has been charged as link service fees against of Transc ID: {$recharge_transaction->id}, and Transc amount: $formatted_recharge_amount";
         $walletTransactionHandler->setLog($minus_log)->setType('debit')->setAmount($minus_wallet_amount)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
         /*$payment_receiver->minusWallet($minus_wallet_amount, ['log' => $minus_log]);*/
 
     }
 
     private function getPaymentLinkFee($amount) {
-        return ($amount * $this->paymentLinkCommission) / 100;
+        return ($this->paymentLink->getEmiMonth() > 0 ? $this->paymentLink->getBankTransactionCharge() ?: 0 : round(($amount * $this->paymentLinkCommission) / 100, 2)) + 3;
     }
 
     private function clearPosOrder() {
@@ -131,7 +140,9 @@ class PaymentLinkOrderComplete extends PaymentComplete {
             $payment_data    = [
                 'pos_order_id' => $target->id,
                 'amount'       => $this->payment->payable->amount,
-                'method'       => $this->payment->payable->type
+                'method'       => $this->payment->payable->type,
+                'emi_month'    => $this->payment->payable->emi_month,
+                'interest'     => $this->paymentLink->getInterest(),
             ];
             $payment_creator = app(PaymentCreator::class);
             $payment_creator->credit($payment_data);

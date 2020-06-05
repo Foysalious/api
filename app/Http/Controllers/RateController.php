@@ -80,7 +80,7 @@ class RateController extends Controller
 
     private function storeReviews(Request $request, $review)
     {
-        $data = json_decode($request->data);
+        $data = json_decode(preg_replace("/\r|\n/", " ", $request->data));
         try {
             DB::transaction(function () use ($data, $review, $request) {
                 $quesAns = $data->quesAns;

@@ -150,7 +150,7 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface, Pay
     public function getServiceRequestObjects()
     {
         return array_map(function ($service) {
-            return (new ServiceRequestObject())->setServiceId($service['id'])
+            return (app(ServiceRequestObject::class))->setServiceId($service['id'])
                 ->setQuantity($service['quantity'])->setOption($service['option'])->build();
         }, json_decode($this->service_details, true)['breakdown']);
     }

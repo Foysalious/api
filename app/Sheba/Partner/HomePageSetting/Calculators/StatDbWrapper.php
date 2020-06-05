@@ -6,6 +6,10 @@ use Sheba\Repositories\PartnerRepository;
 
 class StatDbWrapper extends Setting
 {
+    public function __construct(Setting $next = null)
+    {
+        parent::__construct($next);
+    }
     protected function setting()
     {
         try {
@@ -13,7 +17,7 @@ class StatDbWrapper extends Setting
                 throw new Exception();
             return json_decode($this->partner->home_page_setting);
         } catch (Exception $e) {
-            $data = $this->next->get();
+            $data = $this->next->setVersion($this->version)->get();
             (new PartnerRepository($this->partner))->update($this->partner, ['home_page_setting' => json_encode($data)]);
             return $data;
         }

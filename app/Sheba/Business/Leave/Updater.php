@@ -4,6 +4,7 @@ use App\Models\BusinessMember;
 use Exception;
 use Sheba\Dal\ApprovalRequest\Status;
 use Sheba\Dal\Leave\Contract as LeaveRepository;
+use Sheba\Dal\Leave\LeaveStatusPresenter as LeaveStatusPresenter;
 use Sheba\Dal\Leave\Model as Leave;
 use DB;
 use App\Sheba\Business\LeaveStatusChangeLog\Creator as LeaveStatusChangeLogCreator;
@@ -83,6 +84,7 @@ class Updater
      */
     public function sendNotification($status)
     {
+        $status = LeaveStatusPresenter::statuses()[$status];
         $business_member = $this->businessMemberRepository->where('id', $this->leave->business_member_id)->first();
         $sheba_notification_data = [
             'title' => "Your leave request has been $status",

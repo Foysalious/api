@@ -32,10 +32,9 @@ abstract class Handler
 
     public function render()
     {
-
         $response = [
             'code' => $this->exception->getCode() ? $this->exception->getCode() : 500,
-            'message' => $this->getMessage()
+            'message' => $this->wantsTrace() && $this->getMessage() ? $this->getMessage() : 'Something went wrong'
         ];
 
         if ($this->wantsTrace()) {
@@ -60,6 +59,6 @@ abstract class Handler
 
     protected function wantsTrace()
     {
-        return ($this->request->has('debug') && $this->request->debug) || config('app.env') == 'local';
+        return ($this->request->has('debug') && $this->request->debug) || config('app.env') != 'production';
     }
 }
