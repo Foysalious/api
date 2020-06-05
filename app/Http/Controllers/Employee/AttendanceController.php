@@ -1,27 +1,26 @@
 <?php namespace App\Http\Controllers\Employee;
 
-use App\Http\Controllers\Controller;
-use App\Models\BusinessMember;
-use App\Sheba\Business\Attendance\MonthlyStat;
-use Carbon\Carbon;
-use Illuminate\Http\Request;
-use Sheba\Business\AttendanceActionLog\ActionChecker\ActionChecker;
+use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
+use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
+use Sheba\Business\AttendanceActionLog\ActionChecker\ActionChecker;
+use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
 use Sheba\Business\AttendanceActionLog\AttendanceAction;
+use App\Transformers\Business\AttendanceTransformer;
+use Illuminate\Validation\ValidationException;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
-use Sheba\ModificationFields;
-
-use App\Transformers\Business\AttendanceTransformer;
 use App\Transformers\CustomSerializer;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Validation\ValidationException;
-use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
-use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
-use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
-use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
+use App\Models\BusinessMember;
+use Sheba\ModificationFields;
+use Illuminate\Http\Request;
 use Sheba\Helpers\TimeFrame;
+use League\Fractal\Manager;
+use App\Models\Business;
+use Carbon\Carbon;
 use Throwable;
 
 class AttendanceController extends Controller
@@ -69,40 +68,36 @@ class AttendanceController extends Controller
      */
     public function takeAction(Request $request, AttendanceAction $attendance_action, ActionProcessor $action_processor)
     {
-        try {
-            $validation_data = [
-                'action' => 'required|string|in:' . implode(',', Actions::get()),
-                'device_id' => 'string',
-                'user_agent' => 'string',
-                'lat' => 'numeric',
-                'lng' => 'numeric'
-            ];
-            $business_member = $this->getBusinessMember($request);
-            if (!$business_member) return api_response($request, null, 404);
+        $validation_data = [
+            'action' => 'required|string|in:' . implode(',', Actions::get()),
+            'device_id' => 'string',
+            'user_agent' => 'string'
+        ];
 
-            $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
-            if ($request->action == Actions::CHECKOUT && $checkout->isNoteRequired($business_member)) {
-                $validation_data += ['note' => 'string|required_if:action,' . Actions::CHECKOUT];
-            }
-            $this->validate($request, $validation_data);
-            $this->setModifier($business_member->member);
+        $business_member = $this->getBusinessMember($request);
+        $business = $this->getBusiness($request);
+        if (!$business_member) return api_response($request, null, 404);
 
-            $attendance_action->setBusinessMember($business_member)->setAction($request->action)->setBusiness($business_member->business)
-                ->setNote($request->note)->setDeviceId($request->device_id)->setLat($request->lat)->setLng($request->lng);
-            /** @var ActionChecker $action */
-            $action = $attendance_action->doAction();
-            return response()->json(['code' => $action->getResultCode(), 'message' => $action->getResultMessage()]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500, ['message' => 'Something went wrong. Please try again!']);
+        $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
+        if ($request->action == Actions::CHECKOUT && $checkout->isNoteRequired()) {
+            $validation_data += ['note' => 'string|required_if:action,' . Actions::CHECKOUT];
         }
+        if ($business->isRemoteAttendanceEnable()) {
+            $validation_data += ['lat' => 'required|numeric', 'lng' => 'required|numeric'];
+        }
+        $this->validate($request, $validation_data);
+        $this->setModifier($business_member->member);
 
+        $attendance_action->setBusinessMember($business_member)
+            ->setAction($request->action)
+            ->setBusiness($business_member->business)
+            ->setNote($request->note)
+            ->setDeviceId($request->device_id)
+            ->setLat($request->lat)
+            ->setLng($request->lng);
+        $action = $attendance_action->doAction();
+
+        return response()->json(['code' => $action->getResultCode(), 'message' => $action->getResultMessage()]);
     }
 
     /**
@@ -124,14 +119,17 @@ class AttendanceController extends Controller
         $attendance = $business_member->attendanceOfToday();
         /** @var ActionChecker $checkout */
         $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
+        $business = $this->getBusiness($request);
+        $is_remote_enable = $business->isRemoteAttendanceEnable();
         $data = [
             'can_checkin' => !$attendance ? 1 : ($attendance->canTakeThisAction(Actions::CHECKIN) ? 1 : 0),
             'can_checkout' => $attendance && $attendance->canTakeThisAction(Actions::CHECKOUT) ? 1 : 0,
             'is_note_required' => 0,
             'checkin_time' => $attendance ? $attendance->checkin_time : null,
             'checkout_time' => $attendance ? $attendance->checkout_time : null,
+            'is_geo_required' => $is_remote_enable ? 1 : 0
         ];
-        if ($data['can_checkout']) $data['is_note_required'] = $checkout->isNoteRequired($business_member);
+        if ($data['can_checkout']) $data['is_note_required'] = $checkout->isNoteRequired();
         return api_response($request, null, 200, ['attendance' => $data]);
     }
 
@@ -141,6 +139,14 @@ class AttendanceController extends Controller
         $business_member = $auth_info['business_member'];
         if (!isset($business_member['id'])) return null;
         return BusinessMember::find($business_member['id']);
+    }
+
+    public function getBusiness(Request $request)
+    {
+        $auth_info = $request->auth_info;
+        $business_member = $auth_info['business_member'];
+        if (!isset($business_member['business_id'])) return null;
+        return Business::findOrFail($business_member['business_id']);
     }
 
 }
