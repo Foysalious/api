@@ -330,7 +330,7 @@ class DashboardController extends Controller
     {
         try {
             $home_page_setting         = $request->home_page_setting;
-            $data['home_page_setting'] = $home_page_setting;
+            $data['home_page_setting_new'] = $home_page_setting;
             $partner_repo->update($request->partner, $data);
             return api_response($request, null, 200, [
                 'message' => 'Dashboard Setting updated successfully',

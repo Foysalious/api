@@ -13,12 +13,12 @@ class StatDbWrapper extends SettingV3
     protected function setting()
     {
         try {
-            if (is_null($this->partner->home_page_setting))
+            if (is_null($this->partner->home_page_setting_new))
                 throw new Exception();
-            return json_decode($this->partner->home_page_setting);
+            return json_decode($this->partner->home_page_setting_new);
         } catch (Exception $e) {
             $data = $this->next->get();
-            (new PartnerRepository($this->partner))->update($this->partner, ['home_page_setting' => json_encode($data)]);
+            (new PartnerRepository($this->partner))->update($this->partner, ['home_page_setting_new' => json_encode($data)]);
             return $data;
         }
     }
