@@ -145,7 +145,8 @@ class Documents implements Arrayable
             'nominee_document',
             'grantor_document',
             'business_document',
-            'extras'
+            'extras',
+            'retailer_document'
         ];
     }
 
