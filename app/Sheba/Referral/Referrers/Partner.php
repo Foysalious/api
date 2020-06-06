@@ -5,6 +5,7 @@ use App\Models\Resource;
 use App\Repositories\SmsHandler;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
 use Sheba\Referral\Exceptions\AlreadyExistProfile;
 use Sheba\Referral\Exceptions\AlreadyReferred;
@@ -14,6 +15,7 @@ use Sheba\Referral\HasReferrals;
 use Sheba\Referral\Referrer;
 use Sheba\Referral\ReferrerInterface;
 use Sheba\Sms\Sms;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class Partner extends Referrer implements ReferrerInterface
 {
@@ -152,7 +154,6 @@ class Partner extends Referrer implements ReferrerInterface
         if ($partner_referral->refer) {
             $usage    = (int)$partner_referral->usages;
             $earnings = 0;
-
             foreach ($config as $key => $configuration) {
                 if ($configuration['nid_verification'])
                 {
@@ -161,6 +162,8 @@ class Partner extends Referrer implements ReferrerInterface
                         $partner_referral->refer->refer_level = $key+1;
                         $partner_referral->refer->referrer_income = $earnings + $configuration['amount'];
                         $partner_referral->refer->update();
+                        (new WalletTransactionHandler())->setModel($partner_referral->refer->referredBy)->setSource(TransactionSources::SHEBA_WALLET)->setType('credit')->setAmount($configuration['amount'])->setLog($configuration['amount'] . " BDT has been credited for partner referral from usage of name: " . $partner_referral->refer->name . ', ID: ' . $partner_referral->refer->id)->store();
+
                         $partnerModel = 'App\Models\Partner';
                         $this->updatedRefer = $partnerModel::find($partner_referral->refer->id);
 
