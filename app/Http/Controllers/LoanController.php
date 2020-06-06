@@ -751,7 +751,11 @@ class LoanController extends Controller
                 throw new NotAllowedToAccess();
             }
             list($offset, $limit) = calculatePagination($request);
-            $partner_bank_loan_logs = $partner_bank_loan->changeLogs->slice($offset)->take($limit);
+            $partner_bank_loan_logs = $partner_bank_loan->changeLogs
+                ->whereIn('title',
+                    ['images_retailer_document -> application','images_retailer_document -> charge_document',
+                        'images_retailer_document -> credit_proposal'])
+                ->slice($offset)->take($limit);
             $output                 = $partner_bank_loan_logs->sortByDesc('id')->values();
             return api_response($request, null, 200, ['logs' => $output]);
         } catch (NotAllowedToAccess $e) {
