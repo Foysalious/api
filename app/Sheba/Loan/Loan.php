@@ -605,7 +605,8 @@ class Loan
         $config = constants('LOAN_CONFIG');
         $data   = [
             'loan_amount' => $config['minimum_amount'],
-            'duration'    => $config['minimum_duration']
+            'duration'    => $config['minimum_duration'],
+            'type'        => $request->type ? $request->type : 0
         ];
         if ($this->user instanceof BankUser) {
             $data['bank_id'] = $this->user->bank->id;

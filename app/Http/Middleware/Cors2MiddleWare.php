@@ -104,7 +104,8 @@ class Cors2MiddleWare
             "http://payment-link-web.sheba.test:3031",
             "https://v3.sheba.xyz",
             "https://www.smanager.xyz",
-            "https://v2.sheba.xyz"
+            "https://v2.sheba.xyz",
+            "https://retailers.dev-sheba.xyz"
         ];
         // ALLOW OPTIONS METHOD
         $headers['Access-Control-Allow-Credentials'] = 'true';
