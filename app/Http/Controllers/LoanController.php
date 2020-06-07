@@ -172,7 +172,8 @@ class LoanController extends Controller
             $data     = [
                 'loan_amount' => $request->loan_amount,
                 'duration'    => $request->duration,
-                'month'       => $resource->month ?: 0
+                'month'       => $resource->month ?: 0,
+                'type'        => $request->type ? $request->type : 0
             ];
             $info     = $loan->setPartner($partner)->setResource($resource)->setData($data)->apply();
             return api_response($request, 1, 200, ['data' => $info]);
@@ -635,7 +636,7 @@ class LoanController extends Controller
             $this->validate($request, [
                 'picture' => 'required|mimes:jpg,jpeg,png,pdf',
                 'name'    => 'required',
-                'for'     => 'required|in:profile,nominee_document,grantor_document,business_document,extras'
+                'for'     => 'required|in:profile,nominee_document,grantor_document,business_document,extras,retailer_document'
             ]);
             $loan->uploadDocument($loan_id, $request);
             return api_response($request, true, 200);
@@ -719,7 +720,13 @@ class LoanController extends Controller
         }
     }
 
-    public function showForAgent(Request $request,$loan_id,Loan $loan)
+    /**
+     * @param Request $request
+     * @param $loan_id
+     * @param Loan $loan
+     * @return JsonResponse
+     */
+    public function showForAgent(Request $request, $loan_id, Loan $loan)
     {
         try {
             $data = $loan->showForAgent($loan_id);
@@ -733,5 +740,29 @@ class LoanController extends Controller
             return api_response($request, null, 500);
         }
 
+    }
+
+    public function getChangeLogsForAgent(Request $request, PartnerBankLoan $partner_bank_loan)
+    {
+
+        try {
+            $user = $request->user;
+            if (!empty($user) && (!($user instanceof User) && ($user instanceof BankUser && $user->bank->id != $partner_bank_loan->bank_id))) {
+                throw new NotAllowedToAccess();
+            }
+            list($offset, $limit) = calculatePagination($request);
+            $partner_bank_loan_logs = $partner_bank_loan->changeLogs
+                ->whereIn('title',
+                    ['images_retailer_document -> application','images_retailer_document -> charge_document',
+                        'images_retailer_document -> credit_proposal'])
+                ->slice($offset)->take($limit);
+            $output                 = $partner_bank_loan_logs->sortByDesc('id')->values();
+            return api_response($request, null, 200, ['logs' => $output]);
+        } catch (NotAllowedToAccess $e) {
+            return api_response($request, null, 400);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 }
