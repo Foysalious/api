@@ -27,14 +27,13 @@ class SslController extends Controller
         return redirect($redirect_url);
     }
 
-    public function validateTopUp(Request $request)
+    public function validateTopUp(Request $request, SslClient $ssl)
     {
         try {
             $this->validate($request, [
                 'vr_guid' => 'required',
                 'guid'    => 'required',
             ]);
-            $ssl      = new SslClient();
             $response = $ssl->getRecharge($request->guid, $request->vr_guid);
             return api_response($request, $response, 200, ['data' => $response]);
         } catch (ValidationException $e) {
@@ -46,10 +45,9 @@ class SslController extends Controller
         }
     }
 
-    public function checkBalance(Request $request)
+    public function checkBalance(Request $request, SslClient $ssl)
     {
         try {
-            $ssl      = new SslClient();
             $response = $ssl->getBalance();
             return api_response($request, $response, 200, ['data' => $response]);
         } catch (\Throwable $e) {
