@@ -1,20 +1,20 @@
-<?php
-
-namespace Sheba\Payment\Methods\Ssl;
+<?php namespace Sheba\Payment\Methods\Ssl;
 
 use App\Models\Payable;
 use App\Models\Payment;
 use App\Models\PaymentDetail;
-use Carbon\Carbon;
-use GuzzleHttp\Client;
 use Sheba\Payment\Methods\PaymentMethod;
 use Sheba\Payment\Methods\Ssl\Response\InitResponse;
 use Sheba\Payment\Methods\Ssl\Response\ValidationResponse;
 use Sheba\Payment\Statuses;
 use Sheba\RequestIdentification;
 use DB;
+use Sheba\TPProxy\TPProxyClient;
+use Sheba\TPProxy\TPProxyServerError;
+use Sheba\TPProxy\TPRequest;
 
-class Ssl extends PaymentMethod {
+class Ssl extends PaymentMethod
+{
     private $storeId;
     private $storePassword;
     private $sessionUrl;
@@ -26,7 +26,11 @@ class Ssl extends PaymentMethod {
     CONST NAME_DONATE = 'ssl_donation';
     private $is_donate = false;
 
-    public function __construct() {
+    /** @var TPProxyClient */
+    private $tpClient;
+
+    public function __construct(TPProxyClient $tp_client)
+    {
         parent::__construct();
         $this->storeId            = config('ssl.store_id');
         $this->storePassword      = config('ssl.store_password');
@@ -35,9 +39,11 @@ class Ssl extends PaymentMethod {
         $this->failUrl            = config('ssl.fail_url');
         $this->cancelUrl          = config('ssl.cancel_url');
         $this->orderValidationUrl = config('ssl.order_validation_url');
+        $this->tpClient           = $tp_client;
     }
 
-    public function setDonationConfig() {
+    public function setDonationConfig()
+    {
         $this->storeId            = config('ssl_donation.store_id');
         $this->storePassword      = config('ssl_donation.store_password');
         $this->sessionUrl         = config('ssl_donation.session_url');
@@ -49,7 +55,13 @@ class Ssl extends PaymentMethod {
         return $this;
     }
 
-    public function init(Payable $payable): Payment {
+    /**
+     * @param Payable $payable
+     * @return Payment
+     * @throws \Exception
+     */
+    public function init(Payable $payable): Payment
+    {
         $invoice              = "SHEBA_SSL_" . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . randomString(10, 1, 1);
         $data                 = array();
         $data['store_id']     = $this->storeId;
@@ -89,7 +101,7 @@ class Ssl extends PaymentMethod {
             $payment_details->amount     = $payable->amount;
             $payment_details->save();
         });
-        $response      = $this->getSslSession($data);
+        $response      = $this->createSslSession($data);
         $init_response = new InitResponse();
         $init_response->setResponse($response);
         if ($init_response->hasSuccess()) {
@@ -111,13 +123,20 @@ class Ssl extends PaymentMethod {
         return $payment;
     }
 
-    public function getSslSession($data) {
-        $client = new Client();
-        $result = $client->request('POST', $this->sessionUrl, ['form_params' => $data]);
-        return json_decode($result->getBody());
+    /**
+     * @param $data
+     * @return mixed
+     * @throws TPProxyServerError
+     */
+    private function createSslSession($data)
+    {
+        $request = (new TPRequest())->setUrl($this->sessionUrl)
+            ->setMethod(TPRequest::METHOD_POST)->setInput($data);
+        return $this->tpClient->call($request);
     }
 
-    public function validate(Payment $payment) {
+    public function validate(Payment $payment)
+    {
         if ($this->sslIpnHashValidation()) {
             $validation_response = new ValidationResponse();
             $validation_response->setResponse($this->validateOrder());
@@ -158,55 +177,35 @@ class Ssl extends PaymentMethod {
         return $payment;
     }
 
-    private function sslIpnHashValidation() {
-        if (request()->has('verify_key') && request()->has('verify_sign')) {
-            $pre_define_key = explode(',', request('verify_key'));
-            $new_data       = array();
-            if (!empty($pre_define_key)) {
-                foreach ($pre_define_key as $value) {
-                    if (request()->exists($value)) {
-                        $new_data[$value] = request($value);
-                    }
+    private function sslIpnHashValidation()
+    {
+        if (!(request()->has('verify_key') && request()->has('verify_sign'))) return false;
+
+        $pre_define_key = explode(',', request('verify_key'));
+        $new_data       = array();
+        if (!empty($pre_define_key)) {
+            foreach ($pre_define_key as $value) {
+                if (request()->exists($value)) {
+                    $new_data[$value] = request($value);
                 }
             }
-            $new_data['store_passwd'] = md5($this->storePassword);
-            ksort($new_data);
-            $hash_string = "";
-            foreach ($new_data as $key => $value) {
-                $hash_string .= $key . '=' . ($value) . '&';
-            }
-            $hash_string = rtrim($hash_string, '&');
-            if (md5($hash_string) == request('verify_sign')) {
-                return true;
-            } else {
-                return false;
-            }
-        } else {
-            return false;
         }
+        $new_data['store_passwd'] = md5($this->storePassword);
+        ksort($new_data);
+        $hash_string = "";
+        foreach ($new_data as $key => $value) {
+            $hash_string .= $key . '=' . ($value) . '&';
+        }
+        $hash_string = rtrim($hash_string, '&');
+        return md5($hash_string) == request('verify_sign');
     }
 
-    private function validateOrder() {
-        $client   = new Client();
+    private function validateOrder()
+    {
         try {
-            $result   = $client->request('GET', $this->orderValidationUrl, [
-                'query' => [
-                    'val_id'       => request('val_id'),
-                    'store_id'     => $this->storeId,
-                    'store_passwd' => $this->storePassword,
-                ]
-            ]);
-            $response = json_decode($result->getBody()->getContents());
-            if (!$response) {
-
-                $response = new \stdClass();
-                $response->status  = "ERROR";
-                $response->result  = $result->getBody()->getContents();
-                $response->code    = 502;
-                $response->tran_id = null;
-            }
-        } catch (\Throwable $e) {
-            $response = new \stdClass();
+            $response = $this->validateFromSsl();
+        } catch (TPProxyServerError $e) {
+            $response          = new \stdClass();
             $response->status  = "ERROR";
             $response->result  = $e->getMessage();
             $response->code    = $e->getCode();
@@ -214,5 +213,24 @@ class Ssl extends PaymentMethod {
             $response->tran_id = null;
         }
         return $response;
+    }
+
+    /**
+     * @return mixed
+     * @throws TPProxyServerError
+     */
+    private function validateFromSsl()
+    {
+        $request = (new TPRequest())
+            ->setUrl($this->orderValidationUrl)
+            ->setMethod(TPRequest::METHOD_GET)
+            ->setInput([
+                'query' => [
+                    'val_id'       => request('val_id'),
+                    'store_id'     => $this->storeId,
+                    'store_passwd' => $this->storePassword,
+                ]
+            ]);
+        return $this->tpClient->call($request);
     }
 }
