@@ -221,7 +221,8 @@ class CustomerOrderController extends Controller
         ));
     }
 
-    public function dueOrders($customer, Request $request){
+    public function dueOrders($customer, Request $request)
+    {
         $orders = $request->customer->partnerOrders();
         $due_orders = $orders->where('closed_at', '<>', null)->where('closed_and_paid_at', null)->orderBy('closed_at', 'ASC')->limit(1)->get();
         if ($due_orders->isEmpty()) return api_response($request, null, 404, ['message' => 'No Due Order Found.']);
