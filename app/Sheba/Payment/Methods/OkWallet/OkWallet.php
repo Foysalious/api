@@ -1,6 +1,4 @@
-<?php
-
-namespace Sheba\Payment\Methods\OkWallet;
+<?php namespace Sheba\Payment\Methods\OkWallet;
 
 use App\Models\Payable;
 use App\Models\Payment;
@@ -15,22 +13,17 @@ use Sheba\Payment\Methods\PaymentMethod;
 use Sheba\Payment\Statuses;
 use Sheba\RequestIdentification;
 
-class OkWallet extends PaymentMethod {
+class OkWallet extends PaymentMethod
+{
     const NAME = 'ok_wallet';
-
-    public function __construct() {
-        parent::__construct();
-        $this->successUrl = '';
-        $this->failUrl    = '';
-
-    }
 
     /**
      * @param Payable $payable
      * @return Payment
      * @throws \Throwable
      */
-    public function init(Payable $payable): Payment {
+    public function init(Payable $payable): Payment
+    {
         $invoice = "SHEBA_OK_WALLET_" . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . randomString(10, 1, 1);
         $user    = $payable->user;
         $payment = new Payment();
@@ -50,7 +43,9 @@ class OkWallet extends PaymentMethod {
             $payment_details->save();
         });
         try {
-            $session = (new OkWalletClient())->createSession($payment->payable->amount, $payment->getShebaTransaction()->getTransactionId());
+            /** @var OkWalletClient $ok_wallet */
+            $ok_wallet = app(OkWalletClient::class);
+            $session = $ok_wallet->createSession($payment->payable->amount, $payment->getShebaTransaction()->getTransactionId());
         } catch (\Throwable $e) {
             $error = ['status' => "failed", "errorMessage" => $e->getMessage(), 'statusCode' => $e->getCode()];
             $this->onInitFailed($payment, json_encode($error));
@@ -68,7 +63,8 @@ class OkWallet extends PaymentMethod {
 
     }
 
-    private function onInitFailed(Payment $payment, $error) {
+    private function onInitFailed(Payment $payment, $error)
+    {
         $this->paymentRepository->setPayment($payment);
         $this->paymentRepository->changeStatus([
             'to'                  => Statuses::INITIATION_FAILED,
@@ -83,8 +79,10 @@ class OkWallet extends PaymentMethod {
     /**
      * @param Payment $payment
      * @return Payment
+     * @throws \Sheba\TPProxy\TPProxyServerError
      */
-    public function validate(Payment $payment) {
+    public function validate(Payment $payment)
+    {
         $request = request()->all();
 
         $request = (new InitRequest(json_decode($request['data'], true)));
@@ -100,6 +98,4 @@ class OkWallet extends PaymentMethod {
         $payment->update();
         return $payment;
     }
-
-
 }

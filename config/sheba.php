@@ -143,6 +143,7 @@ return [
     'category_groups' => [
         'trending' => env('TRENDING_CATEGORY_GROUP', 10)
     ],
-    'payout_token'=>env('SHEBA_PAYOUT_TOKEN','ShebaAdminPanelToken!@#$!@#'),
+    'tp_proxy_url' => env('TP_PROXY_URL')
     'resource_max_withdraw_limit' => 1000
+    'payout_token'=>env('SHEBA_PAYOUT_TOKEN','ShebaAdminPanelToken!@#$!@#'),
 ];

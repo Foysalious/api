@@ -1,8 +1,4 @@
-<?php
-
-
-namespace App\Sheba\Payment\Methods\OkWallet\Response;
-
+<?php namespace App\Sheba\Payment\Methods\OkWallet\Response;
 
 use App\Models\Payment;
 use App\Repositories\PaymentRepository;
@@ -41,6 +37,7 @@ class ValidateTransaction
 
     /**
      * @return mixed
+     * @throws \Sheba\TPProxy\TPProxyServerError
      */
     public function initValidation()
     {
@@ -105,10 +102,13 @@ class ValidateTransaction
     /**
      * @param $transaction_id
      * @return mixed
+     * @throws \Sheba\TPProxy\TPProxyServerError
      */
     private function validateOrder($transaction_id)
     {
-        return  (new OkWalletClient())->validationRequest($transaction_id);
+        /** @var OkWalletClient $ok_wallet */
+        $ok_wallet = app(OkWalletClient::class);
+        return  $ok_wallet->validationRequest($transaction_id);
     }
 
 
