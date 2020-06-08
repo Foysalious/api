@@ -18,7 +18,7 @@ class CacheWrapper extends Setting
         if ($cache_manager->has()) {
             return $cache_manager->get();
         } else {
-            $data = $this->next->get();
+            $data =  $this->next->get();;
             $cache_manager->store($data);
             return $data;
         }

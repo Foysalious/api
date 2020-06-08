@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Logs\Customer\JobLogs;
+use Throwable;
 
 class CustomerOrderController extends Controller
 {
@@ -45,7 +46,7 @@ class CustomerOrderController extends Controller
                 }
 
                 $q->with(['partnerOrders' => function ($q) use ($filter, $status) {
-                    $q->with(['partner.resources.profile', 'order' => function ($q) use ($status){
+                    $q->with(['partner.resources.profile', 'order' => function ($q) use ($status) {
                         $q->select('id', 'sales_channel', 'subscription_order_id');
                     }, 'jobs' => function ($q) {
                         $q->with(['statusChangeLogs', 'resource.profile', 'jobServices', 'customerComplains', 'category', 'review' => function ($q) {
@@ -72,9 +73,9 @@ class CustomerOrderController extends Controller
                 $all_jobs = collect();
             }
             if ($search) {
-               $all_jobs = $all_jobs->filter(function ($job) use ($search) {
-                   return (false !== stristr($job['order_code'], $search) || false !== stristr($job['category_name'], $search));
-               });
+                $all_jobs = $all_jobs->filter(function ($job) use ($search) {
+                    return (false !== stristr($job['order_code'], $search) || false !== stristr($job['category_name'], $search));
+                });
             }
             if ($status) {
                 $all_jobs = $all_jobs->where('status', $status);
@@ -90,7 +91,7 @@ class CustomerOrderController extends Controller
             app('sentry')->captureException($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -168,7 +169,7 @@ class CustomerOrderController extends Controller
             removeRelationsAndFields($partner_order);
             $partner_order['jobs'] = $final;
             return api_response($request, $partner_order, 200, ['orders' => $partner_order]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -204,7 +205,7 @@ class CustomerOrderController extends Controller
             'contact_number' => $show_expert ? ($job->resource ? $job->resource->profile->mobile : null) : ($partnerOrder->partner ? $partnerOrder->partner->getManagerMobile() : null),
             'contact_person' => $show_expert ? 'expert' : 'partner',
             'rating' => $job->review != null ? $job->review->rating : null,
-            'price' => (double)$partnerOrder->totalPrice,
+            'price' => $partnerOrder->getCustomerPayable(),
             'order_code' => $partnerOrder->order->code(),
             'created_at' => $partnerOrder->created_at->format('Y-m-d'),
             'created_at_timestamp' => $partnerOrder->created_at->timestamp,

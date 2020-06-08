@@ -31,9 +31,12 @@ use Sheba\LocationService\PriceCalculation;
 use Sheba\LocationService\UpsellCalculation;
 use Sheba\Logistics\Repository\OrderRepository;
 use Sheba\Logs\Customer\JobLogs;
+use Sheba\Order\Policy\Orderable;
+use Sheba\Order\Policy\PreviousOrder;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
 use Sheba\Payment\ShebaPayment;
 use Sheba\Payment\ShebaPaymentValidator;
+use Sheba\Services\FormatServices;
 use Throwable;
 
 class JobController extends Controller
@@ -78,7 +81,7 @@ class JobController extends Controller
     }
 
 
-    public function show($customer, $job, Request $request, PriceCalculation $price_calculation, DeliveryCharge $delivery_charge, JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, ServiceV2MinimalTransformer $service_transformer)
+    public function show($customer, $job, Request $request, PreviousOrder $previousOrder, PriceCalculation $price_calculation, DeliveryCharge $delivery_charge, JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, ServiceV2MinimalTransformer $service_transformer)
     {
         $customer = $request->customer;
         $job = $request->job->load(['resource.profile', 'carRentalJobDetail', 'category', 'review', 'jobServices', 'discounts', 'complains' => function ($q) use ($customer) {
@@ -151,10 +154,9 @@ class JobController extends Controller
         $job_collection->put('can_take_review', $this->canTakeReview($job));
         $job_collection->put('can_pay', $this->canPay($job));
         $job_collection->put('can_add_promo', $this->canAddPromo($job));
-        $job_collection->put('is_same_service', 1);
         $job_collection->put('is_vat_applicable', $job->category ? $job->category['is_vat_applicable'] : null);
         $job_collection->put('max_order_amount', $job->category ? (double)$job->category['max_order_amount'] : null);
-
+        $job_collection->put('is_same_service', 0);
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
         if (count($job->jobServices) == 0) {
@@ -166,7 +168,6 @@ class JobController extends Controller
                 ->setOption(json_decode($job->service_option, true))
                 ->setQuantity($job->service_quantity);
             $upsell_price = $upsell_calculation->getAllUpsellWithMinMaxQuantity();
-            $job_collection->put('is_same_service', 0);
             $services->push([
                 'service_id' => $job->service->id,
                 'name' => $job->service_name,
@@ -180,26 +181,24 @@ class JobController extends Controller
             ]);
         } else {
             $services = collect();
-            $notSame = 0;
+            $location_services = LocationService::where('location_id', $job->partnerOrder->order->location_id)
+                ->whereIn('service_id', $job->jobServices->pluck('service_id')->toArray())->get();
             foreach ($job->jobServices as $jobService) {
                 /** @var JobService $jobService */
                 $variables = json_decode($jobService->variables);
-                $location_service = $jobService->service->locationServices->first();
+                $location_service = $location_services->where('service_id', $jobService->service->id)->first();
                 $option = json_decode($jobService->option, true);
                 $upsell_calculation->setService($jobService->service)
                     ->setLocationService($location_service)
                     ->setOption($option ? $option : [])
                     ->setQuantity($jobService->quantity);
                 $upsell_price = $upsell_calculation->getAllUpsellWithMinMaxQuantity();
-
-                $location_service = LocationService::where('location_id', $job->partnerOrder->order->location_id)->where('service_id', $jobService->service->id)->first();
                 $selected_service = [
                     "option" => json_decode($jobService->option, true),
                     "variable_type" => $jobService->variable_type
                 ];
                 if ($location_service) {
                     $service_transformer->setLocationService($location_service);
-                    if ($jobService->variable_type != $location_service->service->variable_type) $notSame = 1;
                 }
                 $resource = new Item($selected_service, $service_transformer);
                 $price_data = $manager->createData($resource)->toArray();
@@ -218,18 +217,14 @@ class JobController extends Controller
                 $service_data += $price_data;
                 $services->push($service_data);
             }
-            if ($notSame) $job_collection->put('is_same_service', 0);
+            $job_collection->put('is_same_service', $previousOrder->setCategory($job->category)->setJobServices($job->jobServices)
+                ->setLocationServices($location_services)->canOrder());
         }
-
         $job_collection->put('services', $services);
-
-        $resource = new Item($job->category,
-            new ServiceV2DeliveryChargeTransformer($delivery_charge, $job_discount_handler, $job->partnerOrder->order->location)
-        );
+        $resource = new Item($job->category, new ServiceV2DeliveryChargeTransformer($delivery_charge, $job_discount_handler, $job->partnerOrder->order->location));
         $delivery_charge_discount_data = $manager->createData($resource)->toArray();
         $job_collection->put('delivery_charge', $delivery_charge_discount_data['delivery_charge']);
         $job_collection->put('delivery_discount', $delivery_charge_discount_data['delivery_discount']);
-
         return api_response($request, $job_collection, 200, ['job' => $job_collection]);
     }
 
@@ -247,7 +242,7 @@ class JobController extends Controller
         return (double)$job->totalDiscount == 0 && !$partner_order->order->voucher_id && $partner_order->due != 0 && !$partner_order->cancelled_at && !$partner_order->closed_at ? 1 : 0;
     }
 
-    public function getBills($customer, $job, Request $request, OrderRepository $logistics_orderRepo)
+    public function getBills($customer, $job, Request $request, OrderRepository $logistics_orderRepo, FormatServices $formatServices)
     {
         try {
             $job = $request->job->load(['partnerOrder.order', 'category', 'service', 'jobServices' => function ($q) {
@@ -256,13 +251,22 @@ class JobController extends Controller
             $job->calculate(true);
             if (count($job->jobServices) == 0) {
                 $services = array();
+                $service_list = array();
                 array_push($services, [
                     'name' => $job->service != null ? $job->service->name : null,
                     'price' => (double)$job->servicePrice,
                     'min_price' => 0,
                     'is_min_price_applied' => 0
                 ]);
+                array_push($service_list, [
+                    'name' => $job->service != null ? $job->service->name : null,
+                    'service_group' => [],
+                    'unit' => $job->service->unit,
+                    'quantity' => $job->service_quantity,
+                    'price' => (double)$job->servicePrice
+                ]);
             } else {
+                $service_list = $formatServices->setJob($job)->formatServices();
                 $services = array();
                 foreach ($job->jobServices as $jobService) {
                     $total = (double)$jobService->unit_price * (double)$jobService->quantity;
@@ -289,8 +293,10 @@ class JobController extends Controller
             $bill['paid'] = (double)$partnerOrder->paidWithLogistic;
             $bill['due'] = (double)$partnerOrder->dueWithLogistic;
             $bill['material_price'] = (double)$job->materialPrice;
+            $bill['total_service_price'] = (double)$job->servicePrice;
             $bill['discount'] = (double)$job->discountWithoutDeliveryDiscount;
             $bill['services'] = $services;
+            $bill['service_list'] = $service_list;
             $bill['delivered_date'] = $job->delivered_date != null ? $job->delivered_date->format('Y-m-d') : null;
             $bill['delivered_date_timestamp'] = $job->delivered_date != null ? $job->delivered_date->timestamp : null;
             $bill['closed_and_paid_at'] = $partnerOrder->closed_and_paid_at ? $partnerOrder->closed_and_paid_at->format('Y-m-d') : null;

@@ -13,6 +13,9 @@ class SslClient
     private $clientPassword;
     private $topUpUrl;
 
+    /** @var SoapClient */
+    private $soapClient;
+
     public function __construct()
     {
         $this->clientId = config('ssl.topup_client_id');
@@ -21,15 +24,24 @@ class SslClient
     }
 
     /**
+     * @throws SoapFault
+     */
+    public function setSoapClient()
+    {
+        ini_set("soap.wsdl_cache_enabled", '0'); // disabling WSDL cache
+        $this->soapClient = new SoapClient($this->topUpUrl);
+    }
+
+    /**
      * @param TopUpOrder $topup_order
      * @return TopUpResponse
+     * @throws \Exception
      */
     public function recharge(TopUpOrder $topup_order): TopUpResponse
     {
         $ssl_response = new SslResponse();
         try {
-            ini_set("soap.wsdl_cache_enabled", '0'); // disabling WSDL cache
-            $client = new SoapClient($this->topUpUrl);
+            $this->setSoapClient();
             $guid = randomString(20, 1, 1);
             $mobile = $topup_order->payee_mobile;
             $operator_id = $this->getOperatorId($mobile);
@@ -39,9 +51,9 @@ class SslClient
             $s_url = config('sheba.api_url') . '/v2/top-up/success/ssl';
             $f_url = config('sheba.api_url') . '/v2/top-up/fail/ssl';
             $calling_method = "GET";
-            $create_recharge_response = $client->CreateRecharge($this->clientId, $this->clientPassword, $guid, $operator_id, $mobile, $topup_order->amount, $connection_type, $sender_id, $priority, $s_url, $f_url, $calling_method);
+            $create_recharge_response = $this->soapClient->CreateRecharge($this->clientId, $this->clientPassword, $guid, $operator_id, $mobile, $topup_order->amount, $connection_type, $sender_id, $priority, $s_url, $f_url, $calling_method);
             $vr_guid = $create_recharge_response->vr_guid;
-            $recharge_response = $client->InitRecharge($this->clientId, $this->clientPassword, $guid, $vr_guid);
+            $recharge_response = $this->soapClient->InitRecharge($this->clientId, $this->clientPassword, $guid, $vr_guid);
             $recharge_response->guid = $guid;
             $ssl_response->setResponse($recharge_response);
         } catch (SoapFault $exception) {
@@ -50,24 +62,32 @@ class SslClient
         return $ssl_response;
     }
 
+    /**
+     * @return mixed
+     * @throws SoapFault
+     */
     public function getBalance()
     {
         try {
-            ini_set("soap.wsdl_cache_enabled", '0'); // disabling WSDL cache
-            $client = new SoapClient($this->topUpUrl);
-            $response = $client->GetBalanceInfo($this->clientId);
+            $this->setSoapClient();
+            $response = $this->soapClient->GetBalanceInfo($this->clientId);
             return $response;
         } catch (SoapFault $exception) {
             throw $exception;
         }
     }
 
+    /**
+     * @param $guid
+     * @param $vr_guid
+     * @return mixed
+     * @throws SoapFault
+     */
     public function getRecharge($guid, $vr_guid)
     {
         try {
-            ini_set("soap.wsdl_cache_enabled", '0'); // disabling WSDL cache
-            $client = new SoapClient($this->topUpUrl);
-            $response = $client->QueryRechargeStatus($this->clientId, $guid, $vr_guid);
+            $this->setSoapClient();
+            $response = $this->soapClient->QueryRechargeStatus($this->clientId, $guid, $vr_guid);
             return $response;
         } catch (SoapFault $exception) {
             throw $exception;
