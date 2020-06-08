@@ -16,7 +16,7 @@ trait Ssl
     /**
      * @param TopUpOrder $topup_order
      * @return TopUpResponse
-     * @throws \SoapFault
+     * @throws \Exception
      */
     public function recharge(TopUpOrder $topup_order): TopUpResponse
     {
