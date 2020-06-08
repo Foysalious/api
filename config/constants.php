@@ -821,7 +821,7 @@ return [
     ],
     'WITHDRAW_LIMIT'                              => [
         'bkash' => [
-            'min' => 500,
+            'min' => 100,
             'max' => 15000
         ],
         'bank'  => [
