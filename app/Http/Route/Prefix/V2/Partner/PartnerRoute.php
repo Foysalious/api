@@ -1,5 +1,6 @@
 <?php namespace App\Http\Route\Prefix\V2\Partner;
 
+use App\Http\Route\Prefix\V2\Partner\ID\Auth\EmiRoute as EmiRoute;
 use App\Http\Route\Prefix\V2\Partner\ID\Auth\IndexRoute as IDAuthRoute;
 use App\Http\Route\Prefix\V2\Partner\ID\NonAuth\IndexRoute as IDNonAuthRoute;
 use App\Http\Route\Prefix\V2\Partner\PosRoute as PosRoute;
@@ -19,6 +20,7 @@ class PartnerRoute
             (new IDAuthRoute())->set($api);
             (new PosRoute())->set($api);
             (new ReferralRoute())->globals($api);
+            (new EmiRoute())->set($api);
         });
         $api->group(['prefix'=>'bank', 'middleware'=>'jwtGlobalAuth'],function($api){
             $api->post('/password/reset','Auth\PasswordController@resetPasswordForBank');

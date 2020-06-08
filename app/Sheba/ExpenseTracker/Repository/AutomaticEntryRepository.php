@@ -23,6 +23,8 @@ class AutomaticEntryRepository extends BaseRepository {
     private $emiMonth;
     private $paymentMethod;
     private $paymentId;
+    private $interest;
+    private $bankTransactionCharge;
 
     /**
      * @param mixed $paymentMethod
@@ -149,12 +151,31 @@ class AutomaticEntryRepository extends BaseRepository {
         return $this;
     }
 
+
     /**
      * @param mixed $emiMonth
      * @return AutomaticEntryRepository
      */
     public function setEmiMonth($emiMonth) {
         $this->emiMonth = $emiMonth;
+        return $this;
+    }
+
+    /**
+     * @param mixed $interest
+     * @return AutomaticEntryRepository
+     */
+    public function setInterest($interest) {
+        $this->interest = $interest;
+        return $this;
+    }
+
+    /**
+     * @param mixed $bankTransactionCharge
+     * @return AutomaticEntryRepository
+     */
+    public function setBankTransactionCharge($bankTransactionCharge) {
+        $this->bankTransactionCharge = $bankTransactionCharge;
         return $this;
     }
 
@@ -183,18 +204,20 @@ class AutomaticEntryRepository extends BaseRepository {
         $created_from['created_at'] = $created_from['created_at']->format('Y-m-d H:s:i');
         $created_from['updated_at'] = $created_from['updated_at']->format('Y-m-d H:s:i');
         $data                       = [
-            'created_at'     => $this->createdAt ?: Carbon::now()->format('Y-m-d H:s:i'),
-            'created_from'   => json_encode($created_from),
-            'amount'         => $this->amount,
-            'amount_cleared' => $this->amountCleared,
-            'head_name'      => $this->head,
-            'note'           => 'Automatically Placed from Sheba',
-            'source_type'    => $this->sourceType,
-            'source_id'      => $this->sourceId,
-            'type'           => $this->for,
-            'payment_method' => $this->paymentMethod,
-            'payment_id'     => $this->paymentId,
-            'emi_month'      => $this->emiMonth
+            'created_at'              => $this->createdAt ?: Carbon::now()->format('Y-m-d H:s:i'),
+            'created_from'            => json_encode($created_from),
+            'amount'                  => $this->amount,
+            'amount_cleared'          => $this->amountCleared,
+            'head_name'               => $this->head,
+            'note'                    => 'Automatically Placed from Sheba',
+            'source_type'             => $this->sourceType,
+            'source_id'               => $this->sourceId,
+            'type'                    => $this->for,
+            'payment_method'          => $this->paymentMethod,
+            'payment_id'              => $this->paymentId,
+            'emi_month'               => $this->emiMonth,
+            'interest'                => $this->interest,
+            'bank_transaction_charge' => $this->bankTransactionCharge
         ];
         if (empty($data['amount']))
             $data['amount'] = 0;
@@ -224,14 +247,13 @@ class AutomaticEntryRepository extends BaseRepository {
     /**
      * @return bool|mixed
      */
-    public function updatePartyFromSource()
-    {
-        try{
+    public function updatePartyFromSource() {
+        try {
             $data = [
-                'source_type'    => $this->sourceType,
-                'source_id'      => $this->sourceId,
-                'type'           => $this->for,
-                'profile_id'     => $this->profileId
+                'source_type' => $this->sourceType,
+                'source_id'   => $this->sourceId,
+                'type'        => $this->for,
+                'profile_id'  => $this->profileId
             ];
             if (empty($data['source_type']) || empty($data['source_id']))
                 throw new Exception('Source Type or Source id is not present');
