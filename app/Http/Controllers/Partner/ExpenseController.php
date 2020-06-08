@@ -16,6 +16,7 @@ use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\EntryType;
 use Sheba\ExpenseTracker\Repository\EntryRepository;
 use Sheba\Helpers\TimeFrame;
+use Sheba\Usage\Usage;
 use Throwable;
 
 class ExpenseController extends Controller
@@ -123,6 +124,10 @@ class ExpenseController extends Controller
             $resource = new Item($expense, new ExpenseTransformer());
             $expense_formatted = $manager->createData($resource)->toArray()['data'];
 
+            /**
+             * USAGE LOG
+             */
+            (new Usage())->setUser($request->partner)->setType(Usage::Partner()::EXPENSE_TRACKER_TRANSACTION)->create($request->manager_resource);
             return api_response($request, null, 200, ['expense' => $expense_formatted]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
