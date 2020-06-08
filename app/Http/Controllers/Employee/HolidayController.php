@@ -18,10 +18,12 @@ class HolidayController extends Controller
     {
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
+        $firstDayofPreviousMonth = Carbon::parse(Carbon::now()->startOfMonth()->subMonth()->toDateString());
+        $lastDayofNextMonth = Carbon::parse(Carbon::now()->startOfMonth()->addMonths(1)->endOfMonth()->toDateString());
         $business_holidays = $business_holiday_repo->getAllByBusiness($business_member->business);
         $weekend = $business_weekend_repo->weekendDates($business_member->business);
         $fractal = new Manager();
-        $resource = new Collection($business_holidays, new HolidayListTransformer());
+        $resource = new Collection($business_holidays, new HolidayListTransformer($firstDayofPreviousMonth,$lastDayofNextMonth));
         $holidays = $fractal->createData($resource)->toArray()['data'];
         $holidays = call_user_func_array('array_merge', $holidays);
         return api_response($request, null,200, ['holidays' => $holidays, 'weekends' => $weekend]);

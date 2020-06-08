@@ -129,8 +129,9 @@ return [
         'one_way_id' => env('ONE_WAY_SERVICE_ID'),
         'round_trip_id' => env('ROUND_TRIP_SERVICE_ID'),
         'date_range_service_ids' => explode(',', env('RENT_A_CAR_SERVICE_ID_FOR_DATE_RANGE')),
-        'destination_fields_service_ids' => explode(',', env('RENT_A_CAR_SERVICE_ID_FOR_DESTINATION_FIELD')),
-        'service_ids' => array_map('intval', explode(',', env('RENT_CAR_SERVICE_IDS')))
+        'destination_fields_service_ids' => array_map('intval', explode(',', env('RENT_A_CAR_SERVICE_ID_FOR_DESTINATION_FIELD'))),
+        'service_ids' => array_map('intval', explode(',', env('RENT_CAR_SERVICE_IDS'))),
+        'slug' => 'car-rental'
     ],
     'payment_link' => [
         'sms' => env('SEND_PAYMENT_LINK_SMS', 1)

@@ -85,7 +85,8 @@ class ScheduleSlot
             $this->resources = $this->getResources();
             $this->bookedSchedules = $this->getBookedSchedules($start, $end);
             $this->runningLeaves = $this->getLeavesBetween($start, $end);
-            if ($this->category) $this->preparationTime = $this->partner->categories->where('id', $this->category->id)->first()->pivot->preparation_time_minutes;
+            $category_partner = $this->partner->categories->where('id', $this->category->id)->first();
+            if ($this->category && $category_partner) $this->preparationTime = $category_partner->pivot->preparation_time_minutes;
         }
         $day = $this->today->copy();
         while ($day < $last_day) {
@@ -182,7 +183,7 @@ class ScheduleSlot
             foreach ($this->shebaSlots as $slot) {
                 if (!$slot['is_available']) continue;
                 $start_time = Carbon::parse($date_string . ' ' . $slot->start);
-                $end_time = Carbon::parse($date_string . ' ' . $slot->start)->addMinutes($this->category->book_resource_minutes);
+                $end_time = $this->category ? Carbon::parse($date_string . ' ' . $slot->start)->addMinutes($this->category->book_resource_minutes) : Carbon::parse($date_string . ' ' . $slot->start)->addMinutes(0);
                 $booked_resources = collect();
                 foreach ($bookedSchedules as $booked_schedule) {
                     if ($this->hasBookedSchedule($booked_schedule, $start_time, $end_time)) $booked_resources->push($booked_schedule->resource_id);

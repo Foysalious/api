@@ -14,7 +14,7 @@ use Sheba\Logistics\Repository\ParcelRepository;
 class Category extends Model
 {
     protected $guarded = ['id'];
-    protected $casts = ['is_auto_sp_enabled' => 'int', 'min_order_amount' => 'double'];
+    protected $casts = ['is_auto_sp_enabled' => 'int', 'min_order_amount' => 'double', 'max_order_amount' => 'double'];
 
     /**
      *  Relationships
@@ -72,6 +72,11 @@ class Category extends Model
     public function locations()
     {
         return $this->belongsToMany(Location::class);
+    }
+
+    public function logisticEnabledLocations()
+    {
+        return $this->locations()->wherePivot('is_logistic_enabled', 1);
     }
 
     public function subCat()
@@ -204,6 +209,11 @@ class Category extends Model
         return in_array($this->id, array_map('intval', explode(',', env('RENT_CAR_IDS')))) ? 1 : 0;
     }
 
+    public function isRentMaster()
+    {
+        return $this->id == config('sheba.car_rental.master_category_id');
+    }
+
 
     public function scopeLocationWise($query_, $hyper_locations)
     {
@@ -231,6 +241,15 @@ class Category extends Model
     public function needsLogistic()
     {
         return (bool)$this->is_logistic_available;
+    }
+
+    /**
+     * @param Location $location
+     * @return bool
+     */
+    public function needsLogisticOn(Location $location)
+    {
+        return $this->logisticEnabledLocations()->where('location_id', $location->id)->count() > 0;
     }
 
     /**
@@ -317,5 +336,10 @@ class Category extends Model
     public function getContentsAttribute()
     {
         return $this->structured_contents ? json_decode($this->structured_contents) : null;
+    }
+
+    public function isMarketPlacePublished()
+    {
+        return $this->publication_status;
     }
 }

@@ -5,6 +5,7 @@ use Sheba\Partner\HomePageSetting\Setting;
 
 class Basic extends Setting
 {
+
     protected function setting()
     {
         return DefaultSetting::get();

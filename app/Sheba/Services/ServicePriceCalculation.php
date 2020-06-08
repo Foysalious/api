@@ -97,7 +97,7 @@ class ServicePriceCalculation
         return $this->serviceRequestObject[0]->getCategory();
     }
 
-    private function createServiceList()
+    public function createServiceList()
     {
         $services_list = collect();
         foreach ($this->serviceRequestObject as $selected_service) {
@@ -111,6 +111,9 @@ class ServicePriceCalculation
             $this->discountCalculation->setLocationService($location_service)->setOriginalPrice($total_original_price)->setQuantity($selected_service->getQuantity())->calculate();
             $service_data = [
                 'service_id' => $service->id,
+                'service_name' => $service->name,
+                'variable_type' => $service->variable_type,
+                'unit' => $service->unit,
                 'quantity' => $selected_service->getQuantity(),
                 'unit_price' => $unit_price,
                 'discount' => $this->discountCalculation->getJobServiceDiscount(),
@@ -145,7 +148,7 @@ class ServicePriceCalculation
 
     private function calculateDeliveryCharge()
     {
-        $category['delivery_charge'] = $this->delivery_charge->setCategory($this->category)->get();
+        $category['delivery_charge'] = $this->delivery_charge->setCategory($this->category)->setLocation($this->location)->get();
         /** @var Discount $delivery_discount */
         $delivery_discount = $this->job_discount_handler->getDiscount();
         $discount_checking_params = (new JobDiscountCheckingParams())->setDiscountableAmount($category['delivery_charge']);

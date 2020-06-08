@@ -43,6 +43,11 @@ class Location extends Model
         return $query->where('geo_informations', '<>', null);
     }
 
+    public function scopeHasPolygon($query)
+    {
+        return $query->where('geo_informations', 'like', '%polygon%');
+    }
+
     public function hyperLocal()
     {
         return $this->hasOne(HyperLocal::class);
@@ -51,5 +56,10 @@ class Location extends Model
     public function customer_delivery_addresses()
     {
         return $this->hasMany(CustomerDeliveryAddress::class);
+    }
+
+    public function isPublished()
+    {
+        return (int)$this->publication_status;
     }
 }

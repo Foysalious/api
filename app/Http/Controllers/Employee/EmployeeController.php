@@ -128,7 +128,7 @@ class EmployeeController extends Controller
             'is_approval_request_required' => $approval_requests->count() > 0 ? 1 : 0,
             'approval_requests' => ['pending_request' => $pending_approval_requests->count()]
         ];
-        if ($data['attendance']['can_checkout']) $data['attendance']['is_note_required'] = $checkout->isNoteRequired($business_member);
+        if ($data['attendance']['can_checkout']) $data['attendance']['is_note_required'] = $checkout->isNoteRequired();
         if ($business_member) return api_response($request, $business_member, 200, ['info' => $data]);
     }
 

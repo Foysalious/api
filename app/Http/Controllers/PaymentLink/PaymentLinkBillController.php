@@ -20,11 +20,12 @@ class PaymentLinkBillController extends Controller
                 'purpose' => 'string',
                 'identifier' => 'required',
                 'name' => 'required',
-                'mobile' => 'required|string',
+                'mobile' => 'required|string'
             ]);
             $payment_method = $request->payment_method;
             $user = $customerCreator->setMobile($request->mobile)->setName($request->name)->create();
             $payment_link = $paymentLinkRepository->findByIdentifier($request->identifier);
+            if (!empty($payment_link->getEmiMonth()) && (double)$payment_link->getAmount() < config('emi.manager.minimum_emi_amount')) return api_response($request, null, 400, ['message' => 'Amount must be greater then or equal BDT ' . config('emi.manager.minimum_emi_amount')]);
             $payable = $paymentLinkOrderAdapter->setPayableUser($user)
                 ->setPaymentLink($payment_link)->setAmount($request->amount)->setDescription($request->purpose)->getPayable();
             if ($payment_method == 'wallet' && $user->shebaCredit() < $payable->amount) return api_response($request, null, 403, ['message' => "You don't have sufficient balance"]);
@@ -36,9 +37,6 @@ class PaymentLinkBillController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
         }
     }
 }

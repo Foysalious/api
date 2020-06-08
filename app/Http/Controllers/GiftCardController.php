@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Sheba\ModificationFields;
 use Sheba\Payment\Adapters\Payable\GiftCardPurchaseAdapter;
 use Sheba\Payment\ShebaPayment;
+use Throwable;
 
 class GiftCardController extends Controller
 {
@@ -35,12 +36,12 @@ class GiftCardController extends Controller
                 ],
                 [
                     'question' => 'Pay with Voucher',
-                    'answer' => 'You can use Sheba bonus credit in mobile recharge and service purchase. In service purchase you can find Sheba Bonus Credit section from where you can select Sheba bonus credit for full or partial payment.'
+                    'answer' => 'You can use Sheba bonus credit in service purchase. In service purchase you can find Sheba Bonus Credit section from where you can select Sheba bonus credit for full or partial payment.'
                 ],
             ];
             $data = ['gift_cards' => $gift_cards, 'instructions' => $instructions];
             return api_response($request, $data, 200, ['data' => $data]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -48,38 +49,33 @@ class GiftCardController extends Controller
 
     public function purchaseGiftCard(Request $request, ShebaPayment $payment)
     {
-        try {
-            $this->validate($request, [
-                'payment_method' => 'required|string|in:online,bkash,wallet,cbl',
-                'gift_card_id' => 'required'
-            ]);
-            $gift_card = GiftCard::find((int)$request->gift_card_id);
-            if (!$gift_card)
-                return api_response($request, null, 404, ['message' => 'Gift Card Not found.']);
+        $this->validate($request, [
+            'payment_method' => 'required|string|in:online,bkash,wallet,cbl',
+            'gift_card_id' => 'required'
+        ]);
+        $gift_card = GiftCard::find((int)$request->gift_card_id);
+        if (!$gift_card)
+            return api_response($request, null, 404, ['message' => 'Gift Card Not found.']);
 
-            if (!$gift_card->isValid())
-                return api_response($request, null, 403, ['message' => 'Gift card is not valid.']);
+        if (!$gift_card->isValid())
+            return api_response($request, null, 403, ['message' => 'Gift card is not valid.']);
 
-            $gift_card_purchased_order = GiftCardPurchase::create(
-                $this->withCreateModificationField(
-                    [
-                        'customer_id' => $request->customer->id,
-                        'gift_card_id' => $gift_card->id,
-                        'amount' => (float)$gift_card->price,
-                        'credits_purchased' => (float)$gift_card->credit,
-                        'status' => 'initialized',
-                        'valid_till' => Carbon::now()->addMonth((int)$gift_card->validity_in_months),
-                    ]
-                )
-            );
-            $gift_card_purchase_adapter = new GiftCardPurchaseAdapter();
-            $payable = $gift_card_purchase_adapter->setModelForPayable($gift_card_purchased_order)->getPayable();
-            $payment = $payment->setMethod($request->payment_method)->init($payable);
-            return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $gift_card_purchased_order = GiftCardPurchase::create(
+            $this->withCreateModificationField(
+                [
+                    'customer_id' => $request->customer->id,
+                    'gift_card_id' => $gift_card->id,
+                    'amount' => (float)$gift_card->price,
+                    'credits_purchased' => (float)$gift_card->credit,
+                    'status' => 'initialized',
+                    'valid_till' => Carbon::now()->addMonth((int)$gift_card->validity_in_months),
+                ]
+            )
+        );
+        $gift_card_purchase_adapter = new GiftCardPurchaseAdapter();
+        $payable = $gift_card_purchase_adapter->setModelForPayable($gift_card_purchased_order)->getPayable();
+        $payment = $payment->setMethod($request->payment_method)->init($payable);
+        return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
 
     }
 

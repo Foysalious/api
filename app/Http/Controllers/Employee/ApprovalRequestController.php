@@ -20,6 +20,7 @@ use Sheba\Business\ApprovalRequest\Updater;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Sheba\Dal\Leave\Model as Leave;
+use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
 use Sheba\ModificationFields;
 
 class ApprovalRequestController extends Controller
@@ -60,8 +61,6 @@ class ApprovalRequestController extends Controller
             $member = $requestable->businessMember->member;
             /** @var Profile $profile */
             $profile = $member->profile;
-            /** @var BusinessRole $role */
-            $role = $business_member->role;
 
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
@@ -94,12 +93,14 @@ class ApprovalRequestController extends Controller
         if ($business_member->id != $approval_request->approver_id)
             return api_response($request, null, 403, ['message' => 'You Are not authorized to show this request']);
 
+        /** @var BusinessMember $leave_requester_business_member */
+        $leave_requester_business_member = $requestable->businessMember;
         /** @var Member $member */
-        $member = $business_member->member;
+        $member = $leave_requester_business_member->member;
         /** @var Profile $profile */
         $profile = $member->profile;
         /** @var BusinessRole $role */
-        $role = $business_member->role;
+        $role = $leave_requester_business_member->role;
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
@@ -129,10 +130,13 @@ class ApprovalRequestController extends Controller
     {
         $approvers = [];
         foreach ($requestable->requests as $approval_request) {
+            /** @var BusinessMember $business_member */
             $business_member = $this->getBusinessMemberById($approval_request->approver_id);
+            /** @var Member $member */
             $member = $business_member->member;
+            /** @var Profile $profile */
             $profile = $member->profile;
-            array_push($approvers, ['name' => $profile->name, 'status' => $approval_request->status]);
+            array_push($approvers, ['name' => $profile->name, 'status' => ApprovalRequestPresenter::statuses()[$approval_request->status]]);
         }
         return $approvers;
     }

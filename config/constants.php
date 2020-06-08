@@ -93,7 +93,8 @@ return [
         'Operation' => 'Operation',
         'Finance'   => 'Finance',
         'Handyman'  => 'Handyman',
-        'Salesman'  => 'Salesman'
+        'Salesman'  => 'Salesman',
+        'Owner'     => 'Owner'
     ],
     'JOB_STATUSES'                                => [
         'Pending'       => 'Pending',
@@ -763,7 +764,7 @@ return [
         'service_unavailable' => 'Service Unavailable'
     ],
     'PARTNER_AFFILIATIONS_FAKE_REJECT_REASONS'    => ['fake'],
-    'PARTNER_DEFAULT_SECURITY_MONEY'              => 300,
+    'PARTNER_DEFAULT_SECURITY_MONEY'              => 100,
     'PARTNER_AFFILIATION_REWARD'                  => 200,
     'PARTNER_AFFILIATION_PARTNER_ORDER_BENCHMARK' => 2,
     'PARTNER_AFFILIATION_REWARD_BREAKDOWN'        => [
@@ -824,7 +825,7 @@ return [
             'max' => 15000
         ],
         'bank'  => [
-            'min' => 20000,
+            'min' => 5000,
             'max' => 250000
         ]
     ],
@@ -1280,6 +1281,11 @@ return [
             'en'  => 'Proprietorship',
             'bn'  => 'প্রোপ্রাইটরশিপ'
         ],
+    ],
+    'ownership_type_en' => [
+        'লিমিটেড' => 'Limited',
+        'পার্টনারশিপ' => 'Partnership',
+        'প্রোপ্রাইটরশিপ' => 'Proprietorship'
     ],
     'PARTNER_BUSINESS_CATEGORIES'                 => [
         'Small',

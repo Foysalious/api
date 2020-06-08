@@ -1,5 +1,6 @@
 <?php namespace App\Http\Route\Prefix\V2;
 
+use App\Http\Route\Prefix\V2\Resource\ResourceRoute;
 use App\Http\Route\Prefix\V2\Partner\PartnerRoute;
 
 class Route
@@ -14,6 +15,7 @@ class Route
             (new AffiliateRoute())->set($api);
             (new PartnerRoute())->set($api);
             (new HelpRoute())->set($api);
+            (new ResourceRoute())->set($api);
             $api->post('training-status-update', 'ResourceController@trainingStatusUpdate');
             $api->post('profile-check', 'Profile\ProfileController@checkProfile');
             $api->post('newsletter', 'NewsletterController@create');
@@ -183,6 +185,8 @@ class Route
             $api->post('forget-password', 'ProfileController@forgetPassword');
             /** EMI INFO */
             $api->get('emi-info', 'ShebaController@getEmiInfo');
+            $api->get('emi-info/manager', 'ShebaController@emiInfoForManager');
+
             $api->group(['prefix' => 'tickets', 'middleware' => 'jwtGlobalAuth'], function ($api) {
                 $api->get('validate-token', 'ProfileController@validateJWT');
                 $api->get('payments', 'ShebaController@getPayments');
@@ -191,6 +195,7 @@ class Route
             });
             $api->get('refresh-token', 'ProfileController@refresh');
             $api->get('service-price-calculate', 'Service\ServicePricingController@getCalculatedPrice');
+            $api->post('due-tracker/create-pos-order-payment', 'Pos\DueTrackerController@createPosOrderPayment');
         });
         return $api;
     }

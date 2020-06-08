@@ -63,8 +63,11 @@ class JobDeliveryChargeCalculator
     public function getCalculatedJob()
     {
         $delivery_charge = new DeliveryCharge();
-        $delivery_charge->setCategory($this->job->category);
-        if ($this->partner) $delivery_charge->setCategoryPartnerPivot(CategoryPartner::where([['category_id', $this->job->category->id], ['partner_id', $this->partner->id]])->first());
+        $delivery_charge->setCategory($this->job->category)->setLocation($this->partnerOrder->order->location);
+        if ($this->partner) {
+            $category_partner = CategoryPartner::where([['category_id', $this->job->category_id], ['partner_id', $this->partner->id]])->first();
+            $delivery_charge->setCategoryPartnerPivot($category_partner);
+        }
         $charge = $delivery_charge->get();
         $this->job->delivery_charge = $delivery_charge->doesUseShebaLogistic() ? 0 : $charge;
         $this->job->logistic_charge = $delivery_charge->doesUseShebaLogistic() ? $charge : 0;

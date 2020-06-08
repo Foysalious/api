@@ -1,7 +1,9 @@
 <?php namespace Sheba\Checkout\Requests;
 
+use App\Exceptions\HyperLocationNotFoundException;
 use App\Models\Category;
 use App\Models\HyperLocal;
+use App\Models\Location;
 use App\Models\Partner;
 use App\Models\Service;
 use Dingo\Api\Routing\Helpers;
@@ -231,6 +233,15 @@ class PartnerListRequest
         if($this->location) return $this->location;
 
         $hyper_local = HyperLocal::insidePolygon($this->lat, $this->lng)->first();
+        if(!$hyper_local) throw new HyperLocationNotFoundException("lat : $this->lat, lng: $this->lng");
         return $hyper_local->location_id;
+    }
+
+    /**
+     * @return Location
+     */
+    public function getLocation()
+    {
+        return Location::find($this->getLocationId());
     }
 }

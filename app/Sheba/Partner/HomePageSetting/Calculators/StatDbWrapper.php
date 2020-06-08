@@ -6,6 +6,10 @@ use Sheba\Repositories\PartnerRepository;
 
 class StatDbWrapper extends Setting
 {
+    public function __construct(Setting $next = null)
+    {
+        parent::__construct($next);
+    }
     protected function setting()
     {
         try {

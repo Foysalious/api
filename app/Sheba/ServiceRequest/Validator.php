@@ -19,7 +19,6 @@ class Validator
         ];
         $this->rentACarRules = array_merge($this->rules, [
             'pick_up_location_geo' => 'required',
-            'pick_up_address' => 'required'
         ]);
     }
 
@@ -52,10 +51,23 @@ class Validator
     public function validate()
     {
         foreach ($this->services as $service) {
-            $rules = in_array($service['id'], config('sheba.car_rental.service_ids')) ? $this->rentACarRules : $this->rules;
-            $validator = LaravelValidator::make($service, $rules);
+            $validator = LaravelValidator::make($service, $this->getRules($service));
             if (!$validator->passes()) $this->setErrors($validator);
         }
+    }
+
+    private function getRules($service)
+    {
+        if (isset($service['id']) && in_array($service['id'], config('sheba.car_rental')['destination_fields_service_ids'])) return $this->getDestinationRules();
+        if (isset($service['id']) && in_array($service['id'], config('sheba.car_rental.service_ids'))) return $this->rentACarRules;
+        return $this->rules;
+    }
+
+    private function getDestinationRules()
+    {
+        return array_merge($this->rentACarRules, [
+            'destination_location_geo' => 'required',
+        ]);
     }
 
 

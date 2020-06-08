@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a309b245ed0e701f0cb02ba0371e415b",
+    "content-hash": "c6e0a67a756d1e9d7d46c690f40ec008",
     "packages": [
         {
             "name": "algolia/algoliasearch-client-php",
@@ -1536,7 +1536,7 @@
             "time": "2017-09-05T11:17:05+00:00"
         },
         {
-            "name": "jeremeamia/SuperClosure",
+            "name": "jeremeamia/superclosure",
             "version": "2.3.0",
             "source": {
                 "type": "git",
@@ -3267,8 +3267,8 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://mac_pasha@bitbucket.org/startern/sheba_dal.git",
-                "reference": "5e2ca5d4576f76acc6348ed9df49545d0d847111"
+                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
+                "reference": "b71bf0b8185c78c471cb38e66ceda7e644511269"
             },
             "require": {
                 "php": ">=5.4"
@@ -3295,7 +3295,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2020-04-12T08:05:00+00:00"
+            "time": "2020-06-06T17:34:47+00:00"
         },
         {
             "name": "sheba/notification",
@@ -3303,7 +3303,7 @@
             "source": {
                 "type": "git",
                 "url": "https://mac_pasha@bitbucket.org/startern/sheba_notification.git",
-                "reference": "7ced22baac9f0a7cda1f3f20c726885d33982d4a"
+                "reference": "b9852926a4978d358af21f82903040710886fbaf"
             },
             "require": {
                 "php": ">=5.4"
@@ -3327,7 +3327,7 @@
                 }
             ],
             "description": "Sheba notifications.",
-            "time": "2020-02-13T09:08:21+00:00"
+            "time": "2020-04-09T16:23:52+00:00"
         },
         {
             "name": "sheba/report",

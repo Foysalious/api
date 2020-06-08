@@ -1,6 +1,8 @@
 <?php namespace App\Models;
 
+use App\Exceptions\NotFoundException;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -241,15 +243,19 @@ class Service extends Model
 
     public function getVariablesOfOptionsService(array $options)
     {
-        $variables = [];
-        foreach ($this->getOptions() as $key => $service_option) {
-            array_push($variables, [
-                'title' => isset($service_option->title) ? $service_option->title : null,
-                'question' => $service_option->question,
-                'answer' => explode(',', $service_option->answers)[$options[$key]]
-            ]);
+        try {
+            $variables = [];
+            foreach ($this->getOptions() as $key => $service_option) {
+                array_push($variables, [
+                    'title' => isset($service_option->title) ? $service_option->title : null,
+                    'question' => $service_option->question,
+                    'answer' => explode(',', $service_option->answers)[$options[$key]]
+                ]);
+            }
+            return json_encode($variables);
+        } catch (Exception $e) {
+            throw new NotFoundException('Option does not exists', 404);
         }
-        return json_encode($variables);
     }
 
     public function variable()
@@ -336,5 +342,10 @@ class Service extends Model
     public function getContentsAttribute()
     {
         return $this->structured_contents ? json_decode($this->structured_contents) : null;
+    }
+
+    public function isMarketPlacePublished()
+    {
+        return $this->publication_status;
     }
 }

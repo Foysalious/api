@@ -10,6 +10,7 @@ use App\Transformers\PosOrderTransformer;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
@@ -20,7 +21,9 @@ use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 use Sheba\Pos\Customer\Creator;
 use Sheba\Pos\Customer\Updater;
+use Sheba\Pos\Discount\DiscountTypes;
 use Sheba\Pos\Repositories\PosOrderRepository;
+use Sheba\Usage\Usage;
 use Throwable;
 
 class CustomerController extends Controller
@@ -55,27 +58,32 @@ class CustomerController extends Controller
      * @param EntryRepository $entry_repo
      * @return JsonResponse
      */
-    public function show($partner, $customer, Request $request, EntryRepository $entry_repo)
+    public function show($partner, $customer, Request $request, EntryRepository $entry_repo,DueTrackerRepository $dueTrackerRepository)
     {
         try {
             /** @var PosCustomer $customer */
             $customer = PosCustomer::find((int)$customer);
             if (!$customer)
                 return api_response($request, null, 404, ['message' => 'Customer Not Found.']);
+
+            $partner_pos_customer = PartnerPosCustomer::byPartner($partner)->where('customer_id', $customer->id)->first();
+            if (empty($partner_pos_customer))
+                return api_response($request, null, 404, ['message' => 'Customer Not Found.']);
+
             $data                             = $customer->details();
             $data['customer_since']           = $customer->created_at->format('Y-m-d');
             $data['customer_since_formatted'] = $customer->created_at->diffForHumans();
             $total_purchase_amount            = 0.00;
-            $total_due_amount                 = 0.00;
-            PosOrder::byPartner($partner)->byCustomer($customer->id)->get()->each(function ($order) use (&$total_purchase_amount, &$total_due_amount) {
+            $total_used_promo                 = 0;
+            PosOrder::byPartner($partner)->byCustomer($customer->id)->get()->each(function ($order) use (&$total_purchase_amount, &$total_used_promo) {
                 /** @var PosOrder $order */
                 $order                 = $order->calculate();
                 $total_purchase_amount += $order->getNetBill();
-                $total_due_amount      += $order->getDue();
+                $total_used_promo += !empty($order->voucher_id) ? $this->getVoucherAmount($order) : 0;
             });
             $data['total_purchase_amount'] = $total_purchase_amount;
-            $data['total_due_amount']      = $total_due_amount;
-            $data['total_used_promo']      = 0.00;
+            $data['total_due_amount']      = $this->getDueAmountFromDueTracker($dueTrackerRepository,$request->partner,$customer);
+            $data['total_used_promo']      = $total_used_promo;
             $data['total_payable_amount']  = $entry_repo->setPartner($request->partner)->getTotalPayableAmountByCustomer($customer->profile_id)['total_payables'];
             $data['is_customer_editable']  = $customer->isEditable();
             $data['note']                  = PartnerPosCustomer::where('customer_id', $customer->id)->where('partner_id', $partner)->first()->note;
@@ -106,6 +114,10 @@ class CustomerController extends Controller
             if ($error = $creator->hasError())
                 return api_response($request, null, 400, ['message' => $error['msg']]);
             $customer = $creator->setPartner($request->partner)->create();
+            /**
+             * USAGE LOG
+             */
+            (new Usage())->setUser($request->partner)->setType(Usage::Partner()::CREATE_CUSTOMER)->create($request->manager_resource);
             return api_response($request, $customer, 200, ['customer' => $customer->details()]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -236,9 +248,25 @@ class CustomerController extends Controller
         } catch (InvalidPartnerPosCustomer $e) {
             return api_response($request, null, 500, ['message' => $e->getMessage()]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    /**
+     * @param $dueTrackerRepository
+     * @param Partner $partner
+     * @param PosCustomer $customer
+     * @return bool|int
+     */
+    private function getDueAmountFromDueTracker($dueTrackerRepository, Partner $partner, PosCustomer $customer){
+
+        $data = $dueTrackerRepository->setPartner($partner)->getDueListByProfile($partner,(new Request(['customer_id' => $customer->id])));
+        return $data['stats']['due'] > 0 ? $data['stats']['due'] : 0;
+    }
+
+    private function getVoucherAmount($order)
+    {
+        return $order->discounts()->where('type',DiscountTypes::VOUCHER)->sum('amount');
     }
 }

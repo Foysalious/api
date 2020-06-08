@@ -5,6 +5,7 @@ use App\Models\HyperLocal;
 use App\Models\InspectionItemIssue;
 use App\Models\Member;
 use App\Models\Payment;
+use App\Repositories\NotificationRepository;
 use App\Sheba\Address\AddressValidator;
 use App\Sheba\Checkout\Checkout;
 use Carbon\Carbon;
@@ -112,30 +113,18 @@ class OrderController extends Controller
         }
     }
 
-    public function clearBills($business, $order, Request $request, ShebaPayment $payment)
+    public function clearBills($business, $order, Request $request, ShebaPayment $payment, OrderAdapter $order_adapter)
     {
-        try {
-            $this->validate($request, [
-                'payment_method' => 'sometimes|required|in:online,wallet,bkash,cbl',
-            ]);
-            $payment_method = $request->has('payment_method') ? $request->payment_method : 'online';
-            if ($payment_method == 'bkash' && $this->hasPreviousBkashTransaction($request->job->partner_order_id)) {
-                return api_response($request, null, 500, ['message' => "Can't send multiple requests within 1 minute."]);
-            }
-            $order_adapter = new OrderAdapter($request->job->partnerOrder);
-            $order_adapter->setPaymentMethod($payment_method);
-            $payment = $payment->setMethod($payment_method)->init($order_adapter->getPayable());
-            return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        $this->validate($request, [
+            'payment_method' => 'sometimes|required|in:online,wallet,bkash,cbl',
+        ]);
+        $payment_method = $request->has('payment_method') ? $request->payment_method : 'online';
+        if ($payment_method == 'bkash' && $this->hasPreviousBkashTransaction($request->job->partner_order_id)) {
+            return api_response($request, null, 500, ['message' => "Can't send multiple requests within 1 minute."]);
         }
+        $order_adapter->setPartnerOrder($request->job->partnerOrder)->setPaymentMethod($payment_method);
+        $payment = $payment->setMethod($payment_method)->init($order_adapter->getPayable());
+        return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
     }
 
     private function hasPreviousBkashTransaction($partner_order_id)
@@ -226,8 +215,12 @@ class OrderController extends Controller
                     $issue = InspectionItemIssue::find((int)$request->issue_id);
                     $issue->update($this->withBothModificationFields(['order_id' => $order->id, 'status' => 'closed']));
                 }
-                return api_response($request, $order, 200, ['job_id' => $order->jobs->first()->id, 'order_id' => $order->jobs->first()->partnerOrder->id,
-                    'order_code' => $order->code()]);
+                $this->sendNotifications($order);
+                return api_response($request, $order, 200, [
+                    'job_id' => $order->jobs->first()->id,
+                    'order_id' => $order->jobs->first()->partnerOrder->id,
+                    'order_code' => $order->code()
+                ]);
             } else {
                 return api_response($request, null, 500);
             }
@@ -264,6 +257,16 @@ class OrderController extends Controller
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
+        }
+    }
+
+    private function sendNotifications($order)
+    {
+        try {
+            (new NotificationRepository())->send($order);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return null;
         }
     }
 }
