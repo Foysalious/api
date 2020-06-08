@@ -45,6 +45,7 @@ class SitemapDataStore implements DataStoreObject
                 });
 
                 $secondary_category['services'] = array_values($secondary_category['services']->toArray());
+                unset($secondary_category['parent_id']);
             }
 
             $master_category['secondary_categories'] = $master_category['secondary_categories']->filter(function ($cat, $key) {
@@ -52,6 +53,7 @@ class SitemapDataStore implements DataStoreObject
             });
 
             $master_category['secondary_categories'] =  array_values($master_category['secondary_categories']->toArray());
+            unset($master_category['parent_id']);
 
         }
 
