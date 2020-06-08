@@ -146,9 +146,9 @@ return [
     'category_groups' => [
         'trending' => env('TRENDING_CATEGORY_GROUP', 10)
     ],
-    'tp_proxy_url' => env('TP_PROXY_URL')
-    'payout_token'=>env('SHEBA_PAYOUT_TOKEN','ShebaAdminPanelToken!@#$!@#'),
+    'tp_proxy_url' => env('TP_PROXY_URL'),
+    'payout_token' => env('SHEBA_PAYOUT_TOKEN','ShebaAdminPanelToken!@#$!@#'),
     'address' => 'House #63 (1st Floor), Road #04, Block-C, Banani, Dhaka 1213',
     'email' => 'info@sheba.xyz',
-    'resource_max_withdraw_limit' => 1000,
+    'resource_max_withdraw_limit' => 1000
 ];
