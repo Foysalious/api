@@ -63,16 +63,17 @@ class ProcurementRepository extends BaseRepository implements ProcurementReposit
 
     public function getProcurementFilterByLastDateOfSubmissionWithSearch($query)
     {
-        $today = Carbon::today()->endOfDay()->timestamp;
-        $procurements = $this->model->search($query, [
-            'filters' => "last_date_of_submission_timestamp >= $today"
-        ]);
+        $base_query = $this->model;
+        if ($query) {
+            $today = Carbon::today()->endOfDay()->timestamp;
+            $procurements = $this->model->search($query, [
+                'filters' => "last_date_of_submission_timestamp >= $today"
+            ]);
 
-        if (!empty($procurements['hits'])) {
-            $procurements_id = collect($procurements['hits'])->pluck('id')->toArray();
-        } else
-            $procurements_id = [];
+            $procurements_id = (!empty($procurements['hits'])) ? collect($procurements['hits'])->pluck('id')->toArray() : [];
+            $base_query = $base_query->whereIn('id', $procurements_id);
+        }
 
-        return $this->model->with('tags', 'bids')->whereIn('id', $procurements_id);
+        return $base_query->with('tags', 'bids')->where('last_date_of_submission', '>=', Carbon::now());
     }
 }
