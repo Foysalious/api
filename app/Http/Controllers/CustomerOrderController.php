@@ -5,9 +5,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Job;
 use App\Models\PartnerOrder;
+use App\Transformers\Customer\CustomerDueOrdersTransformer;
+use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
 use Sheba\Logs\Customer\JobLogs;
 use Throwable;
 
@@ -216,4 +220,16 @@ class CustomerOrderController extends Controller
             'message' => (new JobLogs($job))->getOrderMessage(),
         ));
     }
+
+    public function dueOrders($customer, Request $request){
+        $orders = $request->customer->partnerOrders();
+        $due_orders = $orders->where('closed_at', '<>', null)->where('closed_and_paid_at', null)->orderBy('closed_at', 'ASC')->limit(1)->get();
+        if ($due_orders->isEmpty()) return api_response($request, null, 404, ['message' => 'Due Order Not found.']);
+        $fractal = new Manager();
+        $fractal->setSerializer(new CustomSerializer());
+        $resource = new Collection($due_orders, new CustomerDueOrdersTransformer());
+        $dueOrders = $fractal->createData($resource)->toArray()['data'];
+        return api_response($request, $dueOrders, 200, ['due_orders' => $dueOrders]);
+    }
+
 }
