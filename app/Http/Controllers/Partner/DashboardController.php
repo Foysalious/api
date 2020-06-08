@@ -28,8 +28,8 @@ use Sheba\Location\LocationSetter;
 use Sheba\Manager\JobList;
 use Sheba\ModificationFields;
 use Sheba\Partner\HomePageSetting\CacheManager;
-use Sheba\Partner\HomePageSettingV3\CacheManagerV3;
 use Sheba\Partner\HomePageSetting\Setting;
+use Sheba\Partner\HomePageSettingV3\DefaultSettingV3;
 use Sheba\Partner\HomePageSettingV3\SettingV3;
 use Sheba\Partner\LeaveStatus;
 use Sheba\Pos\Order\OrderPaymentStatuses;
@@ -273,7 +273,24 @@ class DashboardController extends Controller
     {
         try {
             $this->setModifier($request->partner);
-            $setting = $setting->setPartner($request->partner)->setVersion($request->version)->get();
+            $setting = $setting->setPartner($request->partner)->get();
+            return api_response($request, null, 200, ['data' => $setting]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @param SettingV3 $setting
+     * @return JsonResponse
+     */
+    public function getHomeSettingV3(Request $request, SettingV3 $setting)
+    {
+        try {
+            $this->setModifier($request->partner);
+            $setting = $setting->setPartner($request->partner)->get();
             return api_response($request, null, 200, ['data' => $setting]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
@@ -298,6 +315,58 @@ class DashboardController extends Controller
                 'message' => 'Dashboard Setting updated successfully',
                 'data'    => json_decode($home_page_setting)
             ]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @param PartnerRepositoryInterface $partner_repo
+     * @return JsonResponse
+     */
+    public function updateHomeSettingV3(Request $request, PartnerRepositoryInterface $partner_repo)
+    {
+        try {
+            $home_page_setting         = $request->home_page_setting;
+            $data['home_page_setting_new'] = $home_page_setting;
+            $partner_repo->update($request->partner, $data);
+            return api_response($request, null, 200, [
+                'message' => 'Dashboard Setting updated successfully',
+                'data'    => json_decode($home_page_setting)
+            ]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function isUpdatedHomeSetting(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'last_updated' => 'sometimes|date|date_format:Y-m-d',
+            ]);
+
+            $is_updated = 1;
+            $last_updated = DefaultSettingV3::getLastUpdatedAt();
+            if($request->has('last_updated'))
+            $is_updated = Carbon::parse($last_updated) > Carbon::parse($request->last_updated) ? 1 : 0;
+            $data = [
+                'is_updated' => $is_updated,
+                'last_updated' => $last_updated
+            ];
+
+            return api_response($request, null, 200, ['data' => $data]);
+
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
