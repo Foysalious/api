@@ -9,7 +9,7 @@ return [
         1,
         2,
         3,
-        8
+        4
     ],
     'smanager_logo'                               => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner_assets/assets/images/logo/smanager-44-44-px.png',
     'AFFILIATE_VIDEO_LINK'                        => '',

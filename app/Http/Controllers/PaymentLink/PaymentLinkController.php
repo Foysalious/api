@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
+use Exception;
 use Sheba\EMI\Calculations;
 use Sheba\ModificationFields;
 use Sheba\PaymentLink\Creator;

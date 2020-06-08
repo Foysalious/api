@@ -19,8 +19,8 @@ class PartnerRoute
             (new IDNonAuthRoute())->set($api);
             (new IDAuthRoute())->set($api);
             (new PosRoute())->set($api);
-            (new EmiRoute())->set($api);
             (new ReferralRoute())->globals($api);
+            (new EmiRoute())->set($api);
         });
         $api->group(['prefix'=>'bank', 'middleware'=>'jwtGlobalAuth'],function($api){
             $api->post('/password/reset','Auth\PasswordController@resetPasswordForBank');
