@@ -1,6 +1,6 @@
-<?php namespace Sheba\Partner\HomePageSetting;
+<?php namespace Sheba\Partner\HomePageSettingV3;
 
-class DefaultSettingNew
+class DefaultSettingV3
 {
     public static function get()
     {
@@ -39,7 +39,7 @@ class DefaultSettingNew
         $loan = [
             "key" => "loan",
             "name_en" => "Loan",
-            "name_bn" => "সহজ লোন",
+            "name_bn" => "ডিজিটাল লোন",
             "is_on_homepage" => 1
         ];
 
@@ -113,5 +113,9 @@ class DefaultSettingNew
         ];
 
         return [$pos, $pos_due, $payment_link, $online_sheba, $extra_income, $loan, $earnings, $pos_history, $customer_list, $marketing, $report, $stock, $e_shop, $expense, $gift_shop, $emi];
+    }
+    public static function getLastUpdatedAt()
+    {
+        return '2020-06-01';
     }
 }

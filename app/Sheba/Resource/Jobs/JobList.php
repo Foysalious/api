@@ -88,7 +88,7 @@ class JobList
         $jobs->load(['partnerOrder' => function ($q) {
             $q->with(['order' => function ($q) {
                 $q->select('id', 'sales_channel', 'delivery_address_id', 'delivery_mobile')->with(['deliveryAddress' => function ($q) {
-                    $q->select('id', 'name', 'address', 'location_id')->with(['location' => function ($q) {
+                    $q->select('id', 'name', 'address', 'mobile', 'location_id')->with(['location' => function ($q) {
                         $q->select('id', 'name');
                     }]);
                 }]);
@@ -116,7 +116,7 @@ class JobList
             $formatted_job->put('category_id', $job->category_id);
             $formatted_job->put('delivery_address', $job->partnerOrder->order->deliveryAddress->address);
             $formatted_job->put('location', $job->partnerOrder->order->deliveryAddress->location->name);
-            $formatted_job->put('delivery_mobile', $job->partnerOrder->order->delivery_mobile);
+            $formatted_job->put('delivery_mobile', $job->partnerOrder->order->deliveryAddress->mobile);
             $formatted_job->put('start_time', Carbon::parse($job->preferred_time_start)->format('h:i A'));
             $formatted_job->put('services', $this->jobInfo->formatServices($job->jobServices));
             $formatted_job->put('order_status', $this->statusTagCalculator->getOrderStatusMessage($job));
