@@ -19,7 +19,7 @@ class PaymentStrategy
 
     public static function getDefaultOnlineMethod()
     {
-        return self::PORT_WALLET;
+        return self::SSL;
     }
 
     public static function getDetails($method, $version_code, $platform_name)

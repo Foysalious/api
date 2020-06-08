@@ -27,8 +27,7 @@ class SslController extends Controller
         return redirect($redirect_url);
     }
 
-    public function validateTopUp(Request $request, SslClient $ssl)
-    {
+    public function validateTopUp(Request $request, SslClient $ssl) {
         try {
             $this->validate($request, [
                 'vr_guid' => 'required',
@@ -45,8 +44,7 @@ class SslController extends Controller
         }
     }
 
-    public function checkBalance(Request $request, SslClient $ssl)
-    {
+    public function checkBalance(Request $request, SslClient $ssl) {
         try {
             $response = $ssl->getBalance();
             return api_response($request, $response, 200, ['data' => $response]);
