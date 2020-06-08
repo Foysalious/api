@@ -24,26 +24,40 @@ class SitemapDataStore implements DataStoreObject
 
     public function generateMasterCategoryTree()
     {
-        $master_categories = Category::select('id', 'name')->parent()->get();
+        $master_categories = Category::select('id', 'name', 'parent_id')->parents()->has('subCat')->get();
 
         foreach ($master_categories as $master_category) {
-            $master_category['slug'] = $master_category->getSlug();
-            $master_category['secondary_categories'] = $master_category->subCat()->select('id', 'name', 'parent_id')->get();
+            $is_car_rental = $master_category->isRentMaster();
+            $car_rental_slug = config('sheba.car_rental.slug');
 
+            $master_category['slug'] = $is_car_rental ? $car_rental_slug : $master_category->getSlug();
+            $master_category['secondary_categories'] = $master_category->subCat()->select('id', 'name', 'parent_id')->has('publishedServices')->get();
             foreach ( $master_category['secondary_categories'] as $secondary_category) {
-                $secondary_category['slug'] = $secondary_category->getSlug();
-                $secondary_category['services'] = $secondary_category->publishedServices()->select('id', 'name', 'parent_id')->get();
+                $secondary_category['slug'] = $is_car_rental ? $car_rental_slug : $secondary_category->getSlug();
+                $secondary_category['services'] = $secondary_category->publishedServices()->select('id', 'name')->get();
 
                 foreach ( $secondary_category['services'] as $service) {
-                    $service['slug'] = $service->getSlug();
+                    $service['slug'] = $is_car_rental ? $car_rental_slug : $service->getSlug();
                 }
 
-                $secondary_category['services'] = $secondary_category['services']->toArray();
+                $secondary_category['services'] = $secondary_category['services']->filter(function ($service, $key) {
+                    return  $service['slug'] != null;
+                });
+
+                $secondary_category['services'] = array_values($secondary_category['services']->toArray());
             }
 
-            $master_category['secondary_categories'] =  $master_category['secondary_categories']->toArray();
+            $master_category['secondary_categories'] = $master_category['secondary_categories']->filter(function ($cat, $key) {
+                return  $cat['slug'] != null && !empty($cat['services']) ;
+            });
+
+            $master_category['secondary_categories'] =  array_values($master_category['secondary_categories']->toArray());
+
         }
 
-        return $master_categories->toArray();
+        $master_categories = $master_categories->filter(function ($cat, $key) {
+            return  $cat['slug'] != null && !empty($cat['secondary_categories']);
+        });
+        return array_values($master_categories->toArray());
     }
 }
