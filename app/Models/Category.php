@@ -216,8 +216,9 @@ class Category extends Model
 
     public function isRentMaster()
     {
-        return in_array($this->id, array_map('intval', explode(',', env('RENT_A_CAR_CATEGORY_ID')))) ? 1 : 0;
+        return $this->id == config('sheba.car_rental.master_category_id');
     }
+
 
     public function scopeLocationWise($query_, $hyper_locations)
     {
