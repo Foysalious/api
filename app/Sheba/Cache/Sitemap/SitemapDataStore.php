@@ -28,11 +28,11 @@ class SitemapDataStore implements DataStoreObject
 
         foreach ($master_categories as $master_category) {
             $master_category['slug'] = $master_category->getSlug();
-            $master_category['secondary_categories'] = $master_category->subCat()->select('id', 'name')->get();
+            $master_category['secondary_categories'] = $master_category->subCat()->select('id', 'name', 'parent_id')->get();
 
             foreach ( $master_category['secondary_categories'] as $secondary_category) {
                 $secondary_category['slug'] = $secondary_category->getSlug();
-                $secondary_category['services'] = $secondary_category->publishedServices()->select('id', 'name')->get();
+                $secondary_category['services'] = $secondary_category->publishedServices()->select('id', 'name', 'parent_id')->get();
 
                 foreach ( $secondary_category['services'] as $service) {
                     $service['slug'] = $service->getSlug();
