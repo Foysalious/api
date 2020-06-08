@@ -7,6 +7,10 @@ use App\Models\Procurement;
 
 class ProcurementRepository extends BaseRepository implements ProcurementRepositoryInterface
 {
+    /**
+     * ProcurementRepository constructor.
+     * @param Procurement $procurement
+     */
     public function __construct(Procurement $procurement)
     {
         parent::__construct();
@@ -25,7 +29,8 @@ class ProcurementRepository extends BaseRepository implements ProcurementReposit
 
     public function getProcurementFilterByLastDateOfSubmission()
     {
-        return $this->model->with('tags', 'bids')
+        return $this->model
+            ->with('tags', 'bids')
             ->where('last_date_of_submission', '>=', Carbon::now());
     }
 
@@ -54,5 +59,20 @@ class ProcurementRepository extends BaseRepository implements ProcurementReposit
     public function filterWithEstimatedPrice($min_price, $max_price)
     {
         return $this->model->whereBetween('estimated_price', [$min_price, $max_price]);
+    }
+
+    public function getProcurementFilterByLastDateOfSubmissionWithSearch($query)
+    {
+        $today = Carbon::today()->endOfDay()->timestamp;
+        $procurements = $this->model->search($query, [
+            'filters' => "last_date_of_submission_timestamp >= $today"
+        ]);
+
+        if (!empty($procurements['hits'])) {
+            $procurements_id = collect($procurements['hits'])->pluck('id')->toArray();
+        } else
+            $procurements_id = [];
+
+        return $this->model->with('tags', 'bids')->whereIn('id', $procurements_id);
     }
 }
