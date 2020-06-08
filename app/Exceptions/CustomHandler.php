@@ -1,10 +1,12 @@
 <?php namespace App\Exceptions;
 
+use Dingo\Api\Http\Request;
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Validation\ValidationException;
 use Sheba\Exceptions\HandlerFactory;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Dingo\Api\Exception\Handler as DingoHandler;
 
@@ -28,7 +30,7 @@ class CustomHandler extends DingoHandler
      *
      * This is a great spot to send exceptions to Sentry, Bugsnag, etc.
      *
-     * @param  \Exception $e
+     * @param Exception $e
      * @return void
      */
     public function report(Exception $e)
@@ -42,9 +44,9 @@ class CustomHandler extends DingoHandler
     /**
      * Render an exception into an HTTP response.
      *
-     * @param \Dingo\Api\Http\Request $request
-     * @param \Exception $e
-     * @return \Illuminate\Http\Response|\Symfony\Component\HttpFoundation\Response
+     * @param Request $request
+     * @param Exception $e
+     * @return \Illuminate\Http\Response|Response
      * @throws Exception
      */
     public function render($request, Exception $e)
@@ -55,5 +57,4 @@ class CustomHandler extends DingoHandler
 
         return parent::render($request, $e);
     }
-
 }
