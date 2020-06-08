@@ -503,6 +503,6 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
 
     public function getCustomerPayable()
     {
-        return $this->dueWithLogistic;
+        return (double)$this->dueWithLogistic;
     }
 }
