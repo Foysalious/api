@@ -12,6 +12,7 @@ use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ModificationFields;
 use Sheba\Pos\Repositories\PartnerPosCustomerRepository;
 use Sheba\Reports\PdfHandler;
+use Sheba\Usage\Usage;
 
 class DueTrackerController extends Controller
 {
@@ -97,6 +98,8 @@ class DueTrackerController extends Controller
             ]);
             $request->merge(['customer_id' => $customer_id]);
             $response = $dueTrackerRepository->setPartner($request->partner)->store($request->partner, $request);
+
+            (new Usage())->setUser($request->partner)->setType(Usage::Partner()::DUE_TRACKER_TRANSACTION)->create($request->manager_resource);
             return api_response($request, $response, 200, ['data' => $response]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
