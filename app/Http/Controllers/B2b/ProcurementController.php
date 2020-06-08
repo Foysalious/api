@@ -227,25 +227,25 @@ class ProcurementController extends Controller
      */
     public function tenders(Request $request)
     {
-        $procurements = $this->procurementRepository->getProcurementFilterByLastDateOfSubmission();
-        // list($offset, $limit) = calculatePagination($request);
-        // $procurements = $procurements->skip($offset)->limit($limit);
+        if ($request->has('q'))
+            $procurements = $this->procurementRepository->getProcurementFilterByLastDateOfSubmissionWithSearch($request->q);
+        else {
+            $procurements = $this->procurementRepository->getProcurementFilterByLastDateOfSubmission();
+            // list($offset, $limit) = calculatePagination($request);
+            // $procurements = $procurements->skip($offset)->limit($limit);
+            $min_price = $request->has('min_price') ? $request->min_price : null;
+            $max_price = $request->has('max_price') ? $request->max_price : null;
+            $start_date = $request->has('start_date') ? $request->start_date : null;
+            $end_date = $request->has('end_date') ? $request->end_date : null;
 
-        if ($request->has('tag')) $procurements = $this->procurementRepository->filterWithTag($request->tag);
-        if ($request->has('category') && $request->category != 'all') $procurements = $this->procurementRepository->filterWithCategory($request->category);
-        if ($request->has('shared_to')) $procurements = $this->procurementRepository->filterWithSharedTo($request->shared_to);
+            if ($request->has('tag')) $procurements = $this->procurementRepository->filterWithTag($request->tag);
+            if ($request->has('category') && $request->category != 'all') $procurements = $this->procurementRepository->filterWithCategory($request->category);
+            if ($request->has('shared_to')) $procurements = $this->procurementRepository->filterWithSharedTo($request->shared_to);
+            if ($min_price && $max_price) $procurements = $this->procurementRepository->filterWithEstimatedPrice($min_price, $max_price);
+            if ($start_date && $end_date) $procurements = $this->procurementRepository->filterWithEndDate($start_date, $end_date);
+        }
 
-        $min_price = $request->has('min_price') ? $request->min_price : null;
-        $max_price = $request->has('max_price') ? $request->max_price : null;
-        if ($min_price && $max_price) $procurements = $this->procurementRepository->filterWithEstimatedPrice($min_price, $max_price);
-
-        $start_date = $request->has('start_date') ? $request->start_date : null;
-        $end_date = $request->has('end_date') ? $request->end_date : null;
-        if ($start_date && $end_date) $procurements = $this->procurementRepository->filterWithEndDate($start_date, $end_date);
-
-        $procurements = $procurements->orderBy('id', 'desc');
-        $procurements = $procurements->get();
-
+        $procurements = $procurements->orderBy('id', 'desc')->get();
         $procurements = $procurements->filter(function ($procurement) {
             $number_of_participants = $procurement->number_of_participants;
             $number_of_bids = $procurement->bids()->count();
