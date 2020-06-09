@@ -188,4 +188,17 @@ class ResourceJobController extends Controller
             throw new \Exception('আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন', 500);
         }
     }
+
+    public function getAllHistoryJobs(Request $request, JobList $job_list)
+    {
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+        $jobs = $job_list->setResource($resource);
+        if ($request->has('limit')) $jobs = $jobs->setOffset($request->offset)->setLimit($request->limit);
+        if ($request->has('year')) $jobs = $jobs->setYear($request->year);
+        if ($request->has('month')) $jobs = $jobs->setMonth($request->month);
+        $jobs = $jobs->getHistoryJobs();
+        return api_response($request, $jobs, 200, ['jobs' => ['years' => $jobs]]);
+    }
 }
