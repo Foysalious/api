@@ -92,8 +92,8 @@ class ServiceTransformer extends TransformerAbstract
                 'name' => $category->name,
                 'slug' => $category->getSlug(),
                 'cross_sale' => $cross_sale,
-                'delivery_discount' => isset($delivery_discount) ? $delivery_discount : 'N/A',
-                'delivery_charge' => isset($delivery_charge) ? $delivery_charge : 'N/A',
+                'delivery_discount' => isset($delivery_discount) ? $delivery_discount : null,
+                'delivery_charge' => isset($delivery_charge) ? $delivery_charge : null,
                 'is_auto_sp_enabled' => $category->is_auto_sp_enabled,
                 'min_order_amount' => (double) $category->min_order_amount
             ],
