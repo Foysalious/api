@@ -8,6 +8,7 @@ use Illuminate\Support\Collection;
 use Sheba\BanglaConverter;
 use Sheba\Dal\Job\JobRepositoryInterface;
 use Sheba\Jobs\JobStatuses;
+use DB;
 
 class JobList
 {
@@ -21,6 +22,14 @@ class JobList
     private $firstJobFromList;
     private $actionCalculator;
     private $statusTagCalculator;
+    /** @var int $limit */
+    private $limit;
+    /** @var int $offset */
+    private $offset;
+    /** @var int $year */
+    private $year;
+    /** @var int $month */
+    private $month;
 
     public function __construct(JobRepositoryInterface $job_repository, RearrangeJobList $rearrange, JobInfo $jobInfo, ActionCalculator $actionCalculator, StatusTagCalculator $statusTagCalculator)
     {
@@ -29,11 +38,54 @@ class JobList
         $this->jobInfo = $jobInfo;
         $this->actionCalculator = $actionCalculator;
         $this->statusTagCalculator = $statusTagCalculator;
+        $this->limit = 10;
+        $this->offset = 0;
+        $this->year = Carbon::now()->format('Y');
     }
 
     public function setResource(Resource $resource)
     {
         $this->resource = $resource;
+        return $this;
+    }
+
+    /**
+     * @param $limit
+     * @return $this
+     */
+    public function setLimit($limit)
+    {
+        $this->limit = $limit;
+        return $this;
+    }
+
+    /**
+     * @param $offset
+     * @return $this
+     */
+    public function setOffset($offset)
+    {
+        $this->offset = $offset;
+        return $this;
+    }
+
+    /**
+     * @param $year
+     * @return $this
+     */
+    public function setYear($year)
+    {
+        $this->year = $year;
+        return $this;
+    }
+
+    /**
+     * @param $month
+     * @return $this
+     */
+    public function setMonth($month)
+    {
+        $this->month = $month;
         return $this;
     }
 
@@ -81,6 +133,19 @@ class JobList
         $jobs = $this->loadNecessaryRelations($jobs);
         $jobs = $this->rearrange->rearrange($jobs);
         return $this->formatJobs($jobs);
+    }
+
+    public function getHistoryJobs()
+    {
+        $query = $this->jobRepository->getHistoryJobs($this->resource->id)->select('*', DB::raw('YEAR(delivered_date) as year'), DB::raw('MONTH(delivered_date) as month'));
+        $query = $query->where('delivered_date', '>=', Carbon::now()->subMonth(12));
+        if ($this->month) $query = $query->whereYear('delivered_date', '=', $this->year)->whereMonth('delivered_date', '=', $this->month);
+        $query = $query->orderBy('delivered_date', 'DESC')->skip($this->offset)->take($this->limit)->get();
+        $jobs = new Collection($query);
+        $grouped = $jobs->groupBy('year')->transform(function($item, $value) {
+            return $item->groupBy('month');
+        });
+        return $this->formatHistoryJobs($grouped);
     }
 
     private function loadNecessaryRelations($jobs)
@@ -143,6 +208,24 @@ class JobList
         $jobs_summary['tomorrows_jobs'] = $this->jobRepository->getOngoingJobsForResource($this->resource->id)->where('schedule_date', Carbon::tomorrow()->toDateString())->count();
         $jobs_summary['rest_jobs'] = $this->jobRepository->getOngoingJobsForResource($this->resource->id)->where('schedule_date', '>', Carbon::tomorrow()->toDateString())->count();
         return $jobs_summary;
+    }
+
+    public function formatHistoryJobs(Collection $jobs_grouped_by_years)
+    {
+        $formatted_history_jobs = collect();
+        foreach ($jobs_grouped_by_years as $index => $jobs_of_a_year_grouped_by_months) {
+            $year = collect();
+            $year->put('value', $index);
+            $year->put('months', collect());
+            foreach ($jobs_of_a_year_grouped_by_months as $key => $jobs_of_a_month) {
+                $month = collect();
+                $month->put('value', $key);
+                $month->put('jobs', $this->formatJobs($jobs_of_a_month));
+                $year['months']->push($month);
+            }
+            $formatted_history_jobs->push($year);
+        }
+        return $formatted_history_jobs;
     }
 
 
