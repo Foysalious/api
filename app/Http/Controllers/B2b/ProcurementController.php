@@ -28,9 +28,11 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use Sheba\Business\Procurement\Creator;
+use Sheba\Business\Procurement\ProcurementFilterRequest;
 use Sheba\Business\Procurement\WorkOrderDataGenerator;
 use Sheba\Dal\ProcurementInvitation\Model as ProcurementInvitation;
 use Sheba\Dal\ProcurementInvitation\ProcurementInvitationRepositoryInterface;
+use Sheba\Helpers\TimeFrame;
 use Sheba\Logs\ErrorLog;
 use Sheba\ModificationFields;
 use Sheba\Payment\Adapters\Payable\ProcurementAdapter;
@@ -223,27 +225,30 @@ class ProcurementController extends Controller
 
     /**
      * @param Request $request
+     * @param ProcurementFilterRequest $procurement_filter_request
+     * @param TimeFrame $time_frame
      * @return JsonResponse
      */
-    public function tenders(Request $request)
+    public function tenders(Request $request, ProcurementFilterRequest $procurement_filter_request, TimeFrame $time_frame)
     {
-        // $procurements = $this->procurementRepository->getProcurementFilterByLastDateOfSubmission();
-        $procurements = $this->procurementRepository->getProcurementFilterByLastDateOfSubmissionWithSearch($request->q);
+        if ($request->has('min_price') && $request->has('max_price')) $procurement_filter_request->setMinPrice($request->min_price)->setMaxPrice($request->max_price);
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $time_frame->set(Carbon::parse($request->start_date), Carbon::parse($request->end_date));
+            $start_date = $time_frame->getArray()[0];
+            $end_date = $time_frame->getArray()[1];
+            $procurement_filter_request->setStartDate($start_date)->setEndDate($end_date);
+        }
+        if ($request->has('tag')) $procurement_filter_request->setTagsId(json_decode($request->tag));
+        if ($request->has('category') && $request->category != 'all') $procurement_filter_request->setCategoriesId(json_decode($request->category));
+        if ($request->has('shared_to')) $procurement_filter_request->setSharedTo($request->shared_to);
+        if ($request->has('q')) $procurement_filter_request->setSearchQuery($request->q);
+
+        $procurements = $this->procurementRepository->getProcurementFilterBy($procurement_filter_request);
 
         // list($offset, $limit) = calculatePagination($request);
         // $procurements = $procurements->skip($offset)->limit($limit);
-        $min_price = $request->has('min_price') ? $request->min_price : null;
-        $max_price = $request->has('max_price') ? $request->max_price : null;
-        $start_date = $request->has('start_date') ? $request->start_date : null;
-        $end_date = $request->has('end_date') ? $request->end_date : null;
 
-        if ($request->has('tag')) $procurements = $this->procurementRepository->filterWithTag($request->tag);
-        if ($request->has('category') && $request->category != 'all') $procurements = $this->procurementRepository->filterWithCategory($request->category);
-        if ($request->has('shared_to')) $procurements = $this->procurementRepository->filterWithSharedTo($request->shared_to);
-        if ($min_price && $max_price) $procurements = $this->procurementRepository->filterWithEstimatedPrice($min_price, $max_price);
-        if ($start_date && $end_date) $procurements = $this->procurementRepository->filterWithEndDate($start_date, $end_date);
-
-        $procurements = $procurements->orderBy('id', 'desc')->get();
+        // $procurements = $procurements->orderBy('category_id', 'desc')->get();
         $procurements = $procurements->filter(function ($procurement) {
             $number_of_participants = $procurement->number_of_participants;
             $number_of_bids = $procurement->bids()->count();
