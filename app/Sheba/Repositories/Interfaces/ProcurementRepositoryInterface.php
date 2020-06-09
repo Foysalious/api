@@ -1,5 +1,7 @@
 <?php namespace Sheba\Repositories\Interfaces;
 
+use Sheba\Business\Procurement\ProcurementFilterRequest;
+
 interface ProcurementRepositoryInterface extends BaseRepositoryInterface
 {
     public function ofBusiness($business_id);
@@ -18,5 +20,5 @@ interface ProcurementRepositoryInterface extends BaseRepositoryInterface
 
     public function filterWithEstimatedPrice($min_price, $max_price);
 
-    public function getProcurementFilterByLastDateOfSubmissionWithSearch($query);
+    public function getProcurementFilterBy(ProcurementFilterRequest $procurement_filter_request);
 }
