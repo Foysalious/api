@@ -2,6 +2,7 @@
 
 use App\Exceptions\NotFoundException;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -252,7 +253,7 @@ class Service extends Model
                 ]);
             }
             return json_encode($variables);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw new NotFoundException('Option does not exists', 404);
         }
     }
@@ -341,5 +342,10 @@ class Service extends Model
     public function getContentsAttribute()
     {
         return $this->structured_contents ? json_decode($this->structured_contents) : null;
+    }
+
+    public function isMarketPlacePublished()
+    {
+        return $this->publication_status;
     }
 }

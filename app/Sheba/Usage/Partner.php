@@ -12,12 +12,10 @@ class Partner
     const PAYMENT_LINK                = 'payment_link';
     const DUE_TRACKER_TRANSACTION     = 'due_tracker_transaction';
 
+    const TRANSACTION_COMPLETE        = 'transaction_complete';
 
 
-    //const TRANSACTION_COMPLETE        = 'transaction_complete';
+    const CREATE_CUSTOMER             = 'customer_create';
 
-
-   // const CREATE_CUSTOMER             = 'customer_create';
-
-   // const PAYMENT_COLLECT             = 'payment_collect';
+    const PAYMENT_COLLECT             = 'payment_collect';
 }

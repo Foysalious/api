@@ -209,6 +209,11 @@ class Category extends Model
         return in_array($this->id, array_map('intval', explode(',', env('RENT_CAR_IDS')))) ? 1 : 0;
     }
 
+    public function isRentMaster()
+    {
+        return $this->id == config('sheba.car_rental.master_category_id');
+    }
+
 
     public function scopeLocationWise($query_, $hyper_locations)
     {
@@ -331,5 +336,10 @@ class Category extends Model
     public function getContentsAttribute()
     {
         return $this->structured_contents ? json_decode($this->structured_contents) : null;
+    }
+
+    public function isMarketPlacePublished()
+    {
+        return $this->publication_status;
     }
 }

@@ -93,7 +93,8 @@ return [
         'Operation' => 'Operation',
         'Finance'   => 'Finance',
         'Handyman'  => 'Handyman',
-        'Salesman'  => 'Salesman'
+        'Salesman'  => 'Salesman',
+        'Owner'     => 'Owner'
     ],
     'JOB_STATUSES'                                => [
         'Pending'       => 'Pending',
@@ -820,11 +821,11 @@ return [
     ],
     'WITHDRAW_LIMIT'                              => [
         'bkash' => [
-            'min' => 500,
+            'min' => 100,
             'max' => 15000
         ],
         'bank'  => [
-            'min' => 20000,
+            'min' => 5000,
             'max' => 250000
         ]
     ],
