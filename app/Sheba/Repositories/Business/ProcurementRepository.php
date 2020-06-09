@@ -62,16 +62,20 @@ class ProcurementRepository extends BaseRepository implements ProcurementReposit
         return $this->model->whereBetween('estimated_price', [$min_price, $max_price]);
     }
 
+    /**
+     * @param ProcurementFilterRequest $procurement_filter_request
+     * @return mixed
+     */
     public function getProcurementFilterBy(ProcurementFilterRequest $procurement_filter_request)
     {
         $categories = $procurement_filter_request->getCategoriesId();
-        $shared_to = $procurement_filter_request->getSharedTo();
-        $min_price = $procurement_filter_request->getMinPrice();
-        $max_price = $procurement_filter_request->getMaxPrice();
+        $shared_to  = $procurement_filter_request->getSharedTo();
+        $min_price  = $procurement_filter_request->getMinPrice();
+        $max_price  = $procurement_filter_request->getMaxPrice();
         $start_date = $procurement_filter_request->getStartDate();
-        $end_date = $procurement_filter_request->getEndDate();
-        $tags = $procurement_filter_request->getTagsId();
-        $search = $procurement_filter_request->getSearchQuery();
+        $end_date   = $procurement_filter_request->getEndDate();
+        $tags       = $procurement_filter_request->getTagsId();
+        $search     = $procurement_filter_request->getSearchQuery();
 
         $base_query = $this->model->with('tags', 'bids')->where('last_date_of_submission', '>=', Carbon::now())
             ->where(function ($query) use ($categories, $shared_to, $min_price, $max_price, $start_date, $end_date, $tags) {
@@ -88,9 +92,11 @@ class ProcurementRepository extends BaseRepository implements ProcurementReposit
                     return $date_query->orWhereBetween('procurement_end_date', [$start_date, $end_date]);
                 })
                 ->when($tags, function ($tag_query) use ($tags) {
-                    return $tag_query->whereDoesntHave('tags')->orWhereHas('tags', function ($query) use ($tags) {
-                        $query->whereIn('id', $tags);
-                    });
+                    return $tag_query
+                        /*->whereDoesntHave('tags')*/
+                        ->orWhereHas('tags', function ($query) use ($tags) {
+                            $query->whereIn('id', $tags);
+                        });
                 });
             });
 
@@ -101,6 +107,8 @@ class ProcurementRepository extends BaseRepository implements ProcurementReposit
             $base_query = $base_query->whereIn('id', $procurements_id);
         }
 
-        return $base_query->orderBy('category_id', 'desc')->orderBy('id', 'desc')->get();
+        if ($categories) $base_query->orderBy('category_id', 'desc');
+
+        return $base_query->orderBy('id', 'desc')->get();
     }
 }
