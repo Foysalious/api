@@ -23,7 +23,8 @@ class SmsHandler {
      */
     public function handle() {
         /** @var Partner $partner */
-        $partner = $this->order->partner->reload();
+        $partner = $this->order->partner;
+        $partner->reload();
         if (empty($this->order->customer)) return;
         $service_break_down = [];
         $this->order->items->each(function ($item) use (&$service_break_down) {
