@@ -30,6 +30,8 @@ class JobList
     private $year;
     /** @var int $month */
     private $month;
+    private $orderId;
+    private $query;
 
     public function __construct(JobRepositoryInterface $job_repository, RearrangeJobList $rearrange, JobInfo $jobInfo, ActionCalculator $actionCalculator, StatusTagCalculator $statusTagCalculator)
     {
@@ -89,6 +91,19 @@ class JobList
         return $this;
     }
 
+    public function setOrderId($orderId)
+    {
+        $this->orderId = $orderId;
+        return $this;
+    }
+
+
+    public function setQuery($query)
+    {
+        $this->query = $query;
+        return $this;
+    }
+
     private function setFirstJobFromList(Job $firstJobFromList)
     {
         $this->firstJobFromList = $firstJobFromList;
@@ -137,12 +152,26 @@ class JobList
 
     public function getHistoryJobs()
     {
-        $query = $this->jobRepository->getHistoryJobs($this->resource->id);
+        $query = $this->jobRepository->getHistoryJobsForResource($this->resource->id);
         $query = $this->historyJobsFilterQuery($query);
         $jobs = $query->orderBy('closed_at', 'DESC')->skip($this->offset)->take($this->limit)->get();
         $jobs = $this->loadNecessaryRelations($jobs);
         $jobs = $this->groupJobsByYearAndMonth($jobs);
         return $this->formatHistoryJobs($jobs);
+    }
+
+    public function getJobsFilteredByOrderId()
+    {
+        $jobs = $this->jobRepository->getJobsForResourceFilteredByOrderId($this->resource->id, $this->orderId)->get();
+        $jobs = $this->loadNecessaryRelations($jobs);
+        return $this->formatJobs($jobs);
+    }
+
+    public function getJobsFilteredByServiceOrCustomerName()
+    {
+        $jobs = $this->jobRepository->getJobsForResourceFilteredByServiceOrCustomerName($this->resource->id, $this->query)->get();
+        $jobs = $this->loadNecessaryRelations($jobs);
+        return $this->formatJobs($jobs);
     }
 
     private function loadNecessaryRelations($jobs)
