@@ -15,6 +15,7 @@ class BusinessRoute
             $api->get('filter-options', 'B2b\ProcurementController@filterOptions');
             $api->group(['prefix' => '{tender}'], function ($api) {
                 $api->get('/', 'B2b\ProcurementController@tenderShow');
+                $api->get('proposal', 'B2b\ProcurementController@tenderProposalEdit');
                 $api->post('proposal', 'B2b\ProcurementController@tenderProposalStore');
             });
         });

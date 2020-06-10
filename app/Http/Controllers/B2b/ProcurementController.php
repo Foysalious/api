@@ -859,4 +859,49 @@ class ProcurementController extends Controller
 
         return $field_results;
     }
+
+    /**
+     * @param $tender
+     * @param Request $request
+     * @param ProcurementRepository $procurement_repository
+     * @return JsonResponse
+     */
+    public function tenderProposalEdit($tender, Request $request, ProcurementRepository $procurement_repository)
+    {
+        $procurement = $this->procurementRepository->find($tender);
+        if (!$procurement) return api_response($request, null, 404, ['message' => 'Tender not Found']);
+
+        $price_quotation_fields = $this->generateItemData($procurement, 'price_quotation');
+        $technical_evaluation_fields = $this->generateItemData($procurement, 'technical_evaluation');
+        $company_evaluation_fields = $this->generateItemData($procurement, 'company_evaluation');
+
+        $fractal = new Manager();
+        $fractal->setSerializer(new CustomSerializer());
+        $resource = new Item($procurement, new TenderDetailsTransformer(true));
+        $procurement = $fractal->createData($resource)->toArray()['data'];
+
+        $procurement['price_quotation']      = $price_quotation_fields;
+        $procurement['company_evaluation']   = $company_evaluation_fields;
+        $procurement['technical_evaluation'] = $technical_evaluation_fields;
+
+        return api_response($request, null, 200, ['tender' => $procurement]);
+    }
+
+    public function generateItemData($procurement, $type)
+    {
+        $type_data = $procurement->items->where('type', $type)->first();
+        return $type_data ? $type_data->fields->map(function ($field) use ($procurement) {
+            return [
+                'id' => $field->bid_item_id ? $field->bid_item_id : $field->procurement_item_id,
+                'field_id' => $field->id,
+                'title' => $field->title,
+                'input_type' => $field->input_type,
+                'short_description' => $field->short_description,
+                'long_description' => $field->long_description,
+                'unit' => $field->variables ? json_decode($field->variables)->unit ? json_decode($field->variables)->unit : 'n/a' : 'n/a',
+                'options' => $field->variables ? json_decode($field->variables)->options ? json_decode($field->variables)->options : 'n/a' : 'n/a',
+                'result' => $field->bid_item_id && $procurement->status === 'pending' ? $field->input_type === 'checkbox' ? json_decode($field->result) : $field->result : $field->result
+            ];
+        }) : null;
+    }
 }
