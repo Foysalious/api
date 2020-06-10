@@ -20,6 +20,8 @@ class StatusTagCalculator
         $now = Carbon::now()->format('H:i');
         if ($job->status == JobStatuses::SERVED && !$job->partnerOrder->isClosedAndPaidAt()) {
             return ['message' => "বিল সংগ্রহ বাকি আছে", 'tag' => 'collection'];
+        } elseif ($job->status == JobStatuses::SERVED && $job->partnerOrder->isClosedAndPaidAt()) {
+            return ['message' => "যে অর্ডার টি শেষ", 'tag' => 'served'];
         } elseif ($this->isStatusAfterOrEqualToProcess($job->status)) {
             return ['message' => "যে অর্ডার টি এখন চলছে", 'tag' => 'process'];
         } else {
@@ -44,6 +46,7 @@ class StatusTagCalculator
         $now = Carbon::now();
         $job_start_time = $this->getJobStartTime($job);
         if ($now->gt($job_start_time) && $this->actionCalculator->isStatusBeforeProcess($job->status)) return ['type' => 'late', 'value' => 'Late'];
+        if ($job->status == JobStatuses::SERVED && $job->partnerOrder->isClosedAndPaidAt()) return ['type' => 'served', 'value' => 'Served'];
         if ($this->isStatusAfterOrEqualToProcess($job->status)) return ['type' => 'process', 'value' => 'Process'];
         if ($job_start_time->gt($now) && $job_start_time->diffInHours($now) <= 24) return ['type' => 'time', 'value' => Carbon::parse($job->preferred_time_start)->format('H:i A')];
         return ['type' => 'date', 'value' => Carbon::parse($job->schedule_date)->format('j F')];
