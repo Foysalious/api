@@ -191,6 +191,10 @@ class ResourceJobController extends Controller
 
     public function getAllHistoryJobs(Request $request, JobList $job_list)
     {
+        $this->validate($request, [
+            'offset' => 'numeric|min:0', 'limit' => 'numeric|min:1',
+            'month' => 'sometimes|required|integer|between:1,12', 'year' => 'sometimes|required|integer'
+        ]);
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
         $resource = $auth_user->getResource();
