@@ -44,6 +44,7 @@ class StatusTagCalculator
         $now = Carbon::now();
         $job_start_time = $this->getJobStartTime($job);
         if ($now->gt($job_start_time) && $this->actionCalculator->isStatusBeforeProcess($job->status)) return ['type' => 'late', 'value' => 'Late'];
+        if ($this->isStatusEqualToServed($job->status)) return ['type' => 'served', 'value' => 'Served'];
         if ($this->isStatusAfterOrEqualToProcess($job->status)) return ['type' => 'process', 'value' => 'Process'];
         if ($job_start_time->gt($now) && $job_start_time->diffInHours($now) <= 24) return ['type' => 'time', 'value' => Carbon::parse($job->preferred_time_start)->format('H:i A')];
         return ['type' => 'date', 'value' => Carbon::parse($job->schedule_date)->format('j F')];
@@ -65,5 +66,14 @@ class StatusTagCalculator
     private function getJobStartTime(Job $job)
     {
         return Carbon::parse($job->schedule_date . ' ' . $job->preferred_time_start);
+    }
+
+    /**
+     * @param $status
+     * @return bool
+     */
+    private function isStatusEqualToServed($status)
+    {
+        return constants('JOB_STATUS_SEQUENCE')[$status] == constants('JOB_STATUS_SEQUENCE')[JobStatuses::SERVED];
     }
 }
