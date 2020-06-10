@@ -58,8 +58,11 @@ use Throwable;
 class ProcurementController extends Controller
 {
     use ModificationFields;
+
     /** @var ProcurementRepositoryInterface $procurementRepository */
     private $procurementRepository;
+    /** @var Resource $resource*/
+    private $resource;
 
     public function __construct(ProcurementRepositoryInterface $procurement_repository)
     {
@@ -772,7 +775,6 @@ class ProcurementController extends Controller
             return api_response($request, null, 200, ['bid' => $bid->id]);
         }
 
-
         /** @var Procurement $procurement */
         $procurement = $procurement_repository->find($tender);
         $procurement->load('items.fields');
@@ -783,13 +785,18 @@ class ProcurementController extends Controller
             return api_response($request, null, $json_response->code, ['message' => $json_response->message]);
         }
 
-        $bid = $creator->setBidder($partner)
+        $creator->setBidder($partner)
             ->setProcurement($procurement)
             ->setStatus($request->status)
             ->setProposal($request->proposal)
             ->setFieldResults($field_results)
             ->setPrice($request->price)
-            ->create();
+            ->setCreatedBy($this->resource);
+
+        if ($request->attachments && is_array($request->attachments))
+            $creator->setAttachments($request->attachments);
+
+        $bid = $creator->create();
 
         return api_response($request, null, 200, ['bid' => $bid->id]);
     }
@@ -805,9 +812,9 @@ class ProcurementController extends Controller
         /** @var Profile $profile */
         $profile = $profile->first();
         /** @var Resource $resource */
-        $resource = $profile->resource;
+        $this->resource = $profile->resource;
         /** @var Partner $partner */
-        $partner = $resource->firstPartner();
+        $partner = $this->resource->firstPartner();
 
         return $partner;
     }

@@ -2,6 +2,7 @@
 
 use App\Models\Bid;
 use App\Models\Procurement;
+use App\Sheba\Attachments\Attachments;
 use App\Sheba\Repositories\Business\BidRepository;
 use Exception;
 use Illuminate\Database\QueryException;
@@ -26,19 +27,30 @@ class Creator
     private $fieldResults;
     private $bidItemRepository;
     private $bidItemFieldRepository;
+    /** @var array $attachments */
+    private $attachments;
+    /** @var Attachments $attachmentManager */
+    private $attachmentManager;
+    private $createdBy;
 
     /**
      * Creator constructor.
      * @param BidRepository $bid_repository
      * @param BidItemRepositoryInterface $bid_item_repository
      * @param BidItemFieldRepositoryInterface $bid_item_field_repository
+     * @param Attachments $attachment_manager
      */
-    public function __construct(BidRepository $bid_repository, BidItemRepositoryInterface $bid_item_repository, BidItemFieldRepositoryInterface $bid_item_field_repository)
+    public function __construct(BidRepository $bid_repository,
+                                BidItemRepositoryInterface $bid_item_repository,
+                                BidItemFieldRepositoryInterface $bid_item_field_repository,
+                                Attachments $attachment_manager)
     {
         $this->bidRepository = $bid_repository;
         $this->bidItemRepository = $bid_item_repository;
         $this->bidItemFieldRepository = $bid_item_field_repository;
         $this->data = [];
+        $this->attachments = [];
+        $this->attachmentManager = $attachment_manager;
     }
 
     public function setProcurement(Procurement $procurement)
@@ -112,7 +124,8 @@ class Creator
                     }
                 }
                 $this->updatePrice($bid);
-                // $this->sendVendorParticipatedNotification($bid);
+                $this->createAttachments($bid);
+                $this->sendVendorParticipatedNotification($bid);
             });
         } catch (QueryException $e) {
             throw $e;
@@ -177,5 +190,30 @@ class Creator
                 'message' => $message,
             ], $bid->bidder->id, get_class($bid->bidder)));*/
         }
+    }
+
+    public function setAttachments(array $attachments)
+    {
+        $this->attachments = $attachments;
+        return $this;
+    }
+
+    /**
+     * @param Bid $bid
+     */
+    private function createAttachments(Bid $bid)
+    {
+        foreach ($this->attachments as $attachment) {
+            $this->attachmentManager->setAttachableModel($bid)
+                ->setCreatedBy($this->createdBy)
+                ->setFile($attachment)
+                ->store();
+        }
+    }
+
+    public function setCreatedBy($created_by)
+    {
+        $this->createdBy = $created_by;
+        return $this;
     }
 }
