@@ -10,6 +10,8 @@ use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Models\Profile;
 use App\Repositories\FileRepository;
+use App\Repositories\SmsHandler as SmsHandlerRepo;
+use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -388,11 +390,37 @@ class DueTrackerRepository extends BaseRepository {
             'mobile'        => $customer->profile->mobile,
             'amount'        => $request->amount,
         ];
+
         if ($request->type == 'due') {
             $data['payment_link'] = $request->payment_link;
         }
+
+        if ((double)$request->partner->wallet < (double)$this->calculateSmsCost($data)) {
+            throw new InsufficientBalance();
+        }
         return dispatch((new SendToCustomerToInformDueDepositSMS($request->partner, $data)));
     }
+
+    public function calculateSmsCost($data)
+    {
+        if ($data['type'] == 'due') {
+            $sms = (new SmsHandlerRepo('inform-due'))->setVendor('infobip')->setMobile($data['mobile'])->setMessage([
+                'customer_name' => $data['customer_name'],
+                'partner_name' => $data['partner_name'],
+                'amount' => $data['amount'],
+                'payment_link' => $data['payment_link']
+            ]);
+        } else {
+            $sms = (new SmsHandlerRepo('inform-deposit'))->setVendor('infobip')->setMobile($data['mobile'])->setMessage([
+                'customer_name' => $data['customer_name'],
+                'partner_name' => $data['partner_name'],
+                'amount' => $data['amount'],
+            ]);
+        }
+
+        return $sms->getCost();
+    }
+
 
     /**
      * @return array
