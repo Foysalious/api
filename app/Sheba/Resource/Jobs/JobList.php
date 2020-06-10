@@ -137,15 +137,12 @@ class JobList
 
     public function getHistoryJobs()
     {
-        $query = $this->jobRepository->getHistoryJobs($this->resource->id)->select('*', DB::raw('YEAR(delivered_date) as year'), DB::raw('MONTH(delivered_date) as month'));
-        $query = $query->where('delivered_date', '>=', Carbon::now()->subMonth(12));
-        if ($this->month) $query = $query->whereYear('delivered_date', '=', $this->year)->whereMonth('delivered_date', '=', $this->month);
-        $query = $query->orderBy('delivered_date', 'DESC')->skip($this->offset)->take($this->limit)->get();
-        $jobs = new Collection($query);
-        $grouped = $jobs->groupBy('year')->transform(function($item, $value) {
-            return $item->groupBy('month');
-        });
-        return $this->formatHistoryJobs($grouped);
+        $query = $this->jobRepository->getHistoryJobs($this->resource->id);
+        $query = $this->historyJobsFilterQuery($query);
+        $jobs = $query->orderBy('closed_at', 'DESC')->skip($this->offset)->take($this->limit)->get();
+        $jobs = $this->loadNecessaryRelations($jobs);
+        $jobs = $this->groupJobsByYearAndMonth($jobs);
+        return $this->formatHistoryJobs($jobs);
     }
 
     private function loadNecessaryRelations($jobs)
@@ -213,7 +210,7 @@ class JobList
         return $jobs_summary;
     }
 
-    public function formatHistoryJobs(Collection $jobs_grouped_by_years)
+    private function formatHistoryJobs(Collection $jobs_grouped_by_years)
     {
         $formatted_history_jobs = collect();
         foreach ($jobs_grouped_by_years as $index => $jobs_of_a_year_grouped_by_months) {
@@ -231,5 +228,19 @@ class JobList
         return $formatted_history_jobs;
     }
 
+    private function groupJobsByYearAndMonth($jobs)
+    {
+        $ungrouped_jobs = new Collection($jobs);
+        return $ungrouped_jobs->groupBy('year')->transform(function($item, $value) {
+            return $item->groupBy('month');
+        });
+    }
 
+    private function historyJobsFilterQuery($query)
+    {
+        $query = $query->join('partner_orders', 'partner_orders.id','=','jobs.partner_order_id')->select('jobs.*', 'partner_orders.closed_at as closed_at', DB::raw('YEAR(closed_at) as year'), DB::raw('MONTH(closed_at) as month'));
+        $query = $query->where('closed_at', '>=', Carbon::now()->subMonth(12));
+        if ($this->month) $query = $query->whereYear('closed_at', '=', $this->year)->whereMonth('closed_at', '=', $this->month);
+        return $query;
+    }
 }
