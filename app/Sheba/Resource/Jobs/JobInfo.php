@@ -78,7 +78,7 @@ class JobInfo
         $formatted_job->put('start_time', humanReadableShebaTime($job->preferred_time_start, true));
         $formatted_job->put('schedule_date', $job->schedule_date);
         $formatted_job->put('services', $this->formatServices($job->jobServices));
-        $formatted_job->put('rating', $job->customerReview ? $job->customerReview->rating : null);
+        $formatted_job->put('rating', $job->review ? $job->review->rating : null);
         $formatted_job->put('tag', $this->statusTagCalculator->calculateTag($job));
         $formatted_job->put('status', $job->status);
         $formatted_job->put('can_process', 0);
