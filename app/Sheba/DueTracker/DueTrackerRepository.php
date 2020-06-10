@@ -42,7 +42,7 @@ class DueTrackerRepository extends BaseRepository {
         if ($request->has('q') && !empty($request->q)) {
             $query = preg_replace("/\+/", "", $request->q);
             $list  = $list->filter(function ($item) use ($query) {
-                return preg_match("%$query%i", $item['customer_name']) || preg_match("/$query/", $item['customer_mobile']);
+                return preg_match("%$query%i", $item['customer_name']) || preg_match("%$query%i", $item['customer_mobile']);
             })->values();
         }
         if (!empty($order_by) && $order_by == "name") {
@@ -91,9 +91,10 @@ class DueTrackerRepository extends BaseRepository {
     /**
      * @param Partner $partner
      * @param Request $request
+     * @param bool $paginate
      * @return array
-     * @throws InvalidPartnerPosCustomer
      * @throws ExpenseTrackingServerError
+     * @throws InvalidPartnerPosCustomer
      */
     public function getDueListByProfile(Partner $partner, Request $request) {
         $partner_pos_customer = PartnerPosCustomer::byPartner($partner->id)->where('customer_id', $request->customer_id)->with(['customer'])->first();
@@ -110,7 +111,7 @@ class DueTrackerRepository extends BaseRepository {
             return $item;
         });
         list($offset, $limit) = calculatePagination($request);
-        $list               = $list->slice($offset)->take($limit);
+        $list               = $list->slice($offset)->take($limit)->values();
         $total_credit       = 0;
         $total_debit        = 0;
         $total_transactions = count($list);
@@ -121,7 +122,6 @@ class DueTrackerRepository extends BaseRepository {
                 $total_credit += $item['amount'];
             }
         }
-
         return [
             'list'       => $list,
             'stats'      => $result['data']['totals'],

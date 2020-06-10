@@ -1,4 +1,7 @@
 <?php namespace App\Http\Route\Prefix\V2\Partner\ID\Auth;
+use App\Http\Route\Prefix\V2\Partner\ReferralRoute;
+
+
 
 class IndexRoute
 {
@@ -289,6 +292,7 @@ class IndexRoute
             (new IncomeExpenseRoute())->set($api);
             (new BidRoute())->set($api);
             (new DueTrackerRoute())->set($api);
+            (new ReferralRoute())->individuals($api);
         });
     }
 }

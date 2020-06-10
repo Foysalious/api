@@ -16,6 +16,7 @@ use Sheba\UrlShortener\ShortenUrl;
 use DB;
 use Excel;
 use Throwable;
+use Sheba\Usage\Usage;
 
 class SmsCampaignOrderController extends Controller
 {
@@ -56,6 +57,10 @@ class SmsCampaignOrderController extends Controller
 
             if ($campaign->partnerHasEnoughBalance()) {
                 if ($campaign->createOrder()) {
+                    /**
+                     * USAGE LOG
+                     */
+                    (new Usage())->setUser($request->partner)->setType(Usage::Partner()::SMS_MARKETING)->create($request->manager_resource);
                     return api_response($request, null, 200, ['message' => "Campaign created successfully"]);
                 }
                 return api_response($request, null, 200, ['message' => 'Failed to create campaign', 'error_code' => 'unknown_error', 'code' => 500]);

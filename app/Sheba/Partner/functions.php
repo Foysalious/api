@@ -13,7 +13,6 @@ if (!function_exists('isPartnerReadyToVerified')) {
         if (!($partner instanceof Partner)) {
             $partner = Partner::find($partner);
         }
-
         return (new WaitingStatusProcessor())->setPartner($partner)->isEligibleForWaiting();
     }
 }
