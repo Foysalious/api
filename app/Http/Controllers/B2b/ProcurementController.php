@@ -7,17 +7,22 @@ use App\Models\Business;
 use App\Models\Category;
 use App\Models\Partner;
 use App\Models\Procurement;
+use App\Models\Profile;
+use App\Models\Resource;
 use App\Models\Tag;
 use App\Models\Taggable;
 use App\Sheba\Bitly\BitlyLinkShort;
 use App\Sheba\Business\ACL\AccessControl;
+use App\Sheba\Business\Bid\Updater as BidUpdater;
 use App\Transformers\AttachmentTransformer;
 use App\Transformers\Business\LeaveTransformer;
 use App\Transformers\Business\TenderDetailsTransformer;
 use App\Transformers\Business\TenderTransformer;
 use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
+use Exception;
 use GuzzleHttp\Client;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -27,6 +32,8 @@ use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
+use ReflectionException;
+use Sheba\Business\Bid\Creator as BidCreator;
 use Sheba\Business\Procurement\Creator;
 use Sheba\Business\Procurement\ProcurementFilterRequest;
 use Sheba\Business\Procurement\WorkOrderDataGenerator;
@@ -36,11 +43,14 @@ use Sheba\Helpers\TimeFrame;
 use Sheba\Logs\ErrorLog;
 use Sheba\ModificationFields;
 use Sheba\Payment\Adapters\Payable\ProcurementAdapter;
+use Sheba\Payment\Exceptions\InitiateFailedException;
 use Sheba\Payment\ShebaPayment;
 use Sheba\Payment\ShebaPaymentValidator;
 use Sheba\Repositories\Business\ProcurementRepository;
+use Sheba\Repositories\Interfaces\BidRepositoryInterface;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
+use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Sheba\Sms\Sms;
 use Sheba\Business\ProcurementInvitation\Creator as ProcurementInvitationCreator;
 use Throwable;
@@ -493,6 +503,8 @@ class ProcurementController extends Controller
      * @param ShebaPaymentValidator $payment_validator
      * @param ProcurementRepositoryInterface $procurement_repository
      * @return JsonResponse
+     * @throws ReflectionException
+     * @throws InitiateFailedException
      */
     public function clearBills($business, $procurement, Request $request, ProcurementAdapter $procurement_adapter, ShebaPayment $payment, ShebaPaymentValidator $payment_validator, ProcurementRepositoryInterface $procurement_repository)
     {
@@ -711,5 +723,133 @@ class ProcurementController extends Controller
     {
         $url = config('sheba.partners_url') . "/v3/rfq-invitations/$procurement_invitation->id";
         $sms->shoot($partner->getManagerMobile(), "You have been invited to serve $business->name. Now go to this link-" . $bitly_link->shortUrl($url));
+    }
+
+    /**
+     * @param $tender
+     * @param Request $request
+     * @param BidCreator $creator
+     * @param BidUpdater $updater
+     * @param ProcurementRepository $procurement_repository
+     * @param BidRepositoryInterface $bid_repository
+     * @param ProfileRepositoryInterface $profile_repository
+     * @return JsonResponse
+     * @throws Exception
+     */
+    public function tenderProposalStore($tender, Request $request,
+                                        BidCreator $creator, BidUpdater $updater,
+                                        ProcurementRepository $procurement_repository,
+                                        BidRepositoryInterface $bid_repository,
+                                        ProfileRepositoryInterface $profile_repository)
+    {
+        $this->validate($request, [
+            'price' => 'sometimes|numeric',
+            'proposal' => 'required|string',
+            'company_name' => 'required|string',
+            'company_phone' => 'required|string',
+            'name' => 'required|string',
+            'status' => 'required|string'
+        ]);
+
+        $partner = $this->getPartner($profile_repository, $request);
+        $this->setModifier($partner);
+
+        $bid = $this->getBid($bid_repository, $tender, $partner);
+        if ($bid) {
+            $field_results = $this->getFieldResultBy($bid, $request);
+            if ($field_results instanceof JsonResponse) {
+                $json_response = $field_results->getData();
+                return api_response($request, null, $json_response->code, ['message' => $json_response->message]);
+            }
+
+            $updater->setBid($bid)
+                ->setStatus($request->status)
+                ->setFieldResults($field_results)
+                ->setProposal($request->proposal)
+                ->setPrice($request->price)
+                ->update();
+            
+            return api_response($request, null, 200, ['bid' => $bid->id]);
+        }
+
+
+        /** @var Procurement $procurement */
+        $procurement = $procurement_repository->find($tender);
+        $procurement->load('items.fields');
+
+        $field_results = $this->getFieldResultBy($procurement, $request);
+        if ($field_results instanceof JsonResponse) {
+            $json_response = $field_results->getData();
+            return api_response($request, null, $json_response->code, ['message' => $json_response->message]);
+        }
+
+        $bid = $creator->setBidder($partner)
+            ->setProcurement($procurement)
+            ->setStatus($request->status)
+            ->setProposal($request->proposal)
+            ->setFieldResults($field_results)
+            ->setPrice($request->price)
+            ->create();
+
+        return api_response($request, null, 200, ['bid' => $bid->id]);
+    }
+
+    /**
+     * @param ProfileRepositoryInterface $profile_repository
+     * @param Request $request
+     * @return Partner
+     */
+    private function getPartner(ProfileRepositoryInterface $profile_repository, Request $request)
+    {
+        $profile = $profile_repository->findByMobile($request->company_phone);
+        /** @var Profile $profile */
+        $profile = $profile->first();
+        /** @var Resource $resource */
+        $resource = $profile->resource;
+        /** @var Partner $partner */
+        $partner = $resource->firstPartner();
+
+        return $partner;
+    }
+
+    /**
+     * @param BidRepositoryInterface $bid_repository
+     * @param $tender
+     * @param $partner
+     * @return Bid|null
+     */
+    private function getBid(BidRepositoryInterface $bid_repository, $tender, $partner)
+    {
+        return $bid_repository->where('procurement_id', $tender)
+            ->where('bidder_type', 'like', '%Partner')
+            ->where('bidder_id', $partner->id)
+            ->first();
+    }
+
+    /**
+     * @param $field_source
+     * @param $request
+     * @return array|JsonResponse
+     */
+    private function getFieldResultBy($field_source, $request)
+    {
+        $items = collect(json_decode($request->items));
+        $field_results = [];
+        foreach ($field_source->items as $procurement_item) {
+            $item = $items->where('id', $procurement_item->id)->first();
+            foreach ($procurement_item->fields as $item_field) {
+                $variables = json_decode($item_field->variables);
+                $required = (int)$variables->is_required;
+
+                if ($required && !$item) return api_response($request, null, 400, ['message' => $procurement_item->type . ' missing']);
+                elseif (!$required && !$item) continue;
+
+                $fields = collect($item->fields);
+                $field = $fields->where('id', $item_field->id)->first();
+                array_push($field_results, $field);
+            }
+        }
+
+        return $field_results;
     }
 }
