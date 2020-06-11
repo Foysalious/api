@@ -76,36 +76,36 @@ class BusinessesController extends Controller
 
     public function getVendorsList($business, Request $request)
     {
-        try {
-            $business = $request->business;
-            $partners = $business->partners()->with('categories')->select('id', 'name', 'mobile', 'logo', 'address')->get();
-            $vendors = collect();
-            if ($business) {
-                foreach ($partners as $partner) {
-                    $master_categories = collect();
-                    $partner->categories->map(function ($category) use ($master_categories) {
-                        $parent_category = $category->parent()->select('id', 'name')->first();
-                        $master_categories->push($parent_category);
-                    });
-                    $master_categories = $master_categories->unique()->pluck('name');
-                    $vendor = [
-                        "id" => $partner->id,
-                        "name" => $partner->name,
-                        "logo" => $partner->logo,
-                        "address" => $partner->address,
-                        "mobile" => $partner->getContactNumber(),
-                        'type' => $master_categories
-                    ];
-                    $vendors->push($vendor);
-                }
-                return api_response($request, $vendors, 200, ['vendors' => $vendors]);
-            } else {
-                return api_response($request, 1, 404);
+        $business = $request->business;
+        $partners = $business->partners()
+            ->with('categories')
+            ->select('id', 'name', 'mobile', 'logo', 'address')
+            ->get();
+        $vendors = collect();
+
+        if ($business) {
+            foreach ($partners as $partner) {
+                $master_categories = collect();
+                $partner->categories->map(function ($category) use ($master_categories) {
+                    $parent_category = $category->parent()->select('id', 'name')->first();
+                    $master_categories->push($parent_category);
+                });
+                $master_categories = $master_categories->unique()->pluck('name');
+                $vendor = [
+                    "id" => $partner->id,
+                    "name" => $partner->name,
+                    "logo" => $partner->logo,
+                    "address" => $partner->address,
+                    "mobile" => $partner->getContactNumber(),
+                    'type' => $master_categories
+                ];
+
+                $vendors->push($vendor);
             }
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+            return api_response($request, $vendors, 200, ['vendors' => $vendors]);
         }
+
+        return api_response($request, 1, 404);
     }
 
     public function getVendorInfo($business, $vendor, Request $request)
