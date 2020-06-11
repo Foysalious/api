@@ -17,6 +17,8 @@ use JWTFactory;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Affiliate\VerificationStatus;
+use Sheba\Auth\Auth;
+use Sheba\Dal\ProfileNIDSubmissionLog\Contact as ProfileNIDSubmissionRepo;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\ModificationFields;
 use Sheba\NidInfo\ImageSide;
@@ -122,6 +124,10 @@ class ProfileController extends Controller
     /**
      *
      * Nid images can be file or image link
+     * @param Request $request
+     * @param $id
+     * @param ShebaProfileRepository $repository
+     * @return JsonResponse
      */
     public function updateProfileDocument(Request $request, $id, ShebaProfileRepository $repository)
     {
@@ -271,9 +277,10 @@ class ProfileController extends Controller
      * @param Request $request
      * @param OcrRepository $ocr_repo
      * @param ProfileRepositoryInterface $profile_repo
+     * @param ProfileNIDSubmissionRepo $profileNIDSubmissionLogRepo
      * @return JsonResponse
      */
-    public function storeNid(Request $request, OcrRepository $ocr_repo, ProfileRepositoryInterface $profile_repo)
+    public function storeNid(Request $request, OcrRepository $ocr_repo, ProfileRepositoryInterface $profile_repo, ProfileNIDSubmissionRepo $profileNIDSubmissionLogRepo)
     {
         try {
             $this->validate($request, ['nid_image' => 'required|file|mimes:jpeg,png,jpg', 'side' => 'required']);
@@ -288,10 +295,15 @@ class ProfileController extends Controller
             $resource = new Item($profile, new NidInfoTransformer());
             $details = $manager->createData($resource)->toArray()['data'];
             $details['name'] = "  ";
-
+            $submitted_by = null;
+            $log = "NID submitted by the user";
             $affiliate = $profile->affiliate ?: null;
-            if (!empty($affiliate))
+            if (!empty($affiliate)) {
                 $this->updateVerificationStatus($affiliate);
+                $submitted_by = get_class($affiliate);
+            }
+            $nidLogData = $profileNIDSubmissionLogRepo->processData($affiliate->profile->id, $submitted_by, $log);
+            $profileNIDSubmissionLogRepo->create($nidLogData);
 
             return api_response($request, null, 200, ['data' => $details]);
         } catch (ValidationException $e) {
