@@ -63,14 +63,7 @@ class DisburseHandler
             } else {
                 if ($this->reward->isCashType()) {
                     $log = $amount . " BDT credited for " . $this->reward->name . " reward #" . $this->reward->id;
-
-                    if ($rewardable instanceof Partner) {
-                        (new PartnerTransactionHandler($rewardable))->credit($amount, $log);
-                    } elseif ($rewardable instanceof Customer) {
-                        (new CustomerTransactionHandler($rewardable))->credit($amount, $log);
-                    } else {
-                        $this->cashDisburse->setRewardable($rewardable)->credit($amount, $log);
-                    }
+                    $this->cashDisburse->setRewardable($rewardable)->credit($amount, $log);
 
                 } elseif ($this->reward->isPointType()) {
                     if ($rewardable instanceof Partner) {
