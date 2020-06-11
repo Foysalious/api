@@ -1,8 +1,7 @@
 <?php namespace Sheba\Reward;
 
-use Sheba\Transactions\Wallet\HasWalletTransaction;
 
-interface Rewardable extends HasWalletTransaction
+interface Rewardable
 {
-    public function rechargeWallet($amount, $transaction_data);
+
 }
