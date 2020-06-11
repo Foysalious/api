@@ -343,14 +343,14 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function getContactNumber()
     {
         $resource = $this->getContactResource();
-        if (!$resource) return null;
+        if(!$resource) return null;
         return $resource->profile->mobile;
     }
 
     public function getContactResourceProPic()
     {
         $resource = $this->getContactResource();
-        if (!$resource) return null;
+        if(!$resource) return null;
         return $resource->profile->pro_pic;
     }
 
