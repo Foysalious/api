@@ -10,6 +10,8 @@ use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Models\Profile;
 use App\Repositories\FileRepository;
+use App\Repositories\SmsHandler as SmsHandlerRepo;
+use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -19,8 +21,10 @@ use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\BaseRepository;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
+use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
 use Sheba\RequestIdentification;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class DueTrackerRepository extends BaseRepository {
     use ModificationFields, CdnFileManager, FileManager;
@@ -373,7 +377,7 @@ class DueTrackerRepository extends BaseRepository {
     /**
      * @param Request $request
      * @return mixed
-     * @throws InvalidPartnerPosCustomer
+     * @throws InvalidPartnerPosCustomer|InsufficientBalance
      */
     public function sendSMS(Request $request) {
         $partner_pos_customer = PartnerPosCustomer::byPartner($request->partner->id)->where('customer_id', $request->customer_id)->with(['customer'])->first();
@@ -388,11 +392,43 @@ class DueTrackerRepository extends BaseRepository {
             'mobile'        => $customer->profile->mobile,
             'amount'        => $request->amount,
         ];
+
         if ($request->type == 'due') {
             $data['payment_link'] = $request->payment_link;
         }
-        return dispatch((new SendToCustomerToInformDueDepositSMS($request->partner, $data)));
+
+        list($sms, $log) = $this->getSms($data);
+        $sms_cost = $sms->getCost();
+        if ((double)$request->partner->wallet < (double)$sms_cost) {
+            throw new InsufficientBalance();
+        }
+        $sms->shoot();
+        (new WalletTransactionHandler())->setModel($request->partner)->setAmount($sms_cost)->setType('debit')->setLog($sms_cost . $log)->setTransactionDetails([])->setSource(TransactionSources::SMS)->store();
+        return true;
     }
+
+    public function getSms($data)
+    {
+        if ($data['type'] == 'due') {
+            $sms = (new SmsHandlerRepo('inform-due'))->setVendor('infobip')->setMobile($data['mobile'])->setMessage([
+                'customer_name' => $data['customer_name'],
+                'partner_name' => $data['partner_name'],
+                'amount' => $data['amount'],
+                'payment_link' => $data['payment_link']
+            ]);
+            $log = " BDT has been deducted for sending due details";
+        } else {
+            $sms = (new SmsHandlerRepo('inform-deposit'))->setVendor('infobip')->setMobile($data['mobile'])->setMessage([
+                'customer_name' => $data['customer_name'],
+                'partner_name' => $data['partner_name'],
+                'amount' => $data['amount'],
+            ]);
+            $log = " BDT has been deducted for sending deposit details";
+        }
+
+        return [$sms, $log];
+    }
+
 
     /**
      * @return array
