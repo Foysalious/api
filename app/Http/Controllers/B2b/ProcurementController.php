@@ -37,11 +37,15 @@ use Sheba\Business\Bid\Creator as BidCreator;
 use Sheba\Business\Procurement\Creator;
 use Sheba\Business\Procurement\ProcurementFilterRequest;
 use Sheba\Business\Procurement\WorkOrderDataGenerator;
+use Sheba\Business\Vendor\CreateRequest;
+use Sheba\Business\Vendor\CreateValidator;
 use Sheba\Dal\ProcurementInvitation\Model as ProcurementInvitation;
 use Sheba\Dal\ProcurementInvitation\ProcurementInvitationRepositoryInterface;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Logs\ErrorLog;
 use Sheba\ModificationFields;
+use Sheba\Partner\CreateRequest as PartnerCreateRequest;
+use Sheba\Partner\Creator as PartnerCreator;
 use Sheba\Payment\Adapters\Payable\ProcurementAdapter;
 use Sheba\Payment\Exceptions\InitiateFailedException;
 use Sheba\Payment\ShebaPayment;
@@ -51,6 +55,8 @@ use Sheba\Repositories\Interfaces\BidRepositoryInterface;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
+use Sheba\Repositories\ProfileRepository;
+use Sheba\Resource\ResourceCreator;
 use Sheba\Sms\Sms;
 use Sheba\Business\ProcurementInvitation\Creator as ProcurementInvitationCreator;
 use Throwable;
@@ -63,10 +69,35 @@ class ProcurementController extends Controller
     private $procurementRepository;
     /** @var Resource $resource*/
     private $resource;
+    /** @var ProfileRepository $profileRepository */
+    private $profileRepository;
+    /** @var ResourceCreator $resourceCreator */
+    private $resourceCreator;
+    /** @var PartnerCreator $partnerCreator */
+    private $partnerCreator;
+    /** @var PartnerCreateRequest $partnerCreateRequest */
+    private $partnerCreateRequest;
 
-    public function __construct(ProcurementRepositoryInterface $procurement_repository)
+    /**
+     * ProcurementController constructor.
+     *
+     * @param ProcurementRepositoryInterface $procurement_repository
+     * @param ProfileRepository $profile_repo
+     * @param ResourceCreator $resource_creator
+     * @param PartnerCreator $partner_creator
+     * @param PartnerCreateRequest $partner_create_request
+     */
+    public function __construct(ProcurementRepositoryInterface $procurement_repository,
+                                ProfileRepository $profile_repo,
+                                ResourceCreator $resource_creator,
+                                PartnerCreator $partner_creator,
+                                PartnerCreateRequest $partner_create_request)
     {
         $this->procurementRepository = $procurement_repository;
+        $this->profileRepository = $profile_repo;
+        $this->resourceCreator = $resource_creator;
+        $this->partnerCreator = $partner_creator;
+        $this->partnerCreateRequest = $partner_create_request;
     }
 
     public function create(Request $request)
@@ -808,15 +839,40 @@ class ProcurementController extends Controller
      */
     private function getPartner(ProfileRepositoryInterface $profile_repository, Request $request)
     {
-        $profile = $profile_repository->findByMobile($request->company_phone);
         /** @var Profile $profile */
-        $profile = $profile->first();
-        /** @var Resource $resource */
-        $this->resource = $profile->resource;
-        /** @var Partner $partner */
-        $partner = $this->resource->firstPartner();
+        $profile = $this->profileRepository->checkExistingProfile($request->company_phone, $request->email);
+
+        if (!$profile || !$profile->resource) {
+            $this->resourceCreator->setData($this->formatProfileSpecificData($request));
+            $this->resource = $this->resourceCreator->create();
+        } else {
+            $this->resource = $profile->resource;
+        }
+
+        $request = $this->partnerCreateRequest
+            ->setName($request->company_name)
+            ->setMobile($request->company_phone)
+            ->setEmail($request->email);
+
+        if (!$this->resource->firstPartner()) {
+            $partner = $this->partnerCreator->setPartnerCreateRequest($request)->create();
+            $partner->subscribe(config('sheba.partner_lite_packages_id'), 'monthly');
+            $partner->resources()->save($this->resource, ['resource_type' => 'Admin']);
+        } else {
+            $partner = $this->resource->firstPartner();
+        }
 
         return $partner;
+    }
+
+    private function formatProfileSpecificData($request)
+    {
+        return [
+            'name' => $request->name,
+            'mobile' => $request->company_phone,
+            'email' => $request->email,
+            'alternate_contact' => null
+        ];
     }
 
     /**
