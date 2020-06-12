@@ -470,12 +470,12 @@ class ShebaController extends Controller
     {
         try {
             $this->validate($request, ['amount' => 'required|numeric|min:' . config('emi.manager.minimum_emi_amount')]);
-            $amount = $request->amount;
-            $icons_folder = getEmiBankIconsFolder(true);
+            $amount               = $request->amount;
+            $icons_folder         = getEmiBankIconsFolder(true);
             $emi = Calculations::calculateEmiCharges($amount);
             $banks = Calculations::BankDetails($icons_folder);
             $emi_data = [
-                "emi" => $emi,
+                "emi"   => $emi,
                 "banks" => $banks
             ];
 

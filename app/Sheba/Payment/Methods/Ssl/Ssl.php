@@ -233,4 +233,9 @@ class Ssl extends PaymentMethod
             ]);
         return $this->tpClient->call($request);
     }
+
+    public function getMethodName()
+    {
+        return $this->is_donate ? self::NAME_DONATE : self::NAME;
+    }
 }
