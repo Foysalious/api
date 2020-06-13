@@ -48,11 +48,12 @@ class SitemapDataStore implements DataStoreObject
         $category_slugs = UniversalSlugModel::where('sluggable_type', 'like', '%' . 'category')->select('slug', 'sluggable_id')->whereIn('sluggable_id', $categories)->get()->pluck('slug', 'sluggable_id')->toArray();
         $service_slugs = UniversalSlugModel::where('sluggable_type', 'like', '%' . 'service')->select('slug', 'sluggable_id')->whereIn('sluggable_id', $services)->get()->pluck('slug', 'sluggable_id')->toArray();
         foreach ($master_categories as $master_category) {
-            $master_category['slug'] = $category_slugs[$master_category->id] ?? null;
+            $is_car_rental = $master_category->isRentMaster();
+            $master_category['slug'] = $is_car_rental ? config('sheba.car_rental.slug') : ($category_slugs[$master_category->id] ?? null);
             foreach ($master_category->secondary_categories as $category) {
-                $category['slug'] = $category_slugs[$category->id] ?? null;
+                $category['slug'] = $is_car_rental ? config('sheba.car_rental.slug') : ($category_slugs[$category->id] ?? null);
                 foreach ($category->services as $service) {
-                    $service['slug'] = $service_slugs[$service->id] ?? null;
+                    $service['slug'] = $is_car_rental ? config('sheba.car_rental.slug') : ($service_slugs[$service->id] ?? null);
                 }
             }
         }
