@@ -66,13 +66,7 @@ class DisburseHandler
                     $this->cashDisburse->setRewardable($rewardable)->credit($amount, $log);
 
                 } elseif ($this->reward->isPointType()) {
-                    if ($rewardable instanceof Partner) {
-                        (new PartnerRepository())->updateRewardPoint($rewardable, $amount);
-                    } elseif ($rewardable instanceof Customer) {
-                        (new CustomerRepository())->updateRewardPoint($rewardable, $amount);
-                    } else {
-                        $this->pointDisburse->setRewardable($rewardable)->updateRewardPoint($amount);
-                    }
+                    $this->pointDisburse->setRewardable($rewardable)->updateRewardPoint($amount);
                 }
             }
         }
