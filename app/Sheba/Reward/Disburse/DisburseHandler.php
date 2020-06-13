@@ -67,7 +67,7 @@ class DisburseHandler
 
                 } elseif ($this->reward->isPointType()) {
                     if ($rewardable instanceof Partner) {
-                        (new PartnerRepository())->updateRewardPoint($rewardable, $amount);
+                        (new PartnerRepository(new Partner()))->updateRewardPoint($rewardable, $amount);
                     } elseif ($rewardable instanceof Customer) {
                         (new CustomerRepository())->updateRewardPoint($rewardable, $amount);
                     } else {
