@@ -169,7 +169,7 @@ class JobList
 
     public function getJobsFilteredByServiceOrCustomerName()
     {
-        $jobs = $this->jobRepository->getJobsForResourceFilteredByServiceOrCustomerName($this->resource->id, $this->query)->get();
+        $jobs = $this->jobRepository->getJobsForResourceFilteredByServiceOrCustomerName($this->resource->id, $this->query)->orderBy('schedule_date', 'DESC')->skip($this->offset)->take($this->limit)->get();
         $jobs = $this->loadNecessaryRelations($jobs);
         return $this->formatJobs($jobs);
     }
