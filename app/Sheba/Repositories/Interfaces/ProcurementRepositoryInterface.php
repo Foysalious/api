@@ -21,4 +21,8 @@ interface ProcurementRepositoryInterface extends BaseRepositoryInterface
     public function filterWithEstimatedPrice($min_price, $max_price);
 
     public function getProcurementFilterBy(ProcurementFilterRequest $procurement_filter_request);
+
+    public function filterWithStatus($status);
+
+    public function filterWithCreatedAt($start_date, $end_date);
 }
