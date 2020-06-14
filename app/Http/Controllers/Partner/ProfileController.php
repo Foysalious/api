@@ -50,7 +50,7 @@ class ProfileController extends Controller
 
             }
 
-            return api_response($request, null, 200, ['data' => $data]);
+            return api_response($request, null, $data['code'], ['data' => array_except($data,'code')]);
 
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->errors());
