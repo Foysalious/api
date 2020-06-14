@@ -9,29 +9,30 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\FraudDetection\TransactionSources;
-use Sheba\Payment\ShebaPayment;
+use Sheba\Payment\Factory\PaymentStrategy;
+use Sheba\Payment\PaymentManager;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class PartnerWalletController extends Controller
 {
-
-    public function validatePayment(Request $request, ShebaPayment $sheba_payment)
+    public function validatePayment(Request $request, PaymentManager $payment_manager)
     {
         try {
             /** @var Payment $payment */
             $payment = Payment::where('transaction_id', $request->transaction_id)->valid()->first();
             if (!$payment)
-                return api_response($request, null, 404); elseif ($payment->isComplete())
+                return api_response($request, null, 404);
+            elseif ($payment->isComplete())
                 return api_response($request, 1, 200, ['message' => 'Payment completed']);
             elseif (!$payment->canComplete())
                 return api_response($request, null, 400, ['message' => 'Payment validation failed.']);
-            $payment = $sheba_payment->setMethod('partner_wallet')->complete($payment);
+            $payment = $payment_manager->setMethodName(PaymentStrategy::PARTNER_WALLET)->setPayment($payment)->complete();
             if ($payment->isComplete())
                 $message = 'Payment successfully completed'; elseif ($payment->isPassed())
                 $message = 'Your payment has been received but there was a system error. It will take some time to transaction your order. Call 16516 for support.';
             return api_response($request, null, 200, ['message' => $message]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -48,8 +49,9 @@ class PartnerWalletController extends Controller
             /** @var Payment $payment */
             $payment = Payment::where('transaction_id', $request->transaction_id)->valid()->first();
             if (!$payment)
-                return api_response($request, null, 404); elseif ($payment->isFailed())
-                return api_response($request, null, 500, 'Payment failed');
+                return api_response($request, null, 404);
+            elseif ($payment->isFailed())
+                return api_response($request, null, 500, ['message' => 'Payment failed']);
             elseif ($payment->isPassed())
                 return api_response($request, null, 200);
             /** @var Partner $user */
@@ -71,16 +73,6 @@ class PartnerWalletController extends Controller
                 $transaction = '';
                 DB::transaction(function () use ($payment, $user, $partner_credit, &$transaction) {
                     $partner_order = PartnerOrder::find($payment->payable->type_id);
-                    /*
-                     * WALLET TRANSACTION NEED TO REMOVE
-                     *  $user->debitWallet($payment->payable->amount);
-                     $transaction = $user->walletTransaction([
-                         'amount' => $payment->payable->amount,
-                         'type' => 'Debit',
-                         'log' => "Service Purchase (ORDER ID: {$partner_order->code()})",
-                         'partner_order_id' => $partner_order->id,
-                         'created_at' => Carbon::now()
-                     ]);*/
                     if ($payment->payable->amount > 0) {
                         $transaction = (new WalletTransactionHandler())->setModel($user)->setLog("Service Purchase (ORDER ID: {$partner_order->code()})")->setSource(TransactionSources::SERVICE_PURCHASE)->setType('debit')->setAmount($payment->payable->amount)->store(['partner_order_id' => $partner_order->id]);
                     }
@@ -97,21 +89,16 @@ class PartnerWalletController extends Controller
                 ));
                 $payment->update();
             } catch (QueryException $e) {
-                app('sentry')->captureException($e);
+                logError($e);
                 return api_response($request, null, 500);
             }
             return api_response($request, $user, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry  = app('sentry');
-            $sentry->user_context([
-                'request' => $request->all(),
-                'message' => $message
-            ]);
-            $sentry->captureException($e);
+            logError($e, $request, $message);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }

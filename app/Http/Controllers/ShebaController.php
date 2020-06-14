@@ -325,7 +325,8 @@ class ShebaController extends Controller {
         }
     }
 
-    public function getEmiInfo(Request $request) {
+    public function getEmiInfo(Request $request)
+    {
         try {
             $amount       = $request->amount;
             $icons_folder = getEmiBankIconsFolder(true);
@@ -496,28 +497,6 @@ class ShebaController extends Controller {
     public function nidValidate(Request $request)
     {
         try {
-            $this->validate($request, ['amount' => 'required|numeric|min:' . config('emi.manager.minimum_emi_amount')]);
-            $amount               = $request->amount;
-            $icons_folder         = getEmiBankIconsFolder(true);
-            $emi=Calculations::calculateEmiCharges($amount);
-            $banks=Calculations::BankDetails($icons_folder);
-            $emi_data = [
-                "emi"   => $emi,
-                "banks" => $banks
-            ];
-
-            return api_response($request, null, 200, ['price' => $amount, 'info' => $emi_data]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
-    public function nidValidate(Request $request) {
-        try {
             $this->validate($request, NidValidation::$RULES);
             $nidValidation = new NidValidation();
             if ($request->has('manager_resource')) {
@@ -547,7 +526,8 @@ class ShebaController extends Controller {
         }
     }
 
-    public function getSluggableType(Request $request, $slug, MetaTagRepositoryInterface $meta_tag_repository) {
+    public function getSluggableType(Request $request, $slug, MetaTagRepositoryInterface $meta_tag_repository)
+    {
         $type = SluggableType::where('slug', $slug)->select('sluggable_type', 'sluggable_id')->first();
         if (!$type) return api_response($request, null, 404);
         if ($type->sluggable_type == 'service') $model = 'service';

@@ -2,22 +2,22 @@
 
 use App\Models\Payment;
 use Illuminate\Http\Request;
-use Sheba\Payment\ShebaPayment;
+use Sheba\Logs\ErrorLog;
+use Sheba\Payment\Factory\PaymentStrategy;
+use Sheba\Payment\PaymentManager;
 
 class PortWalletController extends Controller
 {
-    /** @var ShebaPayment */
-    private $shebaPayment;
+    /** @var PaymentManager */
+    private $paymentManager;
 
     /**
      * PortWalletController constructor.
-     * @param ShebaPayment $sheba_payment
-     * @throws \ReflectionException
+     * @param PaymentManager $payment_manager
      */
-    public function __construct(ShebaPayment $sheba_payment)
+    public function __construct(PaymentManager $payment_manager)
     {
-        $this->shebaPayment = $sheba_payment;
-        $this->shebaPayment->setMethod('port_wallet');
+        $this->paymentManager = $payment_manager;
     }
 
     public function ipn(Request $request)
@@ -69,9 +69,9 @@ class PortWalletController extends Controller
     private function complete(Payment $payment)
     {
         try {
-            $payment = $this->shebaPayment->complete($payment);
+            $payment = $this->paymentManager->setMethodName(PaymentStrategy::PORT_WALLET)->setPayment($payment)->complete();
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
         }
         return $payment;
     }
