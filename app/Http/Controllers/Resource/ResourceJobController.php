@@ -216,7 +216,9 @@ class ResourceJobController extends Controller
             $order_id = (int) substr($request->q,2) - config('sheba.order_code_start');
             $jobs = $job_list->setResource($resource)->setOrderId($order_id)->getJobsFilteredByOrderId();
         } else {
-            $jobs = $job_list->setResource($resource)->setQuery($request->q)->getJobsFilteredByServiceOrCustomerName();
+            $jobs = $job_list->setResource($resource)->setQuery($request->q);
+            if ($request->has('limit')) $jobs = $jobs->setOffset($request->offset)->setLimit($request->limit);
+            $jobs = $jobs->getJobsFilteredByServiceOrCustomerName();
         }
         return api_response($request, $jobs, 200, ['results' => $jobs]);
     }
