@@ -2,7 +2,9 @@
 
 
 use App\Http\Controllers\Controller;
+use App\Models\Profile;
 use App\Sheba\Partner\KYC\RestrictedFeature;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -31,7 +33,7 @@ class ProfileController extends Controller
                         'en' => 'NID has not been submiited',
                         'bn' => 'আপনার NID দেয়া হয় নি'
                     ],
-                    'code' => 200,
+                    'code' => 401,
                     'restricted_feature' => $this->getRestrictedFeature(),
                 ];
             }
@@ -44,7 +46,7 @@ class ProfileController extends Controller
                         'en' => $status == 'pending' ? 'NID verification process pending' : 'NID Rejected',
                         'bn' => $status == 'pending' ?  'আপনার ভেরিফিকেশন প্রক্রিয়াধীন রয়েছে। দ্রুত করতে চাইলে ১৬১৬৫ নাম্বারে যোগাযোগ করুন' : 'দুঃখিত। আপনার ভেরিফিকেশন সফল হয় নি।'
                     ],
-                    'code' => $status == 'pending' ? 401 : 402,
+                    'code' => $status == 'pending' ? 403 : 404,
                     'restricted_feature' => $this->getRestrictedFeature(),
                 ];
 
@@ -52,10 +54,7 @@ class ProfileController extends Controller
 
             return api_response($request, null, $data['code'], ['data' => array_except($data,'code')]);
 
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->errors());
-            return api_response($request, null, 401, ['message' => $message]);
-        } catch (\Throwable $e) {
+        }  catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500, ['message' => $e->getMessage(), 'trace' => $e->getTrace()]);
         }
@@ -76,41 +75,50 @@ class ProfileController extends Controller
     {
         return RestrictedFeature::get();
     }
-    public function KycNidCheckAndUpdateInfo(Request $request, $partner, ShebaProfileRepository $repository)
+
+    public function nidGeneralInfoSubmit(Request $request, $partner, ShebaProfileRepository $repository)
     {
         try {
             $profile = $request->manager_resource->profile;
             if (!$profile) return api_response($request, null, 404, ['message' => 'Profile not found']);
 
             $this->validate($request, [
-                'name' => 'required|string|',
-                'nid_number' => 'required',
-                'dob' => 'required'
+                'name' => 'required|string',
+                'nid_no' => 'required',
+                'dob' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
             ]);
-            $data = $request->only(['email', 'name', 'password', 'pro_pic', 'nid_image_front', 'email', 'gender', 'dob', 'mobile', 'nid_no', 'address']);
-            $data = array_filter($data, function ($item) {
-                return $item != null;
-            });
-            if (!empty($data)) {
-                $validation = $repository->validate($data, $profile);
-                if ($validation === true) {
-                    $repository->update($profile, $data);
-                } elseif ($validation === 'phone') {
-                    return api_response($request, null, 500, ['message' => 'Mobile number used by another user']);
-                } elseif ($validation === 'email') {
-                    return api_response($request, null, 500, ['message' => 'Email used by another user']);
-                }
-            } else {
-                return api_response($request, null, 404, ['message' => 'No data provided']);
+
+            $profile_by_given_nid = $this->isAlreadyExistNid($request->nid_no);
+
+            if(!empty($profile_by_given_nid))
+            {
+                if(!empty($profile_by_given_nid->resource))
+                    return api_response($request, null, 401, ['message' => 'This NID is used by another sManager account']);
+                if(!empty($profile_by_given_nid->affiliate))
+                    return api_response($request, null, 403, ['message' => 'This NID is used by another sBondhu account']);
             }
-            return api_response($request, null, 200, ['message' => 'Profile Updated']);
+
+
+            $data = [
+                'name' => $request->name,
+                'nid_no' => $request->nid_no,
+                'dob'   => $request->dob
+            ];
+
+            $repository->update($profile, $data);
+            return api_response($request, null, 200, ['message' => 'Profile data Updated']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->errors());
-            return api_response($request, null, 401, ['message' => $message]);
-        } catch (Throwable $e) {
+            return api_response($request, null, 422, ['message' => $message]);
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500, ['message' => $e->getMessage(), 'trace' => $e->getTrace()]);
         }
+    }
+
+    private function isAlreadyExistNid($nid_no)
+    {
+        return Profile::where('nid_no',$nid_no)->first();
     }
 
 
