@@ -16,6 +16,7 @@ use App\Sheba\Business\ACL\AccessControl;
 use App\Sheba\Business\Bid\Updater as BidUpdater;
 use App\Transformers\AttachmentTransformer;
 use App\Transformers\Business\LeaveTransformer;
+use App\Transformers\Business\ProcurementListTransformer;
 use App\Transformers\Business\TenderDetailsTransformer;
 use App\Transformers\Business\TenderTransformer;
 use App\Transformers\CustomSerializer;
@@ -67,7 +68,7 @@ class ProcurementController extends Controller
 
     /** @var ProcurementRepositoryInterface $procurementRepository */
     private $procurementRepository;
-    /** @var Resource $resource*/
+    /** @var Resource $resource */
     private $resource;
     /** @var ProfileRepository $profileRepository */
     private $profileRepository;
@@ -77,6 +78,8 @@ class ProcurementController extends Controller
     private $partnerCreator;
     /** @var PartnerCreateRequest $partnerCreateRequest */
     private $partnerCreateRequest;
+    /** @var ProcurementFilterRequest $procurementFilterRequest */
+    private $procurementFilterRequest;
 
     /**
      * ProcurementController constructor.
@@ -86,18 +89,21 @@ class ProcurementController extends Controller
      * @param ResourceCreator $resource_creator
      * @param PartnerCreator $partner_creator
      * @param PartnerCreateRequest $partner_create_request
+     * @param ProcurementFilterRequest $procurement_filter_request
      */
     public function __construct(ProcurementRepositoryInterface $procurement_repository,
                                 ProfileRepository $profile_repo,
                                 ResourceCreator $resource_creator,
                                 PartnerCreator $partner_creator,
-                                PartnerCreateRequest $partner_create_request)
+                                PartnerCreateRequest $partner_create_request,
+                                ProcurementFilterRequest $procurement_filter_request)
     {
         $this->procurementRepository = $procurement_repository;
         $this->profileRepository = $profile_repo;
         $this->resourceCreator = $resource_creator;
         $this->partnerCreator = $partner_creator;
         $this->partnerCreateRequest = $partner_create_request;
+        $this->procurementFilterRequest = $procurement_filter_request;
     }
 
     public function create(Request $request)
@@ -194,51 +200,35 @@ class ProcurementController extends Controller
      */
     public function index($business, Request $request, AccessControl $access_control)
     {
-        try {
-            $this->validate($request, [
-                'status' => 'sometimes|string',
-            ]);
-            $access_control->setBusinessMember($request->business_member);
-            if (!($access_control->hasAccess('procurement.r') || $access_control->hasAccess('procurement.rw'))) return api_response($request, null, 403);
-            $this->setModifier($request->manager_member);
-            $business = $request->business;
-            list($offset, $limit) = calculatePagination($request);
-            $procurements = $this->procurementRepository->ofBusiness($business->id)->select(['id', 'title', 'status', 'last_date_of_submission', 'created_at', 'is_published'])->orderBy('id', 'desc');
-            $total_procurement = $procurements->get()->count();
+        $this->validate($request, [
+            'status' => 'sometimes|string',
+        ]);
+        $access_control->setBusinessMember($request->business_member);
+        if (!($access_control->hasAccess('procurement.r') || $access_control->hasAccess('procurement.rw'))) return api_response($request, null, 403);
+        $this->setModifier($request->manager_member);
+        $business = $request->business;
 
-            if ($request->has('status') && $request->status != 'all') {
-                if ($request->status === 'drafted') {
-                    $procurements->where('is_published', 0);
-                } else {
-                    $procurements->where('status', $request->status);
-                }
-            }
+        list($offset, $limit) = calculatePagination($request);
+        $procurements = $this->procurementRepository->ofBusiness($business->id)
+            ->select(['id', 'title', 'long_description', 'status', 'last_date_of_submission', 'created_at', 'is_published'])
+            ->orderBy('id', 'desc');
 
-            $start_date = $request->has('start_date') ? $request->start_date : null;
-            $end_date = $request->has('end_date') ? $request->end_date : null;
-            if ($start_date && $end_date) {
-                $procurements->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
-            }
-            $procurements = $procurements->skip($offset)->limit($limit);
-            $procurements_list = [];
-            foreach ($procurements->get() as $procurement) {
-                array_push($procurements_list, [
-                    "id" => $procurement->id, "title" => $procurement->title, "status" => $procurement->status, "is_published" => $procurement->is_published, "last_date_of_submission" => Carbon::parse($procurement->last_date_of_submission)->format('d/m/y'), "bid_count" => $procurement->bids()->where('status', '<>', 'pending')->get()->count()
-                ]);
-            }
-            if (count($procurements_list) > 0) return api_response($request, $procurements_list, 200, [
-                'procurements' => $procurements_list, 'total_procurement' => $total_procurement
-            ]); else return api_response($request, null, 404);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        if ($request->has('status') && $request->status != 'all') $procurements = $this->procurementRepository->filterWithStatus($request->status);
+        $start_date = $request->has('start_date') ? $request->start_date : null;
+        $end_date = $request->has('end_date') ? $request->end_date : null;
+        if ($start_date && $end_date) $procurements = $this->procurementRepository->filterWithCreatedAt($start_date, $end_date);
+
+        $total_procurement = $procurements->get()->count();
+        $procurements = $procurements->skip($offset)->limit($limit);
+
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Collection($procurements->get(), new ProcurementListTransformer());
+        $procurements = $manager->createData($resource)->toArray()['data'];
+
+        if (count($procurements) > 0) return api_response($request, $procurements, 200, [
+            'procurements' => $procurements, 'total_procurement' => $total_procurement
+        ]); else return api_response($request, null, 404);
     }
 
     /**
@@ -802,7 +792,7 @@ class ProcurementController extends Controller
                 ->setProposal($request->proposal)
                 ->setPrice($request->price)
                 ->update();
-            
+
             return api_response($request, null, 200, ['bid' => $bid->id]);
         }
 
@@ -936,8 +926,8 @@ class ProcurementController extends Controller
         $resource = new Item($procurement, new TenderDetailsTransformer(true));
         $procurement = $fractal->createData($resource)->toArray()['data'];
 
-        $procurement['price_quotation']      = $price_quotation_fields;
-        $procurement['company_evaluation']   = $company_evaluation_fields;
+        $procurement['price_quotation'] = $price_quotation_fields;
+        $procurement['company_evaluation'] = $company_evaluation_fields;
         $procurement['technical_evaluation'] = $technical_evaluation_fields;
 
         return api_response($request, null, 200, ['tender' => $procurement]);
