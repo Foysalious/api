@@ -218,13 +218,12 @@ class ProcurementController extends Controller
         $resource = new Collection($procurements->get(), new ProcurementListTransformer());
         $procurements = $manager->createData($resource)->toArray()['data'];
 
-        $total_procurement = count($procurements);
         if ($request->has('search')) $procurements = $this->searchByTitle($procurements, $request)->values();
         if ($request->has('sort_by_id')) $procurements = $this->sortById($procurements, $request->sort_by_id)->values();
         if ($request->has('sort_by_title')) $procurements = $this->sortByTitle($procurements, $request->sort_by_title)->values();
         if ($request->has('sort_by_created_at')) $procurements = $this->sortByCreatedAt($procurements, $request->sort_by_created_at)->values();
+        $total_procurement = count($procurements);
         if ($request->has('limit')) $procurements = collect($procurements)->splice($offset, $limit);
-
         if (count($procurements) > 0) return api_response($request, $procurements, 200, [
             'procurements' => $procurements, 'total_procurement' => $total_procurement
         ]); else return api_response($request, null, 404);
