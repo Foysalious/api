@@ -279,9 +279,9 @@ class BusinessesController extends Controller
 
         $vendors = collect();
         $business->partners()
-            ->with('categories')
             ->select('id', 'name', 'logo', 'address')
-            ->get()->each(function ($partner) use ($vendors) {
+            ->get()
+            ->each(function ($partner) use ($vendors) {
                 $vendor = [
                     "id"    => $partner->id,
                     "name"  => $partner->name,
@@ -300,6 +300,6 @@ class BusinessesController extends Controller
             });
         }
 
-        return api_response($request, null, 200, ['vendors' => $vendors]);
+        return api_response($request, null, 200, ['own_vendors' => $vendors, 'sheba_verified_vendors' => []]);
     }
 }
