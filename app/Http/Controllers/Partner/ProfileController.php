@@ -24,35 +24,42 @@ class ProfileController extends Controller
             $profile = $request->manager_resource->profile;
 
             if($profile->nid_verified)
-                return api_response($request, null, 200, ['message' => 'NID verified']);
-
-            if(empty($profile->nid_image_front) || empty($profile->nid_image_front))
             {
                 $data = [
                     'message' => [
-                        'en' => 'NID has not been submiited',
+                        'en' => 'NID verified',
+                        'bn' => 'NID ভেরিফাইড'
+                    ],
+                    'status' => 'verified',
+                ];
+
+            }
+
+            if(empty($profile->nid_image_front) || empty($profile->nid_image_back))
+            {
+                $data = [
+                    'message' => [
+                        'en' => 'NID has not been submitted',
                         'bn' => 'আপনার NID দেয়া হয় নি'
                     ],
-                    'code' => 401,
+                    'status' => 'not_submitted',
                     'restricted_feature' => $this->getRestrictedFeature(),
                 ];
             }
 
             else {
                 $status = $this->verificationStatus();
-
                 $data = [
                     'message' => [
                         'en' => $status == 'pending' ? 'NID verification process pending' : 'NID Rejected',
                         'bn' => $status == 'pending' ?  'আপনার ভেরিফিকেশন প্রক্রিয়াধীন রয়েছে। দ্রুত করতে চাইলে ১৬১৬৫ নাম্বারে যোগাযোগ করুন' : 'দুঃখিত। আপনার ভেরিফিকেশন সফল হয় নি।'
                     ],
-                    'code' => $status == 'pending' ? 403 : 404,
+                    'status' => $status,
                     'restricted_feature' => $this->getRestrictedFeature(),
                 ];
-
             }
 
-            return api_response($request, null, $data['code'], ['data' => array_except($data,'code')]);
+            return api_response($request, null, 200, ['data' => $data]);
 
         }  catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -76,6 +83,12 @@ class ProfileController extends Controller
         return RestrictedFeature::get();
     }
 
+    /**
+     * @param Request $request
+     * @param $partner
+     * @param ShebaProfileRepository $repository
+     * @return JsonResponse
+     */
     public function nidGeneralInfoSubmit(Request $request, $partner, ShebaProfileRepository $repository)
     {
         try {
