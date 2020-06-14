@@ -73,6 +73,9 @@ class Route
             $api->group(['prefix' => 'blogs'], function ($api) {
                 $api->get('/', 'BlogController@index');
             });
+            $api->group(['prefix' => 'feedback', 'middleware' => ['manager.auth']], function ($api) {
+                $api->post('/', 'FeedbackController@create');
+            });
             $api->get('offer/{offer}/similar', 'ShebaController@getSimilarOffer');
             $api->group(['prefix' => 'navigation'], function ($api) {
                 $api->get('/', 'NavigationController@getNavList');
