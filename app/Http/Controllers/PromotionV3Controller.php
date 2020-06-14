@@ -106,7 +106,7 @@ class PromotionV3Controller extends Controller
                 ->setQuantity($service_requestObject->getQuantity())->getUpsellUnitPriceForSpecificQuantity();
             $service_amount = $upsell_unit_price ? ($upsell_unit_price * $service_requestObject->getQuantity()) : $price_calculation->getTotalOriginalPrice();
 
-            if ($location_service->service->category->isRentACar())
+            if ($service_requestObject->getCategory()->isRentACar())
                 $service_amount = $price_calculation->getTotalOriginalPrice();
 
             $discount_calculation->setLocationService($location_service)->setOriginalPrice($service_amount)->setQuantity($service_requestObject->getQuantity())->calculate();
