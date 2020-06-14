@@ -10,20 +10,16 @@ use App\Models\Procurement;
 use App\Models\Profile;
 use App\Models\Resource;
 use App\Models\Tag;
-use App\Models\Taggable;
 use App\Sheba\Bitly\BitlyLinkShort;
 use App\Sheba\Business\ACL\AccessControl;
 use App\Sheba\Business\Bid\Updater as BidUpdater;
 use App\Transformers\AttachmentTransformer;
-use App\Transformers\Business\LeaveTransformer;
 use App\Transformers\Business\ProcurementListTransformer;
 use App\Transformers\Business\TenderDetailsTransformer;
 use App\Transformers\Business\TenderTransformer;
 use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
 use Exception;
-use GuzzleHttp\Client;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -38,8 +34,6 @@ use Sheba\Business\Bid\Creator as BidCreator;
 use Sheba\Business\Procurement\Creator;
 use Sheba\Business\Procurement\ProcurementFilterRequest;
 use Sheba\Business\Procurement\WorkOrderDataGenerator;
-use Sheba\Business\Vendor\CreateRequest;
-use Sheba\Business\Vendor\CreateValidator;
 use Sheba\Dal\ProcurementInvitation\Model as ProcurementInvitation;
 use Sheba\Dal\ProcurementInvitation\ProcurementInvitationRepositoryInterface;
 use Sheba\Helpers\TimeFrame;
@@ -47,6 +41,7 @@ use Sheba\Logs\ErrorLog;
 use Sheba\ModificationFields;
 use Sheba\Partner\CreateRequest as PartnerCreateRequest;
 use Sheba\Partner\Creator as PartnerCreator;
+use Sheba\Partner\PartnerStatuses;
 use Sheba\Payment\Adapters\Payable\ProcurementAdapter;
 use Sheba\Payment\Exceptions\InitiateFailedException;
 use Sheba\Payment\ShebaPayment;
@@ -514,39 +509,30 @@ class ProcurementController extends Controller
                                    ProcurementInvitationRepositoryInterface $procurement_invitation_repository,
                                    BusinessMemberRepositoryInterface $business_member_repository)
     {
-        try {
-            $this->validate($request, [
-                'partners' => 'required|string',
-            ]);
-            $partners = Partner::whereIn('id', json_decode($request->partners))->get();
-            $business = $request->business;
-            $procurement = $procurementRepository->find($procurement);
+        $this->validate($request, [
+            'partners' => 'required|string',
+        ]);
+        $partners = Partner::whereIn('id', json_decode($request->partners))->get();
+        $business = $request->business;
+        $procurement = $procurementRepository->find($procurement);
 
-            foreach ($partners as $partner) {
-                /** @var Partner $partner */
-                $creator = new ProcurementInvitationCreator($procurement_invitation_repository);
-                $procurement_invitation = $creator->setBusinessMember($request->business_member)->setProcurement($procurement)->setPartner($partner);
-                if ($creator->hasError()) {
-                    if ($creator->getErrorCode() == 409) {
-                        $procurement_invitation = $procurement_invitation->getProcurementInvitation();
-                        $this->shootSmsForInvitation($business, $procurement_invitation, $bitly_link, $sms, $partner);
-                    }
-                    continue;
+        foreach ($partners as $partner) {
+            /** @var Partner $partner */
+            $creator = new ProcurementInvitationCreator($procurement_invitation_repository);
+            $procurement_invitation = $creator->setBusinessMember($request->business_member)->setProcurement($procurement)->setPartner($partner);
+            if ($creator->hasError()) {
+                if ($creator->getErrorCode() == 409) {
+                    $procurement_invitation = $procurement_invitation->getProcurementInvitation();
+                    $this->shootSmsForInvitation($business, $procurement_invitation, $bitly_link, $sms, $partner);
                 }
-
-                $procurement_invitation = $procurement_invitation->create();
-                $this->shootSmsForInvitation($business, $procurement_invitation, $bitly_link, $sms, $partner);
+                continue;
             }
 
-            return api_response($request, null, 200);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $errorLog->setException($e)->setRequest($request)->setErrorMessage($message)->send();
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+            $procurement_invitation = $procurement_invitation->create();
+            $this->shootSmsForInvitation($business, $procurement_invitation, $bitly_link, $sms, $partner);
         }
+
+        return api_response($request, null, 200);
     }
 
     /**
@@ -812,6 +798,7 @@ class ProcurementController extends Controller
      * @param ProcurementRepository $procurement_repository
      * @param BidRepositoryInterface $bid_repository
      * @param ProfileRepositoryInterface $profile_repository
+     * @param ProcurementInvitationRepositoryInterface $procurement_invitation_repo
      * @return JsonResponse
      * @throws Exception
      */
@@ -819,7 +806,8 @@ class ProcurementController extends Controller
                                         BidCreator $creator, BidUpdater $updater,
                                         ProcurementRepository $procurement_repository,
                                         BidRepositoryInterface $bid_repository,
-                                        ProfileRepositoryInterface $profile_repository)
+                                        ProfileRepositoryInterface $profile_repository,
+                                        ProcurementInvitationRepositoryInterface $procurement_invitation_repo)
     {
         $this->validate($request, [
             'price' => 'sometimes|numeric',
@@ -830,7 +818,17 @@ class ProcurementController extends Controller
             'status' => 'required|string'
         ]);
 
+        /** @var Procurement $procurement */
+        $procurement = $procurement_repository->find($tender);
         $partner = $this->getPartner($profile_repository, $request);
+        $shared_to_statuses = config('b2b.SHARING_TO');
+
+        if ($this->isVerifiedOnlyTender($procurement, $partner, $shared_to_statuses))
+            return api_response($request, null, 420, ['reason' => 'verification']);
+
+        if ($this->isInviteOnlyTender($procurement, $partner, $shared_to_statuses, $procurement_invitation_repo))
+            return api_response($request, null, 420, ['reason' => 'invite_only']);
+
         $this->setModifier($partner);
 
         $bid = $this->getBid($bid_repository, $tender, $partner);
@@ -847,12 +845,10 @@ class ProcurementController extends Controller
                 ->setProposal($request->proposal)
                 ->setPrice($request->price)
                 ->update();
-
-            return api_response($request, null, 200, ['bid' => $bid->id]);
+            
+            return api_response($request, null, 200);
         }
 
-        /** @var Procurement $procurement */
-        $procurement = $procurement_repository->find($tender);
         $procurement->load('items.fields');
 
         $field_results = $this->getFieldResultBy($procurement, $request);
@@ -872,9 +868,9 @@ class ProcurementController extends Controller
         if ($request->attachments && is_array($request->attachments))
             $creator->setAttachments($request->attachments);
 
-        $bid = $creator->create();
+        $creator->create();
 
-        return api_response($request, null, 200, ['bid' => $bid->id]);
+        return api_response($request, null, 200);
     }
 
     /**
@@ -1004,5 +1000,30 @@ class ProcurementController extends Controller
                 'result' => $field->bid_item_id && $procurement->status === 'pending' ? $field->input_type === 'checkbox' ? json_decode($field->result) : $field->result : $field->result
             ];
         }) : null;
+    }
+
+    private function isVerifiedOnlyTender(Procurement $procurement, Partner $partner, $shared_to_statuses)
+    {
+        if ($procurement->shared_to != ($shared_to_statuses['verified'])['key']) return false;
+        if ($partner->status == PartnerStatuses::VERIFIED) return false;
+
+        return true;
+    }
+
+    /**
+     * @param Procurement $procurement
+     * @param Partner $partner
+     * @param $shared_to_statuses
+     * @param ProcurementInvitationRepositoryInterface $procurement_invitation_repo
+     * @return bool
+     */
+    private function isInviteOnlyTender(Procurement $procurement, Partner $partner, $shared_to_statuses, ProcurementInvitationRepositoryInterface $procurement_invitation_repo)
+    {
+        if ($procurement->shared_to != ($shared_to_statuses['own_listed'])['key']) return false;
+
+        $procurement_invitation = $procurement_invitation_repo->findByProcurementPartner($procurement, $partner);
+        if ($procurement_invitation) return false;
+
+        return true;
     }
 }
