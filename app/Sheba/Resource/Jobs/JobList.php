@@ -217,8 +217,6 @@ class JobList
             $formatted_job->put('status', $job->status);
             $formatted_job->put('schedule_date', $job->schedule_date);
             $formatted_job->put('schedule_date_time', Carbon::parse($job->schedule_date . ' ' . $job->preferred_time_start)->toDateTimeString());
-            $formatted_job->put('closed_at_year', $job->partnerOrder->closed_at != null ? $job->partnerOrder->closed_at->format('Y') : null);
-            $formatted_job->put('closed_at_month', $job->partnerOrder->closed_at != null ? $job->partnerOrder->closed_at->format('n') : null);
             $formatted_job->put('closed_at_date', $job->partnerOrder->closed_at != null ? $job->partnerOrder->closed_at->format('Y-m-d') : null);
             $formatted_job->put('can_process', 0);
             $formatted_job->put('can_serve', 0);
