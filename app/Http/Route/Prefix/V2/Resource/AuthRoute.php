@@ -33,6 +33,23 @@ class AuthRoute
                     $api->post('services', 'Resource\ResourceJobController@updateService');
                 });
             });
+            $api->group(['prefix' => 'transactions'], function ($api) {
+                $api->get('/', 'Resource\ResourceTransactionController@index');
+            });
+            $api->group(['prefix' => 'rewards'], function ($api) {
+                $api->get('/', 'Resource\ResourceRewardController@index');
+                $api->get('history', 'Resource\ResourceRewardController@history');
+                $api->group(['prefix' => 'campaigns'], function ($api) {
+                    $api->group(['prefix' => '{campaign}'], function ($api) {
+                        $api->get('/', 'Resource\Reward\CampaignController@show');
+                    });
+                });
+                $api->group(['prefix' => '{reward}'], function ($api) {
+                    $api->get('/', 'Resource\ResourceRewardController@show');
+                });
+            });
+            $api->get('wallet', 'Resource\ResourceWalletController@getWallet');
+            $api->post('withdrawals', 'Resource\ResourceWithdrawalRequestController@store');
         });
     }
 }

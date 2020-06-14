@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a309b245ed0e701f0cb02ba0371e415b",
+    "content-hash": "c6e0a67a756d1e9d7d46c690f40ec008",
     "packages": [
         {
             "name": "algolia/algoliasearch-client-php",
@@ -3267,8 +3267,10 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
+
                 "url": "https://mac_pasha@bitbucket.org/startern/sheba_dal.git",
                 "reference": "8b98186e17eb47208b7925c38a59d4eec29b6004"
+
             },
             "require": {
                 "php": ">=5.4"

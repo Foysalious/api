@@ -6,6 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use Sheba\Dal\Providers\CustomMigrationServiceProvider;
 use Sheba\Dev\DevelopmentEnvironmentChecker;
 use Sheba\Partner\HomePageSetting\Providers\ServiceProvider as PartnerHomeSettingServiceProvider;
+use Sheba\Partner\HomePageSettingV3\Providers\ServiceProvider as PartnerHomeSettingServiceProviderV3;
 use Sheba\PartnerOrder\ConcurrentUpdateRestriction\CURServiceProvider;
 use Sheba\Recommendations\HighlyDemands\Categories\ServiceProvider as HighlyDemandsCategoriesServiceProvider;
 use Sheba\Sms\SmsServiceProvider;
@@ -45,6 +46,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->register(SmsServiceProvider::class);
         $this->app->register(HomePageSettingGettersProvider::class);
         $this->app->register(PartnerHomeSettingServiceProvider::class);
+        $this->app->register(PartnerHomeSettingServiceProviderV3::class);
         $this->app->register(HighlyDemandsCategoriesServiceProvider::class);
         $this->app->register(CURServiceProvider::class);
     }

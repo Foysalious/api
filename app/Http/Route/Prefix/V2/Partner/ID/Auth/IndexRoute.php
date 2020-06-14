@@ -1,4 +1,7 @@
 <?php namespace App\Http\Route\Prefix\V2\Partner\ID\Auth;
+use App\Http\Route\Prefix\V2\Partner\ReferralRoute;
+
+
 
 class IndexRoute
 {
@@ -286,9 +289,13 @@ class IndexRoute
                 });
             });
             $api->post('nid-validate', 'ShebaController@nidValidate');
+            $api->group(['prefix' => 'kyc'], function ($api) {
+                $api->get('check-nid', 'Partner/ProfileController@checkNid');
+            });
             (new IncomeExpenseRoute())->set($api);
             (new BidRoute())->set($api);
             (new DueTrackerRoute())->set($api);
+            (new ReferralRoute())->individuals($api);
         });
     }
 }
