@@ -67,6 +67,7 @@ class Route
             $api->post('faq', 'ShebaController@sendFaq');
             $api->group(['prefix' => 'offers'], function ($api) {
                 $api->get('/', 'OfferController@index');
+                $api->get('/partner-offer', 'OfferController@getPartnerOffer');
                 $api->get('{offer}', 'OfferController@show');
             });
             $api->get('offer/{offer}/similar', 'ShebaController@getSimilarOffer');
