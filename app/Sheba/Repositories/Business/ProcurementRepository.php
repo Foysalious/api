@@ -133,4 +133,19 @@ class ProcurementRepository extends BaseRepository implements ProcurementReposit
         return $this->model->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
 
     }
+
+    public function sortById($sort_by, $business_id)
+    {
+        return $this->model->where('owner_id', $business_id)->where('owner_type', "App\\Models\\Business")->orderBy('id', $sort_by);
+    }
+
+    public function sortByTitle($sort_by, $business_id)
+    {
+        return $this->model->where('owner_id', $business_id)->where('owner_type', "App\\Models\\Business")->orderBy('title', $sort_by);
+    }
+
+    public function sortByCreatedAt($sort_by, $business_id)
+    {
+        return $this->model->where('owner_id', $business_id)->where('owner_type', "App\\Models\\Business")->orderBy('created_at', $sort_by);
+    }
 }

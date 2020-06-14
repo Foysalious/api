@@ -218,17 +218,34 @@ class ProcurementController extends Controller
         $end_date = $request->has('end_date') ? $request->end_date : null;
         if ($start_date && $end_date) $procurements = $this->procurementRepository->filterWithCreatedAt($start_date, $end_date);
 
-        $total_procurement = $procurements->get()->count();
-        $procurements = $procurements->skip($offset)->limit($limit);
+        if ($request->has('sort_by_id')) $procurements = $this->procurementRepository->sortById($request->sort_by_id, $business->id);
+        if ($request->has('sort_by_title')) $procurements = $this->procurementRepository->sortByTitle($request->sort_by_title, $business->id);
+        if ($request->has('sort_by_created_at')) $procurements = $this->procurementRepository->sortByCreatedAt($request->sort_by_created_at, $business->id);
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
         $resource = new Collection($procurements->get(), new ProcurementListTransformer());
         $procurements = $manager->createData($resource)->toArray()['data'];
 
+        if ($request->has('search')) $procurements = $this->searchByTitle($procurements, $request)->values();
+        $total_procurement = count($procurements);
+        if ($request->has('limit')) $procurements = collect($procurements)->splice($offset, $limit);
+
         if (count($procurements) > 0) return api_response($request, $procurements, 200, [
             'procurements' => $procurements, 'total_procurement' => $total_procurement
         ]); else return api_response($request, null, 404);
+    }
+
+    /**
+     * @param $procurements
+     * @param Request $request
+     * @return \Illuminate\Support\Collection
+     */
+    private function searchByTitle($procurements, Request $request)
+    {
+        return collect($procurements)->filter(function ($procurement) use ($request) {
+            return str_contains(strtoupper($procurement['title']), strtoupper($request->search));
+        });
     }
 
     /**
