@@ -297,7 +297,7 @@ class BusinessesController extends Controller
             $vendors = $vendors->filter(function ($vendor) use ($needle) {
                 return (stripos($vendor['mobile'], $needle) !== false) ||
                     (stripos($vendor['name'], $needle) !== false);
-            });
+            })->values();
         }
 
         return api_response($request, null, 200, ['own_vendors' => $vendors, 'sheba_verified_vendors' => []]);
