@@ -25,4 +25,10 @@ interface ProcurementRepositoryInterface extends BaseRepositoryInterface
     public function filterWithStatus($status);
 
     public function filterWithCreatedAt($start_date, $end_date);
+
+    public function sortById($sort_by, $business_id);
+
+    public function sortByTitle($sort_by, $business_id);
+
+    public function sortByCreatedAt($sort_by, $business_id);
 }
