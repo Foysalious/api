@@ -70,6 +70,9 @@ class Route
                 $api->get('/partner-offer', 'OfferController@getPartnerOffer');
                 $api->get('{offer}', 'OfferController@show');
             });
+            $api->group(['prefix' => 'blogs'], function ($api) {
+                $api->get('/', 'BlogController@index');
+            });
             $api->get('offer/{offer}/similar', 'ShebaController@getSimilarOffer');
             $api->group(['prefix' => 'navigation'], function ($api) {
                 $api->get('/', 'NavigationController@getNavList');

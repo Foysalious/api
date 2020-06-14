@@ -73,6 +73,9 @@ class OfferController extends Controller
      */
     public function getPartnerOffer(Request $request) {
         try {
+            $this->validate($request, [
+                'remember_token' => 'required_unless:user,0|string',
+            ]);
             $offers = OfferShowcase::active()->valid()->actual()
                 ->notCampaign()
                 ->getPartnerOffers()
@@ -81,6 +84,12 @@ class OfferController extends Controller
             $offers = $this->getOffersWithFormation($offer_filter->filter()->sortByDesc('id'));
             if (count($offers) > 0) return api_response($request, $offers, 200, ['offers' => $offers]);
             else return api_response($request, null, 404);
+        }catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
