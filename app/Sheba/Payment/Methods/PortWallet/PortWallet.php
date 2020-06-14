@@ -2,8 +2,9 @@
 
 use App\Models\Payable;
 use App\Models\Payment;
+use Sheba\Payment\Factory\PaymentStrategy;
 use Sheba\Payment\Methods\PaymentMethod;
-use Sheba\Payment\ShebaPayment;
+use Sheba\Payment\PaymentManager;
 
 class PortWallet extends PaymentMethod
 {
@@ -38,15 +39,19 @@ class PortWallet extends PaymentMethod
         } else {
             $this->statusChanger->changeToInitiationFailed($init_response->getErrorDetailsString());
 
-            /** @var ShebaPayment $sheba_payment */
-            $sheba_payment = app(ShebaPayment::class);
-            $payment = $sheba_payment->setMethod("ssl")->init($payable);
+            /** @var PaymentManager $ */
+            $payment_manager = app(PaymentManager::class);
+            $payment = $payment_manager->setMethodName(PaymentStrategy::SSL)->setPayable($payable)->init();
         }
 
         return $payment;
     }
 
-    public function validate(Payment $payment)
+    /**
+     * @param Payment $payment
+     * @return Payment
+     */
+    public function validate(Payment $payment): Payment
     {
         $validation_response = $this->portWallet->setPayment($payment)->validate();
         $this->statusChanger->setPayment($payment);

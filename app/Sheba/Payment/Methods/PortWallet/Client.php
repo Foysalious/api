@@ -1,6 +1,5 @@
 <?php namespace Sheba\Payment\Methods\PortWallet;
 
-
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\GuzzleException;
 
@@ -19,9 +18,9 @@ class Client
     {
         $this->httpClient = $client;
 
-        $this->baseUrl = config('port_wallet.base_url');
-        $this->appKey = config('port_wallet.app_key');
-        $this->secretKey = config('port_wallet.secret_key');
+        $this->baseUrl = config('payment.port_wallet.base_url');
+        $this->appKey = config('payment.port_wallet.app_key');
+        $this->secretKey = config('payment.port_wallet.secret_key');
     }
 
     /**

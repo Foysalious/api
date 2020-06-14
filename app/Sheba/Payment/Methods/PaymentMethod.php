@@ -40,9 +40,9 @@ abstract class PaymentMethod
 
     /**
      * @param Payment $payment
-     * @return mixed
+     * @return Payment
      */
-    abstract public function validate(Payment $payment);
+    abstract public function validate(Payment $payment): Payment;
 
     /**
      * @return Carbon
