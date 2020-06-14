@@ -16,6 +16,7 @@ use App\Sheba\Business\Bid\Updater as BidUpdater;
 use App\Transformers\AttachmentTransformer;
 use App\Transformers\Business\ProcurementListTransformer;
 use App\Transformers\Business\TenderDetailsTransformer;
+use App\Transformers\Business\TenderMinimalTransformer;
 use App\Transformers\Business\TenderTransformer;
 use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
@@ -1024,5 +1025,36 @@ class ProcurementController extends Controller
         if ($procurement_invitation) return false;
 
         return true;
+    }
+
+    /**
+     * @param Request $request
+     * @param ProcurementFilterRequest $procurement_filter_request
+     * @return JsonResponse
+     */
+    public function landings(Request $request, ProcurementFilterRequest $procurement_filter_request)
+    {
+        $data = [];
+        $categories = [];
+        $data['statistics'] = ['tenders' => 1200, 'suppliers' => 400, 'quotations' => 4900, 'avg_duration' => 3, 'industries' => 99];
+        $categories_id = config('sheba.tender_landing_categories_id');
+        Category::whereIn('id', $categories_id)->get()->each(function ($category) use (&$categories) {
+            $categories[$category->id] = [
+                'id'    => $category->id,
+                'name'  => $category->name,
+                'icon'  => $category->icon
+            ];
+        });
+        $data['categories'] = array_values($categories);
+
+        $procurement_filter_request->setLimit(10);
+        $procurements = $this->procurementRepository->getProcurementWhereTitleBudgetNotNull($procurement_filter_request);
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Collection($procurements, new TenderMinimalTransformer());
+        $procurements = $manager->createData($resource)->toArray()['data'];
+        $data['tenders'] = $procurements;
+
+        return api_response($request, null, 200, ['data' => $data]);
     }
 }

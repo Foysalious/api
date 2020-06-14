@@ -13,6 +13,7 @@ class ProcurementFilterRequest
     private $maxPrice;
     private $sharedTo;
     private $searchQuery;
+    private $limit;
 
     /**
      * @return mixed
@@ -156,5 +157,16 @@ class ProcurementFilterRequest
     {
         $this->searchQuery = $search_query;
         return $this;
+    }
+
+    public function setLimit($limit)
+    {
+        $this->limit = $limit;
+        return $this;
+    }
+
+    public function getLimit()
+    {
+        return $this->limit;
     }
 }

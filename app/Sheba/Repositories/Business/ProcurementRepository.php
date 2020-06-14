@@ -76,6 +76,7 @@ class ProcurementRepository extends BaseRepository implements ProcurementReposit
         $end_date = $procurement_filter_request->getEndDate();
         $tags = $procurement_filter_request->getTagsId();
         $search = $procurement_filter_request->getSearchQuery();
+        $limit = $procurement_filter_request->getLimit();
 
         $base_query = $this->model->with('tags', 'bids')->where('last_date_of_submission', '>=', Carbon::now())
             ->where(function ($query) use ($categories, $shared_to, $min_price, $max_price, $start_date, $end_date, $tags) {
@@ -108,6 +109,7 @@ class ProcurementRepository extends BaseRepository implements ProcurementReposit
         }
 
         if ($categories) $base_query->orderBy('category_id', 'desc');
+        if ($limit) $base_query->limit($limit);
 
         return $base_query->orderBy('id', 'desc')->get();
     }
@@ -132,5 +134,18 @@ class ProcurementRepository extends BaseRepository implements ProcurementReposit
     {
         return $this->model->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
 
+    }
+
+    public function getProcurementWhereTitleBudgetNotNull(ProcurementFilterRequest $procurement_filter_request)
+    {
+        $limit = $procurement_filter_request->getLimit();
+
+        $base_query = $this->model
+            ->where('last_date_of_submission', '>=', Carbon::now())
+            ->whereNotNull('title')
+            ->whereNotNull('estimated_price');
+        if ($limit) $base_query->limit($limit);
+
+        return $base_query->orderBy('id', 'desc')->get();
     }
 }

@@ -25,4 +25,6 @@ interface ProcurementRepositoryInterface extends BaseRepositoryInterface
     public function filterWithStatus($status);
 
     public function filterWithCreatedAt($start_date, $end_date);
+
+    public function getProcurementWhereTitleBudgetNotNull(ProcurementFilterRequest $procurement_filter_request);
 }

@@ -13,6 +13,7 @@ class BusinessRoute
         $api->group(['prefix' => 'businesses/tenders'], function ($api) {
             $api->get('/', 'B2b\ProcurementController@tenders');
             $api->get('filter-options', 'B2b\ProcurementController@filterOptions');
+            $api->get('landings', 'B2b\ProcurementController@landings');
             $api->group(['prefix' => '{tender}'], function ($api) {
                 $api->get('/', 'B2b\ProcurementController@tenderShow');
                 $api->get('proposal', 'B2b\ProcurementController@tenderProposalEdit');
