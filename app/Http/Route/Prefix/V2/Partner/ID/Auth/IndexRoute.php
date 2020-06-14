@@ -290,7 +290,7 @@ class IndexRoute
             });
             $api->post('nid-validate', 'ShebaController@nidValidate');
             $api->group(['prefix' => 'kyc'], function ($api) {
-                $api->get('check-nid', 'Partner/ProfileController@checkNid');
+                $api->get('check-nid', 'Partner\ProfileController@checkNid');
             });
             (new IncomeExpenseRoute())->set($api);
             (new BidRoute())->set($api);
