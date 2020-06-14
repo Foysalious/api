@@ -3,16 +3,22 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\Profile;
+use App\Repositories\FileRepository;
 use App\Sheba\Partner\KYC\RestrictedFeature;
+use App\Transformers\CustomSerializer;
+use App\Transformers\NidInfoTransformer;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Item;
+use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
+use Sheba\Repositories\ProfileRepository;
 use Sheba\Repositories\ProfileRepository as ShebaProfileRepository;
 
 class ProfileController extends Controller
 {
-
     /**
      * @param Request $request
      * @param $partner
@@ -122,7 +128,7 @@ class ProfileController extends Controller
             return api_response($request, null, 200, ['message' => 'Profile data Updated']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->errors());
-            return api_response($request, null, 422, ['message' => $message]);
+            return api_response($request, null, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500, ['message' => $e->getMessage(), 'trace' => $e->getTrace()]);
@@ -132,6 +138,34 @@ class ProfileController extends Controller
     private function isAlreadyExistNid($nid_no)
     {
         return Profile::where('nid_no',$nid_no)->first();
+    }
+
+    public function submitNidAndProPic(Request $request, $partner, ProfileRepositoryInterface $profile_repo)
+    {
+        try {
+            $this->validate($request, [
+                'nid_image_front' => 'required|file|mimes:jpeg,png,jpg',
+                'nid_image_back' => 'required|file|mimes:jpeg,png,jpg',
+                'pro_pic' => 'required|file|mimes:jpeg,png,jpg'
+            ]);
+            $profile = $request->manager_resource->profile;
+
+            $data = [
+                'nid_image_front' => $request->nid_image_front,
+                'nid_image_back' => $request->nid_image_back,
+            ];
+            $data['profile_image'] = (new ProfileRepository($profile))->saveProPic($request->pro_pic, $profile->name);
+            $profile_repo->update($profile, $data);
+
+            return api_response($request, null, 200, ['message' => 'uploaded successfully']);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
     }
 
 
